@@ -82,8 +82,10 @@ namespace mango
         }
     };
 
-    #define MAKE_MASK(c0, c1, c2, c3) \
-        ((c3 << 6) | (c2 << 4) | (c1 << 2) | c0)
+    constexpr uint32 makeOrderMask(int c0, int c1, int c2, int c3) noexcept
+    {
+        return (c3 << 6) | (c2 << 4) | (c1 << 2) | c0;
+    }
 
     class Format
     {
@@ -96,7 +98,7 @@ namespace mango
         void validate();
 
     public:
-        enum Component
+        enum Component : uint32
         {
             RED   = 0,
             GREEN = 1,
@@ -104,75 +106,75 @@ namespace mango
             ALPHA = 3
         };
 
-        enum Order
+        enum Order : uint32
         {
-            R = MAKE_MASK(0, 1, 2, 3),
-            G = MAKE_MASK(1, 0, 2, 3),
-            B = MAKE_MASK(2, 1, 0, 3),
-            A = MAKE_MASK(3, 1, 2, 0),
+            R = makeOrderMask(0, 1, 2, 3),
+            G = makeOrderMask(1, 0, 2, 3),
+            B = makeOrderMask(2, 1, 0, 3),
+            A = makeOrderMask(3, 1, 2, 0),
 
-            RG = MAKE_MASK(0, 1, 2, 3),
-            RB = MAKE_MASK(0, 2, 1, 3),
-            RA = MAKE_MASK(0, 3, 2, 1),
-            GR = MAKE_MASK(1, 0, 2, 3),
-            GB = MAKE_MASK(1, 2, 0, 3),
-            GA = MAKE_MASK(1, 3, 0, 2),
-            BR = MAKE_MASK(2, 0, 1, 3),
-            BG = MAKE_MASK(2, 1, 0, 3),
-            BA = MAKE_MASK(2, 3, 0, 1),
-            AR = MAKE_MASK(3, 0, 1, 2),
-            AG = MAKE_MASK(3, 1, 0, 2),
-            AB = MAKE_MASK(3, 2, 0, 1),
+            RG = makeOrderMask(0, 1, 2, 3),
+            RB = makeOrderMask(0, 2, 1, 3),
+            RA = makeOrderMask(0, 3, 2, 1),
+            GR = makeOrderMask(1, 0, 2, 3),
+            GB = makeOrderMask(1, 2, 0, 3),
+            GA = makeOrderMask(1, 3, 0, 2),
+            BR = makeOrderMask(2, 0, 1, 3),
+            BG = makeOrderMask(2, 1, 0, 3),
+            BA = makeOrderMask(2, 3, 0, 1),
+            AR = makeOrderMask(3, 0, 1, 2),
+            AG = makeOrderMask(3, 1, 0, 2),
+            AB = makeOrderMask(3, 2, 0, 1),
 
-            RGB = MAKE_MASK(0, 1, 2, 3),
-            RGA = MAKE_MASK(0, 1, 3, 2),
-            RBG = MAKE_MASK(0, 2, 1, 3),
-            RBA = MAKE_MASK(0, 2, 3, 1),
-            RAG = MAKE_MASK(0, 3, 1, 2),
-            RAB = MAKE_MASK(0, 3, 2, 1),
-            GRB = MAKE_MASK(1, 0, 2, 3),
-            GRA = MAKE_MASK(1, 0, 3, 2),
-            GBR = MAKE_MASK(1, 2, 0, 3),
-            GBA = MAKE_MASK(1, 2, 3, 0),
-            GAR = MAKE_MASK(1, 3, 0, 2),
-            GAB = MAKE_MASK(1, 3, 2, 0),
-            BRG = MAKE_MASK(2, 0, 1, 3),
-            BRA = MAKE_MASK(2, 0, 3, 1),
-            BGR = MAKE_MASK(2, 1, 0, 3),
-            BGA = MAKE_MASK(2, 1, 3, 0),
-            BAR = MAKE_MASK(2, 3, 0, 1),
-            BAG = MAKE_MASK(2, 3, 1, 0),
-            ARG = MAKE_MASK(3, 0, 1, 2),
-            ARB = MAKE_MASK(3, 0, 2, 1),
-            AGR = MAKE_MASK(3, 1, 0, 2),
-            AGB = MAKE_MASK(3, 1, 2, 0),
-            ABR = MAKE_MASK(3, 2, 0, 1),
-            ABG = MAKE_MASK(3, 2, 1, 0),
+            RGB = makeOrderMask(0, 1, 2, 3),
+            RGA = makeOrderMask(0, 1, 3, 2),
+            RBG = makeOrderMask(0, 2, 1, 3),
+            RBA = makeOrderMask(0, 2, 3, 1),
+            RAG = makeOrderMask(0, 3, 1, 2),
+            RAB = makeOrderMask(0, 3, 2, 1),
+            GRB = makeOrderMask(1, 0, 2, 3),
+            GRA = makeOrderMask(1, 0, 3, 2),
+            GBR = makeOrderMask(1, 2, 0, 3),
+            GBA = makeOrderMask(1, 2, 3, 0),
+            GAR = makeOrderMask(1, 3, 0, 2),
+            GAB = makeOrderMask(1, 3, 2, 0),
+            BRG = makeOrderMask(2, 0, 1, 3),
+            BRA = makeOrderMask(2, 0, 3, 1),
+            BGR = makeOrderMask(2, 1, 0, 3),
+            BGA = makeOrderMask(2, 1, 3, 0),
+            BAR = makeOrderMask(2, 3, 0, 1),
+            BAG = makeOrderMask(2, 3, 1, 0),
+            ARG = makeOrderMask(3, 0, 1, 2),
+            ARB = makeOrderMask(3, 0, 2, 1),
+            AGR = makeOrderMask(3, 1, 0, 2),
+            AGB = makeOrderMask(3, 1, 2, 0),
+            ABR = makeOrderMask(3, 2, 0, 1),
+            ABG = makeOrderMask(3, 2, 1, 0),
 
-            RGBA = MAKE_MASK(0, 1, 2, 3),
-            RGAB = MAKE_MASK(0, 1, 3, 2),
-            RBGA = MAKE_MASK(0, 2, 1, 3),
-            RBAG = MAKE_MASK(0, 2, 3, 1),
-            RAGB = MAKE_MASK(0, 3, 1, 2),
-            RABG = MAKE_MASK(0, 3, 2, 1),
-            GRBA = MAKE_MASK(1, 0, 2, 3),
-            GRAB = MAKE_MASK(1, 0, 3, 2),
-            GBRA = MAKE_MASK(1, 2, 0, 3),
-            GBAR = MAKE_MASK(1, 2, 3, 0),
-            GARB = MAKE_MASK(1, 3, 0, 2),
-            GABR = MAKE_MASK(1, 3, 2, 0),
-            BRGA = MAKE_MASK(2, 0, 1, 3),
-            BRAG = MAKE_MASK(2, 0, 3, 1),
-            BGRA = MAKE_MASK(2, 1, 0, 3),
-            BGAR = MAKE_MASK(2, 1, 3, 0),
-            BARG = MAKE_MASK(2, 3, 3, 1),
-            BAGR = MAKE_MASK(2, 3, 1, 0),
-            ARGB = MAKE_MASK(3, 0, 1, 2),
-            ARBG = MAKE_MASK(3, 0, 2, 1),
-            AGRB = MAKE_MASK(3, 1, 0, 2),
-            AGBR = MAKE_MASK(3, 1, 2, 0),
-            ABRG = MAKE_MASK(3, 2, 0, 1),
-            ABGR = MAKE_MASK(3, 2, 1, 0)
+            RGBA = makeOrderMask(0, 1, 2, 3),
+            RGAB = makeOrderMask(0, 1, 3, 2),
+            RBGA = makeOrderMask(0, 2, 1, 3),
+            RBAG = makeOrderMask(0, 2, 3, 1),
+            RAGB = makeOrderMask(0, 3, 1, 2),
+            RABG = makeOrderMask(0, 3, 2, 1),
+            GRBA = makeOrderMask(1, 0, 2, 3),
+            GRAB = makeOrderMask(1, 0, 3, 2),
+            GBRA = makeOrderMask(1, 2, 0, 3),
+            GBAR = makeOrderMask(1, 2, 3, 0),
+            GARB = makeOrderMask(1, 3, 0, 2),
+            GABR = makeOrderMask(1, 3, 2, 0),
+            BRGA = makeOrderMask(2, 0, 1, 3),
+            BRAG = makeOrderMask(2, 0, 3, 1),
+            BGRA = makeOrderMask(2, 1, 0, 3),
+            BGAR = makeOrderMask(2, 1, 3, 0),
+            BARG = makeOrderMask(2, 3, 3, 1),
+            BAGR = makeOrderMask(2, 3, 1, 0),
+            ARGB = makeOrderMask(3, 0, 1, 2),
+            ARBG = makeOrderMask(3, 0, 2, 1),
+            AGRB = makeOrderMask(3, 1, 0, 2),
+            AGBR = makeOrderMask(3, 1, 2, 0),
+            ABRG = makeOrderMask(3, 2, 0, 1),
+            ABGR = makeOrderMask(3, 2, 1, 0)
         };
 
         enum Type
@@ -214,8 +216,6 @@ namespace mango
         uint32 mask(int component) const;
         uint32 pack(float red, float green, float blue, float alpha) const;
     };
-
-    #undef MAKE_MASK
 
     // ----------------------------------------------------------------------------
     // Format macros

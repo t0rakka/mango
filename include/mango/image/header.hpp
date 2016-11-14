@@ -19,7 +19,7 @@ namespace mango
         int     levels = 0;
         int     faces = 0;
         Format  format;
-		TextureCompression compression = TextureCompression::NONE;
+        TextureCompression compression = TextureCompression::NONE;
     };
 
 } // namespace mango

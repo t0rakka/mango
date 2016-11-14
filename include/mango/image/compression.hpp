@@ -11,7 +11,7 @@
 namespace mango
 {
 
-    inline constexpr const uint32 makeTextureCompression(uint32 format, uint32 index, uint32 flags) noexcept
+    constexpr uint32 makeTextureCompression(uint32 format, uint32 index, uint32 flags) noexcept
     {
         return flags | (index << 8) | format;
     }
