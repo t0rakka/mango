@@ -1,0 +1,524 @@
+/*
+    MANGO Multimedia Development Platform
+    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+*/
+#include <mango/core/pointer.hpp>
+#include <mango/core/exception.hpp>
+#include <mango/core/system.hpp>
+#include <mango/image/image.hpp>
+
+#define ID "ImageStream.IFF: "
+
+namespace
+{
+    using namespace mango;
+
+	// ------------------------------------------------------------
+	// iff
+	// ------------------------------------------------------------
+
+	void unpackBits(uint8* buffer, const uint8* input, int scansize, int insize)
+	{
+		uint8* buffer_end = buffer + scansize;
+		const uint8* input_end = input + insize;
+
+		for (; buffer < buffer_end && input < input_end;)
+		{
+			uint8 v = *input++;
+
+			if (v > 128)
+			{
+				const int n = 257 - v;
+				std::memset(buffer, *input++, n);
+				buffer += n;
+			}
+			else if (v < 128)
+			{
+				const int n = v + 1;
+				std::memcpy(buffer, input, n);
+				input += n;
+				buffer += n;
+			}
+			else
+			{
+				// 0x80
+				break;
+			}
+		}
+	}
+
+	void p2c_raw(uint8* image, const uint8* temp, int xsize, int ysize, int nplanes, int mask)
+	{
+		const int bpp = (nplanes + 7) >> 3;
+		const int scansize = xsize * bpp;
+		const int planesize = ((xsize + 15) & ~15) / 8;
+        const int mplanes = nplanes + (mask == 1);
+
+		for (int y = 0; y < ysize; ++y)
+		{
+			std::memset(image, 0, scansize);
+
+			for (int x = 0; x < xsize; ++x)
+			{
+				const int shift = ((x ^ 7) & 7);
+
+				const uint8* src = temp + x / 8;
+				uint8* dest = image + x * bpp;
+
+				for (int n = 0; n < nplanes; ++n)
+				{
+					int v = src[n * planesize] >> shift;
+					dest[n / 8] |= (v & 1) << (n & 7);
+				}
+			}
+
+			image += scansize;
+			temp += planesize * mplanes;
+		}
+	}
+
+	void p2c_ham(uint8* dest, const uint8* workptr, int width, int height, int nplanes, const uint8* palette)
+	{
+		bool hamcode2b = (nplanes == 6 || nplanes == 8);
+		int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
+		//int ham_mask = (1 << ham_shift) - 1;
+
+		int lineskip = ((width + 15) >> 4) << 1;
+
+		for (int y = 0; y < height; ++y)
+		{
+			uint32 r = palette[2];
+			uint32 g = palette[1];
+			uint32 b = palette[0];
+
+			uint32 bitmask = 0x80;
+			const uint8* workptr2 = workptr;
+
+			for (int x = 0; x < width; ++x)
+			{
+				const uint8* workptr3 = workptr2;
+
+				// read value
+				uint32 v = 0;
+				uint32 colorbit = 1;
+
+				for (int plane = 2; plane < nplanes; ++plane)
+				{
+					if (*workptr3 & bitmask)
+					{
+						v |= colorbit;
+					}
+					workptr3 += lineskip;
+					colorbit += colorbit;
+				}
+
+				// read hamcode
+				uint32 hamcode = 0;
+
+				if (*workptr3 & bitmask)
+				{
+					hamcode = 1;
+				}
+				workptr3 += lineskip;
+
+				if (hamcode2b)
+				{
+					if (*workptr3 & bitmask)
+					{
+						hamcode |= 2;
+					}
+					workptr3 += lineskip;
+				}
+
+				// hold-and-modify
+				switch (hamcode)
+				{
+					case 0:
+						r = palette[v * 4 + 2];
+						g = palette[v * 4 + 1];
+						b = palette[v * 4 + 0];
+						break;
+
+					case 1:
+                        b = v << ham_shift;
+                        break;
+
+					case 2:
+                        r = v << ham_shift;
+                        break;
+
+					case 3:
+                        g = v << ham_shift;
+                        break;
+				}
+
+                dest[0] = uint8(b);
+                dest[1] = uint8(g);
+                dest[2] = uint8(r);
+                dest[3] = 0xff;
+                dest += 4;
+
+				bitmask >>= 1;
+
+				if (!bitmask)
+				{
+					bitmask = 0x80;
+					++workptr2;
+				}
+			}
+
+			workptr += lineskip * nplanes;
+		}
+	}
+
+    void expand_palette(uint8* dest, const uint8* src, int xsize, int ysize, const uint8* palette)
+    {
+        const uint32* pal = reinterpret_cast<const uint32*>(palette);
+        uint32* image = reinterpret_cast<uint32*>(dest);
+        int count = xsize * ysize;
+
+        for (int i = 0; i < count; ++i)
+        {
+            image[i] = pal[src[i]];
+        }
+    }
+
+    bool read_signature(const uint8*& data)
+    {
+        BigEndianConstPointer p = data;
+
+		uint32 v0 = p.read32(); p += 4;
+		uint32 v1 = p.read32();
+        data = p;
+
+		if (v0 != MAKE_REVERSE_FOURCC('F','O','R','M'))
+            MANGO_EXCEPTION(ID"Incorrect signature.");
+
+		if (v1 != MAKE_REVERSE_FOURCC('I','L','B','M') && v1 != MAKE_REVERSE_FOURCC('P','B','M',' '))
+            MANGO_EXCEPTION(ID"Incorrect signature.");
+
+        return v1 == MAKE_REVERSE_FOURCC('P','B','M',' ');
+    }
+
+    Format select_format(int nplanes, bool ham)
+    {
+        // choose pixelformat
+        Format format;
+
+        if (ham)
+        {
+            // always decode Hold And Modify modes into 32 bpp
+            format = FORMAT_B8G8R8A8;
+        }
+        else
+        {
+            int bpp = (nplanes + 7) >> 3;
+            switch (bpp)
+            {
+                case 1:
+                    // expand palette
+                    format = FORMAT_B8G8R8A8;
+                    break;
+                case 2:
+                    format = FORMAT_B5G6R5;
+                    break;
+                case 3:
+                    format = FORMAT_B8G8R8;
+                    break;
+                case 4:
+                    format = FORMAT_R8G8B8A8;
+                    break;
+            }
+        }
+
+        return format;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder
+    // ------------------------------------------------------------
+
+    struct Interface : ImageDecoderInterface
+    {
+        Memory m_memory;
+
+        Interface(const Memory& memory)
+        : m_memory(memory)
+        {
+        }
+
+        ~Interface()
+        {
+        }
+
+        ImageHeader header() override
+        {
+            const uint8* data = m_memory.address;
+            const uint8* end = m_memory.address + m_memory.size - 12;
+
+            bool is_pbm = read_signature(data);
+            MANGO_UNREFERENCED_PARAMETER(is_pbm);
+
+            bool ham = false;
+            uint8 nplanes = 0;
+
+            ImageHeader header;
+
+            header.width  = 0;
+            header.height = 0;
+            header.depth  = 0;
+            header.levels = 0;
+            header.faces  = 0;
+            header.format = Format();
+            header.compression = TextureCompression::NONE;
+
+            // chunk reader
+            while (data < end)
+            {
+                // chunk header
+                BigEndianConstPointer p = data;
+
+                uint32 id = p.read32();
+                uint32 size = p.read32();
+
+                // next chunk
+                data = p + size + (size & 1);
+
+                switch (id)
+                {
+                    case MAKE_REVERSE_FOURCC('B','M','H','D'):
+                    {
+                        header.width  = p.read16();
+                        header.height = p.read16();
+                        p += 4;
+                        nplanes = p.read8();
+                        p += 12;
+                        break;
+                    }
+
+                    case MAKE_REVERSE_FOURCC('C','A','M','G'):
+                    {
+                        uint32 v = p.read32();
+                        ham = (v & 0x0800) != 0;
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+            }
+
+            header.format = select_format(nplanes, ham);
+
+            return header;
+        }
+
+        void decode(Surface& dest, int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED_PARAMETER(level);
+            MANGO_UNREFERENCED_PARAMETER(depth);
+            MANGO_UNREFERENCED_PARAMETER(face);
+
+            const uint8* data = m_memory.address;
+            const uint8* end = m_memory.address + m_memory.size - 12;
+
+            bool is_pbm = read_signature(data);
+
+            uint8 palette[1024];
+            int palette_size = 0;
+
+            uint8* buffer_allocated = NULL;
+            const uint8* buffer = NULL;
+
+            bool ham = false;
+            bool ehb = false;
+            int nplanes = 0;
+            int compression = 0;
+            int xsize = 0;
+            int ysize = 0;
+
+            // misc
+            int xorigin = 0;
+            int yorigin = 0;
+            int mask = 0;
+            int transcolor = 0;
+            int xaspect = 0;
+            int yaspect = 0;
+            int xscreen = 0;
+            int yscreen = 0;
+
+            // chunk reader
+            while (data < end)
+            {
+                // chunk header
+                BigEndianConstPointer p = data;
+
+                uint32 id = p.read32();
+                uint32 size = p.read32();
+
+                // next chunk
+                data = p + size + (size & 1);
+
+                switch (id)
+                {
+                    case MAKE_REVERSE_FOURCC('A','N','N','O'):
+                    {
+                        break;
+                    }
+
+                    case MAKE_REVERSE_FOURCC('B','M','H','D'):
+                    {
+                        xsize       = p.read16();
+                        ysize       = p.read16();
+                        xorigin     = p.read16();
+                        yorigin     = p.read16();
+                        nplanes     = p.read8();
+                        mask        = p.read8();
+                        compression = p.read16();
+                        transcolor  = p.read16();
+                        xaspect     = p.read8();
+                        yaspect     = p.read8();
+                        xscreen     = p.read16();
+                        yscreen     = p.read16();
+
+                        // alignment
+                        xsize = xsize + (xsize & 1);
+                        break;
+                    }
+
+                    case MAKE_REVERSE_FOURCC('C','M','A','P'):
+                    {
+                        palette_size = size / 3;
+                        for (int i = 0; i < palette_size; ++i)
+                        {
+                            palette[i * 4 + 0] = p[2];
+                            palette[i * 4 + 1] = p[1];
+                            palette[i * 4 + 2] = p[0];
+                            palette[i * 4 + 3] = 0xff;
+                            p += 3;
+                        }
+                        break;
+                    }
+
+                    case MAKE_REVERSE_FOURCC('C','A','M','G'):
+                    {
+                        uint32 v = p.read32();
+                        ham = (v & 0x0800) != 0;
+                        ehb = (v & 0x0080) != 0;
+                        break;
+                    }
+
+                    case MAKE_REVERSE_FOURCC('B','O','D','Y'):
+                    {
+                        if (compression)
+                        {
+                            int scansize = ((xsize + 15) & ~15) / 8 * (nplanes + (mask == 1));
+                            int bytes = scansize * ysize;
+                            buffer_allocated = new uint8[bytes];
+
+                            unpackBits(buffer_allocated, p, bytes, size);
+                            buffer = buffer_allocated;
+                        }
+                        else
+                        {
+                            buffer = p;
+                        }
+
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+
+                // silence compiler warnings about unused symbols
+                MANGO_UNREFERENCED_PARAMETER(xorigin);
+                MANGO_UNREFERENCED_PARAMETER(yorigin);
+                MANGO_UNREFERENCED_PARAMETER(transcolor);
+                MANGO_UNREFERENCED_PARAMETER(xaspect);
+                MANGO_UNREFERENCED_PARAMETER(yaspect);
+                MANGO_UNREFERENCED_PARAMETER(xscreen);
+                MANGO_UNREFERENCED_PARAMETER(yscreen);
+            }
+
+            // fix ehb palette
+            if (ehb && (palette_size == 32 || palette_size == 64))
+            {
+                for (int i = 0; i < 32; ++i)
+                {
+                    palette[(i + 32) * 4 + 0] = palette[i * 4 + 0] >> 1;
+                    palette[(i + 32) * 4 + 1] = palette[i * 4 + 1] >> 1;
+                    palette[(i + 32) * 4 + 2] = palette[i * 4 + 2] >> 1;
+                    palette[(i + 32) * 4 + 3] = 0xff;
+                }
+            }
+
+            // choose pixelformat
+            Format format = select_format(nplanes, ham);
+
+            Bitmap temp(xsize, ysize, format);
+
+            // planar-to-chunky conversion
+            if (ham)
+            {
+                p2c_ham(temp.image, buffer, xsize, ysize, nplanes, palette);
+            }
+            else
+            {
+                if (is_pbm)
+                {
+                    // linear
+                    if (nplanes <= 8)
+                    {
+                        expand_palette(temp.image, buffer, xsize, ysize, palette);
+                    }
+                    else
+                    {
+                        std::memcpy(temp.image, buffer, temp.stride * ysize);
+                    }
+                }
+                else
+                {
+                    // interlaced
+                    if (nplanes <= 8)
+                    {
+                        Bitmap raw(xsize, ysize, FORMAT_L8);
+                        p2c_raw(raw.image, buffer, xsize, ysize, nplanes, mask);
+                        expand_palette(temp.image, raw.image, xsize, ysize, palette);
+                    }
+                    else
+                    {
+                        p2c_raw(temp.image, buffer, xsize, ysize, nplanes, mask);
+                    }
+                }
+            }
+
+            delete[] buffer_allocated;
+
+			// NOTE: we could directly decode into dest if the formats match.
+            dest.blit(0, 0, temp);
+        }
+    };
+
+    ImageDecoderInterface* createInterface(const Memory& memory)
+    {
+        ImageDecoderInterface* x = new Interface(memory);
+        return x;
+    }
+
+} // namespace
+
+namespace mango
+{
+
+    void registerIFF()
+    {
+        registerImageDecoder(createInterface, "iff");
+        registerImageDecoder(createInterface, "lbm");
+        registerImageDecoder(createInterface, "ham");
+        registerImageDecoder(createInterface, "ham8");
+        registerImageDecoder(createInterface, "ilbm");
+        registerImageDecoder(createInterface, "ehb");
+    }
+
+} // namespace mango

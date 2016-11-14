@@ -1,0 +1,747 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\source\unrar\crc.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\crypt.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\getbits.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\rarvm.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\rdwrfn.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\rijndael.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\sha1.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\unrar\unpack.cpp">
+      <Filter>unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\jpeg\arithmetic.cpp">
+      <Filter>jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\jpeg\encode.cpp">
+      <Filter>jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\jpeg\huffman.cpp">
+      <Filter>jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\jpeg\idct.cpp">
+      <Filter>jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\jpeg\process.cpp">
+      <Filter>jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\jpeg\decode.cpp">
+      <Filter>jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lz4\lz4.c">
+      <Filter>lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lz4\lz4hc.c">
+      <Filter>lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\google\astc.cpp">
+      <Filter>google</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\google\etc.cpp">
+      <Filter>google</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\google\etc1.cpp">
+      <Filter>google</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bc\BC.cpp">
+      <Filter>bc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bc\BC4BC5.cpp">
+      <Filter>bc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bc\BC6HBC7.cpp">
+      <Filter>bc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\miniz\miniz.cpp">
+      <Filter>miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzo\minilzo.c">
+      <Filter>lzo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bz_blocksort.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bz_compress.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bz_crctable.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bz_decompress.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bz_huffman.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bz_randtable.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\bzip2\bzlib.c">
+      <Filter>bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\buffer.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\compress.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\memory.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\object.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\string.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\system.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\thread.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\timer.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\file.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\mapper.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_mgx.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_rar.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_zip.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\path.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\blitter.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\block.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\block_dxt.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\block_yuv.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\exif.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\format.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_astc.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_bmp.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_dds.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_gif.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_hdr.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_iff.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_jpg.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_ktx.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_pcx.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_pkm.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_png.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_pvr.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_tga.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\surface.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\math\geometry.cpp">
+      <Filter>mango\source\math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\math\math.cpp">
+      <Filter>mango\source\math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\math\simd.cpp">
+      <Filter>mango\source\math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\opengl\opengl.cpp">
+      <Filter>mango\source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp">
+      <Filter>mango\source\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp">
+      <Filter>mango\source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\gui\win32\win32_window.cpp">
+      <Filter>mango\source\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\win32\dynamic_library.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\win32\file_observer.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\win32\file_stream.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\filesystem\win32\mapper_file.cpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\common\xxhash.c">
+      <Filter>zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\common\zstd_common.c">
+      <Filter>zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\common\entropy_common.c">
+      <Filter>zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\common\fse_decompress.c">
+      <Filter>zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\compress\fse_compress.c">
+      <Filter>zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\compress\huf_compress.c">
+      <Filter>zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\compress\zbuff_compress.c">
+      <Filter>zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\compress\zstd_compress.c">
+      <Filter>zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\decompress\huf_decompress.c">
+      <Filter>zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\decompress\zbuff_decompress.c">
+      <Filter>zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\zstd\decompress\zstd_decompress.c">
+      <Filter>zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzfse_decode.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzfse_decode_base.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzfse_encode.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzfse_encode_base.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzfse_fse.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzvn_decode_base.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lzfse\lzvn_encode_base.c">
+      <Filter>lzfse</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\unrar\array.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\crc.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\crypt.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\getbits.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\model.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\sha1.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\rar.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\rarvm.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\rdwrfn.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\rijndael.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\suballoc.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\unpack.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\jpeg\jpeg.hpp">
+      <Filter>jpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lz4\lz4hc.h">
+      <Filter>lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lz4\lz4.h">
+      <Filter>lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\unrar\compress.hpp">
+      <Filter>unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\google\astc.hpp">
+      <Filter>google</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\google\etc.hpp">
+      <Filter>google</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\google\etc1.h">
+      <Filter>google</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\bc\BC.h">
+      <Filter>bc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzo\lzoconf.h">
+      <Filter>lzo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzo\lzodefs.h">
+      <Filter>lzo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzo\minilzo.h">
+      <Filter>lzo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\bzip2\bzlib.h">
+      <Filter>bzip2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\bzip2\bzlib_private.h">
+      <Filter>bzip2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\bits.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\buffer.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\compress.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\configure.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\core.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\cpuinfo.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\endian.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\exception.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\half.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\memory.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\object.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\pointer.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\stream.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\string.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\system.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\thread.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\timer.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\mango.hpp">
+      <Filter>mango\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\filesystem\file.hpp">
+      <Filter>mango\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\filesystem\fileindex.hpp">
+      <Filter>mango\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\filesystem\fileobserver.hpp">
+      <Filter>mango\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\filesystem\filesystem.hpp">
+      <Filter>mango\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\filesystem\mapper.hpp">
+      <Filter>mango\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\filesystem\path.hpp">
+      <Filter>mango\include\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\gui\gui.hpp">
+      <Filter>mango\include\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\gui\window.hpp">
+      <Filter>mango\include\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\blitter.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\compression.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\decoder.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\encoder.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\exif.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\format.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\fourcc.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\header.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\image.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\surface.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\geometry.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\math.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\matrix.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\matrix_float4x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\quaternion.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\srgb.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_double4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float2.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float3.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_half4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4d_avx.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4d_fpu.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4d_sse2.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4f_altivec.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4f_fpu.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4f_neon.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4f_spu.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd4f_sse2.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp">
+      <Filter>mango\include\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h">
+      <Filter>mango\include\vulkan\khronos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h">
+      <Filter>mango\include\vulkan\khronos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\opengl.hpp">
+      <Filter>mango\include\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\func\glcorearb.hpp">
+      <Filter>mango\include\opengl\func</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\func\glext.hpp">
+      <Filter>mango\include\opengl\func</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\func\glxext.hpp">
+      <Filter>mango\include\opengl\func</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\func\wglext.hpp">
+      <Filter>mango\include\opengl\func</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\glcorearb.h">
+      <Filter>mango\include\opengl\khronos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\glext.h">
+      <Filter>mango\include\opengl\khronos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\glxext.h">
+      <Filter>mango\include\opengl\khronos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\wglext.h">
+      <Filter>mango\include\opengl\khronos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp">
+      <Filter>mango\source\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp">
+      <Filter>mango\include\vulkan\func</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\dynamic_library.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\mem.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\xxhash.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\zbuff.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\zstd.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\zstd_internal.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\bitstream.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\error_private.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\error_public.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\fse.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\common\huf.h">
+      <Filter>zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\zstd\compress\zstd_opt.h">
+      <Filter>zstd\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzfse.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzfse_encode_tables.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzfse_fse.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzfse_internal.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzfse_tunables.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzvn_decode_base.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lzfse\lzvn_encode_base.h">
+      <Filter>lzfse</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="mango">
+      <UniqueIdentifier>{0b255916-838d-4acc-8c5c-612516f3c9df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="unrar">
+      <UniqueIdentifier>{229c9e91-75ff-42aa-b229-c5ebf08e49b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="jpeg">
+      <UniqueIdentifier>{896572bf-2b43-42cd-a917-286f2a599c1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lz4">
+      <UniqueIdentifier>{7cc6e856-10fc-44d0-9862-d03d73aa3f0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="google">
+      <UniqueIdentifier>{b9912b5a-f3d8-4171-b296-2cc7beeed38c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bc">
+      <UniqueIdentifier>{33adbeaa-3d74-41a9-8912-44b9a9df4955}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="miniz">
+      <UniqueIdentifier>{fd8173dc-af42-4a77-ae9e-d38723f3f60f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zstd">
+      <UniqueIdentifier>{5e2ce1d6-f534-4ba2-9b14-6b09ac30e898}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lzo">
+      <UniqueIdentifier>{d898cb9e-75e8-4e33-9859-40cb0f277f0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bzip2">
+      <UniqueIdentifier>{19f886b3-1704-4123-be5f-964977368467}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include">
+      <UniqueIdentifier>{b0223ff6-b318-4020-ad57-d4c4a4c9fe95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\core">
+      <UniqueIdentifier>{03014f45-9d83-489b-9214-4215e4965851}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\filesystem">
+      <UniqueIdentifier>{9de86c1a-af76-45cd-9ec6-fe9f71f0feaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\gui">
+      <UniqueIdentifier>{b49d4155-de98-419f-8b43-a19817658ce7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\image">
+      <UniqueIdentifier>{40406273-5b3b-4092-a32c-98f9eecfdc8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\math">
+      <UniqueIdentifier>{3b2fb452-1962-4c5b-8904-6dbeb09cfaaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl">
+      <UniqueIdentifier>{a44d5b73-ff56-43d8-b172-0aabd7e1da53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\simd">
+      <UniqueIdentifier>{45259682-cec7-4932-bf0f-fd95005b543a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\vulkan">
+      <UniqueIdentifier>{d5c5f0d2-3561-4ec9-9d5e-bcdfd2f5be41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\vulkan\khronos">
+      <UniqueIdentifier>{0a245760-faa5-4aa7-b14a-8944bed9e9db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl\func">
+      <UniqueIdentifier>{e116a082-3332-4642-bbd3-8f545030c91b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl\khronos">
+      <UniqueIdentifier>{74117281-c874-41fe-8854-394b5e7d688a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source">
+      <UniqueIdentifier>{3bc5dc78-33a9-4903-89a8-ecb9d685b537}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\core">
+      <UniqueIdentifier>{9d7c5844-d7ca-4414-b49f-e87328f27cf5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\filesystem">
+      <UniqueIdentifier>{0ca26037-4e79-4c2e-be5d-c7bb48d3c461}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\image">
+      <UniqueIdentifier>{4771ab19-d9d3-49e7-98eb-086db54e96a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\math">
+      <UniqueIdentifier>{d5e1d148-8099-432e-9ea3-053edeb9c220}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\opengl">
+      <UniqueIdentifier>{12a990f7-e20a-45d2-8ec1-386b446f24de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\vulkan">
+      <UniqueIdentifier>{cce7ab33-9dfc-463f-b62a-035b80d00acd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\gui">
+      <UniqueIdentifier>{c54c696b-5169-4a1c-a4c2-b68bd14cd378}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\vulkan\func">
+      <UniqueIdentifier>{aaebf48d-f8dd-4e74-aa18-85ed33739dd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zstd\common">
+      <UniqueIdentifier>{515afbb1-5a2b-4aba-8d9d-5587d01cd2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zstd\compress">
+      <UniqueIdentifier>{fb6bd8c4-9df1-4190-a4fd-b28710ffc31f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zstd\decompress">
+      <UniqueIdentifier>{497ce47c-51a1-49c7-b7c1-2072d331602f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lzfse">
+      <UniqueIdentifier>{2dfcac27-57dd-475b-a33a-1e19bdbd567b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
