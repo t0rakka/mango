@@ -207,7 +207,7 @@ namespace
         // read first chunk; it must be IHDR
         const uint32 size = p.read32();
         const uint32 id = p.read32();
-        if (id != MAKE_REVERSE_FOURCC('I', 'H', 'D', 'R'))
+        if (id != makeReverseFourCC('I', 'H', 'D', 'R'))
         {
             setError("Incorrect file; the IHDR chunk must come first.");
             return;
@@ -332,7 +332,7 @@ namespace
             const uint32 id = p.read32();
             switch (id)
             {
-                case MAKE_REVERSE_FOURCC('t', 'R', 'N', 'S'):
+                case makeReverseFourCC('t', 'R', 'N', 'S'):
                     m_transparent_enable = true;
                     break;
             }
@@ -612,47 +612,47 @@ namespace
 
             switch (id)
             {
-                case MAKE_REVERSE_FOURCC('I', 'H', 'D', 'R'):
+                case makeReverseFourCC('I', 'H', 'D', 'R'):
                     setError("File can only have one IHDR chunk.");
                     break;
 
-                case MAKE_REVERSE_FOURCC('P', 'L', 'T', 'E'):
+                case makeReverseFourCC('P', 'L', 'T', 'E'):
                     read_PLTE(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('t', 'R', 'N', 'S'):
+                case makeReverseFourCC('t', 'R', 'N', 'S'):
                     read_tRNS(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('g', 'A', 'M', 'A'):
+                case makeReverseFourCC('g', 'A', 'M', 'A'):
                     read_gAMA(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('s', 'B', 'I', 'T'):
+                case makeReverseFourCC('s', 'B', 'I', 'T'):
                     read_sBIT(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('s', 'R', 'G', 'B'):
+                case makeReverseFourCC('s', 'R', 'G', 'B'):
                     read_sRGB(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('c', 'H', 'R', 'M'):
+                case makeReverseFourCC('c', 'H', 'R', 'M'):
                     read_cHRM(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('I', 'D', 'A', 'T'):
+                case makeReverseFourCC('I', 'D', 'A', 'T'):
                     read_IDAT(p, size);
                     break;
 
-                case MAKE_REVERSE_FOURCC('p', 'H', 'Y', 's'):
-                case MAKE_REVERSE_FOURCC('b', 'K', 'G', 'D'):
-                case MAKE_REVERSE_FOURCC('z', 'T', 'X', 't'):
-                case MAKE_REVERSE_FOURCC('t', 'E', 'X', 't'):
-                case MAKE_REVERSE_FOURCC('t', 'I', 'M', 'E'):
+                case makeReverseFourCC('p', 'H', 'Y', 's'):
+                case makeReverseFourCC('b', 'K', 'G', 'D'):
+                case makeReverseFourCC('z', 'T', 'X', 't'):
+                case makeReverseFourCC('t', 'E', 'X', 't'):
+                case makeReverseFourCC('t', 'I', 'M', 'E'):
                     // NOTE: ignoring these chunks
                     break;
 
-                case MAKE_REVERSE_FOURCC('I', 'E', 'N', 'D'):
+                case makeReverseFourCC('I', 'E', 'N', 'D'):
                     // terminate parsing (required for files with junk after the IEND marker)
                     p = m_end; 
                     break;
@@ -1325,7 +1325,7 @@ namespace
         Buffer buffer;
         BigEndianStream s(buffer);
 
-        s.write32(MAKE_REVERSE_FOURCC('I', 'H', 'D', 'R'));
+        s.write32(makeReverseFourCC('I', 'H', 'D', 'R'));
 
         s.write32(surface.width);
         s.write32(surface.height);
@@ -1350,7 +1350,7 @@ namespace
         Buffer buffer(4 + z.avail_out);
 
         BigEndianStream s(buffer);
-        s.write32(MAKE_REVERSE_FOURCC('I', 'D', 'A', 'T'));
+        s.write32(makeReverseFourCC('I', 'D', 'A', 'T'));
 
         z.next_out = buffer + 4;
 

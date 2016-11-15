@@ -35,8 +35,8 @@ namespace
     enum
     {
         // chunks
-        FOURCC_DDS        = MAKE_FOURCC('D', 'D', 'S', ' '),
-        FOURCC_DX10       = MAKE_FOURCC('D', 'X', '1', '0'),
+        FOURCC_DDS        = makeFourCC('D', 'D', 'S', ' '),
+        FOURCC_DX10       = makeFourCC('D', 'X', '1', '0'),
 
         // floatint point
         FOURCC_R16F       = 111,

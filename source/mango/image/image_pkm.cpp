@@ -38,7 +38,7 @@ namespace
         void read(BigEndianConstPointer& p)
         {
             uint32 magic = p.read32();
-            if (magic != MAKE_REVERSE_FOURCC('P', 'K', 'M', ' '))
+            if (magic != makeReverseFourCC('P', 'K', 'M', ' '))
             {
                 MANGO_EXCEPTION(ID"Incorrect header.");
             }

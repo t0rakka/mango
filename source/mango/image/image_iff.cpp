@@ -191,13 +191,13 @@ namespace
 		uint32 v1 = p.read32();
         data = p;
 
-		if (v0 != MAKE_REVERSE_FOURCC('F','O','R','M'))
+		if (v0 != makeReverseFourCC('F','O','R','M'))
             MANGO_EXCEPTION(ID"Incorrect signature.");
 
-		if (v1 != MAKE_REVERSE_FOURCC('I','L','B','M') && v1 != MAKE_REVERSE_FOURCC('P','B','M',' '))
+		if (v1 != makeReverseFourCC('I','L','B','M') && v1 != makeReverseFourCC('P','B','M',' '))
             MANGO_EXCEPTION(ID"Incorrect signature.");
 
-        return v1 == MAKE_REVERSE_FOURCC('P','B','M',' ');
+        return v1 == makeReverseFourCC('P','B','M',' ');
     }
 
     Format select_format(int nplanes, bool ham)
@@ -286,7 +286,7 @@ namespace
 
                 switch (id)
                 {
-                    case MAKE_REVERSE_FOURCC('B','M','H','D'):
+                    case makeReverseFourCC('B','M','H','D'):
                     {
                         header.width  = p.read16();
                         header.height = p.read16();
@@ -296,7 +296,7 @@ namespace
                         break;
                     }
 
-                    case MAKE_REVERSE_FOURCC('C','A','M','G'):
+                    case makeReverseFourCC('C','A','M','G'):
                     {
                         uint32 v = p.read32();
                         ham = (v & 0x0800) != 0;
@@ -361,12 +361,12 @@ namespace
 
                 switch (id)
                 {
-                    case MAKE_REVERSE_FOURCC('A','N','N','O'):
+                    case makeReverseFourCC('A','N','N','O'):
                     {
                         break;
                     }
 
-                    case MAKE_REVERSE_FOURCC('B','M','H','D'):
+                    case makeReverseFourCC('B','M','H','D'):
                     {
                         xsize       = p.read16();
                         ysize       = p.read16();
@@ -386,7 +386,7 @@ namespace
                         break;
                     }
 
-                    case MAKE_REVERSE_FOURCC('C','M','A','P'):
+                    case makeReverseFourCC('C','M','A','P'):
                     {
                         palette_size = size / 3;
                         for (int i = 0; i < palette_size; ++i)
@@ -400,7 +400,7 @@ namespace
                         break;
                     }
 
-                    case MAKE_REVERSE_FOURCC('C','A','M','G'):
+                    case makeReverseFourCC('C','A','M','G'):
                     {
                         uint32 v = p.read32();
                         ham = (v & 0x0800) != 0;
@@ -408,7 +408,7 @@ namespace
                         break;
                     }
 
-                    case MAKE_REVERSE_FOURCC('B','O','D','Y'):
+                    case makeReverseFourCC('B','O','D','Y'):
                     {
                         if (compression)
                         {
