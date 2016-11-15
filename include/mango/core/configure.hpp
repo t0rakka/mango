@@ -269,7 +269,8 @@
 
 	// Intel Itanium (IA-64)
 	#define MANGO_CPU_INTEL
-	#define MANGO_LITTLE_ENDIAN /* bi-endian; depends on OS */
+    #define MANGO_CPU_64BIT
+    #define MANGO_LITTLE_ENDIAN /* bi-endian; depends on OS */
 	#define MANGO_CPU_NAME "Itanium"
 
 #elif defined(__aarch64__)
