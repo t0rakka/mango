@@ -744,7 +744,7 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
-	// compare / select
+    // compare / select
     // ------------------------------------------------------------------
 
     static inline simd4f operator > (const float4& a, const float4& b)
