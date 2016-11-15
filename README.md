@@ -49,6 +49,7 @@ After prototyping and benchmarking above methods the mango API practically wrote
 - ARM NEON
 - PPC Altivec (deprecated)
 - SPU (deprecated)
+- fp16 support
 
 ##### Short Vector Math
 - Super efficient implementation
