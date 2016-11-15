@@ -5,80 +5,73 @@
 #pragma once
 
 #include "../core/configure.hpp"
+#include "../core/endian.hpp"
 #include "../core/bits.hpp"
 
 namespace mango
 {
 
-    union PackedColor
+    struct PackedColor
     {
-    private:
-        uint32 packed; // packing depends on endianess
-
-    public:
-        struct
-        {
-            uint8 r, g, b, a;
+        union {
+            uint8 component[4];
+            struct { uint8 r, g, b, a; };
         };
 
         PackedColor()
-        : packed(0)
         {
+            component[0] = 0;
+            component[1] = 0;
+            component[2] = 0;
+            component[3] = 0;
         }
 
-        PackedColor(uint8 red, uint8 green, uint8 blue, uint8 alpha)
-        : r(red), g(green), b(blue), a(alpha)
+        PackedColor(uint8 r, uint8 g, uint8 b, uint8 a)
         {
+            component[0] = r;
+            component[1] = g;
+            component[2] = b;
+            component[3] = a;
         }
 
         PackedColor(uint32 rgba)
         {
-#if defined(MANGO_LITTLE_ENDIAN)
-            packed = rgba;
-#else
-            packed = byteswap32(rgba);
-#endif
+            ustore32le(component, rgba);
         }
 
         PackedColor(const uint8* v)
         {
-            std::memcpy(*this, v, sizeof(PackedColor));
+            std::memcpy(component, v, sizeof(PackedColor));
         }
 
         operator uint32 () const
         {
-#if defined(MANGO_LITTLE_ENDIAN)
-            return packed;
-#else
-            return byteswap32(packed);
-#endif
+            return uload32le(component);
         }
 
         operator uint8* ()
         {
-            return reinterpret_cast<uint8*>(this);
+            return component;
         }
 
         operator const uint8* () const
         {
-            return reinterpret_cast<const uint8*>(this);
+            return component;
         }
 
         uint8& operator [] (int index)
         {
-            uint8* p = *this;
-            return p[index];
+            return component[index];
         }
 
         uint8 operator [] (int index) const
         {
-            const uint8* p = *this;
-            return p[index];
+            return component[index];
         }
 
         bool operator == (const PackedColor& color)
         {
-            return !std::memcmp(this, &color, sizeof(PackedColor));
+            return !std::memcmp(component, color.component, sizeof(PackedColor));
         }
     };
 
