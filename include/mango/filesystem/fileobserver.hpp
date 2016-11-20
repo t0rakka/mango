@@ -6,11 +6,12 @@
 
 #include <string>
 #include "../core/configure.hpp"
+#include "../core/object.hpp"
 
 namespace mango
 {
 
-	class FileObserver
+    class FileObserver : public NonCopyable
 	{
 	protected:
 		struct FileObserverState* m_state;

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "../core/configure.hpp"
+#include "../core/object.hpp"
 #include "../core/timer.hpp"
 #include "../image/surface.hpp"
 #include "../filesystem/fileindex.hpp"
@@ -127,7 +128,7 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
-    class Window
+    class Window : public NonCopyable
     {
     protected:
        	struct WindowHandle* m_handle;

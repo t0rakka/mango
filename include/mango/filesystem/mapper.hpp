@@ -24,7 +24,7 @@ namespace mango
         virtual Memory* mmap(const std::string& filename) = 0;
     };
 
-    class Mapper
+    class Mapper : public NonCopyable
     {
     protected:
         AbstractMapper* m_mapper;
