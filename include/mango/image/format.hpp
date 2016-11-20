@@ -26,7 +26,7 @@ namespace mango
         }
 
         constexpr PackedColor(const PackedColor& color)
-        : component { color[0], color[1], color[2], color[3] }
+        : component { color.component[0], color.component[1], color.component[2], color.component[3] }
         {
         }
 
@@ -45,22 +45,22 @@ namespace mango
             return uload32le(component);
         }
 
-        constexpr operator uint8* ()
+        operator uint8* ()
         {
             return component;
         }
 
-        constexpr operator const uint8* () const
+        operator const uint8* () const
         {
             return component;
         }
 
-        constexpr uint8& operator [] (int index)
+        uint8& operator [] (int index)
         {
             return component[index];
         }
 
-        constexpr uint8 operator [] (int index) const
+        uint8 operator [] (int index) const
         {
             return component[index];
         }
