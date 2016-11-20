@@ -6,58 +6,6 @@
 #include <mango/core/bits.hpp>
 #include <mango/image/format.hpp>
 
-namespace
-{
-    using namespace mango;
-
-	uint32 selectFirstComponent(const Format& format)
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			const int size = format.size(i);
-			if (size > 0)
-			{
-				// select the first non-empty component
-				return size;
-			}
-		}
-
-		return 0;
-	}
-
-    uint32 computeComponentSize(const Format& format)
-    {
-        uint32 component = 0;
-
-        switch (format.type())
-        {
-            case Format::NONE:
-                break;
-
-			case Format::SRGB:
-				component = 8;
-				break;
-
-            case Format::UNORM:
-            case Format::SNORM:
-            case Format::UINT:
-            case Format::SINT:
-                if (format.bits() > 32)
-					component = selectFirstComponent(format);
-                break;
-
-            case Format::FP16:
-			case Format::FP32:
-			case Format::FP64:
-				component = format.float_bits();
-				break;
-        }
-
-        return component;
-    }
-
-} // namespace
-
 namespace mango
 {
 
@@ -65,30 +13,19 @@ namespace mango
     // Format
     // ----------------------------------------------------------------------------
 
-    Format::Format()
-    : m_bits(0), m_type(NONE)
-    {
-    }
-
-    Format::Format(const Format& format)
-    {
-        std::memcpy(this, &format, sizeof(Format));
-    }
-
     Format::Format(int bits, uint32 luminanceMask, uint32 alphaMask)
     : m_bits(bits), m_type(UNORM)
     {
-        m_size.r = uint8(u32_count_bits(luminanceMask));
-        m_size.g = uint8(u32_count_bits(luminanceMask));
-        m_size.b = uint8(u32_count_bits(luminanceMask));
-        m_size.a = uint8(u32_count_bits(alphaMask));
-        m_offset.r = uint8(u32_index_of_lsb(luminanceMask));
-        m_offset.g = uint8(u32_index_of_lsb(luminanceMask));
-        m_offset.b = uint8(u32_index_of_lsb(luminanceMask));
-        m_offset.a = uint8(u32_index_of_lsb(alphaMask));
+        m_size[0] = uint8(u32_count_bits(luminanceMask));
+        m_size[1] = uint8(u32_count_bits(luminanceMask));
+        m_size[2] = uint8(u32_count_bits(luminanceMask));
+        m_size[3] = uint8(u32_count_bits(alphaMask));
+        m_offset[0] = uint8(u32_index_of_lsb(luminanceMask));
+        m_offset[1] = uint8(u32_index_of_lsb(luminanceMask));
+        m_offset[2] = uint8(u32_index_of_lsb(luminanceMask));
+        m_offset[3] = uint8(u32_index_of_lsb(alphaMask));
 
-        if (bits & 7 || bits < 8 || bits > 32)
-        {
+        if (bits & 7 || bits < 8 || bits > 32) {
             MANGO_EXCEPTION("Incorrect number of bits.");
         }
     }
@@ -96,17 +33,16 @@ namespace mango
     Format::Format(int bits, uint32 redMask, uint32 greenMask, uint32 blueMask, uint32 alphaMask)
     : m_bits(bits), m_type(UNORM)
     {
-        m_size.r = uint8(u32_count_bits(redMask));
-        m_size.g = uint8(u32_count_bits(greenMask));
-        m_size.b = uint8(u32_count_bits(blueMask));
-        m_size.a = uint8(u32_count_bits(alphaMask));
-        m_offset.r = uint8(u32_index_of_lsb(redMask));
-        m_offset.g = uint8(u32_index_of_lsb(greenMask));
-        m_offset.b = uint8(u32_index_of_lsb(blueMask));
-        m_offset.a = uint8(u32_index_of_lsb(alphaMask));
+        m_size[0] = uint8(u32_count_bits(redMask));
+        m_size[1] = uint8(u32_count_bits(greenMask));
+        m_size[2] = uint8(u32_count_bits(blueMask));
+        m_size[3] = uint8(u32_count_bits(alphaMask));
+        m_offset[0] = uint8(u32_index_of_lsb(redMask));
+        m_offset[1] = uint8(u32_index_of_lsb(greenMask));
+        m_offset[2] = uint8(u32_index_of_lsb(blueMask));
+        m_offset[3] = uint8(u32_index_of_lsb(alphaMask));
 
-        if (bits & 7 || bits < 8 || bits > 32)
-        {
+        if (bits & 7 || bits < 8 || bits > 32) {
             MANGO_EXCEPTION("Incorrect number of bits.");
         }
     }
@@ -131,66 +67,6 @@ namespace mango
         m_size[c1] = uint8(s1);
         m_size[c2] = uint8(s2);
         m_size[c3] = uint8(s3);
-
-        validate();
-    }
-
-    Format::Format(int bits, Type type, const PackedColor& size, const PackedColor& offset)
-    : m_bits(bits), m_type(type)
-    {
-        m_size = size;
-        m_offset = offset;
-        validate();
-    }
-
-    Format::~Format()
-    {
-    }
-
-    void Format::validate()
-    {
-#if 0
-        printf("bits: %d, type: %d\n", m_bits, m_type);
-        for (int i = 0; i < 4; ++i)
-        {
-            printf("  size: %d, offset: %d\n", m_size[i], m_offset[i]);
-        }
-#endif
-        const uint32 component = computeComponentSize(*this);
-        if (component)
-        {
-            // number of bits must be multiple of component size
-            if (m_bits & (component - 1) || m_bits < component || m_bits > (component * 4))
-            {
-                MANGO_EXCEPTION("Incorrect number of bits.");
-            }
-
-            for (int i = 0; i < 4; ++i)
-            {
-                // enabled component's size must be identical
-                if (m_size[i] && m_size[i] != component)
-                {
-                    MANGO_EXCEPTION("Incorrect component size.");
-                }
-            }
-        }
-        else
-        {
-            // number of bits must be multiple of 8
-            if (m_bits & 7 || m_bits < 8 || m_bits > 128)
-            {
-                MANGO_EXCEPTION("Incorrect number of bits.");
-            }
-
-            for (int i = 0; i < 4; ++i)
-            {
-                // component has to fit into format bits
-                if (uint32(m_offset[i] + m_size[i]) > m_bits)
-                {
-                    MANGO_EXCEPTION("Incorrect component.");
-                }
-            }
-        }
     }
 
     const Format& Format::operator = (const Format& format)
@@ -251,7 +127,7 @@ namespace mango
 
     bool Format::alpha() const
     {
-        return m_size.a > 0;
+        return m_size[3] > 0;
     }
 
     PackedColor Format::size() const

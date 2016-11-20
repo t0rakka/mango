@@ -961,7 +961,7 @@ namespace
                 {
                     PackedColor color(src[0], src[1], src[2], 0xff);
                     if (uint32(color) == m_transparent_rgba)
-                        color.a = 0;
+                        color[3] = 0;
                     *d++ = color;
                     src += 3;
                 }

@@ -13,30 +13,26 @@ namespace mango
 
     struct PackedColor
     {
-        union {
-            uint8 component[4];
-            struct { uint8 r, g, b, a; };
-        };
+        uint8 component[4];
 
-        PackedColor()
+        constexpr PackedColor()
+        : component { 0, 0, 0, 0 }
         {
-            component[0] = 0;
-            component[1] = 0;
-            component[2] = 0;
-            component[3] = 0;
         }
 
-        PackedColor(uint8 r, uint8 g, uint8 b, uint8 a)
+        constexpr PackedColor(uint8 r, uint8 g, uint8 b, uint8 a)
+        : component { r, g, b, a }
         {
-            component[0] = r;
-            component[1] = g;
-            component[2] = b;
-            component[3] = a;
         }
 
-        PackedColor(uint32 rgba)
+        constexpr PackedColor(const PackedColor& color)
+        : component { color[0], color[1], color[2], color[3] }
         {
-            ustore32le(component, rgba);
+        }
+
+        PackedColor(uint32 color)
+        {
+            ustore32le(component, color);
         }
 
         PackedColor(const uint8* v)
@@ -87,8 +83,6 @@ namespace mango
         uint32 m_type;
         PackedColor m_size;
         PackedColor m_offset;
-
-        void validate();
 
     public:
         enum Component : uint32
@@ -183,13 +177,22 @@ namespace mango
             FP64   = 8
         };
 
-        Format();
-        Format(const Format& format);
+        constexpr Format()
+        : m_bits(0), m_type(NONE), m_size(PackedColor()), m_offset(PackedColor())
+        {
+        }
+
+        constexpr Format(int bits, Type type, const PackedColor& size, const PackedColor& offset)
+        : m_bits(bits), m_type(type), m_size(size), m_offset(offset)
+        {
+        }
+
         explicit Format(int bits, uint32 luminanceMask, uint32 alphaMask);
         explicit Format(int bits, uint32 redMask, uint32 greenMask, uint32 blueMask, uint32 alphaMask);
         explicit Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3);
-        explicit Format(int bits, Type type, const PackedColor& size, const PackedColor& offset);
-        ~Format();
+
+        Format(const Format& format) = default;
+        ~Format() = default;
 
         const Format& operator = (const Format& format);
 
