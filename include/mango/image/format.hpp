@@ -45,22 +45,22 @@ namespace mango
             return uload32le(component);
         }
 
-        operator uint8* ()
+        constexpr operator uint8* ()
         {
             return component;
         }
 
-        operator const uint8* () const
+        constexpr operator const uint8* () const
         {
             return component;
         }
 
-        uint8& operator [] (int index)
+        constexpr uint8& operator [] (int index)
         {
             return component[index];
         }
 
-        uint8 operator [] (int index) const
+        constexpr uint8 operator [] (int index) const
         {
             return component[index];
         }
