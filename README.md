@@ -89,3 +89,12 @@ Processing time: 3.2 seconds on i7-3770K CPU running 64 bit Ubuntu 16.04
 This means data rate of of nearly 2 GB/s for raw uncompressed image data.
 
 The decoder can be up to three times the speed of jpeglib-turbo on "best conditions" and on worst case roughly same performance. What defines "best conditions" is a very simple observation: the Huffman decoding is the bottleneck; every bit has to come through the serial decompressor. The JPEG standard has a feature which was originally inteded for error correction: Restart Interval (RST marker). If a file has these markers we can find them at order of magnitude faster rate. When we find a marker we start a new Huffman decoder as the bitstream is literally restarted at the marker. This allows us to run as many times faster we have I/O bandwidth and hardware concurrency.
+
+##### Blitter
+The pixelformat conversion code, "the blitter" used to be JIT-compiled using a realtime x86 assembler called realtime but this functionality has been deprecated for this public github release and replaced with generic template based implementation. The reason is that ARM has gained importance in the past decade dramatically and x86-only code just don't cut it anymore. This means the blitter is not as cool and super as it used to be but it still gets the job done. The blitter is based on a very simple principle: scaling bit-masks:
+
+    uint32 src = 0x000000ff; // unorm component's source bitmask
+    uint32 dst = 0x00ffff00; // we want to convert to this mask
+    double scale = double(dst) / src; // double because fp32 can only handle 24 bits of unorm w/o precision loss
+
+It's magic, but multiplying any value in the src format by this scale will yield the correct normalized value in the dst format. The largest cost here is the conversion between integer and floating-point but it can be handled efficiently. Our SIMD implementation is using AoS layout so each pixel is individually processed. This is wasteful but so is going full SoA as it requires more loads, stores and cache evictions. The best balance would be to process in batches using local SoA so that's definitely in the roadmap. The most common format conversions have custom loops so they are running on the reasonably fast path as it is. This is a disclaimer. :)
