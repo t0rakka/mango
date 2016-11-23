@@ -59,3 +59,25 @@ After prototyping and benchmarking above methods the mango API practically wrote
 #### Code Samples
 
 https://github.com/t0rakka/mango-examples
+
+Let's take a look what the compiler will do with our vector math code:
+
+    float4 test(float4 a, float4 b, float4 c)
+    {
+  	    return a.wwww * b.xxyy + (c.xxzz - a).zzzz * b.w;
+    }
+
+gcc 5.4 will generate the following instructions for ARM64:
+
+    // https://godbolt.org/g/AoyqXi
+    test1(float4, float4, float4):
+        trn1    v2.4s, v2.4s, v2.4s
+        dup     v3.4s, v1.s[3]
+        zip1    v1.4s, v1.4s, v1.4s
+        fsub    v2.4s, v2.4s, v0.4s
+        fmul    v2.4s, v3.4s, v2.s[2]
+        fmla    v2.4s, v1.4s, v0.4s[3]
+        orr     v0.16b, v2.16b, v2.16b
+        ret
+
+It is very easy to shoot yourself into the foot with intrinsics. The most basic error is to use unions of different types; this will dramatically reduce the quality of generated code. We have crafted the "accessor" proxy type to generate the overloads of different shuffling and scalar component access. This has been tested with Microsoft C++, GNU G++ and clang to produce superior code to any other alternative implementation. Nearly every method, operator and function has been extensively optimized to reduce register pressure and spilling with generated code. Most of the time the design attempts to use non-mutable transformations to the data; no in-place modification so that compiler has more options to generate better code.
