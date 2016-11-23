@@ -69,8 +69,8 @@ Let's take a look at example function:
     }
 
 gcc 5.4 will generate the following instructions for ARM64:
-
-    // https://godbolt.org/g/AoyqXi
+https://godbolt.org/g/AoyqXi
+    
     test1(float4, float4, float4):
         trn1    v2.4s, v2.4s, v2.4s
         dup     v3.4s, v1.s[3]
