@@ -98,3 +98,5 @@ The pixelformat conversion code, "the blitter" used to be JIT-compiled using a r
     double scale = double(dst) / src; // double because fp32 can only handle 24 bits of unorm w/o precision loss
 
 It's magic, but multiplying any value in the src format by this scale will yield the correct normalized value in the dst format. The largest cost here is the conversion between integer and floating-point but it can be handled efficiently. Our SIMD implementation is using AoS layout so each pixel is individually processed. This is wasteful but so is going full SoA as it requires more loads, stores and cache evictions. The best balance would be to process in batches using local SoA so that's definitely in the roadmap. The most common format conversions have custom loops so they are running on the reasonably fast path as it is. This is a disclaimer. :)
+
+There is also a promising 100% integer scale-and-bias algorithm which can handle every component size with correct rounding and w/o precision loss at very high rates but it is still in experimental stage. The best part is no compromise between precision and performance. More about that in the future.
