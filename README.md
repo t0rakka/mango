@@ -60,7 +60,8 @@ After prototyping and benchmarking above methods the mango API practically wrote
 
 https://github.com/t0rakka/mango-examples
 
-Let's take a look what the compiler will do with our vector math code:
+##### Vector Math performance
+Let's take a look at example function:
 
     float4 test(float4 a, float4 b, float4 c)
     {
@@ -81,3 +82,10 @@ gcc 5.4 will generate the following instructions for ARM64:
         ret
 
 It is very easy to shoot yourself into the foot with intrinsics. The most basic error is to use unions of different types; this will dramatically reduce the quality of generated code. We have crafted the "accessor" proxy type to generate the overloads of different shuffling and scalar component access. This has been tested with Microsoft C++, GNU G++ and clang to produce superior code to any other alternative implementation. Nearly every method, operator and function has been extensively optimized to reduce register pressure and spilling with generated code. Most of the time the design attempts to use non-mutable transformations to the data; no in-place modification so that compiler has more options to generate better code.
+
+##### JPEG decoder performance
+Sample workload: 672 MB of JPEG data in 410 individual files. 6196 KB of RGB image data when decompressed.
+Processing time: 3.2 seconds on i7-3770K CPU running 64 bit Ubuntu 16.04
+This means data rate of of nearly 2 GB/s for raw uncompressed image data.
+
+The decoder can be up to three times the speed of jpeglib-turbo on "best conditions" and on worst case roughly same performance. What defines "best conditions" is a very simple observation: the Huffman decoding is the bottleneck; every bit has to come through the serial decompressor. The JPEG standard has a feature which was originally inteded for error correction: Restart Interval (RST marker). If a file has these markers we can find them at order of magnitude faster rate. When we find a marker we start a new Huffman decoder as the bitstream is literally restarted at the marker. This allows us to run as many times faster we have I/O bandwidth and hardware concurrency.
