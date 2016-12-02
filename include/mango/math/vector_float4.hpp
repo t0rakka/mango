@@ -535,16 +535,14 @@ namespace mango
 
         uint32 pack() const
         {
-            const simd4f s = simd4f_mul(m, 255.0f);
-            const simd4i i = simd4i_convert(s);
+            const simd4i i = simd4i_convert(m);
             return simd4i_pack(i);
         }
 
         void unpack(uint32 a)
         {
             const simd4i i = simd4i_unpack(a);
-            const simd4f s = simd4f_convert(i);
-            m = simd4f_mul(s, 1.0f / 255.0f);
+            m = simd4f_convert(i);
         }
     };
 
