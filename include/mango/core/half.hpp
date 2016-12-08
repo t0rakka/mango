@@ -26,9 +26,9 @@ namespace mango
         double f;
         struct
         {
-            uint64 Mantissa : MANTISSA;
-            uint64 Exponent : EXPONENT;
-            uint64 Sign : SIGN;
+            uint64 mantissa : MANTISSA;
+            uint64 exponent : EXPONENT;
+            uint64 sign : SIGN;
         };
 
         Double()
@@ -36,7 +36,7 @@ namespace mango
         }
 
         explicit Double(uint64 sign, uint64 exponent, uint64 mantissa)
-        : Mantissa(mantissa), Exponent(exponent), Sign(sign)
+        : mantissa(mantissa), exponent(exponent), sign(sign)
         {
         }
 
@@ -80,9 +80,9 @@ namespace mango
         float f;
         struct
         {
-            uint32 Mantissa : MANTISSA;
-            uint32 Exponent : EXPONENT;
-            uint32 Sign : SIGN;
+            uint32 mantissa : MANTISSA;
+            uint32 exponent : EXPONENT;
+            uint32 sign : SIGN;
         };
 
         Float()
@@ -90,7 +90,7 @@ namespace mango
         }
 
         explicit Float(uint32 sign, uint32 exponent, uint32 mantissa)
-        : Mantissa(mantissa), Exponent(exponent), Sign(sign)
+        : mantissa(mantissa), exponent(exponent), sign(sign)
         {
         }
 
@@ -129,13 +129,13 @@ namespace mango
         uint32 result = 0;
 
         Float temp(value);
-        temp.Sign = 0;
+        temp.sign = 0;
 
-        if (temp.Exponent == (1 << Float::EXPONENT) - 1)
+        if (temp.exponent == (1 << Float::EXPONENT) - 1)
         {
             // Inf / NaN
             result = ((1 << EXPONENT) - 1) << MANTISSA;
-            result |= temp.Mantissa ? temp.Mantissa >> (Float::MANTISSA - MANTISSA) : 0; // Nan -> qNaN, Inf -> Inf
+            result |= temp.mantissa ? temp.mantissa >> (Float::MANTISSA - MANTISSA) : 0; // Nan -> qNaN, Inf -> Inf
         }
         else
         {
@@ -153,7 +153,7 @@ namespace mango
             result = temp.u >> (Float::MANTISSA - MANTISSA);
         }
 
-        result |= ((value.Sign & SIGN) << (EXPONENT + MANTISSA));
+        result |= ((value.sign & SIGN) << (EXPONENT + MANTISSA));
 
         return result;
     }
@@ -161,7 +161,7 @@ namespace mango
     template <uint32 SIGN, uint32 EXPONENT, uint32 MANTISSA>
     Float unpackFloat(uint32 sign, uint32 exponent, uint32 mantissa)
     {
-        const int BIAS = (1 << (EXPONENT - 1)) - 1;
+        const int bias = (1 << (EXPONENT - 1)) - 1;
         const Float magic(0, Float::BIAS - 1, 0);
 
         Float result;
@@ -174,20 +174,20 @@ namespace mango
         }
         else
         {
-            result.Mantissa = mantissa << (Float::MANTISSA - MANTISSA);
+            result.mantissa = mantissa << (Float::MANTISSA - MANTISSA);
 
             if (exponent == (1 << EXPONENT) - 1)
             {
                 // Inf / NaN
-                result.Exponent = (1 << Float::EXPONENT) - 1;
+                result.exponent = (1 << Float::EXPONENT) - 1;
             }
             else
             {
-                result.Exponent = Float::BIAS - BIAS + exponent;
+                result.exponent = Float::BIAS - bias + exponent;
             }
         }
 
-        result.Sign = sign & SIGN;
+        result.sign = sign & SIGN;
 
         return result;
     }
@@ -205,9 +205,9 @@ namespace mango
         uint16 u;
         struct
         {
-            uint16 Mantissa : MANTISSA;
-            uint16 Exponent : EXPONENT;
-            uint16 Sign : SIGN;
+            uint16 mantissa : MANTISSA;
+            uint16 exponent : EXPONENT;
+            uint16 sign : SIGN;
         };
 
         Half()
@@ -215,7 +215,7 @@ namespace mango
         }
 
         explicit Half(uint16 sign, uint16 exponent, uint16 mantissa)
-        : Mantissa(mantissa), Exponent(exponent), Sign(sign)
+        : mantissa(mantissa), exponent(exponent), sign(sign)
         {
         }
 
@@ -241,7 +241,7 @@ namespace mango
 
         operator float () const
         {
-            Float result = unpackFloat<SIGN, EXPONENT, MANTISSA>(Sign, Exponent, Mantissa);
+            Float result = unpackFloat<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa);
             return result;
         }
     };
