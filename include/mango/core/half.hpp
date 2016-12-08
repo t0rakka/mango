@@ -135,7 +135,7 @@ namespace mango
         {
             // Inf / NaN
             result = ((1 << EXPONENT) - 1) << MANTISSA;
-            result |= temp.Mantissa ? (1 << MANTISSA) : 0; // Nan -> qNaN, Inf -> Inf
+            result |= temp.Mantissa ? temp.Mantissa >> (Float::MANTISSA - MANTISSA) : 0; // Nan -> qNaN, Inf -> Inf
         }
         else
         {
@@ -162,7 +162,7 @@ namespace mango
     Float unpackFloat(uint32 sign, uint32 exponent, uint32 mantissa)
     {
         const int BIAS = (1 << (EXPONENT - 1)) - 1;
-        const Float magic(0, BIAS - 1, 0);
+        const Float magic(0, Float::BIAS - 1, 0);
 
         Float result;
 
