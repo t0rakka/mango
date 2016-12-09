@@ -487,7 +487,7 @@
         // ARM NEON vector instrinsics
         #define MANGO_ENABLE_NEON
         #include <arm_neon.h>
-#endif
+    #endif
 
     // ARM FP feature bits
     #if ((__ARM_FP & 0x2) != 0)
@@ -495,15 +495,15 @@
     #endif
 
     #ifdef __ARM_FEATURE_CRYPTO
-        // TODO: AES, SHA1
+        #include <arm_neon.h>
     #endif
 
     #ifdef __ARM_FEATURE_CRC32
-        // TODO
+        #include <arm_acle.h>
     #endif
 
     #ifdef __ARM_FEATURE_CLZ
-        // TODO
+        #include <arm_acle.h>
     #endif
 
 #elif defined(MANGO_CPU_PPC) && (defined(__VEC__) || defined(__PPU__))
