@@ -481,15 +481,29 @@
         #endif
     #endif
 
-#elif defined(MANGO_CPU_ARM) && defined(__ARM_NEON__)
+#elif defined(MANGO_CPU_ARM)
 
-    // ARM NEON vector instrinsics
-    #define MANGO_ENABLE_NEON
-    #include <arm_neon.h>
+    #ifdef __ARM_NEON__
+        // ARM NEON vector instrinsics
+        #define MANGO_ENABLE_NEON
+        #include <arm_neon.h>
+#endif
 
     // ARM FP feature bits
     #if ((__ARM_FP & 0x2) != 0)
         #define MANGO_ENABLE_FP16
+    #endif
+
+    #ifdef __ARM_FEATURE_CRYPTO
+        // TODO: AES, SHA1
+    #endif
+
+    #ifdef __ARM_FEATURE_CRC32
+        // TODO
+    #endif
+
+    #ifdef __ARM_FEATURE_CLZ
+        // TODO
     #endif
 
 #elif defined(MANGO_CPU_PPC) && (defined(__VEC__) || defined(__PPU__))
