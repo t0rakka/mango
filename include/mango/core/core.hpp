@@ -10,6 +10,8 @@
 #include "endian.hpp"
 #include "pointer.hpp"
 #include "compress.hpp"
+#include "crc32.hpp"
+#include "hash.hpp"
 #include "cpuinfo.hpp"
 #include "system.hpp"
 #include "exception.hpp"

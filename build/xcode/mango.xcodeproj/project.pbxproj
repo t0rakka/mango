@@ -135,6 +135,8 @@
 		A607508A1D65C38400105F58 /* lzvn_encode_base.c in Sources */ = {isa = PBXBuildFile; fileRef = A607507C1D65C38400105F58 /* lzvn_encode_base.c */; };
 		A607508B1D65C38400105F58 /* lzvn_encode_base.h in Headers */ = {isa = PBXBuildFile; fileRef = A607507D1D65C38400105F58 /* lzvn_encode_base.h */; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
+		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
+		A630895E1DFC6D4700252BC4 /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895C1DFC6D4700252BC4 /* hash.cpp */; };
 		A6EE674E1D23CE8600C38CF1 /* bitstream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EE67401D23CE8600C38CF1 /* bitstream.h */; };
 		A6EE674F1D23CE8600C38CF1 /* entropy_common.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EE67411D23CE8600C38CF1 /* entropy_common.c */; };
 		A6EE67501D23CE8600C38CF1 /* error_private.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EE67421D23CE8600C38CF1 /* error_private.h */; };
@@ -290,6 +292,8 @@
 		A607507C1D65C38400105F58 /* lzvn_encode_base.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lzvn_encode_base.c; path = lzfse/lzvn_encode_base.c; sourceTree = "<group>"; };
 		A607507D1D65C38400105F58 /* lzvn_encode_base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lzvn_encode_base.h; path = lzfse/lzvn_encode_base.h; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
+		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
+		A630895C1DFC6D4700252BC4 /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
 		A6EE67401D23CE8600C38CF1 /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bitstream.h; path = zstd/common/bitstream.h; sourceTree = "<group>"; };
 		A6EE67411D23CE8600C38CF1 /* entropy_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy_common.c; path = zstd/common/entropy_common.c; sourceTree = "<group>"; };
 		A6EE67421D23CE8600C38CF1 /* error_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error_private.h; path = zstd/common/error_private.h; sourceTree = "<group>"; };
@@ -350,6 +354,8 @@
 				A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */,
 				A005598B1C93324E00A6D963 /* buffer.cpp */,
 				A005598C1C93324E00A6D963 /* compress.cpp */,
+				A630895B1DFC6D4700252BC4 /* crc32.cpp */,
+				A630895C1DFC6D4700252BC4 /* hash.cpp */,
 				A005598D1C93324E00A6D963 /* cpuinfo.cpp */,
 				A005598E1C93324E00A6D963 /* memory.cpp */,
 				A005598F1C93324E00A6D963 /* object.cpp */,
@@ -850,6 +856,7 @@
 				A0265E7F1BD93F3100826B87 /* miniz.cpp in Sources */,
 				A00559D41C93329A00A6D963 /* surface.cpp in Sources */,
 				A095737816952BDA000DD1F5 /* crc.cpp in Sources */,
+				A630895E1DFC6D4700252BC4 /* hash.cpp in Sources */,
 				A00559CA1C93329A00A6D963 /* image_hdr.cpp in Sources */,
 				A095737A16952BDA000DD1F5 /* crypt.cpp in Sources */,
 				A095737C16952BDA000DD1F5 /* getbits.cpp in Sources */,
@@ -869,6 +876,7 @@
 				A60750831D65C38400105F58 /* lzfse_fse.c in Sources */,
 				A00559C31C93329A00A6D963 /* block.cpp in Sources */,
 				A0436E951C37FA9C007C4C35 /* bz_randtable.c in Sources */,
+				A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */,
 				A607508A1D65C38400105F58 /* lzvn_encode_base.c in Sources */,
 				A095738616952BDA000DD1F5 /* rdwrfn.cpp in Sources */,
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
