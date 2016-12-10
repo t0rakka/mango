@@ -289,6 +289,12 @@
     <ClCompile Include="..\..\source\lzfse\lzvn_encode_base.c">
       <Filter>lzfse</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\crc32.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\hash.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\unrar\array.hpp">
@@ -635,6 +641,12 @@
     </ClInclude>
     <ClInclude Include="..\..\source\lzfse\lzvn_encode_base.h">
       <Filter>lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\crc32.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\hash.hpp">
+      <Filter>mango\include\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

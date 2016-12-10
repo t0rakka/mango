@@ -25,10 +25,12 @@
     <ClInclude Include="..\..\include\mango\core\configure.hpp" />
     <ClInclude Include="..\..\include\mango\core\core.hpp" />
     <ClInclude Include="..\..\include\mango\core\cpuinfo.hpp" />
+    <ClInclude Include="..\..\include\mango\core\crc32.hpp" />
     <ClInclude Include="..\..\include\mango\core\dynamic_library.hpp" />
     <ClInclude Include="..\..\include\mango\core\endian.hpp" />
     <ClInclude Include="..\..\include\mango\core\exception.hpp" />
     <ClInclude Include="..\..\include\mango\core\half.hpp" />
+    <ClInclude Include="..\..\include\mango\core\hash.hpp" />
     <ClInclude Include="..\..\include\mango\core\memory.hpp" />
     <ClInclude Include="..\..\include\mango\core\object.hpp" />
     <ClInclude Include="..\..\include\mango\core\pointer.hpp" />
@@ -168,6 +170,8 @@
     <ClCompile Include="..\..\source\mango\core\buffer.cpp" />
     <ClCompile Include="..\..\source\mango\core\compress.cpp" />
     <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp" />
+    <ClCompile Include="..\..\source\mango\core\crc32.cpp" />
+    <ClCompile Include="..\..\source\mango\core\hash.cpp" />
     <ClCompile Include="..\..\source\mango\core\memory.cpp" />
     <ClCompile Include="..\..\source\mango\core\object.cpp" />
     <ClCompile Include="..\..\source\mango\core\string.cpp" />
