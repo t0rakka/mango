@@ -296,11 +296,37 @@ namespace {
         return crc;
     }
 
-    inline uint32 u64_crc32(uint32 crc, uint64 data)
+#ifdef MANGO_CPU_64BIT
+
+    inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
     {
-        uint32 one = uint32(data & 0xffffffff);
-        uint32 two = uint32(data >> 32);
-        one = one ^ crc;
+        uint64 data = *reinterpret_cast<const uint64 *>(ptr);
+#ifdef MANGO_BIG_ENDIAN
+        data = byteswap(data);
+#endif
+        data = data ^ uint64(crc);
+        crc = g_crc32_table[((data>>56) & 0xff) + 0x000] ^
+              g_crc32_table[((data>>48) & 0xff) + 0x100] ^
+              g_crc32_table[((data>>40) & 0xff) + 0x200] ^
+              g_crc32_table[((data>>32) & 0xff) + 0x300] ^
+              g_crc32_table[((data>>24) & 0xff) + 0x400] ^
+              g_crc32_table[((data>>16) & 0xff) + 0x500] ^
+              g_crc32_table[((data>> 8) & 0xff) + 0x600] ^
+              g_crc32_table[((data>> 0) & 0xff) + 0x700];
+        return crc;
+    }
+
+#else
+
+    inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
+    {
+#ifdef MANGO_LITTLE_ENDIAN
+        uint32 one = *reinterpret_cast<const uint32 *>(ptr + 0) ^ crc;
+        uint32 two = *reinterpret_cast<const uint32 *>(ptr + 4);
+#else
+        uint32 one = byteswap(*reinterpret_cast<const uint32 *>(ptr + 4)) ^ crc;
+        uint32 two = byteswap(*reinterpret_cast<const uint32 *>(ptr + 0));
+#endif
         crc = g_crc32_table[((two>>24) & 0xff) + 0x000] ^
               g_crc32_table[((two>>16) & 0xff) + 0x100] ^
               g_crc32_table[((two>> 8) & 0xff) + 0x200] ^
@@ -312,7 +338,8 @@ namespace {
         return crc;
     }
 
-#endif
+#endif // MANGO_CPU_64BIT
+#endif // MANGO_HARDWARE_CRC32
 
 #if !defined(MANGO_HARDWARE_CRC32C)
     
@@ -589,11 +616,37 @@ namespace {
         return crc;
     }
 
-    inline uint32 u64_crc32c(uint32 crc, uint64 data)
+#ifdef MANGO_CPU_64BIT
+
+    inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
     {
-        uint32 one = uint32(data & 0xffffffff);
-        uint32 two = uint32(data >> 32);
-        one = one ^ crc;
+        uint64 data = *reinterpret_cast<const uint64 *>(ptr);
+#ifdef MANGO_BIG_ENDIAN
+        data = byteswap(data);
+#endif
+        data = data ^ uint64(crc);
+        crc = g_crc32c_table[((data>>56) & 0xff) + 0x000] ^
+              g_crc32c_table[((data>>48) & 0xff) + 0x100] ^
+              g_crc32c_table[((data>>40) & 0xff) + 0x200] ^
+              g_crc32c_table[((data>>32) & 0xff) + 0x300] ^
+              g_crc32c_table[((data>>24) & 0xff) + 0x400] ^
+              g_crc32c_table[((data>>16) & 0xff) + 0x500] ^
+              g_crc32c_table[((data>> 8) & 0xff) + 0x600] ^
+              g_crc32c_table[((data>> 0) & 0xff) + 0x700];
+        return crc;
+    }
+
+#else
+
+    inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
+    {
+#ifdef MANGO_LITTLE_ENDIAN
+        uint32 one = *reinterpret_cast<const uint32 *>(ptr + 0) ^ crc;
+        uint32 two = *reinterpret_cast<const uint32 *>(ptr + 4);
+#else
+        uint32 one = byteswap(*reinterpret_cast<const uint32 *>(ptr + 4)) ^ crc;
+        uint32 two = byteswap(*reinterpret_cast<const uint32 *>(ptr + 0));
+#endif
         crc = g_crc32c_table[((two>>24) & 0xff) + 0x000] ^
               g_crc32c_table[((two>>16) & 0xff) + 0x100] ^
               g_crc32c_table[((two>> 8) & 0xff) + 0x200] ^
@@ -605,7 +658,8 @@ namespace {
         return crc;
     }
 
-#endif
+#endif // MANGO_CPU_64BIT
+#endif // MANGO_HARDWARE_CRC32C
 
 #if defined(MANGO_ENABLE_SSE4_2)
 
@@ -614,14 +668,23 @@ namespace {
         return _mm_crc32_u8(crc, data);
     }
 
-    inline uint32 u64_crc32c(uint32 crc, uint64 data)
-    {
 #ifdef MANGO_CPU_64BIT
-        return uint32(_mm_crc32_u64(crc, data));
-#else
-        return u64_crc32c(crc, data);
-#endif
+
+    inline uint32 u64_crc32c(uint32 crc, const uint8* data)
+    {
+        return uint32(_mm_crc32_u64(crc, *reinterpret_cast<const uint64 *>(data)));
     }
+
+#else
+
+    inline uint32 u64_crc32c(uint32 crc, const uint8* data)
+    {
+        crc = _mm_crc32_u32(crc, *reinterpret_cast<const uint32 *>(data + 0));
+        crc = _mm_crc32_u32(crc, *reinterpret_cast<const uint32 *>(data + 4));
+        return crc;
+    }
+
+#endif // MANGO_CPU_64BIT
 
 #elif defined(__ARM_FEATURE_CRC32)
 
@@ -630,9 +693,9 @@ namespace {
         return __crc32b(crc, data);
     }
 
-    inline uint32 u64_crc32(uint32 crc, uint64 data)
+    inline uint32 u64_crc32(uint32 crc, const uint8* data)
     {
-        return __crc32d(crc, data);
+        return __crc32d(crc, *reinterpret_cast<const uint64 *>(data));
     }
 
     inline uint32 u8_crc32c(uint32 crc, uint8 data)
@@ -640,9 +703,9 @@ namespace {
         return __crc32cb(crc, data);
     }
 
-    inline uint32 u64_crc32c(uint32 crc, uint64 data)
+    inline uint32 u64_crc32c(uint32 crc, const uint8* data)
     {
-        return __crc32cd(crc, data);
+        return __crc32cd(crc, *reinterpret_cast<const uint64 *>(data));
     }
 
 #endif
@@ -666,7 +729,7 @@ namespace mango {
 
             while (size >= 8)
             {
-                crc = u64_crc32(crc, *reinterpret_cast<const uint64 *>(data));
+                crc = u64_crc32(crc, data);
                 data += 8;
                 size -= 8;
             }
@@ -695,7 +758,7 @@ namespace mango {
 
             while (size >= 8)
             {
-                crc = u64_crc32c(crc, *reinterpret_cast<const uint64 *>(data));
+                crc = u64_crc32c(crc, data);
                 data += 8;
                 size -= 8;
             }
