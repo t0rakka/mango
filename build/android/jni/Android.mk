@@ -41,6 +41,7 @@ endif
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
     LOCAL_ARM_NEON := true
     OPTIONS += "-D__ARM_NEON__"
+    # OPTIONS += "-march=armv8.1-a+crypto"
 endif
 
 # -------------------------------------------------------------

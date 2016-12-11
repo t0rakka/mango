@@ -14,6 +14,124 @@ namespace {
     // SHA1
     // ----------------------------------------------------------------------------------------
 
+#if defined(__ARM_FEATURE_CRYPTO)
+
+#define ROUND0(K) \
+    a = vgetq_lane_u32(abcd, 0);       \
+    e0 = vsha1h_u32(a);                \
+    abcd = vsha1cq_u32(abcd, e1, wk1); \
+    wk1 = vaddq_u32(w3, K);            \
+    w0 = vsha1su1q_u32(w0, w3);        \
+    w1 = vsha1su0q_u32(w1, w2, w3);
+
+#define ROUND1(K) \
+    a = vgetq_lane_u32(abcd, 0);       \
+    e1 = vsha1h_u32(a);                \
+    abcd = vsha1cq_u32(abcd, e0, wk0); \
+    wk0 = vaddq_u32(w0, K);            \
+    w1 = vsha1su1q_u32(w1, w0);        \
+    w2 = vsha1su0q_u32(w2, w3, w0);
+
+#define ROUND2(K) \
+    a = vgetq_lane_u32(abcd, 0);       \
+    e0 = vsha1h_u32(a);                \
+    abcd = vsha1cq_u32(abcd, e1, wk1); \
+    wk1 = vaddq_u32(w1, K);            \
+    w2 = vsha1su1q_u32(w2, w1);        \
+    w3 = vsha1su0q_u32(w3, w0, w1);
+
+#define ROUND3(K) \
+    a = vgetq_lane_u32(abcd, 0);       \
+    e1 = vsha1h_u32(a);                \
+    abcd = vsha1cq_u32(abcd, e0, wk0); \
+    wk0 = vaddq_u32(w2, K);            \
+    w3 = vsha1su1q_u32(w3, w2);        \
+    w0 = vsha1su0q_u32(w0, w1, w2);
+
+    void sha1_compress(uint32 state[5], const uint8* block)
+    {
+        // set K0..K3 constants
+        uint32x4_t k0 = vdupq_n_u32(0x5A827999);
+        uint32x4_t k1 = vdupq_n_u32(0x6ED9EBA1);
+        uint32x4_t k2 = vdupq_n_u32(0x8F1BBCDC);
+        uint32x4_t k3 = vdupq_n_u32(0xCA62C1D6);
+
+        // load state
+        uint32x4_t abcd = vld1q_u32(state);
+        uint32x4_t abcd0 = abcd;
+        uint32_t e = state[4];
+
+        // load message
+        uint32x4_t w0 = vld1q_u32(reinterpret_cast<const uint32_t *>(block +  0));
+        uint32x4_t w1 = vld1q_u32(reinterpret_cast<const uint32_t *>(block + 16));
+        uint32x4_t w2 = vld1q_u32(reinterpret_cast<const uint32_t *>(block + 32));
+        uint32x4_t w3 = vld1q_u32(reinterpret_cast<const uint32_t *>(block + 48));
+        
+#ifdef MANGO_LITTLE_ENDIAN
+        w0 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(w0)));
+        w1 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(w1)));
+        w2 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(w2)));
+        w3 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(w3)));
+#endif
+
+        // initialize wk0, wk1
+        uint32x4_t wk0 = vaddq_u32(w0, k0);
+        uint32x4_t wk1 = vaddq_u32(w1, k0);
+
+        uint32_t a, e0, e1;
+
+        a = vgetq_lane_u32(abcd, 0);
+        e1 = vsha1h_u32(a);
+        abcd = vsha1cq_u32(abcd, e, wk0);
+        wk0 = vaddq_u32(w2, k0);
+        w0 = vsha1su0q_u32(w0, w1, w2);
+
+        ROUND0(k0);
+        ROUND1(k0);
+        ROUND2(k1);
+        ROUND3(k1);
+        ROUND0(k1);
+        ROUND1(k1);
+        ROUND2(k1);
+        ROUND3(k2);
+        ROUND0(k2);
+        ROUND1(k2);
+        ROUND2(k2);
+        ROUND3(k2);
+        ROUND0(k3);
+        ROUND1(k3);
+        ROUND2(k3);
+        ROUND3(k3);
+
+        a = vgetq_lane_u32(abcd, 0);
+        e0 = vsha1h_u32(a);
+        abcd = vsha1pq_u32(abcd, e1, wk1);
+        wk1 = vaddq_u32(w3, k3);
+        w0 = vsha1su1q_u32(w0, w3);
+
+        a = vgetq_lane_u32(abcd, 0);
+        e1 = vsha1h_u32(a);
+        abcd = vsha1pq_u32(abcd, e0, wk0);
+
+        a = vgetq_lane_u32(abcd, 0);
+        e0 = vsha1h_u32(a);
+        abcd = vsha1pq_u32(abcd, e1, wk1);
+
+        e = e + e0;
+        abcd = vaddq_u32(abcd0, abcd);
+
+        // store state
+        vst1q_u32(state, abcd);
+        state[4] = e;
+    }
+
+#undef ROUND0
+#undef ROUND1
+#undef ROUND2
+#undef ROUND3
+
+#else
+    
     /*
      * SHA-1 hash in C
      *
@@ -62,7 +180,7 @@ namespace {
         uint32 c = state[2];
         uint32 d = state[3];
         uint32 e = state[4];
-        
+
         uint32 schedule[16];
         uint32 temp;
 
@@ -162,6 +280,8 @@ namespace {
 #undef ROUND1
 #undef ROUND2
 #undef ROUND3
+
+#endif // defined(__ARM_FEATURE_CRYPTO)
 
     void sha1_hash(const uint8* message, uint32 len, uint32 hash[5])
     {
@@ -287,6 +407,11 @@ namespace {
         state[3] += d;
     }
 
+#undef ROUND0
+#undef ROUND1
+#undef ROUND2
+#undef ROUND3
+
     void md5_hash(const uint8* data, uint32 size, uint32 hash[4])
     {
         hash[0] = UINT32_C(0x67452301);
@@ -318,7 +443,7 @@ namespace {
         block[15] = size >> 29;
         md5_compress(hash, block);
     }
-    
+
 } // namespace
 
 namespace mango {
