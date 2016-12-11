@@ -16,37 +16,21 @@ namespace {
 
 #if defined(__ARM_FEATURE_CRYPTO)
 
-#define ROUND0(K) \
+#define ROUND0(K, A, B, C, D) \
     a = vgetq_lane_u32(abcd, 0);       \
     e0 = vsha1h_u32(a);                \
     abcd = vsha1cq_u32(abcd, e1, wk1); \
     wk1 = vaddq_u32(w3, K);            \
-    w0 = vsha1su1q_u32(w0, w3);        \
-    w1 = vsha1su0q_u32(w1, w2, w3);
+    A = vsha1su1q_u32(A, D);           \
+    B = vsha1su0q_u32(B, C, D);
 
-#define ROUND1(K) \
+#define ROUND1(K, A, B, C, D) \
     a = vgetq_lane_u32(abcd, 0);       \
     e1 = vsha1h_u32(a);                \
     abcd = vsha1cq_u32(abcd, e0, wk0); \
     wk0 = vaddq_u32(w0, K);            \
-    w1 = vsha1su1q_u32(w1, w0);        \
-    w2 = vsha1su0q_u32(w2, w3, w0);
-
-#define ROUND2(K) \
-    a = vgetq_lane_u32(abcd, 0);       \
-    e0 = vsha1h_u32(a);                \
-    abcd = vsha1cq_u32(abcd, e1, wk1); \
-    wk1 = vaddq_u32(w1, K);            \
-    w2 = vsha1su1q_u32(w2, w1);        \
-    w3 = vsha1su0q_u32(w3, w0, w1);
-
-#define ROUND3(K) \
-    a = vgetq_lane_u32(abcd, 0);       \
-    e1 = vsha1h_u32(a);                \
-    abcd = vsha1cq_u32(abcd, e0, wk0); \
-    wk0 = vaddq_u32(w2, K);            \
-    w3 = vsha1su1q_u32(w3, w2);        \
-    w0 = vsha1su0q_u32(w0, w1, w2);
+    A = vsha1su1q_u32(A, D);           \
+    B = vsha1su0q_u32(B, C, D);
 
     void sha1_compress(uint32 state[5], const uint8* block)
     {
@@ -86,22 +70,22 @@ namespace {
         wk0 = vaddq_u32(w2, k0);
         w0 = vsha1su0q_u32(w0, w1, w2);
 
-        ROUND0(k0);
-        ROUND1(k0);
-        ROUND2(k1);
-        ROUND3(k1);
-        ROUND0(k1);
-        ROUND1(k1);
-        ROUND2(k1);
-        ROUND3(k2);
-        ROUND0(k2);
-        ROUND1(k2);
-        ROUND2(k2);
-        ROUND3(k2);
-        ROUND0(k3);
-        ROUND1(k3);
-        ROUND2(k3);
-        ROUND3(k3);
+        ROUND0(k0, w0, w1, w2, w3);
+        ROUND1(k0, w1, w2, w3, w0);
+        ROUND0(k1, w2, w3, w0, w1);
+        ROUND1(k1, w3, w0, w1, w2);
+        ROUND0(k1, w0, w1, w2, w3);
+        ROUND1(k1, w1, w2, w3, w0);
+        ROUND0(k1, w2, w3, w0, w1);
+        ROUND1(k2, w3, w0, w1, w2);
+        ROUND0(k2, w0, w1, w2, w3);
+        ROUND1(k2, w1, w2, w3, w0);
+        ROUND0(k2, w2, w3, w0, w1);
+        ROUND1(k2, w3, w0, w1, w2);
+        ROUND0(k3, w0, w1, w2, w3);
+        ROUND1(k3, w1, w2, w3, w0);
+        ROUND0(k3, w2, w3, w0, w1);
+        ROUND1(k3, w3, w0, w1, w2);
 
         a = vgetq_lane_u32(abcd, 0);
         e0 = vsha1h_u32(a);
@@ -117,18 +101,13 @@ namespace {
         e0 = vsha1h_u32(a);
         abcd = vsha1pq_u32(abcd, e1, wk1);
 
-        e = e + e0;
-        abcd = vaddq_u32(abcd0, abcd);
-
         // store state
-        vst1q_u32(state, abcd);
-        state[4] = e;
+        vst1q_u32(state, vaddq_u32(abcd0, abcd));
+        state[4] = e + e0;
     }
 
 #undef ROUND0
 #undef ROUND1
-#undef ROUND2
-#undef ROUND3
 
 #else
     
