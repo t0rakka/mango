@@ -855,32 +855,40 @@ namespace mango
 
     static inline simd4f simd4f_convert(__simd4h h)
     {
-        const simd4f magic = simd4f_set1(Float(0, 113, 0).f);
-        const simd4i shexp = simd4i_set1(0x7c00 << 13);
-
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         const simd4i u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
 
-        simd4i v0 = simd4i_sll(simd4i_and(u, simd4i_set1(0x7fff)), 13);
-        const simd4i exp = simd4i_and(v0, shexp);
-        v0 = simd4i_add(v0, simd4i_set1((127 - 15) << 23));
+        simd4i no_sign  = simd4i_and(u, simd4i_set1(0x7fff));
+        simd4i sign     = simd4i_and(u, simd4i_set1(0x8000));
+        simd4i exponent = simd4i_and(u, simd4i_set1(0x7c00));
+        simd4i mantissa = simd4i_and(u, simd4i_set1(0x03ff));
 
-        // handle exponent special cases (nan, inf, zero, denorm)
-        const simd4i s1 = simd4i_compare_eq(exp, shexp);
-        const simd4i s2 = simd4i_compare_eq(exp, simd4i_zero());
+        // NaN or Inf
+        simd4i a = simd4i_or(simd4i_set1(0x7f800000), simd4i_sll(mantissa, 13));
 
-        simd4i v1 = simd4i_sll(simd4i_add(v0, simd4i_set1(128 - 16)), 23);
-        simd4i v2 = simd4i_add(v0, simd4i_set1(1 << 23));
-        v2 = simd4i_cast(simd4f_sub(simd4f_cast(v2), magic));
+        // Zero or Denormal
+        const simd4i magic = simd4i_set1(0x3f000000);
+        simd4i b;
+        b = simd4i_add(magic, mantissa);
+        b = simd4i_cast(simd4f_sub(simd4f_cast(b), simd4f_cast(magic)));
 
-        simd4i v;
-        v = simd4i_select(s1, v1, v0);
-        v = simd4i_select(simd4i_nand(s2, s1), v2, v);
+        // Numeric Value
+        simd4i c = simd4i_add(simd4i_set1(0x38000000), simd4i_sll(no_sign, 13));
 
-        const simd4i sign = simd4i_sll(simd4i_and(u, simd4i_set1(0x8000)), 16);
-        v = simd4i_or(v, sign);
+        // Select a, b, or c based on exponent
+        simd4i mask;
+        simd4i result;
 
-        return simd4f_cast(v);
+        mask = simd4i_compare_eq(exponent, simd4i_zero());
+        result = simd4i_select(mask, b, c);
+
+        mask = simd4i_compare_eq(exponent, simd4i_set1(0x7c00));
+        result = simd4i_select(mask, a, result);
+
+        // Sign
+        result = simd4i_or(result, simd4i_sll(sign, 16));
+
+        return simd4f_cast(result);
     }
 
     static inline simd4h simd4h_convert(__simd4f f)
@@ -893,9 +901,11 @@ namespace mango
 
         const simd4i vexponent = simd4i_set1(0x7f800000);
 
+        // Inf / NaN
         const simd4i s0 = simd4i_compare_eq(simd4i_and(u, vexponent), vexponent);
         simd4i mantissa = simd4i_and(u, simd4i_set1(0x007fffff));
-        mantissa = simd4i_select(simd4i_compare_eq(mantissa, simd4i_zero()), mantissa, simd4i_set1(0x0200));
+        simd4i x0 = simd4i_compare_eq(mantissa, simd4i_zero());
+        mantissa = simd4i_select(x0, simd4i_zero(), simd4i_sra(mantissa, 13));
         const simd4i v0 = simd4i_or(simd4i_set1(0x7c00), mantissa);
 
         simd4i v1 = simd4i_and(u, simd4i_set1(0x7ffff000));

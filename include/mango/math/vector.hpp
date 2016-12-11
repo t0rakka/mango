@@ -792,6 +792,7 @@ namespace mango
 } // namespace mango
 
 #include "vector_half4.hpp"
+#include "vector_float2.hpp"
+#include "vector_float3.hpp"
 #include "vector_float4.hpp"
 #include "vector_double4.hpp"
-

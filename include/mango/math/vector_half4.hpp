@@ -25,13 +25,30 @@ namespace mango
         {
         }
 
-        Vector(const simd4h& v)
+        explicit Vector(const simd4f& v)
+        : m(simd4h_convert(v))
+        {
+        }
+
+        explicit Vector(const simd4h& v)
         : m(v)
         {
         }
 
         ~Vector()
         {
+        }
+
+        Vector& operator = (const Vector<float, 4>& v)
+        {
+            m = simd4h_convert(v.m);
+            return *this;
+        }
+
+        Vector& operator = (const simd4f& v)
+        {
+            m = simd4h_convert(v);
+            return *this;
         }
 
         Vector& operator = (const simd4h& v)
