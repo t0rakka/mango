@@ -375,7 +375,7 @@ namespace mango
 
     // set component
 
-#if defined(__MANGO_ENABLE_SSE4_1)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     template <int Index>
     static inline simd4f simd4f_set_component(__simd4f a, float s)
