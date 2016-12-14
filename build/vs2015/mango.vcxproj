@@ -192,6 +192,7 @@
     <ClCompile Include="..\..\source\mango\image\blitter.cpp" />
     <ClCompile Include="..\..\source\mango\image\block.cpp" />
     <ClCompile Include="..\..\source\mango\image\block_dxt.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_pvrtc.cpp" />
     <ClCompile Include="..\..\source\mango\image\block_yuv.cpp" />
     <ClCompile Include="..\..\source\mango\image\exif.cpp" />
     <ClCompile Include="..\..\source\mango\image\format.cpp" />

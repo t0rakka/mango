@@ -295,6 +295,9 @@
     <ClCompile Include="..\..\source\mango\core\hash.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\block_pvrtc.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\unrar\array.hpp">
