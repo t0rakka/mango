@@ -8,7 +8,7 @@
 
 #define ID "ImageStream.DDS: "
 
-//#define DEBUG_DDS
+#define DEBUG_DDS
 
 namespace
 {
@@ -360,7 +360,7 @@ namespace
                 compression = TextureCompression::BPTC_RGBA_UNORM;
                 break;
             case FOURCC_PTC2:
-                compression = TextureCompression::NONE; // not supported
+                compression = TextureCompression::PVRTC_RGB_2BPP;
                 break;
             case FOURCC_UYVY:
                 compression = TextureCompression::UYVY;
@@ -491,9 +491,8 @@ namespace
                     break;
 
                 case FOURCC_PTC2:
-                    // NOTE: not supported
-                    format = FORMAT_NONE;
-                    compression = TextureCompression::NONE;
+                    format = FORMAT_R8G8B8A8;
+                    compression = TextureCompression::PVRTC_RGB_2BPP;
                     fourCC = 0;
                     break;
 
