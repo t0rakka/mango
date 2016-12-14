@@ -38,10 +38,11 @@ namespace mango
 
         enum CompressionFlags : uint32
         {
-            PVR      = 0x01000000, // Imagination PVR compressed texture
-            BC       = 0x02000000, // DirectX Block Compression
-            YUV      = 0x04000000, // YUV colorspace
-            FLOAT    = 0x08000000, // 16 or 32 bit floating point color
+            PVR      = 0x00010000, // Imagination PVR compressed texture
+            BC       = 0x00020000, // DirectX Block Compression
+            YUV      = 0x02000000, // YUV colorspace
+            FLOAT    = 0x04000000, // 16 or 32 bit floating point color
+            SURFACE  = 0x08000000, // Surface (not block) compression
             ORIGIN   = 0x10000000, // OpenGL bottom-left image origin
             SIGNED   = 0x20000000, // Signed normalized color
             ALPHA    = 0x40000000, // Color has alpha bits
@@ -105,20 +106,20 @@ namespace mango
             ETC2_SRGB_ALPHA8              = makeTextureCompression(ETC2_EAC, 9, ALPHA | SRGB),
 
             // IMG_texture_compression_pvrtc
-            PVRTC_RGB_4BPPV1              = makeTextureCompression(PVRTC1, 0, PVR),
-            PVRTC_RGB_2BPPV1              = makeTextureCompression(PVRTC1, 1, PVR),
-            PVRTC_RGBA_4BPPV1             = makeTextureCompression(PVRTC1, 2, PVR | ALPHA),
-            PVRTC_RGBA_2BPPV1             = makeTextureCompression(PVRTC1, 3, PVR | ALPHA),
+            PVRTC_RGB_4BPP                = makeTextureCompression(PVRTC1, 0, PVR | SURFACE),
+            PVRTC_RGB_2BPP                = makeTextureCompression(PVRTC1, 1, PVR | SURFACE),
+            PVRTC_RGBA_4BPP               = makeTextureCompression(PVRTC1, 2, PVR | SURFACE | ALPHA),
+            PVRTC_RGBA_2BPP               = makeTextureCompression(PVRTC1, 3, PVR | SURFACE | ALPHA),
 
             // IMG_texture_compression_pvrtc2
-            PVRTC_RGBA_2BPPV2             = makeTextureCompression(PVRTC2, 4, PVR | ALPHA),
-            PVRTC_RGBA_4BPPV2             = makeTextureCompression(PVRTC2, 5, PVR | ALPHA),
+            PVRTC2_RGBA_2BPP              = makeTextureCompression(PVRTC2, 4, PVR | SURFACE | ALPHA),
+            PVRTC2_RGBA_4BPP              = makeTextureCompression(PVRTC2, 5, PVR | SURFACE | ALPHA),
 
             // EXT_pvrtc_sRGB
-            PVRTC_SRGB_2BPPV1             = makeTextureCompression(PVRTC_EXT, 6, PVR | SRGB),
-            PVRTC_SRGB_4BPPV1             = makeTextureCompression(PVRTC_EXT, 7, PVR | SRGB),
-            PVRTC_SRGB_ALPHA_2BPPV1       = makeTextureCompression(PVRTC_EXT, 8, PVR | ALPHA | SRGB),
-            PVRTC_SRGB_ALPHA_4BPPV1       = makeTextureCompression(PVRTC_EXT, 9, PVR | ALPHA | SRGB),
+            PVRTC_SRGB_2BPP               = makeTextureCompression(PVRTC_EXT, 6, PVR | SURFACE | SRGB),
+            PVRTC_SRGB_4BPP               = makeTextureCompression(PVRTC_EXT, 7, PVR | SURFACE | SRGB),
+            PVRTC_SRGB_ALPHA_2BPP         = makeTextureCompression(PVRTC_EXT, 8, PVR | SURFACE | ALPHA | SRGB),
+            PVRTC_SRGB_ALPHA_4BPP         = makeTextureCompression(PVRTC_EXT, 9, PVR | SURFACE | ALPHA | SRGB),
 
             // KHR_texture_compression_astc_ldr
             ASTC_RGBA_4x4                 = makeTextureCompression(ASTC, 0, ORIGIN | ALPHA),

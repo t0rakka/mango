@@ -26,6 +26,7 @@ namespace mango
     void decode_block_rgb9e5         (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
     void decode_block_r11f_g11f_b10f (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
     void decode_block_r10f_g11f_b11f (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
+    void decode_block_pvrtc          (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
 
     void encode_block_etc1           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
 
@@ -38,19 +39,19 @@ namespace
     const TextureCompressionInfo g_blockTable[] =
     {
         // AMD_compressed_ATC_texture
-        { 4, 4,  8, FORMAT_NONE, NULL, NULL, TextureCompression::ATC_RGB },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ATC_RGBA_EXPLICIT_ALPHA },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ATC_RGBA_INTERPOLATED_ALPHA },
+        { 4, 4,  8, FORMAT_NONE, nullptr, nullptr, TextureCompression::ATC_RGB },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ATC_RGBA_EXPLICIT_ALPHA },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ATC_RGBA_INTERPOLATED_ALPHA },
 
         // AMD_compressed_3DC_texture
-        { 4, 4,  8, MAKE_FORMAT(8, UNORM, R, 8, 0, 0, 0), decode_block_3dc_x, NULL, TextureCompression::AMD_3DC_X },
-        { 4, 4, 16, MAKE_FORMAT(16, UNORM, RG, 8, 8, 0, 0), decode_block_3dc_xy, NULL, TextureCompression::AMD_3DC_XY },
+        { 4, 4,  8, MAKE_FORMAT(8, UNORM, R, 8, 0, 0, 0), decode_block_3dc_x, nullptr, TextureCompression::AMD_3DC_X },
+        { 4, 4, 16, MAKE_FORMAT(16, UNORM, RG, 8, 8, 0, 0), decode_block_3dc_xy, nullptr, TextureCompression::AMD_3DC_XY },
 
 		// LATC
-        { 4, 4,  8, FORMAT_NONE, NULL, NULL, TextureCompression::LATC1_LUMINANCE },
-        { 4, 4,  8, FORMAT_NONE, NULL, NULL, TextureCompression::LATC1_SIGNED_LUMINANCE },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::LATC2_LUMINANCE_ALPHA },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::LATC2_SIGNED_LUMINANCE_ALPHA },
+        { 4, 4,  8, FORMAT_NONE, nullptr, nullptr, TextureCompression::LATC1_LUMINANCE },
+        { 4, 4,  8, FORMAT_NONE, nullptr, nullptr, TextureCompression::LATC1_SIGNED_LUMINANCE },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::LATC2_LUMINANCE_ALPHA },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::LATC2_SIGNED_LUMINANCE_ALPHA },
 
         // DXT
         { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_dxt1, encode_block_bc1, TextureCompression::DXT1 },
@@ -77,98 +78,98 @@ namespace
 #endif
 
         // IMG_texture_compression_pvrtc
-        { 8, 8, 32, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_RGB_4BPPV1 },
-        { 8, 8, 16, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_RGB_2BPPV1 },
-        { 8, 8, 32, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_RGBA_4BPPV1 },
-        { 8, 8, 16, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_RGBA_2BPPV1 },
+        { 4, 4, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_RGB_4BPP },
+        { 8, 4, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_RGB_2BPP },
+        { 4, 4, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_RGBA_4BPP },
+        { 8, 4, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_RGBA_2BPP },
 
         // IMG_texture_compression_pvrtc2
-        { 8, 4, 8, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_RGBA_2BPPV2 },
-        { 4, 4, 8, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_RGBA_4BPPV2 },
+        { 8, 4, 8, FORMAT_NONE, nullptr, nullptr, TextureCompression::PVRTC2_RGBA_2BPP },
+        { 4, 4, 8, FORMAT_NONE, nullptr, nullptr, TextureCompression::PVRTC2_RGBA_4BPP },
 
         // EXT_pvrtc_sRGB
-        { 8, 8, 16, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_SRGB_2BPPV1 },
-        { 8, 8, 32, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_SRGB_4BPPV1 },
-        { 8, 8, 16, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_SRGB_ALPHA_2BPPV1 },
-        { 8, 8, 32, FORMAT_NONE, NULL, NULL, TextureCompression::PVRTC_SRGB_ALPHA_4BPPV1 },
+        { 8, 8, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_SRGB_2BPP },
+        { 8, 8, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_SRGB_4BPP },
+        { 8, 8, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_SRGB_ALPHA_2BPP },
+        { 8, 8, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr, TextureCompression::PVRTC_SRGB_ALPHA_4BPP },
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
         // ETC2 / EAC
-        { 4, 4,  8, MAKE_FORMAT(16, UNORM, R, 16, 0, 0, 0), decode_block_eac_r11, NULL, TextureCompression::EAC_R11 },
-        { 4, 4,  8, MAKE_FORMAT(16, SNORM, R, 16, 0, 0, 0), decode_block_eac_r11, NULL, TextureCompression::EAC_SIGNED_R11 },
-        { 4, 4, 16, MAKE_FORMAT(32, UNORM, RG, 16, 16, 0, 0), decode_block_eac_rg11, NULL, TextureCompression::EAC_RG11 },
-        { 4, 4, 16, MAKE_FORMAT(32, SNORM, RG, 16, 16, 0, 0), decode_block_eac_rg11, NULL, TextureCompression::EAC_SIGNED_RG11 },
-        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, NULL, TextureCompression::ETC2_RGB },
-        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, NULL, TextureCompression::ETC2_SRGB },
-        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, NULL, TextureCompression::ETC2_RGB_ALPHA1 },
-        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, NULL, TextureCompression::ETC2_SRGB_ALPHA1 },
-        { 4, 4, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2_eac, NULL, TextureCompression::ETC2_RGBA },
-        { 4, 4, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2_eac, NULL, TextureCompression::ETC2_SRGB_ALPHA8 },
+        { 4, 4,  8, MAKE_FORMAT(16, UNORM, R, 16, 0, 0, 0), decode_block_eac_r11, nullptr, TextureCompression::EAC_R11 },
+        { 4, 4,  8, MAKE_FORMAT(16, SNORM, R, 16, 0, 0, 0), decode_block_eac_r11, nullptr, TextureCompression::EAC_SIGNED_R11 },
+        { 4, 4, 16, MAKE_FORMAT(32, UNORM, RG, 16, 16, 0, 0), decode_block_eac_rg11, nullptr, TextureCompression::EAC_RG11 },
+        { 4, 4, 16, MAKE_FORMAT(32, SNORM, RG, 16, 16, 0, 0), decode_block_eac_rg11, nullptr, TextureCompression::EAC_SIGNED_RG11 },
+        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, nullptr, TextureCompression::ETC2_RGB },
+        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, nullptr, TextureCompression::ETC2_SRGB },
+        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, nullptr, TextureCompression::ETC2_RGB_ALPHA1 },
+        { 4, 4,  8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2, nullptr, TextureCompression::ETC2_SRGB_ALPHA1 },
+        { 4, 4, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2_eac, nullptr, TextureCompression::ETC2_RGBA },
+        { 4, 4, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc2_eac, nullptr, TextureCompression::ETC2_SRGB_ALPHA8 },
 
         // OES_compressed_ETC1_RGB8_texture
         { 4, 4, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_etc1, encode_block_etc1, TextureCompression::ETC1_RGB },
 
         // KHR_texture_compression_astc_ldr
-        {  4,  4, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_4x4 },
-        {  5,  4, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_5x4 },
-        {  5,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_5x5 },
-        {  6,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_6x5 },
-        {  6,  6, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_6x6 },
-        {  8,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_8x5 },
-        {  8,  6, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_8x6 },
-        {  8,  8, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_8x8 },
-        { 10,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_10x5 },
-        { 10,  6, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_10x6 },
-        { 10,  8, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_10x8 },
-        { 10, 10, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_10x10 },
-        { 12, 10, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_12x10 },
-        { 12, 12, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_RGBA_12x12 },
-        {  4,  4, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_4x4 },
-        {  5,  4, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_5x4 },
-        {  5,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_5x5 },
-        {  4,  4, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_6x5 },
-        {  6,  6, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_6x6 },
-        {  8,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_8x5 },
-        {  8,  6, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_8x6 },
-        {  8,  8, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_8x8 },
-        { 10,  5, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_10x5 },
-        { 10,  6, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_10x6 },
-        { 10,  8, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_10x8 },
-        { 10, 10, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_10x10 },
-        { 12, 10, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_12x10 },
-        { 12, 12, 16, FORMAT_ASTC, decode_block_astc, NULL, TextureCompression::ASTC_SRGB_ALPHA_12x12 },
+        {  4,  4, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_4x4 },
+        {  5,  4, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_5x4 },
+        {  5,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_5x5 },
+        {  6,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_6x5 },
+        {  6,  6, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_6x6 },
+        {  8,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_8x5 },
+        {  8,  6, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_8x6 },
+        {  8,  8, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_8x8 },
+        { 10,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_10x5 },
+        { 10,  6, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_10x6 },
+        { 10,  8, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_10x8 },
+        { 10, 10, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_10x10 },
+        { 12, 10, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_12x10 },
+        { 12, 12, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_RGBA_12x12 },
+        {  4,  4, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_4x4 },
+        {  5,  4, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_5x4 },
+        {  5,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_5x5 },
+        {  4,  4, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_6x5 },
+        {  6,  6, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_6x6 },
+        {  8,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_8x5 },
+        {  8,  6, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_8x6 },
+        {  8,  8, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_8x8 },
+        { 10,  5, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_10x5 },
+        { 10,  6, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_10x6 },
+        { 10,  8, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_10x8 },
+        { 10, 10, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_10x10 },
+        { 12, 10, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_12x10 },
+        { 12, 12, 16, FORMAT_ASTC, decode_block_astc, nullptr, TextureCompression::ASTC_SRGB_ALPHA_12x12 },
 
         // KHR_texture_compression_astc_hdr
-        { 3, 3, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_3x3x3 },
-        { 4, 3, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_4x3x3 },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_4x4x3 },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_4x4x4 },
-        { 5, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_5x4x4 },
-        { 5, 5, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_5x5x4 },
-        { 5, 5, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_5x5x5 },
-        { 6, 5, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_6x5x5 },
-        { 6, 6, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_6x6x5 },
-        { 6, 6, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_RGBA_6x6x6 },
-        { 3, 3, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_3x3x3 },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_4x3x3 },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_4x4x3 },
-        { 4, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_4x4x4 },
-        { 5, 4, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_5x4x4 },
-        { 5, 5, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_5x5x4 },
-        { 5, 5, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_5x5x5 },
-        { 6, 5, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_6x5x5 },
-        { 6, 6, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_6x6x5 },
-        { 6, 6, 16, FORMAT_NONE, NULL, NULL, TextureCompression::ASTC_SRGB_ALPHA_6x6x6 },
+        { 3, 3, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_3x3x3 },
+        { 4, 3, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_4x3x3 },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_4x4x3 },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_4x4x4 },
+        { 5, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_5x4x4 },
+        { 5, 5, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_5x5x4 },
+        { 5, 5, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_5x5x5 },
+        { 6, 5, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_6x5x5 },
+        { 6, 6, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_6x6x5 },
+        { 6, 6, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_RGBA_6x6x6 },
+        { 3, 3, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_3x3x3 },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_4x3x3 },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_4x4x3 },
+        { 4, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_4x4x4 },
+        { 5, 4, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_5x4x4 },
+        { 5, 5, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_5x5x4 },
+        { 5, 5, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_5x5x5 },
+        { 6, 5, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_6x5x5 },
+        { 6, 6, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_6x6x5 },
+        { 6, 6, 16, FORMAT_NONE, nullptr, nullptr, TextureCompression::ASTC_SRGB_ALPHA_6x6x6 },
 #endif
 
         // Packed Pixel
-        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_rgb9e5, NULL, TextureCompression::RGB9_E5 },
-        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_r11f_g11f_b10f, NULL, TextureCompression::R11F_G11F_B10F },
-        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_r10f_g11f_b11f, NULL, TextureCompression::R10F_G11F_B11F },
-        { 2, 1, 4, FORMAT_R8G8B8A8, decode_block_grgb8, NULL, TextureCompression::G8R8G8B8 },
-        { 2, 1, 4, FORMAT_R8G8B8A8, decode_block_rgbg8, NULL, TextureCompression::R8G8B8G8 },
-		{ 2, 1, 4, FORMAT_R8G8B8A8, decode_block_uyvy, NULL, TextureCompression::UYVY },
-		{ 2, 1, 4, FORMAT_R8G8B8A8, decode_block_yuy2, NULL, TextureCompression::YUY2 },
+        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_rgb9e5, nullptr, TextureCompression::RGB9_E5 },
+        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_r11f_g11f_b10f, nullptr, TextureCompression::R11F_G11F_B10F },
+        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_r10f_g11f_b11f, nullptr, TextureCompression::R10F_G11F_B11F },
+        { 2, 1, 4, FORMAT_R8G8B8A8, decode_block_grgb8, nullptr, TextureCompression::G8R8G8B8 },
+        { 2, 1, 4, FORMAT_R8G8B8A8, decode_block_rgbg8, nullptr, TextureCompression::R8G8B8G8 },
+		{ 2, 1, 4, FORMAT_R8G8B8A8, decode_block_uyvy, nullptr, TextureCompression::UYVY },
+		{ 2, 1, 4, FORMAT_R8G8B8A8, decode_block_yuy2, nullptr, TextureCompression::YUY2 },
     };
 
     const TextureCompressionInfo* getTextureCompressionInfo(TextureCompression compression)
@@ -221,16 +222,16 @@ namespace
         ET( 0x8E8E, 144, 96, BPTC_RGB_SIGNED_FLOAT ),
         ET( 0x8E8C, 145, 98, BPTC_RGBA_UNORM ),
         ET( 0x8E8D, 146, 99, BPTC_SRGB_ALPHA_UNORM ),
-		ET( 0x8C00, 0,    0, PVRTC_RGB_4BPPV1 ),
-        ET( 0x8C01, 0,    0, PVRTC_RGB_2BPPV1 ),
-        ET( 0x8C02, 0,    0, PVRTC_RGBA_4BPPV1 ),
-        ET( 0x8C03, 0,    0, PVRTC_RGBA_2BPPV1 ),
-        ET( 0x9137, 0,    0, PVRTC_RGBA_2BPPV2 ),
-        ET( 0x9138, 0,    0, PVRTC_RGBA_4BPPV2 ),
-        ET( 0x8A54, 0,    0, PVRTC_SRGB_2BPPV1 ),
-        ET( 0x8A55, 0,    0, PVRTC_SRGB_4BPPV1 ),
-        ET( 0x8A56, 0,    0, PVRTC_SRGB_ALPHA_2BPPV1 ),
-        ET( 0x8A57, 0,    0, PVRTC_SRGB_ALPHA_4BPPV1 ),
+		ET( 0x8C00, 0,    0, PVRTC_RGB_4BPP ),
+        ET( 0x8C01, 0,    0, PVRTC_RGB_2BPP ),
+        ET( 0x8C02, 0,    0, PVRTC_RGBA_4BPP ),
+        ET( 0x8C03, 0,    0, PVRTC_RGBA_2BPP ),
+        ET( 0x9137, 0,    0, PVRTC2_RGBA_2BPP ),
+        ET( 0x9138, 0,    0, PVRTC2_RGBA_4BPP ),
+        ET( 0x8A54, 0,    0, PVRTC_SRGB_2BPP ),
+        ET( 0x8A55, 0,    0, PVRTC_SRGB_4BPP ),
+        ET( 0x8A56, 0,    0, PVRTC_SRGB_ALPHA_2BPP ),
+        ET( 0x8A57, 0,    0, PVRTC_SRGB_ALPHA_4BPP ),
         ET( 0x9270, 153,  0, EAC_R11 ),
         ET( 0x9271, 154,  0, EAC_SIGNED_R11 ),
         ET( 0x9272, 155,  0, EAC_RG11 ),
@@ -298,6 +299,94 @@ namespace
         ET( 0,      0,   69, G8R8G8B8 ),
         ET( 0,      0,   68, R8G8B8G8 )
 	};
+
+    void directBlockDecode(const TextureCompressionInfo& block, const Surface& surface, const Memory& memory, int xsize, int ysize)
+    {
+        const int blockImageSize = block.width * surface.format.bytes();
+        const int blockImageStride = block.height * surface.stride;
+
+        const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
+        const uint8* data = memory.address;
+
+        for (int y = 0; y < ysize; ++y)
+        {
+            uint8* image = surface.image;
+            int stride = surface.stride;
+
+            if (origin)
+            {
+                image += (ysize - y) * blockImageStride;
+                image -= stride;
+                stride = -stride;
+            }
+            else
+            {
+                image += y * blockImageStride;
+            }
+
+            for (int x = 0; x < xsize; ++x)
+            {
+                block.decode(block, image, data, stride);
+                image += blockImageSize;
+                data += block.bytes;
+            }
+        }
+    }
+
+    void clipConvertBlockDecode(const TextureCompressionInfo& block, const Surface& surface, const Memory& memory, int xsize, int ysize)
+    {
+        Blitter blitter(surface.format, block.format);
+        BlitRect rect;
+
+        const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
+        const uint8* data = memory.address;
+
+        rect.destStride = origin ? -surface.stride : surface.stride;
+        rect.srcStride = block.width * block.format.bytes();
+
+        Buffer temp(block.height * rect.srcStride);
+        rect.srcImage = temp;
+
+        const int pixelSize = block.width * surface.format.bytes();
+
+        for (int y = 0; y < surface.height; y += block.height)
+        {
+            rect.destImage = surface.image + (origin ? surface.height - y - 1 : y) * surface.stride;
+            rect.height = std::min(y + block.height, surface.height) - y; // vertical clipping
+
+            for (int x = 0; x < surface.width; x += block.width)
+            {
+                block.decode(block, temp, data, rect.srcStride);
+
+                rect.width = std::min(x + block.width, surface.width) - x; // horizontal clipping
+
+                // TODO: async conversion
+                blitter.convert(rect);
+
+                rect.destImage += pixelSize;
+                data += block.bytes;
+            }
+        }
+    }
+
+    void directSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, const Memory& memory, int xsize, int ysize)
+    {
+        TextureCompressionInfo temp = block;
+        temp.width = surface.width;
+        temp.height = surface.height;
+        temp.decode(temp, surface.image, memory.address, surface.stride);
+    }
+
+    void clipConvertSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, const Memory& memory, int xsize, int ysize)
+    {
+        TextureCompressionInfo temp = block;
+        temp.width = surface.width;
+        temp.height = surface.height;
+
+        Bitmap bitmap(surface.width, surface.height, block.format);
+        temp.decode(temp, bitmap.image, memory.address, bitmap.stride);
+        Surface(surface).blit(0, 0, bitmap);
+    }
 
 } // namespace
 
@@ -384,19 +473,20 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     TextureCompressionInfo::TextureCompressionInfo()
-    : width(1), height(1), bytes(0), format(FORMAT_NONE), decode(NULL), encode(NULL), compression(TextureCompression::NONE)
+    : width(1), height(1), bytes(0), format(FORMAT_NONE), decode(nullptr), encode(nullptr), compression(TextureCompression::NONE)
     {
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(TextureCompression _compression)
+    TextureCompressionInfo::TextureCompressionInfo(TextureCompression textureCompression)
     {
-        const TextureCompressionInfo* info = getTextureCompressionInfo(_compression);
+        const TextureCompressionInfo* info = getTextureCompressionInfo(textureCompression);
         *this = info ? *info : TextureCompressionInfo();
 
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(int _width, int _height, int _bytes, const Format& _format, DecodeFunc _decode, EncodeFunc _encode, TextureCompression _compression)
-    : width(_width), height(_height), bytes(_bytes), format(_format), decode(_decode), encode(_encode), compression(_compression)
+    TextureCompressionInfo::TextureCompressionInfo(int width, int height, int bytes, const Format& format,
+                                                   DecodeFunc decode, EncodeFunc encode, TextureCompression compression)
+    : width(width), height(height), bytes(bytes), format(format), decode(decode), encode(encode), compression(compression)
     {
     }
 
@@ -404,8 +494,6 @@ namespace mango
     {
         if (!decode)
             return;
-
-        const uint8* data = memory.address;
 
         const int xsize = round_to_next(surface.width, width);
         const int ysize = round_to_next(surface.height, height);
@@ -415,71 +503,27 @@ namespace mango
         const bool noconvert = surface.format == format;
         const bool direct = noclip && noconvert;
 
-        // compression has origin at bottom left (image is upside down)
-        const bool origin = (getCompressionFlags() & ORIGIN) != 0; 
-
-        if (direct)
+        if (getCompressionFlags() & TextureCompressionInfo::SURFACE)
         {
-            const int blockImageSize = width * format.bytes();
-            const int blockImageStride = height * surface.stride;
-
-            for (int y = 0; y < ysize; ++y)
+            if (direct)
             {
-                uint8* image = surface.image;
-                int stride = surface.stride;
-
-                if (origin)
-                {
-                    image += (ysize - y) * blockImageStride;
-                    image -= stride;
-                    stride = -stride;
-                }
-                else
-                {
-                    image += y * blockImageStride;
-                }
-
-                for (int x = 0; x < xsize; ++x)
-                {
-                    decode(*this, image, data, stride);
-                    image += blockImageSize;
-                    data += bytes;
-                }
+                directSurfaceDecode(*this, surface, memory, xsize, ysize);
+            }
+            else
+            {
+                clipConvertSurfaceDecode(*this, surface, memory, xsize, ysize);
             }
         }
         else
         {
-            Blitter blitter(surface.format, format);
-            BlitRect rect;
-
-            rect.destStride = origin ? -surface.stride : surface.stride;
-            rect.srcStride = width * format.bytes();
-
-            uint8* temp = new uint8[height * rect.srcStride];
-            rect.srcImage = temp;
-
-            const int pixelSize = width * surface.format.bytes();
-
-            for (int y = 0; y < surface.height; y += height)
+            if (direct)
             {
-                rect.destImage = surface.image + (origin ? surface.height - y - 1 : y) * surface.stride;
-                rect.height = std::min(y + height, surface.height) - y; // vertical clipping
-
-                for (int x = 0; x < surface.width; x += width)
-                {
-                    decode(*this, temp, data, rect.srcStride);
-
-                    rect.width = std::min(x + width, surface.width) - x; // horizontal clipping
-
-                    // TODO: async conversion
-                    blitter.convert(rect);
-
-                    rect.destImage += pixelSize;
-                    data += bytes;
-                }
+                directBlockDecode(*this, surface, memory, xsize, ysize);
             }
-
-            delete[] temp;
+            else
+            {
+                clipConvertBlockDecode(*this, surface, memory, xsize, ysize);
+            }
         }
     }
 

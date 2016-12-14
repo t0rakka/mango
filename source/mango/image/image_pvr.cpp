@@ -63,12 +63,12 @@ namespace
 
     const TextureCompression formatTable[] =
     {
-        TextureCompression::PVRTC_RGB_2BPPV1,
-        TextureCompression::PVRTC_RGBA_2BPPV1,
-        TextureCompression::PVRTC_RGB_4BPPV1,
-        TextureCompression::PVRTC_RGBA_4BPPV1,
-        TextureCompression::PVRTC_RGBA_2BPPV2,
-        TextureCompression::PVRTC_RGBA_4BPPV2,
+        TextureCompression::PVRTC_RGB_2BPP,
+        TextureCompression::PVRTC_RGBA_2BPP,
+        TextureCompression::PVRTC_RGB_4BPP,
+        TextureCompression::PVRTC_RGBA_4BPP,
+        TextureCompression::PVRTC2_RGBA_2BPP,
+        TextureCompression::PVRTC2_RGBA_4BPP,
         TextureCompression::ETC1_RGB,
         TextureCompression::DXT1,
         TextureCompression::DXT1,

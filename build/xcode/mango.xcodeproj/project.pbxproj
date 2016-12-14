@@ -137,6 +137,7 @@
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A630895E1DFC6D4700252BC4 /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895C1DFC6D4700252BC4 /* hash.cpp */; };
+		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
 		A6EE674E1D23CE8600C38CF1 /* bitstream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EE67401D23CE8600C38CF1 /* bitstream.h */; };
 		A6EE674F1D23CE8600C38CF1 /* entropy_common.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EE67411D23CE8600C38CF1 /* entropy_common.c */; };
 		A6EE67501D23CE8600C38CF1 /* error_private.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EE67421D23CE8600C38CF1 /* error_private.h */; };
@@ -294,6 +295,7 @@
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895C1DFC6D4700252BC4 /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
+		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
 		A6EE67401D23CE8600C38CF1 /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bitstream.h; path = zstd/common/bitstream.h; sourceTree = "<group>"; };
 		A6EE67411D23CE8600C38CF1 /* entropy_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy_common.c; path = zstd/common/entropy_common.c; sourceTree = "<group>"; };
 		A6EE67421D23CE8600C38CF1 /* error_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error_private.h; path = zstd/common/error_private.h; sourceTree = "<group>"; };
@@ -387,6 +389,7 @@
 			isa = PBXGroup;
 			children = (
 				A00559AB1C93329A00A6D963 /* blitter.cpp */,
+				A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */,
 				A00559AC1C93329A00A6D963 /* block_dxt.cpp */,
 				A00559AD1C93329A00A6D963 /* block_yuv.cpp */,
 				A00559AE1C93329A00A6D963 /* block.cpp */,
@@ -892,6 +895,7 @@
 				A0F241D419D5E30D00218F92 /* simd.cpp in Sources */,
 				A00559951C93324E00A6D963 /* compress.cpp in Sources */,
 				A0F21EDB1CA062EA0084302D /* file_stream.cpp in Sources */,
+				A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */,
 				A00559D31C93329A00A6D963 /* image.cpp in Sources */,
 				A0436E941C37FA9C007C4C35 /* bz_huffman.c in Sources */,
 				A00559D11C93329A00A6D963 /* image_pvr.cpp in Sources */,

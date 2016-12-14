@@ -406,22 +406,22 @@ namespace opengl {
                 supported = core.texture_compression_bptc;
                 break;
 
-            case TextureCompression::PVRTC_RGB_4BPPV1:
-            case TextureCompression::PVRTC_RGB_2BPPV1:
-            case TextureCompression::PVRTC_RGBA_4BPPV1:
-            case TextureCompression::PVRTC_RGBA_2BPPV1:
+            case TextureCompression::PVRTC_RGB_4BPP:
+            case TextureCompression::PVRTC_RGB_2BPP:
+            case TextureCompression::PVRTC_RGBA_4BPP:
+            case TextureCompression::PVRTC_RGBA_2BPP:
                 supported = glext.IMG_texture_compression_pvrtc;
                 break;
 
-            case TextureCompression::PVRTC_RGBA_2BPPV2:
-            case TextureCompression::PVRTC_RGBA_4BPPV2:
+            case TextureCompression::PVRTC2_RGBA_2BPP:
+            case TextureCompression::PVRTC2_RGBA_4BPP:
                 supported = glext.IMG_texture_compression_pvrtc2;
                 break;
 
-            case TextureCompression::PVRTC_SRGB_2BPPV1:
-            case TextureCompression::PVRTC_SRGB_4BPPV1:
-            case TextureCompression::PVRTC_SRGB_ALPHA_2BPPV1:
-            case TextureCompression::PVRTC_SRGB_ALPHA_4BPPV1:
+            case TextureCompression::PVRTC_SRGB_2BPP:
+            case TextureCompression::PVRTC_SRGB_4BPP:
+            case TextureCompression::PVRTC_SRGB_ALPHA_2BPP:
+            case TextureCompression::PVRTC_SRGB_ALPHA_4BPP:
                 supported = glext.EXT_pvrtc_sRGB;
                 break;
 
