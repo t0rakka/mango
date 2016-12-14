@@ -8,7 +8,7 @@
 
 #define ID "ImageStream.DDS: "
 
-#define DEBUG_DDS
+//#define DEBUG_DDS
 
 namespace
 {
