@@ -321,7 +321,7 @@ namespace
             for (unsigned int x = 0; x < ui32WordWidth; x++)
             {
                 int32 mod = getModulationValues(i32ModulationValues, x + ui32WordWidth / 2, y + ui32WordHeight / 2, ui8Bpp);
-                bool punchthrough_alpha = mod & PUNCHTHROUGH_ALPHA;
+                bool punchthrough_alpha = (mod & PUNCHTHROUGH_ALPHA) != 0;
                 mod &= 0xf;
                 
                 Pixel128S result;
