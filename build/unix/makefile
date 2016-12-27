@@ -138,14 +138,38 @@ endif
 # objects
 # ---------------------------------------------------------------------------
 
-SOURCES_MANGO += $(foreach dir,$(SOURCE_DIRS_MANGO),$(wildcard $(SOURCE_BASE)/$(dir)/*.cpp) $(wildcard $(SOURCE_BASE)/$(dir)/*.c) $(wildcard $(SOURCE_BASE)/$(dir)/*.mm))
-OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/,$(patsubst %.cpp,%.o, $(patsubst %.c,%.o, $(patsubst %.mm,%.o, $(abspath $(SOURCES_MANGO))))))
+# mango
 
-SOURCES_OPENGL += $(foreach dir,$(SOURCE_DIRS_OPENGL),$(wildcard $(SOURCE_BASE)/$(dir)/*.cpp) $(wildcard $(SOURCE_BASE)/$(dir)/*.c) $(wildcard $(SOURCE_BASE)/$(dir)/*.mm))
-OBJECTS_OPENGL += $(addprefix $(OBJECTS_PATH)/,$(patsubst %.cpp,%.o, $(patsubst %.c,%.o, $(patsubst %.mm,%.o, $(abspath $(SOURCES_OPENGL))))))
+OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.cpp,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_MANGO), $(wildcard $(SOURCE_BASE)/$(dir)/*.cpp)))))
 
-SOURCES_VULKAN += $(foreach dir,$(SOURCE_DIRS_VULKAN),$(wildcard $(SOURCE_BASE)/$(dir)/*.cpp) $(wildcard $(SOURCE_BASE)/$(dir)/*.c) $(wildcard $(SOURCE_BASE)/$(dir)/*.mm))
-OBJECTS_VULKAN += $(addprefix $(OBJECTS_PATH)/,$(patsubst %.cpp,%.o, $(patsubst %.c,%.o, $(patsubst %.mm,%.o, $(abspath $(SOURCES_VULKAN))))))
+OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.c,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_MANGO), $(wildcard $(SOURCE_BASE)/$(dir)/*.c)))))
+
+OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.mm,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_MANGO), $(wildcard $(SOURCE_BASE)/$(dir)/*.mm)))))
+
+# opengl
+
+OBJECTS_OPENGL += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.cpp,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_OPENGL), $(wildcard $(SOURCE_BASE)/$(dir)/*.cpp)))))
+
+OBJECTS_OPENGL += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.c,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_OPENGL), $(wildcard $(SOURCE_BASE)/$(dir)/*.c)))))
+
+OBJECTS_OPENGL += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.mm,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_OPENGL), $(wildcard $(SOURCE_BASE)/$(dir)/*.mm)))))
+
+# vulkan
+
+OBJECTS_VULKAN += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.cpp,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_VULKAN), $(wildcard $(SOURCE_BASE)/$(dir)/*.cpp)))))
+
+OBJECTS_VULKAN += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.c,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_VULKAN), $(wildcard $(SOURCE_BASE)/$(dir)/*.c)))))
+
+OBJECTS_VULKAN += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.mm,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_VULKAN), $(wildcard $(SOURCE_BASE)/$(dir)/*.mm)))))
 
 # ---------------------------------------------------------------------------
 # rules
