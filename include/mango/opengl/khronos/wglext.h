@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright (c) 2013-2014 The Khronos Group Inc.
+** Copyright (c) 2013-2016 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -33,7 +33,7 @@ extern "C" {
 ** used to make the header, and the header can be found at
 **   http://www.opengl.org/registry/
 **
-** Khronos $Revision: 30969 $ on $Date: 2015-04-28 21:32:44 -0700 (Tue, 28 Apr 2015) $
+** Khronos $Revision: 33340 $ on $Date: 2016-12-19 07:17:22 -0500 (Mon, 19 Dec 2016) $
 */
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
@@ -41,7 +41,7 @@ extern "C" {
 #include <windows.h>
 #endif
 
-#define WGL_WGLEXT_VERSION 20150428
+#define WGL_WGLEXT_VERSION 20161219
 
 /* Generated C header for:
  * API: wgl
@@ -340,6 +340,13 @@ VOID WINAPI wglBlitContextFramebufferAMD (HGLRC dstCtx, GLint srcX0, GLint srcY0
 #define WGL_ATI_pixel_format_float 1
 #define WGL_TYPE_RGBA_FLOAT_ATI           0x21A0
 #endif /* WGL_ATI_pixel_format_float */
+
+#ifndef WGL_EXT_colorspace
+#define WGL_EXT_colorspace 1
+#define WGL_COLORSPACE_EXT                0x3087
+#define WGL_COLORSPACE_SRGB_EXT           0x3089
+#define WGL_COLORSPACE_LINEAR_EXT         0x308A
+#endif /* WGL_EXT_colorspace */
 
 #ifndef WGL_EXT_create_context_es2_profile
 #define WGL_EXT_create_context_es2_profile 1
