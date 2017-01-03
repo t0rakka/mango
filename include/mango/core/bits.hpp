@@ -499,6 +499,31 @@ namespace mango
         return u64_index_of_expanded_bit(msb);
     }
 
+    static inline int u64_index_of_msb_in_mask(uint64 mask)
+    {
+        const uint64 msb = mask & ~(mask >> 1);
+        return u64_index_of_bit(msb);
+    }
+
+    static inline uint64 u64_reverse_bits(uint64 value)
+    {
+#if defined(MANGO_CPU_64BIT)
+        value = ((value >>  1) & 0x5555555555555555) | ((value <<  1) & 0xaaaaaaaaaaaaaaaa);
+        value = ((value >>  2) & 0x3333333333333333) | ((value <<  2) & 0xcccccccccccccccc);
+        value = ((value >>  4) & 0x0f0f0f0f0f0f0f0f) | ((value <<  4) & 0xf0f0f0f0f0f0f0f0);
+        value = ((value >>  8) & 0x00ff00ff00ff00ff) | ((value <<  8) & 0xff00ff00ff00ff00);
+        value = ((value >> 16) & 0x0000ffff0000ffff) | ((value << 16) & 0xffff0000ffff0000);
+        value = ( value >> 32)                       | ( value << 32);
+        return value;
+#else
+        uint32 low = value & 0xffffffff;
+        uint32 high = value >> 32;
+        low = u32_reverse_bits(low);
+        high = u32_reverse_bits(high);
+        return (static_cast<uint64>(low) << 32) | high;
+#endif
+    }
+
 #if defined(MANGO_ENABLE_POPCNT)
 
     static inline int u64_count_bits(uint64 value)
