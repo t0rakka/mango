@@ -1,37 +1,17 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
-#ifndef MANGO_INCLUDE_SIMD
+#ifndef MANGO_SIMD_DOUBLE
 #error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
-
-#include <cmath>
-#include <algorithm>
-
-namespace mango
-{
-
-    // ------------------------------------------------------------------
-    // typedefs
-    // ------------------------------------------------------------------
-
-    typedef __m256d simd4d;
-
-#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_INTEL)
-    typedef const __m256d& __simd4d;
-#else
-    typedef const __m256d __simd4d;
 #endif
 
     // clang workaround
     #define simd_mm256_set_m128i(hi, lo) _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1)
 
-    // -----------------------------------------------------------------
     // conversion
-    // -----------------------------------------------------------------
 
     static inline simd4d simd4d_convert(__simd4i s)
     {
@@ -85,10 +65,6 @@ namespace mango
     {
         return _mm256_cvttpd_epi32(s);
     }
-
-    // -----------------------------------------------------------------
-    // simd4d
-    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     static inline simd4d simd4d_shuffle(__simd4d v)
@@ -503,6 +479,3 @@ namespace mango
     {
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
     }
-
-} // namespace mango
-

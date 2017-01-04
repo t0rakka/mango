@@ -1,34 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
-#ifndef MANGO_INCLUDE_SIMD
+#ifndef MANGO_SCALAR_DOUBLE
 #error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
 #endif
 
-#include <cmath>
-#include <algorithm>
-#include "../core/bits.hpp"
-
-namespace mango
-{
-
-    // -----------------------------------------------------------------
-    // simd4d
-    // -----------------------------------------------------------------
-
-    struct simd4d
-    {
-        double x, y, z, w;
-    };
-
-    typedef const simd4d& __simd4d;
-
-    // -----------------------------------------------------------------
     // conversion
-    // -----------------------------------------------------------------
 
     static inline simd4d simd4d_convert(__simd4i s)
     {
@@ -76,10 +56,6 @@ namespace mango
         int w = int(s.w);
         return simd4i_set4(x, y, z, w);
     }
-
-    // -----------------------------------------------------------------
-    // simd4d
-    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     inline simd4d simd4d_shuffle(__simd4d v)
@@ -595,5 +571,3 @@ namespace mango
     {
         return simd4d_sub(s, simd4d_floor(s));
     }
-
-} // namespace mango

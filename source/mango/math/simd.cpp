@@ -11,7 +11,7 @@
 namespace mango
 {
 
-#ifdef MANGO_ENABLE_SIMD
+#ifdef MANGO_SIMD_FLOAT
 
     // ------------------------------------------------------------------------
     // Sleef: simd4f
@@ -353,6 +353,136 @@ namespace mango
         r = simd4f_or(simd4f_or(is_nan(x), is_nan(y)), mulsign(r, y));
         return r;
     }
+
+#else
+
+    // ------------------------------------------------------------------
+    // FPU Emulation: simd4f
+    // ------------------------------------------------------------------
+
+    simd4f simd4f_sin(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::sin(a.x);
+        v.y = std::sin(a.y);
+        v.z = std::sin(a.z);
+        v.w = std::sin(a.w);
+        return v;
+    }
+
+    simd4f simd4f_cos(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::cos(a.x);
+        v.y = std::cos(a.y);
+        v.z = std::cos(a.z);
+        v.w = std::cos(a.w);
+        return v;
+    }
+
+    simd4f simd4f_tan(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::tan(a.x);
+        v.y = std::tan(a.y);
+        v.z = std::tan(a.z);
+        v.w = std::tan(a.w);
+        return v;
+    }
+
+    simd4f simd4f_exp(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::exp(a.x);
+        v.y = std::exp(a.y);
+        v.z = std::exp(a.z);
+        v.w = std::exp(a.w);
+        return v;
+    }
+
+    simd4f simd4f_log(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::log(a.x);
+        v.y = std::log(a.y);
+        v.z = std::log(a.z);
+        v.w = std::log(a.w);
+        return v;
+    }
+
+    simd4f simd4f_log2(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::log2(a.x);
+        v.y = std::log2(a.y);
+        v.z = std::log2(a.z);
+        v.w = std::log2(a.w);
+        return v;
+    }
+
+    simd4f simd4f_exp2(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::exp2(a.x);
+        v.y = std::exp2(a.y);
+        v.z = std::exp2(a.z);
+        v.w = std::exp2(a.w);
+        return v;
+    }
+
+    simd4f simd4f_pow(__simd4f a, __simd4f b)
+    {
+        simd4f v;
+        v.x = std::pow(a.x, b.x);
+        v.y = std::pow(a.y, b.y);
+        v.z = std::pow(a.z, b.z);
+        v.w = std::pow(a.w, b.w);
+        return v;
+    }
+
+    simd4f simd4f_asin(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::asin(a.x);
+        v.y = std::asin(a.y);
+        v.z = std::asin(a.z);
+        v.w = std::asin(a.w);
+        return v;
+    }
+
+    simd4f simd4f_acos(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::acos(a.x);
+        v.y = std::acos(a.y);
+        v.z = std::acos(a.z);
+        v.w = std::acos(a.w);
+        return v;
+    }
+
+    simd4f simd4f_atan(__simd4f a)
+    {
+        simd4f v;
+        v.x = std::atan(a.x);
+        v.y = std::atan(a.y);
+        v.z = std::atan(a.z);
+        v.w = std::atan(a.w);
+        return v;
+    }
+
+    simd4f simd4f_atan2(__simd4f a, __simd4f b)
+    {
+        simd4f v;
+        v.x = std::atan2(a.x, b.x);
+        v.y = std::atan2(a.y, b.y);
+        v.z = std::atan2(a.z, b.z);
+        v.w = std::atan2(a.w, b.w);
+        return v;
+    }
+
+#endif
+
+#ifdef MANGO_SIMD_DOUBLE
 
     // ------------------------------------------------------------------------
     // Sleef: simd4d
@@ -715,131 +845,7 @@ namespace mango
         return r;
     }
 
-#else // MANGO_ENABLE_SIMD
-
-    // ------------------------------------------------------------------
-    // FPU Emulation: simd4f
-    // ------------------------------------------------------------------
-
-    simd4f simd4f_sin(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::sin(a.x);
-        v.y = std::sin(a.y);
-        v.z = std::sin(a.z);
-        v.w = std::sin(a.w);
-        return v;
-    }
-
-    simd4f simd4f_cos(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::cos(a.x);
-        v.y = std::cos(a.y);
-        v.z = std::cos(a.z);
-        v.w = std::cos(a.w);
-        return v;
-    }
-
-    simd4f simd4f_tan(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::tan(a.x);
-        v.y = std::tan(a.y);
-        v.z = std::tan(a.z);
-        v.w = std::tan(a.w);
-        return v;
-    }
-
-    simd4f simd4f_exp(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::exp(a.x);
-        v.y = std::exp(a.y);
-        v.z = std::exp(a.z);
-        v.w = std::exp(a.w);
-        return v;
-    }
-
-    simd4f simd4f_log(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::log(a.x);
-        v.y = std::log(a.y);
-        v.z = std::log(a.z);
-        v.w = std::log(a.w);
-        return v;
-    }
-
-    simd4f simd4f_log2(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::log2(a.x);
-        v.y = std::log2(a.y);
-        v.z = std::log2(a.z);
-        v.w = std::log2(a.w);
-        return v;
-    }
-
-    simd4f simd4f_exp2(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::exp2(a.x);
-        v.y = std::exp2(a.y);
-        v.z = std::exp2(a.z);
-        v.w = std::exp2(a.w);
-        return v;
-    }
-
-    simd4f simd4f_pow(__simd4f a, __simd4f b)
-    {
-        simd4f v;
-        v.x = std::pow(a.x, b.x);
-        v.y = std::pow(a.y, b.y);
-        v.z = std::pow(a.z, b.z);
-        v.w = std::pow(a.w, b.w);
-        return v;
-    }
-
-    simd4f simd4f_asin(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::asin(a.x);
-        v.y = std::asin(a.y);
-        v.z = std::asin(a.z);
-        v.w = std::asin(a.w);
-        return v;
-    }
-
-    simd4f simd4f_acos(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::acos(a.x);
-        v.y = std::acos(a.y);
-        v.z = std::acos(a.z);
-        v.w = std::acos(a.w);
-        return v;
-    }
-
-    simd4f simd4f_atan(__simd4f a)
-    {
-        simd4f v;
-        v.x = std::atan(a.x);
-        v.y = std::atan(a.y);
-        v.z = std::atan(a.z);
-        v.w = std::atan(a.w);
-        return v;
-    }
-
-    simd4f simd4f_atan2(__simd4f a, __simd4f b)
-    {
-        simd4f v;
-        v.x = std::atan2(a.x, b.x);
-        v.y = std::atan2(a.y, b.y);
-        v.z = std::atan2(a.z, b.z);
-        v.w = std::atan2(a.w, b.w);
-        return v;
-    }
+#else
 
     // ------------------------------------------------------------------
     // FPU Emulation: simd4d
