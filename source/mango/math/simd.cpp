@@ -6,6 +6,7 @@
     This work is based on "SLEEF" library and converted to use MANGO SIMD abstraction
     Author : Naoki Shibata
 */
+#define _USE_MATH_DEFINES /* TODO: required for M_PI, MPI_2, etc. rewrite to not require this */
 #include <mango/simd/simd.hpp>
 
 namespace mango {
