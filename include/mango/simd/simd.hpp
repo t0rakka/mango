@@ -126,6 +126,7 @@ namespace simd {
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
+    #define MANGO_SCALAR_DOUBLE
 
     #include "int_neon.hpp"
     #include "float_neon.hpp"
@@ -157,6 +158,7 @@ namespace simd {
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
+    #define MANGO_SCALAR_DOUBLE
 
     #include "int_altivec.hpp"
     #include "float_altivec.hpp"
@@ -188,35 +190,22 @@ namespace simd {
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
+    #define MANGO_SCALAR_DOUBLE
 
     #include "int_spu.hpp"
     #include "float_spu.hpp"
     #include "double_scalar.hpp"
 
-#endif
+#else
 
     // --------------------------------------------------------------
     // SIMD emulation
     // --------------------------------------------------------------
 
-    // Implement emulation for types which don't have support in hardware
-
-#ifndef MANGO_SIMD_INT
-
-    #define MANGO_SCALAR_INT
-
     struct simd4i
     {
         int32 x, y, z, w;
     };
-
-    typedef const simd4i& __simd4i;
-
-#endif
-
-#ifndef MANGO_SIMD_FLOAT
-
-    #define MANGO_SCALAR_FLOAT
 
     struct simd4h
     {
@@ -228,36 +217,24 @@ namespace simd {
         float x, y, z, w;
     };
 
-    typedef const simd4h& __simd4h;
-    typedef const simd4f& __simd4f;
-
-#endif
-
-#ifndef MANGO_SIMD_DOUBLE
-
-    #define MANGO_SCALAR_DOUBLE
-
     struct simd4d
     {
         double x, y, z, w;
     };
 
+    typedef const simd4i& __simd4i;
+    typedef const simd4h& __simd4h;
+    typedef const simd4f& __simd4f;
     typedef const simd4d& __simd4d;
 
-#endif
+    #define MANGO_SCALAR_INT
+    #define MANGO_SCALAR_FLOAT
+    #define MANGO_SCALAR_DOUBLE
 
-    // Include the headers only after all of the types have been defined
-
-#ifdef MANGO_SCALAR_INT
     #include "int_scalar.hpp"
-#endif
-
-#ifdef MANGO_SCALAR_FLOAT
     #include "float_scalar.hpp"
-#endif
-
-#ifdef MANGO_SCALAR_DOUBLE
     #include "double_scalar.hpp"
+
 #endif
 
 } // namespace simd

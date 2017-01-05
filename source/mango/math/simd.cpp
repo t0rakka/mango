@@ -8,8 +8,8 @@
 */
 #include <mango/simd/simd.hpp>
 
-namespace mango
-{
+namespace mango {
+namespace simd {
 
 #ifdef MANGO_SIMD_FLOAT
 
@@ -975,4 +975,5 @@ namespace mango
 
 #endif
 
+} // namespace simd
 } // namespace mango
