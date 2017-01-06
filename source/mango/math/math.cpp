@@ -34,7 +34,7 @@ namespace mango
 
     const float4x4& float4x4::operator = (float s)
     {
-        simd4f_matrix_set_scale(m, s);
+        simd::float32x4_matrix_set_scale(m, s);
         return *this;
     }
 
@@ -116,32 +116,32 @@ namespace mango
 
     void float4x4::identity()
     {
-        simd4f_matrix_set_scale(m, 1.0f);
+        simd::float32x4_matrix_set_scale(m, 1.0f);
     }
 
     void float4x4::translate(float x, float y, float z)
     {
-        simd4f_matrix_translate(m, x, y, z);
+        simd::float32x4_matrix_translate(m, x, y, z);
     }
 
     void float4x4::translate(const float3& trans)
     {
-        simd4f_matrix_translate(m, trans.x, trans.y, trans.z);
+        simd::float32x4_matrix_translate(m, trans.x, trans.y, trans.z);
     }
 
     void float4x4::scale(float s)
     {
-        simd4f_matrix_scale(m, s);
+        simd::float32x4_matrix_scale(m, s);
     }
 
     void float4x4::scale(float x, float y, float z)
     {
-        simd4f_matrix_scale(m, x, y, z);
+        simd::float32x4_matrix_scale(m, x, y, z);
     }
 
     void float4x4::scale(const float3& s)
     {
-        simd4f_matrix_scale(m, s.x, s.y, s.z);
+        simd::float32x4_matrix_scale(m, s.x, s.y, s.z);
     }
 
 #if defined(MANGO_ENABLE_SIMD)
@@ -149,7 +149,7 @@ namespace mango
     void float4x4::rotate(float angle, const float3& axis)
     {
         const float4x4 temp = AngleAxis(angle, axis);
-        simd4f_matrix_matrix_multiply(m, m, temp.m);
+        simd::float32x4_matrix_matrix_multiply(m, m, temp.m);
     }
 
 #else
@@ -241,7 +241,7 @@ namespace mango
     void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
         const float4x4 temp = matrix::rotateXYZ(xangle, yangle, zangle);
-        simd4f_matrix_matrix_multiply(m, m, temp.m);
+        simd::float32x4_matrix_matrix_multiply(m, m, temp.m);
     }
 
 #else
@@ -430,7 +430,7 @@ namespace mango
     float4x4 translate(float x, float y, float z)
     {
         float4x4 temp;
-        simd4f_matrix_set_translate(temp.m, x, y, z);
+        simd::float32x4_matrix_set_translate(temp.m, x, y, z);
         return temp;
     }
 
@@ -440,28 +440,28 @@ namespace mango
         const float y = translation.y;
         const float z = translation.z;
         float4x4 temp;
-        simd4f_matrix_set_translate(temp.m, x, y, z);
+        simd::float32x4_matrix_set_translate(temp.m, x, y, z);
         return temp;
     }
 
     float4x4 scale(float s)
     {
         float4x4 temp;
-        simd4f_matrix_set_scale(temp.m, s);
+        simd::float32x4_matrix_set_scale(temp.m, s);
         return temp;
     }
 
     float4x4 scale(float x, float y, float z)
     {
         float4x4 temp;
-        simd4f_matrix_set_scale(temp.m, x, y, z);
+        simd::float32x4_matrix_set_scale(temp.m, x, y, z);
         return temp;
     }
 
     float4x4 scale(const float3& s)
     {
         float4x4 temp;
-        simd4f_matrix_set_scale(temp.m, s.x, s.y, s.z);
+        simd::float32x4_matrix_set_scale(temp.m, s.x, s.y, s.z);
         return temp;
     }
 
@@ -1123,7 +1123,7 @@ namespace mango
         static const float4 gamma(1.0f / 2.4f);
         static const float4 zero(0.0f);
         static const float4 one(1.0f);
-        static simd4f alpha_mask = simd4f_cast(simd4i_set4(0, 0, 0, 0xffffffff));
+        static simd::float32x4 alpha_mask = simd::float32x4_cast(simd4i_set4(0, 0, 0, 0xffffffff));
 
         float4 s = clamp(n, zero, one);
         float4 a = s * linear;
@@ -1131,7 +1131,7 @@ namespace mango
         float4 c = select(s < cutoff, a, b);
 
         // pass-through alpha: float4(c.rgb, n.w)
-        return simd4f_select(alpha_mask, n, c);
+        return simd::float32x4_select(alpha_mask, n, c);
     }
 
     float4 srgb_decode(float4 s)
@@ -1141,14 +1141,14 @@ namespace mango
         static const float4 scale(1.f / 1.055f);
         static const float4 bias(0.055f);
         static const float4 gamma(2.4f);
-        static simd4f alpha_mask = simd4f_cast(simd4i_set4(0, 0, 0, 0xffffffff));
+        static simd::float32x4 alpha_mask = simd::float32x4_cast(simd4i_set4(0, 0, 0, 0xffffffff));
 
         float4 a = s * linear;
         float4 b = pow((s + bias) * scale, gamma);
         float4 c = select(s <= cutoff, a, b);
 
         // pass-through alpha: float4(c.rgb, s.w)
-        return simd4f_select(alpha_mask, s, c);
+        return simd::float32x4_select(alpha_mask, s, c);
     }
 
 #else

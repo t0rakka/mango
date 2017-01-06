@@ -23,25 +23,25 @@ namespace simd {
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
-    struct simd4h
+    struct float16x4
     {
         half x, y, z, w;
     };
 
-    typedef __m128i simd4i;
-    typedef __m128 simd4f;
-    typedef __m256d simd4d;
+    typedef __m128i int32x4;
+    typedef __m128  float32x4;
+    typedef __m256d float64x4;
 
 #if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_INTEL)
-    typedef const __m128i& __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const __m128& __simd4f;
-    typedef const __m256d& __simd4d;
+    typedef const __m128i&   int32x4__;
+    typedef const float16x4& float16x4__;
+    typedef const __m128&    float32x4__;
+    typedef const __m256d&   float64x4__;
 #else
-    typedef const __m128i __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const __m128 __simd4f;
-    typedef const __m256d __simd4d;
+    typedef const __m128i    int32x4__;
+    typedef const float16x4& float16x4__;
+    typedef const __m128     float32x4__;
+    typedef const __m256d    float64x4__;
 #endif
 
     #define MANGO_SIMD_INT
@@ -58,30 +58,30 @@ namespace simd {
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
-    struct simd4h
+    struct float16x4
     {
         half x, y, z, w;
     };
 
-    struct simd4d
+    struct float64x4
     {
         __m128d xy;
         __m128d zw;
     };
 
-    typedef __m128i simd4i;
-    typedef __m128 simd4f;
+    typedef __m128i int32x4;
+    typedef __m128 float32x4;
 
 #if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_INTEL)
-    typedef const __m128i& __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const __m128& __simd4f;
-    typedef const simd4d& __simd4d;
+    typedef const __m128i&   int32x4__;
+    typedef const float16x4& float16x4__;
+    typedef const __m128&    float32x4__;
+    typedef const float64x4& float64x4__;
 #else
-    typedef const __m128i __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const __m128 __simd4f;
-    typedef const simd4d& __simd4d;
+    typedef const __m128i    int32x4__;
+    typedef const float16x4& float16x4__;
+    typedef const __m128     float32x4__;
+    typedef const float64x4& float64x4__;
 #endif
 
     #define MANGO_SIMD_INT
@@ -100,29 +100,29 @@ namespace simd {
 
 #ifdef MANGO_ENABLE_FP16
 
-    typedef float16x4_t simd4h;
+    typedef float16x4_t float16x4;
 
 #else
 
-    struct simd4h
+    struct float16x4
     {
         half x, y, z, w;
     };
 
 #endif
 
-    struct simd4d
+    struct float64x4
     {
         double x, y, z, w;
     };
 
-    typedef int32x4_t simd4i;
-    typedef float32x4_t simd4f;
+    typedef int32x4_t int32x4;
+    typedef float32x4_t float32x4;
 
-    typedef const int32x4_t __simd4i;
-    typedef const simd4h __simd4h;
-    typedef const float32x4_t __simd4f;
-    typedef const simd4d& __simd4d;
+    typedef const int32x4_t   int32x4__;
+    typedef const float16x4   float16x4__;
+    typedef const float32x4_t float32x4__;
+    typedef const float64x4&  float64x4__;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -138,23 +138,23 @@ namespace simd {
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
-    struct simd4h
+    struct float16x4
     {
         half x, y, z, w;
     };
 
-    struct simd4d
+    struct float64x4
     {
         double x, y, z, w;
     };
 
-    typedef vector signed int simd4i;
-    typedef vector float simd4f;
+    typedef vector signed int int32x4;
+    typedef vector float float32x4;
 
-    typedef const vector signed int __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const vector float __simd4f;
-    typedef const simd4d& __simd4d;
+    typedef const vector signed int int32x4__;
+    typedef const float16x4&        float16x4__;
+    typedef const vector float      float32x4__;
+    typedef const float64x4&        float64x4__;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -170,23 +170,23 @@ namespace simd {
     // Cell BE SPU
     // --------------------------------------------------------------
 
-    struct simd4h
+    struct float16x4
     {
         half x, y, z, w;
     };
 
-    struct simd4d
+    struct float64x4
     {
         double x, y, z, w;
     };
 
-    typedef vector signed int simd4i;
-    typedef vector float simd4f;
+    typedef vector signed int int32x4;
+    typedef vector float      float32x4;
 
-    typedef const vector signed int __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const vector float __simd4f;
-    typedef const simd4d& __simd4d;
+    typedef const vector signed int int32x4__;
+    typedef const float16x4&        float16x4__;
+    typedef const vector float      float32x4__;
+    typedef const float64x4&        float64x4__;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -202,30 +202,30 @@ namespace simd {
     // SIMD emulation
     // --------------------------------------------------------------
 
-    struct simd4i
+    struct int32x4
     {
         int32 x, y, z, w;
     };
 
-    struct simd4h
+    struct float16x4
     {
         half x, y, z, w;
     };
 
-    struct simd4f
+    struct float32x4
     {
         float x, y, z, w;
     };
 
-    struct simd4d
+    struct float64x4
     {
         double x, y, z, w;
     };
 
-    typedef const simd4i& __simd4i;
-    typedef const simd4h& __simd4h;
-    typedef const simd4f& __simd4f;
-    typedef const simd4d& __simd4d;
+    typedef const int32x4&   int32x4__;
+    typedef const float16x4& float16x4__;
+    typedef const float32x4& float32x4__;
+    typedef const float64x4& float64x4__;
 
     #define MANGO_SCALAR_INT
     #define MANGO_SCALAR_FLOAT
@@ -239,8 +239,5 @@ namespace simd {
 
 } // namespace simd
 } // namespace mango
-
-// TODO: remove this hack after the refactoring is done
-using namespace mango::simd;
 
 #include "common.hpp"

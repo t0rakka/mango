@@ -9,22 +9,22 @@
 #endif
 
     // -----------------------------------------------------------------
-    // simd4f
+    // float32x4
     // -----------------------------------------------------------------
 
     // conversion
 
-    static inline simd4f simd4f_cast(__simd4i s)
+    static inline float32x4 float32x4_cast(int32x4__ s)
     {
-		return (simd4f) s;
+		return (float32x4) s;
     }
 
-    static inline simd4f simd4f_convert(__simd4i s)
+    static inline float32x4 float32x4_convert(int32x4__ s)
     {
         return spu_convtf(s, 0);
     }
 
-    static inline simd4f simd4f_unsigned_convert(__simd4i s)
+    static inline float32x4 float32x4_unsigned_convert(int32x4__ s)
     {
         return spu_convtf((const vector unsigned int)s, 0);
     }
@@ -36,7 +36,7 @@
     (n * 4 + 3) | (select << 4)
 
     template <int x, int y, int z, int w>
-    inline simd4f simd4f_shuffle(__simd4f v)
+    inline float32x4 float32x4_shuffle(float32x4__ v)
     {
 		const vector unsigned char mask =
 		{
@@ -46,7 +46,7 @@
     }
 
     template <>
-    inline simd4f simd4f_shuffle<0, 1, 2, 3>(__simd4f v)
+    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4__ v)
     {
         // .xyzw
         return v;
@@ -55,114 +55,114 @@
     // indexed accessor
 
     template <int Index>
-    static inline simd4f simd4f_set_component(__simd4f a, float s)
+    static inline float32x4 float32x4_set_component(float32x4__ a, float s)
     {
         return spu_insert(s, a, Index);
     }
 
     template <int Index>
-    static inline float simd4f_get_component(__simd4f a)
+    static inline float float32x4_get_component(float32x4__ a)
     {
         return spu_extract(a, Index);
     }
 
-    static inline simd4f simd4f_set_x(__simd4f a, float x)
+    static inline float32x4 float32x4_set_x(float32x4__ a, float x)
     {
         return spu_insert(x, a, 0);
     }
 
-    static inline simd4f simd4f_set_y(__simd4f a, float y)
+    static inline float32x4 float32x4_set_y(float32x4__ a, float y)
     {
         return spu_insert(y, a, 1);
     }
 
-    static inline simd4f simd4f_set_z(__simd4f a, float z)
+    static inline float32x4 float32x4_set_z(float32x4__ a, float z)
     {
         return spu_insert(z, a, 2);
     }
 
-    static inline simd4f simd4f_set_w(__simd4f a, float w)
+    static inline float32x4 float32x4_set_w(float32x4__ a, float w)
     {
         return spu_insert(w, a, 3);
     }
 
-    static inline float simd4f_get_x(__simd4f a)
+    static inline float float32x4_get_x(float32x4__ a)
     {
         return spu_extract(a, 0);
     }
 
-    static inline float simd4f_get_y(__simd4f a)
+    static inline float float32x4_get_y(float32x4__ a)
     {
         return spu_extract(a, 1);
     }
 
-    static inline float simd4f_get_z(__simd4f a)
+    static inline float float32x4_get_z(float32x4__ a)
     {
         return spu_extract(a, 2);
     }
 
-    static inline float simd4f_get_w(__simd4f a)
+    static inline float float32x4_get_w(float32x4__ a)
     {
         return spu_extract(a, 3);
     }
 
-    static inline simd4f simd4f_splat_x(__simd4f a)
+    static inline float32x4 float32x4_splat_x(float32x4__ a)
     {
         const float x = spu_extract(a, 0);
         return vec_splats(x);
     }
     
-    static inline simd4f simd4f_splat_y(__simd4f a)
+    static inline float32x4 float32x4_splat_y(float32x4__ a)
     {
         const float y = spu_extract(a, 1);
         return vec_splats(y);
     }
     
-    static inline simd4f simd4f_splat_z(__simd4f a)
+    static inline float32x4 float32x4_splat_z(float32x4__ a)
     {
         const float z = spu_extract(a, 2);
         return vec_splats(z);
     }
     
-    static inline simd4f simd4f_splat_w(__simd4f a)
+    static inline float32x4 float32x4_splat_w(float32x4__ a)
     {
         const float w = spu_extract(a, 3);
         return vec_splats(w);
     }
 
-    static inline simd4f simd4f_zero()
+    static inline float32x4 float32x4_zero()
     {
         return spu_splats(0.0f);
     }
 
-    static inline simd4f simd4f_set1(float s)
+    static inline float32x4 float32x4_set1(float s)
     {
         return spu_splats(s);
     }
 
-    static inline simd4f simd4f_set4(float x, float y, float z, float w)
+    static inline float32x4 float32x4_set4(float x, float y, float z, float w)
     {
-		const simd4f temp = { x, y, z, w };
+		const float32x4 temp = { x, y, z, w };
 		return temp;
     }
 
-    static inline simd4f simd4f_load(const float* source)
+    static inline float32x4 float32x4_load(const float* source)
     {
-        return reinterpret_cast<const simd4f*>(source)[0];
+        return reinterpret_cast<const float32x4*>(source)[0];
     }
 
-    static inline simd4f simd4f_uload(const float* s)
+    static inline float32x4 float32x4_uload(const float* s)
     {
-        simd4f temp = { s[0], s[1], s[2], s[3] };
+        float32x4 temp = { s[0], s[1], s[2], s[3] };
         return temp;
     }
 
-    static inline void simd4f_store(float* dest, __simd4f a)
+    static inline void float32x4_store(float* dest, float32x4__ a)
     {
-        reinterpret_cast<const simd4f*>(dest)[0] = a;
+        reinterpret_cast<const float32x4*>(dest)[0] = a;
     }
 
-    static inline void simd4f_ustore(float* dest, __simd4f a)
+    static inline void float32x4_ustore(float* dest, float32x4__ a)
     {
         dest[0] = spu_extract(a, 0);
         dest[1] = spu_extract(a, 1);
@@ -170,7 +170,7 @@
         dest[3] = spu_extract(a, 3);
     }
 
-    static inline simd4f simd4f_movelh(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_movelh(float32x4__ a, float32x4__ b)
     {
         const vector unsigned char mask =
         {
@@ -179,7 +179,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    static inline simd4f simd4f_movehl(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_movehl(float32x4__ a, float32x4__ b)
     {
         const vector unsigned char mask =
         {
@@ -188,7 +188,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    static inline simd4f simd4f_unpackhi(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_unpackhi(float32x4__ a, float32x4__ b)
     {
         const vector unsigned char mask =
         {
@@ -197,7 +197,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    static inline simd4f simd4f_unpacklo(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_unpacklo(float32x4__ a, float32x4__ b)
     {
         const vector unsigned char mask =
         {
@@ -210,67 +210,67 @@
 
     // logical
 
-    static inline simd4f simd4f_and(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_and(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_and(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_and(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_nand(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_nand(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_nand(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_nand(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_or(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_or(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_or(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_or(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_xor(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_xor(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_xor(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_xor(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_min(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_min(float32x4__ a, float32x4__ b)
     {
         return spu_sel(a, b, spu_cmpgt(a, b));
     }
 
-    static inline simd4f simd4f_max(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_max(float32x4__ a, float32x4__ b)
     {
         return spu_sel(a, b, spu_cmpgt(b, a));
     }
 
-    static inline simd4f simd4f_clamp(__simd4f v, __simd4f vmin, __simd4f vmax)
+    static inline float32x4 float32x4_clamp(float32x4__ v, float32x4__ vmin, float32x4__ vmax)
     {
-		return simd4f_min(vmax, simd4f_max(vmin, v));
+		return float32x4_min(vmax, float32x4_max(vmin, v));
     }
 
-    static inline simd4f simd4f_abs(__simd4f a)
+    static inline float32x4 float32x4_abs(float32x4__ a)
     {
         return (vec_float4)spu_andc((vec_uint4)a, spu_splats(0x80000000));
     }
 
-    static inline simd4f simd4f_neg(__simd4f a)
+    static inline float32x4 float32x4_neg(float32x4__ a)
     {
         return (vec_float4)spu_xor((vec_uint4)a, spu_splats(0x80000000));
     }
 
-    static inline simd4f simd4f_add(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_add(float32x4__ a, float32x4__ b)
     {
 		return spu_add(a, b);
     }
 
-    static inline simd4f simd4f_sub(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_sub(float32x4__ a, float32x4__ b)
     {
 		return spu_sub(a, b);
     }
 
-    static inline simd4f simd4f_mul(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_mul(float32x4__ a, float32x4__ b)
     {
 		return spu_mul(a, b);
     }
 
-    static inline simd4f simd4f_div(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_div(float32x4__ a, float32x4__ b)
     {
         // Reciprocal estimate and 1 Newton-Raphson iteration.
         // Uses constant of 1.0 + 1 ulp to improve accuracy.
@@ -280,44 +280,44 @@
         return spu_madd(spu_nmsub(b, y0, onen), y0a, y0a);
     }
 
-    static inline simd4f simd4f_div(__simd4f a, float b)
+    static inline float32x4 float32x4_div(float32x4__ a, float b)
     {
-        return simd4f_div(a, spu_splats(b));
+        return float32x4_div(a, spu_splats(b));
     }
 
-    static inline simd4f simd4f_madd(__simd4f a, __simd4f b, __simd4f c)
+    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float32x4__ c)
     {
 		return spu_madd(b, c, a);
     }
 
-    static inline simd4f simd4f_msub(__simd4f a, __simd4f b, __simd4f c)
+    static inline float32x4 float32x4_msub(float32x4__ a, float32x4__ b, float32x4__ c)
     {
 		return spu_sub(a, spu_mul(b, c));
     }
 
-    static inline simd4f simd4f_fast_reciprocal(__simd4f a)
+    static inline float32x4 float32x4_fast_reciprocal(float32x4__ a)
     {
 		return spu_re(a);
     }
 
-    static inline simd4f simd4f_fast_rsqrt(__simd4f a)
+    static inline float32x4 float32x4_fast_rsqrt(float32x4__ a)
     {
 		return spu_rsqrte(a);
     }
 
-    static inline simd4f simd4f_fast_sqrt(__simd4f a)
+    static inline float32x4 float32x4_fast_sqrt(float32x4__ a)
     {
 		return spu_sqrt(a);
     }
 
-    static inline simd4f simd4f_reciprocal(__simd4f a)
+    static inline float32x4 float32x4_reciprocal(float32x4__ a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_re(a);
         return spu_madd(spu_nmsub(a, y0, onen), y0, y0);
     }
 
-    static inline simd4f simd4f_rsqrt(__simd4f a)
+    static inline float32x4 float32x4_rsqrt(float32x4__ a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_rsqrte(a);
@@ -326,7 +326,7 @@
         return spu_madd(spu_nmsub(y0, y0x, onen), y0half, y0);
     }
 
-    static inline simd4f simd4f_sqrt(__simd4f a)
+    static inline float32x4 float32x4_sqrt(float32x4__ a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_rsqrte(a);
@@ -335,73 +335,73 @@
         return spu_madd(spu_nmsub(y0, y0x, onen), y0xhalf, y0x);
     }
 
-    static inline simd4f simd4f_dot3(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_dot3(float32x4__ a, float32x4__ b)
     {
-        simd4f s = spu_mul(a, b);
-        return spu_add(simd4f_shuffle<0, 0, 0, 0>(s),
-               spu_add(simd4f_shuffle<1, 1, 1, 1>(s), simd4f_shuffle<2, 2, 2, 2>(s)));
+        float32x4 s = spu_mul(a, b);
+        return spu_add(float32x4_shuffle<0, 0, 0, 0>(s),
+               spu_add(float32x4_shuffle<1, 1, 1, 1>(s), float32x4_shuffle<2, 2, 2, 2>(s)));
     }
 
-    static inline simd4f simd4f_dot4(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_dot4(float32x4__ a, float32x4__ b)
     {
-        simd4f s = spu_mul(a, b);
-        s = spu_add(s, simd4f_shuffle<2, 3, 0, 1>(s));
-        s = spu_add(s, simd4f_shuffle<1, 0, 3, 2>(s));
+        float32x4 s = spu_mul(a, b);
+        s = spu_add(s, float32x4_shuffle<2, 3, 0, 1>(s));
+        s = spu_add(s, float32x4_shuffle<1, 0, 3, 2>(s));
         return s;
     }
 
-    static inline simd4f simd4f_cross3(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_cross3(float32x4__ a, float32x4__ b)
     {
-        simd4f c = spu_sub(spu_mul(a, simd4f_shuffle<1, 2, 0, 3>(b)),
-                           spu_mul(b, simd4f_shuffle<1, 2, 0, 3>(a)));
-        return simd4f_shuffle<1, 2, 0, 3>(c);
+        float32x4 c = spu_sub(spu_mul(a, float32x4_shuffle<1, 2, 0, 3>(b)),
+                           spu_mul(b, float32x4_shuffle<1, 2, 0, 3>(a)));
+        return float32x4_shuffle<1, 2, 0, 3>(c);
     }
 
-    static inline simd4f simd4f_compare_neq(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_neq(float32x4__ a, float32x4__ b)
     {
         const vec_uint4 mask = spu_cmpeq(a, b);
-        return (simd4f) spu_nor(mask, mask);
+        return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline simd4f simd4f_compare_eq(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_eq(float32x4__ a, float32x4__ b)
     {
-		return (simd4f) spu_cmpeq(a, b);
+		return (float32x4) spu_cmpeq(a, b);
     }
 
-    static inline simd4f simd4f_compare_lt(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_lt(float32x4__ a, float32x4__ b)
     {
-        return (simd4f) spu_cmpgt(b, a);
+        return (float32x4) spu_cmpgt(b, a);
     }
 
-    static inline simd4f simd4f_compare_le(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_le(float32x4__ a, float32x4__ b)
     {
         const vec_uint4 mask = spu_cmpgt(a, b);
-        return (simd4f) spu_nor(mask, mask);
+        return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline simd4f simd4f_compare_gt(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_gt(float32x4__ a, float32x4__ b)
     {
-		return (simd4f) spu_cmpgt(a, b);
+		return (float32x4) spu_cmpgt(a, b);
     }
 
-    static inline simd4f simd4f_compare_ge(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_ge(float32x4__ a, float32x4__ b)
     {
         const vec_uint4 mask = spu_cmpgt(b, a);
-        return (simd4f) spu_nor(mask, mask);
+        return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline simd4f simd4f_select(__simd4f mask, __simd4f a, __simd4f b)
+    static inline float32x4 float32x4_select(float32x4__ mask, float32x4__ a, float32x4__ b)
     {
         return spu_sel(b, a, (vec_uint4)mask);
     }
 
-    static inline uint32 simd4i_get_mask(__simd4i a)
+    static inline uint32 int32x4_get_mask(int32x4__ a)
     {
         // TODO
         return 0;
     }
 
-    static inline simd4f simd4f_round(__simd4f s)
+    static inline float32x4 float32x4_round(float32x4__ s)
     {
         // add 0.5 (fixed precision to eliminate rounding issues)
         vec_int4 exp = spu_sub(125, spu_and(spu_rlmask((vec_int4)s, -23), 0xff));
@@ -417,14 +417,14 @@
         return spu_andc(sa, (vec_float4)mask);
     }
 
-    static inline simd4f simd4f_trunc(__simd4f s)
+    static inline float32x4 float32x4_trunc(float32x4__ s)
     {
-        const vec_uint4 inrange = spu_cmpabsgt((simd4f)spu_splats(0x4b000000), s);
+        const vec_uint4 inrange = spu_cmpabsgt((float32x4)spu_splats(0x4b000000), s);
         const vec_int4 si = spu_convts(s, 0);
         return spu_sel(s, spu_convtf(si, 0), inrange);
     }
 
-    static inline simd4f simd4f_floor(__simd4f s)
+    static inline float32x4 float32x4_floor(float32x4__ s)
     {
         // find truncated value and one less.
         const vec_uint4 inrange = spu_cmpabsgt((vec_float4)spu_splats(0x4b000000), s);
@@ -437,7 +437,7 @@
         return spu_sel(truncated, truncated1, spu_cmpgt(truncated, s));
     }
 
-    static inline simd4f simd4f_ceil(__simd4f s)
+    static inline float32x4 float32x4_ceil(float32x4__ s)
     {
         // find truncated value and one greater.
         const vec_uint4 inrange = spu_cmpabsgt((vec_float4)spu_splats(0x4b000000), s);
@@ -450,80 +450,80 @@
         return spu_sel(truncated, truncated1, spu_cmpgt(s, truncated));
     }
 
-    static inline simd4f simd4f_fract(__simd4f s)
+    static inline float32x4 float32x4_fract(float32x4__ s)
     {
-		return spu_sub(s, simd4f_floor(s));
+		return spu_sub(s, float32x4_floor(s));
     }
 
     // -----------------------------------------------------------------
     // float <-> half conversions
     // -----------------------------------------------------------------
 
-    static inline simd4f simd4f_convert(__simd4h s)
+    static inline float32x4 float32x4_convert(float16x4__ s)
     {
         float x = s.x;
         float y = s.y;
         float z = s.z;
         float w = s.w;
-        return simd4f_set4(x, y, z, w);
+        return float32x4_set4(x, y, z, w);
     }
 
-    static inline simd4h simd4h_convert(__simd4f s)
+    static inline float16x4 float16x4_convert(float32x4__ s)
     {
-        simd4h v;
-        v.x = simd4f_get_x(s);
-        v.y = simd4f_get_y(s);
-        v.z = simd4f_get_z(s);
-        v.w = simd4f_get_w(s);
+        float16x4 v;
+        v.x = float32x4_get_x(s);
+        v.y = float32x4_get_y(s);
+        v.z = float32x4_get_z(s);
+        v.w = float32x4_get_w(s);
         return v;
     }
 
     // -----------------------------------------------------------------
-    // simd4f_matrix
+    // float32x4_matrix
     // -----------------------------------------------------------------
 
     /* TODO
-    static inline void simd4f_matrix_set_scale(simd4f* m, float s)
+    static inline void float32x4_matrix_set_scale(float32x4* m, float s)
     {
     }
 
-    static inline void simd4f_matrix_set_scale(simd4f* m, float x, float y, float z)
+    static inline void float32x4_matrix_set_scale(float32x4* m, float x, float y, float z)
     {
     }
 
-    static inline void simd4f_matrix_set_translate(simd4f* m, float x, float y, float z)
+    static inline void float32x4_matrix_set_translate(float32x4* m, float x, float y, float z)
     {
     }
 
-    static inline void simd4f_matrix_scale(simd4f* m, float s)
+    static inline void float32x4_matrix_scale(float32x4* m, float s)
     {
     }
 
-    static inline void simd4f_matrix_scale(simd4f* m, float x, float y, float z)
+    static inline void float32x4_matrix_scale(float32x4* m, float x, float y, float z)
     {
     }
 
-    static inline void simd4f_matrix_translate(simd4f* m, float x, float y, float z)
+    static inline void float32x4_matrix_translate(float32x4* m, float x, float y, float z)
     {
     }
 
-    static inline void simd4f_matrix_transpose(simd4f* result, const simd4f* m)
+    static inline void float32x4_matrix_transpose(float32x4* result, const float32x4* m)
     {
     }
 
-    static inline void simd4f_matrix_inverse(simd4f* result, const simd4f* m)
+    static inline void float32x4_matrix_inverse(float32x4* result, const float32x4* m)
     {
     }
 
-    static inline void simd4f_matrix_inverse_transpose(simd4f* result, const simd4f* m)
+    static inline void float32x4_matrix_inverse_transpose(float32x4* result, const float32x4* m)
     {
     }
 
-    static inline simd4f simd4f_vector_matrix_multiply(__simd4f v, const simd4f* m)
+    static inline float32x4 float32x4_vector_matrix_multiply(float32x4__ v, const float32x4* m)
     {
     }
 
-    static inline void simd4f_matrix_matrix_multiply(simd4f* result, const simd4f* a, const simd4f* b)
+    static inline void float32x4_matrix_matrix_multiply(float32x4* result, const float32x4* a, const float32x4* b)
     {
     }
     */

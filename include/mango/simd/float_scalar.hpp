@@ -9,19 +9,19 @@
 #endif
 
     // -----------------------------------------------------------------
-    // simd4f
+    // float32x4
     // -----------------------------------------------------------------
 
     // conversion
 
-    static inline simd4f simd4f_cast(__simd4i s)
+    static inline float32x4 float32x4_cast(int32x4__ s)
     {
-        return reinterpret_cast<__simd4f>(s);
+        return reinterpret_cast<float32x4__>(s);
     }
 
-    static inline simd4f simd4f_convert(__simd4i s)
+    static inline float32x4 float32x4_convert(int32x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         v.x = float(s.x);
         v.y = float(s.y);
         v.z = float(s.z);
@@ -29,9 +29,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_unsigned_convert(__simd4i s)
+    static inline float32x4 float32x4_unsigned_convert(int32x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         const uint32 x = s.x;
         const uint32 y = s.y;
         const uint32 z = s.z;
@@ -44,16 +44,16 @@
     }
 
     template <int x, int y, int z, int w>
-    inline simd4f simd4f_shuffle(__simd4f v)
+    inline float32x4 float32x4_shuffle(float32x4__ v)
     {
         // .generic
         const float* src = reinterpret_cast<const float*>(&v);
-        simd4f n = { src[x], src[y], src[z], src[w] };
+        float32x4 n = { src[x], src[y], src[z], src[w] };
         return n;
     }
 
     template <>
-    inline simd4f simd4f_shuffle<0, 1, 2, 3>(__simd4f v)
+    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4__ v)
     {
         // .xyzw
         return v;
@@ -62,162 +62,162 @@
     // indexed accessor
 
     template <int Index>
-    static inline simd4f simd4f_set_component(simd4f a, float s);
+    static inline float32x4 float32x4_set_component(float32x4 a, float s);
 
     template <>
-    inline simd4f simd4f_set_component<0>(simd4f a, float s)
+    inline float32x4 float32x4_set_component<0>(float32x4 a, float s)
     {
         a.x = s;
         return a;
     }
 
     template <>
-    inline simd4f simd4f_set_component<1>(simd4f a, float s)
+    inline float32x4 float32x4_set_component<1>(float32x4 a, float s)
     {
         a.y = s;
         return a;
     }
 
     template <>
-    inline simd4f simd4f_set_component<2>(simd4f a, float s)
+    inline float32x4 float32x4_set_component<2>(float32x4 a, float s)
     {
         a.z = s;
         return a;
     }
 
     template <>
-    inline simd4f simd4f_set_component<3>(simd4f a, float s)
+    inline float32x4 float32x4_set_component<3>(float32x4 a, float s)
     {
         a.w = s;
         return a;
     }
 
     template <int Index>
-    static inline float simd4f_get_component(__simd4f a);
+    static inline float float32x4_get_component(float32x4__ a);
 
     template <>
-    inline float simd4f_get_component<0>(__simd4f a)
+    inline float float32x4_get_component<0>(float32x4__ a)
     {
         return a.x;
     }
 
     template <>
-    inline float simd4f_get_component<1>(__simd4f a)
+    inline float float32x4_get_component<1>(float32x4__ a)
     {
         return a.y;
     }
 
     template <>
-    inline float simd4f_get_component<2>(__simd4f a)
+    inline float float32x4_get_component<2>(float32x4__ a)
     {
         return a.z;
     }
 
     template <>
-    inline float simd4f_get_component<3>(__simd4f a)
+    inline float float32x4_get_component<3>(float32x4__ a)
     {
         return a.w;
     }
 
-    static inline simd4f simd4f_set_x(simd4f a, float x)
+    static inline float32x4 float32x4_set_x(float32x4 a, float x)
     {
         a.x = x;
         return a;
     }
 
-    static inline simd4f simd4f_set_y(simd4f a, float y)
+    static inline float32x4 float32x4_set_y(float32x4 a, float y)
     {
         a.y = y;
         return a;
     }
 
-    static inline simd4f simd4f_set_z(simd4f a, float z)
+    static inline float32x4 float32x4_set_z(float32x4 a, float z)
     {
         a.z = z;
         return a;
     }
 
-    static inline simd4f simd4f_set_w(simd4f a, float w)
+    static inline float32x4 float32x4_set_w(float32x4 a, float w)
     {
         a.w = w;
         return a;
     }
 
-    static inline float simd4f_get_x(__simd4f a)
+    static inline float float32x4_get_x(float32x4__ a)
     {
         return a.x;
     }
 
-    static inline float simd4f_get_y(__simd4f a)
+    static inline float float32x4_get_y(float32x4__ a)
     {
         return a.y;
     }
 
-    static inline float simd4f_get_z(__simd4f a)
+    static inline float float32x4_get_z(float32x4__ a)
     {
         return a.z;
     }
 
-    static inline float simd4f_get_w(__simd4f a)
+    static inline float float32x4_get_w(float32x4__ a)
     {
         return a.w;
     }
 
-    static inline simd4f simd4f_splat_x(__simd4f a)
+    static inline float32x4 float32x4_splat_x(float32x4__ a)
     {
-        simd4f temp = { a.x, a.x, a.x, a.x };
+        float32x4 temp = { a.x, a.x, a.x, a.x };
         return temp;
     }
 
-    static inline simd4f simd4f_splat_y(__simd4f a)
+    static inline float32x4 float32x4_splat_y(float32x4__ a)
     {
-        simd4f temp = { a.y, a.y, a.y, a.y };
+        float32x4 temp = { a.y, a.y, a.y, a.y };
         return temp;
     }
 
-    static inline simd4f simd4f_splat_z(__simd4f a)
+    static inline float32x4 float32x4_splat_z(float32x4__ a)
     {
-        simd4f temp = { a.z, a.z, a.z, a.z };
+        float32x4 temp = { a.z, a.z, a.z, a.z };
         return temp;
     }
 
-    static inline simd4f simd4f_splat_w(__simd4f a)
+    static inline float32x4 float32x4_splat_w(float32x4__ a)
     {
-        simd4f temp = { a.w, a.w, a.w, a.w };
+        float32x4 temp = { a.w, a.w, a.w, a.w };
         return temp;
     }
 
-    static inline simd4f simd4f_zero()
+    static inline float32x4 float32x4_zero()
     {
-        simd4f temp = { 0.0f, 0.0f, 0.0f, 0.0f };
+        float32x4 temp = { 0.0f, 0.0f, 0.0f, 0.0f };
         return temp;
     }
 
-    static inline simd4f simd4f_set1(float s)
+    static inline float32x4 float32x4_set1(float s)
     {
-        simd4f temp = { s, s, s, s };
+        float32x4 temp = { s, s, s, s };
         return temp;
     }
 
-    static inline simd4f simd4f_set4(float x, float y, float z, float w)
+    static inline float32x4 float32x4_set4(float x, float y, float z, float w)
     {
-        simd4f temp = { x, y, z, w };
+        float32x4 temp = { x, y, z, w };
         return temp;
 
     }
 
-    static inline simd4f simd4f_load(const float* source)
+    static inline float32x4 float32x4_load(const float* source)
     {
-        simd4f temp = { source[0], source[1], source[2], source[3] };
+        float32x4 temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline simd4f simd4f_uload(const float* source)
+    static inline float32x4 float32x4_uload(const float* source)
     {
-        return simd4f_load(source);
+        return float32x4_load(source);
     }
 
-    static inline void simd4f_store(float* dest, __simd4f a)
+    static inline void float32x4_store(float* dest, float32x4__ a)
     {
         dest[0] = a.x;
         dest[1] = a.y;
@@ -225,60 +225,60 @@
         dest[3] = a.w;
     }
 
-    static inline void simd4f_ustore(float* dest, __simd4f a)
+    static inline void float32x4_ustore(float* dest, float32x4__ a)
     {
-        simd4f_store(dest, a);
+        float32x4_store(dest, a);
     }
 
-    static inline simd4f simd4f_movelh(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_movelh(float32x4__ a, float32x4__ b)
     {
-        simd4f v = { a.x, a.y, b.x, b.y };
+        float32x4 v = { a.x, a.y, b.x, b.y };
         return v;
     }
 
-    static inline simd4f simd4f_movehl(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_movehl(float32x4__ a, float32x4__ b)
     {
-        simd4f v = { b.z, b.w, a.z, a.w };
+        float32x4 v = { b.z, b.w, a.z, a.w };
         return v;
     }
 
-    static inline simd4f simd4f_unpackhi(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_unpackhi(float32x4__ a, float32x4__ b)
     {
-        simd4f v = { a.z, b.z, a.w, b.w };
+        float32x4 v = { a.z, b.z, a.w, b.w };
         return v;
     }
 
-    static inline simd4f simd4f_unpacklo(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_unpacklo(float32x4__ a, float32x4__ b)
     {
-        simd4f v = { a.x, b.x, a.y, b.y };
+        float32x4 v = { a.x, b.x, a.y, b.y };
         return v;
     }
 
     // logical
 
-    static inline simd4f simd4f_and(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_and(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_and(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_and(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_nand(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_nand(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_nand(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_nand(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_or(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_or(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_or(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_or(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_xor(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_xor(float32x4__ a, float32x4__ b)
     {
-        return simd4f_cast(simd4i_xor(simd4i_cast(a), simd4i_cast(b)));
+        return float32x4_cast(int32x4_xor(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline simd4f simd4f_min(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_min(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::min(a.x, b.x);
         v.y = std::min(a.y, b.y);
         v.z = std::min(a.z, b.z);
@@ -286,9 +286,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_max(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_max(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::max(a.x, b.x);
         v.y = std::max(a.y, b.y);
         v.z = std::max(a.z, b.z);
@@ -296,9 +296,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_clamp(__simd4f a, __simd4f vmin, __simd4f vmax)
+    static inline float32x4 float32x4_clamp(float32x4__ a, float32x4__ vmin, float32x4__ vmax)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::min(vmax.x, std::max(vmin.x, a.x));
         v.y = std::min(vmax.y, std::max(vmin.y, a.y));
         v.z = std::min(vmax.z, std::max(vmin.z, a.z));
@@ -306,9 +306,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_abs(__simd4f a)
+    static inline float32x4 float32x4_abs(float32x4__ a)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::abs(a.x);
         v.y = std::abs(a.y);
         v.z = std::abs(a.z);
@@ -316,15 +316,15 @@
         return v;
     }
 
-    static inline simd4f simd4f_neg(__simd4f a)
+    static inline float32x4 float32x4_neg(float32x4__ a)
     {
-        simd4f v = { -a.x, -a.y, -a.z, -a.w };
+        float32x4 v = { -a.x, -a.y, -a.z, -a.w };
         return v;
     }
 
-    static inline simd4f simd4f_add(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_add(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x + b.x;
         v.y = a.y + b.y;
         v.z = a.z + b.z;
@@ -332,9 +332,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_sub(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_sub(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x - b.x;
         v.y = a.y - b.y;
         v.z = a.z - b.z;
@@ -342,9 +342,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_mul(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_mul(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x * b.x;
         v.y = a.y * b.y;
         v.z = a.z * b.z;
@@ -352,9 +352,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_div(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_div(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x / b.x;
         v.y = a.y / b.y;
         v.z = a.z / b.z;
@@ -362,9 +362,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_div(__simd4f a, float b)
+    static inline float32x4 float32x4_div(float32x4__ a, float b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x / b;
         v.y = a.y / b;
         v.z = a.z / b;
@@ -372,9 +372,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_madd(__simd4f a, __simd4f b, __simd4f c)
+    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float32x4__ c)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x + b.x * c.x;
         v.y = a.y + b.y * c.y;
         v.z = a.z + b.z * c.z;
@@ -382,9 +382,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_msub(__simd4f a, __simd4f b, __simd4f c)
+    static inline float32x4 float32x4_msub(float32x4__ a, float32x4__ b, float32x4__ c)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.x - b.x * c.x;
         v.y = a.y - b.y * c.y;
         v.z = a.z - b.z * c.z;
@@ -392,9 +392,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_fast_reciprocal(__simd4f a)
+    static inline float32x4 float32x4_fast_reciprocal(float32x4__ a)
     {
-        simd4f v;
+        float32x4 v;
         v.x = 1.0f / a.x;
         v.y = 1.0f / a.y;
         v.z = 1.0f / a.z;
@@ -402,9 +402,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_fast_rsqrt(__simd4f a)
+    static inline float32x4 float32x4_fast_rsqrt(float32x4__ a)
     {
-        simd4f v;
+        float32x4 v;
         v.x = 1.0f / float(std::sqrt(a.x));
         v.y = 1.0f / float(std::sqrt(a.y));
         v.z = 1.0f / float(std::sqrt(a.z));
@@ -412,9 +412,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_fast_sqrt(__simd4f a)
+    static inline float32x4 float32x4_fast_sqrt(float32x4__ a)
     {
-        simd4f v;
+        float32x4 v;
         v.x = float(std::sqrt(a.x));
         v.y = float(std::sqrt(a.y));
         v.z = float(std::sqrt(a.z));
@@ -422,36 +422,36 @@
         return v;
     }
 
-    static inline simd4f simd4f_reciprocal(__simd4f a)
+    static inline float32x4 float32x4_reciprocal(float32x4__ a)
     {
-        return simd4f_fast_reciprocal(a);
+        return float32x4_fast_reciprocal(a);
     }
 
-    static inline simd4f simd4f_rsqrt(__simd4f a)
+    static inline float32x4 float32x4_rsqrt(float32x4__ a)
     {
-        return simd4f_fast_rsqrt(a);
+        return float32x4_fast_rsqrt(a);
     }
 
-    static inline simd4f simd4f_sqrt(__simd4f a)
+    static inline float32x4 float32x4_sqrt(float32x4__ a)
     {
-        return simd4f_fast_sqrt(a);
+        return float32x4_fast_sqrt(a);
     }
 
-    static inline simd4f simd4f_dot3(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_dot3(float32x4__ a, float32x4__ b)
     {
         const float s = a.x * b.x + a.y * b.y + a.z * b.z;
-        return simd4f_set1(s);
+        return float32x4_set1(s);
     }
 
-    static inline simd4f simd4f_dot4(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_dot4(float32x4__ a, float32x4__ b)
     {
         const float s = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-        return simd4f_set1(s);
+        return float32x4_set1(s);
     }
 
-    static inline simd4f simd4f_cross3(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_cross3(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = a.y * b.z - a.z * b.y;
         v.y = a.z * b.x - a.x * b.z;
         v.z = a.x * b.y - a.y * b.x;
@@ -461,9 +461,9 @@
 
     // compare
 
-    static inline simd4f simd4f_compare_neq(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_neq(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = Float(uint32(a.x != b.x ? 0xffffffff : 0));
         v.y = Float(uint32(a.y != b.y ? 0xffffffff : 0));
         v.z = Float(uint32(a.z != b.z ? 0xffffffff : 0));
@@ -471,9 +471,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_compare_eq(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_eq(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = Float(uint32(a.x == b.x ? 0xffffffff : 0));
         v.y = Float(uint32(a.y == b.y ? 0xffffffff : 0));
         v.z = Float(uint32(a.z == b.z ? 0xffffffff : 0));
@@ -481,9 +481,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_compare_lt(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_lt(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = Float(uint32(a.x < b.x ? 0xffffffff : 0));
         v.y = Float(uint32(a.y < b.y ? 0xffffffff : 0));
         v.z = Float(uint32(a.z < b.z ? 0xffffffff : 0));
@@ -491,9 +491,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_compare_le(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_le(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = Float(uint32(a.x <= b.x ? 0xffffffff : 0));
         v.y = Float(uint32(a.y <= b.y ? 0xffffffff : 0));
         v.z = Float(uint32(a.z <= b.z ? 0xffffffff : 0));
@@ -501,9 +501,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_compare_gt(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_gt(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = Float(uint32(a.x > b.x ? 0xffffffff : 0));
         v.y = Float(uint32(a.y > b.y ? 0xffffffff : 0));
         v.z = Float(uint32(a.z > b.z ? 0xffffffff : 0));
@@ -511,9 +511,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_compare_ge(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_compare_ge(float32x4__ a, float32x4__ b)
     {
-        simd4f v;
+        float32x4 v;
         v.x = Float(uint32(a.x >= b.x ? 0xffffffff : 0));
         v.y = Float(uint32(a.y >= b.y ? 0xffffffff : 0));
         v.z = Float(uint32(a.z >= b.z ? 0xffffffff : 0));
@@ -521,16 +521,16 @@
         return v;
     }
 
-    static inline simd4f simd4f_select(__simd4f mask, __simd4f a, __simd4f b)
+    static inline float32x4 float32x4_select(float32x4__ mask, float32x4__ a, float32x4__ b)
     {
-        return simd4f_or(simd4f_and(mask, a), simd4f_nand(mask, b));
+        return float32x4_or(float32x4_and(mask, a), float32x4_nand(mask, b));
     }
 
     // rounding
 
-    static inline simd4f simd4f_round(__simd4f s)
+    static inline float32x4 float32x4_round(float32x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::round(s.x);
         v.y = std::round(s.y);
         v.z = std::round(s.z);
@@ -538,9 +538,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_trunc(__simd4f s)
+    static inline float32x4 float32x4_trunc(float32x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::trunc(s.x);
         v.y = std::trunc(s.y);
         v.z = std::trunc(s.z);
@@ -548,9 +548,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_floor(__simd4f s)
+    static inline float32x4 float32x4_floor(float32x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::floor(s.x);
         v.y = std::floor(s.y);
         v.z = std::floor(s.z);
@@ -558,9 +558,9 @@
         return v;
     }
 
-    static inline simd4f simd4f_ceil(__simd4f s)
+    static inline float32x4 float32x4_ceil(float32x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         v.x = std::ceil(s.x);
         v.y = std::ceil(s.y);
         v.z = std::ceil(s.z);
@@ -568,18 +568,18 @@
         return v;
     }
 
-    static inline simd4f simd4f_fract(__simd4f s)
+    static inline float32x4 float32x4_fract(float32x4__ s)
     {
-        return simd4f_sub(s, simd4f_floor(s));
+        return float32x4_sub(s, float32x4_floor(s));
     }
 
     // -----------------------------------------------------------------
     // float <-> half conversions
     // -----------------------------------------------------------------
 
-    static inline simd4f simd4f_convert(__simd4h s)
+    static inline float32x4 float32x4_convert(float16x4__ s)
     {
-        simd4f v;
+        float32x4 v;
         v.x = s.x;
         v.y = s.y;
         v.z = s.z;
@@ -587,9 +587,9 @@
         return v;
     }
 
-    static inline simd4h simd4h_convert(__simd4f s)
+    static inline float16x4 float16x4_convert(float32x4__ s)
     {
-        simd4h v;
+        float16x4 v;
         v.x = s.x;
         v.y = s.y;
         v.z = s.z;
@@ -598,10 +598,10 @@
     }
 
     // -----------------------------------------------------------------
-    // simd4f_matrix
+    // float32x4_matrix
     // -----------------------------------------------------------------
 
-    static inline void simd4f_matrix_set_scale(simd4f* result, float s)
+    static inline void float32x4_matrix_set_scale(float32x4* result, float s)
     {
         float* dest = reinterpret_cast<float*>(result);
         dest[0] = s;
@@ -623,7 +623,7 @@
         dest[7] = 1;
     }
 
-    static inline void simd4f_matrix_set_scale(simd4f* result, float x, float y, float z)
+    static inline void float32x4_matrix_set_scale(float32x4* result, float x, float y, float z)
     {
         float* dest = reinterpret_cast<float*>(result);
         dest[0] = x;
@@ -645,7 +645,7 @@
         dest[7] = 1;
     }
 
-    static inline void simd4f_matrix_set_translate(simd4f* result, float x, float y, float z)
+    static inline void float32x4_matrix_set_translate(float32x4* result, float x, float y, float z)
     {
         float* dest = reinterpret_cast<float*>(result);
         dest[0] = 1;
@@ -667,7 +667,7 @@
         dest[7] = 1;
     }
 
-    static inline void simd4f_matrix_scale(simd4f* result, float s)
+    static inline void float32x4_matrix_scale(float32x4* result, float s)
     {
         float* dest = reinterpret_cast<float*>(result);
         for (int i = 0; i < 4; ++i)
@@ -679,7 +679,7 @@
         }
     }
 
-    static inline void simd4f_matrix_scale(simd4f* result, float x, float y, float z)
+    static inline void float32x4_matrix_scale(float32x4* result, float x, float y, float z)
     {
         float* dest = reinterpret_cast<float*>(result);
         for (int i = 0; i < 4; ++i)
@@ -691,7 +691,7 @@
         }
     }
 
-    static inline void simd4f_matrix_translate(simd4f* result, float x, float y, float z)
+    static inline void float32x4_matrix_translate(float32x4* result, float x, float y, float z)
     {
         float* dest = reinterpret_cast<float*>(result);
         for (int i = 0; i < 4; ++i)
@@ -703,7 +703,7 @@
         }
     }
 
-    static inline void simd4f_matrix_transpose(simd4f* result, const simd4f* m)
+    static inline void float32x4_matrix_transpose(float32x4* result, const float32x4* m)
     {
         const float* src = reinterpret_cast<const float*>(m);
         float* dest = reinterpret_cast<float*>(result);
@@ -725,7 +725,7 @@
         dest[15] = src[15];
     }
 
-    static inline void simd4f_matrix_inverse(simd4f* result, const simd4f* m)
+    static inline void float32x4_matrix_inverse(float32x4* result, const float32x4* m)
     {
         const float* src = reinterpret_cast<const float*>(m);
         float* dest = reinterpret_cast<float*>(result);
@@ -788,7 +788,7 @@
         dest[15] = det * d3;
     }
 
-    static inline void simd4f_matrix_inverse_transpose(simd4f* result, const simd4f* m)
+    static inline void float32x4_matrix_inverse_transpose(float32x4* result, const float32x4* m)
     {
         const float* src = reinterpret_cast<const float*>(m);
         float* dest = reinterpret_cast<float*>(result);
@@ -869,9 +869,9 @@
         dest[15] = det * v15;
     }
 
-    static inline simd4f simd4f_vector_matrix_multiply(__simd4f v, const simd4f* m)
+    static inline float32x4 float32x4_vector_matrix_multiply(float32x4__ v, const float32x4* m)
     {
-        simd4f temp;
+        float32x4 temp;
         temp.x = v.x * m[0].x + v.y * m[1].x + v.z * m[2].x + v.w * m[3].x;
         temp.y = v.x * m[0].y + v.y * m[1].y + v.z * m[2].y + v.w * m[3].y;
         temp.z = v.x * m[0].z + v.y * m[1].z + v.z * m[2].z + v.w * m[3].z;
@@ -879,10 +879,10 @@
         return temp;
     }
 
-    static inline void simd4f_matrix_matrix_multiply(simd4f* result, const simd4f* a, const simd4f* b)
+    static inline void float32x4_matrix_matrix_multiply(float32x4* result, const float32x4* a, const float32x4* b)
     {
-        result[0] = simd4f_vector_matrix_multiply(a[0], b);
-        result[1] = simd4f_vector_matrix_multiply(a[1], b);
-        result[2] = simd4f_vector_matrix_multiply(a[2], b);
-        result[3] = simd4f_vector_matrix_multiply(a[3], b);
+        result[0] = float32x4_vector_matrix_multiply(a[0], b);
+        result[1] = float32x4_vector_matrix_multiply(a[1], b);
+        result[2] = float32x4_vector_matrix_multiply(a[2], b);
+        result[3] = float32x4_vector_matrix_multiply(a[3], b);
     }

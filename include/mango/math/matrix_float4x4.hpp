@@ -56,7 +56,7 @@ namespace mango
     template <>
     struct Matrix<float, 4, 4> : MatrixBase<float, 4, 4>
     {
-        simd4f m[4];
+        simd::float32x4 m[4];
 
         explicit Matrix()
         {
@@ -115,14 +115,14 @@ namespace mango
         const Matrix& operator = (const Quaternion& q);
         const Matrix& operator = (const AngleAxis& a);
 
-        operator simd4f* ()
+        operator simd::float32x4* ()
         {
-            return reinterpret_cast<simd4f*>(this);
+            return reinterpret_cast<simd::float32x4 *>(this);
         }
 
-        operator const simd4f* () const
+        operator const simd::float32x4* () const
         {
-            return reinterpret_cast<const simd4f*>(this);
+            return reinterpret_cast<const simd::float32x4 *>(this);
         }
 
         bool isAffine() const;
@@ -148,13 +148,13 @@ namespace mango
     static inline Matrix<float, 4, 4> operator * (const Matrix<float, 4, 4>& a, const Matrix<float, 4, 4>& b)
     {
         Matrix<float, 4, 4> result;
-        simd4f_matrix_matrix_multiply(result, a, b);
+        simd::float32x4_matrix_matrix_multiply(result, a, b);
         return result;
     }
 
     static inline Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix<float, 4, 4>& m)
     {
-        simd4f result = simd4f_vector_matrix_multiply(v, m);
+        simd::float32x4 result = simd::float32x4_vector_matrix_multiply(v, m);
         return result;
     }
 
@@ -173,21 +173,21 @@ namespace mango
     static inline float4x4 inverse(const float4x4& m)
     {
         float4x4 result;
-        simd4f_matrix_inverse(result.m, m.m);
+        simd::float32x4_matrix_inverse(result.m, m.m);
         return result;
     }
 
     static inline float4x4 inverseTranspose(const float4x4& m)
     {
         float4x4 result;
-        simd4f_matrix_inverse_transpose(result.m, m.m);
+        simd::float32x4_matrix_inverse_transpose(result.m, m.m);
         return result;
     }
 
     static inline float4x4 transpose(const float4x4& m)
     {
         float4x4 result;
-        simd4f_matrix_transpose(result.m, m.m);
+        simd::float32x4_matrix_transpose(result.m, m.m);
         return result;
     }
 

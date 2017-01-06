@@ -816,77 +816,77 @@ namespace
 
     void blit_rgba8888_from_rgba16f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd4h);
+        INIT_POINTERS(uint32, simd::float16x4);
         for (int x = 0; x < count; ++x)
         {
-            simd4f f = simd4f_convert(s[x]);
-            f = simd4f_clamp(f, 0.0f, 1.0f);
-            f = simd4f_mul(f, 255.0f);
-            f = simd4f_add(f, 0.5f);
-            simd4i i = simd4i_convert(f);
-            d[x] = simd4i_pack(i);
+            simd::float32x4 f = simd::float32x4_convert(s[x]);
+            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
+            f = simd::float32x4_mul(f, 255.0f);
+            f = simd::float32x4_add(f, 0.5f);
+            simd::int32x4 i = simd::int32x4_convert(f);
+            d[x] = simd::int32x4_pack(i);
         }
     }
 
     void blit_bgra8888_from_rgba16f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd4h);
+        INIT_POINTERS(uint32, simd::float16x4);
         for (int x = 0; x < count; ++x)
         {
-            simd4f f = simd4f_convert(s[x]);
-            f = simd4f_shuffle<2, 1, 0, 3>(f);
-            f = simd4f_clamp(f, 0.0f, 1.0f);
-            f = simd4f_mul(f, 255.0f);
-            f = simd4f_add(f, 0.5f);
-            simd4i i = simd4i_convert(f);
-            d[x] = simd4i_pack(i);
+            simd::float32x4 f = simd::float32x4_convert(s[x]);
+            f = simd::float32x4_shuffle<2, 1, 0, 3>(f);
+            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
+            f = simd::float32x4_mul(f, 255.0f);
+            f = simd::float32x4_add(f, 0.5f);
+            simd::int32x4 i = simd::int32x4_convert(f);
+            d[x] = simd::int32x4_pack(i);
         }
     }
 
     void blit_rgba8888_from_rgba32f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd4f);
+        INIT_POINTERS(uint32, simd::float32x4);
         for (int x = 0; x < count; ++x)
         {
-            simd4f f = s[x];
-            f = simd4f_clamp(f, 0.0f, 1.0f);
-            f = simd4f_mul(f, 255.0f);
-            f = simd4f_add(f, 0.5f);
-            simd4i i = simd4i_convert(f);
-            d[x] = simd4i_pack(i);
+            simd::float32x4 f = s[x];
+            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
+            f = simd::float32x4_mul(f, 255.0f);
+            f = simd::float32x4_add(f, 0.5f);
+            simd::int32x4 i = simd::int32x4_convert(f);
+            d[x] = simd::int32x4_pack(i);
         }
     }
 
     void blit_bgra8888_from_rgba32f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd4f);
+        INIT_POINTERS(uint32, simd::float32x4);
         for (int x = 0; x < count; ++x)
         {
-            simd4f f = s[x];
-            f = simd4f_shuffle<2, 1, 0, 3>(f);
-            f = simd4f_clamp(f, 0.0f, 1.0f);
-            f = simd4f_mul(f, 255.0f);
-            f = simd4f_add(f, 0.5f);
-            simd4i i = simd4i_convert(f);
-            d[x] = simd4i_pack(i);
+            simd::float32x4 f = s[x];
+            f = simd::float32x4_shuffle<2, 1, 0, 3>(f);
+            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
+            f = simd::float32x4_mul(f, 255.0f);
+            f = simd::float32x4_add(f, 0.5f);
+            simd::int32x4 i = simd::int32x4_convert(f);
+            d[x] = simd::int32x4_pack(i);
         }
     }
 
     void blit_rgba16f_from_rgba32f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(simd4h, simd4f);
+        INIT_POINTERS(simd::float16x4, simd::float32x4);
         for (int x = 0; x < count; ++x)
         {
-            d[x] = simd4h_convert(s[x]);
+            d[x] = simd::float16x4_convert(s[x]);
         }
     }
 
     void blit_rgba32f_from_rgba16f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(simd4f, simd4h);
+        INIT_POINTERS(simd::float32x4, simd::float16x4);
         for (int x = 0; x < count; ++x)
         {
-            d[x] = simd4f_convert(s[x]);
+            d[x] = simd::float32x4_convert(s[x]);
         }
     }
 

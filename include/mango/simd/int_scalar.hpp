@@ -9,17 +9,17 @@
 #endif
 
     // -----------------------------------------------------------------
-    // simd4i
+    // int32x4
     // -----------------------------------------------------------------
 
-    static inline simd4i simd4i_cast(__simd4f s)
+    static inline int32x4 int32x4_cast(float32x4__ s)
     {
-        return reinterpret_cast<__simd4i>(s);
+        return reinterpret_cast<int32x4__>(s);
     }
 
-    static inline simd4i simd4i_convert(__simd4f s)
+    static inline int32x4 int32x4_convert(float32x4__ s)
     {
-        simd4i v;
+        int32x4 v;
         v.x = int(s.x + 0.5f);
         v.y = int(s.y + 0.5f);
         v.z = int(s.z + 0.5f);
@@ -27,9 +27,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_truncate(__simd4f s)
+    static inline int32x4 int32x4_truncate(float32x4__ s)
     {
-        simd4i v;
+        int32x4 v;
         v.x = int(s.x);
         v.y = int(s.y);
         v.z = int(s.z);
@@ -37,66 +37,66 @@
         return v;
     }
 
-    static inline simd4i simd4i_set_x(__simd4i a, int x)
+    static inline int32x4 int32x4_set_x(int32x4__ a, int x)
     {
-        simd4i temp = a;
+        int32x4 temp = a;
         temp.x = x;
         return temp;
     }
 
-    static inline simd4i simd4i_set_y(__simd4i a, int y)
+    static inline int32x4 int32x4_set_y(int32x4__ a, int y)
     {
-        simd4i temp = a;
+        int32x4 temp = a;
         temp.y = y;
         return temp;
     }
 
-    static inline simd4i simd4i_set_z(__simd4i a, int z)
+    static inline int32x4 int32x4_set_z(int32x4__ a, int z)
     {
-        simd4i temp = a;
+        int32x4 temp = a;
         temp.z = z;
         return temp;
     }
 
-    static inline simd4i simd4i_set_w(__simd4i a, int w)
+    static inline int32x4 int32x4_set_w(int32x4__ a, int w)
     {
-        simd4i temp = a;
+        int32x4 temp = a;
         temp.w = w;
         return temp;
     }
 
-    static inline int simd4i_get_x(__simd4i a)
+    static inline int int32x4_get_x(int32x4__ a)
     {
         return a.x;
     }
 
-    static inline int simd4i_get_y(__simd4i a)
+    static inline int int32x4_get_y(int32x4__ a)
     {
         return a.y;
     }
 
-    static inline int simd4i_get_z(__simd4i a)
+    static inline int int32x4_get_z(int32x4__ a)
     {
         return a.z;
     }
 
-    static inline int simd4i_get_w(__simd4i a)
+    static inline int int32x4_get_w(int32x4__ a)
     {
         return a.w;
     }
 
-    static inline simd4i simd4i_load(const int* source)
+    static inline int32x4 int32x4_load(const int* source)
     {
-        simd4i temp = { source[0], source[1], source[2], source[3] };
+        int32x4 temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline simd4i simd4i_uload(const int* source)
+    static inline int32x4 int32x4_uload(const int* source)
     {
-        return simd4i_load(source);
+        return int32x4_load(source);
     }
 
-    static inline void simd4i_store(int* dest, __simd4i a)
+    static inline void int32x4_store(int* dest, int32x4__ a)
     {
         dest[0] = a.x;
         dest[1] = a.y;
@@ -104,38 +104,38 @@
         dest[3] = a.w;
     }
 
-    static inline void simd4i_ustore(int* dest, __simd4i a)
+    static inline void int32x4_ustore(int* dest, int32x4__ a)
     {
-        simd4i_store(dest, a);
+        int32x4_store(dest, a);
     }
 
-    static inline simd4i simd4i_zero()
+    static inline int32x4 int32x4_zero()
     {
-        simd4i temp = { 0, 0, 0, 0 };
+        int32x4 temp = { 0, 0, 0, 0 };
         return temp;
     }
 
-    static inline simd4i simd4i_set1(int s)
+    static inline int32x4 int32x4_set1(int s)
     {
-        simd4i temp = { s, s, s, s };
+        int32x4 temp = { s, s, s, s };
         return temp;
     }
 
-    static inline simd4i simd4i_set4(int x, int y, int z, int w)
+    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
     {
-        simd4i temp = { x, y, z, w };
+        int32x4 temp = { x, y, z, w };
         return temp;
     }
 
-    static inline simd4i simd4i_neg(__simd4i a)
+    static inline int32x4 int32x4_neg(int32x4__ a)
     {
-        simd4i v = { -a.x, -a.y, -a.z, -a.w };
+        int32x4 v = { -a.x, -a.y, -a.z, -a.w };
         return v;
     }
 
-    static inline simd4i simd4i_add(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_add(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x + b.x;
         v.y = a.y + b.y;
         v.z = a.z + b.z;
@@ -143,9 +143,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_sub(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_sub(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x - b.x;
         v.y = a.y - b.y;
         v.z = a.z - b.z;
@@ -155,9 +155,9 @@
 
     // logical
 
-    static inline simd4i simd4i_and(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_and(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x & b.x;
         v.y = a.y & b.y;
         v.z = a.z & b.z;
@@ -165,9 +165,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_nand(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_nand(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = ~a.x & b.x;
         v.y = ~a.y & b.y;
         v.z = ~a.z & b.z;
@@ -175,9 +175,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_or(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_or(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x | b.x;
         v.y = a.y | b.y;
         v.z = a.z | b.z;
@@ -185,9 +185,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_xor(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_xor(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x ^ b.x;
         v.y = a.y ^ b.y;
         v.z = a.z ^ b.z;
@@ -197,9 +197,9 @@
 
     // shift
 
-    static inline simd4i simd4i_sll(__simd4i a, int b)
+    static inline int32x4 int32x4_sll(int32x4__ a, int b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = static_cast<uint32>(a.x) << b;
         v.y = static_cast<uint32>(a.y) << b;
         v.z = static_cast<uint32>(a.z) << b;
@@ -207,9 +207,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_srl(__simd4i a, int b)
+    static inline int32x4 int32x4_srl(int32x4__ a, int b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = static_cast<uint32>(a.x) >> b;
         v.y = static_cast<uint32>(a.y) >> b;
         v.z = static_cast<uint32>(a.z) >> b;
@@ -217,9 +217,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_sra(__simd4i a, int b)
+    static inline int32x4 int32x4_sra(int32x4__ a, int b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x >> b;
         v.y = a.y >> b;
         v.z = a.z >> b;
@@ -229,9 +229,9 @@
 
     // compare
 
-    static inline simd4i simd4i_compare_eq(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_compare_eq(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x == b.x ? 0xffffffff : 0;
         v.y = a.y == b.y ? 0xffffffff : 0;
         v.z = a.z == b.z ? 0xffffffff : 0;
@@ -239,9 +239,9 @@
         return v;
     }
 
-    static inline simd4i simd4i_compare_gt(__simd4i a, __simd4i b)
+    static inline int32x4 int32x4_compare_gt(int32x4__ a, int32x4__ b)
     {
-        simd4i v;
+        int32x4 v;
         v.x = a.x > b.x ? 0xffffffff : 0;
         v.y = a.y > b.y ? 0xffffffff : 0;
         v.z = a.z > b.z ? 0xffffffff : 0;
@@ -249,12 +249,12 @@
         return v;
     }
 
-    static inline simd4i simd4i_select(__simd4i mask, __simd4i a, __simd4i b)
+    static inline int32x4 int32x4_select(int32x4__ mask, int32x4__ a, int32x4__ b)
     {
-        return simd4i_or(simd4i_and(mask, a), simd4i_nand(mask, b));
+        return int32x4_or(int32x4_and(mask, a), int32x4_nand(mask, b));
     }
 
-    static inline uint32 simd4i_get_mask(__simd4i a)
+    static inline uint32 int32x4_get_mask(int32x4__ a)
     {
         const uint32 x = a.x & 0x80000000;
         const uint32 y = a.y & 0x80000000;
@@ -264,7 +264,7 @@
         return mask;
     }
 
-    static inline uint32 simd4i_pack(__simd4i s)
+    static inline uint32 int32x4_pack(int32x4__ s)
     {
         const uint32 x = byteclamp(s.x);
         const uint32 y = byteclamp(s.y);
@@ -273,9 +273,9 @@
         return x | (y << 8) | (z << 16) | (w << 24);
     }
 
-    static inline simd4i simd4i_unpack(uint32 s)
+    static inline int32x4 int32x4_unpack(uint32 s)
     {
-        simd4i v;
+        int32x4 v;
         v.x = (s >> 0) & 0xff;
         v.y = (s >> 8) & 0xff;
         v.z = (s >> 16) & 0xff;

@@ -13,449 +13,449 @@ namespace simd {
     // Trigonometric functions
     // ------------------------------------------------------------------
 
-    simd4f simd4f_sin(__simd4f a);
-    simd4f simd4f_cos(__simd4f a);
-    simd4f simd4f_tan(__simd4f a);
-    simd4f simd4f_asin(__simd4f a);
-    simd4f simd4f_acos(__simd4f a);
-    simd4f simd4f_atan(__simd4f a);
-    simd4f simd4f_exp(__simd4f a);
-    simd4f simd4f_log(__simd4f a);
-    simd4f simd4f_exp2(__simd4f a);
-    simd4f simd4f_log2(__simd4f a);
-    simd4f simd4f_pow(__simd4f a, __simd4f b);
-    simd4f simd4f_atan2(__simd4f a, __simd4f b);
+    float32x4 float32x4_sin(float32x4__ a);
+    float32x4 float32x4_cos(float32x4__ a);
+    float32x4 float32x4_tan(float32x4__ a);
+    float32x4 float32x4_asin(float32x4__ a);
+    float32x4 float32x4_acos(float32x4__ a);
+    float32x4 float32x4_atan(float32x4__ a);
+    float32x4 float32x4_exp(float32x4__ a);
+    float32x4 float32x4_log(float32x4__ a);
+    float32x4 float32x4_exp2(float32x4__ a);
+    float32x4 float32x4_log2(float32x4__ a);
+    float32x4 float32x4_pow(float32x4__ a, float32x4__ b);
+    float32x4 float32x4_atan2(float32x4__ a, float32x4__ b);
 
-    simd4d simd4d_sin(__simd4d a);
-    simd4d simd4d_cos(__simd4d a);
-    simd4d simd4d_tan(__simd4d a);
-    simd4d simd4d_asin(__simd4d a);
-    simd4d simd4d_acos(__simd4d a);
-    simd4d simd4d_atan(__simd4d a);
+    float64x4 float64x4_sin(float64x4__ a);
+    float64x4 float64x4_cos(float64x4__ a);
+    float64x4 float64x4_tan(float64x4__ a);
+    float64x4 float64x4_asin(float64x4__ a);
+    float64x4 float64x4_acos(float64x4__ a);
+    float64x4 float64x4_atan(float64x4__ a);
 #if 0 // TODO
-    simd4d simd4d_exp(__simd4d a);
-    simd4d simd4d_log(__simd4d a);
-    simd4d simd4d_exp2(__simd4d a);
-    simd4d simd4d_log2(__simd4d a);
-    simd4d simd4d_pow(__simd4d a, __simd4d b);
+    float64x4 float64x4_exp(float64x4__ a);
+    float64x4 float64x4_log(float64x4__ a);
+    float64x4 float64x4_exp2(float64x4__ a);
+    float64x4 float64x4_log2(float64x4__ a);
+    float64x4 float64x4_pow(float64x4__ a, float64x4__ b);
 #endif
-    simd4d simd4d_atan2(__simd4d a, __simd4d b);
+    float64x4 float64x4_atan2(float64x4__ a, float64x4__ b);
 
     // ------------------------------------------------------------------
     // Common scalar variations
     // ------------------------------------------------------------------
 
-    // simd4i
+    // int32x4
 
-    static inline simd4i simd4i_add(int a, __simd4i b)
+    static inline int32x4 int32x4_add(int a, int32x4__ b)
     {
-        return simd4i_add(simd4i_set1(a), b);
+        return int32x4_add(int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_add(__simd4i a, int b)
+    static inline int32x4 int32x4_add(int32x4__ a, int b)
     {
-        return simd4i_add(a, simd4i_set1(b));
+        return int32x4_add(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_sub(int a, __simd4i b)
+    static inline int32x4 int32x4_sub(int a, int32x4__ b)
     {
-        return simd4i_sub(simd4i_set1(a), b);
+        return int32x4_sub(int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_sub(__simd4i a, int b)
+    static inline int32x4 int32x4_sub(int32x4__ a, int b)
     {
-        return simd4i_sub(a, simd4i_set1(b));
+        return int32x4_sub(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_and(int a, __simd4i b)
+    static inline int32x4 int32x4_and(int a, int32x4__ b)
     {
-        return simd4i_and(simd4i_set1(a), b);
+        return int32x4_and(int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_and(__simd4i a, int b)
+    static inline int32x4 int32x4_and(int32x4__ a, int b)
     {
-        return simd4i_and(a, simd4i_set1(b));
+        return int32x4_and(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_nand(int a, __simd4i b)
+    static inline int32x4 int32x4_nand(int a, int32x4__ b)
     {
-        return simd4i_nand(simd4i_set1(a), b);
+        return int32x4_nand(int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_nand(__simd4i a, int b)
+    static inline int32x4 int32x4_nand(int32x4__ a, int b)
     {
-        return simd4i_nand(a, simd4i_set1(b));
+        return int32x4_nand(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_or(int a, __simd4i b)
+    static inline int32x4 int32x4_or(int a, int32x4__ b)
     {
-        return simd4i_or(simd4i_set1(a), b);
+        return int32x4_or(int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_or(__simd4i a, int b)
+    static inline int32x4 int32x4_or(int32x4__ a, int b)
     {
-        return simd4i_or(a, simd4i_set1(b));
+        return int32x4_or(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_xor(int a, __simd4i b)
+    static inline int32x4 int32x4_xor(int a, int32x4__ b)
     {
-        return simd4i_xor(simd4i_set1(a), b);
+        return int32x4_xor(int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_xor(__simd4i a, int b)
+    static inline int32x4 int32x4_xor(int32x4__ a, int b)
     {
-        return simd4i_xor(a, simd4i_set1(b));
+        return int32x4_xor(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_compare_eq(__simd4i a, int b)
+    static inline int32x4 int32x4_compare_eq(int32x4__ a, int b)
     {
-        return simd4i_compare_eq(a, simd4i_set1(b));
+        return int32x4_compare_eq(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_compare_gt(__simd4i a, int b)
+    static inline int32x4 int32x4_compare_gt(int32x4__ a, int b)
     {
-        return simd4i_compare_gt(a, simd4i_set1(b));
+        return int32x4_compare_gt(a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_select(__simd4i mask, int a, __simd4i b)
+    static inline int32x4 int32x4_select(int32x4__ mask, int a, int32x4__ b)
     {
-        return simd4i_select(mask, simd4i_set1(a), b);
+        return int32x4_select(mask, int32x4_set1(a), b);
     }
 
-    static inline simd4i simd4i_select(__simd4i mask, __simd4i a, int b)
+    static inline int32x4 int32x4_select(int32x4__ mask, int32x4__ a, int b)
     {
-        return simd4i_select(mask, a, simd4i_set1(b));
+        return int32x4_select(mask, a, int32x4_set1(b));
     }
 
-    static inline simd4i simd4i_select(__simd4i mask, int a, int b)
+    static inline int32x4 int32x4_select(int32x4__ mask, int a, int b)
     {
-        return simd4i_select(mask, simd4i_set1(a), simd4i_set1(b));
+        return int32x4_select(mask, int32x4_set1(a), int32x4_set1(b));
     }
 
-    // simd4f
+    // float32x4
 
-    static inline simd4f simd4f_add(float a, __simd4f b)
+    static inline float32x4 float32x4_add(float a, float32x4__ b)
     {
-        return simd4f_add(simd4f_set1(a), b);
+        return float32x4_add(float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_add(__simd4f a, float b)
+    static inline float32x4 float32x4_add(float32x4__ a, float b)
     {
-        return simd4f_add(a, simd4f_set1(b));
+        return float32x4_add(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_sub(float a, __simd4f b)
+    static inline float32x4 float32x4_sub(float a, float32x4__ b)
     {
-        return simd4f_sub(simd4f_set1(a), b);
+        return float32x4_sub(float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_sub(__simd4f a, float b)
+    static inline float32x4 float32x4_sub(float32x4__ a, float b)
     {
-        return simd4f_sub(a, simd4f_set1(b));
+        return float32x4_sub(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_mul(__simd4f a, float b)
+    static inline float32x4 float32x4_mul(float32x4__ a, float b)
     {
-        return simd4f_mul(a, simd4f_set1(b));
+        return float32x4_mul(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_mul(float a, __simd4f b)
+    static inline float32x4 float32x4_mul(float a, float32x4__ b)
     {
-        return simd4f_mul(simd4f_set1(a), b);
+        return float32x4_mul(float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_div(float a, __simd4f b)
+    static inline float32x4 float32x4_div(float a, float32x4__ b)
     {
-        return simd4f_div(simd4f_set1(a), b);
+        return float32x4_div(float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_madd(float a, __simd4f b, __simd4f c)
+    static inline float32x4 float32x4_madd(float a, float32x4__ b, float32x4__ c)
     {
-        return simd4f_madd(simd4f_set1(a), b, c);
+        return float32x4_madd(float32x4_set1(a), b, c);
     }
 
-    static inline simd4f simd4f_madd(__simd4f a, float b, __simd4f c)
+    static inline float32x4 float32x4_madd(float32x4__ a, float b, float32x4__ c)
     {
-        return simd4f_madd(a, simd4f_set1(b), c);
+        return float32x4_madd(a, float32x4_set1(b), c);
     }
 
-    static inline simd4f simd4f_madd(__simd4f a, __simd4f b, float c)
+    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float c)
     {
-        return simd4f_madd(a, b, simd4f_set1(c));
+        return float32x4_madd(a, b, float32x4_set1(c));
     }
 
-    static inline simd4f simd4f_min(float a, __simd4f b)
+    static inline float32x4 float32x4_min(float a, float32x4__ b)
     {
-        return simd4f_min(simd4f_set1(a), b);
+        return float32x4_min(float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_min(__simd4f a, float b)
+    static inline float32x4 float32x4_min(float32x4__ a, float b)
     {
-        return simd4f_min(a, simd4f_set1(b));
+        return float32x4_min(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_max(float a, __simd4f b)
+    static inline float32x4 float32x4_max(float a, float32x4__ b)
     {
-        return simd4f_max(simd4f_set1(a), b);
+        return float32x4_max(float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_max(__simd4f a, float b)
+    static inline float32x4 float32x4_max(float32x4__ a, float b)
     {
-        return simd4f_max(a, simd4f_set1(b));
+        return float32x4_max(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_clamp(__simd4f v, float vmin, float vmax)
+    static inline float32x4 float32x4_clamp(float32x4__ v, float vmin, float vmax)
     {
-        return simd4f_clamp(v, simd4f_set1(vmin), simd4f_set1(vmax));
+        return float32x4_clamp(v, float32x4_set1(vmin), float32x4_set1(vmax));
     }
 
-    static inline simd4f simd4f_compare_neq(__simd4f a, float b)
+    static inline float32x4 float32x4_compare_neq(float32x4__ a, float b)
     {
-        return simd4f_compare_neq(a, simd4f_set1(b));
+        return float32x4_compare_neq(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_compare_eq(__simd4f a, float b)
+    static inline float32x4 float32x4_compare_eq(float32x4__ a, float b)
     {
-        return simd4f_compare_eq(a, simd4f_set1(b));
+        return float32x4_compare_eq(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_compare_lt(__simd4f a, float b)
+    static inline float32x4 float32x4_compare_lt(float32x4__ a, float b)
     {
-        return simd4f_compare_lt(a, simd4f_set1(b));
+        return float32x4_compare_lt(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_compare_le(__simd4f a, float b)
+    static inline float32x4 float32x4_compare_le(float32x4__ a, float b)
     {
-        return simd4f_compare_le(a, simd4f_set1(b));
+        return float32x4_compare_le(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_compare_gt(__simd4f a, float b)
+    static inline float32x4 float32x4_compare_gt(float32x4__ a, float b)
     {
-        return simd4f_compare_gt(a, simd4f_set1(b));
+        return float32x4_compare_gt(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_compare_ge(__simd4f a, float b)
+    static inline float32x4 float32x4_compare_ge(float32x4__ a, float b)
     {
-        return simd4f_compare_ge(a, simd4f_set1(b));
+        return float32x4_compare_ge(a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_select(__simd4f mask, float a, __simd4f b)
+    static inline float32x4 float32x4_select(float32x4__ mask, float a, float32x4__ b)
     {
-        return simd4f_select(mask, simd4f_set1(a), b);
+        return float32x4_select(mask, float32x4_set1(a), b);
     }
 
-    static inline simd4f simd4f_select(__simd4f mask, __simd4f a, float b)
+    static inline float32x4 float32x4_select(float32x4__ mask, float32x4__ a, float b)
     {
-        return simd4f_select(mask, a, simd4f_set1(b));
+        return float32x4_select(mask, a, float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_select(__simd4f mask, float a, float b)
+    static inline float32x4 float32x4_select(float32x4__ mask, float a, float b)
     {
-        return simd4f_select(mask, simd4f_set1(a), simd4f_set1(b));
+        return float32x4_select(mask, float32x4_set1(a), float32x4_set1(b));
     }
 
-    static inline simd4f simd4f_mod(__simd4f a, __simd4f b)
+    static inline float32x4 float32x4_mod(float32x4__ a, float32x4__ b)
     {
-        simd4f temp = simd4f_floor(simd4f_div(a, b));
-        return simd4f_sub(a, simd4f_mul(b, temp));
+        float32x4 temp = float32x4_floor(float32x4_div(a, b));
+        return float32x4_sub(a, float32x4_mul(b, temp));
     }
 
-    static inline simd4f simd4f_sign(__simd4f a)
+    static inline float32x4 float32x4_sign(float32x4__ a)
     {
-        const simd4f zero_mask = simd4f_compare_neq(a, simd4f_zero());
-        const simd4f sign_bits = simd4f_and(a, simd4f_set1(-0.0f));
-        const simd4f signed_one = simd4f_or(sign_bits, simd4f_set1(1.0f));
-        return simd4f_and(signed_one, zero_mask);
+        const float32x4 zero_mask = float32x4_compare_neq(a, float32x4_zero());
+        const float32x4 sign_bits = float32x4_and(a, float32x4_set1(-0.0f));
+        const float32x4 signed_one = float32x4_or(sign_bits, float32x4_set1(1.0f));
+        return float32x4_and(signed_one, zero_mask);
     }
 
-    static inline simd4f simd4f_radians(__simd4f a)
+    static inline float32x4 float32x4_radians(float32x4__ a)
     {
-        static const simd4f s = simd4f_set1(0.01745329251f);
-        return simd4f_mul(a, s);
+        static const float32x4 s = float32x4_set1(0.01745329251f);
+        return float32x4_mul(a, s);
     }
 
-    static inline simd4f simd4f_degrees(__simd4f a)
+    static inline float32x4 float32x4_degrees(float32x4__ a)
     {
-        static const simd4f s = simd4f_set1(57.2957795131f);
-        return simd4f_mul(a, s);
+        static const float32x4 s = float32x4_set1(57.2957795131f);
+        return float32x4_mul(a, s);
     }
 
-    static inline simd4f simd4f_square(__simd4f a)
+    static inline float32x4 float32x4_square(float32x4__ a)
     {
-        return simd4f_dot4(a, a);
+        return float32x4_dot4(a, a);
     }
 
-    static inline simd4f simd4f_length(__simd4f a)
+    static inline float32x4 float32x4_length(float32x4__ a)
     {
-        return simd4f_sqrt(simd4f_dot4(a, a));
+        return float32x4_sqrt(float32x4_dot4(a, a));
     }
 
-    static inline simd4f simd4f_normalize(__simd4f a)
+    static inline float32x4 float32x4_normalize(float32x4__ a)
     {
-        return simd4f_mul(a, simd4f_rsqrt(simd4f_dot4(a, a)));
+        return float32x4_mul(a, float32x4_rsqrt(float32x4_dot4(a, a)));
     }
 
-    // simd4d
+    // float64x4
 
-    static inline simd4d simd4d_add(double a, __simd4d b)
+    static inline float64x4 float64x4_add(double a, float64x4__ b)
     {
-        return simd4d_add(simd4d_set1(a), b);
+        return float64x4_add(float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_add(__simd4d a, double b)
+    static inline float64x4 float64x4_add(float64x4__ a, double b)
     {
-        return simd4d_add(a, simd4d_set1(b));
+        return float64x4_add(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_sub(double a, __simd4d b)
+    static inline float64x4 float64x4_sub(double a, float64x4__ b)
     {
-        return simd4d_sub(simd4d_set1(a), b);
+        return float64x4_sub(float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_sub(__simd4d a, double b)
+    static inline float64x4 float64x4_sub(float64x4__ a, double b)
     {
-        return simd4d_sub(a, simd4d_set1(b));
+        return float64x4_sub(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_mul(__simd4d a, double b)
+    static inline float64x4 float64x4_mul(float64x4__ a, double b)
     {
-        return simd4d_mul(a, simd4d_set1(b));
+        return float64x4_mul(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_mul(double a, __simd4d b)
+    static inline float64x4 float64x4_mul(double a, float64x4__ b)
     {
-        return simd4d_mul(simd4d_set1(a), b);
+        return float64x4_mul(float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_div(double a, __simd4d b)
+    static inline float64x4 float64x4_div(double a, float64x4__ b)
     {
-        return simd4d_div(simd4d_set1(a), b);
+        return float64x4_div(float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_madd(double a, __simd4d b, __simd4d c)
+    static inline float64x4 float64x4_madd(double a, float64x4__ b, float64x4__ c)
     {
-        return simd4d_madd(simd4d_set1(a), b, c);
+        return float64x4_madd(float64x4_set1(a), b, c);
     }
 
-    static inline simd4d simd4d_madd(__simd4d a, double b, __simd4d c)
+    static inline float64x4 float64x4_madd(float64x4__ a, double b, float64x4__ c)
     {
-        return simd4d_madd(a, simd4d_set1(b), c);
+        return float64x4_madd(a, float64x4_set1(b), c);
     }
 
-    static inline simd4d simd4d_madd(__simd4d a, __simd4d b, double c)
+    static inline float64x4 float64x4_madd(float64x4__ a, float64x4__ b, double c)
     {
-        return simd4d_madd(a, b, simd4d_set1(c));
+        return float64x4_madd(a, b, float64x4_set1(c));
     }
 
-    static inline simd4d simd4d_min(double a, __simd4d b)
+    static inline float64x4 float64x4_min(double a, float64x4__ b)
     {
-        return simd4d_min(simd4d_set1(a), b);
+        return float64x4_min(float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_min(__simd4d a, double b)
+    static inline float64x4 float64x4_min(float64x4__ a, double b)
     {
-        return simd4d_min(a, simd4d_set1(b));
+        return float64x4_min(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_max(double a, __simd4d b)
+    static inline float64x4 float64x4_max(double a, float64x4__ b)
     {
-        return simd4d_max(simd4d_set1(a), b);
+        return float64x4_max(float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_max(__simd4d a, double b)
+    static inline float64x4 float64x4_max(float64x4__ a, double b)
     {
-        return simd4d_max(a, simd4d_set1(b));
+        return float64x4_max(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_clamp(__simd4d v, double vmin, double vmax)
+    static inline float64x4 float64x4_clamp(float64x4__ v, double vmin, double vmax)
     {
-        return simd4d_clamp(v, simd4d_set1(vmin), simd4d_set1(vmax));
+        return float64x4_clamp(v, float64x4_set1(vmin), float64x4_set1(vmax));
     }
 
-    static inline simd4d simd4d_compare_neq(__simd4d a, double b)
+    static inline float64x4 float64x4_compare_neq(float64x4__ a, double b)
     {
-        return simd4d_compare_neq(a, simd4d_set1(b));
+        return float64x4_compare_neq(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_compare_eq(__simd4d a, double b)
+    static inline float64x4 float64x4_compare_eq(float64x4__ a, double b)
     {
-        return simd4d_compare_eq(a, simd4d_set1(b));
+        return float64x4_compare_eq(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_compare_lt(__simd4d a, double b)
+    static inline float64x4 float64x4_compare_lt(float64x4__ a, double b)
     {
-        return simd4d_compare_lt(a, simd4d_set1(b));
+        return float64x4_compare_lt(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_compare_le(__simd4d a, double b)
+    static inline float64x4 float64x4_compare_le(float64x4__ a, double b)
     {
-        return simd4d_compare_le(a, simd4d_set1(b));
+        return float64x4_compare_le(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_compare_gt(__simd4d a, double b)
+    static inline float64x4 float64x4_compare_gt(float64x4__ a, double b)
     {
-        return simd4d_compare_gt(a, simd4d_set1(b));
+        return float64x4_compare_gt(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_compare_ge(__simd4d a, double b)
+    static inline float64x4 float64x4_compare_ge(float64x4__ a, double b)
     {
-        return simd4d_compare_ge(a, simd4d_set1(b));
+        return float64x4_compare_ge(a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_select(__simd4d mask, double a, __simd4d b)
+    static inline float64x4 float64x4_select(float64x4__ mask, double a, float64x4__ b)
     {
-        return simd4d_select(mask, simd4d_set1(a), b);
+        return float64x4_select(mask, float64x4_set1(a), b);
     }
 
-    static inline simd4d simd4d_select(__simd4d mask, __simd4d a, double b)
+    static inline float64x4 float64x4_select(float64x4__ mask, float64x4__ a, double b)
     {
-        return simd4d_select(mask, a, simd4d_set1(b));
+        return float64x4_select(mask, a, float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_select(__simd4d mask, double a, double b)
+    static inline float64x4 float64x4_select(float64x4__ mask, double a, double b)
     {
-        return simd4d_select(mask, simd4d_set1(a), simd4d_set1(b));
+        return float64x4_select(mask, float64x4_set1(a), float64x4_set1(b));
     }
 
-    static inline simd4d simd4d_mod(__simd4d a, __simd4d b)
+    static inline float64x4 float64x4_mod(float64x4__ a, float64x4__ b)
     {
-        simd4d temp = simd4d_floor(simd4d_div(a, b));
-        return simd4d_sub(a, simd4d_mul(b, temp));
+        float64x4 temp = float64x4_floor(float64x4_div(a, b));
+        return float64x4_sub(a, float64x4_mul(b, temp));
     }
 
-    static inline simd4d simd4d_sign(__simd4d a)
+    static inline float64x4 float64x4_sign(float64x4__ a)
     {
-        const simd4d zero_mask = simd4d_compare_neq(a, simd4d_zero());
-        const simd4d sign_bits = simd4d_and(a, simd4d_set1(-0.0));
-        const simd4d signed_one = simd4d_or(sign_bits, simd4d_set1(1.0));
-        return simd4d_and(signed_one, zero_mask);
+        const float64x4 zero_mask = float64x4_compare_neq(a, float64x4_zero());
+        const float64x4 sign_bits = float64x4_and(a, float64x4_set1(-0.0));
+        const float64x4 signed_one = float64x4_or(sign_bits, float64x4_set1(1.0));
+        return float64x4_and(signed_one, zero_mask);
     }
 
-    static inline simd4d simd4d_radians(__simd4d a)
+    static inline float64x4 float64x4_radians(float64x4__ a)
     {
-        static const simd4d s = simd4d_set1(0.01745329251);
-        return simd4d_mul(a, s);
+        static const float64x4 s = float64x4_set1(0.01745329251);
+        return float64x4_mul(a, s);
     }
 
-    static inline simd4d simd4d_degrees(__simd4d a)
+    static inline float64x4 float64x4_degrees(float64x4__ a)
     {
-        static const simd4d s = simd4d_set1(57.2957795131);
-        return simd4d_mul(a, s);
+        static const float64x4 s = float64x4_set1(57.2957795131);
+        return float64x4_mul(a, s);
     }
 
-    static inline simd4d simd4d_square(__simd4d a)
+    static inline float64x4 float64x4_square(float64x4__ a)
     {
-        return simd4d_dot4(a, a);
+        return float64x4_dot4(a, a);
     }
 
-    static inline simd4d simd4d_length(__simd4d a)
+    static inline float64x4 float64x4_length(float64x4__ a)
     {
-        return simd4d_sqrt(simd4d_dot4(a, a));
+        return float64x4_sqrt(float64x4_dot4(a, a));
     }
 
-    static inline simd4d simd4d_normalize(__simd4d a)
+    static inline float64x4 float64x4_normalize(float64x4__ a)
     {
-        return simd4d_mul(a, simd4d_rsqrt(simd4d_dot4(a, a)));
+        return float64x4_mul(a, float64x4_rsqrt(float64x4_dot4(a, a)));
     }
 
 } // namespace simd

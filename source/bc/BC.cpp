@@ -318,8 +318,8 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 
 //-------------------------------------------------------------------------------------
 
-static const simd4f g_XMIdentityR3 = simd4f_set4(0.0f, 0.0f, 0.0f, 1.0f);
-static const simd4f g_XMSelect1110 = simd4f_cast(simd4i_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
+static const simd::float32x4 g_XMIdentityR3 = simd::float32x4_set4(0.0f, 0.0f, 0.0f, 1.0f);
+static const simd::float32x4 g_XMSelect1110 = simd::float32x4_cast(simd::int32x4_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
 
     struct XMU565
     {
@@ -330,10 +330,10 @@ static const simd4f g_XMSelect1110 = simd4f_cast(simd4i_set4(0xffffffff, 0xfffff
     {
 #if 1
         static const XMVECTOR scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
-        simd4i s = simd4i_set1(data);
-        simd4i c = simd4i_and(s, simd4i_set4(0x1f << 11, 0x3f << 5, 0x1f, 0));
-        c = simd4i_or(c, simd4i_set4(0, 0, 0, 1));
-        float4 v = simd4f_convert(c);
+        simd::int32x4 s = simd::int32x4_set1(data);
+        simd::int32x4 c = simd::int32x4_and(s, simd::int32x4_set4(0x1f << 11, 0x3f << 5, 0x1f, 0));
+        c = simd::int32x4_or(c, simd::int32x4_set4(0, 0, 0, 1));
+        float4 v = simd::float32x4_convert(c);
         return v * scale;
 #else
         static const XMVECTOR scale(1.f/31.f, 1.f/63.f, 1.f/31.f, 1.f);
@@ -357,13 +357,13 @@ inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
     float4 color[4];
     color[0] = XMLoadU565(pBC->rgb[0]);
     color[1] = XMLoadU565(pBC->rgb[1]);
-    color[0] = simd4f_select(g_XMIdentityR3, color[0], g_XMSelect1110);
-    color[1] = simd4f_select(g_XMIdentityR3, color[1], g_XMSelect1110);
+    color[0] = simd::float32x4_select(g_XMIdentityR3, color[0], g_XMSelect1110);
+    color[1] = simd::float32x4_select(g_XMIdentityR3, color[1], g_XMSelect1110);
 
     if ( isbc1 && (pBC->rgb[0] <= pBC->rgb[1]) )
     {
         color[2] = lerp(color[0], color[1], 0.5f);
-        color[3] = simd4f_zero();  // Alpha of 0
+        color[3] = simd::float32x4_zero();  // Alpha of 0
     }
     else
     {
@@ -376,10 +376,10 @@ inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
     for (int y = 0; y < 4; ++y)
     {
         float* dest = reinterpret_cast<float*>(pColor);
-        simd4f_ustore(dest +  0, color[(dw >> 0) & 3]);
-        simd4f_ustore(dest +  4, color[(dw >> 2) & 3]);
-        simd4f_ustore(dest +  8, color[(dw >> 4) & 3]);
-        simd4f_ustore(dest + 12, color[(dw >> 6) & 3]);
+        simd::float32x4_ustore(dest +  0, color[(dw >> 0) & 3]);
+        simd::float32x4_ustore(dest +  4, color[(dw >> 2) & 3]);
+        simd::float32x4_ustore(dest +  8, color[(dw >> 4) & 3]);
+        simd::float32x4_ustore(dest + 12, color[(dw >> 6) & 3]);
         dw >>= 8;
         pColor += stride;
     }
@@ -749,7 +749,7 @@ static void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef, 
         for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
             HDRColorA clr;
-            simd4f_ustore( reinterpret_cast<float*>(&clr), pColor[i] );
+            simd::float32x4_ustore( reinterpret_cast<float*>(&clr), pColor[i] );
 
             float fAlph = clr.a + fError[i];
 
@@ -785,7 +785,7 @@ static void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef, 
     {
         for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-            simd4f_ustore( reinterpret_cast<float*>( &Color[i] ), pColor[i] );
+            simd::float32x4_ustore( reinterpret_cast<float*>( &Color[i] ), pColor[i] );
         }
     }
 
@@ -815,21 +815,21 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd4f_set_w( pColor[i], float(dw & 0xf) * s );
+        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd4f_set_w( pColor[i], float(dw & 0xf) * s );
+        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
 
     dw = pBC2->bitmap[1];
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd4f_set_w( pColor[i], float(dw & 0xf) * s );
+        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd4f_set_w( pColor[i], float(dw & 0xf) * s );
+        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
 }
 
 static void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
@@ -840,7 +840,7 @@ static void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
     for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-        simd4f_ustore( reinterpret_cast<float*>( &Color[i] ), pColor[i] );
+        simd::float32x4_ustore( reinterpret_cast<float*>( &Color[i] ), pColor[i] );
     }
 
     D3DX_BC2 *pBC2 = reinterpret_cast<D3DX_BC2 *>(pBC);
@@ -942,21 +942,21 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 3)
-        pColor[i] = simd4f_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 3)
-        pColor[i] = simd4f_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
 
     dw = pBC3->bitmap[3] | (pBC3->bitmap[4] << 8) | (pBC3->bitmap[5] << 16);
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 3)
-        pColor[i] = simd4f_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 3)
-        pColor[i] = simd4f_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
 }
 
 static void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
@@ -967,7 +967,7 @@ static void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
     for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-        simd4f_ustore( reinterpret_cast<float*>( &Color[i] ), pColor[i] );
+        simd::float32x4_ustore( reinterpret_cast<float*>( &Color[i] ), pColor[i] );
     }
 
     D3DX_BC3 *pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
@@ -1176,8 +1176,8 @@ namespace
             const uint32* image = reinterpret_cast<const uint32*>(input + y * stride);
             for (int x = 0; x < 4; ++x)
             {
-                const simd4i v = simd4i_unpack(image[x]);
-                temp[y * 4 + x] = simd4f_convert(v);
+                const simd::int32x4 v = simd::int32x4_unpack(image[x]);
+                temp[y * 4 + x] = simd::float32x4_convert(v);
             }
         }
     }
