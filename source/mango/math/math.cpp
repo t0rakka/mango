@@ -11,22 +11,15 @@
 #include <mango/core/bits.hpp>
 #include <mango/math/math.hpp>
 
+namespace {
+
+    constexpr float epsilon = std::numeric_limits<float>::epsilon();
+    constexpr float pi = 3.14159265358979323846264338327f; 
+
+} // namespace
+
 namespace mango
 {
-
-    // ------------------------------------------------------------------------
-    // macros
-    // ------------------------------------------------------------------------
-
-    #define PI float(3.14159265358979323846264338327)
-    #define EPSILON float(std::numeric_limits<float>::epsilon())
-
-    #define sinf(s) float(std::sin(s))
-    #define cosf(s) float(std::cos(s))
-    #define acosf(s) float(std::acos(s))
-    #define tanf(s) float(std::tan(s))
-    #define atan2f(a,b) float(std::atan2(a,b))
-    #define sqrtf(s) float(std::sqrt(s))
 
     // ------------------------------------------------------------------------
     // float4x4
@@ -64,19 +57,19 @@ namespace mango
     const float4x4& float4x4::operator = (const AngleAxis& a)
     {
         const float length2 = square(a.axis);
-        if (length2 < EPSILON) {
+        if (length2 < epsilon) {
             *this = 1.0f; // set identity
             return *this;
         }
 
-        const float length = 1.0f / sqrtf(length2);
+        const float length = 1.0f / std::sqrt(length2);
 
         const float x = a.axis.x * length;
         const float y = a.axis.y * length;
         const float z = a.axis.z * length;
 
-        const float s = sinf(a.angle);
-        const float c = cosf(a.angle);
+        const float s = std::sin(a.angle);
+        const float c = std::cos(a.angle);
         const float i = 1.0f - c;
 
         const float xx = x * x * i + c;
@@ -187,8 +180,8 @@ namespace mango
 
     void float4x4::rotateX(float angle)
     {
-        const float s = sinf(angle);
-        const float c = cosf(angle);
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
 
         float* p = *this;
         
@@ -204,8 +197,8 @@ namespace mango
 
     void float4x4::rotateY(float angle)
     {
-        const float s = sinf(angle);
-        const float c = cosf(angle);
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
 
         float* p = *this;
         
@@ -221,8 +214,8 @@ namespace mango
 
     void float4x4::rotateZ(float angle)
     {
-        const float s = sinf(angle);
-        const float c = cosf(angle);
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
 
         float* p = *this;
 
@@ -473,8 +466,8 @@ namespace mango
 
     float4x4 rotateX(float angle)
     {
-        const float s = sinf(angle);
-        const float c = cosf(angle);
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
 
         float4x4 result;
 
@@ -488,8 +481,8 @@ namespace mango
 
     float4x4 rotateY(float angle)
     {
-        const float s = sinf(angle);
-        const float c = cosf(angle);
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
 
         float4x4 result;
 
@@ -503,8 +496,8 @@ namespace mango
 
     float4x4 rotateZ(float angle)
     {
-        const float s = sinf(angle);
-        const float c = cosf(angle);
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
 
         float4x4 result;
 
@@ -612,8 +605,8 @@ namespace mango
 
     float4x4 perspective(float xfov, float yfov, float znear, float zfar)
     {
-        float x = znear * tanf(xfov * 0.5f);
-        float y = znear * tanf(yfov * 0.5f);
+        float x = znear * std::tan(xfov * 0.5f);
+        float y = znear * std::tan(yfov * 0.5f);
         return frustum(-x, x, -y, y, znear, zfar);
     }
 
@@ -684,8 +677,8 @@ namespace mango
 
     float4x4 perspective(float xfov, float yfov, float znear, float zfar)
     {
-        float x = znear * tanf(xfov * 0.5f);
-        float y = znear * tanf(yfov * 0.5f);
+        float x = znear * std::tan(xfov * 0.5f);
+        float y = znear * std::tan(yfov * 0.5f);
         return frustum(-x, x, -y, y, znear, zfar);
     }
 
@@ -762,8 +755,8 @@ namespace mango
 
     float4x4 perspective(float xfov, float yfov, float znear, float zfar)
     {
-        const float w = 1.0f / tanf(xfov * 0.5f);
-        const float h = 1.0f / tanf(yfov * 0.5f);
+        const float w = 1.0f / std::tan(xfov * 0.5f);
+        const float h = 1.0f / std::tan(yfov * 0.5f);
         const float a = zfar / (zfar - znear);
         const float b = -a * znear;
 
@@ -862,14 +855,14 @@ namespace mango
             }
         }
 
-        *this = q * (0.5f / sqrtf(t));
+        *this = q * (0.5f / std::sqrt(t));
         return *this;
 #else
         Quaternion q;
 
         const float det = m(0,0) + m(1,1) + m(2,2);
         if (det > 0) {
-            float s = sqrtf(det + 1.0f);
+            float s = std::sqrt(det + 1.0f);
             q.w = s * 0.5f;
             s = 0.5f / s;
             q[0] = (m(1,2) - m(2,1)) * s;
@@ -884,8 +877,8 @@ namespace mango
             int j = i + 1; if (j > 2) j = 0;
             int k = j + 1; if (k > 2) k = 0;
 
-            float s = sqrtf(m(i,i) - m(j,j) - m(k,k) + 1.0f);
-            if (s < EPSILON) {
+            float s = std::sqrt(m(i,i) - m(j,j) - m(k,k) + 1.0f);
+            if (s < epsilon) {
 				q.xyz = float3(0.0f, 0.0f, 0.0f);
                 q.w = 1.0f;
             }
@@ -907,8 +900,8 @@ namespace mango
     const Quaternion& Quaternion::operator = (const AngleAxis& a)
     {
         const float theta = a.angle * 0.5f;
-        const float s = sinf(theta) / length(a.axis);
-        const float c = cosf(theta);
+        const float s = std::sin(theta) / length(a.axis);
+        const float c = std::cos(theta);
         xyz = a.axis * s;
         w = c;
         return *this;
@@ -951,17 +944,17 @@ namespace mango
 
     Quaternion log(const Quaternion& q)
     {
-        float s = q.w ? atan2f(sqrtf(square(q)), q.w) : PI * 2.0f;
+        float s = q.w ? std::atan2(std::sqrt(square(q)), q.w) : pi * 2.0f;
         return Quaternion(q.xyz * s, 0.0f);
     }
 
     Quaternion exp(const Quaternion& q)
     {
-        float s = sqrtf(square(q));
-        const float c = cosf(s);
+        float s = std::sqrt(square(q));
+        const float c = std::cos(s);
 
-        if (s > EPSILON * 100.0f) {
-            s = sinf(s) / s;
+        if (s > epsilon * 100.0f) {
+            s = std::sin(s) / s;
         }
         else {
             s = 1.0f;
@@ -973,10 +966,10 @@ namespace mango
     Quaternion pow(const Quaternion& q, float p)
     {
         float s = square(q);
-        const float c = cosf(s * p);
+        const float c = std::cos(s * p);
 
         if (s) {
-            s = sinf(s * p) / s;
+            s = std::sin(s * p) / s;
         }
         else {
             s = 1.0f;
@@ -989,7 +982,7 @@ namespace mango
     {
         float s = norm(q);
         if (s) {
-            s = 1.0f / sqrtf(s);
+            s = 1.0f / std::sqrt(s);
         }
         return q * s;
     }
@@ -997,9 +990,9 @@ namespace mango
     Quaternion lndif(const Quaternion& a, const Quaternion& b)
     {
         Quaternion p = inverse(a) * b;
-        const float length = sqrtf(square(p));
+        const float length = std::sqrt(square(p));
         const float scale = norm(a);
-        float s = scale ? atan2f(length, scale) : PI * 2.0f;
+        float s = scale ? std::atan2(length, scale) : pi * 2.0f;
         if (length) s /= length;
 
         return Quaternion(p.xyz * s, 0.0f);
@@ -1016,16 +1009,16 @@ namespace mango
     {
         const float cosom = dot(a, b);
 
-        if ((1.0f + cosom) > EPSILON) {
+        if ((1.0f + cosom) > epsilon) {
             float sp;
             float sq;
 
-            if ((1.0f - cosom) > EPSILON) {
-                const float omega = acosf(cosom);
-                const float sinom = 1.0f / sinf(omega);
+            if ((1.0f - cosom) > epsilon) {
+                const float omega = std::acos(cosom);
+                const float sinom = 1.0f / std::sin(omega);
 
-                sp = sinf((1.0f - time) * omega) * sinom;
-                sq = sinf(time * omega) * sinom;
+                sp = std::sin((1.0f - time) * omega) * sinom;
+                sq = std::sin(time * omega) * sinom;
             }
             else {
                 sp = 1.0f - time;
@@ -1035,9 +1028,9 @@ namespace mango
             return a * sp + b * sq;
         }
         else {
-            const float halfpi = PI * 0.5f;
-            const float sp = sinf((1.0f - time) * halfpi);
-            const float sq = sinf(time * halfpi);
+            const float halfpi = pi * 0.5f;
+            const float sp = std::sin((1.0f - time) * halfpi);
+            const float sq = std::sin(time * halfpi);
 
 			// TODO: check the return value
             return Quaternion(a.xyz.x * sp - a.xyz.y * sq,
@@ -1060,18 +1053,18 @@ namespace mango
         float beta;
         float alpha;
 
-        if ((1.0f - tcos) < EPSILON * 100.0f) {
+        if ((1.0f - tcos) < epsilon * 100.0f) {
             // linear interpolate
             beta = 1.0f - time;
             alpha = time * bflip;
         }
         else {
-            const float theta = acosf(tcos);
-            const float phi   = theta + spin * PI;
-            const float tsin  = sinf(theta);
+            const float theta = std::acos(tcos);
+            const float phi   = theta + spin * pi;
+            const float tsin  = std::sin(theta);
 
-            beta  = sinf(theta - time * phi) / tsin;
-            alpha = sinf(time * phi) / tsin * bflip;
+            beta  = std::sin(theta - time * phi) / tsin;
+            alpha = std::sin(time * phi) / tsin * bflip;
         }
 
         return a * beta + b * alpha;

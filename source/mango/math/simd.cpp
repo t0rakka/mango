@@ -6,7 +6,6 @@
     This work is based on "SLEEF" library and converted to use MANGO SIMD abstraction
     Author : Naoki Shibata
 */
-#define _USE_MATH_DEFINES /* TODO: required for M_PI, MPI_2, etc. rewrite to not require this */
 #include <mango/simd/simd.hpp>
 
 namespace mango {
@@ -18,15 +17,20 @@ namespace simd {
     // Sleef: float32x4
     // ------------------------------------------------------------------------
 
-    #define PI4_Af 0.78515625f
-    #define PI4_Bf 0.00024187564849853515625f
-    #define PI4_Cf 3.7747668102383613586e-08f
-    #define PI4_Df 1.2816720341285448015e-12f
-    #define L2Uf 0.693145751953125f
-    #define L2Lf 1.428606765330187045e-06f
-    #define R_LN2f 1.442695040888963407359924681001892137426645954152985934135449406931f
-    #define R_INFf float(std::numeric_limits<float>::infinity())
-    #define R_1_PIf 0.31830988618379067154f
+    constexpr float float_pi   = 3.14159265358979323846f;
+    constexpr float float_pi_2 = 1.57079632679489661923f;
+    constexpr float float_pi_4 = 0.785398163397448309616f;
+    constexpr float float_1_pi = 0.318309886183790671538f;
+    constexpr float float_2_pi = 0.636619772367581343076f;
+
+    constexpr float PI4_Af = 0.78515625f;
+    constexpr float PI4_Bf = 0.00024187564849853515625f;
+    constexpr float PI4_Cf = 3.7747668102383613586e-08f;
+    constexpr float PI4_Df = 1.2816720341285448015e-12f;
+    constexpr float L2Uf = 0.693145751953125f;
+    constexpr float L2Lf = 1.428606765330187045e-06f;
+    constexpr float R_LN2f = 1.442695040888963407359924681001892137426645954152985934135449406931f;
+    constexpr float R_INFf = float(std::numeric_limits<float>::infinity());
 
     static inline float32x4 signbit(float32x4__ f)
     {
@@ -93,7 +97,7 @@ namespace simd {
         u = float32x4_madd(-0.333331018686294555664062f, u, t);
 
         t = float32x4_madd(s, s, float32x4_mul(t, u));
-        t = float32x4_madd(t, float32x4_convert(q), float32x4_set1(float(M_PI/2)));
+        t = float32x4_madd(t, float32x4_convert(q), float32x4_set1(float_pi_2));
 
         return t;
     }
@@ -127,7 +131,7 @@ namespace simd {
     float32x4 float32x4_sin(float32x4__ v)
     {
         float32x4 d = v;
-        int32x4 q = int32x4_convert(float32x4_mul(v, R_1_PIf));
+        int32x4 q = int32x4_convert(float32x4_mul(v, float_1_pi));
         float32x4 u = float32x4_convert(q);
 
         d = float32x4_madd(d, u, -4.0f * PI4_Af);
@@ -151,7 +155,7 @@ namespace simd {
     {
         float32x4 d = v;
         int32x4 q;
-        q = int32x4_convert(float32x4_madd(-0.5f, d, float32x4_set1(R_1_PIf)));
+        q = int32x4_convert(float32x4_madd(-0.5f, d, float32x4_set1(float_1_pi)));
         q = int32x4_add(int32x4_add(q, q), 1);
         float32x4 u = float32x4_convert(q);
 
@@ -173,7 +177,7 @@ namespace simd {
 
     float32x4 float32x4_tan(float32x4__ d)
     {
-        const int32x4 q = int32x4_convert(float32x4_mul(d, float32x4_set1(2 * R_1_PIf)));
+        const int32x4 q = int32x4_convert(float32x4_mul(d, float32x4_set1(float_2_pi)));
         float32x4 u = float32x4_convert(q);
 
         float32x4 x = d;
@@ -298,7 +302,7 @@ namespace simd {
 #endif
 
         x = mulsign(atan2kf(x, absd), d);
-        y = float32x4_and(float32x4_compare_lt(d, float32x4_zero()), float32x4_set1(float(M_PI)));
+        y = float32x4_and(float32x4_compare_lt(d, float32x4_zero()), float32x4_set1(float_pi));
         x = float32x4_add(x, y);
         return x;
     }
@@ -328,7 +332,7 @@ namespace simd {
 
         int32x4 m;
         m = int32x4_compare_eq(int32x4_and(q, int32x4_set1(1)), int32x4_set1(1));
-        t = float32x4_select(float32x4_cast(m), float32x4_sub(float32x4_set1(float(M_PI/2)), t), t);
+        t = float32x4_select(float32x4_cast(m), float32x4_sub(float32x4_set1(float_pi_2), t), t);
 
         m = int32x4_compare_eq(int32x4_and(q, int32x4_set1(2)), int32x4_set1(2));
         t = float32x4_cast(int32x4_xor(int32x4_and(m, int32x4_cast(float32x4_set1(-0.0f))), int32x4_cast(t)));
@@ -338,9 +342,9 @@ namespace simd {
 
     float32x4 float32x4_atan2(float32x4__ y, float32x4__ x)
     {
-        static const float32x4 pi = float32x4_set1(float(M_PI));
-        static const float32x4 pi_2 = float32x4_set1(float(M_PI_2));
-        static const float32x4 pi_4 = float32x4_set1(float(M_PI_4));
+        static const float32x4 pi = float32x4_set1(float_pi);
+        static const float32x4 pi_2 = float32x4_set1(float_pi_2);
+        static const float32x4 pi_4 = float32x4_set1(float_pi_4);
 
         float32x4 r = atan2kf(float32x4_abs(y), x);
         r = mulsign(r, x);
@@ -489,15 +493,20 @@ namespace simd {
     // Sleef: float64x4
     // ------------------------------------------------------------------------
 
-    #define PI4_A 0.78539816290140151978
-    #define PI4_B 4.9604678871439933374e-10
-    #define PI4_C 1.1258708853173288931e-18
-    #define PI4_D 1.7607799325916000908e-27
+    constexpr double double_pi   = 3.14159265358979323846;
+    constexpr double double_pi_2 = 1.57079632679489661923;
+    constexpr double double_pi_4 = 0.785398163397448309616;
+    constexpr double double_1_pi = 0.318309886183790671538;
+    constexpr double double_2_pi = 0.636619772367581343076;
 
-    #define L2U .69314718055966295651160180568695068359375
-    #define L2L .28235290563031577122588448175013436025525412068e-12
-    #define R_LN2 1.442695040888963407359924681001892137426645954152985934135449406931
-    #define R_INF double(std::numeric_limits<double>::infinity())
+    constexpr double PI4_A = 0.78539816290140151978;
+    constexpr double PI4_B = 4.9604678871439933374e-10;
+    constexpr double PI4_C = 1.1258708853173288931e-18;
+    constexpr double PI4_D = 1.7607799325916000908e-27;
+    //constexpr double L2U = 0.69314718055966295651160180568695068359375;
+    //constexpr double L2L = 0.28235290563031577122588448175013436025525412068e-12;
+    //constexpr double R_LN2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
+    constexpr double R_INF = double(std::numeric_limits<double>::infinity());
 
     static inline float64x4 signbit(float64x4__ v)
     {
@@ -580,7 +589,7 @@ namespace simd {
         u = float64x4_madd(-0.333333333333311110369124, u, t);
 
         t = float64x4_madd(s, s, float64x4_mul(t, u));
-        t = float64x4_madd(t, float64x4_convert(q), float64x4_set1(M_PI/2));
+        t = float64x4_madd(t, float64x4_convert(q), float64x4_set1(double_pi_2));
 
         return t;
     }
@@ -621,7 +630,7 @@ namespace simd {
     {
         float64x4 d = v;
 
-        int32x4 q = int32x4_convert(float64x4_mul(d, M_1_PI));
+        int32x4 q = int32x4_convert(float64x4_mul(d, double_1_pi));
         float64x4 u = float64x4_convert(q);
 
         d = float64x4_madd(d, u, -4.0 * PI4_A);
@@ -644,7 +653,7 @@ namespace simd {
         float64x4 d = v;
 
         int32x4 q;
-        q = int32x4_convert(float64x4_madd(-0.5, d, float64x4_set1(M_1_PI)));
+        q = int32x4_convert(float64x4_madd(-0.5, d, float64x4_set1(double_1_pi)));
         q = int32x4_add(int32x4_add(q, q), 1);
         float64x4 u = float64x4_convert(q);
 
@@ -665,7 +674,7 @@ namespace simd {
 
     float64x4 float64x4_tan(float64x4__ d)
     {
-        const int32x4 q = int32x4_convert(float64x4_mul(d, M_2_PI));
+        const int32x4 q = int32x4_convert(float64x4_mul(d, double_2_pi));
         float64x4 u = float64x4_convert(q);
 
         float64x4 x = d;
@@ -776,7 +785,7 @@ namespace simd {
         x = float64x4_sqrt(x);
 
         x = mulsign(atan2k(x, float64x4_abs(d)), d);
-        y = float64x4_and(float64x4_compare_lt(d, float64x4_zero()), float64x4_set1(M_PI));
+        y = float64x4_and(float64x4_compare_lt(d, float64x4_zero()), float64x4_set1(double_pi));
         x = float64x4_add(x, y);
         return x;
     }
@@ -818,7 +827,7 @@ namespace simd {
         float64x4 m;
         const float64x4 q1 = float64x4_convert(int32x4_and(q, int32x4_set1(1)));
         m = float64x4_compare_eq(q1, one);
-        t = float64x4_select(m, float64x4_sub(M_PI / 2, t), t);
+        t = float64x4_select(m, float64x4_sub(double_pi_2, t), t);
 
         const float64x4 q2 = float64x4_convert(int32x4_and(q, int32x4_set1(2)));
         m = float64x4_compare_eq(q2, float64x4_set1(2.0));
@@ -829,9 +838,9 @@ namespace simd {
 
     float64x4 float64x4_atan2(float64x4__ y, float64x4__ x)
     {
-        const float64x4 pi = float64x4_set1(M_PI);
-        const float64x4 pi_2 = float64x4_set1(M_PI_2);
-        const float64x4 pi_4 = float64x4_set1(M_PI_4);
+        const float64x4 pi = float64x4_set1(double_pi);
+        const float64x4 pi_2 = float64x4_set1(double_pi_2);
+        const float64x4 pi_4 = float64x4_set1(double_pi_4);
 
         float64x4 r = atan2k(float64x4_abs(y), x);
         r = mulsign(r, x);
