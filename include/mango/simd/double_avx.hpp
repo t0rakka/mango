@@ -13,19 +13,19 @@
 
     // conversion
 
-    static inline float64x4 float64x4_convert(__simd4i s)
+    static inline float64x4 float64x4_convert(int32x4__ s)
     {
         return _mm256_cvtepi32_pd(s);
     }
 
-    static inline simd4i simd4i_convert(float64x4__ s)
+    static inline int32x4 int32x4_convert(float64x4__ s)
     {
         return _mm256_cvtpd_epi32(s);
     }
 
 #if defined(MANGO_ENABLE_AVX2)
 
-    static inline float64x4 float64x4_unsigned_convert(__simd4i i)
+    static inline float64x4 float64x4_unsigned_convert(int32x4__ i)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m256i xyzw = _mm256_cvtepu32_epi64(i);
@@ -37,7 +37,7 @@
 
 #else
 
-    static inline float64x4 float64x4_unsigned_convert(__simd4i i)
+    static inline float64x4 float64x4_unsigned_convert(int32x4__ i)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m128i mask = _mm_set1_epi32(0x43380000);
@@ -51,7 +51,7 @@
 
 #endif
 
-    static inline simd4i simd4i_unsigned_convert(float64x4__ d)
+    static inline int32x4 int32x4_unsigned_convert(float64x4__ d)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m256d v = _mm256_add_pd(d, bias);
@@ -61,7 +61,7 @@
         return _mm_castps_si128(xyzw);
     }
 
-    static inline simd4i simd4i_truncate(float64x4__ s)
+    static inline int32x4 int32x4_truncate(float64x4__ s)
     {
         return _mm256_cvttpd_epi32(s);
     }
