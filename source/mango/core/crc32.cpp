@@ -22,7 +22,14 @@ namespace {
     using namespace mango;
 
 #if !defined(MANGO_HARDWARE_CRC32)
-    
+
+    // //////////////////////////////////////////////////////////
+    // Copyright (c) 2014 Stephan Brumme. All rights reserved.
+    // see http://create.stephan-brumme.com/disclaimer.html
+    //
+
+    // Original implementaiton of Intel slice-by-8 by Stephan Brumme. Adapted for MANGO in June 2016.
+
     constexpr uint32 g_crc32_table[] =
     {
         0x00000000,0x77073096,0xee0e612c,0x990951ba,0x076dc419,0x706af48f,0xe963a535,0x9e6495a3,
@@ -609,6 +616,10 @@ namespace {
         0xa777317b,0xee4b4c5c,0x350fcb35,0x7c33b612,0x866ab316,0xcf56ce31,0x14124958,0x5d2e347f,
         0xe54c35a1,0xac704886,0x7734cfef,0x3e08b2c8,0xc451b7cc,0x8d6dcaeb,0x56294d82,0x1f1530a5,
     };
+
+    // NOTE: This code is identical to the version above. The only difference is the lookup table
+    // for different polynomial. The code is a macro spaghetti enough already so we just repeat the
+    // code here to keep things simple.
 
     inline uint32 u8_crc32c(uint32 crc, uint8 data)
     {
