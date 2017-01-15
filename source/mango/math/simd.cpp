@@ -505,7 +505,7 @@ namespace simd {
     constexpr double PI4_D = 1.7607799325916000908e-27;
     //constexpr double L2U = 0.69314718055966295651160180568695068359375;
     //constexpr double L2L = 0.28235290563031577122588448175013436025525412068e-12;
-    //constexpr double R_LN2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
+    constexpr double R_LN2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
     constexpr double R_INF = double(std::numeric_limits<double>::infinity());
 
     static inline float64x4 signbit(float64x4__ v)
@@ -538,12 +538,10 @@ namespace simd {
         return float64x4_and(is_inf(d), float64x4_or(signbit(d), m));
     }
 
-#if 0
     static inline float64x4 is_negative_inf(float64x4__ d)
     {
         return float64x4_compare_eq(d, -R_INF);
     }
-#endif
 
     static inline int32x4 sel(float64x4__ f0, float64x4__ f1, int32x4__ x, int32x4__ y)
     {
@@ -594,22 +592,11 @@ namespace simd {
         return t;
     }
 
-#if 0
-    static inline float64x4 ldexp(float64x4__ x, int32x4 q)
+    static inline float64x4 ldexp(float64x4__ x, int32x4__ q)
     {
-        int32x4 m = int32x4_sra(q, 31);
-        m = int32x4_sll(int32x4_sub(int32x4_sra(int32x4_add(m ,q), 9), m), 7);
-        q = int32x4_sub(q, int32x4_sll(m, 2));
-        m = int32x4_add(m, int32x4_set4(0x3fff, 0x3ff, 0x0, 0x0));
-        m = int32x4_nand(m, int32x4_compare_gt(int32x4_zero(), m));
-        int32x4 n = int32x4_compare_gt(m, int32x4_set4(0x7ff, 0x7ff, 0x0, 0x0));
-        m = int32x4_or(int32x4_nand(n, m), int32x4_and(n, int32x4_set4(0x7ff, 0x7ff, 0x0, 0x0)));
-        //m = (__m128i)_mm_shuffle_ps((__m128)m, (__m128)m, _MM_SHUFFLE(1,3,0,3));
-        //vdouble y = (__m128d)_mm_slli_epi32(m, 20);
-        //return vmul_vd_vd_vd(vmul_vd_vd_vd(vmul_vd_vd_vd(vmul_vd_vd_vd(vmul_vd_vd_vd(x, y), y), y), y), vpow2i_vd_vi(q));
-        return x; // TODO
+        // TODO: implement ldexp() with 64 bit precision
+        return float64x4_convert(ldexp(float32x4_convert(x), q));
     }
-#endif
 
     static inline float64x4 sincos_post(float64x4__ s)
     {
@@ -711,7 +698,6 @@ namespace simd {
         return u;
     }
 
-#if 0
     float64x4 float64x4_exp(float64x4__ v)
     {
         const int32x4 q = int32x4_convert(float64x4_mul(v, R_LN2));
@@ -742,25 +728,43 @@ namespace simd {
 
     float64x4 float64x4_log2(float64x4__ v)
     {
-        return v; // TODO
+#if 0
+        // TODO: implement float64x4_log2() with 64 bit precision
+        return float64x4_convert(float32x4_log2(float32x4_convert(v)));
+#else
+        // Choose precision over performance (see above)
+        double x = log2(float64x4_get_x(v));
+        double y = log2(float64x4_get_y(v));
+        double z = log2(float64x4_get_z(v));
+        double w = log2(float64x4_get_w(v));
+        return float64x4_set4(x, y, z, w);
+#endif
     }
 
     float64x4 float64x4_log(float64x4__ v)
     {
-        return v; // TODO
-        //return float32x4_mul(float32x4_log2(v), 0.69314718055995f);
+        return float64x4_mul(float64x4_log2(v), 0.69314718055994530941723212145818);
     }
 
     float64x4 float64x4_exp2(float64x4__ v)
     {
-        return v; // TODO
+#if 0
+        // TODO: implement float64x4_exp2() with 64 bit precision
+        return float64x4_convert(float32x4_exp2(float32x4_convert(v)));
+#else
+        // Choose precision over performance (see above)
+        double x = exp2(float64x4_get_x(v));
+        double y = exp2(float64x4_get_y(v));
+        double z = exp2(float64x4_get_z(v));
+        double w = exp2(float64x4_get_w(v));
+        return float64x4_set4(x, y, z, w);
+#endif
     }
 
     float64x4 float64x4_pow(float64x4__ a, float64x4__ b)
     {
         return float64x4_exp2(float64x4_mul(float64x4_log2(float64x4_abs(a)), b));
     }
-#endif
 
     float64x4 float64x4_asin(float64x4__ d)
     {
@@ -845,12 +849,12 @@ namespace simd {
         float64x4 r = atan2k(float64x4_abs(y), x);
         r = mulsign(r, x);
 
-	r = float64x4_select(float64x4_or(is_inf(x), float64x4_compare_eq(x, float64x4_zero())),
-                          float64x4_sub(pi_2, is_inf2(x, mulsign(pi_2, x))), r);
+        r = float64x4_select(float64x4_or(is_inf(x), float64x4_compare_eq(x, float64x4_zero())),
+                             float64x4_sub(pi_2, is_inf2(x, mulsign(pi_2, x))), r);
         r = float64x4_select(is_inf(y), 
-                          float64x4_sub(pi_2, is_inf2(x, mulsign(pi_4, x))), r);
+                             float64x4_sub(pi_2, is_inf2(x, mulsign(pi_4, x))), r);
         r = float64x4_select(float64x4_compare_eq(y, float64x4_zero()),
-                          float64x4_and(float64x4_compare_eq(sign(x), float64x4_set1(-1.0)), pi), r);
+                             float64x4_and(float64x4_compare_eq(sign(x), float64x4_set1(-1.0)), pi), r);
         r = float64x4_or(float64x4_or(is_nan(x), is_nan(y)), mulsign(r, y));
         return r;
     }
@@ -891,7 +895,6 @@ namespace simd {
         return v;
     }
 
-#if 0
     float64x4 float64x4_exp(float64x4__ a)
     {
         float64x4 v;
@@ -941,7 +944,6 @@ namespace simd {
         v.w = std::pow(a.w, b.w);
         return v;
     }
-#endif
 
     float64x4 float64x4_asin(float64x4__ a)
     {

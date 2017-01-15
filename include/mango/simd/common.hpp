@@ -32,13 +32,11 @@ namespace simd {
     float64x4 float64x4_asin(float64x4__ a);
     float64x4 float64x4_acos(float64x4__ a);
     float64x4 float64x4_atan(float64x4__ a);
-#if 0 // TODO
     float64x4 float64x4_exp(float64x4__ a);
     float64x4 float64x4_log(float64x4__ a);
     float64x4 float64x4_exp2(float64x4__ a);
     float64x4 float64x4_log2(float64x4__ a);
     float64x4 float64x4_pow(float64x4__ a, float64x4__ b);
-#endif
     float64x4 float64x4_atan2(float64x4__ a, float64x4__ b);
 
     // ------------------------------------------------------------------
