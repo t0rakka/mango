@@ -18,9 +18,19 @@
         return _mm256_cvtepi32_pd(s);
     }
 
+    static inline float64x4 float64x4_convert(float32x4__ s)
+    {
+        return _mm256_cvtps_pd(s);
+    }
+
     static inline int32x4 int32x4_convert(float64x4__ s)
     {
         return _mm256_cvtpd_epi32(s);
+    }
+
+    static inline float32x4 float32x4_convert(float64x4__ s)
+    {
+        return _mm256_cvtpd_ps(s);
     }
 
 #if defined(MANGO_ENABLE_AVX2)

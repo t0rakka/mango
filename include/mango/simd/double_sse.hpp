@@ -18,12 +18,27 @@
         return result;
     }
 
+    static inline float64x4 float64x4_convert(float32x4__ s)
+    {
+        float64x4 result;
+        result.xy = _mm_cvtps_pd(s);
+        result.zw = _mm_cvtps_pd(_mm_shuffle_ps(s, s, 0xee));
+        return result;
+    }
+
     static inline int32x4 int32x4_convert(float64x4__ s)
     {
         __m128i xy = _mm_cvtpd_epi32(s.xy);
         __m128i zw = _mm_cvtpd_epi32(s.zw);
         __m128i xzyw = _mm_unpacklo_epi32(xy, zw);
         return _mm_shuffle_epi32(xzyw, 0xd8);
+    }
+
+    static inline float32x4 float32x4_convert(float64x4__ s)
+    {
+        __m128 xy00 = _mm_cvtpd_ps(s.xy);
+        __m128 zw00 = _mm_cvtpd_ps(s.zw);
+        return _mm_shuffle_ps(xy00, zw00, 0x44);
     }
 
     static inline float64x4 float64x4_unsigned_convert(int32x4__ i)

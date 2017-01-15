@@ -20,6 +20,16 @@
         return v;
     }
 
+    static inline float64x4 float64x4_convert(float32x4__ s)
+    {
+        float64x4 v;
+        v.x = double(float32x4_get_x(s));
+        v.y = double(float32x4_get_y(s));
+        v.z = double(float32x4_get_z(s));
+        v.w = double(float32x4_get_w(s));
+        return v;
+    }
+
     static inline int32x4 int32x4_convert(float64x4__ s)
     {
         int x = int(s.x + 0.5);
@@ -27,6 +37,16 @@
         int z = int(s.z + 0.5);
         int w = int(s.w + 0.5);
         return int32x4_set4(x, y, z, w);
+    }
+
+    static inline float32x4 float32x4_convert(float64x4__ s)
+    {
+        float32x4 v;
+        v.x = float(float64x4_get_x(s));
+        v.y = float(float64x4_get_y(s));
+        v.z = float(float64x4_get_z(s));
+        v.w = float(float64x4_get_w(s));
+        return v;
     }
 
     static inline float64x4 float64x4_unsigned_convert(int32x4__ i)
