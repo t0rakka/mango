@@ -41,12 +41,11 @@
 
     static inline float32x4 float32x4_convert(float64x4__ s)
     {
-        float32x4 v;
-        v.x = float(float64x4_get_x(s));
-        v.y = float(float64x4_get_y(s));
-        v.z = float(float64x4_get_z(s));
-        v.w = float(float64x4_get_w(s));
-        return v;
+        float x = float(s.x);
+        float y = float(s.y);
+        float z = float(s.z);
+        float w = float(s.w);
+        return float32x4_set4(x, y, z, w);
     }
 
     static inline float64x4 float64x4_unsigned_convert(int32x4__ i)
