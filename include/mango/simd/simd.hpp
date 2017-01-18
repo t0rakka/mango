@@ -23,14 +23,58 @@ namespace simd {
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
+    struct int32x4
+    {
+        __m128i m;
+
+        int32x4() = default;
+
+        int32x4(__m128i m) : m(m)
+        {
+        }
+
+        operator __m128i () const
+        {
+            return m;
+        }
+    };
+
     struct float16x4
     {
         half x, y, z, w;
     };
 
-    typedef __m128i int32x4;
-    typedef __m128  float32x4;
-    typedef __m256d float64x4;
+    struct float32x4
+    {
+        __m128 m;
+
+        float32x4() = default;
+
+        float32x4(__m128 m) : m(m)
+        {
+        }
+
+        operator __m128 () const
+        {
+            return m;
+        }
+    };
+
+    struct float64x4
+    {
+        __m256d m;
+
+        float64x4() = default;
+
+        float64x4(__m256d m) : m(m)
+        {
+        }
+
+        operator __m256d () const
+        {
+            return m;
+        }
+    };
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -46,9 +90,41 @@ namespace simd {
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
+    struct int32x4
+    {
+        __m128i m;
+
+        int32x4() = default;
+
+        int32x4(__m128i m) : m(m)
+        {
+        }
+
+        operator __m128i () const
+        {
+            return m;
+        }
+    };
+
     struct float16x4
     {
         half x, y, z, w;
+    };
+
+    struct float32x4
+    {
+        __m128 m;
+
+        float32x4() = default;
+
+        float32x4(__m128 m) : m(m)
+        {
+        }
+
+        operator __m128 () const
+        {
+            return m;
+        }
     };
 
     struct float64x4
@@ -56,9 +132,6 @@ namespace simd {
         __m128d xy;
         __m128d zw;
     };
-
-    typedef __m128i int32x4;
-    typedef __m128 float32x4;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -74,9 +147,39 @@ namespace simd {
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
+    struct int32x4
+    {
+        int32x4_t m;
+
+        int32x4() = default;
+
+        int32x4(int32x4_t m) : m(m)
+        {
+        }
+
+        operator int32x4_t () const
+        {
+            return m;
+        }
+    };
+
 #ifdef MANGO_ENABLE_FP16
 
-    typedef float16x4_t float16x4;
+    struct float16x4
+    {
+        float16x4_t m;
+
+        float16x4() = default;
+
+        float16x4(float16x4_t m) : m(m)
+        {
+        }
+
+        operator float16x4_t () const
+        {
+            return m;
+        }
+    };
 
 #else
 
@@ -87,13 +190,26 @@ namespace simd {
 
 #endif
 
+    struct float32x4
+    {
+        float32x4_t m;
+
+        float32x4() = default;
+
+        float32x4(float32x4_t m) : m(m)
+        {
+        }
+
+        operator float32x4_t () const
+        {
+            return m;
+        }
+    };
+
     struct float64x4
     {
         double x, y, z, w;
     };
-
-    typedef int32x4_t int32x4;
-    typedef float32x4_t float32x4;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -109,18 +225,49 @@ namespace simd {
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
+    struct int32x4
+    {
+        typedef vector signed int vectype;
+        vectype m;
+
+        int32x4() = default;
+
+        int32x4(vectype m) : m(m)
+        {
+        }
+
+        operator vectype () const
+        {
+            return m;
+        }
+    };
+
     struct float16x4
     {
         half x, y, z, w;
+    };
+
+    struct float32x4
+    {
+        typedef vector float vectype;
+        vectype m;
+
+        float32x4() = default;
+
+        float32x4(vectype m) : m(m)
+        {
+        }
+
+        operator vectype () const
+        {
+            return m;
+        }
     };
 
     struct float64x4
     {
         double x, y, z, w;
     };
-
-    typedef vector signed int int32x4;
-    typedef vector float float32x4;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -136,18 +283,49 @@ namespace simd {
     // Cell BE SPU
     // --------------------------------------------------------------
 
+    struct int32x4
+    {
+        typedef vector signed int vectype;
+        vectype m;
+
+        int32x4() = default;
+
+        int32x4(vectype m) : m(m)
+        {
+        }
+
+        operator vectype () const
+        {
+            return m;
+        }
+    };
+
     struct float16x4
     {
         half x, y, z, w;
+    };
+
+    struct float32x4
+    {
+        typedef vector float vectype;
+        vectype m;
+
+        float32x4() = default;
+
+        float32x4(vectype m) : m(m)
+        {
+        }
+
+        operator vectype () const
+        {
+            return m;
+        }
     };
 
     struct float64x4
     {
         double x, y, z, w;
     };
-
-    typedef vector signed int int32x4;
-    typedef vector float      float32x4;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
