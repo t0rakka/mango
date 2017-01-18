@@ -21,9 +21,9 @@
 
     static inline int32x4 int32x4_convert(float32x4 s)
     {
-        const uint32x4_t temp = vandq_u32((uint32x4_t)s, (uint32x4_t)vdupq_n_f32(-0.0f));
-        const uint32x4_t half = (uint32x4_t)vdupq_n_f32(0.5f);
-        return vcvtq_s32_f32(vaddq_f32(s, (float32x4_t)vorrq_u32(temp, half)));
+        const uint32x4_t temp = vandq_u32(vreinterpretq_u32_f32(s), vreinterpretq_u32_f32(vdupq_n_f32(-0.0f)));
+        const uint32x4_t half = vreinterpretq_u32_f32(vdupq_n_f32(0.5f));
+        return vcvtq_s32_f32(vaddq_f32(s, vreinterpretq_f32_u32(vorrq_u32(temp, half))));
     }
 
     static inline int32x4 int32x4_truncate(float32x4 s)
@@ -134,47 +134,47 @@
 
     static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
     {
-        return (int32x4) vandq_s32(a, b);
+        return vandq_s32(a, b);
     }
 
     static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
     {
-        return (int32x4) vbicq_s32(b, a);
+        return vbicq_s32(b, a);
     }
 
     static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
     {
-        return (int32x4) vorrq_s32(a, b);
+        return vorrq_s32(a, b);
     }
 
     static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
     {
-        return (int32x4) veorq_u32((uint32x4_t)a, (uint32x4_t)b);
+        return veorq_s32(a, b);
     }
 
     // shift
 
 #ifdef MANGO_COMPILER_CLANG
 
-	#define int32x4_sll(a, b) \
-        ((int32x4) vshlq_n_u32((uint32x4_t)a, b))
+    #define int32x4_sll(a, b) \
+        vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), b))
 
-	#define int32x4_srl(a, b) \
-        ((int32x4) vshrq_n_u32((uint32x4_t)a, b))
+    #define int32x4_srl(a, b) \
+        vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), b))
 
-	#define int32x4_sra(a, b) \
+    #define int32x4_sra(a, b) \
         vshrq_n_s32(a, b)
 
 #else
 
     static inline int32x4 int32x4_sll(int32x4 a, int b)
     {
-        return (int32x4) vshlq_n_u32((uint32x4_t)a, b);
+        return vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), b));
     }
 
     static inline int32x4 int32x4_srl(int32x4 a, int b)
     {
-        return (int32x4) vshrq_n_u32((uint32x4_t)a, b);
+        return vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), b));
     }
 
     static inline int32x4 int32x4_sra(int32x4 a, int b)
@@ -188,17 +188,17 @@
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
     {
-        return (int32x4) vceqq_s32(a, b);
+        return vreinterpretq_s32_u32(vceqq_s32(a, b));
     }
 
     static inline int32x4 int32x4_compare_gt(int32x4 a, int32x4 b)
     {
-        return (int32x4) vcgeq_s32(a, b);
+        return vreinterpretq_s32_u32(vcgeq_s32(a, b));
     }
 
     static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
     {
-        return vbslq_s32((uint32x4_t)mask, a, b);
+        return vbslq_s32(vreinterpretq_u32_s32(mask), a, b);
     }
 
     static inline uint32 int32x4_get_mask(int32x4 a)

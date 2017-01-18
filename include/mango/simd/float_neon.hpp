@@ -46,7 +46,7 @@
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
 #if __GNUC__ >= 5
-        return (float32x4_t) __builtin_shuffle(v, (uint32x4_t) {x, y, z, w});
+        return (float32x4_t) __builtin_shuffle(v.m, (uint32x4_t) {x, y, z, w});
 #else
         return (float32x4_t) { v[x], v[y], v[z], v[w] };
 #endif
@@ -408,37 +408,37 @@
 
     static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
     {
-        return (float32x4) vmvnq_u32(vceqq_f32(a, b));
+        return vreinterpretq_f32_u32(vmvnq_u32(vceqq_f32(a, b)));
     }
 
     static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
     {
-        return (float32x4) vceqq_f32(a, b);
+        return vreinterpretq_f32_u32(vceqq_f32(a, b));
     }
 
     static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
     {
-        return (float32x4) vcltq_f32(a, b);
+        return vreinterpretq_f32_u32(vcltq_f32(a, b));
     }
 
     static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
     {
-        return (float32x4) vcleq_f32(a, b);
+        return vreinterpretq_f32_u32(vcleq_f32(a, b));
     }
 
     static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
     {
-        return (float32x4) vcgtq_f32(a, b);
+        return vreinterpretq_f32_u32(vcgtq_f32(a, b));
     }
 
     static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
     {
-        return (float32x4) vcgeq_f32(a, b);
+        return vreinterpretq_f32_u32(vcgeq_f32(a, b));
     }
 
     static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
     {
-        return vbslq_f32((uint32x4_t)mask, a, b);
+        return vbslq_f32(vreinterpretq_u32_f32(mask), a, b);
     }
 
     // rounding
@@ -486,7 +486,7 @@
         const float32x4 temp = float32x4_round(s);
         const uint32x4_t mask = vcltq_f32(s, temp);
         const uint32x4_t one = vdupq_n_u32(0x3f800000);
-        return vsubq_f32(temp, (float32x4) vandq_u32(mask, one));
+        return vsubq_f32(temp, vreinterpretq_f32_u32(vandq_u32(mask, one)));
     }
 
     static inline float32x4 float32x4_ceil(float32x4 s)
@@ -494,7 +494,7 @@
         const float32x4 temp = float32x4_round(s);
         const uint32x4_t mask = vcgtq_f32(s, temp);
         const uint32x4_t one = vdupq_n_u32(0x3f800000);
-        return vaddq_f32(temp, (float32x4) vandq_u32(mask, one));
+        return vaddq_f32(temp, vreinterpretq_f32_u32(vandq_u32(mask, one)));
     }
 
 #endif
