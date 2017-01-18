@@ -37,7 +37,7 @@
     template <int x, int y, int z, int w>
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
-        return __builtin_shufflevector(v, v, x, y, z, w);
+        return __builtin_shufflevector(v.m, v.m, x, y, z, w);
     }
 
 #else
@@ -48,7 +48,7 @@
 #if __GNUC__ >= 5
         return (float32x4_t) __builtin_shuffle(v, (uint32x4_t) {x, y, z, w});
 #else
-        return (float32x4) { v[x], v[y], v[z], v[w] };
+        return (float32x4_t) { v[x], v[y], v[z], v[w] };
 #endif
     }
 
@@ -178,7 +178,7 @@
 
     static inline float32x4 float32x4_set4(float x, float y, float z, float w)
     {
-        float32x4 temp = { x, y, z, w };
+        float32x4_t temp = { x, y, z, w };
         return temp;
     }
 
@@ -189,7 +189,7 @@
 
     static inline float32x4 float32x4_uload(const float* source)
     {
-        float32x4 temp = { source[0], source[1], source[2], source[3] };
+        float32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 

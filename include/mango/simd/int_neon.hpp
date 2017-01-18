@@ -82,7 +82,7 @@
 
     static inline int32x4 int32x4_uload(const int* source)
     {
-        int32x4 temp = { source[0], source[1], source[2], source[3] };
+        int32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
@@ -111,7 +111,7 @@
 
     static inline int32x4 int32x4_set4(int x, int y, int z, int w)
     {
-        int32x4 temp = { x, y, z, w };
+        int32x4_t temp = { x, y, z, w };
         return temp;
     }
 
