@@ -26,23 +26,11 @@
 
     static inline float32x4 float32x4_unsigned_convert(int32x4__ s)
     {
-#if 1
-        const __m128i mask = _mm_set1_epi32(0x0000ffff);
-        const __m128i onep39 = _mm_set1_epi32(0x53000000);
-
-        const __m128i x0 = _mm_or_si128(_mm_srli_epi32(s, 16), onep39);
-        const __m128i x1 = _mm_and_si128(s, mask);
-        const __m128 f1 = _mm_cvtepi32_ps(x1);
-        const __m128 f0 = _mm_sub_ps(float32x4_cast(x0), float32x4_cast(onep39));
-        return _mm_add_ps(f0, f1);
-#else
-        const __m128 two16 = _mm_set1_ps(0x1.0p16f);
-        const __m128i hi = _mm_srli_epi32((__m128i)s, 16);
-        const __m128i lo = _mm_srli_epi32(_mm_slli_epi32((__m128i)s, 16), 16);
-        const __m128 high = _mm_mul_ps(_mm_cvtepi32_ps(hi), two16);
-        const __m128 low = _mm_cvtepi32_ps(lo);
-        return _mm_add_ps(high, low);
-#endif
+		const __m128i mask = _mm_srai_epi32(s, 32); // msb -> mask
+		const __m128i value = _mm_set1_epi32(0x4f000000); // float(0x80000000)
+		const __m128 f1 = _mm_cvtepi32_ps(_mm_and_si128(s, _mm_set1_epi32(0x7fffffff)));
+		const __m128 f2 = _mm_castsi128_ps(_mm_and_si128(value, mask));
+		return _mm_add_ps(f1, f2);
     }
 
     // shuffle
