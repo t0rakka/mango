@@ -16,7 +16,7 @@
 
     static inline float32x4 float32x4_cast(int32x4 s)
     {
-        return reinterpret_cast<float32x4>(s);
+        return reinterpret_cast<float32x4 &>(s);
     }
 
     static inline float32x4 float32x4_convert(int32x4 s)
