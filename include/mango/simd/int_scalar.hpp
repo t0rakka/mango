@@ -12,12 +12,12 @@
     // int32x4
     // -----------------------------------------------------------------
 
-    static inline int32x4 int32x4_cast(float32x4__ s)
+    static inline int32x4 int32x4_cast(float32x4 s)
     {
-        return reinterpret_cast<int32x4__>(s);
+        return reinterpret_cast<int32x4>(s);
     }
 
-    static inline int32x4 int32x4_convert(float32x4__ s)
+    static inline int32x4 int32x4_convert(float32x4 s)
     {
         int32x4 v;
         v.x = int(s.x + 0.5f);
@@ -27,7 +27,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_truncate(float32x4__ s)
+    static inline int32x4 int32x4_truncate(float32x4 s)
     {
         int32x4 v;
         v.x = int(s.x);
@@ -37,50 +37,50 @@
         return v;
     }
 
-    static inline int32x4 int32x4_set_x(int32x4__ a, int x)
+    static inline int32x4 int32x4_set_x(int32x4 a, int x)
     {
         int32x4 temp = a;
         temp.x = x;
         return temp;
     }
 
-    static inline int32x4 int32x4_set_y(int32x4__ a, int y)
+    static inline int32x4 int32x4_set_y(int32x4 a, int y)
     {
         int32x4 temp = a;
         temp.y = y;
         return temp;
     }
 
-    static inline int32x4 int32x4_set_z(int32x4__ a, int z)
+    static inline int32x4 int32x4_set_z(int32x4 a, int z)
     {
         int32x4 temp = a;
         temp.z = z;
         return temp;
     }
 
-    static inline int32x4 int32x4_set_w(int32x4__ a, int w)
+    static inline int32x4 int32x4_set_w(int32x4 a, int w)
     {
         int32x4 temp = a;
         temp.w = w;
         return temp;
     }
 
-    static inline int int32x4_get_x(int32x4__ a)
+    static inline int int32x4_get_x(int32x4 a)
     {
         return a.x;
     }
 
-    static inline int int32x4_get_y(int32x4__ a)
+    static inline int int32x4_get_y(int32x4 a)
     {
         return a.y;
     }
 
-    static inline int int32x4_get_z(int32x4__ a)
+    static inline int int32x4_get_z(int32x4 a)
     {
         return a.z;
     }
 
-    static inline int int32x4_get_w(int32x4__ a)
+    static inline int int32x4_get_w(int32x4 a)
     {
         return a.w;
     }
@@ -96,7 +96,7 @@
         return int32x4_load(source);
     }
 
-    static inline void int32x4_store(int* dest, int32x4__ a)
+    static inline void int32x4_store(int* dest, int32x4 a)
     {
         dest[0] = a.x;
         dest[1] = a.y;
@@ -104,7 +104,7 @@
         dest[3] = a.w;
     }
 
-    static inline void int32x4_ustore(int* dest, int32x4__ a)
+    static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         int32x4_store(dest, a);
     }
@@ -127,13 +127,13 @@
         return temp;
     }
 
-    static inline int32x4 int32x4_neg(int32x4__ a)
+    static inline int32x4 int32x4_neg(int32x4 a)
     {
         int32x4 v = { -a.x, -a.y, -a.z, -a.w };
         return v;
     }
 
-    static inline int32x4 int32x4_add(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_add(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x + b.x;
@@ -143,7 +143,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_sub(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x - b.x;
@@ -155,7 +155,7 @@
 
     // logical
 
-    static inline int32x4 int32x4_and(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x & b.x;
@@ -165,7 +165,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_nand(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = ~a.x & b.x;
@@ -175,7 +175,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_or(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x | b.x;
@@ -185,7 +185,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_xor(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x ^ b.x;
@@ -197,7 +197,7 @@
 
     // shift
 
-    static inline int32x4 int32x4_sll(int32x4__ a, int b)
+    static inline int32x4 int32x4_sll(int32x4 a, int b)
     {
         int32x4 v;
         v.x = static_cast<uint32>(a.x) << b;
@@ -207,7 +207,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_srl(int32x4__ a, int b)
+    static inline int32x4 int32x4_srl(int32x4 a, int b)
     {
         int32x4 v;
         v.x = static_cast<uint32>(a.x) >> b;
@@ -217,7 +217,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_sra(int32x4__ a, int b)
+    static inline int32x4 int32x4_sra(int32x4 a, int b)
     {
         int32x4 v;
         v.x = a.x >> b;
@@ -229,7 +229,7 @@
 
     // compare
 
-    static inline int32x4 int32x4_compare_eq(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x == b.x ? 0xffffffff : 0;
@@ -239,7 +239,7 @@
         return v;
     }
 
-    static inline int32x4 int32x4_compare_gt(int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_compare_gt(int32x4 a, int32x4 b)
     {
         int32x4 v;
         v.x = a.x > b.x ? 0xffffffff : 0;
@@ -249,12 +249,12 @@
         return v;
     }
 
-    static inline int32x4 int32x4_select(int32x4__ mask, int32x4__ a, int32x4__ b)
+    static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
     {
         return int32x4_or(int32x4_and(mask, a), int32x4_nand(mask, b));
     }
 
-    static inline uint32 int32x4_get_mask(int32x4__ a)
+    static inline uint32 int32x4_get_mask(int32x4 a)
     {
         const uint32 x = a.x & 0x80000000;
         const uint32 y = a.y & 0x80000000;
@@ -264,7 +264,7 @@
         return mask;
     }
 
-    static inline uint32 int32x4_pack(int32x4__ s)
+    static inline uint32 int32x4_pack(int32x4 s)
     {
         const uint32 x = byteclamp(s.x);
         const uint32 y = byteclamp(s.y);

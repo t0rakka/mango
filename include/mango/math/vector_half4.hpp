@@ -25,12 +25,12 @@ namespace mango
         {
         }
 
-        explicit Vector(simd::float32x4__ v)
+        explicit Vector(simd::float32x4 v)
         : m(simd::float16x4_convert(v))
         {
         }
 
-        explicit Vector(simd::float16x4__ v)
+        explicit Vector(simd::float16x4 v)
         : m(v)
         {
         }
@@ -45,13 +45,13 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (simd::float32x4__ v)
+        Vector& operator = (simd::float32x4 v)
         {
             m = simd::float16x4_convert(v);
             return *this;
         }
 
-        Vector& operator = (simd::float16x4__ v)
+        Vector& operator = (simd::float16x4 v)
         {
             m = v;
             return *this;

@@ -14,17 +14,17 @@
 
     // conversion
 
-    static inline float32x4 float32x4_cast(int32x4__ s)
+    static inline float32x4 float32x4_cast(int32x4 s)
     {
         return vreinterpretq_f32_s32(s);
     }
 
-    static inline float32x4 float32x4_convert(int32x4__ s)
+    static inline float32x4 float32x4_convert(int32x4 s)
     {
         return vcvtq_f32_s32(s);
     }
 
-    static inline float32x4 float32x4_unsigned_convert(int32x4__ s)
+    static inline float32x4 float32x4_unsigned_convert(int32x4 s)
     {
         const uint32x4_t u = vreinterpretq_u32_s32(s);
         return vcvtq_f32_u32(u);
@@ -35,7 +35,7 @@
 #ifdef MANGO_COMPILER_CLANG
 
     template <int x, int y, int z, int w>
-    inline float32x4 float32x4_shuffle(float32x4__ v)
+    inline float32x4 float32x4_shuffle(float32x4 v)
     {
         return __builtin_shufflevector(v, v, x, y, z, w);
     }
@@ -43,7 +43,7 @@
 #else
 
     template <int x, int y, int z, int w>
-    inline float32x4 float32x4_shuffle(float32x4__ v)
+    inline float32x4 float32x4_shuffle(float32x4 v)
     {
 #if __GNUC__ >= 5
         return (float32x4_t) __builtin_shuffle(v, (uint32x4_t) {x, y, z, w});
@@ -78,7 +78,7 @@
     // ww  -    -    -    -    -    trn2 -    -    -    -    zip2 -    -    -    -    dup
 
     template <>
-    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4__ v)
+    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4 v)
     {
         // .xyzw
         return v;
@@ -87,80 +87,80 @@
     // indexed accessor
 
     template <int Index>
-    static inline float32x4 float32x4_set_component(float32x4__ a, float s)
+    static inline float32x4 float32x4_set_component(float32x4 a, float s)
     {
         return vsetq_lane_f32(s, a, Index);
     }
 
     template <int Index>
-    static inline float float32x4_get_component(float32x4__ a)
+    static inline float float32x4_get_component(float32x4 a)
     {
         return vgetq_lane_f32(a, Index);
     }
 
     // set
 
-    static inline float32x4 float32x4_set_x(float32x4__ a, float x)
+    static inline float32x4 float32x4_set_x(float32x4 a, float x)
     {
         return vsetq_lane_f32(x, a, 0);
     }
 
-    static inline float32x4 float32x4_set_y(float32x4__ a, float y)
+    static inline float32x4 float32x4_set_y(float32x4 a, float y)
     {
         return vsetq_lane_f32(y, a, 1);
     }
 
-    static inline float32x4 float32x4_set_z(float32x4__ a, float z)
+    static inline float32x4 float32x4_set_z(float32x4 a, float z)
     {
         return vsetq_lane_f32(z, a, 2);
     }
 
-    static inline float32x4 float32x4_set_w(float32x4__ a, float w)
+    static inline float32x4 float32x4_set_w(float32x4 a, float w)
     {
         return vsetq_lane_f32(w, a, 3);
     }
 
     // get
 
-    static inline float float32x4_get_x(float32x4__ a)
+    static inline float float32x4_get_x(float32x4 a)
     {
         return vgetq_lane_f32(a, 0);
     }
 
-    static inline float float32x4_get_y(float32x4__ a)
+    static inline float float32x4_get_y(float32x4 a)
     {
         return vgetq_lane_f32(a, 1);
     }
 
-    static inline float float32x4_get_z(float32x4__ a)
+    static inline float float32x4_get_z(float32x4 a)
     {
         return vgetq_lane_f32(a, 2);
     }
 
-    static inline float float32x4_get_w(float32x4__ a)
+    static inline float float32x4_get_w(float32x4 a)
     {
         return vgetq_lane_f32(a, 3);
     }
 
-    static inline float32x4 float32x4_splat_x(float32x4__ a)
+    static inline float32x4 float32x4_splat_x(float32x4 a)
     {
         const float32x2_t xy = vget_low_f32(a);
         return vdupq_lane_f32(xy, 0);
     }
     
-    static inline float32x4 float32x4_splat_y(float32x4__ a)
+    static inline float32x4 float32x4_splat_y(float32x4 a)
     {
         const float32x2_t xy = vget_low_f32(a);
         return vdupq_lane_f32(xy, 1);
     }
     
-    static inline float32x4 float32x4_splat_z(float32x4__ a)
+    static inline float32x4 float32x4_splat_z(float32x4 a)
     {
         const float32x2_t zw = vget_high_f32(a);
         return vdupq_lane_f32(zw, 0);
     }
     
-    static inline float32x4 float32x4_splat_w(float32x4__ a)
+    static inline float32x4 float32x4_splat_w(float32x4 a)
     {
         const float32x2_t zw = vget_high_f32(a);
         return vdupq_lane_f32(zw, 1);
@@ -193,12 +193,12 @@
         return temp;
     }
 
-    static inline void float32x4_store(float* dest, float32x4__ a)
+    static inline void float32x4_store(float* dest, float32x4 a)
     {
         vst1q_f32(dest, a);
     }
 
-    static inline void float32x4_ustore(float* dest, float32x4__ a)
+    static inline void float32x4_ustore(float* dest, float32x4 a)
     {
         dest[0] = vgetq_lane_f32(a, 0);
         dest[1] = vgetq_lane_f32(a, 1);
@@ -206,23 +206,23 @@
         dest[3] = vgetq_lane_f32(a, 3);
     }
 
-    static inline float32x4 float32x4_movelh(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)
     {
         return vcombine_f32(vget_low_f32(a), vget_low_f32(b));
     }
 
-    static inline float32x4 float32x4_movehl(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_movehl(float32x4 a, float32x4 b)
     {
         return vcombine_f32(vget_high_f32(b), vget_high_f32(a));
     }
 
-    static inline float32x4 float32x4_unpackhi(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_unpackhi(float32x4 a, float32x4 b)
     {
         float32x4x2_t v = vzipq_f32(a, b);
         return v.val[1];
     }
 
-    static inline float32x4 float32x4_unpacklo(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
     {
         float32x4x2_t v = vzipq_f32(a, b);
         return v.val[0];
@@ -230,74 +230,74 @@
 
     // logical
 
-    static inline float32x4 float32x4_and(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
         return float32x4_cast(int32x4_and(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline float32x4 float32x4_nand(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
         return float32x4_cast(int32x4_nand(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline float32x4 float32x4_or(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
         return float32x4_cast(int32x4_or(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline float32x4 float32x4_xor(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
         return float32x4_cast(int32x4_xor(int32x4_cast(a), int32x4_cast(b)));
     }
 
-    static inline float32x4 float32x4_min(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
     {
         return vminq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_max(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_max(float32x4 a, float32x4 b)
     {
         return vmaxq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_clamp(float32x4__ v, float32x4__ vmin, float32x4__ vmax)
+    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
     {
         return vminq_f32(vmax, vmaxq_f32(vmin, v));
     }
 
-    static inline float32x4 float32x4_abs(float32x4__ a)
+    static inline float32x4 float32x4_abs(float32x4 a)
     {
         return vabsq_f32(a);
     }
 
-    static inline float32x4 float32x4_neg(float32x4__ a)
+    static inline float32x4 float32x4_neg(float32x4 a)
     {
         return vnegq_f32(a);
     }
 
-    static inline float32x4 float32x4_add(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_add(float32x4 a, float32x4 b)
     {
         return vaddq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_sub(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_sub(float32x4 a, float32x4 b)
     {
         return vsubq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_mul(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_mul(float32x4 a, float32x4 b)
     {
         return vmulq_f32(a, b);
     }
 
 #ifdef __aarch64__
 
-    static inline float32x4 float32x4_div(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_div(float32x4 a, float32x4 b)
     {
         return vdivq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_div(float32x4__ a, float b)
+    static inline float32x4 float32x4_div(float32x4 a, float b)
     {
         float32x4 s = vdupq_n_f32(b);
         return vdivq_f32(a, s);
@@ -305,7 +305,7 @@
 
 #else
 
-    static inline float32x4 float32x4_div(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_div(float32x4 a, float32x4 b)
     {
         float32x4 n = vrecpeq_f32(b);
         n = vmulq_f32(vrecpsq_f32(n, b), n);
@@ -313,7 +313,7 @@
         return vmulq_f32(a, n);
     }
 
-    static inline float32x4 float32x4_div(float32x4__ a, float b)
+    static inline float32x4 float32x4_div(float32x4 a, float b)
     {
         float32x4 s = vdupq_n_f32(b);
         float32x4 n = vrecpeq_f32(s);
@@ -324,38 +324,38 @@
 
 #endif
 
-    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
     {
         return vmlaq_f32(a, b, c);
     }
 
-    static inline float32x4 float32x4_msub(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
     {
         return vmlsq_f32(a, b, c);
     }
 
-    static inline float32x4 float32x4_fast_reciprocal(float32x4__ a)
+    static inline float32x4 float32x4_fast_reciprocal(float32x4 a)
     {
         float32x4 n = vrecpeq_f32(a);
         n = vmulq_f32(vrecpsq_f32(n, a), n);
         return n;
     }
 
-    static inline float32x4 float32x4_fast_rsqrt(float32x4__ a)
+    static inline float32x4 float32x4_fast_rsqrt(float32x4 a)
     {
         float32x4 n = vrsqrteq_f32(a);
         n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
         return n;
     }
 
-    static inline float32x4 float32x4_fast_sqrt(float32x4__ a)
+    static inline float32x4 float32x4_fast_sqrt(float32x4 a)
     {
         float32x4 n = vrsqrteq_f32(a);
         n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
         return vmulq_f32(a, n);
     }
 
-    static inline float32x4 float32x4_reciprocal(float32x4__ a)
+    static inline float32x4 float32x4_reciprocal(float32x4 a)
     {
         float32x4 n = vrecpeq_f32(a);
         n = vmulq_f32(vrecpsq_f32(n, a), n);
@@ -363,7 +363,7 @@
         return n;
     }
 
-    static inline float32x4 float32x4_rsqrt(float32x4__ a)
+    static inline float32x4 float32x4_rsqrt(float32x4 a)
     {
         float32x4 n = vrsqrteq_f32(a);
         n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
@@ -372,7 +372,7 @@
         return n;
     }
 
-    static inline float32x4 float32x4_sqrt(float32x4__ a)
+    static inline float32x4 float32x4_sqrt(float32x4 a)
     {
         float32x4 n = vrsqrteq_f32(a);
         n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
@@ -381,7 +381,7 @@
         return vmulq_f32(a, n);
     }
 
-    static inline float32x4 float32x4_dot3(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_dot3(float32x4 a, float32x4 b)
     {
         const float32x4 s = vmulq_f32(a, b);
         const float32x2_t xy = vget_low_f32(s);
@@ -389,7 +389,7 @@
         return vdupq_lane_f32(vadd_f32(vpadd_f32(xy, xy), zw), 0);
     }
 
-    static inline float32x4 float32x4_dot4(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_dot4(float32x4 a, float32x4 b)
     {
         float32x4 m = vmulq_f32(a, b);
         float32x2_t s = vpadd_f32(vget_low_f32(m), vget_high_f32(m));
@@ -397,7 +397,7 @@
         return vdupq_lane_f32(s, 0);
     }
 
-    static inline float32x4 float32x4_cross3(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_cross3(float32x4 a, float32x4 b)
     {
         float32x4 c = vmulq_f32(a, float32x4_shuffle<1, 2, 0, 3>(b));
         c = vmlsq_f32(c, b, float32x4_shuffle<1, 2, 0, 3>(a));
@@ -406,37 +406,37 @@
 
     // compare
 
-    static inline float32x4 float32x4_compare_neq(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
     {
         return (float32x4) vmvnq_u32(vceqq_f32(a, b));
     }
 
-    static inline float32x4 float32x4_compare_eq(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
     {
         return (float32x4) vceqq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_compare_lt(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
     {
         return (float32x4) vcltq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_compare_le(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
     {
         return (float32x4) vcleq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_compare_gt(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
     {
         return (float32x4) vcgtq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_compare_ge(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
     {
         return (float32x4) vcgeq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_select(float32x4__ mask, float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
     {
         return vbslq_f32((uint32x4_t)mask, a, b);
     }
@@ -447,41 +447,41 @@
 
     // Disabled with clang until supported in NDK
 
-    static inline float32x4 float32x4_round(float32x4__ s)
+    static inline float32x4 float32x4_round(float32x4 s)
     {
         return vrndqa_f32(s);
     }
 
-    static inline float32x4 float32x4_trunc(float32x4__ s)
+    static inline float32x4 float32x4_trunc(float32x4 s)
     {
         return vrndq_f32(s);
     }
 
-    static inline float32x4 float32x4_floor(float32x4__ s)
+    static inline float32x4 float32x4_floor(float32x4 s)
     {
         return vrndqm_f32(s);
     }
 
-    static inline float32x4 float32x4_ceil(float32x4__ s)
+    static inline float32x4 float32x4_ceil(float32x4 s)
     {
         return vrndqp_f32(s);
     }
 
 #else
 
-    static inline float32x4 float32x4_round(float32x4__ s)
+    static inline float32x4 float32x4_round(float32x4 s)
     {
         const float32x4_t magic = vdupq_n_f32(12582912.0f); // 1.5 * (1 << 23)
         return vsubq_f32(vaddq_f32(s, magic), magic);
     }
 
-    static inline float32x4 float32x4_trunc(float32x4__ s)
+    static inline float32x4 float32x4_trunc(float32x4 s)
     {
         const int32x4_t truncated = vcvtq_s32_f32(s);
         return vcvtq_f32_s32(truncated);
     }
 
-    static inline float32x4 float32x4_floor(float32x4__ s)
+    static inline float32x4 float32x4_floor(float32x4 s)
     {
         const float32x4 temp = float32x4_round(s);
         const uint32x4_t mask = vcltq_f32(s, temp);
@@ -489,7 +489,7 @@
         return vsubq_f32(temp, (float32x4) vandq_u32(mask, one));
     }
 
-    static inline float32x4 float32x4_ceil(float32x4__ s)
+    static inline float32x4 float32x4_ceil(float32x4 s)
     {
         const float32x4 temp = float32x4_round(s);
         const uint32x4_t mask = vcgtq_f32(s, temp);
@@ -499,7 +499,7 @@
 
 #endif
 
-    static inline float32x4 float32x4_fract(float32x4__ s)
+    static inline float32x4 float32x4_fract(float32x4 s)
     {
         return float32x4_sub(s, float32x4_floor(s));
     }
@@ -510,19 +510,19 @@
 
 #ifdef MANGO_ENABLE_FP16
 
-    static inline float32x4 float32x4_convert(float16x4__ s)
+    static inline float32x4 float32x4_convert(float16x4 s)
     {
         return vcvt_f32_f16(s);
     }
 
-    static inline float16x4 float16x4_convert(float32x4__ s)
+    static inline float16x4 float16x4_convert(float32x4 s)
     {
         return vcvt_f16_f32(s);
     }
 
 #else
 
-    static inline float32x4 float32x4_convert(float16x4__ s)
+    static inline float32x4 float32x4_convert(float16x4 s)
     {
         float x = s.x;
         float y = s.y;
@@ -531,7 +531,7 @@
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float16x4 float16x4_convert(float32x4__ s)
+    static inline float16x4 float16x4_convert(float32x4 s)
     {
         float16x4 v;
         v.x = float32x4_get_x(s);
@@ -721,7 +721,7 @@
         float32x4_matrix_transpose(result, temp);
     }
 
-    static inline float32x4 float32x4_vector_matrix_multiply(float32x4__ v, const float32x4* m)
+    static inline float32x4 float32x4_vector_matrix_multiply(float32x4 v, const float32x4* m)
     {
 #if 1
         const float32x4 x = vdupq_n_f32(vgetq_lane_f32(v, 0));

@@ -32,18 +32,6 @@ namespace simd {
     typedef __m128  float32x4;
     typedef __m256d float64x4;
 
-#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_INTEL)
-    typedef const __m128i&   int32x4__;
-    typedef const float16x4& float16x4__;
-    typedef const __m128&    float32x4__;
-    typedef const __m256d&   float64x4__;
-#else
-    typedef const __m128i    int32x4__;
-    typedef const float16x4& float16x4__;
-    typedef const __m128     float32x4__;
-    typedef const __m256d    float64x4__;
-#endif
-
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
     #define MANGO_SIMD_DOUBLE
@@ -71,18 +59,6 @@ namespace simd {
 
     typedef __m128i int32x4;
     typedef __m128 float32x4;
-
-#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_INTEL)
-    typedef const __m128i&   int32x4__;
-    typedef const float16x4& float16x4__;
-    typedef const __m128&    float32x4__;
-    typedef const float64x4& float64x4__;
-#else
-    typedef const __m128i    int32x4__;
-    typedef const float16x4& float16x4__;
-    typedef const __m128     float32x4__;
-    typedef const float64x4& float64x4__;
-#endif
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -119,11 +95,6 @@ namespace simd {
     typedef int32x4_t int32x4;
     typedef float32x4_t float32x4;
 
-    typedef const int32x4_t   int32x4__;
-    typedef const float16x4   float16x4__;
-    typedef const float32x4_t float32x4__;
-    typedef const float64x4&  float64x4__;
-
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
     #define MANGO_SCALAR_DOUBLE
@@ -151,11 +122,6 @@ namespace simd {
     typedef vector signed int int32x4;
     typedef vector float float32x4;
 
-    typedef const vector signed int int32x4__;
-    typedef const float16x4&        float16x4__;
-    typedef const vector float      float32x4__;
-    typedef const float64x4&        float64x4__;
-
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
     #define MANGO_SCALAR_DOUBLE
@@ -182,11 +148,6 @@ namespace simd {
 
     typedef vector signed int int32x4;
     typedef vector float      float32x4;
-
-    typedef const vector signed int int32x4__;
-    typedef const float16x4&        float16x4__;
-    typedef const vector float      float32x4__;
-    typedef const float64x4&        float64x4__;
 
     #define MANGO_SIMD_INT
     #define MANGO_SIMD_FLOAT
@@ -221,11 +182,6 @@ namespace simd {
     {
         double x, y, z, w;
     };
-
-    typedef const int32x4&   int32x4__;
-    typedef const float16x4& float16x4__;
-    typedef const float32x4& float32x4__;
-    typedef const float64x4& float64x4__;
 
     #define MANGO_SCALAR_INT
     #define MANGO_SCALAR_FLOAT

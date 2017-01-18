@@ -14,17 +14,17 @@
 
     // conversion
 
-    static inline float32x4 float32x4_cast(int32x4__ s)
+    static inline float32x4 float32x4_cast(int32x4 s)
     {
         return _mm_castsi128_ps(s);
     }
 
-    static inline float32x4 float32x4_convert(int32x4__ s)
+    static inline float32x4 float32x4_convert(int32x4 s)
     {
         return _mm_cvtepi32_ps(s);
     }
 
-    static inline float32x4 float32x4_unsigned_convert(int32x4__ s)
+    static inline float32x4 float32x4_unsigned_convert(int32x4 s)
     {
 		const __m128i mask = _mm_srai_epi32(s, 32); // msb -> mask
 		const __m128i value = _mm_set1_epi32(0x4f000000); // float(0x80000000)
@@ -36,14 +36,14 @@
     // shuffle
 
     template <int x, int y, int z, int w>
-    static inline float32x4 float32x4_shuffle(float32x4__ v)
+    static inline float32x4 float32x4_shuffle(float32x4 v)
     {
         // .generic
         return _mm_shuffle_ps(v, v, _MM_SHUFFLE(w, z, y, x));
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4__ v)
+    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4 v)
     {
         // .xyzw
         return v;
@@ -51,22 +51,22 @@
 
     // logical
 
-    static inline float32x4 float32x4_and(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
         return _mm_and_ps(a, b);
     }
 
-    static inline float32x4 float32x4_nand(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
         return _mm_andnot_ps(a, b);
     }
 
-    static inline float32x4 float32x4_or(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
         return _mm_or_ps(a, b);
     }
 
-    static inline float32x4 float32x4_xor(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
         return _mm_xor_ps(a, b);
     }
@@ -76,7 +76,7 @@
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <int Index>
-    static inline float32x4 float32x4_set_component(float32x4__ a, float s)
+    static inline float32x4 float32x4_set_component(float32x4 a, float s)
     {
         return _mm_insert_ps(a, _mm_set_ss(s), Index * 0x10);
     }
@@ -84,31 +84,31 @@
 #else
 
     template <int Index>
-    static inline float32x4 float32x4_set_component(float32x4__ a, float s);
+    static inline float32x4 float32x4_set_component(float32x4 a, float s);
 
     template <>
-    inline float32x4 float32x4_set_component<0>(float32x4__ a, float x)
+    inline float32x4 float32x4_set_component<0>(float32x4 a, float x)
     {
         const __m128 b = _mm_unpacklo_ps(_mm_set_ps1(x), a);
         return _mm_shuffle_ps(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
-    inline float32x4 float32x4_set_component<1>(float32x4__ a, float y)
+    inline float32x4 float32x4_set_component<1>(float32x4 a, float y)
     {
         const __m128 b = _mm_unpacklo_ps(_mm_set_ps1(y), a);
         return _mm_shuffle_ps(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
-    inline float32x4 float32x4_set_component<2>(float32x4__ a, float z)
+    inline float32x4 float32x4_set_component<2>(float32x4 a, float z)
     {
         const __m128 b = _mm_unpackhi_ps(_mm_set_ps1(z), a);
         return _mm_shuffle_ps(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
-    inline float32x4 float32x4_set_component<3>(float32x4__ a, float w)
+    inline float32x4 float32x4_set_component<3>(float32x4 a, float w)
     {
         const __m128 b = _mm_unpackhi_ps(_mm_set_ps1(w), a);
         return _mm_shuffle_ps(a, b, _MM_SHUFFLE(0, 1, 1, 0));
@@ -119,88 +119,88 @@
     // get component
 
     template <int Index>
-    static inline float float32x4_get_component(float32x4__ a);
+    static inline float float32x4_get_component(float32x4 a);
 
     template <>
-    inline float float32x4_get_component<0>(float32x4__ a)
+    inline float float32x4_get_component<0>(float32x4 a)
     {
         return _mm_cvtss_f32(a);
     }
 
     template <>
-    inline float float32x4_get_component<1>(float32x4__ a)
+    inline float float32x4_get_component<1>(float32x4 a)
     {
         return _mm_cvtss_f32(float32x4_shuffle<1, 1, 1, 1>(a));
     }
 
     template <>
-    inline float float32x4_get_component<2>(float32x4__ a)
+    inline float float32x4_get_component<2>(float32x4 a)
     {
         return _mm_cvtss_f32(float32x4_shuffle<2, 2, 2, 2>(a));
     }
 
     template <>
-    inline float float32x4_get_component<3>(float32x4__ a)
+    inline float float32x4_get_component<3>(float32x4 a)
     {
         return _mm_cvtss_f32(float32x4_shuffle<3, 3, 3, 3>(a));
     }
 
-    static inline float32x4 float32x4_set_x(float32x4__ a, float x)
+    static inline float32x4 float32x4_set_x(float32x4 a, float x)
     {
         return float32x4_set_component<0>(a, x);
     }
 
-    static inline float32x4 float32x4_set_y(float32x4__ a, float y)
+    static inline float32x4 float32x4_set_y(float32x4 a, float y)
     {
         return float32x4_set_component<1>(a, y);
     }
 
-    static inline float32x4 float32x4_set_z(float32x4__ a, float z)
+    static inline float32x4 float32x4_set_z(float32x4 a, float z)
     {
         return float32x4_set_component<2>(a, z);
     }
 
-    static inline float32x4 float32x4_set_w(float32x4__ a, float w)
+    static inline float32x4 float32x4_set_w(float32x4 a, float w)
     {
         return float32x4_set_component<3>(a, w);
     }
 
-    static inline float float32x4_get_x(float32x4__ a)
+    static inline float float32x4_get_x(float32x4 a)
     {
         return float32x4_get_component<0>(a);
     }
 
-    static inline float float32x4_get_y(float32x4__ a)
+    static inline float float32x4_get_y(float32x4 a)
     {
         return float32x4_get_component<1>(a);
     }
 
-    static inline float float32x4_get_z(float32x4__ a)
+    static inline float float32x4_get_z(float32x4 a)
     {
         return float32x4_get_component<2>(a);
     }
 
-    static inline float float32x4_get_w(float32x4__ a)
+    static inline float float32x4_get_w(float32x4 a)
     {
         return float32x4_get_component<3>(a);
     }
 
-    static inline float32x4 float32x4_splat_x(float32x4__ a)
+    static inline float32x4 float32x4_splat_x(float32x4 a)
     {
         return _mm_shuffle_ps(a, a, _MM_SHUFFLE(0, 0, 0, 0));
     }
 
-    static inline float32x4 float32x4_splat_y(float32x4__ a)
+    static inline float32x4 float32x4_splat_y(float32x4 a)
     {
         return _mm_shuffle_ps(a, a, _MM_SHUFFLE(1, 1, 1, 1));
     }
 
-    static inline float32x4 float32x4_splat_z(float32x4__ a)
+    static inline float32x4 float32x4_splat_z(float32x4 a)
     {
         return _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 2, 2));
     }
 
-    static inline float32x4 float32x4_splat_w(float32x4__ a)
+    static inline float32x4 float32x4_splat_w(float32x4 a)
     {
         return _mm_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 3, 3));
     }
@@ -230,148 +230,148 @@
         return _mm_loadu_ps(source);
     }
 
-    static inline void float32x4_store(float* dest, float32x4__ a)
+    static inline void float32x4_store(float* dest, float32x4 a)
     {
         _mm_store_ps(dest, a);
     }
 
-    static inline void float32x4_ustore(float* dest, float32x4__ a)
+    static inline void float32x4_ustore(float* dest, float32x4 a)
     {
         _mm_storeu_ps(dest, a);
     }
 
-    static inline float32x4 float32x4_movelh(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)
     {
         return _mm_movelh_ps(a, b);
     }
 
-    static inline float32x4 float32x4_movehl(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_movehl(float32x4 a, float32x4 b)
     {
         return _mm_movehl_ps(a, b);
     }
 
-    static inline float32x4 float32x4_unpackhi(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_unpackhi(float32x4 a, float32x4 b)
     {
         return _mm_unpackhi_ps(a, b);
     }
 
-    static inline float32x4 float32x4_unpacklo(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
     {
         return _mm_unpacklo_ps(a, b);
     }
 
-    static inline float32x4 float32x4_min(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
     {
         return _mm_min_ps(a, b);
     }
 
-    static inline float32x4 float32x4_max(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_max(float32x4 a, float32x4 b)
     {
         return _mm_max_ps(a, b);
     }
 
-    static inline float32x4 float32x4_clamp(float32x4__ v, float32x4__ vmin, float32x4__ vmax)
+    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
     {
         return _mm_min_ps(vmax, _mm_max_ps(vmin, v));
     }
 
-    static inline float32x4 float32x4_abs(float32x4__ a)
+    static inline float32x4 float32x4_abs(float32x4 a)
     {
         return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff)));
     }
 
-    static inline float32x4 float32x4_neg(float32x4__ a)
+    static inline float32x4 float32x4_neg(float32x4 a)
     {
         return _mm_xor_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x80000000)));
     }
 
-    static inline float32x4 float32x4_add(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_add(float32x4 a, float32x4 b)
     {
         return _mm_add_ps(a, b);
     }
 
-    static inline float32x4 float32x4_sub(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_sub(float32x4 a, float32x4 b)
     {
         return _mm_sub_ps(a, b);
     }
 
-    static inline float32x4 float32x4_mul(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_mul(float32x4 a, float32x4 b)
     {
         return _mm_mul_ps(a, b);
     }
 
-    static inline float32x4 float32x4_div(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_div(float32x4 a, float32x4 b)
     {
         return _mm_div_ps(a, b);
     }
 
-    static inline float32x4 float32x4_div(float32x4__ a, float b)
+    static inline float32x4 float32x4_div(float32x4 a, float b)
     {
         return _mm_div_ps(a, _mm_set1_ps(b));
     }
 
 #if defined(MANGO_ENABLE_FMA3)
 
-    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_fmadd_ps(b, c, a);
     }
 
-    static inline float32x4 float32x4_msub(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_fnmadd_ps(b, c, a);
     }
 
 #elif defined(MANGO_ENABLE_FMA4)
 
-    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_macc_ps(b, c, a);
     }
 
-    static inline float32x4 float32x4_msub(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_sub_ps(a, _mm_mul_ps(b, c));
     }
 
 #else
 
-    static inline float32x4 float32x4_madd(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_add_ps(a, _mm_mul_ps(b, c));
     }
 
-    static inline float32x4 float32x4_msub(float32x4__ a, float32x4__ b, float32x4__ c)
+    static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_sub_ps(a, _mm_mul_ps(b, c));
     }
 
 #endif
 
-    static inline float32x4 float32x4_fast_reciprocal(float32x4__ a)
+    static inline float32x4 float32x4_fast_reciprocal(float32x4 a)
     {
         return _mm_rcp_ps(a);
     }
 
-    static inline float32x4 float32x4_fast_rsqrt(float32x4__ a)
+    static inline float32x4 float32x4_fast_rsqrt(float32x4 a)
     {
         return _mm_rsqrt_ps(a);
     }
 
-    static inline float32x4 float32x4_fast_sqrt(float32x4__ a)
+    static inline float32x4 float32x4_fast_sqrt(float32x4 a)
     {
         float32x4 n = _mm_rsqrt_ps(a);
         return _mm_mul_ps(a, n);
     }
 
-    static inline float32x4 float32x4_reciprocal(float32x4__ a)
+    static inline float32x4 float32x4_reciprocal(float32x4 a)
     {
         float32x4 n = _mm_rcp_ps(a);
         float32x4 m = _mm_mul_ps(_mm_mul_ps(n, n), a);
         return _mm_sub_ps(_mm_add_ps(n, n), m);
     }
 
-    static inline float32x4 float32x4_rsqrt(float32x4__ a)
+    static inline float32x4 float32x4_rsqrt(float32x4 a)
     {
         float32x4 n = _mm_rsqrt_ps(a);
         float32x4 e = _mm_mul_ps(_mm_mul_ps(n, n), a);
@@ -380,12 +380,12 @@
         return _mm_mul_ps(n, e);
     }
 
-    static inline float32x4 float32x4_sqrt(float32x4__ a)
+    static inline float32x4 float32x4_sqrt(float32x4 a)
     {
         return _mm_sqrt_ps(a);
     }
 
-    static inline float32x4 float32x4_dot3(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_dot3(float32x4 a, float32x4 b)
     {
 #if defined(MANGO_ENABLE_SSE4_1)
         return _mm_dp_ps(a, b, 0x7f);
@@ -396,7 +396,7 @@
 #endif
     }
 
-    static inline float32x4 float32x4_dot4(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_dot4(float32x4 a, float32x4 b)
     {
 #if defined(MANGO_ENABLE_SSE4_1)
         return _mm_dp_ps(a, b, 0xff);
@@ -413,7 +413,7 @@
 #endif
     }
 
-    static inline float32x4 float32x4_cross3(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_cross3(float32x4 a, float32x4 b)
     {
         float32x4 c = _mm_sub_ps(_mm_mul_ps(a, float32x4_shuffle<1, 2, 0, 3>(b)),
                               _mm_mul_ps(b, float32x4_shuffle<1, 2, 0, 3>(a)));
@@ -422,46 +422,46 @@
 
     // compare
 
-    static inline float32x4 float32x4_compare_neq(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
     {
         return _mm_cmpneq_ps(a, b);
     }
 
-    static inline float32x4 float32x4_compare_eq(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
     {
         return _mm_cmpeq_ps(a, b);
     }
 
-    static inline float32x4 float32x4_compare_lt(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
     {
         return _mm_cmplt_ps(a, b);
     }
 
-    static inline float32x4 float32x4_compare_le(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
     {
         return _mm_cmple_ps(a, b);
     }
 
-    static inline float32x4 float32x4_compare_gt(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
     {
         return _mm_cmpgt_ps(a, b);
     }
 
-    static inline float32x4 float32x4_compare_ge(float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
     {
         return _mm_cmpge_ps(a, b);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline float32x4 float32x4_select(float32x4__ mask, float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
     {
         return _mm_blendv_ps(b, a, mask);
     }
 
 #else
 
-    static inline float32x4 float32x4_select(float32x4__ mask, float32x4__ a, float32x4__ b)
+    static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
     {
 #if 1
         return float32x4_or(float32x4_and(mask, a), float32x4_nand(mask, b));
@@ -476,46 +476,46 @@
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline float32x4 float32x4_round(float32x4__ s)
+    static inline float32x4 float32x4_round(float32x4 s)
     {
         return _mm_round_ps(s, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
     }
 
-    static inline float32x4 float32x4_trunc(float32x4__ s)
+    static inline float32x4 float32x4_trunc(float32x4 s)
     {
         return _mm_round_ps(s, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
     }
 
-    static inline float32x4 float32x4_floor(float32x4__ s)
+    static inline float32x4 float32x4_floor(float32x4 s)
     {
         return _mm_round_ps(s, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
     }
 
-    static inline float32x4 float32x4_ceil(float32x4__ s)
+    static inline float32x4 float32x4_ceil(float32x4 s)
     {
         return _mm_round_ps(s, _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC);
     }
 
 #else
 
-    static inline float32x4 float32x4_round(float32x4__ s)
+    static inline float32x4 float32x4_round(float32x4 s)
     {
         return _mm_cvtepi32_ps(_mm_cvtps_epi32(s));
     }
 
-    static inline float32x4 float32x4_trunc(float32x4__ s)
+    static inline float32x4 float32x4_trunc(float32x4 s)
     {
         return _mm_cvtepi32_ps(_mm_cvttps_epi32(s));
     }
 
-    static inline float32x4 float32x4_floor(float32x4__ s)
+    static inline float32x4 float32x4_floor(float32x4 s)
     {
         const float32x4 temp = float32x4_round(s);
         const float32x4 mask = _mm_cmplt_ps(s, temp);
         return _mm_sub_ps(temp, _mm_and_ps(mask, _mm_set1_ps(1.0f)));
     }
 
-    static inline float32x4 float32x4_ceil(float32x4__ s)
+    static inline float32x4 float32x4_ceil(float32x4 s)
     {
         const float32x4 temp = float32x4_round(s);
         const float32x4 mask = _mm_cmpgt_ps(s, temp);
@@ -524,7 +524,7 @@
 
 #endif
 
-    static inline float32x4 float32x4_fract(float32x4__ s)
+    static inline float32x4 float32x4_fract(float32x4 s)
     {
         return float32x4_sub(s, float32x4_floor(s));
     }
@@ -535,13 +535,13 @@
 
 #ifdef MANGO_ENABLE_F16C
 
-    static inline float32x4 float32x4_convert(float16x4__ h)
+    static inline float32x4 float32x4_convert(float16x4 h)
     {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         return _mm_cvtph_ps(_mm_loadl_epi64(p));
     }
 
-    static inline float16x4 float16x4_convert(float32x4__ f)
+    static inline float16x4 float16x4_convert(float32x4 f)
     {
         float16x4 h;
         __m128i* p = reinterpret_cast<__m128i *>(&h);
@@ -551,7 +551,7 @@
 
 #else
 
-    static inline float32x4 float32x4_convert(float16x4__ h)
+    static inline float32x4 float32x4_convert(float16x4 h)
     {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         const int32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
@@ -589,7 +589,7 @@
         return float32x4_cast(result);
     }
 
-    static inline float16x4 float16x4_convert(float32x4__ f)
+    static inline float16x4 float16x4_convert(float32x4 f)
     {
         const float32x4 magic = float32x4_set1(Float(0, 15, 0).f);
         const int32x4 vinf = int32x4_set1(31 << 23);
@@ -851,7 +851,7 @@
         float32x4_matrix_transpose(result, temp);
     }
 
-    static inline float32x4 float32x4_vector_matrix_multiply(float32x4__ v, const float32x4* m)
+    static inline float32x4 float32x4_vector_matrix_multiply(float32x4 v, const float32x4* m)
     {
         float32x4 temp;
         temp = float32x4_mul(_mm_shuffle_ps(v, v, 0x00), m[0]);

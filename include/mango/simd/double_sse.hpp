@@ -10,7 +10,7 @@
 
     // conversion
 
-    static inline float64x4 float64x4_convert(int32x4__ s)
+    static inline float64x4 float64x4_convert(int32x4 s)
     {
         float64x4 result;
         result.xy = _mm_cvtepi32_pd(s);
@@ -18,7 +18,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_convert(float32x4__ s)
+    static inline float64x4 float64x4_convert(float32x4 s)
     {
         float64x4 result;
         result.xy = _mm_cvtps_pd(s);
@@ -26,7 +26,7 @@
         return result;
     }
 
-    static inline int32x4 int32x4_convert(float64x4__ s)
+    static inline int32x4 int32x4_convert(float64x4 s)
     {
         __m128i xy = _mm_cvtpd_epi32(s.xy);
         __m128i zw = _mm_cvtpd_epi32(s.zw);
@@ -34,14 +34,14 @@
         return _mm_shuffle_epi32(xzyw, 0xd8);
     }
 
-    static inline float32x4 float32x4_convert(float64x4__ s)
+    static inline float32x4 float32x4_convert(float64x4 s)
     {
         __m128 xy00 = _mm_cvtpd_ps(s.xy);
         __m128 zw00 = _mm_cvtpd_ps(s.zw);
         return _mm_shuffle_ps(xy00, zw00, 0x44);
     }
 
-    static inline float64x4 float64x4_unsigned_convert(int32x4__ i)
+    static inline float64x4 float64x4_unsigned_convert(int32x4 i)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
         const __m128i mask = _mm_set1_epi32(0x43380000);
@@ -53,7 +53,7 @@
         return result;
     }
 
-    static inline int32x4 int32x4_unsigned_convert(float64x4__ d)
+    static inline int32x4 int32x4_unsigned_convert(float64x4 d)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
         __m128 xy = _mm_castpd_ps(_mm_add_pd(d.xy, bias));
@@ -62,7 +62,7 @@
         return _mm_castps_si128(u);
     }
 
-    static inline int32x4 int32x4_truncate(float64x4__ s)
+    static inline int32x4 int32x4_truncate(float64x4 s)
     {
         __m128i xy = _mm_cvttpd_epi32(s.xy);
         __m128i zw = _mm_cvttpd_epi32(s.zw);
@@ -71,7 +71,7 @@
     }
 
     template <int x, int y, int z, int w>
-    static inline float64x4 float64x4_shuffle(float64x4__ v)
+    static inline float64x4 float64x4_shuffle(float64x4 v)
     {
         const int select0 = ((y & 1) << 1) | (x & 1);
         const int select1 = ((w & 1) << 1) | (z & 1);
@@ -86,14 +86,14 @@
     }
 
     template <>
-    inline float64x4 float64x4_shuffle<0, 1, 2, 3>(float64x4__ v)
+    inline float64x4 float64x4_shuffle<0, 1, 2, 3>(float64x4 v)
     {
         // .xyzw
         return v;
     }
 
     template <>
-    inline float64x4 float64x4_shuffle<0, 0, 0, 0>(float64x4__ v)
+    inline float64x4 float64x4_shuffle<0, 0, 0, 0>(float64x4 v)
     {
         // .xxxx
         const __m128d xx = _mm_shuffle_pd(v.xy, v.xy, 0);
@@ -104,7 +104,7 @@
     }
 
     template <>
-    inline float64x4 float64x4_shuffle<1, 1, 1, 1>(float64x4__ v)
+    inline float64x4 float64x4_shuffle<1, 1, 1, 1>(float64x4 v)
     {
         // .yyyy
         const __m128d yy = _mm_shuffle_pd(v.xy, v.xy, 3);
@@ -115,7 +115,7 @@
     }
 
     template <>
-    inline float64x4 float64x4_shuffle<2, 2, 2, 2>(float64x4__ v)
+    inline float64x4 float64x4_shuffle<2, 2, 2, 2>(float64x4 v)
     {
         // .zzzz
         const __m128d zz = _mm_shuffle_pd(v.zw, v.zw, 0);
@@ -126,7 +126,7 @@
     }
 
     template <>
-    inline float64x4 float64x4_shuffle<3, 3, 3, 3>(float64x4__ v)
+    inline float64x4 float64x4_shuffle<3, 3, 3, 3>(float64x4 v)
     {
         // .wwww
         const __m128d ww = _mm_shuffle_pd(v.zw, v.zw, 3);
@@ -172,70 +172,70 @@
     // get component
 
     template <int Index>
-    static inline double float64x4_get_component(float64x4__ a);
+    static inline double float64x4_get_component(float64x4 a);
 
     template <>
-    inline double float64x4_get_component<0>(float64x4__ a)
+    inline double float64x4_get_component<0>(float64x4 a)
     {
         return _mm_cvtsd_f64(a.xy);
     }
 
     template <>
-    inline double float64x4_get_component<1>(float64x4__ a)
+    inline double float64x4_get_component<1>(float64x4 a)
     {
         const __m128d yy = _mm_unpackhi_pd(a.xy, a.xy);
         return _mm_cvtsd_f64(yy);
     }
 
     template <>
-    inline double float64x4_get_component<2>(float64x4__ a)
+    inline double float64x4_get_component<2>(float64x4 a)
     {
         return _mm_cvtsd_f64(a.zw);
     }
 
     template <>
-    inline double float64x4_get_component<3>(float64x4__ a)
+    inline double float64x4_get_component<3>(float64x4 a)
     {
         const __m128d ww = _mm_unpackhi_pd(a.zw, a.zw);
         return _mm_cvtsd_f64(ww);
     }
 
-    static inline float64x4 float64x4_set_x(float64x4__ a, double x)
+    static inline float64x4 float64x4_set_x(float64x4 a, double x)
     {
         return float64x4_set_component<0>(a, x);
     }
 
-    static inline float64x4 float64x4_set_y(float64x4__ a, double y)
+    static inline float64x4 float64x4_set_y(float64x4 a, double y)
     {
         return float64x4_set_component<1>(a, y);
     }
 
-    static inline float64x4 float64x4_set_z(float64x4__ a, double z)
+    static inline float64x4 float64x4_set_z(float64x4 a, double z)
     {
         return float64x4_set_component<2>(a, z);
     }
 
-    static inline float64x4 float64x4_set_w(float64x4__ a, double w)
+    static inline float64x4 float64x4_set_w(float64x4 a, double w)
     {
         return float64x4_set_component<3>(a, w);
     }
 
-    static inline double float64x4_get_x(float64x4__ a)
+    static inline double float64x4_get_x(float64x4 a)
     {
         return float64x4_get_component<0>(a);
     }
 
-    static inline double float64x4_get_y(float64x4__ a)
+    static inline double float64x4_get_y(float64x4 a)
     {
         return float64x4_get_component<1>(a);
     }
 
-    static inline double float64x4_get_z(float64x4__ a)
+    static inline double float64x4_get_z(float64x4 a)
     {
         return float64x4_get_component<2>(a);
     }
 
-    static inline double float64x4_get_w(float64x4__ a)
+    static inline double float64x4_get_w(float64x4 a)
     {
         return float64x4_get_component<3>(a);
     }
@@ -280,19 +280,19 @@
         return result;
     }
 
-    static inline void float64x4_store(double* dest, float64x4__ a)
+    static inline void float64x4_store(double* dest, float64x4 a)
     {
         _mm_store_pd(dest + 0, a.xy);
         _mm_store_pd(dest + 2, a.zw);
     }
 
-    static inline void float64x4_ustore(double* dest, float64x4__ a)
+    static inline void float64x4_ustore(double* dest, float64x4 a)
     {
         _mm_storeu_pd(dest + 0, a.xy);
         _mm_storeu_pd(dest + 2, a.zw);
     }
 
-    static inline float64x4 float64x4_unpackhi(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_unpackhi_pd(a.xy, b.xy);
@@ -300,7 +300,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_unpacklo(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_unpacklo(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_unpacklo_pd(a.xy, b.xy);
@@ -310,7 +310,7 @@
 
     // logical
 
-    static inline float64x4 float64x4_and(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_and(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_and_pd(a.xy, b.xy);
@@ -318,7 +318,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_nand(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_nand(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_andnot_pd(a.xy, b.xy);
@@ -326,7 +326,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_or(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_or(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_or_pd(a.xy, b.xy);
@@ -334,7 +334,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_xor(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_xor(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_xor_pd(a.xy, b.xy);
@@ -342,7 +342,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_min(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_min(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_min_pd(a.xy, b.xy);
@@ -350,7 +350,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_max(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_max(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_max_pd(a.xy, b.xy);
@@ -358,7 +358,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_clamp(float64x4__ v, float64x4__ vmin, float64x4__ vmax)
+    static inline float64x4 float64x4_clamp(float64x4 v, float64x4 vmin, float64x4 vmax)
     {
         float64x4 result;
         result.xy = _mm_min_pd(vmax.xy, _mm_max_pd(vmin.xy, v.xy));
@@ -366,7 +366,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_abs(float64x4__ a)
+    static inline float64x4 float64x4_abs(float64x4 a)
     {
         const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7fffffffffffffff));
         float64x4 result;
@@ -375,7 +375,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_neg(float64x4__ a)
+    static inline float64x4 float64x4_neg(float64x4 a)
     {
         const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x8000000000000000));
         float64x4 result;
@@ -384,7 +384,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_add(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_add(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_add_pd(a.xy, b.xy);
@@ -392,7 +392,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_sub(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_sub(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_sub_pd(a.xy, b.xy);
@@ -400,7 +400,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_mul(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_mul(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_mul_pd(a.xy, b.xy);
@@ -408,7 +408,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_div(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_div(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_div_pd(a.xy, b.xy);
@@ -416,7 +416,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_div(float64x4__ a, double b)
+    static inline float64x4 float64x4_div(float64x4 a, double b)
     {
         const __m128d bb = _mm_set1_pd(b);
         float64x4 result;
@@ -427,7 +427,7 @@
 
 #if defined(MANGO_ENABLE_FMA3)
 
-    static inline float64x4 float64x4_madd(float64x4__ a, float64x4__ b, float64x4__ c)
+    static inline float64x4 float64x4_madd(float64x4 a, float64x4 b, float64x4 c)
     {
         float64x4 result;
         result.xy = _mm_fmadd_pd(b.xy, c.xy, a.xy);
@@ -435,7 +435,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_msub(float64x4__ a, float64x4__ b, float64x4__ c)
+    static inline float64x4 float64x4_msub(float64x4 a, float64x4 b, float64x4 c)
     {
         float64x4 result;
         result.xy = _mm_fnmadd_pd(b.xy, c.xy, a.xy);
@@ -445,7 +445,7 @@
 
 #else
 
-    static inline float64x4 float64x4_madd(float64x4__ a, float64x4__ b, float64x4__ c)
+    static inline float64x4 float64x4_madd(float64x4 a, float64x4 b, float64x4 c)
     {
         float64x4 result;
         result.xy = _mm_add_pd(a.xy, _mm_mul_pd(b.xy, c.xy));
@@ -453,7 +453,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_msub(float64x4__ a, float64x4__ b, float64x4__ c)
+    static inline float64x4 float64x4_msub(float64x4 a, float64x4 b, float64x4 c)
     {
         float64x4 result;
         result.xy = _mm_sub_pd(a.xy, _mm_mul_pd(b.xy, c.xy));
@@ -463,7 +463,7 @@
 
 #endif
 
-    static inline float64x4 float64x4_fast_reciprocal(float64x4__ a)
+    static inline float64x4 float64x4_fast_reciprocal(float64x4 a)
     {
         const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
@@ -472,7 +472,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_fast_rsqrt(float64x4__ a)
+    static inline float64x4 float64x4_fast_rsqrt(float64x4 a)
     {
         const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
@@ -481,7 +481,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_fast_sqrt(float64x4__ a)
+    static inline float64x4 float64x4_fast_sqrt(float64x4 a)
     {
         float64x4 result;
         result.xy = _mm_sqrt_pd(a.xy);
@@ -489,7 +489,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_reciprocal(float64x4__ a)
+    static inline float64x4 float64x4_reciprocal(float64x4 a)
     {
         const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
@@ -498,7 +498,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_rsqrt(float64x4__ a)
+    static inline float64x4 float64x4_rsqrt(float64x4 a)
     {
         const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
@@ -507,7 +507,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_sqrt(float64x4__ a)
+    static inline float64x4 float64x4_sqrt(float64x4 a)
     {
         float64x4 result;
         result.xy = _mm_sqrt_pd(a.xy);
@@ -515,7 +515,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_dot4(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_dot4(float64x4 a, float64x4 b)
     {
         const __m128d xy = _mm_mul_pd(a.xy, b.xy);
         const __m128d zw = _mm_mul_pd(a.zw, b.zw);
@@ -532,7 +532,7 @@
 
     // compare
 
-    static inline float64x4 float64x4_compare_neq(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_compare_neq(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_cmpneq_pd(a.xy, b.xy);
@@ -540,7 +540,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_compare_eq(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_compare_eq(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_cmpeq_pd(a.xy, b.xy);
@@ -548,7 +548,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_compare_lt(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_compare_lt(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_cmplt_pd(a.xy, b.xy);
@@ -556,7 +556,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_compare_le(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_compare_le(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_cmple_pd(a.xy, b.xy);
@@ -564,7 +564,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_compare_gt(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_compare_gt(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_cmpgt_pd(a.xy, b.xy);
@@ -572,7 +572,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_compare_ge(float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_compare_ge(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_cmpge_pd(a.xy, b.xy);
@@ -582,7 +582,7 @@
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline float64x4 float64x4_select(float64x4__ mask, float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_select(float64x4 mask, float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_blendv_pd(b.xy, a.xy, mask.xy);
@@ -592,7 +592,7 @@
 
 #else
 
-    static inline float64x4 float64x4_select(float64x4__ mask, float64x4__ a, float64x4__ b)
+    static inline float64x4 float64x4_select(float64x4 mask, float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.xy = _mm_or_pd(_mm_and_pd(mask.xy, a.xy), _mm_andnot_pd(mask.xy, b.xy));
@@ -606,7 +606,7 @@
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline float64x4 float64x4_round(float64x4__ s)
+    static inline float64x4 float64x4_round(float64x4 s)
     {
         float64x4 result;
         result.xy = _mm_round_pd(s.xy, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
@@ -614,7 +614,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_trunc(float64x4__ s)
+    static inline float64x4 float64x4_trunc(float64x4 s)
     {
         float64x4 result;
         result.xy = _mm_round_pd(s.xy, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
@@ -622,7 +622,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_floor(float64x4__ s)
+    static inline float64x4 float64x4_floor(float64x4 s)
     {
         float64x4 result;
         result.xy = _mm_round_pd(s.xy, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
@@ -630,7 +630,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_ceil(float64x4__ s)
+    static inline float64x4 float64x4_ceil(float64x4 s)
     {
         float64x4 result;
         result.xy = _mm_round_pd(s.xy, _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC);
@@ -640,7 +640,7 @@
 
 #else
 
-    static inline float64x4 float64x4_round(float64x4__ s)
+    static inline float64x4 float64x4_round(float64x4 s)
     {
         float64x4 result;
         result.xy = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s.xy));
@@ -648,7 +648,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_trunc(float64x4__ s)
+    static inline float64x4 float64x4_trunc(float64x4 s)
     {
         float64x4 result;
         result.xy = _mm_cvtepi32_pd(_mm_cvttpd_epi32(s.xy));
@@ -656,7 +656,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_floor(float64x4__ s)
+    static inline float64x4 float64x4_floor(float64x4 s)
     {
         const __m128d one = _mm_set1_pd(1.0);
         const __m128d temp_xy = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s.xy));
@@ -670,7 +670,7 @@
         return result;
     }
 
-    static inline float64x4 float64x4_ceil(float64x4__ s)
+    static inline float64x4 float64x4_ceil(float64x4 s)
     {
         const __m128d one = _mm_set1_pd(1.0);
         const __m128d temp_xy = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s.xy));
@@ -686,7 +686,7 @@
 
 #endif
 
-    static inline float64x4 float64x4_fract(float64x4__ s)
+    static inline float64x4 float64x4_fract(float64x4 s)
     {
         const __m128d one = _mm_set1_pd(1.0);
         const __m128d temp_xy = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s.xy));

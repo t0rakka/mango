@@ -32,48 +32,48 @@ namespace simd {
     constexpr float R_LN2f = 1.442695040888963407359924681001892137426645954152985934135449406931f;
     constexpr float R_INFf = float(std::numeric_limits<float>::infinity());
 
-    static inline float32x4 signbit(float32x4__ f)
+    static inline float32x4 signbit(float32x4 f)
     {
         return float32x4_and(f, float32x4_set1(-0.0f));
     }
 
-    static inline float32x4 mulsign(float32x4__ x, float32x4__ y)
+    static inline float32x4 mulsign(float32x4 x, float32x4 y)
     {
         return float32x4_xor(x, signbit(y));
     }
 
-    static inline float32x4 sign(float32x4__ f)
+    static inline float32x4 sign(float32x4 f)
     {
         return float32x4_or(float32x4_set1(1.0f), float32x4_and(float32x4_set1(-0.0f), f));
     }
 
-    static inline float32x4 is_nan(float32x4__ d)
+    static inline float32x4 is_nan(float32x4 d)
     {
         return float32x4_compare_neq(d, d);
     }
 
-    static inline float32x4 is_inf(float32x4__ d)
+    static inline float32x4 is_inf(float32x4 d)
     {
         return float32x4_compare_eq(float32x4_abs(d), R_INFf);
     }
 
-    static inline float32x4 is_inf2(float32x4__ d, float32x4__ m)
+    static inline float32x4 is_inf2(float32x4 d, float32x4 m)
     {
         return float32x4_and(is_inf(d), float32x4_or(signbit(d), m));
     }
 
-    static inline float32x4 is_negative_inf(float32x4__ d)
+    static inline float32x4 is_negative_inf(float32x4 d)
     {
         return float32x4_compare_eq(d, -R_INFf);
     }
 
-    static inline int32x4 sel(float32x4__ f0, float32x4__ f1, int32x4__ x, int32x4__ y)
+    static inline int32x4 sel(float32x4 f0, float32x4 f1, int32x4 x, int32x4 y)
     {
         float32x4 m = float32x4_compare_lt(f0, f1);
         return int32x4_select(int32x4_cast(m), x, y);
     }
 
-    static inline float32x4 atan2kf(float32x4__ b, float32x4__ a)
+    static inline float32x4 atan2kf(float32x4 b, float32x4 a)
     {
         int32x4 q = sel(a, float32x4_set1(0.0f), int32x4_set1(-2), int32x4_set1(0));
         float32x4 x = float32x4_abs(a);
@@ -102,7 +102,7 @@ namespace simd {
         return t;
     }
 
-    static inline float32x4 ldexp(float32x4__ x, int32x4__ q)
+    static inline float32x4 ldexp(float32x4 x, int32x4 q)
     {
         float32x4 u;
         int32x4 m = int32x4_sra(q, 31);
@@ -118,7 +118,7 @@ namespace simd {
         return float32x4_mul(y, u);
     }
 
-    static inline float32x4 sincos_post(float32x4__ s)
+    static inline float32x4 sincos_post(float32x4 s)
     {
         float32x4 u;
         u = float32x4_set1(2.6083159809786593541503e-06f);
@@ -128,7 +128,7 @@ namespace simd {
         return u;
     }
 
-    float32x4 float32x4_sin(float32x4__ v)
+    float32x4 float32x4_sin(float32x4 v)
     {
         float32x4 d = v;
         int32x4 q = int32x4_convert(float32x4_mul(v, float_1_pi));
@@ -151,7 +151,7 @@ namespace simd {
         return u;
     }
 
-    float32x4 float32x4_cos(float32x4__ v)
+    float32x4 float32x4_cos(float32x4 v)
     {
         float32x4 d = v;
         int32x4 q;
@@ -175,7 +175,7 @@ namespace simd {
         return u;
     }
 
-    float32x4 float32x4_tan(float32x4__ d)
+    float32x4 float32x4_tan(float32x4 d)
     {
         const int32x4 q = int32x4_convert(float32x4_mul(d, float32x4_set1(float_2_pi)));
         float32x4 u = float32x4_convert(q);
@@ -205,7 +205,7 @@ namespace simd {
         return u;
     }
 
-    float32x4 float32x4_exp(float32x4__ v)
+    float32x4 float32x4_exp(float32x4 v)
     {
         const int32x4 q = int32x4_convert(float32x4_mul(v, R_LN2f));
         const float32x4 p = float32x4_convert(q);
@@ -227,7 +227,7 @@ namespace simd {
         return u;
     }
 
-    float32x4 float32x4_log2(float32x4__ v)
+    float32x4 float32x4_log2(float32x4 v)
     {
         const int32x4 exponent = int32x4_sub(int32x4_srl(int32x4_and(int32x4_cast(v), 0x7fffffff), 23), 127);
         const float32x4 x = float32x4_sub(float32x4_cast(int32x4_sub(int32x4_cast(v), int32x4_sll(exponent, 23))), 1.0f);
@@ -245,12 +245,12 @@ namespace simd {
         return float32x4_madd(u, x4, hi);
     }
 
-    float32x4 float32x4_log(float32x4__ v)
+    float32x4 float32x4_log(float32x4 v)
     {
         return float32x4_mul(float32x4_log2(v), 0.69314718055995f);
     }
 
-    float32x4 float32x4_exp2(float32x4__ v)
+    float32x4 float32x4_exp2(float32x4 v)
     {
         const int32x4 ix = int32x4_truncate(float32x4_add(v, float32x4_cast(int32x4_nand(int32x4_sra(int32x4_convert(v), 31), 0x3f7fffff))));
         float32x4 f = float32x4_mul(float32x4_sub(float32x4_convert(ix), v), 0.69314718055994530942f);
@@ -266,12 +266,12 @@ namespace simd {
         return float32x4_or(float32x4_mul(a, b), float32x4_cast(int32x4_srl(int32x4_compare_gt(ix, 128), 1)));
     }
 
-    float32x4 float32x4_pow(float32x4__ a, float32x4__ b)
+    float32x4 float32x4_pow(float32x4 a, float32x4 b)
     {
         return float32x4_exp2(float32x4_mul(float32x4_log2(float32x4_abs(a)), b));
     }
 
-    float32x4 float32x4_asin(float32x4__ d)
+    float32x4 float32x4_asin(float32x4 d)
     {
         const float32x4 one = float32x4_set1(1.0f);
         float32x4 x, y;
@@ -284,7 +284,7 @@ namespace simd {
         return mulsign(x, d);
     }
 
-    float32x4 float32x4_acos(float32x4__ d)
+    float32x4 float32x4_acos(float32x4 d)
     {
         const float32x4 one = float32x4_set1(1.0f);
         float32x4 x, y;
@@ -307,7 +307,7 @@ namespace simd {
         return x;
     }
 
-    float32x4 float32x4_atan(float32x4__ d)
+    float32x4 float32x4_atan(float32x4 d)
     {
         const float32x4 one = float32x4_set1(1.0f);
 
@@ -340,7 +340,7 @@ namespace simd {
         return t;
     }
 
-    float32x4 float32x4_atan2(float32x4__ y, float32x4__ x)
+    float32x4 float32x4_atan2(float32x4 y, float32x4 x)
     {
         static const float32x4 pi = float32x4_set1(float_pi);
         static const float32x4 pi_2 = float32x4_set1(float_pi_2);
@@ -365,7 +365,7 @@ namespace simd {
     // FPU Emulation: float32x4
     // ------------------------------------------------------------------
 
-    float32x4 float32x4_sin(float32x4__ a)
+    float32x4 float32x4_sin(float32x4 a)
     {
         float32x4 v;
         v.x = std::sin(a.x);
@@ -375,7 +375,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_cos(float32x4__ a)
+    float32x4 float32x4_cos(float32x4 a)
     {
         float32x4 v;
         v.x = std::cos(a.x);
@@ -385,7 +385,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_tan(float32x4__ a)
+    float32x4 float32x4_tan(float32x4 a)
     {
         float32x4 v;
         v.x = std::tan(a.x);
@@ -395,7 +395,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_exp(float32x4__ a)
+    float32x4 float32x4_exp(float32x4 a)
     {
         float32x4 v;
         v.x = std::exp(a.x);
@@ -405,7 +405,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_log(float32x4__ a)
+    float32x4 float32x4_log(float32x4 a)
     {
         float32x4 v;
         v.x = std::log(a.x);
@@ -415,7 +415,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_log2(float32x4__ a)
+    float32x4 float32x4_log2(float32x4 a)
     {
         float32x4 v;
         v.x = std::log2(a.x);
@@ -425,7 +425,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_exp2(float32x4__ a)
+    float32x4 float32x4_exp2(float32x4 a)
     {
         float32x4 v;
         v.x = std::exp2(a.x);
@@ -435,7 +435,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_pow(float32x4__ a, float32x4__ b)
+    float32x4 float32x4_pow(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v.x = std::pow(a.x, b.x);
@@ -445,7 +445,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_asin(float32x4__ a)
+    float32x4 float32x4_asin(float32x4 a)
     {
         float32x4 v;
         v.x = std::asin(a.x);
@@ -455,7 +455,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_acos(float32x4__ a)
+    float32x4 float32x4_acos(float32x4 a)
     {
         float32x4 v;
         v.x = std::acos(a.x);
@@ -465,7 +465,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_atan(float32x4__ a)
+    float32x4 float32x4_atan(float32x4 a)
     {
         float32x4 v;
         v.x = std::atan(a.x);
@@ -475,7 +475,7 @@ namespace simd {
         return v;
     }
 
-    float32x4 float32x4_atan2(float32x4__ a, float32x4__ b)
+    float32x4 float32x4_atan2(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v.x = std::atan2(a.x, b.x);
@@ -508,42 +508,42 @@ namespace simd {
     constexpr double R_LN2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
     constexpr double R_INF = double(std::numeric_limits<double>::infinity());
 
-    static inline float64x4 signbit(float64x4__ v)
+    static inline float64x4 signbit(float64x4 v)
     {
         return float64x4_and(v, float64x4_set1(-0.0));
     }
 
-    static inline float64x4 mulsign(float64x4__ x, float64x4__ y)
+    static inline float64x4 mulsign(float64x4 x, float64x4 y)
     {
         return float64x4_xor(x, signbit(y));
     }
 
-    static inline float64x4 sign(float64x4__ v)
+    static inline float64x4 sign(float64x4 v)
     {
         return float64x4_or(float64x4_set1(1.0), float64x4_and(float64x4_set1(-0.0), v));
     }
 
-    static inline float64x4 is_nan(float64x4__ d)
+    static inline float64x4 is_nan(float64x4 d)
     {
         return float64x4_compare_neq(d, d);
     }
 
-    static inline float64x4 is_inf(float64x4__ d)
+    static inline float64x4 is_inf(float64x4 d)
     {
         return float64x4_compare_eq(float64x4_abs(d), R_INF);
     }
 
-    static inline float64x4 is_inf2(float64x4__ d, float64x4__ m)
+    static inline float64x4 is_inf2(float64x4 d, float64x4 m)
     {
         return float64x4_and(is_inf(d), float64x4_or(signbit(d), m));
     }
 
-    static inline float64x4 is_negative_inf(float64x4__ d)
+    static inline float64x4 is_negative_inf(float64x4 d)
     {
         return float64x4_compare_eq(d, -R_INF);
     }
 
-    static inline int32x4 sel(float64x4__ f0, float64x4__ f1, int32x4__ x, int32x4__ y)
+    static inline int32x4 sel(float64x4 f0, float64x4 f1, int32x4 x, int32x4 y)
     {
         const float64x4 mask = float64x4_compare_lt(f0, f1);
         const float64x4 xd = float64x4_convert(x);
@@ -552,7 +552,7 @@ namespace simd {
         return int32x4_convert(s);
     }
 
-    static inline float64x4 atan2k(float64x4__ b, float64x4__ a)
+    static inline float64x4 atan2k(float64x4 b, float64x4 a)
     {
         int32x4 q = sel(a, float64x4_zero(), int32x4_set1(-2), int32x4_zero());
         float64x4 x = float64x4_abs(a);
@@ -592,13 +592,13 @@ namespace simd {
         return t;
     }
 
-    static inline float64x4 ldexp(float64x4__ x, int32x4__ q)
+    static inline float64x4 ldexp(float64x4 x, int32x4 q)
     {
         // TODO: implement ldexp() with 64 bit precision
         return float64x4_convert(ldexp(float32x4_convert(x), q));
     }
 
-    static inline float64x4 sincos_post(float64x4__ s)
+    static inline float64x4 sincos_post(float64x4 s)
     {
         float64x4 u;
         u = float64x4_set1(-7.97255955009037868891952e-18);
@@ -613,7 +613,7 @@ namespace simd {
         return u;
     }
 
-    float64x4 float64x4_sin(float64x4__ v)
+    float64x4 float64x4_sin(float64x4 v)
     {
         float64x4 d = v;
 
@@ -635,7 +635,7 @@ namespace simd {
         return u;
     }
 
-    float64x4 float64x4_cos(float64x4__ v)
+    float64x4 float64x4_cos(float64x4 v)
     {
         float64x4 d = v;
 
@@ -659,7 +659,7 @@ namespace simd {
         return u;
     }
 
-    float64x4 float64x4_tan(float64x4__ d)
+    float64x4 float64x4_tan(float64x4 d)
     {
         const int32x4 q = int32x4_convert(float64x4_mul(d, double_2_pi));
         float64x4 u = float64x4_convert(q);
@@ -698,7 +698,7 @@ namespace simd {
         return u;
     }
 
-    float64x4 float64x4_exp(float64x4__ v)
+    float64x4 float64x4_exp(float64x4 v)
     {
         const int32x4 q = int32x4_convert(float64x4_mul(v, R_LN2));
         const float64x4 p = float64x4_convert(q);
@@ -726,7 +726,7 @@ namespace simd {
         return u;
     }
 
-    float64x4 float64x4_log2(float64x4__ v)
+    float64x4 float64x4_log2(float64x4 v)
     {
 #if 0
         // TODO: implement float64x4_log2() with 64 bit precision
@@ -741,12 +741,12 @@ namespace simd {
 #endif
     }
 
-    float64x4 float64x4_log(float64x4__ v)
+    float64x4 float64x4_log(float64x4 v)
     {
         return float64x4_mul(float64x4_log2(v), 0.69314718055994530941723212145818);
     }
 
-    float64x4 float64x4_exp2(float64x4__ v)
+    float64x4 float64x4_exp2(float64x4 v)
     {
 #if 0
         // TODO: implement float64x4_exp2() with 64 bit precision
@@ -761,12 +761,12 @@ namespace simd {
 #endif
     }
 
-    float64x4 float64x4_pow(float64x4__ a, float64x4__ b)
+    float64x4 float64x4_pow(float64x4 a, float64x4 b)
     {
         return float64x4_exp2(float64x4_mul(float64x4_log2(float64x4_abs(a)), b));
     }
 
-    float64x4 float64x4_asin(float64x4__ d)
+    float64x4 float64x4_asin(float64x4 d)
     {
         const float64x4 one = float64x4_set1(1.0);
         float64x4 x, y;
@@ -779,7 +779,7 @@ namespace simd {
         return mulsign(x, d);
     }
 
-    float64x4 float64x4_acos(float64x4__ d)
+    float64x4 float64x4_acos(float64x4 d)
     {
         const float64x4 one = float64x4_set1(1.0);
         float64x4 x, y;
@@ -794,7 +794,7 @@ namespace simd {
         return x;
     }
 
-    float64x4 float64x4_atan(float64x4__ d)
+    float64x4 float64x4_atan(float64x4 d)
     {
         const float64x4 one = float64x4_set1(1.0);
 
@@ -840,7 +840,7 @@ namespace simd {
         return t;
     }
 
-    float64x4 float64x4_atan2(float64x4__ y, float64x4__ x)
+    float64x4 float64x4_atan2(float64x4 y, float64x4 x)
     {
         const float64x4 pi = float64x4_set1(double_pi);
         const float64x4 pi_2 = float64x4_set1(double_pi_2);
@@ -865,7 +865,7 @@ namespace simd {
     // FPU Emulation: float64x4
     // ------------------------------------------------------------------
 
-    float64x4 float64x4_sin(float64x4__ a)
+    float64x4 float64x4_sin(float64x4 a)
     {
         float64x4 v;
         v.x = std::sin(a.x);
@@ -875,7 +875,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_cos(float64x4__ a)
+    float64x4 float64x4_cos(float64x4 a)
     {
         float64x4 v;
         v.x = std::cos(a.x);
@@ -885,7 +885,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_tan(float64x4__ a)
+    float64x4 float64x4_tan(float64x4 a)
     {
         float64x4 v;
         v.x = std::tan(a.x);
@@ -895,7 +895,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_exp(float64x4__ a)
+    float64x4 float64x4_exp(float64x4 a)
     {
         float64x4 v;
         v.x = std::exp(a.x);
@@ -905,7 +905,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_log(float64x4__ a)
+    float64x4 float64x4_log(float64x4 a)
     {
         float64x4 v;
         v.x = std::log(a.x);
@@ -915,7 +915,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_log2(float64x4__ a)
+    float64x4 float64x4_log2(float64x4 a)
     {
         float64x4 v;
         v.x = std::log2(a.x);
@@ -925,7 +925,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_exp2(float64x4__ a)
+    float64x4 float64x4_exp2(float64x4 a)
     {
         float64x4 v;
         v.x = std::exp2(a.x);
@@ -935,7 +935,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_pow(float64x4__ a, float64x4__ b)
+    float64x4 float64x4_pow(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v.x = std::pow(a.x, b.x);
@@ -945,7 +945,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_asin(float64x4__ a)
+    float64x4 float64x4_asin(float64x4 a)
     {
         float64x4 v;
         v.x = std::asin(a.x);
@@ -955,7 +955,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_acos(float64x4__ a)
+    float64x4 float64x4_acos(float64x4 a)
     {
         float64x4 v;
         v.x = std::acos(a.x);
@@ -965,7 +965,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_atan(float64x4__ a)
+    float64x4 float64x4_atan(float64x4 a)
     {
         float64x4 v;
         v.x = std::atan(a.x);
@@ -975,7 +975,7 @@ namespace simd {
         return v;
     }
 
-    float64x4 float64x4_atan2(float64x4__ a, float64x4__ b)
+    float64x4 float64x4_atan2(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v.x = std::atan2(a.x, b.x);

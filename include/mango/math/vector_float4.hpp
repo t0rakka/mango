@@ -493,7 +493,7 @@ namespace mango
         {
         }
 
-        Vector(simd::float32x4__ v)
+        Vector(simd::float32x4 v)
         : m(v)
         {
         }
@@ -511,7 +511,7 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (simd::float32x4__ v)
+        Vector& operator = (simd::float32x4 v)
         {
             m = v;
             return *this;
@@ -523,12 +523,12 @@ namespace mango
             return *this;
         }
 
-        operator simd::float32x4__ () const
+        operator simd::float32x4 () const
         {
             return m;
         }
 
-        operator simd::float32x4__ ()
+        operator simd::float32x4 ()
         {
             return m;
         }
@@ -775,7 +775,7 @@ namespace mango
         return simd::float32x4_compare_neq(a, b);
     }
 
-    static inline simd::float32x4 select(simd::float32x4__ mask, const float4& a, const float4& b)
+    static inline simd::float32x4 select(simd::float32x4 mask, const float4& a, const float4& b)
     {
         return simd::float32x4_select(mask, a, b);
     }
