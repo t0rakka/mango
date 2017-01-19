@@ -14,7 +14,7 @@
 
     // conversion
 
-    static inline float32x4 float32x4_cast(int32x4 s)
+    static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
         return _mm_castsi128_ps(s);
     }
@@ -31,7 +31,7 @@
         const __m128i x0 = _mm_or_si128(_mm_srli_epi32(s, 16), onep39);
         const __m128i x1 = _mm_and_si128(s, mask);
         const __m128 f1 = _mm_cvtepi32_ps(x1);
-        const __m128 f0 = _mm_sub_ps(float32x4_cast(x0), float32x4_cast(onep39));
+        const __m128 f0 = _mm_sub_ps(float32x4_reinterpret(x0), float32x4_reinterpret(onep39));
         return _mm_add_ps(f0, f1);
     }
 
@@ -566,7 +566,7 @@
         const int32x4 magic = int32x4_set1(0x3f000000);
         int32x4 b;
         b = int32x4_add(magic, mantissa);
-        b = int32x4_cast(float32x4_sub(float32x4_cast(b), float32x4_cast(magic)));
+        b = int32x4_reinterpret(float32x4_sub(float32x4_reinterpret(b), float32x4_reinterpret(magic)));
 
         // Numeric Value
         int32x4 c = int32x4_add(int32x4_set1(0x38000000), int32x4_sll(no_sign, 13));
@@ -584,7 +584,7 @@
         // Sign
         result = int32x4_or(result, int32x4_sll(sign, 16));
 
-        return float32x4_cast(result);
+        return float32x4_reinterpret(result);
     }
 
     static inline float16x4 float16x4_convert(float32x4 f)
@@ -592,7 +592,7 @@
         const float32x4 magic = float32x4_set1(Float(0, 15, 0).f);
         const int32x4 vinf = int32x4_set1(31 << 23);
 
-        const int32x4 u = int32x4_cast(f);
+        const int32x4 u = int32x4_reinterpret(f);
         const int32x4 sign = int32x4_srl(int32x4_and(u, int32x4_set1(0x80000000)), 16);
 
         const int32x4 vexponent = int32x4_set1(0x7f800000);
@@ -605,7 +605,7 @@
         const int32x4 v0 = int32x4_or(int32x4_set1(0x7c00), mantissa);
 
         int32x4 v1 = int32x4_and(u, int32x4_set1(0x7ffff000));
-        v1 = int32x4_cast(float32x4_mul(float32x4_cast(v1), magic));
+        v1 = int32x4_reinterpret(float32x4_mul(float32x4_reinterpret(v1), magic));
         v1 = int32x4_add(v1, int32x4_set1(0x1000));
 
 #if defined(MANGO_ENABLE_SSE4_1)

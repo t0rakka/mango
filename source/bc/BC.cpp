@@ -319,7 +319,7 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 //-------------------------------------------------------------------------------------
 
 static const simd::float32x4 g_XMIdentityR3 = simd::float32x4_set4(0.0f, 0.0f, 0.0f, 1.0f);
-static const simd::float32x4 g_XMSelect1110 = simd::float32x4_cast(simd::int32x4_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
+static const simd::float32x4 g_XMSelect1110 = simd::float32x4_reinterpret(simd::int32x4_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
 
     struct XMU565
     {

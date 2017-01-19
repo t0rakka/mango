@@ -14,7 +14,7 @@
 
     // conversion
 
-    static inline float32x4 float32x4_cast(int32x4 s)
+    static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
         return vreinterpretq_f32_s32(s);
     }
@@ -232,22 +232,22 @@
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
-        return float32x4_cast(int32x4_and(int32x4_cast(a), int32x4_cast(b)));
+        return float32x4_reinterpret(int32x4_and(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
     static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
-        return float32x4_cast(int32x4_nand(int32x4_cast(a), int32x4_cast(b)));
+        return float32x4_reinterpret(int32x4_nand(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
     static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
-        return float32x4_cast(int32x4_or(int32x4_cast(a), int32x4_cast(b)));
+        return float32x4_reinterpret(int32x4_or(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
     static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
-        return float32x4_cast(int32x4_xor(int32x4_cast(a), int32x4_cast(b)));
+        return float32x4_reinterpret(int32x4_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
     static inline float32x4 float32x4_min(float32x4 a, float32x4 b)

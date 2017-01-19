@@ -14,7 +14,7 @@
 
     // conversion
 
-    static inline int32x4 int32x4_cast(float32x4 s)
+    static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
         return vreinterpretq_s32_f32(s);
     }

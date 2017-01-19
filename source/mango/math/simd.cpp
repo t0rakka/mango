@@ -70,7 +70,7 @@ namespace simd {
     static inline int32x4 sel(float32x4 f0, float32x4 f1, int32x4 x, int32x4 y)
     {
         float32x4 m = float32x4_compare_lt(f0, f1);
-        return int32x4_select(int32x4_cast(m), x, y);
+        return int32x4_select(int32x4_reinterpret(m), x, y);
     }
 
     static inline float32x4 atan2kf(float32x4 b, float32x4 a)
@@ -112,9 +112,9 @@ namespace simd {
         m = int32x4_and(int32x4_compare_gt(m, int32x4_zero()), m);
         const int32x4 n = int32x4_compare_gt(m, 0xff);
         m = int32x4_or(int32x4_nand(n, m), int32x4_and(n, 0xff));
-        u = float32x4_cast(int32x4_sll(m, 23));
+        u = float32x4_reinterpret(int32x4_sll(m, 23));
         const float32x4 y = float32x4_mul(float32x4_mul(float32x4_mul(float32x4_mul(x, u), u), u), u);
-        u = float32x4_cast(int32x4_sll(int32x4_add(p, 0x7f), 23));
+        u = float32x4_reinterpret(int32x4_sll(int32x4_add(p, 0x7f), 23));
         return float32x4_mul(y, u);
     }
 
@@ -141,7 +141,7 @@ namespace simd {
 
         const int32x4 one = int32x4_set1(1);
         const int32x4 q1 = int32x4_and(q, one);
-        const float32x4 mask = float32x4_cast(int32x4_compare_eq(q1, one));
+        const float32x4 mask = float32x4_reinterpret(int32x4_compare_eq(q1, one));
         d = float32x4_xor(float32x4_and(mask, float32x4_set1(-0.0f)), d);
 
         const float32x4 s = float32x4_mul(d, d);
@@ -165,7 +165,7 @@ namespace simd {
         d = float32x4_madd(d, u, -2.0f * PI4_Df);
 
         const int32x4 q2 = int32x4_and(q, 2);
-        const float32x4 mask = float32x4_cast(int32x4_compare_eq(q2, int32x4_zero()));
+        const float32x4 mask = float32x4_reinterpret(int32x4_compare_eq(q2, int32x4_zero()));
         d = float32x4_xor(float32x4_and(mask, float32x4_set1(-0.0f)), d);
 
         const float32x4 s = float32x4_mul(d, d);
@@ -188,7 +188,7 @@ namespace simd {
 
         const float32x4 s = float32x4_mul(x, x);
         const int32x4 m = int32x4_compare_eq(int32x4_and(q, int32x4_set1(1)), int32x4_set1(1));
-        const float32x4 mask = float32x4_cast(m);
+        const float32x4 mask = float32x4_reinterpret(m);
         x = float32x4_xor(float32x4_and(mask, float32x4_set1(-0.0)), x);
 
         u = float32x4_set1(0.00927245803177356719970703f);
@@ -229,8 +229,8 @@ namespace simd {
 
     float32x4 float32x4_log2(float32x4 v)
     {
-        const int32x4 exponent = int32x4_sub(int32x4_srl(int32x4_and(int32x4_cast(v), 0x7fffffff), 23), 127);
-        const float32x4 x = float32x4_sub(float32x4_cast(int32x4_sub(int32x4_cast(v), int32x4_sll(exponent, 23))), 1.0f);
+        const int32x4 exponent = int32x4_sub(int32x4_srl(int32x4_and(int32x4_reinterpret(v), 0x7fffffff), 23), 127);
+        const float32x4 x = float32x4_sub(float32x4_reinterpret(int32x4_sub(int32x4_reinterpret(v), int32x4_sll(exponent, 23))), 1.0f);
         const float32x4 x2 = float32x4_mul(x, x);
         const float32x4 x4 = float32x4_mul(x2, x2);
         float32x4 hi = float32x4_set1(-0.00931049621349f);
@@ -252,7 +252,7 @@ namespace simd {
 
     float32x4 float32x4_exp2(float32x4 v)
     {
-        const int32x4 ix = int32x4_truncate(float32x4_add(v, float32x4_cast(int32x4_nand(int32x4_sra(int32x4_convert(v), 31), 0x3f7fffff))));
+        const int32x4 ix = int32x4_truncate(float32x4_add(v, float32x4_reinterpret(int32x4_nand(int32x4_sra(int32x4_convert(v), 31), 0x3f7fffff))));
         float32x4 f = float32x4_mul(float32x4_sub(float32x4_convert(ix), v), 0.69314718055994530942f);
         float32x4 hi = float32x4_madd(0.0013298820f, f, float32x4_set1(-0.0001413161f));
         float32x4 lo = float32x4_madd(0.4999999206f, f, float32x4_set1(-0.1666653019f));
@@ -262,8 +262,8 @@ namespace simd {
         lo = float32x4_madd(1.0f, f, lo);
         float32x4 f2 = float32x4_mul(f, f);
         float32x4 a = float32x4_add(float32x4_mul(float32x4_mul(f2, f2), hi), lo);
-        float32x4 b = float32x4_cast(int32x4_and(int32x4_sll((int32x4_add(ix, 127)), 23), int32x4_compare_gt(ix, -128)));
-        return float32x4_or(float32x4_mul(a, b), float32x4_cast(int32x4_srl(int32x4_compare_gt(ix, 128), 1)));
+        float32x4 b = float32x4_reinterpret(int32x4_and(int32x4_sll((int32x4_add(ix, 127)), 23), int32x4_compare_gt(ix, -128)));
+        return float32x4_or(float32x4_mul(a, b), float32x4_reinterpret(int32x4_srl(int32x4_compare_gt(ix, 128), 1)));
     }
 
     float32x4 float32x4_pow(float32x4 a, float32x4 b)
@@ -332,10 +332,10 @@ namespace simd {
 
         int32x4 m;
         m = int32x4_compare_eq(int32x4_and(q, int32x4_set1(1)), int32x4_set1(1));
-        t = float32x4_select(float32x4_cast(m), float32x4_sub(float32x4_set1(float_pi_2), t), t);
+        t = float32x4_select(float32x4_reinterpret(m), float32x4_sub(float32x4_set1(float_pi_2), t), t);
 
         m = int32x4_compare_eq(int32x4_and(q, int32x4_set1(2)), int32x4_set1(2));
-        t = float32x4_cast(int32x4_xor(int32x4_and(m, int32x4_cast(float32x4_set1(-0.0f))), int32x4_cast(t)));
+        t = float32x4_reinterpret(int32x4_xor(int32x4_and(m, int32x4_reinterpret(float32x4_set1(-0.0f))), int32x4_reinterpret(t)));
 
         return t;
     }
