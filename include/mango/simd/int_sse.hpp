@@ -51,9 +51,127 @@
         return _mm_setr_epi32(x, y, z, w);
     }
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // set
+
+    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
+    {
+        return _mm_insert_epi32(a, x, 0);
+    }
+
+    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
+    {
+        return _mm_insert_epi32(a, y, 1);
+    }
+
+    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
+    {
+        return _mm_insert_epi32(a, z, 2);
+    }
+
+    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
+    {
+        return _mm_insert_epi32(a, w, 3);
+    }
+
+    // get
+
+    static inline int uint32x4_get_x(uint32x4 a)
+    {
+        return _mm_extract_epi32(a, 0);
+    }
+
+    static inline int uint32x4_get_y(uint32x4 a)
+    {
+        return _mm_extract_epi32(a, 1);
+    }
+
+    static inline int uint32x4_get_z(uint32x4 a)
+    {
+        return _mm_extract_epi32(a, 2);
+    }
+
+    static inline int uint32x4_get_w(uint32x4 a)
+    {
+        return _mm_extract_epi32(a, 3);
+    }
+
+#else
+
+    // set
+
+#define _mm_shuffle_epi(a, b, mask) \
+    _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), mask));
+
+    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
+    {
+        const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
+        return _mm_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
+    }
+
+    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
+    {
+        const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
+        return _mm_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
+    }
+
+    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
+    {
+        const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
+        return _mm_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
+    }
+
+    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
+    {
+        const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
+        return _mm_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
+    }
+
+#undef _mm_shuffle_epi
+
+    // get
+
+    static inline uint32 uint32x4_get_x(uint32x4 a)
+    {
+        return _mm_cvtsi128_si32(a);
+    }
+
+    static inline uint32 uint32x4_get_y(uint32x4 a)
+    {
+        return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0x55));
+    }
+
+    static inline uint32 uint32x4_get_z(uint32x4 a)
+    {
+        return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xaa));
+    }
+
+    static inline uint32 uint32x4_get_w(uint32x4 a)
+    {
+        return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xff));
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------
+
+    static inline int32x4 int32x4_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline int32x4 int32x4_set1(int s)
+    {
+        return _mm_set1_epi32(s);
+    }
+
+    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
+    {
+        return _mm_setr_epi32(x, y, z, w);
+    }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
@@ -176,21 +294,6 @@
     static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
-    }
-
-    static inline int32x4 int32x4_zero()
-    {
-        return _mm_setzero_si128();
-    }
-
-    static inline int32x4 int32x4_set1(int s)
-    {
-        return _mm_set1_epi32(s);
-    }
-
-    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
-    {
-        return _mm_setr_epi32(x, y, z, w);
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)

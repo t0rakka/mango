@@ -50,6 +50,8 @@
     // uint32x4
     // -----------------------------------------------------------------
 
+    // set
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
         return __vec_splatsi4(s);
@@ -61,11 +63,69 @@
         return temp;
     }
 
+    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
+    {
+        return vec_insert(x, a, 0);
+    }
+
+    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
+    {
+        return vec_insert(y, a, 1);
+    }
+
+    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
+    {
+        return vec_insert(z, a, 2);
+    }
+
+    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
+    {
+        return vec_insert(w, a, 3);
+    }
+
+    // get
+
+    static inline int uint32x4_get_x(uint32x4 a)
+    {
+        return vec_extract(a, 0);
+    }
+
+    static inline int uint32x4_get_y(uint32x4 a)
+    {
+        return vec_extract(a, 1);
+    }
+
+    static inline int uint32x4_get_z(uint32x4 a)
+    {
+        return vec_extract(a, 2);
+    }
+
+    static inline int uint32x4_get_w(uint32x4 a)
+    {
+        return vec_extract(a, 3);
+    }
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------
 
     // set
+
+    static inline int32x4 int32x4_zero()
+    {
+        return __vec_splatsi4(0);
+    }
+
+    static inline int32x4 int32x4_set1(int s)
+    {
+        return __vec_splatsi4(s);
+    }
+
+    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
+    {
+        const int32x4 temp = { x, y, z, w };
+        return temp;
+    }
 
     static inline int32x4 int32x4_set_x(int32x4 a, int x)
     {
@@ -131,22 +191,6 @@
         d[1] = s[1];
         d[2] = s[2];
         d[3] = s[3];
-    }
-
-    static inline int32x4 int32x4_zero()
-    {
-        return __vec_splatsi4(0);
-    }
-
-    static inline int32x4 int32x4_set1(int s)
-    {
-        return __vec_splatsi4(s);
-    }
-
-    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
-    {
-        const int32x4 temp = { x, y, z, w };
-        return temp;
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)

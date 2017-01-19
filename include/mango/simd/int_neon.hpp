@@ -43,6 +43,8 @@
     // uint32x4
     // -----------------------------------------------------------------
 
+    // set
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
         return vdupq_n_u32(s);
@@ -54,11 +56,69 @@
         return temp;
     }
 
+    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
+    {
+        return vsetq_lane_u32(x, a, 0);
+    }
+
+    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
+    {
+        return vsetq_lane_u32(y, a, 1);
+    }
+
+    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
+    {
+        return vsetq_lane_u32(z, a, 2);
+    }
+
+    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
+    {
+        return vsetq_lane_u32(w, a, 3);
+    }
+
+    // get
+
+    static inline int uint32x4_get_x(uint32x4 a)
+    {
+        return vgetq_lane_u32(a, 0);
+    }
+
+    static inline int uint32x4_get_y(uint32x4 a)
+    {
+        return vgetq_lane_u32(a, 1);
+    }
+
+    static inline int uint32x4_get_z(uint32x4 a)
+    {
+        return vgetq_lane_u32(a, 2);
+    }
+
+    static inline int uint32x4_get_w(uint32x4 a)
+    {
+        return vgetq_lane_u32(a, 3);
+    }
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------
 
     // set
+
+    static inline int32x4 int32x4_zero()
+    {
+        return vdupq_n_s32(0);
+    }
+
+    static inline int32x4 int32x4_set1(int s)
+    {
+        return vdupq_n_s32(s);
+    }
+
+    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
+    {
+        int32x4_t temp = { x, y, z, w };
+        return temp;
+    }
 
     static inline int32x4 int32x4_set_x(int32x4 a, int x)
     {
@@ -124,22 +184,6 @@
         dest[1] = vgetq_lane_s32(a, 1);
         dest[2] = vgetq_lane_s32(a, 2);
         dest[3] = vgetq_lane_s32(a, 3);
-    }
-
-    static inline int32x4 int32x4_zero()
-    {
-        return vdupq_n_s32(0);
-    }
-
-    static inline int32x4 int32x4_set1(int s)
-    {
-        return vdupq_n_s32(s);
-    }
-
-    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
-    {
-        int32x4_t temp = { x, y, z, w };
-        return temp;
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)

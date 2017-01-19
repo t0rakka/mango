@@ -53,10 +53,10 @@
     static inline float64x4 float64x4_convert(uint32x4 ui)
     {
         float64x4 v;
-        v.x = u32_to_f64(int32x4_get_x(ui));
-        v.y = u32_to_f64(int32x4_get_y(ui));
-        v.z = u32_to_f64(int32x4_get_z(ui));
-        v.w = u32_to_f64(int32x4_get_w(ui));
+        v.x = u32_to_f64(uint32x4_get_x(ui));
+        v.y = u32_to_f64(uint32x4_get_y(ui));
+        v.z = u32_to_f64(uint32x4_get_z(ui));
+        v.w = u32_to_f64(uint32x4_get_w(ui));
         return v;
     }
 

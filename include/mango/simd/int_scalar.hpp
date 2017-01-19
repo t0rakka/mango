@@ -51,6 +51,8 @@
     // uint32x4
     // -----------------------------------------------------------------
 
+    // set
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
         uint32x4 temp = { s, s, s, s };
@@ -63,9 +65,75 @@
         return temp;
     }
 
+    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
+    {
+        a.x = x;
+        return a;
+    }
+
+    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
+    {
+        a.y = y;
+        return a;
+    }
+
+    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
+    {
+        a.z = z;
+        return a;
+    }
+
+    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
+    {
+        a.w = w;
+        return a;
+    }
+
+    // get
+
+    static inline int uint32x4_get_x(uint32x4 a)
+    {
+        return a.x;
+    }
+
+    static inline int uint32x4_get_y(uint32x4 a)
+    {
+        return a.y;
+    }
+
+    static inline int uint32x4_get_z(uint32x4 a)
+    {
+        return a.z;
+    }
+
+    static inline int uint32x4_get_w(uint32x4 a)
+    {
+        return a.w;
+    }
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------
+
+    // set
+
+    static inline int32x4 int32x4_zero()
+    {
+        int32x4 temp = { 0, 0, 0, 0 };
+        return temp;
+    }
+
+    static inline int32x4 int32x4_set1(int s)
+    {
+        int32x4 temp = { s, s, s, s };
+        return temp;
+    }
+
+    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
+    {
+        int32x4 temp = { x, y, z, w };
+        return temp;
+    }
 
     static inline int32x4 int32x4_set_x(int32x4 a, int x)
     {
@@ -90,6 +158,8 @@
         a.w = w;
         return a;
     }
+
+    // get
 
     static inline int int32x4_get_x(int32x4 a)
     {
@@ -133,24 +203,6 @@
     static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         int32x4_store(dest, a);
-    }
-
-    static inline int32x4 int32x4_zero()
-    {
-        int32x4 temp = { 0, 0, 0, 0 };
-        return temp;
-    }
-
-    static inline int32x4 int32x4_set1(int s)
-    {
-        int32x4 temp = { s, s, s, s };
-        return temp;
-    }
-
-    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
-    {
-        int32x4 temp = { x, y, z, w };
-        return temp;
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)
