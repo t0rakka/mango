@@ -9,10 +9,18 @@
 #endif
 
     // -----------------------------------------------------------------
-    // int32x4
+    // conversion
     // -----------------------------------------------------------------
 
-    // conversion
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return int32x4::type(s);
+    }
+
+    static inline int32x4 int32x4_reinterpret(uint32x4 s)
+    {
+        return uint32x4::type(s);
+    }
 
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
@@ -28,6 +36,24 @@
     {
         return _mm_cvttps_epi32(s);
     }
+
+    // -----------------------------------------------------------------
+    // uint32x4
+    // -----------------------------------------------------------------
+
+    static inline uint32x4 uint32x4_set1(uint32 s)
+    {
+        return _mm_set1_epi32(s);
+    }
+
+    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    {
+        return _mm_setr_epi32(x, y, z, w);
+    }
+
+    // -----------------------------------------------------------------
+    // int32x4
+    // -----------------------------------------------------------------
 
 #if defined(MANGO_ENABLE_SSE4_1)
 

@@ -9,10 +9,18 @@
 #endif
 
     // -----------------------------------------------------------------
-    // int32x4
+    // conversion
     // -----------------------------------------------------------------
 
-    // conversion
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return vreinterpretq_u32_s32(s);
+    }
+
+    static inline int32x4 int32x4_reinterpret(uint32x4 s)
+    {
+        return vreinterpretq_s32_u32(s);
+    }
 
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
@@ -30,6 +38,25 @@
     {
         return vcvtq_s32_f32(s);
     }
+
+    // -----------------------------------------------------------------
+    // uint32x4
+    // -----------------------------------------------------------------
+
+    static inline uint32x4 uint32x4_set1(uint32 s)
+    {
+        return vdupq_n_u32(s);
+    }
+
+    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    {
+        uint32x4_t temp = { x, y, z, w };
+        return temp;
+    }
+
+    // -----------------------------------------------------------------
+    // int32x4
+    // -----------------------------------------------------------------
 
     // set
 

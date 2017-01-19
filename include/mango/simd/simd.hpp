@@ -21,9 +21,10 @@ namespace simd {
     // SIMD vector strong_type
     // --------------------------------------------------------------
 
-    template <typename T>
+    template <typename T, bool Signed>
     struct strong_type
     {
+        typedef T type;
         T m;
 
         strong_type() = default;
@@ -44,9 +45,10 @@ namespace simd {
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
-    typedef strong_type<__m128i> int32x4;
-    typedef strong_type<__m128> float32x4;
-    typedef strong_type<__m256d> float64x4;
+    typedef strong_type<__m128i, false> uint32x4;
+    typedef strong_type<__m128i, true> int32x4;
+    typedef strong_type<__m128, true> float32x4;
+    typedef strong_type<__m256d, true> float64x4;
 
     struct float16x4
     {
@@ -67,8 +69,9 @@ namespace simd {
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
-    typedef strong_type<__m128i> int32x4;
-    typedef strong_type<__m128> float32x4;
+    typedef strong_type<__m128i, false> uint32x4;
+    typedef strong_type<__m128i, true> int32x4;
+    typedef strong_type<__m128, true> float32x4;
 
     struct float16x4
     {
@@ -95,12 +98,13 @@ namespace simd {
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
-    typedef strong_type<int32x4_t> int32x4;
-    typedef strong_type<float32x4_t> float32x4;
+    typedef strong_type<uint32x4_t, false> uint32x4;
+    typedef strong_type<int32x4_t, true> int32x4;
+    typedef strong_type<float32x4_t, true> float32x4;
 
 #ifdef MANGO_ENABLE_FP16
 
-    typedef strong_type<float16x4_t> float16x4;
+    typedef strong_type<float16x4_t, true> float16x4;
 
 #else
 
@@ -130,8 +134,9 @@ namespace simd {
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
-    typedef strong_type<vector signed int> int32x4;
-    typedef strong_type<vector float> float32x4;
+    typedef strong_type<vector unsigned int, false> uint32x4;
+    typedef strong_type<vector signed int, true> int32x4;
+    typedef strong_type<vector float, true> float32x4;
 
     struct float16x4
     {
@@ -157,8 +162,9 @@ namespace simd {
     // Cell BE SPU
     // --------------------------------------------------------------
 
-    typedef strong_type<vector signed int> int32x4;
-    typedef strong_type<vector float> float32x4;
+    typedef strong_type<vector unsigned int, false> uint32x4;
+    typedef strong_type<vector signed int, true> int32x4;
+    typedef strong_type<vector float, true> float32x4;
 
     struct float16x4
     {
@@ -183,6 +189,11 @@ namespace simd {
     // --------------------------------------------------------------
     // SIMD emulation
     // --------------------------------------------------------------
+
+    struct uint32x4
+    {
+        uint32 x, y, z, w;
+    };
 
     struct int32x4
     {

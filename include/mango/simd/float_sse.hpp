@@ -9,10 +9,8 @@
 #endif
 
     // -----------------------------------------------------------------
-    // float32x4
-    // -----------------------------------------------------------------
-
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
@@ -24,7 +22,7 @@
         return _mm_cvtepi32_ps(s);
     }
 
-    static inline float32x4 float32x4_unsigned_convert(int32x4 s)
+    static inline float32x4 float32x4_convert(uint32x4 s)
     {
         const __m128i mask = _mm_set1_epi32(0x0000ffff);
         const __m128i onep39 = _mm_set1_epi32(0x53000000);
@@ -34,6 +32,10 @@
         const __m128 f0 = _mm_sub_ps(float32x4_reinterpret(x0), float32x4_reinterpret(onep39));
         return _mm_add_ps(f0, f1);
     }
+
+    // -----------------------------------------------------------------
+    // float32x4
+    // -----------------------------------------------------------------
 
     // shuffle
 

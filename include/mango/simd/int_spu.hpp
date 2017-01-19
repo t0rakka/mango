@@ -9,10 +9,18 @@
 #endif
 
     // -----------------------------------------------------------------
-    // int32x4
+    // conversion
     // -----------------------------------------------------------------
 
-    // conversion
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return (uint32x4) s;
+    }
+
+    static inline int32x4 int32x4_reinterpret(uint32x4 s)
+    {
+        return (int32x4) s;
+    }
 
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
@@ -31,6 +39,25 @@
         const vec_float4 st = spu_sel(s, spu_convtf(si, 0), inrange);
         return spu_convts(st, 0);
     }
+
+    // -----------------------------------------------------------------
+    // uint32x4
+    // -----------------------------------------------------------------
+
+    static inline uint32x4 uint32x4_set1(uint32 s)
+    {
+        return spu_splats(s);
+    }
+
+    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    {
+		const uint32x4 temp = { x, y, z, w };
+		return temp;
+    }
+
+    // -----------------------------------------------------------------
+    // int32x4
+    // -----------------------------------------------------------------
 
     // set
 

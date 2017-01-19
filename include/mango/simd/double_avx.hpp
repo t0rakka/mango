@@ -11,7 +11,9 @@
     // clang workaround
     #define simd_mm256_set_m128i(hi, lo) _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1)
 
+    // -----------------------------------------------------------------
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -35,10 +37,10 @@
 
 #if defined(MANGO_ENABLE_AVX2)
 
-    static inline float64x4 float64x4_unsigned_convert(int32x4 i)
+    static inline float64x4 float64x4_convert(uint32x4 ui)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
-        const __m256i xyzw = _mm256_cvtepu32_epi64(i);
+        const __m256i xyzw = _mm256_cvtepu32_epi64(ui);
         __m256d v = _mm256_castsi256_pd(xyzw);
         v = _mm256_or_pd(v, bias);
         v = _mm256_sub_pd(v, bias);
@@ -47,12 +49,12 @@
 
 #else
 
-    static inline float64x4 float64x4_unsigned_convert(int32x4 i)
+    static inline float64x4 float64x4_convert(uint32x4 ui)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m128i mask = _mm_set1_epi32(0x43380000);
-        const __m128i xy = _mm_unpacklo_epi32(i, mask);
-        const __m128i zw = _mm_unpackhi_epi32(i, mask);
+        const __m128i xy = _mm_unpacklo_epi32(ui, mask);
+        const __m128i zw = _mm_unpackhi_epi32(ui, mask);
         const __m256i xyzw = simd_mm256_set_m128i(zw, xy);
         __m256d v = _mm256_castsi256_pd(xyzw);
         v = _mm256_sub_pd(v, bias);
@@ -61,7 +63,7 @@
 
 #endif
 
-    static inline int32x4 int32x4_unsigned_convert(float64x4 d)
+    static inline uint32x4 uint32x4_convert(float64x4 d)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m256d v = _mm256_add_pd(d, bias);
@@ -75,6 +77,10 @@
     {
         return _mm256_cvttpd_epi32(s);
     }
+
+    // -----------------------------------------------------------------
+    // float64x4
+    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     static inline float64x4 float64x4_shuffle(float64x4 v)

@@ -8,7 +8,9 @@
 #error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
 #endif
 
+    // -----------------------------------------------------------------
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -41,19 +43,19 @@
         return _mm_shuffle_ps(xy00, zw00, 0x44);
     }
 
-    static inline float64x4 float64x4_unsigned_convert(int32x4 i)
+    static inline float64x4 float64x4_convert(uint32x4 ui)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
         const __m128i mask = _mm_set1_epi32(0x43380000);
-        __m128i xy = _mm_unpacklo_epi32(i, mask);
-        __m128i zw = _mm_unpackhi_epi32(i, mask);
+        __m128i xy = _mm_unpacklo_epi32(ui, mask);
+        __m128i zw = _mm_unpackhi_epi32(ui, mask);
         float64x4 result;
         result.xy = _mm_sub_pd(_mm_castsi128_pd(xy), bias);
         result.zw = _mm_sub_pd(_mm_castsi128_pd(zw), bias);
         return result;
     }
 
-    static inline int32x4 int32x4_unsigned_convert(float64x4 d)
+    static inline uint32x4 uint32x4_convert(float64x4 d)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
         __m128 xy = _mm_castpd_ps(_mm_add_pd(d.xy, bias));
@@ -69,6 +71,10 @@
         __m128i xzyw = _mm_unpacklo_epi32(xy, zw);
         return _mm_shuffle_epi32(xzyw, 0xd8);
     }
+
+    // -----------------------------------------------------------------
+    // float64x4
+    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     static inline float64x4 float64x4_shuffle(float64x4 v)

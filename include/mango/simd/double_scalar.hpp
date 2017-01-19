@@ -8,7 +8,9 @@
 #error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
 #endif
 
+    // -----------------------------------------------------------------
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -48,23 +50,23 @@
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float64x4 float64x4_unsigned_convert(int32x4 i)
+    static inline float64x4 float64x4_convert(uint32x4 ui)
     {
         float64x4 v;
-        v.x = u32_to_f64(int32x4_get_x(i));
-        v.y = u32_to_f64(int32x4_get_y(i));
-        v.z = u32_to_f64(int32x4_get_z(i));
-        v.w = u32_to_f64(int32x4_get_w(i));
+        v.x = u32_to_f64(int32x4_get_x(ui));
+        v.y = u32_to_f64(int32x4_get_y(ui));
+        v.z = u32_to_f64(int32x4_get_z(ui));
+        v.w = u32_to_f64(int32x4_get_w(ui));
         return v;
     }
 
-    static inline int32x4 int32x4_unsigned_convert(float64x4 d)
+    static inline uint32x4 uint32x4_convert(float64x4 d)
     {
         uint32 x = f64_to_u32(d.x);
         uint32 y = f64_to_u32(d.y);
         uint32 z = f64_to_u32(d.z);
         uint32 w = f64_to_u32(d.w);
-        return int32x4_set4(x, y, z, w);
+        return uint32x4_set4(x, y, z, w);
     }
 
     static inline int32x4 int32x4_truncate(float64x4 s)
@@ -75,6 +77,10 @@
         int w = int(s.w);
         return int32x4_set4(x, y, z, w);
     }
+
+    // -----------------------------------------------------------------
+    // float64x4
+    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     inline float64x4 float64x4_shuffle(float64x4 v)

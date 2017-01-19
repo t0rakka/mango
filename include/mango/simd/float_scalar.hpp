@@ -9,10 +9,8 @@
 #endif
 
     // -----------------------------------------------------------------
-    // float32x4
-    // -----------------------------------------------------------------
-
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
@@ -29,19 +27,19 @@
         return v;
     }
 
-    static inline float32x4 float32x4_unsigned_convert(int32x4 s)
+    static inline float32x4 float32x4_convert(uint32x4 s)
     {
         float32x4 v;
-        const uint32 x = s.x;
-        const uint32 y = s.y;
-        const uint32 z = s.z;
-        const uint32 w = s.w;
-        v.x = float(x);
-        v.y = float(y);
-        v.z = float(z);
-        v.w = float(w);
+        v.x = float(s.x);
+        v.y = float(s.y);
+        v.z = float(s.z);
+        v.w = float(s.w);
         return v;
     }
+
+    // -----------------------------------------------------------------
+    // float32x4
+    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     inline float32x4 float32x4_shuffle(float32x4 v)

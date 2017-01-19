@@ -9,8 +9,18 @@
 #endif
 
     // -----------------------------------------------------------------
-    // int32x4
+    // conversion
     // -----------------------------------------------------------------
+
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return reinterpret_cast<uint32x4 &>(s);
+    }
+
+    static inline int32x4 int32x4_reinterpret(uint32x4 s)
+    {
+        return reinterpret_cast<int32x4 &>(s);
+    }
 
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
@@ -37,32 +47,48 @@
         return v;
     }
 
+    // -----------------------------------------------------------------
+    // uint32x4
+    // -----------------------------------------------------------------
+
+    static inline uint32x4 uint32x4_set1(uint32 s)
+    {
+        uint32x4 temp = { s, s, s, s };
+        return temp;
+    }
+
+    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    {
+        uint32x4 temp = { x, y, z, w };
+        return temp;
+    }
+
+    // -----------------------------------------------------------------
+    // int32x4
+    // -----------------------------------------------------------------
+
     static inline int32x4 int32x4_set_x(int32x4 a, int x)
     {
-        int32x4 temp = a;
-        temp.x = x;
-        return temp;
+        a.x = x;
+        return a;
     }
 
     static inline int32x4 int32x4_set_y(int32x4 a, int y)
     {
-        int32x4 temp = a;
-        temp.y = y;
-        return temp;
+        a.y = y;
+        return a;
     }
 
     static inline int32x4 int32x4_set_z(int32x4 a, int z)
     {
-        int32x4 temp = a;
-        temp.z = z;
-        return temp;
+        a.z = z;
+        return a;
     }
 
     static inline int32x4 int32x4_set_w(int32x4 a, int w)
     {
-        int32x4 temp = a;
-        temp.w = w;
-        return temp;
+        a.w = w;
+        return a;
     }
 
     static inline int int32x4_get_x(int32x4 a)

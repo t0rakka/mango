@@ -23,10 +23,8 @@
     }
 
     // -----------------------------------------------------------------
-    // float32x4
-    // -----------------------------------------------------------------
-
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
@@ -38,10 +36,14 @@
 		return vec_ctf(s, 0);
     }
 
-    static inline float32x4 float32x4_unsigned_convert(int32x4 s)
+    static inline float32x4 float32x4_convert(uint32x4 s)
     {
-		return vec_ctf((const vector unsigned int)s, 0);
+		return vec_ctf(s, 0);
     }
+
+    // -----------------------------------------------------------------
+    // float32x4
+    // -----------------------------------------------------------------
 
 #define VEC_SH4(n, select) \
     (n * 4 + 0) | (select << 4), \

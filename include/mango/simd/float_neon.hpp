@@ -9,10 +9,8 @@
 #endif
 
     // -----------------------------------------------------------------
-    // float32x4
-    // -----------------------------------------------------------------
-
     // conversion
+    // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
@@ -24,11 +22,14 @@
         return vcvtq_f32_s32(s);
     }
 
-    static inline float32x4 float32x4_unsigned_convert(int32x4 s)
+    static inline float32x4 float32x4_convert(uint32x4 s)
     {
-        const uint32x4_t u = vreinterpretq_u32_s32(s);
-        return vcvtq_f32_u32(u);
+        return vcvtq_f32_u32(s);
     }
+
+    // -----------------------------------------------------------------
+    // float32x4
+    // -----------------------------------------------------------------
 
     // shuffle
 
