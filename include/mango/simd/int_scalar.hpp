@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SCALAR_INT
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_INT_SCALAR
 
     // -----------------------------------------------------------------
     // conversion
@@ -360,3 +360,5 @@
         v.w = (s >> 24);
         return v;
     }
+
+#endif // MANGO_SIMD_INT_SCALAR

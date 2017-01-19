@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SIMD_DOUBLE
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_DOUBLE_SSE
 
     // -----------------------------------------------------------------
     // conversion
@@ -707,3 +707,5 @@
         result.zw = _mm_sub_pd(s.zw, zw);
         return result;
     }
+
+#endif // MANGO_SIMD_DOUBLE_SSE

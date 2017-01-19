@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SCALAR_DOUBLE
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_DOUBLE_SCALAR
 
     // -----------------------------------------------------------------
     // conversion
@@ -596,3 +596,5 @@
     {
         return float64x4_sub(s, float64x4_floor(s));
     }
+
+#endif // MANGO_SIMD_DOUBLE_SCALAR

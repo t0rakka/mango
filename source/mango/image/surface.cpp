@@ -66,13 +66,13 @@ namespace
 
     void clear_uint16_scan(uint8* dest, int count, uint32 color)
     {
-#ifdef MANGO_ENABLE_SIMD
+#if !defined(MANGO_SIMD_FLOAT_SCALAR)
 		if (count >= 32)
 		{
 			// 128 bit fill
 			uint16 value16 = static_cast<uint16>(color);
 			uint32 value32 = (color << 16) | color;
-			simd4i value128 = simd4i_set1(value32);
+			simd::uint32x4 value128 = simd::uint32x4_set1(value32);
 			fill_aligned(dest, value16, value128, count);
 		}
 #else
@@ -106,11 +106,11 @@ namespace
 
     void clear_uint32_scan(uint8* dest, int count, uint32 color)
     {
-#ifdef MANGO_ENABLE_SIMD
+#if !defined(MANGO_SIMD_FLOAT_SCALAR)
 		if (count >= 16)
 		{
 			// 128 bit fill
-			simd4i value128 = simd4i_set1(color);
+			simd::uint32x4 value128 = simd::uint32x4_set1(color);
 			fill_aligned(dest, color, value128, count);
 		}
 		else

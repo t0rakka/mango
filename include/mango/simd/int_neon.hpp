@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SIMD_INT
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_INT_NEON
 
     // -----------------------------------------------------------------
     // conversion
@@ -302,3 +302,5 @@
         const uint32x4_t d = vshll_n_u16(c_lo, 1); // another, compiler hangs on valid input of 0
         return vreinterpretq_s32_u32(vshrq_n_u32(d, 2)); // fix the scale here.. (>> 2)
     }
+
+#endif // MANGO_SIMD_INT_NEON

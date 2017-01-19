@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SIMD_DOUBLE
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_DOUBLE_AVX
 
     // clang workaround
     #define simd_mm256_set_m128i(hi, lo) _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1)
@@ -495,3 +495,5 @@
     {
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
     }
+
+#endif // MANGO_SIMD_DOUBLE_AVX

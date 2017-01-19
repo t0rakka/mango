@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SIMD_INT
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_INT_ALTIVEC
 
     // -----------------------------------------------------------------
     // helpers
@@ -281,3 +281,5 @@
         const int w = (s >> 24);
         return int32x4_set4(x, y, z, w);
     }
+
+#endif // MANGO_SIMD_INT_ALTIVEC

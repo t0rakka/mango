@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SIMD_FLOAT
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_FLOAT_SSE
 
     // -----------------------------------------------------------------
     // conversion
@@ -870,3 +870,4 @@
     }
 
 #undef SIMD_SHUFFLE
+#endif // MANGO_SIMD_FLOAT_SSE

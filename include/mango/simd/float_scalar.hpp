@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SCALAR_FLOAT
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_FLOAT_SCALAR
 
     // -----------------------------------------------------------------
     // conversion
@@ -884,3 +884,5 @@
         result[2] = float32x4_vector_matrix_multiply(a[2], b);
         result[3] = float32x4_vector_matrix_multiply(a[3], b);
     }
+
+#endif // MANGO_SIMD_FLOAT_SCALAR

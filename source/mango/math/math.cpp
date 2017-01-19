@@ -137,7 +137,7 @@ namespace mango
         simd::float32x4_matrix_scale(m, s.x, s.y, s.z);
     }
 
-#if defined(MANGO_ENABLE_SIMD)
+#if !defined(MANGO_SIMD_FLOAT_SCALAR)
 
     void float4x4::rotate(float angle, const float3& axis)
     {
@@ -229,7 +229,7 @@ namespace mango
         }
     }
 
-#if defined(MANGO_ENABLE_SIMD)
+#if !defined(MANGO_SIMD_FLOAT_SCALAR)
 
     void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
@@ -281,7 +281,7 @@ namespace mango
 
 #endif
 
-#if defined(MANGO_ENABLE_SIMD)
+#if !defined(MANGO_SIMD_FLOAT_SCALAR)
 
     float4x4 normalize(const float4x4& m)
     {
@@ -1105,7 +1105,7 @@ namespace mango
         return n;
     }
 
-#if defined(MANGO_ENABLE_SIMD)
+#if !defined(MANGO_SIMD_FLOAT_SCALAR)
 
     float4 srgb_encode(float4 n)
     {
@@ -1116,7 +1116,7 @@ namespace mango
         static const float4 gamma(1.0f / 2.4f);
         static const float4 zero(0.0f);
         static const float4 one(1.0f);
-        static simd::float32x4 alpha_mask = simd::float32x4_cast(simd4i_set4(0, 0, 0, 0xffffffff));
+        static simd::float32x4 alpha_mask = simd::float32x4_reinterpret(simd::int32x4_set4(0, 0, 0, 0xffffffff));
 
         float4 s = clamp(n, zero, one);
         float4 a = s * linear;
@@ -1134,7 +1134,7 @@ namespace mango
         static const float4 scale(1.f / 1.055f);
         static const float4 bias(0.055f);
         static const float4 gamma(2.4f);
-        static simd::float32x4 alpha_mask = simd::float32x4_cast(simd4i_set4(0, 0, 0, 0xffffffff));
+        static simd::float32x4 alpha_mask = simd::float32x4_reinterpret(simd::int32x4_set4(0, 0, 0, 0xffffffff));
 
         float4 a = s * linear;
         float4 b = pow((s + bias) * scale, gamma);

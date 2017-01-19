@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#ifndef MANGO_SIMD_INT
-#error "THIS HEADER MUST NEVER BE INCLUDED MANUALLY."
-#endif
+#include "simd.hpp"
+
+#ifdef MANGO_SIMD_INT_SSE
 
     // -----------------------------------------------------------------
     // conversion
@@ -397,3 +397,5 @@
     }
 
 #endif
+
+#endif // MANGO_SIMD_INT_SSE
