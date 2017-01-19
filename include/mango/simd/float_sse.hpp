@@ -416,7 +416,7 @@
     static inline float32x4 float32x4_cross3(float32x4 a, float32x4 b)
     {
         float32x4 c = _mm_sub_ps(_mm_mul_ps(a, float32x4_shuffle<1, 2, 0, 3>(b)),
-                              _mm_mul_ps(b, float32x4_shuffle<1, 2, 0, 3>(a)));
+                                 _mm_mul_ps(b, float32x4_shuffle<1, 2, 0, 3>(a)));
         return float32x4_shuffle<1, 2, 0, 3>(c);
     }
 
@@ -463,11 +463,7 @@
 
     static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
     {
-#if 1
         return float32x4_or(float32x4_and(mask, a), float32x4_nand(mask, b));
-#else
-        return _mm_xor_ps(b, _mm_and_ps(mask, _mm_xor_ps(a, b)));
-#endif
     }
 
 #endif
@@ -799,14 +795,14 @@
 
     static inline void float32x4_matrix_inverse_transpose(float32x4* result, const float32x4* m)
     {
-		const float32x4 m0zwyz = float32x4_shuffle<2, 3, 1, 2>(m[0]);
-		const float32x4 m0wzwy = float32x4_shuffle<3, 2, 3, 1>(m[0]);
-		const float32x4 m1zwyz = float32x4_shuffle<2, 3, 1, 2>(m[1]);
-		const float32x4 m1wzwy = float32x4_shuffle<3, 2, 3, 1>(m[1]);
-		const float32x4 m2zwyz = float32x4_shuffle<2, 3, 1, 2>(m[2]);
-		const float32x4 m2wzwy = float32x4_shuffle<3, 2, 3, 1>(m[2]);
-		const float32x4 m3zwyz = float32x4_shuffle<2, 3, 1, 2>(m[3]);
-		const float32x4 m3wzwy = float32x4_shuffle<3, 2, 3, 1>(m[3]);
+        const float32x4 m0zwyz = float32x4_shuffle<2, 3, 1, 2>(m[0]);
+        const float32x4 m0wzwy = float32x4_shuffle<3, 2, 3, 1>(m[0]);
+        const float32x4 m1zwyz = float32x4_shuffle<2, 3, 1, 2>(m[1]);
+        const float32x4 m1wzwy = float32x4_shuffle<3, 2, 3, 1>(m[1]);
+        const float32x4 m2zwyz = float32x4_shuffle<2, 3, 1, 2>(m[2]);
+        const float32x4 m2wzwy = float32x4_shuffle<3, 2, 3, 1>(m[2]);
+        const float32x4 m3zwyz = float32x4_shuffle<2, 3, 1, 2>(m[3]);
+        const float32x4 m3wzwy = float32x4_shuffle<3, 2, 3, 1>(m[3]);
 
         const float32x4 v0 = float32x4_sub(float32x4_mul(m0wzwy, m1zwyz), float32x4_mul(m0zwyz, m1wzwy));
         const float32x4 v1 = float32x4_sub(float32x4_mul(m0zwyz, m2wzwy), float32x4_mul(m0wzwy, m2zwyz));
@@ -816,22 +812,22 @@
         const float32x4 v5 = float32x4_sub(float32x4_mul(m2zwyz, m3wzwy), float32x4_mul(m2wzwy, m3zwyz));
         const float32x4 v6 = float32x4_sub(float32x4_mul(m2wzwy, m3zwyz), float32x4_mul(m2zwyz, m3wzwy));
 
-		const float32x4 m0yxxx = float32x4_shuffle<1, 0, 0, 0>(m[0]);
-		const float32x4 m1yxxx = float32x4_shuffle<1, 0, 0, 0>(m[1]);
-		const float32x4 m2yxxx = float32x4_shuffle<1, 0, 0, 0>(m[2]);
-		const float32x4 m3yxxx = float32x4_shuffle<1, 0, 0, 0>(m[3]);
+        const float32x4 m0yxxx = float32x4_shuffle<1, 0, 0, 0>(m[0]);
+        const float32x4 m1yxxx = float32x4_shuffle<1, 0, 0, 0>(m[1]);
+        const float32x4 m2yxxx = float32x4_shuffle<1, 0, 0, 0>(m[2]);
+        const float32x4 m3yxxx = float32x4_shuffle<1, 0, 0, 0>(m[3]);
 
         float32x4 a = float32x4_mul(m1yxxx, v5);
-		float32x4 b = float32x4_mul(m0yxxx, v6);
-		float32x4 c = float32x4_mul(m0yxxx, v4);
-		float32x4 d = float32x4_mul(m0yxxx, v3);
-		a = float32x4_msub(a, m2yxxx, v4);
+        float32x4 b = float32x4_mul(m0yxxx, v6);
+        float32x4 c = float32x4_mul(m0yxxx, v4);
+        float32x4 d = float32x4_mul(m0yxxx, v3);
+        a = float32x4_msub(a, m2yxxx, v4);
         a = float32x4_msub(a, m3yxxx, v3);
         b = float32x4_msub(b, m2yxxx, v2);
-		c = float32x4_madd(c, m1yxxx, v2);
-		b = float32x4_msub(b, m3yxxx, v1);
-		d = float32x4_madd(d, m1yxxx, v1);
-		c = float32x4_msub(c, m3yxxx, v0);
+        c = float32x4_madd(c, m1yxxx, v2);
+        b = float32x4_msub(b, m3yxxx, v1);
+        d = float32x4_madd(d, m1yxxx, v1);
+        c = float32x4_msub(c, m3yxxx, v0);
         d = float32x4_madd(d, m2yxxx, v0);
 
         float32x4 det = float32x4_div(float32x4_set1(1.0f), float32x4_dot4(m[0], a));
