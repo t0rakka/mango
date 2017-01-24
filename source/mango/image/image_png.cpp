@@ -60,14 +60,19 @@ namespace
         int w;
         int h;
 
-        AdamInterleave(int pass, int width, int height)
+        AdamInterleave(uint32 pass, uint32 width, uint32 height)
         {
             assert(pass >=0 && pass < 7);
 
-            xorig = (0 - (~(pass + 1) & 1)) & (1 << ((8 - pass) >> 1)) & 7;
-            yorig = (0 - (~(pass + 0) & 1)) & (1 << ((7 - pass) >> 1)) & 7;
-            xspc = std::min(3, ((9 - pass) >> 1));
-            yspc = std::min(3, ((8 - pass) >> 1));
+            const int xorig_table[] = { 0, 4, 0, 2, 0, 1, 0 };
+            const int yorig_table[] = { 0, 0, 4, 0, 2, 0, 1 };
+            const int xspc_table[]  = { 3, 3, 2, 2, 1, 1, 0 };
+            const int yspc_table[]  = { 3, 3, 3, 2, 2, 1, 1 };
+
+            xorig = xorig_table[pass];
+            yorig = yorig_table[pass];
+            xspc = xspc_table[pass];
+            yspc = yspc_table[pass];
             w = (width - xorig + (1 << xspc) - 1) >> xspc;
             h = (height - yorig + (1 << yspc) - 1) >> yspc;
         }
@@ -103,9 +108,7 @@ namespace
         const uint8* m_end = NULL;
         const char* m_error = NULL;
 
-        z_stream m_zstream;
-        uint8* m_buffer = NULL;
-        int m_buffer_size = 0;
+        Buffer m_compressed;
 
         // IHDR
         int m_width;
@@ -142,9 +145,6 @@ namespace
 
         void setError(const char* error);
 
-        void startInflate();
-        void endInflate();
-
         void read_IHDR(BigEndianConstPointer p, uint32 size);
         void read_IDAT(BigEndianConstPointer p, uint32 size);
         void read_PLTE(BigEndianConstPointer p, uint32 size);
@@ -156,20 +156,22 @@ namespace
 
         void parse();
         void filter(uint8* buffer, int bytes, int height);
-        void deinterlace1to4();
-        void deinterlace8to16();
-        void process_i1to4(uint8* dest, int stride);
-        void process_i8(uint8* dest, int stride);
-        void process_rgb8(uint8* dest, int stride);
-        void process_pal1to4(uint8* dest, int stride);
-        void process_pal8(uint8* dest, int stride);
-        void process_ia8(uint8* dest, int stride);
-        void process_rgba8(uint8* dest, int stride);
-        void process_i16(uint8* dest, int stride);
-        void process_rgb16(uint8* dest, int stride);
-        void process_ia16(uint8* dest, int stride);
-        void process_rgba16(uint8* dest, int stride);
-        void process(uint8* image, int stride);
+        uint8* deinterlace1to4(uint8* buffer);
+        uint8* deinterlace8to16(uint8* buffer);
+
+        void process_i1to4(uint8* dest, int stride, const uint8* src);
+        void process_i8(uint8* dest, int stride, const uint8* src);
+        void process_rgb8(uint8* dest, int stride, const uint8* src);
+        void process_pal1to4(uint8* dest, int stride, const uint8* src);
+        void process_pal8(uint8* dest, int stride, const uint8* src);
+        void process_ia8(uint8* dest, int stride, const uint8* src);
+        void process_rgba8(uint8* dest, int stride, const uint8* src);
+        void process_i16(uint8* dest, int stride, const uint8* src);
+        void process_rgb16(uint8* dest, int stride, const uint8* src);
+        void process_ia16(uint8* dest, int stride, const uint8* src);
+        void process_rgba16(uint8* dest, int stride, const uint8* src);
+
+        uint8* process(uint8* image, int stride, uint8* src);
 
     public:
         ParserPNG(const Memory& memory);
@@ -217,7 +219,6 @@ namespace
 
     ParserPNG::~ParserPNG()
     {
-        delete[] m_buffer;
     }
 
     void ParserPNG::setError(const char* error)
@@ -231,61 +232,6 @@ namespace
     const char* ParserPNG::getError() const
     {
         return m_error;
-    }
-
-    void ParserPNG::startInflate()
-    {
-        // compute output buffer size
-        if (m_interlace)
-        {
-            m_buffer_size = 0;
-
-            // NOTE: brute-force loop to resolve memory consumption
-            for (int pass = 0; pass < 7; ++pass)
-            {
-                AdamInterleave adam(pass, m_width, m_height);
-                if (adam.w && adam.h)
-                {
-                    const int bytesPerLine = FILTER_BYTE + m_channels * ((adam.w * m_bit_depth + 7) / 8);
-                    m_buffer_size += bytesPerLine * adam.h;
-                }
-            }
-        }
-        else
-        {
-            m_buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
-        }
-
-        // allocate output buffer
-        print("  buffer bytes: %d\n", m_buffer_size);
-        m_buffer = new uint8[m_buffer_size];
-        if (!m_buffer)
-        {
-            setError("Memory allocation failed.");
-            return;
-        }
-
-        // initialize zstream
-        std::memset(&m_zstream, 0, sizeof(z_stream));
-
-        m_zstream.zalloc = 0;
-        m_zstream.zfree = 0;
-        m_zstream.opaque = NULL;
-
-        int status = inflateInit(&m_zstream);
-        if (status != Z_OK)
-        {
-            setError("inflateInit() failed.");
-            return;
-        }
-
-        m_zstream.avail_out = m_buffer_size;
-        m_zstream.next_out = m_buffer;
-    }
-
-    void ParserPNG::endInflate()
-    {
-        inflateEnd(&m_zstream);
     }
 
     void ParserPNG::read_IHDR(BigEndianConstPointer p, uint32 size)
@@ -391,24 +337,7 @@ namespace
 
     void ParserPNG::read_IDAT(BigEndianConstPointer p, uint32 size)
     {
-        const uint8* data = p;
-
-        // Decompressed using zlib
-        m_zstream.avail_in = size;
-        m_zstream.next_in = const_cast<uint8*>(data);
-
-        while (m_zstream.avail_in > 0)
-        {
-            int status = inflate(&m_zstream, Z_NO_FLUSH);
-            if (status != Z_OK && status != Z_STREAM_END)
-            {
-                //print("  # error: %s\n", mz_error(status));
-                setError("Inflate failed.");
-                return;
-            }
-        }
-
-        print("  # total_out: %d \n", int(m_zstream.total_out));
+        m_compressed.write(p, size);
     }
 
     void ParserPNG::read_PLTE(BigEndianConstPointer p, uint32 size)
@@ -761,18 +690,18 @@ namespace
         delete[] zero;
     }
 
-    void ParserPNG::deinterlace1to4()
+    uint8* ParserPNG::deinterlace1to4(uint8* buffer)
     {
         const int stride = FILTER_BYTE + m_bytes_per_line;
         uint8* temp = new uint8[m_height * stride];
         if (!temp)
         {
             setError("Memory allocation failed.");
-            return;
+            return buffer;
         }
         std::memset(temp, 0, m_height * stride);
 
-        uint8* p = m_buffer;
+        uint8* p = buffer;
 
         const int samples = 8 / m_bit_depth;
         const int mask = samples - 1;
@@ -813,21 +742,21 @@ namespace
         }
 
         // migrate to deinterleaved temp buffer
-        delete[] m_buffer;
-        m_buffer = temp;
+        delete[] buffer;
+        return temp;
     }
 
-    void ParserPNG::deinterlace8to16()
+    uint8* ParserPNG::deinterlace8to16(uint8* buffer)
     {
         const int stride = FILTER_BYTE + m_bytes_per_line;
         uint8* temp = new uint8[m_height * stride];
         if (!temp)
         {
             setError("Memory allocation failed.");
-            return;
+            return buffer;
         }
 
-        uint8* p = m_buffer;
+        uint8* p = buffer;
         const int size = m_bytes_per_line / m_width;
 
         for (int pass = 0; pass < 7; ++pass)
@@ -865,13 +794,12 @@ namespace
         }
 
         // migrate to deinterleaved temp buffer
-        delete[] m_buffer;
-        m_buffer = temp;
+        delete[] buffer;
+        return temp;
     }
 
-    void ParserPNG::process_i1to4(uint8* dest, int stride)
+    void ParserPNG::process_i1to4(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
         const int bits = m_bit_depth;
@@ -903,9 +831,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_i8(uint8* dest, int stride)
+    void ParserPNG::process_i8(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -937,9 +864,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgb8(uint8* dest, int stride)
+    void ParserPNG::process_rgb8(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -978,9 +904,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_pal1to4(uint8* dest, int stride)
+    void ParserPNG::process_pal1to4(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
         const int bits = m_bit_depth;
@@ -1010,9 +935,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_pal8(uint8* dest, int stride)
+    void ParserPNG::process_pal8(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
         const uint32* palette = m_palette;
@@ -1030,9 +954,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_ia8(uint8* dest, int stride)
+    void ParserPNG::process_ia8(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -1050,9 +973,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgba8(uint8* dest, int stride)
+    void ParserPNG::process_rgba8(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -1070,9 +992,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_i16(uint8* dest, int stride)
+    void ParserPNG::process_i16(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -1112,9 +1033,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgb16(uint8* dest, int stride)
+    void ParserPNG::process_rgb16(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -1169,9 +1089,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_ia16(uint8* dest, int stride)
+    void ParserPNG::process_ia16(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -1193,9 +1112,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgba16(uint8* dest, int stride)
+    void ParserPNG::process_rgba16(uint8* dest, int stride, const uint8* src)
     {
-        const uint8* src = m_buffer;
         const int width = m_width;
         const int height = m_height;
 
@@ -1221,78 +1139,130 @@ namespace
         }
     }
 
-    void ParserPNG::process(uint8* image, int stride)
+    uint8* ParserPNG::process(uint8* image, int stride, uint8* buffer)
     {
         if (m_interlace)
         {
             // deinterlace does filter for each pass
             if (m_bit_depth < 8)
-                deinterlace1to4();
+                buffer = deinterlace1to4(buffer);
             else
-                deinterlace8to16();
+                buffer = deinterlace8to16(buffer);
         }
         else
         {
             // filter the whole image in single pass
-            filter(m_buffer, m_bytes_per_line, m_height);
+            filter(buffer, m_bytes_per_line, m_height);
         }
 
         if (m_error)
-            return;
+            return buffer;
 
         if (m_color_type == COLOR_TYPE_I)
         {
             if (m_bit_depth < 8)
-                process_i1to4(image, stride);
+                process_i1to4(image, stride, buffer);
             else if (m_bit_depth == 8)
-                process_i8(image, stride);
+                process_i8(image, stride, buffer);
             else
-                process_i16(image, stride);
+                process_i16(image, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_RGB)
         {
             if (m_bit_depth == 8)
-                process_rgb8(image, stride);
+                process_rgb8(image, stride, buffer);
             else
-                process_rgb16(image, stride);
+                process_rgb16(image, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
             if (m_bit_depth < 8)
-                process_pal1to4(image, stride);
+                process_pal1to4(image, stride, buffer);
             else
-                process_pal8(image, stride);
+                process_pal8(image, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_IA)
         {
             if (m_bit_depth == 8)
-                process_ia8(image, stride);
+                process_ia8(image, stride, buffer);
             else
-                process_ia16(image, stride);
+                process_ia16(image, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_RGBA)
         {
             if (m_bit_depth == 8)
-                process_rgba8(image, stride);
+                process_rgba8(image, stride, buffer);
             else
-                process_rgba16(image, stride);
+                process_rgba16(image, stride, buffer);
         }
+
+        return buffer;
     }
 
     const char* ParserPNG::decode(Surface& dest)
     {
         if (!m_error)
         {
-            // parse and decompress
-            startInflate();
-            if (!m_error)
-            {
-                parse();
-                endInflate();
+            parse();
 
-                // process decompressed data
-                process(dest.image, dest.stride);
+            int buffer_size = 0;
+            
+            // compute output buffer size
+            if (m_interlace)
+            {
+                // NOTE: brute-force loop to resolve memory consumption
+                for (int pass = 0; pass < 7; ++pass)
+                {
+                    AdamInterleave adam(pass, m_width, m_height);
+                    if (adam.w && adam.h)
+                    {
+                        const int bytesPerLine = FILTER_BYTE + m_channels * ((adam.w * m_bit_depth + 7) / 8);
+                        buffer_size += bytesPerLine * adam.h;
+                    }
+                }
             }
+            else
+            {
+                buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
+            }
+            
+            // allocate output buffer
+            print("  buffer bytes: %d\n", buffer_size);
+            uint8* buffer = new uint8[buffer_size];
+            if (!buffer)
+            {
+                setError("Memory allocation failed.");
+                return m_error;
+            }
+
+            // decompress stream
+            mz_stream stream;
+            int status;
+            memset(&stream, 0, sizeof(stream));
+
+            stream.next_in   = m_compressed;
+            stream.avail_in  = (unsigned int)m_compressed.size();
+            stream.next_out  = buffer;
+            stream.avail_out = (unsigned int)buffer_size;
+
+            status = mz_inflateInit(&stream);
+            if (status != MZ_OK)
+            {
+                // error
+            }
+
+            status = mz_inflate(&stream, MZ_FINISH);
+            if (status != MZ_STREAM_END)
+            {
+                // error
+            }
+
+            print("  # total_out: %d \n", int(stream.total_out));
+            status = mz_inflateEnd(&stream);
+
+            // process image
+            buffer = process(dest.image, dest.stride, buffer);
+            delete[] buffer;
         }
 
         return m_error;
