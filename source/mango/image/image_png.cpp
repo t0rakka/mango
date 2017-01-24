@@ -64,13 +64,13 @@ namespace
         {
             assert(pass >=0 && pass < 7);
 
-            const int orig[] = { 0, 0, 4, 0, 2, 0, 1, 0 };
-            const int spc[]  = { 3, 3, 3, 2, 2, 1, 1, 0 };
+            const uint32 orig = 0x01020400 >> (pass * 4);
+            const uint32 spc = 0x01122333 >> (pass * 4);
 
-            xorig = orig[pass + 1];
-            yorig = orig[pass + 0];
-            xspc = spc[pass + 1];
-            yspc = spc[pass + 0];
+            xorig = (orig >> 4) & 15;
+            yorig = (orig >> 0) & 15;
+            xspc = (spc >> 4) & 15;
+            yspc = (spc >> 0) & 15;
             w = (width - xorig + (1 << xspc) - 1) >> xspc;
             h = (height - yorig + (1 << yspc) - 1) >> yspc;
         }
