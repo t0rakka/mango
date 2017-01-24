@@ -383,7 +383,7 @@ const char *mz_error(int err);
   #define inflate               mz_inflate
   #define inflateEnd            mz_inflateEnd
   #define uncompress            mz_uncompress
-  #define crc32                 mz_crc32
+  //#define crc32                 mz_crc32
   #define adler32               mz_adler32
   #define MAX_WBITS             15
   #define MAX_MEM_LEVEL         9

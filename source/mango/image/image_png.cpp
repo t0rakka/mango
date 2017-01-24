@@ -18,12 +18,6 @@ namespace
     using namespace mango;
 
     // ------------------------------------------------------------
-    // mz_crc32()
-    // ------------------------------------------------------------
-
-    extern "C" mz_ulong mz_crc32(mz_ulong crc, const mz_uint8 *ptr, size_t buf_len);
-
-    // ------------------------------------------------------------
     // print()
     // ------------------------------------------------------------
 
@@ -1313,7 +1307,7 @@ namespace
         BigEndianStream s(stream);
 
         const uint32 chunk_size = static_cast<uint32>(size - 4);
-        const uint32 chunk_crc = (uint32) mz_crc32(0, buffer, size);
+        const uint32 chunk_crc = crc32(0, buffer, size);
 
         s.write32(chunk_size);
         s.write(buffer, size);
@@ -1356,6 +1350,8 @@ namespace
 
         for (int y = 0; y < surface.height; ++y)
         {
+            bool last_scan = (y == surface.height - 1);
+
             // compress filler byte
             uint8 zero = 0;
             z.avail_in = 1;
@@ -1365,7 +1361,7 @@ namespace
             // compress scanline
             z.avail_in = bytesPerLine;
             z.next_in = surface.address<uint8>(0, y);
-            deflate(&z, (y == surface.height - 1) ? Z_FINISH : Z_NO_FLUSH);
+            deflate(&z, last_scan ? Z_FINISH : Z_NO_FLUSH);
         }
 
         // compressed size includes chunkID
