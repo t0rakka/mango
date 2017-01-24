@@ -64,15 +64,13 @@ namespace
         {
             assert(pass >=0 && pass < 7);
 
-            const int xorig_table[] = { 0, 4, 0, 2, 0, 1, 0 };
-            const int yorig_table[] = { 0, 0, 4, 0, 2, 0, 1 };
-            const int xspc_table[]  = { 3, 3, 2, 2, 1, 1, 0 };
-            const int yspc_table[]  = { 3, 3, 3, 2, 2, 1, 1 };
+            const int orig[] = { 0, 0, 4, 0, 2, 0, 1, 0 };
+            const int spc[]  = { 3, 3, 3, 2, 2, 1, 1, 0 };
 
-            xorig = xorig_table[pass];
-            yorig = yorig_table[pass];
-            xspc = xspc_table[pass];
-            yspc = yspc_table[pass];
+            xorig = orig[pass + 1];
+            yorig = orig[pass + 0];
+            xspc = spc[pass + 1];
+            yspc = spc[pass + 0];
             w = (width - xorig + (1 << xspc) - 1) >> xspc;
             h = (height - yorig + (1 << yspc) - 1) >> yspc;
         }
