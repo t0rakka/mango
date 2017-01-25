@@ -418,9 +418,7 @@ namespace mango
 
     static inline bool u32_has_zero_byte(uint32 value)
     {
-        const uint32 mask = 0x7f7f7f7f;
-        value = ((value & mask) + mask) | value;
-        return ~(value | mask) != 0;
+	    return ((value - 0x01010101) & ~value & 0x80808080) != 0;
     }
 
     // ----------------------------------------------------------------------------
@@ -602,9 +600,7 @@ namespace mango
 
     static inline bool u64_has_zero_byte(uint64 value)
     {
-        const uint64 mask = 0x7f7f7f7f7f7f7f7f;
-        value = ((value & mask) + mask) | value;
-        return ~(value | mask) != 0;
+	    return (~value & (value - 0x0101010101010101) & 0x8080808080808080) != 0;
     }
 
     static inline bool u64_is_power_of_two(uint64 value)
