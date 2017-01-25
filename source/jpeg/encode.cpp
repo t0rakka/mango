@@ -1026,7 +1026,9 @@ namespace jpeg
             }
         }
 
-        uint8* buffer = new uint8[surface.width * surface.height + 8192];
+        // NOTE: excessive use of encoding buffer it would be more memory-efficient
+        //       to allocate buffer as the encoding is progressing.
+        Buffer buffer(surface.width * surface.height * 4 + 8192);
         BigEndianPointer p(buffer);
 
         // encode
@@ -1045,8 +1047,6 @@ namespace jpeg
 
         // flush the buffer
         stream.write(buffer, p - buffer);
-
-        delete[] buffer;
     }
 
 } // namespace jpeg
