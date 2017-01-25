@@ -23,25 +23,6 @@
     }
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-		return (float32x4) s;
-    }
-
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-		return vec_ctf(s, 0);
-    }
-
-    static inline float32x4 float32x4_convert(uint32x4 s)
-    {
-		return vec_ctf(s, 0);
-    }
-
-    // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
 
@@ -451,29 +432,6 @@
     static inline float32x4 float32x4_fract(float32x4 s)
     {
         return float32x4_sub(s, float32x4_floor(s));
-    }
-
-    // -----------------------------------------------------------------
-    // float <-> half conversions
-    // -----------------------------------------------------------------
-
-    static inline float32x4 float32x4_convert(float16x4 s)
-    {
-        float x = s.x;
-        float y = s.y;
-        float z = s.z;
-        float w = s.w;
-        return float32x4_set4(x, y, z, w);
-    }
-
-    static inline float16x4 float16x4_convert(float32x4 s)
-    {
-        float16x4 v;
-        v.x = float32x4_get_x(s);
-        v.y = float32x4_get_y(s);
-        v.z = float32x4_get_z(s);
-        v.w = float32x4_get_w(s);
-        return v;
     }
 
     // -----------------------------------------------------------------

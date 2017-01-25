@@ -6,38 +6,15 @@
 
 #include "simd.hpp"
 
-#ifdef MANGO_SIMD_INT_SPU
+#ifdef MANGO_SIMD_INT_ALTIVEC
 
     // -----------------------------------------------------------------
-    // conversion
+    // helpers
     // -----------------------------------------------------------------
 
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    static inline vector signed int __vec_splatsi4(const signed int x)
     {
-        return (uint32x4) s;
-    }
-
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return (int32x4) s;
-    }
-
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-		return (int32x4) s;
-    }
-
-    static inline int32x4 int32x4_convert(float32x4 s)
-    {
-        return spu_convts(s, 0);
-    }
-
-    static inline int32x4 int32x4_truncate(float32x4 s)
-    {
-        const vec_uint4 inrange = spu_cmpabsgt((float32x4)spu_splats(0x4b000000), s);
-        const vec_int4 si = spu_convts(s, 0);
-        const vec_float4 st = spu_sel(s, spu_convtf(si, 0), inrange);
-        return spu_convts(st, 0);
+        return (vector signed int) {x, x, x, x};
     }
 
     // -----------------------------------------------------------------
@@ -48,55 +25,55 @@
 
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
-        return spu_splats(s);
+        return __vec_splatsi4(s);
     }
 
     static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
     {
-		const uint32x4 temp = { x, y, z, w };
-		return temp;
+        const uint32x4 temp = { x, y, z, w };
+        return temp;
     }
 
     static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
     {
-        return spu_insert(x, a, 0);
+        return vec_insert(x, a, 0);
     }
 
     static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
     {
-        return spu_insert(y, a, 1);
+        return vec_insert(y, a, 1);
     }
 
     static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
     {
-        return spu_insert(z, a, 2);
+        return vec_insert(z, a, 2);
     }
 
     static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
     {
-        return spu_insert(w, a, 3);
+        return vec_insert(w, a, 3);
     }
 
     // get
 
     static inline int uint32x4_get_x(uint32x4 a)
     {
-        return spu_extract(a, 0);
+        return vec_extract(a, 0);
     }
 
     static inline int uint32x4_get_y(uint32x4 a)
     {
-        return spu_extract(a, 1);
+        return vec_extract(a, 1);
     }
 
     static inline int uint32x4_get_z(uint32x4 a)
     {
-        return spu_extract(a, 2);
+        return vec_extract(a, 2);
     }
 
     static inline int uint32x4_get_w(uint32x4 a)
     {
-        return spu_extract(a, 3);
+        return vec_extract(a, 3);
     }
 
     // -----------------------------------------------------------------
@@ -107,151 +84,158 @@
 
     static inline int32x4 int32x4_zero()
     {
-        return spu_splats(0);
+        return __vec_splatsi4(0);
     }
 
     static inline int32x4 int32x4_set1(int s)
     {
-        return spu_splats(s);
+        return __vec_splatsi4(s);
     }
 
     static inline int32x4 int32x4_set4(int x, int y, int z, int w)
     {
-		const int32x4 temp = { x, y, z, w };
-		return temp;
+        const int32x4 temp = { x, y, z, w };
+        return temp;
     }
 
     static inline int32x4 int32x4_set_x(int32x4 a, int x)
     {
-        return spu_insert(x, a, 0);
+        return vec_insert(x, a, 0);
     }
 
     static inline int32x4 int32x4_set_y(int32x4 a, int y)
     {
-        return spu_insert(y, a, 1);
+        return vec_insert(y, a, 1);
     }
 
     static inline int32x4 int32x4_set_z(int32x4 a, int z)
     {
-        return spu_insert(z, a, 2);
+        return vec_insert(z, a, 2);
     }
 
     static inline int32x4 int32x4_set_w(int32x4 a, int w)
     {
-        return spu_insert(w, a, 3);
+        return vec_insert(w, a, 3);
     }
 
     // get
 
     static inline int int32x4_get_x(int32x4 a)
     {
-        return spu_extract(a, 0);
+        return vec_extract(a, 0);
     }
 
     static inline int int32x4_get_y(int32x4 a)
     {
-        return spu_extract(a, 1);
+        return vec_extract(a, 1);
     }
 
     static inline int int32x4_get_z(int32x4 a)
     {
-        return spu_extract(a, 2);
+        return vec_extract(a, 2);
     }
 
     static inline int int32x4_get_w(int32x4 a)
     {
-        return spu_extract(a, 3);
+        return vec_extract(a, 3);
     }
 
-    static inline int32x4 int32x4_load(const int* source)
+    static inline int32x4 int32x4_load(const int* s)
     {
-        return reinterpret_cast<const int32x4*>(source)[0];
+        return reinterpret_cast<const int32x4*>(s)[0];
     }
 
     static inline int32x4 int32x4_uload(const int* s)
     {
-        int32x4 temp = { s[0], s[1], s[2], s[3] };
-        return temp;
+        return (int32x4) { s[0], s[1], s[2], s[3] };
     }
 
-    static inline void int32x4_store(int* dest, int32x4 a)
+    static inline void int32x4_store(int* d, int32x4 a)
     {
-        reinterpret_cast<const int32x4*>(dest)[0] = a;
+        reinterpret_cast<const int32x4*>(d)[0] = a;
     }
 
-    static inline void int32x4_ustore(int* dest, int32x4 a)
+    static inline void int32x4_ustore(int* d, int32x4 a)
     {
-        dest[0] = spu_extract(a, 0);
-        dest[1] = spu_extract(a, 1);
-        dest[2] = spu_extract(a, 2);
-        dest[3] = spu_extract(a, 3);
+        const int* s = reinterpret_cast<const float*>(&a);
+        d[0] = s[0];
+        d[1] = s[1];
+        d[2] = s[2];
+        d[3] = s[3];
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)
     {
-        return spu_sub(spu_splats(0), a);
+        vector signed int zero = __vec_splatsi4(0);
+        return vec_sub(zero, x);
     }
 
     static inline int32x4 int32x4_add(int32x4 a, int32x4 b)
     {
-		return spu_add(a, b);
+        return vec_add(a, b);
     }
 
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
-		return spu_sub(a, b);
+        return vec_sub(a, b);
     }
 
     // logical
 
     static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
     {
-		return spu_and(a, b);
+        return vec_and(a, b);
     }
 
     static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
     {
-        return spu_nand(a, b);
+        return vec_neg(vec_and(a, b));
     }
 
     static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
     {
-		return spu_or(a, b);
+        return vec_or(a, b);
     }
 
     static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
     {
-		return spu_xor(a, b);
+        return vec_xor(a, b);
     }
 
     static inline int32x4 int32x4_sll(int32x4 a, int b)
     {
-        return spu_sl(a, b);
+        return vec_sl(a, b);
     }
 
     static inline int32x4 int32x4_srl(int32x4 a, int b)
     {
-        return spu_sr(a, b);
+        return vec_sr(a, b);
     }
 
     static inline int32x4 int32x4_sra(int32x4 a, int b)
     {
-        return spu_sra(a, b);
+        return vec_sra(a, b);
     }
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
     {
-		return (int32x4) spu_cmpeq(a, b);
+        return vec_cmpeq(a, b);
     }
 
     static inline int32x4 int32x4_compare_gt(int32x4 a, int32x4 b)
     {
-		return (int32x4) spu_cmpgt(a, b);
+        return vec_cmpgt(a, b);
     }
 
     static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
     {
-		return spu_sel(b, a, (vec_uint4)mask);
+        return vec_sel(b, a, (vector unsigned int)mask);
+    }
+
+    static inline uint32 int32x4_get_mask(int32x4 a)
+    {
+        // TODO
+        return 0;
     }
 
     static inline uint32 int32x4_pack(int32x4 s)
@@ -269,4 +253,4 @@
         return int32x4_set4(x, y, z, w);
     }
 
-#endif // MANGO_SIMD_INT_SPU
+#endif // MANGO_SIMD_INT_ALTIVEC

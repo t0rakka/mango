@@ -9,35 +9,6 @@
 #ifdef MANGO_SIMD_FLOAT_SCALAR
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return reinterpret_cast<float32x4 &>(s);
-    }
-
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        float32x4 v;
-        v.x = float(s.x);
-        v.y = float(s.y);
-        v.z = float(s.z);
-        v.w = float(s.w);
-        return v;
-    }
-
-    static inline float32x4 float32x4_convert(uint32x4 s)
-    {
-        float32x4 v;
-        v.x = float(s.x);
-        v.y = float(s.y);
-        v.z = float(s.z);
-        v.w = float(s.w);
-        return v;
-    }
-
-    // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
 
@@ -256,22 +227,38 @@
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_and(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        const Float x(Float(a.x).u & Float(b.x).u);
+        const Float y(Float(a.y).u & Float(b.y).u);
+        const Float z(Float(a.z).u & Float(b.z).u);
+        const Float w(Float(a.w).u & Float(b.w).u);
+        return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_nand(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        const Float x(~Float(a.x).u & Float(b.x).u);
+        const Float y(~Float(a.y).u & Float(b.y).u);
+        const Float z(~Float(a.z).u & Float(b.z).u);
+        const Float w(~Float(a.w).u & Float(b.w).u);
+        return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_or(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        const Float x(Float(a.x).u | Float(b.x).u);
+        const Float y(Float(a.y).u | Float(b.y).u);
+        const Float z(Float(a.z).u | Float(b.z).u);
+        const Float w(Float(a.w).u | Float(b.w).u);
+        return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        const Float x(Float(a.x).u ^ Float(b.x).u);
+        const Float y(Float(a.y).u ^ Float(b.y).u);
+        const Float z(Float(a.z).u ^ Float(b.z).u);
+        const Float w(Float(a.w).u ^ Float(b.w).u);
+        return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
@@ -569,30 +556,6 @@
     static inline float32x4 float32x4_fract(float32x4 s)
     {
         return float32x4_sub(s, float32x4_floor(s));
-    }
-
-    // -----------------------------------------------------------------
-    // float <-> half conversions
-    // -----------------------------------------------------------------
-
-    static inline float32x4 float32x4_convert(float16x4 s)
-    {
-        float32x4 v;
-        v.x = s.x;
-        v.y = s.y;
-        v.z = s.z;
-        v.w = s.w;
-        return v;
-    }
-
-    static inline float16x4 float16x4_convert(float32x4 s)
-    {
-        float16x4 v;
-        v.x = s.x;
-        v.y = s.y;
-        v.z = s.z;
-        v.w = s.w;
-        return v;
     }
 
     // -----------------------------------------------------------------

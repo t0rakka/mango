@@ -9,45 +9,6 @@
 #ifdef MANGO_SIMD_INT_SCALAR
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return reinterpret_cast<uint32x4 &>(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return reinterpret_cast<int32x4 &>(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-        return reinterpret_cast<int32x4 &>(s);
-    }
-
-    static inline int32x4 int32x4_convert(float32x4 s)
-    {
-        int32x4 v;
-        v.x = int(s.x + 0.5f);
-        v.y = int(s.y + 0.5f);
-        v.z = int(s.z + 0.5f);
-        v.w = int(s.w + 0.5f);
-        return v;
-    }
-
-    static inline int32x4 int32x4_truncate(float32x4 s)
-    {
-        int32x4 v;
-        v.x = int(s.x);
-        v.y = int(s.y);
-        v.z = int(s.z);
-        v.w = int(s.w);
-        return v;
-    }
-
-    // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
 

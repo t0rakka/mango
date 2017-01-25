@@ -58,9 +58,11 @@ namespace simd {
     #define MANGO_SIMD_INT_SSE
     #define MANGO_SIMD_FLOAT_SSE
     #define MANGO_SIMD_DOUBLE_AVX
-    #include "int_sse.hpp"
-    #include "float_sse.hpp"
-    #include "double_avx.hpp"
+    #define MANGO_SIMD_CONVERT_AVX
+    #include "sse_int.hpp"
+    #include "sse_float.hpp"
+    #include "avx_double.hpp"
+    #include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
 
@@ -86,9 +88,11 @@ namespace simd {
     #define MANGO_SIMD_INT_SSE
     #define MANGO_SIMD_FLOAT_SSE
     #define MANGO_SIMD_DOUBLE_SSE
-    #include "int_sse.hpp"
-    #include "float_sse.hpp"
-    #include "double_sse.hpp"
+    #define MANGO_SIMD_CONVERT_SSE
+    #include "sse_int.hpp"
+    #include "sse_float.hpp"
+    #include "sse_double.hpp"
+    #include "sse_convert.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
 
@@ -121,9 +125,11 @@ namespace simd {
     #define MANGO_SIMD_INT_NEON
     #define MANGO_SIMD_FLOAT_NEON
     #define MANGO_SIMD_DOUBLE_SCALAR
-    #include "int_neon.hpp"
-    #include "float_neon.hpp"
-    #include "double_scalar.hpp"
+    #define MANGO_SIMD_CONVERT_NEON
+    #include "neon_int.hpp"
+    #include "neon_float.hpp"
+    #include "scalar_double.hpp"
+    #include "neon_convert.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
 
@@ -148,9 +154,11 @@ namespace simd {
     #define MANGO_SIMD_INT_ALTIVEC
     #define MANGO_SIMD_FLOAT_ALTIVEC
     #define MANGO_SIMD_DOUBLE_SCALAR
-    #include "int_altivec.hpp"
-    #include "float_altivec.hpp"
-    #include "double_scalar.hpp"
+    #define MANGO_SIMD_CONVERT_ALTIVEC
+    #include "altivec_int.hpp"
+    #include "altivec_float.hpp"
+    #include "scalar_double.hpp"
+    #include "altivec_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SPU)
 
@@ -175,9 +183,11 @@ namespace simd {
     #define MANGO_SIMD_INT_SPU
     #define MANGO_SIMD_FLOAT_SPU
     #define MANGO_SIMD_DOUBLE_SCALAR
-    #include "int_spu.hpp"
-    #include "float_spu.hpp"
-    #include "double_scalar.hpp"
+    #define MANGO_SIMD_CONVERT_SPU
+    #include "spu_int.hpp"
+    #include "spu_float.hpp"
+    #include "scalar_double.hpp"
+    #include "spu_convert.hpp"
 
 #else
 
@@ -213,9 +223,11 @@ namespace simd {
     #define MANGO_SIMD_INT_SCALAR
     #define MANGO_SIMD_FLOAT_SCALAR
     #define MANGO_SIMD_DOUBLE_SCALAR
-    #include "int_scalar.hpp"
-    #include "float_scalar.hpp"
-    #include "double_scalar.hpp"
+    #define MANGO_SIMD_CONVERT_SCALAR
+    #include "scalar_int.hpp"
+    #include "scalar_float.hpp"
+    #include "scalar_double.hpp"
+    #include "scalar_convert.hpp"
 
 #endif
 

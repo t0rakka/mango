@@ -9,35 +9,6 @@
 #ifdef MANGO_SIMD_INT_SSE
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return int32x4::type(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return uint32x4::type(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-        return _mm_castps_si128(s);
-    }
-
-    static inline int32x4 int32x4_convert(float32x4 s)
-    {
-        return _mm_cvtps_epi32(s);
-    }
-
-    static inline int32x4 int32x4_truncate(float32x4 s)
-    {
-        return _mm_cvttps_epi32(s);
-    }
-
-    // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
 

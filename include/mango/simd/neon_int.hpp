@@ -9,37 +9,6 @@
 #ifdef MANGO_SIMD_INT_NEON
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return vreinterpretq_u32_s32(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return vreinterpretq_s32_u32(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-        return vreinterpretq_s32_f32(s);
-    }
-
-    static inline int32x4 int32x4_convert(float32x4 s)
-    {
-        const uint32x4_t temp = vandq_u32(vreinterpretq_u32_f32(s), vreinterpretq_u32_f32(vdupq_n_f32(-0.0f)));
-        const uint32x4_t half = vreinterpretq_u32_f32(vdupq_n_f32(0.5f));
-        return vcvtq_s32_f32(vaddq_f32(s, vreinterpretq_f32_u32(vorrq_u32(temp, half))));
-    }
-
-    static inline int32x4 int32x4_truncate(float32x4 s)
-    {
-        return vcvtq_s32_f32(s);
-    }
-
-    // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
 

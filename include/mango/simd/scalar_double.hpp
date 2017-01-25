@@ -9,76 +9,6 @@
 #ifdef MANGO_SIMD_DOUBLE_SCALAR
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline float64x4 float64x4_convert(int32x4 s)
-    {
-        float64x4 v;
-        v.x = double(int32x4_get_x(s));
-        v.y = double(int32x4_get_y(s));
-        v.z = double(int32x4_get_z(s));
-        v.w = double(int32x4_get_w(s));
-        return v;
-    }
-
-    static inline float64x4 float64x4_convert(float32x4 s)
-    {
-        float64x4 v;
-        v.x = double(float32x4_get_x(s));
-        v.y = double(float32x4_get_y(s));
-        v.z = double(float32x4_get_z(s));
-        v.w = double(float32x4_get_w(s));
-        return v;
-    }
-
-    static inline int32x4 int32x4_convert(float64x4 s)
-    {
-        int x = int(s.x + 0.5);
-        int y = int(s.y + 0.5);
-        int z = int(s.z + 0.5);
-        int w = int(s.w + 0.5);
-        return int32x4_set4(x, y, z, w);
-    }
-
-    static inline float32x4 float32x4_convert(float64x4 s)
-    {
-        float x = float(s.x);
-        float y = float(s.y);
-        float z = float(s.z);
-        float w = float(s.w);
-        return float32x4_set4(x, y, z, w);
-    }
-
-    static inline float64x4 float64x4_convert(uint32x4 ui)
-    {
-        float64x4 v;
-        v.x = u32_to_f64(uint32x4_get_x(ui));
-        v.y = u32_to_f64(uint32x4_get_y(ui));
-        v.z = u32_to_f64(uint32x4_get_z(ui));
-        v.w = u32_to_f64(uint32x4_get_w(ui));
-        return v;
-    }
-
-    static inline uint32x4 uint32x4_convert(float64x4 d)
-    {
-        uint32 x = f64_to_u32(d.x);
-        uint32 y = f64_to_u32(d.y);
-        uint32 z = f64_to_u32(d.z);
-        uint32 w = f64_to_u32(d.w);
-        return uint32x4_set4(x, y, z, w);
-    }
-
-    static inline int32x4 int32x4_truncate(float64x4 s)
-    {
-        int x = int(s.x);
-        int y = int(s.y);
-        int z = int(s.z);
-        int w = int(s.w);
-        return int32x4_set4(x, y, z, w);
-    }
-
-    // -----------------------------------------------------------------
     // float64x4
     // -----------------------------------------------------------------
 
@@ -266,12 +196,7 @@
         const Double y(Double(a.y).u & Double(b.y).u);
         const Double z(Double(a.z).u & Double(b.z).u);
         const Double w(Double(a.w).u & Double(b.w).u);
-        float64x4 v;
-        v.x = x;
-        v.y = y;
-        v.z = z;
-        v.w = w;
-        return v;
+        return float64x4_set4(x, y, z, w);
     }
 
     static inline float64x4 float64x4_nand(float64x4 a, float64x4 b)
@@ -280,12 +205,7 @@
         const Double y(~Double(a.y).u & Double(b.y).u);
         const Double z(~Double(a.z).u & Double(b.z).u);
         const Double w(~Double(a.w).u & Double(b.w).u);
-        float64x4 v;
-        v.x = x;
-        v.y = y;
-        v.z = z;
-        v.w = w;
-        return v;
+        return float64x4_set4(x, y, z, w);
     }
 
     static inline float64x4 float64x4_or(float64x4 a, float64x4 b)
@@ -294,12 +214,7 @@
         const Double y(Double(a.y).u | Double(b.y).u);
         const Double z(Double(a.z).u | Double(b.z).u);
         const Double w(Double(a.w).u | Double(b.w).u);
-        float64x4 v;
-        v.x = x;
-        v.y = y;
-        v.z = z;
-        v.w = w;
-        return v;
+        return float64x4_set4(x, y, z, w);
     }
 
     static inline float64x4 float64x4_xor(float64x4 a, float64x4 b)
@@ -308,12 +223,7 @@
         const Double y(Double(a.y).u ^ Double(b.y).u);
         const Double z(Double(a.z).u ^ Double(b.z).u);
         const Double w(Double(a.w).u ^ Double(b.w).u);
-        float64x4 v;
-        v.x = x;
-        v.y = y;
-        v.z = z;
-        v.w = w;
-        return v;
+        return float64x4_set4(x, y, z, w);
     }
 
     static inline float64x4 float64x4_min(float64x4 a, float64x4 b)

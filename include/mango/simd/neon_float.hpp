@@ -9,25 +9,6 @@
 #ifdef MANGO_SIMD_FLOAT_NEON
 
     // -----------------------------------------------------------------
-    // conversion
-    // -----------------------------------------------------------------
-
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return vreinterpretq_f32_s32(s);
-    }
-
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        return vcvtq_f32_s32(s);
-    }
-
-    static inline float32x4 float32x4_convert(uint32x4 s)
-    {
-        return vcvtq_f32_u32(s);
-    }
-
-    // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
 
@@ -233,22 +214,22 @@
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_and(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return vreinterpretq_f32_s32(int32x4_and(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_nand(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return vreinterpretq_f32_s32(int32x4_nand(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_or(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return vreinterpretq_f32_s32(int32x4_or(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return vreinterpretq_f32_s32(int32x4_xor(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
@@ -504,45 +485,6 @@
     {
         return float32x4_sub(s, float32x4_floor(s));
     }
-
-    // -----------------------------------------------------------------
-    // float <-> half conversions
-    // -----------------------------------------------------------------
-
-#ifdef MANGO_ENABLE_FP16
-
-    static inline float32x4 float32x4_convert(float16x4 s)
-    {
-        return vcvt_f32_f16(s);
-    }
-
-    static inline float16x4 float16x4_convert(float32x4 s)
-    {
-        return vcvt_f16_f32(s);
-    }
-
-#else
-
-    static inline float32x4 float32x4_convert(float16x4 s)
-    {
-        float x = s.x;
-        float y = s.y;
-        float z = s.z;
-        float w = s.w;
-        return float32x4_set4(x, y, z, w);
-    }
-
-    static inline float16x4 float16x4_convert(float32x4 s)
-    {
-        float16x4 v;
-        v.x = float32x4_get_x(s);
-        v.y = float32x4_get_y(s);
-        v.z = float32x4_get_z(s);
-        v.w = float32x4_get_w(s);
-        return v;
-    }
-
-#endif
 
     // -----------------------------------------------------------------
     // float32x4_matrix
