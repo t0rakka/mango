@@ -33,10 +33,11 @@ namespace
 
     inline uint8 PaethPredictor(uint8 a, uint8 b, uint8 c)
     {
-        int p = a + b - c;
-        int pa = abs(p - a);
-        int pb = abs(p - b);
-        int pc = abs(p - c);
+        const int x = b - c;
+        const int y = a - c;
+        const int pa = abs(x);
+        const int pb = abs(y);
+        const int pc = abs(x + y);
         int pred;
         if (pa <= pb && pa <= pc)
             pred = a;
