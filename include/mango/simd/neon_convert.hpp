@@ -9,13 +9,8 @@
 #ifdef MANGO_SIMD_CONVERT_NEON
 
     // -----------------------------------------------------------------
-    // conversion
+    // reinterpret
     // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return vreinterpretq_u32_s32(s);
-    }
 
     static inline int32x4 int32x4_reinterpret(uint32x4 s)
     {
@@ -25,6 +20,40 @@
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
         return vreinterpretq_s32_f32(s);
+    }
+
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return vreinterpretq_u32_s32(s);
+    }
+
+    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
+    {
+        return vreinterpretq_u32_f32(s);
+    }
+
+    static inline float32x4 float32x4_reinterpret(int32x4 s)
+    {
+        return vreinterpretq_f32_s32(s);
+    }
+
+    static inline float32x4 float32x4_reinterpret(uint32x4 s)
+    {
+        return vreinterpretq_f32_u32(s);
+    }
+
+    // -----------------------------------------------------------------
+    // float32
+    // -----------------------------------------------------------------
+
+    static inline float32x4 float32x4_convert(int32x4 s)
+    {
+        return vcvtq_f32_s32(s);
+    }
+
+    static inline float32x4 float32x4_convert(uint32x4 s)
+    {
+        return vcvtq_f32_u32(s);
     }
 
     static inline int32x4 int32x4_convert(float32x4 s)
@@ -39,20 +68,9 @@
         return vcvtq_s32_f32(s);
     }
 
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return vreinterpretq_f32_s32(s);
-    }
-
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        return vcvtq_f32_s32(s);
-    }
-
-    static inline float32x4 float32x4_convert(uint32x4 s)
-    {
-        return vcvtq_f32_u32(s);
-    }
+    // -----------------------------------------------------------------
+    // float64
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -121,7 +139,7 @@
     }
 
     // -----------------------------------------------------------------
-    // float <-> half conversions
+    // float16
     // -----------------------------------------------------------------
 
 #ifdef MANGO_ENABLE_FP16

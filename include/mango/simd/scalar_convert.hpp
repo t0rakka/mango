@@ -9,13 +9,8 @@
 #ifdef MANGO_SIMD_CONVERT_SCALAR
 
     // -----------------------------------------------------------------
-    // conversion
+    // reinterpret
     // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return reinterpret_cast<uint32x4 &>(s);
-    }
 
     static inline int32x4 int32x4_reinterpret(uint32x4 s)
     {
@@ -25,6 +20,50 @@
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
         return reinterpret_cast<int32x4 &>(s);
+    }
+
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return reinterpret_cast<uint32x4 &>(s);
+    }
+
+    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
+    {
+        return reinterpret_cast<uint32x4 &>(s);
+    }
+
+    static inline float32x4 float32x4_reinterpret(int32x4 s)
+    {
+        return reinterpret_cast<float32x4 &>(s);
+    }
+
+    static inline float32x4 float32x4_reinterpret(uint32x4 s)
+    {
+        return reinterpret_cast<float32x4 &>(s);
+    }
+
+    // -----------------------------------------------------------------
+    // float32
+    // -----------------------------------------------------------------
+
+    static inline float32x4 float32x4_convert(int32x4 s)
+    {
+        float32x4 v;
+        v.x = float(s.x);
+        v.y = float(s.y);
+        v.z = float(s.z);
+        v.w = float(s.w);
+        return v;
+    }
+
+    static inline float32x4 float32x4_convert(uint32x4 s)
+    {
+        float32x4 v;
+        v.x = float(s.x);
+        v.y = float(s.y);
+        v.z = float(s.z);
+        v.w = float(s.w);
+        return v;
     }
 
     static inline int32x4 int32x4_convert(float32x4 s)
@@ -47,30 +86,9 @@
         return v;
     }
 
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return reinterpret_cast<float32x4 &>(s);
-    }
-
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        float32x4 v;
-        v.x = float(s.x);
-        v.y = float(s.y);
-        v.z = float(s.z);
-        v.w = float(s.w);
-        return v;
-    }
-
-    static inline float32x4 float32x4_convert(uint32x4 s)
-    {
-        float32x4 v;
-        v.x = float(s.x);
-        v.y = float(s.y);
-        v.z = float(s.z);
-        v.w = float(s.w);
-        return v;
-    }
+    // -----------------------------------------------------------------
+    // float64
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -139,7 +157,7 @@
     }
 
     // -----------------------------------------------------------------
-    // float <-> half conversions
+    // float16
     // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_convert(float16x4 s)

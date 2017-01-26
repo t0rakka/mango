@@ -196,14 +196,16 @@
 
 #ifdef MANGO_COMPILER_CLANG
 
+    // error: argument to '__builtin_neon_vshrq_n_v' must be a constant integer
+
     #define int32x4_sll(a, b) \
-        vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), b))
+        (int32x4) vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), b))
 
     #define int32x4_srl(a, b) \
-        vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), b))
+        (int32x4) vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), b))
 
     #define int32x4_sra(a, b) \
-        vshrq_n_s32(a, b)
+        (int32x4) vshrq_n_s32(a, b)
 
 #else
 

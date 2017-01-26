@@ -9,13 +9,8 @@
 #ifdef MANGO_SIMD_CONVERT_SSE
 
     // -----------------------------------------------------------------
-    // conversion
+    // reinterpret
     // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return int32x4::type(s);
-    }
 
     static inline int32x4 int32x4_reinterpret(uint32x4 s)
     {
@@ -27,20 +22,29 @@
         return _mm_castps_si128(s);
     }
 
-    static inline int32x4 int32x4_convert(float32x4 s)
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
     {
-        return _mm_cvtps_epi32(s);
+        return int32x4::type(s);
     }
 
-    static inline int32x4 int32x4_truncate(float32x4 s)
+    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
     {
-        return _mm_cvttps_epi32(s);
+        return _mm_castps_si128(s);
     }
 
     static inline float32x4 float32x4_reinterpret(int32x4 s)
     {
         return _mm_castsi128_ps(s);
     }
+
+    static inline float32x4 float32x4_reinterpret(uint32x4 s)
+    {
+        return _mm_castsi128_ps(s);
+    }
+
+    // -----------------------------------------------------------------
+    // float32
+    // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_convert(int32x4 s)
     {
@@ -54,9 +58,23 @@
         const __m128i x0 = _mm_or_si128(_mm_srli_epi32(s, 16), onep39);
         const __m128i x1 = _mm_and_si128(s, mask);
         const __m128 f1 = _mm_cvtepi32_ps(x1);
-        const __m128 f0 = _mm_sub_ps(float32x4_reinterpret(x0), float32x4_reinterpret(onep39));
+        const __m128 f0 = _mm_sub_ps(_mm_castsi128_ps(x0), _mm_castsi128_ps(onep39));
         return _mm_add_ps(f0, f1);
     }
+
+    static inline int32x4 int32x4_convert(float32x4 s)
+    {
+        return _mm_cvtps_epi32(s);
+    }
+
+    static inline int32x4 int32x4_truncate(float32x4 s)
+    {
+        return _mm_cvttps_epi32(s);
+    }
+
+    // -----------------------------------------------------------------
+    // float64
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -119,7 +137,7 @@
     }
 
     // -----------------------------------------------------------------
-    // float <-> half conversions
+    // float16
     // -----------------------------------------------------------------
 
 #ifdef MANGO_ENABLE_F16C

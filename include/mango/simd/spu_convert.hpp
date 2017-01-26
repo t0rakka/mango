@@ -9,13 +9,8 @@
 #ifdef MANGO_SIMD_CONVERT_SPU
 
     // -----------------------------------------------------------------
-    // conversion
+    // reinterpret
     // -----------------------------------------------------------------
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return (uint32x4) s;
-    }
 
     static inline int32x4 int32x4_reinterpret(uint32x4 s)
     {
@@ -25,6 +20,40 @@
     static inline int32x4 int32x4_reinterpret(float32x4 s)
     {
 		return (int32x4) s;
+    }
+
+    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
+    {
+        return (uint32x4) s;
+    }
+
+    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
+    {
+        return (uint32x4) s;
+    }
+
+    static inline float32x4 float32x4_reinterpret(int32x4 s)
+    {
+		return (float32x4) s;
+    }
+
+    static inline float32x4 float32x4_reinterpret(uint32x4 s)
+    {
+		return (float32x4) s;
+    }
+
+    // -----------------------------------------------------------------
+    // float32
+    // -----------------------------------------------------------------
+
+    static inline float32x4 float32x4_convert(int32x4 s)
+    {
+        return spu_convtf(s, 0);
+    }
+
+    static inline float32x4 float32x4_convert(uint32x4 s)
+    {
+        return spu_convtf(s, 0);
     }
 
     static inline int32x4 int32x4_convert(float32x4 s)
@@ -40,20 +69,9 @@
         return spu_convts(st, 0);
     }
 
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-		return (float32x4) s;
-    }
-
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        return spu_convtf(s, 0);
-    }
-
-    static inline float32x4 float32x4_convert(uint32x4 s)
-    {
-        return spu_convtf(s, 0);
-    }
+    // -----------------------------------------------------------------
+    // float64
+    // -----------------------------------------------------------------
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
@@ -122,7 +140,7 @@
     }
 
     // -----------------------------------------------------------------
-    // float <-> half conversions
+    // float16
     // -----------------------------------------------------------------
 
     static inline float32x4 float32x4_convert(float16x4 s)
