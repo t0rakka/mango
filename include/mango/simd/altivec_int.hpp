@@ -93,14 +93,12 @@
 
     static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
     {
-        const uint32x4 mask = uint32x4_compare_gt(a, b);
-        return uint32x4_select(mask, b, a);
+        return vec_min(a, b);
     }
 
     static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
     {
-        const uint32x4 mask = uint32x4_compare_gt(a, b);
-        return uint32x4_select(mask, a, b);
+        return vec_max(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -267,14 +265,12 @@
 
     static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
     {
-        const int32x4 mask = int32x4_compare_gt(a, b);
-        return int32x4_select(mask, b, a);
+        return vec_min(a, b);
     }
 
     static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
     {
-        const int32x4 mask = int32x4_compare_gt(a, b);
-        return int32x4_select(mask, a, b);
+        return vec_max(a, b);
     }
 
     static inline uint32 int32x4_pack(int32x4 s)
