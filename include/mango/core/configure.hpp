@@ -227,6 +227,8 @@
     #define MANGO_COMPILER_GCC
 	#define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
 
+    #pragma GCC diagnostic ignored "-Wignored-attributes"
+
 #elif defined(__MWERKS__)
 
     // Metrowerks CodeWarrior

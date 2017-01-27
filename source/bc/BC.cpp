@@ -815,21 +815,29 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
+    {
+        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+    }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
+    {
+        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+    }
 
     dw = pBC2->bitmap[1];
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
+    {
+        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+    }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
-        pColor[i] = simd::float32x4_set_w( pColor[i], float(dw & 0xf) * s );
+    {
+        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+    }
 }
 
 static void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
@@ -924,13 +932,15 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
 
     if(pBC3->alpha[0] > pBC3->alpha[1])
     {
-        for(size_t i = 1; i < 7; ++i)
+        for(size_t i = 1; i < 7; ++i) {
             fAlpha[i + 1] = (fAlpha[0] * (7 - i) + fAlpha[1] * i) * (1.0f / 7.0f);
+        }
     }
     else
     {
-        for(size_t i = 1; i < 5; ++i)
+        for(size_t i = 1; i < 5; ++i) {
             fAlpha[i + 1] = (fAlpha[0] * (5 - i) + fAlpha[1] * i) * (1.0f / 5.0f);
+        }
 
         fAlpha[6] = 0.0f;
         fAlpha[7] = 1.0f;
@@ -941,22 +951,26 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
     DWORD dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3)
+    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
         pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+    }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3)
+    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
         pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+    }
 
     dw = pBC3->bitmap[3] | (pBC3->bitmap[4] << 8) | (pBC3->bitmap[5] << 16);
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3)
+    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
         pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+    }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3)
+    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
         pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+    }
 }
 
 static void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
@@ -981,8 +995,9 @@ static void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     float fMinAlpha = Color[0].a;
     float fMaxAlpha = Color[0].a;
 
-    if (flags & BC_FLAGS_DITHER_A)
+    if (flags & BC_FLAGS_DITHER_A) {
         memset(fError, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(float));
+    }
 
     for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
