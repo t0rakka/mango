@@ -22,6 +22,22 @@
         return _mm_setr_epi32(x, y, z, w);
     }
 
+    static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
+    {
+        return _mm_cmpeq_epi32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
+    {
+        const __m128i sign = _mm_set1_epi32(0x80000000);
+        return _mm_cmpgt_epi32(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+    }
+
+    static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    {
+        return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
+    }
+
 #if defined(MANGO_ENABLE_SSE4_1)
 
     // set
@@ -66,6 +82,16 @@
     static inline int uint32x4_get_w(uint32x4 a)
     {
         return _mm_extract_epi32(a, 3);
+    }
+
+    static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
+    {
+        return _mm_min_epu32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
+    {
+        return _mm_max_epu32(a, b);
     }
 
 #else
@@ -121,6 +147,18 @@
     static inline uint32 uint32x4_get_w(uint32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xff));
+    }
+
+    static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
+    {
+        const uint32x4 mask = uint32x4_compare_gt(a, b);
+        return uint32x4_select(mask, b, a);
+    }
+
+    static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
+    {
+        const uint32x4 mask = uint32x4_compare_gt(a, b);
+        return uint32x4_select(mask, a, b);
     }
 
 #endif

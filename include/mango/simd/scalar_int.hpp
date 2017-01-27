@@ -72,6 +72,56 @@
         return a.w;
     }
 
+    static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = a.x == b.x ? 0xffffffff : 0;
+        v.y = a.y == b.y ? 0xffffffff : 0;
+        v.z = a.z == b.z ? 0xffffffff : 0;
+        v.w = a.w == b.w ? 0xffffffff : 0;
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = a.x > b.x ? 0xffffffff : 0;
+        v.y = a.y > b.y ? 0xffffffff : 0;
+        v.z = a.z > b.z ? 0xffffffff : 0;
+        v.w = a.w > b.w ? 0xffffffff : 0;
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = (mask.x & a.x) | (~mask.x & b.x);
+        v.y = (mask.y & a.y) | (~mask.y & b.y);
+        v.z = (mask.z & a.z) | (~mask.z & b.z);
+        v.w = (mask.w & a.w) | (~mask.w & b.w);
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = std::min(a.x, b.x);
+        v.y = std::min(a.y, b.y;
+        v.z = std::min(a.z, b.z);
+        v.w = std::min(a.w, b.w);
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = std::max(a.x, b.x);
+        v.y = std::max(a.y, b.y;
+        v.z = std::max(a.z, b.z);
+        v.w = std::max(a.w, b.w);
+        return v;
+    }
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------
@@ -290,7 +340,12 @@
 
     static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
     {
-        return int32x4_or(int32x4_and(mask, a), int32x4_nand(mask, b));
+        int32x4 v;
+        v.x = (mask.x & a.x) | (~mask.x & b.x);
+        v.y = (mask.y & a.y) | (~mask.y & b.y);
+        v.z = (mask.z & a.z) | (~mask.z & b.z);
+        v.w = (mask.w & a.w) | (~mask.w & b.w);
+        return v;
     }
 
     static inline uint32 int32x4_get_mask(int32x4 a)

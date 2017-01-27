@@ -67,6 +67,31 @@
         return vgetq_lane_u32(a, 3);
     }
 
+    static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
+    {
+        return vceqq_s32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
+    {
+        return vcgeq_s32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    {
+        return vbslq_u32(mask, a, b);
+    }
+
+    static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
+    {
+        return vminq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
+    {
+        return vmaxq_u32(a, b);
+    }
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------

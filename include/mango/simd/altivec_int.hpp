@@ -76,6 +76,33 @@
         return vec_extract(a, 3);
     }
 
+    static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
+    {
+        return vec_cmpeq(a, b);
+    }
+
+    static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
+    {
+        return vec_cmpgt(a, b);
+    }
+
+    static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    {
+        return vec_sel(b, a, mask);
+    }
+
+    static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
+    {
+        const uint32x4 mask = uint32x4_compare_gt(a, b);
+        return uint32x4_select(mask, b, a);
+    }
+
+    static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
+    {
+        const uint32x4 mask = uint32x4_compare_gt(a, b);
+        return uint32x4_select(mask, a, b);
+    }
+
     // -----------------------------------------------------------------
     // int32x4
     // -----------------------------------------------------------------
