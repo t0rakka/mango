@@ -69,12 +69,12 @@
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
-        return vceqq_s32(a, b);
+        return vceqq_u32(a, b);
     }
 
     static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
     {
-        return vcgeq_s32(a, b);
+        return vcgeq_u32(a, b);
     }
 
     static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)

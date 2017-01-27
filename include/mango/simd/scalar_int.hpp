@@ -106,7 +106,7 @@
     {
         uint32x4 v;
         v.x = std::min(a.x, b.x);
-        v.y = std::min(a.y, b.y;
+        v.y = std::min(a.y, b.y);
         v.z = std::min(a.z, b.z);
         v.w = std::min(a.w, b.w);
         return v;
@@ -116,7 +116,7 @@
     {
         uint32x4 v;
         v.x = std::max(a.x, b.x);
-        v.y = std::max(a.y, b.y;
+        v.y = std::max(a.y, b.y);
         v.z = std::max(a.z, b.z);
         v.w = std::max(a.w, b.w);
         return v;
@@ -362,7 +362,7 @@
     {
         int32x4 v;
         v.x = std::min(a.x, b.x);
-        v.y = std::min(a.y, b.y;
+        v.y = std::min(a.y, b.y);
         v.z = std::min(a.z, b.z);
         v.w = std::min(a.w, b.w);
         return v;
@@ -372,7 +372,7 @@
     {
         int32x4 v;
         v.x = std::max(a.x, b.x);
-        v.y = std::max(a.y, b.y;
+        v.y = std::max(a.y, b.y);
         v.z = std::max(a.z, b.z);
         v.w = std::max(a.w, b.w);
         return v;
