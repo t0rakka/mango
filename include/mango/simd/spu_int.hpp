@@ -222,6 +222,18 @@
 		return spu_sel(b, a, (vec_uint4)mask);
     }
 
+    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    {
+        const int32x4 mask = int32x4_compare_gt(a, b);
+        return int32x4_select(mask, b, a);
+    }
+
+    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    {
+        const int32x4 mask = int32x4_compare_gt(a, b);
+        return int32x4_select(mask, a, b);
+    }
+
     static inline uint32 int32x4_pack(int32x4 s)
     {
         unsigned int* p = (unsigned int*)&s;

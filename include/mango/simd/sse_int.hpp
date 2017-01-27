@@ -352,6 +352,16 @@
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
+    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    {
+        return _mm_min_epi32(a, b);
+    }
+
+    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    {
+        return _mm_max_epi32(a, b);
+    }
+
     static inline int32x4 int32x4_unpack(uint32 s)
     {
         const __m128i i = _mm_cvtsi32_si128(s);
@@ -359,6 +369,18 @@
     }
 
 #else
+
+    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    {
+        const __m128i mask = _mm_cmpgt_epi32(a, b);
+        return int32x4_select(mask, b, a);
+    }
+
+    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    {
+        const __m128i mask = _mm_cmpgt_epi32(a, b);
+        return int32x4_select(mask, a, b);
+    }
 
     static inline int32x4 int32x4_unpack(uint32 s)
     {

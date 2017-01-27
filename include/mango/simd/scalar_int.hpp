@@ -303,6 +303,26 @@
         return mask;
     }
 
+    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    {
+        int32x4 v;
+        v.x = std::min(a.x, b.x);
+        v.y = std::min(a.y, b.y;
+        v.z = std::min(a.z, b.z);
+        v.w = std::min(a.w, b.w);
+        return v;
+    }
+
+    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    {
+        int32x4 v;
+        v.x = std::max(a.x, b.x);
+        v.y = std::max(a.y, b.y;
+        v.z = std::max(a.z, b.z);
+        v.w = std::max(a.w, b.w);
+        return v;
+    }
+
     static inline uint32 int32x4_pack(int32x4 s)
     {
         const uint32 x = byteclamp(s.x);

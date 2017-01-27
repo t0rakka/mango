@@ -255,6 +255,16 @@
         return vget_lane_s32(d1, 0);
     }
 
+    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    {
+        return vminq_s32(a, b);
+    }
+
+    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    {
+        return vmaxq_s32(a, b);
+    }
+
     static inline uint32 int32x4_pack(int32x4 s)
     {
         const uint16x4_t a = vqmovun_s32(s);
