@@ -69,12 +69,12 @@
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
-		return spu_cmpeq(a, b);
+		return (uint32x4) spu_cmpeq(a, b);
     }
 
     static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
     {
-		return spu_cmpgt(a, b);
+		return (uint32x4) spu_cmpgt(a, b);
     }
 
     static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
