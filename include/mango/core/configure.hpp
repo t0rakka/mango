@@ -219,30 +219,32 @@
 
     // LLVM / Clang
     #define MANGO_COMPILER_CLANG
-	#define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
+    #define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
 
 #elif defined(__GNUC__)
 
     // GNU C/C++ Compiler
     #define MANGO_COMPILER_GCC
-	#define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
+    #define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
 
-    #pragma GCC diagnostic ignored "-Wignored-attributes"
+    #if __GNUC__ >= 6
+        #pragma GCC diagnostic ignored "-Wignored-attributes"
+    #endif
 
 #elif defined(__MWERKS__)
 
     // Metrowerks CodeWarrior
-	#define MANGO_PACKED(STRUCT) STRUCT
+    #define MANGO_PACKED(STRUCT) STRUCT
 
 #elif defined(__COMO__)
 
     // Comeau C++
-	#define MANGO_PACKED(STRUCT) STRUCT
+    #define MANGO_PACKED(STRUCT) STRUCT
 
 #else
 
     // generic
-	#define MANGO_PACKED(STRUCT) STRUCT
+    #define MANGO_PACKED(STRUCT) STRUCT
 
 #endif
 
@@ -269,11 +271,11 @@
 
 #elif defined(__ia64__) || defined(__itanium__) || defined(_M_IA64)
 
-	// Intel Itanium (IA-64)
-	#define MANGO_CPU_INTEL
+    // Intel Itanium (IA-64)
+    #define MANGO_CPU_INTEL
     #define MANGO_CPU_64BIT
     #define MANGO_LITTLE_ENDIAN /* bi-endian; depends on OS */
-	#define MANGO_CPU_NAME "Itanium"
+    #define MANGO_CPU_NAME "Itanium"
 
 #elif defined(__aarch64__)
 
@@ -304,11 +306,11 @@
     #define MANGO_CPU_PPC
     #define MANGO_CPU_64BIT
 
-	#ifdef defined(__powerpc64le__) || defined(__ppc64le__) || defined(__PPC64LE__)
-    	#define MANGO_LITTLE_ENDIAN
-	#else
-    	#define MANGO_BIG_ENDIAN /* bi-endian; depends on OS */
-	#endif
+    #ifdef defined(__powerpc64le__) || defined(__ppc64le__) || defined(__PPC64LE__)
+        #define MANGO_LITTLE_ENDIAN
+    #else
+        #define MANGO_BIG_ENDIAN /* bi-endian; depends on OS */
+    #endif
 
     #define MANGO_CPU_NAME "PowerPC"
 
@@ -321,9 +323,9 @@
 
 #elif defined(__m68k__)
 
-	#define MANGO_CPU_M68K
-	#define MANGO_BIG_ENDIAN
-	#define MANGO_CPU_NAME "Motorola 68k"
+    #define MANGO_CPU_M68K
+    #define MANGO_BIG_ENDIAN
+    #define MANGO_CPU_NAME "Motorola 68k"
 
 #elif defined(__sparc) || defined(sparc)
 
@@ -350,29 +352,29 @@
 
 #elif defined(__alpha__) || defined(_M_ALPHA)
 
-	// Alpha
-	#define MANGO_CPU_ALPHA
-	#define MANGO_BIG_ENDIAN /* bi-endian; depends on OS */
-	#define MANGO_CPU_NAME "Alpha"
+    // Alpha
+    #define MANGO_CPU_ALPHA
+    #define MANGO_BIG_ENDIAN /* bi-endian; depends on OS */
+    #define MANGO_CPU_NAME "Alpha"
 
 #else
 
     // generic CPU
     #define MANGO_CPU_NAME "Generic"
 
-	// last chance to detect endianess
-	#include <stdlib.h>
+    // last chance to detect endianess
+    #include <stdlib.h>
 
-	#if defined (__GLIBC__)
-		#include <endian.h>
-		#if (__BYTE_ORDER == __BIG_ENDIAN)
-			#define MANGO_BIG_ENDIAN
-		#else
-			#define MANGO_LITTLE_ENDIAN
-		#endif
-	#else
-	    #error "CPU endianess not supported."
-	#endif
+    #if defined (__GLIBC__)
+        #include <endian.h>
+        #if (__BYTE_ORDER == __BIG_ENDIAN)
+            #define MANGO_BIG_ENDIAN
+        #else
+            #define MANGO_LITTLE_ENDIAN
+        #endif
+    #else
+        #error "CPU endianess not supported."
+    #endif
 
 #endif
 
