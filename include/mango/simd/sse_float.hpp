@@ -31,28 +31,6 @@ namespace simd {
         return v;
     }
 
-    // logical
-
-    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
-    {
-        return _mm_and_ps(a, b);
-    }
-
-    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
-    {
-        return _mm_andnot_ps(a, b);
-    }
-
-    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
-    {
-        return _mm_or_ps(a, b);
-    }
-
-    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
-    {
-        return _mm_xor_ps(a, b);
-    }
-
     // set component
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -170,6 +148,28 @@ namespace simd {
     static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
     {
         return _mm_unpacklo_ps(a, b);
+    }
+
+    // logical
+
+    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
+    {
+        return _mm_and_ps(a, b);
+    }
+
+    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
+    {
+        return _mm_andnot_ps(a, b);
+    }
+
+    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
+    {
+        return _mm_or_ps(a, b);
+    }
+
+    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
+    {
+        return _mm_xor_ps(a, b);
     }
 
     static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
