@@ -288,19 +288,9 @@ namespace simd {
 
 #endif
 
-    static inline int32x4 int32x4_load(const int* source)
-    {
-        return _mm_load_si128(reinterpret_cast<const __m128i*>(source));
-    }
-
     static inline int32x4 int32x4_uload(const int* source)
     {
         return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
-    }
-
-    static inline void int32x4_store(int* dest, int32x4 a)
-    {
-        _mm_store_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
     static inline void int32x4_ustore(int* dest, int32x4 a)

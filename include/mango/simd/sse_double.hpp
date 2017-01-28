@@ -169,26 +169,12 @@ namespace simd {
         return result;
     }
 
-    static inline float64x4 float64x4_load(const double* source)
-    {
-        float64x4 result;
-        result.xy = _mm_load_pd(source + 0);
-        result.zw = _mm_load_pd(source + 2);
-        return result;
-    }
-
     static inline float64x4 float64x4_uload(const double* source)
     {
         float64x4 result;
         result.xy = _mm_loadu_pd(source + 0);
         result.zw = _mm_loadu_pd(source + 2);
         return result;
-    }
-
-    static inline void float64x4_store(double* dest, float64x4 a)
-    {
-        _mm_store_pd(dest + 0, a.xy);
-        _mm_store_pd(dest + 2, a.zw);
     }
 
     static inline void float64x4_ustore(double* dest, float64x4 a)

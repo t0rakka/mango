@@ -110,28 +110,18 @@ namespace simd {
 
     }
 
-    static inline float32x4 float32x4_load(const float* source)
+    static inline float32x4 float32x4_uload(const float* source)
     {
         float32x4 temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline float32x4 float32x4_uload(const float* source)
-    {
-        return float32x4_load(source);
-    }
-
-    static inline void float32x4_store(float* dest, float32x4 a)
+    static inline void float32x4_ustore(float* dest, float32x4 a)
     {
         dest[0] = a.x;
         dest[1] = a.y;
         dest[2] = a.z;
         dest[3] = a.w;
-    }
-
-    static inline void float32x4_ustore(float* dest, float32x4 a)
-    {
-        float32x4_store(dest, a);
     }
 
     static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)

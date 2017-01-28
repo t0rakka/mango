@@ -195,28 +195,18 @@ namespace simd {
         return a.w;
     }
 
-    static inline int32x4 int32x4_load(const int* source)
+    static inline int32x4 int32x4_uload(const int* source)
     {
         int32x4 temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline int32x4 int32x4_uload(const int* source)
-    {
-        return int32x4_load(source);
-    }
-
-    static inline void int32x4_store(int* dest, int32x4 a)
+    static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         dest[0] = a.x;
         dest[1] = a.y;
         dest[2] = a.z;
         dest[3] = a.w;
-    }
-
-    static inline void int32x4_ustore(int* dest, int32x4 a)
-    {
-        int32x4_store(dest, a);
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)

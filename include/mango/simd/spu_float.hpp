@@ -96,20 +96,10 @@ namespace simd {
 		return temp;
     }
 
-    static inline float32x4 float32x4_load(const float* source)
-    {
-        return reinterpret_cast<const float32x4*>(source)[0];
-    }
-
     static inline float32x4 float32x4_uload(const float* s)
     {
         float32x4 temp = { s[0], s[1], s[2], s[3] };
         return temp;
-    }
-
-    static inline void float32x4_store(float* dest, float32x4 a)
-    {
-        reinterpret_cast<const float32x4*>(dest)[0] = a;
     }
 
     static inline void float32x4_ustore(float* dest, float32x4 a)

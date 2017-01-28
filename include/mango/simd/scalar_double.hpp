@@ -111,28 +111,18 @@ namespace simd {
         return temp;
     }
 
-    static inline float64x4 float64x4_load(const double* source)
+    static inline float64x4 float64x4_uload(const double* source)
     {
         float64x4 temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline float64x4 float64x4_uload(const double* source)
-    {
-        return float64x4_load(source);
-    }
-
-    static inline void float64x4_store(double* dest, float64x4 a)
+    static inline void float64x4_ustore(double* dest, float64x4 a)
     {
         dest[0] = a.x;
         dest[1] = a.y;
         dest[2] = a.z;
         dest[3] = a.w;
-    }
-
-    static inline void float64x4_ustore(double* dest, float64x4 a)
-    {
-        float64x4_store(dest, a);
     }
 
     static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)

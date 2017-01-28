@@ -159,20 +159,10 @@ namespace simd {
         return vgetq_lane_s32(a, 3);
     }
 
-    static inline int32x4 int32x4_load(const int* source)
-    {
-        return vld1q_s32(source);
-    }
-
     static inline int32x4 int32x4_uload(const int* source)
     {
         int32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
-    }
-
-    static inline void int32x4_store(int* dest, int32x4 a)
-    {
-        vst1q_s32(dest, a);
     }
 
     static inline void int32x4_ustore(int* dest, int32x4 a)

@@ -395,6 +395,26 @@ namespace simd {
         return float64x4_get_component<3>(a);
     }
 
+    static inline float64x4 float64x4_splat_x(float64x4 a)
+    {
+        return float64x4_shuffle<0, 0, 0, 0>(a);
+    }
+
+    static inline float64x4 float64x4_splat_y(float64x4 a)
+    {
+        return float64x4_shuffle<1, 1, 1, 1>(a);
+    }
+
+    static inline float64x4 float64x4_splat_z(float64x4 a)
+    {
+        return float64x4_shuffle<2, 2, 2, 2>(a);
+    }
+
+    static inline float64x4 float64x4_splat_w(float64x4 a)
+    {
+        return float64x4_shuffle<3, 3, 3, 3>(a);
+    }
+
     static inline float64x4 float64x4_add(double a, float64x4 b)
     {
         return float64x4_add(float64x4_set1(a), b);

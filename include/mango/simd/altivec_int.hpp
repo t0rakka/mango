@@ -168,19 +168,9 @@ namespace simd {
         return vec_extract(a, 3);
     }
 
-    static inline int32x4 int32x4_load(const int* s)
-    {
-        return reinterpret_cast<const int32x4*>(s)[0];
-    }
-
     static inline int32x4 int32x4_uload(const int* s)
     {
         return (int32x4) { s[0], s[1], s[2], s[3] };
-    }
-
-    static inline void int32x4_store(int* d, int32x4 a)
-    {
-        reinterpret_cast<const int32x4*>(d)[0] = a;
     }
 
     static inline void int32x4_ustore(int* d, int32x4 a)

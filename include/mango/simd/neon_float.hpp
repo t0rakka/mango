@@ -131,20 +131,10 @@ namespace simd {
         return temp;
     }
 
-    static inline float32x4 float32x4_load(const float* source)
-    {
-        return vld1q_f32(source);
-    }
-
     static inline float32x4 float32x4_uload(const float* source)
     {
         float32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
-    }
-
-    static inline void float32x4_store(float* dest, float32x4 a)
-    {
-        vst1q_f32(dest, a);
     }
 
     static inline void float32x4_ustore(float* dest, float32x4 a)

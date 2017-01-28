@@ -153,19 +153,9 @@ namespace simd {
         return _mm256_setr_pd(x, y, z, w);
     }
 
-    static inline float64x4 float64x4_load(const double* source)
-    {
-        return _mm256_load_pd(source);
-    }
-
     static inline float64x4 float64x4_uload(const double* source)
     {
         return _mm256_loadu_pd(source);
-    }
-
-    static inline void float64x4_store(double* dest, float64x4 a)
-    {
-        _mm256_store_pd(dest, a);
     }
 
     static inline void float64x4_ustore(double* dest, float64x4 a)

@@ -142,19 +142,9 @@ namespace simd {
         return _mm_setr_ps(x, y, z, w);
     }
 
-    static inline float32x4 float32x4_load(const float* source)
-    {
-        return _mm_load_ps(source);
-    }
-
     static inline float32x4 float32x4_uload(const float* source)
     {
         return _mm_loadu_ps(source);
-    }
-
-    static inline void float32x4_store(float* dest, float32x4 a)
-    {
-        _mm_store_ps(dest, a);
     }
 
     static inline void float32x4_ustore(float* dest, float32x4 a)
