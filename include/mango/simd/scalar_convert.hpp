@@ -5,8 +5,12 @@
 #pragma once
 
 #include "simd.hpp"
+#include "common.hpp"
 
 #ifdef MANGO_SIMD_CONVERT_SCALAR
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -179,5 +183,8 @@
         v.w = s.w;
         return v;
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_CONVERT_SCALAR

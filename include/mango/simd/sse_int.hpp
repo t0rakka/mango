@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_INT_SSE
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
@@ -428,5 +431,8 @@
     }
 
 #endif
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_INT_SSE

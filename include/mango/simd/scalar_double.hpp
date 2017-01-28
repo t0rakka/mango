@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_DOUBLE_SCALAR
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float64x4
     // -----------------------------------------------------------------
@@ -462,5 +465,8 @@
     {
         return float64x4_sub(s, float64x4_floor(s));
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_DOUBLE_SCALAR

@@ -5,8 +5,12 @@
 #pragma once
 
 #include "simd.hpp"
+#include "common.hpp"
 
 #ifdef MANGO_SIMD_CONVERT_ALTIVEC
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -158,5 +162,8 @@
         v.w = float32x4_get_w(s);
         return v;
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_CONVERT_ALTIVEC

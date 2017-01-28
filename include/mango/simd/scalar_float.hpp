@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_FLOAT_SCALAR
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
@@ -779,5 +782,8 @@
         result[2] = float32x4_vector_matrix_multiply(a[2], b);
         result[3] = float32x4_vector_matrix_multiply(a[3], b);
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_FLOAT_SCALAR

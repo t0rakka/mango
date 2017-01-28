@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_FLOAT_ALTIVEC
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------
@@ -422,5 +425,8 @@
     {
     }
     */
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_FLOAT_ALTIVEC

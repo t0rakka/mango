@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_FLOAT_SSE
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
@@ -679,4 +682,8 @@
     }
 
 #undef SIMD_SHUFFLE
+
+} // namespace simd
+} // namespace mango
+
 #endif // MANGO_SIMD_FLOAT_SSE

@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_INT_NEON
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
@@ -308,5 +311,8 @@
         const uint32x4_t d = vshll_n_u16(c_lo, 1); // another, compiler hangs on valid input of 0
         return vreinterpretq_s32_u32(vshrq_n_u32(d, 2)); // fix the scale here.. (>> 2)
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_INT_NEON

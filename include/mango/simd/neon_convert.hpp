@@ -5,8 +5,12 @@
 #pragma once
 
 #include "simd.hpp"
+#include "common.hpp"
 
 #ifdef MANGO_SIMD_CONVERT_NEON
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -176,5 +180,8 @@
     }
 
 #endif // MANGO_ENABLE_FP16
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_CONVERT_NEON

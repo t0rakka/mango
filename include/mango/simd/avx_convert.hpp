@@ -5,8 +5,12 @@
 #pragma once
 
 #include "simd.hpp"
+#include "common.hpp"
 
 #ifdef MANGO_SIMD_CONVERT_AVX
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -249,5 +253,8 @@
     }
 
 #endif // MANGO_ENABLE_F16C
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_CONVERT_AVX

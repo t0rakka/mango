@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_INT_SCALAR
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
@@ -396,5 +399,8 @@
         v.w = (s >> 24);
         return v;
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_INT_SCALAR

@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_DOUBLE_AVX
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float64x4
     // -----------------------------------------------------------------
@@ -385,5 +388,8 @@
     {
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_DOUBLE_AVX

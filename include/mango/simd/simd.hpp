@@ -39,7 +39,13 @@ namespace simd {
         }
     };
 
+} // namespace simd
+} // namespace mango
+
 #if defined(MANGO_ENABLE_AVX)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // Intel AVX vector intrinsics
@@ -55,6 +61,9 @@ namespace simd {
         half x, y, z, w;
     };
 
+} // namespace simd
+} // namespace mango
+
     #define MANGO_SIMD_INT_SSE
     #define MANGO_SIMD_FLOAT_SSE
     #define MANGO_SIMD_DOUBLE_AVX
@@ -65,6 +74,9 @@ namespace simd {
     #include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // Intel SSE vector intrinsics
@@ -85,6 +97,9 @@ namespace simd {
         __m128d zw;
     };
 
+} // namespace simd
+} // namespace mango
+
     #define MANGO_SIMD_INT_SSE
     #define MANGO_SIMD_FLOAT_SSE
     #define MANGO_SIMD_DOUBLE_SSE
@@ -95,6 +110,9 @@ namespace simd {
     #include "sse_convert.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // ARM NEON vector instrinsics
@@ -122,6 +140,9 @@ namespace simd {
         double x, y, z, w;
     };
 
+} // namespace simd
+} // namespace mango
+
     #define MANGO_SIMD_INT_NEON
     #define MANGO_SIMD_FLOAT_NEON
     #define MANGO_SIMD_DOUBLE_SCALAR
@@ -132,6 +153,9 @@ namespace simd {
     #include "neon_convert.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // PowerPC Altivec / AVX128
@@ -151,6 +175,9 @@ namespace simd {
         double x, y, z, w;
     };
 
+} // namespace simd
+} // namespace mango
+
     #define MANGO_SIMD_INT_ALTIVEC
     #define MANGO_SIMD_FLOAT_ALTIVEC
     #define MANGO_SIMD_DOUBLE_SCALAR
@@ -161,6 +188,9 @@ namespace simd {
     #include "altivec_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SPU)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // Cell BE SPU
@@ -180,6 +210,9 @@ namespace simd {
         double x, y, z, w;
     };
 
+} // namespace simd
+} // namespace mango
+
     #define MANGO_SIMD_INT_SPU
     #define MANGO_SIMD_FLOAT_SPU
     #define MANGO_SIMD_DOUBLE_SCALAR
@@ -190,6 +223,9 @@ namespace simd {
     #include "spu_convert.hpp"
 
 #else
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // SIMD emulation
@@ -220,6 +256,9 @@ namespace simd {
         double x, y, z, w;
     };
 
+} // namespace simd
+} // namespace mango
+
     #define MANGO_SIMD_INT_SCALAR
     #define MANGO_SIMD_FLOAT_SCALAR
     #define MANGO_SIMD_DOUBLE_SCALAR
@@ -230,8 +269,3 @@ namespace simd {
     #include "scalar_convert.hpp"
 
 #endif
-
-} // namespace simd
-} // namespace mango
-
-#include "common.hpp"

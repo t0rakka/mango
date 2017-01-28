@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_FLOAT_SPU
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
@@ -451,5 +454,8 @@
     {
     }
     */
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_FLOAT_SPU

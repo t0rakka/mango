@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_INT_ALTIVEC
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------
@@ -287,5 +290,8 @@
         const int w = (s >> 24);
         return int32x4_set4(x, y, z, w);
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_INT_ALTIVEC

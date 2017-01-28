@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_FLOAT_NEON
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
@@ -612,7 +615,7 @@
 
         float32x4_t det = vmulq_f32(row0, res0);
         det = vaddq_f32(det, float32x4_shuffle<1, 0, 3, 2>(det));
-        det = vaddq_f32(det, float32x4_set1(float32x4_get_z(det)));
+        det = vaddq_f32(det, float32x4_set1(vgetq_lane_f32(det, 2)));
         temp = vdupq_n_f32(1.0f / vgetq_lane_f32(det, 0));
 
         result[0] = vmulq_f32(res0, temp);
@@ -690,5 +693,8 @@
         );
 #endif
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_FLOAT_NEON

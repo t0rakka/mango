@@ -8,6 +8,9 @@
 
 #ifdef MANGO_SIMD_DOUBLE_SSE
 
+namespace mango {
+namespace simd {
+
     // -----------------------------------------------------------------
     // float64x4
     // -----------------------------------------------------------------
@@ -603,5 +606,8 @@
         result.zw = _mm_sub_pd(s.zw, zw);
         return result;
     }
+
+} // namespace simd
+} // namespace mango
 
 #endif // MANGO_SIMD_DOUBLE_SSE
