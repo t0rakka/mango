@@ -124,66 +124,6 @@
         return _mm_cvtss_f32(float32x4_shuffle<3, 3, 3, 3>(a));
     }
 
-    static inline float32x4 float32x4_set_x(float32x4 a, float x)
-    {
-        return float32x4_set_component<0>(a, x);
-    }
-
-    static inline float32x4 float32x4_set_y(float32x4 a, float y)
-    {
-        return float32x4_set_component<1>(a, y);
-    }
-
-    static inline float32x4 float32x4_set_z(float32x4 a, float z)
-    {
-        return float32x4_set_component<2>(a, z);
-    }
-
-    static inline float32x4 float32x4_set_w(float32x4 a, float w)
-    {
-        return float32x4_set_component<3>(a, w);
-    }
-
-    static inline float float32x4_get_x(float32x4 a)
-    {
-        return float32x4_get_component<0>(a);
-    }
-
-    static inline float float32x4_get_y(float32x4 a)
-    {
-        return float32x4_get_component<1>(a);
-    }
-
-    static inline float float32x4_get_z(float32x4 a)
-    {
-        return float32x4_get_component<2>(a);
-    }
-
-    static inline float float32x4_get_w(float32x4 a)
-    {
-        return float32x4_get_component<3>(a);
-    }
-
-    static inline float32x4 float32x4_splat_x(float32x4 a)
-    {
-        return _mm_shuffle_ps(a, a, _MM_SHUFFLE(0, 0, 0, 0));
-    }
-
-    static inline float32x4 float32x4_splat_y(float32x4 a)
-    {
-        return _mm_shuffle_ps(a, a, _MM_SHUFFLE(1, 1, 1, 1));
-    }
-
-    static inline float32x4 float32x4_splat_z(float32x4 a)
-    {
-        return _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 2, 2));
-    }
-
-    static inline float32x4 float32x4_splat_w(float32x4 a)
-    {
-        return _mm_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 3, 3));
-    }
-
     static inline float32x4 float32x4_zero()
     {
         return _mm_setzero_ps();

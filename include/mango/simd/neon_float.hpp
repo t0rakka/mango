@@ -66,6 +66,38 @@
         return v;
     }
 
+    template <>
+    inline float32x4 float32x4_shuffle<0, 0, 0, 0>(float32x4 v)
+    {
+        // .xxxx
+        const float32x2_t xy = vget_low_f32(v);
+        return vdupq_lane_f32(xy, 0);
+    }
+
+    template <>
+    inline float32x4 float32x4_shuffle<1, 1, 1, 1>(float32x4 v)
+    {
+        // .yyyy
+        const float32x2_t xy = vget_low_f32(v);
+        return vdupq_lane_f32(xy, 1);
+    }
+
+    template <>
+    inline float32x4 float32x4_shuffle<2, 2, 2, 2>(float32x4 v)
+    {
+        // .zzzz
+        const float32x2_t zw = vget_high_f32(v);
+        return vdupq_lane_f32(zw, 0);
+    }
+
+    template <>
+    inline float32x4 float32x4_shuffle<3, 3, 3, 3>(float32x4 v)
+    {
+        // .wwww
+        const float32x2_t zw = vget_high_f32(v);
+        return vdupq_lane_f32(zw, 1);
+    }        
+
     // indexed accessor
 
     template <int Index>
@@ -78,74 +110,6 @@
     static inline float float32x4_get_component(float32x4 a)
     {
         return vgetq_lane_f32(a, Index);
-    }
-
-    // set
-
-    static inline float32x4 float32x4_set_x(float32x4 a, float x)
-    {
-        return vsetq_lane_f32(x, a, 0);
-    }
-
-    static inline float32x4 float32x4_set_y(float32x4 a, float y)
-    {
-        return vsetq_lane_f32(y, a, 1);
-    }
-
-    static inline float32x4 float32x4_set_z(float32x4 a, float z)
-    {
-        return vsetq_lane_f32(z, a, 2);
-    }
-
-    static inline float32x4 float32x4_set_w(float32x4 a, float w)
-    {
-        return vsetq_lane_f32(w, a, 3);
-    }
-
-    // get
-
-    static inline float float32x4_get_x(float32x4 a)
-    {
-        return vgetq_lane_f32(a, 0);
-    }
-
-    static inline float float32x4_get_y(float32x4 a)
-    {
-        return vgetq_lane_f32(a, 1);
-    }
-
-    static inline float float32x4_get_z(float32x4 a)
-    {
-        return vgetq_lane_f32(a, 2);
-    }
-
-    static inline float float32x4_get_w(float32x4 a)
-    {
-        return vgetq_lane_f32(a, 3);
-    }
-
-    static inline float32x4 float32x4_splat_x(float32x4 a)
-    {
-        const float32x2_t xy = vget_low_f32(a);
-        return vdupq_lane_f32(xy, 0);
-    }
-    
-    static inline float32x4 float32x4_splat_y(float32x4 a)
-    {
-        const float32x2_t xy = vget_low_f32(a);
-        return vdupq_lane_f32(xy, 1);
-    }
-    
-    static inline float32x4 float32x4_splat_z(float32x4 a)
-    {
-        const float32x2_t zw = vget_high_f32(a);
-        return vdupq_lane_f32(zw, 0);
-    }
-    
-    static inline float32x4 float32x4_splat_w(float32x4 a)
-    {
-        const float32x2_t zw = vget_high_f32(a);
-        return vdupq_lane_f32(zw, 1);
     }
 
     static inline float32x4 float32x4_zero()

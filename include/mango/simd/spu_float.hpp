@@ -35,6 +35,34 @@
         return v;
     }
 
+    template <>
+    inline float32x4 float32x4_shuffle<0, 0, 0, 0>(float32x4 v)
+    {
+        // .xxxx
+        return vec_splats(spu_extract(v, 0));
+    }
+
+    template <>
+    inline float32x4 float32x4_shuffle<1, 1, 1, 1>(float32x4 v)
+    {
+        // .yyyy
+        return vec_splats(spu_extract(v, 1));
+    }
+
+    template <>
+    inline float32x4 float32x4_shuffle<2, 2, 2, 2>(float32x4 v)
+    {
+        // .zzzz
+        return vec_splats(spu_extract(v, 2));
+    }
+
+    template <>
+    inline float32x4 float32x4_shuffle<3, 3, 3, 3>(float32x4 v)
+    {
+        // .wwww
+        return vec_splats(spu_extract(v, 3));
+    }
+
     // indexed accessor
 
     template <int Index>
@@ -47,70 +75,6 @@
     static inline float float32x4_get_component(float32x4 a)
     {
         return spu_extract(a, Index);
-    }
-
-    static inline float32x4 float32x4_set_x(float32x4 a, float x)
-    {
-        return spu_insert(x, a, 0);
-    }
-
-    static inline float32x4 float32x4_set_y(float32x4 a, float y)
-    {
-        return spu_insert(y, a, 1);
-    }
-
-    static inline float32x4 float32x4_set_z(float32x4 a, float z)
-    {
-        return spu_insert(z, a, 2);
-    }
-
-    static inline float32x4 float32x4_set_w(float32x4 a, float w)
-    {
-        return spu_insert(w, a, 3);
-    }
-
-    static inline float float32x4_get_x(float32x4 a)
-    {
-        return spu_extract(a, 0);
-    }
-
-    static inline float float32x4_get_y(float32x4 a)
-    {
-        return spu_extract(a, 1);
-    }
-
-    static inline float float32x4_get_z(float32x4 a)
-    {
-        return spu_extract(a, 2);
-    }
-
-    static inline float float32x4_get_w(float32x4 a)
-    {
-        return spu_extract(a, 3);
-    }
-
-    static inline float32x4 float32x4_splat_x(float32x4 a)
-    {
-        const float x = spu_extract(a, 0);
-        return vec_splats(x);
-    }
-    
-    static inline float32x4 float32x4_splat_y(float32x4 a)
-    {
-        const float y = spu_extract(a, 1);
-        return vec_splats(y);
-    }
-    
-    static inline float32x4 float32x4_splat_z(float32x4 a)
-    {
-        const float z = spu_extract(a, 2);
-        return vec_splats(z);
-    }
-    
-    static inline float32x4 float32x4_splat_w(float32x4 a)
-    {
-        const float w = spu_extract(a, 3);
-        return vec_splats(w);
     }
 
     static inline float32x4 float32x4_zero()

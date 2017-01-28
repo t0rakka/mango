@@ -142,46 +142,6 @@
         return _mm_cvtsd_f64(ww);
     }
 
-    static inline float64x4 float64x4_set_x(float64x4 a, double x)
-    {
-        return float64x4_set_component<0>(a, x);
-    }
-
-    static inline float64x4 float64x4_set_y(float64x4 a, double y)
-    {
-        return float64x4_set_component<1>(a, y);
-    }
-
-    static inline float64x4 float64x4_set_z(float64x4 a, double z)
-    {
-        return float64x4_set_component<2>(a, z);
-    }
-
-    static inline float64x4 float64x4_set_w(float64x4 a, double w)
-    {
-        return float64x4_set_component<3>(a, w);
-    }
-
-    static inline double float64x4_get_x(float64x4 a)
-    {
-        return float64x4_get_component<0>(a);
-    }
-
-    static inline double float64x4_get_y(float64x4 a)
-    {
-        return float64x4_get_component<1>(a);
-    }
-
-    static inline double float64x4_get_z(float64x4 a)
-    {
-        return float64x4_get_component<2>(a);
-    }
-
-    static inline double float64x4_get_w(float64x4 a)
-    {
-        return float64x4_get_component<3>(a);
-    }
-
     static inline float64x4 float64x4_zero()
     {
         float64x4 result;

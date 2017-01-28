@@ -90,50 +90,6 @@
         return a.w;
     }
 
-    static inline float64x4 float64x4_set_x(float64x4 a, double x)
-    {
-        a.x = x;
-        return a;
-    }
-
-    static inline float64x4 float64x4_set_y(float64x4 a, double y)
-    {
-        a.y = y;
-        return a;
-    }
-
-    static inline float64x4 float64x4_set_z(float64x4 a, double z)
-    {
-        a.z = z;
-        return a;
-    }
-
-    static inline float64x4 float64x4_set_w(float64x4 a, double w)
-    {
-        a.w = w;
-        return a;
-    }
-
-    static inline double float64x4_get_x(float64x4 a)
-    {
-        return a.x;
-    }
-
-    static inline double float64x4_get_y(float64x4 a)
-    {
-        return a.y;
-    }
-
-    static inline double float64x4_get_z(float64x4 a)
-    {
-        return a.z;
-    }
-
-    static inline double float64x4_get_w(float64x4 a)
-    {
-        return a.w;
-    }
-
     static inline float64x4 float64x4_zero()
     {
         float64x4 temp = { 0.0, 0.0, 0.0, 0.0 };

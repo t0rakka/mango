@@ -91,67 +91,6 @@
         return vec_extract(a, Index);
     }
 
-    static inline float32x4 float32x4_set_x(float32x4 a, float x)
-    {
-        return vec_insert(x, a, 0);
-    }
-
-    static inline float32x4 float32x4_set_y(float32x4 a, float y)
-    {
-        return vec_insert(y, a, 1);
-    }
-
-    static inline float32x4 float32x4_set_z(float32x4 a, float z)
-    {
-        return vec_insert(z, a, 2);
-    }
-
-    static inline float32x4 float32x4_set_w(float32x4 a, float w)
-    {
-        return vec_insert(w, a, 3);
-    }
-
-    static inline float float32x4_get_x(float32x4 a)
-    {
-        return vec_extract(a, 0);
-    }
-
-    static inline float float32x4_get_y(float32x4 a)
-    {
-        return vec_extract(a, 1);
-    }
-
-    static inline float float32x4_get_z(float32x4 a)
-    {
-        return vec_extract(a, 2);
-    }
-
-    static inline float float32x4_get_w(float32x4 a)
-    {
-        return vec_extract(a, 3);
-
-    }
-
-    static inline float32x4 float32x4_splat_x(float32x4 a)
-    {
-        return vec_splat(a, 0);
-    }
-    
-    static inline float32x4 float32x4_splat_y(float32x4 a)
-    {
-        return vec_splat(a, 1);
-    }
-    
-    static inline float32x4 float32x4_splat_z(float32x4 a)
-    {
-        return vec_splat(a, 2);
-    }
-
-    static inline float32x4 float32x4_splat_w(float32x4 a)
-    {
-        return vec_splat(a, 3);
-    }
-
     static inline float32x4 float32x4_zero()
     {
         return __vec_splatsf4(0.0f);
