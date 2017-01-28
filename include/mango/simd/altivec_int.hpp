@@ -15,6 +15,11 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
+    static inline vector unsigned int __vec_splatsui4(const unsigned int x)
+    {
+        return (vector unsigned int) {x, x, x, x};
+    }
+
     static inline vector signed int __vec_splatsi4(const signed int x)
     {
         return (vector signed int) {x, x, x, x};
@@ -26,9 +31,14 @@ namespace simd {
 
     // set
 
+    static inline uint32x4 uint32x4_zero()
+    {
+        return __vec_splatsui4(0);
+    }
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
-        return __vec_splatsi4(s);
+        return __vec_splatsui4(s);
     }
 
     static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
@@ -77,6 +87,42 @@ namespace simd {
     static inline int uint32x4_get_w(uint32x4 a)
     {
         return vec_extract(a, 3);
+    }
+
+    static inline uint32x4 uint32x4_uload(const uin32* s)
+    {
+        return (uint32x4) { s[0], s[1], s[2], s[3] };
+    }
+
+    static inline void uint32x4_ustore(uint32* d, uint32x4 a)
+    {
+        const uint32* s = reinterpret_cast<const uint32 *>(&a);
+        d[0] = s[0];
+        d[1] = s[1];
+        d[2] = s[2];
+        d[3] = s[3];
+    }
+
+    // logical
+
+    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
+    {
+        return vec_and(a, b);
+    }
+
+    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    {
+        return vec_neg(vec_and(a, b));
+    }
+
+    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    {
+        return vec_or(a, b);
+    }
+
+    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    {
+        return vec_xor(a, b);
     }
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)

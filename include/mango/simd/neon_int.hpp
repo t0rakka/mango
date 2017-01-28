@@ -17,6 +17,11 @@ namespace simd {
 
     // set
 
+    static inline uint32x4 uint32x4_zero()
+    {
+        return vdupq_n_u32(0);
+    }
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
         return vdupq_n_u32(s);
@@ -68,6 +73,42 @@ namespace simd {
     static inline int uint32x4_get_w(uint32x4 a)
     {
         return vgetq_lane_u32(a, 3);
+    }
+
+    static inline uint32x4 uint32x4_uload(const uint32* source)
+    {
+        uint32x4_t temp = { source[0], source[1], source[2], source[3] };
+        return temp;
+    }
+
+    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    {
+        dest[0] = vgetq_lane_u32(a, 0);
+        dest[1] = vgetq_lane_u32(a, 1);
+        dest[2] = vgetq_lane_u32(a, 2);
+        dest[3] = vgetq_lane_u32(a, 3);
+    }
+
+    // logical
+
+    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
+    {
+        return vandq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    {
+        return vbicq_u32(b, a);
+    }
+
+    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    {
+        return vorrq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    {
+        return veorq_u32(a, b);
     }
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)

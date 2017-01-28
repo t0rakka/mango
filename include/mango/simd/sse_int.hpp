@@ -15,6 +15,11 @@ namespace simd {
     // uint32x4
     // -----------------------------------------------------------------
 
+    static inline uint32x4 uint32x4_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
         return _mm_set1_epi32(s);
@@ -23,6 +28,38 @@ namespace simd {
     static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
     {
         return _mm_setr_epi32(x, y, z, w);
+    }
+
+    static inline uint32x4 uint32x4_uload(const uint32* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
+    }
+
+    // logical
+
+    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    {
+        return _mm_xor_si128(a, b);
     }
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)

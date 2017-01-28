@@ -17,6 +17,12 @@ namespace simd {
 
     // set
 
+    static inline uint32x4 uint32x4_zero()
+    {
+        uint32x4 temp = { 0, 0, 0, 0 };
+        return temp;
+    }
+
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
         uint32x4 temp = { s, s, s, s };
@@ -73,6 +79,62 @@ namespace simd {
     static inline int uint32x4_get_w(uint32x4 a)
     {
         return a.w;
+    }
+
+    static inline uint32x4 uint32x4_uload(const uint32* source)
+    {
+        uint32x4 temp = { source[0], source[1], source[2], source[3] };
+        return temp;
+    }
+
+    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    {
+        dest[0] = a.x;
+        dest[1] = a.y;
+        dest[2] = a.z;
+        dest[3] = a.w;
+    }
+
+    // logical
+
+    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = a.x & b.x;
+        v.y = a.y & b.y;
+        v.z = a.z & b.z;
+        v.w = a.w & b.w;
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = ~a.x & b.x;
+        v.y = ~a.y & b.y;
+        v.z = ~a.z & b.z;
+        v.w = ~a.w & b.w;
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = a.x | b.x;
+        v.y = a.y | b.y;
+        v.z = a.z | b.z;
+        v.w = a.w | b.w;
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v.x = a.x ^ b.x;
+        v.y = a.y ^ b.y;
+        v.z = a.z ^ b.z;
+        v.w = a.w ^ b.w;
+        return v;
     }
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
