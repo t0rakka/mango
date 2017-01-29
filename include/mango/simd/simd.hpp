@@ -18,24 +18,40 @@ namespace mango {
 namespace simd {
 
     // --------------------------------------------------------------
-    // SIMD vector strong_type
+    // SIMD vector base classes
     // --------------------------------------------------------------
 
     template <typename T, bool Signed>
-    struct strong_type
+    struct vector_type
     {
         typedef T type;
         T m;
 
-        strong_type() = default;
+        vector_type() = default;
 
-        strong_type(T m) : m(m)
+        vector_type(T m) : m(m)
         {
         }
 
         operator T () const
         {
             return m;
+        }
+    };
+
+    template <typename T, int Size>
+    struct scalar_type
+    {
+        T data[Size];
+
+        T & operator [] (int index)
+        {
+            return reinterpret_cast<T *>(this)[index];
+        }
+
+        const T & operator [] (int index) const
+        {
+            return reinterpret_cast<const T *>(this)[index];
         }
     };
 
@@ -51,15 +67,11 @@ namespace simd {
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
-    typedef strong_type<__m128i, false> uint32x4;
-    typedef strong_type<__m128i, true> int32x4;
-    typedef strong_type<__m128, true> float32x4;
-    typedef strong_type<__m256d, true> float64x4;
-
-    struct float16x4
-    {
-        half x, y, z, w;
-    };
+    typedef vector_type<__m128i, false> uint32x4;
+    typedef vector_type<__m128i, true> int32x4;
+    typedef vector_type<__m128, true> float32x4;
+    typedef vector_type<__m256d, true> float64x4;
+    typedef scalar_type<half, 4> float16x4;
 
 } // namespace simd
 } // namespace mango
@@ -82,14 +94,10 @@ namespace simd {
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
-    typedef strong_type<__m128i, false> uint32x4;
-    typedef strong_type<__m128i, true> int32x4;
-    typedef strong_type<__m128, true> float32x4;
-
-    struct float16x4
-    {
-        half x, y, z, w;
-    };
+    typedef vector_type<__m128i, false> uint32x4;
+    typedef vector_type<__m128i, true> int32x4;
+    typedef vector_type<__m128, true> float32x4;
+    typedef scalar_type<half, 4> float16x4;
 
     struct float64x4
     {
@@ -118,27 +126,21 @@ namespace simd {
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
-    typedef strong_type<uint32x4_t, false> uint32x4;
-    typedef strong_type<int32x4_t, true> int32x4;
-    typedef strong_type<float32x4_t, true> float32x4;
+    typedef vector_type<uint32x4_t, false> uint32x4;
+    typedef vector_type<int32x4_t, true> int32x4;
+    typedef vector_type<float32x4_t, true> float32x4;
 
 #ifdef MANGO_ENABLE_FP16
 
-    typedef strong_type<float16x4_t, true> float16x4;
+    typedef vector_type<float16x4_t, true> float16x4;
 
 #else
 
-    struct float16x4
-    {
-        half x, y, z, w;
-    };
+    typedef scalar_type<half, 4> float16x4;
 
 #endif
 
-    struct float64x4
-    {
-        double x, y, z, w;
-    };
+    typedef scalar_type<double, 4> float64x4;
 
 } // namespace simd
 } // namespace mango
@@ -161,19 +163,11 @@ namespace simd {
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
-    typedef strong_type<vector unsigned int, false> uint32x4;
-    typedef strong_type<vector signed int, true> int32x4;
-    typedef strong_type<vector float, true> float32x4;
-
-    struct float16x4
-    {
-        half x, y, z, w;
-    };
-
-    struct float64x4
-    {
-        double x, y, z, w;
-    };
+    typedef vector_type<vector unsigned int, false> uint32x4;
+    typedef vector_type<vector signed int, true> int32x4;
+    typedef vector_type<vector float, true> float32x4;
+    typedef scalar_type<double, 4> float64x4;
+    typedef scalar_type<half, 4> float16x4;
 
 } // namespace simd
 } // namespace mango
@@ -196,19 +190,11 @@ namespace simd {
     // Cell BE SPU
     // --------------------------------------------------------------
 
-    typedef strong_type<vector unsigned int, false> uint32x4;
-    typedef strong_type<vector signed int, true> int32x4;
-    typedef strong_type<vector float, true> float32x4;
-
-    struct float16x4
-    {
-        half x, y, z, w;
-    };
-
-    struct float64x4
-    {
-        double x, y, z, w;
-    };
+    typedef vector_type<vector unsigned int, false> uint32x4;
+    typedef vector_type<vector signed int, true> int32x4;
+    typedef vector_type<vector float, true> float32x4;
+    typedef scalar_type<double, 4> float64x4;
+    typedef scalar_type<half, 4> float16x4;
 
 } // namespace simd
 } // namespace mango
@@ -231,30 +217,11 @@ namespace simd {
     // SIMD emulation
     // --------------------------------------------------------------
 
-    struct uint32x4
-    {
-        uint32 x, y, z, w;
-    };
-
-    struct int32x4
-    {
-        int32 x, y, z, w;
-    };
-
-    struct float16x4
-    {
-        half x, y, z, w;
-    };
-
-    struct float32x4
-    {
-        float x, y, z, w;
-    };
-
-    struct float64x4
-    {
-        double x, y, z, w;
-    };
+    typedef scalar_type<uint32, 4> uint32x4;
+    typedef scalar_type<int32, 4> int32x4;
+    typedef scalar_type<float, 4> float32x4;
+    typedef scalar_type<double, 4> float64x4;
+    typedef scalar_type<half, 4> float16x4;
 
 } // namespace simd
 } // namespace mango

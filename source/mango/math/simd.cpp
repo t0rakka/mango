@@ -368,120 +368,120 @@ namespace simd {
     float32x4 float32x4_sin(float32x4 a)
     {
         float32x4 v;
-        v.x = std::sin(a.x);
-        v.y = std::sin(a.y);
-        v.z = std::sin(a.z);
-        v.w = std::sin(a.w);
+        v[0] = std::sin(a[0]);
+        v[1] = std::sin(a[1]);
+        v[2] = std::sin(a[2]);
+        v[3] = std::sin(a[3]);
         return v;
     }
 
     float32x4 float32x4_cos(float32x4 a)
     {
         float32x4 v;
-        v.x = std::cos(a.x);
-        v.y = std::cos(a.y);
-        v.z = std::cos(a.z);
-        v.w = std::cos(a.w);
+        v[0] = std::cos(a[0]);
+        v[1] = std::cos(a[1]);
+        v[2] = std::cos(a[2]);
+        v[3] = std::cos(a[3]);
         return v;
     }
 
     float32x4 float32x4_tan(float32x4 a)
     {
         float32x4 v;
-        v.x = std::tan(a.x);
-        v.y = std::tan(a.y);
-        v.z = std::tan(a.z);
-        v.w = std::tan(a.w);
+        v[0] = std::tan(a[0]);
+        v[1] = std::tan(a[1]);
+        v[2] = std::tan(a[2]);
+        v[3] = std::tan(a[3]);
         return v;
     }
 
     float32x4 float32x4_exp(float32x4 a)
     {
         float32x4 v;
-        v.x = std::exp(a.x);
-        v.y = std::exp(a.y);
-        v.z = std::exp(a.z);
-        v.w = std::exp(a.w);
+        v[0] = std::exp(a[0]);
+        v[1] = std::exp(a[1]);
+        v[2] = std::exp(a[2]);
+        v[3] = std::exp(a[3]);
         return v;
     }
 
     float32x4 float32x4_log(float32x4 a)
     {
         float32x4 v;
-        v.x = std::log(a.x);
-        v.y = std::log(a.y);
-        v.z = std::log(a.z);
-        v.w = std::log(a.w);
+        v[0] = std::log(a[0]);
+        v[1] = std::log(a[1]);
+        v[2] = std::log(a[2]);
+        v[3] = std::log(a[3]);
         return v;
     }
 
     float32x4 float32x4_log2(float32x4 a)
     {
         float32x4 v;
-        v.x = std::log2(a.x);
-        v.y = std::log2(a.y);
-        v.z = std::log2(a.z);
-        v.w = std::log2(a.w);
+        v[0] = std::log2(a[0]);
+        v[1] = std::log2(a[1]);
+        v[2] = std::log2(a[2]);
+        v[3] = std::log2(a[3]);
         return v;
     }
 
     float32x4 float32x4_exp2(float32x4 a)
     {
         float32x4 v;
-        v.x = std::exp2(a.x);
-        v.y = std::exp2(a.y);
-        v.z = std::exp2(a.z);
-        v.w = std::exp2(a.w);
+        v[0] = std::exp2(a[0]);
+        v[1] = std::exp2(a[1]);
+        v[2] = std::exp2(a[2]);
+        v[3] = std::exp2(a[3]);
         return v;
     }
 
     float32x4 float32x4_pow(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = std::pow(a.x, b.x);
-        v.y = std::pow(a.y, b.y);
-        v.z = std::pow(a.z, b.z);
-        v.w = std::pow(a.w, b.w);
+        v[0] = std::pow(a[0], b[0]);
+        v[1] = std::pow(a[1], b[1]);
+        v[2] = std::pow(a[2], b[2]);
+        v[3] = std::pow(a[3], b[3]);
         return v;
     }
 
     float32x4 float32x4_asin(float32x4 a)
     {
         float32x4 v;
-        v.x = std::asin(a.x);
-        v.y = std::asin(a.y);
-        v.z = std::asin(a.z);
-        v.w = std::asin(a.w);
+        v[0] = std::asin(a[0]);
+        v[1] = std::asin(a[1]);
+        v[2] = std::asin(a[2]);
+        v[3] = std::asin(a[3]);
         return v;
     }
 
     float32x4 float32x4_acos(float32x4 a)
     {
         float32x4 v;
-        v.x = std::acos(a.x);
-        v.y = std::acos(a.y);
-        v.z = std::acos(a.z);
-        v.w = std::acos(a.w);
+        v[0] = std::acos(a[0]);
+        v[1] = std::acos(a[1]);
+        v[2] = std::acos(a[2]);
+        v[3] = std::acos(a[3]);
         return v;
     }
 
     float32x4 float32x4_atan(float32x4 a)
     {
         float32x4 v;
-        v.x = std::atan(a.x);
-        v.y = std::atan(a.y);
-        v.z = std::atan(a.z);
-        v.w = std::atan(a.w);
+        v[0] = std::atan(a[0]);
+        v[1] = std::atan(a[1]);
+        v[2] = std::atan(a[2]);
+        v[3] = std::atan(a[3]);
         return v;
     }
 
     float32x4 float32x4_atan2(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = std::atan2(a.x, b.x);
-        v.y = std::atan2(a.y, b.y);
-        v.z = std::atan2(a.z, b.z);
-        v.w = std::atan2(a.w, b.w);
+        v[0] = std::atan2(a[0], b[0]);
+        v[1] = std::atan2(a[1], b[1]);
+        v[2] = std::atan2(a[2], b[2]);
+        v[3] = std::atan2(a[3], b[3]);
         return v;
     }
 
@@ -868,120 +868,120 @@ namespace simd {
     float64x4 float64x4_sin(float64x4 a)
     {
         float64x4 v;
-        v.x = std::sin(a.x);
-        v.y = std::sin(a.y);
-        v.z = std::sin(a.z);
-        v.w = std::sin(a.w);
+        v[0] = std::sin(a[0]);
+        v[1] = std::sin(a[1]);
+        v[2] = std::sin(a[2]);
+        v[3] = std::sin(a[3]);
         return v;
     }
 
     float64x4 float64x4_cos(float64x4 a)
     {
         float64x4 v;
-        v.x = std::cos(a.x);
-        v.y = std::cos(a.y);
-        v.z = std::cos(a.z);
-        v.w = std::cos(a.w);
+        v[0] = std::cos(a[0]);
+        v[1] = std::cos(a[1]);
+        v[2] = std::cos(a[2]);
+        v[3] = std::cos(a[3]);
         return v;
     }
 
     float64x4 float64x4_tan(float64x4 a)
     {
         float64x4 v;
-        v.x = std::tan(a.x);
-        v.y = std::tan(a.y);
-        v.z = std::tan(a.z);
-        v.w = std::tan(a.w);
+        v[0] = std::tan(a[0]);
+        v[1] = std::tan(a[1]);
+        v[2] = std::tan(a[2]);
+        v[3] = std::tan(a[3]);
         return v;
     }
 
     float64x4 float64x4_exp(float64x4 a)
     {
         float64x4 v;
-        v.x = std::exp(a.x);
-        v.y = std::exp(a.y);
-        v.z = std::exp(a.z);
-        v.w = std::exp(a.w);
+        v[0] = std::exp(a[0]);
+        v[1] = std::exp(a[1]);
+        v[2] = std::exp(a[2]);
+        v[3] = std::exp(a[3]);
         return v;
     }
 
     float64x4 float64x4_log(float64x4 a)
     {
         float64x4 v;
-        v.x = std::log(a.x);
-        v.y = std::log(a.y);
-        v.z = std::log(a.z);
-        v.w = std::log(a.w);
+        v[0] = std::log(a[0]);
+        v[1] = std::log(a[1]);
+        v[2] = std::log(a[2]);
+        v[3] = std::log(a[3]);
         return v;
     }
 
     float64x4 float64x4_log2(float64x4 a)
     {
         float64x4 v;
-        v.x = std::log2(a.x);
-        v.y = std::log2(a.y);
-        v.z = std::log2(a.z);
-        v.w = std::log2(a.w);
+        v[0] = std::log2(a[0]);
+        v[1] = std::log2(a[1]);
+        v[2] = std::log2(a[2]);
+        v[3] = std::log2(a[3]);
         return v;
     }
 
     float64x4 float64x4_exp2(float64x4 a)
     {
         float64x4 v;
-        v.x = std::exp2(a.x);
-        v.y = std::exp2(a.y);
-        v.z = std::exp2(a.z);
-        v.w = std::exp2(a.w);
+        v[0] = std::exp2(a[0]);
+        v[1] = std::exp2(a[1]);
+        v[2] = std::exp2(a[2]);
+        v[3] = std::exp2(a[3]);
         return v;
     }
 
     float64x4 float64x4_pow(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v.x = std::pow(a.x, b.x);
-        v.y = std::pow(a.y, b.y);
-        v.z = std::pow(a.z, b.z);
-        v.w = std::pow(a.w, b.w);
+        v[0] = std::pow(a[0], b[0]);
+        v[1] = std::pow(a[1], b[1]);
+        v[2] = std::pow(a[2], b[2]);
+        v[3] = std::pow(a[3], b[3]);
         return v;
     }
 
     float64x4 float64x4_asin(float64x4 a)
     {
         float64x4 v;
-        v.x = std::asin(a.x);
-        v.y = std::asin(a.y);
-        v.z = std::asin(a.z);
-        v.w = std::asin(a.w);
+        v[0] = std::asin(a[0]);
+        v[1] = std::asin(a[1]);
+        v[2] = std::asin(a[2]);
+        v[3] = std::asin(a[3]);
         return v;
     }
 
     float64x4 float64x4_acos(float64x4 a)
     {
         float64x4 v;
-        v.x = std::acos(a.x);
-        v.y = std::acos(a.y);
-        v.z = std::acos(a.z);
-        v.w = std::acos(a.w);
+        v[0] = std::acos(a[0]);
+        v[1] = std::acos(a[1]);
+        v[2] = std::acos(a[2]);
+        v[3] = std::acos(a[3]);
         return v;
     }
 
     float64x4 float64x4_atan(float64x4 a)
     {
         float64x4 v;
-        v.x = std::atan(a.x);
-        v.y = std::atan(a.y);
-        v.z = std::atan(a.z);
-        v.w = std::atan(a.w);
+        v[0] = std::atan(a[0]);
+        v[1] = std::atan(a[1]);
+        v[2] = std::atan(a[2]);
+        v[3] = std::atan(a[3]);
         return v;
     }
 
     float64x4 float64x4_atan2(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v.x = std::atan2(a.x, b.x);
-        v.y = std::atan2(a.y, b.y);
-        v.z = std::atan2(a.z, b.z);
-        v.w = std::atan2(a.w, b.w);
+        v[0] = std::atan2(a[0], b[0]);
+        v[1] = std::atan2(a[1], b[1]);
+        v[2] = std::atan2(a[2], b[2]);
+        v[3] = std::atan2(a[3], b[3]);
         return v;
     }
 

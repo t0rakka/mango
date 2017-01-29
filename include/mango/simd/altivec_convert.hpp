@@ -77,66 +77,66 @@ namespace simd {
     static inline float64x4 float64x4_convert(int32x4 s)
     {
         float64x4 v;
-        v.x = double(int32x4_get_x(s));
-        v.y = double(int32x4_get_y(s));
-        v.z = double(int32x4_get_z(s));
-        v.w = double(int32x4_get_w(s));
+        v[0] = double(int32x4_get_x(s));
+        v[1] = double(int32x4_get_y(s));
+        v[2] = double(int32x4_get_z(s));
+        v[3] = double(int32x4_get_w(s));
         return v;
     }
 
     static inline float64x4 float64x4_convert(float32x4 s)
     {
         float64x4 v;
-        v.x = double(float32x4_get_x(s));
-        v.y = double(float32x4_get_y(s));
-        v.z = double(float32x4_get_z(s));
-        v.w = double(float32x4_get_w(s));
+        v[0] = double(float32x4_get_x(s));
+        v[1] = double(float32x4_get_y(s));
+        v[2] = double(float32x4_get_z(s));
+        v[3] = double(float32x4_get_w(s));
         return v;
     }
 
     static inline int32x4 int32x4_convert(float64x4 s)
     {
-        int x = int(s.x + 0.5);
-        int y = int(s.y + 0.5);
-        int z = int(s.z + 0.5);
-        int w = int(s.w + 0.5);
+        int x = int(s[0] + 0.5);
+        int y = int(s[1] + 0.5);
+        int z = int(s[2] + 0.5);
+        int w = int(s[3] + 0.5);
         return int32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_convert(float64x4 s)
     {
-        float x = float(s.x);
-        float y = float(s.y);
-        float z = float(s.z);
-        float w = float(s.w);
+        float x = float(s[0]);
+        float y = float(s[1]);
+        float z = float(s[2]);
+        float w = float(s[3]);
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float64x4 float64x4_convert(uint32x4 ui)
+    static inline float64x4 float64x4_convert(uint32x4 s)
     {
         float64x4 v;
-        v.x = u32_to_f64(uint32x4_get_x(ui));
-        v.y = u32_to_f64(uint32x4_get_y(ui));
-        v.z = u32_to_f64(uint32x4_get_z(ui));
-        v.w = u32_to_f64(uint32x4_get_w(ui));
+        v[0] = u32_to_f64(uint32x4_get_x(s));
+        v[1] = u32_to_f64(uint32x4_get_y(s));
+        v[2] = u32_to_f64(uint32x4_get_z(s));
+        v[3] = u32_to_f64(uint32x4_get_w(s));
         return v;
     }
 
     static inline uint32x4 uint32x4_convert(float64x4 d)
     {
-        uint32 x = f64_to_u32(d.x);
-        uint32 y = f64_to_u32(d.y);
-        uint32 z = f64_to_u32(d.z);
-        uint32 w = f64_to_u32(d.w);
+        uint32 x = f64_to_u32(d[0]);
+        uint32 y = f64_to_u32(d[1]);
+        uint32 z = f64_to_u32(d[2]);
+        uint32 w = f64_to_u32(d[3]);
         return uint32x4_set4(x, y, z, w);
     }
 
     static inline int32x4 int32x4_truncate(float64x4 s)
     {
-        int x = int(s.x);
-        int y = int(s.y);
-        int z = int(s.z);
-        int w = int(s.w);
+        int x = int(s[0]);
+        int y = int(s[1]);
+        int z = int(s[2]);
+        int w = int(s[3]);
         return int32x4_set4(x, y, z, w);
     }
 
@@ -146,20 +146,20 @@ namespace simd {
 
     static inline float32x4 float32x4_convert(float16x4 s)
     {
-        float x = s.x;
-        float y = s.y;
-        float z = s.z;
-        float w = s.w;
+        float x = s[0];
+        float y = s[1];
+        float z = s[2];
+        float w = s[3];
         return float32x4_set4(x, y, z, w);
     }
 
     static inline float16x4 float16x4_convert(float32x4 s)
     {
         float16x4 v;
-        v.x = float32x4_get_x(s);
-        v.y = float32x4_get_y(s);
-        v.z = float32x4_get_z(s);
-        v.w = float32x4_get_w(s);
+        v[0] = float32x4_get_x(s);
+        v[1] = float32x4_get_y(s);
+        v[2] = float32x4_get_z(s);
+        v[3] = float32x4_get_w(s);
         return v;
     }
 

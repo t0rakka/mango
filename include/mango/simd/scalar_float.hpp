@@ -15,12 +15,13 @@ namespace simd {
     // float32x4
     // -----------------------------------------------------------------
 
+    // shuffle
+
     template <int x, int y, int z, int w>
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
         // .generic
-        const float* src = reinterpret_cast<const float*>(&v);
-        float32x4 n = { src[x], src[y], src[z], src[w] };
+        float32x4 n = { v[x], v[y], v[z], v[w] };
         return n;
     }
 
@@ -31,64 +32,19 @@ namespace simd {
         return v;
     }
 
-    // indexed accessor
+    // indexed access
 
     template <int Index>
-    static inline float32x4 float32x4_set_component(float32x4 a, float s);
-
-    template <>
-    inline float32x4 float32x4_set_component<0>(float32x4 a, float s)
+    static inline float32x4 float32x4_set_component(float32x4 a, float s)
     {
-        a.x = s;
-        return a;
-    }
-
-    template <>
-    inline float32x4 float32x4_set_component<1>(float32x4 a, float s)
-    {
-        a.y = s;
-        return a;
-    }
-
-    template <>
-    inline float32x4 float32x4_set_component<2>(float32x4 a, float s)
-    {
-        a.z = s;
-        return a;
-    }
-
-    template <>
-    inline float32x4 float32x4_set_component<3>(float32x4 a, float s)
-    {
-        a.w = s;
+        a[Index] = s;
         return a;
     }
 
     template <int Index>
-    static inline float float32x4_get_component(float32x4 a);
-
-    template <>
-    inline float float32x4_get_component<0>(float32x4 a)
+    static inline float float32x4_get_component(float32x4 a)
     {
-        return a.x;
-    }
-
-    template <>
-    inline float float32x4_get_component<1>(float32x4 a)
-    {
-        return a.y;
-    }
-
-    template <>
-    inline float float32x4_get_component<2>(float32x4 a)
-    {
-        return a.z;
-    }
-
-    template <>
-    inline float float32x4_get_component<3>(float32x4 a)
-    {
-        return a.w;
+        return a[Index];
     }
 
     static inline float32x4 float32x4_zero()
@@ -118,33 +74,33 @@ namespace simd {
 
     static inline void float32x4_ustore(float* dest, float32x4 a)
     {
-        dest[0] = a.x;
-        dest[1] = a.y;
-        dest[2] = a.z;
-        dest[3] = a.w;
+        dest[0] = a[0];
+        dest[1] = a[1];
+        dest[2] = a[2];
+        dest[3] = a[3];
     }
 
     static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)
     {
-        float32x4 v = { a.x, a.y, b.x, b.y };
+        float32x4 v = { a[0], a[1], b[0], b[1] };
         return v;
     }
 
     static inline float32x4 float32x4_movehl(float32x4 a, float32x4 b)
     {
-        float32x4 v = { b.z, b.w, a.z, a.w };
+        float32x4 v = { b[2], b[3], a[2], a[3] };
         return v;
     }
 
     static inline float32x4 float32x4_unpackhi(float32x4 a, float32x4 b)
     {
-        float32x4 v = { a.z, b.z, a.w, b.w };
+        float32x4 v = { a[2], b[2], a[3], b[3] };
         return v;
     }
 
     static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
     {
-        float32x4 v = { a.x, b.x, a.y, b.y };
+        float32x4 v = { a[0], b[0], a[1], b[1] };
         return v;
     }
 
@@ -152,183 +108,183 @@ namespace simd {
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
-        const Float x(Float(a.x).u & Float(b.x).u);
-        const Float y(Float(a.y).u & Float(b.y).u);
-        const Float z(Float(a.z).u & Float(b.z).u);
-        const Float w(Float(a.w).u & Float(b.w).u);
+        const Float x(Float(a[0]).u & Float(b[0]).u);
+        const Float y(Float(a[1]).u & Float(b[1]).u);
+        const Float z(Float(a[2]).u & Float(b[2]).u);
+        const Float w(Float(a[3]).u & Float(b[3]).u);
         return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
-        const Float x(~Float(a.x).u & Float(b.x).u);
-        const Float y(~Float(a.y).u & Float(b.y).u);
-        const Float z(~Float(a.z).u & Float(b.z).u);
-        const Float w(~Float(a.w).u & Float(b.w).u);
+        const Float x(~Float(a[0]).u & Float(b[0]).u);
+        const Float y(~Float(a[1]).u & Float(b[1]).u);
+        const Float z(~Float(a[2]).u & Float(b[2]).u);
+        const Float w(~Float(a[3]).u & Float(b[3]).u);
         return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
-        const Float x(Float(a.x).u | Float(b.x).u);
-        const Float y(Float(a.y).u | Float(b.y).u);
-        const Float z(Float(a.z).u | Float(b.z).u);
-        const Float w(Float(a.w).u | Float(b.w).u);
+        const Float x(Float(a[0]).u | Float(b[0]).u);
+        const Float y(Float(a[1]).u | Float(b[1]).u);
+        const Float z(Float(a[2]).u | Float(b[2]).u);
+        const Float w(Float(a[3]).u | Float(b[3]).u);
         return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
-        const Float x(Float(a.x).u ^ Float(b.x).u);
-        const Float y(Float(a.y).u ^ Float(b.y).u);
-        const Float z(Float(a.z).u ^ Float(b.z).u);
-        const Float w(Float(a.w).u ^ Float(b.w).u);
+        const Float x(Float(a[0]).u ^ Float(b[0]).u);
+        const Float y(Float(a[1]).u ^ Float(b[1]).u);
+        const Float z(Float(a[2]).u ^ Float(b[2]).u);
+        const Float w(Float(a[3]).u ^ Float(b[3]).u);
         return float32x4_set4(x, y, z, w);
     }
 
     static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = std::min(a.x, b.x);
-        v.y = std::min(a.y, b.y);
-        v.z = std::min(a.z, b.z);
-        v.w = std::min(a.w, b.w);
+        v[0] = std::min(a[0], b[0]);
+        v[1] = std::min(a[1], b[1]);
+        v[2] = std::min(a[2], b[2]);
+        v[3] = std::min(a[3], b[3]);
         return v;
     }
 
     static inline float32x4 float32x4_max(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = std::max(a.x, b.x);
-        v.y = std::max(a.y, b.y);
-        v.z = std::max(a.z, b.z);
-        v.w = std::max(a.w, b.w);
+        v[0] = std::max(a[0], b[0]);
+        v[1] = std::max(a[1], b[1]);
+        v[2] = std::max(a[2], b[2]);
+        v[3] = std::max(a[3], b[3]);
         return v;
     }
 
     static inline float32x4 float32x4_clamp(float32x4 a, float32x4 vmin, float32x4 vmax)
     {
         float32x4 v;
-        v.x = std::min(vmax.x, std::max(vmin.x, a.x));
-        v.y = std::min(vmax.y, std::max(vmin.y, a.y));
-        v.z = std::min(vmax.z, std::max(vmin.z, a.z));
-        v.w = std::min(vmax.w, std::max(vmin.w, a.w));
+        v[0] = std::min(vmax[0], std::max(vmin[0], a[0]));
+        v[1] = std::min(vmax[1], std::max(vmin[1], a[1]));
+        v[2] = std::min(vmax[2], std::max(vmin[2], a[2]));
+        v[3] = std::min(vmax[3], std::max(vmin[3], a[3]));
         return v;
     }
 
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         float32x4 v;
-        v.x = std::abs(a.x);
-        v.y = std::abs(a.y);
-        v.z = std::abs(a.z);
-        v.w = std::abs(a.w);
+        v[0] = std::abs(a[0]);
+        v[1] = std::abs(a[1]);
+        v[2] = std::abs(a[2]);
+        v[3] = std::abs(a[3]);
         return v;
     }
 
     static inline float32x4 float32x4_neg(float32x4 a)
     {
-        float32x4 v = { -a.x, -a.y, -a.z, -a.w };
+        float32x4 v = { -a[0], -a[1], -a[2], -a[3] };
         return v;
     }
 
     static inline float32x4 float32x4_add(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = a.x + b.x;
-        v.y = a.y + b.y;
-        v.z = a.z + b.z;
-        v.w = a.w + b.w;
+        v[0] = a[0] + b[0];
+        v[1] = a[1] + b[1];
+        v[2] = a[2] + b[2];
+        v[3] = a[3] + b[3];
         return v;
     }
 
     static inline float32x4 float32x4_sub(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = a.x - b.x;
-        v.y = a.y - b.y;
-        v.z = a.z - b.z;
-        v.w = a.w - b.w;
+        v[0] = a[0] - b[0];
+        v[1] = a[1] - b[1];
+        v[2] = a[2] - b[2];
+        v[3] = a[3] - b[3];
         return v;
     }
 
     static inline float32x4 float32x4_mul(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = a.x * b.x;
-        v.y = a.y * b.y;
-        v.z = a.z * b.z;
-        v.w = a.w * b.w;
+        v[0] = a[0] * b[0];
+        v[1] = a[1] * b[1];
+        v[2] = a[2] * b[2];
+        v[3] = a[3] * b[3];
         return v;
     }
 
     static inline float32x4 float32x4_div(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = a.x / b.x;
-        v.y = a.y / b.y;
-        v.z = a.z / b.z;
-        v.w = a.w / b.w;
+        v[0] = a[0] / b[0];
+        v[1] = a[1] / b[1];
+        v[2] = a[2] / b[2];
+        v[3] = a[3] / b[3];
         return v;
     }
 
     static inline float32x4 float32x4_div(float32x4 a, float b)
     {
         float32x4 v;
-        v.x = a.x / b;
-        v.y = a.y / b;
-        v.z = a.z / b;
-        v.w = a.w / b;
+        v[0] = a[0] / b;
+        v[1] = a[1] / b;
+        v[2] = a[2] / b;
+        v[3] = a[3] / b;
         return v;
     }
 
     static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
     {
         float32x4 v;
-        v.x = a.x + b.x * c.x;
-        v.y = a.y + b.y * c.y;
-        v.z = a.z + b.z * c.z;
-        v.w = a.w + b.w * c.w;
+        v[0] = a[0] + b[0] * c[0];
+        v[1] = a[1] + b[1] * c[1];
+        v[2] = a[2] + b[2] * c[2];
+        v[3] = a[3] + b[3] * c[3];
         return v;
     }
 
     static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
     {
         float32x4 v;
-        v.x = a.x - b.x * c.x;
-        v.y = a.y - b.y * c.y;
-        v.z = a.z - b.z * c.z;
-        v.w = a.w - b.w * c.w;
+        v[0] = a[0] - b[0] * c[0];
+        v[1] = a[1] - b[1] * c[1];
+        v[2] = a[2] - b[2] * c[2];
+        v[3] = a[3] - b[3] * c[3];
         return v;
     }
 
     static inline float32x4 float32x4_fast_reciprocal(float32x4 a)
     {
         float32x4 v;
-        v.x = 1.0f / a.x;
-        v.y = 1.0f / a.y;
-        v.z = 1.0f / a.z;
-        v.w = 1.0f / a.w;
+        v[0] = 1.0f / a[0];
+        v[1] = 1.0f / a[1];
+        v[2] = 1.0f / a[2];
+        v[3] = 1.0f / a[3];
         return v;
     }
 
     static inline float32x4 float32x4_fast_rsqrt(float32x4 a)
     {
         float32x4 v;
-        v.x = 1.0f / float(std::sqrt(a.x));
-        v.y = 1.0f / float(std::sqrt(a.y));
-        v.z = 1.0f / float(std::sqrt(a.z));
-        v.w = 1.0f / float(std::sqrt(a.w));
+        v[0] = 1.0f / float(std::sqrt(a[0]));
+        v[1] = 1.0f / float(std::sqrt(a[1]));
+        v[2] = 1.0f / float(std::sqrt(a[2]));
+        v[3] = 1.0f / float(std::sqrt(a[3]));
         return v;
     }
 
     static inline float32x4 float32x4_fast_sqrt(float32x4 a)
     {
         float32x4 v;
-        v.x = float(std::sqrt(a.x));
-        v.y = float(std::sqrt(a.y));
-        v.z = float(std::sqrt(a.z));
-        v.w = float(std::sqrt(a.w));
+        v[0] = float(std::sqrt(a[0]));
+        v[1] = float(std::sqrt(a[1]));
+        v[2] = float(std::sqrt(a[2]));
+        v[3] = float(std::sqrt(a[3]));
         return v;
     }
 
@@ -349,23 +305,23 @@ namespace simd {
 
     static inline float32x4 float32x4_dot3(float32x4 a, float32x4 b)
     {
-        const float s = a.x * b.x + a.y * b.y + a.z * b.z;
+        const float s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
         return float32x4_set1(s);
     }
 
     static inline float32x4 float32x4_dot4(float32x4 a, float32x4 b)
     {
-        const float s = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+        const float s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
         return float32x4_set1(s);
     }
 
     static inline float32x4 float32x4_cross3(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = a.y * b.z - a.z * b.y;
-        v.y = a.z * b.x - a.x * b.z;
-        v.z = a.x * b.y - a.y * b.x;
-        v.w = 0.0f;
+        v[0] = a[1] * b[2] - a[2] * b[1];
+        v[1] = a[2] * b[0] - a[0] * b[2];
+        v[2] = a[0] * b[1] - a[1] * b[0];
+        v[3] = 0.0f;
         return v;
     }
 
@@ -374,60 +330,60 @@ namespace simd {
     static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = Float(uint32(a.x != b.x ? 0xffffffff : 0));
-        v.y = Float(uint32(a.y != b.y ? 0xffffffff : 0));
-        v.z = Float(uint32(a.z != b.z ? 0xffffffff : 0));
-        v.w = Float(uint32(a.w != b.w ? 0xffffffff : 0));
+        v[0] = Float(uint32(a[0] != b[0] ? 0xffffffff : 0));
+        v[1] = Float(uint32(a[1] != b[1] ? 0xffffffff : 0));
+        v[2] = Float(uint32(a[2] != b[2] ? 0xffffffff : 0));
+        v[3] = Float(uint32(a[3] != b[3] ? 0xffffffff : 0));
         return v;
     }
 
     static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = Float(uint32(a.x == b.x ? 0xffffffff : 0));
-        v.y = Float(uint32(a.y == b.y ? 0xffffffff : 0));
-        v.z = Float(uint32(a.z == b.z ? 0xffffffff : 0));
-        v.w = Float(uint32(a.w == b.w ? 0xffffffff : 0));
+        v[0] = Float(uint32(a[0] == b[0] ? 0xffffffff : 0));
+        v[1] = Float(uint32(a[1] == b[1] ? 0xffffffff : 0));
+        v[2] = Float(uint32(a[2] == b[2] ? 0xffffffff : 0));
+        v[3] = Float(uint32(a[3] == b[3] ? 0xffffffff : 0));
         return v;
     }
 
     static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = Float(uint32(a.x < b.x ? 0xffffffff : 0));
-        v.y = Float(uint32(a.y < b.y ? 0xffffffff : 0));
-        v.z = Float(uint32(a.z < b.z ? 0xffffffff : 0));
-        v.w = Float(uint32(a.w < b.w ? 0xffffffff : 0));
+        v[0] = Float(uint32(a[0] < b[0] ? 0xffffffff : 0));
+        v[1] = Float(uint32(a[1] < b[1] ? 0xffffffff : 0));
+        v[2] = Float(uint32(a[2] < b[2] ? 0xffffffff : 0));
+        v[3] = Float(uint32(a[3] < b[3] ? 0xffffffff : 0));
         return v;
     }
 
     static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = Float(uint32(a.x <= b.x ? 0xffffffff : 0));
-        v.y = Float(uint32(a.y <= b.y ? 0xffffffff : 0));
-        v.z = Float(uint32(a.z <= b.z ? 0xffffffff : 0));
-        v.w = Float(uint32(a.w <= b.w ? 0xffffffff : 0));
+        v[0] = Float(uint32(a[0] <= b[0] ? 0xffffffff : 0));
+        v[1] = Float(uint32(a[1] <= b[1] ? 0xffffffff : 0));
+        v[2] = Float(uint32(a[2] <= b[2] ? 0xffffffff : 0));
+        v[3] = Float(uint32(a[3] <= b[3] ? 0xffffffff : 0));
         return v;
     }
 
     static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = Float(uint32(a.x > b.x ? 0xffffffff : 0));
-        v.y = Float(uint32(a.y > b.y ? 0xffffffff : 0));
-        v.z = Float(uint32(a.z > b.z ? 0xffffffff : 0));
-        v.w = Float(uint32(a.w > b.w ? 0xffffffff : 0));
+        v[0] = Float(uint32(a[0] > b[0] ? 0xffffffff : 0));
+        v[1] = Float(uint32(a[1] > b[1] ? 0xffffffff : 0));
+        v[2] = Float(uint32(a[2] > b[2] ? 0xffffffff : 0));
+        v[3] = Float(uint32(a[3] > b[3] ? 0xffffffff : 0));
         return v;
     }
 
     static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v.x = Float(uint32(a.x >= b.x ? 0xffffffff : 0));
-        v.y = Float(uint32(a.y >= b.y ? 0xffffffff : 0));
-        v.z = Float(uint32(a.z >= b.z ? 0xffffffff : 0));
-        v.w = Float(uint32(a.w >= b.w ? 0xffffffff : 0));
+        v[0] = Float(uint32(a[0] >= b[0] ? 0xffffffff : 0));
+        v[1] = Float(uint32(a[1] >= b[1] ? 0xffffffff : 0));
+        v[2] = Float(uint32(a[2] >= b[2] ? 0xffffffff : 0));
+        v[3] = Float(uint32(a[3] >= b[3] ? 0xffffffff : 0));
         return v;
     }
 
@@ -441,40 +397,40 @@ namespace simd {
     static inline float32x4 float32x4_round(float32x4 s)
     {
         float32x4 v;
-        v.x = std::round(s.x);
-        v.y = std::round(s.y);
-        v.z = std::round(s.z);
-        v.w = std::round(s.w);
+        v[0] = std::round(s[0]);
+        v[1] = std::round(s[1]);
+        v[2] = std::round(s[2]);
+        v[3] = std::round(s[3]);
         return v;
     }
 
     static inline float32x4 float32x4_trunc(float32x4 s)
     {
         float32x4 v;
-        v.x = std::trunc(s.x);
-        v.y = std::trunc(s.y);
-        v.z = std::trunc(s.z);
-        v.w = std::trunc(s.w);
+        v[0] = std::trunc(s[0]);
+        v[1] = std::trunc(s[1]);
+        v[2] = std::trunc(s[2]);
+        v[3] = std::trunc(s[3]);
         return v;
     }
 
     static inline float32x4 float32x4_floor(float32x4 s)
     {
         float32x4 v;
-        v.x = std::floor(s.x);
-        v.y = std::floor(s.y);
-        v.z = std::floor(s.z);
-        v.w = std::floor(s.w);
+        v[0] = std::floor(s[0]);
+        v[1] = std::floor(s[1]);
+        v[2] = std::floor(s[2]);
+        v[3] = std::floor(s[3]);
         return v;
     }
 
     static inline float32x4 float32x4_ceil(float32x4 s)
     {
         float32x4 v;
-        v.x = std::ceil(s.x);
-        v.y = std::ceil(s.y);
-        v.z = std::ceil(s.z);
-        v.w = std::ceil(s.w);
+        v[0] = std::ceil(s[0]);
+        v[1] = std::ceil(s[1]);
+        v[2] = std::ceil(s[2]);
+        v[3] = std::ceil(s[3]);
         return v;
     }
 
@@ -758,10 +714,10 @@ namespace simd {
     static inline float32x4 float32x4_vector_matrix_multiply(float32x4 v, const float32x4* m)
     {
         float32x4 temp;
-        temp.x = v.x * m[0].x + v.y * m[1].x + v.z * m[2].x + v.w * m[3].x;
-        temp.y = v.x * m[0].y + v.y * m[1].y + v.z * m[2].y + v.w * m[3].y;
-        temp.z = v.x * m[0].z + v.y * m[1].z + v.z * m[2].z + v.w * m[3].z;
-        temp.w = v.x * m[0].w + v.y * m[1].w + v.z * m[2].w + v.w * m[3].w;
+        temp[0] = v[0] * m[0][0] + v[1] * m[1][0] + v[2] * m[2][0] + v[3] * m[3][0];
+        temp[1] = v[0] * m[0][1] + v[1] * m[1][1] + v[2] * m[2][1] + v[3] * m[3][1];
+        temp[2] = v[0] * m[0][2] + v[1] * m[1][2] + v[2] * m[2][2] + v[3] * m[3][2];
+        temp[3] = v[0] * m[0][3] + v[1] * m[1][3] + v[2] * m[2][3] + v[3] * m[3][3];
         return temp;
     }
 
