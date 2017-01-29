@@ -21,8 +21,7 @@ namespace simd {
     static inline uint32x4 uint32x4_shuffle(uint32x4 v)
     {
         // .generic
-        uint32x4 n = { v[x], v[y], v[z], v[w] };
-        return n;
+        return uint32x4(v[x], v[y], v[z], v[w]);
     }
 
     template <>
@@ -49,26 +48,22 @@ namespace simd {
 
     static inline uint32x4 uint32x4_zero()
     {
-        uint32x4 temp = { 0, 0, 0, 0 };
-        return temp;
+        return uint32x4(0, 0, 0, 0);
     }
 
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
-        uint32x4 temp = { s, s, s, s };
-        return temp;
+        return uint32x4(s, s, s, s);
     }
 
     static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
     {
-        uint32x4 temp = { x, y, z, w };
-        return temp;
+        return uint32x4(x, y, z, w);
     }
 
     static inline uint32x4 uint32x4_uload(const uint32* source)
     {
-        uint32x4 temp = { source[0], source[1], source[2], source[3] };
-        return temp;
+        return uint32x4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
@@ -181,14 +176,13 @@ namespace simd {
     static inline int32x4 int32x4_shuffle(int32x4 v)
     {
         // .generic
-        int32x4 n = { v[x], v[y], v[z], v[w] };
-        return n;
+        return int32x4(v[x], v[y], v[z], v[w]);
     }
 
     template <>
     inline int32x4 int32x4_shuffle<0, 1, 2, 3>(int32x4 v)
     {
-        // [0]yzw
+        // .xyzw
         return v;
     }
 
@@ -209,26 +203,22 @@ namespace simd {
 
     static inline int32x4 int32x4_zero()
     {
-        int32x4 temp = { 0, 0, 0, 0 };
-        return temp;
+        return int32x4(0, 0, 0, 0);
     }
 
     static inline int32x4 int32x4_set1(int s)
     {
-        int32x4 temp = { s, s, s, s };
-        return temp;
+        return int32x4(s, s, s, s);
     }
 
     static inline int32x4 int32x4_set4(int x, int y, int z, int w)
     {
-        int32x4 temp = { x, y, z, w };
-        return temp;
+        return int32x4(x, y, z, w);
     }
 
     static inline int32x4 int32x4_uload(const int* source)
     {
-        int32x4 temp = { source[0], source[1], source[2], source[3] };
-        return temp;
+        return int32x4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void int32x4_ustore(int* dest, int32x4 a)
@@ -241,8 +231,7 @@ namespace simd {
 
     static inline int32x4 int32x4_neg(int32x4 a)
     {
-        int32x4 v = { -a[0], -a[1], -a[2], -a[3] };
-        return v;
+        return int32x4(-a[0], -a[1], -a[2], -a[3]);
     }
 
     static inline int32x4 int32x4_add(int32x4 a, int32x4 b)

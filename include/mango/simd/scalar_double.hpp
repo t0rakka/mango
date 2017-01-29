@@ -21,8 +21,7 @@ namespace simd {
     inline float64x4 float64x4_shuffle(float64x4 v)
     {
         // .generic
-        float64x4 n = { v[x], v[y], v[z], v[w] };
-        return n;
+        return float64x4(v[x], v[y], v[z], v[w]);
     }
 
     template <>
@@ -49,26 +48,22 @@ namespace simd {
 
     static inline float64x4 float64x4_zero()
     {
-        float64x4 temp = { 0.0, 0.0, 0.0, 0.0 };
-        return temp;
+        return float64x4(0.0, 0.0, 0.0, 0.0);
     }
 
     static inline float64x4 float64x4_set1(double s)
     {
-        float64x4 temp = { s, s, s, s };
-        return temp;
+        return float64x4(s, s, s, s);
     }
 
     static inline float64x4 float64x4_set4(double x, double y, double z, double w)
     {
-        float64x4 temp = { x, y, z, w };
-        return temp;
+        return float64x4(x, y, z, w);
     }
 
     static inline float64x4 float64x4_uload(const double* source)
     {
-        float64x4 temp = { source[0], source[1], source[2], source[3] };
-        return temp;
+        return float64x4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void float64x4_ustore(double* dest, float64x4 a)
@@ -81,14 +76,12 @@ namespace simd {
 
     static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
     {
-        float64x4 v = { a[1], b[1], a[3], b[3] };
-        return v;
+        return float64x4(a[1], b[1], a[3], b[3]);
     }
 
     static inline float64x4 float64x4_unpacklo(float64x4 a, float64x4 b)
     {
-        float64x4 v = { a[0], b[0], a[2], b[2] };
-        return v;
+        return float64x4(a[0], b[0], a[2], b[2]);
     }
 
     // logical
@@ -171,8 +164,7 @@ namespace simd {
 
     static inline float64x4 float64x4_neg(float64x4 a)
     {
-        float64x4 v = { -a[0], -a[1], -a[2], -a[3] };
-        return v;
+        return float64x4(-a[0], -a[1], -a[2], -a[3]);
     }
 
     static inline float64x4 float64x4_add(float64x4 a, float64x4 b)

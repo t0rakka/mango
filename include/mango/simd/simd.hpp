@@ -44,6 +44,34 @@ namespace simd {
     {
         T data[Size];
 
+        scalar_type() = default;
+
+        T & operator [] (int index)
+        {
+            return reinterpret_cast<T *>(this)[index];
+        }
+
+        const T & operator [] (int index) const
+        {
+            return reinterpret_cast<const T *>(this)[index];
+        }
+    };
+
+    template <typename T>
+    struct scalar_type<T, 4>
+    {
+        T data[4];
+
+        scalar_type() = default;
+
+        scalar_type(T x, T y, T z, T w)
+        {
+            data[0] = x;
+            data[1] = y;
+            data[2] = z;
+            data[3] = w;
+        }
+
         T & operator [] (int index)
         {
             return reinterpret_cast<T *>(this)[index];
