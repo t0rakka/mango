@@ -111,52 +111,6 @@ namespace simd {
         return temp;
     }
 
-    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
-    {
-        a.x = x;
-        return a;
-    }
-
-    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
-    {
-        a.y = y;
-        return a;
-    }
-
-    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
-    {
-        a.z = z;
-        return a;
-    }
-
-    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
-    {
-        a.w = w;
-        return a;
-    }
-
-    // get
-
-    static inline int uint32x4_get_x(uint32x4 a)
-    {
-        return a.x;
-    }
-
-    static inline int uint32x4_get_y(uint32x4 a)
-    {
-        return a.y;
-    }
-
-    static inline int uint32x4_get_z(uint32x4 a)
-    {
-        return a.z;
-    }
-
-    static inline int uint32x4_get_w(uint32x4 a)
-    {
-        return a.w;
-    }
-
     static inline uint32x4 uint32x4_uload(const uint32* source)
     {
         uint32x4 temp = { source[0], source[1], source[2], source[3] };

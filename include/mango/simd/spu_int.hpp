@@ -53,7 +53,7 @@ namespace simd {
     }
 
     template <int Index>
-    static inline uint32 uint32x4_get_component(uint32x4 a);
+    static inline uint32 uint32x4_get_component(uint32x4 a)
     {
         return spu_extract(a, Index);
     }
@@ -169,7 +169,7 @@ namespace simd {
     }
 
     template <int Index>
-    static inline int32 int32x4_get_component(int32x4 a);
+    static inline int32 int32x4_get_component(int32x4 a)
     {
         return spu_extract(a, Index);
     }

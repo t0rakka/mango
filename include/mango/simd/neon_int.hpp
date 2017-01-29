@@ -20,7 +20,8 @@ namespace simd {
     template <int x, int y, int z, int w>
     static inline uint32x4 uint32x4_shuffle(uint32x4 v)
     {
-        return (uint32x4_t) { v[x], v[y], v[z], v[w] };
+        uint32x4_t temp = v;
+        return (uint32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
 
     template <>
@@ -39,7 +40,7 @@ namespace simd {
     }
 
     template <int Index>
-    static inline uint32 uint32x4_get_component(uint32x4 a);
+    static inline uint32 uint32x4_get_component(uint32x4 a)
     {
         return vgetq_lane_u32(a, Index);
     }
@@ -130,7 +131,8 @@ namespace simd {
     template <int x, int y, int z, int w>
     static inline int32x4 int32x4_shuffle(int32x4 v)
     {
-        return (int32x4_t) { v[x], v[y], v[z], v[w] };
+        int32x4_t temp = v;
+        return (int32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
 
     template <>
@@ -149,7 +151,7 @@ namespace simd {
     }
 
     template <int Index>
-    static inline int32 int32x4_get_component(int32x4 a);
+    static inline int32 int32x4_get_component(int32x4 a)
     {
         return vgetq_lane_s32(a, Index);
     }

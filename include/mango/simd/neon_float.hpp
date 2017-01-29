@@ -33,7 +33,8 @@ namespace simd {
 #if __GNUC__ >= 5
         return (float32x4_t) __builtin_shuffle(v.m, (uint32x4_t) {x, y, z, w});
 #else
-        return (float32x4_t) { v[x], v[y], v[z], v[w] };
+        float32x4_t temp = v;
+        return (float32x4_t) { temp[x], temp[y], temp[z], temp[w] };
 #endif
     }
 

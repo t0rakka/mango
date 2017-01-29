@@ -45,42 +45,42 @@ namespace simd {
 
     // uint32x4
 
-    static inline uint32x4 uint32x4_set_x(uint32x4 a, float x)
+    static inline uint32x4 uint32x4_set_x(uint32x4 a, uint32 x)
     {
         return uint32x4_set_component<0>(a, x);
     }
 
-    static inline uint32x4 uint32x4_set_y(uint32x4 a, float y)
+    static inline uint32x4 uint32x4_set_y(uint32x4 a, uint32 y)
     {
         return uint32x4_set_component<1>(a, y);
     }
 
-    static inline uint32x4 uint32x4_set_z(uint32x4 a, float z)
+    static inline uint32x4 uint32x4_set_z(uint32x4 a, uint32 z)
     {
         return uint32x4_set_component<2>(a, z);
     }
 
-    static inline uint32x4 uint32x4_set_w(uint32x4 a, float w)
+    static inline uint32x4 uint32x4_set_w(uint32x4 a, uint32 w)
     {
         return uint32x4_set_component<3>(a, w);
     }
 
-    static inline float uint32x4_get_x(uint32x4 a)
+    static inline uint32 uint32x4_get_x(uint32x4 a)
     {
         return uint32x4_get_component<0>(a);
     }
 
-    static inline float uint32x4_get_y(uint32x4 a)
+    static inline uint32 uint32x4_get_y(uint32x4 a)
     {
         return uint32x4_get_component<1>(a);
     }
 
-    static inline float uint32x4_get_z(uint32x4 a)
+    static inline uint32 uint32x4_get_z(uint32x4 a)
     {
         return uint32x4_get_component<2>(a);
     }
 
-    static inline float uint32x4_get_w(uint32x4 a)
+    static inline uint32 uint32x4_get_w(uint32x4 a)
     {
         return uint32x4_get_component<3>(a);
     }
@@ -107,42 +107,42 @@ namespace simd {
 
     // int32x4
 
-    static inline int32x4 int32x4_set_x(int32x4 a, float x)
+    static inline int32x4 int32x4_set_x(int32x4 a, int32 x)
     {
         return int32x4_set_component<0>(a, x);
     }
 
-    static inline int32x4 int32x4_set_y(int32x4 a, float y)
+    static inline int32x4 int32x4_set_y(int32x4 a, int32 y)
     {
         return int32x4_set_component<1>(a, y);
     }
 
-    static inline int32x4 int32x4_set_z(int32x4 a, float z)
+    static inline int32x4 int32x4_set_z(int32x4 a, int32 z)
     {
         return int32x4_set_component<2>(a, z);
     }
 
-    static inline int32x4 int32x4_set_w(int32x4 a, float w)
+    static inline int32x4 int32x4_set_w(int32x4 a, int32 w)
     {
         return int32x4_set_component<3>(a, w);
     }
 
-    static inline float int32x4_get_x(int32x4 a)
+    static inline int32 int32x4_get_x(int32x4 a)
     {
         return int32x4_get_component<0>(a);
     }
 
-    static inline float int32x4_get_y(int32x4 a)
+    static inline int32 int32x4_get_y(int32x4 a)
     {
         return int32x4_get_component<1>(a);
     }
 
-    static inline float int32x4_get_z(int32x4 a)
+    static inline int32 int32x4_get_z(int32x4 a)
     {
         return int32x4_get_component<2>(a);
     }
 
-    static inline float int32x4_get_w(int32x4 a)
+    static inline int32 int32x4_get_w(int32x4 a)
     {
         return int32x4_get_component<3>(a);
     }
