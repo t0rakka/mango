@@ -20,7 +20,8 @@ namespace simd {
     template <int x, int y, int z, int w>
     static inline uint32x4 uint32x4_shuffle(uint32x4 v)
     {
-        uint32x4_t temp = v;
+        // TODO: optimize
+        const uint32 *temp = reinterpret_cast<const uint32 *>(&v);
         return (uint32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
 
@@ -131,7 +132,8 @@ namespace simd {
     template <int x, int y, int z, int w>
     static inline int32x4 int32x4_shuffle(int32x4 v)
     {
-        int32x4_t temp = v;
+        // TODO: optimize
+        const int32* temp = reinterpret_cast<const int32 *>(&v);
         return (int32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
 
