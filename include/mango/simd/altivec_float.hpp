@@ -25,15 +25,15 @@ namespace simd {
         return (vector unsigned int) {x, x, x, x};
     }
 
-    // -----------------------------------------------------------------
-    // float32x4
-    // -----------------------------------------------------------------
-
 #define VEC_SH4(n, select) \
     (n * 4 + 0) | (select << 4), \
     (n * 4 + 1) | (select << 4), \
     (n * 4 + 2) | (select << 4), \
     (n * 4 + 3) | (select << 4)
+
+    // -----------------------------------------------------------------
+    // float32x4
+    // -----------------------------------------------------------------
 
     template <int x, int y, int z, int w>
     inline float32x4 float32x4_shuffle(float32x4 v)
@@ -151,8 +151,6 @@ namespace simd {
     {
         return vec_mergel(b, a);
     }
-
-#undef VEC_SH4
 
     // logical
 
@@ -415,6 +413,8 @@ namespace simd {
     {
     }
     */
+
+#undef VEC_SH4
 
 } // namespace simd
 } // namespace mango

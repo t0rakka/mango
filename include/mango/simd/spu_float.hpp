@@ -11,15 +11,16 @@
 namespace mango {
 namespace simd {
 
+    // helper
+    #define SPU_SH4(n, select) \
+        (n * 4 + 0) | (select << 4), \
+        (n * 4 + 1) | (select << 4), \
+        (n * 4 + 2) | (select << 4), \
+        (n * 4 + 3) | (select << 4)
+
     // -----------------------------------------------------------------
     // float32x4
     // -----------------------------------------------------------------
-
-#define SPU_SH4(n, select) \
-    (n * 4 + 0) | (select << 4), \
-    (n * 4 + 1) | (select << 4), \
-    (n * 4 + 2) | (select << 4), \
-    (n * 4 + 3) | (select << 4)
 
     template <int x, int y, int z, int w>
     inline float32x4 float32x4_shuffle(float32x4 v)
@@ -145,8 +146,6 @@ namespace simd {
         };
         return spu_shuffle(a, b, mask);
     }
-
-#undef SPU_SH4
 
     // logical
 
@@ -444,6 +443,8 @@ namespace simd {
     {
     }
     */
+
+#undef SPU_SH4
 
 } // namespace simd
 } // namespace mango

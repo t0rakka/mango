@@ -15,7 +15,83 @@ namespace simd {
     // uint32x4
     // -----------------------------------------------------------------
 
-    // set
+    // shuffle
+
+    template <int x, int y, int z, int w>
+    static inline uint32x4 uint32x4_shuffle(uint32x4 v)
+    {
+        // .generic
+        const uint32* src = reinterpret_cast<const uint32 *>(&v);
+        uint32x4 n = { src[x], src[y], src[z], src[w] };
+        return n;
+    }
+
+    template <>
+    inline uint32x4 uint32x4_shuffle<0, 1, 2, 3>(uint32x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    // indexed access
+
+    template <int Index>
+    static inline uint32x4 uint32x4_set_component(uint32x4 a, uint32 s);
+
+    template <>
+    inline uint32x4 uint32x4_set_component<0>(uint32x4 a, uint32 s)
+    {
+        a.x = s;
+        return a;
+    }
+
+    template <>
+    inline uint32x4 uint32x4_set_component<1>(uint32x4 a, uint32 s)
+    {
+        a.y = s;
+        return a;
+    }
+
+    template <>
+    inline uint32x4 uint32x4_set_component<2>(uint32x4 a, uint32 s)
+    {
+        a.z = s;
+        return a;
+    }
+
+    template <>
+    inline uint32x4 uint32x4_set_component<3>(uint32x4 a, uint32 s)
+    {
+        a.w = s;
+        return a;
+    }
+
+    template <int Index>
+    static inline uint32 uint32x4_get_component(uint32x4 a);
+
+    template <>
+    inline uint32 uint32x4_get_component<0>(uint32x4 a)
+    {
+        return a.x;
+    }
+
+    template <>
+    inline uint32 uint32x4_get_component<1>(uint32x4 a)
+    {
+        return a.y;
+    }
+
+    template <>
+    inline uint32 uint32x4_get_component<2>(uint32x4 a)
+    {
+        return a.z;
+    }
+
+    template <>
+    inline uint32 uint32x4_get_component<3>(uint32x4 a)
+    {
+        return a.w;
+    }
 
     static inline uint32x4 uint32x4_zero()
     {
@@ -191,7 +267,83 @@ namespace simd {
     // int32x4
     // -----------------------------------------------------------------
 
-    // set
+    // shuffle
+
+    template <int x, int y, int z, int w>
+    static inline int32x4 int32x4_shuffle(int32x4 v)
+    {
+        // .generic
+        const int32* src = reinterpret_cast<const int32 *>(&v);
+        int32x4 n = { src[x], src[y], src[z], src[w] };
+        return n;
+    }
+
+    template <>
+    inline int32x4 int32x4_shuffle<0, 1, 2, 3>(int32x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    // indexed access
+
+    template <int Index>
+    static inline int32x4 int32x4_set_component(int32x4 a, int32 s);
+
+    template <>
+    inline int32x4 int32x4_set_component<0>(int32x4 a, int32 s)
+    {
+        a.x = s;
+        return a;
+    }
+
+    template <>
+    inline int32x4 int32x4_set_component<1>(int32x4 a, int32 s)
+    {
+        a.y = s;
+        return a;
+    }
+
+    template <>
+    inline int32x4 int32x4_set_component<2>(int32x4 a, int32 s)
+    {
+        a.z = s;
+        return a;
+    }
+
+    template <>
+    inline int32x4 int32x4_set_component<3>(int32x4 a, int32 s)
+    {
+        a.w = s;
+        return a;
+    }
+
+    template <int Index>
+    static inline int32 int32x4_get_component(int32x4 a);
+
+    template <>
+    inline int32 int32x4_get_component<0>(int32x4 a)
+    {
+        return a.x;
+    }
+
+    template <>
+    inline int32 int32x4_get_component<1>(int32x4 a)
+    {
+        return a.y;
+    }
+
+    template <>
+    inline int32 int32x4_get_component<2>(int32x4 a)
+    {
+        return a.z;
+    }
+
+    template <>
+    inline int32 int32x4_get_component<3>(int32x4 a)
+    {
+        return a.w;
+    }
 
     static inline int32x4 int32x4_zero()
     {
@@ -209,52 +361,6 @@ namespace simd {
     {
         int32x4 temp = { x, y, z, w };
         return temp;
-    }
-
-    static inline int32x4 int32x4_set_x(int32x4 a, int x)
-    {
-        a.x = x;
-        return a;
-    }
-
-    static inline int32x4 int32x4_set_y(int32x4 a, int y)
-    {
-        a.y = y;
-        return a;
-    }
-
-    static inline int32x4 int32x4_set_z(int32x4 a, int z)
-    {
-        a.z = z;
-        return a;
-    }
-
-    static inline int32x4 int32x4_set_w(int32x4 a, int w)
-    {
-        a.w = w;
-        return a;
-    }
-
-    // get
-
-    static inline int int32x4_get_x(int32x4 a)
-    {
-        return a.x;
-    }
-
-    static inline int int32x4_get_y(int32x4 a)
-    {
-        return a.y;
-    }
-
-    static inline int int32x4_get_z(int32x4 a)
-    {
-        return a.z;
-    }
-
-    static inline int int32x4_get_w(int32x4 a)
-    {
-        return a.w;
     }
 
     static inline int32x4 int32x4_uload(const int* source)

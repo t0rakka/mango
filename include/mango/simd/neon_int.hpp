@@ -15,7 +15,34 @@ namespace simd {
     // uint32x4
     // -----------------------------------------------------------------
 
-    // set
+    // shuffle
+
+    template <int x, int y, int z, int w>
+    static inline uint32x4 uint32x4_shuffle(uint32x4 v)
+    {
+        return (uint32x4_t) { v[x], v[y], v[z], v[w] };
+    }
+
+    template <>
+    inline uint32x4 uint32x4_shuffle<0, 1, 2, 3>(uint32x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    // indexed access
+
+    template <int Index>
+    static inline uint32x4 uint32x4_set_component(uint32x4 a, uint32 s)
+    {
+        return vsetq_lane_u32(s, a, Index);
+    }
+
+    template <int Index>
+    static inline uint32 uint32x4_get_component(uint32x4 a);
+    {
+        return vgetq_lane_u32(a, Index);
+    }
 
     static inline uint32x4 uint32x4_zero()
     {
@@ -31,48 +58,6 @@ namespace simd {
     {
         uint32x4_t temp = { x, y, z, w };
         return temp;
-    }
-
-    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
-    {
-        return vsetq_lane_u32(x, a, 0);
-    }
-
-    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
-    {
-        return vsetq_lane_u32(y, a, 1);
-    }
-
-    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
-    {
-        return vsetq_lane_u32(z, a, 2);
-    }
-
-    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
-    {
-        return vsetq_lane_u32(w, a, 3);
-    }
-
-    // get
-
-    static inline int uint32x4_get_x(uint32x4 a)
-    {
-        return vgetq_lane_u32(a, 0);
-    }
-
-    static inline int uint32x4_get_y(uint32x4 a)
-    {
-        return vgetq_lane_u32(a, 1);
-    }
-
-    static inline int uint32x4_get_z(uint32x4 a)
-    {
-        return vgetq_lane_u32(a, 2);
-    }
-
-    static inline int uint32x4_get_w(uint32x4 a)
-    {
-        return vgetq_lane_u32(a, 3);
     }
 
     static inline uint32x4 uint32x4_uload(const uint32* source)
@@ -140,6 +125,35 @@ namespace simd {
     // int32x4
     // -----------------------------------------------------------------
 
+    // shuffle
+
+    template <int x, int y, int z, int w>
+    static inline int32x4 int32x4_shuffle(int32x4 v)
+    {
+        return (int32x4_t) { v[x], v[y], v[z], v[w] };
+    }
+
+    template <>
+    inline int32x4 int32x4_shuffle<0, 1, 2, 3>(int32x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    // indexed access
+
+    template <int Index>
+    static inline int32x4 int32x4_set_component(int32x4 a, int32 s)
+    {
+        return vsetq_lane_s32(s, a, Index);
+    }
+
+    template <int Index>
+    static inline int32 int32x4_get_component(int32x4 a);
+    {
+        return vgetq_lane_s32(a, Index);
+    }
+
     // set
 
     static inline int32x4 int32x4_zero()
@@ -156,48 +170,6 @@ namespace simd {
     {
         int32x4_t temp = { x, y, z, w };
         return temp;
-    }
-
-    static inline int32x4 int32x4_set_x(int32x4 a, int x)
-    {
-        return vsetq_lane_s32(x, a, 0);
-    }
-
-    static inline int32x4 int32x4_set_y(int32x4 a, int y)
-    {
-        return vsetq_lane_s32(y, a, 1);
-    }
-
-    static inline int32x4 int32x4_set_z(int32x4 a, int z)
-    {
-        return vsetq_lane_s32(z, a, 2);
-    }
-
-    static inline int32x4 int32x4_set_w(int32x4 a, int w)
-    {
-        return vsetq_lane_s32(w, a, 3);
-    }
-
-    // get
-
-    static inline int int32x4_get_x(int32x4 a)
-    {
-        return vgetq_lane_s32(a, 0);
-    }
-
-    static inline int int32x4_get_y(int32x4 a)
-    {
-        return vgetq_lane_s32(a, 1);
-    }
-
-    static inline int int32x4_get_z(int32x4 a)
-    {
-        return vgetq_lane_s32(a, 2);
-    }
-
-    static inline int int32x4_get_w(int32x4 a)
-    {
-        return vgetq_lane_s32(a, 3);
     }
 
     static inline int32x4 int32x4_uload(const int* source)

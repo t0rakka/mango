@@ -12,8 +12,51 @@ namespace mango {
 namespace simd {
 
     // -----------------------------------------------------------------
+    // helpers
+    // -----------------------------------------------------------------
+
+#define SPU_SH4(n, select) \
+    (n * 4 + 0) | (select << 4), \
+    (n * 4 + 1) | (select << 4), \
+    (n * 4 + 2) | (select << 4), \
+    (n * 4 + 3) | (select << 4)
+
+    // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
+
+    // shuffle
+
+    template <int x, int y, int z, int w>
+    static inline uint32x4 uint32x4_shuffle(uint32x4 v)
+    {
+		const vector unsigned char mask =
+		{
+            SPU_SH4(x, 0), SPU_SH4(y, 0), SPU_SH4(z, 0), SPU_SH4(w, 0)
+		};
+		return spu_shuffle(v, v, mask);
+    }
+
+    template <>
+    inline uint32x4 uint32x4_shuffle<0, 1, 2, 3>(uint32x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    // indexed access
+
+    template <int Index>
+    static inline uint32x4 uint32x4_set_component(uint32x4 a, uint32 s)
+    {
+        return spu_insert(s, a, Index);
+    }
+
+    template <int Index>
+    static inline uint32 uint32x4_get_component(uint32x4 a);
+    {
+        return spu_extract(a, Index);
+    }
 
     // set
 
@@ -31,48 +74,6 @@ namespace simd {
     {
 		const uint32x4 temp = { x, y, z, w };
 		return temp;
-    }
-
-    static inline uint32x4 uint32x4_set_x(uint32x4 a, int x)
-    {
-        return spu_insert(x, a, 0);
-    }
-
-    static inline uint32x4 uint32x4_set_y(uint32x4 a, int y)
-    {
-        return spu_insert(y, a, 1);
-    }
-
-    static inline uint32x4 uint32x4_set_z(uint32x4 a, int z)
-    {
-        return spu_insert(z, a, 2);
-    }
-
-    static inline uint32x4 uint32x4_set_w(uint32x4 a, int w)
-    {
-        return spu_insert(w, a, 3);
-    }
-
-    // get
-
-    static inline int uint32x4_get_x(uint32x4 a)
-    {
-        return spu_extract(a, 0);
-    }
-
-    static inline int uint32x4_get_y(uint32x4 a)
-    {
-        return spu_extract(a, 1);
-    }
-
-    static inline int uint32x4_get_z(uint32x4 a)
-    {
-        return spu_extract(a, 2);
-    }
-
-    static inline int uint32x4_get_w(uint32x4 a)
-    {
-        return spu_extract(a, 3);
     }
 
     static inline uint32x4 uint32x4_uload(const uint32* s)
@@ -140,6 +141,39 @@ namespace simd {
     // int32x4
     // -----------------------------------------------------------------
 
+    // shuffle
+
+    template <int x, int y, int z, int w>
+    static inline int32x4 int32x4_shuffle(int32x4 v)
+    {
+		const vector unsigned char mask =
+		{
+            SPU_SH4(x, 0), SPU_SH4(y, 0), SPU_SH4(z, 0), SPU_SH4(w, 0)
+		};
+		return spu_shuffle(v, v, mask);
+    }
+
+    template <>
+    inline int32x4 int32x4_shuffle<0, 1, 2, 3>(int32x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    // indexed access
+
+    template <int Index>
+    static inline int32x4 int32x4_set_component(int32x4 a, int32 s)
+    {
+        return spu_insert(s, a, Index);
+    }
+
+    template <int Index>
+    static inline int32 int32x4_get_component(int32x4 a);
+    {
+        return spu_extract(a, Index);
+    }
+
     // set
 
     static inline int32x4 int32x4_zero()
@@ -156,48 +190,6 @@ namespace simd {
     {
 		const int32x4 temp = { x, y, z, w };
 		return temp;
-    }
-
-    static inline int32x4 int32x4_set_x(int32x4 a, int x)
-    {
-        return spu_insert(x, a, 0);
-    }
-
-    static inline int32x4 int32x4_set_y(int32x4 a, int y)
-    {
-        return spu_insert(y, a, 1);
-    }
-
-    static inline int32x4 int32x4_set_z(int32x4 a, int z)
-    {
-        return spu_insert(z, a, 2);
-    }
-
-    static inline int32x4 int32x4_set_w(int32x4 a, int w)
-    {
-        return spu_insert(w, a, 3);
-    }
-
-    // get
-
-    static inline int int32x4_get_x(int32x4 a)
-    {
-        return spu_extract(a, 0);
-    }
-
-    static inline int int32x4_get_y(int32x4 a)
-    {
-        return spu_extract(a, 1);
-    }
-
-    static inline int int32x4_get_z(int32x4 a)
-    {
-        return spu_extract(a, 2);
-    }
-
-    static inline int int32x4_get_w(int32x4 a)
-    {
-        return spu_extract(a, 3);
     }
 
     static inline int32x4 int32x4_uload(const int* s)
@@ -305,6 +297,8 @@ namespace simd {
         const int w = (s >> 24);
         return int32x4_set4(x, y, z, w);
     }
+
+#undef SPU_SH4
 
 } // namespace simd
 } // namespace mango
