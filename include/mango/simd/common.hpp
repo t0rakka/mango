@@ -105,6 +105,31 @@ namespace simd {
         return uint32x4_shuffle<3, 3, 3, 3>(a);
     }
 
+    static inline uint32x4 uint32x4_not(uint32x4 a)
+    {
+        return uint32x4_xor(a, uint32x4_compare_eq(a, a));
+    }
+
+    static inline uint32x4 uint32x4_compare_neq(uint32x4 a, uint32x4 b)
+    {
+        return uint32x4_not(uint32x4_compare_eq(b, a));
+    }
+
+    static inline uint32x4 uint32x4_compare_lt(uint32x4 a, uint32x4 b)
+    {
+        return uint32x4_compare_gt(b, a);
+    }
+
+    static inline uint32x4 uint32x4_compare_le(uint32x4 a, uint32x4 b)
+    {
+        return uint32x4_not(uint32x4_compare_gt(a, b));
+    }
+
+    static inline uint32x4 uint32x4_compare_ge(uint32x4 a, uint32x4 b)
+    {
+        return uint32x4_not(uint32x4_compare_gt(b, a));
+    }
+
     // int32x4
 
     static inline int32x4 int32x4_set_x(int32x4 a, int32 x)
@@ -225,6 +250,31 @@ namespace simd {
     static inline int32x4 int32x4_xor(int32x4 a, int b)
     {
         return int32x4_xor(a, int32x4_set1(b));
+    }
+
+    static inline int32x4 int32x4_not(int32x4 a)
+    {
+        return int32x4_xor(a, int32x4_compare_eq(a, a));
+    }
+
+    static inline int32x4 int32x4_compare_neq(int32x4 a, int32x4 b)
+    {
+        return int32x4_not(int32x4_compare_eq(b, a));
+    }
+
+    static inline int32x4 int32x4_compare_lt(int32x4 a, int32x4 b)
+    {
+        return int32x4_compare_gt(b, a);
+    }
+
+    static inline int32x4 int32x4_compare_le(int32x4 a, int32x4 b)
+    {
+        return int32x4_not(int32x4_compare_gt(a, b));
+    }
+
+    static inline int32x4 int32x4_compare_ge(int32x4 a, int32x4 b)
+    {
+        return int32x4_not(int32x4_compare_gt(b, a));
     }
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int b)
