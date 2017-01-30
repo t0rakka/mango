@@ -36,6 +36,7 @@ namespace simd {
     template <int Index>
     static inline float64x4 float64x4_set_component(float64x4 a, double s)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         a[Index] = s;
         return a;
     }
@@ -43,6 +44,7 @@ namespace simd {
     template <int Index>
     static inline double float64x4_get_component(float64x4 a)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return a[Index];
     }
 

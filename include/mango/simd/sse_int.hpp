@@ -45,12 +45,14 @@ namespace simd {
     template <int Index>
     static inline uint32x4 uint32x4_set_component(uint32x4 a, uint32 s)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
     template <int Index>
     static inline uint32 uint32x4_get_component(uint32x4 a)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
     }
 
@@ -234,12 +236,14 @@ namespace simd {
     template <int Index>
     static inline int32x4 int32x4_set_component(int32x4 a, int32 s)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
     template <int Index>
     static inline int32 int32x4_get_component(int32x4 a)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
     }
 

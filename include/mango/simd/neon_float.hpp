@@ -107,12 +107,14 @@ namespace simd {
     template <int Index>
     static inline float32x4 float32x4_set_component(float32x4 a, float s)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return vsetq_lane_f32(s, a, Index);
     }
 
     template <int Index>
     static inline float float32x4_get_component(float32x4 a)
     {
+        static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return vgetq_lane_f32(a, Index);
     }
 

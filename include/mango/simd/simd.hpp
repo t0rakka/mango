@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <type_traits>
 #include "../core/configure.hpp"
 #include "../core/half.hpp"
 #include "../core/bits.hpp"
