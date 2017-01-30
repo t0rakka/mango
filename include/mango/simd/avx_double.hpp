@@ -163,6 +163,16 @@ namespace simd {
         _mm256_storeu_pd(dest, a);
     }
 
+    static inline float64x4 float64x4_movelh(float64x4 a, float64x4 b)
+    {
+        return _mm256_permute2f128_pd(a, b, 0x20);
+    }
+
+    static inline float64x4 float64x4_movehl(float64x4 a, float64x4 b)
+    {
+        return _mm256_permute2f128_pd(a, b, 0x13);
+    }
+
     static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
     {
         return _mm256_unpackhi_pd(a, b);

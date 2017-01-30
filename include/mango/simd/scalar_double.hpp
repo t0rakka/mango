@@ -76,6 +76,16 @@ namespace simd {
         dest[3] = a[3];
     }
 
+    static inline float64x4 float64x4_movelh(float64x4 a, float64x4 b)
+    {
+        return float64x4(a[0], a[1], b[0], b[1]);
+    }
+
+    static inline float64x4 float64x4_movehl(float64x4 a, float64x4 b)
+    {
+        return float64x4(b[2], b[3], a[2], a[3]);
+    }
+
     static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
     {
         return float64x4(a[1], b[1], a[3], b[3]);

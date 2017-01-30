@@ -183,6 +183,22 @@ namespace simd {
         _mm_storeu_pd(dest + 2, a.zw);
     }
 
+    static inline float64x4 float64x4_movelh(float64x4 a, float64x4 b)
+    {
+        float64x4 result;
+        result.xy = a.xy;
+        result.zw = b.xy;
+        return result;
+    }
+
+    static inline float64x4 float64x4_movehl(float64x4 a, float64x4 b)
+    {
+        float64x4 result;
+        result.xy = b.zw;
+        result.zw = a.zw;
+        return result;
+    }
+
     static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
     {
         float64x4 result;

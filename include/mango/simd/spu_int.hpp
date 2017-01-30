@@ -273,6 +273,12 @@ namespace simd {
 		return spu_sel(b, a, (vec_uint4)mask);
     }
 
+    static inline uint32 int32x4_get_mask(int32x4 a)
+    {
+        // TODO
+        return 0;
+    }
+
     static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
     {
         return spu_sel(a, b, spu_cmpgt(a, b));
