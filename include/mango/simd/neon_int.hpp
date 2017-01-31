@@ -78,6 +78,16 @@ namespace simd {
         dest[3] = vgetq_lane_u32(a, 3);
     }
 
+    static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
+    {
+        return vaddq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_sub(uint32x4 a, uint32x4 b)
+    {
+        return vsubq_u32(a, b);
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -192,6 +202,11 @@ namespace simd {
         dest[1] = vgetq_lane_s32(a, 1);
         dest[2] = vgetq_lane_s32(a, 2);
         dest[3] = vgetq_lane_s32(a, 3);
+    }
+
+    static inline int32x4 int32x4_abs(int32x4 a)
+    {
+        return vabsq_s32(a);
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)

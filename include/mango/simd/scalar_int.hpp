@@ -76,6 +76,26 @@ namespace simd {
         dest[3] = a[3];
     }
 
+    static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v[0] = a[0] + b[0];
+        v[1] = a[1] + b[1];
+        v[2] = a[2] + b[2];
+        v[3] = a[3] + b[3];
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_sub(uint32x4 a, uint32x4 b)
+    {
+        uint32x4 v;
+        v[0] = a[0] - b[0];
+        v[1] = a[1] - b[1];
+        v[2] = a[2] - b[2];
+        v[3] = a[3] - b[3];
+        return v;
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -231,6 +251,16 @@ namespace simd {
         dest[1] = a[1];
         dest[2] = a[2];
         dest[3] = a[3];
+    }
+
+    static inline int32x4 int32x4_abs(int32x4 a)
+    {
+        int32x4 v;
+        v[0] = std::abs(a[0]);
+        v[1] = std::abs(a[1]);
+        v[2] = std::abs(a[2]);
+        v[3] = std::abs(a[3]);
+        return v;
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)

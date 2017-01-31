@@ -105,6 +105,16 @@ namespace simd {
         return uint32x4_shuffle<3, 3, 3, 3>(a);
     }
 
+    static inline uint32x4 uint32x4_clamp(uint32x4 v, uint32x4 vmin, uint32x4 vmax)
+    {
+        return uint32x4_min(vmax, uint32x4_max(vmin, v));
+    }
+
+    static inline uint32x4 uint32x4_clamp(uint32x4 v, uint32 vmin, uint32 vmax)
+    {
+        return uint32x4_min(uint32x4_set1(vmax), uint32x4_max(uint32x4_set1(vmin), v));
+    }
+
     static inline uint32x4 uint32x4_not(uint32x4 a)
     {
         return uint32x4_xor(a, uint32x4_compare_eq(a, a));
@@ -255,6 +265,16 @@ namespace simd {
     static inline int32x4 int32x4_not(int32x4 a)
     {
         return int32x4_xor(a, int32x4_compare_eq(a, a));
+    }
+
+    static inline int32x4 int32x4_clamp(int32x4 v, int32x4 vmin, int32x4 vmax)
+    {
+        return int32x4_min(vmax, int32x4_max(vmin, v));
+    }
+
+    static inline int32x4 int32x4_clamp(int32x4 v, int vmin, int vmax)
+    {
+        return int32x4_min(int32x4_set1(vmax), int32x4_max(int32x4_set1(vmin), v));
     }
 
     static inline int32x4 int32x4_compare_neq(int32x4 a, int32x4 b)

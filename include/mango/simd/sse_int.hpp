@@ -143,6 +143,16 @@ namespace simd {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
+    static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
+    {
+        return _mm_add_epi32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_sub(uint32x4 a, uint32x4 b)
+    {
+        return _mm_sub_epi32(a, b);
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -332,6 +342,12 @@ namespace simd {
     static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
+    }
+
+    static inline int32x4 int32x4_abs(int32x4 a)
+    {
+        __m128i mask = _mm_srai_epi32(a, 31);
+        return _mm_sub_epi32(_mm_xor_si128(a, mask), mask);
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)
