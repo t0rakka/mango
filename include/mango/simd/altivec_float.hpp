@@ -186,11 +186,6 @@ namespace simd {
 		return vec_max(a, b);
     }
 
-    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
-    {
-		return vec_min(vmax, vec_max(vmin, v));
-    }
-
     static inline float32x4 float32x4_abs(float32x4 a)
     {
 		return vec_abs(a);

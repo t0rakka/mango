@@ -181,11 +181,6 @@ namespace simd {
         return _mm_max_ps(a, b);
     }
 
-    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
-    {
-        return _mm_min_ps(vmax, _mm_max_ps(vmin, v));
-    }
-
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff)));

@@ -202,11 +202,6 @@ namespace simd {
         return vmaxq_f32(a, b);
     }
 
-    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
-    {
-        return vminq_f32(vmax, vmaxq_f32(vmin, v));
-    }
-
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         return vabsq_f32(a);

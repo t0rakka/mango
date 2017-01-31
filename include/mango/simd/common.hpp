@@ -434,9 +434,14 @@ namespace simd {
         return float32x4_max(a, float32x4_set1(b));
     }
 
+    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
+    {
+        return float32x4_min(vmax, float32x4_max(vmin, v));
+    }
+
     static inline float32x4 float32x4_clamp(float32x4 v, float vmin, float vmax)
     {
-        return float32x4_clamp(v, float32x4_set1(vmin), float32x4_set1(vmax));
+        return float32x4_min(float32x4_set1(vmax), float32x4_max(float32x4_set1(vmin), v));
     }
 
     static inline float32x4 float32x4_compare_neq(float32x4 a, float b)
@@ -657,9 +662,14 @@ namespace simd {
         return float64x4_max(a, float64x4_set1(b));
     }
 
+    static inline float64x4 float64x4_clamp(float64x4 v, float64x4 vmin, float64x4 vmax)
+    {
+        return float64x4_min(vmax, float64x4_max(vmin, v));
+    }
+
     static inline float64x4 float64x4_clamp(float64x4 v, double vmin, double vmax)
     {
-        return float64x4_clamp(v, float64x4_set1(vmin), float64x4_set1(vmax));
+        return float64x4_min(float64x4_set1(vmax), float64x4_max(float64x4_set1(vmin), v));
     }
 
     static inline float64x4 float64x4_compare_neq(float64x4 a, double b)

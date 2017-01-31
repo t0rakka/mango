@@ -265,14 +265,6 @@ namespace simd {
         return result;
     }
 
-    static inline float64x4 float64x4_clamp(float64x4 v, float64x4 vmin, float64x4 vmax)
-    {
-        float64x4 result;
-        result.xy = _mm_min_pd(vmax.xy, _mm_max_pd(vmin.xy, v.xy));
-        result.zw = _mm_min_pd(vmax.zw, _mm_max_pd(vmin.zw, v.zw));
-        return result;
-    }
-
     static inline float64x4 float64x4_abs(float64x4 a)
     {
         const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7fffffffffffffff));

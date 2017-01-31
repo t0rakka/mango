@@ -154,16 +154,6 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4 float32x4_clamp(float32x4 a, float32x4 vmin, float32x4 vmax)
-    {
-        float32x4 v;
-        v[0] = std::min(vmax[0], std::max(vmin[0], a[0]));
-        v[1] = std::min(vmax[1], std::max(vmin[1], a[1]));
-        v[2] = std::min(vmax[2], std::max(vmin[2], a[2]));
-        v[3] = std::min(vmax[3], std::max(vmin[3], a[3]));
-        return v;
-    }
-
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         float32x4 v;

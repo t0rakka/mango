@@ -181,11 +181,6 @@ namespace simd {
         return spu_sel(a, b, spu_cmpgt(b, a));
     }
 
-    static inline float32x4 float32x4_clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
-    {
-		return float32x4_min(vmax, float32x4_max(vmin, v));
-    }
-
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         return (vec_float4)spu_andc((vec_uint4)a, spu_splats(0x80000000));
