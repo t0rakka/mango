@@ -263,19 +263,22 @@ namespace simd {
         return vec_xor(a, b);
     }
 
-    static inline int32x4 int32x4_sll(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sll(int32x4 a)
     {
-        return vec_sl(a, b);
+        return vec_sl(a, Count);
     }
 
-    static inline int32x4 int32x4_srl(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_srl(int32x4 a)
     {
-        return vec_sr(a, b);
+        return vec_sr(a, Count);
     }
 
-    static inline int32x4 int32x4_sra(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sra(int32x4 a)
     {
-        return vec_sra(a, b);
+        return vec_sra(a, Count);
     }
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)

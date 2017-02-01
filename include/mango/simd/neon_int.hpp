@@ -248,37 +248,23 @@ namespace simd {
 
     // shift
 
-#ifdef MANGO_COMPILER_CLANG
-
-    // error: argument to '__builtin_neon_vshrq_n_v' must be a constant integer
-
-    #define int32x4_sll(a, b) \
-        (int32x4) vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), b))
-
-    #define int32x4_srl(a, b) \
-        (int32x4) vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), b))
-
-    #define int32x4_sra(a, b) \
-        (int32x4) vshrq_n_s32(a, b)
-
-#else
-
-    static inline int32x4 int32x4_sll(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sll(int32x4 a)
     {
-        return vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), b));
+        return vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), Count));
     }
 
-    static inline int32x4 int32x4_srl(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_srl(int32x4 a)
     {
-        return vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), b));
+        return vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), Count));
     }
 
-    static inline int32x4 int32x4_sra(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sra(int32x4 a)
     {
-        return vshrq_n_s32(a, b);
+        return vshrq_n_s32(a, Count);
     }
-
-#endif
 
     // compare
 

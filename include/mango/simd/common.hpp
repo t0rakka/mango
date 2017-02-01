@@ -778,5 +778,19 @@ namespace simd {
         return float64x4_mul(a, float64x4_rsqrt(float64x4_dot4(a, a)));
     }
 
+    // ------------------------------------------------------------------
+    // macros
+    // ------------------------------------------------------------------
+
+    // Hide the worst hacks here in the end. We desperately want to use
+    // API that allows to the "constant integer" parameter to be passed as-if
+    // the shift was a normal function. CLANG implementation for example does not
+    // accept anything else so we do this immoral macro sleight-of-hand to get
+    // what we want. The count still has to be a compile-time constant, of course.
+
+    #define int32x4_sll(Value, Count) int32x4_sll<Count>(Value)
+    #define int32x4_srl(Value, Count) int32x4_srl<Count>(Value)
+    #define int32x4_sra(Value, Count) int32x4_sra<Count>(Value)
+
 } // namespace simd
 } // namespace mango

@@ -332,33 +332,36 @@ namespace simd {
 
     // shift
 
-    static inline int32x4 int32x4_sll(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sll(int32x4 a)
     {
         int32x4 v;
-        v[0] = static_cast<uint32>(a[0]) << b;
-        v[1] = static_cast<uint32>(a[1]) << b;
-        v[2] = static_cast<uint32>(a[2]) << b;
-        v[3] = static_cast<uint32>(a[3]) << b;
+        v[0] = static_cast<uint32>(a[0]) << Count;
+        v[1] = static_cast<uint32>(a[1]) << Count;
+        v[2] = static_cast<uint32>(a[2]) << Count;
+        v[3] = static_cast<uint32>(a[3]) << Count;
         return v;
     }
 
-    static inline int32x4 int32x4_srl(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_srl(int32x4 a)
     {
         int32x4 v;
-        v[0] = static_cast<uint32>(a[0]) >> b;
-        v[1] = static_cast<uint32>(a[1]) >> b;
-        v[2] = static_cast<uint32>(a[2]) >> b;
-        v[3] = static_cast<uint32>(a[3]) >> b;
+        v[0] = static_cast<uint32>(a[0]) >> Count;
+        v[1] = static_cast<uint32>(a[1]) >> Count;
+        v[2] = static_cast<uint32>(a[2]) >> Count;
+        v[3] = static_cast<uint32>(a[3]) >> Count;
         return v;
     }
 
-    static inline int32x4 int32x4_sra(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sra(int32x4 a)
     {
         int32x4 v;
-        v[0] = a[0] >> b;
-        v[1] = a[1] >> b;
-        v[2] = a[2] >> b;
-        v[3] = a[3] >> b;
+        v[0] = a[0] >> Count;
+        v[1] = a[1] >> Count;
+        v[2] = a[2] >> Count;
+        v[3] = a[3] >> Count;
         return v;
     }
 

@@ -389,19 +389,22 @@ namespace simd {
 
     // shift
 
-    static inline int32x4 int32x4_sll(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sll(int32x4 a)
     {
-        return _mm_slli_epi32(a, b);
+        return _mm_slli_epi32(a, Count);
     }
 
-    static inline int32x4 int32x4_srl(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_srl(int32x4 a)
     {
-        return _mm_srli_epi32(a, b);
+        return _mm_srli_epi32(a, Count);
     }
 
-    static inline int32x4 int32x4_sra(int32x4 a, int b)
+    template <int Count> 
+    static inline int32x4 int32x4_sra(int32x4 a)
     {
-        return _mm_srai_epi32(a, b);
+        return _mm_srai_epi32(a, Count);
     }
 
     // compare
