@@ -110,6 +110,29 @@ namespace simd {
         return veorq_u32(a, b);
     }
 
+    // shift
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sll(uint32x4 a)
+    {
+        return vshlq_n_u32(a, Count);
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_srl(uint32x4 a)
+    {
+        return vshrq_n_u32(a, Count);
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sra(uint32x4 a)
+    {
+        const int32x4 temp = vshrq_n_s32(vreinterpretq_s32_u32(a), Count);
+        return vreinterpretq_u32_s32(temp);
+    }
+
+    // compare
+
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
         return vceqq_u32(a, b);
@@ -251,13 +274,15 @@ namespace simd {
     template <int Count> 
     static inline int32x4 int32x4_sll(int32x4 a)
     {
-        return vreinterpretq_s32_u32(vshlq_n_u32(vreinterpretq_u32_s32(a), Count));
+        const uint32x4 temp = vshlq_n_u32(vreinterpretq_u32_s32(a), Count);
+        return vreinterpretq_s32_u32(temp);
     }
 
     template <int Count> 
     static inline int32x4 int32x4_srl(int32x4 a)
     {
-        return vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a), Count));
+        const uint32x4 temp = vshrq_n_u32(vreinterpretq_u32_s32(a), Count);
+        return vreinterpretq_s32_u32(temp);
     }
 
     template <int Count> 

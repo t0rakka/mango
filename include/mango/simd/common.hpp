@@ -788,6 +788,10 @@ namespace simd {
     // accept anything else so we do this immoral macro sleight-of-hand to get
     // what we want. The count still has to be a compile-time constant, of course.
 
+    #define uint32x4_sll(Value, Count) uint32x4_sll<Count>(Value)
+    #define uint32x4_srl(Value, Count) uint32x4_srl<Count>(Value)
+    #define uint32x4_sra(Value, Count) uint32x4_sra<Count>(Value)
+
     #define int32x4_sll(Value, Count) int32x4_sll<Count>(Value)
     #define int32x4_srl(Value, Count) int32x4_srl<Count>(Value)
     #define int32x4_sra(Value, Count) int32x4_sra<Count>(Value)

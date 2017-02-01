@@ -122,6 +122,28 @@ namespace simd {
 		return spu_xor(a, b);
     }
 
+    // shift
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sll(uint32x4 a)
+    {
+        return spu_sl(a, Count);
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_srl(uint32x4 a)
+    {
+        return spu_sr(a, Count);
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sra(uint32x4 a)
+    {
+        return spu_sra(a, Count);
+    }
+
+    // compare
+
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
 		return (uint32x4) spu_cmpeq(a, b);
@@ -258,6 +280,8 @@ namespace simd {
 		return spu_xor(a, b);
     }
 
+    // shift
+
     template <int Count> 
     static inline int32x4 int32x4_sll(int32x4 a)
     {
@@ -275,6 +299,8 @@ namespace simd {
     {
         return spu_sra(a, Count);
     }
+
+    // compare
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
     {

@@ -138,6 +138,43 @@ namespace simd {
         return v;
     }
 
+    // shift
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sll(uint32x4 a)
+    {
+        uint32x4 v;
+        v[0] = a[0] << Count;
+        v[1] = a[1] << Count;
+        v[2] = a[2] << Count;
+        v[3] = a[3] << Count;
+        return v;
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_srl(uint32x4 a)
+    {
+        uint32x4 v;
+        v[0] = a[0] >> Count;
+        v[1] = a[1] >> Count;
+        v[2] = a[2] >> Count;
+        v[3] = a[3] >> Count;
+        return v;
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sra(uint32x4 a)
+    {
+        uint32x4 v;
+        v[0] = static_cast<int32>(a[0]) >> Count;
+        v[1] = static_cast<int32>(a[1]) >> Count;
+        v[2] = static_cast<int32>(a[2]) >> Count;
+        v[3] = static_cast<int32>(a[3]) >> Count;
+        return v;
+    }
+
+    // compare
+
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
         uint32x4 v;

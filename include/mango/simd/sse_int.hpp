@@ -175,6 +175,28 @@ namespace simd {
         return _mm_xor_si128(a, b);
     }
 
+    // shift
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sll(uint32x4 a)
+    {
+        return _mm_slli_epi32(a, Count);
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_srl(uint32x4 a)
+    {
+        return _mm_srli_epi32(a, Count);
+    }
+
+    template <int Count> 
+    static inline uint32x4 uint32x4_sra(uint32x4 a)
+    {
+        return _mm_srai_epi32(a, Count);
+    }
+
+    // compare
+
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
         return _mm_cmpeq_epi32(a, b);
