@@ -684,7 +684,7 @@ namespace mango
     MAKE_VECTOR_FUNCTION2(min, simd::float64x4_min)
     MAKE_VECTOR_FUNCTION2(max, simd::float64x4_max)
     MAKE_VECTOR_FUNCTION2(dot, simd::float64x4_dot4)
-    MAKE_VECTOR_FUNCTION2(cross, simd::float64x4_cross3)
+    //MAKE_VECTOR_FUNCTION2(cross, simd::float64x4_cross3)
     MAKE_VECTOR_FUNCTION2(mod, simd::float64x4_mod)
     MAKE_VECTOR_FUNCTION2(pow, simd::float64x4_pow)
     MAKE_VECTOR_FUNCTION2(atan2, simd::float64x4_atan2)
