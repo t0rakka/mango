@@ -22,39 +22,39 @@ namespace simd {
     // SIMD vector base classes
     // --------------------------------------------------------------
 
-    template <typename T, bool Signed>
+    template <typename ScalarType, int Size, typename VectorType>
     struct vector_type
     {
-        typedef T type;
-        T m;
+        typedef VectorType type;
+        VectorType m;
 
         vector_type() = default;
 
-        vector_type(T m) : m(m)
+        vector_type(VectorType m) : m(m)
         {
         }
 
-        operator T () const
+        operator VectorType () const
         {
             return m;
         }
     };
 
-    template <typename T, int Size>
+    template <typename ScalarType, int Size>
     struct scalar_type
     {
-        T data[Size];
+        ScalarType data[Size];
 
         scalar_type() = default;
 
-        T & operator [] (int index)
+        ScalarType & operator [] (int index)
         {
-            return reinterpret_cast<T *>(this)[index];
+            return reinterpret_cast<ScalarType *>(this)[index];
         }
 
-        const T & operator [] (int index) const
+        const ScalarType & operator [] (int index) const
         {
-            return reinterpret_cast<const T *>(this)[index];
+            return reinterpret_cast<const ScalarType *>(this)[index];
         }
     };
 
@@ -96,10 +96,10 @@ namespace simd {
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
-    typedef vector_type<__m128i, false> uint32x4;
-    typedef vector_type<__m128i, true> int32x4;
-    typedef vector_type<__m128, true> float32x4;
-    typedef vector_type<__m256d, true> float64x4;
+    typedef vector_type<uint32, 4, __m128i> uint32x4;
+    typedef vector_type<int32, 4, __m128i> int32x4;
+    typedef vector_type<float, 4, __m128> float32x4;
+    typedef vector_type<double, 4,  __m256d> float64x4;
     typedef scalar_type<half, 4> float16x4;
 
 } // namespace simd
@@ -123,9 +123,9 @@ namespace simd {
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
-    typedef vector_type<__m128i, false> uint32x4;
-    typedef vector_type<__m128i, true> int32x4;
-    typedef vector_type<__m128, true> float32x4;
+    typedef vector_type<uint32, 4, __m128i> uint32x4;
+    typedef vector_type<int32, 4, __m128i> int32x4;
+    typedef vector_type<float, 4, __m128> float32x4;
     typedef scalar_type<half, 4> float16x4;
 
     struct float64x4
@@ -155,13 +155,13 @@ namespace simd {
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
-    typedef vector_type<uint32x4_t, false> uint32x4;
-    typedef vector_type<int32x4_t, true> int32x4;
-    typedef vector_type<float32x4_t, true> float32x4;
+    typedef vector_type<uint32, 4, uint32x4_t> uint32x4;
+    typedef vector_type<int32, 4, int32x4_t> int32x4;
+    typedef vector_type<float, 4, float32x4_t> float32x4;
 
 #ifdef MANGO_ENABLE_FP16
 
-    typedef vector_type<float16x4_t, true> float16x4;
+    typedef vector_type<half, 4, float16x4_t> float16x4;
 
 #else
 
@@ -192,9 +192,9 @@ namespace simd {
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
-    typedef vector_type<vector unsigned int, false> uint32x4;
-    typedef vector_type<vector signed int, true> int32x4;
-    typedef vector_type<vector float, true> float32x4;
+    typedef vector_type<uint32, 4, vector unsigned int> uint32x4;
+    typedef vector_type<int32, 4, vector signed int> int32x4;
+    typedef vector_type<float, 4, vector float> float32x4;
     typedef scalar_type<double, 4> float64x4;
     typedef scalar_type<half, 4> float16x4;
 
@@ -219,9 +219,9 @@ namespace simd {
     // Cell BE SPU
     // --------------------------------------------------------------
 
-    typedef vector_type<vector unsigned int, false> uint32x4;
-    typedef vector_type<vector signed int, true> int32x4;
-    typedef vector_type<vector float, true> float32x4;
+    typedef vector_type<uint32, 4, vector unsigned int> uint32x4;
+    typedef vector_type<int32, 4, vector signed int> int32x4;
+    typedef vector_type<float, 4, vector float> float32x4;
     typedef scalar_type<double, 4> float64x4;
     typedef scalar_type<half, 4> float16x4;
 
