@@ -414,6 +414,16 @@ namespace simd {
         return vbslq_s32(vreinterpretq_u32_s32(mask), a, b);
     }
 
+    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    {
+        return vminq_s32(a, b);
+    }
+
+    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    {
+        return vmaxq_s32(a, b);
+    }
+
     static inline uint32 int32x4_get_mask(int32x4 a)
     {
         const int32x4_t mask = { 1, 2, 4, 8 };
@@ -424,16 +434,6 @@ namespace simd {
         const int32x2_t d0 = vorr_s32(high, low);
         const int32x2_t d1 = vpadd_s32(d0, d0);
         return vget_lane_s32(d1, 0);
-    }
-
-    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
-    {
-        return vminq_s32(a, b);
-    }
-
-    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
-    {
-        return vmaxq_s32(a, b);
     }
 
     static inline uint32 int32x4_pack(int32x4 s)

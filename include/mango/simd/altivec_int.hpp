@@ -345,12 +345,6 @@ namespace simd {
         return vec_sel(b, a, (vector unsigned int)mask);
     }
 
-    static inline uint32 int32x4_get_mask(int32x4 a)
-    {
-        // TODO
-        return 0;
-    }
-
     static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
     {
         return vec_min(a, b);
@@ -359,6 +353,12 @@ namespace simd {
     static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
     {
         return vec_max(a, b);
+    }
+
+    static inline uint32 int32x4_get_mask(int32x4 a)
+    {
+        // TODO
+        return 0;
     }
 
     static inline uint32 int32x4_pack(int32x4 s)
