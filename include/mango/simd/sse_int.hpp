@@ -18,6 +18,64 @@ namespace simd {
     #define simd_shuffle_epi(a, b, mask) \
         _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), mask));
 
+    static inline __m128i _mm_select_si128(__m128i mask, __m128i a, __m128i b)
+    {
+        return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
+    }
+
+    // TODO: move to correct place when implemented
+    static inline uint16x8 uint16x8_compare_gt(uint16x8 a, uint16x8 b)
+    {
+        const __m128i sign = _mm_set1_epi16(0x8000);
+        return _mm_cmpgt_epi16(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+    }
+
+    // -----------------------------------------------------------------
+    // uint8x16
+    // -----------------------------------------------------------------
+
+    static inline uint8x16 uint8x16_min(uint8x16 a, uint8x16 b)
+    {
+        return _mm_min_epu8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_max(uint8x16 a, uint8x16 b)
+    {
+        return _mm_max_epu8(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // uint16x8
+    // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline uint16x8 uint16x8_min(uint16x8 a, uint16x8 b)
+    {
+        return _mm_min_epu16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_max(uint16x8 a, uint16x8 b)
+    {
+        return _mm_max_epu16(a, b);
+    }
+
+#else
+
+    static inline uint16x8 uint16x8_min(uint16x8 a, uint16x8 b)
+    {
+        const __m128i mask = uint16x8_compare_gt(a, b);
+        return _mm_select_si128(mask, b, a);
+    }
+
+    static inline uint16x8 uint16x8_max(uint16x8 a, uint16x8 b)
+    {
+        const __m128i mask = uint16x8_compare_gt(a, b);
+        return _mm_select_si128(mask, a, b);
+    }
+
+#endif
+    
     // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
@@ -210,7 +268,7 @@ namespace simd {
 
     static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
     {
-        return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
+        return _mm_select_si128(mask, a, b);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -230,16 +288,62 @@ namespace simd {
     static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
     {
         const uint32x4 mask = uint32x4_compare_gt(a, b);
-        return uint32x4_select(mask, b, a);
+        return _mm_select_si128(mask, b, a);
     }
 
     static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
     {
         const uint32x4 mask = uint32x4_compare_gt(a, b);
-        return uint32x4_select(mask, a, b);
+        return _mm_select_si128(mask, a, b);
     }
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
+
+    // -----------------------------------------------------------------
+    // int8x16
+    // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
+    {
+        return _mm_min_epi8(a, b);
+    }
+
+    static inline int8x16 int8x16_max(int8x16 a, int8x16 b)
+    {
+        return _mm_max_epi8(a, b);
+    }
+
+#else
+
+    static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
+    {
+        const __m128i mask = _mm_cmpgt_epi8(a, b);
+        return _mm_select_si128(mask, b, a);
+    }
+
+    static inline int8x16 int8x16_max(int8x16 a, int8x16 b)
+    {
+        const __m128i mask = _mm_cmpgt_epi8(a, b);
+        return _mm_select_si128(mask, a, b);
+    }
+
+#endif
+
+    // -----------------------------------------------------------------
+    // int16x8
+    // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_min(int16x8 a, int16x8 b)
+    {
+        return _mm_min_epi16(a, b);
+    }
+
+    static inline int16x8 int16x8_max(int16x8 a, int16x8 b)
+    {
+        return _mm_max_epi16(a, b);
+    }
 
     // -----------------------------------------------------------------
     // int32x4
@@ -443,7 +547,7 @@ namespace simd {
 
     static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
     {
-        return int32x4_or(int32x4_and(mask, a), int32x4_nand(mask, b));
+        return _mm_select_si128(mask, a, b);
     }
 
     static inline uint32 int32x4_get_mask(int32x4 a)
@@ -481,13 +585,13 @@ namespace simd {
     static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
     {
         const __m128i mask = _mm_cmpgt_epi32(a, b);
-        return int32x4_select(mask, b, a);
+        return _mm_select_si128(mask, b, a);
     }
 
     static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
     {
         const __m128i mask = _mm_cmpgt_epi32(a, b);
-        return int32x4_select(mask, a, b);
+        return _mm_select_si128(mask, a, b);
     }
 
     static inline int32x4 int32x4_unpack(uint32 s)

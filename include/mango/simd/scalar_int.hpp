@@ -12,6 +12,58 @@ namespace mango {
 namespace simd {
 
     // -----------------------------------------------------------------
+    // helpers
+    // -----------------------------------------------------------------
+
+    template <typename ScalarType, int Size>
+    static inline scalar_type<ScalarType, Size> scalar_min(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    {
+        scalar_type<ScalarType, Size> v;
+        for (int i = 0; i < Size; ++i) {
+            v[i] = std::min(a[i], b[i]);
+        }
+        return v;
+    }
+
+    template <typename ScalarType, int Size>
+    static inline scalar_type<ScalarType, Size> scalar_max(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    {
+        scalar_type<ScalarType, Size> v;
+        for (int i = 0; i < Size; ++i) {
+            v[i] = std::max(a[i], b[i]);
+        }
+        return v;
+    }
+
+    // -----------------------------------------------------------------
+    // uint8x16
+    // -----------------------------------------------------------------
+
+    static inline uint8x16 uint8x16_min(uint8x16 a, uint8x16 b)
+    {
+        return scalar_min(a, b);
+    }
+
+    static inline uint8x16 uint8x16_max(uint8x16 a, uint8x16 b)
+    {
+        return scalar_max(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // uint16x8
+    // -----------------------------------------------------------------
+
+    static inline uint16x8 uint16x8_min(uint16x8 a, uint16x8 b)
+    {
+        return scalar_min(a, b);
+    }
+
+    static inline uint16x8 uint16x8_max(uint16x8 a, uint16x8 b)
+    {
+        return scalar_max(a, b);
+    }
+    
+    // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
 
@@ -207,22 +259,40 @@ namespace simd {
 
     static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
     {
-        uint32x4 v;
-        v[0] = std::min(a[0], b[0]);
-        v[1] = std::min(a[1], b[1]);
-        v[2] = std::min(a[2], b[2]);
-        v[3] = std::min(a[3], b[3]);
-        return v;
+        return scalar_min(a, b);
     }
 
     static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
     {
-        uint32x4 v;
-        v[0] = std::max(a[0], b[0]);
-        v[1] = std::max(a[1], b[1]);
-        v[2] = std::max(a[2], b[2]);
-        v[3] = std::max(a[3], b[3]);
-        return v;
+        return scalar_max(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // int8x16
+    // -----------------------------------------------------------------
+
+    static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
+    {
+        return scalar_min(a, b);
+    }
+
+    static inline int8x16 int8x16_max(int8x16 a, int8x16 b)
+    {
+        return scalar_min(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // int16x8
+    // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_min(int16x8 a, int16x8 b)
+    {
+        return scalar_min(a, b);
+    }
+
+    static inline int16x8 int16x8_max(int16x8 a, int16x8 b)
+    {
+        return scalar_min(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -446,22 +516,12 @@ namespace simd {
 
     static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
     {
-        int32x4 v;
-        v[0] = std::min(a[0], b[0]);
-        v[1] = std::min(a[1], b[1]);
-        v[2] = std::min(a[2], b[2]);
-        v[3] = std::min(a[3], b[3]);
-        return v;
+        return scalar_min(a, b);
     }
 
     static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
     {
-        int32x4 v;
-        v[0] = std::max(a[0], b[0]);
-        v[1] = std::max(a[1], b[1]);
-        v[2] = std::max(a[2], b[2]);
-        v[3] = std::max(a[3], b[3]);
-        return v;
+        return scalar_max(a, b);
     }
 
     static inline uint32 int32x4_pack(int32x4 s)

@@ -12,6 +12,34 @@ namespace mango {
 namespace simd {
 
     // -----------------------------------------------------------------
+    // uint8x16
+    // -----------------------------------------------------------------
+
+    static inline uint8x16 uint8x16_min(uint8x16 a, uint8x16 b)
+    {
+        return vminq_u8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_max(uint8x16 a, uint8x16 b)
+    {
+        return vmaxq_u8(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // uint16x8
+    // -----------------------------------------------------------------
+
+    static inline uint16x8 uint16x8_min(uint16x8 a, uint16x8 b)
+    {
+        return vminq_u16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_max(uint16x8 a, uint16x8 b)
+    {
+        return vmaxq_u16(a, b);
+    }
+
+    // -----------------------------------------------------------------
     // uint32x4
     // -----------------------------------------------------------------
 
@@ -181,6 +209,34 @@ namespace simd {
     static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
     {
         return vmaxq_u32(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // int8x16
+    // -----------------------------------------------------------------
+
+    static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
+    {
+        return vminq_s8(a, b);
+    }
+
+    static inline int8x16 int8x16_max(int8x16 a, int8x16 b)
+    {
+        return vmaxq_s8(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // int16x8
+    // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_min(int16x8 a, int16x8 b)
+    {
+        return vminq_s16(a, b);
+    }
+
+    static inline int16x8 int16x8_max(int16x8 a, int16x8 b)
+    {
+        return vmaxq_s16(a, b);
     }
 
     // -----------------------------------------------------------------
