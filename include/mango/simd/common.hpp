@@ -115,6 +115,8 @@ namespace simd {
         return uint32x4_min(uint32x4_set1(vmax), uint32x4_max(uint32x4_set1(vmin), v));
     }
 
+#ifndef MANGO_SIMD_INT_NEON
+
     static inline uint32x4 uint32x4_not(uint32x4 a)
     {
         return uint32x4_xor(a, uint32x4_compare_eq(a, a));
@@ -139,6 +141,8 @@ namespace simd {
     {
         return uint32x4_not(uint32x4_compare_gt(b, a));
     }
+
+#endif // MANGO_SIMD_INT_NEON
 
     // int32x4
 
@@ -202,6 +206,16 @@ namespace simd {
         return int32x4_shuffle<3, 3, 3, 3>(a);
     }
 
+    static inline int32x4 int32x4_clamp(int32x4 v, int32x4 vmin, int32x4 vmax)
+    {
+        return int32x4_min(vmax, int32x4_max(vmin, v));
+    }
+
+    static inline int32x4 int32x4_clamp(int32x4 v, int vmin, int vmax)
+    {
+        return int32x4_min(int32x4_set1(vmax), int32x4_max(int32x4_set1(vmin), v));
+    }
+
     static inline int32x4 int32x4_add(int a, int32x4 b)
     {
         return int32x4_add(int32x4_set1(a), b);
@@ -262,19 +276,11 @@ namespace simd {
         return int32x4_xor(a, int32x4_set1(b));
     }
 
+#ifndef MANGO_SIMD_INT_NEON
+
     static inline int32x4 int32x4_not(int32x4 a)
     {
         return int32x4_xor(a, int32x4_compare_eq(a, a));
-    }
-
-    static inline int32x4 int32x4_clamp(int32x4 v, int32x4 vmin, int32x4 vmax)
-    {
-        return int32x4_min(vmax, int32x4_max(vmin, v));
-    }
-
-    static inline int32x4 int32x4_clamp(int32x4 v, int vmin, int vmax)
-    {
-        return int32x4_min(int32x4_set1(vmax), int32x4_max(int32x4_set1(vmin), v));
     }
 
     static inline int32x4 int32x4_compare_neq(int32x4 a, int32x4 b)
@@ -296,6 +302,8 @@ namespace simd {
     {
         return int32x4_not(int32x4_compare_gt(b, a));
     }
+
+#endif // MANGO_SIMD_INT_NEON
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int b)
     {

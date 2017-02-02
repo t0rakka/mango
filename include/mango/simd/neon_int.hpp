@@ -110,6 +110,11 @@ namespace simd {
         return veorq_u32(a, b);
     }
 
+    static inline uint32x4 uint32x4_not(uint32x4 a)
+    {
+        return vmvnq_u32(a);
+    }
+
     // shift
 
     template <int Count> 
@@ -133,6 +138,26 @@ namespace simd {
 
     // compare
 
+    static inline uint32x4 uint32x4_compare_neq(uint32x4 a, uint32x4 b)
+    {
+        return vmvnq_u32(vceqq_u32(a, b));
+    }
+
+    static inline uint32x4 uint32x4_compare_lt(uint32x4 a, uint32x4 b)
+    {
+        return vcltq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_compare_le(uint32x4 a, uint32x4 b)
+    {
+        return vcleq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_compare_ge(uint32x4 a, uint32x4 b)
+    {
+        return vcgeq_u32(a, b);
+    }
+
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
         return vceqq_u32(a, b);
@@ -140,7 +165,7 @@ namespace simd {
 
     static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
     {
-        return vcgeq_u32(a, b);
+        return vcgtq_u32(a, b);
     }
 
     static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
@@ -269,6 +294,11 @@ namespace simd {
         return veorq_s32(a, b);
     }
 
+    static inline int32x4 int32x4_not(int32x4 a)
+    {
+        return vmvnq_s32(a);
+    }
+
     // shift
 
     template <int Count> 
@@ -293,6 +323,26 @@ namespace simd {
 
     // compare
 
+    static inline int32x4 int32x4_compare_neq(int32x4 a, int32x4 b)
+    {
+        return vreinterpretq_s32_u32(vmvnq_s32(vceqq_s32(a, b)));
+    }
+
+    static inline int32x4 int32x4_compare_lt(int32x4 a, int32x4 b)
+    {
+        return vreinterpretq_s32_u32(vcltq_s32(a, b));
+    }
+
+    static inline int32x4 int32x4_compare_le(int32x4 a, int32x4 b)
+    {
+        return vreinterpretq_s32_u32(vcleq_s32(a, b));
+    }
+
+    static inline int32x4 int32x4_compare_ge(int32x4 a, int32x4 b)
+    {
+        return vreinterpretq_s32_u32(vcgeq_s32(a, b));
+    }
+
     static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
     {
         return vreinterpretq_s32_u32(vceqq_s32(a, b));
@@ -300,7 +350,7 @@ namespace simd {
 
     static inline int32x4 int32x4_compare_gt(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vcgeq_s32(a, b));
+        return vreinterpretq_s32_u32(vcgtq_s32(a, b));
     }
 
     static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
