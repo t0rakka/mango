@@ -374,7 +374,7 @@ namespace simd {
 
     static inline int32x4 int32x4_neg(int32x4 a)
     {
-        return _mm_xor_si128(a, _mm_set1_epi32(0x80000000));
+        return _mm_sub_epi32(_mm_setzero_si128(), a);
     }
 
     static inline int32x4 int32x4_add(int32x4 a, int32x4 b)

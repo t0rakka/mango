@@ -249,8 +249,7 @@ namespace simd {
 
     static inline int32x4 int32x4_neg(int32x4 a)
     {
-        vector signed int zero = __vec_splatsi4(0);
-        return vec_sub(zero, x);
+        return vec_sub(vec_xor(a, a), a);
     }
 
     static inline int32x4 int32x4_add(int32x4 a, int32x4 b)

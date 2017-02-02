@@ -245,7 +245,7 @@ namespace simd {
 
     static inline int32x4 int32x4_neg(int32x4 a)
     {
-        return spu_sub(spu_splats(0), a);
+        return spu_sub(spu_xor(a, a), a);
     }
 
     static inline int32x4 int32x4_add(int32x4 a, int32x4 b)
