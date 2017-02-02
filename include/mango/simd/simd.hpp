@@ -96,6 +96,10 @@ namespace simd {
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
+    typedef vector_type<uint8, 16, __m128i> uint8x16;
+    typedef vector_type<int8, 16, __m128i> int8x16;
+    typedef vector_type<uint16, 8, __m128i> uint16x8;
+    typedef vector_type<int16, 8, __m128i> int16x8;
     typedef vector_type<uint32, 4, __m128i> uint32x4;
     typedef vector_type<int32, 4, __m128i> int32x4;
     typedef vector_type<float, 4, __m128> float32x4;
@@ -123,6 +127,10 @@ namespace simd {
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
+    typedef vector_type<uint8, 16, __m128i> uint8x16;
+    typedef vector_type<int8, 16, __m128i> int8x16;
+    typedef vector_type<uint16, 8, __m128i> uint16x8;
+    typedef vector_type<int16, 8, __m128i> int16x8;
     typedef vector_type<uint32, 4, __m128i> uint32x4;
     typedef vector_type<int32, 4, __m128i> int32x4;
     typedef vector_type<float, 4, __m128> float32x4;
@@ -155,6 +163,10 @@ namespace simd {
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
+    typedef vector_type<uint8, 16, uint8x16_t> uint8x16;
+    typedef vector_type<int8, 16, int8x16_t> int8x16;
+    typedef vector_type<uint16, 8, uint16x8_t> uint16x8;
+    typedef vector_type<int16, 8, int16x8_t> int16x8;
     typedef vector_type<uint32, 4, uint32x4_t> uint32x4;
     typedef vector_type<int32, 4, int32x4_t> int32x4;
     typedef vector_type<float, 4, float32x4_t> float32x4;
@@ -192,6 +204,10 @@ namespace simd {
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
+    typedef vector_type<uint8, 16, vector unsigned char> uint8x16;
+    typedef vector_type<int8, 16, vector signed char> int8x16;
+    typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
+    typedef vector_type<int16, 8, vector signed short> int16x8;
     typedef vector_type<uint32, 4, vector unsigned int> uint32x4;
     typedef vector_type<int32, 4, vector signed int> int32x4;
     typedef vector_type<float, 4, vector float> float32x4;
@@ -219,6 +235,10 @@ namespace simd {
     // Cell BE SPU
     // --------------------------------------------------------------
 
+    typedef vector_type<uint8, 16, vector unsigned char> uint8x16;
+    typedef vector_type<int8, 16, vector signed char> int8x16;
+    typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
+    typedef vector_type<int16, 8, vector signed short> int16x8;
     typedef vector_type<uint32, 4, vector unsigned int> uint32x4;
     typedef vector_type<int32, 4, vector signed int> int32x4;
     typedef vector_type<float, 4, vector float> float32x4;
@@ -246,6 +266,10 @@ namespace simd {
     // SIMD emulation
     // --------------------------------------------------------------
 
+    typedef scalar_type<uint8, 16> uint8x16;
+    typedef scalar_type<int8, 16> int8x16;
+    typedef scalar_type<uint16, 8> uint16x8;
+    typedef scalar_type<int16, 8> int16x8;
     typedef scalar_type<uint32, 4> uint32x4;
     typedef scalar_type<int32, 4> int32x4;
     typedef scalar_type<float, 4> float32x4;
