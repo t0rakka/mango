@@ -381,7 +381,7 @@ namespace simd {
 
     static inline int32x4 int32x4_compare_neq(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vmvnq_s32(vceqq_s32(a, b)));
+        return vreinterpretq_s32_u32(vmvnq_u32(vceqq_s32(a, b)));
     }
 
     static inline int32x4 int32x4_compare_lt(int32x4 a, int32x4 b)
@@ -449,7 +449,7 @@ namespace simd {
     {
         const uint8x8_t a = vreinterpret_u8_u32(vdup_n_u32(s));
         const uint16x4_t b = vget_low_u16(vmovl_u8(a));
-        return vmovl_u16(b);
+        return vreinterpretq_s32_u32(vmovl_u16(b));
     }
 
 } // namespace simd
