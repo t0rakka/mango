@@ -15,115 +15,105 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
+    // unary
+
     template <typename ScalarType, int Size>
     static inline scalar_type<ScalarType, Size>
-    scalar_abs(scalar_type<ScalarType, Size> a)
+    scalar_unroll(ScalarType (*func)(ScalarType), scalar_type<ScalarType, Size> a)
     {
         scalar_type<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
-            v[i] = std::abs(a[i]);
+            v[i] = func(a[i]);
         }
         return v;
     }
 
+    template <typename ScalarType>
+    static inline ScalarType scalar_abs(ScalarType a)
+    {
+        return std::abs(a);
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_neg(ScalarType a)
+    {
+        return -a;
+    }
+
+    // binary
+
     template <typename ScalarType, int Size>
     static inline scalar_type<ScalarType, Size>
-    scalar_neg(scalar_type<ScalarType, Size> a)
+    scalar_unroll(ScalarType (*func)(ScalarType, ScalarType), scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
     {
         scalar_type<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
-            v[i] = -a[i];
+            v[i] = func(a[i], b[i]);
         }
         return v;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_add(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_add(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] + b[i];
-        }
-        return v;
+        return a + b;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_sub(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_sub(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] - b[i];
-        }
-        return v;
+        return a - b;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_and(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_and(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] & b[i];
-        }
-        return v;
+        return a & b;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_nand(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_nand(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = ~a[i] & b[i];
-        }
-        return v;
+        return ~a & b;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_or(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_or(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] | b[i];
-        }
-        return v;
+        return a | b;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_xor(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_xor(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] ^ b[i];
-        }
-        return v;
+        return a ^ b;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_compare_eq(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_compare_eq(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] == b[i] ? ~0 : 0;
-        }
-        return v;
+        return a == b ? ~0 : 0;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_compare_gt(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType>
+    static inline ScalarType scalar_compare_gt(ScalarType a, ScalarType b)
     {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = a[i] > b[i] ? ~0 : 0;
-        }
-        return v;
+        return a > b ? ~0 : 0;
     }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_min(ScalarType a, ScalarType b)
+    {
+        return std::min(a, b);
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_max(ScalarType a, ScalarType b)
+    {
+        return std::max(a, b);
+    }
+
+    // tertiary
 
     template <typename ScalarType, int Size>
     static inline scalar_type<ScalarType, Size>
@@ -136,40 +126,18 @@ namespace simd {
         return v;
     }
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_min(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
-    {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = std::min(a[i], b[i]);
-        }
-        return v;
-    }
-
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_max(scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
-    {
-        scalar_type<ScalarType, Size> v;
-        for (int i = 0; i < Size; ++i) {
-            v[i] = std::max(a[i], b[i]);
-        }
-        return v;
-    }
-
     // -----------------------------------------------------------------
     // uint8x16
     // -----------------------------------------------------------------
 
     static inline uint8x16 uint8x16_min(uint8x16 a, uint8x16 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_min, a, b);
     }
 
     static inline uint8x16 uint8x16_max(uint8x16 a, uint8x16 b)
     {
-        return scalar_max(a, b);
+        return scalar_unroll(scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -178,12 +146,12 @@ namespace simd {
 
     static inline uint16x8 uint16x8_min(uint16x8 a, uint16x8 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_min, a, b);
     }
 
     static inline uint16x8 uint16x8_max(uint16x8 a, uint16x8 b)
     {
-        return scalar_max(a, b);
+        return scalar_unroll(scalar_max, a, b);
     }
     
     // -----------------------------------------------------------------
@@ -253,34 +221,34 @@ namespace simd {
 
     static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
     {
-        return scalar_add(a, b);
+        return scalar_unroll(scalar_add, a, b);
     }
 
     static inline uint32x4 uint32x4_sub(uint32x4 a, uint32x4 b)
     {
-        return scalar_sub(a, b);
+        return scalar_unroll(scalar_sub, a, b);
     }
 
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
     {
-        return scalar_and(a, b);
+        return scalar_unroll(scalar_and, a, b);
     }
 
     static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
     {
-        return scalar_nand(a, b);
+        return scalar_unroll(scalar_nand, a, b);
     }
 
     static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
     {
-        return scalar_or(a, b);
+        return scalar_unroll(scalar_or, a, b);
     }
 
     static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
     {
-        return scalar_xor(a, b);
+        return scalar_unroll(scalar_xor, a, b);
     }
 
     // shift
@@ -322,12 +290,12 @@ namespace simd {
 
     static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
     {
-        return scalar_compare_eq(a, b);
+        return scalar_unroll(scalar_compare_eq, a, b);
     }
 
     static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
     {
-        return scalar_compare_gt(a, b);
+        return scalar_unroll(scalar_compare_gt, a, b);
     }
 
     static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
@@ -337,12 +305,12 @@ namespace simd {
 
     static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_min, a, b);
     }
 
     static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
     {
-        return scalar_max(a, b);
+        return scalar_unroll(scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -351,12 +319,12 @@ namespace simd {
 
     static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_min, a, b);
     }
 
     static inline int8x16 int8x16_max(int8x16 a, int8x16 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -365,12 +333,12 @@ namespace simd {
 
     static inline int16x8 int16x8_min(int16x8 a, int16x8 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_min, a, b);
     }
 
     static inline int16x8 int16x8_max(int16x8 a, int16x8 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -440,44 +408,44 @@ namespace simd {
 
     static inline int32x4 int32x4_abs(int32x4 a)
     {
-        return scalar_abs(a);
+        return scalar_unroll(scalar_abs, a);
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)
     {
-        return scalar_neg(a);
+        return scalar_unroll(scalar_neg, a);
     }
 
     static inline int32x4 int32x4_add(int32x4 a, int32x4 b)
     {
-        return scalar_add(a, b);
+        return scalar_unroll(scalar_add, a, b);
     }
 
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
-        return scalar_sub(a, b);
+        return scalar_unroll(scalar_sub, a, b);
     }
 
     // logical
 
     static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
     {
-        return scalar_and(a, b);
+        return scalar_unroll(scalar_and, a, b);
     }
 
     static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
     {
-        return scalar_nand(a, b);
+        return scalar_unroll(scalar_nand, a, b);
     }
 
     static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
     {
-        return scalar_or(a, b);
+        return scalar_unroll(scalar_or, a, b);
     }
 
     static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
     {
-        return scalar_xor(a, b);
+        return scalar_unroll(scalar_xor, a, b);
     }
 
     // shift
@@ -519,12 +487,12 @@ namespace simd {
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
     {
-        return scalar_compare_eq(a, b);
+        return scalar_unroll(scalar_compare_eq, a, b);
     }
 
     static inline int32x4 int32x4_compare_gt(int32x4 a, int32x4 b)
     {
-        return scalar_compare_gt(a, b);
+        return scalar_unroll(scalar_compare_gt, a, b);
     }
 
     static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
@@ -534,12 +502,12 @@ namespace simd {
 
     static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
     {
-        return scalar_min(a, b);
+        return scalar_unroll(scalar_min, a, b);
     }
 
     static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
     {
-        return scalar_max(a, b);
+        return scalar_unroll(scalar_max, a, b);
     }
 
     static inline uint32 int32x4_get_mask(int32x4 a)
