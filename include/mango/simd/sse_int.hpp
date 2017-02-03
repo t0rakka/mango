@@ -26,7 +26,7 @@ namespace simd {
     // TODO: move to correct place when implemented
     static inline uint16x8 uint16x8_compare_gt(uint16x8 a, uint16x8 b)
     {
-        const __m128i sign = _mm_set1_epi16(0x8000);
+        const __m128i sign = _mm_set1_epi16(uint16(0x8000));
         return _mm_cmpgt_epi16(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
     }
 
