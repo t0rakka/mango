@@ -447,12 +447,9 @@ namespace simd {
 
     static inline int32x4 int32x4_unpack(uint32 s)
     {
-        const uint32x2_t a = vdup_n_u32(s);
-        const uint8x8_t b = vreinterpret_u8_u32(a);
-        const uint16x8_t c = vshll_n_u8(b, 1); // shift by one!
-        const uint16x4_t c_lo = vget_low_u16(c);
-        const uint32x4_t d = vshll_n_u16(c_lo, 1); // another, compiler hangs on valid input of 0
-        return vreinterpretq_s32_u32(vshrq_n_u32(d, 2)); // fix the scale here.. (>> 2)
+        const uint8x8_t a = vreinterpret_u8_u32(vdup_n_u32(s));
+        const uint16x4_t b = vget_low_u16(vmovl_u8(a));
+        return vmovl_u16(b);
     }
 
 } // namespace simd
