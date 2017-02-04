@@ -40,10 +40,74 @@ namespace simd {
     float64x4 float64x4_atan2(float64x4 a, float64x4 b);
 
     // ------------------------------------------------------------------
-    // Common scalar variations
+    // uint8x16
     // ------------------------------------------------------------------
 
+#ifndef MANGO_SIMD_INT_NEON
+
+    static inline uint8x16 uint8x16_not(uint8x16 a)
+    {
+        return uint8x16_xor(a, uint8x16_compare_eq(a, a));
+    }
+
+    static inline uint8x16 uint8x16_compare_neq(uint8x16 a, uint8x16 b)
+    {
+        return uint8x16_not(uint8x16_compare_eq(b, a));
+    }
+
+    static inline uint8x16 uint8x16_compare_lt(uint8x16 a, uint8x16 b)
+    {
+        return uint8x16_compare_gt(b, a);
+    }
+
+    static inline uint8x16 uint8x16_compare_le(uint8x16 a, uint8x16 b)
+    {
+        return uint8x16_not(uint8x16_compare_gt(a, b));
+    }
+
+    static inline uint8x16 uint8x16_compare_ge(uint8x16 a, uint8x16 b)
+    {
+        return uint8x16_not(uint8x16_compare_gt(b, a));
+    }
+
+#endif // MANGO_SIMD_INT_NEON
+
+    // ------------------------------------------------------------------
+    // uint16x8
+    // ------------------------------------------------------------------
+
+#ifndef MANGO_SIMD_INT_NEON
+
+    static inline uint16x8 uint16x8_not(uint16x8 a)
+    {
+        return uint16x8_xor(a, uint16x8_compare_eq(a, a));
+    }
+
+    static inline uint16x8 uint16x8_compare_neq(uint16x8 a, uint16x8 b)
+    {
+        return uint16x8_not(uint16x8_compare_eq(b, a));
+    }
+
+    static inline uint16x8 uint16x8_compare_lt(uint16x8 a, uint16x8 b)
+    {
+        return uint16x8_compare_gt(b, a);
+    }
+
+    static inline uint16x8 uint16x8_compare_le(uint16x8 a, uint16x8 b)
+    {
+        return uint16x8_not(uint16x8_compare_gt(a, b));
+    }
+
+    static inline uint16x8 uint16x8_compare_ge(uint16x8 a, uint16x8 b)
+    {
+        return uint16x8_not(uint16x8_compare_gt(b, a));
+    }
+
+#endif // MANGO_SIMD_INT_NEON
+
+    // ------------------------------------------------------------------
     // uint32x4
+    // ------------------------------------------------------------------
 
     static inline uint32x4 uint32x4_set_x(uint32x4 a, uint32 x)
     {
@@ -144,7 +208,75 @@ namespace simd {
 
 #endif // MANGO_SIMD_INT_NEON
 
+    // ------------------------------------------------------------------
+    // int8x16
+    // ------------------------------------------------------------------
+
+#ifndef MANGO_SIMD_INT_NEON
+
+    static inline int8x16 int8x16_not(int8x16 a)
+    {
+        return int8x16_xor(a, int8x16_compare_eq(a, a));
+    }
+
+    static inline int8x16 int8x16_compare_neq(int8x16 a, int8x16 b)
+    {
+        return int8x16_not(int8x16_compare_eq(b, a));
+    }
+
+    static inline int8x16 int8x16_compare_lt(int8x16 a, int8x16 b)
+    {
+        return int8x16_compare_gt(b, a);
+    }
+
+    static inline int8x16 int8x16_compare_le(int8x16 a, int8x16 b)
+    {
+        return int8x16_not(int8x16_compare_gt(a, b));
+    }
+
+    static inline int8x16 int8x16_compare_ge(int8x16 a, int8x16 b)
+    {
+        return int8x16_not(int8x16_compare_gt(b, a));
+    }
+
+#endif // MANGO_SIMD_INT_NEON
+
+    // ------------------------------------------------------------------
+    // int16x8
+    // ------------------------------------------------------------------
+
+#ifndef MANGO_SIMD_INT_NEON
+
+    static inline int16x8 int16x8_not(int16x8 a)
+    {
+        return int16x8_xor(a, int16x8_compare_eq(a, a));
+    }
+
+    static inline int16x8 int16x8_compare_neq(int16x8 a, int16x8 b)
+    {
+        return int16x8_not(int16x8_compare_eq(b, a));
+    }
+
+    static inline int16x8 int16x8_compare_lt(int16x8 a, int16x8 b)
+    {
+        return int16x8_compare_gt(b, a);
+    }
+
+    static inline int16x8 int16x8_compare_le(int16x8 a, int16x8 b)
+    {
+        return int16x8_not(int16x8_compare_gt(a, b));
+    }
+
+    static inline int16x8 int16x8_compare_ge(int16x8 a, int16x8 b)
+    {
+        return int16x8_not(int16x8_compare_gt(b, a));
+    }
+
+#endif // MANGO_SIMD_INT_NEON
+
+    // ------------------------------------------------------------------
     // int32x4
+    // ------------------------------------------------------------------
 
     static inline int32x4 int32x4_set_x(int32x4 a, int32 x)
     {
@@ -330,7 +462,9 @@ namespace simd {
         return int32x4_select(mask, int32x4_set1(a), int32x4_set1(b));
     }
 
+    // ------------------------------------------------------------------
     // float32x4
+    // ------------------------------------------------------------------
 
     static inline float32x4 float32x4_set_x(float32x4 a, float x)
     {
@@ -558,7 +692,9 @@ namespace simd {
         return float32x4_mul(a, float32x4_rsqrt(float32x4_dot4(a, a)));
     }
 
+    // ------------------------------------------------------------------
     // float64x4
+    // ------------------------------------------------------------------
 
     static inline float64x4 float64x4_set_x(float64x4 a, double x)
     {

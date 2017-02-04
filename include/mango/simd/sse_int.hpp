@@ -23,16 +23,49 @@ namespace simd {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
 
-    // TODO: move to correct place when implemented
-    static inline uint16x8 uint16x8_compare_gt(uint16x8 a, uint16x8 b)
-    {
-        const __m128i sign = _mm_set1_epi16(uint16(0x8000));
-        return _mm_cmpgt_epi16(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
-    }
-
     // -----------------------------------------------------------------
     // uint8x16
     // -----------------------------------------------------------------
+
+    // logical
+
+    static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint8x16 uint8x16_nand(uint8x16 a, uint8x16 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline uint8x16 uint8x16_or(uint8x16 a, uint8x16 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline uint8x16 uint8x16_xor(uint8x16 a, uint8x16 b)
+    {
+        return _mm_xor_si128(a, b);
+    }
+
+    // compare
+
+    static inline uint8x16 uint8x16_compare_eq(uint8x16 a, uint8x16 b)
+    {
+        return _mm_cmpeq_epi8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_compare_gt(uint8x16 a, uint8x16 b)
+    {
+        const __m128i sign = _mm_set1_epi32(0x80808080);
+        return _mm_cmpgt_epi8(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+    }
+
+    static inline uint8x16 uint8x16_select(uint8x16 mask, uint8x16 a, uint8x16 b)
+    {
+        return _mm_select_si128(mask, a, b);
+    }
 
     static inline uint8x16 uint8x16_min(uint8x16 a, uint8x16 b)
     {
@@ -47,6 +80,46 @@ namespace simd {
     // -----------------------------------------------------------------
     // uint16x8
     // -----------------------------------------------------------------
+
+    // logical
+
+    static inline uint16x8 uint16x8_and(uint16x8 a, uint16x8 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint16x8 uint16x8_nand(uint16x8 a, uint16x8 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline uint16x8 uint16x8_or(uint16x8 a, uint16x8 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline uint16x8 uint16x8_xor(uint16x8 a, uint16x8 b)
+    {
+        return _mm_xor_si128(a, b);
+    }
+
+    // compare
+
+    static inline uint16x8 uint16x8_compare_eq(uint16x8 a, uint16x8 b)
+    {
+        return _mm_cmpeq_epi16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_compare_gt(uint16x8 a, uint16x8 b)
+    {
+        const __m128i sign = _mm_set1_epi32(0x80008000);
+        return _mm_cmpgt_epi16(_mm_xor_si128(a, sign), _mm_xor_si128(b, sign));
+    }
+
+    static inline uint16x8 uint16x8_select(uint16x8 mask, uint16x8 a, uint16x8 b)
+    {
+        return _mm_select_si128(mask, a, b);
+    }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
@@ -303,6 +376,45 @@ namespace simd {
     // int8x16
     // -----------------------------------------------------------------
 
+    // logical
+
+    static inline int8x16 int8x16_and(int8x16 a, int8x16 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline int8x16 int8x16_nand(int8x16 a, int8x16 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline int8x16 int8x16_or(int8x16 a, int8x16 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline int8x16 int8x16_xor(int8x16 a, int8x16 b)
+    {
+        return _mm_xor_si128(a, b);
+    }
+
+    // compare
+
+    static inline int8x16 int8x16_compare_eq(int8x16 a, int8x16 b)
+    {
+        return _mm_cmpeq_epi8(a, b);
+    }
+
+    static inline int8x16 int8x16_compare_gt(int8x16 a, int8x16 b)
+    {
+        return _mm_cmpgt_epi8(a, b);
+    }
+
+    static inline int8x16 int8x16_select(int8x16 mask, int8x16 a, int8x16 b)
+    {
+        return _mm_select_si128(mask, a, b);
+    }
+
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
@@ -334,6 +446,45 @@ namespace simd {
     // -----------------------------------------------------------------
     // int16x8
     // -----------------------------------------------------------------
+
+    // logical
+
+    static inline int16x8 int16x8_and(int16x8 a, int16x8 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline int16x8 int16x8_nand(int16x8 a, int16x8 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline int16x8 int16x8_or(int16x8 a, int16x8 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline int16x8 int16x8_xor(int16x8 a, int16x8 b)
+    {
+        return _mm_xor_si128(a, b);
+    }
+
+    // compare
+
+    static inline int16x8 int16x8_compare_eq(int16x8 a, int16x8 b)
+    {
+        return _mm_cmpeq_epi16(a, b);
+    }
+
+    static inline int16x8 int16x8_compare_gt(int16x8 a, int16x8 b)
+    {
+        return _mm_cmpgt_epi16(a, b);
+    }
+
+    static inline int16x8 int16x8_select(int16x8 mask, int16x8 a, int16x8 b)
+    {
+        return _mm_select_si128(mask, a, b);
+    }
 
     static inline int16x8 int16x8_min(int16x8 a, int16x8 b)
     {

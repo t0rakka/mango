@@ -130,6 +130,45 @@ namespace simd {
     // uint8x16
     // -----------------------------------------------------------------
 
+    // logical
+
+    static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline uint8x16 uint8x16_nand(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_nand, a, b);
+    }
+
+    static inline uint8x16 uint8x16_or(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_or, a, b);
+    }
+
+    static inline uint8x16 uint8x16_xor(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_xor, a, b);
+    }
+
+    // compare
+
+    static inline uint8x16 uint8x16_compare_eq(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_compare_eq, a, b);
+    }
+
+    static inline uint8x16 uint8x16_compare_gt(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_compare_gt, a, b);
+    }
+
+    static inline uint8x16 uint8x16_select(uint8x16 mask, uint8x16 a, uint8x16 b)
+    {
+        return scalar_select(mask, a, b);
+    }
+
     static inline uint8x16 uint8x16_min(uint8x16 a, uint8x16 b)
     {
         return scalar_unroll(scalar_min, a, b);
@@ -143,6 +182,45 @@ namespace simd {
     // -----------------------------------------------------------------
     // uint16x8
     // -----------------------------------------------------------------
+
+    // logical
+
+    static inline uint16x8 uint16x8_and(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline uint16x8 uint16x8_nand(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_nand, a, b);
+    }
+
+    static inline uint16x8 uint16x8_or(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_or, a, b);
+    }
+
+    static inline uint16x8 uint16x8_xor(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_xor, a, b);
+    }
+
+    // compare
+
+    static inline uint16x8 uint16x8_compare_eq(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_compare_eq, a, b);
+    }
+
+    static inline uint16x8 uint16x8_compare_gt(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_compare_gt, a, b);
+    }
+
+    static inline uint16x8 uint16x8_select(uint16x8 mask, uint16x8 a, uint16x8 b)
+    {
+        return scalar_select(mask, a, b);
+    }
 
     static inline uint16x8 uint16x8_min(uint16x8 a, uint16x8 b)
     {
@@ -317,6 +395,45 @@ namespace simd {
     // int8x16
     // -----------------------------------------------------------------
 
+    // logical
+
+    static inline int8x16 int8x16_and(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline int8x16 int8x16_nand(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_nand, a, b);
+    }
+
+    static inline int8x16 int8x16_or(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_or, a, b);
+    }
+
+    static inline int8x16 int8x16_xor(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_xor, a, b);
+    }
+
+    // compare
+
+    static inline int8x16 int8x16_compare_eq(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_compare_eq, a, b);
+    }
+
+    static inline int8x16 int8x16_compare_gt(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_compare_gt, a, b);
+    }
+
+    static inline int8x16 int8x16_select(int8x16 mask, int8x16 a, int8x16 b)
+    {
+        return scalar_select(mask, a, b);
+    }
+
     static inline int8x16 int8x16_min(int8x16 a, int8x16 b)
     {
         return scalar_unroll(scalar_min, a, b);
@@ -330,6 +447,45 @@ namespace simd {
     // -----------------------------------------------------------------
     // int16x8
     // -----------------------------------------------------------------
+
+    // logical
+
+    static inline int16x8 int16x8_and(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline int16x8 int16x8_nand(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_nand, a, b);
+    }
+
+    static inline int16x8 int16x8_or(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_or, a, b);
+    }
+
+    static inline int16x8 int16x8_xor(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_xor, a, b);
+    }
+
+    // compare
+
+    static inline int16x8 int16x8_compare_eq(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_compare_eq, a, b);
+    }
+
+    static inline int16x8 int16x8_compare_gt(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_compare_gt, a, b);
+    }
+
+    static inline int16x8 int16x8_select(int16x8 mask, int16x8 a, int16x8 b)
+    {
+        return scalar_select(mask, a, b);
+    }
 
     static inline int16x8 int16x8_min(int16x8 a, int16x8 b)
     {
