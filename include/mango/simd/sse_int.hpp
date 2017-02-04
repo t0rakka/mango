@@ -27,6 +27,16 @@ namespace simd {
     // uint8x16
     // -----------------------------------------------------------------
 
+    static inline uint8x16 uint8x16_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline uint8x16 uint8x16_set1(uint8 s)
+    {
+        return _mm_set1_epi8(s);
+    }
+
     // logical
 
     static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
@@ -80,6 +90,16 @@ namespace simd {
     // -----------------------------------------------------------------
     // uint16x8
     // -----------------------------------------------------------------
+
+    static inline uint16x8 uint16x8_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline uint16x8 uint16x8_set1(uint16 s)
+    {
+        return _mm_set1_epi16(s);
+    }
 
     // logical
 
@@ -376,6 +396,28 @@ namespace simd {
     // int8x16
     // -----------------------------------------------------------------
 
+    static inline int8x16 int8x16_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline int8x16 int8x16_set1(int8 s)
+    {
+        return _mm_set1_epi8(s);
+    }
+
+    static inline int8x16 int8x16_abs(int8x16 a)
+    {
+        const __m128i zero = _mm_setzero_si128();
+        const __m128i mask = _mm_cmpgt_epi8(zero, a);
+        return _mm_select_si128(mask, _mm_sub_epi8(zero, a), a);
+    }
+
+    static inline int8x16 int8x16_neg(int8x16 a)
+    {
+        return _mm_sub_epi8(_mm_setzero_si128(), a);
+    }
+
     // logical
 
     static inline int8x16 int8x16_and(int8x16 a, int8x16 b)
@@ -446,6 +488,27 @@ namespace simd {
     // -----------------------------------------------------------------
     // int16x8
     // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline int16x8 int16x8_set1(int16 s)
+    {
+        return _mm_set1_epi16(s);
+    }
+
+    static inline int16x8 int16x8_abs(int16x8 a)
+    {
+        __m128i mask = _mm_srai_epi16(a, 15);
+        return _mm_sub_epi16(_mm_xor_si128(a, mask), mask);
+    }
+
+    static inline int16x8 int16x8_neg(int16x8 a)
+    {
+        return _mm_sub_epi16(_mm_setzero_si128(), a);
+    }
 
     // logical
 

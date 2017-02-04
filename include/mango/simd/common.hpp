@@ -72,6 +72,11 @@ namespace simd {
 
 #endif // MANGO_SIMD_INT_NEON
 
+    static inline uint8x16 uint8x16_clamp(uint8x16 v, uint8x16 vmin, uint8x16 vmax)
+    {
+        return uint8x16_min(vmax, uint8x16_max(vmin, v));
+    }
+
     // ------------------------------------------------------------------
     // uint16x8
     // ------------------------------------------------------------------
@@ -104,6 +109,11 @@ namespace simd {
     }
 
 #endif // MANGO_SIMD_INT_NEON
+
+    static inline uint16x8 uint16x8_clamp(uint16x8 v, uint16x8 vmin, uint16x8 vmax)
+    {
+        return uint16x8_min(vmax, uint16x8_max(vmin, v));
+    }
 
     // ------------------------------------------------------------------
     // uint32x4
@@ -241,6 +251,11 @@ namespace simd {
 
 #endif // MANGO_SIMD_INT_NEON
 
+    static inline int8x16 int8x16_clamp(int8x16 v, int8x16 vmin, int8x16 vmax)
+    {
+        return int8x16_min(vmax, int8x16_max(vmin, v));
+    }
+
     // ------------------------------------------------------------------
     // int16x8
     // ------------------------------------------------------------------
@@ -273,6 +288,11 @@ namespace simd {
     }
 
 #endif // MANGO_SIMD_INT_NEON
+
+    static inline int16x8 int16x8_clamp(int16x8 v, int16x8 vmin, int16x8 vmax)
+    {
+        return int16x8_min(vmax, int16x8_max(vmin, v));
+    }
 
     // ------------------------------------------------------------------
     // int32x4
@@ -692,6 +712,11 @@ namespace simd {
         return float32x4_mul(a, float32x4_rsqrt(float32x4_dot4(a, a)));
     }
 
+    static inline float32x4 float32x4_not(float32x4 a)
+    {
+        return float32x4_xor(a, float32x4_compare_eq(a, a));
+    }
+
     // ------------------------------------------------------------------
     // float64x4
     // ------------------------------------------------------------------
@@ -920,6 +945,11 @@ namespace simd {
     static inline float64x4 float64x4_normalize(float64x4 a)
     {
         return float64x4_mul(a, float64x4_rsqrt(float64x4_dot4(a, a)));
+    }
+
+    static inline float64x4 float64x4_not(float64x4 a)
+    {
+        return float64x4_xor(a, float64x4_compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------

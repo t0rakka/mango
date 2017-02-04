@@ -15,6 +15,17 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
+    template <typename ScalarType, int Size>
+    static inline scalar_type<ScalarType, Size>
+    scalar_set(ScalarType value)
+    {
+        scalar_type<ScalarType, Size> v;
+        for (int i = 0; i < Size; ++i) {
+            v[i] = value;
+        }
+        return v;
+    }
+
     // unary
 
     template <typename ScalarType, int Size>
@@ -130,6 +141,16 @@ namespace simd {
     // uint8x16
     // -----------------------------------------------------------------
 
+    static inline uint8x16 uint8x16_zero()
+    {
+        return scalar_set<uint8, 16>(0);
+    }
+
+    static inline uint8x16 uint8x16_set1(uint8 s)
+    {
+        return scalar_set<uint8, 16>(s);
+    }
+
     // logical
 
     static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
@@ -182,6 +203,16 @@ namespace simd {
     // -----------------------------------------------------------------
     // uint16x8
     // -----------------------------------------------------------------
+
+    static inline uint16x8 uint16x8_zero()
+    {
+        return scalar_set<uint16, 8>(0);
+    }
+
+    static inline uint16x8 uint16x8_set1(uint16 s)
+    {
+        return scalar_set<uint16, 8>(s);
+    }
 
     // logical
 
@@ -395,6 +426,26 @@ namespace simd {
     // int8x16
     // -----------------------------------------------------------------
 
+    static inline int8x16 int8x16_zero()
+    {
+        return scalar_set<int8, 16>(0);
+    }
+
+    static inline int8x16 int8x16_set1(int8 s)
+    {
+        return scalar_set<int8, 16>(s);
+    }
+
+    static inline int8x16 int8x16_abs(int8x16 a)
+    {
+        return scalar_unroll(scalar_abs, a);
+    }
+
+    static inline int8x16 int8x16_neg(int8x16 a)
+    {
+        return scalar_unroll(scalar_neg, a);
+    }
+
     // logical
 
     static inline int8x16 int8x16_and(int8x16 a, int8x16 b)
@@ -447,6 +498,26 @@ namespace simd {
     // -----------------------------------------------------------------
     // int16x8
     // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_zero()
+    {
+        return scalar_set<int16, 8>(0);
+    }
+
+    static inline int16x8 int16x8_set1(int16 s)
+    {
+        return scalar_set<int16, 8>(s);
+    }
+
+    static inline int16x8 int16x8_abs(int16x8 a)
+    {
+        return scalar_unroll(scalar_abs, a);
+    }
+
+    static inline int16x8 int16x8_neg(int16x8 a)
+    {
+        return scalar_unroll(scalar_neg, a);
+    }
 
     // logical
 
