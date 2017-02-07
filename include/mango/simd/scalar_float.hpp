@@ -327,60 +327,60 @@ namespace simd {
     static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v[0] = Float(uint32(a[0] != b[0] ? 0xffffffff : 0));
-        v[1] = Float(uint32(a[1] != b[1] ? 0xffffffff : 0));
-        v[2] = Float(uint32(a[2] != b[2] ? 0xffffffff : 0));
-        v[3] = Float(uint32(a[3] != b[3] ? 0xffffffff : 0));
+        v[0] = Float(-uint32(a[0] != b[0]));
+        v[1] = Float(-uint32(a[1] != b[1]));
+        v[2] = Float(-uint32(a[2] != b[2]));
+        v[3] = Float(-uint32(a[3] != b[3]));
         return v;
     }
 
     static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v[0] = Float(uint32(a[0] == b[0] ? 0xffffffff : 0));
-        v[1] = Float(uint32(a[1] == b[1] ? 0xffffffff : 0));
-        v[2] = Float(uint32(a[2] == b[2] ? 0xffffffff : 0));
-        v[3] = Float(uint32(a[3] == b[3] ? 0xffffffff : 0));
+        v[0] = Float(-uint32(a[0] == b[0]));
+        v[1] = Float(-uint32(a[1] == b[1]));
+        v[2] = Float(-uint32(a[2] == b[2]));
+        v[3] = Float(-uint32(a[3] == b[3]));
         return v;
     }
 
     static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v[0] = Float(uint32(a[0] < b[0] ? 0xffffffff : 0));
-        v[1] = Float(uint32(a[1] < b[1] ? 0xffffffff : 0));
-        v[2] = Float(uint32(a[2] < b[2] ? 0xffffffff : 0));
-        v[3] = Float(uint32(a[3] < b[3] ? 0xffffffff : 0));
+        v[0] = Float(-uint32(a[0] < b[0]));
+        v[1] = Float(-uint32(a[1] < b[1]));
+        v[2] = Float(-uint32(a[2] < b[2]));
+        v[3] = Float(-uint32(a[3] < b[3]));
         return v;
     }
 
     static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v[0] = Float(uint32(a[0] <= b[0] ? 0xffffffff : 0));
-        v[1] = Float(uint32(a[1] <= b[1] ? 0xffffffff : 0));
-        v[2] = Float(uint32(a[2] <= b[2] ? 0xffffffff : 0));
-        v[3] = Float(uint32(a[3] <= b[3] ? 0xffffffff : 0));
+        v[0] = Float(-uint32(a[0] <= b[0]));
+        v[1] = Float(-uint32(a[1] <= b[1]));
+        v[2] = Float(-uint32(a[2] <= b[2]));
+        v[3] = Float(-uint32(a[3] <= b[3]));
         return v;
     }
 
     static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v[0] = Float(uint32(a[0] > b[0] ? 0xffffffff : 0));
-        v[1] = Float(uint32(a[1] > b[1] ? 0xffffffff : 0));
-        v[2] = Float(uint32(a[2] > b[2] ? 0xffffffff : 0));
-        v[3] = Float(uint32(a[3] > b[3] ? 0xffffffff : 0));
+        v[0] = Float(-uint32(a[0] > b[0]));
+        v[1] = Float(-uint32(a[1] > b[1]));
+        v[2] = Float(-uint32(a[2] > b[2]));
+        v[3] = Float(-uint32(a[3] > b[3]));
         return v;
     }
 
     static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
     {
         float32x4 v;
-        v[0] = Float(uint32(a[0] >= b[0] ? 0xffffffff : 0));
-        v[1] = Float(uint32(a[1] >= b[1] ? 0xffffffff : 0));
-        v[2] = Float(uint32(a[2] >= b[2] ? 0xffffffff : 0));
-        v[3] = Float(uint32(a[3] >= b[3] ? 0xffffffff : 0));
+        v[0] = Float(-uint32(a[0] >= b[0]));
+        v[1] = Float(-uint32(a[1] >= b[1]));
+        v[2] = Float(-uint32(a[2] >= b[2]));
+        v[3] = Float(-uint32(a[3] >= b[3]));
         return v;
     }
 
