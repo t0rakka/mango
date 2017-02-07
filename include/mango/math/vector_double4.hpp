@@ -691,7 +691,7 @@ namespace mango
 
 #undef MAKE_VECTOR_FUNCTION1
 #undef MAKE_VECTOR_FUNCTION2
-    
+
     static inline double4 clamp(const double4& a, const double4& amin, const double4& amax)
     {
         return simd::float64x4_clamp(a, amin, amax);
@@ -719,14 +719,12 @@ namespace mango
 
     static inline double4 hmin(const double4& v)
     {
-        const double4 temp = min(v, v.zwxy);
-        return min(temp, temp.yxwz);
+        return simd::float64x4_hmin(v);
     }
 
     static inline double4 hmax(const double4& v)
     {
-        const double4 temp = max(v, v.zwxy);
-        return max(temp, temp.yxwz);
+        return simd::float64x4_hmax(v);
     }
 
     // ------------------------------------------------------------------

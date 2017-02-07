@@ -731,14 +731,12 @@ namespace mango
 
     static inline float4 hmin(const float4& v)
     {
-        const float4 temp = min(v, v.zwxy);
-        return min(temp, temp.yxwz);
+        return simd::float32x4_hmin(v);
     }
 
     static inline float4 hmax(const float4& v)
     {
-        const float4 temp = max(v, v.zwxy);
-        return max(temp, temp.yxwz);
+        return simd::float32x4_hmax(v);
     }
 
     // ------------------------------------------------------------------

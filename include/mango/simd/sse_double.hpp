@@ -265,6 +265,26 @@ namespace simd {
         return result;
     }
 
+    static inline float64x4 float64x4_hmin(float64x4 a)
+    {
+        const __m128d xy = _mm_min_pd(a.xy, _mm_shuffle_pd(a.xy, a.xy, 0x01));
+        const __m128d zw = _mm_min_pd(a.xy, _mm_shuffle_pd(a.zw, a.zw, 0x01));
+        float64x4 result;
+        result.xy = _mm_min_pd(xy, _mm_shuffle_pd(zw, zw, 0x02));
+        result.zw = _mm_min_pd(zw, _mm_shuffle_pd(xy, xy, 0x02));
+        return result;
+    }
+
+    static inline float64x4 float64x4_hmax(float64x4 a)
+    {
+        const __m128d xy = _mm_max_pd(a.xy, _mm_shuffle_pd(a.xy, a.xy, 0x01));
+        const __m128d zw = _mm_max_pd(a.xy, _mm_shuffle_pd(a.zw, a.zw, 0x01));
+        float64x4 result;
+        result.xy = _mm_max_pd(xy, _mm_shuffle_pd(zw, zw, 0x02));
+        result.zw = _mm_max_pd(zw, _mm_shuffle_pd(xy, xy, 0x02));
+        return result;
+    }
+
     static inline float64x4 float64x4_abs(float64x4 a)
     {
         const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7fffffffffffffff));

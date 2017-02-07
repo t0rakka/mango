@@ -202,6 +202,20 @@ namespace simd {
         return vmaxq_f32(a, b);
     }
 
+    static inline float32x4 float32x4_hmin(float32x4 a)
+    {
+        float32x2_t s = vpmin_f32(vget_low_f32(a), vget_high_f32(a));
+        s = vpmin_f32(s, s);
+        return vcombine_f32(s, s);
+    }
+
+    static inline float32x4 float32x4_hmax(float32x4 a)
+    {
+        float32x2_t s = vpmax_f32(vget_low_f32(a), vget_high_f32(a));
+        s = vpmax_f32(s, s);
+        return vcombine_f32(s, s);
+    }
+
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         return vabsq_f32(a);

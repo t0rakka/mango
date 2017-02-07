@@ -35,6 +35,20 @@ namespace simd {
     }
 
     template <>
+    inline float64x4 float64x4_shuffle<1, 0, 3, 2>(float64x4 v)
+    {
+        // .yxwz
+        return _mm256_shuffle_pd(v, v, 0x05);
+    }
+
+    template <>
+    inline float64x4 float64x4_shuffle<2, 3, 0, 1>(float64x4 v)
+    {
+        // .zwxy
+        return _mm256_shuffle_pd(v, v, 0x0a);
+    }
+
+    template <>
     inline float64x4 float64x4_shuffle<0, 0, 0, 0>(float64x4 v)
     {
         // .xxxx
@@ -213,6 +227,18 @@ namespace simd {
     static inline float64x4 float64x4_max(float64x4 a, float64x4 b)
     {
         return _mm256_max_pd(a, b);
+    }
+
+    static inline float64x4 float64x4_hmin(float64x4 a)
+    {
+        const __m256d temp = _mm256_min_pd(a, _mm256_shuffle_pd(a, a, 0x05));
+        return _mm256_min_pd(temp, _mm256_shuffle_pd(temp, temp, 0x0a));
+    }
+
+    static inline float64x4 float64x4_hmax(float64x4 a)
+    {
+        const __m256d temp = _mm256_max_pd(a, _mm256_shuffle_pd(a, a, 0x05));
+        return _mm256_max_pd(temp, _mm256_shuffle_pd(temp, temp, 0x0a));
     }
 
     static inline float64x4 float64x4_abs(float64x4 a)

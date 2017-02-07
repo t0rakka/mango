@@ -154,6 +154,22 @@ namespace simd {
         return v;
     }
 
+    static inline float64x4 float64x4_hmin(float64x4 a)
+    {
+        double l = std::min(a[0], a[1]);
+        double h = std::min(a[2], a[3]);
+        double s = std::min(l, h);
+        return float64x4_set1(s);
+    }
+
+    static inline float64x4 float64x4_hmax(float64x4 a)
+    {
+        double l = std::max(a[0], a[1]);
+        double h = std::max(a[2], a[3]);
+        double s = std::max(l, h);
+        return float64x4_set1(s);
+    }
+
     static inline float64x4 float64x4_abs(float64x4 a)
     {
         float64x4 v;

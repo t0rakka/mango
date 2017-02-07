@@ -181,6 +181,18 @@ namespace simd {
         return _mm_max_ps(a, b);
     }
 
+    static inline float32x4 float32x4_hmin(float32x4 a)
+    {
+        __m128 temp = _mm_min_ps(a, _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1)));
+        return _mm_min_ps(temp, _mm_shuffle_ps(temp, temp, _MM_SHUFFLE(1, 0, 3, 2)));
+    }
+
+    static inline float32x4 float32x4_hmax(float32x4 a)
+    {
+        __m128 temp = _mm_max_ps(a, _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1)));
+        return _mm_max_ps(temp, _mm_shuffle_ps(temp, temp, _MM_SHUFFLE(1, 0, 3, 2)));
+    }
+
     static inline float32x4 float32x4_abs(float32x4 a)
     {
         return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff)));
