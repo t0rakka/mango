@@ -295,60 +295,60 @@ namespace simd {
     static inline float64x4 float64x4_compare_neq(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v[0] = Double(uint64(a[0] != b[0] ? 0xffffffffffffffff : 0));
-        v[1] = Double(uint64(a[1] != b[1] ? 0xffffffffffffffff : 0));
-        v[2] = Double(uint64(a[2] != b[2] ? 0xffffffffffffffff : 0));
-        v[3] = Double(uint64(a[3] != b[3] ? 0xffffffffffffffff : 0));
+        v[0] = Double(-uint64(a[0] != b[0]));
+        v[1] = Double(-uint64(a[1] != b[1]));
+        v[2] = Double(-uint64(a[2] != b[2]));
+        v[3] = Double(-uint64(a[3] != b[3]));
         return v;
     }
 
     static inline float64x4 float64x4_compare_eq(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v[0] = Double(uint64(a[0] == b[0] ? 0xffffffffffffffff : 0));
-        v[1] = Double(uint64(a[1] == b[1] ? 0xffffffffffffffff : 0));
-        v[2] = Double(uint64(a[2] == b[2] ? 0xffffffffffffffff : 0));
-        v[3] = Double(uint64(a[3] == b[3] ? 0xffffffffffffffff : 0));
+        v[0] = Double(-uint64(a[0] == b[0]));
+        v[1] = Double(-uint64(a[1] == b[1]));
+        v[2] = Double(-uint64(a[2] == b[2]));
+        v[3] = Double(-uint64(a[3] == b[3]));
         return v;
     }
 
     static inline float64x4 float64x4_compare_lt(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v[0] = Double(uint64(a[0] < b[0] ? 0xffffffffffffffff : 0));
-        v[1] = Double(uint64(a[1] < b[1] ? 0xffffffffffffffff : 0));
-        v[2] = Double(uint64(a[2] < b[2] ? 0xffffffffffffffff : 0));
-        v[3] = Double(uint64(a[3] < b[3] ? 0xffffffffffffffff : 0));
+        v[0] = Double(-uint64(a[0] < b[0]));
+        v[1] = Double(-uint64(a[1] < b[1]));
+        v[2] = Double(-uint64(a[2] < b[2]));
+        v[3] = Double(-uint64(a[3] < b[3]));
         return v;
     }
 
     static inline float64x4 float64x4_compare_le(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v[0] = Double(uint64(a[0] <= b[0] ? 0xffffffffffffffff : 0));
-        v[1] = Double(uint64(a[1] <= b[1] ? 0xffffffffffffffff : 0));
-        v[2] = Double(uint64(a[2] <= b[2] ? 0xffffffffffffffff : 0));
-        v[3] = Double(uint64(a[3] <= b[3] ? 0xffffffffffffffff : 0));
+        v[0] = Double(-uint64(a[0] <= b[0]));
+        v[1] = Double(-uint64(a[1] <= b[1]));
+        v[2] = Double(-uint64(a[2] <= b[2]));
+        v[3] = Double(-uint64(a[3] <= b[3]));
         return v;
     }
 
     static inline float64x4 float64x4_compare_gt(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v[0] = Double(uint64(a[0] > b[0] ? 0xffffffffffffffff : 0));
-        v[1] = Double(uint64(a[1] > b[1] ? 0xffffffffffffffff : 0));
-        v[2] = Double(uint64(a[2] > b[2] ? 0xffffffffffffffff : 0));
-        v[3] = Double(uint64(a[3] > b[3] ? 0xffffffffffffffff : 0));
+        v[0] = Double(-uint64(a[0] > b[0]));
+        v[1] = Double(-uint64(a[1] > b[1]));
+        v[2] = Double(-uint64(a[2] > b[2]));
+        v[3] = Double(-uint64(a[3] > b[3]));
         return v;
     }
 
     static inline float64x4 float64x4_compare_ge(float64x4 a, float64x4 b)
     {
         float64x4 v;
-        v[0] = Double(uint64(a[0] >= b[0] ? 0xffffffffffffffff : 0));
-        v[1] = Double(uint64(a[1] >= b[1] ? 0xffffffffffffffff : 0));
-        v[2] = Double(uint64(a[2] >= b[2] ? 0xffffffffffffffff : 0));
-        v[3] = Double(uint64(a[3] >= b[3] ? 0xffffffffffffffff : 0));
+        v[0] = Double(-uint64(a[0] >= b[0]));
+        v[1] = Double(-uint64(a[1] >= b[1]));
+        v[2] = Double(-uint64(a[2] >= b[2]));
+        v[3] = Double(-uint64(a[3] >= b[3]));
         return v;
     }
 
