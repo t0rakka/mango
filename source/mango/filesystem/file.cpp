@@ -43,7 +43,7 @@ namespace mango
 
     File::operator Memory () const
     {
-        return m_memory->getBlock(0);
+        return m_memory->slice(0);
     }
 
 	File::operator const uint8* () const

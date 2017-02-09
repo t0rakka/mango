@@ -798,7 +798,7 @@ namespace
             }
         }
 
-        Memory block = memory.getBlock(bestOffset, bestSize);
+        Memory block = memory.slice(bestOffset, bestSize);
 
         LittleEndianConstPointer pa = block.address;
 
@@ -884,7 +884,7 @@ namespace
                 case 0x4349: // IC - OS/2 Icon
                 case 0x5450: // PT - OS/2 Pointer
                 {
-                    Memory bitmapMemory = m_memory.getBlock(14);
+                    Memory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
 
                     header.width  = bmp_header.width;
@@ -968,7 +968,7 @@ namespace
                     break;
             }
 
-            Memory block = m_memory.getBlock(14);
+            Memory block = m_memory.slice(14);
             decodeBitmap(dest, block, fileHeader.offset - 14, false);
         }
     };

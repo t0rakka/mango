@@ -17,33 +17,33 @@ namespace mango
     // memory block
     // -----------------------------------------------------------------------
 
-   	struct Memory
+    struct Memory
     {
-		Object* object;
+        Object* object;
         size_t size;
         const uint8* address;
 
         Memory();
         Memory(const uint8* address, size_t size);
-		Memory(const Memory& memory);
+        Memory(const Memory& memory);
         virtual ~Memory();
 
-		const Memory& operator = (const Memory& memory);
+        const Memory& operator = (const Memory& memory);
 
-		operator const uint8* () const;
-		operator const char* () const;
+        operator const uint8* () const;
+        operator const char* () const;
 
-        Memory getBlock(size_t offset, size_t size = 0) const;
+        Memory slice(size_t offset, size_t size = 0) const;
     };
 
-	struct ManagedMemory : Memory
-	{
-		ManagedMemory(size_t size);
+    struct ManagedMemory : Memory
+    {
+        ManagedMemory(size_t size);
         ManagedMemory(const uint8* address, size_t size);
 
-		operator uint8* () const;
-		operator char* () const;
-	};
+        operator uint8* () const;
+        operator char* () const;
+    };
 
     // -----------------------------------------------------------------------
     // aligned malloc/free
@@ -143,7 +143,7 @@ namespace mango
             typedef AlignedAllocator<U> other;
         };
 
-		bool operator == (AlignedAllocator const& allocator)
+        bool operator == (AlignedAllocator const& allocator)
         {
             MANGO_UNREFERENCED_PARAMETER(allocator);
             return true;

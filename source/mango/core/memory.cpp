@@ -70,7 +70,7 @@ namespace mango {
 		return reinterpret_cast<const char*>(address);
 	}
 
-    Memory Memory::getBlock(size_t offset, size_t block_size) const
+    Memory Memory::slice(size_t offset, size_t block_size) const
     {
         Memory block(address + offset, size - offset);
         if (block_size) {
