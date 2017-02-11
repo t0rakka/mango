@@ -408,9 +408,13 @@ namespace simd {
 
     static inline int8x16 int8x16_abs(int8x16 a)
     {
+#if defined(MANGO_ENABLE_SSSE3)
+        return _mm_abs_epi8(a);
+#else
         const __m128i zero = _mm_setzero_si128();
         const __m128i mask = _mm_cmpgt_epi8(zero, a);
         return _mm_select_si128(mask, _mm_sub_epi8(zero, a), a);
+#endif
     }
 
     static inline int8x16 int8x16_neg(int8x16 a)
@@ -501,8 +505,12 @@ namespace simd {
 
     static inline int16x8 int16x8_abs(int16x8 a)
     {
+#if defined(MANGO_ENABLE_SSSE3)
+        return _mm_abs_epi16(a);
+#else
         __m128i mask = _mm_srai_epi16(a, 15);
         return _mm_sub_epi16(_mm_xor_si128(a, mask), mask);
+#endif
     }
 
     static inline int16x8 int16x8_neg(int16x8 a)
@@ -686,8 +694,12 @@ namespace simd {
 
     static inline int32x4 int32x4_abs(int32x4 a)
     {
+#if defined(MANGO_ENABLE_SSSE3)
+        return _mm_abs_epi32(a);
+#else
         __m128i mask = _mm_srai_epi32(a, 31);
         return _mm_sub_epi32(_mm_xor_si128(a, mask), mask);
+#endif
     }
 
     static inline int32x4 int32x4_neg(int32x4 a)
