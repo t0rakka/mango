@@ -151,6 +151,16 @@ namespace simd {
         return scalar_set<uint8, 16>(s);
     }
 
+    static inline uint8x16 uint8x16_add(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_add, a, b);
+    }
+
+    static inline uint8x16 uint8x16_sub(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_sub, a, b);
+    }
+
     // logical
 
     static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
@@ -212,6 +222,16 @@ namespace simd {
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
         return scalar_set<uint16, 8>(s);
+    }
+
+    static inline uint16x8 uint16x8_add(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_add, a, b);
+    }
+
+    static inline uint16x8 uint16x8_sub(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_sub, a, b);
     }
 
     // logical
@@ -436,6 +456,16 @@ namespace simd {
         return scalar_set<int8, 16>(s);
     }
 
+    static inline int8x16 int8x16_add(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_add, a, b);
+    }
+
+    static inline int8x16 int8x16_sub(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_sub, a, b);
+    }
+
     static inline int8x16 int8x16_abs(int8x16 a)
     {
         return scalar_unroll(scalar_abs, a);
@@ -507,6 +537,16 @@ namespace simd {
     static inline int16x8 int16x8_set1(int16 s)
     {
         return scalar_set<int16, 8>(s);
+    }
+
+    static inline int16x8 int16x8_add(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_add, a, b);
+    }
+
+    static inline int16x8 int16x8_sub(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_sub, a, b);
     }
 
     static inline int16x8 int16x8_abs(int16x8 a)

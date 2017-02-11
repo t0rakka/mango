@@ -25,6 +25,16 @@ namespace simd {
         return vdupq_n_u8(s);
     }
 
+    static inline uint8x16 uint8x16_add(uint8x16 a, uint8x16 b)
+    {
+        return vaddq_s8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_sub(uint8x16 a, uint8x16 b)
+    {
+        return vsubq_s8(a, b);
+    }
+
     // logical
 
     static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
@@ -111,6 +121,16 @@ namespace simd {
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
         return vdupq_n_u16(s);
+    }
+
+    static inline uint16x8 uint16x8_add(uint16x8 a, uint16x8 b)
+    {
+        return vaddq_s16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_sub(uint16x8 a, uint16x8 b)
+    {
+        return vsubq_s16(a, b);
     }
 
     // logical
@@ -373,6 +393,16 @@ namespace simd {
         return vdupq_n_s8(s);
     }
 
+    static inline int8x16 int8x16_add(int8x16 a, int8x16 b)
+    {
+        return vaddq_u8(a, b);
+    }
+
+    static inline int8x16 int8x16_sub(int8x16 a, int8x16 b)
+    {
+        return vsubq_u8(a, b);
+    }
+
     static inline int8x16 int8x16_abs(int8x16 a)
     {
         return vabsq_s8(a);
@@ -469,6 +499,16 @@ namespace simd {
     static inline int16x8 int16x8_set1(int16 s)
     {
         return vdupq_n_s16(s);
+    }
+
+    static inline int16x8 int16x8_add(int16x8 a, int16x8 b)
+    {
+        return vaddq_u16(a, b);
+    }
+
+    static inline int16x8 int16x8_sub(int16x8 a, int16x8 b)
+    {
+        return vsubq_u16(a, b);
     }
 
     static inline int16x8 int16x8_abs(int16x8 a)
