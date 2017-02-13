@@ -52,6 +52,8 @@ namespace simd {
 
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
+        // NOTE: conversion could be done by subtracting 0x80000000 from the value before signed conversion and
+        //       adding float(0x80000000) to the result after conversion but this would reduce precision on the LSBs.
         const __m128i mask = _mm_set1_epi32(0x0000ffff);
         const __m128i onep39 = _mm_set1_epi32(0x53000000);
         const __m128i x0 = _mm_or_si128(_mm_srli_epi32(s, 16), onep39);
@@ -68,6 +70,8 @@ namespace simd {
 
     static inline uint32x4 uint32x4_convert(float32x4 s)
     {
+        // NOTE: conversion could be done by subtracting float(0x80000000) from the value before signed conversion and
+        //       adding 0x80000000 to the result after conversion but this would reduce precision on the LSBs.
 	    __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
 	    __m128 x1 = _mm_cmple_ps(x2, s);
   	    __m128i x0 = _mm_cvtps_epi32(_mm_sub_ps(s, _mm_and_ps(x2, x1)));
