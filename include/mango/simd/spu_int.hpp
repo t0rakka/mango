@@ -112,6 +112,18 @@ namespace simd {
 		return spu_sub(a, b);
     }
 
+    // saturated
+
+    static inline uint32x4 uint32x4_adds(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4 uint32x4_subs(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -280,6 +292,18 @@ namespace simd {
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
 		return spu_sub(a, b);
+    }
+
+    // saturated
+
+    static inline int32x4 int32x4_adds(int32x4 a, int32x4 b)
+    {
+        return a; // TODO
+    }
+
+    static inline int32x4 int32x4_subs(int32x4 a, int32x4 b)
+    {
+        return a; // TODO
     }
 
     // logical

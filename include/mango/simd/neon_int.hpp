@@ -62,6 +62,18 @@ namespace simd {
         return vmvnq_u8(a);
     }
 
+    // saturated
+
+    static inline uint8x16 uint8x16_adds(uint8x16 a, uint8x16 b)
+    {
+        return vqaddq_u8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_subs(uint8x16 a, uint8x16 b)
+    {
+        return vqsubq_u8(a, b);
+    }
+
     // compare
 
     static inline uint8x16 uint8x16_compare_neq(uint8x16 a, uint8x16 b)
@@ -131,6 +143,18 @@ namespace simd {
     static inline uint16x8 uint16x8_sub(uint16x8 a, uint16x8 b)
     {
         return vsubq_u16(a, b);
+    }
+
+    // saturated
+
+    static inline uint16x8 uint16x8_adds(uint16x8 a, uint16x8 b)
+    {
+        return vqaddq_u16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_subs(uint16x8 a, uint16x8 b)
+    {
+        return vqsubq_u16(a, b);
     }
 
     // logical
@@ -284,6 +308,18 @@ namespace simd {
         return vsubq_u32(a, b);
     }
 
+    // saturated
+
+    static inline uint32x4 uint32x4_adds(uint32x4 a, uint32x4 b)
+    {
+        return vqaddq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_subs(uint32x4 a, uint32x4 b)
+    {
+        return vqsubq_u32(a, b);
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -403,6 +439,18 @@ namespace simd {
         return vsubq_s8(a, b);
     }
 
+    // saturated
+
+    static inline int8x16 int8x16_adds(int8x16 a, int8x16 b)
+    {
+        return vqaddq_s8(a, b);
+    }
+
+    static inline int8x16 int8x16_subs(int8x16 a, int8x16 b)
+    {
+        return vqsubq_s8(a, b);
+    }
+
     static inline int8x16 int8x16_abs(int8x16 a)
     {
         return vabsq_s8(a);
@@ -509,6 +557,18 @@ namespace simd {
     static inline int16x8 int16x8_sub(int16x8 a, int16x8 b)
     {
         return vsubq_s16(a, b);
+    }
+
+    // saturated
+
+    static inline int16x8 int16x8_adds(int16x8 a, int16x8 b)
+    {
+        return vqaddq_s16(a, b);
+    }
+
+    static inline int16x8 int16x8_subs(int16x8 a, int16x8 b)
+    {
+        return vqsubq_s16(a, b);
     }
 
     static inline int16x8 int16x8_abs(int16x8 a)
@@ -682,6 +742,18 @@ namespace simd {
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
         return vsubq_s32(a, b);
+    }
+
+    // saturated
+
+    static inline int32x4 int32x4_adds(int32x4 a, int32x4 b)
+    {
+        return vqaddq_s32(a, b);
+    }
+
+    static inline int32x4 int32x4_subs(int32x4 a, int32x4 b)
+    {
+        return vqsubq_s32(a, b);
     }
 
     // logical

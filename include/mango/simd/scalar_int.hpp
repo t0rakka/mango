@@ -77,6 +77,58 @@ namespace simd {
     }
 
     template <typename ScalarType>
+    static inline ScalarType scalar_unsigned_adds(ScalarType a, ScalarType b)
+    {
+	    ScalarType v = a + b;
+	    v |= -(v < a);
+	    return v;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_unsigned_subs(ScalarType a, ScalarType b)
+    {
+    	ScalarType v = a - b;
+	    v &= -(v <= a);
+	    return v;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_signed_adds(ScalarType a, ScalarType b)
+    {
+      	typedef typename std::make_unsigned<ScalarType>::type UnsignedScalarType;
+        UnsignedScalarType x = a;
+		UnsignedScalarType y = b;
+		UnsignedScalarType v = x + y;
+
+  	    // overflow
+	    x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
+	    if (ScalarType((x ^ y) | ~(y ^ v)) >= 0)
+	    {
+		    v = x;
+	    }
+
+	    return v;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_signed_subs(ScalarType a, ScalarType b)
+    {
+      	typedef typename std::make_unsigned<ScalarType>::type UnsignedScalarType;
+        UnsignedScalarType x = a;
+        UnsignedScalarType y = b;
+        UnsignedScalarType v = x - y;
+
+  	    // overflow
+	    x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
+	    if (ScalarType((x ^ y) & (x ^ v)) < 0)
+	    {
+		    v = x;
+	    }
+
+	    return v;
+    }
+
+    template <typename ScalarType>
     static inline ScalarType scalar_and(ScalarType a, ScalarType b)
     {
         return a & b;
@@ -161,6 +213,18 @@ namespace simd {
         return scalar_unroll(scalar_sub, a, b);
     }
 
+    // saturated
+
+    static inline uint8x16 uint8x16_adds(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_unsigned_adds, a, b);
+    }
+
+    static inline uint8x16 uint8x16_subs(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_unsigned_subs, a, b);
+    }
+
     // logical
 
     static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
@@ -232,6 +296,18 @@ namespace simd {
     static inline uint16x8 uint16x8_sub(uint16x8 a, uint16x8 b)
     {
         return scalar_unroll(scalar_sub, a, b);
+    }
+
+    // saturated
+
+    static inline uint16x8 uint16x8_adds(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_unsigned_adds, a, b);
+    }
+
+    static inline uint16x8 uint16x8_subs(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_unsigned_subs, a, b);
     }
 
     // logical
@@ -358,6 +434,18 @@ namespace simd {
         return scalar_unroll(scalar_sub, a, b);
     }
 
+    // saturated
+
+    static inline uint32x4 uint32x4_adds(uint32x4 a, uint32x4 b)
+    {
+        return scalar_unroll(scalar_unsigned_adds, a, b);
+    }
+
+    static inline uint32x4 uint32x4_subs(uint32x4 a, uint32x4 b)
+    {
+        return scalar_unroll(scalar_unsigned_subs, a, b);
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -466,6 +554,18 @@ namespace simd {
         return scalar_unroll(scalar_sub, a, b);
     }
 
+    // saturated
+
+    static inline int8x16 int8x16_adds(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_signed_adds, a, b);
+    }
+
+    static inline int8x16 int8x16_subs(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_signed_subs, a, b);
+    }
+
     static inline int8x16 int8x16_abs(int8x16 a)
     {
         return scalar_unroll(scalar_abs, a);
@@ -547,6 +647,18 @@ namespace simd {
     static inline int16x8 int16x8_sub(int16x8 a, int16x8 b)
     {
         return scalar_unroll(scalar_sub, a, b);
+    }
+
+    // saturated
+
+    static inline int16x8 int16x8_adds(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_signed_adds, a, b);
+    }
+
+    static inline int16x8 int16x8_subs(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_signed_subs, a, b);
     }
 
     static inline int16x8 int16x8_abs(int16x8 a)
@@ -691,6 +803,18 @@ namespace simd {
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
         return scalar_unroll(scalar_sub, a, b);
+    }
+
+    // saturated
+
+    static inline int32x4 int32x4_adds(int32x4 a, int32x4 b)
+    {
+        return scalar_unroll(scalar_signed_adds, a, b);
+    }
+
+    static inline int32x4 int32x4_subs(int32x4 a, int32x4 b)
+    {
+        return scalar_unroll(scalar_signed_subs, a, b);
     }
 
     // logical

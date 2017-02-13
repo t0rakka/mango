@@ -47,6 +47,18 @@ namespace simd {
         return _mm_sub_epi8(a, b);
     }
 
+    // saturated
+
+    static inline uint8x16 uint8x16_adds(uint8x16 a, uint8x16 b)
+    {
+        return _mm_adds_epu8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_subs(uint8x16 a, uint8x16 b)
+    {
+        return _mm_subs_epu8(a, b);
+    }
+
     // logical
 
     static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
@@ -160,6 +172,18 @@ namespace simd {
     static inline uint16x8 uint16x8_sub(uint16x8 a, uint16x8 b)
     {
         return _mm_sub_epi16(a, b);
+    }
+
+    // saturated
+
+    static inline uint16x8 uint16x8_adds(uint16x8 a, uint16x8 b)
+    {
+        return _mm_adds_epu16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_subs(uint16x8 a, uint16x8 b)
+    {
+        return _mm_subs_epu16(a, b);
     }
 
     // logical
@@ -406,6 +430,20 @@ namespace simd {
         return _mm_sub_epi32(a, b);
     }
 
+    // saturated
+
+    static inline uint32x4 uint32x4_adds(uint32x4 a, uint32x4 b)
+    {
+  	    const __m128i temp = _mm_add_epi32(a, b);
+  	    return _mm_or_si128(temp, _mm_cmplt_epi32(temp, a));
+    }
+
+    static inline uint32x4 uint32x4_subs(uint32x4 a, uint32x4 b)
+    {
+  	    const __m128i temp = _mm_sub_epi32(a, b);
+  	    return _mm_and_si128(temp, _mm_cmpgt_epi32(a, temp));
+    }
+
     // logical
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
@@ -559,6 +597,18 @@ namespace simd {
         return _mm_sub_epi8(a, b);
     }
 
+    // saturated
+
+    static inline int8x16 int8x16_adds(int8x16 a, int8x16 b)
+    {
+        return _mm_adds_epi8(a, b);
+    }
+
+    static inline int8x16 int8x16_subs(int8x16 a, int8x16 b)
+    {
+        return _mm_subs_epi8(a, b);
+    }
+
     static inline int8x16 int8x16_abs(int8x16 a)
     {
 #if defined(MANGO_ENABLE_SSSE3)
@@ -705,6 +755,18 @@ namespace simd {
     static inline int16x8 int16x8_sub(int16x8 a, int16x8 b)
     {
         return _mm_sub_epi16(a, b);
+    }
+
+    // saturated
+
+    static inline int16x8 int16x8_adds(int16x8 a, int16x8 b)
+    {
+        return _mm_adds_epi16(a, b);
+    }
+
+    static inline int16x8 int16x8_subs(int16x8 a, int16x8 b)
+    {
+        return _mm_subs_epi16(a, b);
     }
 
     static inline int16x8 int16x8_abs(int16x8 a)
@@ -960,6 +1022,26 @@ namespace simd {
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
         return _mm_sub_epi32(a, b);
+    }
+
+    // saturated
+
+    static inline int32x4 int32x4_adds(int32x4 a, int32x4 b)
+    {
+        const __m128i v = _mm_add_epi32(a, b);
+        a = _mm_srai_epi32(a, 31);
+        __m128i temp = _mm_xor_si128(b, v);
+        temp = _mm_xor_si128(temp, _mm_cmpeq_epi32(temp, temp));
+        temp = _mm_or_si128(temp, _mm_xor_si128(a, b));
+        return _mm_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), v, a);
+    }
+
+    static inline int32x4 int32x4_subs(int32x4 a, int32x4 b)
+    {
+        const __m128i v = _mm_sub_epi32(a, b);
+        a = _mm_srai_epi32(a, 31);
+        __m128i temp = _mm_and_si128(_mm_xor_si128(a, b), _mm_xor_si128(a, v));
+        return _mm_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
     }
 
     // logical
