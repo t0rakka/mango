@@ -50,21 +50,30 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        return vcvtq_f32_s32(s);
-    }
-
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         return vcvtq_f32_u32(s);
     }
 
+    static inline float32x4 float32x4_convert(int32x4 s)
+    {
+        return vcvtq_f32_s32(s);
+    }
+
+    static inline uint32x4 uint32x4_convert(float32x4 s)
+    {
+        return vcvtq_u32_f32(float32x4_round(s));
+    }
+
     static inline int32x4 int32x4_convert(float32x4 s)
     {
+#if 1
+        return vcvtq_s32_f32(float32x4_round(s));
+#else
         const uint32x4_t temp = vandq_u32(vreinterpretq_u32_f32(s), vreinterpretq_u32_f32(vdupq_n_f32(-0.0f)));
         const uint32x4_t half = vreinterpretq_u32_f32(vdupq_n_f32(0.5f));
         return vcvtq_s32_f32(vaddq_f32(s, vreinterpretq_f32_u32(vorrq_u32(temp, half))));
+#endif
     }
 
     static inline int32x4 int32x4_truncate(float32x4 s)

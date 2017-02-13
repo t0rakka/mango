@@ -50,16 +50,6 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        float32x4 v;
-        v[0] = float(s[0]);
-        v[1] = float(s[1]);
-        v[2] = float(s[2]);
-        v[3] = float(s[3]);
-        return v;
-    }
-
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         float32x4 v;
@@ -70,23 +60,43 @@ namespace simd {
         return v;
     }
 
+    static inline float32x4 float32x4_convert(int32x4 s)
+    {
+        float32x4 v;
+        v[0] = float(s[0]);
+        v[1] = float(s[1]);
+        v[2] = float(s[2]);
+        v[3] = float(s[3]);
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_convert(float32x4 s)
+    {
+        uint32x4 v;
+        v[0] = uint32(s[0] + 0.5f);
+        v[1] = uint32(s[1] + 0.5f);
+        v[2] = uint32(s[2] + 0.5f);
+        v[3] = uint32(s[3] + 0.5f);
+        return v;
+    }
+
     static inline int32x4 int32x4_convert(float32x4 s)
     {
         int32x4 v;
-        v[0] = int(s[0] + 0.5f);
-        v[1] = int(s[1] + 0.5f);
-        v[2] = int(s[2] + 0.5f);
-        v[3] = int(s[3] + 0.5f);
+        v[0] = int32(s[0] + 0.5f);
+        v[1] = int32(s[1] + 0.5f);
+        v[2] = int32(s[2] + 0.5f);
+        v[3] = int32(s[3] + 0.5f);
         return v;
     }
 
     static inline int32x4 int32x4_truncate(float32x4 s)
     {
         int32x4 v;
-        v[0] = int(s[0]);
-        v[1] = int(s[1]);
-        v[2] = int(s[2]);
-        v[3] = int(s[3]);
+        v[0] = int32(s[0]);
+        v[1] = int32(s[1]);
+        v[2] = int32(s[2]);
+        v[3] = int32(s[3]);
         return v;
     }
 

@@ -50,11 +50,6 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x4 float32x4_convert(int32x4 s)
-    {
-        return _mm_cvtepi32_ps(s);
-    }
-
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         const __m128i mask = _mm_set1_epi32(0x0000ffff);
@@ -64,6 +59,19 @@ namespace simd {
         const __m128 f1 = _mm_cvtepi32_ps(x1);
         const __m128 f0 = _mm_sub_ps(_mm_castsi128_ps(x0), _mm_castsi128_ps(onep39));
         return _mm_add_ps(f0, f1);
+    }
+
+    static inline float32x4 float32x4_convert(int32x4 s)
+    {
+        return _mm_cvtepi32_ps(s);
+    }
+
+    static inline uint32x4 uint32x4_convert(float32x4 s)
+    {
+	    __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
+	    __m128 x1 = _mm_cmple_ps(x2, s);
+  	    __m128i x0 = _mm_cvtps_epi32(_mm_sub_ps(s, _mm_and_ps(x2, x1)));
+  	    return _mm_or_si128(x0, _mm_slli_epi32(_mm_castps_si128(x1), 31));
     }
 
     static inline int32x4 int32x4_convert(float32x4 s)

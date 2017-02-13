@@ -50,14 +50,19 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
+    static inline float32x4 float32x4_convert(uint32x4 s)
+    {
+        return spu_convtf(s, 0);
+    }
+
     static inline float32x4 float32x4_convert(int32x4 s)
     {
         return spu_convtf(s, 0);
     }
 
-    static inline float32x4 float32x4_convert(uint32x4 s)
+    static inline uint32x4 uint32x4_convert(float32x4 s)
     {
-        return spu_convtf(s, 0);
+        return spu_convts(s, 0);
     }
 
     static inline int32x4 int32x4_convert(float32x4 s)
