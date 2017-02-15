@@ -5,10 +5,7 @@
 #include <cctype>
 #include <algorithm>
 #include <locale>
-//#include <codecvt>
 #include <mango/core/string.hpp>
-
-#define PATH_STRING "/\\:"
 
 namespace
 {
@@ -300,9 +297,9 @@ namespace mango
 
     std::string u16_toBytes(const std::wstring& source)
     {
-		// TODO: validate against reference implementation
+        // TODO: validate against reference implementation
 #if 0
-		std::string s;
+        std::string s;
         StringBuilder<char, 256, 4> sb(s);
 
         const size_t length = source.length();
@@ -329,46 +326,46 @@ namespace mango
         sb.flush();
         return s;
 #else
-		const wchar_t* src = source.c_str();
-		std::string s;
+        const wchar_t* src = source.c_str();
+        std::string s;
 
-		while (*src)
-		{
-			uint32 c = *src++;
+        while (*src)
+        {
+            uint32 c = *src++;
 
-			if (c < 0x80)
-			{
-				s.push_back(c);
-			}
-			else if (c < 0x800)
-			{
-				s.push_back(0xc0 | (c >> 6));
-				s.push_back(0x80 | (c & 0x3f));
-			}
-			else if (c < 0x10000)
-			{
-				s.push_back(0xe0 | (c >> 12));
-				s.push_back(0x80 | ((c >> 6) & 0x3f));
-				s.push_back(0x80 | (c & 0x3f));
-			}
-			else if (c < 0x200000)
-			{
-				s.push_back(0xf0 | (c >> 18));
-				s.push_back(0x80 | ((c >> 12) & 0x3f));
-				s.push_back(0x80 | ((c >> 6) & 0x3f));
-				s.push_back(0x80 | (c & 0x3f));
-			}
-		}
+            if (c < 0x80)
+            {
+                s.push_back(c);
+            }
+            else if (c < 0x800)
+            {
+                s.push_back(0xc0 | (c >> 6));
+                s.push_back(0x80 | (c & 0x3f));
+            }
+            else if (c < 0x10000)
+            {
+                s.push_back(0xe0 | (c >> 12));
+                s.push_back(0x80 | ((c >> 6) & 0x3f));
+                s.push_back(0x80 | (c & 0x3f));
+            }
+            else if (c < 0x200000)
+            {
+                s.push_back(0xf0 | (c >> 18));
+                s.push_back(0x80 | ((c >> 12) & 0x3f));
+                s.push_back(0x80 | ((c >> 6) & 0x3f));
+                s.push_back(0x80 | (c & 0x3f));
+            }
+        }
 
-		return s;
+        return s;
 #endif
     }
 
     std::wstring u16_fromBytes(const std::string& source)
     {
-		// TODO: validate against reference implementation
+        // TODO: validate against reference implementation
 #if 0
-		std::wstring s;
+        std::wstring s;
         StringBuilder<wchar_t, 256, 1> sb(s);
 
         uint32 state = 0;
@@ -389,59 +386,59 @@ namespace mango
         sb.flush() ;
         return s;
 #else
-		const char* src = source.c_str();
-		std::wstring s;
+        const char* src = source.c_str();
+        std::wstring s;
 
-		while (*src)
-		{
-			uint32 c = static_cast<uint8>(*src++);
-			uint32 d;
+        while (*src)
+        {
+            uint32 c = static_cast<uint8>(*src++);
+            uint32 d;
 
-			if (c < 0x80)
-			{
-				d = c;
-			}
-			else if ((c >> 5) == 6)
-			{
-				if ((*src & 0xc0) != 0x80)
-					break;
-				d = ((c & 0x1f) << 6) | (*src & 0x3f);
-				src++;
-			}
-			else if ((c >> 4) == 14)
-			{
-				if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80)
-					break;
-				d = ((c & 0xf) << 12) | ((src[0] & 0x3f) << 6) | (src[1] & 0x3f);
-				src += 2;
-			}
-			else if ((c >> 3) == 30)
-			{
-				if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80 || (src[2] & 0xc0) != 0x80)
-					break;
-				d = ((c & 7) << 18) | ((src[0] & 0x3f) << 12) | ((src[1] & 0x3f) << 6) | (src[2] & 0x3f);
-				src += 3;
-			}
-			else
-			{
-				// Ignore bad characters
-				continue;
-			}
+            if (c < 0x80)
+            {
+                d = c;
+            }
+            else if ((c >> 5) == 6)
+            {
+                if ((*src & 0xc0) != 0x80)
+                    break;
+                d = ((c & 0x1f) << 6) | (*src & 0x3f);
+                src++;
+            }
+            else if ((c >> 4) == 14)
+            {
+                if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80)
+                    break;
+                d = ((c & 0xf) << 12) | ((src[0] & 0x3f) << 6) | (src[1] & 0x3f);
+                src += 2;
+            }
+            else if ((c >> 3) == 30)
+            {
+                if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80 || (src[2] & 0xc0) != 0x80)
+                    break;
+                d = ((c & 7) << 18) | ((src[0] & 0x3f) << 12) | ((src[1] & 0x3f) << 6) | (src[2] & 0x3f);
+                src += 3;
+            }
+            else
+            {
+                // Ignore bad characters
+                continue;
+            }
 
-			if (d > 0xffff)
-			{
-				if (d > 0x10ffff)
-					continue;
-				s.push_back(((d - 0x10000) >> 10) + 0xd800);
-				s.push_back((d & 0x3ff) + 0xdc00);
-			}
-			else
-			{
-				s.push_back(d);
-			}
-		}
+            if (d > 0xffff)
+            {
+                if (d > 0x10ffff)
+                    continue;
+                s.push_back(((d - 0x10000) >> 10) + 0xd800);
+                s.push_back((d & 0x3ff) + 0xdc00);
+            }
+            else
+            {
+                s.push_back(d);
+            }
+        }
 
-		return s;
+        return s;
 #endif
     }
 
@@ -480,19 +477,19 @@ namespace mango
     }
 
     std::vector<std::string> split(const std::string& s, char delimiter)
-	{
-		return splitTemplate(s, delimiter);
-	}
+    {
+        return splitTemplate(s, delimiter);
+    }
 
     std::vector<std::string> split(const std::string& s, const char* delimiter)
-	{
-		return splitTemplate(s, delimiter);
-	}
+    {
+        return splitTemplate(s, delimiter);
+    }
 
     std::vector<std::string> split(const std::string& s, const std::string& delimiter)
-	{
-		return splitTemplate(s, delimiter);
-	}
+    {
+        return splitTemplate(s, delimiter);
+    }
 
     // -----------------------------------------------------------------
     // filename manipulation
@@ -500,7 +497,7 @@ namespace mango
 
     std::string getPath(const std::string& filename)
     {
-        size_t n = filename.find_last_of(PATH_STRING);
+        size_t n = filename.find_last_of("/\\:");
         std::string s;
         if (n != std::string::npos)
             s = filename.substr(0, n + 1);
@@ -509,7 +506,7 @@ namespace mango
 
     std::string removePath(const std::string& filename)
     {
-        size_t n = filename.find_last_of(PATH_STRING);
+        size_t n = filename.find_last_of("/\\:");
         std::string s;
         if (n != std::string::npos)
             s = filename.substr(n + 1);
@@ -520,7 +517,7 @@ namespace mango
 
     std::string getExtension(const std::string& filename)
     {
-        size_t n = filename.find_last_of(".");
+        size_t n = filename.find_last_of('.');
         std::string s;
         if (n != std::string::npos)
             s = filename.substr(n + 1);
@@ -529,7 +526,7 @@ namespace mango
 
     std::string removeExtension(const std::string& filename)
     {
-        size_t n = filename.find_last_of(".");
+        size_t n = filename.find_last_of('.');
         return filename.substr(0, n);
     }
 
