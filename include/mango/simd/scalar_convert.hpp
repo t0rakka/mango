@@ -47,6 +47,74 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // zero extend
+    // -----------------------------------------------------------------
+
+    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    {
+        uint16x8 v;
+        for (int i = 0; i < v.size(); ++i)
+        {
+            v[i] = s[i];
+        }
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    {
+        uint32x4 v;
+        for (int i = 0; i < v.size(); ++i)
+        {
+            v[i] = s[i];
+        }
+        return v;
+    }
+
+    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    {
+        uint32x4 v;
+        for (int i = 0; i < v.size(); ++i)
+        {
+            v[i] = s[i];
+        }
+        return v;
+    }
+
+    // -----------------------------------------------------------------
+    // sign extend
+    // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_convert(int8x16 s)
+    {
+        int16x8 v;
+        for (int i = 0; i < v.size(); ++i)
+        {
+            v[i] = s[i];
+        }
+        return v;
+    }
+
+    static inline int32x4 int32x4_convert(int8x16 s)
+    {
+        int32x4 v;
+        for (int i = 0; i < v.size(); ++i)
+        {
+            v[i] = s[i];
+        }
+        return v;
+    }
+
+    static inline int32x4 int32x4_convert(int16x8 s)
+    {
+        int32x4 v;
+        for (int i = 0; i < v.size(); ++i)
+        {
+            v[i] = s[i];
+        }
+        return v;
+    }
+
+    // -----------------------------------------------------------------
     // float32
     // -----------------------------------------------------------------
 

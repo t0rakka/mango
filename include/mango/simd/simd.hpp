@@ -47,6 +47,11 @@ namespace simd {
 
         scalar_type() = default;
 
+        int size() const
+        {
+            return Size;
+        }
+
         ScalarType & operator [] (int index)
         {
             return reinterpret_cast<ScalarType *>(this)[index];
@@ -71,6 +76,11 @@ namespace simd {
             data[1] = y;
             data[2] = z;
             data[3] = w;
+        }
+
+        int size() const
+        {
+            return 4;
         }
 
         T & operator [] (int index)

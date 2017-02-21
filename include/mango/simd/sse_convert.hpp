@@ -47,6 +47,94 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // zero extend
+    // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    {
+        return _mm_cvtepu8_epi16(s);
+    }
+
+    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    {
+        return _mm_cvtepu8_epi32(s);
+    }
+
+    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    {
+        return _mm_cvtepu16_epi32(s);
+    }
+
+#else
+
+    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    {
+        return _mm_unpacklo_epi8(s, _mm_setzero_si128());
+    }
+
+    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    {
+        const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
+        return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
+    }
+
+    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    {
+        return _mm_unpacklo_epi16(s, _mm_setzero_si128());
+    }
+
+#endif
+
+    // -----------------------------------------------------------------
+    // sign extend
+    // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline int16x8 int16x8_convert(int8x16 s)
+    {
+        return _mm_cvtepi8_epi16(s);
+    }
+
+    static inline int32x4 int32x4_convert(int8x16 s)
+    {
+        return _mm_cvtepi8_epi32(s);
+    }
+
+    static inline int32x4 int32x4_convert(int16x8 s)
+    {
+        return _mm_cvtepi16_epi32(s);
+    }
+
+#else
+
+    static inline int16x8 int16x8_convert(int8x16 s)
+    {
+        const __m128i sign = _mm_set1_epi16(0x80);
+        const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
+        return _mm_sub_epi16(_mm_xor_si128(temp, sign), sign);
+    }
+
+    static inline int32x4 int32x4_convert(int8x16 s)
+    {
+        const __m128i sign = _mm_set1_epi32(0x80);
+        __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
+        temp = _mm_unpacklo_epi16(temp, _mm_setzero_si128());
+        return _mm_sub_epi32(_mm_xor_si128(temp, sign), sign);
+    }
+
+    static inline int32x4 int32x4_convert(int16x8 s)
+    {
+        const __m128i sign = _mm_set1_epi32(0x8000);
+        const __m128i temp = _mm_unpacklo_epi16(s, _mm_setzero_si128());
+        return _mm_sub_epi32(_mm_xor_si128(temp, sign), sign);
+    }
+
+#endif
+
+    // -----------------------------------------------------------------
     // float32
     // -----------------------------------------------------------------
 

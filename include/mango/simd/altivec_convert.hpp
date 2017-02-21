@@ -47,6 +47,50 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // zero extend
+    // -----------------------------------------------------------------
+
+    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    {
+        // TODO
+        return s;
+    }
+
+    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    {
+        // TODO
+        return s;
+    }
+
+    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    {
+        // TODO
+        return s;
+    }
+
+    // -----------------------------------------------------------------
+    // sign extend
+    // -----------------------------------------------------------------
+
+    static inline int16x8 int16x8_convert(int8x16 s)
+    {
+        // TODO
+        return s;
+    }
+
+    static inline int32x4 int32x4_convert(int8x16 s)
+    {
+        // TODO
+        return s;
+    }
+
+    static inline int32x4 int32x4_convert(int16x8 s)
+    {
+        // TODO
+        return s;
+    }
+
+    // -----------------------------------------------------------------
     // float32
     // -----------------------------------------------------------------
 
