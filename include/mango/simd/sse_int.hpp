@@ -18,6 +18,22 @@ namespace simd {
     #define simd_shuffle_epi(a, b, mask) \
         _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), mask));
 
+    static inline __m128i simd_mullo_epi8(__m128i a, __m128i b)
+    {
+        const __m128i temp0 = _mm_mullo_epi16(a, b);
+        const __m128i temp1 = _mm_mullo_epi16(_mm_srli_epi16(a, 8),_mm_srli_epi16(b, 8));
+        return _mm_or_si128(_mm_slli_epi16(temp1, 8), _mm_srli_epi16(_mm_slli_epi16(temp0, 8), 8));
+    }
+
+    static inline __m128i simd_mullo_epi32(__m128i a, __m128i b)
+    {
+        __m128i temp0 = _mm_mul_epu32(a, b);
+        __m128i temp1 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));
+        temp0 = _mm_shuffle_epi32(temp0, _MM_SHUFFLE(0, 0, 2, 0));
+        temp1 = _mm_shuffle_epi32(temp1, _MM_SHUFFLE(0, 0, 2, 0));
+        return _mm_unpacklo_epi32(temp0, temp1);
+    }
+
     static inline __m128i _mm_select_si128(__m128i mask, __m128i a, __m128i b)
     {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
@@ -45,6 +61,11 @@ namespace simd {
     static inline uint8x16 uint8x16_sub(uint8x16 a, uint8x16 b)
     {
         return _mm_sub_epi8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_mullo(uint8x16 a, uint8x16 b)
+    {
+        return simd_mullo_epi8(a, b);
     }
 
     // saturated
@@ -446,11 +467,7 @@ namespace simd {
 
     static inline uint32x4 uint32x4_mullo(uint32x4 a, uint32x4 b)
     {
-        __m128i temp1 = _mm_mul_epu32(a, b);
-        __m128i temp2 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));
-        temp1 = _mm_shuffle_epi32(temp1, _MM_SHUFFLE(0, 0, 2, 0));
-        temp2 = _mm_shuffle_epi32(temp2, _MM_SHUFFLE(0, 0, 2, 0));
-        return _mm_unpacklo_epi32(temp1, temp2);
+        return simd_mullo_epi32(a, b);
     }
 
 #endif
@@ -620,6 +637,11 @@ namespace simd {
     static inline int8x16 int8x16_sub(int8x16 a, int8x16 b)
     {
         return _mm_sub_epi8(a, b);
+    }
+
+    static inline int8x16 int8x16_mullo(int8x16 a, int8x16 b)
+    {
+        return simd_mullo_epi8(a, b);
     }
 
     // saturated
@@ -1065,11 +1087,7 @@ namespace simd {
 
     static inline int32x4 int32x4_mullo(int32x4 a, int32x4 b)
     {
-        __m128i temp1 = _mm_mul_epu32(a, b);
-        __m128i temp2 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));
-        temp1 = _mm_shuffle_epi32(temp1, _MM_SHUFFLE(0, 0, 2, 0));
-        temp2 = _mm_shuffle_epi32(temp2, _MM_SHUFFLE(0, 0, 2, 0));
-        return _mm_unpacklo_epi32(temp1, temp2);
+        return simd_mullo_epi32(a, b);
     }
 
 #endif

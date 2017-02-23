@@ -219,6 +219,11 @@ namespace simd {
         return scalar_unroll(scalar_sub, a, b);
     }
 
+    static inline uint8x16 uint8x16_mullo(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_mullo, a, b);
+    }
+
     // saturated
 
     static inline uint8x16 uint8x16_adds(uint8x16 a, uint8x16 b)
@@ -568,6 +573,11 @@ namespace simd {
     static inline int8x16 int8x16_sub(int8x16 a, int8x16 b)
     {
         return scalar_unroll(scalar_sub, a, b);
+    }
+
+    static inline int8x16 int8x16_mullo(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_mullo, a, b);
     }
 
     // saturated
