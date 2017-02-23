@@ -174,6 +174,11 @@ namespace simd {
         return _mm_sub_epi16(a, b);
     }
 
+    static inline uint16x8 uint16x8_mullo(uint16x8 a, uint16x8 b)
+    {
+        return _mm_mullo_epi16(a, b);
+    }
+
     // saturated
 
     static inline uint16x8 uint16x8_adds(uint16x8 a, uint16x8 b)
@@ -429,6 +434,26 @@ namespace simd {
     {
         return _mm_sub_epi32(a, b);
     }
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline uint32x4 uint32x4_mullo(uint32x4 a, uint32x4 b)
+    {
+        return _mm_mullo_epi32(a, b);
+    }
+
+#else
+
+    static inline uint32x4 uint32x4_mullo(uint32x4 a, uint32x4 b)
+    {
+        __m128i temp1 = _mm_mul_epu32(a, b);
+        __m128i temp2 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));
+        temp1 = _mm_shuffle_epi32(temp1, _MM_SHUFFLE(0, 0, 2, 0));
+        temp2 = _mm_shuffle_epi32(temp2, _MM_SHUFFLE(0, 0, 2, 0));
+        return _mm_unpacklo_epi32(temp1, temp2);
+    }
+
+#endif
 
     // saturated
 
@@ -757,6 +782,11 @@ namespace simd {
         return _mm_sub_epi16(a, b);
     }
 
+    static inline int16x8 int16x8_mullo(int16x8 a, int16x8 b)
+    {
+        return _mm_mullo_epi16(a, b);
+    }
+
     // saturated
 
     static inline int16x8 int16x8_adds(int16x8 a, int16x8 b)
@@ -1023,6 +1053,26 @@ namespace simd {
     {
         return _mm_sub_epi32(a, b);
     }
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline int32x4 int32x4_mullo(int32x4 a, int32x4 b)
+    {
+        return _mm_mullo_epi32(a, b);
+    }
+
+#else
+
+    static inline int32x4 int32x4_mullo(int32x4 a, int32x4 b)
+    {
+        __m128i temp1 = _mm_mul_epu32(a, b);
+        __m128i temp2 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));
+        temp1 = _mm_shuffle_epi32(temp1, _MM_SHUFFLE(0, 0, 2, 0));
+        temp2 = _mm_shuffle_epi32(temp2, _MM_SHUFFLE(0, 0, 2, 0));
+        return _mm_unpacklo_epi32(temp1, temp2);
+    }
+
+#endif
 
     // saturated
 

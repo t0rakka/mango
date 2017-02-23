@@ -145,6 +145,11 @@ namespace simd {
         return vsubq_u16(a, b);
     }
 
+    static inline uint16x8 uint16x8_mullo(uint16x8 a, uint16x8 b)
+    {
+        return vmulq_u16(a, b);
+    }
+
     // saturated
 
     static inline uint16x8 uint16x8_adds(uint16x8 a, uint16x8 b)
@@ -306,6 +311,11 @@ namespace simd {
     static inline uint32x4 uint32x4_sub(uint32x4 a, uint32x4 b)
     {
         return vsubq_u32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_mullo(uint32x4 a, uint32x4 b)
+    {
+        return vmulq_u32(a, b);
     }
 
     // saturated
@@ -559,6 +569,11 @@ namespace simd {
         return vsubq_s16(a, b);
     }
 
+    static inline int16x8 int16x8_mullo(int16x8 a, int16x8 b)
+    {
+        return vmulq_s16(a, b);
+    }
+
     // saturated
 
     static inline int16x8 int16x8_adds(int16x8 a, int16x8 b)
@@ -742,6 +757,11 @@ namespace simd {
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
         return vsubq_s32(a, b);
+    }
+
+    static inline int32x4 int32x4_mullo(int32x4 a, int32x4 b)
+    {
+        return vmulq_s32(a, b);
     }
 
     // saturated

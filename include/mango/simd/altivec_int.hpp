@@ -116,6 +116,11 @@ namespace simd {
         return vec_sub(a, b);
     }
 
+    static inline uint32x4 uint32x4_mullo(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
     // saturated
 
     static inline uint32x4 uint32x4_adds(uint32x4 a, uint32x4 b)
@@ -296,6 +301,11 @@ namespace simd {
     static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
     {
         return vec_sub(a, b);
+    }
+
+    static inline int32x4 int32x4_mullo(int32x4 a, int32x4 b)
+    {
+        // TODO
     }
 
     // saturated
