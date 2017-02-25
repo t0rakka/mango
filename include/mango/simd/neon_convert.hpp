@@ -75,14 +75,15 @@ namespace simd {
 
     static inline int16x8 int16x8_extend(int8x16 s)
     {
-	    int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
-        int16x8_t temp = vreinterpretq_s16_s8(vcombine_s8(a.val[0], a.val[1]));
-        int16x8_t sign = vdupq_n_s16(0x80);
-        return vsubq_s16(veorq_s16(temp, sign), sign);
+        const int8x8_t low = vget_low_s8(s);
+        const int8x8_t sign = vreinterpret_s8_u8(vcgt_s8(vdup_n_s8(0), low));
+	    const int8x8x2_t temp = vzip_s8(low, sign);
+        return vreinterpretq_s16_s8(vcombine_s8(temp.val[0], temp.val[1]));
     }
 
     static inline int32x4 int32x4_extend(int8x16 s)
     {
+        // TODO: optimize
 	    int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
 	    int16x4x2_t b = vzip_s16(vreinterpret_s16_s8(a.val[0]), vdup_n_s16(0));
 	    int32x4_t temp = vreinterpretq_s32_s16(vcombine_s16(b.val[0], b.val[1]));
@@ -92,6 +93,7 @@ namespace simd {
 
     static inline int32x4 int32x4_extend(int16x8 s)
     {
+        // TODO: optimize
 	    int16x4x2_t a = vzip_s16(vget_low_s16(s), vdup_n_s16(0));
 	    int32x4_t temp = vreinterpretq_s32_s16(vcombine_s16(a.val[0], a.val[1]));
         int32x4_t sign = vdupq_n_s32(0x8000);
