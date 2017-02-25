@@ -52,20 +52,20 @@ namespace simd {
 
     static inline uint16x8 uint16x8_extend(uint8x16 s)
     {
-	    uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
+	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
         return vreinterpretq_u16_u8(vcombine_u8(a.val[0], a.val[1]));
     }
 
     static inline uint32x4 uint32x4_extend(uint8x16 s)
     {
-	    uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
-	    uint16x4x2_t b = vzip_u16(vreinterpret_u16_u8(a.val[0]), vdup_n_u16(0));
+	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
+	    const uint16x4x2_t b = vzip_u16(vreinterpret_u16_u8(a.val[0]), vdup_n_u16(0));
 	    return vreinterpretq_u32_u16(vcombine_u16(b.val[0], b.val[1]));
     }
 
     static inline uint32x4 uint32x4_extend(uint16x8 s)
     {
-	    uint16x4x2_t a = vzip_u16(vget_low_u16(s), vdup_n_u16(0));
+	    const uint16x4x2_t a = vzip_u16(vget_low_u16(s), vdup_n_u16(0));
 	    return vreinterpretq_u32_u16(vcombine_u16(a.val[0], a.val[1]));
     }
 
@@ -83,10 +83,10 @@ namespace simd {
 
     static inline int32x4 int32x4_extend(int8x16 s)
     {
-	    int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
-	    int16x4x2_t b = vzip_s16(vreinterpret_s16_s8(a.val[0]), vdup_n_s16(0));
-	    int32x4_t temp = vreinterpretq_s32_s16(vcombine_s16(b.val[0], b.val[1]));
-        int32x4_t sign = vdupq_n_s32(0x80);
+	    const int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
+	    const int16x4x2_t b = vzip_s16(vreinterpret_s16_s8(a.val[0]), vdup_n_s16(0));
+	    const int32x4_t temp = vreinterpretq_s32_s16(vcombine_s16(b.val[0], b.val[1]));
+        const int32x4_t sign = vdupq_n_s32(0x80);
         return vsubq_s32(veorq_s32(temp, sign), sign);
     }
 

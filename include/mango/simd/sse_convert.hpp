@@ -118,10 +118,8 @@ namespace simd {
 
     static inline int32x4 int32x4_extend(int8x16 s)
     {
-        const __m128i sign = _mm_set1_epi32(0x80);
-        __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
-        temp = _mm_unpacklo_epi16(temp, _mm_setzero_si128());
-        return _mm_sub_epi32(_mm_xor_si128(temp, sign), sign);
+        const __m128i temp = _mm_unpacklo_epi8(s, _mm_cmpgt_epi8(_mm_setzero_si128(), s));
+        return _mm_unpacklo_epi16(temp, _mm_cmpgt_epi16(_mm_setzero_si128(), temp));
     }
 
     static inline int32x4 int32x4_extend(int16x8 s)
