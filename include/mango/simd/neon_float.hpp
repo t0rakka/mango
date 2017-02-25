@@ -102,6 +102,27 @@ namespace simd {
         return vdupq_lane_f32(zw, 1);
     }        
 
+    template <>
+    inline float32x4 float32x4_shuffle<1, 1, 0, 0>(float32x4 v)
+    {
+        // .yyxx
+	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 1)), vdup_n_f32(vgetq_lane_f32(v, 0)));
+    }        
+
+    template <>
+    inline float32x4 float32x4_shuffle<2, 2, 0, 0>(float32x4 v)
+    {
+        // .zzxx
+	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 2)), vdup_n_f32(vgetq_lane_f32(v, 0)));
+    }        
+
+    template <>
+    inline float32x4 float32x4_shuffle<3, 3, 1, 1>(float32x4 v)
+    {
+        // .wwyy
+	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 3)), vdup_n_f32(vgetq_lane_f32(v, 1)));
+    }        
+
     // indexed accessor
 
     template <int Index>
