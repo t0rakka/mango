@@ -50,7 +50,7 @@ namespace simd {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    static inline uint16x8 uint16x8_extend(uint8x16 s)
     {
         uint16x8 v;
         for (int i = 0; i < v.size(); ++i)
@@ -60,7 +60,7 @@ namespace simd {
         return v;
     }
 
-    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    static inline uint32x4 uint32x4_extend(uint8x16 s)
     {
         uint32x4 v;
         for (int i = 0; i < v.size(); ++i)
@@ -70,7 +70,7 @@ namespace simd {
         return v;
     }
 
-    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    static inline uint32x4 uint32x4_extend(uint16x8 s)
     {
         uint32x4 v;
         for (int i = 0; i < v.size(); ++i)
@@ -84,7 +84,7 @@ namespace simd {
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 int16x8_convert(int8x16 s)
+    static inline int16x8 int16x8_extend(int8x16 s)
     {
         int16x8 v;
         for (int i = 0; i < v.size(); ++i)
@@ -94,7 +94,7 @@ namespace simd {
         return v;
     }
 
-    static inline int32x4 int32x4_convert(int8x16 s)
+    static inline int32x4 int32x4_extend(int8x16 s)
     {
         int32x4 v;
         for (int i = 0; i < v.size(); ++i)
@@ -104,12 +104,60 @@ namespace simd {
         return v;
     }
 
-    static inline int32x4 int32x4_convert(int16x8 s)
+    static inline int32x4 int32x4_extend(int16x8 s)
     {
         int32x4 v;
         for (int i = 0; i < v.size(); ++i)
         {
             v[i] = s[i];
+        }
+        return v;
+    }
+
+    // -----------------------------------------------------------------
+    // pack
+    // -----------------------------------------------------------------
+
+    static inline uint8x16 uint8x16_pack(uint16x8 a, uint16x8 b)
+    {
+        uint8x16 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i + 0] = std::min(uint16(0xff), a[i]);
+            v[i + 8] = std::min(uint16(0xff), b[i]);
+        }
+        return v;
+    }
+
+    static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
+    {
+        uint16x8 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i + 0] = std::min(uint32(0xffff), a[i]);
+            v[i + 4] = std::min(uint32(0xffff), b[i]);
+        }
+        return v;
+    }
+
+    static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)
+    {
+        int8x16 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i + 0] = clamp(a[i], int16(-0x80), int16(0x7f));
+            v[i + 8] = clamp(b[i], int16(-0x80), int16(0x7f));
+        }
+        return v;
+    }
+
+    static inline int16x8 int16x8_pack(int32x4 a, int32x4 b)
+    {
+        int16x8 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i + 0] = clamp(a[i], int32(-0x8000), int32(0x7fff));
+            v[i + 4] = clamp(b[i], int32(-0x8000), int32(0x7fff));
         }
         return v;
     }

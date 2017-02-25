@@ -52,35 +52,35 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    static inline uint16x8 uint16x8_extend(uint8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
     }
 
-    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    static inline uint32x4 uint32x4_extend(uint8x16 s)
     {
         return _mm_cvtepu8_epi32(s);
     }
 
-    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    static inline uint32x4 uint32x4_extend(uint16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
     }
 
 #else
 
-    static inline uint16x8 uint16x8_convert(uint8x16 s)
+    static inline uint16x8 uint16x8_extend(uint8x16 s)
     {
         return _mm_unpacklo_epi8(s, _mm_setzero_si128());
     }
 
-    static inline uint32x4 uint32x4_convert(uint8x16 s)
+    static inline uint32x4 uint32x4_extend(uint8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
         return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
     }
 
-    static inline uint32x4 uint32x4_convert(uint16x8 s)
+    static inline uint32x4 uint32x4_extend(uint16x8 s)
     {
         return _mm_unpacklo_epi16(s, _mm_setzero_si128());
     }
@@ -93,31 +93,31 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline int16x8 int16x8_convert(int8x16 s)
+    static inline int16x8 int16x8_extend(int8x16 s)
     {
         return _mm_cvtepi8_epi16(s);
     }
 
-    static inline int32x4 int32x4_convert(int8x16 s)
+    static inline int32x4 int32x4_extend(int8x16 s)
     {
         return _mm_cvtepi8_epi32(s);
     }
 
-    static inline int32x4 int32x4_convert(int16x8 s)
+    static inline int32x4 int32x4_extend(int16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
     }
 
 #else
 
-    static inline int16x8 int16x8_convert(int8x16 s)
+    static inline int16x8 int16x8_extend(int8x16 s)
     {
         const __m128i sign = _mm_set1_epi16(0x80);
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
         return _mm_sub_epi16(_mm_xor_si128(temp, sign), sign);
     }
 
-    static inline int32x4 int32x4_convert(int8x16 s)
+    static inline int32x4 int32x4_extend(int8x16 s)
     {
         const __m128i sign = _mm_set1_epi32(0x80);
         __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
@@ -125,7 +125,7 @@ namespace simd {
         return _mm_sub_epi32(_mm_xor_si128(temp, sign), sign);
     }
 
-    static inline int32x4 int32x4_convert(int16x8 s)
+    static inline int32x4 int32x4_extend(int16x8 s)
     {
         const __m128i sign = _mm_set1_epi32(0x8000);
         const __m128i temp = _mm_unpacklo_epi16(s, _mm_setzero_si128());
@@ -133,6 +133,30 @@ namespace simd {
     }
 
 #endif
+
+    // -----------------------------------------------------------------
+    // pack
+    // -----------------------------------------------------------------
+
+    static inline uint8x16 uint8x16_pack(uint16x8 a, uint16x8 b)
+    {
+        return _mm_packus_epi16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
+    {
+        return simd_packus_epi32(a, b);
+    }
+
+    static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)
+    {
+        return _mm_packs_epi16(a, b);
+    }
+
+    static inline int16x8 int16x8_pack(int32x4 a, int32x4 b)
+    {
+        return _mm_packs_epi32(a, b);
+    }
 
     // -----------------------------------------------------------------
     // float32

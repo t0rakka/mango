@@ -34,6 +34,15 @@ namespace simd {
         return _mm_unpacklo_epi32(temp0, temp1);
     }
 
+    static inline __m128i simd_packus_epi32(__m128i a, __m128i b)
+    {
+        a = _mm_slli_epi32(a, 16);
+        a = _mm_srai_epi32(a, 16);
+        b = _mm_slli_epi32(b, 16);
+        b = _mm_srai_epi32(b, 16);
+        return _mm_packs_epi32(a, b);
+    }
+
     static inline __m128i _mm_select_si128(__m128i mask, __m128i a, __m128i b)
     {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
