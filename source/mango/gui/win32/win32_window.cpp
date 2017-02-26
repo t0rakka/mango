@@ -280,8 +280,8 @@ namespace
 
 		case WM_CLOSE:
 		{
-			window->breakEventLoop();
 			window->onClose();
+			window->breakEventLoop();
 			return 0;
 		}
 
