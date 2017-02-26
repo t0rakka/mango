@@ -62,6 +62,16 @@ namespace simd {
         return _mm_set1_epi8(s);
     }
 
+    static inline uint8x16 uint8x16_unpack_low(uint8x16 a, uint8x16 b)
+    {
+        return _mm_unpacklo_epi8(a, b);
+    }
+
+    static inline uint8x16 uint8x16_unpack_high(uint8x16 a, uint8x16 b)
+    {
+        return _mm_unpackhi_epi8(a, b);
+    }
+
     static inline uint8x16 uint8x16_add(uint8x16 a, uint8x16 b)
     {
         return _mm_add_epi8(a, b);
@@ -192,6 +202,16 @@ namespace simd {
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
         return _mm_set1_epi16(s);
+    }
+
+    static inline uint16x8 uint16x8_unpack_low(uint16x8 a, uint16x8 b)
+    {
+        return _mm_unpacklo_epi16(a, b);
+    }
+
+    static inline uint16x8 uint16x8_unpack_high(uint16x8 a, uint16x8 b)
+    {
+        return _mm_unpackhi_epi16(a, b);
     }
 
     static inline uint16x8 uint16x8_add(uint16x8 a, uint16x8 b)
@@ -455,6 +475,16 @@ namespace simd {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
+    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    {
+        return _mm_unpacklo_epi32(a, b);
+    }
+
+    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    {
+        return _mm_unpackhi_epi32(a, b);
+    }
+
     static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
     {
         return _mm_add_epi32(a, b);
@@ -638,6 +668,16 @@ namespace simd {
         return _mm_set1_epi8(s);
     }
 
+    static inline int8x16 int8x16_unpack_low(int8x16 a, int8x16 b)
+    {
+        return _mm_unpacklo_epi8(a, b);
+    }
+
+    static inline int8x16 int8x16_unpack_high(int8x16 a, int8x16 b)
+    {
+        return _mm_unpackhi_epi8(a, b);
+    }
+
     static inline int8x16 int8x16_add(int8x16 a, int8x16 b)
     {
         return _mm_add_epi8(a, b);
@@ -801,6 +841,16 @@ namespace simd {
     static inline int16x8 int16x8_set1(int16 s)
     {
         return _mm_set1_epi16(s);
+    }
+
+    static inline int16x8 int16x8_unpack_low(int16x8 a, int16x8 b)
+    {
+        return _mm_unpacklo_epi16(a, b);
+    }
+
+    static inline int16x8 int16x8_unpack_high(int16x8 a, int16x8 b)
+    {
+        return _mm_unpackhi_epi16(a, b);
     }
 
     static inline int16x8 int16x8_add(int16x8 a, int16x8 b)
@@ -1058,6 +1108,16 @@ namespace simd {
     static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
+    }
+
+    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    {
+        return _mm_unpacklo_epi32(a, b);
+    }
+
+    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    {
+        return _mm_unpackhi_epi32(a, b);
     }
 
     static inline int32x4 int32x4_abs(int32x4 a)

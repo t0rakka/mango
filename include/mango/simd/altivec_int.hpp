@@ -106,6 +106,16 @@ namespace simd {
         d[3] = s[3];
     }
 
+    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
     static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
     {
         return vec_add(a, b);
@@ -281,6 +291,16 @@ namespace simd {
         d[1] = s[1];
         d[2] = s[2];
         d[3] = s[3];
+    }
+
+    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    {
+        // TODO
     }
 
     static inline int32x4 int32x4_abs(int32x4 a)

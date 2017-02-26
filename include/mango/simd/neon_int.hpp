@@ -25,6 +25,19 @@ namespace simd {
         return vdupq_n_u8(s);
     }
 
+    static inline uint8x16 uint8x16_unpack_low(uint8x16 a, uint8x16 b)
+    {
+        
+	    const uint8x8x2_t temp = vzip_u8(vget_low_u8(a), vget_low_u8(b));
+	    return vcombine_u8(temp.val[0], temp.val[1]);
+    }
+
+    static inline uint8x16 uint8x16_unpack_high(uint8x16 a, uint8x16 b)
+    {
+	    const uint8x8x2_t temp = vzip_u8(vget_high_u8(a), vget_high_u8(b));
+	    return vcombine_u8(temp.val[0], temp.val[1]);
+    }
+
     static inline uint8x16 uint8x16_add(uint8x16 a, uint8x16 b)
     {
         return vaddq_u8(a, b);
@@ -138,6 +151,18 @@ namespace simd {
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
         return vdupq_n_u16(s);
+    }
+
+    static inline uint16x8 uint16x8_unpack_low(uint16x8 a, uint16x8 b)
+    {
+	    const uint16x4x2_t temp = vzip_u16(vget_low_u16(a), vget_low_u16(b));
+	    return vcombine_u16(temp.val[0], temp.val[1]);
+    }
+
+    static inline uint16x8 uint16x8_unpack_high(uint16x8 a, uint16x8 b)
+    {
+	    const uint16x4x2_t temp = vzip_u16(vget_high_u16(a), vget_high_u16(b));
+	    return vcombine_u16(temp.val[0], temp.val[1]);
     }
 
     static inline uint16x8 uint16x8_add(uint16x8 a, uint16x8 b)
@@ -308,6 +333,18 @@ namespace simd {
         dest[3] = vgetq_lane_u32(a, 3);
     }
 
+    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    {
+	    const uint32x2x2_t temp = vzip_u32(vget_low_u32(a), vget_low_u32(b));
+	    return vcombine_u32(temp.val[0], temp.val[1]);
+    }
+
+    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    {
+	    const uint32x2x2_t temp = vzip_u32(vget_high_u32(a), vget_high_u32(b));
+	    return vcombine_u32(temp.val[0], temp.val[1]);
+    }
+
     static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
     {
         return vaddq_u32(a, b);
@@ -444,6 +481,18 @@ namespace simd {
         return vdupq_n_s8(s);
     }
 
+    static inline int8x16 int8x16_unpack_low(int8x16 a, int8x16 b)
+    {
+	    const int8x8x2_t temp = vzip_s8(vget_low_s8(a), vget_low_s8(b));
+	    return vcombine_s8(temp.val[0], temp.val[1]);
+    }
+
+    static inline int8x16 int8x16_unpack_high(int8x16 a, int8x16 b)
+    {
+	    const int8x8x2_t temp = vzip_s8(vget_high_s8(a), vget_high_s8(b));
+	    return vcombine_s8(temp.val[0], temp.val[1]);
+    }
+
     static inline int8x16 int8x16_add(int8x16 a, int8x16 b)
     {
         return vaddq_s8(a, b);
@@ -567,6 +616,18 @@ namespace simd {
     static inline int16x8 int16x8_set1(int16 s)
     {
         return vdupq_n_s16(s);
+    }
+
+    static inline int16x8 int16x8_unpack_low(int16x8 a, int16x8 b)
+    {
+	    const int16x4x2_t temp = vzip_s16(vget_low_s16(a), vget_low_s16(b));
+	    return vcombine_s16(temp.val[0], temp.val[1]);
+    }
+
+    static inline int16x8 int16x8_unpack_high(int16x8 a, int16x8 b)
+    {
+	    const int16x4x2_t temp = vzip_s16(vget_high_s16(a), vget_high_s16(b));
+	    return vcombine_s16(temp.val[0], temp.val[1]);
     }
 
     static inline int16x8 int16x8_add(int16x8 a, int16x8 b)
@@ -747,6 +808,18 @@ namespace simd {
         dest[1] = vgetq_lane_s32(a, 1);
         dest[2] = vgetq_lane_s32(a, 2);
         dest[3] = vgetq_lane_s32(a, 3);
+    }
+
+    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    {
+	    const int32x2x2_t temp = vzip_s32(vget_low_s32(a), vget_low_s32(b));
+	    return vcombine_s32(temp.val[0], temp.val[1]);
+    }
+
+    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    {
+	    const int32x2x2_t temp = vzip_s32(vget_high_s32(a), vget_high_s32(b));
+	    return vcombine_s32(temp.val[0], temp.val[1]);
     }
 
     static inline int32x4 int32x4_abs(int32x4 a)

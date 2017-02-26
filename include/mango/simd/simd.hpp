@@ -43,14 +43,11 @@ namespace simd {
     template <typename ScalarType, int Size>
     struct scalar_type
     {
+        typedef ScalarType type;
+        enum { size = Size };
         ScalarType data[Size];
 
         scalar_type() = default;
-
-        int size() const
-        {
-            return Size;
-        }
 
         ScalarType & operator [] (int index)
         {
@@ -66,6 +63,8 @@ namespace simd {
     template <typename T>
     struct scalar_type<T, 4>
     {
+        typedef T type;
+        enum { size = 4 };
         T data[4];
 
         scalar_type() = default;
@@ -76,11 +75,6 @@ namespace simd {
             data[1] = y;
             data[2] = z;
             data[3] = w;
-        }
-
-        int size() const
-        {
-            return 4;
         }
 
         T & operator [] (int index)

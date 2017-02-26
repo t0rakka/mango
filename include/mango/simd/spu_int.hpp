@@ -102,6 +102,16 @@ namespace simd {
         dest[3] = spu_extract(a, 3);
     }
 
+    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
     static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
     {
 		return spu_add(a, b);
@@ -277,6 +287,16 @@ namespace simd {
         dest[1] = spu_extract(a, 1);
         dest[2] = spu_extract(a, 2);
         dest[3] = spu_extract(a, 3);
+    }
+
+    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    {
+        // TODO
     }
 
     static inline int32x4 int32x4_abs(int32x4 a)

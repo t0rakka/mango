@@ -53,7 +53,7 @@ namespace simd {
     static inline uint16x8 uint16x8_extend(uint8x16 s)
     {
         uint16x8 v;
-        for (int i = 0; i < v.size(); ++i)
+        for (int i = 0; i < 8; ++i)
         {
             v[i] = s[i];
         }
@@ -63,7 +63,7 @@ namespace simd {
     static inline uint32x4 uint32x4_extend(uint8x16 s)
     {
         uint32x4 v;
-        for (int i = 0; i < v.size(); ++i)
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = s[i];
         }
@@ -73,7 +73,7 @@ namespace simd {
     static inline uint32x4 uint32x4_extend(uint16x8 s)
     {
         uint32x4 v;
-        for (int i = 0; i < v.size(); ++i)
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = s[i];
         }
@@ -87,7 +87,7 @@ namespace simd {
     static inline int16x8 int16x8_extend(int8x16 s)
     {
         int16x8 v;
-        for (int i = 0; i < v.size(); ++i)
+        for (int i = 0; i < 8; ++i)
         {
             v[i] = s[i];
         }
@@ -97,7 +97,7 @@ namespace simd {
     static inline int32x4 int32x4_extend(int8x16 s)
     {
         int32x4 v;
-        for (int i = 0; i < v.size(); ++i)
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = s[i];
         }
@@ -107,7 +107,7 @@ namespace simd {
     static inline int32x4 int32x4_extend(int16x8 s)
     {
         int32x4 v;
-        for (int i = 0; i < v.size(); ++i)
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = s[i];
         }
