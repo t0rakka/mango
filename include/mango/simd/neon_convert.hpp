@@ -136,6 +136,23 @@ namespace simd {
         return vcvtq_f32_s32(s);
     }
 
+#if __ARM_ARCH >= 8 && !defined(MANGO_COMPILER_CLANG)
+
+    // ARMv8 supports rouding float-to-int conversion ...
+    // ... but clang doesn't
+
+    static inline uint32x4 uint32x4_convert(float32x4 s)
+    {
+        return vcvtnq_u32_f32(s);
+    }
+
+    static inline int32x4 int32x4_convert(float32x4 s)
+    {
+        return vcvtnq_s32_f32(s);
+    }
+
+#else
+
     static inline uint32x4 uint32x4_convert(float32x4 s)
     {
         return vcvtq_u32_f32(float32x4_round(s));
@@ -145,6 +162,8 @@ namespace simd {
     {
         return vcvtq_s32_f32(float32x4_round(s));
     }
+
+#endif
 
     static inline int32x4 int32x4_truncate(float32x4 s)
     {
