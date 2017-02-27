@@ -39,9 +39,10 @@ namespace simd {
 
     // shuffle
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline uint32x4 uint32x4_shuffle(uint32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 		const vector unsigned char mask =
 		{
             SPU_SH4(x, 0), SPU_SH4(y, 0), SPU_SH4(z, 0), SPU_SH4(w, 0)
@@ -226,9 +227,10 @@ namespace simd {
 
     // shuffle
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline int32x4 int32x4_shuffle(int32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 		const vector unsigned char mask =
 		{
             SPU_SH4(x, 0), SPU_SH4(y, 0), SPU_SH4(z, 0), SPU_SH4(w, 0)

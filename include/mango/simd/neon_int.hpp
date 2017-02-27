@@ -272,9 +272,10 @@ namespace simd {
 
     // shuffle
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline uint32x4 uint32x4_shuffle(uint32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         // TODO: optimize
         const uint32 *temp = reinterpret_cast<const uint32 *>(&v);
         return (uint32x4_t) { temp[x], temp[y], temp[z], temp[w] };
@@ -747,9 +748,10 @@ namespace simd {
 
     // shuffle
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline int32x4 int32x4_shuffle(int32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         // TODO: optimize
         const int32* temp = reinterpret_cast<const int32 *>(&v);
         return (int32x4_t) { temp[x], temp[y], temp[z], temp[w] };

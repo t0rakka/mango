@@ -15,9 +15,10 @@ namespace simd {
     // float64x4
     // -----------------------------------------------------------------
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline float64x4 float64x4_shuffle(float64x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         const int select = ((w & 1) << 3) | ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
         const int mask = ((w & 2) << 2) | ((z & 2) << 1) | (y & 2) | ((x & 2) >> 1);
         __m256d xyxy = _mm256_permute2f128_pd(v, v, 0);

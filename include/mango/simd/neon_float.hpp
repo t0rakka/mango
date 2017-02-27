@@ -19,17 +19,19 @@ namespace simd {
 
 #ifdef MANGO_COMPILER_CLANG
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         return __builtin_shufflevector(v.m, v.m, x, y, z, w);
     }
 
 #else
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 #if __GNUC__ >= 5
         return (float32x4_t) __builtin_shuffle(v.m, (uint32x4_t) {x, y, z, w});
 #else

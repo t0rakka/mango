@@ -17,10 +17,10 @@ namespace simd {
 
     // shuffle
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline float32x4 float32x4_shuffle(float32x4 v)
     {
-        // .generic
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         return _mm_shuffle_ps(v, v, _MM_SHUFFLE(w, z, y, x));
     }
 

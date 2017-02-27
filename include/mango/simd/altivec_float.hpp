@@ -35,9 +35,10 @@ namespace simd {
     // float32x4
     // -----------------------------------------------------------------
 
-    template <int x, int y, int z, int w>
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         const vector unsigned char mask =
         {
             VEC_SH4(x, 0), VEC_SH4(y, 0), VEC_SH4(z, 0), VEC_SH4(w, 0)
