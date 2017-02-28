@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_INT_SSE
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // helpers
@@ -1335,8 +1330,4 @@ namespace simd {
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
 #undef simd_shuffle_epi
-
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_INT_SSE
+#endif // MANGO_INCLUDE_SIMD

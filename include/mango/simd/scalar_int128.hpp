@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_INT_SCALAR
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // helpers
@@ -1051,7 +1046,4 @@ namespace simd {
         return v;
     }
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_INT_SCALAR
+#endif // MANGO_INCLUDE_SIMD

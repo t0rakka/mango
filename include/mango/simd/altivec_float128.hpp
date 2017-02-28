@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_FLOAT_ALTIVEC
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // helpers
@@ -424,7 +419,4 @@ namespace simd {
 
 #undef VEC_SH4
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_FLOAT_ALTIVEC
+#endif // MANGO_INCLUDE_SIMD

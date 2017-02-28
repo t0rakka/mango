@@ -4,10 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // ------------------------------------------------------------------
     // Trigonometric functions
@@ -43,7 +40,7 @@ namespace simd {
     // uint8x16
     // ------------------------------------------------------------------
 
-#if !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint8x16 uint8x16_not(uint8x16 a)
     {
@@ -70,7 +67,7 @@ namespace simd {
         return uint8x16_not(uint8x16_compare_gt(b, a));
     }
 
-#endif // !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint8x16 uint8x16_clamp(uint8x16 v, uint8x16 vmin, uint8x16 vmax)
     {
@@ -81,7 +78,7 @@ namespace simd {
     // uint16x8
     // ------------------------------------------------------------------
 
-#if !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint16x8 uint16x8_not(uint16x8 a)
     {
@@ -108,7 +105,7 @@ namespace simd {
         return uint16x8_not(uint16x8_compare_gt(b, a));
     }
 
-#endif // !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint16x8 uint16x8_clamp(uint16x8 v, uint16x8 vmin, uint16x8 vmax)
     {
@@ -189,7 +186,7 @@ namespace simd {
         return uint32x4_min(uint32x4_set1(vmax), uint32x4_max(uint32x4_set1(vmin), v));
     }
 
-#if !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint32x4 uint32x4_not(uint32x4 a)
     {
@@ -216,13 +213,13 @@ namespace simd {
         return uint32x4_not(uint32x4_compare_gt(b, a));
     }
 
-#endif // !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     // ------------------------------------------------------------------
     // int8x16
     // ------------------------------------------------------------------
 
-#if !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int8x16 int8x16_not(int8x16 a)
     {
@@ -249,7 +246,7 @@ namespace simd {
         return int8x16_not(int8x16_compare_gt(b, a));
     }
 
-#endif // !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int8x16 int8x16_clamp(int8x16 v, int8x16 vmin, int8x16 vmax)
     {
@@ -260,7 +257,7 @@ namespace simd {
     // int16x8
     // ------------------------------------------------------------------
 
-#if !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int16x8 int16x8_not(int16x8 a)
     {
@@ -287,7 +284,7 @@ namespace simd {
         return int16x8_not(int16x8_compare_gt(b, a));
     }
 
-#endif // !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int16x8 int16x8_clamp(int16x8 v, int16x8 vmin, int16x8 vmax)
     {
@@ -428,7 +425,7 @@ namespace simd {
         return int32x4_xor(a, int32x4_set1(b));
     }
 
-#if !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int32x4 int32x4_not(int32x4 a)
     {
@@ -455,7 +452,7 @@ namespace simd {
         return int32x4_not(int32x4_compare_gt(b, a));
     }
 
-#endif // !defined(MANGO_SIMD_INT_NEON) && !defined(MANGO_ENABLE_XOP)
+#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int32x4 int32x4_compare_eq(int32x4 a, int b)
     {
@@ -970,5 +967,4 @@ namespace simd {
     #define int32x4_srl(Value, Count) int32x4_srl<Count>(Value)
     #define int32x4_sra(Value, Count) int32x4_sra<Count>(Value)
 
-} // namespace simd
-} // namespace mango
+#endif // MANGO_INCLUDE_SIMD

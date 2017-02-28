@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_FLOAT_SPU
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // helper
     #define SPU_SH4(n, select) \
@@ -454,7 +449,4 @@ namespace simd {
 
 #undef SPU_SH4
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_FLOAT_SPU
+#endif // MANGO_INCLUDE_SIMD

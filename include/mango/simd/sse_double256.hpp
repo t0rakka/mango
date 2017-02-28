@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_DOUBLE_SSE
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // float64x4
@@ -622,7 +617,4 @@ namespace simd {
         return result;
     }
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_DOUBLE_SSE
+#endif // MANGO_INCLUDE_SIMD

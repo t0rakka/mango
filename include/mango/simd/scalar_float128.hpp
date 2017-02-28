@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_FLOAT_SCALAR
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // float32x4
@@ -726,7 +721,4 @@ namespace simd {
         result[3] = float32x4_vector_matrix_multiply(a[3], b);
     }
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_FLOAT_SCALAR
+#endif // MANGO_INCLUDE_SIMD

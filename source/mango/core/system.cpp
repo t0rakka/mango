@@ -77,7 +77,7 @@ namespace mango
         info << std::endl;
 
         info << "SIMD: ";
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
     #if defined(MANGO_ENABLE_SSE)
         info << "SSE ";
     #endif

@@ -137,7 +137,7 @@ namespace mango
         simd::float32x4_matrix_scale(m, s.x, s.y, s.z);
     }
 
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
 
     void float4x4::rotate(float angle, const float3& axis)
     {
@@ -229,7 +229,7 @@ namespace mango
         }
     }
 
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
 
     void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
@@ -281,7 +281,7 @@ namespace mango
 
 #endif
 
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
 
     float4x4 normalize(const float4x4& m)
     {
@@ -1105,7 +1105,7 @@ namespace mango
         return n;
     }
 
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
 
     float4 srgb_encode(float4 n)
     {

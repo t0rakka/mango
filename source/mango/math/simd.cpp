@@ -11,7 +11,7 @@
 namespace mango {
 namespace simd {
 
-#ifndef MANGO_SIMD_FLOAT_SCALAR
+#if defined(MANGO_ENABLE_SIMD)
 
     // ------------------------------------------------------------------------
     // Sleef: float32x4
@@ -487,7 +487,7 @@ namespace simd {
 
 #endif
 
-#ifndef MANGO_SIMD_DOUBLE_SCALAR
+#if defined(MANGO_ENABLE_SIMD)
 
     // ------------------------------------------------------------------------
     // Sleef: float64x4

@@ -25,7 +25,7 @@
 #define JPEG_HUFF_LOOKUP_BITS    8   // Huffman look-ahead table log2 size
 #define JPEG_HUFF_LOOKUP_SIZE    (1 << JPEG_HUFF_LOOKUP_BITS)
 
-#if defined(JPEG_ENABLE_SIMD) && !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(JPEG_ENABLE_SIMD) && defined(MANGO_ENABLE_SIMD)
 
     #ifdef MANGO_ENABLE_SSE
         #define JPEG_ENABLE_SSE

@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_DOUBLE_SCALAR
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // float64x4
@@ -420,7 +415,4 @@ namespace simd {
         return float64x4_sub(s, float64x4_floor(s));
     }
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_DOUBLE_SCALAR
+#endif // MANGO_INCLUDE_SIMD

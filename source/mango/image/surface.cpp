@@ -66,7 +66,7 @@ namespace
 
     void clear_uint16_scan(uint8* dest, int count, uint32 color)
     {
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
 		if (count >= 32)
 		{
 			// 128 bit fill
@@ -106,7 +106,7 @@ namespace
 
     void clear_uint32_scan(uint8* dest, int count, uint32 color)
     {
-#if !defined(MANGO_SIMD_FLOAT_SCALAR)
+#if defined(MANGO_ENABLE_SIMD)
 		if (count >= 16)
 		{
 			// 128 bit fill

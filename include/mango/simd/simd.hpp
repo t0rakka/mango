@@ -15,6 +15,8 @@
 // Configure SIMD implementation
 // ------------------------------------------------------------------
 
+#define MANGO_INCLUDE_SIMD
+
 namespace mango {
 namespace simd {
 
@@ -88,57 +90,47 @@ namespace simd {
         }
     };
 
-} // namespace simd
-} // namespace mango
-
 #if defined(MANGO_ENABLE_AVX)
-
-namespace mango {
-namespace simd {
 
     // --------------------------------------------------------------
     // Intel AVX vector intrinsics
     // --------------------------------------------------------------
 
-    typedef vector_type<uint8, 16, __m128i> uint8x16;
-    typedef vector_type<int8, 16, __m128i> int8x16;
-    typedef vector_type<uint16, 8, __m128i> uint16x8;
-    typedef vector_type<int16, 8, __m128i> int16x8;
-    typedef vector_type<uint32, 4, __m128i> uint32x4;
-    typedef vector_type<int32, 4, __m128i> int32x4;
-    typedef vector_type<float, 4, __m128> float32x4;
-    typedef vector_type<double, 4,  __m256d> float64x4;
-    typedef scalar_type<half, 4> float16x4;
+    #define MANGO_ENABLE_SIMD
 
-} // namespace simd
-} // namespace mango
+    typedef vector_type<uint8, 16, __m128i>  uint8x16;
+    typedef vector_type<int8, 16, __m128i>   int8x16;
+    typedef vector_type<uint16, 8, __m128i>  uint16x8;
+    typedef vector_type<int16, 8, __m128i>   int16x8;
+    typedef vector_type<uint32, 4, __m128i>  uint32x4;
+    typedef vector_type<int32, 4, __m128i>   int32x4;
+    typedef vector_type<float, 4, __m128>    float32x4;
+    typedef vector_type<double, 4, __m256d>  float64x4;
+    typedef scalar_type<half, 4>             float16x4;
 
-    #define MANGO_SIMD_INT_SSE
-    #define MANGO_SIMD_FLOAT_SSE
-    #define MANGO_SIMD_DOUBLE_AVX
-    #define MANGO_SIMD_CONVERT_AVX
-    #include "sse_int.hpp"
-    #include "sse_float.hpp"
-    #include "avx_double.hpp"
+    #include "sse_int128.hpp"
+    #include "sse_float128.hpp"
+    #include "avx_float256.hpp"
+    #include "sse_double128.hpp"
+    #include "avx_double256.hpp"
     #include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
-
-namespace mango {
-namespace simd {
 
     // --------------------------------------------------------------
     // Intel SSE vector intrinsics
     // --------------------------------------------------------------
 
+    #define MANGO_ENABLE_SIMD
+
     typedef vector_type<uint8, 16, __m128i> uint8x16;
-    typedef vector_type<int8, 16, __m128i> int8x16;
+    typedef vector_type<int8, 16, __m128i>  int8x16;
     typedef vector_type<uint16, 8, __m128i> uint16x8;
-    typedef vector_type<int16, 8, __m128i> int16x8;
+    typedef vector_type<int16, 8, __m128i>  int16x8;
     typedef vector_type<uint32, 4, __m128i> uint32x4;
-    typedef vector_type<int32, 4, __m128i> int32x4;
-    typedef vector_type<float, 4, __m128> float32x4;
-    typedef scalar_type<half, 4> float16x4;
+    typedef vector_type<int32, 4, __m128i>  int32x4;
+    typedef vector_type<float, 4, __m128>   float32x4;
+    typedef scalar_type<half, 4>            float16x4;
 
     struct float64x4
     {
@@ -146,33 +138,27 @@ namespace simd {
         __m128d zw;
     };
 
-} // namespace simd
-} // namespace mango
-
-    #define MANGO_SIMD_INT_SSE
-    #define MANGO_SIMD_FLOAT_SSE
-    #define MANGO_SIMD_DOUBLE_SSE
-    #define MANGO_SIMD_CONVERT_SSE
-    #include "sse_int.hpp"
-    #include "sse_float.hpp"
-    #include "sse_double.hpp"
+    #include "sse_int128.hpp"
+    #include "sse_float128.hpp"
+    #include "sse_float256.hpp"
+    #include "sse_double128.hpp"
+    #include "sse_double256.hpp"
     #include "sse_convert.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
-
-namespace mango {
-namespace simd {
 
     // --------------------------------------------------------------
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
+    #define MANGO_ENABLE_SIMD
+
     typedef vector_type<uint8, 16, uint8x16_t> uint8x16;
-    typedef vector_type<int8, 16, int8x16_t> int8x16;
+    typedef vector_type<int8, 16, int8x16_t>   int8x16;
     typedef vector_type<uint16, 8, uint16x8_t> uint16x8;
-    typedef vector_type<int16, 8, int16x8_t> int16x8;
+    typedef vector_type<int16, 8, int16x8_t>   int16x8;
     typedef vector_type<uint32, 4, uint32x4_t> uint32x4;
-    typedef vector_type<int32, 4, int32x4_t> int32x4;
+    typedef vector_type<int32, 4, int32x4_t>   int32x4;
     typedef vector_type<float, 4, float32x4_t> float32x4;
 
 #ifdef MANGO_ENABLE_FP16
@@ -187,109 +173,87 @@ namespace simd {
 
     typedef scalar_type<double, 4> float64x4;
 
-} // namespace simd
-} // namespace mango
-
-    #define MANGO_SIMD_INT_NEON
-    #define MANGO_SIMD_FLOAT_NEON
-    #define MANGO_SIMD_DOUBLE_SCALAR
-    #define MANGO_SIMD_CONVERT_NEON
-    #include "neon_int.hpp"
-    #include "neon_float.hpp"
-    #include "scalar_double.hpp"
+    #include "neon_int128.hpp"
+    #include "neon_float128.hpp"
+    #include "scalar_float256.hpp"
+    #include "scalar_double128.hpp"
+    #include "scalar_double256.hpp"
     #include "neon_convert.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
-
-namespace mango {
-namespace simd {
 
     // --------------------------------------------------------------
     // PowerPC Altivec / AVX128
     // --------------------------------------------------------------
 
-    typedef vector_type<uint8, 16, vector unsigned char> uint8x16;
-    typedef vector_type<int8, 16, vector signed char> int8x16;
+    #define MANGO_ENABLE_SIMD
+
+    typedef vector_type<uint8, 16, vector unsigned char>  uint8x16;
+    typedef vector_type<int8, 16, vector signed char>     int8x16;
     typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
-    typedef vector_type<int16, 8, vector signed short> int16x8;
-    typedef vector_type<uint32, 4, vector unsigned int> uint32x4;
-    typedef vector_type<int32, 4, vector signed int> int32x4;
-    typedef vector_type<float, 4, vector float> float32x4;
-    typedef scalar_type<double, 4> float64x4;
-    typedef scalar_type<half, 4> float16x4;
+    typedef vector_type<int16, 8, vector signed short>    int16x8;
+    typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
+    typedef vector_type<int32, 4, vector signed int>      int32x4;
+    typedef vector_type<float, 4, vector float>           float32x4;
+    typedef scalar_type<double, 4>                        float64x4;
+    typedef scalar_type<half, 4>                          float16x4;
 
-} // namespace simd
-} // namespace mango
-
-    #define MANGO_SIMD_INT_ALTIVEC
-    #define MANGO_SIMD_FLOAT_ALTIVEC
-    #define MANGO_SIMD_DOUBLE_SCALAR
-    #define MANGO_SIMD_CONVERT_ALTIVEC
-    #include "altivec_int.hpp"
-    #include "altivec_float.hpp"
-    #include "scalar_double.hpp"
+    #include "altivec_int128.hpp"
+    #include "altivec_float128.hpp"
+    #include "scalar_float256.hpp"
+    #include "scalar_double128.hpp"
+    #include "scalar_double256.hpp"
     #include "altivec_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SPU)
-
-namespace mango {
-namespace simd {
 
     // --------------------------------------------------------------
     // Cell BE SPU
     // --------------------------------------------------------------
 
-    typedef vector_type<uint8, 16, vector unsigned char> uint8x16;
-    typedef vector_type<int8, 16, vector signed char> int8x16;
+    #define MANGO_ENABLE_SIMD
+
+    typedef vector_type<uint8, 16, vector unsigned char>  uint8x16;
+    typedef vector_type<int8, 16, vector signed char>     int8x16;
     typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
-    typedef vector_type<int16, 8, vector signed short> int16x8;
-    typedef vector_type<uint32, 4, vector unsigned int> uint32x4;
-    typedef vector_type<int32, 4, vector signed int> int32x4;
-    typedef vector_type<float, 4, vector float> float32x4;
-    typedef scalar_type<double, 4> float64x4;
-    typedef scalar_type<half, 4> float16x4;
+    typedef vector_type<int16, 8, vector signed short>    int16x8;
+    typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
+    typedef vector_type<int32, 4, vector signed int>      int32x4;
+    typedef vector_type<float, 4, vector float>           float32x4;
+    typedef scalar_type<double, 4>                        float64x4;
+    typedef scalar_type<half, 4>                          float16x4;
 
-} // namespace simd
-} // namespace mango
-
-    #define MANGO_SIMD_INT_SPU
-    #define MANGO_SIMD_FLOAT_SPU
-    #define MANGO_SIMD_DOUBLE_SCALAR
-    #define MANGO_SIMD_CONVERT_SPU
-    #include "spu_int.hpp"
-    #include "spu_float.hpp"
-    #include "scalar_double.hpp"
+    #include "spu_int128.hpp"
+    #include "spu_float128.hpp"
+    #include "scalar_float256.hpp"
+    #include "scalar_double128.hpp"
+    #include "scalar_double256.hpp"
     #include "spu_convert.hpp"
 
 #else
-
-namespace mango {
-namespace simd {
 
     // --------------------------------------------------------------
     // SIMD emulation
     // --------------------------------------------------------------
 
     typedef scalar_type<uint8, 16> uint8x16;
-    typedef scalar_type<int8, 16> int8x16;
+    typedef scalar_type<int8, 16>  int8x16;
     typedef scalar_type<uint16, 8> uint16x8;
-    typedef scalar_type<int16, 8> int16x8;
+    typedef scalar_type<int16, 8>  int16x8;
     typedef scalar_type<uint32, 4> uint32x4;
-    typedef scalar_type<int32, 4> int32x4;
-    typedef scalar_type<float, 4> float32x4;
+    typedef scalar_type<int32, 4>  int32x4;
+    typedef scalar_type<float, 4>  float32x4;
     typedef scalar_type<double, 4> float64x4;
-    typedef scalar_type<half, 4> float16x4;
+    typedef scalar_type<half, 4>   float16x4;
 
-} // namespace simd
-} // namespace mango
-
-    #define MANGO_SIMD_INT_SCALAR
-    #define MANGO_SIMD_FLOAT_SCALAR
-    #define MANGO_SIMD_DOUBLE_SCALAR
-    #define MANGO_SIMD_CONVERT_SCALAR
-    #include "scalar_int.hpp"
-    #include "scalar_float.hpp"
-    #include "scalar_double.hpp"
+    #include "scalar_int128.hpp"
+    #include "scalar_float128.hpp"
+    #include "scalar_float256.hpp"
+    #include "scalar_double128.hpp"
+    #include "scalar_double256.hpp"
     #include "scalar_convert.hpp"
 
 #endif
+
+} // namespace simd
+} // namespace mango

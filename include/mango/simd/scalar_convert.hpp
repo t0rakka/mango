@@ -4,13 +4,9 @@
 */
 #pragma once
 
-#include "simd.hpp"
+#ifdef MANGO_INCLUDE_SIMD
+
 #include "common.hpp"
-
-#ifdef MANGO_SIMD_CONVERT_SCALAR
-
-namespace mango {
-namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -310,7 +306,4 @@ namespace simd {
         return v;
     }
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_CONVERT_SCALAR
+#endif // MANGO_INCLUDE_SIMD

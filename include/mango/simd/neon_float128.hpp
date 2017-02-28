@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_FLOAT_NEON
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // float32x4
@@ -719,7 +714,4 @@ namespace simd {
 #endif
     }
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_FLOAT_NEON
+#endif // MANGO_INCLUDE_SIMD

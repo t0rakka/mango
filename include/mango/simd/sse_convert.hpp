@@ -4,13 +4,9 @@
 */
 #pragma once
 
-#include "simd.hpp"
+#ifdef MANGO_INCLUDE_SIMD
+
 #include "common.hpp"
-
-#ifdef MANGO_SIMD_CONVERT_SSE
-
-namespace mango {
-namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -366,7 +362,4 @@ namespace simd {
 
 #endif // MANGO_ENABLE_F16C
 
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_CONVERT_SSE
+#endif // MANGO_INCLUDE_SIMD

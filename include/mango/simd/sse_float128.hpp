@@ -4,12 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
-
-#ifdef MANGO_SIMD_FLOAT_SSE
-
-namespace mango {
-namespace simd {
+#ifdef MANGO_INCLUDE_SIMD
 
     // -----------------------------------------------------------------
     // float32x4
@@ -678,8 +673,4 @@ namespace simd {
     }
 
 #undef SIMD_SHUFFLE
-
-} // namespace simd
-} // namespace mango
-
-#endif // MANGO_SIMD_FLOAT_SSE
+#endif // MANGO_INCLUDE_SIMD
