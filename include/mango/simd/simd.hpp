@@ -105,6 +105,8 @@ namespace simd {
     typedef vector_type<uint32, 4, __m128i>  uint32x4;
     typedef vector_type<int32, 4, __m128i>   int32x4;
     typedef vector_type<float, 4, __m128>    float32x4;
+    typedef vector_type<float, 8, __m256>    float32x8;
+    typedef vector_type<double, 2, __m128d>  float64x2;
     typedef vector_type<double, 4, __m256d>  float64x4;
     typedef scalar_type<half, 4>             float16x4;
 
@@ -130,7 +132,14 @@ namespace simd {
     typedef vector_type<uint32, 4, __m128i> uint32x4;
     typedef vector_type<int32, 4, __m128i>  int32x4;
     typedef vector_type<float, 4, __m128>   float32x4;
+    typedef vector_type<double, 2, __m128d> float64x2;
     typedef scalar_type<half, 4>            float16x4;
+
+    struct float32x8
+    {
+        __m128 low;
+        __m128 high;
+    };
 
     struct float64x4
     {
@@ -171,6 +180,8 @@ namespace simd {
 
 #endif
 
+    typedef scalar_type<float, 8>  float32x8;
+    typedef scalar_type<double, 2> float64x2;
     typedef scalar_type<double, 4> float64x4;
 
     #include "neon_int128.hpp"
@@ -195,6 +206,8 @@ namespace simd {
     typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
     typedef vector_type<int32, 4, vector signed int>      int32x4;
     typedef vector_type<float, 4, vector float>           float32x4;
+    typedef scalar_type<float, 8>                         float32x8;
+    typedef scalar_type<double, 2>                        float64x2;
     typedef scalar_type<double, 4>                        float64x4;
     typedef scalar_type<half, 4>                          float16x4;
 
@@ -220,6 +233,8 @@ namespace simd {
     typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
     typedef vector_type<int32, 4, vector signed int>      int32x4;
     typedef vector_type<float, 4, vector float>           float32x4;
+    typedef scalar_type<float, 8>                         float32x8;
+    typedef scalar_type<double, 2>                        float64x2;
     typedef scalar_type<double, 4>                        float64x4;
     typedef scalar_type<half, 4>                          float16x4;
 
@@ -236,15 +251,17 @@ namespace simd {
     // SIMD emulation
     // --------------------------------------------------------------
 
-    typedef scalar_type<uint8, 16> uint8x16;
-    typedef scalar_type<int8, 16>  int8x16;
-    typedef scalar_type<uint16, 8> uint16x8;
-    typedef scalar_type<int16, 8>  int16x8;
-    typedef scalar_type<uint32, 4> uint32x4;
-    typedef scalar_type<int32, 4>  int32x4;
-    typedef scalar_type<float, 4>  float32x4;
-    typedef scalar_type<double, 4> float64x4;
-    typedef scalar_type<half, 4>   float16x4;
+    typedef scalar_type<uint8, 16>  uint8x16;
+    typedef scalar_type<int8, 16>   int8x16;
+    typedef scalar_type<uint16, 8>  uint16x8;
+    typedef scalar_type<int16, 8>   int16x8;
+    typedef scalar_type<uint32, 4>  uint32x4;
+    typedef scalar_type<int32, 4>   int32x4;
+    typedef scalar_type<float, 4>   float32x4;
+    typedef scalar_type<float, 8>   float32x8;
+    typedef scalar_type<double, 2>  float64x2;
+    typedef scalar_type<double, 4>  float64x4;
+    typedef scalar_type<half, 4>    float16x4;
 
     #include "scalar_int128.hpp"
     #include "scalar_float128.hpp"
