@@ -57,12 +57,12 @@
         return _mm_set1_epi8(s);
     }
 
-    static inline uint8x16 uint8x16_unpack_low(uint8x16 a, uint8x16 b)
+    static inline uint8x16 uint8x16_unpacklo(uint8x16 a, uint8x16 b)
     {
         return _mm_unpacklo_epi8(a, b);
     }
 
-    static inline uint8x16 uint8x16_unpack_high(uint8x16 a, uint8x16 b)
+    static inline uint8x16 uint8x16_unpackhi(uint8x16 a, uint8x16 b)
     {
         return _mm_unpackhi_epi8(a, b);
     }
@@ -199,12 +199,12 @@
         return _mm_set1_epi16(s);
     }
 
-    static inline uint16x8 uint16x8_unpack_low(uint16x8 a, uint16x8 b)
+    static inline uint16x8 uint16x8_unpacklo(uint16x8 a, uint16x8 b)
     {
         return _mm_unpacklo_epi16(a, b);
     }
 
-    static inline uint16x8 uint16x8_unpack_high(uint16x8 a, uint16x8 b)
+    static inline uint16x8 uint16x8_unpackhi(uint16x8 a, uint16x8 b)
     {
         return _mm_unpackhi_epi16(a, b);
     }
@@ -470,12 +470,12 @@
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
-    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    static inline uint32x4 uint32x4_unpacklo(uint32x4 a, uint32x4 b)
     {
         return _mm_unpacklo_epi32(a, b);
     }
 
-    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    static inline uint32x4 uint32x4_unpackhi(uint32x4 a, uint32x4 b)
     {
         return _mm_unpackhi_epi32(a, b);
     }
@@ -663,12 +663,12 @@
         return _mm_set1_epi8(s);
     }
 
-    static inline int8x16 int8x16_unpack_low(int8x16 a, int8x16 b)
+    static inline int8x16 int8x16_unpacklo(int8x16 a, int8x16 b)
     {
         return _mm_unpacklo_epi8(a, b);
     }
 
-    static inline int8x16 int8x16_unpack_high(int8x16 a, int8x16 b)
+    static inline int8x16 int8x16_unpackhi(int8x16 a, int8x16 b)
     {
         return _mm_unpackhi_epi8(a, b);
     }
@@ -838,12 +838,12 @@
         return _mm_set1_epi16(s);
     }
 
-    static inline int16x8 int16x8_unpack_low(int16x8 a, int16x8 b)
+    static inline int16x8 int16x8_unpacklo(int16x8 a, int16x8 b)
     {
         return _mm_unpacklo_epi16(a, b);
     }
 
-    static inline int16x8 int16x8_unpack_high(int16x8 a, int16x8 b)
+    static inline int16x8 int16x8_unpackhi(int16x8 a, int16x8 b)
     {
         return _mm_unpackhi_epi16(a, b);
     }
@@ -1105,12 +1105,12 @@
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
-    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    static inline int32x4 int32x4_unpacklo(int32x4 a, int32x4 b)
     {
         return _mm_unpacklo_epi32(a, b);
     }
 
-    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    static inline int32x4 int32x4_unpackhi(int32x4 a, int32x4 b)
     {
         return _mm_unpackhi_epi32(a, b);
     }

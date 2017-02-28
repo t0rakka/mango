@@ -191,7 +191,7 @@
     }
 
     template <typename VectorType>
-    static inline VectorType scalar_unpack_low(VectorType a, VectorType b)
+    static inline VectorType scalar_unpacklo(VectorType a, VectorType b)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size / 2; ++i)
@@ -203,7 +203,7 @@
     }
 
     template <typename VectorType>
-    static inline VectorType scalar_unpack_high(VectorType a, VectorType b)
+    static inline VectorType scalar_unpackhi(VectorType a, VectorType b)
     {
         VectorType v;
         constexpr int half = VectorType::size / 2;
@@ -229,14 +229,14 @@
         return scalar_set<uint8, 16>(s);
     }
 
-    static inline uint8x16 uint8x16_unpack_low(uint8x16 a, uint8x16 b)
+    static inline uint8x16 uint8x16_unpacklo(uint8x16 a, uint8x16 b)
     {
-        return scalar_unpack_low(a, b);
+        return scalar_unpacklo(a, b);
     }
 
-    static inline uint8x16 uint8x16_unpack_high(uint8x16 a, uint8x16 b)
+    static inline uint8x16 uint8x16_unpackhi(uint8x16 a, uint8x16 b)
     {
-        return scalar_unpack_high(a, b);
+        return scalar_unpackhi(a, b);
     }
 
     static inline uint8x16 uint8x16_add(uint8x16 a, uint8x16 b)
@@ -329,14 +329,14 @@
         return scalar_set<uint16, 8>(s);
     }
 
-    static inline uint16x8 uint16x8_unpack_low(uint16x8 a, uint16x8 b)
+    static inline uint16x8 uint16x8_unpacklo(uint16x8 a, uint16x8 b)
     {
-        return scalar_unpack_low(a, b);
+        return scalar_unpacklo(a, b);
     }
 
-    static inline uint16x8 uint16x8_unpack_high(uint16x8 a, uint16x8 b)
+    static inline uint16x8 uint16x8_unpackhi(uint16x8 a, uint16x8 b)
     {
-        return scalar_unpack_high(a, b);
+        return scalar_unpackhi(a, b);
     }
 
     static inline uint16x8 uint16x8_add(uint16x8 a, uint16x8 b)
@@ -480,14 +480,14 @@
         dest[3] = a[3];
     }
 
-    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    static inline uint32x4 uint32x4_unpacklo(uint32x4 a, uint32x4 b)
     {
-        return scalar_unpack_low(a, b);
+        return scalar_unpacklo(a, b);
     }
 
-    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    static inline uint32x4 uint32x4_unpackhi(uint32x4 a, uint32x4 b)
     {
-        return scalar_unpack_high(a, b);
+        return scalar_unpackhi(a, b);
     }
 
     static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
@@ -615,14 +615,14 @@
         return scalar_set<int8, 16>(s);
     }
 
-    static inline int8x16 int8x16_unpack_low(int8x16 a, int8x16 b)
+    static inline int8x16 int8x16_unpacklo(int8x16 a, int8x16 b)
     {
-        return scalar_unpack_low(a, b);
+        return scalar_unpacklo(a, b);
     }
 
-    static inline int8x16 int8x16_unpack_high(int8x16 a, int8x16 b)
+    static inline int8x16 int8x16_unpackhi(int8x16 a, int8x16 b)
     {
-        return scalar_unpack_high(a, b);
+        return scalar_unpackhi(a, b);
     }
 
     static inline int8x16 int8x16_add(int8x16 a, int8x16 b)
@@ -725,14 +725,14 @@
         return scalar_set<int16, 8>(s);
     }
 
-    static inline int16x8 int16x8_unpack_low(int16x8 a, int16x8 b)
+    static inline int16x8 int16x8_unpacklo(int16x8 a, int16x8 b)
     {
-        return scalar_unpack_low(a, b);
+        return scalar_unpacklo(a, b);
     }
 
-    static inline int16x8 int16x8_unpack_high(int16x8 a, int16x8 b)
+    static inline int16x8 int16x8_unpackhi(int16x8 a, int16x8 b)
     {
-        return scalar_unpack_high(a, b);
+        return scalar_unpackhi(a, b);
     }
 
     static inline int16x8 int16x8_add(int16x8 a, int16x8 b)
@@ -886,14 +886,14 @@
         dest[3] = a[3];
     }
 
-    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    static inline int32x4 int32x4_unpacklo(int32x4 a, int32x4 b)
     {
-        return scalar_unpack_low(a, b);
+        return scalar_unpacklo(a, b);
     }
 
-    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    static inline int32x4 int32x4_unpackhi(int32x4 a, int32x4 b)
     {
-        return scalar_unpack_high(a, b);
+        return scalar_unpackhi(a, b);
     }
 
     static inline int32x4 int32x4_abs(int32x4 a)

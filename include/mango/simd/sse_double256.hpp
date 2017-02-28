@@ -335,8 +335,8 @@
     {
         const __m128d bb = _mm_set1_pd(b);
         float64x4 result;
-        result.xy = _mm_xor_pd(a.xy, bb);
-        result.zw = _mm_xor_pd(a.zw, bb);
+        result.xy = _mm_div_pd(a.xy, bb);
+        result.zw = _mm_div_pd(a.zw, bb);
         return result;
     }
 

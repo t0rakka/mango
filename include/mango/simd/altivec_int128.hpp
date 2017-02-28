@@ -102,12 +102,12 @@
         d[3] = s[3];
     }
 
-    static inline uint32x4 uint32x4_unpack_low(uint32x4 a, uint32x4 b)
+    static inline uint32x4 uint32x4_unpacklo(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
-    static inline uint32x4 uint32x4_unpack_high(uint32x4 a, uint32x4 b)
+    static inline uint32x4 uint32x4_unpackhi(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
@@ -290,12 +290,12 @@
         d[3] = s[3];
     }
 
-    static inline int32x4 int32x4_unpack_low(int32x4 a, int32x4 b)
+    static inline int32x4 int32x4_unpacklo(int32x4 a, int32x4 b)
     {
         // TODO
     }
 
-    static inline int32x4 int32x4_unpack_high(int32x4 a, int32x4 b)
+    static inline int32x4 int32x4_unpackhi(int32x4 a, int32x4 b)
     {
         // TODO
     }
