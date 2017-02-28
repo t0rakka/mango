@@ -120,7 +120,7 @@
 	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 3)), vdup_n_f32(vgetq_lane_f32(v, 1)));
     }        
 
-    // indexed accessor
+    // indexed access
 
     template <int Index>
     static inline float32x4 float32x4_set_component(float32x4 a, float s)
@@ -192,22 +192,22 @@
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_s32(int32x4_and(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
+        return vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_s32(int32x4_nand(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
+        return vreinterpretq_f32_s32(vbicq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_s32(int32x4_or(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
+        return vreinterpretq_f32_s32(vorrq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_s32(int32x4_xor(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
+        return vreinterpretq_f32_s32(veorq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
     static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
