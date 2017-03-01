@@ -16,7 +16,7 @@
     inline float32x4 float32x4_shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return float32x4(v[x], v[y], v[z], v[w]);
+        return {{ v[x], v[y], v[z], v[w] }};
     }
 
     template <>
@@ -45,22 +45,22 @@
 
     static inline float32x4 float32x4_zero()
     {
-        return float32x4(0.0f, 0.0f, 0.0f, 0.0f);
+        return {{ 0.0f, 0.0f, 0.0f, 0.0f }};
     }
 
     static inline float32x4 float32x4_set1(float s)
     {
-        return float32x4(s, s, s, s);
+        return {{ s, s, s, s }};
     }
 
     static inline float32x4 float32x4_set4(float x, float y, float z, float w)
     {
-        return float32x4(x, y, z, w);
+        return {{ x, y, z, w }};
     }
 
     static inline float32x4 float32x4_uload(const float* source)
     {
-        return float32x4(source[0], source[1], source[2], source[3]);
+        return float32x4_set4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void float32x4_ustore(float* dest, float32x4 a)
@@ -73,22 +73,22 @@
 
     static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)
     {
-        return float32x4(a[0], a[1], b[0], b[1]);
+        return float32x4_set4(a[0], a[1], b[0], b[1]);
     }
 
     static inline float32x4 float32x4_movehl(float32x4 a, float32x4 b)
     {
-        return float32x4(b[2], b[3], a[2], a[3]);
+        return float32x4_set4(b[2], b[3], a[2], a[3]);
     }
 
     static inline float32x4 float32x4_unpackhi(float32x4 a, float32x4 b)
     {
-        return float32x4(a[2], b[2], a[3], b[3]);
+        return float32x4_set4(a[2], b[2], a[3], b[3]);
     }
 
     static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
     {
-        return float32x4(a[0], b[0], a[1], b[1]);
+        return float32x4_set4(a[0], b[0], a[1], b[1]);
     }
 
     // logical
@@ -177,7 +177,7 @@
 
     static inline float32x4 float32x4_neg(float32x4 a)
     {
-        return float32x4(-a[0], -a[1], -a[2], -a[3]);
+        return float32x4_set4(-a[0], -a[1], -a[2], -a[3]);
     }
 
     static inline float32x4 float32x4_add(float32x4 a, float32x4 b)

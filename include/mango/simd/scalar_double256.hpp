@@ -16,7 +16,7 @@
     inline float64x4 float64x4_shuffle(float64x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return float64x4(v[x], v[y], v[z], v[w]);
+        return {{ v[x], v[y], v[z], v[w] }};
     }
 
     template <>
@@ -45,22 +45,22 @@
 
     static inline float64x4 float64x4_zero()
     {
-        return float64x4(0.0, 0.0, 0.0, 0.0);
+        return {{ 0.0, 0.0, 0.0, 0.0 }};
     }
 
     static inline float64x4 float64x4_set1(double s)
     {
-        return float64x4(s, s, s, s);
+        return {{ s, s, s, s }};
     }
 
     static inline float64x4 float64x4_set4(double x, double y, double z, double w)
     {
-        return float64x4(x, y, z, w);
+        return {{ x, y, z, w }};
     }
 
     static inline float64x4 float64x4_uload(const double* source)
     {
-        return float64x4(source[0], source[1], source[2], source[3]);
+        return float64x4_set4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void float64x4_ustore(double* dest, float64x4 a)
@@ -73,22 +73,22 @@
 
     static inline float64x4 float64x4_movelh(float64x4 a, float64x4 b)
     {
-        return float64x4(a[0], a[1], b[0], b[1]);
+        return float64x4_set4(a[0], a[1], b[0], b[1]);
     }
 
     static inline float64x4 float64x4_movehl(float64x4 a, float64x4 b)
     {
-        return float64x4(b[2], b[3], a[2], a[3]);
+        return float64x4_set4(b[2], b[3], a[2], a[3]);
     }
 
     static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
     {
-        return float64x4(a[1], b[1], a[3], b[3]);
+        return float64x4_set4(a[1], b[1], a[3], b[3]);
     }
 
     static inline float64x4 float64x4_unpacklo(float64x4 a, float64x4 b)
     {
-        return float64x4(a[0], b[0], a[2], b[2]);
+        return float64x4_set4(a[0], b[0], a[2], b[2]);
     }
 
     // logical
@@ -177,7 +177,7 @@
 
     static inline float64x4 float64x4_neg(float64x4 a)
     {
-        return float64x4(-a[0], -a[1], -a[2], -a[3]);
+        return float64x4_set4(-a[0], -a[1], -a[2], -a[3]);
     }
 
     static inline float64x4 float64x4_add(float64x4 a, float64x4 b)
@@ -412,7 +412,12 @@
 
     static inline float64x4 float64x4_fract(float64x4 s)
     {
-        return float64x4_sub(s, float64x4_floor(s));
+        float64x4 v;
+        v[0] = s[0] - std::floor(s[0]);
+        v[1] = s[1] - std::floor(s[1]);
+        v[2] = s[2] - std::floor(s[2]);
+        v[3] = s[3] - std::floor(s[3]);
+        return v;
     }
 
 #endif // MANGO_INCLUDE_SIMD

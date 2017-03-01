@@ -425,7 +425,7 @@
     static inline uint32x4 uint32x4_shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return uint32x4(v[x], v[y], v[z], v[w]);
+        return {{ v[x], v[y], v[z], v[w] }};
     }
 
     template <>
@@ -454,22 +454,22 @@
 
     static inline uint32x4 uint32x4_zero()
     {
-        return uint32x4(0, 0, 0, 0);
+        return {{ 0, 0, 0, 0 }};
     }
 
     static inline uint32x4 uint32x4_set1(uint32 s)
     {
-        return uint32x4(s, s, s, s);
+        return {{ s, s, s, s }};
     }
 
     static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
     {
-        return uint32x4(x, y, z, w);
+        return {{ x, y, z, w }};
     }
 
     static inline uint32x4 uint32x4_uload(const uint32* source)
     {
-        return uint32x4(source[0], source[1], source[2], source[3]);
+        return uint32x4_set4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
@@ -831,7 +831,7 @@
     static inline int32x4 int32x4_shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return int32x4(v[x], v[y], v[z], v[w]);
+        return {{ v[x], v[y], v[z], v[w] }};
     }
 
     template <>
@@ -860,22 +860,22 @@
 
     static inline int32x4 int32x4_zero()
     {
-        return int32x4(0, 0, 0, 0);
+        return {{ 0, 0, 0, 0 }};
     }
 
     static inline int32x4 int32x4_set1(int s)
     {
-        return int32x4(s, s, s, s);
+        return {{ s, s, s, s }};
     }
 
     static inline int32x4 int32x4_set4(int x, int y, int z, int w)
     {
-        return int32x4(x, y, z, w);
+        return {{ x, y, z, w }};
     }
 
     static inline int32x4 int32x4_uload(const int* source)
     {
-        return int32x4(source[0], source[1], source[2], source[3]);
+        return int32x4_set4(source[0], source[1], source[2], source[3]);
     }
 
     static inline void int32x4_ustore(int* dest, int32x4 a)
