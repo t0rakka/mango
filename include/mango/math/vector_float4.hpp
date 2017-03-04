@@ -18,47 +18,6 @@ namespace mango
     template <>
     struct Vector<float, 4> : VectorBase<float, 4>
     {
-        template <int Index>
-        struct ScalarAccessor
-        {
-            simd::float32x4 m;
-
-            operator float () const
-            {
-                return simd::float32x4_get_component<Index>(m);
-            }
-
-            ScalarAccessor& operator = (float s)
-            {
-                m = simd::float32x4_set_component<Index>(m, s);
-                return *this;
-            }
-
-            ScalarAccessor& operator += (float s)
-            {
-                *this = float(*this) + s;
-                return *this;
-            }
-
-            ScalarAccessor& operator -= (float s)
-            {
-                *this = float(*this) - s;
-                return *this;
-            }
-
-            ScalarAccessor& operator *= (float s)
-            {
-                *this = float(*this) * s;
-                return *this;
-            }
-
-            ScalarAccessor& operator /= (float s)
-            {
-                *this = float(*this) / s;
-                return *this;
-            }
-        };
-
         template <int X, int Y>
         struct Permute2
         {
@@ -66,8 +25,8 @@ namespace mango
 
             operator Vector<float, 2> () const
             {
-                const float x = simd::float32x4_get_component<X>(m);
-                const float y = simd::float32x4_get_component<Y>(m);
+                const float x = simd::get_component<X>(m);
+                const float y = simd::get_component<Y>(m);
                 return Vector<float, 2>(x, y);
             }
         };
@@ -79,9 +38,9 @@ namespace mango
 
             operator Vector<float, 3> () const
             {
-                const float x = simd::float32x4_get_component<X>(m);
-                const float y = simd::float32x4_get_component<Y>(m);
-                const float z = simd::float32x4_get_component<Z>(m);
+                const float x = simd::get_component<X>(m);
+                const float y = simd::get_component<Y>(m);
+                const float z = simd::get_component<Z>(m);
                 return Vector<float, 3>(x, y, z);
             }
         };
@@ -93,7 +52,7 @@ namespace mango
 
             operator simd::float32x4 () const
             {
-                return simd::float32x4_shuffle<X, Y, Z, W>(m);
+                return simd::shuffle<X, Y, Z, W>(m);
             }
         };
 
@@ -101,10 +60,10 @@ namespace mango
         {
             simd::float32x4 m;
 
-            ScalarAccessor<0> x;
-            ScalarAccessor<1> y;
-            ScalarAccessor<2> z;
-            ScalarAccessor<3> w;
+            ScalarAccessor<simd::float32x4, float, 0> x;
+            ScalarAccessor<simd::float32x4, float, 1> y;
+            ScalarAccessor<simd::float32x4, float, 2> z;
+            ScalarAccessor<simd::float32x4, float, 3> w;
 
             Permute2<0, 0> xx;
             Permute2<1, 0> yx;
@@ -536,12 +495,12 @@ namespace mango
         uint32 pack() const
         {
             const simd::int32x4 i = simd::int32x4_convert(m);
-            return simd::int32x4_pack(i);
+            return simd::pack(i);
         }
 
         void unpack(uint32 a)
         {
-            const simd::int32x4 i = simd::int32x4_unpack(a);
+            const simd::int32x4 i = simd::unpack(a);
             m = simd::float32x4_convert(i);
         }
     };
@@ -557,102 +516,102 @@ namespace mango
 
     static inline float4 operator - (const float4& v)
     {
-        return simd::float32x4_neg(v);
+        return simd::neg(v);
     }
 
     static inline float4& operator += (float4& a, const float4& b)
     {
-        a = simd::float32x4_add(a, b);
+        a = simd::add(a, b);
         return a;
     }
 
     static inline float4& operator -= (float4& a, const float4& b)
     {
-        a = simd::float32x4_sub(a, b);
+        a = simd::sub(a, b);
         return a;
     }
 
     static inline float4& operator *= (float4& a, const float4& b)
     {
-        a = simd::float32x4_mul(a, b);
+        a = simd::mul(a, b);
         return a;
     }
 
     static inline float4& operator *= (float4& a, float b)
     {
-        a = simd::float32x4_mul(a, b);
+        a = simd::mul(a, b);
         return a;
     }
 
     static inline float4& operator /= (float4& a, const float4& b)
     {
-        a = simd::float32x4_div(a, b);
+        a = simd::div(a, b);
         return a;
     }
 
     static inline float4& operator /= (float4& a, float b)
     {
-        a = simd::float32x4_div(a, b);
+        a = simd::div(a, b);
         return a;
     }
 
     static inline float4 operator + (const float4& a, const float4& b)
     {
-        return simd::float32x4_add(a, b);
+        return simd::add(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline float4 operator + (const float4::Permute4<X,Y,Z,W>& a, const float4::Permute4<A,B,C,D>& b)
     {
-        return simd::float32x4_add(a, b);
+        return simd::add(a, b);
     }
 
     static inline float4 operator - (const float4& a, const float4& b)
     {
-        return simd::float32x4_sub(a, b);
+        return simd::sub(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline float4 operator - (const float4::Permute4<X,Y,Z,W>& a, const float4::Permute4<A,B,C,D>& b)
     {
-        return simd::float32x4_sub(a, b);
+        return simd::sub(a, b);
     }
 
     static inline float4 operator * (const float4& a, const float4& b)
     {
-        return simd::float32x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     static inline float4 operator * (const float4& a, float b)
     {
-        return simd::float32x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     static inline float4 operator * (float a, const float4& b)
     {
-        return simd::float32x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline float4 operator * (const float4::Permute4<X,Y,Z,W>& a, const float4::Permute4<A,B,C,D>& b)
     {
-        return simd::float32x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     static inline float4 operator / (const float4& a, const float4& b)
     {
-        return simd::float32x4_div(a, b);
+        return simd::div(a, b);
     }
 
     static inline float4 operator / (const float4& a, float b)
     {
-        return simd::float32x4_div(a, b);
+        return simd::div(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline float4 operator / (const float4::Permute4<X,Y,Z,W>& a, const float4::Permute4<A,B,C,D>& b)
     {
-        return simd::float32x4_div(a, b);
+        return simd::div(a, b);
     }
 
     // ------------------------------------------------------------------
@@ -669,54 +628,54 @@ namespace mango
         return SimdName(a, b); \
     }
     
-    MAKE_VECTOR_FUNCTION1(abs, simd::float32x4_abs)
-    MAKE_VECTOR_FUNCTION1(square, simd::float32x4_square)
-    MAKE_VECTOR_FUNCTION1(length, simd::float32x4_length)
-    MAKE_VECTOR_FUNCTION1(normalize, simd::float32x4_normalize)
-    MAKE_VECTOR_FUNCTION1(round, simd::float32x4_round)
-    MAKE_VECTOR_FUNCTION1(floor, simd::float32x4_floor)
-    MAKE_VECTOR_FUNCTION1(ceil, simd::float32x4_ceil)
-    MAKE_VECTOR_FUNCTION1(fract, simd::float32x4_fract)
-    MAKE_VECTOR_FUNCTION1(sin, simd::float32x4_sin)
-    MAKE_VECTOR_FUNCTION1(cos, simd::float32x4_cos)
-    MAKE_VECTOR_FUNCTION1(tan, simd::float32x4_tan)
-    MAKE_VECTOR_FUNCTION1(asin, simd::float32x4_asin)
-    MAKE_VECTOR_FUNCTION1(acos, simd::float32x4_acos)
-    MAKE_VECTOR_FUNCTION1(atan, simd::float32x4_atan)
-    MAKE_VECTOR_FUNCTION1(exp, simd::float32x4_exp)
-    MAKE_VECTOR_FUNCTION1(log, simd::float32x4_log)
-    MAKE_VECTOR_FUNCTION1(exp2, simd::float32x4_exp2)
-    MAKE_VECTOR_FUNCTION1(log2, simd::float32x4_log2)
-    MAKE_VECTOR_FUNCTION1(sign, simd::float32x4_sign)
-    MAKE_VECTOR_FUNCTION1(radians, simd::float32x4_radians)
-    MAKE_VECTOR_FUNCTION1(degrees, simd::float32x4_degrees)
-    MAKE_VECTOR_FUNCTION1(sqrt, simd::float32x4_sqrt)
-    MAKE_VECTOR_FUNCTION1(rsqrt, simd::float32x4_rsqrt)
+    MAKE_VECTOR_FUNCTION1(abs, simd::abs)
+    MAKE_VECTOR_FUNCTION1(square, simd::square)
+    MAKE_VECTOR_FUNCTION1(length, simd::length)
+    MAKE_VECTOR_FUNCTION1(normalize, simd::normalize)
+    MAKE_VECTOR_FUNCTION1(round, simd::round)
+    MAKE_VECTOR_FUNCTION1(floor, simd::floor)
+    MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
+    MAKE_VECTOR_FUNCTION1(fract, simd::fract)
+    MAKE_VECTOR_FUNCTION1(sin, simd::sin)
+    MAKE_VECTOR_FUNCTION1(cos, simd::cos)
+    MAKE_VECTOR_FUNCTION1(tan, simd::tan)
+    MAKE_VECTOR_FUNCTION1(asin, simd::asin)
+    MAKE_VECTOR_FUNCTION1(acos, simd::acos)
+    MAKE_VECTOR_FUNCTION1(atan, simd::atan)
+    MAKE_VECTOR_FUNCTION1(exp, simd::exp)
+    MAKE_VECTOR_FUNCTION1(log, simd::log)
+    MAKE_VECTOR_FUNCTION1(exp2, simd::exp2)
+    MAKE_VECTOR_FUNCTION1(log2, simd::log2)
+    MAKE_VECTOR_FUNCTION1(sign, simd::sign)
+    MAKE_VECTOR_FUNCTION1(radians, simd::radians)
+    MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
+    MAKE_VECTOR_FUNCTION1(sqrt, simd::sqrt)
+    MAKE_VECTOR_FUNCTION1(rsqrt, simd::rsqrt)
 
-    MAKE_VECTOR_FUNCTION2(min, simd::float32x4_min)
-    MAKE_VECTOR_FUNCTION2(max, simd::float32x4_max)
-    MAKE_VECTOR_FUNCTION2(dot, simd::float32x4_dot4)
-    MAKE_VECTOR_FUNCTION2(cross, simd::float32x4_cross3)
-    MAKE_VECTOR_FUNCTION2(mod, simd::float32x4_mod)
-    MAKE_VECTOR_FUNCTION2(pow, simd::float32x4_pow)
-    MAKE_VECTOR_FUNCTION2(atan2, simd::float32x4_atan2)
+    MAKE_VECTOR_FUNCTION2(min, simd::min)
+    MAKE_VECTOR_FUNCTION2(max, simd::max)
+    MAKE_VECTOR_FUNCTION2(dot, simd::dot4)
+    MAKE_VECTOR_FUNCTION2(cross, simd::cross3)
+    MAKE_VECTOR_FUNCTION2(mod, simd::mod)
+    MAKE_VECTOR_FUNCTION2(pow, simd::pow)
+    MAKE_VECTOR_FUNCTION2(atan2, simd::atan2)
 
 #undef MAKE_VECTOR_FUNCTION1
 #undef MAKE_VECTOR_FUNCTION2
 
     static inline float4 clamp(const float4& a, const float4& amin, const float4& amax)
     {
-        return simd::float32x4_clamp(a, amin, amax);
+        return simd::clamp(a, amin, amax);
     }
 
     static inline float4 madd(const float4& a, const float4& b, const float4& c)
     {
-        return simd::float32x4_madd(a, b, c);
+        return simd::madd(a, b, c);
     }
 
     static inline float4 msub(const float4& a, const float4& b, const float4& c)
     {
-        return simd::float32x4_msub(a, b, c);
+        return simd::msub(a, b, c);
     }
 
     static inline float4 lerp(const float4& a, const float4& b, float factor)
@@ -731,12 +690,12 @@ namespace mango
 
     static inline float4 hmin(const float4& v)
     {
-        return simd::float32x4_hmin(v);
+        return simd::hmin(v);
     }
 
     static inline float4 hmax(const float4& v)
     {
-        return simd::float32x4_hmax(v);
+        return simd::hmax(v);
     }
 
     // ------------------------------------------------------------------
@@ -745,37 +704,37 @@ namespace mango
 
     static inline simd::float32x4 operator > (const float4& a, const float4& b)
     {
-        return simd::float32x4_compare_gt(a, b);
+        return simd::compare_gt(a, b);
     }
 
     static inline simd::float32x4 operator >= (const float4& a, const float4& b)
     {
-        return simd::float32x4_compare_ge(a, b);
+        return simd::compare_ge(a, b);
     }
 
     static inline simd::float32x4 operator < (const float4& a, const float4& b)
     {
-        return simd::float32x4_compare_lt(a, b);
+        return simd::compare_lt(a, b);
     }
 
     static inline simd::float32x4 operator <= (const float4& a, const float4& b)
     {
-        return simd::float32x4_compare_le(a, b);
+        return simd::compare_le(a, b);
     }
 
     static inline simd::float32x4 operator == (const float4& a, const float4& b)
     {
-        return simd::float32x4_compare_eq(a, b);
+        return simd::compare_eq(a, b);
     }
 
     static inline simd::float32x4 operator != (const float4& a, const float4& b)
     {
-        return simd::float32x4_compare_neq(a, b);
+        return simd::compare_neq(a, b);
     }
 
     static inline simd::float32x4 select(simd::float32x4 mask, const float4& a, const float4& b)
     {
-        return simd::float32x4_select(mask, a, b);
+        return simd::select(mask, a, b);
     }
 
 } // namespace mango

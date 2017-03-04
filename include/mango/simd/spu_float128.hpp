@@ -18,7 +18,7 @@
     // -----------------------------------------------------------------
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
-    inline float32x4 float32x4_shuffle(float32x4 v)
+    inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 		const vector unsigned char mask =
@@ -29,35 +29,35 @@
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4 v)
+    inline float32x4 shuffle<0, 1, 2, 3>(float32x4 v)
     {
         // .xyzw
         return v;
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<0, 0, 0, 0>(float32x4 v)
+    inline float32x4 shuffle<0, 0, 0, 0>(float32x4 v)
     {
         // .xxxx
         return vec_splats(spu_extract(v, 0));
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<1, 1, 1, 1>(float32x4 v)
+    inline float32x4 shuffle<1, 1, 1, 1>(float32x4 v)
     {
         // .yyyy
         return vec_splats(spu_extract(v, 1));
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<2, 2, 2, 2>(float32x4 v)
+    inline float32x4 shuffle<2, 2, 2, 2>(float32x4 v)
     {
         // .zzzz
         return vec_splats(spu_extract(v, 2));
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<3, 3, 3, 3>(float32x4 v)
+    inline float32x4 shuffle<3, 3, 3, 3>(float32x4 v)
     {
         // .wwww
         return vec_splats(spu_extract(v, 3));
@@ -66,14 +66,14 @@
     // indexed accessor
 
     template <int Index>
-    static inline float32x4 float32x4_set_component(float32x4 a, float s)
+    static inline float32x4 set_component(float32x4 a, float s)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return spu_insert(s, a, Index);
     }
 
     template <int Index>
-    static inline float float32x4_get_component(float32x4 a)
+    static inline float get_component(float32x4 a)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return spu_extract(a, Index);
@@ -109,7 +109,7 @@
         dest[3] = spu_extract(a, 3);
     }
 
-    static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)
+    static inline float32x4 movelh(float32x4 a, float32x4 b)
     {
         const vector unsigned char mask =
         {
@@ -118,7 +118,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    static inline float32x4 float32x4_movehl(float32x4 a, float32x4 b)
+    static inline float32x4 movehl(float32x4 a, float32x4 b)
     {
         const vector unsigned char mask =
         {
@@ -127,7 +127,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    static inline float32x4 float32x4_unpackhi(float32x4 a, float32x4 b)
+    static inline float32x4 unpackhi(float32x4 a, float32x4 b)
     {
         const vector unsigned char mask =
         {
@@ -136,7 +136,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
+    static inline float32x4 unpacklo(float32x4 a, float32x4 b)
     {
         const vector unsigned char mask =
         {
@@ -145,7 +145,7 @@
         return spu_shuffle(a, b, mask);
     }
 
-    // logical
+    // bitwise
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
@@ -167,52 +167,52 @@
         return float32x4_reinterpret(int32x4_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
-    static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
+    static inline float32x4 min(float32x4 a, float32x4 b)
     {
         return spu_sel(a, b, spu_cmpgt(a, b));
     }
 
-    static inline float32x4 float32x4_max(float32x4 a, float32x4 b)
+    static inline float32x4 max(float32x4 a, float32x4 b)
     {
         return spu_sel(a, b, spu_cmpgt(b, a));
     }
 
-    static inline float32x4 float32x4_hmin(float32x4 a)
+    static inline float32x4 hmin(float32x4 a)
     {
         return a; // TODO
     }
 
-    static inline float32x4 float32x4_hmax(float32x4 a)
+    static inline float32x4 hmax(float32x4 a)
     {
         return a; // TODO
     }
 
-    static inline float32x4 float32x4_abs(float32x4 a)
+    static inline float32x4 abs(float32x4 a)
     {
         return (vec_float4)spu_andc((vec_uint4)a, spu_splats(0x80000000));
     }
 
-    static inline float32x4 float32x4_neg(float32x4 a)
+    static inline float32x4 neg(float32x4 a)
     {
         return (vec_float4)spu_xor((vec_uint4)a, spu_splats(0x80000000));
     }
 
-    static inline float32x4 float32x4_add(float32x4 a, float32x4 b)
+    static inline float32x4 add(float32x4 a, float32x4 b)
     {
 		return spu_add(a, b);
     }
 
-    static inline float32x4 float32x4_sub(float32x4 a, float32x4 b)
+    static inline float32x4 sub(float32x4 a, float32x4 b)
     {
 		return spu_sub(a, b);
     }
 
-    static inline float32x4 float32x4_mul(float32x4 a, float32x4 b)
+    static inline float32x4 mul(float32x4 a, float32x4 b)
     {
 		return spu_mul(a, b);
     }
 
-    static inline float32x4 float32x4_div(float32x4 a, float32x4 b)
+    static inline float32x4 div(float32x4 a, float32x4 b)
     {
         // Reciprocal estimate and 1 Newton-Raphson iteration.
         // Uses constant of 1.0 + 1 ulp to improve accuracy.
@@ -222,44 +222,44 @@
         return spu_madd(spu_nmsub(b, y0, onen), y0a, y0a);
     }
 
-    static inline float32x4 float32x4_div(float32x4 a, float b)
+    static inline float32x4 div(float32x4 a, float b)
     {
         return float32x4_div(a, spu_splats(b));
     }
 
-    static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
+    static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
 		return spu_madd(b, c, a);
     }
 
-    static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
+    static inline float32x4 msub(float32x4 a, float32x4 b, float32x4 c)
     {
 		return spu_sub(a, spu_mul(b, c));
     }
 
-    static inline float32x4 float32x4_fast_reciprocal(float32x4 a)
+    static inline float32x4 fast_reciprocal(float32x4 a)
     {
 		return spu_re(a);
     }
 
-    static inline float32x4 float32x4_fast_rsqrt(float32x4 a)
+    static inline float32x4 fast_rsqrt(float32x4 a)
     {
 		return spu_rsqrte(a);
     }
 
-    static inline float32x4 float32x4_fast_sqrt(float32x4 a)
+    static inline float32x4 fast_sqrt(float32x4 a)
     {
 		return spu_sqrt(a);
     }
 
-    static inline float32x4 float32x4_reciprocal(float32x4 a)
+    static inline float32x4 reciprocal(float32x4 a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_re(a);
         return spu_madd(spu_nmsub(a, y0, onen), y0, y0);
     }
 
-    static inline float32x4 float32x4_rsqrt(float32x4 a)
+    static inline float32x4 rsqrt(float32x4 a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_rsqrte(a);
@@ -268,7 +268,7 @@
         return spu_madd(spu_nmsub(y0, y0x, onen), y0half, y0);
     }
 
-    static inline float32x4 float32x4_sqrt(float32x4 a)
+    static inline float32x4 sqrt(float32x4 a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_rsqrte(a);
@@ -277,73 +277,73 @@
         return spu_madd(spu_nmsub(y0, y0x, onen), y0xhalf, y0x);
     }
 
-    static inline float32x4 float32x4_dot3(float32x4 a, float32x4 b)
+    static inline float32x4 dot3(float32x4 a, float32x4 b)
     {
         float32x4 s = spu_mul(a, b);
-        return spu_add(float32x4_shuffle<0, 0, 0, 0>(s),
-               spu_add(float32x4_shuffle<1, 1, 1, 1>(s), float32x4_shuffle<2, 2, 2, 2>(s)));
+        return spu_add(shuffle<0, 0, 0, 0>(s),
+               spu_add(shuffle<1, 1, 1, 1>(s), shuffle<2, 2, 2, 2>(s)));
     }
 
-    static inline float32x4 float32x4_dot4(float32x4 a, float32x4 b)
+    static inline float32x4 dot4(float32x4 a, float32x4 b)
     {
         float32x4 s = spu_mul(a, b);
-        s = spu_add(s, float32x4_shuffle<2, 3, 0, 1>(s));
-        s = spu_add(s, float32x4_shuffle<1, 0, 3, 2>(s));
+        s = spu_add(s, shuffle<2, 3, 0, 1>(s));
+        s = spu_add(s, shuffle<1, 0, 3, 2>(s));
         return s;
     }
 
-    static inline float32x4 float32x4_cross3(float32x4 a, float32x4 b)
+    static inline float32x4 cross3(float32x4 a, float32x4 b)
     {
-        float32x4 c = spu_sub(spu_mul(a, float32x4_shuffle<1, 2, 0, 3>(b)),
-                           spu_mul(b, float32x4_shuffle<1, 2, 0, 3>(a)));
-        return float32x4_shuffle<1, 2, 0, 3>(c);
+        float32x4 c = spu_sub(spu_mul(a, shuffle<1, 2, 0, 3>(b)),
+                              spu_mul(b, shuffle<1, 2, 0, 3>(a)));
+        return shuffle<1, 2, 0, 3>(c);
     }
 
-    static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
     {
         const vec_uint4 mask = spu_cmpeq(a, b);
         return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
     {
 		return (float32x4) spu_cmpeq(a, b);
     }
 
-    static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
     {
         return (float32x4) spu_cmpgt(b, a);
     }
 
-    static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
+    static inline float32x4 compare_le(float32x4 a, float32x4 b)
     {
         const vec_uint4 mask = spu_cmpgt(a, b);
         return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
     {
 		return (float32x4) spu_cmpgt(a, b);
     }
 
-    static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
     {
         const vec_uint4 mask = spu_cmpgt(b, a);
         return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
     {
         return spu_sel(b, a, (vec_uint4)mask);
     }
 
-    static inline uint32 int32x4_get_mask(int32x4 a)
+    static inline uint32 get_mask(int32x4 a)
     {
         // TODO
         return 0;
     }
 
-    static inline float32x4 float32x4_round(float32x4 s)
+    static inline float32x4 round(float32x4 s)
     {
         // add 0.5 (fixed precision to eliminate rounding issues)
         vec_int4 exp = spu_sub(125, spu_and(spu_rlmask((vec_int4)s, -23), 0xff));
@@ -359,14 +359,14 @@
         return spu_andc(sa, (vec_float4)mask);
     }
 
-    static inline float32x4 float32x4_trunc(float32x4 s)
+    static inline float32x4 trunc(float32x4 s)
     {
         const vec_uint4 inrange = spu_cmpabsgt((float32x4)spu_splats(0x4b000000), s);
         const vec_int4 si = spu_convts(s, 0);
         return spu_sel(s, spu_convtf(si, 0), inrange);
     }
 
-    static inline float32x4 float32x4_floor(float32x4 s)
+    static inline float32x4 floor(float32x4 s)
     {
         // find truncated value and one less.
         const vec_uint4 inrange = spu_cmpabsgt((vec_float4)spu_splats(0x4b000000), s);
@@ -379,7 +379,7 @@
         return spu_sel(truncated, truncated1, spu_cmpgt(truncated, s));
     }
 
-    static inline float32x4 float32x4_ceil(float32x4 s)
+    static inline float32x4 ceil(float32x4 s)
     {
         // find truncated value and one greater.
         const vec_uint4 inrange = spu_cmpabsgt((vec_float4)spu_splats(0x4b000000), s);
@@ -392,9 +392,9 @@
         return spu_sel(truncated, truncated1, spu_cmpgt(s, truncated));
     }
 
-    static inline float32x4 float32x4_fract(float32x4 s)
+    static inline float32x4 fract(float32x4 s)
     {
-		return spu_sub(s, float32x4_floor(s));
+		return spu_sub(s, floor(s));
     }
 
     // -----------------------------------------------------------------

@@ -13,14 +13,14 @@
     // shuffle
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
-    inline float64x4 float64x4_shuffle(float64x4 v)
+    inline float64x4 shuffle(float64x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         return {{ v[x], v[y], v[z], v[w] }};
     }
 
     template <>
-    inline float64x4 float64x4_shuffle<0, 1, 2, 3>(float64x4 v)
+    inline float64x4 shuffle<0, 1, 2, 3>(float64x4 v)
     {
         // .xyzw
         return v;
@@ -29,7 +29,7 @@
     // indexed access
 
     template <int Index>
-    static inline float64x4 float64x4_set_component(float64x4 a, double s)
+    static inline float64x4 set_component(float64x4 a, double s)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         a[Index] = s;
@@ -37,7 +37,7 @@
     }
 
     template <int Index>
-    static inline double float64x4_get_component(float64x4 a)
+    static inline double get_component(float64x4 a)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return a[Index];
@@ -71,27 +71,27 @@
         dest[3] = a[3];
     }
 
-    static inline float64x4 float64x4_movelh(float64x4 a, float64x4 b)
+    static inline float64x4 movelh(float64x4 a, float64x4 b)
     {
         return float64x4_set4(a[0], a[1], b[0], b[1]);
     }
 
-    static inline float64x4 float64x4_movehl(float64x4 a, float64x4 b)
+    static inline float64x4 movehl(float64x4 a, float64x4 b)
     {
         return float64x4_set4(b[2], b[3], a[2], a[3]);
     }
 
-    static inline float64x4 float64x4_unpackhi(float64x4 a, float64x4 b)
+    static inline float64x4 unpackhi(float64x4 a, float64x4 b)
     {
         return float64x4_set4(a[1], b[1], a[3], b[3]);
     }
 
-    static inline float64x4 float64x4_unpacklo(float64x4 a, float64x4 b)
+    static inline float64x4 unpacklo(float64x4 a, float64x4 b)
     {
         return float64x4_set4(a[0], b[0], a[2], b[2]);
     }
 
-    // logical
+    // bitwise
 
     static inline float64x4 float64x4_and(float64x4 a, float64x4 b)
     {
@@ -129,7 +129,7 @@
         return float64x4_set4(x, y, z, w);
     }
 
-    static inline float64x4 float64x4_min(float64x4 a, float64x4 b)
+    static inline float64x4 min(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = std::min(a[0], b[0]);
@@ -139,7 +139,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_max(float64x4 a, float64x4 b)
+    static inline float64x4 max(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = std::max(a[0], b[0]);
@@ -149,7 +149,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_hmin(float64x4 a)
+    static inline float64x4 hmin(float64x4 a)
     {
         double l = std::min(a[0], a[1]);
         double h = std::min(a[2], a[3]);
@@ -157,7 +157,7 @@
         return float64x4_set1(s);
     }
 
-    static inline float64x4 float64x4_hmax(float64x4 a)
+    static inline float64x4 hmax(float64x4 a)
     {
         double l = std::max(a[0], a[1]);
         double h = std::max(a[2], a[3]);
@@ -165,7 +165,7 @@
         return float64x4_set1(s);
     }
 
-    static inline float64x4 float64x4_abs(float64x4 a)
+    static inline float64x4 abs(float64x4 a)
     {
         float64x4 v;
         v[0] = std::abs(a[0]);
@@ -175,12 +175,12 @@
         return v;
     }
 
-    static inline float64x4 float64x4_neg(float64x4 a)
+    static inline float64x4 neg(float64x4 a)
     {
         return float64x4_set4(-a[0], -a[1], -a[2], -a[3]);
     }
 
-    static inline float64x4 float64x4_add(float64x4 a, float64x4 b)
+    static inline float64x4 add(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = a[0] + b[0];
@@ -190,7 +190,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_sub(float64x4 a, float64x4 b)
+    static inline float64x4 sub(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = a[0] - b[0];
@@ -200,7 +200,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_mul(float64x4 a, float64x4 b)
+    static inline float64x4 mul(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = a[0] * b[0];
@@ -210,7 +210,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_div(float64x4 a, float64x4 b)
+    static inline float64x4 div(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = a[0] / b[0];
@@ -220,7 +220,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_div(float64x4 a, double b)
+    static inline float64x4 div(float64x4 a, double b)
     {
         float64x4 v;
         v[0] = a[0] / b;
@@ -230,7 +230,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_madd(float64x4 a, float64x4 b, float64x4 c)
+    static inline float64x4 madd(float64x4 a, float64x4 b, float64x4 c)
     {
         float64x4 v;
         v[0] = a[0] + b[0] * c[0];
@@ -240,7 +240,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_msub(float64x4 a, float64x4 b, float64x4 c)
+    static inline float64x4 msub(float64x4 a, float64x4 b, float64x4 c)
     {
         float64x4 v;
         v[0] = a[0] - b[0] * c[0];
@@ -250,7 +250,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_fast_reciprocal(float64x4 a)
+    static inline float64x4 fast_reciprocal(float64x4 a)
     {
         float64x4 v;
         v[0] = 1.0 / a[0];
@@ -260,7 +260,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_fast_rsqrt(float64x4 a)
+    static inline float64x4 fast_rsqrt(float64x4 a)
     {
         float64x4 v;
         v[0] = 1.0 / std::sqrt(a[0]);
@@ -270,7 +270,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_fast_sqrt(float64x4 a)
+    static inline float64x4 fast_sqrt(float64x4 a)
     {
         float64x4 v;
         v[0] = std::sqrt(a[0]);
@@ -280,22 +280,22 @@
         return v;
     }
 
-    static inline float64x4 float64x4_reciprocal(float64x4 a)
+    static inline float64x4 reciprocal(float64x4 a)
     {
-        return float64x4_fast_reciprocal(a);
+        return fast_reciprocal(a);
     }
 
-    static inline float64x4 float64x4_rsqrt(float64x4 a)
+    static inline float64x4 rsqrt(float64x4 a)
     {
-        return float64x4_fast_rsqrt(a);
+        return fast_rsqrt(a);
     }
 
-    static inline float64x4 float64x4_sqrt(float64x4 a)
+    static inline float64x4 sqrt(float64x4 a)
     {
-        return float64x4_fast_sqrt(a);
+        return fast_sqrt(a);
     }
 
-    static inline float64x4 float64x4_dot4(float64x4 a, float64x4 b)
+    static inline float64x4 dot4(float64x4 a, float64x4 b)
     {
         const double s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
         return float64x4_set1(s);
@@ -303,7 +303,7 @@
 
     // compare
 
-    static inline float64x4 float64x4_compare_neq(float64x4 a, float64x4 b)
+    static inline float64x4 compare_neq(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = Double(-uint64(a[0] != b[0]));
@@ -313,7 +313,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_compare_eq(float64x4 a, float64x4 b)
+    static inline float64x4 compare_eq(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = Double(-uint64(a[0] == b[0]));
@@ -323,7 +323,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_compare_lt(float64x4 a, float64x4 b)
+    static inline float64x4 compare_lt(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = Double(-uint64(a[0] < b[0]));
@@ -333,7 +333,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_compare_le(float64x4 a, float64x4 b)
+    static inline float64x4 compare_le(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = Double(-uint64(a[0] <= b[0]));
@@ -343,7 +343,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_compare_gt(float64x4 a, float64x4 b)
+    static inline float64x4 compare_gt(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = Double(-uint64(a[0] > b[0]));
@@ -353,7 +353,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_compare_ge(float64x4 a, float64x4 b)
+    static inline float64x4 compare_ge(float64x4 a, float64x4 b)
     {
         float64x4 v;
         v[0] = Double(-uint64(a[0] >= b[0]));
@@ -363,14 +363,14 @@
         return v;
     }
 
-    static inline float64x4 float64x4_select(float64x4 mask, float64x4 a, float64x4 b)
+    static inline float64x4 select(float64x4 mask, float64x4 a, float64x4 b)
     {
         return float64x4_or(float64x4_and(mask, a), float64x4_nand(mask, b));
     }
 
     // rounding
 
-    static inline float64x4 float64x4_round(float64x4 s)
+    static inline float64x4 round(float64x4 s)
     {
         float64x4 v;
         v[0] = std::round(s[0]);
@@ -380,7 +380,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_trunc(float64x4 s)
+    static inline float64x4 trunc(float64x4 s)
     {
         float64x4 v;
         v[0] = std::trunc(s[0]);
@@ -390,7 +390,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_floor(float64x4 s)
+    static inline float64x4 floor(float64x4 s)
     {
         float64x4 v;
         v[0] = std::floor(s[0]);
@@ -400,7 +400,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_ceil(float64x4 s)
+    static inline float64x4 ceil(float64x4 s)
     {
         float64x4 v;
         v[0] = std::ceil(s[0]);
@@ -410,7 +410,7 @@
         return v;
     }
 
-    static inline float64x4 float64x4_fract(float64x4 s)
+    static inline float64x4 fract(float64x4 s)
     {
         float64x4 v;
         v[0] = s[0] - std::floor(s[0]);

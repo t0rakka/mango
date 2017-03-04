@@ -39,7 +39,7 @@
     // shuffle
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
-    static inline uint32x4 uint32x4_shuffle(uint32x4 v)
+    static inline uint32x4 shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         const vector unsigned char mask =
@@ -50,7 +50,7 @@
     }
 
     template <>
-    inline uint32x4 uint32x4_shuffle<0, 1, 2, 3>(uint32x4 v)
+    inline uint32x4 shuffle<0, 1, 2, 3>(uint32x4 v)
     {
         // .xyzw
         return v;
@@ -59,14 +59,14 @@
     // indexed access
 
     template <int Index>
-    static inline uint32x4 uint32x4_set_component(uint32x4 a, uint32 s)
+    static inline uint32x4 set_component(uint32x4 a, uint32 s)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return vec_insert(s, a, Index);
     }
 
     template <int Index>
-    static inline uint32 uint32x4_get_component(uint32x4 a)
+    static inline uint32 get_component(uint32x4 a)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return vec_extract(a, Index);
@@ -102,44 +102,44 @@
         d[3] = s[3];
     }
 
-    static inline uint32x4 uint32x4_unpacklo(uint32x4 a, uint32x4 b)
+    static inline uint32x4 unpacklo(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
-    static inline uint32x4 uint32x4_unpackhi(uint32x4 a, uint32x4 b)
+    static inline uint32x4 unpackhi(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
-    static inline uint32x4 uint32x4_add(uint32x4 a, uint32x4 b)
+    static inline uint32x4 add(uint32x4 a, uint32x4 b)
     {
         return vec_add(a, b);
     }
 
-    static inline uint32x4 uint32x4_sub(uint32x4 a, uint32x4 b)
+    static inline uint32x4 sub(uint32x4 a, uint32x4 b)
     {
         return vec_sub(a, b);
     }
 
-    static inline uint32x4 uint32x4_mullo(uint32x4 a, uint32x4 b)
+    static inline uint32x4 mullo(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
     // saturated
 
-    static inline uint32x4 uint32x4_adds(uint32x4 a, uint32x4 b)
+    static inline uint32x4 adds(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
-    static inline uint32x4 uint32x4_subs(uint32x4 a, uint32x4 b)
+    static inline uint32x4 subs(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
-    // logical
+    // bitwise
 
     static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
     {
@@ -164,46 +164,46 @@
     // shift
 
     template <int Count> 
-    static inline uint32x4 uint32x4_sll(uint32x4 a)
+    static inline uint32x4 sll(uint32x4 a)
     {
         return vec_sl(a, Count);
     }
 
     template <int Count> 
-    static inline uint32x4 uint32x4_srl(uint32x4 a)
+    static inline uint32x4 srl(uint32x4 a)
     {
         return vec_sr(a, Count);
     }
 
     template <int Count> 
-    static inline uint32x4 uint32x4_sra(uint32x4 a)
+    static inline uint32x4 sra(uint32x4 a)
     {
         return vec_sra(a, Count);
     }
 
     // compare
 
-    static inline uint32x4 uint32x4_compare_eq(uint32x4 a, uint32x4 b)
+    static inline uint32x4 compare_eq(uint32x4 a, uint32x4 b)
     {
         return vec_cmpeq(a, b);
     }
 
-    static inline uint32x4 uint32x4_compare_gt(uint32x4 a, uint32x4 b)
+    static inline uint32x4 compare_gt(uint32x4 a, uint32x4 b)
     {
         return vec_cmpgt(a, b);
     }
 
-    static inline uint32x4 uint32x4_select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
     {
         return vec_sel(b, a, mask);
     }
 
-    static inline uint32x4 uint32x4_min(uint32x4 a, uint32x4 b)
+    static inline uint32x4 min(uint32x4 a, uint32x4 b)
     {
         return vec_min(a, b);
     }
 
-    static inline uint32x4 uint32x4_max(uint32x4 a, uint32x4 b)
+    static inline uint32x4 max(uint32x4 a, uint32x4 b)
     {
         return vec_max(a, b);
     }
@@ -227,7 +227,7 @@
     // shuffle
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
-    static inline int32x4 int32x4_shuffle(int32x4 v)
+    static inline int32x4 shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         const vector unsigned char mask =
@@ -238,7 +238,7 @@
     }
 
     template <>
-    inline int32x4 int32x4_shuffle<0, 1, 2, 3>(int32x4 v)
+    inline int32x4 shuffle<0, 1, 2, 3>(int32x4 v)
     {
         // .xyzw
         return v;
@@ -247,14 +247,14 @@
     // indexed access
 
     template <int Index>
-    static inline int32x4 int32x4_set_component(int32x4 a, int32 s)
+    static inline int32x4 set_component(int32x4 a, int32 s)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return vec_insert(s, a, Index);
     }
 
     template <int Index>
-    static inline int32 int32x4_get_component(int32x4 a)
+    static inline int32 get_component(int32x4 a)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return vec_extract(a, Index);
@@ -290,54 +290,54 @@
         d[3] = s[3];
     }
 
-    static inline int32x4 int32x4_unpacklo(int32x4 a, int32x4 b)
+    static inline int32x4 unpacklo(int32x4 a, int32x4 b)
     {
         // TODO
     }
 
-    static inline int32x4 int32x4_unpackhi(int32x4 a, int32x4 b)
+    static inline int32x4 unpackhi(int32x4 a, int32x4 b)
     {
         // TODO
     }
 
-    static inline int32x4 int32x4_abs(int32x4 a)
+    static inline int32x4 abs(int32x4 a)
     {
         return vec_abs(a);
     }
 
-    static inline int32x4 int32x4_neg(int32x4 a)
+    static inline int32x4 neg(int32x4 a)
     {
         return vec_sub(vec_xor(a, a), a);
     }
 
-    static inline int32x4 int32x4_add(int32x4 a, int32x4 b)
+    static inline int32x4 add(int32x4 a, int32x4 b)
     {
         return vec_add(a, b);
     }
 
-    static inline int32x4 int32x4_sub(int32x4 a, int32x4 b)
+    static inline int32x4 sub(int32x4 a, int32x4 b)
     {
         return vec_sub(a, b);
     }
 
-    static inline int32x4 int32x4_mullo(int32x4 a, int32x4 b)
+    static inline int32x4 mullo(int32x4 a, int32x4 b)
     {
         // TODO
     }
 
     // saturated
 
-    static inline int32x4 int32x4_adds(int32x4 a, int32x4 b)
+    static inline int32x4 adds(int32x4 a, int32x4 b)
     {
         return a; // TODO
     }
 
-    static inline int32x4 int32x4_subs(int32x4 a, int32x4 b)
+    static inline int32x4 subs(int32x4 a, int32x4 b)
     {
         return a; // TODO
     }
 
-    // logical
+    // bitwise
 
     static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
     {
@@ -362,63 +362,63 @@
     // shift
 
     template <int Count> 
-    static inline int32x4 int32x4_sll(int32x4 a)
+    static inline int32x4 sll(int32x4 a)
     {
         return vec_sl(a, Count);
     }
 
     template <int Count> 
-    static inline int32x4 int32x4_srl(int32x4 a)
+    static inline int32x4 srl(int32x4 a)
     {
         return vec_sr(a, Count);
     }
 
     template <int Count> 
-    static inline int32x4 int32x4_sra(int32x4 a)
+    static inline int32x4 sra(int32x4 a)
     {
         return vec_sra(a, Count);
     }
 
     // compare
 
-    static inline int32x4 int32x4_compare_eq(int32x4 a, int32x4 b)
+    static inline int32x4 compare_eq(int32x4 a, int32x4 b)
     {
         return vec_cmpeq(a, b);
     }
 
-    static inline int32x4 int32x4_compare_gt(int32x4 a, int32x4 b)
+    static inline int32x4 compare_gt(int32x4 a, int32x4 b)
     {
         return vec_cmpgt(a, b);
     }
 
-    static inline int32x4 int32x4_select(int32x4 mask, int32x4 a, int32x4 b)
+    static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
     {
         return vec_sel(b, a, (vector unsigned int)mask);
     }
 
-    static inline int32x4 int32x4_min(int32x4 a, int32x4 b)
+    static inline int32x4 min(int32x4 a, int32x4 b)
     {
         return vec_min(a, b);
     }
 
-    static inline int32x4 int32x4_max(int32x4 a, int32x4 b)
+    static inline int32x4 max(int32x4 a, int32x4 b)
     {
         return vec_max(a, b);
     }
 
-    static inline uint32 int32x4_get_mask(int32x4 a)
+    static inline uint32 get_mask(int32x4 a)
     {
         // TODO
         return 0;
     }
 
-    static inline uint32 int32x4_pack(int32x4 s)
+    static inline uint32 pack(int32x4 s)
     {
         unsigned int* p = (unsigned int*)&s;
         return p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
     }
 
-    static inline int32x4 int32x4_unpack(uint32 s)
+    static inline int32x4 unpack(uint32 s)
     {
         const int x = (s >> 0) & 0xff;
         const int y = (s >> 8) & 0xff;

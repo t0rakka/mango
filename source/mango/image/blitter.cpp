@@ -820,11 +820,11 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             simd::float32x4 f = simd::float32x4_convert(s[x]);
-            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
-            f = simd::float32x4_mul(f, 255.0f);
-            f = simd::float32x4_add(f, 0.5f);
+            f = simd::clamp(f, 0.0f, 1.0f);
+            f = simd::mul(f, 255.0f);
+            f = simd::add(f, 0.5f);
             simd::int32x4 i = simd::int32x4_convert(f);
-            d[x] = simd::int32x4_pack(i);
+            d[x] = simd::pack(i);
         }
     }
 
@@ -834,12 +834,12 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             simd::float32x4 f = simd::float32x4_convert(s[x]);
-            f = simd::float32x4_shuffle<2, 1, 0, 3>(f);
-            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
-            f = simd::float32x4_mul(f, 255.0f);
-            f = simd::float32x4_add(f, 0.5f);
+            f = simd::shuffle<2, 1, 0, 3>(f);
+            f = simd::clamp(f, 0.0f, 1.0f);
+            f = simd::mul(f, 255.0f);
+            f = simd::add(f, 0.5f);
             simd::int32x4 i = simd::int32x4_convert(f);
-            d[x] = simd::int32x4_pack(i);
+            d[x] = simd::pack(i);
         }
     }
 
@@ -849,11 +849,11 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             simd::float32x4 f = s[x];
-            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
-            f = simd::float32x4_mul(f, 255.0f);
-            f = simd::float32x4_add(f, 0.5f);
+            f = simd::clamp(f, 0.0f, 1.0f);
+            f = simd::mul(f, 255.0f);
+            f = simd::add(f, 0.5f);
             simd::int32x4 i = simd::int32x4_convert(f);
-            d[x] = simd::int32x4_pack(i);
+            d[x] = simd::pack(i);
         }
     }
 
@@ -863,12 +863,12 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             simd::float32x4 f = s[x];
-            f = simd::float32x4_shuffle<2, 1, 0, 3>(f);
-            f = simd::float32x4_clamp(f, 0.0f, 1.0f);
-            f = simd::float32x4_mul(f, 255.0f);
-            f = simd::float32x4_add(f, 0.5f);
+            f = simd::shuffle<2, 1, 0, 3>(f);
+            f = simd::clamp(f, 0.0f, 1.0f);
+            f = simd::mul(f, 255.0f);
+            f = simd::add(f, 0.5f);
             simd::int32x4 i = simd::int32x4_convert(f);
-            d[x] = simd::int32x4_pack(i);
+            d[x] = simd::pack(i);
         }
     }
 

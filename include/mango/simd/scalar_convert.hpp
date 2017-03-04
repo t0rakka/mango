@@ -141,8 +141,8 @@
         int8x16 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i + 0] = clamp(a[i], int16(-0x80), int16(0x7f));
-            v[i + 8] = clamp(b[i], int16(-0x80), int16(0x7f));
+            v[i + 0] = std::min(int16(0x7f), std::max(int16(-0x80), a[i]));
+            v[i + 8] = std::min(int16(0x7f), std::max(int16(-0x80), b[i]));
         }
         return v;
     }
@@ -152,8 +152,8 @@
         int16x8 v;
         for (int i = 0; i < 4; ++i)
         {
-            v[i + 0] = clamp(a[i], int32(-0x8000), int32(0x7fff));
-            v[i + 4] = clamp(b[i], int32(-0x8000), int32(0x7fff));
+            v[i + 0] = std::min(int32(0x7fff), std::max(int32(-0x8000), a[i]));
+            v[i + 4] = std::min(int32(0x7fff), std::max(int32(-0x8000), b[i]));
         }
         return v;
     }
@@ -219,20 +219,20 @@
     static inline float64x4 float64x4_convert(int32x4 s)
     {
         float64x4 v;
-        v[0] = double(int32x4_get_x(s));
-        v[1] = double(int32x4_get_y(s));
-        v[2] = double(int32x4_get_z(s));
-        v[3] = double(int32x4_get_w(s));
+        v[0] = double(get_x(s));
+        v[1] = double(get_y(s));
+        v[2] = double(get_z(s));
+        v[3] = double(get_w(s));
         return v;
     }
 
     static inline float64x4 float64x4_convert(float32x4 s)
     {
         float64x4 v;
-        v[0] = double(float32x4_get_x(s));
-        v[1] = double(float32x4_get_y(s));
-        v[2] = double(float32x4_get_z(s));
-        v[3] = double(float32x4_get_w(s));
+        v[0] = double(get_x(s));
+        v[1] = double(get_y(s));
+        v[2] = double(get_z(s));
+        v[3] = double(get_w(s));
         return v;
     }
 
@@ -257,10 +257,10 @@
     static inline float64x4 float64x4_convert(uint32x4 ui)
     {
         float64x4 v;
-        v[0] = u32_to_f64(uint32x4_get_x(ui));
-        v[1] = u32_to_f64(uint32x4_get_y(ui));
-        v[2] = u32_to_f64(uint32x4_get_z(ui));
-        v[3] = u32_to_f64(uint32x4_get_w(ui));
+        v[0] = u32_to_f64(get_x(ui));
+        v[1] = u32_to_f64(get_y(ui));
+        v[2] = u32_to_f64(get_z(ui));
+        v[3] = u32_to_f64(get_w(ui));
         return v;
     }
 

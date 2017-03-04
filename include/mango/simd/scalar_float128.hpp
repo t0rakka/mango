@@ -13,14 +13,14 @@
     // shuffle
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
-    inline float32x4 float32x4_shuffle(float32x4 v)
+    inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         return {{ v[x], v[y], v[z], v[w] }};
     }
 
     template <>
-    inline float32x4 float32x4_shuffle<0, 1, 2, 3>(float32x4 v)
+    inline float32x4 shuffle<0, 1, 2, 3>(float32x4 v)
     {
         // .xyzw
         return v;
@@ -29,7 +29,7 @@
     // indexed access
 
     template <int Index>
-    static inline float32x4 float32x4_set_component(float32x4 a, float s)
+    static inline float32x4 set_component(float32x4 a, float s)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         a[Index] = s;
@@ -37,7 +37,7 @@
     }
 
     template <int Index>
-    static inline float float32x4_get_component(float32x4 a)
+    static inline float get_component(float32x4 a)
     {
         static_assert(Index >= 0 && Index < 4, "Index out of range.");
         return a[Index];
@@ -71,27 +71,27 @@
         dest[3] = a[3];
     }
 
-    static inline float32x4 float32x4_movelh(float32x4 a, float32x4 b)
+    static inline float32x4 movelh(float32x4 a, float32x4 b)
     {
         return float32x4_set4(a[0], a[1], b[0], b[1]);
     }
 
-    static inline float32x4 float32x4_movehl(float32x4 a, float32x4 b)
+    static inline float32x4 movehl(float32x4 a, float32x4 b)
     {
         return float32x4_set4(b[2], b[3], a[2], a[3]);
     }
 
-    static inline float32x4 float32x4_unpackhi(float32x4 a, float32x4 b)
+    static inline float32x4 unpackhi(float32x4 a, float32x4 b)
     {
         return float32x4_set4(a[2], b[2], a[3], b[3]);
     }
 
-    static inline float32x4 float32x4_unpacklo(float32x4 a, float32x4 b)
+    static inline float32x4 unpacklo(float32x4 a, float32x4 b)
     {
         return float32x4_set4(a[0], b[0], a[1], b[1]);
     }
 
-    // logical
+    // bitwise
 
     static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
     {
@@ -129,7 +129,7 @@
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float32x4 float32x4_min(float32x4 a, float32x4 b)
+    static inline float32x4 min(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = std::min(a[0], b[0]);
@@ -139,7 +139,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_max(float32x4 a, float32x4 b)
+    static inline float32x4 max(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = std::max(a[0], b[0]);
@@ -149,7 +149,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_hmin(float32x4 a)
+    static inline float32x4 hmin(float32x4 a)
     {
         float l = std::min(a[0], a[1]);
         float h = std::min(a[2], a[3]);
@@ -157,7 +157,7 @@
         return float32x4_set1(s);
     }
 
-    static inline float32x4 float32x4_hmax(float32x4 a)
+    static inline float32x4 hmax(float32x4 a)
     {
         float l = std::max(a[0], a[1]);
         float h = std::max(a[2], a[3]);
@@ -165,7 +165,7 @@
         return float32x4_set1(s);
     }
 
-    static inline float32x4 float32x4_abs(float32x4 a)
+    static inline float32x4 abs(float32x4 a)
     {
         float32x4 v;
         v[0] = std::abs(a[0]);
@@ -175,12 +175,12 @@
         return v;
     }
 
-    static inline float32x4 float32x4_neg(float32x4 a)
+    static inline float32x4 neg(float32x4 a)
     {
         return float32x4_set4(-a[0], -a[1], -a[2], -a[3]);
     }
 
-    static inline float32x4 float32x4_add(float32x4 a, float32x4 b)
+    static inline float32x4 add(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = a[0] + b[0];
@@ -190,7 +190,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_sub(float32x4 a, float32x4 b)
+    static inline float32x4 sub(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = a[0] - b[0];
@@ -200,7 +200,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_mul(float32x4 a, float32x4 b)
+    static inline float32x4 mul(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = a[0] * b[0];
@@ -210,7 +210,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_div(float32x4 a, float32x4 b)
+    static inline float32x4 div(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = a[0] / b[0];
@@ -220,7 +220,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_div(float32x4 a, float b)
+    static inline float32x4 div(float32x4 a, float b)
     {
         float32x4 v;
         v[0] = a[0] / b;
@@ -230,7 +230,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_madd(float32x4 a, float32x4 b, float32x4 c)
+    static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
         float32x4 v;
         v[0] = a[0] + b[0] * c[0];
@@ -240,7 +240,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_msub(float32x4 a, float32x4 b, float32x4 c)
+    static inline float32x4 msub(float32x4 a, float32x4 b, float32x4 c)
     {
         float32x4 v;
         v[0] = a[0] - b[0] * c[0];
@@ -250,7 +250,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_fast_reciprocal(float32x4 a)
+    static inline float32x4 fast_reciprocal(float32x4 a)
     {
         float32x4 v;
         v[0] = 1.0f / a[0];
@@ -260,7 +260,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_fast_rsqrt(float32x4 a)
+    static inline float32x4 fast_rsqrt(float32x4 a)
     {
         float32x4 v;
         v[0] = 1.0f / float(std::sqrt(a[0]));
@@ -270,7 +270,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_fast_sqrt(float32x4 a)
+    static inline float32x4 fast_sqrt(float32x4 a)
     {
         float32x4 v;
         v[0] = float(std::sqrt(a[0]));
@@ -280,34 +280,34 @@
         return v;
     }
 
-    static inline float32x4 float32x4_reciprocal(float32x4 a)
+    static inline float32x4 reciprocal(float32x4 a)
     {
-        return float32x4_fast_reciprocal(a);
+        return fast_reciprocal(a);
     }
 
-    static inline float32x4 float32x4_rsqrt(float32x4 a)
+    static inline float32x4 rsqrt(float32x4 a)
     {
-        return float32x4_fast_rsqrt(a);
+        return fast_rsqrt(a);
     }
 
-    static inline float32x4 float32x4_sqrt(float32x4 a)
+    static inline float32x4 sqrt(float32x4 a)
     {
-        return float32x4_fast_sqrt(a);
+        return fast_sqrt(a);
     }
 
-    static inline float32x4 float32x4_dot3(float32x4 a, float32x4 b)
+    static inline float32x4 dot3(float32x4 a, float32x4 b)
     {
         const float s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
         return float32x4_set1(s);
     }
 
-    static inline float32x4 float32x4_dot4(float32x4 a, float32x4 b)
+    static inline float32x4 dot4(float32x4 a, float32x4 b)
     {
         const float s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
         return float32x4_set1(s);
     }
 
-    static inline float32x4 float32x4_cross3(float32x4 a, float32x4 b)
+    static inline float32x4 cross3(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = a[1] * b[2] - a[2] * b[1];
@@ -319,7 +319,7 @@
 
     // compare
 
-    static inline float32x4 float32x4_compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = Float(-uint32(a[0] != b[0]));
@@ -329,7 +329,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = Float(-uint32(a[0] == b[0]));
@@ -339,7 +339,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = Float(-uint32(a[0] < b[0]));
@@ -349,7 +349,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_compare_le(float32x4 a, float32x4 b)
+    static inline float32x4 compare_le(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = Float(-uint32(a[0] <= b[0]));
@@ -359,7 +359,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = Float(-uint32(a[0] > b[0]));
@@ -369,7 +369,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
     {
         float32x4 v;
         v[0] = Float(-uint32(a[0] >= b[0]));
@@ -379,14 +379,14 @@
         return v;
     }
 
-    static inline float32x4 float32x4_select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
     {
         return float32x4_or(float32x4_and(mask, a), float32x4_nand(mask, b));
     }
 
     // rounding
 
-    static inline float32x4 float32x4_round(float32x4 s)
+    static inline float32x4 round(float32x4 s)
     {
         float32x4 v;
         v[0] = std::round(s[0]);
@@ -396,7 +396,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_trunc(float32x4 s)
+    static inline float32x4 trunc(float32x4 s)
     {
         float32x4 v;
         v[0] = std::trunc(s[0]);
@@ -406,7 +406,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_floor(float32x4 s)
+    static inline float32x4 floor(float32x4 s)
     {
         float32x4 v;
         v[0] = std::floor(s[0]);
@@ -416,7 +416,7 @@
         return v;
     }
 
-    static inline float32x4 float32x4_ceil(float32x4 s)
+    static inline float32x4 ceil(float32x4 s)
     {
         float32x4 v;
         v[0] = std::ceil(s[0]);
@@ -426,9 +426,9 @@
         return v;
     }
 
-    static inline float32x4 float32x4_fract(float32x4 s)
+    static inline float32x4 fract(float32x4 s)
     {
-        return float32x4_sub(s, float32x4_floor(s));
+        return sub(s, floor(s));
     }
 
     // -----------------------------------------------------------------

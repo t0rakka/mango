@@ -16,47 +16,6 @@ namespace mango
     template <>
     struct Vector<double, 4> : VectorBase<double, 4>
     {
-        template <int Index>
-        struct ScalarAccessor
-        {
-            simd::float64x4 m;
-
-            operator double () const
-            {
-                return simd::float64x4_get_component<Index>(m);
-            }
-
-            ScalarAccessor& operator = (double s)
-            {
-                m = simd::float64x4_set_component<Index>(m, s);
-                return *this;
-            }
-
-            ScalarAccessor& operator += (double s)
-            {
-                *this = double(*this) + s;
-                return *this;
-            }
-
-            ScalarAccessor& operator -= (double s)
-            {
-                *this = double(*this) - s;
-                return *this;
-            }
-
-            ScalarAccessor& operator *= (double s)
-            {
-                *this = double(*this) * s;
-                return *this;
-            }
-
-            ScalarAccessor& operator /= (double s)
-            {
-                *this = double(*this) / s;
-                return *this;
-            }
-        };
-
         template <int X, int Y>
         struct Permute2
         {
@@ -64,8 +23,8 @@ namespace mango
 
             operator Vector<double, 2> () const
             {
-                const double x = simd::float64x4_get_component<X>(m);
-                const double y = simd::float64x4_get_component<Y>(m);
+                const double x = simd::get_component<X>(m);
+                const double y = simd::get_component<Y>(m);
                 return Vector<double, 2>(x, y);
             }
         };
@@ -77,9 +36,9 @@ namespace mango
 
             operator Vector<double, 3> () const
             {
-                const double x = simd::float64x4_get_component<X>(m);
-                const double y = simd::float64x4_get_component<Y>(m);
-                const double z = simd::float64x4_get_component<Z>(m);
+                const double x = simd::get_component<X>(m);
+                const double y = simd::get_component<Y>(m);
+                const double z = simd::get_component<Z>(m);
                 return Vector<double, 3>(x, y, z);
             }
         };
@@ -91,7 +50,7 @@ namespace mango
 
             operator simd::float64x4 () const
             {
-                return simd::float64x4_shuffle<X, Y, Z, W>(m);
+                return simd::shuffle<X, Y, Z, W>(m);
             }
         };
 
@@ -99,10 +58,10 @@ namespace mango
         {
             simd::float64x4 m;
 
-            ScalarAccessor<0> x;
-            ScalarAccessor<1> y;
-            ScalarAccessor<2> z;
-            ScalarAccessor<3> w;
+            ScalarAccessor<simd::float64x4, double, 0> x;
+            ScalarAccessor<simd::float64x4, double, 1> y;
+            ScalarAccessor<simd::float64x4, double, 2> z;
+            ScalarAccessor<simd::float64x4, double, 3> w;
 
             Permute2<0, 0> xx;
             Permute2<1, 0> yx;
@@ -545,102 +504,102 @@ namespace mango
 
     static inline double4 operator - (const double4& v)
     {
-        return simd::float64x4_neg(v);
+        return simd::neg(v);
     }
 
     static inline double4& operator += (double4& a, const double4& b)
     {
-        a = simd::float64x4_add(a, b);
+        a = simd::add(a, b);
         return a;
     }
 
     static inline double4& operator -= (double4& a, const double4& b)
     {
-        a = simd::float64x4_sub(a, b);
+        a = simd::sub(a, b);
         return a;
     }
 
     static inline double4& operator *= (double4& a, const double4& b)
     {
-        a = simd::float64x4_mul(a, b);
+        a = simd::mul(a, b);
         return a;
     }
 
     static inline double4& operator *= (double4& a, double b)
     {
-        a = simd::float64x4_mul(a, b);
+        a = simd::mul(a, b);
         return a;
     }
 
     static inline double4& operator /= (double4& a, const double4& b)
     {
-        a = simd::float64x4_div(a, b);
+        a = simd::div(a, b);
         return a;
     }
 
     static inline double4& operator /= (double4& a, double b)
     {
-        a = simd::float64x4_div(a, b);
+        a = simd::div(a, b);
         return a;
     }
 
     static inline double4 operator + (const double4& a, const double4& b)
     {
-        return simd::float64x4_add(a, b);
+        return simd::add(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline double4 operator + (const double4::Permute4<X,Y,Z,W>& a, const double4::Permute4<A,B,C,D>& b)
     {
-        return simd::float64x4_add(a, b);
+        return simd::add(a, b);
     }
     
     static inline double4 operator - (const double4& a, const double4& b)
     {
-        return simd::float64x4_sub(a, b);
+        return simd::sub(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline double4 operator - (const double4::Permute4<X,Y,Z,W>& a, const double4::Permute4<A,B,C,D>& b)
     {
-        return simd::float64x4_sub(a, b);
+        return simd::sub(a, b);
     }
 
     static inline double4 operator * (const double4& a, const double4& b)
     {
-        return simd::float64x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     static inline double4 operator * (const double4& a, double b)
     {
-        return simd::float64x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     static inline double4 operator * (double a, const double4& b)
     {
-        return simd::float64x4_mul(a, b);
+        return simd::mul(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline double4 operator * (const double4::Permute4<X,Y,Z,W>& a, const double4::Permute4<A,B,C,D>& b)
     {
-        return simd::float64x4_mul(a, b);
+        return simd::mul(a, b);
     }
     
     static inline double4 operator / (const double4& a, const double4& b)
     {
-        return simd::float64x4_div(a, b);
+        return simd::div(a, b);
     }
 
     static inline double4 operator / (const double4& a, double b)
     {
-        return simd::float64x4_div(a, b);
+        return simd::div(a, b);
     }
 
     template <int X, int Y, int Z, int W, int A, int B, int C, int D>
     static inline double4 operator / (const double4::Permute4<X,Y,Z,W>& a, const double4::Permute4<A,B,C,D>& b)
     {
-        return simd::float64x4_div(a, b);
+        return simd::div(a, b);
     }
 
     // ------------------------------------------------------------------
@@ -657,54 +616,54 @@ namespace mango
         return SimdName(a, b); \
     }
 
-    MAKE_VECTOR_FUNCTION1(abs, simd::float64x4_abs)
-    MAKE_VECTOR_FUNCTION1(square, simd::float64x4_square)
-    MAKE_VECTOR_FUNCTION1(length, simd::float64x4_length)
-    MAKE_VECTOR_FUNCTION1(normalize, simd::float64x4_normalize)
-    MAKE_VECTOR_FUNCTION1(round, simd::float64x4_round)
-    MAKE_VECTOR_FUNCTION1(floor, simd::float64x4_floor)
-    MAKE_VECTOR_FUNCTION1(ceil, simd::float64x4_ceil)
-    MAKE_VECTOR_FUNCTION1(fract, simd::float64x4_fract)
-    MAKE_VECTOR_FUNCTION1(sin, simd::float64x4_sin)
-    MAKE_VECTOR_FUNCTION1(cos, simd::float64x4_cos)
-    MAKE_VECTOR_FUNCTION1(tan, simd::float64x4_tan)
-    MAKE_VECTOR_FUNCTION1(asin, simd::float64x4_asin)
-    MAKE_VECTOR_FUNCTION1(acos, simd::float64x4_acos)
-    MAKE_VECTOR_FUNCTION1(atan, simd::float64x4_atan)
-    MAKE_VECTOR_FUNCTION1(exp, simd::float64x4_exp)
-    MAKE_VECTOR_FUNCTION1(log, simd::float64x4_log)
-    MAKE_VECTOR_FUNCTION1(exp2, simd::float64x4_exp2)
-    MAKE_VECTOR_FUNCTION1(log2, simd::float64x4_log2)
-    MAKE_VECTOR_FUNCTION1(sign, simd::float64x4_sign)
-    MAKE_VECTOR_FUNCTION1(radians, simd::float64x4_radians)
-    MAKE_VECTOR_FUNCTION1(degrees, simd::float64x4_degrees)
-    MAKE_VECTOR_FUNCTION1(sqrt, simd::float64x4_sqrt)
-    MAKE_VECTOR_FUNCTION1(rsqrt, simd::float64x4_rsqrt)
+    MAKE_VECTOR_FUNCTION1(abs, simd::abs)
+    MAKE_VECTOR_FUNCTION1(square, simd::square)
+    MAKE_VECTOR_FUNCTION1(length, simd::length)
+    MAKE_VECTOR_FUNCTION1(normalize, simd::normalize)
+    MAKE_VECTOR_FUNCTION1(round, simd::round)
+    MAKE_VECTOR_FUNCTION1(floor, simd::floor)
+    MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
+    MAKE_VECTOR_FUNCTION1(fract, simd::fract)
+    MAKE_VECTOR_FUNCTION1(sin, simd::sin)
+    MAKE_VECTOR_FUNCTION1(cos, simd::cos)
+    MAKE_VECTOR_FUNCTION1(tan, simd::tan)
+    MAKE_VECTOR_FUNCTION1(asin, simd::asin)
+    MAKE_VECTOR_FUNCTION1(acos, simd::acos)
+    MAKE_VECTOR_FUNCTION1(atan, simd::atan)
+    MAKE_VECTOR_FUNCTION1(exp, simd::exp)
+    MAKE_VECTOR_FUNCTION1(log, simd::log)
+    MAKE_VECTOR_FUNCTION1(exp2, simd::exp2)
+    MAKE_VECTOR_FUNCTION1(log2, simd::log2)
+    MAKE_VECTOR_FUNCTION1(sign, simd::sign)
+    MAKE_VECTOR_FUNCTION1(radians, simd::radians)
+    MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
+    MAKE_VECTOR_FUNCTION1(sqrt, simd::sqrt)
+    MAKE_VECTOR_FUNCTION1(rsqrt, simd::rsqrt)
 
-    MAKE_VECTOR_FUNCTION2(min, simd::float64x4_min)
-    MAKE_VECTOR_FUNCTION2(max, simd::float64x4_max)
-    MAKE_VECTOR_FUNCTION2(dot, simd::float64x4_dot4)
-    //MAKE_VECTOR_FUNCTION2(cross, simd::float64x4_cross3)
-    MAKE_VECTOR_FUNCTION2(mod, simd::float64x4_mod)
-    MAKE_VECTOR_FUNCTION2(pow, simd::float64x4_pow)
-    MAKE_VECTOR_FUNCTION2(atan2, simd::float64x4_atan2)
+    MAKE_VECTOR_FUNCTION2(min, simd::min)
+    MAKE_VECTOR_FUNCTION2(max, simd::max)
+    MAKE_VECTOR_FUNCTION2(dot, simd::dot4)
+    //MAKE_VECTOR_FUNCTION2(cross, simd::cross3)
+    MAKE_VECTOR_FUNCTION2(mod, simd::mod)
+    MAKE_VECTOR_FUNCTION2(pow, simd::pow)
+    MAKE_VECTOR_FUNCTION2(atan2, simd::atan2)
 
 #undef MAKE_VECTOR_FUNCTION1
 #undef MAKE_VECTOR_FUNCTION2
 
     static inline double4 clamp(const double4& a, const double4& amin, const double4& amax)
     {
-        return simd::float64x4_clamp(a, amin, amax);
+        return simd::clamp(a, amin, amax);
     }
 
     static inline double4 madd(const double4& a, const double4& b, const double4& c)
     {
-        return simd::float64x4_madd(a, b, c);
+        return simd::madd(a, b, c);
     }
 
     static inline double4 msub(const double4& a, const double4& b, const double4& c)
     {
-        return simd::float64x4_msub(a, b, c);
+        return simd::msub(a, b, c);
     }
 
     static inline double4 lerp(const double4& a, const double4& b, double factor)
@@ -719,12 +678,12 @@ namespace mango
 
     static inline double4 hmin(const double4& v)
     {
-        return simd::float64x4_hmin(v);
+        return simd::hmin(v);
     }
 
     static inline double4 hmax(const double4& v)
     {
-        return simd::float64x4_hmax(v);
+        return simd::hmax(v);
     }
 
     // ------------------------------------------------------------------
@@ -733,37 +692,37 @@ namespace mango
 
     static inline simd::float64x4 operator > (const double4& a, const double4& b)
     {
-        return simd::float64x4_compare_gt(a, b);
+        return simd::compare_gt(a, b);
     }
 
     static inline simd::float64x4 operator >= (const double4& a, const double4& b)
     {
-        return simd::float64x4_compare_ge(a, b);
+        return simd::compare_ge(a, b);
     }
 
     static inline simd::float64x4 operator < (const double4& a, const double4& b)
     {
-        return simd::float64x4_compare_lt(a, b);
+        return simd::compare_lt(a, b);
     }
 
     static inline simd::float64x4 operator <= (const double4& a, const double4& b)
     {
-        return simd::float64x4_compare_le(a, b);
+        return simd::compare_le(a, b);
     }
 
     static inline simd::float64x4 operator == (const double4& a, const double4& b)
     {
-        return simd::float64x4_compare_eq(a, b);
+        return simd::compare_eq(a, b);
     }
 
     static inline simd::float64x4 operator != (const double4& a, const double4& b)
     {
-        return simd::float64x4_compare_neq(a, b);
+        return simd::compare_neq(a, b);
     }
 
     static inline simd::float64x4 select(simd::float64x4 mask, const double4& a, const double4& b)
     {
-        return simd::float64x4_select(mask, a, b);
+        return simd::select(mask, a, b);
     }
 
 } // namespace mango

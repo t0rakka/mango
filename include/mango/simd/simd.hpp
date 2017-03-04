@@ -24,6 +24,11 @@ namespace simd {
     // SIMD vector base classes
     // --------------------------------------------------------------
 
+    // The C++ does not have strong typedef:
+    // Wrap the hardware-supported SIMD vector types so that we get
+    // strong types for the compiler to be able to resolve the overloads
+    // when the underlying types are identical.
+
     template <typename ScalarType, int Size, typename VectorType>
     struct vector_type
     {
@@ -110,8 +115,8 @@ namespace simd {
 
     struct float32x8
     {
-        __m128 lo;
-        __m128 hi;
+        float32x4 lo;
+        float32x4 hi;
     };
 
     struct float64x4

@@ -357,8 +357,8 @@ inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
     float4 color[4];
     color[0] = XMLoadU565(pBC->rgb[0]);
     color[1] = XMLoadU565(pBC->rgb[1]);
-    color[0] = simd::float32x4_select(g_XMIdentityR3, color[0], g_XMSelect1110);
-    color[1] = simd::float32x4_select(g_XMIdentityR3, color[1], g_XMSelect1110);
+    color[0] = simd::select(g_XMIdentityR3, color[0], g_XMSelect1110);
+    color[1] = simd::select(g_XMIdentityR3, color[1], g_XMSelect1110);
 
     if ( isbc1 && (pBC->rgb[0] <= pBC->rgb[1]) )
     {
@@ -816,13 +816,13 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
     }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
     }
 
     dw = pBC2->bitmap[1];
@@ -830,13 +830,13 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
     }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::float32x4_set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
     }
 }
 
@@ -952,24 +952,24 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
     }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
     }
 
     dw = pBC3->bitmap[3] | (pBC3->bitmap[4] << 8) | (pBC3->bitmap[5] << 16);
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
     }
 
 	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::float32x4_set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
     }
 }
 
@@ -1191,7 +1191,7 @@ namespace
             const uint32* image = reinterpret_cast<const uint32*>(input + y * stride);
             for (int x = 0; x < 4; ++x)
             {
-                const simd::int32x4 v = simd::int32x4_unpack(image[x]);
+                const simd::int32x4 v = simd::unpack(image[x]);
                 temp[y * 4 + x] = simd::float32x4_convert(v);
             }
         }

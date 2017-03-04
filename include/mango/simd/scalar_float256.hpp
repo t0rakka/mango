@@ -42,17 +42,17 @@
         dest[7] = a[7];
     }
 
-    static inline float32x8 float32x8_unpackhi(float32x8 a, float32x8 b)
+    static inline float32x8 unpackhi(float32x8 a, float32x8 b)
     {
         return float32x8_set8(a[4], b[4], a[5], b[5], a[6], b[6], a[7], b[7] );
     }
 
-    static inline float32x8 float32x8_unpacklo(float32x8 a, float32x8 b)
+    static inline float32x8 unpacklo(float32x8 a, float32x8 b)
     {
         return float32x8_set8(a[0], b[0], a[1], b[1], a[2], b[2], a[3], b[3] );
     }
 
-    // logical
+    // bitwise
 
     static inline float32x8 float32x8_and(float32x8 a, float32x8 b)
     {
@@ -94,7 +94,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_min(float32x8 a, float32x8 b)
+    static inline float32x8 min(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -104,7 +104,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_max(float32x8 a, float32x8 b)
+    static inline float32x8 max(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -114,7 +114,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_abs(float32x8 a)
+    static inline float32x8 abs(float32x8 a)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -124,7 +124,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_neg(float32x8 a)
+    static inline float32x8 neg(float32x8 a)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -134,7 +134,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_add(float32x8 a, float32x8 b)
+    static inline float32x8 add(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -144,7 +144,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_sub(float32x8 a, float32x8 b)
+    static inline float32x8 sub(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -154,7 +154,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_mul(float32x8 a, float32x8 b)
+    static inline float32x8 mul(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -164,7 +164,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_div(float32x8 a, float32x8 b)
+    static inline float32x8 div(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -174,7 +174,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_div(float32x8 a, float b)
+    static inline float32x8 div(float32x8 a, float b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -184,7 +184,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_fast_reciprocal(float32x8 a)
+    static inline float32x8 fast_reciprocal(float32x8 a)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -194,7 +194,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_fast_rsqrt(float32x8 a)
+    static inline float32x8 fast_rsqrt(float32x8 a)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -204,7 +204,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_fast_sqrt(float32x8 a)
+    static inline float32x8 fast_sqrt(float32x8 a)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -214,24 +214,24 @@
         return v;
     }
 
-    static inline float32x8 float32x8_reciprocal(float32x8 a)
+    static inline float32x8 reciprocal(float32x8 a)
     {
-        return float32x8_fast_reciprocal(a);
+        return fast_reciprocal(a);
     }
 
-    static inline float32x8 float32x8_rsqrt(float32x8 a)
+    static inline float32x8 rsqrt(float32x8 a)
     {
-        return float32x8_fast_rsqrt(a);
+        return fast_rsqrt(a);
     }
 
-    static inline float32x8 float32x8_sqrt(float32x8 a)
+    static inline float32x8 sqrt(float32x8 a)
     {
-        return float32x8_fast_sqrt(a);
+        return fast_sqrt(a);
     }
 
     // compare
 
-    static inline float32x8 float32x8_compare_neq(float32x8 a, float32x8 b)
+    static inline float32x8 compare_neq(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -241,7 +241,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_compare_eq(float32x8 a, float32x8 b)
+    static inline float32x8 compare_eq(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -251,7 +251,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_compare_lt(float32x8 a, float32x8 b)
+    static inline float32x8 compare_lt(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -261,7 +261,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_compare_le(float32x8 a, float32x8 b)
+    static inline float32x8 compare_le(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -271,7 +271,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_compare_gt(float32x8 a, float32x8 b)
+    static inline float32x8 compare_gt(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -281,7 +281,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_compare_ge(float32x8 a, float32x8 b)
+    static inline float32x8 compare_ge(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -291,14 +291,14 @@
         return v;
     }
 
-    static inline float32x8 float32x8_select(float32x8 mask, float32x8 a, float32x8 b)
+    static inline float32x8 select(float32x8 mask, float32x8 a, float32x8 b)
     {
         return float32x8_or(float32x8_and(mask, a), float32x8_nand(mask, b));
     }
 
     // rounding
 
-    static inline float32x8 float32x8_round(float32x8 s)
+    static inline float32x8 round(float32x8 s)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -308,7 +308,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_trunc(float32x8 s)
+    static inline float32x8 trunc(float32x8 s)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -318,7 +318,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_floor(float32x8 s)
+    static inline float32x8 floor(float32x8 s)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -328,7 +328,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_ceil(float32x8 s)
+    static inline float32x8 ceil(float32x8 s)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -338,7 +338,7 @@
         return v;
     }
 
-    static inline float32x8 float32x8_fract(float32x8 s)
+    static inline float32x8 fract(float32x8 s)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)

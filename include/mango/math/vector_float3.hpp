@@ -42,6 +42,7 @@ namespace mango
         union
         {
             struct { float x, y, z; };
+
 			Permute2<0, 0> xx;
 			Permute2<1, 0> yx;
 			Permute2<2, 0> zx;
@@ -51,6 +52,7 @@ namespace mango
 			Permute2<0, 2> xz;
 			Permute2<1, 2> yz;
 			Permute2<2, 2> zz;
+
             Permute3<0, 0, 0> xxx;
             Permute3<1, 0, 0> yxx;
             Permute3<2, 0, 0> zxx;

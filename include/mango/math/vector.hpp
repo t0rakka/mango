@@ -12,34 +12,49 @@ namespace mango
 {
 
     // ------------------------------------------------------------------
-    // static_for
+    // ScalarAccessor
     // ------------------------------------------------------------------
 
-    template <int First, int Last>
-    struct StaticFor
+    template <typename VectorType, typename ScalarType, int Index>
+    struct ScalarAccessor
     {
-        template <typename Func>
-        static void each(Func func)
+        VectorType m;
+
+        operator ScalarType () const
         {
-            func(First);
-            StaticFor<First + 1, Last>::each(func);
+            return simd::get_component<Index>(m);
+        }
+
+        ScalarAccessor& operator = (ScalarType s)
+        {
+            m = simd::set_component<Index>(m, s);
+            return *this;
+        }
+
+        ScalarAccessor& operator += (ScalarType s)
+        {
+            *this = ScalarType(*this) + s;
+            return *this;
+        }
+
+        ScalarAccessor& operator -= (ScalarType s)
+        {
+            *this = ScalarType(*this) - s;
+            return *this;
+        }
+
+        ScalarAccessor& operator *= (ScalarType s)
+        {
+            *this = ScalarType(*this) * s;
+            return *this;
+        }
+
+        ScalarAccessor& operator /= (ScalarType s)
+        {
+            *this = ScalarType(*this) / s;
+            return *this;
         }
     };
-
-    template <int Last>
-    struct StaticFor<Last, Last>
-    {
-        template <typename Func>
-        static void each(Func func)
-        {
-            MANGO_UNREFERENCED_PARAMETER(func);
-        }
-    };
-
-    #define static_for_begin(INDEX, FIRST, SIZE) \
-        StaticFor<FIRST, FIRST + SIZE>::each([&](int INDEX)
-
-    #define static_for_end );
 
     // ------------------------------------------------------------------
     // VectorBase
@@ -86,18 +101,18 @@ namespace mango
 
         explicit Vector(Type s)
         {
-            static_for_begin(i, 0, Size)
+            for (int i = 0; i < Size; ++i)
             {
                 m[i] = s;
-            } static_for_end
+            }
         }
 
         Vector(const Vector& v)
         {
-            static_for_begin(i, 0, Size)
+            for (int i = 0; i < Size; ++i)
             {
                 m[i] = v[i];
-            } static_for_end
+            }
         }
 
         ~Vector()
@@ -106,19 +121,19 @@ namespace mango
 
         Vector& operator = (Type s)
         {
-            static_for_begin(i, 0, Size)
+            for (int i = 0; i < Size; ++i)
             {
                 m[i] = s;
-            } static_for_end
+            }
             return *this;
         }
 
         Vector& operator = (const Vector& v)
         {
-            static_for_begin(i, 0, Size)
+            for (int i = 0; i < Size; ++i)
             {
                 m[i] = v[i];
-            } static_for_end
+            }
             return *this;
         }
     };
@@ -311,70 +326,70 @@ namespace mango
     static inline Vector<Type, Size> operator - (const Vector<Type, Size>& v)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = -v[i];
-        } static_for_end
+        }
         return temp;
     }
 
     template <typename Type, int Size>
     static inline Vector<Type, Size>& operator += (Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             a[i] += b[i];
-        } static_for_end
+        }
         return a;
     }
 
     template <typename Type, int Size>
     static inline Vector<Type, Size>& operator -= (Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             a[i] -= b[i];
-        } static_for_end
+        }
         return a;
     }
 
     template <typename Type, int Size>
     static inline Vector<Type, Size>& operator *= (Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             a[i] *= b[i];
-        } static_for_end
+        }
         return a;
     }
 
     template <typename Type, int Size>
     static inline Vector<Type, Size>& operator *= (Vector<Type, Size>& a, Type b)
     {
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             a[i] *= b;
-        } static_for_end
+        }
         return a;
     }
 
     template <typename Type, int Size>
     static inline Vector<Type, Size>& operator /= (Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             a[i] /= b[i];
-        } static_for_end
+        }
         return a;
     }
 
     template <typename Type, int Size>
     static inline Vector<Type, Size>& operator /= (Vector<Type, Size>& a, Type b)
     {
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             a[i] /= b;
-        } static_for_end
+        }
         return a;
     }
 
@@ -382,10 +397,10 @@ namespace mango
     static inline Vector<Type, Size> operator + (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] + b[i];
-        } static_for_end
+        }
         return temp;
     }
 
@@ -393,10 +408,10 @@ namespace mango
     static inline Vector<Type, Size> operator - (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] - b[i];
-        } static_for_end
+        }
         return temp;
     }
 
@@ -404,10 +419,10 @@ namespace mango
     static inline Vector<Type, Size> operator * (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] * b[i];
-        } static_for_end
+        }
         return temp;
     }
 
@@ -415,10 +430,10 @@ namespace mango
     static inline Vector<Type, Size> operator * (const Vector<Type, Size>& a, Type b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] * b;
-        } static_for_end
+        }
         return temp;
     }
 
@@ -426,10 +441,10 @@ namespace mango
     static inline Vector<Type, Size> operator * (Type a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a * b[i];
-        } static_for_end
+        }
         return temp;
     }
 
@@ -437,10 +452,10 @@ namespace mango
     static inline Vector<Type, Size> operator / (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] / b[i];
-        } static_for_end
+        }
         return temp;
     }
 
@@ -448,10 +463,10 @@ namespace mango
     static inline Vector<Type, Size> operator / (const Vector<Type, Size>& a, Type b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] / b;
-        } static_for_end
+        }
         return temp;
     }
 
@@ -463,10 +478,10 @@ namespace mango
     static inline const Vector<Type, Size> abs(const Vector<Type, Size>& a)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = std::abs(a[i]);
-        } static_for_end
+        }
         return temp;
     }
 
@@ -474,10 +489,10 @@ namespace mango
     static inline const Vector<Type, Size> min(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = std::min(a[i], b[i]);
-        } static_for_end
+        }
         return temp;
     }
 
@@ -485,10 +500,10 @@ namespace mango
     static inline const Vector<Type, Size> max(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = std::max(a[i], b[i]);
-        } static_for_end
+        }
         return temp;
     }
 
@@ -496,10 +511,10 @@ namespace mango
     static inline Type dot(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
         Type s = 0;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             s += a[i] * b[i];
-        } static_for_end
+        }
         return s;
     }
 
@@ -507,10 +522,10 @@ namespace mango
     static inline Type square(const Vector<Type, Size>& a)
     {
         Type s = 0;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             s += a[i] * a[i];
-        } static_for_end
+        }
         return s;
     }
 
@@ -518,10 +533,10 @@ namespace mango
     static inline Type length(const Vector<Type, Size>& a)
     {
         Type s = 0;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             s += a[i] * a[i];
-        } static_for_end
+        }
         return static_cast<Type>(std::sqrt(s));
     }
 
@@ -535,10 +550,10 @@ namespace mango
     static inline const Vector<Type, Size> clamp(const Vector<Type, Size>& a, const Vector<Type, Size>& amin, const Vector<Type, Size>& amax)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = std::min(amax[i], std::max(amin[i], a[i]));
-        } static_for_end
+        }
         return temp;
     }
 
@@ -546,10 +561,10 @@ namespace mango
     static inline Vector<Type, Size> madd(const Vector<Type, Size>& a, const Vector<Type, Size>& b, const Vector<Type, Size>& c)
     {
         Vector<Type, Size> temp;
-        static_for_begin(i, 0, Size)
+        for (int i = 0; i < Size; ++i)
         {
             temp[i] = a[i] + b[i] * c[i];
-        } static_for_end
+        }
         return temp;
     }
 
@@ -567,9 +582,9 @@ namespace mango
 	template <int Size> \
 	static inline const Vector<Type, Size> Name(const Vector<Type, Size>& a) { \
         Vector<Type, Size> temp; \
-        static_for_begin(i, 0, Size) { \
+        for (int i = 0; i < Size; ++i) { \
             temp[i] = Expression; \
-        } static_for_end \
+        } \
         return temp; \
 	}
 
@@ -577,9 +592,9 @@ namespace mango
 	template <int Size> \
 	static inline const Vector<Type, Size> Name(const Vector<Type, Size>& a, const Vector<Type, Size>& b) { \
         Vector<Type, Size> temp; \
-        static_for_begin(i, 0, Size) { \
+        for (int i = 0; i < Size; ++i) { \
             temp[i] = Expression; \
-        } static_for_end \
+        } \
         return temp; \
 	}
 

@@ -201,8 +201,8 @@ namespace mango
 
         float3x3 tbn;
 
-        tbn[0] = normalize((a * d.y - b * c.y) * s); // tangent
-        tbn[1] = normalize((a * d.x + b * c.x) * -s); // binormal
+        tbn[0] = normalize((a * float(d.y) - b * float(c.y)) * s); // tangent
+        tbn[1] = normalize((a * float(d.x) + b * float(c.x)) * -s); // binormal
         tbn[2] = normalize(cross(a, b)); // normal
 
         return tbn;

@@ -146,20 +146,20 @@
     static inline float64x4 float64x4_convert(int32x4 s)
     {
         float64x4 v;
-        v[0] = double(int32x4_get_x(s));
-        v[1] = double(int32x4_get_y(s));
-        v[2] = double(int32x4_get_z(s));
-        v[3] = double(int32x4_get_w(s));
+        v[0] = double(get_x(s));
+        v[1] = double(get_y(s));
+        v[2] = double(get_z(s));
+        v[3] = double(get_w(s));
         return v;
     }
 
     static inline float64x4 float64x4_convert(float32x4 s)
     {
         float64x4 v;
-        v[0] = double(float32x4_get_x(s));
-        v[1] = double(float32x4_get_y(s));
-        v[2] = double(float32x4_get_z(s));
-        v[3] = double(float32x4_get_w(s));
+        v[0] = double(get_x(s));
+        v[1] = double(get_y(s));
+        v[2] = double(get_z(s));
+        v[3] = double(get_w(s));
         return v;
     }
 
@@ -184,10 +184,10 @@
     static inline float64x4 float64x4_convert(uint32x4 s)
     {
         float64x4 v;
-        v[0] = u32_to_f64(uint32x4_get_x(s));
-        v[1] = u32_to_f64(uint32x4_get_y(s));
-        v[2] = u32_to_f64(uint32x4_get_z(s));
-        v[3] = u32_to_f64(uint32x4_get_w(s));
+        v[0] = u32_to_f64(get_x(s));
+        v[1] = u32_to_f64(get_y(s));
+        v[2] = u32_to_f64(get_z(s));
+        v[3] = u32_to_f64(get_w(s));
         return v;
     }
 
@@ -225,10 +225,10 @@
     static inline float16x4 float16x4_convert(float32x4 s)
     {
         float16x4 v;
-        v[0] = float32x4_get_x(s);
-        v[1] = float32x4_get_y(s);
-        v[2] = float32x4_get_z(s);
-        v[3] = float32x4_get_w(s);
+        v[0] = get_x(s);
+        v[1] = get_y(s);
+        v[2] = get_z(s);
+        v[3] = get_w(s);
         return v;
     }
 

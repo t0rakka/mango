@@ -1124,7 +1124,7 @@ namespace mango
         float4 c = select(s < cutoff, a, b);
 
         // pass-through alpha: float4(c.rgb, n.w)
-        return simd::float32x4_select(alpha_mask, n, c);
+        return simd::select(alpha_mask, n, c);
     }
 
     float4 srgb_decode(float4 s)
@@ -1141,7 +1141,7 @@ namespace mango
         float4 c = select(s <= cutoff, a, b);
 
         // pass-through alpha: float4(c.rgb, s.w)
-        return simd::float32x4_select(alpha_mask, s, c);
+        return simd::select(alpha_mask, s, c);
     }
 
 #else

@@ -48,7 +48,7 @@
         _mm_storeu_ps(dest + 4, a.hi);
     }
 
-    static inline float32x8 float32x8_unpackhi(float32x8 a, float32x8 b)
+    static inline float32x8 unpackhi(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_unpackhi_ps(a.lo, b.lo);
@@ -56,7 +56,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_unpacklo(float32x8 a, float32x8 b)
+    static inline float32x8 unpacklo(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_unpacklo_ps(a.lo, b.lo);
@@ -64,7 +64,7 @@
         return result;
     }
 
-    // logical
+    // bitwise
 
     static inline float32x8 float32x8_and(float32x8 a, float32x8 b)
     {
@@ -98,7 +98,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_min(float32x8 a, float32x8 b)
+    static inline float32x8 min(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_min_ps(a.lo, b.lo);
@@ -106,7 +106,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_max(float32x8 a, float32x8 b)
+    static inline float32x8 max(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_max_ps(a.lo, b.lo);
@@ -114,7 +114,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_abs(float32x8 a)
+    static inline float32x8 abs(float32x8 a)
     {
         const __m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
         float32x8 result;
@@ -123,7 +123,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_neg(float32x8 a)
+    static inline float32x8 neg(float32x8 a)
     {
         const __m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x80000000));
         float32x8 result;
@@ -132,7 +132,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_add(float32x8 a, float32x8 b)
+    static inline float32x8 add(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_add_ps(a.lo, b.lo);
@@ -140,7 +140,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_sub(float32x8 a, float32x8 b)
+    static inline float32x8 sub(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_sub_ps(a.lo, b.lo);
@@ -148,7 +148,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_mul(float32x8 a, float32x8 b)
+    static inline float32x8 mul(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_mul_ps(a.lo, b.lo);
@@ -156,7 +156,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_div(float32x8 a, float32x8 b)
+    static inline float32x8 div(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_div_ps(a.lo, b.lo);
@@ -164,7 +164,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_div(float32x8 a, float b)
+    static inline float32x8 div(float32x8 a, float b)
     {
         __m128 scale = _mm_set1_ps(b);
         float32x8 result;
@@ -173,7 +173,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_fast_reciprocal(float32x8 a)
+    static inline float32x8 fast_reciprocal(float32x8 a)
     {
         float32x8 result;
         result.lo = _mm_rcp_ps(a.lo);
@@ -181,7 +181,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_fast_rsqrt(float32x8 a)
+    static inline float32x8 fast_rsqrt(float32x8 a)
     {
         float32x8 result;
         result.lo = _mm_rsqrt_ps(a.lo);
@@ -189,7 +189,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_fast_sqrt(float32x8 a)
+    static inline float32x8 fast_sqrt(float32x8 a)
     {
         float32x8 result;
         result.lo = _mm_mul_ps(a.lo, _mm_rsqrt_ps(a.lo));
@@ -197,23 +197,23 @@
         return result;
     }
 
-    static inline float32x8 float32x8_reciprocal(float32x8 a)
+    static inline float32x8 reciprocal(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_reciprocal(a.lo);
-        result.hi = float32x4_reciprocal(a.hi);
+        result.lo = reciprocal(a.lo);
+        result.hi = reciprocal(a.hi);
         return result;
     }
 
-    static inline float32x8 float32x8_rsqrt(float32x8 a)
+    static inline float32x8 rsqrt(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_rsqrt(a.lo);
-        result.hi = float32x4_rsqrt(a.hi);
+        result.lo = rsqrt(a.lo);
+        result.hi = rsqrt(a.hi);
         return result;
     }
 
-    static inline float32x8 float32x8_sqrt(float32x8 a)
+    static inline float32x8 sqrt(float32x8 a)
     {
         float32x8 result;
         result.lo = _mm_sqrt_ps(a.lo);
@@ -223,7 +223,7 @@
 
     // compare
 
-    static inline float32x8 float32x8_compare_neq(float32x8 a, float32x8 b)
+    static inline float32x8 compare_neq(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_cmpneq_ps(a.lo, b.lo);
@@ -231,7 +231,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_compare_eq(float32x8 a, float32x8 b)
+    static inline float32x8 compare_eq(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_cmpeq_ps(a.lo, b.lo);
@@ -239,7 +239,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_compare_lt(float32x8 a, float32x8 b)
+    static inline float32x8 compare_lt(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_cmplt_ps(a.lo, b.lo);
@@ -247,7 +247,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_compare_le(float32x8 a, float32x8 b)
+    static inline float32x8 compare_le(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_cmple_ps(a.lo, b.lo);
@@ -255,7 +255,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_compare_gt(float32x8 a, float32x8 b)
+    static inline float32x8 compare_gt(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_cmpgt_ps(a.lo, b.lo);
@@ -263,7 +263,7 @@
         return result;
     }
 
-    static inline float32x8 float32x8_compare_ge(float32x8 a, float32x8 b)
+    static inline float32x8 compare_ge(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_cmpge_ps(a.lo, b.lo);
@@ -271,53 +271,53 @@
         return result;
     }
 
-    static inline float32x8 float32x8_select(float32x8 mask, float32x8 a, float32x8 b)
+    static inline float32x8 select(float32x8 mask, float32x8 a, float32x8 b)
     {
         float32x8 result;
-        result.lo = float32x4_select(mask.lo, a.lo, b.lo);
-        result.hi = float32x4_select(mask.hi, a.hi, b.hi);
+        result.lo = select(mask.lo, a.lo, b.lo);
+        result.hi = select(mask.hi, a.hi, b.hi);
         return result;
     }
 
     // rounding
 
-    static inline float32x8 float32x8_round(float32x8 a)
+    static inline float32x8 round(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_round(a.lo);
-        result.hi = float32x4_round(a.hi);
+        result.lo = round(a.lo);
+        result.hi = round(a.hi);
         return result;
     }
 
-    static inline float32x8 float32x8_trunc(float32x8 a)
+    static inline float32x8 trunc(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_trunc(a.lo);
-        result.hi = float32x4_trunc(a.hi);
+        result.lo = trunc(a.lo);
+        result.hi = trunc(a.hi);
         return result;
     }
 
-    static inline float32x8 float32x8_floor(float32x8 a)
+    static inline float32x8 floor(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_floor(a.lo);
-        result.hi = float32x4_floor(a.hi);
+        result.lo = floor(a.lo);
+        result.hi = floor(a.hi);
         return result;
     }
 
-    static inline float32x8 float32x8_ceil(float32x8 a)
+    static inline float32x8 ceil(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_ceil(a.lo);
-        result.hi = float32x4_ceil(a.hi);
+        result.lo = ceil(a.lo);
+        result.hi = ceil(a.hi);
         return result;
     }
 
-    static inline float32x8 float32x8_fract(float32x8 a)
+    static inline float32x8 fract(float32x8 a)
     {
         float32x8 result;
-        result.lo = float32x4_fract(a.lo);
-        result.hi = float32x4_fract(a.hi);
+        result.lo = fract(a.lo);
+        result.hi = fract(a.hi);
         return result;
     }
 

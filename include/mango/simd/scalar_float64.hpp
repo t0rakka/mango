@@ -13,7 +13,7 @@
     // shuffle
 
     template <uint32 x, uint32 y>
-    static inline float32x2 float32x2_shuffle(float32x2 v)
+    static inline float32x2 shuffle(float32x2 v)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         return {{ v[x], v[y] }};
@@ -22,7 +22,7 @@
     // indexed access
 
     template <int Index>
-    static inline float32x2 float32x2_set_component(float32x2 a, float s)
+    static inline float32x2 set_component(float32x2 a, float s)
     {
         static_assert(Index >= 0 && Index < 2, "Index out of range.");
         a[Index] = s;
@@ -30,7 +30,7 @@
     }
 
     template <int Index>
-    static inline float float32x2_get_component(float32x2 a)
+    static inline float get_component(float32x2 a)
     {
         static_assert(Index >= 0 && Index < 2, "Index out of range.");
         return a[Index];
@@ -62,17 +62,17 @@
         dest[1] = a[1];
     }
 
-    static inline float32x2 float32x2_unpackhi(float32x2 a, float32x2 b)
+    static inline float32x2 unpackhi(float32x2 a, float32x2 b)
     {
         return float32x2_set2(a[1], b[1]);
     }
 
-    static inline float32x2 float32x2_unpacklo(float32x2 a, float32x2 b)
+    static inline float32x2 unpacklo(float32x2 a, float32x2 b)
     {
         return float32x2_set2(a[0], b[0]);
     }
 
-    // logical
+    // bitwise
 
     static inline float32x2 float32x2_and(float32x2 a, float32x2 b)
     {
@@ -102,7 +102,7 @@
         return float32x2_set2(x, y);
     }
 
-    static inline float32x2 float32x2_min(float32x2 a, float32x2 b)
+    static inline float32x2 min(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = std::min(a[0], b[0]);
@@ -110,7 +110,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_max(float32x2 a, float32x2 b)
+    static inline float32x2 max(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = std::max(a[0], b[0]);
@@ -118,7 +118,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_abs(float32x2 a)
+    static inline float32x2 abs(float32x2 a)
     {
         float32x2 v;
         v[0] = std::abs(a[0]);
@@ -126,12 +126,12 @@
         return v;
     }
 
-    static inline float32x2 float32x2_neg(float32x2 a)
+    static inline float32x2 neg(float32x2 a)
     {
         return float32x2_set2(-a[0], -a[1]);
     }
 
-    static inline float32x2 float32x2_add(float32x2 a, float32x2 b)
+    static inline float32x2 add(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = a[0] + b[0];
@@ -139,7 +139,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_sub(float32x2 a, float32x2 b)
+    static inline float32x2 sub(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = a[0] - b[0];
@@ -147,7 +147,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_mul(float32x2 a, float32x2 b)
+    static inline float32x2 mul(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = a[0] * b[0];
@@ -155,7 +155,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_div(float32x2 a, float32x2 b)
+    static inline float32x2 div(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = a[0] / b[0];
@@ -163,7 +163,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_div(float32x2 a, float b)
+    static inline float32x2 div(float32x2 a, float b)
     {
         float32x2 v;
         v[0] = a[0] / b;
@@ -171,7 +171,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_madd(float32x2 a, float32x2 b, float32x2 c)
+    static inline float32x2 madd(float32x2 a, float32x2 b, float32x2 c)
     {
         float32x2 v;
         v[0] = a[0] + b[0] * c[0];
@@ -179,7 +179,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_msub(float32x2 a, float32x2 b, float32x2 c)
+    static inline float32x2 msub(float32x2 a, float32x2 b, float32x2 c)
     {
         float32x2 v;
         v[0] = a[0] - b[0] * c[0];
@@ -187,7 +187,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_fast_reciprocal(float32x2 a)
+    static inline float32x2 fast_reciprocal(float32x2 a)
     {
         float32x2 v;
         v[0] = 1.0f / a[0];
@@ -195,7 +195,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_fast_rsqrt(float32x2 a)
+    static inline float32x2 fast_rsqrt(float32x2 a)
     {
         float32x2 v;
         v[0] = 1.0f / float(std::sqrt(a[0]));
@@ -203,7 +203,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_fast_sqrt(float32x2 a)
+    static inline float32x2 fast_sqrt(float32x2 a)
     {
         float32x2 v;
         v[0] = float(std::sqrt(a[0]));
@@ -211,22 +211,22 @@
         return v;
     }
 
-    static inline float32x2 float32x2_reciprocal(float32x2 a)
+    static inline float32x2 reciprocal(float32x2 a)
     {
-        return float32x2_fast_reciprocal(a);
+        return fast_reciprocal(a);
     }
 
-    static inline float32x2 float32x2_rsqrt(float32x2 a)
+    static inline float32x2 rsqrt(float32x2 a)
     {
-        return float32x2_fast_rsqrt(a);
+        return fast_rsqrt(a);
     }
 
-    static inline float32x2 float32x2_sqrt(float32x2 a)
+    static inline float32x2 sqrt(float32x2 a)
     {
-        return float32x2_fast_sqrt(a);
+        return fast_sqrt(a);
     }
 
-    static inline float32x2 float32x2_dot2(float32x2 a, float32x2 b)
+    static inline float32x2 dot2(float32x2 a, float32x2 b)
     {
         const float s = a[0] * b[0] + a[1] * b[1];
         return float32x2_set1(s);
@@ -234,7 +234,7 @@
 
     // compare
 
-    static inline float32x2 float32x2_compare_neq(float32x2 a, float32x2 b)
+    static inline float32x2 compare_neq(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = Float(-uint32(a[0] != b[0]));
@@ -242,7 +242,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_compare_eq(float32x2 a, float32x2 b)
+    static inline float32x2 compare_eq(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = Float(-uint32(a[0] == b[0]));
@@ -250,7 +250,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_compare_lt(float32x2 a, float32x2 b)
+    static inline float32x2 compare_lt(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = Float(-uint32(a[0] < b[0]));
@@ -258,7 +258,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_compare_le(float32x2 a, float32x2 b)
+    static inline float32x2 compare_le(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = Float(-uint32(a[0] <= b[0]));
@@ -266,7 +266,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_compare_gt(float32x2 a, float32x2 b)
+    static inline float32x2 compare_gt(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = Float(-uint32(a[0] > b[0]));
@@ -274,7 +274,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_compare_ge(float32x2 a, float32x2 b)
+    static inline float32x2 compare_ge(float32x2 a, float32x2 b)
     {
         float32x2 v;
         v[0] = Float(-uint32(a[0] >= b[0]));
@@ -282,14 +282,14 @@
         return v;
     }
 
-    static inline float32x2 float32x2_select(float32x2 mask, float32x2 a, float32x2 b)
+    static inline float32x2 select(float32x2 mask, float32x2 a, float32x2 b)
     {
         return float32x2_or(float32x2_and(mask, a), float32x2_nand(mask, b));
     }
 
     // rounding
 
-    static inline float32x2 float32x2_round(float32x2 s)
+    static inline float32x2 round(float32x2 s)
     {
         float32x2 v;
         v[0] = std::round(s[0]);
@@ -297,7 +297,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_trunc(float32x2 s)
+    static inline float32x2 trunc(float32x2 s)
     {
         float32x2 v;
         v[0] = std::trunc(s[0]);
@@ -305,7 +305,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_floor(float32x2 s)
+    static inline float32x2 floor(float32x2 s)
     {
         float32x2 v;
         v[0] = std::floor(s[0]);
@@ -313,7 +313,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_ceil(float32x2 s)
+    static inline float32x2 ceil(float32x2 s)
     {
         float32x2 v;
         v[0] = std::ceil(s[0]);
@@ -321,7 +321,7 @@
         return v;
     }
 
-    static inline float32x2 float32x2_fract(float32x2 s)
+    static inline float32x2 fract(float32x2 s)
     {
         float32x2 v;
         v[0] = s[0] - std::floor(s[0]);
