@@ -236,7 +236,7 @@
         float32x8 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i] = Float(-uint32(a[i] != b[i]));
+            v[i] = Float(0 - uint32(a[i] != b[i]));
         }
         return v;
     }
@@ -246,7 +246,7 @@
         float32x8 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i] = Float(-uint32(a[i] == b[i]));
+            v[i] = Float(0 - uint32(a[i] == b[i]));
         }
         return v;
     }
@@ -256,7 +256,7 @@
         float32x8 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i] = Float(-uint32(a[i] < b[i]));
+            v[i] = Float(0 - uint32(a[i] < b[i]));
         }
         return v;
     }
@@ -266,7 +266,7 @@
         float32x8 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i] = Float(-uint32(a[i] <= b[i]));
+            v[i] = Float(0 - uint32(a[i] <= b[i]));
         }
         return v;
     }
@@ -276,7 +276,7 @@
         float32x8 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i] = Float(-uint32(a[i] > b[i]));
+            v[i] = Float(0 - uint32(a[i] > b[i]));
         }
         return v;
     }
@@ -286,7 +286,7 @@
         float32x8 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i] = Float(-uint32(a[i] >= b[i]));
+            v[i] = Float(0 - uint32(a[i] >= b[i]));
         }
         return v;
     }

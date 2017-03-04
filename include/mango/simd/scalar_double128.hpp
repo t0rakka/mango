@@ -235,48 +235,48 @@
     static inline float64x2 compare_neq(float64x2 a, float64x2 b)
     {
         float64x2 v;
-        v[0] = Double(-uint64(a[0] != b[0]));
-        v[1] = Double(-uint64(a[1] != b[1]));
+        v[0] = Double(0 - uint64(a[0] != b[0]));
+        v[1] = Double(0 - uint64(a[1] != b[1]));
         return v;
     }
 
     static inline float64x2 compare_eq(float64x2 a, float64x2 b)
     {
         float64x2 v;
-        v[0] = Double(-uint64(a[0] == b[0]));
-        v[1] = Double(-uint64(a[1] == b[1]));
+        v[0] = Double(0 - uint64(a[0] == b[0]));
+        v[1] = Double(0 - uint64(a[1] == b[1]));
         return v;
     }
 
     static inline float64x2 compare_lt(float64x2 a, float64x2 b)
     {
         float64x2 v;
-        v[0] = Double(-uint64(a[0] < b[0]));
-        v[1] = Double(-uint64(a[1] < b[1]));
+        v[0] = Double(0 - uint64(a[0] < b[0]));
+        v[1] = Double(0 - uint64(a[1] < b[1]));
         return v;
     }
 
     static inline float64x2 compare_le(float64x2 a, float64x2 b)
     {
         float64x2 v;
-        v[0] = Double(-uint64(a[0] <= b[0]));
-        v[1] = Double(-uint64(a[1] <= b[1]));
+        v[0] = Double(0 - uint64(a[0] <= b[0]));
+        v[1] = Double(0 - uint64(a[1] <= b[1]));
         return v;
     }
 
     static inline float64x2 compare_gt(float64x2 a, float64x2 b)
     {
         float64x2 v;
-        v[0] = Double(-uint64(a[0] > b[0]));
-        v[1] = Double(-uint64(a[1] > b[1]));
+        v[0] = Double(0 - uint64(a[0] > b[0]));
+        v[1] = Double(0 - uint64(a[1] > b[1]));
         return v;
     }
 
     static inline float64x2 compare_ge(float64x2 a, float64x2 b)
     {
         float64x2 v;
-        v[0] = Double(-uint64(a[0] >= b[0]));
-        v[1] = Double(-uint64(a[1] >= b[1]));
+        v[0] = Double(0 - uint64(a[0] >= b[0]));
+        v[1] = Double(0 - uint64(a[1] >= b[1]));
         return v;
     }
 
