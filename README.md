@@ -53,7 +53,7 @@ After prototyping and benchmarking above methods the mango API practically wrote
 
 ##### Short Vector Math
 - Super efficient implementation
-- Specialized float4 and matrix4x4 for SIMD
+- Specialized float4, double4 and matrix4x4 for SIMD
 - GLSL compatible syntax
 
 #### Code Samples
@@ -114,8 +114,11 @@ There is also a promising 100% integer scale-and-bias algorithm which can handle
 
 #### TODO
 Features currently being worked on:
-- pvr/pvr2 decompressor (uses the new full-surface decoding interface, the compressor used to only support blocks)
-- lightweight OpenEXR decompressor / compressor
+- pvr (done) / pvr2 decompressor
+- lightweight OpenEXR decompressor / compressor ("done", integration pending..)
 - Improved blitter
 - Rewrite some of the Intel specific SIMD code to be more portable (ARM NEON specificly)
-- Remove exceptions
+- Remove exceptions?
+- Complete security overhaul :(
+- Finalize the SIMD API; need prefixed functions for some operations (set, and, or, xor, ..)
+- More Short Vector Math specializations - the SIMD back-end is now much richer in functionality
