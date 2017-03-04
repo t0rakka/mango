@@ -49,12 +49,14 @@ After prototyping and benchmarking above methods the mango API practically wrote
 - ARM NEON
 - PPC Altivec (deprecated)
 - SPU (deprecated)
-- fp16 support
+- FP16 conversion instruction support
+- Functional API ; simd vector objects are never modified in-place
 
 ##### Short Vector Math
 - Super efficient implementation
 - Specialized float4, double4 and matrix4x4 for SIMD
 - GLSL compatible syntax
+- Unique ScalarAccessor design for reading/writing lanes and shuffling SIMD-backed vectors
 
 #### Code Samples
 
