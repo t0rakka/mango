@@ -197,7 +197,11 @@ namespace mango
         const float3 b = position[2] - position[0];
         const float2 c = texcoord[1] - texcoord[0];
         const float2 d = texcoord[2] - texcoord[0];
-        const float s = 1.0f / (c.x * d.y - c.y * d.x);
+        float s = c.x * d.y - c.y * d.x;
+		if (s)
+		{
+			s = 1.0f / s;
+		}
 
         float3x3 tbn;
 
