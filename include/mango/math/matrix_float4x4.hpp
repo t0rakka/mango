@@ -117,18 +117,21 @@ namespace mango
 
         operator simd::float32x4* ()
         {
-            return reinterpret_cast<simd::float32x4 *>(this);
+            return m;
         }
 
         operator const simd::float32x4* () const
         {
-            return reinterpret_cast<const simd::float32x4 *>(this);
+            return m;
         }
 
         bool isAffine() const;
         float determinant() const;
 
+        // set identity
         void identity();
+
+        // modify current matrix
         void translate(float xtrans, float ytrans, float ztrans);
         void translate(const float3& trans);
         void scale(float scale);
