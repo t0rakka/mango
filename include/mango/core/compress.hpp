@@ -15,6 +15,24 @@ namespace mango
     // stream compression
     // -----------------------------------------------------------------------
 
+    // WARNING! The memory allocation is caller's responsibility; use bound()
+    // to get conservative estimate for destination size - the bound is
+    // guaranteed to be sufficient.
+
+    // The stream compression interface is abstraction for a stateful block compressor.
+    // Each call to encode() will compress a block which can be decoded. The unique
+    // feature is that the compressor and decompressor are stateful; the compressor
+    // keeps track of what it had compressed before so that data can be compressed
+    // efficiently in smaller chunks, which can be decoded individually. The caller
+    // is responsible for transmitting the compressed block size - that is NOT part of
+    // the protocol. This information is required so that the decompressor can allocate
+    // enough memory for the decompressed data. The compressed blocks MUST be decompressed
+    // at the same order they were compressed - this is a state machine with two end points:
+    // the sender and receiver.
+
+    // This API is useful for transmitting compressed realtime data stream over high latency,
+    // low bandwidth connection.
+
     class StreamEncoder : public Object
     {
     public:
@@ -35,6 +53,10 @@ namespace mango
     // -----------------------------------------------------------------------
     // memory block compression
     // -----------------------------------------------------------------------
+
+    // WARNING! The memory allocation is caller's responsibility; use bound()
+    // to get conservative estimate for destination size - the bound is
+    // guaranteed to be sufficient.
 
     // Compression levels are clamped to range [0, 10]
     // Level 6: default
@@ -89,14 +111,5 @@ namespace mango
         void decompress(const Memory& dest, const Memory& source);
     }
 #endif
-
-    // -----------------------------------------------------------------------
-    // hashing algorithms
-    // -----------------------------------------------------------------------
-
-    uint32 crc32(uint32 crc, const uint8* data, size_t size);
-    uint32 crc32c(uint32 crc, const uint8* data, size_t size);
-    void sha1(uint32 hash[5], const uint8* data, size_t size);
-    void md5(uint32 hash[4], const uint8* data, size_t size);
 
 } // namespace mango
