@@ -28,8 +28,8 @@ namespace mango
 
     LocalTime::LocalTime()
     {
-	    std::time_t t = std::time(nullptr);
-	    std::tm* s = std::localtime(&t);
+        std::time_t t = std::time(nullptr);
+        std::tm* s = std::localtime(&t);
 
         year   = s->tm_year + 1900;
         month  = s->tm_mon + 1;
