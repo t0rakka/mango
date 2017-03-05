@@ -15,35 +15,35 @@ namespace mango
     // aligned load/store
     // --------------------------------------------------------------
 
-    inline uint16 load16(const uint8* p)
+    static inline uint16 load16(const uint8* p)
     {
         uint16 value = reinterpret_cast<const uint16*>(p)[0];
         return value;
     }
 
-    inline uint32 load32(const uint8* p)
+    static inline uint32 load32(const uint8* p)
     {
         uint32 value = reinterpret_cast<const uint32*>(p)[0];
         return value;
     }
 
-    inline uint64 load64(const uint8* p)
+    static inline uint64 load64(const uint8* p)
     {
         uint64 value = reinterpret_cast<const uint64*>(p)[0];
         return value;
     }
 
-    inline void store16(uint8* p, uint16 value)
+    static inline void store16(uint8* p, uint16 value)
     {
         reinterpret_cast<uint16*>(p)[0] = value;
     }
 
-    inline void store32(uint8* p, uint32 value)
+    static inline void store32(uint8* p, uint32 value)
     {
         reinterpret_cast<uint32*>(p)[0] = value;
     }
 
-    inline void store64(uint8* p, uint64 value)
+    static inline void store64(uint8* p, uint64 value)
     {
         reinterpret_cast<uint64*>(p)[0] = value;
     }
@@ -54,30 +54,30 @@ namespace mango
 
 #ifdef MANGO_UNALIGNED_MEMORY
 
-    inline uint16 uload16(const uint8* p)
+    static inline uint16 uload16(const uint8* p)
     {
         uint16 value = reinterpret_cast<const uint16*>(p)[0];
         return value;
     }
 
-    inline uint32 uload32(const uint8* p)
+    static inline uint32 uload32(const uint8* p)
     {
         uint32 value = reinterpret_cast<const uint32*>(p)[0];
         return value;
     }
 
-    inline uint64 uload64(const uint8* p)
+    static inline uint64 uload64(const uint8* p)
     {
         uint64 value = reinterpret_cast<const uint64*>(p)[0];
         return value;
     }
 
-    inline void ustore16(uint8* p, uint16 value)
+    static inline void ustore16(uint8* p, uint16 value)
     {
         reinterpret_cast<uint16*>(p)[0] = value;
     }
 
-    inline void ustore32(uint8* p, uint32 value)
+    static inline void ustore32(uint8* p, uint32 value)
     {
         reinterpret_cast<uint32*>(p)[0] = value;
     }
@@ -86,40 +86,40 @@ namespace mango
 
     // Platform does not support unaligned load/store
 
-    inline uint16 uload16(const uint8* p)
+    static inline uint16 uload16(const uint8* p)
     {
         uint16 value;
         std::memcpy(&value, p, sizeof(uint16));
         return value;
     }
 
-    inline uint32 uload32(const uint8* p)
+    static inline uint32 uload32(const uint8* p)
     {
         uint32 value;
         std::memcpy(&value, p, sizeof(uint32));
         return value;
     }
 
-    inline uint64 uload64(const uint8* p)
+    static inline uint64 uload64(const uint8* p)
     {
         uint64 value;
         std::memcpy(&value, p, sizeof(uint64));
         return value;
     }
 
-    inline void ustore16(uint8* p, uint16 value)
+    static inline void ustore16(uint8* p, uint16 value)
     {
         std::memcpy(p, &value, sizeof(uint16));
     }
 
-    inline void ustore32(uint8* p, uint32 value)
+    static inline void ustore32(uint8* p, uint32 value)
     {
         std::memcpy(p, &value, sizeof(uint32));
     }
 
 #endif
 
-    inline void ustore64(uint8* p, uint64 value)
+    static inline void ustore64(uint8* p, uint64 value)
     {
         std::memcpy(p, &value, sizeof(uint64));
     }
@@ -194,6 +194,38 @@ namespace mango
     // endian storage types
     // --------------------------------------------------------------
 
+    // Interface for endian aware storage class.
+
+    // Implements swap-on-read and swap-on-write for built-in types
+    // with compile-time endianess selection. Strict aliasing is honored
+    // by using char array as the underlying storage representation.
+    // Compilers will recognize the short memcpy idiom and use native
+    // load and store instructions in their place - alignment always works
+    // with this approach.
+
+    // The problem this solves is a new one introduced by the memory mapped I/O
+    // architecture of MANGO API; client can read/write struct that "just works"
+
+    /* Code example:
+    struct Foo
+    {
+        uint32be a;
+        uint32be b;
+    };
+
+    void bar(const char *ptr)
+    {
+        // ptr is pointer to some offset in a memory mapped file
+        // convert it to our type Foo. Packing will always be correct as we use char storage (see above)
+        const Foo *foo = reinterpret_cast<const Foo *>(ptr);
+
+        // The endian conversion is done when we read from the variables
+        uint32 a = foo->a;
+        uint32 b = foo->b;
+    }
+
+    */
+
     template <typename T>
     class TypeCopy {
     protected:
@@ -256,9 +288,9 @@ namespace mango
     typedef TypeCopy<float>  float32le;
     typedef TypeCopy<double> float64le;
 
-    typedef TypeSwap<int16> int16be;
-    typedef TypeSwap<int32> int32be;
-    typedef TypeSwap<int64> int64be;
+    typedef TypeSwap<int16>  int16be;
+    typedef TypeSwap<int32>  int32be;
+    typedef TypeSwap<int64>  int64be;
     typedef TypeSwap<uint16> uint16be;
     typedef TypeSwap<uint32> uint32be;
     typedef TypeSwap<uint64> uint64be;
@@ -268,9 +300,9 @@ namespace mango
 
 #else
 
-    typedef TypeSwap<int16> int16le;
-    typedef TypeSwap<int32> int32le;
-    typedef TypeSwap<int64> int64le;
+    typedef TypeSwap<int16>  int16le;
+    typedef TypeSwap<int32>  int32le;
+    typedef TypeSwap<int64>  int64le;
     typedef TypeSwap<uint16> uint16le;
     typedef TypeSwap<uint32> uint32le;
     typedef TypeSwap<uint64> uint64le;
@@ -278,9 +310,9 @@ namespace mango
     typedef TypeSwap<float>  float32le;
     typedef TypeSwap<double> float64le;
 
-    typedef TypeCopy<int16> int16be;
-    typedef TypeCopy<int32> int32be;
-    typedef TypeCopy<int64> int64be;
+    typedef TypeCopy<int16>  int16be;
+    typedef TypeCopy<int32>  int32be;
+    typedef TypeCopy<int64>  int64be;
     typedef TypeCopy<uint16> uint16be;
     typedef TypeCopy<uint32> uint32be;
     typedef TypeCopy<uint64> uint64be;

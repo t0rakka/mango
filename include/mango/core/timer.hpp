@@ -61,7 +61,7 @@ namespace mango
         uint16  year;	// [....]
         uint16  month;	// [1, 12]
         uint16  day;	// [1, 31]
-		uint16  wday;   // [0, 6]
+        uint16  wday;   // [0, 6]
         uint16  hour;	// [0, 23]
         uint16  minute; // [0, 59]
         uint16  second; // [0, 60]
