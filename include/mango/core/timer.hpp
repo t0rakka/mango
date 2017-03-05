@@ -7,19 +7,54 @@
 #include <chrono>
 #include "configure.hpp"
 
-#ifdef MANGO_PLATFORM_UNIX
-#include <unistd.h>
-#include <sys/time.h>
-    #if defined(MANGO_PLATFORM_LINUX)
-    #include <time.h>
-    #elif defined(__MACH__)
-    #include <mach/mach.h>
-    #include <mach/clock.h>
-    #endif
-#endif
-
 namespace mango
 {
+
+    class Timer
+    {
+    public:
+        using Time = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
+        void reset()
+        {
+            // reset timer
+            m_start = now();
+        }
+
+        double time() const
+        {
+            // timer age in seconds
+            std::chrono::duration<double> duration = now() - m_start;
+            return duration.count();
+        }
+
+        uint64 ms() const
+        {
+            // time age in milliseconds
+            return std::chrono::duration_cast<std::chrono::milliseconds>(now() - m_start).count();
+        }
+
+        uint64 us() const
+        {
+            // timer age in micro-seconds
+            return std::chrono::duration_cast<std::chrono::microseconds>(now() - m_start).count();
+        }
+
+        uint64 ns() const
+        {
+            // timer age in nanoseconds
+            return std::chrono::duration_cast<std::chrono::nanoseconds>(now() - m_start).count();
+        }
+
+        Time now() const
+        {
+            // std::chrono compatible time_point
+            return std::chrono::high_resolution_clock::now();
+        }
+
+    protected:
+        Time m_start { now() };
+    };
 
     struct LocalTime
     {
@@ -30,41 +65,8 @@ namespace mango
         uint16  hour;	// [0, 23]
         uint16  minute; // [0, 59]
         uint16  second; // [0, 60]
-    };
 
-    // TODO: replace this header with std::chrono
-
-    class Timer
-    {
-    private:
-
-#ifdef MANGO_PLATFORM_WINDOWS
-        uint64 m_freq;
-        uint64 m_start;
-#endif
-
-#ifdef MANGO_PLATFORM_UNIX
-    #if defined(MANGO_PLATFORM_LINUX)
-        timespec m_start;
-    #elif defined(__MACH__)
-        clock_serv_t m_clock;
-        struct timespec m_start;
-    #else
-		struct timeval m_start;
-    #endif
-#endif
-
-#if 0
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
-#endif
-
-    public:
-        Timer();
-        ~Timer();
-
-        void reset();
-        float time() const;
-        LocalTime local() const;
+        LocalTime();
     };
 
 } // namespace mango
