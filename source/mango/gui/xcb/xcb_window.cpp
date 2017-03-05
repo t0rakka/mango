@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <unistd.h>
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include "xcb_handle.hpp"
