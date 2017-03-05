@@ -18,7 +18,7 @@ namespace mango
         year    = st.wYear;
         month   = st.wMonth;
         day     = st.wDay;
-		wday    = st.wDayOfWeek;
+        wday    = st.wDayOfWeek;
         hour    = st.wHour;
         minute  = st.wMinute;
         second  = st.wSecond;
@@ -34,7 +34,7 @@ namespace mango
         year   = s->tm_year + 1900;
         month  = s->tm_mon + 1;
         day    = s->tm_mday;
-	    wday   = s->tm_wday;
+        wday   = s->tm_wday;
         hour   = s->tm_hour;
         minute = s->tm_min;
         second = s->tm_sec;
