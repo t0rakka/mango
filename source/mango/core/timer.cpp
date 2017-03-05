@@ -8,38 +8,21 @@
 namespace mango
 {
 
-#ifdef MANGO_PLATFORM_WINDOWS
-
-    LocalTime::LocalTime()
-    {
-        SYSTEMTIME st;
-        ::GetLocalTime(&st);
-
-        year    = st.wYear;
-        month   = st.wMonth;
-        day     = st.wDay;
-        wday    = st.wDayOfWeek;
-        hour    = st.wHour;
-        minute  = st.wMinute;
-        second  = st.wSecond;
-    }
-
-#else
-
-    LocalTime::LocalTime()
+    LocalTime getLocalTime()
     {
         std::time_t t = std::time(nullptr);
         std::tm* s = std::localtime(&t);
 
-        year   = s->tm_year + 1900;
-        month  = s->tm_mon + 1;
-        day    = s->tm_mday;
-        wday   = s->tm_wday;
-        hour   = s->tm_hour;
-        minute = s->tm_min;
-        second = s->tm_sec;
-    }
+        LocalTime time;
+        time.year   = s->tm_year + 1900;
+        time.month  = s->tm_mon + 1;
+        time.day    = s->tm_mday;
+        time.wday   = s->tm_wday;
+        time.hour   = s->tm_hour;
+        time.minute = s->tm_min;
+        time.second = s->tm_sec;
 
-#endif // MANGO_PLATFORM_UNIX
+        return time;
+    }
 
 } // namespace mango

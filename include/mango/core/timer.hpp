@@ -36,7 +36,7 @@ namespace mango
 
         uint64 us() const
         {
-            // timer age in micro-seconds
+            // timer age in microseconds
             return std::chrono::duration_cast<std::chrono::microseconds>(now() - m_start).count();
         }
 
@@ -65,8 +65,8 @@ namespace mango
         uint16  hour;	// [0, 23]
         uint16  minute; // [0, 59]
         uint16  second; // [0, 60]
-
-        LocalTime();
     };
+
+    LocalTime getLocalTime();
 
 } // namespace mango
