@@ -32,7 +32,7 @@ namespace mango
             simd::float32x2 m;
 
             ScalarAccessor<simd::float32x2, float, 0> x;
-            ScalarAccessor<simd::float32x2, float, 0> y;
+            ScalarAccessor<simd::float32x2, float, 1> y;
 
             Permute2<0, 0> xx;
             Permute2<1, 0> yx;
