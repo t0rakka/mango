@@ -495,13 +495,13 @@ namespace mango
                         {
                             flags |= FileInfo::COMPRESSED;
                         }
-                        index.emplace(filename, header.unpacked_size, flags);
+                        emplace(index, filename, header.unpacked_size, flags);
                     }
                     else
                     {
                         if (n == filename.length() - 1)
                         {
-                            index.emplace(filename, 0, FileInfo::DIRECTORY);
+                            emplace(index, filename, 0, FileInfo::DIRECTORY);
                         }
                     }
                 }

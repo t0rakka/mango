@@ -135,19 +135,16 @@ namespace
             const std::string testname = pathname + filename;
 
             struct stat s;
-
             if (stat(testname.c_str(), &s) != -1)
             {
-                bool isfile = (s.st_mode & S_IFDIR) == 0;
-
-                if (isfile)
+                if ((s.st_mode & S_IFDIR) == 0)
                 {
                     size_t size = static_cast<size_t>(s.st_size);
-                    index.emplace(filename, size, 0);
+                    ::emplace(index, filename, size, 0);
                 }
                 else
                 {
-                    index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                    ::emplace(index, filename + "/", 0, FileInfo::DIRECTORY);
                 }
             }
         }

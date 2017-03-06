@@ -602,7 +602,7 @@ namespace mango
                     {
                         if (n == (filename.length() - 1))
                         {
-                            index.emplace(filename, 0, FileInfo::DIRECTORY);
+                            emplace(index, filename, 0, FileInfo::DIRECTORY);
                         }
                     }
                     else
@@ -613,7 +613,7 @@ namespace mango
                             flags |= FileInfo::COMPRESSED;
                         }
 
-                        index.emplace(filename, header.uncompressedSize, flags);
+                        emplace(index, filename, header.uncompressedSize, flags);
                     }
                 }
             }

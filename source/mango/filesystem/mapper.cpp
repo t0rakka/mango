@@ -76,61 +76,11 @@ namespace mango
     }
 
     // -----------------------------------------------------------------
-    // FileInfo
-    // -----------------------------------------------------------------
-
-    FileInfo::FileInfo()
-    : size(0), flags(0)
-    {
-    }
-
-    FileInfo::FileInfo(const std::string _name, uint64 _size, uint32 _flags)
-    : size(_size), flags(_flags), name(_name)
-    {
-    }
-
-    FileInfo::~FileInfo()
-    {
-    }
-
-    bool FileInfo::isDirectory() const
-    {
-        return (flags & DIRECTORY) != 0;
-    }
-
-    bool FileInfo::isContainer() const
-    {
-        return (flags & CONTAINER) != 0;
-    }
-
-    bool FileInfo::isCompressed() const
-    {
-        return (flags & COMPRESSED) != 0;
-    }
-
-    // -----------------------------------------------------------------
-    // FileIndex
-    // -----------------------------------------------------------------
-
-    void FileIndex::emplace(const std::string& name, uint64 size, uint32 flags)
-    {
-        m_files.emplace_back(name, size, flags);
-
-        const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-
-        if (isFile && Mapper::isCustomMapper(name))
-        {
-            // file is a virtual folder (aka. "container")
-            m_files.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
-        }
-    }
-
-    // -----------------------------------------------------------------
     // Mapper
     // -----------------------------------------------------------------
 
     Mapper::Mapper()
-    : m_mapper(NULL), m_parent_memory(NULL)
+    : m_mapper(nullptr), m_parent_memory(nullptr)
     {
     }
 
@@ -175,7 +125,7 @@ namespace mango
                 n += extension->extid.length();
                 std::string fn = filename.substr(0, n - 1);
 
-                AbstractMapper* mapper = NULL;
+                AbstractMapper* mapper = nullptr;
 
                 if (parent->isfile(fn))
                 {
@@ -188,7 +138,7 @@ namespace mango
             }
         }
 
-        return NULL;
+        return nullptr;
     }
 
     Mapper::operator AbstractMapper* () const
