@@ -432,9 +432,6 @@
     <ClInclude Include="..\..\include\mango\filesystem\file.hpp">
       <Filter>mango\include\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\filesystem\fileindex.hpp">
-      <Filter>mango\include\filesystem</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mango\filesystem\fileobserver.hpp">
       <Filter>mango\include\filesystem</Filter>
     </ClInclude>

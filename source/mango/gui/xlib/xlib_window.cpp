@@ -411,11 +411,11 @@ namespace
                             if ((s.st_mode & S_IFDIR) == 0) {
                                 // file
                                 uint64 filesize = uint64(s.st_size);
-                                dropped.emplace(filename, filesize, 0);
+                                emplace(dropped, filename, filesize, 0);
                             }
                             else {
                                 // folder
-                                dropped.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                                emplace(dropped, filename + "/", 0, FileInfo::DIRECTORY);
                             }
                         }
                     }

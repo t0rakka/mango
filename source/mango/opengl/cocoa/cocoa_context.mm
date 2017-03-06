@@ -497,15 +497,15 @@ using mango::opengl::Context;
             std::string s = [path UTF8String];
             if (isDirectory)
             {
-                dropped.emplace(s + "/", 0, mango::FileInfo::DIRECTORY);
+                emplace(dropped, s + "/", 0, mango::FileInfo::DIRECTORY);
             }
             else
             {
                 uint64 size = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize];
-                dropped.emplace(s, size, 0);
+                emplace(dropped, s, size, 0);
             }
         }
-        
+
         context->onDropFiles(dropped);
     }
     return YES;

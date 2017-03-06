@@ -62,75 +62,66 @@ namespace mango
         return extensions;
     } ();
 
-    bool Mapper::isCustomMapper(const std::string& filename)
-    {
-        const std::string ext = toLower(getExtension(filename));
+	// -----------------------------------------------------------------
+	// misc
+	// -----------------------------------------------------------------
 
-        for (auto& node : g_extensions) {
-            if (ext == node.ext) {
-                return true;
-            }
-        }
+	bool Mapper::isCustomMapper(const std::string& filename)
+	{
+		const std::string ext = toLower(getExtension(filename));
 
-        return false;
-    }
+		for (auto& node : g_extensions) {
+			if (ext == node.ext) {
+				return true;
+			}
+		}
 
-    // -----------------------------------------------------------------
-    // FileInfo
-    // -----------------------------------------------------------------
+		return false;
+	}
 
-    FileInfo::FileInfo()
-    : size(0), flags(0)
-    {
-    }
+	// -----------------------------------------------------------------
+	// FileInfo
+	// -----------------------------------------------------------------
 
-    FileInfo::FileInfo(const std::string _name, uint64 _size, uint32 _flags)
-    : size(_size), flags(_flags), name(_name)
-    {
-    }
+	FileInfo::FileInfo()
+		: size(0)
+		, flags(0)
+	{
+	}
 
-    FileInfo::~FileInfo()
-    {
-    }
+	FileInfo::FileInfo(const std::string& name, uint64 size, uint32 flags)
+		: size(size)
+		, flags(flags)
+		, name(name)
+	{
+	}
 
-    bool FileInfo::isDirectory() const
-    {
-        return (flags & DIRECTORY) != 0;
-    }
+	FileInfo::~FileInfo()
+	{
+	}
 
-    bool FileInfo::isContainer() const
-    {
-        return (flags & CONTAINER) != 0;
-    }
+	bool FileInfo::isDirectory() const
+	{
+		return (flags & DIRECTORY) != 0;
+	}
 
-    bool FileInfo::isCompressed() const
-    {
-        return (flags & COMPRESSED) != 0;
-    }
+	bool FileInfo::isContainer() const
+	{
+		return (flags & CONTAINER) != 0;
+	}
 
-    // -----------------------------------------------------------------
-    // FileIndex
-    // -----------------------------------------------------------------
-
-    void FileIndex::emplace(const std::string& name, uint64 size, uint32 flags)
-    {
-        m_files.emplace_back(name, size, flags);
-
-        const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-
-        if (isFile && Mapper::isCustomMapper(name))
-        {
-            // file is a virtual folder (aka. "container")
-            m_files.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
-        }
-    }
+	bool FileInfo::isCompressed() const
+	{
+		return (flags & COMPRESSED) != 0;
+	}
 
     // -----------------------------------------------------------------
     // Mapper
     // -----------------------------------------------------------------
 
     Mapper::Mapper()
-    : m_mapper(NULL), m_parent_memory(NULL)
+		: m_mapper(nullptr)
+		, m_parent_memory(nullptr)
     {
     }
 
@@ -160,7 +151,7 @@ namespace mango
         return filename;
     }
 
-    AbstractMapper* Mapper::create(AbstractMapper* parent, std::string& filename, const std::string& password)
+	AbstractMapper* Mapper::create(AbstractMapper* parent, std::string& filename, const std::string& password)
     {
         std::string f = toLower(filename);
 
@@ -175,7 +166,7 @@ namespace mango
                 n += extension->extid.length();
                 std::string fn = filename.substr(0, n - 1);
 
-                AbstractMapper* mapper = NULL;
+                AbstractMapper* mapper = nullptr;
 
                 if (parent->isfile(fn))
                 {
@@ -188,12 +179,24 @@ namespace mango
             }
         }
 
-        return NULL;
+        return nullptr;
     }
 
     Mapper::operator AbstractMapper* () const
     {
         return m_mapper;
     }
+
+	void emplace(FileIndex &index, const std::string &name, uint64 size, uint32 flags)
+	{
+		index.emplace_back(name, size, flags);
+
+		const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
+		if (isFile && Mapper::isCustomMapper(name))
+		{
+			// file is a container; add it into the index again as one
+			index.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
+		}
+	}
 
 } // namespace mango

@@ -171,11 +171,11 @@ namespace
                         if (isfile)
                         {
                             size_t filesize = static_cast<size_t>(cfile.size);
-                            index.emplace(filename, filesize, 0);
+                            emplace(index, filename, filesize, 0);
                         }
                         else
                         {
-                            index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                            emplace(index, filename + "/", 0, FileInfo::DIRECTORY);
                         }
                     }
 

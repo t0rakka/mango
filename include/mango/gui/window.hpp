@@ -10,7 +10,7 @@
 #include "../core/object.hpp"
 #include "../core/timer.hpp"
 #include "../image/surface.hpp"
-#include "../filesystem/fileindex.hpp"
+#include "../filesystem/filesystem.hpp"
 #include "../math/math.hpp"
 
 namespace mango
