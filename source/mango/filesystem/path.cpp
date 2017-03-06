@@ -9,51 +9,6 @@ namespace mango
 {
 
     // -----------------------------------------------------------------
-    // FileInfo
-    // -----------------------------------------------------------------
-
-    FileInfo::FileInfo()
-    : size(0), flags(0)
-    {
-    }
-
-    FileInfo::FileInfo(const std::string& name, uint64 size, uint32 flags)
-    : size(size), flags(flags), name(name)
-    {
-    }
-
-    FileInfo::~FileInfo()
-    {
-    }
-
-    bool FileInfo::isDirectory() const
-    {
-        return (flags & DIRECTORY) != 0;
-    }
-
-    bool FileInfo::isContainer() const
-    {
-        return (flags & CONTAINER) != 0;
-    }
-
-    bool FileInfo::isCompressed() const
-    {
-        return (flags & COMPRESSED) != 0;
-    }
-
-    void emplace(FileIndex &index, const std::string &name, uint64 size, uint32 flags)
-    {
-        index.emplace_back(name, size, flags);
-
-        const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-        if (isFile && Mapper::isCustomMapper(name))
-        {
-            // file is a container; add it into the index again as one
-            index.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
-        }
-    }
-
-    // -----------------------------------------------------------------
     // Path
     // -----------------------------------------------------------------
 

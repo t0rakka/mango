@@ -40,7 +40,6 @@
     <ClInclude Include="..\..\include\mango\core\thread.hpp" />
     <ClInclude Include="..\..\include\mango\core\timer.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\file.hpp" />
-    <ClInclude Include="..\..\include\mango\filesystem\fileindex.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\fileobserver.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\filesystem.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\mapper.hpp" />

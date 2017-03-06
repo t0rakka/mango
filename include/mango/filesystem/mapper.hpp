@@ -8,14 +8,37 @@
 #include <vector>
 #include "../core/configure.hpp"
 #include "../core/memory.hpp"
-#include "fileindex.hpp"
 
 namespace mango
 {
 
+	struct FileInfo
+	{
+		enum Flags
+		{
+			DIRECTORY = 0x01,
+			CONTAINER = 0x02,
+			COMPRESSED = 0x04,
+		};
+
+		uint64 size;
+		uint32 flags;
+		std::string name;
+
+		FileInfo();
+		FileInfo(const std::string& name, uint64 size, uint32 flags = 0);
+		~FileInfo();
+
+		bool isDirectory() const;
+		bool isContainer() const;
+		bool isCompressed() const;
+	};
+
+	using FileIndex = std::vector<FileInfo>;
+
     class AbstractMapper
     {
-    public:
+	public:
         AbstractMapper() = default;
         virtual ~AbstractMapper() = default;
 
@@ -43,5 +66,7 @@ namespace mango
         operator AbstractMapper* () const;
         static bool isCustomMapper(const std::string& filename);
     };
+
+	void emplace(FileIndex &index, const std::string &name, uint64 size, uint32 flags);
 
 } // namespace mango
