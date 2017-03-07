@@ -4,9 +4,11 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
-
+#include "simd.hpp"
 #include "common.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -119,8 +121,8 @@
         uint8x16 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i + 0] = std::min(uint16(0xff), a[i]);
-            v[i + 8] = std::min(uint16(0xff), b[i]);
+            v[i + 0] = uint8(std::min(uint16(0xff), a[i]));
+            v[i + 8] = uint8(std::min(uint16(0xff), b[i]));
         }
         return v;
     }
@@ -141,8 +143,8 @@
         int8x16 v;
         for (int i = 0; i < 8; ++i)
         {
-            v[i + 0] = std::min(int16(0x7f), std::max(int16(-0x80), a[i]));
-            v[i + 8] = std::min(int16(0x7f), std::max(int16(-0x80), b[i]));
+            v[i + 0] = int8(std::min(int16(0x7f), std::max(int16(-0x80), a[i])));
+            v[i + 8] = int8(std::min(int16(0x7f), std::max(int16(-0x80), b[i])));
         }
         return v;
     }
@@ -306,4 +308,5 @@
         return v;
     }
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

@@ -15,8 +15,6 @@
 // Configure SIMD implementation
 // ------------------------------------------------------------------
 
-#define MANGO_INCLUDE_SIMD
-
 namespace mango {
 namespace simd {
 
@@ -65,7 +63,13 @@ namespace simd {
         }
     };
 
+} // namespace simd
+} // namespace mango
+
 #if defined(MANGO_ENABLE_AVX)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // Intel AVX vector intrinsics
@@ -86,6 +90,9 @@ namespace simd {
     typedef vector_type<double, 4, __m256d>  float64x4;
     typedef scalar_type<half, 4>             float16x4;
 
+} // namespace simd
+} // namespace mango
+
     #include "sse_int128.hpp"
     #include "scalar_float64.hpp"
     #include "sse_float128.hpp"
@@ -95,6 +102,9 @@ namespace simd {
     #include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // Intel SSE vector intrinsics
@@ -125,6 +135,9 @@ namespace simd {
         __m128d zw;
     };
 
+} // namespace simd
+} // namespace mango
+
     #include "sse_int128.hpp"
     #include "scalar_float64.hpp"
     #include "sse_float128.hpp"
@@ -134,6 +147,9 @@ namespace simd {
     #include "sse_convert.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // ARM NEON vector instrinsics
@@ -164,6 +180,9 @@ namespace simd {
     typedef scalar_type<double, 2> float64x2;
     typedef scalar_type<double, 4> float64x4;
 
+} // namespace simd
+} // namespace mango
+
     #include "neon_int128.hpp"
     #include "neon_float64.hpp"
     #include "neon_float128.hpp"
@@ -173,6 +192,9 @@ namespace simd {
     #include "neon_convert.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // PowerPC Altivec / AVX128
@@ -193,6 +215,9 @@ namespace simd {
     typedef scalar_type<double, 4>                        float64x4;
     typedef scalar_type<half, 4>                          float16x4;
 
+} // namespace simd
+} // namespace mango
+
     #include "altivec_int128.hpp"
     #include "scalar_float64.hpp"
     #include "altivec_float128.hpp"
@@ -202,6 +227,9 @@ namespace simd {
     #include "altivec_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SPU)
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // Cell BE SPU
@@ -222,6 +250,9 @@ namespace simd {
     typedef scalar_type<double, 4>                        float64x4;
     typedef scalar_type<half, 4>                          float16x4;
 
+} // namespace simd
+} // namespace mango
+
     #include "spu_int128.hpp"
     #include "scalar_float64.hpp"
     #include "spu_float128.hpp"
@@ -231,6 +262,9 @@ namespace simd {
     #include "spu_convert.hpp"
 
 #else
+
+namespace mango {
+namespace simd {
 
     // --------------------------------------------------------------
     // SIMD emulation
@@ -249,6 +283,9 @@ namespace simd {
     typedef scalar_type<double, 4>  float64x4;
     typedef scalar_type<half, 4>    float16x4;
 
+} // namespace simd
+} // namespace mango
+
     #include "scalar_int128.hpp"
     #include "scalar_float64.hpp"
     #include "scalar_float128.hpp"
@@ -258,6 +295,3 @@ namespace simd {
     #include "scalar_convert.hpp"
 
 #endif
-
-} // namespace simd
-} // namespace mango

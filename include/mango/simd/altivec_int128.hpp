@@ -4,7 +4,10 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
+#include "simd.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // helpers
@@ -427,4 +430,5 @@
         return int32x4_set4(x, y, z, w);
     }
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

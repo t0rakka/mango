@@ -4,7 +4,10 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
+#include "simd.hpp"
+
+namespace mango {
+namespace simd {
 
     // ------------------------------------------------------------------
     // Trigonometric functions
@@ -1377,4 +1380,5 @@
     #define srl(Value, Count) srl<Count>(Value)
     #define sra(Value, Count) sra<Count>(Value)
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

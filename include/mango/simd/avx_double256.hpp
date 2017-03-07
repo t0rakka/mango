@@ -4,7 +4,10 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
+#include "simd.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // float64x4
@@ -406,4 +409,5 @@
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
     }
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

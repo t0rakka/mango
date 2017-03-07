@@ -4,7 +4,10 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
+#include "simd.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // uint8x16
@@ -980,4 +983,5 @@
         return vreinterpretq_s32_u32(vmovl_u16(b));
     }
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

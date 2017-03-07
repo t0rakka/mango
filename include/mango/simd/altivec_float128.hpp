@@ -4,7 +4,10 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
+#include "simd.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // helpers
@@ -423,4 +426,5 @@
 
 #undef VEC_SH4
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

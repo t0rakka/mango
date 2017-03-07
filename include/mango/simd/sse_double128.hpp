@@ -4,7 +4,10 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
+#include "simd.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // float64x2
@@ -326,4 +329,5 @@
         return _mm_sub_pd(s, _mm_sub_pd(temp, _mm_and_pd(mask, _mm_set1_pd(1.0))));
     }
 
-#endif // MANGO_INCLUDE_SIMD
+} // namespace simd
+} // namespace mango

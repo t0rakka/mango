@@ -4,9 +4,11 @@
 */
 #pragma once
 
-#ifdef MANGO_INCLUDE_SIMD
-
+#include "simd.hpp"
 #include "common.hpp"
+
+namespace mango {
+namespace simd {
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -234,5 +236,3 @@
         v[3] = get_w(s);
         return v;
     }
-
-#endif // MANGO_INCLUDE_SIMD
