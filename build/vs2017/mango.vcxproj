@@ -1,0 +1,283 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\mango\core\bits.hpp" />
+    <ClInclude Include="..\..\include\mango\core\buffer.hpp" />
+    <ClInclude Include="..\..\include\mango\core\compress.hpp" />
+    <ClInclude Include="..\..\include\mango\core\configure.hpp" />
+    <ClInclude Include="..\..\include\mango\core\core.hpp" />
+    <ClInclude Include="..\..\include\mango\core\cpuinfo.hpp" />
+    <ClInclude Include="..\..\include\mango\core\crc32.hpp" />
+    <ClInclude Include="..\..\include\mango\core\dynamic_library.hpp" />
+    <ClInclude Include="..\..\include\mango\core\endian.hpp" />
+    <ClInclude Include="..\..\include\mango\core\exception.hpp" />
+    <ClInclude Include="..\..\include\mango\core\half.hpp" />
+    <ClInclude Include="..\..\include\mango\core\hash.hpp" />
+    <ClInclude Include="..\..\include\mango\core\memory.hpp" />
+    <ClInclude Include="..\..\include\mango\core\object.hpp" />
+    <ClInclude Include="..\..\include\mango\core\pointer.hpp" />
+    <ClInclude Include="..\..\include\mango\core\stream.hpp" />
+    <ClInclude Include="..\..\include\mango\core\string.hpp" />
+    <ClInclude Include="..\..\include\mango\core\system.hpp" />
+    <ClInclude Include="..\..\include\mango\core\thread.hpp" />
+    <ClInclude Include="..\..\include\mango\core\timer.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\file.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\fileobserver.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\filesystem.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\mapper.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\path.hpp" />
+    <ClInclude Include="..\..\include\mango\gui\gui.hpp" />
+    <ClInclude Include="..\..\include\mango\gui\window.hpp" />
+    <ClInclude Include="..\..\include\mango\image\blitter.hpp" />
+    <ClInclude Include="..\..\include\mango\image\compression.hpp" />
+    <ClInclude Include="..\..\include\mango\image\decoder.hpp" />
+    <ClInclude Include="..\..\include\mango\image\encoder.hpp" />
+    <ClInclude Include="..\..\include\mango\image\exif.hpp" />
+    <ClInclude Include="..\..\include\mango\image\format.hpp" />
+    <ClInclude Include="..\..\include\mango\image\fourcc.hpp" />
+    <ClInclude Include="..\..\include\mango\image\header.hpp" />
+    <ClInclude Include="..\..\include\mango\image\image.hpp" />
+    <ClInclude Include="..\..\include\mango\image\surface.hpp" />
+    <ClInclude Include="..\..\include\mango\math\geometry.hpp" />
+    <ClInclude Include="..\..\include\mango\math\math.hpp" />
+    <ClInclude Include="..\..\include\mango\math\matrix.hpp" />
+    <ClInclude Include="..\..\include\mango\math\matrix_float4x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\quaternion.hpp" />
+    <ClInclude Include="..\..\include\mango\math\srgb.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_double4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float2.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float3.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_half4.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\glcorearb.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\glext.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\glxext.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\wglext.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\glcorearb.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\glext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\glxext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\wglext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\opengl.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\common.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_float64.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_float64.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\simd.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\spu_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\spu_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\spu_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp" />
+    <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h" />
+    <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h" />
+    <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp" />
+    <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\mango\core\buffer.cpp" />
+    <ClCompile Include="..\..\source\mango\core\compress.cpp" />
+    <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp" />
+    <ClCompile Include="..\..\source\mango\core\crc32.cpp" />
+    <ClCompile Include="..\..\source\mango\core\hash.cpp" />
+    <ClCompile Include="..\..\source\mango\core\memory.cpp" />
+    <ClCompile Include="..\..\source\mango\core\object.cpp" />
+    <ClCompile Include="..\..\source\mango\core\string.cpp" />
+    <ClCompile Include="..\..\source\mango\core\system.cpp" />
+    <ClCompile Include="..\..\source\mango\core\thread.cpp" />
+    <ClCompile Include="..\..\source\mango\core\timer.cpp" />
+    <ClCompile Include="..\..\source\mango\core\win32\dynamic_library.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\file.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_mgx.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_rar.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_zip.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\path.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\win32\file_observer.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\win32\file_stream.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\win32\mapper_file.cpp" />
+    <ClCompile Include="..\..\source\mango\gui\win32\win32_window.cpp" />
+    <ClCompile Include="..\..\source\mango\image\blitter.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_dxt.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_pvrtc.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_yuv.cpp" />
+    <ClCompile Include="..\..\source\mango\image\exif.cpp" />
+    <ClCompile Include="..\..\source\mango\image\format.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_astc.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_bmp.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_dds.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_gif.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_hdr.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_iff.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_jpg.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_ktx.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pcx.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pkm.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_png.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pvr.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_tga.cpp" />
+    <ClCompile Include="..\..\source\mango\image\surface.cpp" />
+    <ClCompile Include="..\..\source\mango\math\geometry.cpp" />
+    <ClCompile Include="..\..\source\mango\math\math.cpp" />
+    <ClCompile Include="..\..\source\mango\math\simd.cpp" />
+    <ClCompile Include="..\..\source\mango\opengl\opengl.cpp" />
+    <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp" />
+    <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{375AE88F-BDF7-4923-AFEA-BB5345ABF375}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>mango</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
