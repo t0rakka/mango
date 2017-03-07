@@ -18,9 +18,6 @@ namespace mango
 
 #if defined(MANGO_COMPILER_MICROSOFT)
 
-    // Microsoft Visual Studio intrinsics
-    #include <intrin.h>
-
     static inline uint16 byteswap16(uint16 v)
     {
         return _byteswap_ushort(v);

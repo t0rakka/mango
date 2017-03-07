@@ -46,7 +46,7 @@ namespace mango
         uint32 initMask;
         uint32 copyMask;
 
-#ifdef MANGO_ENABLE_SSE
+#ifdef MANGO_ENABLE_SSE2
         __m128 sseScale;
         __m128i sseSrcMask;
         __m128i sseDestMask;
