@@ -4,7 +4,7 @@
 */
 #include <chrono>
 #include <mango/core/thread.hpp>
-#include "../../concurrentqueue/concurrentqueue.h"
+#include "../../external/concurrentqueue/concurrentqueue.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;

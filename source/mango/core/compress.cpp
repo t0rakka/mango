@@ -9,19 +9,19 @@
 
 #define MINIZ_HEADER_FILE_ONLY
 #define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
-#include "../../miniz/miniz.cpp"
+#include "../../external/miniz/miniz.cpp"
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
-#include "../../lz4/lz4.h"
-#include "../../lz4/lz4hc.h"
-#include "../../lzo/minilzo.h"
-#include "../../zstd/common/zstd.h"
-#include "../../zstd/common/zbuff.h"
+#include "../../external/lz4/lz4.h"
+#include "../../external/lz4/lz4hc.h"
+#include "../../external/lzo/minilzo.h"
+#include "../../external/zstd/common/zstd.h"
+#include "../../external/zstd/common/zbuff.h"
 #endif
 
 #ifdef MANGO_ENABLE_LICENSE_ZLIB
-#include "../../bzip2/bzlib.h"
-#include "../../lzfse/lzfse.h"
+#include "../../external/bzip2/bzlib.h"
+#include "../../external/lzfse/lzfse.h"
 #endif
 
 namespace mango {

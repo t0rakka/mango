@@ -22,11 +22,18 @@ SOURCE_DIRS_MANGO  = mango/core \
                      mango/filesystem/unix \
                      mango/image \
                      mango/math \
-                     zstd/common \
-                     zstd/compress \
-                     zstd/decompress \
-                     lzfse \
-                     jpeg bc google unrar miniz lz4 lzo bzip2
+                     mango/jpeg \
+                     external/zstd/common \
+                     external/zstd/compress \
+                     external/zstd/decompress \
+                     external/lzfse \
+                     external/bc \
+                     external/google \
+                     external/unrar \
+                     external/miniz \
+                     external/lz4 \
+                     external/lzo \
+                     external/bzip2
 SOURCE_DIRS_OPENGL = mango/opengl
 SOURCE_DIRS_VULKAN = mango/vulkan
 

@@ -286,7 +286,7 @@ namespace
 
         Memory getMemory(const Memory& memory, int level, int depth, uint32 face) const
         {
-            const uint8* p = memory.address + m_dataOffset;
+            uint8* p = memory.address + m_dataOffset;
 
             Memory data;
 

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -93,339 +93,128 @@ namespace mango
             return static_cast<const Type*>(a) - static_cast<const Type*>(b);
         }
 
-        // --------------------------------------------------------------
-        // LittleEndianRead
-        // --------------------------------------------------------------
-
-        template <typename Type>
-        class LittleEndianRead : public Pointer<Type>
-        {
-        protected:
-            using Pointer<Type>::p;
-
-            LittleEndianRead(Type* address)
-            : Pointer<Type>(address)
-            {
-            }
-
-        public:
-            void read(uint8* dest, size_t count)
-            {
-                std::memcpy(dest, p, count);
-                p += count;
-            }
-
-            uint8 read8()
-            {
-                return *p++;
-            }
-
-            uint16 read16()
-            {
-                uint16 value = uload16le(p);
-                p += 2;
-                return value;
-            }
-
-            uint32 read32()
-            {
-                uint32 value = uload32le(p);
-                p += 4;
-                return value;
-            }
-
-            uint64 read64()
-            {
-                uint64 value = uload64le(p);
-                p += 8;
-                return value;
-            }
-
-            half read16f()
-            {
-                Half value;
-                value.u = uload16le(p);
-                p += 2;
-                return value;
-            }
-
-            float read32f()
-            {
-                Float value;
-                value.u = uload32le(p);
-                p += 4;
-                return value;
-            }
-
-            double read64f()
-            {
-                Double value;
-                value.u = uload64le(p);
-                p += 8;
-                return value;
-            }
-        };
-
-        // --------------------------------------------------------------
-        // LittleEndianWrite
-        // --------------------------------------------------------------
-
-        template <typename Type>
-        class LittleEndianWrite : public LittleEndianRead<Type>
-        {
-        protected:
-            using Pointer<Type>::p;
-
-            LittleEndianWrite(Type* address)
-            : LittleEndianRead<Type>(address)
-            {
-            }
-
-        public:
-            void write(const uint8* source, size_t count)
-            {
-                std::memcpy(p, source, count);
-                p += count;
-            }
-
-            void write8(uint8 value)
-            {
-                *p++ = value;
-            }
-
-            void write16(uint16 value)
-            {
-                ustore16le(p, value);
-                p += 2;
-            }
-
-            void write32(uint32 value)
-            {
-                ustore32le(p, value);
-                p += 4;
-            }
-
-            void write64(uint64 value)
-            {
-                ustore64le(p, value);
-                p += 8;
-            }
-
-            void write16f(Half value)
-            {
-                write16(value.u);
-            }
-
-            void write32f(Float value)
-            {
-                write32(value.u);
-            }
-
-            void write64f(Double value)
-            {
-                write64(value.u);
-            }
-        };
-
-        // --------------------------------------------------------------
-        // BigEndianRead
-        // --------------------------------------------------------------
-
-        template <typename Type>
-        class BigEndianRead : public Pointer<Type>
-        {
-        protected:
-            using Pointer<Type>::p;
-
-            BigEndianRead(Type* address)
-            : Pointer<Type>(address)
-            {
-            }
-
-        public:
-            void read(uint8* dest, size_t count)
-            {
-                std::memcpy(dest, p, count);
-                p += count;
-            }
-
-            uint8 read8()
-            {
-                return *p++;
-            }
-
-            uint16 read16()
-            {
-                uint16 value = uload16be(p);
-                p += 2;
-                return value;
-            }
-
-            uint32 read32()
-            {
-                uint32 value = uload32be(p);
-                p += 4;
-                return value;
-            }
-
-            uint64 read64()
-            {
-                uint64 value = uload64be(p);
-                p += 8;
-                return value;
-            }
-
-            half read16f()
-            {
-                Half value;
-                value.u = uload16be(p);
-                p += 2;
-                return value;
-            }
-
-            float read32f()
-            {
-                Float value;
-                value.u = uload32be(p);
-                p += 4;
-                return value;
-            }
-
-            double read64f()
-            {
-                Double value;
-                value.u = uload64be(p);
-                p += 8;
-                return value;
-            }
-        };
-
-        // --------------------------------------------------------------
-        // BigEndianWrite
-        // --------------------------------------------------------------
-
-        template <typename Type>
-        class BigEndianWrite : public BigEndianRead<Type>
-        {
-        protected:
-            using Pointer<Type>::p;
-
-            BigEndianWrite(Type* address)
-            : BigEndianRead<Type>(address)
-            {
-            }
-
-        public:
-            void write(const uint8* source, size_t count)
-            {
-                std::memcpy(p, source, count);
-                p += count;
-            }
-
-            void write8(uint8 value)
-            {
-                *p++ = value;
-            }
-
-            void write16(uint16 value)
-            {
-                ustore16be(p, value);
-                p += 2;
-            }
-
-            void write32(uint32 value)
-            {
-                ustore32be(p, value);
-                p += 4;
-            }
-
-            void write64(uint64 value)
-            {
-                ustore64be(p, value);
-                p += 8;
-            }
-
-            void write16f(Half value)
-            {
-                write16(value.u);
-            }
-
-            void write32f(Float value)
-            {
-                write32(value.u);
-            }
-
-            void write64f(Double value)
-            {
-                write64(value.u);
-            }
-        };
-
     } // namespace internal
-
-    // --------------------------------------------------------------
-    // LittleEndianConstPointer
-    // --------------------------------------------------------------
-
-    class LittleEndianConstPointer : public internal::LittleEndianRead<const uint8>
-    {
-    public:
-        LittleEndianConstPointer()
-        : LittleEndianRead(NULL)
-        {
-        }
-
-        LittleEndianConstPointer(const uint8* address)
-        : LittleEndianRead(address)
-        {
-        }
-
-        ~LittleEndianConstPointer()
-        {
-        }
-    };
 
     // --------------------------------------------------------------
     // LittleEndianPointer
     // --------------------------------------------------------------
 
-    class LittleEndianPointer : public internal::LittleEndianWrite<uint8>
+    class LittleEndianPointer : public internal::Pointer<uint8>
     {
-    public:
-        LittleEndianPointer()
-        : LittleEndianWrite(NULL)
-        {
-        }
+    protected:
+        using internal::Pointer<uint8>::p;
 
+    public:
         LittleEndianPointer(uint8* address)
-        : LittleEndianWrite(address)
+        : internal::Pointer<uint8>(address)
         {
         }
 
-        ~LittleEndianPointer()
-        {
-        }
-    };
+        // read methods
 
-    // --------------------------------------------------------------
-    // BigEndianConstPointer
-    // --------------------------------------------------------------
-
-    class BigEndianConstPointer : public internal::BigEndianRead<const uint8>
-    {
-    public:
-        BigEndianConstPointer()
-        : BigEndianRead(NULL)
+        void read(uint8* dest, size_t count)
         {
+            std::memcpy(dest, p, count);
+            p += count;
         }
 
-        BigEndianConstPointer(const uint8* address)
-        : BigEndianRead(address)
+        uint8 read8()
         {
+            return *p++;
         }
 
-        ~BigEndianConstPointer()
+        uint16 read16()
         {
+            uint16 value = uload16le(p);
+            p += 2;
+            return value;
+        }
+
+        uint32 read32()
+        {
+            uint32 value = uload32le(p);
+            p += 4;
+            return value;
+        }
+
+        uint64 read64()
+        {
+            uint64 value = uload64le(p);
+            p += 8;
+            return value;
+        }
+
+        half read16f()
+        {
+            Half value;
+            value.u = uload16le(p);
+            p += 2;
+            return value;
+        }
+
+        float read32f()
+        {
+            Float value;
+            value.u = uload32le(p);
+            p += 4;
+            return value;
+        }
+
+        double read64f()
+        {
+            Double value;
+            value.u = uload64le(p);
+            p += 8;
+            return value;
+        }
+
+        // write methods
+
+        void write(const uint8* source, size_t count)
+        {
+            std::memcpy(p, source, count);
+            p += count;
+        }
+
+        void write8(uint8 value)
+        {
+            *p++ = value;
+        }
+
+        void write16(uint16 value)
+        {
+            ustore16le(p, value);
+            p += 2;
+        }
+
+        void write32(uint32 value)
+        {
+            ustore32le(p, value);
+            p += 4;
+        }
+
+        void write64(uint64 value)
+        {
+            ustore64le(p, value);
+            p += 8;
+        }
+
+        void write16f(Half value)
+        {
+            ustore16le(p, value.u);
+            p += 2;
+        }
+
+        void write32f(Float value)
+        {
+            ustore32le(p, value.u);
+            p += 4;
+        }
+
+        void write64f(Double value)
+        {
+            ustore64le(p, value.u);
+            p += 8;
         }
     };
 
@@ -433,21 +222,122 @@ namespace mango
     // BigEndianPointer
     // --------------------------------------------------------------
 
-    class BigEndianPointer : public internal::BigEndianWrite<uint8>
+    class BigEndianPointer : public internal::Pointer<uint8>
     {
+    protected:
+        using internal::Pointer<uint8>::p;
+
     public:
-        BigEndianPointer()
-        : BigEndianWrite(NULL)
-        {
-        }
-
         BigEndianPointer(uint8* address)
-        : BigEndianWrite(address)
+        : internal::Pointer<uint8>(address)
         {
         }
 
-        ~BigEndianPointer()
+        // read methods
+
+        void read(uint8* dest, size_t count)
         {
+            std::memcpy(dest, p, count);
+            p += count;
+        }
+
+        uint8 read8()
+        {
+            return *p++;
+        }
+
+        uint16 read16()
+        {
+            uint16 value = uload16be(p);
+            p += 2;
+            return value;
+        }
+
+        uint32 read32()
+        {
+            uint32 value = uload32be(p);
+            p += 4;
+            return value;
+        }
+
+        uint64 read64()
+        {
+            uint64 value = uload64be(p);
+            p += 8;
+            return value;
+        }
+
+        half read16f()
+        {
+            Half value;
+            value.u = uload16be(p);
+            p += 2;
+            return value;
+        }
+
+        float read32f()
+        {
+            Float value;
+            value.u = uload32be(p);
+            p += 4;
+            return value;
+        }
+
+        double read64f()
+        {
+            Double value;
+            value.u = uload64be(p);
+            p += 8;
+            return value;
+        }
+
+        // write methods
+
+        void write(const uint8* source, size_t count)
+        {
+            std::memcpy(p, source, count);
+            p += count;
+        }
+
+        void write8(uint8 value)
+        {
+            *p++ = value;
+        }
+
+        void write16(uint16 value)
+        {
+            ustore16be(p, value);
+            p += 2;
+        }
+
+        void write32(uint32 value)
+        {
+            ustore32be(p, value);
+            p += 4;
+        }
+
+        void write64(uint64 value)
+        {
+            ustore64be(p, value);
+            p += 8;
+        }
+
+        void write16f(Half value)
+        {
+            ustore16be(p, value.u);
+            p += 2;
+        }
+
+        void write32f(Float value)
+        {
+            ustore32be(p, value.u);
+            p += 4;
+        }
+
+        void write64f(Double value)
+        {
+            ustore64be(p, value.u);
+            p += 8;
         }
     };
 

@@ -40,7 +40,7 @@ namespace
 
         FileHeader(const Memory& memory)
         {
-            LittleEndianConstPointer p = memory.address;
+            LittleEndianPointer p = memory.address;
             magic = p.read16();
             filesize = p.read32();
             p += 4;
@@ -149,12 +149,12 @@ namespace
             identifier    = 0;
         }
 
-        void HeaderSize(LittleEndianConstPointer& p)
+        void HeaderSize(LittleEndianPointer& p)
         {
             headerSize = p.read32();
         }
 
-        void WinBitmapHeader1(LittleEndianConstPointer& p)
+        void WinBitmapHeader1(LittleEndianPointer& p)
         {
             width = p.read32();
             height = p.read32();
@@ -168,19 +168,19 @@ namespace
             importantColorCount = p.read32();
         }
 
-        void WinBitmapHeader2(LittleEndianConstPointer& p)
+        void WinBitmapHeader2(LittleEndianPointer& p)
         {
             redMask = p.read32();
             greenMask = p.read32();
             blueMask = p.read32();
         }
 
-        void WinBitmapHeader3(LittleEndianConstPointer& p)
+        void WinBitmapHeader3(LittleEndianPointer& p)
         {
             alphaMask = p.read32();
         }
 
-        void WinBitmapHeader4(LittleEndianConstPointer& p)
+        void WinBitmapHeader4(LittleEndianPointer& p)
         {
             csType = p.read32();
             for (int i = 0; i < 9; ++i)
@@ -192,7 +192,7 @@ namespace
             gammaBlue = p.read32();
         }
 
-        void WinBitmapHeader5(LittleEndianConstPointer& p)
+        void WinBitmapHeader5(LittleEndianPointer& p)
         {
             intent = p.read32();
             profileData = p.read32();
@@ -200,7 +200,7 @@ namespace
             reserved3 = p.read32();
         }
 
-        void OS2BitmapHeader1(LittleEndianConstPointer& p)
+        void OS2BitmapHeader1(LittleEndianPointer& p)
         {
             width        = p.read16();
             height       = p.read16();
@@ -208,7 +208,7 @@ namespace
             bitsPerPixel = p.read16();
         }
 
-        void OS2BitmapHeader2(LittleEndianConstPointer& p)
+        void OS2BitmapHeader2(LittleEndianPointer& p)
         {
             units         = p.read16();
             reserved      = p.read16();
@@ -232,7 +232,7 @@ namespace
         {
             paletteComponents = 0;
 
-            LittleEndianConstPointer p = memory.address;
+            LittleEndianPointer p = memory.address;
 
             HeaderSize(p);
 
@@ -564,7 +564,7 @@ namespace
         surface.blit(0, 0, temp);
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, const uint8* data, const uint8* palette)
+    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, uint8* data, const uint8* palette)
     {
         const int bits = header.bitsPerPixel;
         const uint32 mask = (1 << bits) - 1;
@@ -576,7 +576,7 @@ namespace
 
         for (int y = 0; y < temp.height; ++y)
         {
-            BigEndianConstPointer p(data + y * stride);
+            BigEndianPointer p(data + y * stride);
             uint32* dest = reinterpret_cast<uint32*>(temp.image + y * temp.stride);
 
             uint32 value = 0;
@@ -625,7 +625,7 @@ namespace
         }
 
         const int stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
-        const uint8* data = memory.address + offset;
+        uint8* data = memory.address + offset;
 
         Surface mirror = surface;
 
@@ -722,7 +722,7 @@ namespace
 
     void parseIco(ImageHeader* imageHeader, Surface* surface, const Memory& memory)
     {
-        LittleEndianConstPointer p = memory.address;
+        LittleEndianPointer p = memory.address;
 
         uint32 magic = p.read32();
         int size = p.read16();
@@ -800,7 +800,7 @@ namespace
 
         Memory block = memory.slice(bestOffset, bestSize);
 
-        LittleEndianConstPointer pa = block.address;
+        LittleEndianPointer pa = block.address;
 
         Header header;
         header.HeaderSize(pa);

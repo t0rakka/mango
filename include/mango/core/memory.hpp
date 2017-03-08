@@ -14,35 +14,57 @@ namespace mango
 {
 
     // -----------------------------------------------------------------------
-    // memory block
+    // memory
     // -----------------------------------------------------------------------
 
     struct Memory
     {
-        Object* object;
+        uint8* address;
         size_t size;
-        const uint8* address;
 
         Memory();
-        Memory(const uint8* address, size_t size);
-        Memory(const Memory& memory);
-        virtual ~Memory();
+        Memory(uint8* address, size_t size);
 
-        const Memory& operator = (const Memory& memory);
-
-        operator const uint8* () const;
-        operator const char* () const;
+        operator uint8* () const;
+        operator char* () const;
 
         Memory slice(size_t offset, size_t size = 0) const;
     };
 
-    struct ManagedMemory : Memory
+    class SharedMemory
     {
-        ManagedMemory(size_t size);
-        ManagedMemory(const uint8* address, size_t size);
+    private:
+        Memory memory;
+        std::shared_ptr<uint8> ptr;
 
-        operator uint8* () const;
-        operator char* () const;
+    public:
+        SharedMemory(size_t size);
+        SharedMemory(uint8* address, size_t size);
+
+        operator Memory () const
+        {
+            return memory;
+        }
+    };
+
+    class VirtualMemory : private NonCopyable
+    {
+    protected:
+        Memory memory;
+
+    public:
+        VirtualMemory() = default;
+        ~VirtualMemory() {}
+
+        const Memory* operator -> () const
+        {
+            return &memory;
+        }
+
+        operator Memory () const
+        {
+            return memory;
+        }
     };
 
     // -----------------------------------------------------------------------

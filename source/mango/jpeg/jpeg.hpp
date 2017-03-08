@@ -2,8 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#ifndef MANGO_INCLUDE_JPEG
-#define MANGO_INCLUDE_JPEG
+#pragma once
 
 #include <vector>
 #include <string>
@@ -127,9 +126,9 @@ namespace jpeg
 
     struct jpegBuffer
     {
-        const uint8* ptr;
-        const uint8* end;
-        const uint8* nextFF;
+        uint8* ptr;
+        uint8* end;
+        uint8* nextFF;
 
         DataType data;
         int remain;
@@ -333,26 +332,26 @@ namespace jpeg
 
         bool isJPEG(const Memory& memory) const;
 
-        const uint8* stepMarker(const uint8* p);
-        const uint8* seekMarker(const uint8* p, const uint8* end);
+        uint8* stepMarker(uint8* p);
+        uint8* seekMarker(uint8* p, uint8* end);
 
         void processSOI();
         void processEOI();
-        void processCOM(const uint8* p);
-        void processTEM(const uint8* p);
-        void processRES(const uint8* p);
-        void processJPG(const uint8* p);
-        void processJPG(const uint8* p, uint16 marker);
-        void processAPP(const uint8* p, uint16 marker);
-        void processSOF(const uint8* p, uint16 marker);
-        const uint8* processSOS(const uint8* p, const uint8* end);
-        void processDQT(const uint8* p);
-        void processDNL(const uint8* p);
-        void processDRI(const uint8* p);
-        void processDHT(const uint8* p);
-        void processDAC(const uint8* p);
-        void processDHP(const uint8* p);
-        void processEXP(const uint8* p);
+        void processCOM(uint8* p);
+        void processTEM(uint8* p);
+        void processRES(uint8* p);
+        void processJPG(uint8* p);
+        void processJPG(uint8* p, uint16 marker);
+        void processAPP(uint8* p, uint16 marker);
+        void processSOF(uint8* p, uint16 marker);
+        uint8* processSOS(uint8* p, uint8* end);
+        void processDQT(uint8* p);
+        void processDNL(uint8* p);
+        void processDRI(uint8* p);
+        void processDHT(uint8* p);
+        void processDAC(uint8* p);
+        void processDHP(uint8* p);
+        void processEXP(uint8* p);
 
         void parse(const Memory& memory, bool decode);
 
@@ -436,5 +435,3 @@ namespace jpeg
 	void EncodeImage(Stream& stream, const Surface& surface, float quality);
 
 } // namespace jpeg
-
-#endif

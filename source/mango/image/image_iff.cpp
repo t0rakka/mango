@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
@@ -183,9 +183,9 @@ namespace
         }
     }
 
-    bool read_signature(const uint8*& data)
+    bool read_signature(uint8*& data)
     {
-        BigEndianConstPointer p = data;
+        BigEndianPointer p = data;
 
 		uint32 v0 = p.read32(); p += 4;
 		uint32 v1 = p.read32();
@@ -253,8 +253,8 @@ namespace
 
         ImageHeader header() override
         {
-            const uint8* data = m_memory.address;
-            const uint8* end = m_memory.address + m_memory.size - 12;
+            uint8* data = m_memory.address;
+            uint8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
             MANGO_UNREFERENCED_PARAMETER(is_pbm);
@@ -276,7 +276,7 @@ namespace
             while (data < end)
             {
                 // chunk header
-                BigEndianConstPointer p = data;
+                BigEndianPointer p = data;
 
                 uint32 id = p.read32();
                 uint32 size = p.read32();
@@ -319,16 +319,16 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            const uint8* data = m_memory.address;
-            const uint8* end = m_memory.address + m_memory.size - 12;
+            uint8* data = m_memory.address;
+            uint8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
 
             uint8 palette[1024];
             int palette_size = 0;
 
-            uint8* buffer_allocated = NULL;
-            const uint8* buffer = NULL;
+            uint8* buffer_allocated = nullptr;
+            uint8* buffer = nullptr;
 
             bool ham = false;
             bool ehb = false;
@@ -351,7 +351,7 @@ namespace
             while (data < end)
             {
                 // chunk header
-                BigEndianConstPointer p = data;
+                BigEndianPointer p = data;
 
                 uint32 id = p.read32();
                 uint32 size = p.read32();

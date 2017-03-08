@@ -30,7 +30,6 @@ namespace mango
 
         // memory
         operator Memory () const;
-		operator const uint8* () const;
 		operator uint8* ();
 
         // stream

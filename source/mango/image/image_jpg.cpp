@@ -4,7 +4,7 @@
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
-#include "../../jpeg/jpeg.hpp"
+#include "../jpeg/jpeg.hpp"
 
 #define ID "ImageStream.JPG: "
 

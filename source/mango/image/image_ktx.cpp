@@ -275,7 +275,7 @@ glBaseInternalFormat:
 
 		Memory getMemory(const Memory& memory, int level, int depth, int face) const
 		{
-			const uint8* address = memory.address;
+			uint8* address = memory.address;
 			address += sizeof(HeaderKTX) + bytesOfKeyValueData;
 
             const int maxLevel = int(numberOfMipmapLevels);

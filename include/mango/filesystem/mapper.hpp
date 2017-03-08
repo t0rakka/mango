@@ -44,14 +44,14 @@ namespace mango
 
         virtual bool isfile(const std::string& filename) const = 0;
         virtual void index(FileIndex& index, const std::string& pathname) = 0;
-        virtual Memory* mmap(const std::string& filename) = 0;
+        virtual VirtualMemory* mmap(const std::string& filename) = 0;
     };
 
     class Mapper : public NonCopyable
     {
     protected:
         AbstractMapper* m_mapper;
-        Memory* m_parent_memory;
+        VirtualMemory* m_parent_memory;
         std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
         std::string m_pathname;
 

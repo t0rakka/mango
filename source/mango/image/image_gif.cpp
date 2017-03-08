@@ -34,11 +34,11 @@ namespace
 		uint8	packed = 0;
 		uint8	background = 0;
 		uint8   aspect = 0;
-		const uint8* palette = nullptr;
+		uint8* palette = nullptr;
 
-        void read(const uint8*& data, const uint8* end)
+        void read(uint8*& data, uint8* end)
 		{
-			LittleEndianConstPointer p = data;
+			LittleEndianPointer p = data;
 
 			if (p + 7 < end)
 			{
@@ -71,11 +71,11 @@ namespace
 		uint16	width = 0;
 		uint16	height = 0;
 		uint8	field = 0;
-		const uint8* palette = nullptr;
+		uint8* palette = nullptr;
 
-        void read(const uint8*& data, const uint8* end)
+        void read(uint8*& data, uint8* end)
 		{
-            LittleEndianConstPointer p = data;
+            LittleEndianPointer p = data;
 
             if (p + 9 < end)
             {
@@ -100,9 +100,9 @@ namespace
 		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	uint8* readBits(const uint8*& data, int width, int height)
+	uint8* readBits(uint8*& data, int width, int height)
 	{
-        const uint8* p = data;
+        uint8* p = data;
 
 		// initialize gif data stream decoder
 		const int samples = width * height;
@@ -291,14 +291,14 @@ namespace
         }
     }
 
-    void read_image(const uint8*& data, const uint8* end, const gif_logical_screen_descriptor& desc, Surface& surface)
+    void read_image(uint8*& data, uint8* end, const gif_logical_screen_descriptor& desc, Surface& surface)
     {
 		gif_image_descriptor image_desc;
         image_desc.read(data, end);
 
 		// choose palette
 		int palette_size = 0;
-		const uint8* palette_data = NULL;
+		uint8* palette_data = nullptr;
 
 		if (image_desc.local_color_table())
 		{
@@ -366,9 +366,9 @@ namespace
 		delete[] bits;
     }
 
-	void read_extension(const uint8*& data)
+	void read_extension(uint8*& data)
 	{
-        const uint8* p = data;
+        uint8* p = data;
 
 		++p;
 
@@ -382,7 +382,7 @@ namespace
         data = p;
 	}
 
-    void read_magic(const uint8*& data, const uint8* end)
+    void read_magic(uint8*& data, uint8* end)
     {
 		if (data + 6 >= end)
 		{
@@ -398,7 +398,7 @@ namespace
 		}
     }
 
-    void read_chunks(const uint8* data, const uint8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface)
+    void read_chunks(uint8* data, uint8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface)
     {
         while (data < end)
 		{
@@ -448,8 +448,8 @@ namespace
 
         ImageHeader header() override
         {
-            const uint8* data = m_memory.address;
-			const uint8* end = data + m_memory.size;
+            uint8* data = m_memory.address;
+			uint8* end = data + m_memory.size;
 
 			read_magic(data, end);
 
@@ -475,8 +475,8 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            const uint8* data = m_memory.address;
-            const uint8* end = data + m_memory.size;
+            uint8* data = m_memory.address;
+            uint8* end = data + m_memory.size;
 
             read_magic(data, end);
             gif_logical_screen_descriptor screen_desc;

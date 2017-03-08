@@ -10,7 +10,7 @@
 #include <mango/filesystem/path.hpp>
 
 #define MINIZ_HEADER_FILE_ONLY
-#include "../../miniz/miniz.cpp"
+#include "../../external/miniz/miniz.cpp"
 
 #define ID ".zip mapper: "
 
@@ -35,7 +35,7 @@ namespace
 		uint16	filenameLen;       // length of the filename field following this structure
 		uint16	extraFieldLen;     // length of the extra field following the filename field
 
-        LocalFileHeader(LittleEndianConstPointer p)
+        LocalFileHeader(LittleEndianPointer p)
         {
 			signature = p.read32();
             if (status())
@@ -54,14 +54,14 @@ namespace
                 p += filenameLen;
 
                 // read extra fields
-                const uint8* ext = p;
-                const uint8* end = p + extraFieldLen;
+                uint8* ext = p;
+                uint8* end = p + extraFieldLen;
                 for (; ext < end;)
                 {
-                    LittleEndianConstPointer e = ext;
+                    LittleEndianPointer e = ext;
                     uint16 magic = e.read16();
                     uint16 size = e.read16();
-                    const uint8* next = e + size;
+                    uint8* next = e + size;
                     switch (magic)
                     {
                         case 0x01:
@@ -108,7 +108,7 @@ namespace
         {
         }
 
-		DirFileHeader(LittleEndianConstPointer& p)
+		DirFileHeader(LittleEndianPointer& p)
 		{
 			signature = p.read32();
 			if (status())
@@ -131,7 +131,7 @@ namespace
 			    localOffset      = p.read32();
 
                 // read filename
-                const uint8* us = p;
+                uint8* us = p;
                 const char* s = reinterpret_cast<const char*>(us);
                 p += filenameLen;
 
@@ -148,14 +148,14 @@ namespace
                 filename = std::string(s, filenameLen);
 
                 // read extra fields
-                const uint8* ext = p;
-                const uint8* end = p + extraFieldLen;
+                uint8* ext = p;
+                uint8* end = p + extraFieldLen;
                 for (; ext < end;)
                 {
-                    LittleEndianConstPointer e = ext;
+                    LittleEndianPointer e = ext;
                     uint16 magic = e.read16();
                     uint16 size = e.read16();
-                    const uint8* next = e + size;
+                    uint8* next = e + size;
                     switch (magic)
                     {
                         case 0x01:
@@ -201,14 +201,14 @@ namespace
 
 			// find central directory end record signature
 			// by scanning backwards from the end of the file
-            const uint8* start = memory.address;
-            const uint8* end = memory.address + memory.size;
+            uint8* start = memory.address;
+            uint8* end = memory.address + memory.size;
 
             end -= 22; // header size is 22 bytes
 
             for (; end >= start; --end)
 			{
-                LittleEndianConstPointer p = end;
+                LittleEndianPointer p = end;
 
 				signature = p.read32();
 				if (status())
@@ -418,6 +418,33 @@ namespace
 namespace mango
 {
 
+    class VirtualMemoryPointer : public mango::VirtualMemory
+    {
+    public:
+        VirtualMemoryPointer(uint8* address, size_t size)
+        {
+            memory = Memory(address, size);
+        }
+
+        ~VirtualMemoryPointer()
+        {
+        }
+    };
+
+    class VirtualMemoryBuffer : public mango::VirtualMemory
+    {
+    public:
+        VirtualMemoryBuffer(uint8* address, size_t size)
+        {
+            memory = Memory(address, size);
+        }
+
+        ~VirtualMemoryBuffer()
+        {
+            delete [] memory.address;
+        }
+    };
+
     // -----------------------------------------------------------------
     // MapperZIP
     // -----------------------------------------------------------------
@@ -440,7 +467,7 @@ namespace mango
                     const int numFiles = int(record.numEntriesTotal);
 
                     // read file header for each file
-                    LittleEndianConstPointer p = parent.address + record.dirStartOffset;
+                    LittleEndianPointer p = parent.address + record.dirStartOffset;
 
                     for (int i = 0; i < numFiles; ++i)
                     {
@@ -471,7 +498,7 @@ namespace mango
         {
         }
 
-        Memory* mmap(const DirFileHeader& header, const uint8* start, const std::string& password)
+        VirtualMemory* mmap(const DirFileHeader& header, uint8* start, const std::string& password)
         {
             bool encrypted = (header.flags & 1) != 0;
             bool compressed = false;
@@ -491,7 +518,7 @@ namespace mango
                     MANGO_EXCEPTION(ID"Unsupported compression algorithm.");
             }
 
-            LittleEndianConstPointer p = start + header.localOffset;
+            LittleEndianPointer p = start + header.localOffset;
 
             LocalFileHeader localHeader(p);
             if (!localHeader.status())
@@ -501,15 +528,15 @@ namespace mango
 
             uint64 offset = header.localOffset + 30 + localHeader.filenameLen + localHeader.extraFieldLen;
 
-            const uint8* address = start + offset;
+            uint8* address = start + offset;
             uint64 size = 0;
 
-            uint8* buffer = NULL; // remember allocated memory
+            uint8* buffer = nullptr; // remember allocated memory
 
             if (encrypted)
             {
                 // decryption header
-                const uint8* dcheader = address;
+                uint8* dcheader = address;
                 address += DCKEYSIZE;
 
                 // NOTE: decryption limited on 32 bit platforms
@@ -554,15 +581,15 @@ namespace mango
                 size = header.uncompressedSize;
             }
 
-            Memory* memory;
+            VirtualMemory* memory;
 
             if (buffer)
             {
-                memory = new ManagedMemory(buffer, static_cast<size_t>(size));
+                memory = new VirtualMemoryBuffer(buffer, static_cast<size_t>(size));
             }
             else
             {
-                memory = new Memory(address, static_cast<size_t>(size));
+                memory = new VirtualMemoryPointer(address, static_cast<size_t>(size));
             }
 
             return memory;
@@ -619,7 +646,7 @@ namespace mango
             }
         }
 
-        Memory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename)
         {
             auto i = m_files.find(filename);
             if (i == m_files.end())
@@ -627,8 +654,7 @@ namespace mango
                 MANGO_EXCEPTION(ID"File not found.");
             }
 
-            Memory* memory = mmap(i->second, m_parent_memory.address, m_password);
-            return memory;
+            return mmap(i->second, m_parent_memory.address, m_password);
         }
     };
 

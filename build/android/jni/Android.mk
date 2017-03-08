@@ -19,11 +19,18 @@ SOURCE_DIRS := mango/core \
                mango/image  \
                mango/math \
                mango/opengl \
-               zstd/common \
-               zstd/compress \
-               zstd/decompress \
-               lzfse \
-               unrar bc google jpeg miniz lz4 lzo bzip2
+               mango/jpeg \
+               external/zstd/common \
+               external/zstd/compress \
+               external/zstd/decompress \
+               external/lzfse \
+               external/unrar \
+               external/bc \
+               external/google \
+               external/miniz \
+               external/lz4 \
+               external/lzo \
+               external/bzip2
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS),$(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) $(wildcard $(MANGO_SOURCE)/$(dir)/*.c))
 mango_sources := $(SOURCES:$(LOCAL_PATH)/%=%)

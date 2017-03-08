@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
-#include "../../google/etc.hpp"
-#include "../../google/astc.hpp"
-#include "../../bc/BC.h"
+#include "../../external/google/etc.hpp"
+#include "../../external/google/astc.hpp"
+#include "../../external/bc/BC.h"
 
 #define FORMAT_ASTC  MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8)
 

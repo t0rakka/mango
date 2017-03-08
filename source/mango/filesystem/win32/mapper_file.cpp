@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -22,7 +22,7 @@ namespace
     // FileMemory
     // -----------------------------------------------------------------
 
-    class FileMemory : public Memory
+    class FileMemory : public VirtualMemory
     {
     protected:
         LPVOID  m_address;
@@ -31,7 +31,7 @@ namespace
 
     public:
         FileMemory(const std::string& filename, uint64 _offset, uint64 _size)
-        : m_address(NULL), m_file(INVALID_HANDLE_VALUE), m_map(NULL)
+        : m_address(nullptr), m_file(INVALID_HANDLE_VALUE), m_map(nullptr)
         {
 			m_file = CreateFileW(u16_fromBytes(filename).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -41,8 +41,8 @@ namespace
 				// TODO: use UNC filename or ShortPath
 				if (filename.length() > MAX_PATH)
 				{
-					address = NULL;
-					size = 0;
+					memory.address = NULL;
+					memory.size = 0;
 					return;
 				}
 			}
@@ -76,17 +76,17 @@ namespace
 							offsetLow = DWORD(page_offset & 0xffffffff);
 						}
 
-						size = static_cast<size_t>(file_size.QuadPart);
+						memory.size = static_cast<size_t>(file_size.QuadPart);
 						if (_size > 0)
 						{
-							size = std::min(size, static_cast<size_t>(_size));
-							bytes = static_cast<SIZE_T>(size);
+							memory.size = std::min(memory.size, static_cast<size_t>(_size));
+							bytes = static_cast<SIZE_T>(memory.size);
 						}
 
 						LPVOID address_ = MapViewOfFile(m_map, FILE_MAP_READ, offsetHigh, offsetLow, bytes);
 
 						m_address = address_;
-						address = reinterpret_cast<uint8*>(address_) + (_offset - page_offset);
+						memory.address = reinterpret_cast<uint8*>(address_) + (_offset - page_offset);
 					}
 					else
 					{
@@ -187,9 +187,9 @@ namespace
             }
         }
 
-        Memory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename)
         {
-            Memory* memory = new FileMemory(filename, 0, 0);
+            VirtualMemory* memory = new FileMemory(filename, 0, 0);
             return memory;
         }
     };
@@ -203,11 +203,10 @@ namespace mango
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    FileMapper g_fileMapper;
-
     AbstractMapper* Mapper::getFileMapper() const
     {
-        return &g_fileMapper;
+        static FileMapper fileMapper;
+        return &fileMapper;
     }
 
 } // namespace mango

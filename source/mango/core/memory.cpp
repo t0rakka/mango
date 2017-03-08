@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/memory.hpp>
 
@@ -11,101 +11,52 @@ namespace mango {
     // -----------------------------------------------------------------------
 
     Memory::Memory()
-    : object(NULL), size(0), address(NULL)
+        : address(nullptr)
+        , size(0)
     {
     }
 
-    Memory::Memory(const uint8* _address, size_t _size)
-    : object(NULL), size(_size), address(_address)
+    Memory::Memory(uint8* address, size_t size)
+        : address(address)
+        , size(size)
     {
     }
 
-	Memory::Memory(const Memory& memory)
-	: object(memory.object), size(memory.size), address(memory.address)
-	{
-		if (object) {
-			object->retain();
-		}
-	}
-
-    Memory::~Memory()
+    Memory::operator uint8* () const
     {
-		if (object) {
-			int count = object->release();
-			if (!count) {
-				delete[] address;
-			}
-		}
+        return address;
     }
 
-	const Memory& Memory::operator = (const Memory& memory)
-	{
-		if (this != &memory) {
-			if (object)	{
-				int count = object->release();
-				if (!count)	{
-					delete[] address;
-				}
-			}
-
-			object = memory.object;
-			size = memory.size;
-			address = memory.address;
-
-			if (object) {
-				object->retain();
-			}
-		}
-
-		return *this;
-	}
-
-	Memory::operator const uint8* () const
-	{
-		return address;
-	}
-
-	Memory::operator const char* () const
-	{
-		return reinterpret_cast<const char*>(address);
-	}
-
-    Memory Memory::slice(size_t offset, size_t block_size) const
+    Memory::operator char* () const
     {
-        Memory block(address + offset, size - offset);
-        if (block_size) {
-            block.size = std::min(block.size, block_size);
+		return reinterpret_cast<char *>(address);
+    }
+
+    Memory Memory::slice(size_t offset, size_t mem_size) const
+    {
+        Memory memory(address + offset, size - offset);
+        if (mem_size) {
+            memory.size = std::min(memory.size, mem_size);
         }
-        return block;
+        return memory;
     }
 
     // -----------------------------------------------------------------------
-    // ManagedMemory
+    // SharedMemory
     // -----------------------------------------------------------------------
 
-    ManagedMemory::ManagedMemory(const uint8* _address, size_t _size)
-    : Memory(_address, _size)
+    SharedMemory::SharedMemory(size_t size)
     {
-        object = new Object();
+        uint8 *address = new uint8[size];
+        memory = Memory(address, size);
+        ptr = std::shared_ptr<uint8>(address, std::default_delete<uint8[]>());
     }
 
-    ManagedMemory::ManagedMemory(size_t _size)
-	: Memory(NULL, _size)
-	{
-		object = new Object();
-		address = new uint8[size];
-	}
-
-	ManagedMemory::operator uint8* () const
-	{
-		return const_cast<uint8*>(address);
-	}
-
-	ManagedMemory::operator char* () const
-	{
-		const char* p = reinterpret_cast<const char*>(address);
-		return const_cast<char*>(p);
-	}
+    SharedMemory::SharedMemory(uint8* address, size_t size)
+        : memory(address, size)
+        , ptr(address, std::default_delete<uint8[]>())
+    {
+    }
 
     // -----------------------------------------------------------------------
     // aligned malloc/free
