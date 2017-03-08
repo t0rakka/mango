@@ -247,11 +247,10 @@ namespace mango
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    FileMapper g_fileMapper;
-
     AbstractMapper* Mapper::getFileMapper() const
     {
-        return &g_fileMapper;
+        static FileMapper fileMapper;
+        return &fileMapper;
     }
 
 } // namespace mango

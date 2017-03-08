@@ -28,7 +28,7 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/zstd/decompress \
                      external/lzfse \
                      external/bc \
-                     external/oogle \
+                     external/google \
                      external/unrar \
                      external/miniz \
                      external/lz4 \
