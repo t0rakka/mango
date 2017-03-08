@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="3rd-party">
-      <UniqueIdentifier>{a60c93e6-0d6a-40e6-b21a-e33010c094ec}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mango">
       <UniqueIdentifier>{c616ecc2-ce93-40a6-9781-a1761d481b90}</UniqueIdentifier>
     </Filter>
@@ -12,39 +9,6 @@
     </Filter>
     <Filter Include="mango\source">
       <UniqueIdentifier>{dcc79c82-0dc2-488f-9053-83f1f6ad7099}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\bc">
-      <UniqueIdentifier>{68768ac8-b068-40e2-ae34-4b88be77c8fd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\bzip2">
-      <UniqueIdentifier>{f9f9f47a-b8d0-4450-9b99-2f0ded599d67}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\concurrentqueue">
-      <UniqueIdentifier>{b7baad05-f69b-4a40-a767-7881a251ae50}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\google">
-      <UniqueIdentifier>{a57bf6ed-9f7e-4e3e-b5e1-9665c190f696}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\jpeg">
-      <UniqueIdentifier>{a38178f0-1d57-40cc-8756-e9ce78895f64}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\lz4">
-      <UniqueIdentifier>{ba855389-f18a-4799-b08b-6448bfa66549}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\lzfse">
-      <UniqueIdentifier>{e18219c9-968c-470b-a306-dedc23041a65}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\lzo">
-      <UniqueIdentifier>{6c8825cc-ce27-4591-baae-4c4b415e4b57}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\miniz">
-      <UniqueIdentifier>{f2e5f51e-0708-4157-ae14-b1e926236784}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\unrar">
-      <UniqueIdentifier>{1c9f7348-bebb-4e8e-ac67-859735fcb188}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3rd-party\zstd">
-      <UniqueIdentifier>{08bc8681-dfd2-4248-a7fe-d616cf3b1b72}</UniqueIdentifier>
     </Filter>
     <Filter Include="mango\include\core">
       <UniqueIdentifier>{5df6cf50-4a4c-4c1c-8ddf-9985ce155747}</UniqueIdentifier>
@@ -114,6 +78,51 @@
     </Filter>
     <Filter Include="mango\source\opengl\wgl">
       <UniqueIdentifier>{e35d4449-988f-405a-adc3-bbedb6587644}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\jpeg">
+      <UniqueIdentifier>{ecacb02d-6e46-4f31-8261-5b2631fb295d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external">
+      <UniqueIdentifier>{43deecb4-1df0-4b58-88bb-564a9908f19c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\bc">
+      <UniqueIdentifier>{0bf64e42-2e76-418e-a8c0-650921352a2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\bzip2">
+      <UniqueIdentifier>{072b5b77-4700-4099-83e5-811a12923feb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\concurrentqueue">
+      <UniqueIdentifier>{8ae8f3b5-5333-4cef-a8f9-73afc1cf0c52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\google">
+      <UniqueIdentifier>{37410f16-d8de-41fe-adbd-6dcfe0883d01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\lz4">
+      <UniqueIdentifier>{e9d76498-dd7f-484a-8e37-7e4fe1cbf39c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\lzfse">
+      <UniqueIdentifier>{c0cffdaa-5455-4f35-b441-140e1446541f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\lzo">
+      <UniqueIdentifier>{7eb93716-a627-4a20-92b7-27d76767ef77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\miniz">
+      <UniqueIdentifier>{18c94ab2-0af2-41cc-a65b-b384b79b541a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\unrar">
+      <UniqueIdentifier>{406a2812-4e0c-4af1-af9d-42579d7e6a33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\zstd">
+      <UniqueIdentifier>{9f1f00fd-0b8f-4095-8cf2-1ccd76873450}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\zstd\common">
+      <UniqueIdentifier>{22682595-9bc1-4981-859c-86c00aa277b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\zstd\compress">
+      <UniqueIdentifier>{dfe0289f-4eee-4773-94cb-2121c74c88aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\zstd\decompress">
+      <UniqueIdentifier>{23707869-827d-4f33-b2a3-05764437c339}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -390,6 +399,138 @@
     <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp">
       <Filter>mango\source\gui\win32</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\bitstream.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\error_private.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\error_public.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\fse.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\huf.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\mem.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\xxhash.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\zbuff.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\zstd.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_opt.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\array.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\compress.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\crc.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\crypt.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\getbits.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\model.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\rar.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\rarvm.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\rdwrfn.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\rijndael.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\sha1.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\suballoc.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\unrar\unpack.hpp">
+      <Filter>external\unrar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzo\lzoconf.h">
+      <Filter>external\lzo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzo\lzodefs.h">
+      <Filter>external\lzo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzo\minilzo.h">
+      <Filter>external\lzo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzvn_encode_base.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzfse.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_encode_tables.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_fse.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_internal.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_tunables.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzfse\lzvn_decode_base.h">
+      <Filter>external\lzfse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lz4\lz4hc.h">
+      <Filter>external\lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lz4\lz4.h">
+      <Filter>external\lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\google\etc1.h">
+      <Filter>external\google</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\google\astc.hpp">
+      <Filter>external\google</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\google\etc.hpp">
+      <Filter>external\google</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\concurrentqueue\concurrentqueue.h">
+      <Filter>external\concurrentqueue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\bzip2\bzlib_private.h">
+      <Filter>external\bzip2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\bzip2\bzlib.h">
+      <Filter>external\bzip2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\bc\BC.h">
+      <Filter>external\bc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -541,6 +682,153 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp">
       <Filter>mango\source\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\process.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\arithmetic.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\decode.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\encode.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\huffman.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\idct.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\entropy_common.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\fse_decompress.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\xxhash.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\zstd_common.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\fse_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zbuff_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\huf_decompress.c">
+      <Filter>external\zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\zbuff_decompress.c">
+      <Filter>external\zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c">
+      <Filter>external\zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\crc.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\crypt.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\getbits.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\rarvm.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\rdwrfn.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\rijndael.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\sha1.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\unrar\unpack.cpp">
+      <Filter>external\unrar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\miniz\miniz.cpp">
+      <Filter>external\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzo\minilzo.c">
+      <Filter>external\lzo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_decode.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_decode_base.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_encode.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_encode_base.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_fse.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzvn_decode_base.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzfse\lzvn_encode_base.c">
+      <Filter>external\lzfse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lz4\lz4.c">
+      <Filter>external\lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lz4\lz4hc.c">
+      <Filter>external\lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\google\astc.cpp">
+      <Filter>external\google</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\google\etc.cpp">
+      <Filter>external\google</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\google\etc1.cpp">
+      <Filter>external\google</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bz_blocksort.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bz_compress.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bz_crctable.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bz_decompress.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bz_huffman.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bz_randtable.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bzip2\bzlib.c">
+      <Filter>external\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bc\BC6HBC7.cpp">
+      <Filter>external\bc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bc\BC.cpp">
+      <Filter>external\bc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\bc\BC4BC5.cpp">
+      <Filter>external\bc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
