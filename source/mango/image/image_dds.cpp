@@ -309,7 +309,7 @@ namespace
         uint32 arraySize;
         uint32 reserved;
 
-        const uint8* read(LittleEndianConstPointer p)
+        uint8* read(LittleEndianPointer p)
         {
             dxgiFormat = p.read32();
             resourceDimension = p.read32();
@@ -536,7 +536,7 @@ namespace
             }
         }
 
-        const uint8* read(LittleEndianConstPointer p)
+        uint8* read(LittleEndianPointer p)
         {
             size = p.read32();
             if (size != 32)
@@ -617,9 +617,9 @@ namespace
 
         TextureCompressionInfo info;
 
-        const uint8* data;
+        uint8* data;
 
-        const uint8* read(LittleEndianConstPointer p)
+        uint8* read(LittleEndianPointer p)
         {
             uint32 magic = p.read32();
             if (magic != FOURCC_DDS)
@@ -665,7 +665,6 @@ namespace
             info = pixelFormat.compression;
 
             data = p;
-
             return p;
         }
 
@@ -837,7 +836,7 @@ namespace
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
 
-            const uint8* image = data;
+            uint8* image = data;
             Memory selected;
 
             for (int iFace = 0; iFace < maxFace; ++iFace)
@@ -872,7 +871,7 @@ namespace
 
         Interface(const Memory& memory)
         {
-            LittleEndianConstPointer p = memory.address;
+            LittleEndianPointer p = memory.address;
             m_header.read(p);
         }
 

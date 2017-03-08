@@ -21,7 +21,7 @@ namespace mango
         m_mapper = path;
         m_pathname = path.pathname();
         m_filename = parse(m_pathname + filename, "");
-        m_memory = std::unique_ptr<Memory>(m_mapper->mmap(m_filename));
+        m_memory = std::unique_ptr<VirtualMemory>(m_mapper->mmap(m_filename));
     }
 
     File::File(const std::string& filename)
@@ -29,7 +29,7 @@ namespace mango
     {
         m_mapper = getFileMapper();
         m_filename = parse(filename, "");
-        m_memory = std::unique_ptr<Memory>(m_mapper->mmap(m_filename));
+        m_memory = std::unique_ptr<VirtualMemory>(m_mapper->mmap(m_filename));
     }
 
     File::~File()
@@ -43,22 +43,22 @@ namespace mango
 
     File::operator Memory () const
     {
-        return m_memory->slice(0);
+        return *m_memory;
     }
 
 	File::operator const uint8* () const
 	{
-		return m_memory->address;
+        return (*m_memory)->address;
 	}
 
     const uint8* File::data() const
     {
-        return m_memory->address;
+        return (*m_memory)->address;
     }
 
     uint64 File::size() const
     {
-        return m_memory->size;
+        return (*m_memory)->size;
     }
 
     uint64 File::offset() const
@@ -79,7 +79,7 @@ namespace mango
                 break;
 
             case END:
-                m_offset = m_memory->size - distance;
+                m_offset = (*m_memory)->size - distance;
                 break;
 
             default:
@@ -89,12 +89,12 @@ namespace mango
 
     void File::read(void* dest, size_t size)
     {
-        const size_t left = m_memory->size - static_cast<size_t>(m_offset);
+        const size_t left = (*m_memory)->size - static_cast<size_t>(m_offset);
         if (left < size)
         {
             size = left;
         }
-        std::memcpy(dest, m_memory->address + m_offset, size);
+        std::memcpy(dest, (*m_memory)->address + m_offset, size);
         m_offset += size;
     }
 

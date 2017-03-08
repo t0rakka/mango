@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
@@ -10,22 +10,25 @@
 namespace mango {
 
     Buffer::Buffer()
-    : m_offset(0)
+        : m_offset(0)
     {
     }
 
     Buffer::Buffer(size_t _size)
-    : m_buffer(_size), m_offset(0)
+        : m_buffer(_size)
+        , m_offset(0)
     {
     }
 
     Buffer::Buffer(const uint8* address, size_t _size)
-    : m_buffer(address, address + _size), m_offset(0)
+        : m_buffer(address, address + _size)
+        , m_offset(0)
     {
     }
 
     Buffer::Buffer(const Memory& memory)
-    : m_buffer(memory.address, memory.address + memory.size), m_offset(0)
+        : m_buffer(memory.address, memory.address + memory.size)
+        , m_offset(0)
     {
     }
 
@@ -41,13 +44,9 @@ namespace mango {
 
     Buffer::operator Memory () const
     {
-        return Memory(&m_buffer[0], m_buffer.size());
+        uint8 *address = const_cast<uint8 *>(m_buffer.data());
+        return Memory(address, m_buffer.size());
     }
-
-	Buffer::operator const uint8* () const
-	{
-		return &m_buffer[0];
-	}
 
 	Buffer::operator uint8* ()
 	{
@@ -95,7 +94,7 @@ namespace mango {
 
     void Buffer::write(const void* data, size_t size)
     {
-        const uint8* source = reinterpret_cast<const uint8*>(data);
+        const char* source = reinterpret_cast<const char *>(data);
         const size_t left = m_buffer.size() - m_offset;
         const size_t right = size - left;
 

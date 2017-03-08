@@ -15,7 +15,7 @@
 
 #ifdef MANGO_ENABLE_LICENSE_GPL
 
-#include "../../unrar/rar.hpp"
+#include "../../external/unrar/rar.hpp"
 
 #define ID ".rar mapper: "
 
@@ -26,10 +26,37 @@ namespace
     // -----------------------------------------------------------------
 
     using mango::Memory;
-    using mango::ManagedMemory;
+    using mango::VirtualMemory;
 
     typedef unsigned char uint8;
     typedef unsigned short uint16;
+
+    class VirtualMemoryPointer : public mango::VirtualMemory
+    {
+    public:
+        VirtualMemoryPointer(uint8* address, size_t size)
+        {
+            memory = Memory(address, size);
+        }
+
+        ~VirtualMemoryPointer()
+        {
+        }
+    };
+
+    class VirtualMemoryBuffer : public mango::VirtualMemory
+    {
+    public:
+        VirtualMemoryBuffer(uint8* address, size_t size)
+        {
+            memory = Memory(address, size);
+        }
+
+        ~VirtualMemoryBuffer()
+        {
+            delete [] memory.address;
+        }
+    };
 
     bool decompress(uint8* output, const uint8* input, uint64 unpacked_size, uint64 packed_size, uint8 version)
     {
@@ -215,9 +242,9 @@ namespace
         uint8   method;
         std::string filename;
 
-        Header(const uint8* address)
+        Header(uint8* address)
         {
-            mango::LittleEndianConstPointer p = address;
+            mango::LittleEndianPointer p = address;
 
             crc   = p.read16();
             type  = p.read8();
@@ -334,21 +361,21 @@ namespace
         uint8   method;
 
         bool folder;
-        const uint8* data;
+        uint8* data;
 
         bool compressed() const
         {
             return method != 0x30;
         }
 
-        Memory* mmap()
+        VirtualMemory* mmap()
         {
-            Memory* memory;
+            VirtualMemory* memory;
 
             if (method == 0x30)
             {
                 // no compression
-                memory = new Memory(data, static_cast<size_t>(unpacked_size));
+                memory = new VirtualMemoryPointer(data, static_cast<size_t>(unpacked_size));
             }
             else
             {
@@ -362,7 +389,7 @@ namespace
                     MANGO_EXCEPTION(ID"Decompression failed.");
                 }
 
-                memory = new ManagedMemory(buffer, size);
+                memory = new VirtualMemoryBuffer(buffer, size);
             }
 
             return memory;
@@ -387,8 +414,8 @@ namespace mango
         MapperRAR(Memory parent, const std::string& password)
         : m_password(password)
         {
-            const uint8* start = parent.address;
-            const uint8* end = parent.address + parent.size;
+            uint8* start = parent.address;
+            uint8* end = parent.address + parent.size;
 
             if (start)
             {
@@ -400,9 +427,9 @@ namespace mango
         {
         }
 
-        void parse(const uint8* start, const uint8* end)
+        void parse(uint8* start, uint8* end)
         {
-            const uint8* p = start;
+            uint8* p = start;
 
             const uint8 signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
 
@@ -414,7 +441,7 @@ namespace mango
 
             for (; p < end;)
             {
-                const uint8* h = p;
+                uint8* h = p;
                 Header header(p);
                 p = h + header.size;
 
@@ -508,7 +535,7 @@ namespace mango
             }
         }
 
-        Memory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename)
         {
             auto i = m_files.find(filename);
             if (i == m_files.end())
@@ -517,9 +544,7 @@ namespace mango
             }
 
             FileHeader& header = i->second;
-
-            Memory* memory = header.mmap();
-            return memory;
+            return header.mmap();
         }
     };
 

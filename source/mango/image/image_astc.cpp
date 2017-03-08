@@ -70,14 +70,14 @@ namespace
         int depth;
         TextureCompression compression;
 
-        uint32 read24(LittleEndianConstPointer& p) const
+        uint32 read24(LittleEndianPointer& p) const
         {
             uint32 value = (p[2] << 16) | (p[1] << 8) | p[0];
             p += 3;
             return value;
         }
 
-        void read(LittleEndianConstPointer& p)
+        void read(LittleEndianPointer& p)
         {
             uint32 magic = p.read32();
             if (magic != 0x5ca1ab13)
@@ -111,7 +111,7 @@ namespace
 
         Interface(const Memory& memory)
         {
-            LittleEndianConstPointer p = memory.address;
+            LittleEndianPointer p = memory.address;
             m_header.read(p);
             m_data = Memory(p, memory.address + memory.size - p);
         }

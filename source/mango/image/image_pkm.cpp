@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -35,7 +35,7 @@ namespace
         // compression type
         int16 type;
 
-        void read(BigEndianConstPointer& p)
+        void read(BigEndianPointer& p)
         {
             uint32 magic = p.read32();
             if (magic != makeReverseFourCC('P', 'K', 'M', ' '))
@@ -90,7 +90,7 @@ namespace
 
         Interface(const Memory& memory)
         {
-            BigEndianConstPointer p = memory.address;
+            BigEndianPointer p = memory.address;
             m_header.read(p);
             m_data = Memory(memory.address + 16, memory.size - 16);
         }

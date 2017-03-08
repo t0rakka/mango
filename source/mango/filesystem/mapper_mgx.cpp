@@ -9,11 +9,13 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-#include "../../lz4/lz4.h"
+#include "../../external/lz4/lz4.h"
 
 #define ID ".mgx mapper: "
 
-#if 0 // TODO
+#if 0
+
+// TODO
 
 namespace
 {
@@ -68,7 +70,7 @@ namespace mango
         {
         }
 
-        Memory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename)
         {
         }
     };

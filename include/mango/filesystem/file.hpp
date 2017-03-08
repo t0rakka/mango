@@ -20,7 +20,7 @@ namespace mango
     protected:
         uint64 m_offset;
         std::string m_filename;
-        std::unique_ptr<Memory> m_memory;
+        std::unique_ptr<VirtualMemory> m_memory;
 
     public:
         File(const Path& path, const std::string& filename);

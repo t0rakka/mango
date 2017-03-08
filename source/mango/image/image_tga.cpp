@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
@@ -31,7 +31,7 @@ namespace
         uint8   pixel_size;
         uint8   descriptor;
 
-        void read(LittleEndianConstPointer& p)
+        void read(LittleEndianPointer& p)
         {
             idfield_length   = p.read8();
             colormap_type    = p.read8();
@@ -310,11 +310,11 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderTGA m_header;
-        const uint8* m_pointer;
+        uint8* m_pointer;
 
         Interface(const Memory& memory)
         {
-            LittleEndianConstPointer p = memory.address;
+            LittleEndianPointer p = memory.address;
             m_header.read(p);
             m_pointer = p;
         }
@@ -342,11 +342,11 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            LittleEndianConstPointer p = m_pointer;
+            LittleEndianPointer p = m_pointer;
 
             // read palette
             uint8 paletteImage[1024];
-            uint8* palette = NULL;
+            uint8* palette = nullptr;
 
             switch (m_header.data_type)
             {

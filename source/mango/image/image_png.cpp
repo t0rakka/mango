@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
 #define MINIZ_HEADER_FILE_ONLY
-#include "../../miniz/miniz.cpp"
+#include "../../external/miniz/miniz.cpp"
 
 #define ID "ImageStream.PNG: "
 #define FILTER_BYTE 1
@@ -103,9 +103,9 @@ namespace
     protected:
         const Memory& m_memory;
 
-        const uint8* m_pointer = NULL;
-        const uint8* m_end = NULL;
-        const char* m_error = NULL;
+        uint8* m_pointer = nullptr;
+        uint8* m_end = nullptr;
+        const char* m_error = nullptr;
 
         Buffer m_compressed;
 
@@ -144,14 +144,14 @@ namespace
 
         void setError(const char* error);
 
-        void read_IHDR(BigEndianConstPointer p, uint32 size);
-        void read_IDAT(BigEndianConstPointer p, uint32 size);
-        void read_PLTE(BigEndianConstPointer p, uint32 size);
-        void read_tRNS(BigEndianConstPointer p, uint32 size);
-        void read_cHRM(BigEndianConstPointer p, uint32 size);
-        void read_gAMA(BigEndianConstPointer p, uint32 size);
-        void read_sBIT(BigEndianConstPointer p, uint32 size);
-        void read_sRGB(BigEndianConstPointer p, uint32 size);
+        void read_IHDR(BigEndianPointer p, uint32 size);
+        void read_IDAT(BigEndianPointer p, uint32 size);
+        void read_PLTE(BigEndianPointer p, uint32 size);
+        void read_tRNS(BigEndianPointer p, uint32 size);
+        void read_cHRM(BigEndianPointer p, uint32 size);
+        void read_gAMA(BigEndianPointer p, uint32 size);
+        void read_sBIT(BigEndianPointer p, uint32 size);
+        void read_sRGB(BigEndianPointer p, uint32 size);
 
         void parse();
         void filter(uint8* buffer, int bytes, int height);
@@ -189,7 +189,7 @@ namespace
     ParserPNG::ParserPNG(const Memory& memory)
     : m_memory(memory), m_end(memory.address + memory.size)
     {
-        BigEndianConstPointer p = memory.address;
+        BigEndianPointer p = memory.address;
 
         // read header magic
         const uint64 magic = p.read64();
@@ -233,7 +233,7 @@ namespace
         return m_error;
     }
 
-    void ParserPNG::read_IHDR(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_IHDR(BigEndianPointer p, uint32 size)
     {
         print("[\"IHDR\"] %d bytes\n", size);
 
@@ -334,12 +334,12 @@ namespace
         print("  Interlace:   %d\n", m_interlace);
     }
 
-    void ParserPNG::read_IDAT(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_IDAT(BigEndianPointer p, uint32 size)
     {
         m_compressed.write(p, size);
     }
 
-    void ParserPNG::read_PLTE(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_PLTE(BigEndianPointer p, uint32 size)
     {
         if (size % 3)
         {
@@ -361,7 +361,7 @@ namespace
         }
     }
 
-    void ParserPNG::read_tRNS(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_tRNS(BigEndianPointer p, uint32 size)
     {
         if (m_color_type == COLOR_TYPE_I)
         {
@@ -411,7 +411,7 @@ namespace
         }
     }
 
-    void ParserPNG::read_cHRM(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_cHRM(BigEndianPointer p, uint32 size)
     {
         if (size != 32)
         {
@@ -430,7 +430,7 @@ namespace
         m_chromaticity.blue.y  = p.read32() / scale;
     }
 
-    void ParserPNG::read_gAMA(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_gAMA(BigEndianPointer p, uint32 size)
     {
         if (size != 4)
         {
@@ -441,7 +441,7 @@ namespace
         m_gamma = p.read32() / 100000.0f;
     }
 
-    void ParserPNG::read_sBIT(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_sBIT(BigEndianPointer p, uint32 size)
     {
         if (size > 4)
         {
@@ -455,7 +455,7 @@ namespace
         }
     }
 
-    void ParserPNG::read_sRGB(BigEndianConstPointer p, uint32 size)
+    void ParserPNG::read_sRGB(BigEndianPointer p, uint32 size)
     {
         if (size != 1)
         {
@@ -517,7 +517,7 @@ namespace
 
     void ParserPNG::parse()
     {
-        BigEndianConstPointer p = m_pointer;
+        BigEndianPointer p = m_pointer;
 
         for (; p < m_end - 8;)
         {

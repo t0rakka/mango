@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -36,7 +36,7 @@ namespace
     // FileMemory
     // -----------------------------------------------------------------
 
-    class FileMemory : public Memory
+    class FileMemory : public VirtualMemory
     {
     protected:
         int m_file;
@@ -45,7 +45,7 @@ namespace
 
     public:
         FileMemory(const std::string& filename, uint64 _offset, uint64 _size)
-        : m_file(-1), m_size(0), m_address(NULL)
+        : m_file(-1), m_size(0), m_address(nullptr)
         {
             m_file = open(filename.c_str(), O_RDONLY);
 
@@ -80,7 +80,7 @@ namespace
 
                     if (m_size > 0)
                     {
-                        m_address = ::mmap(NULL, m_size, PROT_READ, MAP_PRIVATE, m_file, page_offset);
+                        m_address = ::mmap(nullptr, m_size, PROT_READ, MAP_PRIVATE, m_file, page_offset);
 
                         if (m_address == MAP_FAILED)
                         {
@@ -90,13 +90,13 @@ namespace
                             MANGO_EXCEPTION(msg);
                         }
 
-                        size = m_size;
-                        address = reinterpret_cast<uint8*>(m_address) + (file_offset - page_offset);
+                        memory.size = m_size;
+                        memory.address = reinterpret_cast<uint8*>(m_address) + (file_offset - page_offset);
                     }
                     else
                     {
-                        size = 0;
-                        address = NULL;
+                        memory.size = 0;
+                        memory.address = nullptr;
                     }
                 }
             }
@@ -231,9 +231,9 @@ namespace
 
 #endif
 
-        Memory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename)
         {
-            Memory* memory = new FileMemory(filename, 0, 0);
+            VirtualMemory* memory = new FileMemory(filename, 0, 0);
             return memory;
         }
     };
