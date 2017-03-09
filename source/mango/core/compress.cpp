@@ -1,7 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+
+#include <vector>
+
 #include <mango/core/compress.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
@@ -57,9 +60,7 @@ namespace miniz {
     void decompress(const Memory& dest, const Memory& source)
     {
         mz_ulong zd = static_cast<mz_ulong>(dest.size);
-        uint8* buffer = const_cast<uint8 *>(dest.address);
-
-        int status = mz_uncompress(buffer, &zd, source.address,
+        int status = mz_uncompress(dest.address, &zd, source.address,
                                    static_cast<mz_ulong>(source.size));
 
         const char* msg;
@@ -116,15 +117,13 @@ namespace lz4 {
 
         if (level > 6)
         {
-            const int compressionLevel = 1 + (level - 7) * 5;
-            written = LZ4_compress_HC(source, (char*)dest.address,
-                source_size, dest_size, compressionLevel);
+            const int compression_level = 1 + (level - 7) * 5;
+            written = LZ4_compress_HC(source, dest, source_size, dest_size, compression_level);
         }
         else
         {
             const int acceleration = 19 - level * 3;
-            written = LZ4_compress_fast(source, (char*)dest.address,
-                source_size, dest_size, acceleration);
+            written = LZ4_compress_fast(source, dest, source_size, dest_size, acceleration);
         }
 
 	    if (written <= 0 || written > dest.size)
@@ -137,8 +136,7 @@ namespace lz4 {
 
     void decompress(const Memory& dest, const Memory& source)
     {
-        uint8* buffer = const_cast<uint8 *>(dest.address);
-        int status = LZ4_decompress_fast(source, reinterpret_cast<char *>(buffer), int(dest.size));
+        int status = LZ4_decompress_fast(source, dest, int(dest.size));
         if (status < 0)
         {
             MANGO_EXCEPTION("lz4: decompression failed.");
@@ -166,7 +164,7 @@ namespace lzo {
         int x = lzo1x_1_compress(
             source.address,
             static_cast<lzo_uint>(source.size),
-            const_cast<uint8*>(dest.address),
+            dest.address,
             &dst_len,
             workmem);
 
@@ -185,7 +183,7 @@ namespace lzo {
         int x = lzo1x_decompress(
             source.address,
             static_cast<lzo_uint>(source.size),
-            const_cast<uint8*>(dest.address),
+            dest.address,
             &dst_len,
             NULL);
         if (x != LZO_E_OK)
@@ -267,7 +265,7 @@ namespace zstd {
             const uint8* src = source.address;
             size_t src_bytes = source.size;
 
-            uint8* dst = const_cast<uint8 *>(dest.address);
+            uint8* dst = dest.address;
             size_t dst_bytes = dest.size;
 
             size_t dstCapacity;
@@ -320,7 +318,7 @@ namespace zstd {
             const uint8* src = source.address;
             size_t src_bytes = source.size;
 
-            uint8* dst = const_cast<uint8 *>(dest.address);
+            uint8* dst = dest.address;
             size_t dst_bytes = dest.size;
 
             for (; src_bytes > 0;)
@@ -428,8 +426,8 @@ namespace bzip2 {
             MANGO_EXCEPTION("bzip2: decompression failed.");
         }
 
-        strm.next_in = (char*)source.address;
-        strm.next_out = (char*)dest.address;
+        strm.next_in = reinterpret_cast<char *>(source.address);
+        strm.next_out = reinterpret_cast<char *>(dest.address);
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = static_cast<unsigned int>(dest.size);
 
@@ -467,20 +465,18 @@ namespace lzfse {
         MANGO_UNREFERENCED_PARAMETER(level);
 
         const size_t scratch_size = lzfse_encode_scratch_size();
-        char* scratch = new char[scratch_size];
-        size_t written = lzfse_encode_buffer(const_cast<uint8_t *>(dest.address), dest.size,
-                                             reinterpret_cast<const uint8_t *>(source.address), source.size, scratch);
-        delete[] scratch;
+        std::vector<char> scratch(scratch_size);
+        size_t written = lzfse_encode_buffer(dest.address, dest.size,
+                                             reinterpret_cast<const uint8_t *>(source.address), source.size, scratch.data());
         return Memory(dest.address, written);
     }
 
     void decompress(const Memory& dest, const Memory& source)
     {
         const size_t scratch_size = lzfse_decode_scratch_size();
-        char* scratch = new char[scratch_size];
-        size_t written = lzfse_decode_buffer(const_cast<uint8_t *>(dest.address), dest.size,
-                                             reinterpret_cast<const uint8_t *>(source.address), source.size, scratch);
-        delete[] scratch;
+        std::vector<char> scratch(scratch_size);
+        size_t written = lzfse_decode_buffer(dest.address, dest.size,
+                                             reinterpret_cast<const uint8_t *>(source.address), source.size, scratch.data());
         MANGO_UNREFERENCED_PARAMETER(written);
     }
 

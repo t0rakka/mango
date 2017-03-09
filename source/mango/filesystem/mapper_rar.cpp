@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     RAR decompression code: Alexander L. Roshal / unRAR library.
@@ -31,6 +31,7 @@ namespace
     typedef unsigned char uint8;
     typedef unsigned short uint16;
 
+    // Reference to existing memory
     class VirtualMemoryPointer : public mango::VirtualMemory
     {
     public:
@@ -44,6 +45,7 @@ namespace
         }
     };
 
+    // Take ownership of existing memory
     class VirtualMemoryBuffer : public mango::VirtualMemory
     {
     public:
@@ -58,7 +60,7 @@ namespace
         }
     };
 
-    bool decompress(uint8* output, const uint8* input, uint64 unpacked_size, uint64 packed_size, uint8 version)
+    bool decompress(uint8* output, uint8* input, uint64 unpacked_size, uint64 packed_size, uint8 version)
     {
         ComprDataIO subDataIO;
         subDataIO.Init();
@@ -72,7 +74,7 @@ namespace
 
         subDataIO.UnpackFromMemory = true;
         subDataIO.UnpackFromMemorySize = static_cast<size_t>(packed_size);
-        subDataIO.UnpackFromMemoryAddr = const_cast<byte*>(input);
+        subDataIO.UnpackFromMemoryAddr = input;
 
         subDataIO.UnpPackedSize = packed_size;
         unpack.SetDestSize(unpacked_size);

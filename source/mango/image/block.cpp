@@ -534,7 +534,7 @@ namespace mango
 
         ConcurrentQueue queue;
 
-        uint8* address = const_cast<uint8*>(memory.address);
+        uint8* address = memory.address;
 
         const int xblocks = round_to_next(surface.width, width);
         const int yblocks = round_to_next(surface.height, height);

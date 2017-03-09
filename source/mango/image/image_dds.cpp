@@ -916,7 +916,7 @@ namespace
             }
             else
             {
-                uint8* image = const_cast<uint8 *>(imageMemory.address);
+                uint8* image = imageMemory.address;
                 Format format = m_header.getFormat();
                 int width = std::max(1, m_header.getWidth() >> level);
                 int height = std::max(1, m_header.getHeight() >> level);

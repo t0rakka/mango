@@ -363,8 +363,7 @@ namespace
                     int paletteSize = int(m_header.colormap_length);
 
                     // convert 24 bit palette into target surface format using blitter
-                    const uint8* up = p;
-                    Surface srcPalette(paletteSize, 1, FORMAT_B8G8R8, 0, const_cast<uint8*>(up));
+                    Surface srcPalette(paletteSize, 1, FORMAT_B8G8R8, 0, p);
                     Surface destPalette(paletteSize, 1, surface.format, 0, paletteImage);
                     destPalette.blit(0, 0, srcPalette);
 
@@ -385,8 +384,7 @@ namespace
             const int height = m_header.image_height;
             Format format = m_header.getFormat();
 
-            const uint8* up = p;
-            Surface src(width, height, format, width * format.bytes(), const_cast<uint8*>(up));
+            Surface src(width, height, format, width * format.bytes(), p);
             Surface dest(surface, 0, 0, width, height);
 
             if (m_header.descriptor & 0x20)

@@ -598,9 +598,9 @@ namespace
         surface.blit(0, 0, temp);
     }
 
-    void readRGB(Surface surface, const BitmapHeader& header, int stride, const uint8* data)
+    void readRGB(Surface surface, const BitmapHeader& header, int stride, uint8* data)
     {
-        uint8* image = const_cast<uint8*>(data);
+        uint8* image = data;
         Surface source(header.width, header.height, header.format, stride, image);
         surface.blit(0, 0, source);
     }

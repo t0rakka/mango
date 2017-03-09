@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/pointer.hpp>
@@ -367,12 +367,12 @@ namespace
 		return true;
 	}
 
-	uint64 zip_decompress(const uint8* compressed, uint8* uncompressed, uint64 compressedLen, uint64 uncompressedLen)
+	uint64 zip_decompress(uint8* compressed, uint8* uncompressed, uint64 compressedLen, uint64 uncompressedLen)
 	{
 		z_stream zstream;
 		std::memset(&zstream, 0, sizeof(zstream));
 
-		zstream.next_in  = const_cast<uint8 *>(compressed);
+		zstream.next_in  = compressed;
 		zstream.avail_in = uInt(compressedLen); // TODO: upgrade to support 64 bit files
 
         if (inflateInit2(&zstream, -MAX_WBITS) != Z_OK)

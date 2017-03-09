@@ -375,7 +375,7 @@ namespace
             if (m_header.m_info.compression == TextureCompression::NONE)
             {
                 int stride = width * m_header.m_info.bytes; // .pvr parser stores bytesPerPixel in block information
-                Surface source(width, height, m_header.m_info.format, stride, const_cast<uint8*>(data.address));
+                Surface source(width, height, m_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
             }
             else
