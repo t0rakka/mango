@@ -176,7 +176,7 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    Surface load_surface(const Memory& memory, const std::string& extension, const Format* format)
+    Surface load_surface(Memory memory, const std::string& extension, const Format* format)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
 
@@ -485,7 +485,7 @@ namespace mango
             image = new uint8[stride * height];
     }
 
-    Bitmap::Bitmap(const Memory& memory, const std::string& extension)
+    Bitmap::Bitmap(Memory memory, const std::string& extension)
     : Surface(load_surface(memory, extension, nullptr))
     {
     }

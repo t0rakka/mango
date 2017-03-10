@@ -179,7 +179,7 @@ glBaseInternalFormat:
 		uint32 numberOfMipmapLevels;
 		uint32 bytesOfKeyValueData;
 
-		HeaderKTX(const Memory& memory)
+		HeaderKTX(Memory memory)
 		{
 			const uint8 ktxIdentifier[] =
 			{
@@ -273,7 +273,7 @@ glBaseInternalFormat:
             return compression;
         }
 
-		Memory getMemory(const Memory& memory, int level, int depth, int face) const
+		Memory getMemory(Memory memory, int level, int depth, int face) const
 		{
 			uint8* address = memory.address;
 			address += sizeof(HeaderKTX) + bytesOfKeyValueData;
@@ -316,8 +316,9 @@ glBaseInternalFormat:
         Memory m_memory;
         HeaderKTX m_header;
 
-        Interface(const Memory& memory)
-        : m_memory(memory), m_header(memory)
+        Interface(Memory memory)
+            : m_memory(memory)
+            , m_header(memory)
         {
         }
 
@@ -368,7 +369,7 @@ glBaseInternalFormat:
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

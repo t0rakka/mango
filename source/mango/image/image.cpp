@@ -109,7 +109,7 @@ namespace mango
             return nullptr;
         }
 
-        ImageDecoderInterface* createImageDecoder(const Memory& memory, const std::string& filename)
+        ImageDecoderInterface* createImageDecoder(Memory memory, const std::string& filename)
         {
             ImageDecoderInterface* decoder = nullptr;
             ImageDecoder::CreateFunc func = getImageDecoder(filename);
@@ -163,7 +163,7 @@ namespace mango
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
-    ImageDecoder::ImageDecoder(const Memory& memory, const std::string& filename)
+    ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
     {
         m_interface = g_imageServer.createImageDecoder(memory, filename);
     }

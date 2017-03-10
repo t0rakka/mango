@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 #include <mango/core/exception.hpp>
@@ -427,9 +427,9 @@ namespace {
 
 namespace mango {
 
-    void sha1(uint32 hash[5], const uint8* data, size_t size)
+    void sha1(uint32 hash[5], Memory memory)
     {
-        sha1_hash(data, uint32(size), hash);
+        sha1_hash(memory.address, uint32(memory.size), hash);
         hash[0] = byteswap(hash[0]);
         hash[1] = byteswap(hash[1]);
         hash[2] = byteswap(hash[2]);
@@ -437,9 +437,9 @@ namespace mango {
         hash[4] = byteswap(hash[4]);
     }
 
-    void md5(uint32 hash[4], const uint8* data, size_t size)
+    void md5(uint32 hash[4], Memory memory)
     {
-        md5_hash(data, uint32(size), hash);
+        md5_hash(memory.address, uint32(memory.size), hash);
     }
 
 } // namespace mango

@@ -20,7 +20,10 @@ namespace mango
 
     public:
         Exception(const std::string message, const std::string func, const std::string file, int line)
-        : m_message(message), m_func(func), m_file(file), m_line(line)
+            : m_message(message)
+            , m_func(func)
+            , m_file(file)
+            , m_line(line)
         {
         }
 
@@ -58,4 +61,3 @@ namespace mango
 #endif
 
 } // namespace mango
-

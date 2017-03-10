@@ -40,7 +40,7 @@ namespace
         uint16      VscreenSize;
         uint8       Padding[54];
 
-        HeaderPCX(const Memory& memory)
+        HeaderPCX(Memory memory)
         {
             LittleEndianPointer p = memory.address;
 
@@ -139,7 +139,7 @@ namespace
         }
     };
 
-    bool getPaletteMarker(const Memory& memory)
+    bool getPaletteMarker(Memory memory)
     {
         bool isPaletteMarker = false;
 
@@ -322,7 +322,7 @@ namespace
     {
         Memory m_memory;
 
-        Interface(const Memory& memory)
+        Interface(Memory memory)
         : m_memory(memory)
         {
         }
@@ -440,7 +440,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

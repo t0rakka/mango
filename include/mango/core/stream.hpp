@@ -41,7 +41,7 @@ namespace mango
         virtual void read(void* dest, size_t size) = 0;
         virtual void write(const void* data, size_t size) = 0;
 
-        void write(const Memory& memory)
+        void write(Memory memory)
         {
             write(memory.address, memory.size);
         }
@@ -122,6 +122,11 @@ namespace mango
             void write(const void* data, size_t size)
             {
                 s.write(data, size);
+            }
+
+            void write(Memory memory)
+            {
+                s.write(memory);
             }
 
             void write8(uint8 value)
@@ -236,6 +241,11 @@ namespace mango
             void write(const void* data, size_t size)
             {
                 s.write(data, size);
+            }
+
+            void write(Memory memory)
+            {
+                s.write(memory);
             }
 
             void write8(uint8 value)

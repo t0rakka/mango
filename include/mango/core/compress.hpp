@@ -39,7 +39,7 @@ namespace mango
         StreamEncoder() {}
         virtual ~StreamEncoder() {}
         virtual size_t bound(size_t size) const = 0;
-        virtual size_t encode(const Memory& dest, const Memory& source) = 0;
+        virtual size_t encode(Memory dest, Memory source) = 0;
     };
 
     class StreamDecoder : public Object
@@ -47,7 +47,7 @@ namespace mango
     public:
         StreamDecoder() {}
         virtual ~StreamDecoder() {}
-        virtual size_t decode(const Memory& dest, const Memory& source) = 0;
+        virtual size_t decode(Memory dest, Memory source) = 0;
     };
 
     // -----------------------------------------------------------------------
@@ -66,30 +66,30 @@ namespace mango
     namespace miniz
     {
         size_t bound(size_t size);
-        Memory compress(const Memory& dest, const Memory& source, int level = 6);
-        void decompress(const Memory& dest, const Memory& source);
+        Memory compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
     }
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
     namespace lz4
     {
         size_t bound(size_t size);
-        Memory compress(const Memory& dest, const Memory& source, int level = 6);
-        void decompress(const Memory& dest, const Memory& source);
+        Memory compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
     }
 
     namespace lzo
     {
         size_t bound(size_t size);
-        Memory compress(const Memory& dest, const Memory& source, int level = 6);
-        void decompress(const Memory& dest, const Memory& source);
+        Memory compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
     }
 
     namespace zstd
     {
         size_t bound(size_t size);
-        Memory compress(const Memory& dest, const Memory& source, int level = 6);
-        void decompress(const Memory& dest, const Memory& source);
+        Memory compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
 
         StreamEncoder* createStreamEncoder(int level);
         StreamDecoder* createStreamDecoder();
@@ -100,15 +100,15 @@ namespace mango
     namespace bzip2
     {
         size_t bound(size_t size);
-        Memory compress(const Memory& dest, const Memory& source, int level = 6);
-        void decompress(const Memory& dest, const Memory& source);
+        Memory compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
     }
 
     namespace lzfse
     {
         size_t bound(size_t size);
-        Memory compress(const Memory& dest, const Memory& source, int level = 6);
-        void decompress(const Memory& dest, const Memory& source);
+        Memory compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
     }
 #endif
 

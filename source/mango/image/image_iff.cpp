@@ -242,8 +242,8 @@ namespace
     {
         Memory m_memory;
 
-        Interface(const Memory& memory)
-        : m_memory(memory)
+        Interface(Memory memory)
+            : m_memory(memory)
         {
         }
 
@@ -500,7 +500,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

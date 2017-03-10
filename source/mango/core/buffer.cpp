@@ -14,19 +14,19 @@ namespace mango {
     {
     }
 
-    Buffer::Buffer(size_t _size)
-        : m_buffer(_size)
+    Buffer::Buffer(size_t size)
+        : m_buffer(size)
         , m_offset(0)
     {
     }
 
-    Buffer::Buffer(const uint8* address, size_t _size)
-        : m_buffer(address, address + _size)
+    Buffer::Buffer(const uint8* address, size_t size)
+        : m_buffer(address, address + size)
         , m_offset(0)
     {
     }
 
-    Buffer::Buffer(const Memory& memory)
+    Buffer::Buffer(Memory memory)
         : m_buffer(memory.address, memory.address + memory.size)
         , m_offset(0)
     {
@@ -94,7 +94,7 @@ namespace mango {
 
     void Buffer::write(const void* data, size_t size)
     {
-        const char* source = reinterpret_cast<const char *>(data);
+        const uint8 *source = reinterpret_cast<const uint8 *>(data);
         const size_t left = m_buffer.size() - m_offset;
         const size_t right = size - left;
 

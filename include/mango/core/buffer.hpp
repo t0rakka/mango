@@ -23,7 +23,7 @@ namespace mango
         Buffer();
         Buffer(size_t size);
         Buffer(const uint8* address, size_t size);
-        Buffer(const Memory& memory);
+        Buffer(Memory memory);
         ~Buffer();
 
         void resize(size_t size);

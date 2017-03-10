@@ -869,7 +869,7 @@ namespace
     {
         HeaderDDS m_header;
 
-        Interface(const Memory& memory)
+        Interface(Memory memory)
         {
             LittleEndianPointer p = memory.address;
             m_header.read(p);
@@ -928,7 +928,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

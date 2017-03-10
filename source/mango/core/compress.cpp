@@ -7,6 +7,7 @@
 
 #include <mango/core/compress.hpp>
 #include <mango/core/exception.hpp>
+#include <mango/core/buffer.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
@@ -41,13 +42,12 @@ namespace miniz {
 		return mz_compressBound(s);
     }
 
-	Memory compress(const Memory& dest, const Memory& source, int level)
+	Memory compress(Memory dest, Memory source, int level)
 	{
         level = clamp(level, 0, 10);
 
         mz_ulong size = static_cast<mz_ulong>(dest.size);
-        int status = mz_compress2((unsigned char*)dest.address, &size, source.address,
-                                  static_cast<mz_ulong>(source.size), level);
+        int status = mz_compress2(dest, &size, source, static_cast<mz_ulong>(source.size), level);
 
         if (status != MZ_OK)
         {
@@ -57,11 +57,10 @@ namespace miniz {
         return Memory(dest.address, size);
 	}
 
-    void decompress(const Memory& dest, const Memory& source)
+    void decompress(Memory dest, Memory source)
     {
         mz_ulong zd = static_cast<mz_ulong>(dest.size);
-        int status = mz_uncompress(dest.address, &zd, source.address,
-                                   static_cast<mz_ulong>(source.size));
+        int status = mz_uncompress(dest, &zd, source, static_cast<mz_ulong>(source.size));
 
         const char* msg;
 
@@ -106,7 +105,7 @@ namespace lz4 {
 		return LZ4_compressBound(s);
     }
 
-    Memory compress(const Memory& dest, const Memory& source, int level)
+    Memory compress(Memory dest, Memory source, int level)
     {
         const int source_size = int(source.size);
         const int dest_size = int(dest.size);
@@ -134,7 +133,7 @@ namespace lz4 {
         return Memory(dest.address, written);
 	}
 
-    void decompress(const Memory& dest, const Memory& source)
+    void decompress(Memory dest, Memory source)
     {
         int status = LZ4_decompress_fast(source, dest, int(dest.size));
         if (status < 0)
@@ -156,7 +155,7 @@ namespace lzo {
         return size + (size / 16) + 128;
     }
 
-    Memory compress(const Memory& dest, const Memory& source, int level)
+    Memory compress(Memory dest, Memory source, int level)
     {
         void* workmem = aligned_malloc(LZO1X_MEM_COMPRESS);
 
@@ -177,7 +176,7 @@ namespace lzo {
         return Memory(dest.address, (size_t)dst_len);
 	}
 
-    void decompress(const Memory& dest, const Memory& source)
+    void decompress(Memory dest, Memory source)
     {
         lzo_uint dst_len = (lzo_uint)dest.size;
         int x = lzo1x_decompress(
@@ -207,11 +206,11 @@ namespace zstd {
 		return ZSTD_compressBound(size) + turbo;
     }
 
-    Memory compress(const Memory& dest, const Memory& source, int level)
+    Memory compress(Memory dest, Memory source, int level)
     {
         level = clamp(level * 2, 1, 20);
 
-        const size_t x = ZSTD_compress((void*)dest.address, dest.size,
+        const size_t x = ZSTD_compress(dest.address, dest.size,
                                        source.address, source.size, level);
         if (ZSTD_isError(x))
         {
@@ -224,7 +223,7 @@ namespace zstd {
         return Memory(dest.address, x);
 	}
 
-    void decompress(const Memory& dest, const Memory& source)
+    void decompress(Memory dest, Memory source)
     {
         size_t x = ZSTD_decompress((void*)dest.address, dest.size,
                                    source.address, source.size);
@@ -260,7 +259,7 @@ namespace zstd {
             return ZSTD_compressBound(size) + turbo;
         }
 
-        size_t encode(const Memory& dest, const Memory& source)
+        size_t encode(Memory dest, Memory source)
         {
             const uint8* src = source.address;
             size_t src_bytes = source.size;
@@ -313,7 +312,7 @@ namespace zstd {
             ZBUFF_freeDCtx(z);
         }
 
-        size_t decode(const Memory& dest, const Memory& source)
+        size_t decode(Memory dest, Memory source)
         {
             const uint8* src = source.address;
             size_t src_bytes = source.size;
@@ -368,7 +367,7 @@ namespace bzip2 {
         return size + (size / 100) + 600;
     }
 
-    Memory compress(const Memory& dest, const Memory& source, int level)
+    Memory compress(Memory dest, Memory source, int level)
     {
         const int blockSize100k = clamp(level, 1, 9);
 
@@ -377,9 +376,9 @@ namespace bzip2 {
 
         bz_stream strm;
 
-        strm.bzalloc = NULL;
-        strm.bzfree = NULL;
-        strm.opaque = NULL;
+        strm.bzalloc = nullptr;
+        strm.bzfree = nullptr;
+        strm.opaque = nullptr;
 
         int x = BZ2_bzCompressInit(&strm, blockSize100k, verbosity, workFactor);
         if (x != BZ_OK)
@@ -389,8 +388,8 @@ namespace bzip2 {
 
         unsigned int destLength = static_cast<unsigned int>(dest.size);
 
-        strm.next_in = (char*)source.address;
-        strm.next_out = (char*)dest.address;
+        strm.next_in = source;
+        strm.next_out = dest;
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = destLength;
 
@@ -412,13 +411,13 @@ namespace bzip2 {
         return Memory(dest.address, static_cast<size_t>(destLength));
     }
 
-    void decompress(const Memory& dest, const Memory& source)
+    void decompress(Memory dest, Memory source)
     {
         bz_stream strm;
 
-        strm.bzalloc = NULL;
-        strm.bzfree = NULL;
-        strm.opaque = NULL;
+        strm.bzalloc = nullptr;
+        strm.bzfree = nullptr;
+        strm.opaque = nullptr;
 
         int x = BZ2_bzDecompressInit(&strm, 0, 0);
         if (x != BZ_OK)
@@ -426,8 +425,8 @@ namespace bzip2 {
             MANGO_EXCEPTION("bzip2: decompression failed.");
         }
 
-        strm.next_in = reinterpret_cast<char *>(source.address);
-        strm.next_out = reinterpret_cast<char *>(dest.address);
+        strm.next_in = source;
+        strm.next_out = dest;
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = static_cast<unsigned int>(dest.size);
 
@@ -460,23 +459,21 @@ namespace lzfse {
         return 1024 + size;
     }
 
-    Memory compress(const Memory& dest, const Memory& source, int level)
+    Memory compress(Memory dest, Memory source, int level)
     {
         MANGO_UNREFERENCED_PARAMETER(level);
 
         const size_t scratch_size = lzfse_encode_scratch_size();
-        std::vector<char> scratch(scratch_size);
-        size_t written = lzfse_encode_buffer(dest.address, dest.size,
-                                             reinterpret_cast<const uint8_t *>(source.address), source.size, scratch.data());
+        Buffer scratch(scratch_size);
+        size_t written = lzfse_encode_buffer(dest.address, dest.size, source, source.size, scratch);
         return Memory(dest.address, written);
     }
 
-    void decompress(const Memory& dest, const Memory& source)
+    void decompress(Memory dest, Memory source)
     {
         const size_t scratch_size = lzfse_decode_scratch_size();
-        std::vector<char> scratch(scratch_size);
-        size_t written = lzfse_decode_buffer(dest.address, dest.size,
-                                             reinterpret_cast<const uint8_t *>(source.address), source.size, scratch.data());
+        Buffer scratch(scratch_size);
+        size_t written = lzfse_decode_buffer(dest.address, dest.size, source, source.size, scratch);
         MANGO_UNREFERENCED_PARAMETER(written);
     }
 

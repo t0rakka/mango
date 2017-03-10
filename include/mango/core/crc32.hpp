@@ -5,11 +5,12 @@
 #pragma once
 
 #include "configure.hpp"
+#include "memory.hpp"
 
 namespace mango
 {
 
-    uint32 crc32(uint32 crc, const uint8* data, size_t size);
-    uint32 crc32c(uint32 crc, const uint8* data, size_t size);
+    uint32 crc32(uint32 crc, Memory memory);
+    uint32 crc32c(uint32 crc, Memory memory);
 
 } // namespace mango

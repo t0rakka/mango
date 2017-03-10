@@ -189,7 +189,7 @@ namespace
         int m_dataOffset;
         TextureCompressionInfo m_info;
 
-        void read(const Memory& memory)
+        void read(Memory memory)
         {
             pvr_header3_t pvr;
 
@@ -284,7 +284,7 @@ namespace
             m_dataOffset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
         }
 
-        Memory getMemory(const Memory& memory, int level, int depth, uint32 face) const
+        Memory getMemory(Memory memory, int level, int depth, uint32 face) const
         {
             uint8* p = memory.address + m_dataOffset;
 
@@ -335,8 +335,8 @@ namespace
         Memory m_memory;
         HeaderPVR m_header;
         
-        Interface(const Memory& memory)
-        : m_memory(memory)
+        Interface(Memory memory)
+            : m_memory(memory)
         {
             m_header.read(memory);
         }
@@ -385,7 +385,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -313,7 +313,7 @@ namespace
         radheader m_header;
         const uint8* m_data;
 
-        Interface(const Memory& memory)
+        Interface(Memory memory)
         {
             const uint8* data = memory.address;
             const uint8* end = memory.address + memory.size;
@@ -361,7 +361,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -33,9 +33,9 @@ namespace mango
         ImageDecoderInterface* m_interface;
 
     public:
-        typedef ImageDecoderInterface* (*CreateFunc)(const Memory& memory);
+        typedef ImageDecoderInterface* (*CreateFunc)(Memory memory);
 
-        ImageDecoder(const Memory& memory, const std::string& filename);
+        ImageDecoder(Memory memory, const std::string& filename);
         ~ImageDecoder();
 
         bool isDecoder() const;

@@ -101,7 +101,7 @@ namespace
     class ParserPNG
     {
     protected:
-        const Memory& m_memory;
+        Memory m_memory;
 
         uint8* m_pointer = nullptr;
         uint8* m_end = nullptr;
@@ -173,7 +173,7 @@ namespace
         uint8* process(uint8* image, int stride, uint8* src);
 
     public:
-        ParserPNG(const Memory& memory);
+        ParserPNG(Memory memory);
         ~ParserPNG();
 
         const char* getError() const;
@@ -186,8 +186,9 @@ namespace
     // ParserPNG
     // ------------------------------------------------------------
 
-    ParserPNG::ParserPNG(const Memory& memory)
-    : m_memory(memory), m_end(memory.address + memory.size)
+    ParserPNG::ParserPNG(Memory memory)
+        : m_memory(memory)
+        , m_end(memory.address + memory.size)
     {
         BigEndianPointer p = memory.address;
 
@@ -1271,15 +1272,15 @@ namespace
     // writePNG()
     // ------------------------------------------------------------
 
-    void writeChunk(Stream& stream, const uint8* buffer, size_t size)
+    void writeChunk(Stream& stream, Memory memory)
     {
         BigEndianStream s(stream);
 
-        const uint32 chunk_size = static_cast<uint32>(size - 4);
-        const uint32 chunk_crc = crc32(0, buffer, size);
+        const uint32 chunk_size = static_cast<uint32>(memory.size - 4);
+        const uint32 chunk_crc = crc32(0, memory);
 
         s.write32(chunk_size);
-        s.write(buffer, size);
+        s.write(memory);
         s.write32(chunk_crc);
     }
 
@@ -1298,7 +1299,7 @@ namespace
         s.write8(0); // filter
         s.write8(0); // interlace
 
-        writeChunk(stream, buffer, static_cast<size_t>(buffer.size()));
+        writeChunk(stream, buffer);
     }
 
     void write_IDAT(Stream& stream, const Surface& surface)
@@ -1339,7 +1340,7 @@ namespace
         deflateEnd(&z);
 
         // write chunkdID + compressed data
-        writeChunk(stream, buffer, compressed_size);
+        writeChunk(stream, Memory(buffer, compressed_size));
     }
 
     void writePNG(Stream& stream, const Surface& surface)
@@ -1372,8 +1373,8 @@ namespace
         ParserPNG m_parser;
         ImageHeader m_header;
 
-        Interface(const Memory& memory)
-        : m_parser(memory)
+        Interface(Memory memory)
+            : m_parser(memory)
         {
             m_header = m_parser.header();
 
@@ -1399,7 +1400,7 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            const char* error = NULL;
+            const char* error = nullptr;
 
             if (dest.format == m_header.format &&
                 dest.width >= m_header.width &&
@@ -1423,7 +1424,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(const Memory& memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -725,59 +725,59 @@ namespace {
 
 namespace mango {
     
-    uint32 crc32(uint32 crc, const uint8* data, size_t size)
+    uint32 crc32(uint32 crc, Memory memory)
     {
         crc = ~crc;
 
-        size_t alignment = (reinterpret_cast<const uint8 *>(0) - data) & 0x7;
-        if (alignment <= size)
+        size_t alignment = (reinterpret_cast<uint8 *>(0) - memory.address) & 0x7;
+        if (alignment <= memory.size)
         {
-            size -= alignment;
+            memory.size -= alignment;
             while (alignment--)
             {
-                crc = u8_crc32(crc, *data++);
+                crc = u8_crc32(crc, *memory.address++);
             }
 
-            while (size >= 8)
+            while (memory.size >= 8)
             {
-                crc = u64_crc32(crc, data);
-                data += 8;
-                size -= 8;
+                crc = u64_crc32(crc, memory.address);
+                memory.address += 8;
+                memory.size -= 8;
             }
         }
 
-        while (size--)
+        while (memory.size--)
         {
-            crc = u8_crc32(crc, *data++);
+            crc = u8_crc32(crc, *memory.address++);
         }
 
         return ~crc;
     }
 
-    uint32 crc32c(uint32 crc, const uint8* data, size_t size)
+    uint32 crc32c(uint32 crc, Memory memory)
     {
         crc = ~crc;
 
-        size_t alignment = (reinterpret_cast<const uint8 *>(0) - data) & 0x7;
-        if (alignment <= size)
+        size_t alignment = (reinterpret_cast<const uint8 *>(0) - memory.address) & 0x7;
+        if (alignment <= memory.size)
         {
-            size -= alignment;
+            memory.size -= alignment;
             while (alignment--)
             {
-                crc = u8_crc32c(crc, *data++);
+                crc = u8_crc32c(crc, *memory.address++);
             }
 
-            while (size >= 8)
+            while (memory.size >= 8)
             {
-                crc = u64_crc32c(crc, data);
-                data += 8;
-                size -= 8;
+                crc = u64_crc32c(crc, memory.address);
+                memory.address += 8;
+                memory.size -= 8;
             }
         }
 
-        while (size--)
+        while (memory.size--)
         {
-            crc = u8_crc32c(crc, *data++);
+            crc = u8_crc32c(crc, *memory.address++);
         }
 
         return ~crc;
