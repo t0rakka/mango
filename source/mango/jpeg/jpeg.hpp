@@ -330,7 +330,7 @@ namespace jpeg
         int ymcu;
         int mcus;
 
-        bool isJPEG(const Memory& memory) const;
+        bool isJPEG(Memory memory) const;
 
         uint8* stepMarker(uint8* p);
         uint8* seekMarker(uint8* p, uint8* end);
@@ -353,7 +353,7 @@ namespace jpeg
         void processDHP(uint8* p);
         void processEXP(uint8* p);
 
-        void parse(const Memory& memory, bool decode);
+        void parse(Memory memory, bool decode);
 
         void restart();
         bool handleRestart();
@@ -373,7 +373,7 @@ namespace jpeg
         Memory icc_memory; // ICC color profile block, if one is present
         Memory scan_memory; // Scan block
 
-        Parser(const Memory& jpeg_memory);
+        Parser(Memory memory);
         ~Parser();
 
         Status decode(Surface& target);

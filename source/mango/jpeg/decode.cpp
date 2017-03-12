@@ -161,7 +161,7 @@ namespace jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(const Memory& memory)
+    Parser::Parser(Memory memory)
     : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN), blockVector(NULL)
     {
         decodeState.zigzagTable = zigzagTable;
@@ -220,7 +220,7 @@ namespace jpeg
         aligned_free(blockVector);
     }
 
-    bool Parser::isJPEG(const Memory& memory) const
+    bool Parser::isJPEG(Memory memory) const
     {
         if (!memory.address || memory.size < 4)
             return false;
@@ -1014,7 +1014,7 @@ namespace jpeg
         MANGO_UNREFERENCED_PARAMETER(Ev);
     }
 
-    void Parser::parse(const Memory& memory, bool decode)
+    void Parser::parse(Memory memory, bool decode)
     {
         uint8* end = memory.address + memory.size;
         uint8* p = memory.address;

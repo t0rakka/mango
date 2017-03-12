@@ -16,7 +16,6 @@
 
 namespace
 {
-
     using namespace mango;
 
 	enum { DCKEYSIZE = 12 };
@@ -195,7 +194,7 @@ namespace
 		uint64	dirStartOffset;    // offset of the start of central directory on the disk
 		uint16	commentLen;        // zip file comment length
 
-		DirEndRecord(const Memory& memory)
+		DirEndRecord(Memory memory)
 		{
             std::memset(this, 0, sizeof(DirEndRecord));
 

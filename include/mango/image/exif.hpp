@@ -141,7 +141,7 @@ namespace mango
         std::string	LenseName;
 
         Exif();
-        Exif(const Memory& memory);
+        Exif(Memory memory);
     };
 
 } // namespace mango
