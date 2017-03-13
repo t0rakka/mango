@@ -18,6 +18,26 @@ namespace mango
     template <>
     struct Vector<float, 4> : VectorBase<float, 4>
     {
+        struct Permute2Low
+        {
+            simd::float32x4 m;
+
+            operator Vector<float, 2> () const
+            {
+                return simd::get_low(m);
+            }
+        };
+
+        struct Permute2High
+        {
+            simd::float32x4 m;
+
+            operator Vector<float, 2> () const
+            {
+                return simd::get_high(m);
+            }
+        };
+
         template <int X, int Y>
         struct Permute2
         {
@@ -25,9 +45,8 @@ namespace mango
 
             operator Vector<float, 2> () const
             {
-                const float x = simd::get_component<X>(m);
-                const float y = simd::get_component<Y>(m);
-                return Vector<float, 2>(x, y);
+                const simd::float32x4 temp = simd::shuffle<X, Y, X, Y>(m);
+                return simd::get_low(temp);
             }
         };
 
@@ -69,7 +88,7 @@ namespace mango
             Permute2<1, 0> yx;
             Permute2<2, 0> zx;
             Permute2<3, 0> wx;
-            Permute2<0, 1> xy;
+            Permute2Low    xy;
             Permute2<1, 1> yy;
             Permute2<2, 1> zy;
             Permute2<3, 1> wy;
@@ -79,7 +98,7 @@ namespace mango
             Permute2<3, 2> wz;
             Permute2<0, 3> xw;
             Permute2<1, 3> yw;
-            Permute2<2, 3> zw;
+            Permute2High   zw;
             Permute2<3, 3> ww;
 
             Permute3<0, 0, 0> xxx;
@@ -438,7 +457,7 @@ namespace mango
         }
 
         explicit Vector(const Vector<float, 2>& xy, const Vector<float, 2>& zw)
-        : m(simd::float32x4_set4(xy.x, xy.y, zw.x, zw.y))
+        : m(simd::combine(xy, zw))
         {
         }
 
