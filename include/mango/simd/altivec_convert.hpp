@@ -116,6 +116,27 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
+    static inline float32x2 low(float32x4 a)
+    {
+        float32x2 v;
+        v[0] = get_x(a);
+        v[1] = get_y(a);
+        return v;
+    }
+
+    static inline float32x2 high(float32x4 a)
+    {
+        float32x2 v;
+        v[0] = get_z(a);
+        v[1] = get_w(a);
+        return v;
+    }
+
+    static inline float32x4 combine(float32x2 a, float32x2 b)
+    {
+        return float32x4_set4(a[0], a[1], b[0], b[1]);
+    }
+
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
 		return vec_ctf(s, 0);
@@ -144,6 +165,32 @@ namespace simd {
     // -----------------------------------------------------------------
     // float64
     // -----------------------------------------------------------------
+
+    static inline float64x2 low(float64x4 a)
+    {
+        float64x2 v;
+        v[0] = a[0];
+        v[1] = a[1];
+        return v;
+    }
+
+    static inline float64x2 high(float64x4 a)
+    {
+        float64x2 v;
+        v[0] = a[2];
+        v[1] = a[3];
+        return v;
+    }
+
+    static inline float64x4 combine(float64x2 a, float64x2 b)
+    {
+        float64x4 v;
+        v[0] = a[0];
+        v[1] = a[1];
+        v[2] = b[0];
+        v[3] = b[1];
+        return v;
+    }
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {

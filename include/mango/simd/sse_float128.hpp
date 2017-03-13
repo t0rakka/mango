@@ -226,6 +226,23 @@ namespace simd {
         return _mm_div_ps(a, _mm_set1_ps(b));
     }
 
+#if defined(MANGO_ENABLE_SSE3)
+
+    static inline float32x4 hadd(float32x4 a, float32x4 b)
+    {
+	    return _mm_hadd_ps(a, b);
+    }
+
+#else
+
+    static inline float32x4 hadd(float32x4 a, float32x4 b)
+    {
+	    return _mm_add_ps(_mm_shuffle_ps(a, b, 0x88),
+	                      _mm_shuffle_ps(a, b, 0xdd));
+    }
+
+#endif
+
 #if defined(MANGO_ENABLE_FMA3)
 
     static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)

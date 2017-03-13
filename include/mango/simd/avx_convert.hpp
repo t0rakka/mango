@@ -156,6 +156,29 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
+    static inline float32x2 low(float32x4 a)
+    {
+        float x = get_x(a);
+        float y = get_y(a);
+        return float32x2_set2(x, y);
+    }
+
+    static inline float32x2 high(float32x4 a)
+    {
+        float z = get_z(a);
+        float w = get_w(a);
+        return float32x2_set2(z, w);
+    }
+
+    static inline float32x4 combine(float32x2 a, float32x2 b)
+    {
+        float x = get_x(a);
+        float y = get_y(a);
+        float z = get_x(b);
+        float w = get_y(b);
+        return float32x4_set4(x, y, z, w);
+    }
+
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         const __m128i mask = _mm_set1_epi32(0x0000ffff);
@@ -193,6 +216,21 @@ namespace simd {
     // -----------------------------------------------------------------
     // float64
     // -----------------------------------------------------------------
+
+    static inline float64x2 low(float64x4 a)
+    {
+        return _mm256_extractf128_pd(a, 0);
+    }
+
+    static inline float64x2 high(float64x4 a)
+    {
+        return _mm256_extractf128_pd(a, 1);
+    }
+
+    static inline float64x4 combine(float64x2 a, float64x2 b)
+    {
+        return _mm256_set_m128d(b, a);
+    }
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {

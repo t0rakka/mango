@@ -232,6 +232,12 @@ namespace simd {
         return vec_div(a, __vec_splatsf4(b));
     }
 
+    static inline float32x4 hadd(float32x4 a, float32x4 b)
+    {
+        // TODO
+        return a;
+    }
+
     static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
 		return vec_madd(b, c, a);

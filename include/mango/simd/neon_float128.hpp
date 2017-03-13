@@ -296,6 +296,12 @@ namespace simd {
 
 #endif
 
+    static inline float32x4 hadd(float32x4 a, float32x4 b)
+    {
+        return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)), 
+	                        vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
+    }
+
     static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
         return vmlaq_f32(a, b, c);

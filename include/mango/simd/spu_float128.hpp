@@ -230,6 +230,12 @@ namespace simd {
         return float32x4_div(a, spu_splats(b));
     }
 
+    static inline float32x4 hadd(float32x4 a, float32x4 b)
+    {
+        // TODO
+        return a;
+    }
+
     static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
 		return spu_madd(b, c, a);
