@@ -156,14 +156,14 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x2 low(float32x4 a)
+    static inline float32x2 get_low(float32x4 a)
     {
         float x = get_x(a);
         float y = get_y(a);
         return float32x2_set2(x, y);
     }
 
-    static inline float32x2 high(float32x4 a)
+    static inline float32x2 get_high(float32x4 a)
     {
         float z = get_z(a);
         float w = get_w(a);
@@ -217,12 +217,12 @@ namespace simd {
     // float64
     // -----------------------------------------------------------------
 
-    static inline float64x2 low(float64x4 a)
+    static inline float64x2 get_low(float64x4 a)
     {
         return a.xy;
     }
 
-    static inline float64x2 high(float64x4 a)
+    static inline float64x2 get_high(float64x4 a)
     {
         return a.zw;
     }
