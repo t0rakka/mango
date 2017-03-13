@@ -229,15 +229,7 @@ namespace simd {
 
     static inline float64x4 combine(float64x2 a, float64x2 b)
     {
-#if 0
-        // GCC 5.4.1 does not recognize this intrinsic
-        return _mm256_setr_m128d(a, b);
-#else
-        __m256d result = _mm256_setzero_pd();
-        _mm256_insertf128_pd(result, a, 0);
-        _mm256_insertf128_pd(result, b, 1);
-        return result;
-#endif
+        return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
     }
 
     static inline float64x4 float64x4_convert(int32x4 s)
