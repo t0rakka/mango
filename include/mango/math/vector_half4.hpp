@@ -14,24 +14,24 @@ namespace mango
     template <>
     struct Vector<half, 4> : VectorBase<half, 4>
     {
-        simd::float16x4 m;
+        simd::float16x4 xyzw;
 
         explicit Vector()
         {
         }
 
         explicit Vector(const Vector<float, 4>& v)
-        : m(simd::float16x4_convert(v.m))
+        : xyzw(simd::float16x4_convert(v.xyzw))
         {
         }
 
         explicit Vector(simd::float32x4 v)
-        : m(simd::float16x4_convert(v))
+        : xyzw(simd::float16x4_convert(v))
         {
         }
 
         explicit Vector(simd::float16x4 v)
-        : m(v)
+        : xyzw(v)
         {
         }
 
@@ -41,41 +41,41 @@ namespace mango
 
         Vector& operator = (const Vector<float, 4>& v)
         {
-            m = simd::float16x4_convert(v.m);
+            xyzw = simd::float16x4_convert(v.xyzw);
             return *this;
         }
 
         Vector& operator = (simd::float32x4 v)
         {
-            m = simd::float16x4_convert(v);
+            xyzw = simd::float16x4_convert(v);
             return *this;
         }
 
         Vector& operator = (simd::float16x4 v)
         {
-            m = v;
+            xyzw = v;
             return *this;
         }
 
         Vector& operator = (const Vector& v)
         {
-            m = v.m;
+            xyzw = v.xyzw;
             return *this;
         }
 
         operator Vector<float, 4> () const
         {
-            return Vector<float, 4>(simd::float32x4_convert(m));
+            return Vector<float, 4>(simd::float32x4_convert(xyzw));
         }
 
         operator const simd::float16x4& () const
         {
-            return m;
+            return xyzw;
         }
 
         operator simd::float16x4& ()
         {
-            return m;
+            return xyzw;
         }
     };
 

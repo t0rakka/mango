@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -16,85 +16,73 @@ namespace mango
     template <>
     struct Vector<float, 2> : VectorBase<float, 2>
     {
-        template <int X, int Y>
-        struct Permute2
-        {
-            simd::float32x2 m;
-
-			operator Vector<float, 2> () const
-			{
-                return simd::shuffle<X, Y>(m);
-			}
-        };
-
         union
         {
-            simd::float32x2 m;
+            simd::float32x2 xy;
 
             ScalarAccessor<simd::float32x2, float, 0> x;
             ScalarAccessor<simd::float32x2, float, 1> y;
 
-            Permute2<0, 0> xx;
-            Permute2<1, 0> yx;
-            Permute2<0, 1> xy;
-            Permute2<1, 1> yy;
+            Permute2<simd::float32x2, 0, 0> xx;
+            Permute2<simd::float32x2, 1, 0> yx;
+            Permute2<simd::float32x2, 1, 1> yy;
         };
 
         explicit Vector() = default;
 
         explicit Vector(float s)
-        : m(simd::float32x2_set1(s))
+        : xy(simd::float32x2_set1(s))
         {
         }
 
         explicit Vector(int s)
-        : m(simd::float32x2_set1(float(s)))
+        : xy(simd::float32x2_set1(float(s)))
         {
         }
 
         explicit Vector(float x, float y)
-        : m(simd::float32x2_set2(x, y))
+        : xy(simd::float32x2_set2(x, y))
         {
         }
 
         Vector(simd::float32x2 v)
-        : m(v)
+        : xy(v)
         {
         }
 
         template <int X, int Y>
-        Vector(const Permute2<X, Y>& p)
+        Vector(const Permute2<simd::float32x2, X, Y>& p)
         {
-            m = p;
+            xy = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const Permute2<X, Y>& p)
+        Vector& operator = (const Permute2<simd::float32x2, X, Y>& p)
         {
-            m = p;
+            xy = p;
             return *this;
         }
 
         Vector& operator = (simd::float32x2 v)
         {
-            m = v;
+            xy = v;
             return *this;
         }
 
         Vector& operator = (float s)
         {
-            m = simd::float32x2_set1(s);
+            xy = simd::float32x2_set1(s);
             return *this;
         }
 
         operator simd::float32x2 () const
         {
-            return m;
+            return xy;
         }
 
         operator simd::float32x2 ()
         {
-            return m;
+            return xy;
         }
     };
 
@@ -154,7 +142,7 @@ namespace mango
     }
 
     template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator + (const Vector<float, 2>::Permute2<X,Y>& a, const Vector<float, 2>::Permute2<A,B>& b)
+    static inline Vector<float, 2> operator + (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
     {
         return simd::add(a, b);
     }
@@ -165,7 +153,7 @@ namespace mango
     }
 
     template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator - (const Vector<float, 2>::Permute2<X,Y>& a, const Vector<float, 2>::Permute2<A,B>& b)
+    static inline Vector<float, 2> operator - (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
     {
         return simd::sub(a, b);
     }
@@ -186,7 +174,7 @@ namespace mango
     }
 
     template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator * (const Vector<float, 2>::Permute2<X,Y>& a, const Vector<float, 2>::Permute2<A,B>& b)
+    static inline Vector<float, 2> operator * (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
     {
         return simd::mul(a, b);
     }
@@ -202,7 +190,7 @@ namespace mango
     }
 
     template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator / (const Vector<float, 2>::Permute2<X,Y>& a, const Vector<float, 2>::Permute2<A,B>& b)
+    static inline Vector<float, 2> operator / (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
     {
         return simd::div(a, b);
     }
