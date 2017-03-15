@@ -708,6 +708,9 @@
     <ClInclude Include="..\..\source\external\concurrentqueue\concurrentqueue.h">
       <Filter>external\concurrentqueue</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_double2.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mango">

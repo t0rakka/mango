@@ -63,6 +63,7 @@
     <ClInclude Include="..\..\include\mango\math\quaternion.hpp" />
     <ClInclude Include="..\..\include\mango\math\srgb.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_double2.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_double4.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_float2.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_float3.hpp" />

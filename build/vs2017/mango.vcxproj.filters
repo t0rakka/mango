@@ -531,6 +531,9 @@
     <ClInclude Include="..\..\source\external\bc\BC.h">
       <Filter>external\bc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_double2.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
