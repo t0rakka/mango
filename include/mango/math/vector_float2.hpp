@@ -141,19 +141,7 @@ namespace mango
         return simd::add(a, b);
     }
 
-    template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator + (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
-    {
-        return simd::add(a, b);
-    }
-
     static inline Vector<float, 2> operator - (const Vector<float, 2>& a, const Vector<float, 2>& b)
-    {
-        return simd::sub(a, b);
-    }
-
-    template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator - (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
     {
         return simd::sub(a, b);
     }
@@ -173,24 +161,12 @@ namespace mango
         return simd::mul(a, b);
     }
 
-    template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator * (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
-    {
-        return simd::mul(a, b);
-    }
-
     static inline Vector<float, 2> operator / (const Vector<float, 2>& a, const Vector<float, 2>& b)
     {
         return simd::div(a, b);
     }
 
     static inline Vector<float, 2> operator / (const Vector<float, 2>& a, float b)
-    {
-        return simd::div(a, b);
-    }
-
-    template <int X, int Y, int A, int B>
-    static inline Vector<float, 2> operator / (const Permute2<simd::float32x2, X,Y>& a, const Permute2<simd::float32x2, A,B>& b)
     {
         return simd::div(a, b);
     }

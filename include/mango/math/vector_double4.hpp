@@ -509,20 +509,8 @@ namespace mango
     {
         return simd::add(a, b);
     }
-
-    template <int X, int Y, int Z, int W, int A, int B, int C, int D>
-    static inline double4 operator + (const Permute4<simd::float64x4, X,Y,Z,W>& a, const Permute4<simd::float64x4, A,B,C,D>& b)
-    {
-        return simd::add(a, b);
-    }
     
     static inline double4 operator - (const double4& a, const double4& b)
-    {
-        return simd::sub(a, b);
-    }
-
-    template <int X, int Y, int Z, int W, int A, int B, int C, int D>
-    static inline double4 operator - (const Permute4<simd::float64x4, X,Y,Z,W>& a, const Permute4<simd::float64x4, A,B,C,D>& b)
     {
         return simd::sub(a, b);
     }
@@ -541,12 +529,6 @@ namespace mango
     {
         return simd::mul(a, b);
     }
-
-    template <int X, int Y, int Z, int W, int A, int B, int C, int D>
-    static inline double4 operator * (const Permute4<simd::float64x4, X,Y,Z,W>& a, const Permute4<simd::float64x4, A,B,C,D>& b)
-    {
-        return simd::mul(a, b);
-    }
     
     static inline double4 operator / (const double4& a, const double4& b)
     {
@@ -554,12 +536,6 @@ namespace mango
     }
 
     static inline double4 operator / (const double4& a, double b)
-    {
-        return simd::div(a, b);
-    }
-
-    template <int X, int Y, int Z, int W, int A, int B, int C, int D>
-    static inline double4 operator / (const Permute4<simd::float64x4, X,Y,Z,W>& a, const Permute4<simd::float64x4, A,B,C,D>& b)
     {
         return simd::div(a, b);
     }
