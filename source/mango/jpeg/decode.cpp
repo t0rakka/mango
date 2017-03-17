@@ -252,29 +252,25 @@ namespace jpeg
         return p + size;
     }
 
-    uint8* Parser::seekMarker(uint8* p, uint8* end)
+    uint8* Parser::seekMarker(uint8* start, uint8* end)
     {
-        uint8* start = p;
+        uint8* p = start;
+        --end; // marker is two bytes: don't look at last byte
 
         for ( ; p < end; ++p)
         {
             if (p[0] == 0xff)
             {
-                if (p[1] != 0)
+                if (p[1])
                 {
-                    // found marker
-                    break;
-                }
-                else
-                {
-                    // skip stuff byte
-                    ++p;
+                    return p; // found marker
                 }
             }
         }
 
+        //if (*p != 0xff)
+        ++p; // skip last byte (warning! if it is 0xff a marker can be potentially missed)
         jpegPrint("  Seek: %d bytes\n", int(p - start));
-        MANGO_UNREFERENCED_PARAMETER(start);
 
         return p;
     }
