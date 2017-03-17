@@ -20,12 +20,12 @@ namespace mango
         {
             simd::float64x2 xy;
 
-            ScalarAccessor<simd::float64x2, double, 0> x;
-            ScalarAccessor<simd::float64x2, double, 1> y;
+            ScalarAccessor<double, simd::float64x2, 0> x;
+            ScalarAccessor<double, simd::float64x2, 1> y;
 
-            Permute2<simd::float64x2, 0, 0> xx;
-            Permute2<simd::float64x2, 1, 0> yx;
-            Permute2<simd::float64x2, 1, 1> yy;
+            Permute2<double, simd::float64x2, 0, 0> xx;
+            Permute2<double, simd::float64x2, 1, 0> yx;
+            Permute2<double, simd::float64x2, 1, 1> yy;
         };
 
         explicit Vector() = default;
@@ -51,13 +51,13 @@ namespace mango
         }
 
         template <int X, int Y>
-        Vector(const Permute2<simd::float64x2, X, Y>& p)
+        Vector(const Permute2<double, simd::float64x2, X, Y>& p)
         {
             xy = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const Permute2<simd::float64x2, X, Y>& p)
+        Vector& operator = (const Permute2<double, simd::float64x2, X, Y>& p)
         {
             xy = p;
             return *this;
@@ -90,83 +90,83 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const Vector<double, 2>& operator + (const Vector<double, 2>& v)
+    static inline const double2 operator + (double2 v)
     {
         return v;
     }
 
-    static inline Vector<double, 2> operator - (const Vector<double, 2>& v)
+    static inline double2 operator - (double2 v)
     {
         return simd::neg(v);
     }
 
-    static inline Vector<double, 2>& operator += (Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2& operator += (double2& a, double2 b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<double, 2>& operator -= (Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2& operator -= (double2& a, double2 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<double, 2>& operator *= (Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2& operator *= (double2& a, double2 b)
     {
         a = simd::mul(a, b);
         return a;
     }
 
-    static inline Vector<double, 2>& operator *= (Vector<double, 2>& a, double b)
+    static inline double2& operator *= (double2& a, double b)
     {
         a = simd::mul(a, b);
         return a;
     }
 
-    static inline Vector<double, 2>& operator /= (Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2& operator /= (double2& a, double2 b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline Vector<double, 2>& operator /= (Vector<double, 2>& a, double b)
+    static inline double2& operator /= (double2& a, double b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline Vector<double, 2> operator + (const Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2 operator + (double2 a, double2 b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<double, 2> operator - (const Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2 operator - (double2 a, double2 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<double, 2> operator * (const Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2 operator * (double2 a, double2 b)
     {
         return simd::mul(a, b);
     }
 
-    static inline Vector<double, 2> operator * (const Vector<double, 2>& a, double b)
+    static inline double2 operator * (double2 a, double b)
     {
         return simd::mul(a, b);
     }
 
-    static inline Vector<double, 2> operator * (double a, const Vector<double, 2>& b)
+    static inline double2 operator * (double a, double2 b)
     {
         return simd::mul(a, b);
     }
 
-    static inline Vector<double, 2> operator / (const Vector<double, 2>& a, const Vector<double, 2>& b)
+    static inline double2 operator / (double2 a, double2 b)
     {
         return simd::div(a, b);
     }
 
-    static inline Vector<double, 2> operator / (const Vector<double, 2>& a, double b)
+    static inline double2 operator / (double2 a, double b)
     {
         return simd::div(a, b);
     }
@@ -175,24 +175,63 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<double, 2> clamp(const Vector<double, 2>& a, const Vector<double, 2>& amin, const Vector<double, 2>& amax)
+    static inline double2 clamp(double2 a, double2 amin, double2 amax)
     {
         return simd::clamp(a, amin, amax);
     }
 
-    static inline Vector<double, 2> madd(const Vector<double, 2>& a, const Vector<double, 2>& b, const Vector<double, 2>& c)
+    static inline double2 madd(double2 a, double2 b, double2 c)
     {
         return simd::madd(a, b, c);
     }
 
-    static inline Vector<double, 2> lerp(const Vector<double, 2>& a, const Vector<double, 2>& b, double factor)
+    static inline double2 lerp(double2 a, double2 b, double factor)
     {
         return a + (b - a) * factor;
     }
 
-    static inline Vector<double, 2> lerp(const Vector<double, 2>& a, const Vector<double, 2>& b, const Vector<double, 2>& factor)
+    static inline double2 lerp(double2 a, double2 b, double2 factor)
     {
         return a + (b - a) * factor;
+    }
+
+    // ------------------------------------------------------------------
+    // compare / select
+    // ------------------------------------------------------------------
+
+    static inline double2 operator > (double2 a, double2 b)
+    {
+        return simd::compare_gt(a, b);
+    }
+
+    static inline double2 operator >= (double2 a, double2 b)
+    {
+        return simd::compare_ge(a, b);
+    }
+
+    static inline double2 operator < (double2 a, double2 b)
+    {
+        return simd::compare_lt(a, b);
+    }
+
+    static inline double2 operator <= (double2 a, double2 b)
+    {
+        return simd::compare_le(a, b);
+    }
+
+    static inline double2 operator == (double2 a, double2 b)
+    {
+        return simd::compare_eq(a, b);
+    }
+
+    static inline double2 operator != (double2 a, double2 b)
+    {
+        return simd::compare_neq(a, b);
+    }
+
+    static inline double2 select(double2 mask, double2 a, double2 b)
+    {
+        return simd::select(mask, a, b);
     }
 
 } // namespace mango

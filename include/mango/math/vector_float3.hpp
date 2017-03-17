@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -173,17 +173,17 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const Vector<float, 3>& operator + (const Vector<float, 3>& v)
+    static inline const float3& operator + (const float3& v)
     {
         return v;
     }
 
-    static inline Vector<float, 3> operator - (const Vector<float, 3>& v)
+    static inline float3 operator - (const float3& v)
     {
-        return Vector<float, 3>(-v.x, -v.y, -v.z);
+        return float3(-v.x, -v.y, -v.z);
     }
 
-    static inline Vector<float, 3>& operator += (Vector<float, 3>& a, const Vector<float, 3>& b)
+    static inline float3& operator += (float3& a, const float3& b)
     {
         a.x += b.x;
         a.y += b.y;
@@ -191,7 +191,7 @@ namespace mango
         return a;
     }
 
-    static inline Vector<float, 3>& operator -= (Vector<float, 3>& a, const Vector<float, 3>& b)
+    static inline float3& operator -= (float3& a, const float3& b)
     {
         a.x -= b.x;
         a.y -= b.y;
@@ -199,7 +199,7 @@ namespace mango
         return a;
     }
 
-    static inline Vector<float, 3>& operator *= (Vector<float, 3>& a, const Vector<float, 3>& b)
+    static inline float3& operator *= (float3& a, const float3& b)
     {
         a.x *= b.x;
         a.y *= b.y;
@@ -207,7 +207,7 @@ namespace mango
         return a;
     }
 
-    static inline Vector<float, 3>& operator *= (Vector<float, 3>& a, float b)
+    static inline float3& operator *= (float3& a, float b)
     {
         a.x *= b;
         a.y *= b;
@@ -215,7 +215,7 @@ namespace mango
         return a;
     }
 
-    static inline Vector<float, 3>& operator /= (Vector<float, 3>& a, const Vector<float, 3>& b)
+    static inline float3& operator /= (float3& a, const float3& b)
     {
         a.x /= b.x;
         a.y /= b.y;
@@ -223,7 +223,7 @@ namespace mango
         return a;
     }
 
-    static inline Vector<float, 3>& operator /= (Vector<float, 3>& a, float b)
+    static inline float3& operator /= (float3& a, float b)
     {
         b = 1.0f / b;
         a.x *= b;
@@ -236,48 +236,48 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<float, 3> clamp(const Vector<float, 3>& a, const Vector<float, 3>& amin, const Vector<float, 3>& amax)
+    static inline float3 clamp(const float3& a, const float3& amin, const float3& amax)
     {
         const float x = std::max(amin.x, std::min(amax.x, a.x));
         const float y = std::max(amin.y, std::min(amax.y, a.y));
         const float z = std::max(amin.z, std::min(amax.z, a.z));
-        return Vector<float, 3>(x, y, z);
+        return float3(x, y, z);
     }
 
-    static inline Vector<float, 3> madd(const Vector<float, 3>& a, const Vector<float, 3>& b, const Vector<float, 3>& c)
+    static inline float3 madd(const float3& a, const float3& b, const float3& c)
     {
         const float x = a.x + b.x * c.x;
         const float y = a.y + b.y * c.y;
         const float z = a.z + b.z * c.z;
-        return Vector<float, 3>(x, y, z);
+        return float3(x, y, z);
     }
 
-    static inline Vector<float, 3> lerp(const Vector<float, 3>& a, const Vector<float, 3>& b, float factor)
+    static inline float3 lerp(const float3& a, const float3& b, float factor)
     {
         const float x = a.x + (b.x - a.x) * factor;
         const float y = a.y + (b.y - a.y) * factor;
         const float z = a.z + (b.z - a.z) * factor;
-        return Vector<float, 3>(x, y, z);
+        return float3(x, y, z);
     }
 
-    static inline Vector<float, 3> lerp(const Vector<float, 3>& a, const Vector<float, 3>& b, const Vector<float, 3>& factor)
+    static inline float3 lerp(const float3& a, const float3& b, const float3& factor)
     {
         const float x = a.x + (b.x - a.x) * factor.x;
         const float y = a.y + (b.y - a.y) * factor.y;
         const float z = a.z + (b.z - a.z) * factor.z;
-        return Vector<float, 3>(x, y, z);
+        return float3(x, y, z);
     }
 
-    static inline Vector<float, 3> hmin(const Vector<float, 3>& v)
+    static inline float3 hmin(const float3& v)
     {
         const float s = std::min(std::min(v.x, v.y), v.z);
-        return Vector<float, 3>(s);
+        return float3(s);
     }
 
-    static inline Vector<float, 3> hmax(const Vector<float, 3>& v)
+    static inline float3 hmax(const float3& v)
     {
         const float s = std::max(std::max(v.x, v.y), v.z);
-        return Vector<float, 3>(s);
+        return float3(s);
     }
 
 } // namespace mango

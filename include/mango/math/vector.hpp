@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -745,7 +745,7 @@ namespace mango
     // ScalarAccessor
     // ------------------------------------------------------------------
 
-    template <typename VectorType, typename ScalarType, int Index>
+    template <typename ScalarType, typename VectorType, int Index>
     struct ScalarAccessor
     {
         VectorType m;
@@ -790,12 +790,12 @@ namespace mango
     // Permute2
     // ------------------------------------------------------------------
 
-    template <typename SIMD, int X, int Y>
+    template <typename ScalarType, typename VectorType, int X, int Y>
     struct Permute2
     {
-        SIMD m;
+        VectorType m;
 
-		operator SIMD () const
+		operator Vector<ScalarType, 2> () const
 		{
             return simd::shuffle<X, Y>(m);
 		}
@@ -805,12 +805,12 @@ namespace mango
     // Permute4
     // ------------------------------------------------------------------
 
-    template <typename SIMD, int X, int Y, int Z, int W>
+    template <typename ScalarType, typename VectorType, int X, int Y, int Z, int W>
     struct Permute4
     {
-        SIMD m;
+        VectorType m;
 
-        operator SIMD () const
+        operator Vector<ScalarType, 4> () const
         {
             return simd::shuffle<X, Y, Z, W>(m);
         }
@@ -820,35 +820,35 @@ namespace mango
     // Permute4x2
     // ------------------------------------------------------------------
 
-    template <typename SIMD4, typename SIMD2, int X, int Y>
+    template <typename ScalarType, typename VectorType, int X, int Y>
     struct Permute4x2
     {
-        SIMD4 m;
+        VectorType m;
 
-        operator SIMD2 () const
+        operator Vector<ScalarType, 2> () const
         {
-            const SIMD4 temp = simd::shuffle<X, Y, X, Y>(m);
+            const VectorType temp = simd::shuffle<X, Y, X, Y>(m);
             return simd::get_low(temp);
         }
     };
 
-    template <typename SIMD4, typename SIMD2>
-    struct Permute4x2<SIMD4, SIMD2, 0, 1>
+    template <typename ScalarType, typename VectorType>
+    struct Permute4x2<ScalarType, VectorType, 0, 1>
     {
-        SIMD4 m;
+        VectorType m;
 
-        operator SIMD2 () const
+        operator Vector<ScalarType, 2> () const
         {
             return simd::get_low(m);
         }
     };
 
-    template <typename SIMD4, typename SIMD2>
-    struct Permute4x2<SIMD4, SIMD2, 2, 3>
+    template <typename ScalarType, typename VectorType>
+    struct Permute4x2<ScalarType, VectorType, 2, 3>
     {
-        SIMD4 m;
+        VectorType m;
 
-        operator SIMD2 () const
+        operator Vector<ScalarType, 2> () const
         {
             return simd::get_high(m);
         }
@@ -858,17 +858,17 @@ namespace mango
     // Permute4x3
     // ------------------------------------------------------------------
 
-    template <typename SIMD, typename SCALAR, int X, int Y, int Z>
+    template <typename ScalarType, typename VectorType, int X, int Y, int Z>
     struct Permute4x3
     {
-        SIMD m;
+        VectorType m;
 
-        operator Vector<SCALAR, 3> () const
+        operator Vector<ScalarType, 3> () const
         {
-            const SCALAR x = simd::get_component<X>(m);
-            const SCALAR y = simd::get_component<Y>(m);
-            const SCALAR z = simd::get_component<Z>(m);
-            return Vector<SCALAR, 3>(x, y, z);
+            const ScalarType x = simd::get_component<X>(m);
+            const ScalarType y = simd::get_component<Y>(m);
+            const ScalarType z = simd::get_component<Z>(m);
+            return Vector<ScalarType, 3>(x, y, z);
         }
     };
 

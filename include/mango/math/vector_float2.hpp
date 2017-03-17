@@ -20,12 +20,12 @@ namespace mango
         {
             simd::float32x2 xy;
 
-            ScalarAccessor<simd::float32x2, float, 0> x;
-            ScalarAccessor<simd::float32x2, float, 1> y;
+            ScalarAccessor<float, simd::float32x2, 0> x;
+            ScalarAccessor<float, simd::float32x2, 1> y;
 
-            Permute2<simd::float32x2, 0, 0> xx;
-            Permute2<simd::float32x2, 1, 0> yx;
-            Permute2<simd::float32x2, 1, 1> yy;
+            Permute2<float, simd::float32x2, 0, 0> xx;
+            Permute2<float, simd::float32x2, 1, 0> yx;
+            Permute2<float, simd::float32x2, 1, 1> yy;
         };
 
         explicit Vector() = default;
@@ -51,13 +51,13 @@ namespace mango
         }
 
         template <int X, int Y>
-        Vector(const Permute2<simd::float32x2, X, Y>& p)
+        Vector(const Permute2<float, simd::float32x2, X, Y>& p)
         {
             xy = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const Permute2<simd::float32x2, X, Y>& p)
+        Vector& operator = (const Permute2<float, simd::float32x2, X, Y>& p)
         {
             xy = p;
             return *this;
@@ -90,83 +90,83 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const Vector<float, 2>& operator + (const Vector<float, 2>& v)
+    static inline const float2 operator + (float2 v)
     {
         return v;
     }
 
-    static inline Vector<float, 2> operator - (const Vector<float, 2>& v)
+    static inline float2 operator - (float2 v)
     {
         return simd::neg(v);
     }
 
-    static inline Vector<float, 2>& operator += (Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2& operator += (float2& a, float2 b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<float, 2>& operator -= (Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2& operator -= (float2& a, float2 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<float, 2>& operator *= (Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2& operator *= (float2& a, float2 b)
     {
         a = simd::mul(a, b);
         return a;
     }
 
-    static inline Vector<float, 2>& operator *= (Vector<float, 2>& a, float b)
+    static inline float2& operator *= (float2& a, float b)
     {
         a = simd::mul(a, b);
         return a;
     }
 
-    static inline Vector<float, 2>& operator /= (Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2& operator /= (float2& a, float2 b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline Vector<float, 2>& operator /= (Vector<float, 2>& a, float b)
+    static inline float2& operator /= (float2& a, float b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline Vector<float, 2> operator + (const Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2 operator + (float2 a, float2 b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<float, 2> operator - (const Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2 operator - (float2 a, float2 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<float, 2> operator * (const Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2 operator * (float2 a, float2 b)
     {
         return simd::mul(a, b);
     }
 
-    static inline Vector<float, 2> operator * (const Vector<float, 2>& a, float b)
+    static inline float2 operator * (float2 a, float b)
     {
         return simd::mul(a, b);
     }
 
-    static inline Vector<float, 2> operator * (float a, const Vector<float, 2>& b)
+    static inline float2 operator * (float a, float2 b)
     {
         return simd::mul(a, b);
     }
 
-    static inline Vector<float, 2> operator / (const Vector<float, 2>& a, const Vector<float, 2>& b)
+    static inline float2 operator / (float2 a, float2 b)
     {
         return simd::div(a, b);
     }
 
-    static inline Vector<float, 2> operator / (const Vector<float, 2>& a, float b)
+    static inline float2 operator / (float2 a, float b)
     {
         return simd::div(a, b);
     }
@@ -175,24 +175,63 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<float, 2> clamp(const Vector<float, 2>& a, const Vector<float, 2>& amin, const Vector<float, 2>& amax)
+    static inline float2 clamp(float2 a, float2 amin, float2 amax)
     {
         return simd::clamp(a, amin, amax);
     }
 
-    static inline Vector<float, 2> madd(const Vector<float, 2>& a, const Vector<float, 2>& b, const Vector<float, 2>& c)
+    static inline float2 madd(float2 a, float2 b, float2 c)
     {
         return simd::madd(a, b, c);
     }
 
-    static inline Vector<float, 2> lerp(const Vector<float, 2>& a, const Vector<float, 2>& b, float factor)
+    static inline float2 lerp(float2 a, float2 b, float factor)
     {
         return a + (b - a) * factor;
     }
 
-    static inline Vector<float, 2> lerp(const Vector<float, 2>& a, const Vector<float, 2>& b, const Vector<float, 2>& factor)
+    static inline float2 lerp(float2 a, float2 b, float2 factor)
     {
         return a + (b - a) * factor;
+    }
+
+    // ------------------------------------------------------------------
+    // compare / select
+    // ------------------------------------------------------------------
+
+    static inline float2 operator > (float2 a, float2 b)
+    {
+        return simd::compare_gt(a, b);
+    }
+
+    static inline float2 operator >= (float2 a, float2 b)
+    {
+        return simd::compare_ge(a, b);
+    }
+
+    static inline float2 operator < (float2 a, float2 b)
+    {
+        return simd::compare_lt(a, b);
+    }
+
+    static inline float2 operator <= (float2 a, float2 b)
+    {
+        return simd::compare_le(a, b);
+    }
+
+    static inline float2 operator == (float2 a, float2 b)
+    {
+        return simd::compare_eq(a, b);
+    }
+
+    static inline float2 operator != (float2 a, float2 b)
+    {
+        return simd::compare_neq(a, b);
+    }
+
+    static inline float2 select(float2 mask, float2 a, float2 b)
+    {
+        return simd::select(mask, a, b);
     }
 
 } // namespace mango
