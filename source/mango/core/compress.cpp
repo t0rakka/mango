@@ -235,21 +235,22 @@ namespace zstd {
         }
     }
 
-#if 0
     class StreamEncoderZSTD : public StreamEncoder
     {
+    protected:
+        ZSTD_CStream* z;
+
     public:
         StreamEncoderZSTD(int level)
         {
             level = clamp(level * 2, 1, 20);
-            z = ZBUFF_createCCtx();
-            ZBUFF_compressInit(z, level);
+            z = ZSTD_createCStream();
+            ZSTD_initCStream(z, level);
         }
 
         ~StreamEncoderZSTD()
         {
-            //ZBUFF_compressEnd(z, ..., ...);
-            ZBUFF_freeCCtx(z);
+            ZSTD_freeCStream(z);
         }
 
         size_t bound(size_t size) const
@@ -261,81 +262,67 @@ namespace zstd {
 
         size_t encode(Memory dest, Memory source)
         {
-            const uint8* src = source.address;
-            size_t src_bytes = source.size;
+            ZSTD_inBuffer input;
 
-            uint8* dst = dest.address;
-            size_t dst_bytes = dest.size;
+            input.src = source.address;
+            input.size = source.size;
+            input.pos = 0;
 
-            size_t dstCapacity;
-            size_t srcSize;
+            ZSTD_outBuffer output;
 
-            // compression loop
-            for (; src_bytes > 0;)
+            output.dst = dest.address;
+            output.size = dest.size;
+            output.pos = 0;
+
+            for (; input.pos < input.size;)
             {
-                dstCapacity = dst_bytes;
-                srcSize = src_bytes;
-                ZBUFF_compressContinue(z, dst, &dstCapacity, src, &srcSize);
-                dst += dstCapacity;
-                src += srcSize;
-                dst_bytes -= dstCapacity;
-                src_bytes -= srcSize;
+                ZSTD_compressStream(z, &output, &input);
             }
 
-            // flush compressed stream
-            dstCapacity = dst_bytes;
-            ZBUFF_compressFlush(z, dst, &dstCapacity);
-            dst += dstCapacity;
-            dst_bytes -= dstCapacity;
+            ZSTD_flushStream(z, &output);
 
-            // calculate how many bytes we wrote
-            size_t written = dest.size - dst_bytes;
-
-            return written;
+            return output.pos;
         }
-
-    protected:
-        ZBUFF_CCtx* z;
     };
 
     class StreamDecoderZSTD : public StreamDecoder
     {
+    protected:
+        ZSTD_DStream* z;
+
     public:
         StreamDecoderZSTD()
         {
-            z = ZBUFF_createDCtx();
-            ZBUFF_decompressInit(z);
+            z = ZSTD_createDStream();
+            ZSTD_initDStream(z);
         }
 
         ~StreamDecoderZSTD()
         {
-            ZBUFF_freeDCtx(z);
+            ZSTD_freeDStream(z);
         }
 
         size_t decode(Memory dest, Memory source)
         {
-            const uint8* src = source.address;
-            size_t src_bytes = source.size;
+            ZSTD_inBuffer input;
 
-            uint8* dst = dest.address;
-            size_t dst_bytes = dest.size;
+            input.src = source.address;
+            input.size = source.size;
+            input.pos = 0;
 
-            for (; src_bytes > 0;)
+            ZSTD_outBuffer output;
+
+            output.dst = dest.address;
+            output.size = dest.size;
+            output.pos = 0;
+
+            for (; input.pos < input.size;)
             {
-                size_t dstCapacity = dst_bytes;
-                size_t srcSize = src_bytes;
-                ZBUFF_decompressContinue(z, dst, &dstCapacity, src, &srcSize);
-                dst += dstCapacity;
-                src += srcSize;
-                dst_bytes -= dstCapacity;
-                src_bytes -= srcSize;
+                ZSTD_decompressStream(z, &output, &input);
             }
 
-            return dest.size;
+            return output.pos;
         }
-
-    protected:
-        ZBUFF_DCtx* z;
     };
 
     StreamEncoder* createStreamEncoder(int level)
@@ -349,7 +336,6 @@ namespace zstd {
         StreamDecoder* decoder = new StreamDecoderZSTD();
         return decoder;
     }
-#endif
 
 } // namespace zstd
 
