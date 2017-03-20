@@ -12,12 +12,12 @@
 *  Dependencies
 ***************************************/
 #include <string.h>         /* memset */
-#include "mem.h"
+#include "../common/mem.h"
 #define FSE_STATIC_LINKING_ONLY   /* FSE_encodeSymbol */
-#include "fse.h"
+#include "../common/fse.h"
 #define HUF_STATIC_LINKING_ONLY
-#include "huf.h"
-#include "zstd_internal.h"  /* includes zstd.h */
+#include "../common/huf.h"
+#include "../common/zstd_internal.h"  /* includes zstd.h */
 
 
 /*-*************************************

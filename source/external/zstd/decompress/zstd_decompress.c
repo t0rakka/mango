@@ -42,12 +42,12 @@
 *  Dependencies
 *********************************************************/
 #include <string.h>      /* memcpy, memmove, memset */
-#include "mem.h"         /* low level memory routines */
+#include "../common/mem.h"         /* low level memory routines */
 #define FSE_STATIC_LINKING_ONLY
-#include "fse.h"
+#include "../common/fse.h"
 #define HUF_STATIC_LINKING_ONLY
-#include "huf.h"
-#include "zstd_internal.h"
+#include "../common/huf.h"
+#include "../common/zstd_internal.h"
 
 #if defined(ZSTD_LEGACY_SUPPORT) && (ZSTD_LEGACY_SUPPORT>=1)
 #  include "zstd_legacy.h"

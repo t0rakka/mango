@@ -21,9 +21,9 @@
 /* ======   Dependencies   ====== */
 #include <stdlib.h>   /* malloc */
 #include <string.h>   /* memcpy */
-#include "pool.h"     /* threadpool */
-#include "threading.h"  /* mutex */
-#include "zstd_internal.h"   /* MIN, ERROR, ZSTD_*, ZSTD_highbit32 */
+#include "../common/pool.h"     /* threadpool */
+#include "../common/threading.h"  /* mutex */
+#include "../common/zstd_internal.h"   /* MIN, ERROR, ZSTD_*, ZSTD_highbit32 */
 #include "zstdmt_compress.h"
 
 

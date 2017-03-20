@@ -55,10 +55,10 @@
 *  Dependencies
 ****************************************************************/
 #include <string.h>     /* memcpy, memset */
-#include "bitstream.h"  /* BIT_* */
-#include "fse.h"        /* header compression */
+#include "../common/bitstream.h"  /* BIT_* */
+#include "../common/fse.h"        /* header compression */
 #define HUF_STATIC_LINKING_ONLY
-#include "huf.h"
+#include "../common/huf.h"
 
 
 /* **************************************************************

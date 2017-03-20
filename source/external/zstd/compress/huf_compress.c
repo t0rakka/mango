@@ -45,11 +45,11 @@
 ****************************************************************/
 #include <string.h>     /* memcpy, memset */
 #include <stdio.h>      /* printf (debug) */
-#include "bitstream.h"
+#include "../common/bitstream.h"
 #define FSE_STATIC_LINKING_ONLY   /* FSE_optimalTableLog_internal */
-#include "fse.h"        /* header compression */
+#include "../common/fse.h"        /* header compression */
 #define HUF_STATIC_LINKING_ONLY
-#include "huf.h"
+#include "../common/huf.h"
 
 
 /* **************************************************************
