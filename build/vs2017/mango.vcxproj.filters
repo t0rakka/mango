@@ -402,39 +402,6 @@
     <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp">
       <Filter>mango\source\jpeg</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\bitstream.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\error_private.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\error_public.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\fse.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\huf.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\mem.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\xxhash.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\zbuff.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\zstd.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h">
-      <Filter>external\zstd\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\zstd\compress\zstd_opt.h">
-      <Filter>external\zstd\compress</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\unrar\array.hpp">
       <Filter>external\unrar</Filter>
     </ClInclude>
@@ -533,6 +500,51 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mango\math\vector_double2.hpp">
       <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lz4\lz4opt.h">
+      <Filter>external\lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\zstd.h">
+      <Filter>external\zstd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\bitstream.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\error_private.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\error_public.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\fse.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\huf.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\mem.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\pool.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\threading.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\xxhash.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_errors.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_opt.h">
+      <Filter>external\zstd\compress</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -704,39 +716,6 @@
     <ClCompile Include="..\..\source\mango\jpeg\idct.cpp">
       <Filter>mango\source\jpeg</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\common\entropy_common.c">
-      <Filter>external\zstd\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\common\fse_decompress.c">
-      <Filter>external\zstd\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\common\xxhash.c">
-      <Filter>external\zstd\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\common\zstd_common.c">
-      <Filter>external\zstd\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\compress\fse_compress.c">
-      <Filter>external\zstd\compress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c">
-      <Filter>external\zstd\compress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\compress\zbuff_compress.c">
-      <Filter>external\zstd\compress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c">
-      <Filter>external\zstd\compress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\decompress\huf_decompress.c">
-      <Filter>external\zstd\decompress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\decompress\zbuff_decompress.c">
-      <Filter>external\zstd\decompress</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c">
-      <Filter>external\zstd\decompress</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\external\unrar\crc.cpp">
       <Filter>external\unrar</Filter>
     </ClCompile>
@@ -832,6 +811,45 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\bc\BC4BC5.cpp">
       <Filter>external\bc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\entropy_common.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\error_private.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\fse_decompress.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\pool.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\threading.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\xxhash.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\common\zstd_common.c">
+      <Filter>external\zstd\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\fse_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zstdmt_compress.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c">
+      <Filter>external\zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\huf_decompress.c">
+      <Filter>external\zstd\decompress</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
