@@ -19,8 +19,7 @@
 #include "../../external/lz4/lz4.h"
 #include "../../external/lz4/lz4hc.h"
 #include "../../external/lzo/minilzo.h"
-#include "../../external/zstd/common/zstd.h"
-#include "../../external/zstd/common/zbuff.h"
+#include "../../external/zstd/zstd.h"
 #endif
 
 #ifdef MANGO_ENABLE_LICENSE_ZLIB
@@ -236,6 +235,7 @@ namespace zstd {
         }
     }
 
+#if 0
     class StreamEncoderZSTD : public StreamEncoder
     {
     public:
@@ -349,7 +349,8 @@ namespace zstd {
         StreamDecoder* decoder = new StreamDecoderZSTD();
         return decoder;
     }
-    
+#endif
+
 } // namespace zstd
 
 #endif // MANGO_ENABLE_LICENSE_BSD

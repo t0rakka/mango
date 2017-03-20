@@ -52,6 +52,8 @@
 		A00559E01C9333FE00A6D963 /* gui in Headers */ = {isa = PBXBuildFile; fileRef = A00559DF1C9333FE00A6D963 /* gui */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559E21C93340600A6D963 /* image in Headers */ = {isa = PBXBuildFile; fileRef = A00559E11C93340600A6D963 /* image */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559E41C9335E100A6D963 /* vulkan in Headers */ = {isa = PBXBuildFile; fileRef = A00559E31C9335E100A6D963 /* vulkan */; settings = {ATTRIBUTES = (Public, ); }; };
+		A05C9CF81E808D51000D6B3E /* error_private.c in Sources */ = {isa = PBXBuildFile; fileRef = A05C9CF71E808D51000D6B3E /* error_private.c */; };
+		A05C9CFA1E808E20000D6B3E /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A05C9CF91E808E20000D6B3E /* zstd.h */; };
 		A0B1452419198C1300912118 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1452319198C1300912118 /* AppKit.framework */; };
 		A0B1452619198C1D00912118 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1452519198C1D00912118 /* OpenGL.framework */; };
 		A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */; };
@@ -139,11 +141,9 @@
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
 		A63DD7BB1E706FEB00D4D499 /* huf_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7B81E706FEB00D4D499 /* huf_decompress.c */; };
-		A63DD7BC1E706FEB00D4D499 /* zbuff_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7B91E706FEB00D4D499 /* zbuff_decompress.c */; };
 		A63DD7BD1E706FEB00D4D499 /* zstd_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7BA1E706FEB00D4D499 /* zstd_decompress.c */; };
 		A63DD7C31E706FFC00D4D499 /* fse_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7BE1E706FFC00D4D499 /* fse_compress.c */; };
 		A63DD7C41E706FFC00D4D499 /* huf_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7BF1E706FFC00D4D499 /* huf_compress.c */; };
-		A63DD7C51E706FFC00D4D499 /* zbuff_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7C01E706FFC00D4D499 /* zbuff_compress.c */; };
 		A63DD7C61E706FFC00D4D499 /* zstd_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7C11E706FFC00D4D499 /* zstd_compress.c */; };
 		A63DD7C71E706FFC00D4D499 /* zstd_opt.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7C21E706FFC00D4D499 /* zstd_opt.h */; };
 		A63DD7D61E70700900D4D499 /* bitstream.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7C81E70700900D4D499 /* bitstream.h */; };
@@ -156,10 +156,8 @@
 		A63DD7DD1E70700900D4D499 /* mem.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7CF1E70700900D4D499 /* mem.h */; };
 		A63DD7DE1E70700900D4D499 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7D01E70700900D4D499 /* xxhash.c */; };
 		A63DD7DF1E70700900D4D499 /* xxhash.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7D11E70700900D4D499 /* xxhash.h */; };
-		A63DD7E01E70700900D4D499 /* zbuff.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7D21E70700900D4D499 /* zbuff.h */; };
 		A63DD7E11E70700900D4D499 /* zstd_common.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7D31E70700900D4D499 /* zstd_common.c */; };
 		A63DD7E21E70700900D4D499 /* zstd_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7D41E70700900D4D499 /* zstd_internal.h */; };
-		A63DD7E31E70700900D4D499 /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7D51E70700900D4D499 /* zstd.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -208,6 +206,8 @@
 		A00559DF1C9333FE00A6D963 /* gui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = gui; path = mango/gui; sourceTree = "<group>"; };
 		A00559E11C93340600A6D963 /* image */ = {isa = PBXFileReference; lastKnownFileType = folder; name = image; path = mango/image; sourceTree = "<group>"; };
 		A00559E31C9335E100A6D963 /* vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = vulkan; path = mango/vulkan; sourceTree = "<group>"; };
+		A05C9CF71E808D51000D6B3E /* error_private.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = error_private.c; path = external/zstd/common/error_private.c; sourceTree = "<group>"; };
+		A05C9CF91E808E20000D6B3E /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/zstd.h; sourceTree = "<group>"; };
 		A0B1452319198C1300912118 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		A0B1452519198C1D00912118 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dynamic_library.cpp; path = core/unix/dynamic_library.cpp; sourceTree = "<group>"; };
@@ -297,11 +297,9 @@
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
 		A63DD7B81E706FEB00D4D499 /* huf_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = huf_decompress.c; path = external/zstd/decompress/huf_decompress.c; sourceTree = "<group>"; };
-		A63DD7B91E706FEB00D4D499 /* zbuff_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zbuff_decompress.c; path = external/zstd/decompress/zbuff_decompress.c; sourceTree = "<group>"; };
 		A63DD7BA1E706FEB00D4D499 /* zstd_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_decompress.c; path = external/zstd/decompress/zstd_decompress.c; sourceTree = "<group>"; };
 		A63DD7BE1E706FFC00D4D499 /* fse_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fse_compress.c; path = external/zstd/compress/fse_compress.c; sourceTree = "<group>"; };
 		A63DD7BF1E706FFC00D4D499 /* huf_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = huf_compress.c; path = external/zstd/compress/huf_compress.c; sourceTree = "<group>"; };
-		A63DD7C01E706FFC00D4D499 /* zbuff_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zbuff_compress.c; path = external/zstd/compress/zbuff_compress.c; sourceTree = "<group>"; };
 		A63DD7C11E706FFC00D4D499 /* zstd_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress.c; path = external/zstd/compress/zstd_compress.c; sourceTree = "<group>"; };
 		A63DD7C21E706FFC00D4D499 /* zstd_opt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_opt.h; path = external/zstd/compress/zstd_opt.h; sourceTree = "<group>"; };
 		A63DD7C81E70700900D4D499 /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bitstream.h; path = external/zstd/common/bitstream.h; sourceTree = "<group>"; };
@@ -314,10 +312,8 @@
 		A63DD7CF1E70700900D4D499 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mem.h; path = external/zstd/common/mem.h; sourceTree = "<group>"; };
 		A63DD7D01E70700900D4D499 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xxhash.c; path = external/zstd/common/xxhash.c; sourceTree = "<group>"; };
 		A63DD7D11E70700900D4D499 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxhash.h; path = external/zstd/common/xxhash.h; sourceTree = "<group>"; };
-		A63DD7D21E70700900D4D499 /* zbuff.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zbuff.h; path = external/zstd/common/zbuff.h; sourceTree = "<group>"; };
 		A63DD7D31E70700900D4D499 /* zstd_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_common.c; path = external/zstd/common/zstd_common.c; sourceTree = "<group>"; };
 		A63DD7D41E70700900D4D499 /* zstd_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_internal.h; path = external/zstd/common/zstd_internal.h; sourceTree = "<group>"; };
-		A63DD7D51E70700900D4D499 /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/common/zstd.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -664,6 +660,7 @@
 		A63DD7B41E706FBF00D4D499 /* zstd */ = {
 			isa = PBXGroup;
 			children = (
+				A05C9CF91E808E20000D6B3E /* zstd.h */,
 				A63DD7B71E706FD100D4D499 /* decompress */,
 				A63DD7B61E706FCC00D4D499 /* compress */,
 				A63DD7B51E706FC600D4D499 /* common */,
@@ -674,6 +671,7 @@
 		A63DD7B51E706FC600D4D499 /* common */ = {
 			isa = PBXGroup;
 			children = (
+				A05C9CF71E808D51000D6B3E /* error_private.c */,
 				A63DD7C81E70700900D4D499 /* bitstream.h */,
 				A63DD7C91E70700900D4D499 /* entropy_common.c */,
 				A63DD7CA1E70700900D4D499 /* error_private.h */,
@@ -684,10 +682,8 @@
 				A63DD7CF1E70700900D4D499 /* mem.h */,
 				A63DD7D01E70700900D4D499 /* xxhash.c */,
 				A63DD7D11E70700900D4D499 /* xxhash.h */,
-				A63DD7D21E70700900D4D499 /* zbuff.h */,
 				A63DD7D31E70700900D4D499 /* zstd_common.c */,
 				A63DD7D41E70700900D4D499 /* zstd_internal.h */,
-				A63DD7D51E70700900D4D499 /* zstd.h */,
 			);
 			name = common;
 			sourceTree = "<group>";
@@ -697,7 +693,6 @@
 			children = (
 				A63DD7BE1E706FFC00D4D499 /* fse_compress.c */,
 				A63DD7BF1E706FFC00D4D499 /* huf_compress.c */,
-				A63DD7C01E706FFC00D4D499 /* zbuff_compress.c */,
 				A63DD7C11E706FFC00D4D499 /* zstd_compress.c */,
 				A63DD7C21E706FFC00D4D499 /* zstd_opt.h */,
 			);
@@ -708,7 +703,6 @@
 			isa = PBXGroup;
 			children = (
 				A63DD7B81E706FEB00D4D499 /* huf_decompress.c */,
-				A63DD7B91E706FEB00D4D499 /* zbuff_decompress.c */,
 				A63DD7BA1E706FEB00D4D499 /* zstd_decompress.c */,
 			);
 			name = decompress;
@@ -734,6 +728,7 @@
 				A63DD7971E706F5400D4D499 /* lzoconf.h in Headers */,
 				A63DD7551E706EB200D4D499 /* rarvm.hpp in Headers */,
 				A63DD7DF1E70700900D4D499 /* xxhash.h in Headers */,
+				A05C9CFA1E808E20000D6B3E /* zstd.h in Headers */,
 				A63DD7AF1E706FA000D4D499 /* astc.hpp in Headers */,
 				A63DD7DD1E70700900D4D499 /* mem.h in Headers */,
 				A63DD7711E706EF100D4D499 /* lzfse_encode_tables.h in Headers */,
@@ -742,8 +737,6 @@
 				A00559DA1C93337C00A6D963 /* core in Headers */,
 				A63DD7C71E706FFC00D4D499 /* zstd_opt.h in Headers */,
 				A00559DE1C9333F100A6D963 /* filesystem in Headers */,
-				A63DD7E01E70700900D4D499 /* zbuff.h in Headers */,
-				A63DD7E31E70700900D4D499 /* zstd.h in Headers */,
 				A63DD75B1E706EB200D4D499 /* sha1.hpp in Headers */,
 				A0FF42CE1BBEDC9D0036141B /* simd in Headers */,
 				A63DD7751E706EF100D4D499 /* lzfse_internal.h in Headers */,
@@ -842,7 +835,7 @@
 				A00559D21C93329A00A6D963 /* image_tga.cpp in Sources */,
 				A63DD7701E706EF100D4D499 /* lzfse_encode_base.c in Sources */,
 				A00559981C93324E00A6D963 /* object.cpp in Sources */,
-				A63DD7BC1E706FEB00D4D499 /* zbuff_decompress.c in Sources */,
+				A05C9CF81E808D51000D6B3E /* error_private.c in Sources */,
 				A00559A51C93327800A6D963 /* mapper_mgx.cpp in Sources */,
 				A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */,
 				A63DD76E1E706EF100D4D499 /* lzfse_decode_base.c in Sources */,
@@ -860,7 +853,6 @@
 				A00559CD1C93329A00A6D963 /* image_ktx.cpp in Sources */,
 				A63DD6FC1E706D8600D4D499 /* encode.cpp in Sources */,
 				A63DD75D1E706EB200D4D499 /* unpack.cpp in Sources */,
-				A63DD7C51E706FFC00D4D499 /* zbuff_compress.c in Sources */,
 				A63DD7501E706EB200D4D499 /* getbits.cpp in Sources */,
 				A63DD77A1E706EF100D4D499 /* lzvn_encode_base.c in Sources */,
 				A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */,
