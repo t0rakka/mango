@@ -41,7 +41,7 @@ namespace miniz {
 		return mz_compressBound(s);
     }
 
-	Memory compress(Memory dest, Memory source, int level)
+	size_t compress(Memory dest, Memory source, int level)
 	{
         level = clamp(level, 0, 10);
 
@@ -53,7 +53,7 @@ namespace miniz {
             MANGO_EXCEPTION("miniz: compression failed.");
         }
 
-        return Memory(dest.address, size);
+        return size;
 	}
 
     void decompress(Memory dest, Memory source)
@@ -66,7 +66,7 @@ namespace miniz {
         switch (status)
         {
             case MZ_OK:
-                msg = NULL;
+                msg = nullptr;
                 break;
             case MZ_MEM_ERROR:
                 msg = "miniz: not enough memory.";
@@ -104,7 +104,7 @@ namespace lz4 {
 		return LZ4_compressBound(s);
     }
 
-    Memory compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, Memory source, int level)
     {
         const int source_size = int(source.size);
         const int dest_size = int(dest.size);
@@ -129,7 +129,7 @@ namespace lz4 {
 			MANGO_EXCEPTION("lz4: compression failed.");
 		}
 
-        return Memory(dest.address, written);
+        return written;
 	}
 
     void decompress(Memory dest, Memory source)
@@ -154,7 +154,7 @@ namespace lzo {
         return size + (size / 16) + 128;
     }
 
-    Memory compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, Memory source, int level)
     {
         void* workmem = aligned_malloc(LZO1X_MEM_COMPRESS);
 
@@ -172,7 +172,7 @@ namespace lzo {
             MANGO_EXCEPTION("lzo: compression failed.");
         }
 
-        return Memory(dest.address, (size_t)dst_len);
+        return static_cast<size_t>(dst_len);
 	}
 
     void decompress(Memory dest, Memory source)
@@ -205,7 +205,7 @@ namespace zstd {
 		return ZSTD_compressBound(size) + turbo;
     }
 
-    Memory compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, Memory source, int level)
     {
         level = clamp(level * 2, 1, 20);
 
@@ -219,7 +219,7 @@ namespace zstd {
             MANGO_EXCEPTION(s);
         }
 
-        return Memory(dest.address, x);
+        return x;
 	}
 
     void decompress(Memory dest, Memory source)
@@ -354,7 +354,7 @@ namespace bzip2 {
         return size + (size / 100) + 600;
     }
 
-    Memory compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, Memory source, int level)
     {
         const int blockSize100k = clamp(level, 1, 9);
 
@@ -395,7 +395,7 @@ namespace bzip2 {
         destLength -= strm.avail_out;
         BZ2_bzCompressEnd(&strm);
 
-        return Memory(dest.address, static_cast<size_t>(destLength));
+        return static_cast<size_t>(destLength);
     }
 
     void decompress(Memory dest, Memory source)
@@ -446,14 +446,14 @@ namespace lzfse {
         return 1024 + size;
     }
 
-    Memory compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, Memory source, int level)
     {
         MANGO_UNREFERENCED_PARAMETER(level);
 
         const size_t scratch_size = lzfse_encode_scratch_size();
         Buffer scratch(scratch_size);
         size_t written = lzfse_encode_buffer(dest.address, dest.size, source, source.size, scratch);
-        return Memory(dest.address, written);
+        return written;
     }
 
     void decompress(Memory dest, Memory source)

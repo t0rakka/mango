@@ -66,7 +66,7 @@ namespace mango
     namespace miniz
     {
         size_t bound(size_t size);
-        Memory compress(Memory dest, Memory source, int level = 6);
+        size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
 
@@ -74,21 +74,21 @@ namespace mango
     namespace lz4
     {
         size_t bound(size_t size);
-        Memory compress(Memory dest, Memory source, int level = 6);
+        size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
 
     namespace lzo
     {
         size_t bound(size_t size);
-        Memory compress(Memory dest, Memory source, int level = 6);
+        size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
 
     namespace zstd
     {
         size_t bound(size_t size);
-        Memory compress(Memory dest, Memory source, int level = 6);
+        size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
 
         StreamEncoder* createStreamEncoder(int level);
@@ -100,14 +100,14 @@ namespace mango
     namespace bzip2
     {
         size_t bound(size_t size);
-        Memory compress(Memory dest, Memory source, int level = 6);
+        size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
 
     namespace lzfse
     {
         size_t bound(size_t size);
-        Memory compress(Memory dest, Memory source, int level = 6);
+        size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
 #endif
