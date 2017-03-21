@@ -700,7 +700,9 @@ namespace mango
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        for (; msg.message != WM_QUIT;)
+		m_handle->looping = true;
+
+		for (; m_handle->looping && msg.message != WM_QUIT;)
         {
             if (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
             {
@@ -717,6 +719,7 @@ namespace mango
     void Window::breakEventLoop()
     {
         ::PostQuitMessage(0);
+		m_handle->looping = false;
     }
 
     void Window::onIdle()

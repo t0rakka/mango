@@ -11,6 +11,7 @@ namespace mango
     {
 		HWND hwnd { NULL };
         HICON icon { NULL };
+		bool looping{ false };
 
 		WindowHandle(int width, int height);
 		~WindowHandle();
