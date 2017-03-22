@@ -141,6 +141,129 @@ namespace lz4 {
         }
     }
 
+    // stream
+
+    class StreamEncoderLZ4 : public StreamEncoder
+    {
+    protected:
+        LZ4_stream_t* s;
+        int acceleration;
+
+        char buffer[1024 * 192];
+        size_t offset { 0 };
+
+    public:
+        StreamEncoderLZ4(int level)
+            : acceleration(level)
+        {
+            s = LZ4_createStream();
+        }
+
+        ~StreamEncoderLZ4()
+        {
+            LZ4_freeStream(s);
+        }
+
+        size_t bound(size_t size) const
+        {
+            const int s = int(size);
+            return LZ4_compressBound(s);
+        }
+
+        size_t encode(Memory dest, Memory source)
+        {
+            size_t compressed_bytes = 0;
+
+            for (; source.size > 0;)
+            {
+                size_t block_size = std::min(size_t(1024 * 64), source.size);
+
+                if (offset >= 1024 * 128)
+                {
+                    offset = 0;
+                }
+
+                char* temp = buffer + offset;
+                offset += block_size;
+
+                std::memcpy(temp, source.address, block_size);
+                source.address += block_size;
+                source.size -= block_size;
+
+                int bytes = LZ4_compress_fast_continue(s, temp, reinterpret_cast<char *>(dest.address), int(block_size), int(dest.size), acceleration);
+
+                compressed_bytes += bytes;
+                dest.address += bytes;
+                dest.size -= bytes;
+            }
+
+            return compressed_bytes;
+        }
+    };
+
+    class StreamDecoderLZ4 : public StreamDecoder
+    {
+    protected:
+        LZ4_streamDecode_t* s;
+
+        char buffer[1024 * 192];
+        size_t offset { 0 };
+
+    public:
+        StreamDecoderLZ4()
+        {
+            s = LZ4_createStreamDecode();
+        }
+
+        ~StreamDecoderLZ4()
+        {
+            LZ4_freeStreamDecode(s);
+        }
+
+        size_t decode(Memory dest, Memory source)
+        {
+            size_t decompressed_bytes = 0;
+
+            for (; dest.size > 0;)
+            {
+                size_t block_size = std::min(size_t(1024 * 64), dest.size);
+
+                if (offset >= 1024 * 128)
+                {
+                    offset = 0;
+                }
+
+                char* temp = buffer + offset;
+                offset += block_size;
+
+                int x = LZ4_decompress_fast_continue(s, reinterpret_cast<const char *>(source.address), temp, int(block_size));
+
+                source.address += x;
+                source.size -= x;
+
+                std::memcpy(dest.address, temp, block_size);
+                dest.address += block_size;
+                dest.size -= block_size;
+
+                decompressed_bytes += block_size;
+            }
+
+            return decompressed_bytes;
+        }
+    };
+
+    StreamEncoder* createStreamEncoder(int level)
+    {
+        StreamEncoder* encoder = new StreamEncoderLZ4(level);
+        return encoder;
+    }
+
+    StreamDecoder* createStreamDecoder()
+    {
+        StreamDecoder* decoder = new StreamDecoderLZ4();
+        return decoder;
+    }
+
 } // namespace lz4
 
 // ----------------------------------------------------------------------------
@@ -234,6 +357,8 @@ namespace zstd {
             MANGO_EXCEPTION(s);
         }
     }
+
+    // stream
 
     class StreamEncoderZSTD : public StreamEncoder
     {

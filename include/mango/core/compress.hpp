@@ -50,6 +50,22 @@ namespace mango
         virtual size_t decode(Memory dest, Memory source) = 0;
     };
 
+#ifdef MANGO_ENABLE_LICENSE_BSD
+
+    namespace lz4
+    {
+        StreamEncoder* createStreamEncoder(int level);
+        StreamDecoder* createStreamDecoder();
+    }
+
+    namespace zstd
+    {
+        StreamEncoder* createStreamEncoder(int level);
+        StreamDecoder* createStreamDecoder();
+    }
+
+#endif
+
     // -----------------------------------------------------------------------
     // memory block compression
     // -----------------------------------------------------------------------
@@ -71,6 +87,7 @@ namespace mango
     }
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
+
     namespace lz4
     {
         size_t bound(size_t size);
@@ -90,13 +107,12 @@ namespace mango
         size_t bound(size_t size);
         size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
-
-        StreamEncoder* createStreamEncoder(int level);
-        StreamDecoder* createStreamDecoder();
     }
+
 #endif
 
 #ifdef MANGO_ENABLE_LICENSE_ZLIB
+
     namespace bzip2
     {
         size_t bound(size_t size);
@@ -110,6 +126,7 @@ namespace mango
         size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
+
 #endif
 
 } // namespace mango
