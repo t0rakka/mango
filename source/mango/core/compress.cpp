@@ -146,22 +146,22 @@ namespace lz4 {
     class StreamEncoderLZ4 : public StreamEncoder
     {
     protected:
-        LZ4_stream_t* s;
-        int acceleration;
+        LZ4_stream_t* m_stream;
+        int m_acceleration;
 
-        char buffer[1024 * 192];
-        size_t offset { 0 };
+        char m_buffer[1024 * 128];
+        size_t m_offset { 0 };
 
     public:
         StreamEncoderLZ4(int level)
-            : acceleration(level)
+            : m_acceleration(level)
         {
-            s = LZ4_createStream();
+            m_stream = LZ4_createStream();
         }
 
         ~StreamEncoderLZ4()
         {
-            LZ4_freeStream(s);
+            LZ4_freeStream(m_stream);
         }
 
         size_t bound(size_t size) const
@@ -172,83 +172,86 @@ namespace lz4 {
 
         size_t encode(Memory dest, Memory source)
         {
-            size_t compressed_bytes = 0;
+            size_t written = 0;
 
             for (; source.size > 0;)
             {
                 size_t block_size = std::min(size_t(1024 * 64), source.size);
 
-                if (offset >= 1024 * 128)
+                if (m_offset + block_size > 1024 * 128)
                 {
-                    offset = 0;
+                    m_offset = 0;
                 }
 
-                char* temp = buffer + offset;
-                offset += block_size;
+                char* temp = m_buffer + m_offset;
+                m_offset += block_size;
 
                 std::memcpy(temp, source.address, block_size);
                 source.address += block_size;
                 source.size -= block_size;
 
-                int bytes = LZ4_compress_fast_continue(s, temp, reinterpret_cast<char *>(dest.address), int(block_size), int(dest.size), acceleration);
+                char* dst = reinterpret_cast<char *>(dest.address);
+                int bytes = LZ4_compress_fast_continue(m_stream, temp, dst, int(block_size), int(dest.size), m_acceleration);
 
-                compressed_bytes += bytes;
                 dest.address += bytes;
                 dest.size -= bytes;
+
+                written += bytes;
             }
 
-            return compressed_bytes;
+            return written;
         }
     };
 
     class StreamDecoderLZ4 : public StreamDecoder
     {
     protected:
-        LZ4_streamDecode_t* s;
+        LZ4_streamDecode_t* m_stream;
 
-        char buffer[1024 * 192];
-        size_t offset { 0 };
+        char m_buffer[1024 * 128];
+        size_t m_offset { 0 };
 
     public:
         StreamDecoderLZ4()
         {
-            s = LZ4_createStreamDecode();
+            m_stream = LZ4_createStreamDecode();
         }
 
         ~StreamDecoderLZ4()
         {
-            LZ4_freeStreamDecode(s);
+            LZ4_freeStreamDecode(m_stream);
         }
 
         size_t decode(Memory dest, Memory source)
         {
-            size_t decompressed_bytes = 0;
+            size_t written = 0;
 
             for (; dest.size > 0;)
             {
                 size_t block_size = std::min(size_t(1024 * 64), dest.size);
 
-                if (offset >= 1024 * 128)
+                if (m_offset + block_size > 1024 * 128)
                 {
-                    offset = 0;
+                    m_offset = 0;
                 }
 
-                char* temp = buffer + offset;
-                offset += block_size;
+                char* temp = m_buffer + m_offset;
+                m_offset += block_size;
 
-                int x = LZ4_decompress_fast_continue(s, reinterpret_cast<const char *>(source.address), temp, int(block_size));
+                const char* src = reinterpret_cast<const char *>(source.address);
+                int bytes = LZ4_decompress_fast_continue(m_stream, src, temp, int(block_size));
 
-                source.address += x;
-                source.size -= x;
+                source.address += bytes;
+                source.size -= bytes;
 
                 std::memcpy(dest.address, temp, block_size);
                 dest.address += block_size;
                 dest.size -= block_size;
 
-                decompressed_bytes += block_size;
+                written += block_size;
             }
 
-            return decompressed_bytes;
+            return written;
         }
     };
 
