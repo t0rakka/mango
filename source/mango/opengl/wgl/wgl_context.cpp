@@ -89,7 +89,7 @@ namespace opengl {
 
 	struct ContextHandle
 	{
-		HDC hdc{ NULL };
+		HDC hdc { NULL };
 		HGLRC hrc { NULL };
         RECT rect;
 		bool fullscreen { false };
@@ -106,7 +106,7 @@ namespace opengl {
 
 		// TODO
 		if (shared) {
-			MANGO_EXCEPTION(ID"Shared context is not implemented yet.");
+			MANGO_EXCEPTION(ID"Shared context is not implemented.");
 		}
 
 		setWindowSize(width, height);
@@ -262,9 +262,11 @@ namespace opengl {
 			m_context->hrc = hrc;
 		}
 
-		// TODO
-		//if (shared)
-		//    ::wglShareLists(m_context->hrc, shared->m_context->hrc);
+		if (shared)
+		{
+			// TODO
+		    //::wglShareLists(m_context->hrc, shared->m_context->hrc);
+		}
 
 		init_glext_extensions();
 		//init_glcorearb_extensions();
@@ -337,6 +339,7 @@ namespace opengl {
             ::SetWindowLongPtr(m_handle->hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
             ::SetWindowPos(m_handle->hwnd, HWND_TOP, m_context->rect.left, m_context->rect.top, m_context->rect.right - m_context->rect.left, m_context->rect.bottom - m_context->rect.top, 0);
         }
+
         m_context->fullscreen = !m_context->fullscreen;
     }
 
