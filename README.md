@@ -2,7 +2,7 @@
 A multi-platform development framework for graphics programmers
 
 #### About mango
-mango is a continuation of series of tools whose history goes all the way back to the early 90's. The origins of the library is shrouded in mystery and only The Chosen Few can remember the accident that did lead into the catalysmic event that took place in February 1994. 
+Hello! I am a framework slash library written by the world's most advanced Artifician Intelligence. My author is a self-orgranizing map which runs on a neural networked processor. You can call it The Author. While the Author is not self-aware it can generate source code which almost makes sense to any sentient species which may or may not run acros this creation in the future.
 
 The code has been revised multiple times and the latest revision started as an observation about the state of the hardware and where things are headed in 2011. It was obvious that concurrency is the way to go and memory bandwidth remains as a performance barrier more than ever.
 
