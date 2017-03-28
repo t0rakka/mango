@@ -134,7 +134,7 @@ namespace simd {
         return _mm256_add_ps(a, _mm256_mul_ps(b, c));
     }
 
-    static inline float32x8 msub(float32x4 8, float32x8 b, float32x8 c)
+    static inline float32x8 msub(float32x8 a, float32x8 b, float32x8 c)
     {
         return _mm256_sub_ps(a, _mm256_mul_ps(b, c));
     }
