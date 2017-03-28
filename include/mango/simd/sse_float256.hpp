@@ -176,6 +176,14 @@ namespace simd {
         return result;
     }
 
+    static inline float32x8 hadd(float32x8 a, float32x8 b)
+    {
+        float32x8 result;
+        result.lo = hadd(a.lo, b.lo);
+        result.hi = hadd(a.hi, b.hi);
+        return result;
+    }
+
     static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)
     {
         float32x8 result;

@@ -131,8 +131,8 @@ namespace simd {
 
     struct float64x4
     {
-        __m128d xy;
-        __m128d zw;
+        float64x2 lo;
+        float64x2 hi;
     };
 
 } // namespace simd

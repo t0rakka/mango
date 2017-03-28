@@ -237,50 +237,50 @@ namespace simd {
 
     static inline float64x2 get_low(float64x4 a)
     {
-        return a.xy;
+        return a.lo;
     }
 
     static inline float64x2 get_high(float64x4 a)
     {
-        return a.zw;
+        return a.hi;
     }
 
     static inline float64x4 combine(float64x2 a, float64x2 b)
     {
         float64x4 result;
-        result.xy = a;
-        result.zw = b;
+        result.lo = a;
+        result.hi = b;
         return result;
     }
 
     static inline float64x4 float64x4_convert(int32x4 s)
     {
         float64x4 result;
-        result.xy = _mm_cvtepi32_pd(s);
-        result.zw = _mm_cvtepi32_pd(_mm_shuffle_epi32(s, 0xee));
+        result.lo = _mm_cvtepi32_pd(s);
+        result.hi = _mm_cvtepi32_pd(_mm_shuffle_epi32(s, 0xee));
         return result;
     }
 
     static inline float64x4 float64x4_convert(float32x4 s)
     {
         float64x4 result;
-        result.xy = _mm_cvtps_pd(s);
-        result.zw = _mm_cvtps_pd(_mm_shuffle_ps(s, s, 0xee));
+        result.lo = _mm_cvtps_pd(s);
+        result.hi = _mm_cvtps_pd(_mm_shuffle_ps(s, s, 0xee));
         return result;
     }
 
     static inline int32x4 int32x4_convert(float64x4 s)
     {
-        __m128i xy = _mm_cvtpd_epi32(s.xy);
-        __m128i zw = _mm_cvtpd_epi32(s.zw);
+        __m128i xy = _mm_cvtpd_epi32(s.lo);
+        __m128i zw = _mm_cvtpd_epi32(s.hi);
         __m128i xzyw = _mm_unpacklo_epi32(xy, zw);
         return _mm_shuffle_epi32(xzyw, 0xd8);
     }
 
     static inline float32x4 float32x4_convert(float64x4 s)
     {
-        __m128 xy00 = _mm_cvtpd_ps(s.xy);
-        __m128 zw00 = _mm_cvtpd_ps(s.zw);
+        __m128 xy00 = _mm_cvtpd_ps(s.lo);
+        __m128 zw00 = _mm_cvtpd_ps(s.hi);
         return _mm_shuffle_ps(xy00, zw00, 0x44);
     }
 
@@ -291,24 +291,24 @@ namespace simd {
         __m128i xy = _mm_unpacklo_epi32(ui, mask);
         __m128i zw = _mm_unpackhi_epi32(ui, mask);
         float64x4 result;
-        result.xy = _mm_sub_pd(_mm_castsi128_pd(xy), bias);
-        result.zw = _mm_sub_pd(_mm_castsi128_pd(zw), bias);
+        result.lo = _mm_sub_pd(_mm_castsi128_pd(xy), bias);
+        result.hi = _mm_sub_pd(_mm_castsi128_pd(zw), bias);
         return result;
     }
 
     static inline uint32x4 uint32x4_convert(float64x4 d)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
-        __m128 xy = _mm_castpd_ps(_mm_add_pd(d.xy, bias));
-        __m128 zw = _mm_castpd_ps(_mm_add_pd(d.zw, bias));
+        __m128 xy = _mm_castpd_ps(_mm_add_pd(d.lo, bias));
+        __m128 zw = _mm_castpd_ps(_mm_add_pd(d.hi, bias));
         __m128 u = _mm_shuffle_ps(xy, zw, 0x88);
         return _mm_castps_si128(u);
     }
 
     static inline int32x4 int32x4_truncate(float64x4 s)
     {
-        __m128i xy = _mm_cvttpd_epi32(s.xy);
-        __m128i zw = _mm_cvttpd_epi32(s.zw);
+        __m128i xy = _mm_cvttpd_epi32(s.lo);
+        __m128i zw = _mm_cvttpd_epi32(s.hi);
         __m128i xzyw = _mm_unpacklo_epi32(xy, zw);
         return _mm_shuffle_epi32(xzyw, 0xd8);
     }

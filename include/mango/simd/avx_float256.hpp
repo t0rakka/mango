@@ -115,6 +115,11 @@ namespace simd {
         return _mm256_div_ps(a, _mm256_set1_ps(b));
     }
 
+    static inline float32x8 hadd(float32x8 a, float32x8 b)
+    {
+        return _mm256_hadd_ps(a, b);
+    }
+
 #if defined(MANGO_ENABLE_FMA3)
 
     static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)

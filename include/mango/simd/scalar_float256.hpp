@@ -187,6 +187,20 @@ namespace simd {
         return v;
     }
 
+    static inline float32x8 hadd(float32x8 a, float32x8 b)
+    {
+        float32x8 v;
+        v[0] = a[0] + a[1];
+        v[1] = a[2] + a[3];
+        v[2] = b[0] + b[1];
+        v[3] = b[2] + b[3];
+        v[4] = a[4] + a[5];
+        v[5] = a[6] + a[7];
+        v[6] = b[4] + b[5];
+        v[7] = b[6] + b[7];
+        return v;
+    }
+
     static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)
     {
         float32x8 v;
