@@ -187,6 +187,26 @@ namespace simd {
         return v;
     }
 
+    static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)
+    {
+        float32x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = a[i] + b[i] * c[i];
+        }
+        return v;
+    }
+
+    static inline float32x8 msub(float32x8 a, float32x8 b, float32x8 c)
+    {
+        float32x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = a[i] - b[i] * c[i];
+        }
+        return v;
+    }
+
     static inline float32x8 fast_reciprocal(float32x8 a)
     {
         float32x8 v;

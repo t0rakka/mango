@@ -139,6 +139,24 @@ namespace simd {
         return vcombine_f32(a, b);
     }
 
+    static inline float32x4 get_low(float32x8 a)
+    {
+        return a.lo;
+    }
+
+    static inline float32x4 get_high(float32x8 a)
+    {
+        return a.hi;
+    }
+
+    static inline float32x8 combine(float32x4 a, float32x4 b)
+    {
+        float32x8 result;
+        result.lo = a;
+        result.hi = b;
+        return result;
+    }
+
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         return vcvtq_f32_u32(s);

@@ -179,6 +179,21 @@ namespace simd {
         return float32x4_set4(x, y, z, w);
     }
 
+    static inline float32x4 get_low(float32x8 a)
+    {
+        return _mm256_extractf128_ps(a, 0);
+    }
+
+    static inline float32x4 get_high(float32x8 a)
+    {
+        return _mm256_extractf128_ps(a, 1);
+    }
+
+    static inline float32x8 combine(float32x4 a, float32x4 b)
+    {
+        return _mm256_insertf128_ps(_mm256_castps128_ps256(a), b, 1);
+    }
+
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         const __m128i mask = _mm_set1_epi32(0x0000ffff);

@@ -175,6 +175,24 @@ namespace simd {
         return float32x4_set4(a[0], a[1], b[0], b[1]);
     }
 
+    static inline float32x4 get_low(float32x8 a)
+    {
+        return a.lo;
+    }
+
+    static inline float32x4 get_high(float32x8 a)
+    {
+        return a.hi;
+    }
+
+    static inline float32x8 combine(float32x4 a, float32x4 b)
+    {
+        float32x8 result;
+        result.lo = a;
+        result.hi = b;
+        return result;
+    }
+
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         // conversion could be done by subtracting 0x80000000 from the value before signed conversion and

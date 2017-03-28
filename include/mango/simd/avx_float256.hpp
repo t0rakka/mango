@@ -115,6 +115,32 @@ namespace simd {
         return _mm256_div_ps(a, _mm256_set1_ps(b));
     }
 
+#if defined(MANGO_ENABLE_FMA3)
+
+    static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)
+    {
+        return _mm256_fmadd_ps(b, c, a);
+    }
+
+    static inline float32x8 msub(float32x8 a, float32x8 b, float32x8 c)
+    {
+        return _mm256_fnmadd_ps(b, c, a);
+    }
+
+#else
+
+    static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)
+    {
+        return _mm256_add_ps(a, _mm256_mul_ps(b, c));
+    }
+
+    static inline float32x8 msub(float32x4 8, float32x8 b, float32x8 c)
+    {
+        return _mm256_sub_ps(a, _mm256_mul_ps(b, c));
+    }
+
+#endif
+
     static inline float32x8 fast_reciprocal(float32x8 a)
     {
         return _mm256_rcp_ps(a);

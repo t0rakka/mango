@@ -190,6 +190,40 @@ namespace simd {
         return v;
     }
 
+    static inline float32x4 get_low(float32x8 a)
+    {
+        float32x4 v;
+        v[0] = a[0];
+        v[1] = a[1];
+        v[2] = a[2];
+        v[3] = a[3];
+        return v;
+    }
+
+    static inline float32x4 get_high(float32x8 a)
+    {
+        float32x4 v;
+        v[0] = a[4];
+        v[1] = a[5];
+        v[2] = a[6];
+        v[3] = a[7];
+        return v;
+    }
+
+    static inline float32x8 combine(float32x4 a, float32x4 b)
+    {
+        float32x8 v;
+        v[0] = a[0];
+        v[1] = a[1];
+        v[2] = a[2];
+        v[3] = a[3];
+        v[4] = b[0];
+        v[5] = b[1];
+        v[6] = b[2];
+        v[7] = b[3];
+        return v;
+    }
+
     static inline float32x4 float32x4_convert(uint32x4 s)
     {
         float32x4 v;

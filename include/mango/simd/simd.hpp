@@ -176,7 +176,12 @@ namespace simd {
 
 #endif
 
-    typedef scalar_type<float, 8>  float32x8;
+    struct float32x8
+    {
+        float32x4 lo;
+        float32x4 hi;
+    };
+
     typedef scalar_type<double, 2> float64x2;
     typedef scalar_type<double, 4> float64x4;
 
@@ -186,7 +191,7 @@ namespace simd {
     #include "neon_int128.hpp"
     #include "neon_float64.hpp"
     #include "neon_float128.hpp"
-    #include "scalar_float256.hpp"
+    #include "neon_float256.hpp"
     #include "scalar_double128.hpp"
     #include "scalar_double256.hpp"
     #include "neon_convert.hpp"
