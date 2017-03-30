@@ -686,8 +686,16 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
-        int v = enumToVirtual(code);
-        return (GetAsyncKeyState(v) & 0x8000) != 0;
+		bool pressed = false;
+
+		HWND active = GetActiveWindow();
+		if (m_handle->hwnd == active)
+		{
+			int v = enumToVirtual(code);
+			pressed = (GetAsyncKeyState(v) & 0x8000) != 0;
+		}
+
+		return pressed;
     }
 
     Window::operator HWND () const
