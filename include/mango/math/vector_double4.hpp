@@ -475,7 +475,19 @@ namespace mango
         return a;
     }
 
+    static inline double4& operator += (double4& a, double b)
+    {
+        a = simd::add(a, b);
+        return a;
+    }
+
     static inline double4& operator -= (double4& a, double4 b)
+    {
+        a = simd::sub(a, b);
+        return a;
+    }
+
+    static inline double4& operator -= (double4& a, double b)
     {
         a = simd::sub(a, b);
         return a;
@@ -510,7 +522,27 @@ namespace mango
         return simd::add(a, b);
     }
 
+    static inline double4 operator + (double4 a, double b)
+    {
+        return simd::add(a, b);
+    }
+
+    static inline double4 operator + (double a, double4 b)
+    {
+        return simd::add(a, b);
+    }
+
     static inline double4 operator - (double4 a, double4 b)
+    {
+        return simd::sub(a, b);
+    }
+
+    static inline double4 operator - (double4 a, double b)
+    {
+        return simd::sub(a, b);
+    }
+
+    static inline double4 operator - (double a, double4 b)
     {
         return simd::sub(a, b);
     }
@@ -536,6 +568,11 @@ namespace mango
     }
 
     static inline double4 operator / (double4 a, double b)
+    {
+        return simd::div(a, b);
+    }
+
+    static inline double4 operator / (double a, double4 b)
     {
         return simd::div(a, b);
     }
@@ -622,6 +659,30 @@ namespace mango
     static inline double4 hmax(double4 v)
     {
         return simd::hmax(v);
+    }
+
+    // ------------------------------------------------------------------
+	// bitwise operators
+    // ------------------------------------------------------------------
+
+    static inline double4 nand(double4 a, double4 b)
+    {
+        return simd::float64x4_nand(a, b);
+    }
+
+    static inline double4 operator & (double4 a, double4 b)
+    {
+        return simd::float64x4_and(a, b);
+    }
+
+    static inline double4 operator | (double4 a, double4 b)
+    {
+        return simd::float64x4_or(a, b);
+    }
+
+    static inline double4 operator ^ (double4 a, double4 b)
+    {
+        return simd::float64x4_xor(a, b);
     }
 
     // ------------------------------------------------------------------

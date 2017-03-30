@@ -106,7 +106,19 @@ namespace mango
         return a;
     }
 
+    static inline double2& operator += (double2& a, double b)
+    {
+        a = simd::add(a, b);
+        return a;
+    }
+
     static inline double2& operator -= (double2& a, double2 b)
+    {
+        a = simd::sub(a, b);
+        return a;
+    }
+
+    static inline double2& operator -= (double2& a, double b)
     {
         a = simd::sub(a, b);
         return a;
@@ -141,7 +153,27 @@ namespace mango
         return simd::add(a, b);
     }
 
+    static inline double2 operator + (double2 a, double b)
+    {
+        return simd::add(a, b);
+    }
+
+    static inline double2 operator + (double a, double2 b)
+    {
+        return simd::add(a, b);
+    }
+
     static inline double2 operator - (double2 a, double2 b)
+    {
+        return simd::sub(a, b);
+    }
+
+    static inline double2 operator - (double2 a, double b)
+    {
+        return simd::sub(a, b);
+    }
+
+    static inline double2 operator - (double a, double2 b)
     {
         return simd::sub(a, b);
     }
@@ -171,6 +203,11 @@ namespace mango
         return simd::div(a, b);
     }
 
+    static inline double2 operator / (double a, double2 b)
+    {
+        return simd::div(a, b);
+    }
+
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
@@ -193,6 +230,30 @@ namespace mango
     static inline double2 lerp(double2 a, double2 b, double2 factor)
     {
         return a + (b - a) * factor;
+    }
+
+    // ------------------------------------------------------------------
+	// bitwise operators
+    // ------------------------------------------------------------------
+
+    static inline double2 nand(double2 a, double2 b)
+    {
+        return simd::float64x2_nand(a, b);
+    }
+
+    static inline double2 operator & (double2 a, double2 b)
+    {
+        return simd::float64x2_and(a, b);
+    }
+
+    static inline double2 operator | (double2 a, double2 b)
+    {
+        return simd::float64x2_or(a, b);
+    }
+
+    static inline double2 operator ^ (double2 a, double2 b)
+    {
+        return simd::float64x2_xor(a, b);
     }
 
     // ------------------------------------------------------------------
