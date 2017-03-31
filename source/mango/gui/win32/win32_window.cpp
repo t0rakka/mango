@@ -722,6 +722,8 @@ namespace mango
                 onIdle();
             }
         }
+
+		m_handle->looping = false;
     }
 
     void Window::breakEventLoop()
