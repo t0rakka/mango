@@ -529,11 +529,11 @@
 // -----------------------------------------------------------------------
 
 #define MANGO_UNREFERENCED_PARAMETER(x) (void) x
-#define MANGO_MEMORY_ALIGNMENT 16
+#define MANGO_DEFAULT_ALIGNMENT 64
 
 #ifdef MANGO_PLATFORM_WINDOWS
 
-    #define MANGO_ALIGN(...) __declspec(align(__VA_ARGS__)) 
+    #define MANGO_ALIGN(...) __declspec(align(__VA_ARGS__))
     #define MANGO_IMPORT __declspec(dllimport)
     #define MANGO_EXPORT __declspec(dllexport)
 

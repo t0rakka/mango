@@ -71,7 +71,7 @@ namespace mango
     // aligned malloc/free
     // -----------------------------------------------------------------------
 
-    void* aligned_malloc(size_t size);
+    void* aligned_malloc(size_t size, size_t alignment = MANGO_DEFAULT_ALIGNMENT);
     void aligned_free(void* aligned);
 
     // -----------------------------------------------------------------------
@@ -122,7 +122,7 @@ namespace mango
         pointer allocate(size_type n, std::allocator<void>::const_pointer hint = 0)
         {
             MANGO_UNREFERENCED_PARAMETER(hint);
-            void* s = aligned_malloc(n * sizeof(T));
+            void* s = aligned_malloc(n * sizeof(T), MANGO_DEFAULT_ALIGNMENT);
             return reinterpret_cast<pointer>(s);
         }
 

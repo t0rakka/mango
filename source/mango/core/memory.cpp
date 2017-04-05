@@ -2,6 +2,8 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <cassert>
+#include <mango/core/bits.hpp>
 #include <mango/core/memory.hpp>
 
 namespace mango {
@@ -32,11 +34,11 @@ namespace mango {
 		return reinterpret_cast<char *>(address);
     }
 
-    Memory Memory::slice(size_t offset, size_t mem_size) const
+    Memory Memory::slice(size_t slice_offset, size_t slice_size) const
     {
-        Memory memory(address + offset, size - offset);
-        if (mem_size) {
-            memory.size = std::min(memory.size, mem_size);
+        Memory memory(address + slice_offset, size - slice_offset);
+        if (slice_size) {
+            memory.size = std::min(memory.size, slice_size);
         }
         return memory;
     }
@@ -62,25 +64,12 @@ namespace mango {
     // aligned malloc/free
     // -----------------------------------------------------------------------
 
-#if defined(MANGO_PLATFORM_OSX)
+#if defined(MANGO_COMPILER_MICROSOFT)
 
-    // NOTE: OSX ABI already aligns memory allocations to 16 bytes
-
-    void* aligned_malloc(size_t size)
+    void* aligned_malloc(size_t size, size_t alignment)
     {
-        return std::malloc(size);
-    }
-
-    void aligned_free(void* aligned)
-    {
-        std::free(aligned);
-    }
-
-#elif defined(MANGO_COMPILER_MICROSOFT)
-
-    void* aligned_malloc(size_t size)
-    {
-        return _aligned_malloc(size, MANGO_MEMORY_ALIGNMENT);
+        assert(u32_is_power_of_two(alignment));
+        return _aligned_malloc(size, alignment);
     }
 
     void aligned_free(void* aligned)
@@ -88,11 +77,12 @@ namespace mango {
         _aligned_free(aligned);
     }
 
-#elif defined(MANGO_PLATFORM_UNIX)
+#elif defined(MANGO_PLATFORM_LINUX)
 
-    void* aligned_malloc(size_t size)
+    void* aligned_malloc(size_t size, size_t alignment)
     {
-        return memalign(MANGO_MEMORY_ALIGNMENT, size);
+        assert(u32_is_power_of_two(alignment));
+        return memalign(alignment, size);
     }
 
     void aligned_free(void* aligned)
@@ -104,17 +94,20 @@ namespace mango {
 
     // generic implementation
 
-    void* aligned_malloc(size_t size)
+    void* aligned_malloc(size_t size, size_t alignment)
     {
-        void* block = std::malloc(size + (MANGO_MEMORY_ALIGNMENT - 1) + sizeof(void*));
+        assert(u32_is_power_of_two(alignment));
+
+        const size_t mask = alignment - 1;
+        void* block = std::malloc(size + mask + sizeof(void*));
         char* aligned = reinterpret_cast<char*>(block) + sizeof(void*);
 
         if (block) {
-            aligned += MANGO_MEMORY_ALIGNMENT - (reinterpret_cast<ptrdiff_t>(aligned) & (MANGO_MEMORY_ALIGNMENT - 1));
+            aligned += alignment - (reinterpret_cast<ptrdiff_t>(aligned) & mask);
             reinterpret_cast<void**>(aligned)[-1] = block;
         }
         else {
-            aligned = NULL;
+            aligned = nullptr;
         }
 
         return aligned;
