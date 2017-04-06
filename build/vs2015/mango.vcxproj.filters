@@ -732,6 +732,9 @@
     <ClInclude Include="..\..\include\mango\simd\neon_float256.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float8.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mango">

@@ -68,6 +68,7 @@
     <ClInclude Include="..\..\include\mango\math\vector_float2.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_float3.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_float4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float8.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_half4.hpp" />
     <ClInclude Include="..\..\include\mango\opengl\func\glcorearb.hpp" />
     <ClInclude Include="..\..\include\mango\opengl\func\glext.hpp" />
