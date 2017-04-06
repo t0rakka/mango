@@ -926,7 +926,161 @@ namespace simd {
     // float32x8
     // ------------------------------------------------------------------
 
-    // TODO
+    static inline float32x8 add(float a, float32x8 b)
+    {
+        return add(float32x8_set1(a), b);
+    }
+
+    static inline float32x8 add(float32x8 a, float b)
+    {
+        return add(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 sub(float a, float32x8 b)
+    {
+        return sub(float32x8_set1(a), b);
+    }
+
+    static inline float32x8 sub(float32x8 a, float b)
+    {
+        return sub(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 mul(float32x8 a, float b)
+    {
+        return mul(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 mul(float a, float32x8 b)
+    {
+        return mul(float32x8_set1(a), b);
+    }
+
+    static inline float32x8 div(float a, float32x8 b)
+    {
+        return div(float32x8_set1(a), b);
+    }
+
+    static inline float32x8 madd(float a, float32x8 b, float32x8 c)
+    {
+        return madd(float32x8_set1(a), b, c);
+    }
+
+    static inline float32x8 madd(float32x8 a, float b, float32x8 c)
+    {
+        return madd(a, float32x8_set1(b), c);
+    }
+
+    static inline float32x8 madd(float32x8 a, float32x8 b, float c)
+    {
+        return madd(a, b, float32x8_set1(c));
+    }
+
+    static inline float32x8 min(float a, float32x8 b)
+    {
+        return min(float32x8_set1(a), b);
+    }
+
+    static inline float32x8 min(float32x8 a, float b)
+    {
+        return min(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 max(float a, float32x8 b)
+    {
+        return max(float32x8_set1(a), b);
+    }
+
+    static inline float32x8 max(float32x8 a, float b)
+    {
+        return max(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 clamp(float32x8 v, float32x8 vmin, float32x8 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    static inline float32x8 clamp(float32x8 v, float vmin, float vmax)
+    {
+        return min(float32x8_set1(vmax), max(float32x8_set1(vmin), v));
+    }
+
+    static inline float32x8 compare_neq(float32x8 a, float b)
+    {
+        return compare_neq(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 compare_eq(float32x8 a, float b)
+    {
+        return compare_eq(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 compare_lt(float32x8 a, float b)
+    {
+        return compare_lt(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 compare_le(float32x8 a, float b)
+    {
+        return compare_le(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 compare_gt(float32x8 a, float b)
+    {
+        return compare_gt(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 compare_ge(float32x8 a, float b)
+    {
+        return compare_ge(a, float32x8_set1(b));
+    }
+
+    static inline float32x8 select(float32x8 mask, float a, float32x8 b)
+    {
+        return select(mask, float32x8_set1(a), b);
+    }
+
+    static inline float32x8 select(float32x8 mask, float32x8 a, float b)
+    {
+        return select(mask, a, float32x8_set1(b));
+    }
+
+    static inline float32x8 select(float32x8 mask, float a, float b)
+    {
+        return select(mask, float32x8_set1(a), float32x8_set1(b));
+    }
+
+    static inline float32x8 mod(float32x8 a, float32x8 b)
+    {
+        float32x8 temp = floor(div(a, b));
+        return sub(a, mul(b, temp));
+    }
+
+    static inline float32x8 sign(float32x8 a)
+    {
+        const float32x8 zero_mask = compare_neq(a, float32x8_zero());
+        const float32x8 sign_bits = bitwise_and(a, float32x8_set1(-0.0f));
+        const float32x8 signed_one = bitwise_or(sign_bits, float32x8_set1(1.0f));
+        return bitwise_and(signed_one, zero_mask);
+    }
+
+    static inline float32x8 radians(float32x8 a)
+    {
+        static const float32x8 s = float32x8_set1(0.01745329251f);
+        return mul(a, s);
+    }
+
+    static inline float32x8 degrees(float32x8 a)
+    {
+        static const float32x8 s = float32x8_set1(57.2957795131f);
+        return mul(a, s);
+    }
+
+    static inline float32x8 bitwise_not(float32x8 a)
+    {
+        return bitwise_xor(a, compare_eq(a, a));
+    }
 
     // ------------------------------------------------------------------
     // float64x2

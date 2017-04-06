@@ -883,6 +883,7 @@ namespace mango
     typedef Vector<float, 2>    float2;
     typedef Vector<float, 3>    float3;
     typedef Vector<float, 4>    float4;
+    typedef Vector<float, 8>    float8;
 
     typedef Vector<double, 2>   double2;
     typedef Vector<double, 3>   double3;
@@ -896,5 +897,6 @@ namespace mango
 #include "vector_float2.hpp"
 #include "vector_float3.hpp"
 #include "vector_float4.hpp"
+#include "vector_float8.hpp"
 #include "vector_double2.hpp"
 #include "vector_double4.hpp"
