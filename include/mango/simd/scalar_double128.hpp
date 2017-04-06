@@ -75,28 +75,28 @@ namespace simd {
 
     // bitwise
 
-    static inline float64x2 float64x2_and(float64x2 a, float64x2 b)
-    {
-        const Double x(Double(a[0]).u & Double(b[0]).u);
-        const Double y(Double(a[1]).u & Double(b[1]).u);
-        return float64x2_set2(x, y);
-    }
-
-    static inline float64x2 float64x2_nand(float64x2 a, float64x2 b)
+    static inline float64x2 bitwise_nand(float64x2 a, float64x2 b)
     {
         const Double x(~Double(a[0]).u & Double(b[0]).u);
         const Double y(~Double(a[1]).u & Double(b[1]).u);
         return float64x2_set2(x, y);
     }
 
-    static inline float64x2 float64x2_or(float64x2 a, float64x2 b)
+    static inline float64x2 bitwise_and(float64x2 a, float64x2 b)
+    {
+        const Double x(Double(a[0]).u & Double(b[0]).u);
+        const Double y(Double(a[1]).u & Double(b[1]).u);
+        return float64x2_set2(x, y);
+    }
+
+    static inline float64x2 bitwise_or(float64x2 a, float64x2 b)
     {
         const Double x(Double(a[0]).u | Double(b[0]).u);
         const Double y(Double(a[1]).u | Double(b[1]).u);
         return float64x2_set2(x, y);
     }
 
-    static inline float64x2 float64x2_xor(float64x2 a, float64x2 b)
+    static inline float64x2 bitwise_xor(float64x2 a, float64x2 b)
     {
         const Double x(Double(a[0]).u ^ Double(b[0]).u);
         const Double y(Double(a[1]).u ^ Double(b[1]).u);
@@ -285,7 +285,7 @@ namespace simd {
 
     static inline float64x2 select(float64x2 mask, float64x2 a, float64x2 b)
     {
-        return float64x2_or(float64x2_and(mask, a), float64x2_nand(mask, b));
+        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
     }
 
     // rounding

@@ -69,15 +69,7 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x8 float32x8_and(float32x8 a, float32x8 b)
-    {
-        float32x8 result;
-        result.lo = vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a.lo), vreinterpretq_s32_f32(b.lo)));
-        result.hi = vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a.hi), vreinterpretq_s32_f32(b.hi)));
-        return result;
-    }
-
-    static inline float32x8 float32x8_nand(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_nand(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = vreinterpretq_f32_s32(vbicq_s32(vreinterpretq_s32_f32(a.lo), vreinterpretq_s32_f32(b.lo)));
@@ -85,7 +77,15 @@ namespace simd {
         return result;
     }
 
-    static inline float32x8 float32x8_or(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_and(float32x8 a, float32x8 b)
+    {
+        float32x8 result;
+        result.lo = vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a.lo), vreinterpretq_s32_f32(b.lo)));
+        result.hi = vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a.hi), vreinterpretq_s32_f32(b.hi)));
+        return result;
+    }
+
+    static inline float32x8 bitwise_or(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = vreinterpretq_f32_s32(vorrq_s32(vreinterpretq_s32_f32(a.lo), vreinterpretq_s32_f32(b.lo)));
@@ -93,7 +93,7 @@ namespace simd {
         return result;
     }
 
-    static inline float32x8 float32x8_xor(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_xor(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = vreinterpretq_f32_s32(veorq_s32(vreinterpretq_s32_f32(a.lo), vreinterpretq_s32_f32(b.lo)));

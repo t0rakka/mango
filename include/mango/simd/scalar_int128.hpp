@@ -133,15 +133,15 @@ namespace simd {
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_and(ScalarType a, ScalarType b)
-    {
-        return a & b;
-    }
-
-    template <typename ScalarType>
     static inline ScalarType scalar_nand(ScalarType a, ScalarType b)
     {
         return ~a & b;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_and(ScalarType a, ScalarType b)
+    {
+        return a & b;
     }
 
     template <typename ScalarType>
@@ -271,22 +271,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
-    {
-        return scalar_unroll(scalar_and, a, b);
-    }
-
-    static inline uint8x16 uint8x16_nand(uint8x16 a, uint8x16 b)
+    static inline uint8x16 bitwise_nand(uint8x16 a, uint8x16 b)
     {
         return scalar_unroll(scalar_nand, a, b);
     }
 
-    static inline uint8x16 uint8x16_or(uint8x16 a, uint8x16 b)
+    static inline uint8x16 bitwise_and(uint8x16 a, uint8x16 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline uint8x16 bitwise_or(uint8x16 a, uint8x16 b)
     {
         return scalar_unroll(scalar_or, a, b);
     }
 
-    static inline uint8x16 uint8x16_xor(uint8x16 a, uint8x16 b)
+    static inline uint8x16 bitwise_xor(uint8x16 a, uint8x16 b)
     {
         return scalar_unroll(scalar_xor, a, b);
     }
@@ -371,22 +371,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint16x8 uint16x8_and(uint16x8 a, uint16x8 b)
-    {
-        return scalar_unroll(scalar_and, a, b);
-    }
-
-    static inline uint16x8 uint16x8_nand(uint16x8 a, uint16x8 b)
+    static inline uint16x8 bitwise_nand(uint16x8 a, uint16x8 b)
     {
         return scalar_unroll(scalar_nand, a, b);
     }
 
-    static inline uint16x8 uint16x8_or(uint16x8 a, uint16x8 b)
+    static inline uint16x8 bitwise_and(uint16x8 a, uint16x8 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline uint16x8 bitwise_or(uint16x8 a, uint16x8 b)
     {
         return scalar_unroll(scalar_or, a, b);
     }
 
-    static inline uint16x8 uint16x8_xor(uint16x8 a, uint16x8 b)
+    static inline uint16x8 bitwise_xor(uint16x8 a, uint16x8 b)
     {
         return scalar_unroll(scalar_xor, a, b);
     }
@@ -522,22 +522,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
-    {
-        return scalar_unroll(scalar_and, a, b);
-    }
-
-    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_nand(uint32x4 a, uint32x4 b)
     {
         return scalar_unroll(scalar_nand, a, b);
     }
 
-    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_and(uint32x4 a, uint32x4 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline uint32x4 bitwise_or(uint32x4 a, uint32x4 b)
     {
         return scalar_unroll(scalar_or, a, b);
     }
 
-    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_xor(uint32x4 a, uint32x4 b)
     {
         return scalar_unroll(scalar_xor, a, b);
     }
@@ -667,22 +667,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int8x16 int8x16_and(int8x16 a, int8x16 b)
-    {
-        return scalar_unroll(scalar_and, a, b);
-    }
-
-    static inline int8x16 int8x16_nand(int8x16 a, int8x16 b)
+    static inline int8x16 bitwise_nand(int8x16 a, int8x16 b)
     {
         return scalar_unroll(scalar_nand, a, b);
     }
 
-    static inline int8x16 int8x16_or(int8x16 a, int8x16 b)
+    static inline int8x16 bitwise_and(int8x16 a, int8x16 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline int8x16 bitwise_or(int8x16 a, int8x16 b)
     {
         return scalar_unroll(scalar_or, a, b);
     }
 
-    static inline int8x16 int8x16_xor(int8x16 a, int8x16 b)
+    static inline int8x16 bitwise_xor(int8x16 a, int8x16 b)
     {
         return scalar_unroll(scalar_xor, a, b);
     }
@@ -777,22 +777,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int16x8 int16x8_and(int16x8 a, int16x8 b)
-    {
-        return scalar_unroll(scalar_and, a, b);
-    }
-
-    static inline int16x8 int16x8_nand(int16x8 a, int16x8 b)
+    static inline int16x8 bitwise_nand(int16x8 a, int16x8 b)
     {
         return scalar_unroll(scalar_nand, a, b);
     }
 
-    static inline int16x8 int16x8_or(int16x8 a, int16x8 b)
+    static inline int16x8 bitwise_and(int16x8 a, int16x8 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline int16x8 bitwise_or(int16x8 a, int16x8 b)
     {
         return scalar_unroll(scalar_or, a, b);
     }
 
-    static inline int16x8 int16x8_xor(int16x8 a, int16x8 b)
+    static inline int16x8 bitwise_xor(int16x8 a, int16x8 b)
     {
         return scalar_unroll(scalar_xor, a, b);
     }
@@ -938,22 +938,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
-    {
-        return scalar_unroll(scalar_and, a, b);
-    }
-
-    static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_nand(int32x4 a, int32x4 b)
     {
         return scalar_unroll(scalar_nand, a, b);
     }
 
-    static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_and(int32x4 a, int32x4 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline int32x4 bitwise_or(int32x4 a, int32x4 b)
     {
         return scalar_unroll(scalar_or, a, b);
     }
 
-    static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_xor(int32x4 a, int32x4 b)
     {
         return scalar_unroll(scalar_xor, a, b);
     }

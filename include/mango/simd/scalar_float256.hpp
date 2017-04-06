@@ -57,17 +57,7 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x8 float32x8_and(float32x8 a, float32x8 b)
-    {
-        float32x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = Float(Float(a[i]).u & Float(b[i]).u);
-        }
-        return v;
-    }
-
-    static inline float32x8 float32x8_nand(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_nand(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -77,7 +67,17 @@ namespace simd {
         return v;
     }
 
-    static inline float32x8 float32x8_or(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_and(float32x8 a, float32x8 b)
+    {
+        float32x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = Float(Float(a[i]).u & Float(b[i]).u);
+        }
+        return v;
+    }
+
+    static inline float32x8 bitwise_or(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -87,7 +87,7 @@ namespace simd {
         return v;
     }
 
-    static inline float32x8 float32x8_xor(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_xor(float32x8 a, float32x8 b)
     {
         float32x8 v;
         for (int i = 0; i < 8; ++i)
@@ -330,7 +330,7 @@ namespace simd {
 
     static inline float32x8 select(float32x8 mask, float32x8 a, float32x8 b)
     {
-        return float32x8_or(float32x8_and(mask, a), float32x8_nand(mask, b));
+        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
     }
 
     // rounding

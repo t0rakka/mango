@@ -92,22 +92,22 @@ namespace simd {
 
     // bitwise
 
-    static inline float64x2 float64x2_and(float64x2 a, float64x2 b)
-    {
-        return _mm_and_pd(a, b);
-    }
-
-    static inline float64x2 float64x2_nand(float64x2 a, float64x2 b)
+    static inline float64x2 bitwise_nand(float64x2 a, float64x2 b)
     {
         return _mm_andnot_pd(a, b);
     }
 
-    static inline float64x2 float64x2_or(float64x2 a, float64x2 b)
+    static inline float64x2 bitwise_and(float64x2 a, float64x2 b)
+    {
+        return _mm_and_pd(a, b);
+    }
+
+    static inline float64x2 bitwise_or(float64x2 a, float64x2 b)
     {
         return _mm_or_pd(a, b);
     }
 
-    static inline float64x2 float64x2_xor(float64x2 a, float64x2 b)
+    static inline float64x2 bitwise_xor(float64x2 a, float64x2 b)
     {
         return _mm_xor_pd(a, b);
     }

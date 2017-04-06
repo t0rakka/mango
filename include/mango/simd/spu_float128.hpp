@@ -150,24 +150,24 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_nand(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_and(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return float32x4_reinterpret(bitwise_nand(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
-    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_and(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_nand(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return float32x4_reinterpretbitwise_and(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
-    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_or(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_or(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return float32x4_reinterpret(bitwise_or(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
-    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_xor(float32x4 a, float32x4 b)
     {
-        return float32x4_reinterpret(int32x4_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
+        return float32x4_reinterpret(bitwise_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
     static inline float32x4 min(float32x4 a, float32x4 b)

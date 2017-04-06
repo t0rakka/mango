@@ -45,14 +45,14 @@ namespace simd {
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
-    static inline uint8x16 uint8x16_not(uint8x16 a)
+    static inline uint8x16 bitwise_not(uint8x16 a)
     {
-        return uint8x16_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     static inline uint8x16 compare_neq(uint8x16 a, uint8x16 b)
     {
-        return uint8x16_not(compare_eq(b, a));
+        return bitwise_not(compare_eq(b, a));
     }
 
     static inline uint8x16 compare_lt(uint8x16 a, uint8x16 b)
@@ -62,12 +62,12 @@ namespace simd {
 
     static inline uint8x16 compare_le(uint8x16 a, uint8x16 b)
     {
-        return uint8x16_not(compare_gt(a, b));
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline uint8x16 compare_ge(uint8x16 a, uint8x16 b)
     {
-        return uint8x16_not(compare_gt(b, a));
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
@@ -83,14 +83,14 @@ namespace simd {
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
-    static inline uint16x8 uint16x8_not(uint16x8 a)
+    static inline uint16x8 bitwise_not(uint16x8 a)
     {
-        return uint16x8_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     static inline uint16x8 compare_neq(uint16x8 a, uint16x8 b)
     {
-        return uint16x8_not(compare_eq(b, a));
+        return bitwise_not(compare_eq(b, a));
     }
 
     static inline uint16x8 compare_lt(uint16x8 a, uint16x8 b)
@@ -100,12 +100,12 @@ namespace simd {
 
     static inline uint16x8 compare_le(uint16x8 a, uint16x8 b)
     {
-        return uint16x8_not(compare_gt(a, b));
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline uint16x8 compare_ge(uint16x8 a, uint16x8 b)
     {
-        return uint16x8_not(compare_gt(b, a));
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
@@ -191,14 +191,14 @@ namespace simd {
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
-    static inline uint32x4 uint32x4_not(uint32x4 a)
+    static inline uint32x4 bitwise_not(uint32x4 a)
     {
-        return uint32x4_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     static inline uint32x4 compare_neq(uint32x4 a, uint32x4 b)
     {
-        return uint32x4_not(compare_eq(b, a));
+        return bitwise_not(compare_eq(b, a));
     }
 
     static inline uint32x4 compare_lt(uint32x4 a, uint32x4 b)
@@ -208,12 +208,12 @@ namespace simd {
 
     static inline uint32x4 compare_le(uint32x4 a, uint32x4 b)
     {
-        return uint32x4_not(compare_gt(a, b));
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline uint32x4 compare_ge(uint32x4 a, uint32x4 b)
     {
-        return uint32x4_not(compare_gt(b, a));
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
@@ -224,14 +224,14 @@ namespace simd {
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
-    static inline int8x16 int8x16_not(int8x16 a)
+    static inline int8x16 bitwise_not(int8x16 a)
     {
-        return int8x16_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     static inline int8x16 compare_neq(int8x16 a, int8x16 b)
     {
-        return int8x16_not(compare_eq(b, a));
+        return bitwise_not(compare_eq(b, a));
     }
 
     static inline int8x16 compare_lt(int8x16 a, int8x16 b)
@@ -241,12 +241,12 @@ namespace simd {
 
     static inline int8x16 compare_le(int8x16 a, int8x16 b)
     {
-        return int8x16_not(compare_gt(a, b));
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline int8x16 compare_ge(int8x16 a, int8x16 b)
     {
-        return int8x16_not(compare_gt(b, a));
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
@@ -262,14 +262,14 @@ namespace simd {
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
-    static inline int16x8 int16x8_not(int16x8 a)
+    static inline int16x8 bitwise_not(int16x8 a)
     {
-        return int16x8_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     static inline int16x8 compare_neq(int16x8 a, int16x8 b)
     {
-        return int16x8_not(compare_eq(b, a));
+        return bitwise_not(compare_eq(b, a));
     }
 
     static inline int16x8 compare_lt(int16x8 a, int16x8 b)
@@ -279,12 +279,12 @@ namespace simd {
 
     static inline int16x8 compare_le(int16x8 a, int16x8 b)
     {
-        return int16x8_not(compare_gt(a, b));
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline int16x8 compare_ge(int16x8 a, int16x8 b)
     {
-        return int16x8_not(compare_gt(b, a));
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
@@ -388,56 +388,56 @@ namespace simd {
         return sub(a, int32x4_set1(b));
     }
 
-    static inline int32x4 int32x4_and(int a, int32x4 b)
+    static inline int32x4 bitwise_nand(int a, int32x4 b)
     {
-        return int32x4_and(int32x4_set1(a), b);
+        return bitwise_nand(int32x4_set1(a), b);
     }
 
-    static inline int32x4 int32x4_and(int32x4 a, int b)
+    static inline int32x4 bitwise_nand(int32x4 a, int b)
     {
-        return int32x4_and(a, int32x4_set1(b));
+        return bitwise_nand(a, int32x4_set1(b));
     }
 
-    static inline int32x4 int32x4_nand(int a, int32x4 b)
+    static inline int32x4 bitwise_and(int a, int32x4 b)
     {
-        return int32x4_nand(int32x4_set1(a), b);
+        return bitwise_and(int32x4_set1(a), b);
     }
 
-    static inline int32x4 int32x4_nand(int32x4 a, int b)
+    static inline int32x4 bitwise_and(int32x4 a, int b)
     {
-        return int32x4_nand(a, int32x4_set1(b));
+        return bitwise_and(a, int32x4_set1(b));
     }
 
-    static inline int32x4 int32x4_or(int a, int32x4 b)
+    static inline int32x4 bitwise_or(int a, int32x4 b)
     {
-        return int32x4_or(int32x4_set1(a), b);
+        return bitwise_or(int32x4_set1(a), b);
     }
 
-    static inline int32x4 int32x4_or(int32x4 a, int b)
+    static inline int32x4 bitwise_or(int32x4 a, int b)
     {
-        return int32x4_or(a, int32x4_set1(b));
+        return bitwise_or(a, int32x4_set1(b));
     }
 
-    static inline int32x4 int32x4_xor(int a, int32x4 b)
+    static inline int32x4 bitwise_xor(int a, int32x4 b)
     {
-        return int32x4_xor(int32x4_set1(a), b);
+        return bitwise_xor(int32x4_set1(a), b);
     }
 
-    static inline int32x4 int32x4_xor(int32x4 a, int b)
+    static inline int32x4 bitwise_xor(int32x4 a, int b)
     {
-        return int32x4_xor(a, int32x4_set1(b));
+        return bitwise_xor(a, int32x4_set1(b));
     }
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
-    static inline int32x4 int32x4_not(int32x4 a)
+    static inline int32x4 bitwise_not(int32x4 a)
     {
-        return int32x4_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     static inline int32x4 compare_neq(int32x4 a, int32x4 b)
     {
-        return int32x4_not(compare_eq(b, a));
+        return bitwise_not(compare_eq(b, a));
     }
 
     static inline int32x4 compare_lt(int32x4 a, int32x4 b)
@@ -447,12 +447,12 @@ namespace simd {
 
     static inline int32x4 compare_le(int32x4 a, int32x4 b)
     {
-        return int32x4_not(compare_gt(a, b));
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline int32x4 compare_ge(int32x4 a, int32x4 b)
     {
-        return int32x4_not(compare_gt(b, a));
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
@@ -650,9 +650,9 @@ namespace simd {
     static inline float32x2 sign(float32x2 a)
     {
         const float32x2 zero_mask = compare_neq(a, float32x2_zero());
-        const float32x2 sign_bits = float32x2_and(a, float32x2_set1(-0.0f));
-        const float32x2 signed_one = float32x2_or(sign_bits, float32x2_set1(1.0f));
-        return float32x2_and(signed_one, zero_mask);
+        const float32x2 sign_bits = bitwise_and(a, float32x2_set1(-0.0f));
+        const float32x2 signed_one = bitwise_or(sign_bits, float32x2_set1(1.0f));
+        return bitwise_and(signed_one, zero_mask);
     }
 
     static inline float32x2 radians(float32x2 a)
@@ -682,9 +682,9 @@ namespace simd {
         return mul(a, rsqrt(dot2(a, a)));
     }
 
-    static inline float32x2 float32x2_not(float32x2 a)
+    static inline float32x2 bitwise_not(float32x2 a)
     {
-        return float32x2_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------
@@ -885,9 +885,9 @@ namespace simd {
     static inline float32x4 sign(float32x4 a)
     {
         const float32x4 zero_mask = compare_neq(a, float32x4_zero());
-        const float32x4 sign_bits = float32x4_and(a, float32x4_set1(-0.0f));
-        const float32x4 signed_one = float32x4_or(sign_bits, float32x4_set1(1.0f));
-        return float32x4_and(signed_one, zero_mask);
+        const float32x4 sign_bits = bitwise_and(a, float32x4_set1(-0.0f));
+        const float32x4 signed_one = bitwise_or(sign_bits, float32x4_set1(1.0f));
+        return bitwise_and(signed_one, zero_mask);
     }
 
     static inline float32x4 radians(float32x4 a)
@@ -917,10 +917,16 @@ namespace simd {
         return mul(a, rsqrt(dot4(a, a)));
     }
 
-    static inline float32x4 float32x4_not(float32x4 a)
+    static inline float32x4 bitwise_not(float32x4 a)
     {
-        return float32x4_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
+
+    // ------------------------------------------------------------------
+    // float32x8
+    // ------------------------------------------------------------------
+
+    // TODO
 
     // ------------------------------------------------------------------
     // float64x2
@@ -1090,9 +1096,9 @@ namespace simd {
     static inline float64x2 sign(float64x2 a)
     {
         const float64x2 zero_mask = compare_neq(a, float64x2_zero());
-        const float64x2 sign_bits = float64x2_and(a, float64x2_set1(-0.0));
-        const float64x2 signed_one = float64x2_or(sign_bits, float64x2_set1(1.0));
-        return float64x2_and(signed_one, zero_mask);
+        const float64x2 sign_bits = bitwise_and(a, float64x2_set1(-0.0));
+        const float64x2 signed_one = bitwise_or(sign_bits, float64x2_set1(1.0));
+        return bitwise_and(signed_one, zero_mask);
     }
 
     static inline float64x2 radians(float64x2 a)
@@ -1122,9 +1128,9 @@ namespace simd {
         return mul(a, rsqrt(dot2(a, a)));
     }
 
-    static inline float64x2 float64x2_not(float64x2 a)
+    static inline float64x2 bitwise_not(float64x2 a)
     {
-        return float64x2_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------
@@ -1325,9 +1331,9 @@ namespace simd {
     static inline float64x4 sign(float64x4 a)
     {
         const float64x4 zero_mask = compare_neq(a, float64x4_zero());
-        const float64x4 sign_bits = float64x4_and(a, float64x4_set1(-0.0));
-        const float64x4 signed_one = float64x4_or(sign_bits, float64x4_set1(1.0));
-        return float64x4_and(signed_one, zero_mask);
+        const float64x4 sign_bits = bitwise_and(a, float64x4_set1(-0.0));
+        const float64x4 signed_one = bitwise_or(sign_bits, float64x4_set1(1.0));
+        return bitwise_and(signed_one, zero_mask);
     }
 
     static inline float64x4 radians(float64x4 a)
@@ -1357,9 +1363,9 @@ namespace simd {
         return mul(a, rsqrt(dot4(a, a)));
     }
 
-    static inline float64x4 float64x4_not(float64x4 a)
+    static inline float64x4 bitwise_not(float64x4 a)
     {
-        return float64x4_xor(a, compare_eq(a, a));
+        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------

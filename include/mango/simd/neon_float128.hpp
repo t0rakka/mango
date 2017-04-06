@@ -193,22 +193,22 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
-    {
-        return vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
-    }
-
-    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_nand(float32x4 a, float32x4 b)
     {
         return vreinterpretq_f32_s32(vbicq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
-    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_and(float32x4 a, float32x4 b)
+    {
+        return vreinterpretq_f32_s32(vandq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
+    }
+
+    static inline float32x4 bitwise_or(float32x4 a, float32x4 b)
     {
         return vreinterpretq_f32_s32(vorrq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
-    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_xor(float32x4 a, float32x4 b)
     {
         return vreinterpretq_f32_s32(veorq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }

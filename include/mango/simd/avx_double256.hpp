@@ -198,22 +198,22 @@ namespace simd {
 
     // bitwise
 
-    static inline float64x4 float64x4_and(float64x4 a, float64x4 b)
-    {
-        return _mm256_and_pd(a, b);
-    }
-
-    static inline float64x4 float64x4_nand(float64x4 a, float64x4 b)
+    static inline float64x4 bitwise_nand(float64x4 a, float64x4 b)
     {
         return _mm256_andnot_pd(a, b);
     }
 
-    static inline float64x4 float64x4_or(float64x4 a, float64x4 b)
+    static inline float64x4 bitwise_and(float64x4 a, float64x4 b)
+    {
+        return _mm256_and_pd(a, b);
+    }
+
+    static inline float64x4 bitwise_or(float64x4 a, float64x4 b)
     {
         return _mm256_or_pd(a, b);
     }
 
-    static inline float64x4 float64x4_xor(float64x4 a, float64x4 b)
+    static inline float64x4 bitwise_xor(float64x4 a, float64x4 b)
     {
         return _mm256_xor_pd(a, b);
     }

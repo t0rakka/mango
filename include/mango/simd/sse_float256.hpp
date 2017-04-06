@@ -69,15 +69,7 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x8 float32x8_and(float32x8 a, float32x8 b)
-    {
-        float32x8 result;
-        result.lo = _mm_and_ps(a.lo, b.lo);
-        result.hi = _mm_and_ps(a.hi, b.hi);
-        return result;
-    }
-
-    static inline float32x8 float32x8_nand(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_nand(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_andnot_ps(a.lo, b.lo);
@@ -85,7 +77,15 @@ namespace simd {
         return result;
     }
 
-    static inline float32x8 float32x8_or(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_and(float32x8 a, float32x8 b)
+    {
+        float32x8 result;
+        result.lo = _mm_and_ps(a.lo, b.lo);
+        result.hi = _mm_and_ps(a.hi, b.hi);
+        return result;
+    }
+
+    static inline float32x8 bitwise_or(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_or_ps(a.lo, b.lo);
@@ -93,7 +93,7 @@ namespace simd {
         return result;
     }
 
-    static inline float32x8 float32x8_xor(float32x8 a, float32x8 b)
+    static inline float32x8 bitwise_xor(float32x8 a, float32x8 b)
     {
         float32x8 result;
         result.lo = _mm_xor_ps(a.lo, b.lo);

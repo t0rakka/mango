@@ -96,16 +96,7 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
-    {
-        const Float x(Float(a[0]).u & Float(b[0]).u);
-        const Float y(Float(a[1]).u & Float(b[1]).u);
-        const Float z(Float(a[2]).u & Float(b[2]).u);
-        const Float w(Float(a[3]).u & Float(b[3]).u);
-        return float32x4_set4(x, y, z, w);
-    }
-
-    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_nand(float32x4 a, float32x4 b)
     {
         const Float x(~Float(a[0]).u & Float(b[0]).u);
         const Float y(~Float(a[1]).u & Float(b[1]).u);
@@ -114,7 +105,16 @@ namespace simd {
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_and(float32x4 a, float32x4 b)
+    {
+        const Float x(Float(a[0]).u & Float(b[0]).u);
+        const Float y(Float(a[1]).u & Float(b[1]).u);
+        const Float z(Float(a[2]).u & Float(b[2]).u);
+        const Float w(Float(a[3]).u & Float(b[3]).u);
+        return float32x4_set4(x, y, z, w);
+    }
+
+    static inline float32x4 bitwise_or(float32x4 a, float32x4 b)
     {
         const Float x(Float(a[0]).u | Float(b[0]).u);
         const Float y(Float(a[1]).u | Float(b[1]).u);
@@ -123,7 +123,7 @@ namespace simd {
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_xor(float32x4 a, float32x4 b)
     {
         const Float x(Float(a[0]).u ^ Float(b[0]).u);
         const Float y(Float(a[1]).u ^ Float(b[1]).u);
@@ -394,7 +394,7 @@ namespace simd {
 
     static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
     {
-        return float32x4_or(float32x4_and(mask, a), float32x4_nand(mask, b));
+        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
     }
 
     // rounding

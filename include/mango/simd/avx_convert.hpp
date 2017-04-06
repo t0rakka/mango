@@ -342,13 +342,13 @@ namespace simd {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         const int32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
 
-        int32x4 no_sign  = int32x4_and(u, int32x4_set1(0x7fff));
-        int32x4 sign     = int32x4_and(u, int32x4_set1(0x8000));
-        int32x4 exponent = int32x4_and(u, int32x4_set1(0x7c00));
-        int32x4 mantissa = int32x4_and(u, int32x4_set1(0x03ff));
+        int32x4 no_sign  = bitwise_and(u, int32x4_set1(0x7fff));
+        int32x4 sign     = bitwise_and(u, int32x4_set1(0x8000));
+        int32x4 exponent = bitwise_and(u, int32x4_set1(0x7c00));
+        int32x4 mantissa = bitwise_and(u, int32x4_set1(0x03ff));
 
         // NaN or Inf
-        int32x4 a = int32x4_or(int32x4_set1(0x7f800000), sll(mantissa, 13));
+        int32x4 a = bitwise_or(int32x4_set1(0x7f800000), sll(mantissa, 13));
 
         // Zero or Denormal
         const int32x4 magic = int32x4_set1(0x3f000000);
@@ -370,7 +370,7 @@ namespace simd {
         result = select(mask, a, result);
 
         // Sign
-        result = int32x4_or(result, sll(sign, 16));
+        result = bitwise_or(result, sll(sign, 16));
 
         return float32x4_reinterpret(result);
     }
@@ -381,18 +381,18 @@ namespace simd {
         const int32x4 vinf = int32x4_set1(31 << 23);
 
         const int32x4 u = int32x4_reinterpret(f);
-        const int32x4 sign = srl(int32x4_and(u, int32x4_set1(0x80000000)), 16);
+        const int32x4 sign = srl(bitwise_and(u, int32x4_set1(0x80000000)), 16);
 
         const int32x4 vexponent = int32x4_set1(0x7f800000);
 
         // Inf / NaN
-        const int32x4 s0 = compare_eq(int32x4_and(u, vexponent), vexponent);
-        int32x4 mantissa = int32x4_and(u, int32x4_set1(0x007fffff));
+        const int32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
+        int32x4 mantissa = bitwise_and(u, int32x4_set1(0x007fffff));
         int32x4 x0 = compare_eq(mantissa, int32x4_zero());
         mantissa = select(x0, int32x4_zero(), sra(mantissa, 13));
-        const int32x4 v0 = int32x4_or(int32x4_set1(0x7c00), mantissa);
+        const int32x4 v0 = bitwise_or(int32x4_set1(0x7c00), mantissa);
 
-        int32x4 v1 = int32x4_and(u, int32x4_set1(0x7ffff000));
+        int32x4 v1 = bitwise_and(u, int32x4_set1(0x7ffff000));
         v1 = int32x4_reinterpret(mul(float32x4_reinterpret(v1), magic));
         v1 = add(v1, int32x4_set1(0x1000));
 
@@ -401,14 +401,14 @@ namespace simd {
         v1 = sra(v1, 13);
 
         int32x4 v = select(s0, v0, v1);
-        v = int32x4_or(v, sign);
+        v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
 #else
         v1 = int32x4_select(compare_gt(v1, vinf), vinf, v1);
         v1 = sra(v1, 13);
 
         int32x4 v = select(s0, v0, v1);
-        v = int32x4_or(v, sign);
+        v = bitwise_or(v, sign);
         v = _mm_slli_epi32 (v, 16);
         v = _mm_srai_epi32 (v, 16);
         v = _mm_packs_epi32 (v, v);

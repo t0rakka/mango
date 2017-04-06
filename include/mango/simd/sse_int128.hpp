@@ -99,22 +99,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint8x16 uint8x16_and(uint8x16 a, uint8x16 b)
-    {
-        return _mm_and_si128(a, b);
-    }
-
-    static inline uint8x16 uint8x16_nand(uint8x16 a, uint8x16 b)
+    static inline uint8x16 bitwise_nand(uint8x16 a, uint8x16 b)
     {
         return _mm_andnot_si128(a, b);
     }
 
-    static inline uint8x16 uint8x16_or(uint8x16 a, uint8x16 b)
+    static inline uint8x16 bitwise_and(uint8x16 a, uint8x16 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint8x16 bitwise_or(uint8x16 a, uint8x16 b)
     {
         return _mm_or_si128(a, b);
     }
 
-    static inline uint8x16 uint8x16_xor(uint8x16 a, uint8x16 b)
+    static inline uint8x16 bitwise_xor(uint8x16 a, uint8x16 b)
     {
         return _mm_xor_si128(a, b);
     }
@@ -123,7 +123,7 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_XOP)
 
-    static inline uint8x16 uint8x16_not(uint8x16 a)
+    static inline uint8x16 bitwise_not(uint8x16 a)
     {
         return _mm_xor_si128(a, _mm_comeq_epu8(a, a));
     }
@@ -241,22 +241,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint16x8 uint16x8_and(uint16x8 a, uint16x8 b)
-    {
-        return _mm_and_si128(a, b);
-    }
-
-    static inline uint16x8 uint16x8_nand(uint16x8 a, uint16x8 b)
+    static inline uint16x8 bitwise_nand(uint16x8 a, uint16x8 b)
     {
         return _mm_andnot_si128(a, b);
     }
 
-    static inline uint16x8 uint16x8_or(uint16x8 a, uint16x8 b)
+    static inline uint16x8 bitwise_and(uint16x8 a, uint16x8 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint16x8 bitwise_or(uint16x8 a, uint16x8 b)
     {
         return _mm_or_si128(a, b);
     }
 
-    static inline uint16x8 uint16x8_xor(uint16x8 a, uint16x8 b)
+    static inline uint16x8 bitwise_xor(uint16x8 a, uint16x8 b)
     {
         return _mm_xor_si128(a, b);
     }
@@ -265,7 +265,7 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_XOP)
 
-    static inline uint16x8 uint16x8_not(uint16x8 a)
+    static inline uint16x8 bitwise_not(uint16x8 a)
     {
         return _mm_xor_si128(a, _mm_comeq_epu16(a, a));
     }
@@ -525,22 +525,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
-    {
-        return _mm_and_si128(a, b);
-    }
-
-    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_nand(uint32x4 a, uint32x4 b)
     {
         return _mm_andnot_si128(a, b);
     }
 
-    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_and(uint32x4 a, uint32x4 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint32x4 bitwise_or(uint32x4 a, uint32x4 b)
     {
         return _mm_or_si128(a, b);
     }
 
-    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_xor(uint32x4 a, uint32x4 b)
     {
         return _mm_xor_si128(a, b);
     }
@@ -569,7 +569,7 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_XOP)
 
-    static inline uint32x4 uint32x4_not(uint32x4 a)
+    static inline uint32x4 bitwise_not(uint32x4 a)
     {
         return _mm_xor_si128(a, _mm_comeq_epu32(a, a));
     }
@@ -721,22 +721,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int8x16 int8x16_and(int8x16 a, int8x16 b)
-    {
-        return _mm_and_si128(a, b);
-    }
-
-    static inline int8x16 int8x16_nand(int8x16 a, int8x16 b)
+    static inline int8x16 bitwise_nand(int8x16 a, int8x16 b)
     {
         return _mm_andnot_si128(a, b);
     }
 
-    static inline int8x16 int8x16_or(int8x16 a, int8x16 b)
+    static inline int8x16 bitwise_and(int8x16 a, int8x16 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline int8x16 bitwise_or(int8x16 a, int8x16 b)
     {
         return _mm_or_si128(a, b);
     }
 
-    static inline int8x16 int8x16_xor(int8x16 a, int8x16 b)
+    static inline int8x16 bitwise_xor(int8x16 a, int8x16 b)
     {
         return _mm_xor_si128(a, b);
     }
@@ -745,7 +745,7 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_XOP)
 
-    static inline int8x16 int8x16_not(int8x16 a)
+    static inline int8x16 bitwise_not(int8x16 a)
     {
         return _mm_xor_si128(a, _mm_comeq_epi8(a, a));
     }
@@ -895,22 +895,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int16x8 int16x8_and(int16x8 a, int16x8 b)
-    {
-        return _mm_and_si128(a, b);
-    }
-
-    static inline int16x8 int16x8_nand(int16x8 a, int16x8 b)
+    static inline int16x8 bitwise_nand(int16x8 a, int16x8 b)
     {
         return _mm_andnot_si128(a, b);
     }
 
-    static inline int16x8 int16x8_or(int16x8 a, int16x8 b)
+    static inline int16x8 bitwise_and(int16x8 a, int16x8 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline int16x8 bitwise_or(int16x8 a, int16x8 b)
     {
         return _mm_or_si128(a, b);
     }
 
-    static inline int16x8 int16x8_xor(int16x8 a, int16x8 b)
+    static inline int16x8 bitwise_xor(int16x8 a, int16x8 b)
     {
         return _mm_xor_si128(a, b);
     }
@@ -919,7 +919,7 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_XOP)
 
-    static inline int16x8 int16x8_not(int16x8 a)
+    static inline int16x8 bitwise_not(int16x8 a)
     {
         return _mm_xor_si128(a, _mm_comeq_epi16(a, a));
     }
@@ -1181,22 +1181,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
-    {
-        return _mm_and_si128(a, b);
-    }
-
-    static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_nand(int32x4 a, int32x4 b)
     {
         return _mm_andnot_si128(a, b);
     }
 
-    static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_and(int32x4 a, int32x4 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline int32x4 bitwise_or(int32x4 a, int32x4 b)
     {
         return _mm_or_si128(a, b);
     }
 
-    static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_xor(int32x4 a, int32x4 b)
     {
         return _mm_xor_si128(a, b);
     }
@@ -1225,7 +1225,7 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_XOP)
 
-    static inline int32x4 int32x4_not(int32x4 a)
+    static inline int32x4 bitwise_not(int32x4 a)
     {
         return _mm_xor_si128(a, _mm_comeq_epi32(a, a));
     }

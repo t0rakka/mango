@@ -331,8 +331,8 @@ static const simd::float32x4 g_XMSelect1110 = simd::float32x4_reinterpret(simd::
 #if 1
         static const XMVECTOR scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
         simd::int32x4 s = simd::int32x4_set1(data);
-        simd::int32x4 c = simd::int32x4_and(s, simd::int32x4_set4(0x1f << 11, 0x3f << 5, 0x1f, 0));
-        c = simd::int32x4_or(c, simd::int32x4_set4(0, 0, 0, 1));
+        simd::int32x4 c = simd::bitwise_and(s, simd::int32x4_set4(0x1f << 11, 0x3f << 5, 0x1f, 0));
+        c = simd::bitwise_or(c, simd::int32x4_set4(0, 0, 0, 1));
         float4 v = simd::float32x4_convert(c);
         return v * scale;
 #else

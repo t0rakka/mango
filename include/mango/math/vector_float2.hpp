@@ -238,22 +238,27 @@ namespace mango
 
     static inline float2 nand(float2 a, float2 b)
     {
-        return simd::float32x2_nand(a, b);
+        return simd::bitwise_nand(a, b);
     }
 
     static inline float2 operator & (float2 a, float2 b)
     {
-        return simd::float32x2_and(a, b);
+        return simd::bitwise_and(a, b);
     }
 
     static inline float2 operator | (float2 a, float2 b)
     {
-        return simd::float32x2_or(a, b);
+        return simd::bitwise_or(a, b);
     }
 
     static inline float2 operator ^ (float2 a, float2 b)
     {
-        return simd::float32x2_xor(a, b);
+        return simd::bitwise_xor(a, b);
+    }
+
+    static inline float2 operator ~ (float2 a)
+    {
+        return simd::bitwise_not(a);
     }
 
     // ------------------------------------------------------------------

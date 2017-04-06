@@ -140,22 +140,22 @@ namespace simd {
 
     // bitwise
 
-    static inline uint32x4 uint32x4_and(uint32x4 a, uint32x4 b)
-    {
-		return spu_and(a, b);
-    }
-
-    static inline uint32x4 uint32x4_nand(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_nand(uint32x4 a, uint32x4 b)
     {
         return spu_nand(a, b);
     }
 
-    static inline uint32x4 uint32x4_or(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_and(uint32x4 a, uint32x4 b)
+    {
+		return spu_and(a, b);
+    }
+
+    static inline uint32x4 bitwise_or(uint32x4 a, uint32x4 b)
     {
 		return spu_or(a, b);
     }
 
-    static inline uint32x4 uint32x4_xor(uint32x4 a, uint32x4 b)
+    static inline uint32x4 bitwise_xor(uint32x4 a, uint32x4 b)
     {
 		return spu_xor(a, b);
     }
@@ -338,22 +338,22 @@ namespace simd {
 
     // bitwise
 
-    static inline int32x4 int32x4_and(int32x4 a, int32x4 b)
-    {
-		return spu_and(a, b);
-    }
-
-    static inline int32x4 int32x4_nand(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_nand(int32x4 a, int32x4 b)
     {
         return spu_nand(a, b);
     }
 
-    static inline int32x4 int32x4_or(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_and(int32x4 a, int32x4 b)
+    {
+		return spu_and(a, b);
+    }
+
+    static inline int32x4 bitwise_or(int32x4 a, int32x4 b)
     {
 		return spu_or(a, b);
     }
 
-    static inline int32x4 int32x4_xor(int32x4 a, int32x4 b)
+    static inline int32x4 bitwise_xor(int32x4 a, int32x4 b)
     {
 		return spu_xor(a, b);
     }

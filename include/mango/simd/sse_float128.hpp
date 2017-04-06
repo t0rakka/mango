@@ -149,22 +149,22 @@ namespace simd {
 
     // bitwise
 
-    static inline float32x4 float32x4_and(float32x4 a, float32x4 b)
-    {
-        return _mm_and_ps(a, b);
-    }
-
-    static inline float32x4 float32x4_nand(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_nand(float32x4 a, float32x4 b)
     {
         return _mm_andnot_ps(a, b);
     }
 
-    static inline float32x4 float32x4_or(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_and(float32x4 a, float32x4 b)
+    {
+        return _mm_and_ps(a, b);
+    }
+
+    static inline float32x4 bitwise_or(float32x4 a, float32x4 b)
     {
         return _mm_or_ps(a, b);
     }
 
-    static inline float32x4 float32x4_xor(float32x4 a, float32x4 b)
+    static inline float32x4 bitwise_xor(float32x4 a, float32x4 b)
     {
         return _mm_xor_ps(a, b);
     }
@@ -396,7 +396,7 @@ namespace simd {
 
     static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
     {
-        return float32x4_or(float32x4_and(mask, a), float32x4_nand(mask, b));
+        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
     }
 
 #endif

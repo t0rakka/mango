@@ -216,15 +216,7 @@ namespace simd {
 
     // bitwise
 
-    static inline float64x4 float64x4_and(float64x4 a, float64x4 b)
-    {
-        float64x4 result;
-        result.lo = _mm_and_pd(a.lo, b.lo);
-        result.hi = _mm_and_pd(a.hi, b.hi);
-        return result;
-    }
-
-    static inline float64x4 float64x4_nand(float64x4 a, float64x4 b)
+    static inline float64x4 bitwise_nand(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.lo = _mm_andnot_pd(a.lo, b.lo);
@@ -232,7 +224,15 @@ namespace simd {
         return result;
     }
 
-    static inline float64x4 float64x4_or(float64x4 a, float64x4 b)
+    static inline float64x4 bitwise_and(float64x4 a, float64x4 b)
+    {
+        float64x4 result;
+        result.lo = _mm_and_pd(a.lo, b.lo);
+        result.hi = _mm_and_pd(a.hi, b.hi);
+        return result;
+    }
+
+    static inline float64x4 bitwise_or(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.lo = _mm_or_pd(a.lo, b.lo);
@@ -240,7 +240,7 @@ namespace simd {
         return result;
     }
 
-    static inline float64x4 float64x4_xor(float64x4 a, float64x4 b)
+    static inline float64x4 bitwise_xor(float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.lo = _mm_xor_pd(a.lo, b.lo);
