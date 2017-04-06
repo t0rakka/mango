@@ -68,7 +68,7 @@ namespace mango {
 
     void* aligned_malloc(size_t size, size_t alignment)
     {
-        assert(u32_is_power_of_two(alignment));
+        assert(u32_is_power_of_two(uint32(alignment)));
         return _aligned_malloc(size, alignment);
     }
 
@@ -81,7 +81,7 @@ namespace mango {
 
     void* aligned_malloc(size_t size, size_t alignment)
     {
-        assert(u32_is_power_of_two(alignment));
+        assert(u32_is_power_of_two(uint32(alignment)));
         return memalign(alignment, size);
     }
 
@@ -96,7 +96,7 @@ namespace mango {
 
     void* aligned_malloc(size_t size, size_t alignment)
     {
-        assert(u32_is_power_of_two(alignment));
+        assert(u32_is_power_of_two(uint32(alignment)));
 
         const size_t mask = alignment - 1;
         void* block = std::malloc(size + mask + sizeof(void*));
