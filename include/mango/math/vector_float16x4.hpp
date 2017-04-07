@@ -5,7 +5,7 @@
 #pragma once
 
 #include "vector.hpp"
-#include "vector_float4.hpp"
+#include "vector_float32x4.hpp"
 
 namespace mango
 {
