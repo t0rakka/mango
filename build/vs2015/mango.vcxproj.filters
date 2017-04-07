@@ -411,42 +411,6 @@
     <ClInclude Include="..\..\include\mango\image\surface.hpp">
       <Filter>mango\include\image</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\geometry.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\math.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\matrix.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\matrix_float4x4.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\quaternion.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\srgb.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_double4.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_float2.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_float3.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_float4.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_half4.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp">
       <Filter>mango\include\vulkan</Filter>
     </ClInclude>
@@ -681,9 +645,6 @@
     <ClInclude Include="..\..\source\external\concurrentqueue\concurrentqueue.h">
       <Filter>external\concurrentqueue</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_double2.hpp">
-      <Filter>mango\include\math</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\lz4\lz4opt.h">
       <Filter>external\lz4</Filter>
     </ClInclude>
@@ -732,7 +693,70 @@
     <ClInclude Include="..\..\include\mango\simd\neon_float256.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\vector_float8.hpp">
+    <ClInclude Include="..\..\include\mango\math\geometry.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\math.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\matrix.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\matrix_float4x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\quaternion.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\srgb.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float16x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float32x2.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float32x3.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float32x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float32x8.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float64x2.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_float64x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_int8x16.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_int16x8.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_int32x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_int64x2.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_uint8x16.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_uint16x8.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_uint32x4.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_uint64x2.hpp">
       <Filter>mango\include\math</Filter>
     </ClInclude>
   </ItemGroup>
