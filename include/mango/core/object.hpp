@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -21,16 +21,14 @@ namespace mango
         NonCopyable& operator = (const NonCopyable&) = delete;
     };
 
-    class Object : private NonCopyable
+    class RefCounted : private NonCopyable
     {
     protected:
-        int refcount;
+        int m_count { 1 };
 
     public:
-        std::string name;
-
-        Object();
-        virtual ~Object();
+        RefCounted() = default;
+        virtual ~RefCounted() = default;
 
         int retain();
         int release();

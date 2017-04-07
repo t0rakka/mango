@@ -33,7 +33,7 @@ namespace mango
     // This API is useful for transmitting compressed realtime data stream over high latency,
     // low bandwidth connection.
 
-    class StreamEncoder : public Object
+    class StreamEncoder : public RefCounted
     {
     public:
         StreamEncoder() {}
@@ -42,7 +42,7 @@ namespace mango
         virtual size_t encode(Memory dest, Memory source) = 0;
     };
 
-    class StreamDecoder : public Object
+    class StreamDecoder : public RefCounted
     {
     public:
         StreamDecoder() {}

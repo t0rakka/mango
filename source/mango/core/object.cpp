@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/object.hpp>
 
@@ -8,37 +8,27 @@ namespace mango
 {
 
     // ----------------------------------------------------------------------------
-    // Object
+    // RefCounted
     // ----------------------------------------------------------------------------
 
-    Object::Object()
-    : refcount(1)
+    int RefCounted::retain()
     {
+        return ++m_count;
     }
 
-    Object::~Object()
+    int RefCounted::release()
     {
-    }
-
-    int Object::retain()
-    {
-        return ++refcount;
-    }
-
-    int Object::release()
-    {
-        const int count = --refcount;
-        if (!count)
-        {
+        const int count = --m_count;
+        if (!count) {
             delete this;
         }
 
         return count;
     }
 
-    int Object::count() const
+    int RefCounted::count() const
     {
-        return refcount;
+        return m_count;
     }
 
 } // namespace mango
