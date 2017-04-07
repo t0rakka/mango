@@ -879,20 +879,25 @@ namespace mango
     typedef Vector<int, 2>      int2;
     typedef Vector<int, 3>      int3;
     typedef Vector<int, 4>      int4;
-
     typedef Vector<half, 4>     half4;
-
     typedef Vector<float, 2>    float2;
     typedef Vector<float, 3>    float3;
     typedef Vector<float, 4>    float4;
     typedef Vector<float, 8>    float8;
-
     typedef Vector<double, 2>   double2;
     typedef Vector<double, 3>   double3;
     typedef Vector<double, 4>   double4;
 
 } // namespace mango
 
+#include "vector_int16x8.hpp"
+#include "vector_int32x4.hpp"
+#include "vector_int64x2.hpp"
+#include "vector_int8x16.hpp"
+#include "vector_uint16x8.hpp"
+#include "vector_uint32x4.hpp"
+#include "vector_uint64x2.hpp"
+#include "vector_uint8x16.hpp"
 #include "vector_float16x4.hpp"
 #include "vector_float32x2.hpp"
 #include "vector_float32x3.hpp"
