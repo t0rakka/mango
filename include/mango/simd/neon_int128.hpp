@@ -1110,7 +1110,7 @@ namespace simd {
 
     static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
     {
-        return vbslq_s64(mask, a, b);
+        return vbslq_s64(vreinterpretq_u64_s64(mask), a, b);
     }
 
 } // namespace simd
