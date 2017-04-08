@@ -131,8 +131,8 @@ ifeq (Darwin, $(OS))
   LIBRARY_OPENGL = lib$(LIBNAME_OPENGL).dylib
   LIBRARY_VULKAN =
   PLATFORM = x86-64
-  CC  = clang $(OPTIONS) $(CC_STD) -msse4 -mmacosx-version-min=10.7
-  CPP = clang++ $(OPTIONS) $(CPP_STD) -msse4 -mmacosx-version-min=10.7 $(STD) -stdlib=libc++
+  CC  = clang $(OPTIONS) $(OPTIONS_X86) $(CC_STD) -mmacosx-version-min=10.7
+  CPP = clang++ $(OPTIONS) $(OPTIONS_X86) $(CPP_STD) -mmacosx-version-min=10.7 $(STD) -stdlib=libc++
   LINK_MANGO  = libtool -dynamic -o $(LIBRARY_MANGO) -undefined dynamic_lookup -macosx_version_min 10.7
   LINK_OPENGL = libtool -dynamic -o $(LIBRARY_OPENGL) -undefined dynamic_lookup -macosx_version_min 10.7
   LINK_VULKAN = libtool -dynamic -o $(LIBRARY_VULKAN) -undefined dynamic_lookup -macosx_version_min 10.7
