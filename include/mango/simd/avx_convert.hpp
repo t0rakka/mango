@@ -139,7 +139,7 @@ namespace simd {
 
     static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
     {
-        return simd_packus_epi32(a, b);
+        return simd128_packus_epi32(a, b);
     }
 
     static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)

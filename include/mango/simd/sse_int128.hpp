@@ -13,17 +13,17 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    #define simd_shuffle_epi(a, b, mask) \
+    #define simd128_shuffle_epi(a, b, mask) \
         _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), mask));
 
-    static inline __m128i simd_mullo_epi8(__m128i a, __m128i b)
+    static inline __m128i simd128_mullo_epi8(__m128i a, __m128i b)
     {
         const __m128i temp0 = _mm_mullo_epi16(a, b);
         const __m128i temp1 = _mm_mullo_epi16(_mm_srli_epi16(a, 8),_mm_srli_epi16(b, 8));
         return _mm_or_si128(_mm_slli_epi16(temp1, 8), _mm_srli_epi16(_mm_slli_epi16(temp0, 8), 8));
     }
 
-    static inline __m128i simd_mullo_epi32(__m128i a, __m128i b)
+    static inline __m128i simd128_mullo_epi32(__m128i a, __m128i b)
     {
         __m128i temp0 = _mm_mul_epu32(a, b);
         __m128i temp1 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));
@@ -32,7 +32,7 @@ namespace simd {
         return _mm_unpacklo_epi32(temp0, temp1);
     }
 
-    static inline __m128i simd_packus_epi32(__m128i a, __m128i b)
+    static inline __m128i simd128_packus_epi32(__m128i a, __m128i b)
     {
         a = _mm_slli_epi32(a, 16);
         a = _mm_srai_epi32(a, 16);
@@ -82,7 +82,7 @@ namespace simd {
 
     static inline uint8x16 mullo(uint8x16 a, uint8x16 b)
     {
-        return simd_mullo_epi8(a, b);
+        return simd128_mullo_epi8(a, b);
     }
 
     // saturated
@@ -395,28 +395,28 @@ namespace simd {
     inline uint32x4 set_component<0>(uint32x4 a, uint32 x)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
-        return simd_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
+        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
     inline uint32x4 set_component<1>(uint32x4 a, uint32 y)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
-        return simd_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
+        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
     inline uint32x4 set_component<2>(uint32x4 a, uint32 z)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
-        return simd_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
+        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
     inline uint32x4 set_component<3>(uint32x4 a, uint32 w)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
-        return simd_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
+        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
     template <int Index>
@@ -504,7 +504,7 @@ namespace simd {
 
     static inline uint32x4 mullo(uint32x4 a, uint32x4 b)
     {
-        return simd_mullo_epi32(a, b);
+        return simd128_mullo_epi32(a, b);
     }
 
 #endif
@@ -688,7 +688,7 @@ namespace simd {
 
     static inline int8x16 mullo(int8x16 a, int8x16 b)
     {
-        return simd_mullo_epi8(a, b);
+        return simd128_mullo_epi8(a, b);
     }
 
     // saturated
@@ -1030,28 +1030,28 @@ namespace simd {
     inline int32x4 set_component<0>(int32x4 a, int32 x)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
-        return simd_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
+        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
     inline int32x4 set_component<1>(int32x4 a, int32 y)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
-        return simd_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
+        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
     inline int32x4 set_component<2>(int32x4 a, int32 z)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
-        return simd_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
+        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
     inline int32x4 set_component<3>(int32x4 a, int32 w)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
-        return simd_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
+        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
     template <int Index>
@@ -1154,7 +1154,7 @@ namespace simd {
 
     static inline int32x4 mullo(int32x4 a, int32x4 b)
     {
-        return simd_mullo_epi32(a, b);
+        return simd128_mullo_epi32(a, b);
     }
 
 #endif
@@ -1332,7 +1332,7 @@ namespace simd {
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
-#undef simd_shuffle_epi
+#undef simd128_shuffle_epi
 
 } // namespace simd
 } // namespace mango

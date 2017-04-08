@@ -87,11 +87,11 @@ namespace simd {
     typedef vector_type<uint64, 2, __m128i>   uint64x2; // TODO
     typedef vector_type<int8, 32, __m256i>    int8x32; // TODO
     typedef vector_type<int16, 16, __m256i>   int16x16; // TODO
-    typedef vector_type<int32 8, __m256i>     int32x8; // TODO
+    typedef vector_type<int32, 8, __m256i>    int32x8; // TODO
     typedef vector_type<int64, 4, __m256i>    int64x4; // TODO
     typedef vector_type<uint8, 32, __m256i>   uint8x32; // TODO
     typedef vector_type<uint16, 16, __m256i>  uint16x16; // TODO
-    typedef vector_type<uint32 8, __m256i>    uint32x8; // TODO
+    typedef vector_type<uint32, 8, __m256i>   uint32x8; // TODO
     typedef vector_type<uint64, 4, __m256i>   uint64x4; // TODO
     typedef scalar_type<half, 4>              float16x4;
     typedef scalar_type<float, 2>             float32x2;
@@ -138,19 +138,16 @@ namespace simd {
     typedef vector_type<double, 2, __m128d>  float64x2;
     typedef vector_type<double, 4, __m256d>  float64x4;
 
-    // TODO
      struct int8x32
     {
         int8x16 lo, hi;
     };
 
-    // TODO
     struct int16x16
     {
         int16x8 lo, hi;
     };
 
-    // TODO
     struct int32x8
     {
         int32x4 lo, hi;
@@ -162,19 +159,16 @@ namespace simd {
         int64x2 lo, hi;
     };
 
-    // TODO
     struct uint8x32
     {
         uint8x16 lo, hi;
     };
 
-    // TODO
     struct uint16x16
     {
         uint16x8 lo, hi;
     };
 
-    // TODO
     struct uint32x8
     {
         uint32x4 lo, hi;
@@ -190,7 +184,7 @@ namespace simd {
 } // namespace mango
 
     #include "sse_int128.hpp"
-    #include "sse_int256.hpp"
+    #include "common_int256.hpp"
     #include "scalar_float64.hpp"
     #include "sse_float128.hpp"
     #include "avx_float256.hpp"
@@ -222,19 +216,16 @@ namespace simd {
     typedef vector_type<float, 4, __m128>    float32x4;
     typedef vector_type<double, 2, __m128d>  float64x2;
 
-    // TODO
     struct int8x32
     {
         int8x16 lo, hi;
     };
 
-    // TODO
     struct int16x16
     {
         int16x8 lo, hi;
     };
 
-    // TODO
     struct int32x8
     {
         int32x4 lo, hi;
@@ -246,19 +237,16 @@ namespace simd {
         int64x2 lo, hi;
     };
 
-    // TODO
     struct uint8x32
     {
         uint8x16 lo, hi;
     };
 
-    // TODO
     struct uint16x16
     {
         uint16x8 lo, hi;
     };
 
-    // TODO
     struct uint32x8
     {
         uint32x4 lo, hi;
@@ -284,7 +272,7 @@ namespace simd {
 } // namespace mango
 
     #include "sse_int128.hpp"
-    #include "sse_int256.hpp"
+    #include "common_int256.hpp"
     #include "scalar_float64.hpp"
     #include "sse_float128.hpp"
     #include "common_float256.hpp"
@@ -324,19 +312,16 @@ namespace simd {
 
 #endif
 
-    // TODO
     struct int8x32
     {
         int8x16 lo, hi;
     };
 
-    // TODO
     struct int16x16
     {
         int16x8 lo, hi;
     };
 
-    // TODO
     struct int32x8
     {
         int32x4 lo, hi;
@@ -348,19 +333,16 @@ namespace simd {
         int64x2 lo, hi;
     };
 
-    // TODO
     struct uint8x32
     {
         uint8x16 lo, hi;
     };
 
-    // TODO
     struct uint16x16
     {
         uint16x8 lo, hi;
     };
 
-    // TODO
     struct uint32x8
     {
         uint32x4 lo, hi;
@@ -384,7 +366,7 @@ namespace simd {
 } // namespace mango
 
     #include "neon_int128.hpp"
-    #include "neon_int256.hpp"
+    #include "common_int256.hpp"
     #include "neon_float64.hpp"
     #include "neon_float128.hpp"
     #include "common_float256.hpp"
@@ -411,19 +393,43 @@ namespace simd {
     typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
     typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
     typedef scalar_type<uint64, 2>                        uint64x2; // TODO
-    typedef scalar_type<int8, 32>                         int8x32; // TODO
-    typedef scalar_type<int16, 16>                        int16x16; // TODO
-    typedef scalar_type<int32, 8>                         int32x8; // TODO
     typedef scalar_type<int64, 4>                         int64x4; // TODO
-    typedef scalar_type<uint8, 32>                        uint8x32; // TODO
-    typedef scalar_type<uint16, 16>                       uint16x16; // TODO
-    typedef scalar_type<uint32, 8>                        uint32x8; // TODO
     typedef scalar_type<uint64, 4>                        uint64x4; // TODO
     typedef scalar_type<half, 4>                          float16x4;
     typedef scalar_type<float, 2>                         float32x2;
     typedef vector_type<float, 4, vector float>           float32x4;
     typedef scalar_type<double, 2>                        float64x2;
     typedef scalar_type<double, 4>                        float64x4;
+
+    struct int8x32
+    {
+        int8x16 lo, hi;
+    };
+
+    struct int16x16
+    {
+        int16x8 lo, hi;
+    };
+
+    struct int32x8
+    {
+        int32x4 lo, hi;
+    };
+
+    struct uint8x32
+    {
+        uint8x16 lo, hi;
+    };
+
+    struct uint16x16
+    {
+        uint16x8 lo, hi;
+    };
+
+    struct uint32x8
+    {
+        uint32x4 lo, hi;
+    };
 
     struct float32x8
     {
@@ -434,7 +440,7 @@ namespace simd {
 } // namespace mango
 
     #include "altivec_int128.hpp"
-    #include "scalar_int256.hpp"
+    #include "common_int256.hpp"
     #include "scalar_float64.hpp"
     #include "altivec_float128.hpp"
     #include "common_float256.hpp"
@@ -461,19 +467,43 @@ namespace simd {
     typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
     typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
     typedef scalar_type<uint64, 2>                        uint64x2; // TODO
-    typedef scalar_type<int8, 32>                         int8x32; // TODO
-    typedef scalar_type<int16, 16>                        int16x16; // TODO
-    typedef scalar_type<int32, 8>                         int32x8; // TODO
     typedef scalar_type<int64, 4>                         int64x4; // TODO
-    typedef scalar_type<uint8, 32>                        uint8x32; // TODO
-    typedef scalar_type<uint16, 16>                       uint16x16; // TODO
-    typedef scalar_type<uint32, 8>                        uint32x8; // TODO
     typedef scalar_type<uint64, 4>                        uint64x4; // TODO
     typedef scalar_type<half, 4>                          float16x4;
     typedef scalar_type<float, 2>                         float32x2;
     typedef vector_type<float, 4, vector float>           float32x4;
     typedef scalar_type<double, 2>                        float64x2;
     typedef scalar_type<double, 4>                        float64x4;
+
+    struct int8x32
+    {
+        int8x16 lo, hi;
+    };
+
+    struct int16x16
+    {
+        int16x8 lo, hi;
+    };
+
+    struct int32x8
+    {
+        int32x4 lo, hi;
+    };
+
+    struct uint8x32
+    {
+        uint8x16 lo, hi;
+    };
+
+    struct uint16x16
+    {
+        uint16x8 lo, hi;
+    };
+
+    struct uint32x8
+    {
+        uint32x4 lo, hi;
+    };
 
     struct float32x8
     {
@@ -484,7 +514,7 @@ namespace simd {
 } // namespace mango
 
     #include "spu_int128.hpp"
-    #include "scalar_int256.hpp"
+    #include "common_int256.hpp"
     #include "scalar_float64.hpp"
     #include "spu_float128.hpp"
     #include "common_float256.hpp"
@@ -509,19 +539,43 @@ namespace simd {
     typedef scalar_type<uint16, 8>  uint16x8;
     typedef scalar_type<uint32, 4>  uint32x4;
     typedef scalar_type<uint64, 2>  uint64x2; // TODO
-    typedef scalar_type<int8, 32>   int8x32; // TODO
-    typedef scalar_type<int16, 16>  int16x16; // TODO
-    typedef scalar_type<int32, 8>   int32x8; // TODO
     typedef scalar_type<int64, 4>   int64x4; // TODO
-    typedef scalar_type<uint8, 32>  uint8x32; // TODO
-    typedef scalar_type<uint16, 16> uint16x16; // TODO
-    typedef scalar_type<uint32, 8>  uint32x8; // TODO
     typedef scalar_type<uint64, 4>  uint64x4; // TODO
     typedef scalar_type<half, 4>    float16x4;
     typedef scalar_type<float, 2>   float32x2;
     typedef scalar_type<float, 4>   float32x4;
     typedef scalar_type<double, 2>  float64x2;
     typedef scalar_type<double, 4>  float64x4;
+
+    struct int8x32
+    {
+        int8x16 lo, hi;
+    };
+
+    struct int16x16
+    {
+        int16x8 lo, hi;
+    };
+
+    struct int32x8
+    {
+        int32x4 lo, hi;
+    };
+
+    struct uint8x32
+    {
+        uint8x16 lo, hi;
+    };
+
+    struct uint16x16
+    {
+        uint16x8 lo, hi;
+    };
+
+    struct uint32x8
+    {
+        uint32x4 lo, hi;
+    };
 
     struct float32x8
     {
@@ -532,7 +586,7 @@ namespace simd {
 } // namespace mango
 
     #include "scalar_int128.hpp"
-    #include "scalar_int256.hpp"
+    #include "common_int256.hpp"
     #include "scalar_float64.hpp"
     #include "scalar_float128.hpp"
     #include "common_float256.hpp"
