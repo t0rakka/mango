@@ -523,6 +523,106 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // uint64x4
+    // -----------------------------------------------------------------
+
+    static inline uint64x4 uint64x4_zero()
+    {
+        uint64x4 result;
+        result.lo = uint64x2_zero();
+        result.hi = uint64x2_zero();
+        return result;
+    }
+
+    static inline uint64x4 uint64x4_set1(uint64 s)
+    {
+        uint64x4 result;
+        result.lo = uint64x2_set1(s);
+        result.hi = uint64x2_set1(s);
+        return result;
+    }
+
+    static inline uint64x4 uint64x4_set4(uint64 x, uint64 y, uint64 z, uint64 w)
+    {
+        uint64x4 result;
+        result.lo = uint64x2_set2(x, y);
+        result.hi = uint64x2_set2(z, w);
+        return result;
+    }
+
+    static inline uint64x4 unpacklo(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = unpacklo(a.lo, b.lo);
+        result.hi = unpacklo(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 unpackhi(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = unpackhi(a.lo, b.lo);
+        result.hi = unpackhi(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 add(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = add(a.lo, b.lo);
+        result.hi = add(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 sub(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = sub(a.lo, b.lo);
+        result.hi = sub(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 bitwise_nand(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = bitwise_nand(a.lo, b.lo);
+        result.hi = bitwise_nand(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 bitwise_and(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = bitwise_and(a.lo, b.lo);
+        result.hi = bitwise_and(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 bitwise_or(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = bitwise_or(a.lo, b.lo);
+        result.hi = bitwise_or(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 bitwise_xor(uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = bitwise_xor(a.lo, b.lo);
+        result.hi = bitwise_xor(a.hi, b.hi);
+        return result;
+    }
+
+    static inline uint64x4 select(uint64x4 mask, uint64x4 a, uint64x4 b)
+    {
+        uint64x4 result;
+        result.lo = select(mask.lo, a.lo, b.lo);
+        result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    // -----------------------------------------------------------------
     // int8x32
     // -----------------------------------------------------------------
 
@@ -1080,6 +1180,106 @@ namespace simd {
         int32x8 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
+        return result;
+    }
+
+    // -----------------------------------------------------------------
+    // int64x4
+    // -----------------------------------------------------------------
+
+    static inline int64x4 int64x4_zero()
+    {
+        int64x4 result;
+        result.lo = int64x2_zero();
+        result.hi = int64x2_zero();
+        return result;
+    }
+
+    static inline int64x4 int64x4_set1(int64 s)
+    {
+        int64x4 result;
+        result.lo = int64x2_set1(s);
+        result.hi = int64x2_set1(s);
+        return result;
+    }
+
+    static inline int64x4 int64x4_set4(int64 x, int64 y, int64 z, int64 w)
+    {
+        int64x4 result;
+        result.lo = int64x2_set2(x, y);
+        result.hi = int64x2_set2(z, w);
+        return result;
+    }
+
+    static inline int64x4 unpacklo(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = unpacklo(a.lo, b.lo);
+        result.hi = unpacklo(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 unpackhi(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = unpackhi(a.lo, b.lo);
+        result.hi = unpackhi(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 add(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = add(a.lo, b.lo);
+        result.hi = add(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 sub(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = sub(a.lo, b.lo);
+        result.hi = sub(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 bitwise_nand(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = bitwise_nand(a.lo, b.lo);
+        result.hi = bitwise_nand(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 bitwise_and(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = bitwise_and(a.lo, b.lo);
+        result.hi = bitwise_and(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 bitwise_or(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = bitwise_or(a.lo, b.lo);
+        result.hi = bitwise_or(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 bitwise_xor(int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = bitwise_xor(a.lo, b.lo);
+        result.hi = bitwise_xor(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int64x4 select(int64x4 mask, int64x4 a, int64x4 b)
+    {
+        int64x4 result;
+        result.lo = select(mask.lo, a.lo, b.lo);
+        result.hi = select(mask.hi, a.hi, b.hi);
         return result;
     }
 

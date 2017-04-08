@@ -605,6 +605,70 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // uint64x2
+    // -----------------------------------------------------------------
+
+    static inline uint64x2 uint64x2_zero()
+    {
+        return scalar_set<uint64, 2>(0);
+    }
+
+    static inline uint64x2 uint64x2_set1(uint64 s)
+    {
+        return scalar_set<uint64, 2>(s);
+    }
+
+    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    {
+        return {{ x, y }};
+    }
+
+    static inline uint64x2 unpacklo(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unpacklo(a, b);
+    }
+
+    static inline uint64x2 unpackhi(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unpackhi(a, b);
+    }
+
+    static inline uint64x2 add(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unroll(scalar_add, a, b);
+    }
+
+    static inline uint64x2 sub(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unroll(scalar_sub, a, b);
+    }
+
+    static inline uint64x2 bitwise_nand(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unroll(scalar_nand, a, b);
+    }
+
+    static inline uint64x2 bitwise_and(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline uint64x2 bitwise_or(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unroll(scalar_or, a, b);
+    }
+
+    static inline uint64x2 bitwise_xor(uint64x2 a, uint64x2 b)
+    {
+        return scalar_unroll(scalar_xor, a, b);
+    }
+
+    static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
+    {
+        return scalar_select(mask, a, b);
+    }
+
+    // -----------------------------------------------------------------
     // int8x16
     // -----------------------------------------------------------------
 
@@ -1047,6 +1111,70 @@ namespace simd {
         v[2] = (s >> 16) & 0xff;
         v[3] = (s >> 24);
         return v;
+    }
+
+    // -----------------------------------------------------------------
+    // int64x2
+    // -----------------------------------------------------------------
+
+    static inline int64x2 int64x2_zero()
+    {
+        return scalar_set<int64, 2>(0);
+    }
+
+    static inline int64x2 int64x2_set1(int64 s)
+    {
+        return scalar_set<int64, 2>(s);
+    }
+
+    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    {
+        return {{ x, y }};
+    }
+
+    static inline int64x2 unpacklo(int64x2 a, int64x2 b)
+    {
+        return scalar_unpacklo(a, b);
+    }
+
+    static inline int64x2 unpackhi(int64x2 a, int64x2 b)
+    {
+        return scalar_unpackhi(a, b);
+    }
+
+    static inline int64x2 add(int64x2 a, int64x2 b)
+    {
+        return scalar_unroll(scalar_add, a, b);
+    }
+
+    static inline int64x2 sub(int64x2 a, int64x2 b)
+    {
+        return scalar_unroll(scalar_sub, a, b);
+    }
+
+    static inline int64x2 bitwise_nand(int64x2 a, int64x2 b)
+    {
+        return scalar_unroll(scalar_nand, a, b);
+    }
+
+    static inline int64x2 bitwise_and(int64x2 a, int64x2 b)
+    {
+        return scalar_unroll(scalar_and, a, b);
+    }
+
+    static inline int64x2 bitwise_or(int64x2 a, int64x2 b)
+    {
+        return scalar_unroll(scalar_or, a, b);
+    }
+
+    static inline int64x2 bitwise_xor(int64x2 a, int64x2 b)
+    {
+        return scalar_unroll(scalar_xor, a, b);
+    }
+
+    static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
+    {
+        return scalar_select(mask, a, b);
     }
 
 } // namespace simd

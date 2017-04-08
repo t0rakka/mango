@@ -653,6 +653,70 @@ namespace simd {
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
     // -----------------------------------------------------------------
+    // uint64x2
+    // -----------------------------------------------------------------
+
+    static inline uint64x2 uint64x2_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline uint64x2 uint64x2_set1(uint64 s)
+    {
+        return _mm_set1_epi64x(s);
+    }
+
+    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    {
+        return _mm_set_epi64x(y, x);
+    }
+
+    static inline uint64x2 unpacklo(uint64x2 a, uint64x2 b)
+    {
+        return _mm_unpacklo_epi64(a, b);
+    }
+
+    static inline uint64x2 unpackhi(uint64x2 a, uint64x2 b)
+    {
+        return _mm_unpackhi_epi64(a, b);
+    }
+
+    static inline uint64x2 add(uint64x2 a, uint64x2 b)
+    {
+        return _mm_add_epi64(a, b);
+    }
+
+    static inline uint64x2 sub(uint64x2 a, uint64x2 b)
+    {
+        return _mm_sub_epi64(a, b);
+    }
+
+    static inline uint64x2 bitwise_nand(uint64x2 a, uint64x2 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline uint64x2 bitwise_and(uint64x2 a, uint64x2 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline uint64x2 bitwise_or(uint64x2 a, uint64x2 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline uint64x2 bitwise_xor(uint64x2 a, uint64x2 b)
+    {
+        return _mm_xor_si128(a, b);
+    }
+
+    static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
+    {
+        return _mm_select_si128(mask, a, b);
+    }
+
+    // -----------------------------------------------------------------
     // int8x16
     // -----------------------------------------------------------------
 
@@ -1331,6 +1395,70 @@ namespace simd {
     }
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
+
+    // -----------------------------------------------------------------
+    // int64x2
+    // -----------------------------------------------------------------
+
+    static inline int64x2 int64x2_zero()
+    {
+        return _mm_setzero_si128();
+    }
+
+    static inline int64x2 int64x2_set1(int64 s)
+    {
+        return _mm_set1_epi64x(s);
+    }
+
+    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    {
+        return _mm_set_epi64x(y, x);
+    }
+
+    static inline int64x2 unpacklo(int64x2 a, int64x2 b)
+    {
+        return _mm_unpacklo_epi64(a, b);
+    }
+
+    static inline int64x2 unpackhi(int64x2 a, int64x2 b)
+    {
+        return _mm_unpackhi_epi64(a, b);
+    }
+
+    static inline int64x2 add(int64x2 a, int64x2 b)
+    {
+        return _mm_add_epi64(a, b);
+    }
+
+    static inline int64x2 sub(int64x2 a, int64x2 b)
+    {
+        return _mm_sub_epi64(a, b);
+    }
+
+    static inline int64x2 bitwise_nand(int64x2 a, int64x2 b)
+    {
+        return _mm_andnot_si128(a, b);
+    }
+
+    static inline int64x2 bitwise_and(int64x2 a, int64x2 b)
+    {
+        return _mm_and_si128(a, b);
+    }
+
+    static inline int64x2 bitwise_or(int64x2 a, int64x2 b)
+    {
+        return _mm_or_si128(a, b);
+    }
+
+    static inline int64x2 bitwise_xor(int64x2 a, int64x2 b)
+    {
+        return _mm_xor_si128(a, b);
+    }
+
+    static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
+    {
+        return _mm_select_si128(mask, a, b);
+    }
 
 #undef simd128_shuffle_epi
 

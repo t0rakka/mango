@@ -80,19 +80,19 @@ namespace simd {
     typedef vector_type<int8, 16, __m128i>    int8x16;
     typedef vector_type<int16, 8, __m128i>    int16x8;
     typedef vector_type<int32, 4, __m128i>    int32x4;
-    typedef vector_type<int64, 2, __m128i>    int64x2; // TODO
+    typedef vector_type<int64, 2, __m128i>    int64x2;
     typedef vector_type<uint8, 16, __m128i>   uint8x16;
     typedef vector_type<uint16, 8, __m128i>   uint16x8;
     typedef vector_type<uint32, 4, __m128i>   uint32x4;
-    typedef vector_type<uint64, 2, __m128i>   uint64x2; // TODO
-    typedef vector_type<int8, 32, __m256i>    int8x32; // TODO
-    typedef vector_type<int16, 16, __m256i>   int16x16; // TODO
-    typedef vector_type<int32, 8, __m256i>    int32x8; // TODO
-    typedef vector_type<int64, 4, __m256i>    int64x4; // TODO
-    typedef vector_type<uint8, 32, __m256i>   uint8x32; // TODO
-    typedef vector_type<uint16, 16, __m256i>  uint16x16; // TODO
-    typedef vector_type<uint32, 8, __m256i>   uint32x8; // TODO
-    typedef vector_type<uint64, 4, __m256i>   uint64x4; // TODO
+    typedef vector_type<uint64, 2, __m128i>   uint64x2;
+    typedef vector_type<int8, 32, __m256i>    int8x32;
+    typedef vector_type<int16, 16, __m256i>   int16x16;
+    typedef vector_type<int32, 8, __m256i>    int32x8;
+    typedef vector_type<int64, 4, __m256i>    int64x4;
+    typedef vector_type<uint8, 32, __m256i>   uint8x32;
+    typedef vector_type<uint16, 16, __m256i>  uint16x16;
+    typedef vector_type<uint32, 8, __m256i>   uint32x8;
+    typedef vector_type<uint64, 4, __m256i>   uint64x4;
     typedef scalar_type<half, 4>              float16x4;
     typedef scalar_type<float, 2>             float32x2;
     typedef vector_type<float, 4, __m128>     float32x4;
@@ -126,11 +126,11 @@ namespace simd {
     typedef vector_type<int8, 16, __m128i>   int8x16;
     typedef vector_type<int16, 8, __m128i>   int16x8;
     typedef vector_type<int32, 4, __m128i>   int32x4;
-    typedef vector_type<int64, 2, __m128i>   int64x2; // TODO
+    typedef vector_type<int64, 2, __m128i>   int64x2;
     typedef vector_type<uint8, 16, __m128i>  uint8x16;
     typedef vector_type<uint16, 8, __m128i>  uint16x8;
     typedef vector_type<uint32, 4, __m128i>  uint32x4;
-    typedef vector_type<uint64, 2, __m128i>  uint64x2; // TODO
+    typedef vector_type<uint64, 2, __m128i>  uint64x2;
     typedef scalar_type<half, 4>             float16x4;
     typedef scalar_type<float, 2>            float32x2;
     typedef vector_type<float, 4, __m128>    float32x4;
@@ -153,7 +153,6 @@ namespace simd {
         int32x4 lo, hi;
     };
 
-    // TODO
     struct int64x4
     {
         int64x2 lo, hi;
@@ -174,7 +173,6 @@ namespace simd {
         uint32x4 lo, hi;
     };
 
-    // TODO
     struct uint64x4
     {
         uint64x2 lo, hi;
@@ -206,11 +204,11 @@ namespace simd {
     typedef vector_type<int8, 16, __m128i>   int8x16;
     typedef vector_type<int16, 8, __m128i>   int16x8;
     typedef vector_type<int32, 4, __m128i>   int32x4;
-    typedef vector_type<int64, 2, __m128i>   int64x2; // TODO
+    typedef vector_type<int64, 2, __m128i>   int64x2;
     typedef vector_type<uint8, 16, __m128i>  uint8x16;
     typedef vector_type<uint16, 8, __m128i>  uint16x8;
     typedef vector_type<uint32, 4, __m128i>  uint32x4;
-    typedef vector_type<uint64, 2, __m128i>  uint64x2; // TODO
+    typedef vector_type<uint64, 2, __m128i>  uint64x2;
     typedef scalar_type<half, 4>             float16x4;
     typedef scalar_type<float, 2>            float32x2;
     typedef vector_type<float, 4, __m128>    float32x4;
@@ -231,7 +229,6 @@ namespace simd {
         int32x4 lo, hi;
     };
 
-    // TODO
     struct int64x4
     {
         int64x2 lo, hi;
@@ -252,7 +249,6 @@ namespace simd {
         uint32x4 lo, hi;
     };
 
-    // TODO
     struct uint64x4
     {
         uint64x2 lo, hi;
@@ -294,11 +290,11 @@ namespace simd {
     typedef vector_type<int8, 16, int8x16_t>    int8x16;
     typedef vector_type<int16, 8, int16x8_t>    int16x8;
     typedef vector_type<int32, 4, int32x4_t>    int32x4;
-    typedef vector_type<int64, 2, int64x2_t>    int64x2; // TODO
+    typedef vector_type<int64, 2, int64x2_t>    int64x2;
     typedef vector_type<uint8, 16, uint8x16_t>  uint8x16;
     typedef vector_type<uint16, 8, uint16x8_t>  uint16x8;
     typedef vector_type<uint32, 4, uint32x4_t>  uint32x4;
-    typedef vector_type<uint64, 2, uint64x2_t>  uint64x2; // TODO
+    typedef vector_type<uint64, 2, uint64x2_t>  uint64x2;
     typedef vector_type<float, 2, float32x2_t>  float32x2;
     typedef vector_type<float, 4, float32x4_t>  float32x4;
 
@@ -327,7 +323,6 @@ namespace simd {
         int32x4 lo, hi;
     };
 
-    // TODO
     struct int64x4
     {
         int64x2 lo, hi;
@@ -348,7 +343,6 @@ namespace simd {
         uint32x4 lo, hi;
     };
 
-    // TODO
     struct uint64x4
     {
         uint64x2 lo, hi;
@@ -388,13 +382,11 @@ namespace simd {
     typedef vector_type<int8, 16, vector signed char>     int8x16;
     typedef vector_type<int16, 8, vector signed short>    int16x8;
     typedef vector_type<int32, 4, vector signed int>      int32x4;
-    typedef scalar_type<int64, 2>                         int64x2; // TODO
+    typedef scalar_type<int64, 2>                         int64x2;
     typedef vector_type<uint8, 16, vector unsigned char>  uint8x16;
     typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
     typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
-    typedef scalar_type<uint64, 2>                        uint64x2; // TODO
-    typedef scalar_type<int64, 4>                         int64x4; // TODO
-    typedef scalar_type<uint64, 4>                        uint64x4; // TODO
+    typedef scalar_type<uint64, 2>                        uint64x2;
     typedef scalar_type<half, 4>                          float16x4;
     typedef scalar_type<float, 2>                         float32x2;
     typedef vector_type<float, 4, vector float>           float32x4;
@@ -416,6 +408,11 @@ namespace simd {
         int32x4 lo, hi;
     };
 
+    struct int64x4
+    {
+        int64x2 lo, hi;
+    };
+
     struct uint8x32
     {
         uint8x16 lo, hi;
@@ -429,6 +426,11 @@ namespace simd {
     struct uint32x8
     {
         uint32x4 lo, hi;
+    };
+
+    struct uint64x4
+    {
+        uint64x2 lo, hi;
     };
 
     struct float32x8
@@ -462,13 +464,11 @@ namespace simd {
     typedef vector_type<int8, 16, vector signed char>     int8x16;
     typedef vector_type<int16, 8, vector signed short>    int16x8;
     typedef vector_type<int32, 4, vector signed int>      int32x4;
-    typedef scalar_type<int64, 2>                         int64x2; // TODO
+    typedef scalar_type<int64, 2>                         int64x2;
     typedef vector_type<uint8, 16, vector unsigned char>  uint8x16;
     typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
     typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
-    typedef scalar_type<uint64, 2>                        uint64x2; // TODO
-    typedef scalar_type<int64, 4>                         int64x4; // TODO
-    typedef scalar_type<uint64, 4>                        uint64x4; // TODO
+    typedef scalar_type<uint64, 2>                        uint64x2;
     typedef scalar_type<half, 4>                          float16x4;
     typedef scalar_type<float, 2>                         float32x2;
     typedef vector_type<float, 4, vector float>           float32x4;
@@ -495,6 +495,11 @@ namespace simd {
         uint8x16 lo, hi;
     };
 
+    struct int64x4
+    {
+        int64x2 lo, hi;
+    };
+
     struct uint16x16
     {
         uint16x8 lo, hi;
@@ -503,6 +508,11 @@ namespace simd {
     struct uint32x8
     {
         uint32x4 lo, hi;
+    };
+
+    struct uint64x4
+    {
+        uint64x2 lo, hi;
     };
 
     struct float32x8
@@ -534,13 +544,11 @@ namespace simd {
     typedef scalar_type<int8, 16>   int8x16;
     typedef scalar_type<int16, 8>   int16x8;
     typedef scalar_type<int32, 4>   int32x4;
-    typedef scalar_type<int64, 2>   int64x2; // TODO
+    typedef scalar_type<int64, 2>   int64x2;
     typedef scalar_type<uint8, 16>  uint8x16;
     typedef scalar_type<uint16, 8>  uint16x8;
     typedef scalar_type<uint32, 4>  uint32x4;
-    typedef scalar_type<uint64, 2>  uint64x2; // TODO
-    typedef scalar_type<int64, 4>   int64x4; // TODO
-    typedef scalar_type<uint64, 4>  uint64x4; // TODO
+    typedef scalar_type<uint64, 2>  uint64x2;
     typedef scalar_type<half, 4>    float16x4;
     typedef scalar_type<float, 2>   float32x2;
     typedef scalar_type<float, 4>   float32x4;
@@ -567,6 +575,11 @@ namespace simd {
         uint8x16 lo, hi;
     };
 
+    struct int64x4
+    {
+        int64x2 lo, hi;
+    };
+
     struct uint16x16
     {
         uint16x8 lo, hi;
@@ -575,6 +588,11 @@ namespace simd {
     struct uint32x8
     {
         uint32x4 lo, hi;
+    };
+
+    struct uint64x4
+    {
+        uint64x2 lo, hi;
     };
 
     struct float32x8

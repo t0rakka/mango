@@ -457,3 +457,6 @@ namespace simd {
     */
 
 #undef SPU_SH4
+
+} // namespace simd
+} // namespace mango

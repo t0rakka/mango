@@ -366,6 +366,70 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // uint64x4
+    // -----------------------------------------------------------------
+
+    static inline uint64x4 uint64x4_zero()
+    {
+        return _mm256_setzero_si256();
+    }
+
+    static inline uint64x4 uint64x4_set1(uint64 s)
+    {
+        return _mm256_set1_epi64x(s);
+    }
+
+    static inline uint64x4 uint64x4_set4(uint64 x, uint64 y, uint64 z, uint64 w)
+    {
+        return _mm256_setr_epi64x(x, y, z, w);
+    }
+
+    static inline uint64x4 unpacklo(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_unpacklo_epi64(a, b);
+    }
+
+    static inline uint64x4 unpackhi(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_unpackhi_epi64(a, b);
+    }
+
+    static inline uint64x4 add(int64x4 a, uint64x4 b)
+    {
+        return _mm256_add_epi64(a, b);
+    }
+
+    static inline uint64x4 sub(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_sub_epi64(a, b);
+    }
+
+    static inline uint64x4 bitwise_nand(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_andnot_si256(a, b);
+    }
+
+    static inline uint64x4 bitwise_and(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline uint64x4 bitwise_or(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline uint64x4 bitwise_xor(uint64x4 a, uint64x4 b)
+    {
+        return _mm256_xor_si256(a, b);
+    }
+
+    static inline uint64x4 select(uint64x4 mask, uint64x4 a, uint64x4 b)
+    {
+        return _mm256_select_si256(mask, a, b);
+    }
+
+    // -----------------------------------------------------------------
     // int8x32
     // -----------------------------------------------------------------
 
@@ -736,6 +800,70 @@ namespace simd {
     static inline int32x8 max(int32x8 a, int32x8 b)
     {
         return _mm256_max_epi32(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // int64x4
+    // -----------------------------------------------------------------
+
+    static inline int64x4 int64x4_zero()
+    {
+        return _mm256_setzero_si256();
+    }
+
+    static inline int64x4 int64x4_set1(int64 s)
+    {
+        return _mm256_set1_epi64x(s);
+    }
+
+    static inline int64x4 int64x4_set4(int64 x, int64 y, int64 z, int64 w)
+    {
+        return _mm256_setr_epi64x(x, y, z, w);
+    }
+
+    static inline int64x4 unpacklo(int64x4 a, int64x4 b)
+    {
+        return _mm256_unpacklo_epi64(a, b);
+    }
+
+    static inline int64x4 unpackhi(int64x4 a, int64x4 b)
+    {
+        return _mm256_unpackhi_epi64(a, b);
+    }
+
+    static inline int64x4 add(int64x4 a, int64x4 b)
+    {
+        return _mm256_add_epi64(a, b);
+    }
+
+    static inline int64x4 sub(int64x4 a, int64x4 b)
+    {
+        return _mm256_sub_epi64(a, b);
+    }
+
+    static inline int64x4 bitwise_nand(int64x4 a, int64x4 b)
+    {
+        return _mm256_andnot_si256(a, b);
+    }
+
+    static inline int64x4 bitwise_and(int64x4 a, int64x4 b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline int64x4 bitwise_or(int64x4 a, int64x4 b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline int64x4 bitwise_xor(int64x4 a, int64x4 b)
+    {
+        return _mm256_xor_si256(a, b);
+    }
+
+    static inline int64x4 select(int64x4 mask, int64x4 a, int64x4 b)
+    {
+        return _mm256_select_si256(mask, a, b);
     }
 
 } // namespace simd

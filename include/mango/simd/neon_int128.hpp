@@ -467,6 +467,71 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // uint64x2
+    // -----------------------------------------------------------------
+
+    static inline uint64x2 uint64x2_zero()
+    {
+        return vdupq_n_u64(0);
+    }
+
+    static inline uint64x2 uint64x2_set1(uint64 s)
+    {
+        return vdupq_n_u64(s);
+    }
+
+    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    {
+        uint64x2_t temp = { x, y };
+        return temp;
+    }
+
+    static inline uint64x2 unpacklo(uint64x2 a, uint64x2 b)
+    {
+        return vsetq_lane_u64(vgetq_lane_u64(b, 0), a, 1);
+    }
+
+    static inline uint64x2 unpackhi(uint64x2 a, uint64x2 b)
+    {
+        return vsetq_lane_u64(vgetq_lane_u64(a, 1), b, 0);
+    }
+
+    static inline uint64x2 add(uint64x2 a, uint64x2 b)
+    {
+        return vaddq_u64(a, b);
+    }
+
+    static inline uint64x2 sub(uint64x2 a, uint64x2 b)
+    {
+        return vsubq_u64(a, b);
+    }
+
+    static inline uint64x2 bitwise_nand(uint64x2 a, uint64x2 b)
+    {
+        return vbicq_u64(a, b);
+    }
+
+    static inline uint64x2 bitwise_and(uint64x2 a, uint64x2 b)
+    {
+        return vandq_u64(a, b);
+    }
+
+    static inline uint64x2 bitwise_or(uint64x2 a, uint64x2 b)
+    {
+        return vorrq_u64(a, b);
+    }
+
+    static inline uint64x2 bitwise_xor(uint64x2 a, uint64x2 b)
+    {
+        return veorq_u64(a, b);
+    }
+
+    static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
+    {
+        return vbslq_u64(mask, a, b);
+    }
+
+    // -----------------------------------------------------------------
     // int8x16
     // -----------------------------------------------------------------
 
@@ -981,6 +1046,71 @@ namespace simd {
         const uint8x8_t a = vreinterpret_u8_u32(vdup_n_u32(s));
         const uint16x4_t b = vget_low_u16(vmovl_u8(a));
         return vreinterpretq_s32_u32(vmovl_u16(b));
+    }
+
+    // -----------------------------------------------------------------
+    // int64x2
+    // -----------------------------------------------------------------
+
+    static inline int64x2 int64x2_zero()
+    {
+        return vdupq_n_s64(0);
+    }
+
+    static inline int64x2 int64x2_set1(int64 s)
+    {
+        return vdupq_n_s64(s);
+    }
+
+    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    {
+        int64x2_t temp = { x, y };
+        return temp;
+    }
+
+    static inline int64x2 unpacklo(int64x2 a, int64x2 b)
+    {
+        return vsetq_lane_s64(vgetq_lane_s64(b, 0), a, 1);
+    }
+
+    static inline int64x2 unpackhi(int64x2 a, int64x2 b)
+    {
+        return vsetq_lane_s64(vgetq_lane_s64(a, 1), b, 0);
+    }
+
+    static inline int64x2 add(int64x2 a, int64x2 b)
+    {
+        return vaddq_s64(a, b);
+    }
+
+    static inline int64x2 sub(int64x2 a, int64x2 b)
+    {
+        return vsubq_s64(a, b);
+    }
+
+    static inline int64x2 bitwise_nand(int64x2 a, int64x2 b)
+    {
+        return vbicq_s64(a, b);
+    }
+
+    static inline int64x2 bitwise_and(int64x2 a, int64x2 b)
+    {
+        return vandq_s64(a, b);
+    }
+
+    static inline int64x2 bitwise_or(int64x2 a, int64x2 b)
+    {
+        return vorrq_s64(a, b);
+    }
+
+    static inline int64x2 bitwise_xor(int64x2 a, int64x2 b)
+    {
+        return veorq_s64(a, b);
+    }
+
+    static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
+    {
+        return vbslq_s64(mask, a, b);
     }
 
 } // namespace simd

@@ -315,3 +315,6 @@ namespace simd {
         v[3] = get_w(s);
         return v;
     }
+
+} // namespace simd
+} // namespace mango
