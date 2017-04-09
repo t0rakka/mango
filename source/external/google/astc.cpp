@@ -745,15 +745,14 @@ namespace
         if (isBitSet(a, 5))
             a -= 0x40;
     }
-    
-    inline UVec4 clampedRGBA (const IVec4& rgba)
+
+    inline UVec4 clampedRGBA(IVec4 rgba)
     {
-        return UVec4(byteclamp(rgba.x),
-                     byteclamp(rgba.y),
-                     byteclamp(rgba.z),
-                     byteclamp(rgba.w));
+        // TODO: optimize
+        rgba = clamp(rgba, IVec4(0), IVec4(255));
+        return UVec4(rgba.x, rgba.y, rgba.z, rgba.w);
     }
-    
+
     inline IVec4 blueContract (int r, int g, int b, int a)
     {
         return IVec4((r+b)>>1, (g+b)>>1, b, a);
@@ -895,12 +894,12 @@ namespace
 #undef ASSIGN_X_BITS
 #undef SHOR
             }
-            
+
             static const int numDBits[] = { 7, 6, 7, 6, 5, 6, 5, 6 };
-            
+
             d0 = signExtend(d0, numDBits[mode]);
             d1 = signExtend(d1, numDBits[mode]);
-            
+
             const int shiftAmount = (mode >> 1) ^ 3;
             a	<<= shiftAmount;
             c	<<= shiftAmount;
@@ -908,38 +907,33 @@ namespace
             b1	<<= shiftAmount;
             d0	<<= shiftAmount;
             d1	<<= shiftAmount;
-            
-            e0 = UVec4(clamp(a-c,			0, 0xfff),
-                       clamp(a-b0-c-d0,		0, 0xfff),
-                       clamp(a-b1-c-d1,		0, 0xfff),
-                       0x780);
-            
-            e1 = UVec4(clamp(a,				0, 0xfff),
-                       clamp(a-b0,			0, 0xfff),
-                       clamp(a-b1,			0, 0xfff),
-                       0x780);
-            
-            if (major == 1)
-            {
-                std::swap(e0.x, e0.y);
-                std::swap(e1.x, e1.y);
+
+            const UVec4 limit0(0);
+            const UVec4 limit1(0xfff);
+            e0 = UVec4(a - c, a - b0 - c - d0, a - b1 - c - d1, 0x780);
+            e1 = UVec4(a, a - b0, a - b1, 0x780);
+            e0 = clamp(e0, limit0, limit1);
+            e1 = clamp(e1, limit0, limit1);
+
+            if (major == 1) {
+                e0 = e0.yxzw;
+                e1 = e1.yxzw;
             }
-            else if (major == 2)
-            {
-                std::swap(e0.x, e0.z);
-                std::swap(e1.x, e1.z);
+            else if (major == 2) {
+                e0 = e0.zyxw;
+                e1 = e1.zyxw;
             }
         }
     }
-    
+
     void decodeHDREndpointMode15(UVec4& e0, UVec4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5, uint32 v6In, uint32 v7In)
     {
         decodeHDREndpointMode11(e0, e1, v0, v1, v2, v3, v4, v5);
-        
+
         const uint32	mode	= (getBit(v7In, 7) << 1) | getBit(v6In, 7);
         int32			v6		= (int32)getBits(v6In, 0, 6);
         int32			v7		= (int32)getBits(v7In, 0, 6);
-        
+
         if (mode == 3)
         {
             e0.w = v6 << 5;

@@ -43,6 +43,26 @@ namespace simd {
     // uint8x16
     // ------------------------------------------------------------------
 
+    static inline uint8x16 add(uint8 a, uint8x16 b)
+    {
+        return add(uint8x16_set1(a), b);
+    }
+
+    static inline uint8x16 add(uint8x16 a, uint8 b)
+    {
+        return add(a, uint8x16_set1(b));
+    }
+
+    static inline uint8x16 sub(uint8 a, uint8x16 b)
+    {
+        return sub(uint8x16_set1(a), b);
+    }
+
+    static inline uint8x16 sub(uint8x16 a, uint8 b)
+    {
+        return sub(a, uint8x16_set1(b));
+    }
+
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint8x16 bitwise_not(uint8x16 a)
@@ -80,6 +100,26 @@ namespace simd {
     // ------------------------------------------------------------------
     // uint16x8
     // ------------------------------------------------------------------
+
+    static inline uint16x8 add(uint16 a, uint16x8 b)
+    {
+        return add(uint16x8_set1(a), b);
+    }
+
+    static inline uint16x8 add(uint16x8 a, uint16 b)
+    {
+        return add(a, uint16x8_set1(b));
+    }
+
+    static inline uint16x8 sub(uint16 a, uint16x8 b)
+    {
+        return sub(uint16x8_set1(a), b);
+    }
+
+    static inline uint16x8 sub(uint16x8 a, uint16 b)
+    {
+        return sub(a, uint16x8_set1(b));
+    }
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
@@ -179,6 +219,26 @@ namespace simd {
         return shuffle<3, 3, 3, 3>(a);
     }
 
+    static inline uint32x4 add(uint32 a, uint32x4 b)
+    {
+        return add(uint32x4_set1(a), b);
+    }
+
+    static inline uint32x4 add(uint32x4 a, uint32 b)
+    {
+        return add(a, uint32x4_set1(b));
+    }
+
+    static inline uint32x4 sub(uint32 a, uint32x4 b)
+    {
+        return sub(uint32x4_set1(a), b);
+    }
+
+    static inline uint32x4 sub(uint32x4 a, uint32 b)
+    {
+        return sub(a, uint32x4_set1(b));
+    }
+
     static inline uint32x4 clamp(uint32x4 v, uint32x4 vmin, uint32x4 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -222,6 +282,26 @@ namespace simd {
     // int8x16
     // ------------------------------------------------------------------
 
+    static inline int8x16 add(int8 a, int8x16 b)
+    {
+        return add(int8x16_set1(a), b);
+    }
+
+    static inline int8x16 add(int8x16 a, int8 b)
+    {
+        return add(a, int8x16_set1(b));
+    }
+
+    static inline int8x16 sub(int8 a, int8x16 b)
+    {
+        return sub(int8x16_set1(a), b);
+    }
+
+    static inline int8x16 sub(int8x16 a, int8 b)
+    {
+        return sub(a, int8x16_set1(b));
+    }
+
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int8x16 bitwise_not(int8x16 a)
@@ -259,6 +339,26 @@ namespace simd {
     // ------------------------------------------------------------------
     // int16x8
     // ------------------------------------------------------------------
+
+    static inline int16x8 add(int16 a, int16x8 b)
+    {
+        return add(int16x8_set1(a), b);
+    }
+
+    static inline int16x8 add(int16x8 a, int16 b)
+    {
+        return add(a, int16x8_set1(b));
+    }
+
+    static inline int16x8 sub(int16 a, int16x8 b)
+    {
+        return sub(int16x8_set1(a), b);
+    }
+
+    static inline int16x8 sub(int16x8 a, int16 b)
+    {
+        return sub(a, int16x8_set1(b));
+    }
 
 #if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
