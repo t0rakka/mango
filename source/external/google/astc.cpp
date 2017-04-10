@@ -34,9 +34,6 @@ namespace
 {
     using namespace mango;
 
-    typedef Vector<int, 4> IVec4;
-    typedef Vector<uint32, 4> UVec4;
-
     enum
     {
         ASTC_MAX_BLOCK_WIDTH	= 12,
@@ -257,8 +254,8 @@ namespace
     
     struct ColorEndpointPair
     {
-        UVec4 e0;
-        UVec4 e1;
+        uint4 e0;
+        uint4 e1;
     };
     
     struct TexelWeightPair
@@ -746,16 +743,16 @@ namespace
             a -= 0x40;
     }
 
-    inline UVec4 clampedRGBA(IVec4 rgba)
+    inline uint4 clampedRGBA(int4 rgba)
     {
         // TODO: optimize
-        rgba = clamp(rgba, IVec4(0), IVec4(255));
-        return UVec4(rgba.x, rgba.y, rgba.z, rgba.w);
+        rgba = clamp(rgba, int4(0), int4(255));
+        return uint4(rgba.x, rgba.y, rgba.z, rgba.w);
     }
 
-    inline IVec4 blueContract (int r, int g, int b, int a)
+    inline int4 blueContract (int r, int g, int b, int a)
     {
-        return IVec4((r+b)>>1, (g+b)>>1, b, a);
+        return int4((r+b)>>1, (g+b)>>1, b, a);
     }
     
     inline bool isColorEndpointModeHDR (uint32 mode)
@@ -768,7 +765,7 @@ namespace
         mode == 15;
     }
     
-    void decodeHDREndpointMode7 (UVec4& e0, UVec4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3)
+    void decodeHDREndpointMode7 (uint4& e0, uint4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3)
     {
         const uint32 m10		= getBit(v1, 7) | (getBit(v2, 7) << 1);
         const uint32 m23		= getBits(v0, 6, 7);
@@ -826,46 +823,43 @@ namespace
         
         if (mode != 5)
         {
-            green	= red - green;
-            blue	= red - blue;
+            green = red - green;
+            blue  = red - blue;
         }
         
         if (majComp == 1)
             std::swap(red, green);
         else if (majComp == 2)
             std::swap(red, blue);
-        
-        e0 = UVec4(clamp(red	- scale,	0, 0xfff),
-                   clamp(green	- scale,	0, 0xfff),
-                   clamp(blue	- scale,	0, 0xfff),
-                   0x780);
-        
-        e1 = UVec4(clamp(red,				0, 0xfff),
-                   clamp(green,				0, 0xfff),
-                   clamp(blue,				0, 0xfff),
-                   0x780);
+
+        const uint4 limit0(0);
+        const uint4 limit1(0xfff);
+        e0 = uint4(red - scale, green - scale, blue - scale, 0x780);
+        e1 = uint4(red, green, blue, 0x780);
+        e0 = clamp(e0, limit0, limit1);
+        e1 = clamp(e1, limit0, limit1);
     }
     
-    void decodeHDREndpointMode11 (UVec4& e0, UVec4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5)
+    void decodeHDREndpointMode11 (uint4& e0, uint4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5)
     {
         const uint32 major = (getBit(v5, 7) << 1) | getBit(v4, 7);
         
         if (major == 3)
         {
-            e0 = UVec4(v0<<4, v2<<4, getBits(v4,0,6)<<5, 0x780);
-            e1 = UVec4(v1<<4, v3<<4, getBits(v5,0,6)<<5, 0x780);
+            e0 = uint4(v0<<4, v2<<4, getBits(v4,0,6)<<5, 0x780);
+            e1 = uint4(v1<<4, v3<<4, getBits(v5,0,6)<<5, 0x780);
         }
         else
         {
             const uint32 mode = (getBit(v3, 7) << 2) | (getBit(v2, 7) << 1) | getBit(v1, 7);
-            
-            int32 a	= (int32)((getBit(v1, 6) << 8) | v0);
-            int32 c	= (int32)(getBits(v1, 0, 5));
-            int32 b0	= (int32)(getBits(v2, 0, 5));
-            int32 b1	= (int32)(getBits(v3, 0, 5));
-            int32 d0	= (int32)(getBits(v4, 0, 4));
-            int32 d1	= (int32)(getBits(v5, 0, 4));
-            
+
+            int32 a  = (int32)((getBit(v1, 6) << 8) | v0);
+            int32 c  = (int32)(getBits(v1, 0, 5));
+            int32 b0 = (int32)(getBits(v2, 0, 5));
+            int32 b1 = (int32)(getBits(v3, 0, 5));
+            int32 d0 = (int32)(getBits(v4, 0, 4));
+            int32 d1 = (int32)(getBits(v5, 0, 4));
+
             {
 #define SHOR(DST_VAR, SHIFT, BIT_VAR) (DST_VAR) |= (BIT_VAR) << (SHIFT)
 #define ASSIGN_X_BITS(V0,S0, V1,S1, V2,S2, V3,S3, V4,S4, V5,S5) { SHOR(V0,S0,x0); SHOR(V1,S1,x1); SHOR(V2,S2,x2); SHOR(V3,S3,x3); SHOR(V4,S4,x4); SHOR(V5,S5,x5); }
@@ -908,10 +902,10 @@ namespace
             d0	<<= shiftAmount;
             d1	<<= shiftAmount;
 
-            const UVec4 limit0(0);
-            const UVec4 limit1(0xfff);
-            e0 = UVec4(a - c, a - b0 - c - d0, a - b1 - c - d1, 0x780);
-            e1 = UVec4(a, a - b0, a - b1, 0x780);
+            const uint4 limit0(0);
+            const uint4 limit1(0xfff);
+            e0 = uint4(a - c, a - b0 - c - d0, a - b1 - c - d1, 0x780);
+            e1 = uint4(a, a - b0, a - b1, 0x780);
             e0 = clamp(e0, limit0, limit1);
             e1 = clamp(e1, limit0, limit1);
 
@@ -926,7 +920,7 @@ namespace
         }
     }
 
-    void decodeHDREndpointMode15(UVec4& e0, UVec4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5, uint32 v6In, uint32 v7In)
+    void decodeHDREndpointMode15(uint4& e0, uint4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5, uint32 v6In, uint32 v7In)
     {
         decodeHDREndpointMode11(e0, e1, v0, v1, v2, v3, v4, v5);
 
@@ -963,24 +957,24 @@ namespace
         {
             const uint32		endpointMode	= endpointModes[partitionNdx];
             const uint32*		v				= &unquantizedEndpoints[unquantizedNdx];
-            UVec4&				e0				= dst[partitionNdx].e0;
-            UVec4&				e1				= dst[partitionNdx].e1;
-            
+            uint4&				e0				= dst[partitionNdx].e0;
+            uint4&				e1				= dst[partitionNdx].e1;
+
             unquantizedNdx += computeNumColorEndpointValues(endpointMode);
             
             switch (endpointMode)
             {
                 case 0:
-                    e0 = UVec4(v[0], v[0], v[0], 0xff);
-                    e1 = UVec4(v[1], v[1], v[1], 0xff);
+                    e0 = uint4(v[0], v[0], v[0], 0xff);
+                    e1 = uint4(v[1], v[1], v[1], 0xff);
                     break;
                     
                 case 1:
                 {
                     const uint32 L0 = (v[0] >> 2) | (getBits(v[1], 6, 7) << 6);
                     const uint32 L1 = std::min(0xffu, L0 + getBits(v[1], 0, 5));
-                    e0 = UVec4(L0, L0, L0, 0xff);
-                    e1 = UVec4(L1, L1, L1, 0xff);
+                    e0 = uint4(L0, L0, L0, 0xff);
+                    e1 = uint4(L1, L1, L1, 0xff);
                     break;
                 }
                     
@@ -990,8 +984,8 @@ namespace
                     const uint32 y0		= v1Gr ? v[0]<<4 : (v[1]<<4) + 8;
                     const uint32 y1		= v1Gr ? v[1]<<4 : (v[0]<<4) - 8;
                     
-                    e0 = UVec4(y0, y0, y0, 0x780);
-                    e1 = UVec4(y1, y1, y1, 0x780);
+                    e0 = uint4(y0, y0, y0, 0x780);
+                    e1 = uint4(y1, y1, y1, 0x780);
                     break;
                 }
                     
@@ -1004,14 +998,14 @@ namespace
                     : getBits(v[1], 0, 3) << 1;
                     const uint32	y1	= std::min(0xfffu, y0+d);
                     
-                    e0 = UVec4(y0, y0, y0, 0x780);
-                    e1 = UVec4(y1, y1, y1, 0x780);
+                    e0 = uint4(y0, y0, y0, 0x780);
+                    e1 = uint4(y1, y1, y1, 0x780);
                     break;
                 }
                     
                 case 4:
-                    e0 = UVec4(v[0], v[0], v[0], v[2]);
-                    e1 = UVec4(v[1], v[1], v[1], v[3]);
+                    e0 = uint4(v[0], v[0], v[0], v[2]);
+                    e1 = uint4(v[1], v[1], v[1], v[3]);
                     break;
                     
                 case 5:
@@ -1023,14 +1017,14 @@ namespace
                     bitTransferSigned(v1, v0);
                     bitTransferSigned(v3, v2);
                     
-                    e0 = clampedRGBA(IVec4(v0,		v0,		v0,		v2));
-                    e1 = clampedRGBA(IVec4(v0+v1,	v0+v1,	v0+v1,	v2+v3));
+                    e0 = clampedRGBA(int4(v0, v0, v0, v2));
+                    e1 = clampedRGBA(int4(v0+v1, v0+v1, v0+v1, v2+v3));
                     break;
                 }
                     
                 case 6:
-                    e0 = UVec4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	0xff);
-                    e1 = UVec4(v[0],				v[1],				v[2],				0xff);
+                    e0 = uint4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	0xff);
+                    e1 = uint4(v[0],				v[1],				v[2],				0xff);
                     break;
                     
                 case 7:
@@ -1040,15 +1034,15 @@ namespace
                 case 8:
                     if (v[1]+v[3]+v[5] >= v[0]+v[2]+v[4])
                     {
-                        e0 = UVec4(v[0], v[2], v[4], 0xff);
-                        e1 = UVec4(v[1], v[3], v[5], 0xff);
+                        e0 = uint4(v[0], v[2], v[4], 0xff);
+                        e1 = uint4(v[1], v[3], v[5], 0xff);
                     }
                     else
                     {
-                        IVec4 temp0 = blueContract(v[1], v[3], v[5], 0xff);
-                        IVec4 temp1 = blueContract(v[0], v[2], v[4], 0xff);
-                        e0 = UVec4(temp0.x, temp0.y, temp0.z, temp0.w);
-                        e1 = UVec4(temp1.x, temp1.y, temp1.z, temp1.w);
+                        int4 temp0 = blueContract(v[1], v[3], v[5], 0xff);
+                        int4 temp1 = blueContract(v[0], v[2], v[4], 0xff);
+                        e0 = uint4(temp0.x, temp0.y, temp0.z, temp0.w);
+                        e1 = uint4(temp1.x, temp1.y, temp1.z, temp1.w);
                     }
                     break;
 
@@ -1066,8 +1060,8 @@ namespace
                     
                     if (v1+v3+v5 >= 0)
                     {
-                        e0 = clampedRGBA(IVec4(v0,		v2,		v4,		0xff));
-                        e1 = clampedRGBA(IVec4(v0+v1,	v2+v3,	v4+v5,	0xff));
+                        e0 = clampedRGBA(int4(v0,		v2,		v4,		0xff));
+                        e1 = clampedRGBA(int4(v0+v1,	v2+v3,	v4+v5,	0xff));
                     }
                     else
                     {
@@ -1078,8 +1072,8 @@ namespace
                 }
                     
                 case 10:
-                    e0 = UVec4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	v[4]);
-                    e1 = UVec4(v[0],				v[1],				v[2],				v[5]);
+                    e0 = uint4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	v[4]);
+                    e1 = uint4(v[0],				v[1],				v[2],				v[5]);
                     break;
                     
                 case 11:
@@ -1089,8 +1083,8 @@ namespace
                 case 12:
                     if (v[1]+v[3]+v[5] >= v[0]+v[2]+v[4])
                     {
-                        e0 = UVec4(v[0], v[2], v[4], v[6]);
-                        e1 = UVec4(v[1], v[3], v[5], v[7]);
+                        e0 = uint4(v[0], v[2], v[4], v[6]);
+                        e1 = uint4(v[1], v[3], v[5], v[7]);
                     }
                     else
                     {
@@ -1116,8 +1110,8 @@ namespace
                     
                     if (v1+v3+v5 >= 0)
                     {
-                        e0 = clampedRGBA(IVec4(v0,		v2,		v4,		v6));
-                        e1 = clampedRGBA(IVec4(v0+v1,	v2+v3,	v4+v5,	v6+v7));
+                        e0 = clampedRGBA(int4(v0,		v2,		v4,		v6));
+                        e1 = clampedRGBA(int4(v0+v1,	v2+v3,	v4+v5,	v6+v7));
                     }
                     else
                     {
@@ -1333,8 +1327,8 @@ namespace
             {
                 const int				texelNdx			= texelY*blockWidth + texelX;
                 const int				colorEndpointNdx	= numPartitions == 1 ? 0 : computeTexelPartition(partitionIndexSeed, texelX, texelY, 0, numPartitions, smallBlock);
-                const UVec4&			e0					= colorEndpoints[colorEndpointNdx].e0;
-                const UVec4&			e1					= colorEndpoints[colorEndpointNdx].e1;
+                const uint4&			e0					= colorEndpoints[colorEndpointNdx].e0;
+                const uint4&			e1					= colorEndpoints[colorEndpointNdx].e1;
                 const TexelWeightPair&	weight				= texelWeights[texelNdx];
                 
                 if (isLDRMode && isHDREndpoint[colorEndpointNdx])
@@ -1489,8 +1483,8 @@ namespace mango
     {
         union
         {
-            uint8		sRGB[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
-            float		linear[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
+            uint8 sRGB[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
+            float linear[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
         } decompressedBuffer;
 
         const bool isLDR = false; // TODO: determine from block information

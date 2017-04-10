@@ -873,20 +873,56 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
-    // typedefs
+    // named vector types
     // ------------------------------------------------------------------
 
-    typedef Vector<int, 2>      int2;
-    typedef Vector<int, 3>      int3;
-    typedef Vector<int, 4>      int4;
-    typedef Vector<half, 4>     half4;
-    typedef Vector<float, 2>    float2;
-    typedef Vector<float, 3>    float3;
-    typedef Vector<float, 4>    float4;
-    typedef Vector<float, 8>    float8;
-    typedef Vector<double, 2>   double2;
-    typedef Vector<double, 3>   double3;
-    typedef Vector<double, 4>   double4;
+    // 128 bit integer vectors
+    using int8x16  = Vector<int8, 16>;
+    using int16x8  = Vector<int16, 8>;
+    using int32x4  = Vector<int32, 4>;
+    using int64x2  = Vector<int64, 2>;
+    using uint8x16 = Vector<uint8, 16>;
+    using uint16x8 = Vector<uint16, 8>;
+    using uint32x4 = Vector<uint32, 4>;
+    using uint64x2 = Vector<uint64, 2>;
+
+    // 256 bit integer vectors
+    /* TODO:
+    using int8x32   = Vector<int8, 32>;
+    using int16x16  = Vector<int16, 16>;
+    using int32x8   = Vector<int32, 8>;
+    using int64x4   = Vector<int64, 4>;
+    using uint8x32  = Vector<uint8, 32>;
+    using uint16x16 = Vector<uint16, 16>;
+    using uint32x8  = Vector<uint32, 8>;
+    using uint64x4  = Vector<uint64, 4>;
+    */
+
+    // float vectors
+    using float16x4 = Vector<half, 4>;
+    using float32x2 = Vector<float, 2>;
+    using float32x3 = Vector<float, 3>;
+    using float32x4 = Vector<float, 4>;
+    using float32x8 = Vector<float, 8>;
+    using float64x2 = Vector<double, 2>;
+    using float64x3 = Vector<double, 3>;
+    using float64x4 = Vector<double, 4>;
+
+    // OpenCL vectors
+    using int2    = Vector<int32, 2>;
+    using int3    = Vector<int32, 3>;
+    using int4    = Vector<int32, 4>;
+    using uint2   = Vector<uint32, 2>;
+    using uint3   = Vector<uint32, 3>;
+    using uint4   = Vector<uint32, 4>;
+    using half4   = Vector<half, 4>;
+    using float2  = Vector<float, 2>;
+    using float3  = Vector<float, 3>;
+    using float4  = Vector<float, 4>;
+    using float8  = Vector<float, 8>;
+    using double2 = Vector<double, 2>;
+    using double3 = Vector<double, 3>;
+    using double4 = Vector<double, 4>;
 
 } // namespace mango
 
