@@ -8,64 +8,15 @@
 #include <memory>
 #include <thread>
 #include <mutex>
-#include <atomic>
 #include <functional>
 #include <condition_variable>
 #include <future>
 #include "exception.hpp"
 #include "object.hpp"
+#include "atomic.hpp"
 
 namespace mango
 {
-
-    class SpinMutex
-    {
-    private:
-        std::atomic_flag m_flag = ATOMIC_FLAG_INIT;
-
-    public:
-        void lock()
-        {
-            int counter = 0;
-            while (m_flag.test_and_set(std::memory_order_acquire))
-            {
-                if (++counter > 30)
-                    std::this_thread::yield();
-            }
-        }
-
-        void unlock()
-        {
-            m_flag.clear(std::memory_order_release);
-        }
-    };
-
-    class SpinLock
-    {
-    private:
-        SpinMutex& m_mutex;
-
-    public:
-        SpinLock(SpinMutex& mutex) : m_mutex(mutex)
-        {
-            m_mutex.lock();
-        }
-
-        ~SpinLock()
-        {
-            m_mutex.unlock();
-        }
-
-        void lock()
-        {
-            m_mutex.lock();
-        }
-
-        void unlock()
-        {
-            m_mutex.unlock();
-        }
-    };
 
     template <typename T>
     class ObjectCache

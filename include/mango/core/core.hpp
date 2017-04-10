@@ -6,6 +6,7 @@
 
 #include "configure.hpp"
 #include "half.hpp"
+#include "atomic.hpp"
 #include "bits.hpp"
 #include "endian.hpp"
 #include "pointer.hpp"
