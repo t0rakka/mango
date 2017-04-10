@@ -77,31 +77,47 @@ namespace mango
         std::atomic<int> m_write_count { 0 };
         std::atomic<int> m_read_count { 0 };
 
+        void lock()
+        {
+            // acquire exclusive access to the mutex
+            while (std::atomic_exchange_explicit(&m_write_count, 1, std::memory_order_acquire)) {
+            }
+        }
+
+        void unlock()
+        {
+            // release exclusivity
+            std::atomic_store_explicit(&m_write_count, 0, std::memory_order_release);
+        }
+
     public:
         void writeLock()
         {
-            while (std::atomic_exchange_explicit(&m_write_count, 1, std::memory_order_acquire)) {
-            }
+            // acquire exclusive access to the mutex
+            lock();
 
+            // flush all readers
             while (m_read_count > 0) {
             }
         }
 
         void writeUnlock()
         {
-            std::atomic_store_explicit(&m_write_count, 0, std::memory_order_release);
+            // release exclusivity
+            unlock();
         }
 
         void readLock()
         {
-            while (m_write_count) {
-            }
-
+            // gain temporary exclusivity to add one reader
+            lock();
             ++m_read_count;
+            unlock();
         }
 
         void readUnlock()
         {
+            // reader can be released at any time w/o exclusivity
             --m_read_count;
         }
     };
