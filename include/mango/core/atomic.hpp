@@ -10,6 +10,12 @@
 namespace mango
 {
 
+    /* WARNING!
+       Atomic locks are implemented as busy loops which consume significant
+       amounts of CPU time if the locks are congested and held for a long
+       period of time.
+    */
+
     // ----------------------------------------------------------------------------
     // SpinMutex / SpinLock
     // ----------------------------------------------------------------------------
@@ -71,24 +77,10 @@ namespace mango
     // ReadWriteMutex / WriteLock / ReadLock
     // ----------------------------------------------------------------------------
 
-    class ReadWriteMutex
+    class ReadWriteMutex : protected SpinMutex
     {
     private:
-        std::atomic<int> m_write_count { 0 };
         std::atomic<int> m_read_count { 0 };
-
-        void lock()
-        {
-            // acquire exclusive access to the mutex
-            while (std::atomic_exchange_explicit(&m_write_count, 1, std::memory_order_acquire)) {
-            }
-        }
-
-        void unlock()
-        {
-            // release exclusivity
-            std::atomic_store_explicit(&m_write_count, 0, std::memory_order_release);
-        }
 
     public:
         void writeLock()
