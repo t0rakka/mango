@@ -453,6 +453,16 @@ namespace mango
         {
             return xyzw;
         }
+
+        Vector<double, 2> low() const
+        {
+            return simd::get_low(xyzw);
+        }
+
+        Vector<double, 2> high() const
+        {
+            return simd::get_high(xyzw);
+        }
     };
 
     // ------------------------------------------------------------------

@@ -453,6 +453,16 @@ namespace mango
             return xyzw;
         }
 
+        Vector<float, 2> low() const
+        {
+            return simd::get_low(xyzw);
+        }
+
+        Vector<float, 2> high() const
+        {
+            return simd::get_high(xyzw);
+        }
+
         uint32 pack() const
         {
             const simd::int32x4 temp = simd::int32x4_convert(xyzw);

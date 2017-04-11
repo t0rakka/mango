@@ -67,6 +67,16 @@ namespace mango
         {
             return m;
         }
+
+        Vector<float, 4> low() const
+        {
+            return simd::get_low(m);
+        }
+
+        Vector<float, 4> high() const
+        {
+            return simd::get_high(m);
+        }
     };
 
     // ------------------------------------------------------------------
