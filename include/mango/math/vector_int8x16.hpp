@@ -49,14 +49,14 @@ namespace mango
         }
     };
 
-    static inline Vector<int8, 16> operator + (Vector<int8, 16> v)
+    static inline const Vector<int8, 16> operator + (Vector<int8, 16> v)
     {
         return v;
     }
 
     static inline Vector<int8, 16> operator - (Vector<int8, 16> v)
     {
-        return simd::neg(v);
+        return simd::sub(simd::int8x16_zero(), v);
     }
 
     static inline Vector<int8, 16>& operator += (Vector<int8, 16>& a, Vector<int8, 16> b)

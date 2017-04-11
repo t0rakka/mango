@@ -318,6 +318,16 @@ namespace mango
         }
     };
 
+    static inline const Vector<int32, 4> operator + (Vector<int32, 4> v)
+    {
+        return v;
+    }
+
+    static inline Vector<int32, 4> operator - (Vector<int32, 4> v)
+    {
+        return simd::sub(simd::int32x4_zero(), v);
+    }
+
     static inline Vector<int32, 4>& operator += (Vector<int32, 4>& a, Vector<int32, 4> b)
     {
         a = simd::add(a, b);
