@@ -787,6 +787,36 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
+    // LowAccessor
+    // ------------------------------------------------------------------
+
+    template <typename LowType, typename VectorType>
+    struct LowAccessor
+    {
+        VectorType m;
+
+        operator LowType () const
+        {
+            return simd::get_low(m);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // HighAccessor
+    // ------------------------------------------------------------------
+
+    template <typename HighType, typename VectorType>
+    struct HighAccessor
+    {
+        VectorType m;
+
+        operator HighType () const
+        {
+            return simd::get_high(m);
+        }
+    };
+
+    // ------------------------------------------------------------------
     // Permute2
     // ------------------------------------------------------------------
 

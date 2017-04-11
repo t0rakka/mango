@@ -22,6 +22,9 @@ namespace mango
         {
             simd::float32x4 xyzw;
 
+            LowAccessor<simd::float32x2, simd::float32x4> low;
+            HighAccessor<simd::float32x2, simd::float32x4> high;
+
             ScalarAccessor<float, simd::float32x4, 0> x;
             ScalarAccessor<float, simd::float32x4, 1> y;
             ScalarAccessor<float, simd::float32x4, 2> z;
@@ -451,16 +454,6 @@ namespace mango
         operator simd::float32x4 ()
         {
             return xyzw;
-        }
-
-        Vector<float, 2> low() const
-        {
-            return simd::get_low(xyzw);
-        }
-
-        Vector<float, 2> high() const
-        {
-            return simd::get_high(xyzw);
         }
 
         uint32 pack() const

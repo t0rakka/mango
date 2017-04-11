@@ -17,7 +17,12 @@ namespace mango
     template <>
     struct Vector<float, 8> : VectorBase<float, 8>
     {
-        simd::float32x8 m;
+        union
+        {
+            simd::float32x8 m;
+            LowAccessor<simd::float32x4, simd::float32x8> low;
+            HighAccessor<simd::float32x4, simd::float32x8> high;
+        };
 
         explicit Vector() = default;
 
@@ -66,16 +71,6 @@ namespace mango
         operator simd::float32x8 ()
         {
             return m;
-        }
-
-        Vector<float, 4> low() const
-        {
-            return simd::get_low(m);
-        }
-
-        Vector<float, 4> high() const
-        {
-            return simd::get_high(m);
         }
     };
 
