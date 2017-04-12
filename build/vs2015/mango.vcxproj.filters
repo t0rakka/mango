@@ -759,6 +759,9 @@
     <ClInclude Include="..\..\include\mango\simd\sse_int128.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\atomic.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mango">

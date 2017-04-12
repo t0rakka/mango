@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\mango\core\atomic.hpp" />
     <ClInclude Include="..\..\include\mango\core\bits.hpp" />
     <ClInclude Include="..\..\include\mango\core\buffer.hpp" />
     <ClInclude Include="..\..\include\mango\core\compress.hpp" />
