@@ -170,6 +170,20 @@ namespace simd {
         return float32x2_set2(z, w);
     }
 
+    static inline float32x4 set_low(float32x4 a, float32x2 low)
+    {
+        a = set_x(a, get_x(low));
+        a = set_y(a, get_y(low));
+        return a;
+    }
+
+    static inline float32x4 set_high(float32x4 a, float32x2 high)
+    {
+        a = set_z(a, get_x(high));
+        a = set_w(a, get_y(high));
+        return a;
+    }
+
     static inline float32x4 combine(float32x2 a, float32x2 b)
     {
         return float32x4_set4(a[0], a[1], b[0], b[1]);
@@ -183,6 +197,18 @@ namespace simd {
     static inline float32x4 get_high(float32x8 a)
     {
         return a.hi;
+    }
+
+    static inline float32x8 set_low(float32x8 a, float32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+
+    static inline float32x8 set_high(float32x8 a, float32x4 high)
+    {
+        a.hi = high;
+        return a;
     }
 
     static inline float32x8 combine(float32x4 a, float32x4 b)
@@ -243,6 +269,18 @@ namespace simd {
     static inline float64x2 get_high(float64x4 a)
     {
         return a.hi;
+    }
+
+    static inline float64x4 set_low(float64x4 a, float64x2 low)
+    {
+        a.lo = low;
+        return a;
+    }
+
+    static inline float64x4 set_high(float64x4 a, float64x2 high)
+    {
+        a.hi = high;
+        return a;
     }
 
     static inline float64x4 combine(float64x2 a, float64x2 b)

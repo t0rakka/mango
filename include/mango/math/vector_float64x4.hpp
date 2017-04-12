@@ -21,8 +21,8 @@ namespace mango
         {
             simd::float64x4 xyzw;
 
-            LowAccessor<simd::float64x2, simd::float64x4> low;
-            HighAccessor<simd::float64x2, simd::float64x4> high;
+            LowAccessor<Vector<double, 2>, simd::float64x4> low;
+            HighAccessor<Vector<double, 2>, simd::float64x4> high;
 
             ScalarAccessor<double, simd::float64x4, 0> x;
             ScalarAccessor<double, simd::float64x4, 1> y;

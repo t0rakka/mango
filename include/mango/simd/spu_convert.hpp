@@ -132,6 +132,20 @@ namespace simd {
         return v;
     }
 
+    static inline float32x4 set_low(float32x4 a, float32x2 low)
+    {
+        a = set_x(a, low[0]);
+        a = set_y(a, low[1]);
+        return a;
+    }
+
+    static inline float32x4 set_high(float32x4 a, float32x2 high)
+    {
+        a = set_z(a, high[0]);
+        a = set_w(a, high[1]);
+        return a;
+    }
+
     static inline float32x4 combine(float32x2 a, float32x2 b)
     {
         return float32x4_set4(a[0], a[1], b[0], b[1]);
@@ -139,33 +153,31 @@ namespace simd {
 
     static inline float32x4 get_low(float32x8 a)
     {
-        float x = a[0];
-        float y = a[1];
-        float z = a[2];
-        float w = a[3];
-        return float32x4_set4(x, y, z, w);
+        return a.lo;
     }
 
     static inline float32x4 get_high(float32x8 a)
     {
-        float x = a[4];
-        float y = a[5];
-        float z = a[6];
-        float w = a[7];
-        return float32x4_set4(x, y, z, w);
+        return a.hi;
+    }
+
+    static inline float32x8 set_low(float32x8 a, float32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+
+    static inline float32x8 set_high(float32x8 a, float32x4 high)
+    {
+        a.hi = high;
+        return a;
     }
 
     static inline float32x8 combine(float32x4 a, float32x4 b)
     {
         float32x8 result;
-        result[0] = float32x4_get_x(a);
-        result[1] = float32x4_get_y(a);
-        result[2] = float32x4_get_z(a);
-        result[3] = float32x4_get_w(a);
-        result[4] = float32x4_get_x(b);
-        result[5] = float32x4_get_y(b);
-        result[6] = float32x4_get_z(b);
-        result[7] = float32x4_get_w(b);
+        result.lo = a;
+        result.hi = b;
         return result;
     }
 
@@ -215,6 +227,20 @@ namespace simd {
         v[0] = a[2];
         v[1] = a[3];
         return v;
+    }
+
+    static inline float64x4 set_low(float64x4 a, float64x2 low)
+    {
+        a[0] = low[0];
+        a[1] = low[1];
+        return a;
+    }
+
+    static inline float64x4 set_high(float64x4 a, float64x2 high)
+    {
+        a[2] = high[0];
+        a[3] = high[1];
+        return a;
     }
 
     static inline float64x4 combine(float64x2 a, float64x2 b)

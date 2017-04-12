@@ -134,6 +134,16 @@ namespace simd {
         return vget_high_f32(a);
     }
 
+    static inline float32x4 set_low(float32x4 a, float32x2 low)
+    {
+        return vcombine_f32(low, vget_high_f32(a));
+    }
+
+    static inline float32x4 set_high(float32x4 a, float32x2 high)
+    {
+        return vcombine_f32(vget_low_f32(a), high);
+    }
+
     static inline float32x4 combine(float32x2 a, float32x2 b)
     {
         return vcombine_f32(a, b);
@@ -147,6 +157,18 @@ namespace simd {
     static inline float32x4 get_high(float32x8 a)
     {
         return a.hi;
+    }
+
+    static inline float32x8 set_low(float32x8 a, float32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+
+    static inline float32x8 set_high(float32x8 a, float32x4 high)
+    {
+        a.hi = high;
+        return a;
     }
 
     static inline float32x8 combine(float32x4 a, float32x4 b)
@@ -219,6 +241,20 @@ namespace simd {
         v[0] = a[2];
         v[1] = a[3];
         return v;
+    }
+
+    static inline float64x4 set_low(float64x4 a, float64x2 low)
+    {
+        a[0] = low[0];
+        a[1] = low[1];
+        return a;
+    }
+
+    static inline float64x4 set_high(float64x4 a, float64x2 high)
+    {
+        a[2] = high[0];
+        a[3] = high[1];
+        return a;
     }
 
     static inline float64x4 combine(float64x2 a, float64x2 b)

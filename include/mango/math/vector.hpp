@@ -799,6 +799,11 @@ namespace mango
         {
             return simd::get_low(m);
         }
+
+        void operator = (LowType low)
+        {
+            m = simd::set_low(m, low);
+        }
     };
 
     // ------------------------------------------------------------------
@@ -813,6 +818,11 @@ namespace mango
         operator HighType () const
         {
             return simd::get_high(m);
+        }
+
+        void operator = (HighType high)
+        {
+            m = simd::set_high(m, high);
         }
     };
 

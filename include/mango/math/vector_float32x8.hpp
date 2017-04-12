@@ -20,8 +20,8 @@ namespace mango
         union
         {
             simd::float32x8 m;
-            LowAccessor<simd::float32x4, simd::float32x8> low;
-            HighAccessor<simd::float32x4, simd::float32x8> high;
+            LowAccessor<Vector<float, 4>, simd::float32x8> low;
+            HighAccessor<Vector<float, 4>, simd::float32x8> high;
         };
 
         explicit Vector() = default;
