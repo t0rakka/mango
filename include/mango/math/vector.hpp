@@ -927,7 +927,6 @@ namespace mango
     using uint64x2 = Vector<uint64, 2>;
 
     // 256 bit integer vectors
-    /* TODO:
     using int8x32   = Vector<int8, 32>;
     using int16x16  = Vector<int16, 16>;
     using int32x8   = Vector<int32, 8>;
@@ -936,7 +935,6 @@ namespace mango
     using uint16x16 = Vector<uint16, 16>;
     using uint32x8  = Vector<uint32, 8>;
     using uint64x4  = Vector<uint64, 4>;
-    */
 
     // float vectors
     using float16x4 = Vector<half, 4>;
@@ -966,14 +964,22 @@ namespace mango
 
 } // namespace mango
 
-#include "vector_int16x8.hpp"
-#include "vector_int32x4.hpp"
-#include "vector_int64x2.hpp"
-#include "vector_int8x16.hpp"
-#include "vector_uint16x8.hpp"
-#include "vector_uint32x4.hpp"
-#include "vector_uint64x2.hpp"
-#include "vector_uint8x16.hpp"
+#include "vector128_int8x16.hpp"
+#include "vector128_int16x8.hpp"
+#include "vector128_int32x4.hpp"
+#include "vector128_int64x2.hpp"
+#include "vector128_uint8x16.hpp"
+#include "vector128_uint16x8.hpp"
+#include "vector128_uint32x4.hpp"
+#include "vector128_uint64x2.hpp"
+#include "vector256_int8x32.hpp"
+#include "vector256_int16x16.hpp"
+#include "vector256_int32x8.hpp"
+#include "vector256_int64x4.hpp"
+#include "vector256_uint8x32.hpp"
+#include "vector256_uint16x16.hpp"
+#include "vector256_uint32x8.hpp"
+#include "vector256_uint64x4.hpp"
 #include "vector_float16x4.hpp"
 #include "vector_float32x2.hpp"
 #include "vector_float32x3.hpp"
