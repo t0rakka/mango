@@ -17,15 +17,20 @@ namespace mango
     */
 
     // ----------------------------------------------------------------------------
-    // SpinMutex / SpinLock
+    // SpinLock
     // ----------------------------------------------------------------------------
 
-    class SpinMutex
+    class SpinLock
     {
     private:
         std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
 
     public:
+        bool tryLock()
+        {
+            return m_locked.test_and_set(std::memory_order_acquire);
+        }
+
         void lock()
         {
             while (m_locked.test_and_set(std::memory_order_acquire)) {
@@ -38,20 +43,20 @@ namespace mango
         }
     };
 
-    class SpinLock
+    class SpinLockGuard
     {
     private:
-        SpinMutex& m_mutex;
+        SpinLock& m_spinlock;
         bool m_locked { false };
 
     public:
-        SpinLock(SpinMutex& mutex)
-            : m_mutex(mutex)
+        SpinLockGuard(SpinLock& spinlock)
+            : m_spinlock(spinlock)
         {
             lock();
         }
 
-        ~SpinLock()
+        ~SpinLockGuard()
         {
             unlock();
         }
@@ -60,7 +65,7 @@ namespace mango
         {
             if (!m_locked) {
                 m_locked = true;
-                m_mutex.lock();
+                m_spinlock.lock();
             }
         }
 
@@ -68,24 +73,36 @@ namespace mango
         {
             if (m_locked) {
                 m_locked = false;
-                m_mutex.unlock();
+                m_spinlock.unlock();
             }
         }
     };
 
     // ----------------------------------------------------------------------------
-    // ReadWriteMutex / WriteLock / ReadLock
+    // ReadWriteSpinLock
     // ----------------------------------------------------------------------------
 
-    class ReadWriteMutex : protected SpinMutex
+    class ReadWriteSpinLock : protected SpinLock
     {
     private:
         std::atomic<int> m_read_count { 0 };
 
     public:
+        bool tryWriteLock()
+        {
+            bool status = tryLock();
+            if (status) {
+                // acquired exclusive access - flush all readers
+                while (m_read_count > 0) {
+                }
+            }
+
+            return status;
+        }
+
         void writeLock()
         {
-            // acquire exclusive access to the mutex
+            // acquire exclusive access
             lock();
 
             // flush all readers
@@ -99,35 +116,47 @@ namespace mango
             unlock();
         }
 
+        bool tryReadLock()
+        {
+            bool status = tryLock();
+            if (status) {
+                // gained temporary exclusivity - add one reader
+                m_read_count.fetch_add(1, std::memory_order_acquire);
+                unlock();
+            }
+
+            return status;
+        }
+
         void readLock()
         {
             // gain temporary exclusivity to add one reader
             lock();
-            ++m_read_count;
+            m_read_count.fetch_add(1, std::memory_order_acquire);
             unlock();
         }
 
         void readUnlock()
         {
             // reader can be released at any time w/o exclusivity
-            --m_read_count;
+            m_read_count.fetch_sub(1, std::memory_order_release);
         }
     };
 
-    class WriteLock
+    class WriteSpinLockGuard
     {
     private:
-        ReadWriteMutex& m_mutex;
+        ReadWriteSpinLock& m_rwlock;
         bool m_locked { false };
 
     public:
-        WriteLock(ReadWriteMutex& mutex)
-            : m_mutex(mutex)
+        WriteSpinLockGuard(ReadWriteSpinLock& rwlock)
+            : m_rwlock(rwlock)
         {
             lock();
         }
 
-        ~WriteLock()
+        ~WriteSpinLockGuard()
         {
             unlock();
         }
@@ -136,7 +165,7 @@ namespace mango
         {
             if (!m_locked) {
                 m_locked = true;
-                m_mutex.writeLock();
+                m_rwlock.writeLock();
             }
         }
 
@@ -144,25 +173,25 @@ namespace mango
         {
             if (m_locked) {
                 m_locked = false;
-                m_mutex.writeUnlock();
+                m_rwlock.writeUnlock();
             }
         }
     };
 
-    class ReadLock
+    class ReadSpinLockGuard
     {
     private:
-        ReadWriteMutex& m_mutex;
+        ReadWriteSpinLock& m_rwlock;
         bool m_locked { false };
 
     public:
-        ReadLock(ReadWriteMutex& mutex)
-            : m_mutex(mutex)
+        ReadSpinLockGuard(ReadWriteSpinLock& rwlock)
+            : m_rwlock(rwlock)
         {
             lock();
         }
 
-        ~ReadLock()
+        ~ReadSpinLockGuard()
         {
             unlock();
         }
@@ -171,7 +200,7 @@ namespace mango
         {
             if (!m_locked) {
                 m_locked = true;
-                m_mutex.readLock();
+                m_rwlock.readLock();
             }
         }
 
@@ -179,7 +208,7 @@ namespace mango
         {
             if (m_locked) {
                 m_locked = false;
-                m_mutex.readUnlock();
+                m_rwlock.readUnlock();
             }
         }
     };

@@ -27,11 +27,11 @@ namespace mango
         T** m_stack { nullptr };
         int m_stack_capacity { 0 };
         int m_stack_size { 0 };
-        SpinMutex m_mutex;
+        SpinLock m_lock;
 
     public:
         ObjectCache(int block_size)
-        : m_block_size(block_size)
+            : m_block_size(block_size)
         {
         }
 
@@ -46,7 +46,7 @@ namespace mango
 
         T* acquire()
         {
-            SpinLock lock(m_mutex);
+            SpinLockGuard guard(m_lock);
             if (!m_stack_size)
             {
                 T* block = new T[m_block_size];
@@ -69,7 +69,7 @@ namespace mango
 
         void discard(T* object)
         {
-            SpinLock lock(m_mutex);
+            SpinLockGuard guard(m_lock);
             m_stack[m_stack_size++] = object;
         }
     };
