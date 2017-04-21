@@ -100,28 +100,28 @@ namespace simd {
         // .wwww
         const float32x2_t zw = vget_high_f32(v);
         return vdupq_lane_f32(zw, 1);
-    }        
+    }
 
     template <>
     inline float32x4 shuffle<1, 1, 0, 0>(float32x4 v)
     {
         // .yyxx
 	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 1)), vdup_n_f32(vgetq_lane_f32(v, 0)));
-    }        
+    }
 
     template <>
     inline float32x4 shuffle<2, 2, 0, 0>(float32x4 v)
     {
         // .zzxx
 	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 2)), vdup_n_f32(vgetq_lane_f32(v, 0)));
-    }        
+    }
 
     template <>
     inline float32x4 shuffle<3, 3, 1, 1>(float32x4 v)
     {
         // .wwyy
 	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 3)), vdup_n_f32(vgetq_lane_f32(v, 1)));
-    }        
+    }
 
     // indexed access
 

@@ -25,7 +25,6 @@ namespace simd {
 
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
     {
-        
 	    const uint8x8x2_t temp = vzip_u8(vget_low_u8(a), vget_low_u8(b));
 	    return vcombine_u8(temp.val[0], temp.val[1]);
     }
@@ -400,19 +399,19 @@ namespace simd {
 
     // shift
 
-    template <int Count> 
+    template <int Count>
     static inline uint32x4 sll(uint32x4 a)
     {
         return vshlq_n_u32(a, Count);
     }
 
-    template <int Count> 
+    template <int Count>
     static inline uint32x4 srl(uint32x4 a)
     {
         return vshrq_n_u32(a, Count);
     }
 
-    template <int Count> 
+    template <int Count>
     static inline uint32x4 sra(uint32x4 a)
     {
         const int32x4 temp = vshrq_n_s32(vreinterpretq_s32_u32(a), Count);
@@ -953,21 +952,21 @@ namespace simd {
 
     // shift
 
-    template <int Count> 
+    template <int Count>
     static inline int32x4 sll(int32x4 a)
     {
         const uint32x4 temp = vshlq_n_u32(vreinterpretq_u32_s32(a), Count);
         return vreinterpretq_s32_u32(temp);
     }
 
-    template <int Count> 
+    template <int Count>
     static inline int32x4 srl(int32x4 a)
     {
         const uint32x4 temp = vshrq_n_u32(vreinterpretq_u32_s32(a), Count);
         return vreinterpretq_s32_u32(temp);
     }
 
-    template <int Count> 
+    template <int Count>
     static inline int32x4 sra(int32x4 a)
     {
         return vshrq_n_s32(a, Count);
