@@ -9,9 +9,32 @@
 namespace mango {
 namespace simd {
 
+#define SET_COMPONENT(vec, value, mask, index) \
+    if (index <= mask) vec.lo = set_component<index & mask>(vec.lo, value); \
+    else               vec.hi = set_component<index & mask>(vec.hi, value)
+
+#define GET_COMPONENT(vec, mask, index) \
+        Index <= mask ? get_component<index & mask>(vec.lo) \
+                      : get_component<index & mask>(vec.hi)
+
     // -----------------------------------------------------------------
     // uint8x32
     // -----------------------------------------------------------------
+
+    template <unsigned int Index>
+    static inline uint8x32 set_component(uint8x32 a, uint8 b)
+    {
+        static_assert(Index < 32, "Index out of range.");
+        SET_COMPONENT(a, b, 15, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline uint8 get_component(uint8x32 a)
+    {
+        static_assert(Index < 32, "Index out of range.");
+        return GET_COMPONENT(a, 15, Index);
+    }
 
     static inline uint8x32 uint8x32_zero()
     {
@@ -167,6 +190,21 @@ namespace simd {
     // uint16x16
     // -----------------------------------------------------------------
 
+    template <unsigned int Index>
+    static inline uint16x16 set_component(uint16x16 a, uint16 b)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        SET_COMPONENT(a, b, 7, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline uint16 get_component(uint16x16 a)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return GET_COMPONENT(a, 7, Index);
+    }
+
     static inline uint16x16 uint16x16_zero()
     {
         uint16x16 result;
@@ -320,6 +358,21 @@ namespace simd {
     // -----------------------------------------------------------------
     // uint32x8
     // -----------------------------------------------------------------
+
+    template <unsigned int Index>
+    static inline uint32x8 set_component(uint32x8 a, uint32 b)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        SET_COMPONENT(a, b, 3, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline uint32 get_component(uint32x8 a)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        return GET_COMPONENT(a, 3, Index);
+    }
 
     static inline uint32x8 uint32x8_zero()
     {
@@ -526,6 +579,21 @@ namespace simd {
     // uint64x4
     // -----------------------------------------------------------------
 
+    template <unsigned int Index>
+    static inline uint64x4 set_component(uint64x4 a, uint64 b)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        SET_COMPONENT(a, b, 1, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline uint64 get_component(uint64x4 a)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        return GET_COMPONENT(a, 1, Index);
+    }
+
     static inline uint64x4 uint64x4_zero()
     {
         uint64x4 result;
@@ -625,6 +693,21 @@ namespace simd {
     // -----------------------------------------------------------------
     // int8x32
     // -----------------------------------------------------------------
+
+    template <unsigned int Index>
+    static inline int8x32 set_component(int8x32 a, int8 b)
+    {
+        static_assert(Index < 32, "Index out of range.");
+        SET_COMPONENT(a, b, 15, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline int8 get_component(int8x32 a)
+    {
+        static_assert(Index < 32, "Index out of range.");
+        return GET_COMPONENT(a, 15, Index);
+    }
 
     static inline int8x32 int8x32_zero()
     {
@@ -796,6 +879,21 @@ namespace simd {
     // int16x16
     // -----------------------------------------------------------------
 
+    template <unsigned int Index>
+    static inline int16x16 set_component(int16x16 a, int16 b)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        SET_COMPONENT(a, b, 7, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline int16 get_component(int16x16 a)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return GET_COMPONENT(a, 7, Index);
+    }
+
     static inline int16x16 int16x16_zero()
     {
         int16x16 result;
@@ -965,6 +1063,21 @@ namespace simd {
     // -----------------------------------------------------------------
     // int32x8
     // -----------------------------------------------------------------
+
+    template <unsigned int Index>
+    static inline int32x8 set_component(int32x8 a, int32 b)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        SET_COMPONENT(a, b, 3, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline int32 get_component(int32x8 a)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        return GET_COMPONENT(a, 3, Index);
+    }
 
     static inline int32x8 int32x8_zero()
     {
@@ -1187,6 +1300,21 @@ namespace simd {
     // int64x4
     // -----------------------------------------------------------------
 
+    template <unsigned int Index>
+    static inline int64x4 set_component(int64x4 a, int64 b)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        SET_COMPONENT(a, b, 1, Index);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline int64 get_component(int64x4 a)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        return GET_COMPONENT(a, 1, Index);
+    }
+
     static inline int64x4 int64x4_zero()
     {
         int64x4 result;
@@ -1282,6 +1410,9 @@ namespace simd {
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
     }
+
+#undef SET_COMPONENT
+#undef GET_COMPONENT
 
 } // namespace simd
 } // namespace mango

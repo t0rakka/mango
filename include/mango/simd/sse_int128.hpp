@@ -50,6 +50,45 @@ namespace simd {
     // uint8x16
     // -----------------------------------------------------------------
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    template <unsigned int Index>
+    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return _mm_insert_epi8(a, s, Index);
+    }
+
+    template <unsigned int Index>
+    static inline uint8 get_component(uint8x16 a)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return _mm_extract_epi8(a, Index);
+    }
+
+#else
+
+    template <unsigned int Index>
+    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        uint32 temp = _mm_extract_epi16(a, Index / 2);
+        if (Index & 1)
+            temp = (temp & 0x00ff) | uint32(s) << 8;
+        else
+            temp = (temp & 0xff00) | uint32(s);
+        return _mm_insert_epi16(a, temp, Index / 2);
+    }
+
+    template <unsigned int Index>
+    static inline uint8 get_component(uint8x16 a)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return _mm_extract_epi16(a, Index / 2) >> ((Index & 1) * 8);
+    }
+
+#endif
+
     static inline uint8x16 uint8x16_zero()
     {
         return _mm_setzero_si128();
@@ -191,6 +230,20 @@ namespace simd {
     // -----------------------------------------------------------------
     // uint16x8
     // -----------------------------------------------------------------
+
+    template <unsigned int Index>
+    static inline uint16x8 set_component(uint16x8 a, uint16 s)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        return _mm_insert_epi16(a, s, Index);
+    }
+
+    template <unsigned int Index>
+    static inline uint16 get_component(uint16x8 a)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        return _mm_extract_epi16(a, Index);
+    }
 
     static inline uint16x8 uint16x8_zero()
     {
@@ -372,17 +425,17 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    template <int Index>
+    template <unsigned int Index>
     static inline uint32x4 set_component(uint32x4 a, uint32 s)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline uint32 get_component(uint32x4 a)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
     }
 
@@ -656,6 +709,49 @@ namespace simd {
     // uint64x2
     // -----------------------------------------------------------------
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    template <unsigned int Index>
+    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        return _mm_insert_epi64(a, s, Index);
+    }
+
+    template <unsigned int Index>
+    static inline uint64 get_component(uint64x2 a)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        return _mm_extract_epi64(a, Index);
+    }
+
+#else
+
+    template <unsigned int Index>
+    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        a = _mm_insert_epi16(a, (s >>  0) & 0xffff, Index * 4 + 0);
+        a = _mm_insert_epi16(a, (s >> 16) & 0xffff, Index * 4 + 1);
+        a = _mm_insert_epi16(a, (s >> 32) & 0xffff, Index * 4 + 2);
+        a = _mm_insert_epi16(a, (s >> 48) & 0xffff, Index * 4 + 3);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline uint64 get_component(uint64x2 a)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        uint64 temp = 0;
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 0));
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 1)) << 16;
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 2)) << 32;
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 3)) << 48;
+        return temp;
+    }
+
+#endif
+
     static inline uint64x2 uint64x2_zero()
     {
         return _mm_setzero_si128();
@@ -719,6 +815,45 @@ namespace simd {
     // -----------------------------------------------------------------
     // int8x16
     // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    template <unsigned int Index>
+    static inline int8x16 set_component(int8x16 a, int8 s)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return _mm_insert_epi8(a, s, Index);
+    }
+
+    template <unsigned int Index>
+    static inline int8 get_component(int8x16 a)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return _mm_extract_epi8(a, Index);
+    }
+
+#else
+
+    template <unsigned int Index>
+    static inline int8x16 set_component(int8x16 a, int8 s)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        uint32 temp = _mm_extract_epi16(a, Index / 2);
+        if (Index & 1)
+            temp = (temp & 0x00ff) | uint32(s) << 8;
+        else
+            temp = (temp & 0xff00) | uint32(s);
+        return _mm_insert_epi16(a, temp, Index / 2);
+    }
+
+    template <unsigned int Index>
+    static inline int8 get_component(int8x16 a)
+    {
+        static_assert(Index < 16, "Index out of range.");
+        return _mm_extract_epi16(a, Index / 2) >> ((Index & 1) * 8);
+    }
+
+#endif
 
     static inline int8x16 int8x16_zero()
     {
@@ -894,6 +1029,20 @@ namespace simd {
     // -----------------------------------------------------------------
     // int16x8
     // -----------------------------------------------------------------
+
+    template <unsigned int Index>
+    static inline int16x8 set_component(int16x8 a, int16 s)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        return _mm_insert_epi16(a, s, Index);
+    }
+
+    template <unsigned int Index>
+    static inline int16 get_component(int16x8 a)
+    {
+        static_assert(Index < 8, "Index out of range.");
+        return _mm_extract_epi16(a, Index);
+    }
 
     static inline int16x8 int16x8_zero()
     {
@@ -1071,17 +1220,17 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    template <int Index>
+    template <unsigned int Index>
     static inline int32x4 set_component(int32x4 a, int32 s)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline int32 get_component(int32x4 a)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
     }
 
@@ -1399,6 +1548,49 @@ namespace simd {
     // -----------------------------------------------------------------
     // int64x2
     // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    template <unsigned int Index>
+    static inline int64x2 set_component(int64x2 a, int64 s)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        return _mm_insert_epi64(a, s, Index);
+    }
+
+    template <unsigned int Index>
+    static inline int64 get_component(int64x2 a)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        return _mm_extract_epi64(a, Index);
+    }
+
+#else
+
+    template <unsigned int Index>
+    static inline int64x2 set_component(int64x2 a, int64 s)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        a = _mm_insert_epi16(a, (s >>  0) & 0xffff, Index * 4 + 0);
+        a = _mm_insert_epi16(a, (s >> 16) & 0xffff, Index * 4 + 1);
+        a = _mm_insert_epi16(a, (s >> 32) & 0xffff, Index * 4 + 2);
+        a = _mm_insert_epi16(a, (s >> 48) & 0xffff, Index * 4 + 3);
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline int64 get_component(int64x2 a)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        uint64 temp = 0;
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 0));
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 1)) << 16;
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 2)) << 32;
+        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 3)) << 48;
+        return temp;
+    }
+
+#endif
 
     static inline int64x2 int64x2_zero()
     {

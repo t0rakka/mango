@@ -68,17 +68,17 @@ namespace simd {
 
     // indexed accessor
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float32x4 set_component(float32x4 a, float s)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return spu_insert(s, a, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float get_component(float32x4 a)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return spu_extract(a, Index);
     }
 

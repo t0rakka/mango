@@ -33,10 +33,10 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float32x4 set_component(float32x4 a, float s)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return _mm_insert_ps(a, _mm_set_ss(s), Index * 0x10);
     }
 

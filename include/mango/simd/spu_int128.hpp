@@ -57,17 +57,17 @@ namespace simd {
 
     // indexed access
 
-    template <int Index>
+    template <unsigned int Index>
     static inline uint32x4 set_component(uint32x4 a, uint32 s)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return spu_insert(s, a, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline uint32 get_component(uint32x4 a)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return spu_extract(a, Index);
     }
 
@@ -251,17 +251,17 @@ namespace simd {
 
     // indexed access
 
-    template <int Index>
+    template <unsigned int Index>
     static inline int32x4 set_component(int32x4 a, int32 s)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return spu_insert(s, a, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline int32 get_component(int32x4 a)
     {
-        static_assert(Index >= 0 && Index < 4, "Index out of range.");
+        static_assert(Index < 4, "Index out of range.");
         return spu_extract(a, Index);
     }
 

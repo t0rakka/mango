@@ -48,17 +48,17 @@ namespace simd {
 
     // indexed access
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float32x2 set_component(float32x2 a, float s)
     {
-        static_assert(Index >= 0 && Index < 2, "Index out of range.");
+        static_assert(Index < 2, "Index out of range.");
         return vset_lane_f32(s, a, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float get_component(float32x2 a)
     {
-        static_assert(Index >= 0 && Index < 2, "Index out of range.");
+        static_assert(Index < 2, "Index out of range.");
         return vget_lane_f32(a, Index);
     }
 

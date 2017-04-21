@@ -24,18 +24,18 @@ namespace simd {
 
     // indexed access
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float32x2 set_component(float32x2 a, float s)
     {
-        static_assert(Index >= 0 && Index < 2, "Index out of range.");
+        static_assert(Index < 2, "Index out of range.");
         a[Index] = s;
         return a;
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline float get_component(float32x2 a)
     {
-        static_assert(Index >= 0 && Index < 2, "Index out of range.");
+        static_assert(Index < 2, "Index out of range.");
         return a[Index];
     }
 
