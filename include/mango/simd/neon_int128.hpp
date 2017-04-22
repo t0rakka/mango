@@ -281,6 +281,25 @@ namespace simd {
         return vbslq_u16(mask, a, b);
     }
 
+    template <int Count>
+    static inline uint16x8 sll(uint16x8 a)
+    {
+        return vshlq_n_u16(a, Count);
+    }
+
+    template <int Count>
+    static inline uint16x8 srl(uint16x8 a)
+    {
+        return vshrq_n_u16(a, Count);
+    }
+
+    template <int Count>
+    static inline uint16x8 sra(uint16x8 a)
+    {
+        const int16x8 temp = vshrq_n_s16(vreinterpretq_s16_u16(a), Count);
+        return vreinterpretq_u16_s16(temp);
+    }
+
     static inline uint16x8 min(uint16x8 a, uint16x8 b)
     {
         return vminq_u16(a, b);
@@ -425,27 +444,6 @@ namespace simd {
         return vmvnq_u32(a);
     }
 
-    // shift
-
-    template <int Count>
-    static inline uint32x4 sll(uint32x4 a)
-    {
-        return vshlq_n_u32(a, Count);
-    }
-
-    template <int Count>
-    static inline uint32x4 srl(uint32x4 a)
-    {
-        return vshrq_n_u32(a, Count);
-    }
-
-    template <int Count>
-    static inline uint32x4 sra(uint32x4 a)
-    {
-        const int32x4 temp = vshrq_n_s32(vreinterpretq_s32_u32(a), Count);
-        return vreinterpretq_u32_s32(temp);
-    }
-
     // compare
 
     static inline uint32x4 compare_neq(uint32x4 a, uint32x4 b)
@@ -481,6 +479,27 @@ namespace simd {
     static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
     {
         return vbslq_u32(mask, a, b);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline uint32x4 sll(uint32x4 a)
+    {
+        return vshlq_n_u32(a, Count);
+    }
+
+    template <int Count>
+    static inline uint32x4 srl(uint32x4 a)
+    {
+        return vshrq_n_u32(a, Count);
+    }
+
+    template <int Count>
+    static inline uint32x4 sra(uint32x4 a)
+    {
+        const int32x4 temp = vshrq_n_s32(vreinterpretq_s32_u32(a), Count);
+        return vreinterpretq_u32_s32(temp);
     }
 
     static inline uint32x4 min(uint32x4 a, uint32x4 b)
@@ -570,6 +589,18 @@ namespace simd {
     static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
     {
         return vbslq_u64(mask, a, b);
+    }
+
+    template <int Count>
+    static inline uint64x2 sll(uint64x2 a)
+    {
+        return vshlq_n_u64(a, Count);
+    }
+
+    template <int Count>
+    static inline uint64x2 srl(uint64x2 a)
+    {
+        return vshrq_n_u64(a, Count);
     }
 
     // -----------------------------------------------------------------
@@ -864,6 +895,26 @@ namespace simd {
         return vbslq_s16(vreinterpretq_u16_s16(mask), a, b);
     }
 
+    template <int Count>
+    static inline int16x8 sll(int16x8 a)
+    {
+        const uint16x8 temp = vshlq_n_u16(vreinterpretq_u16_s16(a), Count);
+        return vreinterpretq_s16_u16(temp);
+    }
+
+    template <int Count>
+    static inline int16x8 srl(int16x8 a)
+    {
+        const uint16x8 temp = vshrq_n_u16(vreinterpretq_u16_s16(a), Count);
+        return vreinterpretq_s16_u16(temp);
+    }
+
+    template <int Count>
+    static inline int16x8 sra(int16x8 a)
+    {
+        return vshrq_n_s16(a, Count);
+    }
+
     static inline int16x8 min(int16x8 a, int16x8 b)
     {
         return vminq_s16(a, b);
@@ -1020,28 +1071,6 @@ namespace simd {
         return vmvnq_s32(a);
     }
 
-    // shift
-
-    template <int Count>
-    static inline int32x4 sll(int32x4 a)
-    {
-        const uint32x4 temp = vshlq_n_u32(vreinterpretq_u32_s32(a), Count);
-        return vreinterpretq_s32_u32(temp);
-    }
-
-    template <int Count>
-    static inline int32x4 srl(int32x4 a)
-    {
-        const uint32x4 temp = vshrq_n_u32(vreinterpretq_u32_s32(a), Count);
-        return vreinterpretq_s32_u32(temp);
-    }
-
-    template <int Count>
-    static inline int32x4 sra(int32x4 a)
-    {
-        return vshrq_n_s32(a, Count);
-    }
-
     // compare
 
     static inline int32x4 compare_neq(int32x4 a, int32x4 b)
@@ -1077,6 +1106,28 @@ namespace simd {
     static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
     {
         return vbslq_s32(vreinterpretq_u32_s32(mask), a, b);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline int32x4 sll(int32x4 a)
+    {
+        const uint32x4 temp = vshlq_n_u32(vreinterpretq_u32_s32(a), Count);
+        return vreinterpretq_s32_u32(temp);
+    }
+
+    template <int Count>
+    static inline int32x4 srl(int32x4 a)
+    {
+        const uint32x4 temp = vshrq_n_u32(vreinterpretq_u32_s32(a), Count);
+        return vreinterpretq_s32_u32(temp);
+    }
+
+    template <int Count>
+    static inline int32x4 sra(int32x4 a)
+    {
+        return vshrq_n_s32(a, Count);
     }
 
     static inline int32x4 min(int32x4 a, int32x4 b)
@@ -1194,6 +1245,20 @@ namespace simd {
     static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
     {
         return vbslq_s64(vreinterpretq_u64_s64(mask), a, b);
+    }
+
+    template <int Count>
+    static inline int64x2 sll(int64x2 a)
+    {
+        const uint64x2 temp = vshlq_n_u64(vreinterpretq_u64_s64(a), Count);
+        return vreinterpretq_s64_u64(temp);
+    }
+
+    template <int Count>
+    static inline int64x2 srl(int64x2 a)
+    {
+        const uint64x2 temp = vshrq_n_u64(vreinterpretq_u64_s64(a), Count);
+        return vreinterpretq_s64_u64(temp);
     }
 
 } // namespace simd

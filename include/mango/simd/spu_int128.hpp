@@ -160,26 +160,6 @@ namespace simd {
 		return spu_xor(a, b);
     }
 
-    // shift
-
-    template <int Count> 
-    static inline uint32x4 sll(uint32x4 a)
-    {
-        return spu_sl(a, Count);
-    }
-
-    template <int Count> 
-    static inline uint32x4 srl(uint32x4 a)
-    {
-        return spu_sr(a, Count);
-    }
-
-    template <int Count> 
-    static inline uint32x4 sra(uint32x4 a)
-    {
-        return spu_sra(a, Count);
-    }
-
     // compare
 
     static inline uint32x4 compare_eq(uint32x4 a, uint32x4 b)
@@ -195,6 +175,26 @@ namespace simd {
     static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
     {
 		return spu_sel(b, a, mask);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline uint32x4 sll(uint32x4 a)
+    {
+        return spu_sl(a, Count);
+    }
+
+    template <int Count>
+    static inline uint32x4 srl(uint32x4 a)
+    {
+        return spu_sr(a, Count);
+    }
+
+    template <int Count>
+    static inline uint32x4 sra(uint32x4 a)
+    {
+        return spu_sra(a, Count);
     }
 
     static inline uint32x4 min(uint32x4 a, uint32x4 b)
@@ -364,26 +364,6 @@ namespace simd {
 		return spu_xor(a, b);
     }
 
-    // shift
-
-    template <int Count> 
-    static inline int32x4 sll(int32x4 a)
-    {
-        return spu_sl(a, Count);
-    }
-
-    template <int Count> 
-    static inline int32x4 srl(int32x4 a)
-    {
-        return spu_sr(a, Count);
-    }
-
-    template <int Count> 
-    static inline int32x4 sra(int32x4 a)
-    {
-        return spu_sra(a, Count);
-    }
-
     // compare
 
     static inline int32x4 compare_eq(int32x4 a, int32x4 b)
@@ -399,6 +379,26 @@ namespace simd {
     static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
     {
 		return spu_sel(b, a, (vec_uint4)mask);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline int32x4 sll(int32x4 a)
+    {
+        return spu_sl(a, Count);
+    }
+
+    template <int Count>
+    static inline int32x4 srl(int32x4 a)
+    {
+        return spu_sr(a, Count);
+    }
+
+    template <int Count>
+    static inline int32x4 sra(int32x4 a)
+    {
+        return spu_sra(a, Count);
     }
 
     static inline int32x4 min(int32x4 a, int32x4 b)

@@ -245,6 +245,24 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    template <int Count>
+    static inline uint16x16 sll(uint16x16 a)
+    {
+        return _mm256_slli_epi16(a, Count);
+    }
+
+    template <int Count>
+    static inline uint16x16 srl(uint16x16 a)
+    {
+        return _mm256_srli_epi16(a, Count);
+    }
+
+    template <int Count>
+    static inline uint16x16 sra(uint16x16 a)
+    {
+        return _mm256_srai_epi16(a, Count);
+    }
+
     static inline uint16x16 min(uint16x16 a, uint16x16 b)
     {
         return _mm256_min_epu16(a, b);
@@ -359,26 +377,6 @@ namespace simd {
         return _mm256_xor_si256(a, b);
     }
 
-    // shift
-
-    template <int Count> 
-    static inline uint32x8 sll(uint32x8 a)
-    {
-        return _mm256_slli_epi32(a, Count);
-    }
-
-    template <int Count> 
-    static inline uint32x8 srl(uint32x8 a)
-    {
-        return _mm256_srli_epi32(a, Count);
-    }
-
-    template <int Count> 
-    static inline uint32x8 sra(uint32x8 a)
-    {
-        return _mm256_srai_epi32(a, Count);
-    }
-
     // compare
 
     static inline uint32x8 compare_eq(uint32x8 a, uint32x8 b)
@@ -395,6 +393,26 @@ namespace simd {
     static inline uint32x8 select(uint32x8 mask, uint32x8 a, uint32x8 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline uint32x8 sll(uint32x8 a)
+    {
+        return _mm256_slli_epi32(a, Count);
+    }
+
+    template <int Count>
+    static inline uint32x8 srl(uint32x8 a)
+    {
+        return _mm256_srli_epi32(a, Count);
+    }
+
+    template <int Count>
+    static inline uint32x8 sra(uint32x8 a)
+    {
+        return _mm256_srai_epi32(a, Count);
     }
 
     static inline uint32x8 min(uint32x8 a, uint32x8 b)
@@ -483,6 +501,18 @@ namespace simd {
     static inline uint64x4 select(uint64x4 mask, uint64x4 a, uint64x4 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    template <int Count>
+    static inline uint64x4 sll(uint64x4 a)
+    {
+        return _mm256_slli_epi64(a, Count);
+    }
+
+    template <int Count>
+    static inline uint64x4 srl(uint64x4 a)
+    {
+        return _mm256_srli_epi64(a, Count);
     }
 
     // -----------------------------------------------------------------
@@ -723,6 +753,26 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    // shift
+
+    template <int Count>
+    static inline int16x16 sll(int16x16 a)
+    {
+        return _mm256_slli_epi16(a, Count);
+    }
+
+    template <int Count>
+    static inline int16x16 srl(int16x16 a)
+    {
+        return _mm256_srli_epi16(a, Count);
+    }
+
+    template <int Count>
+    static inline int16x16 sra(int16x16 a)
+    {
+        return _mm256_srai_epi16(a, Count);
+    }
+
     static inline int16x16 min(int16x16 a, int16x16 b)
     {
         return _mm256_min_epi16(a, b);
@@ -853,6 +903,23 @@ namespace simd {
         return _mm256_xor_si256(a, b);
     }
 
+    // compare
+
+    static inline int32x8 compare_eq(int32x8 a, int32x8 b)
+    {
+        return _mm256_cmpeq_epi32(a, b);
+    }
+
+    static inline int32x8 compare_gt(int32x8 a, int32x8 b)
+    {
+        return _mm256_cmpgt_epi32(a, b);
+    }
+
+    static inline int32x8 select(int32x8 mask, int32x8 a, int32x8 b)
+    {
+        return _mm256_select_si256(mask, a, b);
+    }
+
     // shift
 
     template <int Count>
@@ -871,23 +938,6 @@ namespace simd {
     static inline int32x8 sra(int32x8 a)
     {
         return _mm256_srai_epi32(a, Count);
-    }
-
-    // compare
-
-    static inline int32x8 compare_eq(int32x8 a, int32x8 b)
-    {
-        return _mm256_cmpeq_epi32(a, b);
-    }
-
-    static inline int32x8 compare_gt(int32x8 a, int32x8 b)
-    {
-        return _mm256_cmpgt_epi32(a, b);
-    }
-
-    static inline int32x8 select(int32x8 mask, int32x8 a, int32x8 b)
-    {
-        return _mm256_select_si256(mask, a, b);
     }
 
     static inline int32x8 min(int32x8 a, int32x8 b)
@@ -976,6 +1026,18 @@ namespace simd {
     static inline int64x4 select(int64x4 mask, int64x4 a, int64x4 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    template <int Count>
+    static inline int64x4 sll(int64x4 a)
+    {
+        return _mm256_slli_epi64(a, Count);
+    }
+
+    template <int Count>
+    static inline int64x4 srl(int64x4 a)
+    {
+        return _mm256_srli_epi64(a, Count);
     }
 
 } // namespace simd

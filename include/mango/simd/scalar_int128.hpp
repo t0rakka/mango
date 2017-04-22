@@ -438,6 +438,41 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // shift
+
+    template <int Count>
+    static inline uint16x8 sll(uint16x8 a)
+    {
+        uint16x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = a[i] << Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline uint16x8 srl(uint16x8 a)
+    {
+        uint16x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = a[i] >> Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline uint16x8 sra(uint16x8 a)
+    {
+        uint16x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = int16(a[i]) >> Count;
+        }
+        return v;
+    }
+
     static inline uint16x8 min(uint16x8 a, uint16x8 b)
     {
         return scalar_unroll(scalar_min, a, b);
@@ -572,41 +607,6 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
-    // shift
-
-    template <int Count> 
-    static inline uint32x4 sll(uint32x4 a)
-    {
-        uint32x4 v;
-        v[0] = a[0] << Count;
-        v[1] = a[1] << Count;
-        v[2] = a[2] << Count;
-        v[3] = a[3] << Count;
-        return v;
-    }
-
-    template <int Count> 
-    static inline uint32x4 srl(uint32x4 a)
-    {
-        uint32x4 v;
-        v[0] = a[0] >> Count;
-        v[1] = a[1] >> Count;
-        v[2] = a[2] >> Count;
-        v[3] = a[3] >> Count;
-        return v;
-    }
-
-    template <int Count> 
-    static inline uint32x4 sra(uint32x4 a)
-    {
-        uint32x4 v;
-        v[0] = static_cast<int32>(a[0]) >> Count;
-        v[1] = static_cast<int32>(a[1]) >> Count;
-        v[2] = static_cast<int32>(a[2]) >> Count;
-        v[3] = static_cast<int32>(a[3]) >> Count;
-        return v;
-    }
-
     // compare
 
     static inline uint32x4 compare_eq(uint32x4 a, uint32x4 b)
@@ -622,6 +622,41 @@ namespace simd {
     static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline uint32x4 sll(uint32x4 a)
+    {
+        uint32x4 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i] = a[i] << Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline uint32x4 srl(uint32x4 a)
+    {
+        uint32x4 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i] = a[i] >> Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline uint32x4 sra(uint32x4 a)
+    {
+        uint32x4 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i] = int32(a[i]) >> Count;
+        }
+        return v;
     }
 
     static inline uint32x4 min(uint32x4 a, uint32x4 b)
@@ -711,6 +746,28 @@ namespace simd {
     static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    template <int Count>
+    static inline uint64x2 sll(uint64x2 a)
+    {
+        uint64x2 v;
+        for (int i = 0; i < 2; ++i)
+        {
+            v[i] = a[i] << Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline uint64x2 srl(uint64x2 a)
+    {
+        uint64x2 v;
+        for (int i = 0; i < 2; ++i)
+        {
+            v[i] = a[i] >> Count;
+        }
+        return v;
     }
 
     // -----------------------------------------------------------------
@@ -953,6 +1010,39 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    template <int Count>
+    static inline int16x8 sll(int16x8 a)
+    {
+        int16x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = uint16(a[i]) << Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline int16x8 srl(int16x8 a)
+    {
+        int16x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = uint16(a[i]) >> Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline int16x8 sra(int16x8 a)
+    {
+        int16x8 v;
+        for (int i = 0; i < 8; ++i)
+        {
+            v[i] = a[i] >> Count;
+        }
+        return v;
+    }
+
     static inline int16x8 min(int16x8 a, int16x8 b)
     {
         return scalar_unroll(scalar_min, a, b);
@@ -1097,41 +1187,6 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
-    // shift
-
-    template <int Count> 
-    static inline int32x4 sll(int32x4 a)
-    {
-        int32x4 v;
-        v[0] = static_cast<uint32>(a[0]) << Count;
-        v[1] = static_cast<uint32>(a[1]) << Count;
-        v[2] = static_cast<uint32>(a[2]) << Count;
-        v[3] = static_cast<uint32>(a[3]) << Count;
-        return v;
-    }
-
-    template <int Count> 
-    static inline int32x4 srl(int32x4 a)
-    {
-        int32x4 v;
-        v[0] = static_cast<uint32>(a[0]) >> Count;
-        v[1] = static_cast<uint32>(a[1]) >> Count;
-        v[2] = static_cast<uint32>(a[2]) >> Count;
-        v[3] = static_cast<uint32>(a[3]) >> Count;
-        return v;
-    }
-
-    template <int Count> 
-    static inline int32x4 sra(int32x4 a)
-    {
-        int32x4 v;
-        v[0] = a[0] >> Count;
-        v[1] = a[1] >> Count;
-        v[2] = a[2] >> Count;
-        v[3] = a[3] >> Count;
-        return v;
-    }
-
     // compare
 
     static inline int32x4 compare_eq(int32x4 a, int32x4 b)
@@ -1147,6 +1202,41 @@ namespace simd {
     static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    // shift
+
+    template <int Count>
+    static inline int32x4 sll(int32x4 a)
+    {
+        int32x4 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i] = uint32(a[i]) << Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline int32x4 srl(int32x4 a)
+    {
+        int32x4 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i] = uint32(a[i]) >> Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline int32x4 sra(int32x4 a)
+    {
+        int32x4 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v[i] = a[i] << Count;
+        }
+        return v;
     }
 
     static inline int32x4 min(int32x4 a, int32x4 b)
@@ -1265,6 +1355,28 @@ namespace simd {
     static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    template <int Count>
+    static inline int64x2 sll(int64x2 a)
+    {
+        int64x2 v;
+        for (int i = 0; i < 2; ++i)
+        {
+            v[i] = uint64(a[i]) << Count;
+        }
+        return v;
+    }
+
+    template <int Count>
+    static inline int64x2 srl(int64x2 a)
+    {
+        int64x2 v;
+        for (int i = 0; i < 2; ++i)
+        {
+            v[i] = uint64(a[i]) >> Count;
+        }
+        return v;
     }
 
 } // namespace simd

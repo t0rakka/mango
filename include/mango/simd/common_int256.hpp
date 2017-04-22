@@ -339,6 +339,35 @@ namespace simd {
         return result;
     }
 
+    // shift
+
+    template <int Count>
+    static inline uint16x16 sll(uint16x16 a)
+    {
+        uint16x16 result;
+        result.lo = sll<Count>(a.lo);
+        result.hi = sll<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline uint16x16 srl(uint16x16 a)
+    {
+        uint16x16 result;
+        result.lo = srl<Count>(a.lo);
+        result.hi = srl<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline uint16x16 sra(uint16x16 a)
+    {
+        uint16x16 result;
+        result.lo = sra<Count>(a.lo);
+        result.hi = sra<Count>(a.hi);
+        return result;
+    }
+
     static inline uint16x16 min(uint16x16 a, uint16x16 b)
     {
         uint16x16 result;
@@ -504,35 +533,6 @@ namespace simd {
         return result;
     }
 
-    // shift
-
-    template <int Count> 
-    static inline uint32x8 sll(uint32x8 a)
-    {
-        uint32x8 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
-        return result;
-    }
-
-    template <int Count> 
-    static inline uint32x8 srl(uint32x8 a)
-    {
-        uint32x8 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
-        return result;
-    }
-
-    template <int Count> 
-    static inline uint32x8 sra(uint32x8 a)
-    {
-        uint32x8 result;
-        result.lo = sra<Count>(a.lo);
-        result.hi = sra<Count>(a.hi);
-        return result;
-    }
-
     // compare
 
     static inline uint32x8 compare_eq(uint32x8 a, uint32x8 b)
@@ -556,6 +556,35 @@ namespace simd {
         uint32x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    // shift
+
+    template <int Count>
+    static inline uint32x8 sll(uint32x8 a)
+    {
+        uint32x8 result;
+        result.lo = sll<Count>(a.lo);
+        result.hi = sll<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline uint32x8 srl(uint32x8 a)
+    {
+        uint32x8 result;
+        result.lo = srl<Count>(a.lo);
+        result.hi = srl<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline uint32x8 sra(uint32x8 a)
+    {
+        uint32x8 result;
+        result.lo = sra<Count>(a.lo);
+        result.hi = sra<Count>(a.hi);
         return result;
     }
 
@@ -687,6 +716,24 @@ namespace simd {
         uint64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline uint64x4 sll(uint64x4 a)
+    {
+        uint64x4 result;
+        result.lo = sll<Count>(a.lo);
+        result.hi = sll<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline uint64x4 srl(uint64x4 a)
+    {
+        uint64x4 result;
+        result.lo = srl<Count>(a.lo);
+        result.hi = srl<Count>(a.hi);
         return result;
     }
 
@@ -1044,6 +1091,35 @@ namespace simd {
         return result;
     }
 
+    // shift
+
+    template <int Count>
+    static inline int16x16 sll(int16x16 a)
+    {
+        int16x16 result;
+        result.lo = sll<Count>(a.lo);
+        result.hi = sll<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline int16x16 srl(int16x16 a)
+    {
+        int16x16 result;
+        result.lo = srl<Count>(a.lo);
+        result.hi = srl<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline int16x16 sra(int16x16 a)
+    {
+        int16x16 result;
+        result.lo = sra<Count>(a.lo);
+        result.hi = sra<Count>(a.hi);
+        return result;
+    }
+
     static inline int16x16 min(int16x16 a, int16x16 b)
     {
         int16x16 result;
@@ -1225,6 +1301,32 @@ namespace simd {
         return result;
     }
 
+    // compare
+
+    static inline int32x8 compare_eq(int32x8 a, int32x8 b)
+    {
+        int32x8 result;
+        result.lo = compare_eq(a.lo, b.lo);
+        result.hi = compare_eq(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int32x8 compare_gt(int32x8 a, int32x8 b)
+    {
+        int32x8 result;
+        result.lo = compare_gt(a.lo, b.lo);
+        result.hi = compare_gt(a.hi, b.hi);
+        return result;
+    }
+
+    static inline int32x8 select(int32x8 mask, int32x8 a, int32x8 b)
+    {
+        int32x8 result;
+        result.lo = select(mask.lo, a.lo, b.lo);
+        result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
     // shift
 
     template <int Count>
@@ -1251,32 +1353,6 @@ namespace simd {
         int32x8 result;
         result.lo = sra<Count>(a.lo);
         result.hi = sra<Count>(a.hi);
-        return result;
-    }
-
-    // compare
-
-    static inline int32x8 compare_eq(int32x8 a, int32x8 b)
-    {
-        int32x8 result;
-        result.lo = compare_eq(a.lo, b.lo);
-        result.hi = compare_eq(a.hi, b.hi);
-        return result;
-    }
-
-    static inline int32x8 compare_gt(int32x8 a, int32x8 b)
-    {
-        int32x8 result;
-        result.lo = compare_gt(a.lo, b.lo);
-        result.hi = compare_gt(a.hi, b.hi);
-        return result;
-    }
-
-    static inline int32x8 select(int32x8 mask, int32x8 a, int32x8 b)
-    {
-        int32x8 result;
-        result.lo = select(mask.lo, a.lo, b.lo);
-        result.hi = select(mask.hi, a.hi, b.hi);
         return result;
     }
 
@@ -1408,6 +1484,24 @@ namespace simd {
         int64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline int64x4 sll(int64x4 a)
+    {
+        int64x4 result;
+        result.lo = sll<Count>(a.lo);
+        result.hi = sll<Count>(a.hi);
+        return result;
+    }
+
+    template <int Count>
+    static inline int64x4 srl(int64x4 a)
+    {
+        int64x4 result;
+        result.lo = srl<Count>(a.lo);
+        result.hi = srl<Count>(a.hi);
         return result;
     }
 
