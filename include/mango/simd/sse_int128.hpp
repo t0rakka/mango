@@ -13,8 +13,11 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    #define simd128_shuffle_epi(a, b, mask) \
-        _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), mask));
+#define simd128_shuffle_epi32(a, b, mask) \
+    _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), mask))
+
+#define simd128_shuffle_epi64(a, b, mask) \
+    _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), mask))
 
     static inline __m128i simd128_mullo_epi8(__m128i a, __m128i b)
     {
@@ -45,6 +48,34 @@ namespace simd {
     {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
+
+#if defined(__x86_64__)
+
+    static inline __m128i simd128_cvtsi64_si128(int64 a)
+    {
+        return _mm_cvtsi64_si128(a);
+    }
+
+    static inline int64 simd128_cvtsi128_si64(__m128i a)
+    {
+        return _mm_cvtsi128_si64(a);
+    }
+
+#else
+
+    static inline __m128i simd128_cvtsi64_si128(int64 a)
+    {
+        return _mm_set_epi64x(0, a);
+    }
+
+    static inline int64 simd128_cvtsi128_si64(__m128i a)
+    {
+        uint64 value = _mm_cvtsi128_si32(a);
+        value |= uint64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
+        return value;
+    }
+
+#endif
 
     // -----------------------------------------------------------------
     // uint8x16
@@ -448,28 +479,28 @@ namespace simd {
     inline uint32x4 set_component<0>(uint32x4 a, uint32 x)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
-        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
+        return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
     inline uint32x4 set_component<1>(uint32x4 a, uint32 y)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
-        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
+        return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
     inline uint32x4 set_component<2>(uint32x4 a, uint32 z)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
-        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
+        return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
     inline uint32x4 set_component<3>(uint32x4 a, uint32 w)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
-        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
+        return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
     template <int Index>
@@ -731,23 +762,17 @@ namespace simd {
     static inline uint64x2 set_component(uint64x2 a, uint64 s)
     {
         static_assert(Index < 2, "Index out of range.");
-        a = _mm_insert_epi16(a, (s >>  0) & 0xffff, Index * 4 + 0);
-        a = _mm_insert_epi16(a, (s >> 16) & 0xffff, Index * 4 + 1);
-        a = _mm_insert_epi16(a, (s >> 32) & 0xffff, Index * 4 + 2);
-        a = _mm_insert_epi16(a, (s >> 48) & 0xffff, Index * 4 + 3);
-        return a;
+        const __m128i temp = simd128_cvtsi64_si128(s);
+        return Index ? simd128_shuffle_epi64(a, temp, 0x00)
+                     : simd128_shuffle_epi64(temp, a, 0x02);
     }
 
     template <unsigned int Index>
     static inline uint64 get_component(uint64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
-        uint64 temp = 0;
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 0));
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 1)) << 16;
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 2)) << 32;
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 3)) << 48;
-        return temp;
+        const __m128i temp = _mm_shuffle_epi32(a, 0x44 + Index * 0xaa);
+        return simd128_cvtsi128_si64(temp);
     }
 
 #endif
@@ -1243,28 +1268,28 @@ namespace simd {
     inline int32x4 set_component<0>(int32x4 a, int32 x)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
-        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 3, 0));
+        return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
     inline int32x4 set_component<1>(int32x4 a, int32 y)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
-        return simd128_shuffle_epi(b, a, _MM_SHUFFLE(3, 2, 0, 1));
+        return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
     inline int32x4 set_component<2>(int32x4 a, int32 z)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
-        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(3, 0, 1, 0));
+        return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
     inline int32x4 set_component<3>(int32x4 a, int32 w)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
-        return simd128_shuffle_epi(a, b, _MM_SHUFFLE(0, 1, 1, 0));
+        return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
     template <int Index>
@@ -1571,23 +1596,17 @@ namespace simd {
     static inline int64x2 set_component(int64x2 a, int64 s)
     {
         static_assert(Index < 2, "Index out of range.");
-        a = _mm_insert_epi16(a, (s >>  0) & 0xffff, Index * 4 + 0);
-        a = _mm_insert_epi16(a, (s >> 16) & 0xffff, Index * 4 + 1);
-        a = _mm_insert_epi16(a, (s >> 32) & 0xffff, Index * 4 + 2);
-        a = _mm_insert_epi16(a, (s >> 48) & 0xffff, Index * 4 + 3);
-        return a;
+        const __m128i temp = simd128_cvtsi64_si128(s);
+        return Index ? simd128_shuffle_epi64(a, temp, 0x00)
+                     : simd128_shuffle_epi64(temp, a, 0x02);
     }
 
     template <unsigned int Index>
     static inline int64 get_component(int64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
-        uint64 temp = 0;
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 0));
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 1)) << 16;
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 2)) << 32;
-        temp |= uint64(_mm_extract_epi16(a, Index * 4 + 3)) << 48;
-        return temp;
+        const __m128i temp = _mm_shuffle_epi32(a, 0x44 + Index * 0xaa);
+        return simd128_cvtsi128_si64(temp);
     }
 
 #endif
@@ -1652,7 +1671,8 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-#undef simd128_shuffle_epi
+#undef simd128_shuffle_epi32
+#undef simd128_shuffle_epi64
 
 } // namespace simd
 } // namespace mango
