@@ -222,15 +222,6 @@ namespace mango
         return value;
     }
 
-    // TODO: thread-safe API
-    static inline uint32 random(uint32 seed = 0, bool reseed = false)
-    {
-        static uint32 prev = 0x12345678;
-        prev = reseed ?	seed : prev;
-        prev = prev * 1664525 + 1013904223;
-        return prev;
-    }
-
     // ----------------------------------------------------------------------------
     // 32 bits
     // ----------------------------------------------------------------------------
