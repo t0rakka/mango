@@ -12,7 +12,7 @@ namespace mango
 
     // half4 is a storage class and does not support any arithmetic operations.
     template <>
-    struct Vector<half, 4> : VectorBase<half, 4>
+    struct Vector<half, 4> : simd::VectorBase<half, 4>
     {
         simd::float16x4 xyzw;
 
@@ -21,17 +21,17 @@ namespace mango
         }
 
         explicit Vector(const Vector<float, 4>& v)
-        : xyzw(simd::float16x4_convert(v.xyzw))
+            : xyzw(simd::float16x4_convert(v.xyzw))
         {
         }
 
         explicit Vector(simd::float32x4 v)
-        : xyzw(simd::float16x4_convert(v))
+            : xyzw(simd::float16x4_convert(v))
         {
         }
 
         explicit Vector(simd::float16x4 v)
-        : xyzw(v)
+            : xyzw(v)
         {
         }
 

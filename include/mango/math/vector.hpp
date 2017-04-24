@@ -8,11 +8,12 @@
 #include <algorithm>
 #include "../simd/simd.hpp"
 
-namespace mango
-{
+namespace mango {
+
+namespace detail {
 
     // ------------------------------------------------------------------
-    // VectorBase
+    // detail
     // ------------------------------------------------------------------
 
     template <typename Type, int Size>
@@ -27,26 +28,16 @@ namespace mango
         {
             return reinterpret_cast<const Type*>(this);
         }
-
-        Type& operator [] (int index)
-        {
-            assert(index >= 0 && index < Size);
-            return reinterpret_cast<Type*>(this)[index];
-        }
-
-        const Type& operator [] (int index) const
-        {
-            assert(index >= 0 && index < Size);
-            return reinterpret_cast<const Type*>(this)[index];
-        }
     };
+       
+} // namespace detail
 
     // ------------------------------------------------------------------
     // Vector
     // ------------------------------------------------------------------
 
     template <typename Type, int Size>
-    struct Vector : VectorBase<Type, Size>
+    struct Vector : detail::VectorBase<Type, Size>
     {
         Type m[Size];
 
@@ -91,10 +82,22 @@ namespace mango
             }
             return *this;
         }
+
+        Type& operator [] (int index)
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
+
+        const Type& operator [] (int index) const
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
     };
 
     template <typename Type>
-    struct Vector<Type, 2> : VectorBase<Type, 2>
+    struct Vector<Type, 2> : detail::VectorBase<Type, 2>
     {
         enum { Size = 2 };
         union
@@ -142,10 +145,22 @@ namespace mango
             y = v.y;
             return *this;
         }
+
+        Type& operator [] (int index)
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
+
+        const Type& operator [] (int index) const
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
     };
 
     template <typename Type>
-    struct Vector<Type, 3> : VectorBase<Type, 3>
+    struct Vector<Type, 3> : detail::VectorBase<Type, 3>
     {
         enum { Size = 3 };
         union
@@ -200,10 +215,22 @@ namespace mango
             z = v.z;
             return *this;
         }
+
+        Type& operator [] (int index)
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
+
+        const Type& operator [] (int index) const
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
     };
 
     template <typename Type>
-    struct Vector<Type, 4> : VectorBase<Type, 4>
+    struct Vector<Type, 4> : detail::VectorBase<Type, 4>
     {
         enum { Size = 4 };
         union
@@ -264,6 +291,18 @@ namespace mango
             z = v.z;
             w = v.w;
             return *this;
+        }
+
+        Type& operator [] (int index)
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
+        }
+
+        const Type& operator [] (int index) const
+        {
+            assert(index >= 0 && index < Size);
+            return m[index];
         }
     };
 
@@ -741,6 +780,26 @@ namespace mango
         return Vector<Type, 3>(s);
     }
 
+namespace simd {
+
+    // ------------------------------------------------------------------
+    // VectorBase
+    // ------------------------------------------------------------------
+
+    template <typename Type, int Size>
+    struct VectorBase
+    {
+        operator Type* ()
+        {
+            return reinterpret_cast<Type*>(this);
+        }
+
+        operator const Type* () const
+        {
+            return reinterpret_cast<const Type*>(this);
+        }
+    };
+
     // ------------------------------------------------------------------
     // ScalarAccessor
     // ------------------------------------------------------------------
@@ -911,6 +970,8 @@ namespace mango
             return Vector<ScalarType, 3>(x, y, z);
         }
     };
+
+} // namespace simd
 
     // ------------------------------------------------------------------
     // named vector types

@@ -10,27 +10,19 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint32, 8> : VectorBase<uint32, 8>
+    struct Vector<uint32, 8> : simd::VectorBase<uint32, 8>
     {
-        union
-        {
-            simd::uint32x8 m;
-
-            ScalarAccessor<uint32, simd::uint32x8, 0> x;
-            ScalarAccessor<uint32, simd::uint32x8, 1> y;
-            ScalarAccessor<uint32, simd::uint32x8, 2> z;
-            ScalarAccessor<uint32, simd::uint32x8, 3> w;
-        };
+        simd::uint32x8 m;
 
         explicit Vector() = default;
 
         explicit Vector(uint32 s)
-        : m(simd::uint32x8_set1(s))
+            : m(simd::uint32x8_set1(s))
         {
         }
 
         Vector(simd::uint32x8 v)
-        : m(v)
+            : m(v)
         {
         }
 

@@ -15,7 +15,7 @@ namespace mango
     // ------------------------------------------------------------------
 
     template <>
-    struct Vector<float, 3> : VectorBase<float, 3>
+    struct Vector<float, 3> : detail::VectorBase<float, 3>
     {
         template <int X, int Y>
         struct Permute2
