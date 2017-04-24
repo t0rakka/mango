@@ -1632,13 +1632,13 @@ namespace simd {
     // accept anything else so we do this immoral macro sleight-of-hand to get
     // what we want. The count still has to be a compile-time constant, of course.
 
-    #define sll(Value, Count) sll<Count>(Value)
-    #define srl(Value, Count) srl<Count>(Value)
-    #define sra(Value, Count) sra<Count>(Value)
+    #define slli(Value, Count) slli<Count>(Value)
+    #define srli(Value, Count) srli<Count>(Value)
+    #define srai(Value, Count) srai<Count>(Value)
 
-    #define sll(Value, Count) sll<Count>(Value)
-    #define srl(Value, Count) srl<Count>(Value)
-    #define sra(Value, Count) sra<Count>(Value)
+    #define slli(Value, Count) slli<Count>(Value)
+    #define srli(Value, Count) srli<Count>(Value)
+    #define srai(Value, Count) srai<Count>(Value)
 
 } // namespace simd
 } // namespace mango

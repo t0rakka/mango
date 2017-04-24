@@ -404,22 +404,39 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
+    // shift
+
     template <int Count>
-    static inline uint16x8 sll(uint16x8 a)
+    static inline uint16x8 slli(uint16x8 a)
     {
         return _mm_slli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline uint16x8 srl(uint16x8 a)
+    static inline uint16x8 srli(uint16x8 a)
     {
         return _mm_srli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline uint16x8 sra(uint16x8 a)
+    static inline uint16x8 srai(uint16x8 a)
     {
         return _mm_srai_epi16(a, Count);
+    }
+
+    static inline uint16x8 sll(uint16x8 a, int count)
+    {
+        return _mm_sll_epi16(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline uint16x8 srl(uint16x8 a, int count)
+    {
+        return _mm_srl_epi16(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline uint16x8 sra(uint16x8 a, int count)
+    {
+        return _mm_sra_epi16(a, _mm_cvtsi32_si128(count));
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -709,21 +726,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline uint32x4 sll(uint32x4 a)
+    static inline uint32x4 slli(uint32x4 a)
     {
         return _mm_slli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline uint32x4 srl(uint32x4 a)
+    static inline uint32x4 srli(uint32x4 a)
     {
         return _mm_srli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline uint32x4 sra(uint32x4 a)
+    static inline uint32x4 srai(uint32x4 a)
     {
         return _mm_srai_epi32(a, Count);
+    }
+
+    static inline uint32x4 sll(uint32x4 a, int count)
+    {
+        return _mm_sll_epi32(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline uint32x4 srl(uint32x4 a, int count)
+    {
+        return _mm_srl_epi32(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline uint32x4 sra(uint32x4 a, int count)
+    {
+        return _mm_sra_epi32(a, _mm_cvtsi32_si128(count));
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -855,16 +887,28 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
+    // shift
+
     template <int Count>
-    static inline uint64x2 sll(uint64x2 a)
+    static inline uint64x2 slli(uint64x2 a)
     {
         return _mm_slli_epi64(a, Count);
     }
 
     template <int Count>
-    static inline uint64x2 srl(uint64x2 a)
+    static inline uint64x2 srli(uint64x2 a)
     {
         return _mm_srli_epi64(a, Count);
+    }
+
+    static inline uint64x2 sll(uint64x2 a, int count)
+    {
+        return _mm_sll_epi64(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline uint64x2 srl(uint64x2 a, int count)
+    {
+        return _mm_srl_epi64(a, _mm_cvtsi32_si128(count));
     }
 
     // -----------------------------------------------------------------
@@ -1241,22 +1285,39 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
+    // shift
+
     template <int Count>
-    static inline int16x8 sll(int16x8 a)
+    static inline int16x8 slli(int16x8 a)
     {
         return _mm_slli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline int16x8 srl(int16x8 a)
+    static inline int16x8 srli(int16x8 a)
     {
         return _mm_srli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline int16x8 sra(int16x8 a)
+    static inline int16x8 srai(int16x8 a)
     {
         return _mm_srai_epi16(a, Count);
+    }
+
+    static inline int16x8 sll(int16x8 a, int count)
+    {
+        return _mm_sll_epi16(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline int16x8 srl(int16x8 a, int count)
+    {
+        return _mm_srl_epi16(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline int16x8 sra(int16x8 a, int count)
+    {
+        return _mm_sra_epi16(a, _mm_cvtsi32_si128(count));
     }
 
     static inline int16x8 min(int16x8 a, int16x8 b)
@@ -1548,21 +1609,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline int32x4 sll(int32x4 a)
+    static inline int32x4 slli(int32x4 a)
     {
         return _mm_slli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline int32x4 srl(int32x4 a)
+    static inline int32x4 srli(int32x4 a)
     {
         return _mm_srli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline int32x4 sra(int32x4 a)
+    static inline int32x4 srai(int32x4 a)
     {
         return _mm_srai_epi32(a, Count);
+    }
+
+    static inline int32x4 sll(int32x4 a, int count)
+    {
+        return _mm_sll_epi32(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline int32x4 srl(int32x4 a, int count)
+    {
+        return _mm_srl_epi32(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline int32x4 sra(int32x4 a, int count)
+    {
+        return _mm_sra_epi32(a, _mm_cvtsi32_si128(count));
     }
 
     static inline uint32 get_mask(int32x4 a)
@@ -1719,16 +1795,28 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
+    // shift
+
     template <int Count>
-    static inline int64x2 sll(int64x2 a)
+    static inline int64x2 slli(int64x2 a)
     {
         return _mm_slli_epi64(a, Count);
     }
 
     template <int Count>
-    static inline int64x2 srl(int64x2 a)
+    static inline int64x2 srli(int64x2 a)
     {
         return _mm_srli_epi64(a, Count);
+    }
+
+    static inline int64x2 sll(int64x2 a, int count)
+    {
+        return _mm_sll_epi64(a, _mm_cvtsi32_si128(count));
+    }
+
+    static inline int64x2 srl(int64x2 a, int count)
+    {
+        return _mm_srl_epi64(a, _mm_cvtsi32_si128(count));
     }
 
 #undef simd128_shuffle_epi32

@@ -382,7 +382,7 @@ namespace simd {
         int32x4 mantissa = bitwise_and(u, int32x4_set1(0x03ff));
 
         // NaN or Inf
-        int32x4 a = bitwise_or(int32x4_set1(0x7f800000), sll(mantissa, 13));
+        int32x4 a = bitwise_or(int32x4_set1(0x7f800000), slli(mantissa, 13));
 
         // Zero or Denormal
         const int32x4 magic = int32x4_set1(0x3f000000);
@@ -391,7 +391,7 @@ namespace simd {
         b = int32x4_reinterpret(sub(float32x4_reinterpret(b), float32x4_reinterpret(magic)));
 
         // Numeric Value
-        int32x4 c = add(int32x4_set1(0x38000000), sll(no_sign, 13));
+        int32x4 c = add(int32x4_set1(0x38000000), slli(no_sign, 13));
 
         // Select a, b, or c based on exponent
         int32x4 mask;
@@ -404,7 +404,7 @@ namespace simd {
         result = select(mask, a, result);
 
         // Sign
-        result = bitwise_or(result, sll(sign, 16));
+        result = bitwise_or(result, slli(sign, 16));
 
         return float32x4_reinterpret(result);
     }
@@ -415,7 +415,7 @@ namespace simd {
         const int32x4 vinf = int32x4_set1(31 << 23);
 
         const int32x4 u = int32x4_reinterpret(f);
-        const int32x4 sign = srl(bitwise_and(u, int32x4_set1(0x80000000)), 16);
+        const int32x4 sign = srli(bitwise_and(u, int32x4_set1(0x80000000)), 16);
 
         const int32x4 vexponent = int32x4_set1(0x7f800000);
 
@@ -423,7 +423,7 @@ namespace simd {
         const int32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
         int32x4 mantissa = bitwise_and(u, int32x4_set1(0x007fffff));
         int32x4 x0 = compare_eq(mantissa, int32x4_zero());
-        mantissa = select(x0, int32x4_zero(), sra(mantissa, 13));
+        mantissa = select(x0, int32x4_zero(), srai(mantissa, 13));
         const int32x4 v0 = bitwise_or(int32x4_set1(0x7c00), mantissa);
 
         int32x4 v1 = bitwise_and(u, int32x4_set1(0x7ffff000));
@@ -432,14 +432,14 @@ namespace simd {
 
 #if defined(MANGO_ENABLE_SSE4_1)
         v1 = _mm_min_epi32(v1, vinf);
-        v1 = sra(v1, 13);
+        v1 = srai(v1, 13);
 
         int32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
 #else
         v1 = int32x4_select(compare_gt(v1, vinf), vinf, v1);
-        v1 = sra(v1, 13);
+        v1 = srai(v1, 13);
 
         int32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);

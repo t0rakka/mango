@@ -104,16 +104,16 @@ namespace simd {
     static inline float32x4 ldexp(float32x4 x, int32x4 q)
     {
         float32x4 u;
-        int32x4 m = sra(q, 31);
-        m = sll(sub(sra(add(m, q), 6), m), 4);
-        const int32x4 p = sub(q, sll(m, 2));
+        int32x4 m = srai(q, 31);
+        m = slli(sub(srai(add(m, q), 6), m), 4);
+        const int32x4 p = sub(q, slli(m, 2));
         m = add(m, 0x7f);
         m = bitwise_and(compare_gt(m, int32x4_zero()), m);
         const int32x4 n = compare_gt(m, 0xff);
         m = bitwise_or(bitwise_nand(n, m), bitwise_and(n, 0xff));
-        u = float32x4_reinterpret(sll(m, 23));
+        u = float32x4_reinterpret(slli(m, 23));
         const float32x4 y = mul(mul(mul(mul(x, u), u), u), u);
-        u = float32x4_reinterpret(sll(add(p, 0x7f), 23));
+        u = float32x4_reinterpret(slli(add(p, 0x7f), 23));
         return mul(y, u);
     }
 
@@ -228,8 +228,8 @@ namespace simd {
 
     float32x4 log2(float32x4 v)
     {
-        const int32x4 exponent = sub(srl(bitwise_and(int32x4_reinterpret(v), 0x7fffffff), 23), 127);
-        const float32x4 x = sub(float32x4_reinterpret(sub(int32x4_reinterpret(v), sll(exponent, 23))), 1.0f);
+        const int32x4 exponent = sub(srli(bitwise_and(int32x4_reinterpret(v), 0x7fffffff), 23), 127);
+        const float32x4 x = sub(float32x4_reinterpret(sub(int32x4_reinterpret(v), slli(exponent, 23))), 1.0f);
         const float32x4 x2 = mul(x, x);
         const float32x4 x4 = mul(x2, x2);
         float32x4 hi = float32x4_set1(-0.00931049621349f);
@@ -251,7 +251,7 @@ namespace simd {
 
     float32x4 exp2(float32x4 v)
     {
-        const int32x4 ix = int32x4_truncate(add(v, float32x4_reinterpret(bitwise_nand(sra(int32x4_convert(v), 31), 0x3f7fffff))));
+        const int32x4 ix = int32x4_truncate(add(v, float32x4_reinterpret(bitwise_nand(srai(int32x4_convert(v), 31), 0x3f7fffff))));
         float32x4 f = mul(sub(float32x4_convert(ix), v), 0.69314718055994530942f);
         float32x4 hi = madd(0.0013298820f, f, float32x4_set1(-0.0001413161f));
         float32x4 lo = madd(0.4999999206f, f, float32x4_set1(-0.1666653019f));
@@ -261,8 +261,8 @@ namespace simd {
         lo = madd(1.0f, f, lo);
         float32x4 f2 = mul(f, f);
         float32x4 a = add(mul(mul(f2, f2), hi), lo);
-        float32x4 b = float32x4_reinterpret(bitwise_and(sll((add(ix, 127)), 23), compare_gt(ix, -128)));
-        return bitwise_or(mul(a, b), float32x4_reinterpret(srl(compare_gt(ix, 128), 1)));
+        float32x4 b = float32x4_reinterpret(bitwise_and(slli((add(ix, 127)), 23), compare_gt(ix, -128)));
+        return bitwise_or(mul(a, b), float32x4_reinterpret(srli(compare_gt(ix, 128), 1)));
     }
 
     float32x4 pow(float32x4 a, float32x4 b)

@@ -13,11 +13,11 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
+    template <typename ScalarType, int Bits, int Size>
+    static inline scalar_type<ScalarType, Bits, Size>
     scalar_set(ScalarType value)
     {
-        scalar_type<ScalarType, Size> v;
+        scalar_type<ScalarType, Bits, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = value;
         }
@@ -26,11 +26,11 @@ namespace simd {
 
     // unary
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_unroll(ScalarType (*func)(ScalarType), scalar_type<ScalarType, Size> a)
+    template <typename ScalarType, int Bits, int Size>
+    static inline scalar_type<ScalarType, Bits, Size>
+    scalar_unroll(ScalarType (*func)(ScalarType), scalar_type<ScalarType, Bits, Size> a)
     {
-        scalar_type<ScalarType, Size> v;
+        scalar_type<ScalarType, Bits, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = func(a[i]);
         }
@@ -51,11 +51,11 @@ namespace simd {
 
     // binary
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_unroll(ScalarType (*func)(ScalarType, ScalarType), scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType, int Bits, int Size>
+    static inline scalar_type<ScalarType, Bits, Size>
+    scalar_unroll(ScalarType (*func)(ScalarType, ScalarType), scalar_type<ScalarType, Bits, Size> a, scalar_type<ScalarType, Bits, Size> b)
     {
-        scalar_type<ScalarType, Size> v;
+        scalar_type<ScalarType, Bits, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = func(a[i], b[i]);
         }
@@ -168,6 +168,50 @@ namespace simd {
         return a > b ? ~0 : 0;
     }
 
+    template <typename VectorType, typename ScalarType, int Count>
+    static inline VectorType scalar_shift_left(VectorType a)
+    {
+        VectorType v;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            v[i] = Count < VectorType::bits ? ScalarType(a[i]) << Count : 0;
+        }
+        return v;
+    }
+
+    template <typename VectorType, typename ScalarType, int Count>
+    static inline VectorType scalar_shift_right(VectorType a)
+    {
+        VectorType v;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            v[i] = Count < VectorType::bits ? ScalarType(a[i]) >> Count : 0;
+        }
+        return v;
+    }
+
+    template <typename VectorType, typename ScalarType>
+    static inline VectorType scalar_shift_left(VectorType a, int count)
+    {
+        VectorType v;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            v[i] = count < VectorType::bits ? ScalarType(a[i]) << count : 0;
+        }
+        return v;
+    }
+
+    template <typename VectorType, typename ScalarType>
+    static inline VectorType scalar_shift_right(VectorType a, int count)
+    {
+        VectorType v;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            v[i] = count < VectorType::bits ? ScalarType(a[i]) >> count : 0;
+        }
+        return v;
+    }
+
     template <typename ScalarType>
     static inline ScalarType scalar_min(ScalarType a, ScalarType b)
     {
@@ -182,11 +226,11 @@ namespace simd {
 
     // misc
 
-    template <typename ScalarType, int Size>
-    static inline scalar_type<ScalarType, Size>
-    scalar_select(scalar_type<ScalarType, Size> mask, scalar_type<ScalarType, Size> a, scalar_type<ScalarType, Size> b)
+    template <typename ScalarType, int Bits, int Size>
+    static inline scalar_type<ScalarType, Bits, Size>
+    scalar_select(scalar_type<ScalarType, Bits, Size> mask, scalar_type<ScalarType, Bits, Size> a, scalar_type<ScalarType, Bits, Size> b)
     {
-        scalar_type<ScalarType, Size> v;
+        scalar_type<ScalarType, Bits, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = (mask[i] & a[i]) | (~mask[i] & b[i]);
         }
@@ -239,12 +283,12 @@ namespace simd {
 
     static inline uint8x16 uint8x16_zero()
     {
-        return scalar_set<uint8, 16>(0);
+        return scalar_set<uint8, 8, 16>(0);
     }
 
     static inline uint8x16 uint8x16_set1(uint8 s)
     {
-        return scalar_set<uint8, 16>(s);
+        return scalar_set<uint8, 8, 16>(s);
     }
 
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
@@ -354,12 +398,12 @@ namespace simd {
 
     static inline uint16x8 uint16x8_zero()
     {
-        return scalar_set<uint16, 8>(0);
+        return scalar_set<uint16, 16, 8>(0);
     }
 
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
-        return scalar_set<uint16, 8>(s);
+        return scalar_set<uint16, 16, 8>(s);
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -441,36 +485,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline uint16x8 sll(uint16x8 a)
+    static inline uint16x8 slli(uint16x8 a)
     {
-        uint16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = a[i] << Count;
-        }
-        return v;
+        return scalar_shift_left<uint16x8, uint16, Count>(a);
     }
 
     template <int Count>
-    static inline uint16x8 srl(uint16x8 a)
+    static inline uint16x8 srli(uint16x8 a)
     {
-        uint16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = a[i] >> Count;
-        }
-        return v;
+        return scalar_shift_right<uint16x8, uint16, Count>(a);
     }
 
     template <int Count>
-    static inline uint16x8 sra(uint16x8 a)
+    static inline uint16x8 srai(uint16x8 a)
     {
-        uint16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = int16(a[i]) >> Count;
-        }
-        return v;
+        return scalar_shift_right<uint16x8, int16, Count>(a);
+    }
+
+    static inline uint16x8 sll(uint16x8 a, int count)
+    {
+        return scalar_shift_left<uint16x8, uint16>(a, count);
+    }
+
+    static inline uint16x8 srl(uint16x8 a, int count)
+    {
+        return scalar_shift_right<uint16x8, uint16>(a, count);
+    }
+
+    static inline uint16x8 sra(uint16x8 a, int count)
+    {
+        return scalar_shift_right<uint16x8, int16>(a, count);
     }
 
     static inline uint16x8 min(uint16x8 a, uint16x8 b)
@@ -627,36 +671,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline uint32x4 sll(uint32x4 a)
+    static inline uint32x4 slli(uint32x4 a)
     {
-        uint32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = a[i] << Count;
-        }
-        return v;
+        return scalar_shift_left<uint32x4, uint32, Count>(a);
     }
 
     template <int Count>
-    static inline uint32x4 srl(uint32x4 a)
+    static inline uint32x4 srli(uint32x4 a)
     {
-        uint32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = a[i] >> Count;
-        }
-        return v;
+        return scalar_shift_right<uint32x4, uint32, Count>(a);
     }
 
     template <int Count>
-    static inline uint32x4 sra(uint32x4 a)
+    static inline uint32x4 srai(uint32x4 a)
     {
-        uint32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = int32(a[i]) >> Count;
-        }
-        return v;
+        return scalar_shift_right<uint32x4, int32, Count>(a);
+    }
+
+    static inline uint32x4 sll(uint32x4 a, int count)
+    {
+        return scalar_shift_left<uint32x4, uint32>(a, count);
+    }
+
+    static inline uint32x4 srl(uint32x4 a, int count)
+    {
+        return scalar_shift_right<uint32x4, uint32>(a, count);
+    }
+
+    static inline uint32x4 sra(uint32x4 a, int count)
+    {
+        return scalar_shift_right<uint32x4, int32>(a, count);
     }
 
     static inline uint32x4 min(uint32x4 a, uint32x4 b)
@@ -690,12 +734,12 @@ namespace simd {
 
     static inline uint64x2 uint64x2_zero()
     {
-        return scalar_set<uint64, 2>(0);
+        return scalar_set<uint64, 64, 2>(0);
     }
 
     static inline uint64x2 uint64x2_set1(uint64 s)
     {
-        return scalar_set<uint64, 2>(s);
+        return scalar_set<uint64, 64, 2>(s);
     }
 
     static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
@@ -748,26 +792,28 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // shift
+
     template <int Count>
-    static inline uint64x2 sll(uint64x2 a)
+    static inline uint64x2 slli(uint64x2 a)
     {
-        uint64x2 v;
-        for (int i = 0; i < 2; ++i)
-        {
-            v[i] = a[i] << Count;
-        }
-        return v;
+        return scalar_shift_left<uint64x2, uint64, Count>(a);
     }
 
     template <int Count>
-    static inline uint64x2 srl(uint64x2 a)
+    static inline uint64x2 srli(uint64x2 a)
     {
-        uint64x2 v;
-        for (int i = 0; i < 2; ++i)
-        {
-            v[i] = a[i] >> Count;
-        }
-        return v;
+        return scalar_shift_right<uint64x2, uint64, Count>(a);
+    }
+
+    static inline uint64x2 sll(uint64x2 a, int count)
+    {
+        return scalar_shift_left<uint64x2, uint64>(a, count);
+    }
+
+    static inline uint64x2 srl(uint64x2 a, int count)
+    {
+        return scalar_shift_right<uint64x2, uint64>(a, count);
     }
 
     // -----------------------------------------------------------------
@@ -791,12 +837,12 @@ namespace simd {
 
     static inline int8x16 int8x16_zero()
     {
-        return scalar_set<int8, 16>(0);
+        return scalar_set<int8, 8, 16>(0);
     }
 
     static inline int8x16 int8x16_set1(int8 s)
     {
-        return scalar_set<int8, 16>(s);
+        return scalar_set<int8, 8, 16>(s);
     }
 
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
@@ -916,12 +962,12 @@ namespace simd {
 
     static inline int16x8 int16x8_zero()
     {
-        return scalar_set<int16, 8>(0);
+        return scalar_set<int16, 16, 8>(0);
     }
 
     static inline int16x8 int16x8_set1(int16 s)
     {
-        return scalar_set<int16, 8>(s);
+        return scalar_set<int16, 16, 8>(s);
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)
@@ -1011,36 +1057,36 @@ namespace simd {
     }
 
     template <int Count>
-    static inline int16x8 sll(int16x8 a)
+    static inline int16x8 slli(int16x8 a)
     {
-        int16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = uint16(a[i]) << Count;
-        }
-        return v;
+        return scalar_shift_left<int16x8, uint16, Count>(a);
     }
 
     template <int Count>
-    static inline int16x8 srl(int16x8 a)
+    static inline int16x8 srli(int16x8 a)
     {
-        int16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = uint16(a[i]) >> Count;
-        }
-        return v;
+        return scalar_shift_right<int16x8, uint16, Count>(a);
     }
 
     template <int Count>
-    static inline int16x8 sra(int16x8 a)
+    static inline int16x8 srai(int16x8 a)
     {
-        int16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = a[i] >> Count;
-        }
-        return v;
+        return scalar_shift_right<int16x8, int16, Count>(a);
+    }
+
+    static inline int16x8 sll(int16x8 a, int count)
+    {
+        return scalar_shift_left<int16x8, uint16>(a, count);
+    }
+
+    static inline int16x8 srl(int16x8 a, int count)
+    {
+        return scalar_shift_right<int16x8, uint16>(a, count);
+    }
+
+    static inline int16x8 sra(int16x8 a, int count)
+    {
+        return scalar_shift_right<int16x8, int16>(a, count);
     }
 
     static inline int16x8 min(int16x8 a, int16x8 b)
@@ -1207,36 +1253,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline int32x4 sll(int32x4 a)
+    static inline int32x4 slli(int32x4 a)
     {
-        int32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = uint32(a[i]) << Count;
-        }
-        return v;
+        return scalar_shift_left<int32x4, uint32, Count>(a);
     }
 
     template <int Count>
-    static inline int32x4 srl(int32x4 a)
+    static inline int32x4 srli(int32x4 a)
     {
-        int32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = uint32(a[i]) >> Count;
-        }
-        return v;
+        return scalar_shift_right<int32x4, uint32, Count>(a);
     }
 
     template <int Count>
-    static inline int32x4 sra(int32x4 a)
+    static inline int32x4 srai(int32x4 a)
     {
-        int32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = a[i] << Count;
-        }
-        return v;
+        return scalar_shift_right<int32x4, int32, Count>(a);
+    }
+
+    static inline int32x4 sll(int32x4 a, int count)
+    {
+        return scalar_shift_left<int32x4, uint32>(a, count);
+    }
+
+    static inline int32x4 srl(int32x4 a, int count)
+    {
+        return scalar_shift_right<int32x4, uint32>(a, count);
+    }
+
+    static inline int32x4 sra(int32x4 a, int count)
+    {
+        return scalar_shift_right<int32x4, int32>(a, count);
     }
 
     static inline int32x4 min(int32x4 a, int32x4 b)
@@ -1299,12 +1345,12 @@ namespace simd {
 
     static inline int64x2 int64x2_zero()
     {
-        return scalar_set<int64, 2>(0);
+        return scalar_set<int64, 64, 2>(0);
     }
 
     static inline int64x2 int64x2_set1(int64 s)
     {
-        return scalar_set<int64, 2>(s);
+        return scalar_set<int64, 64, 2>(s);
     }
 
     static inline int64x2 int64x2_set2(int64 x, int64 y)
@@ -1357,26 +1403,28 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // shift
+
     template <int Count>
-    static inline int64x2 sll(int64x2 a)
+    static inline int64x2 slli(int64x2 a)
     {
-        int64x2 v;
-        for (int i = 0; i < 2; ++i)
-        {
-            v[i] = uint64(a[i]) << Count;
-        }
-        return v;
+        return scalar_shift_left<int64x2, uint64, Count>(a);
     }
 
     template <int Count>
-    static inline int64x2 srl(int64x2 a)
+    static inline int64x2 srli(int64x2 a)
     {
-        int64x2 v;
-        for (int i = 0; i < 2; ++i)
-        {
-            v[i] = uint64(a[i]) >> Count;
-        }
-        return v;
+        return scalar_shift_right<int64x2, uint64, Count>(a);
+    }
+
+    static inline int64x2 sll(int64x2 a, int count)
+    {
+        return scalar_shift_left<int64x2, uint64>(a, count);
+    }
+
+    static inline int64x2 srl(int64x2 a, int count)
+    {
+        return scalar_shift_right<int64x2, uint64>(a, count);
     }
 
 } // namespace simd

@@ -184,21 +184,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline uint32x4 sll(uint32x4 a)
+    static inline uint32x4 slli(uint32x4 a)
     {
         return vec_sl(a, Count);
     }
 
     template <int Count>
-    static inline uint32x4 srl(uint32x4 a)
+    static inline uint32x4 srli(uint32x4 a)
     {
         return vec_sr(a, Count);
     }
 
     template <int Count>
-    static inline uint32x4 sra(uint32x4 a)
+    static inline uint32x4 srai(uint32x4 a)
     {
         return vec_sra(a, Count);
+    }
+
+    static inline uint32x4 sll(uint32x4 a, int count)
+    {
+        return vec_sl(a, count);
+    }
+
+    static inline uint32x4 srl(uint32x4 a, int count)
+    {
+        return vec_sr(a, count);
+    }
+
+    static inline uint32x4 sra(uint32x4 a, int count)
+    {
+        return vec_sra(a, count);
     }
 
     static inline uint32x4 min(uint32x4 a, uint32x4 b)
@@ -388,21 +403,36 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline int32x4 sll(int32x4 a)
+    static inline int32x4 slli(int32x4 a)
     {
         return vec_sl(a, Count);
     }
 
     template <int Count>
-    static inline int32x4 srl(int32x4 a)
+    static inline int32x4 srli(int32x4 a)
     {
         return vec_sr(a, Count);
     }
 
     template <int Count>
-    static inline int32x4 sra(int32x4 a)
+    static inline int32x4 srai(int32x4 a)
     {
         return vec_sra(a, Count);
+    }
+
+    static inline int32x4 sll(int32x4 a, int count)
+    {
+        return vec_sl(a, count);
+    }
+
+    static inline int32x4 srl(int32x4 a, int count)
+    {
+        return vec_sr(a, count);
+    }
+
+    static inline int32x4 sra(int32x4 a, int count)
+    {
+        return vec_sra(a, count);
     }
 
     static inline int32x4 min(int32x4 a, int32x4 b)

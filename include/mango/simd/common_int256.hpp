@@ -342,29 +342,53 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline uint16x16 sll(uint16x16 a)
+    static inline uint16x16 slli(uint16x16 a)
     {
         uint16x16 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
+        result.lo = slli<Count>(a.lo);
+        result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint16x16 srl(uint16x16 a)
+    static inline uint16x16 srli(uint16x16 a)
     {
         uint16x16 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
+        result.lo = srli<Count>(a.lo);
+        result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint16x16 sra(uint16x16 a)
+    static inline uint16x16 srai(uint16x16 a)
     {
         uint16x16 result;
-        result.lo = sra<Count>(a.lo);
-        result.hi = sra<Count>(a.hi);
+        result.lo = srai<Count>(a.lo);
+        result.hi = srai<Count>(a.hi);
+        return result;
+    }
+
+    static inline uint16x16 sll(uint16x16 a, int count)
+    {
+        uint16x16 result;
+        result.lo = sll(a.lo, count);
+        result.hi = sll(a.hi, count);
+        return result;
+    }
+
+    static inline uint16x16 srl(uint16x16 a, int count)
+    {
+        uint16x16 result;
+        result.lo = srl(a.lo, count);
+        result.hi = srl(a.hi, count);
+        return result;
+    }
+
+    static inline uint16x16 sra(uint16x16 a, int count)
+    {
+        uint16x16 result;
+        result.lo = sra(a.lo, count);
+        result.hi = sra(a.hi, count);
         return result;
     }
 
@@ -562,29 +586,53 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline uint32x8 sll(uint32x8 a)
+    static inline uint32x8 slli(uint32x8 a)
     {
         uint32x8 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
+        result.lo = slli<Count>(a.lo);
+        result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint32x8 srl(uint32x8 a)
+    static inline uint32x8 srli(uint32x8 a)
     {
         uint32x8 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
+        result.lo = srli<Count>(a.lo);
+        result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint32x8 sra(uint32x8 a)
+    static inline uint32x8 srai(uint32x8 a)
     {
         uint32x8 result;
-        result.lo = sra<Count>(a.lo);
-        result.hi = sra<Count>(a.hi);
+        result.lo = srai<Count>(a.lo);
+        result.hi = srai<Count>(a.hi);
+        return result;
+    }
+
+    static inline uint32x8 sll(uint32x8 a, int count)
+    {
+        uint32x8 result;
+        result.lo = sll(a.lo, count);
+        result.hi = sll(a.hi, count);
+        return result;
+    }
+
+    static inline uint32x8 srl(uint32x8 a, int count)
+    {
+        uint32x8 result;
+        result.lo = srl(a.lo, count);
+        result.hi = srl(a.hi, count);
+        return result;
+    }
+
+    static inline uint32x8 sra(uint32x8 a, int count)
+    {
+        uint32x8 result;
+        result.lo = sra(a.lo, count);
+        result.hi = sra(a.hi, count);
         return result;
     }
 
@@ -719,21 +767,39 @@ namespace simd {
         return result;
     }
 
+    // shift
+
     template <int Count>
-    static inline uint64x4 sll(uint64x4 a)
+    static inline uint64x4 slli(uint64x4 a)
     {
         uint64x4 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
+        result.lo = slli<Count>(a.lo);
+        result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint64x4 srl(uint64x4 a)
+    static inline uint64x4 srli(uint64x4 a)
     {
         uint64x4 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
+        result.lo = srli<Count>(a.lo);
+        result.hi = srli<Count>(a.hi);
+        return result;
+    }
+
+    static inline uint64x4 sll(uint64x4 a, int count)
+    {
+        uint64x4 result;
+        result.lo = sll(a.lo, count);
+        result.hi = sll(a.hi, count);
+        return result;
+    }
+
+    static inline uint64x4 srl(uint64x4 a, int count)
+    {
+        uint64x4 result;
+        result.lo = srl(a.lo, count);
+        result.hi = srl(a.hi, count);
         return result;
     }
 
@@ -1094,29 +1160,53 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline int16x16 sll(int16x16 a)
+    static inline int16x16 slli(int16x16 a)
     {
         int16x16 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
+        result.lo = slli<Count>(a.lo);
+        result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int16x16 srl(int16x16 a)
+    static inline int16x16 srli(int16x16 a)
     {
         int16x16 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
+        result.lo = srli<Count>(a.lo);
+        result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int16x16 sra(int16x16 a)
+    static inline int16x16 srai(int16x16 a)
     {
         int16x16 result;
-        result.lo = sra<Count>(a.lo);
-        result.hi = sra<Count>(a.hi);
+        result.lo = srai<Count>(a.lo);
+        result.hi = srai<Count>(a.hi);
+        return result;
+    }
+
+    static inline int16x16 sll(int16x16 a, int count)
+    {
+        int16x16 result;
+        result.lo = sll(a.lo, count);
+        result.hi = sll(a.hi, count);
+        return result;
+    }
+
+    static inline int16x16 srl(int16x16 a, int count)
+    {
+        int16x16 result;
+        result.lo = srl(a.lo, count);
+        result.hi = srl(a.hi, count);
+        return result;
+    }
+
+    static inline int16x16 sra(int16x16 a, int count)
+    {
+        int16x16 result;
+        result.lo = sra(a.lo, count);
+        result.hi = sra(a.hi, count);
         return result;
     }
 
@@ -1330,29 +1420,53 @@ namespace simd {
     // shift
 
     template <int Count>
-    static inline int32x8 sll(int32x8 a)
+    static inline int32x8 slli(int32x8 a)
     {
         int32x8 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
+        result.lo = slli<Count>(a.lo);
+        result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int32x8 srl(int32x8 a)
+    static inline int32x8 srli(int32x8 a)
     {
         int32x8 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
+        result.lo = srli<Count>(a.lo);
+        result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int32x8 sra(int32x8 a)
+    static inline int32x8 srai(int32x8 a)
     {
         int32x8 result;
-        result.lo = sra<Count>(a.lo);
-        result.hi = sra<Count>(a.hi);
+        result.lo = srai<Count>(a.lo);
+        result.hi = srai<Count>(a.hi);
+        return result;
+    }
+
+    static inline int32x8 sll(int32x8 a, int count)
+    {
+        int32x8 result;
+        result.lo = sll(a.lo, count);
+        result.hi = sll(a.hi, count);
+        return result;
+    }
+
+    static inline int32x8 srl(int32x8 a, int count)
+    {
+        int32x8 result;
+        result.lo = srl(a.lo, count);
+        result.hi = srl(a.hi, count);
+        return result;
+    }
+
+    static inline int32x8 sra(int32x8 a, int count)
+    {
+        int32x8 result;
+        result.lo = sra(a.lo, count);
+        result.hi = sra(a.hi, count);
         return result;
     }
 
@@ -1487,21 +1601,39 @@ namespace simd {
         return result;
     }
 
+    // shift
+
     template <int Count>
-    static inline int64x4 sll(int64x4 a)
+    static inline int64x4 slli(int64x4 a)
     {
         int64x4 result;
-        result.lo = sll<Count>(a.lo);
-        result.hi = sll<Count>(a.hi);
+        result.lo = slli<Count>(a.lo);
+        result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int64x4 srl(int64x4 a)
+    static inline int64x4 srli(int64x4 a)
     {
         int64x4 result;
-        result.lo = srl<Count>(a.lo);
-        result.hi = srl<Count>(a.hi);
+        result.lo = srli<Count>(a.lo);
+        result.hi = srli<Count>(a.hi);
+        return result;
+    }
+
+    static inline int64x4 sll(int64x4 a, int count)
+    {
+        int64x4 result;
+        result.lo = sll(a.lo, count);
+        result.hi = sll(a.hi, count);
+        return result;
+    }
+
+    static inline int64x4 srl(int64x4 a, int count)
+    {
+        int64x4 result;
+        result.lo = srl(a.lo, count);
+        result.hi = srl(a.hi, count);
         return result;
     }
 
