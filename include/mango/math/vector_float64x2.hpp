@@ -14,50 +14,50 @@ namespace mango
     // ------------------------------------------------------------------
 
     template <>
-    struct Vector<double, 2> : simd::VectorBase<double, 2>
+    struct Vector<double, 2> : VectorBase<double, 2>
     {
         union
         {
             simd::float64x2 xy;
 
-            simd::ScalarAccessor<double, simd::float64x2, 0> x;
-            simd::ScalarAccessor<double, simd::float64x2, 1> y;
+            ScalarAccessor<double, simd::float64x2, 0> x;
+            ScalarAccessor<double, simd::float64x2, 1> y;
 
-            simd::Permute2<double, simd::float64x2, 0, 0> xx;
-            simd::Permute2<double, simd::float64x2, 1, 0> yx;
-            simd::Permute2<double, simd::float64x2, 1, 1> yy;
+            Permute2<double, simd::float64x2, 0, 0> xx;
+            Permute2<double, simd::float64x2, 1, 0> yx;
+            Permute2<double, simd::float64x2, 1, 1> yy;
         };
 
         explicit Vector() = default;
 
         explicit Vector(double s)
-            : xy(simd::float64x2_set1(s))
+        : xy(simd::float64x2_set1(s))
         {
         }
 
         explicit Vector(int s)
-            : xy(simd::float64x2_set1(double(s)))
+        : xy(simd::float64x2_set1(double(s)))
         {
         }
 
         explicit Vector(double x, double y)
-            : xy(simd::float64x2_set2(x, y))
+        : xy(simd::float64x2_set2(x, y))
         {
         }
 
         Vector(simd::float64x2 v)
-            : xy(v)
+        : xy(v)
         {
         }
 
         template <int X, int Y>
-        Vector(const simd::Permute2<double, simd::float64x2, X, Y>& p)
+        Vector(const Permute2<double, simd::float64x2, X, Y>& p)
         {
             xy = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const simd::Permute2<double, simd::float64x2, X, Y>& p)
+        Vector& operator = (const Permute2<double, simd::float64x2, X, Y>& p)
         {
             xy = p;
             return *this;

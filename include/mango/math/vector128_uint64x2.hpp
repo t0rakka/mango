@@ -10,47 +10,47 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint64, 2> : simd::VectorBase<uint64, 2>
+    struct Vector<uint64, 2> : VectorBase<uint64, 2>
     {
         union
         {
             simd::uint64x2 xy;
 
-            simd::ScalarAccessor<uint64, simd::uint64x2, 0> x;
-            simd::ScalarAccessor<uint64, simd::uint64x2, 1> y;
+            ScalarAccessor<uint64, simd::uint64x2, 0> x;
+            ScalarAccessor<uint64, simd::uint64x2, 1> y;
 
-            simd::Permute2<uint64, simd::uint64x2, 0, 0> xx;
-            simd::Permute2<uint64, simd::uint64x2, 1, 0> yx;
-            simd::Permute2<uint64, simd::uint64x2, 1, 1> yy;
+            Permute2<uint64, simd::uint64x2, 0, 0> xx;
+            Permute2<uint64, simd::uint64x2, 1, 0> yx;
+            Permute2<uint64, simd::uint64x2, 1, 1> yy;
         };
 
         explicit Vector() = default;
 
         explicit Vector(uint64 s)
-            : xy(simd::uint64x2_set1(s))
+        : xy(simd::uint64x2_set1(s))
         {
         }
 
         explicit Vector(uint64 x, uint64 y)
-            : xy(simd::uint64x2_set2(x, y))
+        : xy(simd::uint64x2_set2(x, y))
         {
         }
 
         Vector(simd::uint64x2 v)
-            : xy(v)
+        : xy(v)
         {
         }
 
         template <int X, int Y>
-        Vector(const simd::Permute2<uint64, simd::uint64x2, X, Y>& p)
+        Vector(const Permute2<uint64, simd::uint64x2, X, Y>& p)
         {
-            *this = p;
+            xy = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const simd::Permute2<uint64, simd::uint64x2, X, Y>& p)
+        Vector& operator = (const Permute2<uint64, simd::uint64x2, X, Y>& p)
         {
-            *this = p;
+            xy = p;
             return *this;
         }
 

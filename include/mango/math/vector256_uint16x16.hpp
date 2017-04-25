@@ -10,19 +10,19 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint16, 16> : simd::VectorBase<uint16, 16>
+    struct Vector<uint16, 16> : VectorBase<uint16, 16>
     {
         simd::uint16x16 m;
 
         explicit Vector() = default;
 
         explicit Vector(uint16 s)
-            : m(simd::uint16x16_set1(s))
+        : m(simd::uint16x16_set1(s))
         {
         }
 
         Vector(simd::uint16x16 v)
-            : m(v)
+        : m(v)
         {
         }
 
