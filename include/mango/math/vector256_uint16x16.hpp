@@ -168,4 +168,14 @@ namespace mango
         return simd::select(mask, a, b);
     }
 
+    static inline Vector<uint16, 16> operator << (Vector<uint16, 16> a, int b)
+    {
+        return simd::sll(a, b);
+    }
+
+    static inline Vector<uint16, 16> operator >> (Vector<uint16, 16> a, int b)
+    {
+        return simd::srl(a, b);
+    }
+
 } // namespace mango
