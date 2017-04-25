@@ -12,40 +12,40 @@ namespace mango
     template <>
     struct Vector<int16, 8> : VectorBase<int16, 8>
     {
-        simd::int16x8 xyzw;
+        simd::int16x8 m;
 
         explicit Vector() = default;
 
         explicit Vector(int16 s)
-        : xyzw(simd::int16x8_set1(s))
+        : m(simd::int16x8_set1(s))
         {
         }
 
         Vector(simd::int16x8 v)
-        : xyzw(v)
+        : m(v)
         {
         }
 
         Vector& operator = (simd::int16x8 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (int16 s)
         {
-            xyzw = simd::int16x8_set1(s);
+            m = simd::int16x8_set1(s);
             return *this;
         }
 
         operator simd::int16x8 () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::int16x8 ()
         {
-            return xyzw;
+            return m;
         }
     };
 

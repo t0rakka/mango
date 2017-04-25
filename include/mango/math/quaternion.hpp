@@ -26,8 +26,8 @@ namespace mango
         {
         }
 
-        explicit Quaternion(float x, float y, float z, float _w)
-        : xyz(x, y, z), w(_w)
+        explicit Quaternion(float x, float y, float z, float w)
+        : xyz(x, y, z), w(w)
         {
         }
 
@@ -36,8 +36,8 @@ namespace mango
         {
         }
 
-        Quaternion(const Vector<float, 3>& v, float _w)
-        : xyz(v), w(_w)
+        Quaternion(const Vector<float, 3>& v, float w)
+        : xyz(v), w(w)
         {
         }
 
