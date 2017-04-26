@@ -28,30 +28,31 @@ namespace simd {
     // when the underlying types are identical.
 
     template <typename ScalarType, int Size, typename VectorType>
-    struct vector_type
+    struct hardware_vector
     {
-        typedef VectorType type;
-        VectorType m;
+        using type = VectorType;
+        VectorType data;
 
-        vector_type() = default;
+        hardware_vector() = default;
 
-        vector_type(VectorType m) : m(m)
+        hardware_vector(VectorType v)
+        : data(v)
         {
         }
 
         operator VectorType () const
         {
-            return m;
+            return data;
         }
     };
 
-    template <typename ScalarType, int Bits, int Size>
-    struct scalar_type
+    template <typename ScalarType, int Size>
+    struct scalar_vector
     {
-        typedef ScalarType type;
-        enum {
-            bits = Bits, 
-            size = Size 
+        enum
+        {
+            bits = sizeof(ScalarType) * 8,
+            size = Size
         };
         ScalarType data[Size];
 
@@ -80,40 +81,41 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    typedef vector_type<int8, 16, __m128i>    int8x16;
-    typedef vector_type<int16, 8, __m128i>    int16x8;
-    typedef vector_type<int32, 4, __m128i>    int32x4;
-    typedef vector_type<int64, 2, __m128i>    int64x2;
-    typedef vector_type<uint8, 16, __m128i>   uint8x16;
-    typedef vector_type<uint16, 8, __m128i>   uint16x8;
-    typedef vector_type<uint32, 4, __m128i>   uint32x4;
-    typedef vector_type<uint64, 2, __m128i>   uint64x2;
-    typedef vector_type<int8, 32, __m256i>    int8x32;
-    typedef vector_type<int16, 16, __m256i>   int16x16;
-    typedef vector_type<int32, 8, __m256i>    int32x8;
-    typedef vector_type<int64, 4, __m256i>    int64x4;
-    typedef vector_type<uint8, 32, __m256i>   uint8x32;
-    typedef vector_type<uint16, 16, __m256i>  uint16x16;
-    typedef vector_type<uint32, 8, __m256i>   uint32x8;
-    typedef vector_type<uint64, 4, __m256i>   uint64x4;
-    typedef scalar_type<half, 16, 4>          float16x4;
-    typedef scalar_type<float, 32, 2>         float32x2;
-    typedef vector_type<float, 4, __m128>     float32x4;
-    typedef vector_type<float, 8, __m256>     float32x8;
-    typedef vector_type<double, 2, __m128d>   float64x2;
-    typedef vector_type<double, 4, __m256d>   float64x4;
+    using int8x16   = hardware_vector<int8, 16, __m128i>;
+    using int16x8   = hardware_vector<int16, 8, __m128i>;
+    using int32x4   = hardware_vector<int32, 4, __m128i>;
+    using int64x2   = hardware_vector<int64, 2, __m128i>;
+    using uint8x16  = hardware_vector<uint8, 16, __m128i>;
+    using uint16x8  = hardware_vector<uint16, 8, __m128i>;
+    using uint32x4  = hardware_vector<uint32, 4, __m128i>;
+    using uint64x2  = hardware_vector<uint64, 2, __m128i>;
+    using int8x32   = hardware_vector<int8, 32, __m256i>;
+    using int16x16  = hardware_vector<int16, 16, __m256i>;
+    using int32x8   = hardware_vector<int32, 8, __m256i>;
+    using int64x4   = hardware_vector<int64, 4, __m256i>;
+    using uint8x32  = hardware_vector<uint8, 32, __m256i>;
+    using uint16x16 = hardware_vector<uint16, 16, __m256i>;
+    using uint32x8  = hardware_vector<uint32, 8, __m256i>;
+    using uint64x4  = hardware_vector<uint64, 4, __m256i>;
+    using float32x4 = hardware_vector<float, 4, __m128>;
+    using float32x8 = hardware_vector<float, 8, __m256>;
+    using float64x2 = hardware_vector<double, 2, __m128d>;
+    using float64x4 = hardware_vector<double, 4, __m256d>;
+
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
 
 } // namespace simd
 } // namespace mango
 
-    #include "sse_int128.hpp"
-    #include "avx2_int256.hpp"
-    #include "scalar_float64.hpp"
-    #include "sse_float128.hpp"
-    #include "avx_float256.hpp"
-    #include "sse_double128.hpp"
-    #include "avx_double256.hpp"
-    #include "avx_convert.hpp"
+#include "sse_int128.hpp"
+#include "avx2_int256.hpp"
+#include "scalar_float64.hpp"
+#include "sse_float128.hpp"
+#include "avx_float256.hpp"
+#include "sse_double128.hpp"
+#include "avx_double256.hpp"
+#include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_AVX)
 
@@ -126,20 +128,21 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    typedef vector_type<int8, 16, __m128i>   int8x16;
-    typedef vector_type<int16, 8, __m128i>   int16x8;
-    typedef vector_type<int32, 4, __m128i>   int32x4;
-    typedef vector_type<int64, 2, __m128i>   int64x2;
-    typedef vector_type<uint8, 16, __m128i>  uint8x16;
-    typedef vector_type<uint16, 8, __m128i>  uint16x8;
-    typedef vector_type<uint32, 4, __m128i>  uint32x4;
-    typedef vector_type<uint64, 2, __m128i>  uint64x2;
-    typedef scalar_type<half, 16, 4>         float16x4;
-    typedef scalar_type<float, 32, 2>        float32x2;
-    typedef vector_type<float, 4, __m128>    float32x4;
-    typedef vector_type<float, 8, __m256>    float32x8;
-    typedef vector_type<double, 2, __m128d>  float64x2;
-    typedef vector_type<double, 4, __m256d>  float64x4;
+    using int8x16   = hardware_vector<int8, 16, __m128i>;
+    using int16x8   = hardware_vector<int16, 8, __m128i>;
+    using int32x4   = hardware_vector<int32, 4, __m128i>;
+    using int64x2   = hardware_vector<int64, 2, __m128i>;
+    using uint8x16  = hardware_vector<uint8, 16, __m128i>;
+    using uint16x8  = hardware_vector<uint16, 8, __m128i>;
+    using uint32x4  = hardware_vector<uint32, 4, __m128i>;
+    using uint64x2  = hardware_vector<uint64, 2, __m128i>;
+    using float32x4 = hardware_vector<float, 4, __m128>;
+    using float32x8 = hardware_vector<float, 8, __m256>;
+    using float64x2 = hardware_vector<double, 2, __m128d>;
+    using float64x4 = hardware_vector<double, 4, __m256d>;
+
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
 
     struct int8x32
     {
@@ -184,14 +187,14 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-    #include "sse_int128.hpp"
-    #include "common_int256.hpp"
-    #include "scalar_float64.hpp"
-    #include "sse_float128.hpp"
-    #include "avx_float256.hpp"
-    #include "sse_double128.hpp"
-    #include "avx_double256.hpp"
-    #include "avx_convert.hpp"
+#include "sse_int128.hpp"
+#include "common_int256.hpp"
+#include "scalar_float64.hpp"
+#include "sse_float128.hpp"
+#include "avx_float256.hpp"
+#include "sse_double128.hpp"
+#include "avx_double256.hpp"
+#include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
 
@@ -204,18 +207,19 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    typedef vector_type<int8, 16, __m128i>   int8x16;
-    typedef vector_type<int16, 8, __m128i>   int16x8;
-    typedef vector_type<int32, 4, __m128i>   int32x4;
-    typedef vector_type<int64, 2, __m128i>   int64x2;
-    typedef vector_type<uint8, 16, __m128i>  uint8x16;
-    typedef vector_type<uint16, 8, __m128i>  uint16x8;
-    typedef vector_type<uint32, 4, __m128i>  uint32x4;
-    typedef vector_type<uint64, 2, __m128i>  uint64x2;
-    typedef scalar_type<half, 16, 4>         float16x4;
-    typedef scalar_type<float, 32, 2>        float32x2;
-    typedef vector_type<float, 4, __m128>    float32x4;
-    typedef vector_type<double, 2, __m128d>  float64x2;
+    using int8x16   = hardware_vector<int8, 16, __m128i>;
+    using int16x8   = hardware_vector<int16, 8, __m128i>;
+    using int32x4   = hardware_vector<int32, 4, __m128i>;
+    using int64x2   = hardware_vector<int64, 2, __m128i>;
+    using uint8x16  = hardware_vector<uint8, 16, __m128i>;
+    using uint16x8  = hardware_vector<uint16, 8, __m128i>;
+    using uint32x4  = hardware_vector<uint32, 4, __m128i>;
+    using uint64x2  = hardware_vector<uint64, 2, __m128i>;
+    using float32x4 = hardware_vector<float, 4, __m128>;
+    using float64x2 = hardware_vector<double, 2, __m128d>;
+
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
 
     struct int8x32
     {
@@ -270,14 +274,14 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-    #include "sse_int128.hpp"
-    #include "common_int256.hpp"
-    #include "scalar_float64.hpp"
-    #include "sse_float128.hpp"
-    #include "common_float256.hpp"
-    #include "sse_double128.hpp"
-    #include "sse_double256.hpp"
-    #include "sse_convert.hpp"
+#include "sse_int128.hpp"
+#include "common_int256.hpp"
+#include "scalar_float64.hpp"
+#include "sse_float128.hpp"
+#include "common_float256.hpp"
+#include "sse_double128.hpp"
+#include "sse_double256.hpp"
+#include "sse_convert.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
 
@@ -290,24 +294,27 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    typedef vector_type<int8, 16, int8x16_t>    int8x16;
-    typedef vector_type<int16, 8, int16x8_t>    int16x8;
-    typedef vector_type<int32, 4, int32x4_t>    int32x4;
-    typedef vector_type<int64, 2, int64x2_t>    int64x2;
-    typedef vector_type<uint8, 16, uint8x16_t>  uint8x16;
-    typedef vector_type<uint16, 8, uint16x8_t>  uint16x8;
-    typedef vector_type<uint32, 4, uint32x4_t>  uint32x4;
-    typedef vector_type<uint64, 2, uint64x2_t>  uint64x2;
-    typedef vector_type<float, 2, float32x2_t>  float32x2;
-    typedef vector_type<float, 4, float32x4_t>  float32x4;
+    using int8x16   = hardware_vector<int8, 16, int8x16_t>;
+    using int16x8   = hardware_vector<int16, 8, int16x8_t>;
+    using int32x4   = hardware_vector<int32, 4, int32x4_t>;
+    using int64x2   = hardware_vector<int64, 2, int64x2_t>;
+    using uint8x16  = hardware_vector<uint8, 16, uint8x16_t>;
+    using uint16x8  = hardware_vector<uint16, 8, uint16x8_t>;
+    using uint32x4  = hardware_vector<uint32, 4, uint32x4_t>;
+    using uint64x2  = hardware_vector<uint64, 2, uint64x2_t>;
+    using float32x2 = hardware_vector<float, 2, float32x2_t>;
+    using float32x4 = hardware_vector<float, 4, float32x4_t>;
+
+    using float64x2 = scalar_vector<double, 2> ;
+    using float64x4 = scalar_vector<double, 4>;
 
 #ifdef MANGO_ENABLE_FP16
 
-    typedef vector_type<half, 4, float16x4_t> float16x4;
+    using float16x4 = hardware_vector<half, 4, float16x4_t>;
 
 #else
 
-    typedef scalar_type<half, 16, 4> float16x4;
+    using float16x4 = scalar_vector<half, 4>;
 
 #endif
 
@@ -356,20 +363,17 @@ namespace simd {
         float32x4 lo, hi;
     };
 
-    typedef scalar_type<double, 64, 2> float64x2;
-    typedef scalar_type<double, 64, 4> float64x4;
-
 } // namespace simd
 } // namespace mango
 
-    #include "neon_int128.hpp"
-    #include "common_int256.hpp"
-    #include "neon_float64.hpp"
-    #include "neon_float128.hpp"
-    #include "common_float256.hpp"
-    #include "scalar_double128.hpp"
-    #include "scalar_double256.hpp"
-    #include "neon_convert.hpp"
+#include "neon_int128.hpp"
+#include "common_int256.hpp"
+#include "neon_float64.hpp"
+#include "neon_float128.hpp"
+#include "common_float256.hpp"
+#include "scalar_double128.hpp"
+#include "scalar_double256.hpp"
+#include "neon_convert.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
 
@@ -382,19 +386,20 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    typedef vector_type<int8, 16, vector signed char>     int8x16;
-    typedef vector_type<int16, 8, vector signed short>    int16x8;
-    typedef vector_type<int32, 4, vector signed int>      int32x4;
-    typedef scalar_type<int64, 64, 2>                     int64x2;
-    typedef vector_type<uint8, 16, vector unsigned char>  uint8x16;
-    typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
-    typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
-    typedef scalar_type<uint64, 64, 2>                    uint64x2;
-    typedef scalar_type<half, 16, 4>                      float16x4;
-    typedef scalar_type<float, 32, 2>                     float32x2;
-    typedef vector_type<float, 4, vector float>           float32x4;
-    typedef scalar_type<double, 64, 2>                    float64x2;
-    typedef scalar_type<double, 64, 4>                    float64x4;
+    using int8x16   = hardware_vector<int8, 16, vector signed char>;
+    using int16x8   = hardware_vector<int16, 8, vector signed short>;
+    using int32x4   = hardware_vector<int32, 4, vector signed int>;
+    using uint8x16  = hardware_vector<uint8, 16, vector unsigned char>;
+    using uint16x8  = hardware_vector<uint16, 8, vector unsigned short>;
+    using uint32x4  = hardware_vector<uint32, 4, vector unsigned int>;
+    using float32x4 = hardware_vector<float, 4, vector float>;
+
+    using int64x2   = scalar_vector<int64, 2>;
+    using uint64x2  = scalar_vector<uint64, 2>;
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
+    using float64x2 = scalar_vector<double, 2>;
+    using float64x4 = scalar_vector<double, 4>;
 
     struct int8x32
     {
@@ -444,14 +449,14 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-    #include "altivec_int128.hpp"
-    #include "common_int256.hpp"
-    #include "scalar_float64.hpp"
-    #include "altivec_float128.hpp"
-    #include "common_float256.hpp"
-    #include "scalar_double128.hpp"
-    #include "scalar_double256.hpp"
-    #include "altivec_convert.hpp"
+#include "altivec_int128.hpp"
+#include "common_int256.hpp"
+#include "scalar_float64.hpp"
+#include "altivec_float128.hpp"
+#include "common_float256.hpp"
+#include "scalar_double128.hpp"
+#include "scalar_double256.hpp"
+#include "altivec_convert.hpp"
 
 #elif defined(MANGO_ENABLE_SPU)
 
@@ -464,19 +469,20 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    typedef vector_type<int8, 16, vector signed char>     int8x16;
-    typedef vector_type<int16, 8, vector signed short>    int16x8;
-    typedef vector_type<int32, 4, vector signed int>      int32x4;
-    typedef scalar_type<int64, 64, 2>                     int64x2;
-    typedef vector_type<uint8, 16, vector unsigned char>  uint8x16;
-    typedef vector_type<uint16, 8, vector unsigned short> uint16x8;
-    typedef vector_type<uint32, 4, vector unsigned int>   uint32x4;
-    typedef scalar_type<uint64, 64, 2>                    uint64x2;
-    typedef scalar_type<half, 16, 4>                      float16x4;
-    typedef scalar_type<float, 32, 2>                     float32x2;
-    typedef vector_type<float, 4, vector float>           float32x4;
-    typedef scalar_type<double, 64, 2>                    float64x2;
-    typedef scalar_type<double, 64, 4>                    float64x4;
+    using int8x16   = hardware_vector<int8, 16, vector signed char>;
+    using int16x8   = hardware_vector<int16, 8, vector signed short>;
+    using int32x4   = hardware_vector<int32, 4, vector signed int>;
+    using uint8x16  = hardware_vector<uint8, 16, vector unsigned char>;
+    using uint16x8  = hardware_vector<uint16, 8, vector unsigned short>;
+    using uint32x4  = hardware_vector<uint32, 4, vector unsigned int>;
+    using float32x4 = hardware_vector<float, 4, vector float>;
+
+    using int64x2   = scalar_vector<int64, 2>;
+    using uint64x2  = scalar_vector<uint64, 2>;
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
+    using float64x2 = scalar_vector<double, 2>;
+    using float64x4 = scalar_vector<double, 4>;
 
     struct int8x32
     {
@@ -526,14 +532,14 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-    #include "spu_int128.hpp"
-    #include "common_int256.hpp"
-    #include "scalar_float64.hpp"
-    #include "spu_float128.hpp"
-    #include "common_float256.hpp"
-    #include "scalar_double128.hpp"
-    #include "scalar_double256.hpp"
-    #include "spu_convert.hpp"
+#include "spu_int128.hpp"
+#include "common_int256.hpp"
+#include "scalar_float64.hpp"
+#include "spu_float128.hpp"
+#include "common_float256.hpp"
+#include "scalar_double128.hpp"
+#include "scalar_double256.hpp"
+#include "spu_convert.hpp"
 
 #else
 
@@ -544,19 +550,19 @@ namespace simd {
     // SIMD emulation
     // --------------------------------------------------------------
 
-    typedef scalar_type<int8, 8, 16>    int8x16;
-    typedef scalar_type<int16, 16, 8>   int16x8;
-    typedef scalar_type<int32, 32, 4>   int32x4;
-    typedef scalar_type<int64, 64, 2>   int64x2;
-    typedef scalar_type<uint8, 8, 16>   uint8x16;
-    typedef scalar_type<uint16, 16, 8>  uint16x8;
-    typedef scalar_type<uint32, 32, 4>  uint32x4;
-    typedef scalar_type<uint64, 64, 2>  uint64x2;
-    typedef scalar_type<half, 16, 4>    float16x4;
-    typedef scalar_type<float, 32, 2>   float32x2;
-    typedef scalar_type<float, 32, 4>   float32x4;
-    typedef scalar_type<double, 64, 2>  float64x2;
-    typedef scalar_type<double, 64, 4>  float64x4;
+    using int8x16   = scalar_vector<int8, 16>;
+    using int16x8   = scalar_vector<int16, 8>;
+    using int32x4   = scalar_vector<int32, 4>;
+    using int64x2   = scalar_vector<int64, 2>;
+    using uint8x16  = scalar_vector<uint8, 16>;
+    using uint16x8  = scalar_vector<uint16, 8>;
+    using uint32x4  = scalar_vector<uint32, 4>;
+    using uint64x2  = scalar_vector<uint64, 2>;
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
+    using float32x4 = scalar_vector<float, 4>;
+    using float64x2 = scalar_vector<double, 2>;
+    using float64x4 = scalar_vector<double, 4>;
 
     struct int8x32
     {
@@ -606,13 +612,13 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-    #include "scalar_int128.hpp"
-    #include "common_int256.hpp"
-    #include "scalar_float64.hpp"
-    #include "scalar_float128.hpp"
-    #include "common_float256.hpp"
-    #include "scalar_double128.hpp"
-    #include "scalar_double256.hpp"
-    #include "scalar_convert.hpp"
+#include "scalar_int128.hpp"
+#include "common_int256.hpp"
+#include "scalar_float64.hpp"
+#include "scalar_float128.hpp"
+#include "common_float256.hpp"
+#include "scalar_double128.hpp"
+#include "scalar_double256.hpp"
+#include "scalar_convert.hpp"
 
 #endif

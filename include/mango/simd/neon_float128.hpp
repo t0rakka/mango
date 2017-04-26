@@ -21,7 +21,7 @@ namespace simd {
     inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return __builtin_shufflevector(v.m, v.m, x, y, z, w);
+        return __builtin_shufflevector(v.data, v.data, x, y, z, w);
     }
 
 #else
@@ -31,7 +31,7 @@ namespace simd {
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 #if __GNUC__ >= 5
-        return (float32x4_t) __builtin_shuffle(v.m, (uint32x4_t) {x, y, z, w});
+        return (float32x4_t) __builtin_shuffle(v.data, (uint32x4_t) {x, y, z, w});
 #else
         float32x4_t temp = v;
         return (float32x4_t) { temp[x], temp[y], temp[z], temp[w] };

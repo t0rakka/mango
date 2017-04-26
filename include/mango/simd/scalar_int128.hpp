@@ -13,11 +13,11 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    template <typename ScalarType, int Bits, int Size>
-    static inline scalar_type<ScalarType, Bits, Size>
+    template <typename ScalarType, int Size>
+    static inline scalar_vector<ScalarType, Size>
     scalar_set(ScalarType value)
     {
-        scalar_type<ScalarType, Bits, Size> v;
+        scalar_vector<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = value;
         }
@@ -26,11 +26,11 @@ namespace simd {
 
     // unary
 
-    template <typename ScalarType, int Bits, int Size>
-    static inline scalar_type<ScalarType, Bits, Size>
-    scalar_unroll(ScalarType (*func)(ScalarType), scalar_type<ScalarType, Bits, Size> a)
+    template <typename ScalarType, int Size>
+    static inline scalar_vector<ScalarType, Size>
+    scalar_unroll(ScalarType (*func)(ScalarType), scalar_vector<ScalarType, Size> a)
     {
-        scalar_type<ScalarType, Bits, Size> v;
+        scalar_vector<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = func(a[i]);
         }
@@ -51,11 +51,11 @@ namespace simd {
 
     // binary
 
-    template <typename ScalarType, int Bits, int Size>
-    static inline scalar_type<ScalarType, Bits, Size>
-    scalar_unroll(ScalarType (*func)(ScalarType, ScalarType), scalar_type<ScalarType, Bits, Size> a, scalar_type<ScalarType, Bits, Size> b)
+    template <typename ScalarType, int Size>
+    static inline scalar_vector<ScalarType, Size>
+    scalar_unroll(ScalarType (*func)(ScalarType, ScalarType), scalar_vector<ScalarType, Size> a, scalar_vector<ScalarType, Size> b)
     {
-        scalar_type<ScalarType, Bits, Size> v;
+        scalar_vector<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = func(a[i], b[i]);
         }
@@ -226,11 +226,11 @@ namespace simd {
 
     // misc
 
-    template <typename ScalarType, int Bits, int Size>
-    static inline scalar_type<ScalarType, Bits, Size>
-    scalar_select(scalar_type<ScalarType, Bits, Size> mask, scalar_type<ScalarType, Bits, Size> a, scalar_type<ScalarType, Bits, Size> b)
+    template <typename ScalarType, int Size>
+    static inline scalar_vector<ScalarType, Size>
+    scalar_select(scalar_vector<ScalarType, Size> mask, scalar_vector<ScalarType, Size> a, scalar_vector<ScalarType, Size> b)
     {
-        scalar_type<ScalarType, Bits, Size> v;
+        scalar_vector<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
             v[i] = (mask[i] & a[i]) | (~mask[i] & b[i]);
         }
@@ -283,12 +283,12 @@ namespace simd {
 
     static inline uint8x16 uint8x16_zero()
     {
-        return scalar_set<uint8, 8, 16>(0);
+        return scalar_set<uint8, 16>(0);
     }
 
     static inline uint8x16 uint8x16_set1(uint8 s)
     {
-        return scalar_set<uint8, 8, 16>(s);
+        return scalar_set<uint8, 16>(s);
     }
 
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
@@ -398,12 +398,12 @@ namespace simd {
 
     static inline uint16x8 uint16x8_zero()
     {
-        return scalar_set<uint16, 16, 8>(0);
+        return scalar_set<uint16, 8>(0);
     }
 
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
-        return scalar_set<uint16, 16, 8>(s);
+        return scalar_set<uint16, 8>(s);
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -734,12 +734,12 @@ namespace simd {
 
     static inline uint64x2 uint64x2_zero()
     {
-        return scalar_set<uint64, 64, 2>(0);
+        return scalar_set<uint64, 2>(0);
     }
 
     static inline uint64x2 uint64x2_set1(uint64 s)
     {
-        return scalar_set<uint64, 64, 2>(s);
+        return scalar_set<uint64, 2>(s);
     }
 
     static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
@@ -837,12 +837,12 @@ namespace simd {
 
     static inline int8x16 int8x16_zero()
     {
-        return scalar_set<int8, 8, 16>(0);
+        return scalar_set<int8, 16>(0);
     }
 
     static inline int8x16 int8x16_set1(int8 s)
     {
-        return scalar_set<int8, 8, 16>(s);
+        return scalar_set<int8, 16>(s);
     }
 
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
@@ -962,12 +962,12 @@ namespace simd {
 
     static inline int16x8 int16x8_zero()
     {
-        return scalar_set<int16, 16, 8>(0);
+        return scalar_set<int16, 8>(0);
     }
 
     static inline int16x8 int16x8_set1(int16 s)
     {
-        return scalar_set<int16, 16, 8>(s);
+        return scalar_set<int16, 8>(s);
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)
@@ -1345,12 +1345,12 @@ namespace simd {
 
     static inline int64x2 int64x2_zero()
     {
-        return scalar_set<int64, 64, 2>(0);
+        return scalar_set<int64, 2>(0);
     }
 
     static inline int64x2 int64x2_set1(int64 s)
     {
-        return scalar_set<int64, 64, 2>(s);
+        return scalar_set<int64, 2>(s);
     }
 
     static inline int64x2 int64x2_set2(int64 x, int64 y)
