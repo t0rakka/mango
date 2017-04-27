@@ -46,6 +46,8 @@ namespace simd {
         }
     };
 
+    // Scalar Emulated vector types not supported by hardware instructions
+
     template <typename ScalarType, int Size>
     struct scalar_vector
     {
@@ -65,6 +67,14 @@ namespace simd {
         {
             return reinterpret_cast<const ScalarType *>(this)[index];
         }
+    };
+
+    // Vector types implemented as separate low/high parts, which typically have hardware support
+
+    template <typename VectorType>
+    struct composite_vector
+    {
+        VectorType lo, hi;
     };
 
 } // namespace simd
@@ -144,45 +154,14 @@ namespace simd {
     using float16x4 = scalar_vector<half, 4>;
     using float32x2 = scalar_vector<float, 2>;
 
-    struct int8x32
-    {
-        int8x16 lo, hi;
-    };
-
-    struct int16x16
-    {
-        int16x8 lo, hi;
-    };
-
-    struct int32x8
-    {
-        int32x4 lo, hi;
-    };
-
-    struct int64x4
-    {
-        int64x2 lo, hi;
-    };
-
-    struct uint8x32
-    {
-        uint8x16 lo, hi;
-    };
-
-    struct uint16x16
-    {
-        uint16x8 lo, hi;
-    };
-
-    struct uint32x8
-    {
-        uint32x4 lo, hi;
-    };
-
-    struct uint64x4
-    {
-        uint64x2 lo, hi;
-    };
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
 
 } // namespace simd
 } // namespace mango
@@ -221,55 +200,16 @@ namespace simd {
     using float16x4 = scalar_vector<half, 4>;
     using float32x2 = scalar_vector<float, 2>;
 
-    struct int8x32
-    {
-        int8x16 lo, hi;
-    };
-
-    struct int16x16
-    {
-        int16x8 lo, hi;
-    };
-
-    struct int32x8
-    {
-        int32x4 lo, hi;
-    };
-
-    struct int64x4
-    {
-        int64x2 lo, hi;
-    };
-
-    struct uint8x32
-    {
-        uint8x16 lo, hi;
-    };
-
-    struct uint16x16
-    {
-        uint16x8 lo, hi;
-    };
-
-    struct uint32x8
-    {
-        uint32x4 lo, hi;
-    };
-
-    struct uint64x4
-    {
-        uint64x2 lo, hi;
-    };
-
-    struct float32x8
-    {
-        float32x4 lo, hi;
-    };
-
-    struct float64x4
-    {
-        float64x2 lo, hi;
-    };
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
+    using float32x8 = composite_vector<float32x4>;
+    using float64x4 = composite_vector<float64x2>;
 
 } // namespace simd
 } // namespace mango
@@ -318,50 +258,15 @@ namespace simd {
 
 #endif
 
-    struct int8x32
-    {
-        int8x16 lo, hi;
-    };
-
-    struct int16x16
-    {
-        int16x8 lo, hi;
-    };
-
-    struct int32x8
-    {
-        int32x4 lo, hi;
-    };
-
-    struct int64x4
-    {
-        int64x2 lo, hi;
-    };
-
-    struct uint8x32
-    {
-        uint8x16 lo, hi;
-    };
-
-    struct uint16x16
-    {
-        uint16x8 lo, hi;
-    };
-
-    struct uint32x8
-    {
-        uint32x4 lo, hi;
-    };
-
-    struct uint64x4
-    {
-        uint64x2 lo, hi;
-    };
-
-    struct float32x8
-    {
-        float32x4 lo, hi;
-    };
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
+    using float32x8 = composite_vector<float32x4>;
 
 } // namespace simd
 } // namespace mango
@@ -401,50 +306,15 @@ namespace simd {
     using float64x2 = scalar_vector<double, 2>;
     using float64x4 = scalar_vector<double, 4>;
 
-    struct int8x32
-    {
-        int8x16 lo, hi;
-    };
-
-    struct int16x16
-    {
-        int16x8 lo, hi;
-    };
-
-    struct int32x8
-    {
-        int32x4 lo, hi;
-    };
-
-    struct int64x4
-    {
-        int64x2 lo, hi;
-    };
-
-    struct uint8x32
-    {
-        uint8x16 lo, hi;
-    };
-
-    struct uint16x16
-    {
-        uint16x8 lo, hi;
-    };
-
-    struct uint32x8
-    {
-        uint32x4 lo, hi;
-    };
-
-    struct uint64x4
-    {
-        uint64x2 lo, hi;
-    };
-
-    struct float32x8
-    {
-        float32x4 lo, hi;
-    };
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
+    using float32x8 = composite_vector<float32x4>;
 
 } // namespace simd
 } // namespace mango
@@ -484,50 +354,15 @@ namespace simd {
     using float64x2 = scalar_vector<double, 2>;
     using float64x4 = scalar_vector<double, 4>;
 
-    struct int8x32
-    {
-        int8x16 lo, hi;
-    };
-
-    struct int16x16
-    {
-        int16x8 lo, hi;
-    };
-
-    struct int32x8
-    {
-        int32x4 lo, hi;
-    };
-
-    struct uint8x32
-    {
-        uint8x16 lo, hi;
-    };
-
-    struct int64x4
-    {
-        int64x2 lo, hi;
-    };
-
-    struct uint16x16
-    {
-        uint16x8 lo, hi;
-    };
-
-    struct uint32x8
-    {
-        uint32x4 lo, hi;
-    };
-
-    struct uint64x4
-    {
-        uint64x2 lo, hi;
-    };
-
-    struct float32x8
-    {
-        float32x4 lo, hi;
-    };
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
+    using float32x8 = composite_vector<float32x4>;
 
 } // namespace simd
 } // namespace mango
@@ -564,50 +399,15 @@ namespace simd {
     using float64x2 = scalar_vector<double, 2>;
     using float64x4 = scalar_vector<double, 4>;
 
-    struct int8x32
-    {
-        int8x16 lo, hi;
-    };
-
-    struct int16x16
-    {
-        int16x8 lo, hi;
-    };
-
-    struct int32x8
-    {
-        int32x4 lo, hi;
-    };
-
-    struct uint8x32
-    {
-        uint8x16 lo, hi;
-    };
-
-    struct int64x4
-    {
-        int64x2 lo, hi;
-    };
-
-    struct uint16x16
-    {
-        uint16x8 lo, hi;
-    };
-
-    struct uint32x8
-    {
-        uint32x4 lo, hi;
-    };
-
-    struct uint64x4
-    {
-        uint64x2 lo, hi;
-    };
-
-    struct float32x8
-    {
-        float32x4 lo, hi;
-    };
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
+    using float32x8 = composite_vector<float32x4>;
 
 } // namespace simd
 } // namespace mango
