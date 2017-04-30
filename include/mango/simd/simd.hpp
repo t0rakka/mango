@@ -87,7 +87,7 @@ namespace simd {
     struct composite_vector
     {
         using scalar_type = typename T::scalar_type;
-        using vector_type = typename T::vector_type;
+        using vector_type = void;
         enum
         {
             scalar_bits = sizeof(scalar_type) * 8,
