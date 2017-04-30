@@ -30,7 +30,15 @@ namespace simd {
     template <typename ScalarType, int Size, typename VectorType>
     struct hardware_vector
     {
-        using type = VectorType;
+        using scalar_type = ScalarType;
+        using vector_type = VectorType;
+        enum
+        {
+            scalar_bits = sizeof(ScalarType) * 8,
+            vector_bits = sizeof(VectorType) * 8,
+            size = Size
+        };
+
         VectorType data;
 
         hardware_vector() = default;
@@ -51,11 +59,15 @@ namespace simd {
     template <typename ScalarType, int Size>
     struct scalar_vector
     {
+        using scalar_type = ScalarType;
+        using vector_type = void;
         enum
         {
-            bits = sizeof(ScalarType) * 8,
+            scalar_bits = sizeof(ScalarType) * 8,
+            vector_bits = sizeof(ScalarType) * Size * 8,
             size = Size
         };
+
         ScalarType data[Size];
 
         ScalarType & operator [] (int index)
@@ -71,10 +83,19 @@ namespace simd {
 
     // Vector types implemented as separate low/high parts, which typically have hardware support
 
-    template <typename VectorType>
+    template <typename T>
     struct composite_vector
     {
-        VectorType lo, hi;
+        using scalar_type = typename T::scalar_type;
+        using vector_type = typename T::vector_type;
+        enum
+        {
+            scalar_bits = sizeof(scalar_type) * 8,
+            vector_bits = sizeof(T) * 2 * 8,
+            size = T::size * 2
+        };
+
+        T lo, hi;
     };
 
 } // namespace simd

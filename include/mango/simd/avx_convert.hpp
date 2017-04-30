@@ -16,7 +16,7 @@ namespace simd {
 
     static inline int32x4 int32x4_reinterpret(uint32x4 s)
     {
-        return uint32x4::type(s);
+        return uint32x4::vector_type(s);
     }
 
     static inline int32x4 int32x4_reinterpret(float32x4 s)
@@ -26,7 +26,7 @@ namespace simd {
 
     static inline uint32x4 uint32x4_reinterpret(int32x4 s)
     {
-        return int32x4::type(s);
+        return int32x4::vector_type(s);
     }
 
     static inline uint32x4 uint32x4_reinterpret(float32x4 s)
