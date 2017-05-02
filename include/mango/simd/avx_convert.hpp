@@ -9,40 +9,121 @@
 
 namespace mango {
 namespace simd {
+namespace detail {
+
+	template <int bits>
+	struct reinterpret_vector;
+
+	template <>
+	struct reinterpret_vector<128>
+	{
+		__m128 data;
+
+	    template <typename ScalarType, int Size, typename VectorType>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, VectorType> v)
+        : data(v)
+	    {
+	    }
+
+	    template <typename ScalarType, int Size>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m128i> v)
+        : data(_mm_castsi128_ps(v))
+	    {
+	    }
+
+	    template <typename ScalarType, int Size>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m128d> v)
+        : data(_mm_castpd_ps(v))
+	    {
+	    }
+
+		template <typename ScalarType, int Size, typename VectorType>
+		operator hardware_vector<ScalarType, Size, VectorType> ()
+		{
+			return hardware_vector<ScalarType, Size, VectorType>(data);
+		}
+
+		template <typename ScalarType, int Size>
+		operator hardware_vector<ScalarType, Size, __m128i> ()
+		{
+			return hardware_vector<ScalarType, Size, __m128i>(_mm_castps_si128(data));
+		}
+
+		template <typename ScalarType, int Size>
+		operator hardware_vector<ScalarType, Size, __m128d> ()
+		{
+			return hardware_vector<ScalarType, Size, __m128d>(_mm_castps_pd(data));
+		}
+	};
+
+	template <>
+	struct reinterpret_vector<256>
+	{
+	    __m256 data;
+
+	    template <typename ScalarType, int Size, typename VectorType>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, VectorType> v)
+        : data(v)
+	    {
+	    }
+
+	    template <typename ScalarType, int Size>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m256i> v)
+        : data(_mm256_castsi256_ps(v))
+	    {
+	    }
+
+	    template <typename ScalarType, int Size>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m256d> v)
+        : data(_mm256_castpd_ps(v))
+	    {
+	    }
+
+	    template <typename T>
+	    reinterpret_vector(composite_vector<T> v)
+	    {
+		    std::memcpy(&data, &v, 32);
+	    }
+
+    	template <typename ScalarType, int Size, typename VectorType>
+    	operator hardware_vector<ScalarType, Size, VectorType> ()
+	    {
+		    return hardware_vector<ScalarType, Size, VectorType>(data);
+	    }
+
+	    template <typename ScalarType, int Size>
+	    operator hardware_vector<ScalarType, Size, __m256i> ()
+	    {
+		    return hardware_vector<ScalarType, Size, __m256i>(_mm256_castps_si256(data));
+	    }
+
+	    template <typename ScalarType, int Size>
+	    operator hardware_vector<ScalarType, Size, __m256d> ()
+	    {
+		    return hardware_vector<ScalarType, Size, __m256d>(_mm256_castps_pd(data));
+	    }
+
+	    template <typename T>
+	    operator composite_vector<T> ()
+	    {
+    		composite_vector<T> temp;
+		    std::memcpy(&temp, this, 32);
+		    return temp;
+	    }
+    };
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
     // -----------------------------------------------------------------
 
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return uint32x4::vector_type(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-        return _mm_castps_si128(s);
-    }
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return int32x4::vector_type(s);
-    }
-
-    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
-    {
-        return _mm_castps_si128(s);
-    }
-
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return _mm_castsi128_ps(s);
-    }
-
-    static inline float32x4 float32x4_reinterpret(uint32x4 s)
-    {
-        return _mm_castsi128_ps(s);
-    }
+	template <typename D, typename S>
+	inline D reinterpret(S s)
+	{
+        static_assert(sizeof(S) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<S::vector_bits>(s));
+	}
 
     // -----------------------------------------------------------------
     // zero extend
@@ -388,7 +469,7 @@ namespace simd {
         const int32x4 magic = int32x4_set1(0x3f000000);
         int32x4 b;
         b = add(magic, mantissa);
-        b = int32x4_reinterpret(sub(float32x4_reinterpret(b), float32x4_reinterpret(magic)));
+        b = reinterpret<int32x4>(sub(reinterpret<float32x4>(b), reinterpret<float32x4>(magic)));
 
         // Numeric Value
         int32x4 c = add(int32x4_set1(0x38000000), slli(no_sign, 13));
@@ -406,7 +487,7 @@ namespace simd {
         // Sign
         result = bitwise_or(result, slli(sign, 16));
 
-        return float32x4_reinterpret(result);
+        return reinterpret<float32x4>(result);
     }
 
     static inline float16x4 float16x4_convert(float32x4 f)
@@ -414,7 +495,7 @@ namespace simd {
         const float32x4 magic = float32x4_set1(Float(0, 15, 0).f);
         const int32x4 vinf = int32x4_set1(31 << 23);
 
-        const int32x4 u = int32x4_reinterpret(f);
+        const int32x4 u = reinterpret<int32x4>(f);
         const int32x4 sign = srli(bitwise_and(u, int32x4_set1(0x80000000)), 16);
 
         const int32x4 vexponent = int32x4_set1(0x7f800000);
@@ -427,7 +508,7 @@ namespace simd {
         const int32x4 v0 = bitwise_or(int32x4_set1(0x7c00), mantissa);
 
         int32x4 v1 = bitwise_and(u, int32x4_set1(0x7ffff000));
-        v1 = int32x4_reinterpret(mul(float32x4_reinterpret(v1), magic));
+        v1 = reinterpret<int32x4>(mul(reinterpret<float32x4>(v1), magic));
         v1 = add(v1, int32x4_set1(0x1000));
 
 #if defined(MANGO_ENABLE_SSE4_1)

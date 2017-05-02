@@ -14,35 +14,12 @@ namespace simd {
     // reinterpret
     // -----------------------------------------------------------------
 
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return reinterpret_cast<int32x4 &>(s);
-    }
-
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-        return reinterpret_cast<int32x4 &>(s);
-    }
-
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return reinterpret_cast<uint32x4 &>(s);
-    }
-
-    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
-    {
-        return reinterpret_cast<uint32x4 &>(s);
-    }
-
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return reinterpret_cast<float32x4 &>(s);
-    }
-
-    static inline float32x4 float32x4_reinterpret(uint32x4 s)
-    {
-        return reinterpret_cast<float32x4 &>(s);
-    }
+	template <typename D, typename S>
+	inline D reinterpret(S s)
+	{
+        static_assert(sizeof(S) == sizeof(D), "Vectors must be same size.");
+        return reinterpret_cast<const D &>(s);
+	}
 
     // -----------------------------------------------------------------
     // zero extend

@@ -69,7 +69,7 @@ namespace simd {
     static inline int32x4 sel(float32x4 f0, float32x4 f1, int32x4 x, int32x4 y)
     {
         float32x4 m = compare_lt(f0, f1);
-        return select(int32x4_reinterpret(m), x, y);
+        return select(reinterpret<int32x4>(m), x, y);
     }
 
     static inline float32x4 atan2kf(float32x4 b, float32x4 a)
@@ -111,9 +111,9 @@ namespace simd {
         m = bitwise_and(compare_gt(m, int32x4_zero()), m);
         const int32x4 n = compare_gt(m, 0xff);
         m = bitwise_or(bitwise_nand(n, m), bitwise_and(n, 0xff));
-        u = float32x4_reinterpret(slli(m, 23));
+        u = reinterpret<float32x4>(slli(m, 23));
         const float32x4 y = mul(mul(mul(mul(x, u), u), u), u);
-        u = float32x4_reinterpret(slli(add(p, 0x7f), 23));
+        u = reinterpret<float32x4>(slli(add(p, 0x7f), 23));
         return mul(y, u);
     }
 
@@ -140,7 +140,7 @@ namespace simd {
 
         const int32x4 one = int32x4_set1(1);
         const int32x4 q1 = bitwise_and(q, one);
-        const float32x4 mask = float32x4_reinterpret(compare_eq(q1, one));
+        const float32x4 mask = reinterpret<float32x4>(compare_eq(q1, one));
         d = bitwise_xor(bitwise_and(mask, float32x4_set1(-0.0f)), d);
 
         const float32x4 s = mul(d, d);
@@ -164,7 +164,7 @@ namespace simd {
         d = madd(d, u, -2.0f * PI4_Df);
 
         const int32x4 q2 = bitwise_and(q, 2);
-        const float32x4 mask = float32x4_reinterpret(compare_eq(q2, int32x4_zero()));
+        const float32x4 mask = reinterpret<float32x4>(compare_eq(q2, int32x4_zero()));
         d = bitwise_xor(bitwise_and(mask, float32x4_set1(-0.0f)), d);
 
         const float32x4 s = mul(d, d);
@@ -187,7 +187,7 @@ namespace simd {
 
         const float32x4 s = mul(x, x);
         const int32x4 m = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
-        const float32x4 mask = float32x4_reinterpret(m);
+        const float32x4 mask = reinterpret<float32x4>(m);
         x = bitwise_xor(bitwise_and(mask, float32x4_set1(-0.0)), x);
 
         u = float32x4_set1(0.00927245803177356719970703f);
@@ -228,8 +228,8 @@ namespace simd {
 
     float32x4 log2(float32x4 v)
     {
-        const int32x4 exponent = sub(srli(bitwise_and(int32x4_reinterpret(v), 0x7fffffff), 23), 127);
-        const float32x4 x = sub(float32x4_reinterpret(sub(int32x4_reinterpret(v), slli(exponent, 23))), 1.0f);
+        const int32x4 exponent = sub(srli(bitwise_and(reinterpret<int32x4>(v), 0x7fffffff), 23), 127);
+        const float32x4 x = sub(reinterpret<float32x4>(sub(reinterpret<int32x4>(v), slli(exponent, 23))), 1.0f);
         const float32x4 x2 = mul(x, x);
         const float32x4 x4 = mul(x2, x2);
         float32x4 hi = float32x4_set1(-0.00931049621349f);
@@ -251,7 +251,7 @@ namespace simd {
 
     float32x4 exp2(float32x4 v)
     {
-        const int32x4 ix = int32x4_truncate(add(v, float32x4_reinterpret(bitwise_nand(srai(int32x4_convert(v), 31), 0x3f7fffff))));
+        const int32x4 ix = int32x4_truncate(add(v, reinterpret<float32x4>(bitwise_nand(srai(int32x4_convert(v), 31), 0x3f7fffff))));
         float32x4 f = mul(sub(float32x4_convert(ix), v), 0.69314718055994530942f);
         float32x4 hi = madd(0.0013298820f, f, float32x4_set1(-0.0001413161f));
         float32x4 lo = madd(0.4999999206f, f, float32x4_set1(-0.1666653019f));
@@ -261,8 +261,8 @@ namespace simd {
         lo = madd(1.0f, f, lo);
         float32x4 f2 = mul(f, f);
         float32x4 a = add(mul(mul(f2, f2), hi), lo);
-        float32x4 b = float32x4_reinterpret(bitwise_and(slli((add(ix, 127)), 23), compare_gt(ix, -128)));
-        return bitwise_or(mul(a, b), float32x4_reinterpret(srli(compare_gt(ix, 128), 1)));
+        float32x4 b = reinterpret<float32x4>(bitwise_and(slli((add(ix, 127)), 23), compare_gt(ix, -128)));
+        return bitwise_or(mul(a, b), reinterpret<float32x4>(srli(compare_gt(ix, 128), 1)));
     }
 
     float32x4 pow(float32x4 a, float32x4 b)
@@ -331,10 +331,10 @@ namespace simd {
 
         int32x4 m;
         m = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
-        t = select(float32x4_reinterpret(m), sub(float32x4_set1(float_pi_2), t), t);
+        t = select(reinterpret<float32x4>(m), sub(float32x4_set1(float_pi_2), t), t);
 
         m = compare_eq(bitwise_and(q, int32x4_set1(2)), int32x4_set1(2));
-        t = float32x4_reinterpret(bitwise_xor(bitwise_and(m, int32x4_reinterpret(float32x4_set1(-0.0f))), int32x4_reinterpret(t)));
+        t = reinterpret<float32x4>(bitwise_xor(bitwise_and(m, reinterpret<int32x4>(float32x4_set1(-0.0f))), reinterpret<int32x4>(t)));
 
         return t;
     }
