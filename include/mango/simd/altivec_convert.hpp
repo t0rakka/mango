@@ -25,19 +25,19 @@ namespace simd {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 uint16x8_extend(uint8x16 s)
+    static inline uint16x8 extend16(uint8x16 s)
     {
         // TODO
         return s;
     }
 
-    static inline uint32x4 uint32x4_extend(uint8x16 s)
+    static inline uint32x4 extend32(uint8x16 s)
     {
         // TODO
         return s;
     }
 
-    static inline uint32x4 uint32x4_extend(uint16x8 s)
+    static inline uint32x4 extend32(uint16x8 s)
     {
         // TODO
         return s;
@@ -47,19 +47,19 @@ namespace simd {
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 int16x8_extend(int8x16 s)
+    static inline int16x8 extend16(int8x16 s)
     {
         // TODO
         return s;
     }
 
-    static inline int32x4 int32x4_extend(int8x16 s)
+    static inline int32x4 extend32(int8x16 s)
     {
         // TODO
         return s;
     }
 
-    static inline int32x4 int32x4_extend(int16x8 s)
+    static inline int32x4 extend32(int16x8 s)
     {
         // TODO
         return s;
@@ -69,22 +69,22 @@ namespace simd {
     // pack
     // -----------------------------------------------------------------
 
-    static inline uint8x16 uint8x16_pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
     {
         // TODO
     }
 
-    static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
     {
         // TODO
     }
 
-    static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)
+    static inline int8x16 pack(int16x8 a, int16x8 b)
     {
         // TODO
     }
 
-    static inline int16x8 int16x8_pack(int32x4 a, int32x4 b)
+    static inline int16x8 pack(int32x4 a, int32x4 b)
     {
         // TODO
     }

@@ -82,7 +82,7 @@ namespace detail {
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
 	    {
-		    std::memcpy(&data, &v, 32);
+		    std::memcpy(this, &v, 32);
 	    }
 
     	template <typename ScalarType, int Size, typename VectorType>
@@ -131,35 +131,35 @@ namespace detail {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline uint16x8 uint16x8_extend(uint8x16 s)
+    static inline uint16x8 extend16(uint8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
     }
 
-    static inline uint32x4 uint32x4_extend(uint8x16 s)
+    static inline uint32x4 extend32(uint8x16 s)
     {
         return _mm_cvtepu8_epi32(s);
     }
 
-    static inline uint32x4 uint32x4_extend(uint16x8 s)
+    static inline uint32x4 extend32(uint16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
     }
 
 #else
 
-    static inline uint16x8 uint16x8_extend(uint8x16 s)
+    static inline uint16x8 extend16(uint8x16 s)
     {
         return _mm_unpacklo_epi8(s, _mm_setzero_si128());
     }
 
-    static inline uint32x4 uint32x4_extend(uint8x16 s)
+    static inline uint32x4 extend32(uint8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
         return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
     }
 
-    static inline uint32x4 uint32x4_extend(uint16x8 s)
+    static inline uint32x4 extend32(uint16x8 s)
     {
         return _mm_unpacklo_epi16(s, _mm_setzero_si128());
     }
@@ -172,36 +172,36 @@ namespace detail {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline int16x8 int16x8_extend(int8x16 s)
+    static inline int16x8 extend16(int8x16 s)
     {
         return _mm_cvtepi8_epi16(s);
     }
 
-    static inline int32x4 int32x4_extend(int8x16 s)
+    static inline int32x4 extend32(int8x16 s)
     {
         return _mm_cvtepi8_epi32(s);
     }
 
-    static inline int32x4 int32x4_extend(int16x8 s)
+    static inline int32x4 extend32(int16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
     }
 
 #else
 
-    static inline int16x8 int16x8_extend(int8x16 s)
+    static inline int16x8 extend16(int8x16 s)
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi8(s, sign);
     }
 
-    static inline int32x4 int32x4_extend(int8x16 s)
+    static inline int32x4 extend32(int8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_cmpgt_epi8(_mm_setzero_si128(), s));
         return _mm_unpacklo_epi16(temp, _mm_cmpgt_epi16(_mm_setzero_si128(), temp));
     }
 
-    static inline int32x4 int32x4_extend(int16x8 s)
+    static inline int32x4 extend32(int16x8 s)
     {
         const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi16(s, sign);
@@ -213,22 +213,22 @@ namespace detail {
     // pack
     // -----------------------------------------------------------------
 
-    static inline uint8x16 uint8x16_pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
     {
         return _mm_packus_epi16(a, b);
     }
 
-    static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
     {
         return simd128_packus_epi32(a, b);
     }
 
-    static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)
+    static inline int8x16 pack(int16x8 a, int16x8 b)
     {
         return _mm_packs_epi16(a, b);
     }
 
-    static inline int16x8 int16x8_pack(int32x4 a, int32x4 b)
+    static inline int16x8 pack(int32x4 a, int32x4 b)
     {
         return _mm_packs_epi32(a, b);
     }

@@ -9,6 +9,153 @@
 
 namespace mango {
 namespace simd {
+namespace detail {
+
+	template <int bits>
+	struct reinterpret_vector;
+
+	template <>
+	struct reinterpret_vector<128>
+	{
+        uint32x4_t data;
+
+        reinterpret_vector() = default;
+
+		reinterpret_vector(int8x16 v)
+        : data(vreinterpretq_u32_s8(v))
+		{
+		}
+
+		reinterpret_vector(int16x8 v)
+        : data(vreinterpretq_u32_s16(v))
+		{
+		}
+
+		reinterpret_vector(int32x4 v)
+        : data(vreinterpretq_u32_s32(v))
+		{
+		}
+
+		reinterpret_vector(int64x2 v)
+        : data(vreinterpretq_u32_s64(v))
+		{
+		}
+
+		reinterpret_vector(uint8x16 v)
+        : data(vreinterpretq_u32_u8(v))
+		{
+		}
+
+		reinterpret_vector(uint16x8 v)
+        : data(vreinterpretq_u32_u16(v))
+		{
+		}
+
+		reinterpret_vector(uint32x4 v)
+        : data(v)
+		{
+		}
+
+		reinterpret_vector(uint64x2 v)
+        : data(vreinterpretq_u32_u64(v))
+		{
+		}
+
+		reinterpret_vector(float32x4 v)
+        : data(vreinterpretq_u32_f32(v))
+		{
+		}
+
+		reinterpret_vector(float64x2 v)
+		{
+            std::memcpy(&data, &v, 16);
+		}
+
+		operator int8x16 ()
+		{
+			return vreinterpretq_s8_u32(data);
+		}
+
+		operator int16x8 ()
+		{
+			return vreinterpretq_s16_u32(data);
+		}
+
+		operator int32x4 ()
+		{
+			return vreinterpretq_s32_u32(data);
+		}
+
+		operator int64x2 ()
+		{
+			return vreinterpretq_s64_u32(data);
+		}
+
+		operator uint8x16 ()
+		{
+			return vreinterpretq_u8_u32(data);
+		}
+
+		operator uint16x8 ()
+		{
+			return vreinterpretq_u16_u32(data);
+		}
+
+		operator uint32x4 ()
+		{
+			return data;
+		}
+
+		operator uint64x2 ()
+		{
+			return vreinterpretq_u64_u32(data);
+		}
+
+		operator float32x4 ()
+		{
+			return vreinterpretq_f32_u32(data);
+		}
+
+		operator float64x2 ()
+		{
+            float64x2 temp;
+            std::memcpy(&temp, &data, 16);
+            return temp;
+		}
+	};
+
+	template <>
+	struct reinterpret_vector<256>
+	{
+        reinterpret_vector<128> lo;
+        reinterpret_vector<128> hi;
+
+	    template <typename T>
+	    reinterpret_vector(composite_vector<T> v)
+        : lo(v.lo), hi(v.hi)
+	    {
+	    }
+
+		reinterpret_vector(float64x4 v)
+		{
+            std::memcpy(this, &v, 32);
+		}
+
+		template <typename T>
+		operator composite_vector<T> ()
+		{
+            return composite_vector<T>(lo, hi);
+		}
+
+		operator float64x4 ()
+		{
+            float64x4 temp;
+            std::memcpy(&temp, this, 32);
+            return temp;
+		}
+	};
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -18,27 +165,27 @@ namespace simd {
 	inline D reinterpret(S s)
 	{
         static_assert(sizeof(S) == sizeof(D), "Vectors must be same size.");
-        return reinterpret_cast<const D &>(s);
+		return D(detail::reinterpret_vector<S::vector_bits>(s));
 	}
 
     // -----------------------------------------------------------------
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 uint16x8_extend(uint8x16 s)
+    static inline uint16x8 extend16(uint8x16 s)
     {
 	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
         return vreinterpretq_u16_u8(vcombine_u8(a.val[0], a.val[1]));
     }
 
-    static inline uint32x4 uint32x4_extend(uint8x16 s)
+    static inline uint32x4 extend32(uint8x16 s)
     {
 	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
 	    const uint16x4x2_t b = vzip_u16(vreinterpret_u16_u8(a.val[0]), vdup_n_u16(0));
 	    return vreinterpretq_u32_u16(vcombine_u16(b.val[0], b.val[1]));
     }
 
-    static inline uint32x4 uint32x4_extend(uint16x8 s)
+    static inline uint32x4 extend32(uint16x8 s)
     {
 	    const uint16x4x2_t a = vzip_u16(vget_low_u16(s), vdup_n_u16(0));
 	    return vreinterpretq_u32_u16(vcombine_u16(a.val[0], a.val[1]));
@@ -48,7 +195,7 @@ namespace simd {
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 int16x8_extend(int8x16 s)
+    static inline int16x8 extend16(int8x16 s)
     {
         const int8x8_t low = vget_low_s8(s);
         const int8x8_t sign = vreinterpret_s8_u8(vcgt_s8(vdup_n_s8(0), low));
@@ -56,7 +203,7 @@ namespace simd {
         return vreinterpretq_s16_s8(vcombine_s8(temp.val[0], temp.val[1]));
     }
 
-    static inline int32x4 int32x4_extend(int8x16 s)
+    static inline int32x4 extend32(int8x16 s)
     {
         const int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
         const int16x4x2_t b = vzip_s16(vreinterpret_s16_s8(a.val[0]), vdup_n_s16(0));
@@ -65,7 +212,7 @@ namespace simd {
         return vsubq_s32(veorq_s32(temp, sign), sign);
     }
 
-    static inline int32x4 int32x4_extend(int16x8 s)
+    static inline int32x4 extend32(int16x8 s)
     {
         const int16x4_t low = vget_low_s16(s);
         const int16x4_t sign = vreinterpret_s16_u16(vcgt_s16(vdup_n_s16(0), low));
@@ -77,22 +224,22 @@ namespace simd {
     // pack
     // -----------------------------------------------------------------
 
-    static inline uint8x16 uint8x16_pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
     {
         return vcombine_u8(vqmovn_u16(a), vqmovn_u16(b));
     }
 
-    static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
     {
         return vcombine_u16(vqmovn_u32(a), vqmovn_u32(b));
     }
 
-    static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)
+    static inline int8x16 pack(int16x8 a, int16x8 b)
     {
         return vcombine_s8(vqmovn_s16(a), vqmovn_s16(b));
     }
 
-    static inline int16x8 int16x8_pack(int32x4 a, int32x4 b)
+    static inline int16x8 pack(int32x4 a, int32x4 b)
     {
         return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
     }
