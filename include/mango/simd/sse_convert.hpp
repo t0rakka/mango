@@ -78,11 +78,18 @@ namespace detail {
     // reinterpret
     // -----------------------------------------------------------------
 
-	template <typename D, typename S>
-	inline D reinterpret(S s)
+	template <typename D, typename S0, int S1, typename S2>
+	inline D reinterpret(hardware_vector<S0, S1, S2> s)
 	{
-        static_assert(sizeof(S) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<S::vector_bits>(s));
+        static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
+	}
+
+	template <typename D, typename S>
+	inline D reinterpret(composite_vector<S> s)
+	{
+        static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<composite_vector<S>::vector_bits>(s));
 	}
 
     // -----------------------------------------------------------------

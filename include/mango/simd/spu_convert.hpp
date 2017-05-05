@@ -14,10 +14,17 @@ namespace simd {
     // reinterpret
     // -----------------------------------------------------------------
 
-	template <typename D, typename S>
-	inline D reinterpret(S s)
+	template <typename D, typename S0, int S1, typename S2>
+	inline D reinterpret(hardware_vector<S0, S1, S2> s)
 	{
-        static_assert(sizeof(S) == sizeof(D), "Vectors must be same size.");
+        static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
+        return reinterpret_cast<const D &>(s);
+	}
+
+	template <typename D, typename S>
+	inline D reinterpret(composite_vector<S> s)
+	{
+        static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
         return reinterpret_cast<const D &>(s);
 	}
 
