@@ -458,14 +458,14 @@ namespace mango
 
         uint32 pack() const
         {
-            const simd::int32x4 temp = simd::int32x4_convert(xyzw);
+            const simd::int32x4 temp = simd::convert<simd::int32x4>(xyzw);
             return simd::pack(temp);
         }
 
         void unpack(uint32 a)
         {
             const simd::int32x4 temp = simd::unpack(a);
-            xyzw = simd::float32x4_convert(temp);
+            xyzw = simd::convert<simd::float32x4>(temp);
         }
     };
 

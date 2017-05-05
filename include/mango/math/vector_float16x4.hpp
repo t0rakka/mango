@@ -21,12 +21,12 @@ namespace mango
         }
 
         explicit Vector(const Vector<float, 4>& v)
-        : xyzw(simd::float16x4_convert(v.xyzw))
+        : xyzw(simd::convert<simd::float16x4>(v.xyzw))
         {
         }
 
         explicit Vector(simd::float32x4 v)
-        : xyzw(simd::float16x4_convert(v))
+        : xyzw(simd::convert<simd::float16x4>(v))
         {
         }
 
@@ -41,13 +41,13 @@ namespace mango
 
         Vector& operator = (const Vector<float, 4>& v)
         {
-            xyzw = simd::float16x4_convert(v.xyzw);
+            xyzw = simd::convert<simd::float16x4>(v.xyzw);
             return *this;
         }
 
         Vector& operator = (simd::float32x4 v)
         {
-            xyzw = simd::float16x4_convert(v);
+            xyzw = simd::convert<simd::float16x4>(v);
             return *this;
         }
 
@@ -65,7 +65,7 @@ namespace mango
 
         operator Vector<float, 4> () const
         {
-            return Vector<float, 4>(simd::float32x4_convert(xyzw));
+            return Vector<float, 4>(simd::convert<simd::float32x4>(xyzw));
         }
 
         operator const simd::float16x4& () const
