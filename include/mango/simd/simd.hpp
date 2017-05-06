@@ -96,6 +96,13 @@ namespace simd {
         };
 
         T lo, hi;
+
+        composite_vector() = default;
+
+        composite_vector(T lo, T hi)
+        : lo(lo), hi(hi)
+        {
+        }
     };
 
 } // namespace simd

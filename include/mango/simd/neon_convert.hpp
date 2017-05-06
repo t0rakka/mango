@@ -9,59 +9,213 @@
 
 namespace mango {
 namespace simd {
+namespace detail {
+
+	template <int bits>
+	struct reinterpret_vector;
+
+	template <>
+	struct reinterpret_vector<128>
+	{
+        uint32x4_t data;
+
+        reinterpret_vector() = default;
+
+		reinterpret_vector(int8x16 v)
+        : data(vreinterpretq_u32_s8(v))
+		{
+		}
+
+		reinterpret_vector(int16x8 v)
+        : data(vreinterpretq_u32_s16(v))
+		{
+		}
+
+		reinterpret_vector(int32x4 v)
+        : data(vreinterpretq_u32_s32(v))
+		{
+		}
+
+		reinterpret_vector(int64x2 v)
+        : data(vreinterpretq_u32_s64(v))
+		{
+		}
+
+		reinterpret_vector(uint8x16 v)
+        : data(vreinterpretq_u32_u8(v))
+		{
+		}
+
+		reinterpret_vector(uint16x8 v)
+        : data(vreinterpretq_u32_u16(v))
+		{
+		}
+
+		reinterpret_vector(uint32x4 v)
+        : data(v)
+		{
+		}
+
+		reinterpret_vector(uint64x2 v)
+        : data(vreinterpretq_u32_u64(v))
+		{
+		}
+
+		reinterpret_vector(float32x4 v)
+        : data(vreinterpretq_u32_f32(v))
+		{
+		}
+
+		reinterpret_vector(float64x2 v)
+		{
+            std::memcpy(&data, &v, 16);
+		}
+
+		operator int8x16 ()
+		{
+			return vreinterpretq_s8_u32(data);
+		}
+
+		operator int16x8 ()
+		{
+			return vreinterpretq_s16_u32(data);
+		}
+
+		operator int32x4 ()
+		{
+			return vreinterpretq_s32_u32(data);
+		}
+
+		operator int64x2 ()
+		{
+			return vreinterpretq_s64_u32(data);
+		}
+
+		operator uint8x16 ()
+		{
+			return vreinterpretq_u8_u32(data);
+		}
+
+		operator uint16x8 ()
+		{
+			return vreinterpretq_u16_u32(data);
+		}
+
+		operator uint32x4 ()
+		{
+			return data;
+		}
+
+		operator uint64x2 ()
+		{
+			return vreinterpretq_u64_u32(data);
+		}
+
+		operator float32x4 ()
+		{
+			return vreinterpretq_f32_u32(data);
+		}
+
+		operator float64x2 ()
+		{
+            float64x2 temp;
+            std::memcpy(&temp, &data, 16);
+            return temp;
+		}
+	};
+
+	template <>
+	struct reinterpret_vector<256>
+	{
+        reinterpret_vector<128> lo;
+        reinterpret_vector<128> hi;
+
+	    template <typename T>
+	    reinterpret_vector(composite_vector<T> v)
+        : lo(v.lo), hi(v.hi)
+	    {
+	    }
+
+		reinterpret_vector(float64x4 v)
+		{
+            std::memcpy(this, &v, 32);
+		}
+
+		template <typename T>
+		operator composite_vector<T> ()
+		{
+            return composite_vector<T>(lo, hi);
+		}
+
+		operator float64x4 ()
+		{
+            float64x4 temp;
+            std::memcpy(&temp, this, 32);
+            return temp;
+		}
+	};
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
     // -----------------------------------------------------------------
 
-    static inline int32x4 int32x4_reinterpret(uint32x4 s)
-    {
-        return vreinterpretq_s32_u32(s);
-    }
+	template <typename D, typename S0, int S1, typename S2>
+	inline D reinterpret(hardware_vector<S0, S1, S2> s)
+	{
+        static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
+	}
 
-    static inline int32x4 int32x4_reinterpret(float32x4 s)
-    {
-        return vreinterpretq_s32_f32(s);
-    }
+	template <typename D, typename S0, int S1>
+	inline D reinterpret(scalar_vector<S0, S1> s)
+	{
+        static_assert(sizeof(scalar_vector<S0, S1>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<scalar_vector<S0, S1>::vector_bits>(s));
+	}
 
-    static inline uint32x4 uint32x4_reinterpret(int32x4 s)
-    {
-        return vreinterpretq_u32_s32(s);
-    }
+	template <typename D, typename S>
+	inline D reinterpret(composite_vector<S> s)
+	{
+        static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<composite_vector<S>::vector_bits>(s));
+	}
 
-    static inline uint32x4 uint32x4_reinterpret(float32x4 s)
-    {
-        return vreinterpretq_u32_f32(s);
-    }
+    // -----------------------------------------------------------------
+    // convert
+    // -----------------------------------------------------------------
 
-    static inline float32x4 float32x4_reinterpret(int32x4 s)
-    {
-        return vreinterpretq_f32_s32(s);
-    }
+	template <typename D, typename S>
+	inline D convert(S)
+	{
+		D::undefined_conversion();
+	}
 
-    static inline float32x4 float32x4_reinterpret(uint32x4 s)
-    {
-        return vreinterpretq_f32_u32(s);
-    }
+	template <typename D, typename S>
+	inline D truncate(S)
+	{
+		D::undefined_conversion();
+	}
 
     // -----------------------------------------------------------------
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 uint16x8_extend(uint8x16 s)
+    static inline uint16x8 extend16(uint8x16 s)
     {
 	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
         return vreinterpretq_u16_u8(vcombine_u8(a.val[0], a.val[1]));
     }
 
-    static inline uint32x4 uint32x4_extend(uint8x16 s)
+    static inline uint32x4 extend32(uint8x16 s)
     {
 	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
 	    const uint16x4x2_t b = vzip_u16(vreinterpret_u16_u8(a.val[0]), vdup_n_u16(0));
 	    return vreinterpretq_u32_u16(vcombine_u16(b.val[0], b.val[1]));
     }
 
-    static inline uint32x4 uint32x4_extend(uint16x8 s)
+    static inline uint32x4 extend32(uint16x8 s)
     {
 	    const uint16x4x2_t a = vzip_u16(vget_low_u16(s), vdup_n_u16(0));
 	    return vreinterpretq_u32_u16(vcombine_u16(a.val[0], a.val[1]));
@@ -71,7 +225,7 @@ namespace simd {
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 int16x8_extend(int8x16 s)
+    static inline int16x8 extend16(int8x16 s)
     {
         const int8x8_t low = vget_low_s8(s);
         const int8x8_t sign = vreinterpret_s8_u8(vcgt_s8(vdup_n_s8(0), low));
@@ -79,7 +233,7 @@ namespace simd {
         return vreinterpretq_s16_s8(vcombine_s8(temp.val[0], temp.val[1]));
     }
 
-    static inline int32x4 int32x4_extend(int8x16 s)
+    static inline int32x4 extend32(int8x16 s)
     {
         const int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
         const int16x4x2_t b = vzip_s16(vreinterpret_s16_s8(a.val[0]), vdup_n_s16(0));
@@ -88,7 +242,7 @@ namespace simd {
         return vsubq_s32(veorq_s32(temp, sign), sign);
     }
 
-    static inline int32x4 int32x4_extend(int16x8 s)
+    static inline int32x4 extend32(int16x8 s)
     {
         const int16x4_t low = vget_low_s16(s);
         const int16x4_t sign = vreinterpret_s16_u16(vcgt_s16(vdup_n_s16(0), low));
@@ -100,22 +254,22 @@ namespace simd {
     // pack
     // -----------------------------------------------------------------
 
-    static inline uint8x16 uint8x16_pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
     {
         return vcombine_u8(vqmovn_u16(a), vqmovn_u16(b));
     }
 
-    static inline uint16x8 uint16x8_pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
     {
         return vcombine_u16(vqmovn_u32(a), vqmovn_u32(b));
     }
 
-    static inline int8x16 int8x16_pack(int16x8 a, int16x8 b)
+    static inline int8x16 pack(int16x8 a, int16x8 b)
     {
         return vcombine_s8(vqmovn_s16(a), vqmovn_s16(b));
     }
 
-    static inline int16x8 int16x8_pack(int32x4 a, int32x4 b)
+    static inline int16x8 pack(int32x4 a, int32x4 b)
     {
         return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
     }
@@ -179,12 +333,14 @@ namespace simd {
         return result;
     }
 
-    static inline float32x4 float32x4_convert(uint32x4 s)
+    template <>
+    inline float32x4 convert<float32x4>(uint32x4 s)
     {
         return vcvtq_f32_u32(s);
     }
 
-    static inline float32x4 float32x4_convert(int32x4 s)
+    template <>
+    inline float32x4 convert<float32x4>(int32x4 s)
     {
         return vcvtq_f32_s32(s);
     }
@@ -194,31 +350,36 @@ namespace simd {
     // ARMv8 supports rouding float-to-int conversion ...
     // ... but clang doesn't
 
-    static inline uint32x4 uint32x4_convert(float32x4 s)
+    template <>
+    inline uint32x4 convert<uint32x4>(float32x4 s)
     {
         return vcvtnq_u32_f32(s);
     }
 
-    static inline int32x4 int32x4_convert(float32x4 s)
+    template <>
+    inline int32x4 convert<int32x4>(float32x4 s)
     {
         return vcvtnq_s32_f32(s);
     }
 
 #else
 
-    static inline uint32x4 uint32x4_convert(float32x4 s)
+    template <>
+    inline uint32x4 convert<uint32x4>(float32x4 s)
     {
         return vcvtq_u32_f32(round(s));
     }
 
-    static inline int32x4 int32x4_convert(float32x4 s)
+    template <>
+    inline int32x4 convert<int32x4>(float32x4 s)
     {
         return vcvtq_s32_f32(round(s));
     }
 
 #endif
 
-    static inline int32x4 int32x4_truncate(float32x4 s)
+    template <>
+    inline int32x4 truncate<int32x4>(float32x4 s)
     {
         return vcvtq_s32_f32(s);
     }
@@ -267,7 +428,8 @@ namespace simd {
         return v;
     }
 
-    static inline float64x4 float64x4_convert(int32x4 s)
+    template <>
+    inline float64x4 convert<float64x4>(int32x4 s)
     {
         float64x4 v;
         v[0] = double(get_x(s));
@@ -277,7 +439,8 @@ namespace simd {
         return v;
     }
 
-    static inline float64x4 float64x4_convert(float32x4 s)
+    template <>
+    inline float64x4 convert<float64x4>(float32x4 s)
     {
         float64x4 v;
         v[0] = double(get_x(s));
@@ -287,7 +450,8 @@ namespace simd {
         return v;
     }
 
-    static inline int32x4 int32x4_convert(float64x4 s)
+    template <>
+    inline int32x4 convert<int32x4>(float64x4 s)
     {
         int x = int(s[0] + 0.5);
         int y = int(s[1] + 0.5);
@@ -296,7 +460,8 @@ namespace simd {
         return int32x4_set4(x, y, z, w);
     }
 
-    static inline float32x4 float32x4_convert(float64x4 s)
+    template <>
+    inline float32x4 convert<float32x4>(float64x4 s)
     {
         float x = float(s[0]);
         float y = float(s[1]);
@@ -305,7 +470,8 @@ namespace simd {
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float64x4 float64x4_convert(uint32x4 s)
+    template <>
+    inline float64x4 convert<float64x4>(uint32x4 s)
     {
         float64x4 v;
         v[0] = u32_to_f64(get_x(s));
@@ -315,7 +481,8 @@ namespace simd {
         return v;
     }
 
-    static inline uint32x4 uint32x4_convert(float64x4 d)
+    template <>
+    inline uint32x4 convert<uint32x4>(float64x4 d)
     {
         uint32 x = f64_to_u32(d[0]);
         uint32 y = f64_to_u32(d[1]);
@@ -324,7 +491,8 @@ namespace simd {
         return uint32x4_set4(x, y, z, w);
     }
 
-    static inline int32x4 int32x4_truncate(float64x4 s)
+    template <>
+    inline int32x4 truncate<int32x4>(float64x4 s)
     {
         int x = int(s[0]);
         int y = int(s[1]);
@@ -339,19 +507,22 @@ namespace simd {
 
 #ifdef MANGO_ENABLE_FP16
 
-    static inline float32x4 float32x4_convert(float16x4 s)
+    template <>
+    inline float32x4 convert<float32x4>(float16x4 s)
     {
         return vcvt_f32_f16(s);
     }
 
-    static inline float16x4 float16x4_convert(float32x4 s)
+    template <>
+    inline float16x4 convert<float16x4>(float32x4 s)
     {
         return vcvt_f16_f32(s);
     }
 
 #else
 
-    static inline float32x4 float32x4_convert(float16x4 s)
+    template <>
+    inline float32x4 convert<float32x4>(float16x4 s)
     {
         float x = s[0];
         float y = s[1];
@@ -360,7 +531,8 @@ namespace simd {
         return float32x4_set4(x, y, z, w);
     }
 
-    static inline float16x4 float16x4_convert(float32x4 s)
+    template <>
+    inline float16x4 convert<float16x4>(float32x4 s)
     {
         float16x4 v;
         v[0] = get_x(s);

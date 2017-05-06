@@ -319,7 +319,7 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 //-------------------------------------------------------------------------------------
 
 static const simd::float32x4 g_XMIdentityR3 = simd::float32x4_set4(0.0f, 0.0f, 0.0f, 1.0f);
-static const simd::float32x4 g_XMSelect1110 = simd::float32x4_reinterpret(simd::int32x4_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
+static const simd::float32x4 g_XMSelect1110 = simd::reinterpret<simd::float32x4>(simd::int32x4_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
 
     struct XMU565
     {
@@ -333,7 +333,7 @@ static const simd::float32x4 g_XMSelect1110 = simd::float32x4_reinterpret(simd::
         simd::int32x4 s = simd::int32x4_set1(data);
         simd::int32x4 c = simd::bitwise_and(s, simd::int32x4_set4(0x1f << 11, 0x3f << 5, 0x1f, 0));
         c = simd::bitwise_or(c, simd::int32x4_set4(0, 0, 0, 1));
-        float4 v = simd::float32x4_convert(c);
+        float4 v = simd::convert<simd::float32x4>(c);
         return v * scale;
 #else
         static const XMVECTOR scale(1.f/31.f, 1.f/63.f, 1.f/31.f, 1.f);
@@ -1192,7 +1192,7 @@ namespace
             for (int x = 0; x < 4; ++x)
             {
                 const simd::int32x4 v = simd::unpack(image[x]);
-                temp[y * 4 + x] = simd::float32x4_convert(v);
+                temp[y * 4 + x] = simd::convert<simd::float32x4>(v);
             }
         }
     }

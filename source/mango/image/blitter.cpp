@@ -819,11 +819,11 @@ namespace
         INIT_POINTERS(uint32, simd::float16x4);
         for (int x = 0; x < count; ++x)
         {
-            simd::float32x4 f = simd::float32x4_convert(s[x]);
+            simd::float32x4 f = simd::convert<simd::float32x4>(s[x]);
             f = simd::clamp(f, 0.0f, 1.0f);
             f = simd::mul(f, 255.0f);
             f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::int32x4_convert(f);
+            simd::int32x4 i = simd::convert<simd::int32x4>(f);
             d[x] = simd::pack(i);
         }
     }
@@ -833,12 +833,12 @@ namespace
         INIT_POINTERS(uint32, simd::float16x4);
         for (int x = 0; x < count; ++x)
         {
-            simd::float32x4 f = simd::float32x4_convert(s[x]);
+            simd::float32x4 f = simd::convert<simd::float32x4>(s[x]);
             f = simd::shuffle<2, 1, 0, 3>(f);
             f = simd::clamp(f, 0.0f, 1.0f);
             f = simd::mul(f, 255.0f);
             f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::int32x4_convert(f);
+            simd::int32x4 i = simd::convert<simd::int32x4>(f);
             d[x] = simd::pack(i);
         }
     }
@@ -852,7 +852,7 @@ namespace
             f = simd::clamp(f, 0.0f, 1.0f);
             f = simd::mul(f, 255.0f);
             f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::int32x4_convert(f);
+            simd::int32x4 i = simd::convert<simd::int32x4>(f);
             d[x] = simd::pack(i);
         }
     }
@@ -867,7 +867,7 @@ namespace
             f = simd::clamp(f, 0.0f, 1.0f);
             f = simd::mul(f, 255.0f);
             f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::int32x4_convert(f);
+            simd::int32x4 i = simd::convert<simd::int32x4>(f);
             d[x] = simd::pack(i);
         }
     }
@@ -877,7 +877,7 @@ namespace
         INIT_POINTERS(simd::float16x4, simd::float32x4);
         for (int x = 0; x < count; ++x)
         {
-            d[x] = simd::float16x4_convert(s[x]);
+            d[x] = simd::convert<simd::float16x4>(s[x]);
         }
     }
 
@@ -886,7 +886,7 @@ namespace
         INIT_POINTERS(simd::float32x4, simd::float16x4);
         for (int x = 0; x < count; ++x)
         {
-            d[x] = simd::float32x4_convert(s[x]);
+            d[x] = simd::convert<simd::float32x4>(s[x]);
         }
     }
 
