@@ -423,7 +423,7 @@ namespace simd {
 
 #if __ARM_ARCH >= 8 && !defined(MANGO_COMPILER_CLANG)
 
-    // Disabled with clang until supported in NDK
+    // Disabled with clang until supported in NDK (tested last with r14b)
 
     static inline float32x4 round(float32x4 s)
     {

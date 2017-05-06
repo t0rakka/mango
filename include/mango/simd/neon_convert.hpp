@@ -345,10 +345,7 @@ namespace detail {
         return vcvtq_f32_s32(s);
     }
 
-#if __ARM_ARCH >= 8 && !defined(MANGO_COMPILER_CLANG)
-
-    // ARMv8 supports rouding float-to-int conversion ...
-    // ... but clang doesn't
+#if __ARM_ARCH >= 8 //&& !defined(MANGO_COMPILER_CLANG)
 
     template <>
     inline uint32x4 convert<uint32x4>(float32x4 s)
