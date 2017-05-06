@@ -7,106 +7,103 @@
 #include "configure.hpp"
 #include "endian.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace detail {
 
-    namespace internal
+    // --------------------------------------------------------------
+    // Pointer
+    // --------------------------------------------------------------
+
+    template <typename Type>
+    class Pointer
     {
+    protected:
+        Type* p;
 
-        // --------------------------------------------------------------
-        // Pointer
-        // --------------------------------------------------------------
-
-        template <typename Type>
-        class Pointer
+    public:
+        Pointer(const Pointer& pointer)
+        : p(pointer.p)
         {
-        protected:
-            Type* p;
-
-        public:
-            Pointer(const Pointer& pointer)
-            : p(pointer.p)
-            {
-            }
-
-            Pointer(Type* address)
-            : p(address)
-            {
-            }
-
-            ~Pointer()
-            {
-            }
-
-            const Pointer& operator = (Type* address)
-            {
-                p = address;
-                return *this;
-            }
-
-            operator Type* () const
-            {
-                return p;
-            }
-
-            Type& operator * () const
-            {
-                return *p;
-            }
-
-            Type* operator ++ ()
-            {
-                return ++p;
-            }
-
-            Type* operator ++ (int)
-            {
-                return p++;
-            }
-
-            Type* operator -- ()
-            {
-                return --p;
-            }
-
-            Type* operator -- (int)
-            {
-                return p--;
-            }
-
-            Type* operator += (size_t count)
-            {
-                p += count;
-                return p;
-            }
-
-            Type* operator -= (size_t count)
-            {
-                p -= count;
-                return p;
-            }
-        };
-
-        template <typename Type>
-        ptrdiff_t operator - (const Pointer<Type>& a, const Pointer<Type>& b)
-        {
-            return static_cast<const Type*>(a) - static_cast<const Type*>(b);
         }
 
-    } // namespace internal
+        Pointer(Type* address)
+        : p(address)
+        {
+        }
+
+        ~Pointer()
+        {
+        }
+
+        const Pointer& operator = (Type* address)
+        {
+            p = address;
+            return *this;
+        }
+
+        operator Type* () const
+        {
+            return p;
+        }
+
+        Type& operator * () const
+        {
+            return *p;
+        }
+
+        Type* operator ++ ()
+        {
+            return ++p;
+        }
+
+        Type* operator ++ (int)
+        {
+            return p++;
+        }
+
+        Type* operator -- ()
+        {
+            return --p;
+        }
+
+        Type* operator -- (int)
+        {
+            return p--;
+        }
+
+        Type* operator += (size_t count)
+        {
+            p += count;
+            return p;
+        }
+
+        Type* operator -= (size_t count)
+        {
+            p -= count;
+            return p;
+        }
+    };
+
+    template <typename Type>
+    ptrdiff_t operator - (const Pointer<Type>& a, const Pointer<Type>& b)
+    {
+        return static_cast<const Type*>(a) - static_cast<const Type*>(b);
+    }
+
+} // namespace detail
 
     // --------------------------------------------------------------
     // LittleEndianPointer
     // --------------------------------------------------------------
 
-    class LittleEndianPointer : public internal::Pointer<uint8>
+    class LittleEndianPointer : public detail::Pointer<uint8>
     {
     protected:
-        using internal::Pointer<uint8>::p;
+        using detail::Pointer<uint8>::p;
 
     public:
         LittleEndianPointer(uint8* address)
-        : internal::Pointer<uint8>(address)
+        : detail::Pointer<uint8>(address)
         {
         }
 
@@ -222,14 +219,14 @@ namespace mango
     // BigEndianPointer
     // --------------------------------------------------------------
 
-    class BigEndianPointer : public internal::Pointer<uint8>
+    class BigEndianPointer : public detail::Pointer<uint8>
     {
     protected:
-        using internal::Pointer<uint8>::p;
+        using detail::Pointer<uint8>::p;
 
     public:
         BigEndianPointer(uint8* address)
-        : internal::Pointer<uint8>(address)
+        : detail::Pointer<uint8>(address)
         {
         }
 

@@ -47,7 +47,7 @@ namespace mango
         }
     };
 
-    namespace internal
+    namespace detail
     {
 
         // --------------------------------------------------------------
@@ -287,7 +287,7 @@ namespace mango
             }
         };
 
-    } // namespace internal
+    } // namespace detail
 
     // --------------------------------------------------------------
     // EndianStream
@@ -295,13 +295,13 @@ namespace mango
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    typedef internal::SameEndianStream LittleEndianStream;
-    typedef internal::SwapEndianStream BigEndianStream;
+    typedef detail::SameEndianStream LittleEndianStream;
+    typedef detail::SwapEndianStream BigEndianStream;
 
 #else
 
-    typedef internal::SwapEndianStream LittleEndianStream;
-    typedef internal::SameEndianStream BigEndianStream;
+    typedef detail::SwapEndianStream LittleEndianStream;
+    typedef detail::SameEndianStream BigEndianStream;
 
 #endif
 
