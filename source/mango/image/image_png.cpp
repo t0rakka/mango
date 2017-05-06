@@ -83,11 +83,11 @@ namespace
 
     enum ColorType
     {
-        COLOR_TYPE_I = 0,
-        COLOR_TYPE_RGB = 2,
+        COLOR_TYPE_I       = 0,
+        COLOR_TYPE_RGB     = 2,
         COLOR_TYPE_PALETTE = 3,
-        COLOR_TYPE_IA = 4,
-        COLOR_TYPE_RGBA = 6,
+        COLOR_TYPE_IA      = 4,
+        COLOR_TYPE_RGBA    = 6,
     };
 
     struct Chromaticity
@@ -481,12 +481,14 @@ namespace
             header.compression = TextureCompression::NONE;
 
             // force alpha channel on when transparency is enabled
-            int type = m_color_type;
-            if (m_transparent_enable && type != COLOR_TYPE_PALETTE)
-                type |= 4;
+            int color_type = m_color_type;
+            if (m_transparent_enable && color_type != COLOR_TYPE_PALETTE)
+            {
+                color_type |= 4;
+            }
 
             // select decoding format
-            switch (m_color_type)
+            switch (color_type)
             {
                 case COLOR_TYPE_I:
                     header.format = m_bit_depth <= 8 ?
@@ -1225,7 +1227,7 @@ namespace
             {
                 buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
             }
-            
+
             // allocate output buffer
             print("  buffer bytes: %d\n", buffer_size);
             uint8* buffer = new uint8[buffer_size];
