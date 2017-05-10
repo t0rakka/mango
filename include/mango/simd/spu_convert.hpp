@@ -182,6 +182,14 @@ namespace simd {
     }
 
     template <>
+    inline float32x2 convert<float32x2>(float64x2 s)
+    {
+        float x = float(s[0]);
+        float y = float(s[1]);
+        return float32x2_set2(x, y);
+    }
+
+    template <>
     inline float32x4 convert<float32x4>(uint32x4 s)
     {
         return spu_convtf(s, 0);
@@ -212,6 +220,42 @@ namespace simd {
         const vec_int4 si = spu_convts(s, 0);
         const vec_float4 st = spu_sel(s, spu_convtf(si, 0), inrange);
         return spu_convts(st, 0);
+    }
+
+    template <>
+    inline int32x8 convert<int32x8>(float32x8 s)
+    {
+        int32x8 result;
+        result.lo = convert<int32x4>(s.lo);
+        result.hi = convert<int32x4>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(int32x8 s)
+    {
+        float32x8 result;
+        result.lo = convert<float32x4>(s.lo);
+        result.hi = convert<float32x4>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline uint32x8 convert<uint32x8>(float32x8 s)
+    {
+        uint32x8 result;
+        result.lo = convert<uint32x4>(s.lo);
+        result.hi = convert<uint32x4>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(uint32x8 s)
+    {
+        float32x8 result;
+        result.lo = convert<float32x4>(s.lo);
+        result.hi = convert<float32x4>(s.hi);
+        return result;
     }
 
     // -----------------------------------------------------------------
@@ -256,6 +300,14 @@ namespace simd {
         v[2] = b[0];
         v[3] = b[1];
         return v;
+    }
+
+    template <>
+    inline float64x2 convert<float64x2>(float32x2 s)
+    {
+        double x = s[0];
+        double y = s[1];
+        return float64x2_set2(x, y);
     }
 
     template <>

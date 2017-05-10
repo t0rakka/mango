@@ -323,6 +323,15 @@ namespace detail {
     }
 
     template <>
+    inline float32x2 convert<float32x2>(float64x2 s)
+    {
+        float32x4 temp = _mm_cvtpd_ps(s);
+        float x = get_x(temp);
+        float y = get_y(temp);
+        return float32x2_set2(x, y);
+    }
+
+    template <>
     inline float32x4 convert<float32x4>(uint32x4 s)
     {
         const __m128i mask = _mm_set1_epi32(0x0000ffff);
@@ -361,6 +370,79 @@ namespace detail {
         return _mm_cvttps_epi32(s);
     }
 
+#if defined(MANGO_ENABLE_AVX2)
+
+    template <>
+    inline int32x8 convert<int32x8>(float32x8 s)
+    {
+        return _mm256_cvtps_epi32(s);
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(int32x8 s)
+    {
+        return _mm256_cvtepi32_ps(s);
+    }
+
+    template <>
+    inline uint32x8 convert<uint32x8>(float32x8 s)
+    {
+	    __m256 x2 = _mm256_castsi256_ps(_mm256_set1_epi32(0x4f000000));
+	    __m256 x1 = _mm256_cmp_ps(x2, s, 2);
+  	    __m256i x0 = _mm256_cvtps_epi32(_mm256_sub_ps(s, _mm256_and_ps(x2, x1)));
+  	    return _mm256_or_si256(x0, _mm256_slli_epi32(_mm256_castps_si256(x1), 31));
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(uint32x8 s)
+    {
+        const __m256i mask = _mm256_set1_epi32(0x0000ffff);
+        const __m256i onep39 = _mm256_set1_epi32(0x53000000);
+        const __m256i x0 = _mm256_or_si256(_mm256_srli_epi32(s, 16), onep39);
+        const __m256i x1 = _mm256_and_si256(s, mask);
+        const __m256 f1 = _mm256_cvtepi32_ps(x1);
+        const __m256 f0 = _mm256_sub_ps(_mm256_castsi256_ps(x0), _mm256_castsi256_ps(onep39));
+        return _mm256_add_ps(f0, f1);
+    }
+
+#else
+
+    template <>
+    inline int32x8 convert<int32x8>(float32x8 s)
+    {
+        int32x8 result;
+        result.lo = convert<int32x4>(get_low(s));
+        result.hi = convert<int32x4>(get_high(s));
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(int32x8 s)
+    {
+        float32x4 lo = convert<float32x4>(s.lo);
+        float32x4 hi = convert<float32x4>(s.hi);
+        return combine(lo, hi);
+    }
+
+    template <>
+    inline uint32x8 convert<uint32x8>(float32x8 s)
+    {
+        uint32x8 result;
+        result.lo = convert<uint32x4>(get_low(s));
+        result.hi = convert<uint32x4>(get_high(s));
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(uint32x8 s)
+    {
+        float32x4 lo = convert<float32x4>(s.lo);
+        float32x4 hi = convert<float32x4>(s.hi);
+        return combine(lo, hi);
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // float64
     // -----------------------------------------------------------------
@@ -388,6 +470,15 @@ namespace detail {
     static inline float64x4 combine(float64x2 a, float64x2 b)
     {
         return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
+    }
+
+    template <>
+    inline float64x2 convert<float64x2>(float32x2 s)
+    {
+        float x = s[0];
+        float y = s[1];
+        const __m128 temp = _mm_setr_ps(x, y, x, y);
+        return _mm_cvtps_pd(temp);
     }
 
     template <>
@@ -441,8 +532,6 @@ namespace detail {
         v = _mm256_sub_pd(v, bias);
         return v;
     }
-
-    #undef simd_mm256_set_m128i
 
 #endif
 

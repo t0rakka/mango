@@ -228,6 +228,15 @@ namespace simd {
     }
 
     template <>
+    inline float32x2 convert<float32x2>(float64x2 s)
+    {
+        float32x2 v;
+        v[0] = float(s[0]);
+        v[1] = float(s[1]);
+        return v;
+    }
+
+    template <>
     inline float32x4 convert<float32x4>(uint32x4 s)
     {
         float32x4 v;
@@ -282,6 +291,42 @@ namespace simd {
         return v;
     }
 
+    template <>
+    inline int32x8 convert<int32x8>(float32x8 s)
+    {
+        int32x8 result;
+        result.lo = convert<int32x4>(s.lo);
+        result.hi = convert<int32x4>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(int32x8 s)
+    {
+        float32x8 result;
+        result.lo = convert<float32x4>(s.lo);
+        result.hi = convert<float32x4>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline uint32x8 convert<uint32x8>(float32x8 s)
+    {
+        uint32x8 result;
+        result.lo = convert<uint32x4>(s.lo);
+        result.hi = convert<uint32x4>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(uint32x8 s)
+    {
+        float32x8 result;
+        result.lo = convert<float32x4>(s.lo);
+        result.hi = convert<float32x4>(s.hi);
+        return result;
+    }
+
     // -----------------------------------------------------------------
     // float64
     // -----------------------------------------------------------------
@@ -327,13 +372,22 @@ namespace simd {
     }
 
     template <>
+    inline float64x2 convert<float64x2>(float32x2 s)
+    {
+        float64x2 v;
+        v[0] = s[0];
+        v[1] = s[1];
+        return v;
+    }
+
+    template <>
     inline float64x4 convert<float64x4>(int32x4 s)
     {
         float64x4 v;
-        v[0] = double(get_x(s));
-        v[1] = double(get_y(s));
-        v[2] = double(get_z(s));
-        v[3] = double(get_w(s));
+        v[0] = double(s[0]);
+        v[1] = double(s[1]);
+        v[2] = double(s[2]);
+        v[3] = double(s[3]);
         return v;
     }
 
@@ -341,10 +395,10 @@ namespace simd {
     inline float64x4 convert<float64x4>(float32x4 s)
     {
         float64x4 v;
-        v[0] = double(get_x(s));
-        v[1] = double(get_y(s));
-        v[2] = double(get_z(s));
-        v[3] = double(get_w(s));
+        v[0] = double(s[0]);
+        v[1] = double(s[1]);
+        v[2] = double(s[2]);
+        v[3] = double(s[3]);
         return v;
     }
 
@@ -369,13 +423,13 @@ namespace simd {
     }
 
     template <>
-    inline float64x4 convert<float64x4>(uint32x4 ui)
+    inline float64x4 convert<float64x4>(uint32x4 u)
     {
         float64x4 v;
-        v[0] = u32_to_f64(get_x(ui));
-        v[1] = u32_to_f64(get_y(ui));
-        v[2] = u32_to_f64(get_z(ui));
-        v[3] = u32_to_f64(get_w(ui));
+        v[0] = u32_to_f64(u[0]);
+        v[1] = u32_to_f64(u[1]);
+        v[2] = u32_to_f64(u[2]);
+        v[3] = u32_to_f64(u[3]);
         return v;
     }
 
