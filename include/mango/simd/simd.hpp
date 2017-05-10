@@ -72,12 +72,12 @@ namespace simd {
 
         ScalarType & operator [] (int index)
         {
-            return reinterpret_cast<ScalarType *>(this)[index];
+            return data[index];
         }
 
         const ScalarType & operator [] (int index) const
         {
-            return reinterpret_cast<const ScalarType *>(this)[index];
+            return data[index];
         }
     };
 
