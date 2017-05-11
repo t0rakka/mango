@@ -1107,41 +1107,44 @@ namespace mango
 
 #if defined(MANGO_ENABLE_SIMD)
 
-    float4 srgb_encode(float4 n)
+    static inline float32x4 pow24(simd::float32x4 v)
     {
-        static const float4 cutoff(0.0031308f);
-        static const float4 linear(12.92f);
-        static const float4 scale(1.055f);
-        static const float4 bias(0.055f);
-        static const float4 gamma(1.0f / 2.4f);
-        static const float4 zero(0.0f);
-        static const float4 one(1.0f);
-        static simd::float32x4 alpha_mask = simd::reinterpret<simd::float32x4>(simd::int32x4_set4(0, 0, 0, 0xffffffff));
-
-        float4 s = clamp(n, zero, one);
-        float4 a = s * linear;
-        float4 b = scale * pow(s, gamma) - bias;
-        float4 c = select(s < cutoff, a, b);
-
-        // pass-through alpha: float4(c.rgb, n.w)
-        return simd::select(alpha_mask, n, c);
+        int32x4 i = simd::reinterpret<simd::int32x4>(v);
+        i = (i >> 2) + (i >> 4);
+        i += (i >> 4);
+        i += (i >> 8);
+        i += 0x2a514d80;
+        simd::int32x4 is = i;
+        float32x4 s = simd::reinterpret<simd::float32x4>(is);
+        s = 0.3332454f * (2.0f * s + float32x4(v) / (s * s));
+        return s * sqrt(sqrt(s));
     }
 
-    float4 srgb_decode(float4 s)
+    static inline float32x4 root5(simd::float32x4 v)
     {
-        static const float4 cutoff(0.04045f);
-        static const float4 linear(1.f / 12.92f);
-        static const float4 scale(1.f / 1.055f);
-        static const float4 bias(0.055f);
-        static const float4 gamma(2.4f);
-        static simd::float32x4 alpha_mask = simd::reinterpret<simd::float32x4>(simd::int32x4_set4(0, 0, 0, 0xffffffff));
+        int32x4 i = simd::reinterpret<simd::int32x4>(v);
+        int32x4 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
+        i = 0x32c9af22 + d;
+        simd::int32x4 is = i;
+        float32x4 f = simd::reinterpret<simd::float32x4>(is);
+        float32x4 s = f * f;
+        f -= (f - v / (s * s)) * 0.2f;
+        return f;
+    }
 
-        float4 a = s * linear;
-        float4 b = pow((s + bias) * scale, gamma);
-        float4 c = select(s <= cutoff, a, b);
+    float4 srgb_encode(float4 linear)
+    {
+        float32x4 a = linear * 12.92f;
+        float32x4 b = 1.055f * pow24(linear) - 0.055f;
+        return select(linear <= float32x4(0.0031308f), a, b);
+    }
 
-        // pass-through alpha: float4(c.rgb, s.w)
-        return simd::select(alpha_mask, s, c);
+    float4 srgb_decode(float4 curve)
+    {
+        float32x4 a = curve * (1.0f / 12.92f);
+        float32x4 b = (curve * (1.f / 1.055f) + 0.055f / 1.055f);
+        float32x4 c = (b * b) * root5(b * b);
+        return select(curve < float32x4(0.04045f), a, c);
     }
 
 #else
@@ -1151,7 +1154,7 @@ namespace mango
         float x = srgb_encode(n.x);
         float y = srgb_encode(n.y);
         float z = srgb_encode(n.z);
-        float w = n.w;
+        float w = srgb_encode(n.w);
         return float4(x, y, z, w);
     }
 
@@ -1160,7 +1163,7 @@ namespace mango
         float x = srgb_decode(s.x);
         float y = srgb_decode(s.y);
         float z = srgb_decode(s.z);
-        float w = s.w;
+        float w = srgb_decode(s.w);
         return float4(x, y, z, w);
     }
 
@@ -1170,12 +1173,12 @@ namespace mango
     {
         float4 s;
         s.unpack(n);
-        return srgb_encode(s);
+        return srgb_encode(s * (1.0f / 255.0f));
     }
 
     uint32 srgb_decode_packed(float4 s)
     {
-        s = srgb_decode(s);
+        s = srgb_decode(s) * 255.0f;
         return s.pack();
     }
 
