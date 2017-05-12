@@ -12,6 +12,7 @@ namespace mango
     template <>
     struct Vector<int8, 32> : VectorBase<int8, 32>
     {
+        using vector_type = simd::int8x32;
         simd::int8x32 m;
 
         explicit Vector() = default;

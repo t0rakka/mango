@@ -8,6 +8,14 @@
 #include <algorithm>
 #include "../simd/simd.hpp"
 
+/* Abstract:
+    The Short Vector Math code presented in this header was originally a straightforward
+    template N-dimensional vector implementation. The low-level SIMD abstraction is a
+    result of merging a separate SIMD library and this causes a chasm where the scalar
+    and SIMD vector classes have diverged. Eventually the code will be structured so
+    that the difference has more logical layout.
+*/
+
 namespace mango
 {
 
@@ -739,6 +747,27 @@ namespace mango
     {
         const Type s = std::max(std::max(v.x, v.y), v.z);
         return Vector<Type, 3>(s);
+    }
+
+    // ------------------------------------------------------------------
+    // reinterpret / convert
+    // ------------------------------------------------------------------
+
+    // The reinterpret and conversion casts forward the work to the simd abstraction.
+    // This is enforced by requiring "vector_type" declaration in the Vector specialization.
+
+    template <typename D, typename S>
+    static inline  D reinterpret(S s)
+    {
+        typename S::vector_type temp = s;
+        return simd::reinterpret<typename D::vector_type>(temp);
+    }
+
+    template <typename D, typename S>
+    static inline  D convert(S s)
+    {
+        typename S::vector_type temp = s;
+        return simd::convert<typename D::vector_type>(temp);
     }
 
     // ------------------------------------------------------------------

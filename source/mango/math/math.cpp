@@ -1107,26 +1107,24 @@ namespace mango
 
 #if defined(MANGO_ENABLE_SIMD)
 
-    static inline float32x4 pow24(simd::float32x4 v)
+    static inline float32x4 pow24(float32x4 v)
     {
-        int32x4 i = simd::reinterpret<simd::int32x4>(v);
+        int32x4 i = reinterpret<int32x4>(v);
         i = (i >> 2) + (i >> 4);
         i += (i >> 4);
         i += (i >> 8);
         i += 0x2a514d80;
-        simd::int32x4 is = i;
-        float32x4 s = simd::reinterpret<simd::float32x4>(is);
+        float32x4 s = reinterpret<float32x4>(i);
         s = 0.3332454f * (2.0f * s + float32x4(v) / (s * s));
         return s * sqrt(sqrt(s));
     }
 
-    static inline float32x4 root5(simd::float32x4 v)
+    static inline float32x4 root5(float32x4 v)
     {
-        int32x4 i = simd::reinterpret<simd::int32x4>(v);
+        int32x4 i = reinterpret<int32x4>(v);
         int32x4 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
         i = 0x32c9af22 + d;
-        simd::int32x4 is = i;
-        float32x4 f = simd::reinterpret<simd::float32x4>(is);
+        float32x4 f = reinterpret<float32x4>(i);
         float32x4 s = f * f;
         f -= (f - v / (s * s)) * 0.2f;
         return f;

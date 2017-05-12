@@ -16,6 +16,7 @@ namespace mango
     template <>
     struct Vector<float, 2> : VectorBase<float, 2>
     {
+        using vector_type = simd::float32x2;
         union
         {
             simd::float32x2 xy;

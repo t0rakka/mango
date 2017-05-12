@@ -12,6 +12,7 @@ namespace mango
     template <>
     struct Vector<uint64, 4> : VectorBase<uint64, 4>
     {
+        using vector_type = simd::uint64x4;
         union
         {
             simd::uint64x4 xyzw;

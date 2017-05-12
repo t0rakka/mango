@@ -14,6 +14,7 @@ namespace mango
     template <>
     struct Vector<half, 4> : VectorBase<half, 4>
     {
+        using vector_type = simd::float16x4;
         simd::float16x4 xyzw;
 
         explicit Vector()
