@@ -63,7 +63,7 @@ inline static uint16_t Encode565(const HDRColorA *pColor)
 
 //-------------------------------------------------------------------------------------
 static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
-                        const HDRColorA *pPoints, size_t cSteps, DWORD flags)
+                        const HDRColorA *pPoints, size_t cSteps, uint32 flags)
 {
     static const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
     static const float pC3[] = { 2.0f/2.0f, 1.0f/2.0f, 0.0f/2.0f };
@@ -318,35 +318,16 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 
 //-------------------------------------------------------------------------------------
 
-static const simd::float32x4 g_XMIdentityR3 = simd::float32x4_set4(0.0f, 0.0f, 0.0f, 1.0f);
-static const simd::float32x4 g_XMSelect1110 = simd::reinterpret<simd::float32x4>(simd::int32x4_set4(0xffffffff, 0xffffffff, 0xffffffff, 0));
+static const float32x4 g_XMIdentityR3 = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
+static const float32x4 g_XMSelect1110 = reinterpret<float32x4>(int32x4(0xffffffff, 0xffffffff, 0xffffffff, 0));
 
-    struct XMU565
+    static inline float32x4 XMLoadU565(uint16 data)
     {
-        uint16 data;
-    };
-
-    static inline XMVECTOR XMLoadU565(uint16 data)
-    {
-#if 1
-        static const XMVECTOR scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
-        simd::int32x4 s = simd::int32x4_set1(data);
-        simd::int32x4 c = simd::bitwise_and(s, simd::int32x4_set4(0x1f << 11, 0x3f << 5, 0x1f, 0));
-        c = simd::bitwise_or(c, simd::int32x4_set4(0, 0, 0, 1));
-        float4 v = simd::convert<simd::float32x4>(c);
+        static const float32x4 scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
+        int32x4 c = int32x4(data) & int32x4(0x1f << 11, 0x3f << 5, 0x1f, 0);
+        c = c | int32x4(0, 0, 0, 1);
+        float32x4 v = convert<float32x4>(c);
         return v * scale;
-#else
-        static const XMVECTOR scale(1.f/31.f, 1.f/63.f, 1.f/31.f, 1.f);
-        uint32 r = (data >> 11) & 0x1f;
-        uint32 g = (data >>  5) & 0x3f;
-        uint32 b = (data >>  0) & 0x1f;
-        XMVECTOR v;
-        v.x = float(r);
-        v.y = float(g);
-        v.z = float(b);
-        v.w = 1.0f;
-        return v * scale;
-#endif
     }
 
 inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, bool isbc1)
@@ -357,13 +338,13 @@ inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
     float4 color[4];
     color[0] = XMLoadU565(pBC->rgb[0]);
     color[1] = XMLoadU565(pBC->rgb[1]);
-    color[0] = simd::select(g_XMIdentityR3, color[0], g_XMSelect1110);
-    color[1] = simd::select(g_XMIdentityR3, color[1], g_XMSelect1110);
+    color[0] = select(g_XMIdentityR3, color[0], g_XMSelect1110);
+    color[1] = select(g_XMIdentityR3, color[1], g_XMSelect1110);
 
     if ( isbc1 && (pBC->rgb[0] <= pBC->rgb[1]) )
     {
         color[2] = lerp(color[0], color[1], 0.5f);
-        color[3] = simd::float32x4_zero();  // Alpha of 0
+        color[3] = float32x4(0.0f);  // Alpha of 0
     }
     else
     {
@@ -388,7 +369,7 @@ inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
 //-------------------------------------------------------------------------------------
 
 static void EncodeBC1(D3DX_BC1 *pBC, const HDRColorA *pColor,
-                      bool bColorKey, float alphaRef, DWORD flags)
+                      bool bColorKey, float alphaRef, uint32 flags)
 {
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
@@ -735,7 +716,7 @@ static void EncodeSolidBC1(D3DX_BC1 *pBC, const HDRColorA *pColor)
 // BC1 Compression
 //-------------------------------------------------------------------------------------
 
-static void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef, DWORD flags)
+static void D3DXEncodeBC1(uint8_t *pBC, const float32x4 *pColor, float alphaRef, uint32 flags)
 {
     assert( pBC && pColor );
 
@@ -809,38 +790,38 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
     DecodeBC1(output, stride, &pBC2->bc1, false);
 
     // 4-bit alpha part
-    DWORD dw = pBC2->bitmap[0];
+    uint32 dw = pBC2->bitmap[0];
 	const float s = 1.0f / 15.0f;
-	XMVECTOR *pColor;
+	float32x4* pColor;
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i].w = float(dw & 0xf) * s;
     }
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i].w = float(dw & 0xf) * s;
     }
 
     dw = pBC2->bitmap[1];
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i].w = float(dw & 0xf) * s;
     }
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 4)
     {
-        pColor[i] = simd::set_w(pColor[i], float(dw & 0xf) * s);
+        pColor[i].w = float(dw & 0xf) * s;
     }
 }
 
-static void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
+static void D3DXEncodeBC2(uint8_t *pBC, const float32x4 *pColor, uint32 flags)
 {
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes" );
@@ -946,34 +927,34 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
         fAlpha[7] = 1.0f;
     }
 
-	XMVECTOR *pColor = reinterpret_cast<XMVECTOR*>(output);
+	float32x4 *pColor = reinterpret_cast<float32x4*>(output);
 
-    DWORD dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
+    uint32 dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 0);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i].w = fAlpha[dw & 0x7];
     }
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 1);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 1);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i].w = fAlpha[dw & 0x7];
     }
 
     dw = pBC3->bitmap[3] | (pBC3->bitmap[4] << 8) | (pBC3->bitmap[5] << 16);
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 2);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 2);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i].w = fAlpha[dw & 0x7];
     }
 
-	pColor = reinterpret_cast<XMVECTOR*>(output + stride * 3);
+	pColor = reinterpret_cast<float32x4*>(output + stride * 3);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i] = simd::set_w( pColor[i], fAlpha[dw & 0x7] );
+        pColor[i].w = fAlpha[dw & 0x7];
     }
 }
 
-static void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
+static void D3DXEncodeBC3(uint8_t *pBC, const float32x4 *pColor, uint32 flags)
 {
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes" );
@@ -1180,8 +1161,7 @@ namespace
 {
     using namespace mango;
 
-    // NOTE: calls to this routine can be reduced when the DX encoder supports
-    //       stride.
+    // NOTE: calls to this routine can be reduced when the DX encoder supports stride.
     // TODO: support rgba8888 input in the encoder to completely eliminate this.
 
     void convert_block(float4* temp, const uint8* input, int stride)
@@ -1191,8 +1171,8 @@ namespace
             const uint32* image = reinterpret_cast<const uint32*>(input + y * stride);
             for (int x = 0; x < 4; ++x)
             {
-                const simd::int32x4 v = simd::unpack(image[x]);
-                temp[y * 4 + x] = simd::convert<simd::float32x4>(v);
+                const int32x4 v = simd::unpack(image[x]);
+                temp[y * 4 + x] = convert<float32x4>(v);
             }
         }
     }

@@ -341,7 +341,7 @@ namespace mango
 
     	for (int y = 0; y < 4; ++y)
     	{
-	    	XMVECTOR* pColor = reinterpret_cast<XMVECTOR*>(output);
+	    	float32x4* pColor = reinterpret_cast<float32x4*>(output);
     		const int blockIndex = y * 4;
 
     		for (int x = 0; x < 4; ++x)
@@ -361,7 +361,7 @@ namespace mango
 
     	for (int y = 0; y < 4; ++y)
     	{
-	    	XMVECTOR* pColor = reinterpret_cast<XMVECTOR*>(output);
+	    	float32x4* pColor = reinterpret_cast<float32x4*>(output);
     		const int blockIndex = y * 4;
 
     		for (int x = 0; x < 4; ++x)
@@ -382,7 +382,7 @@ namespace mango
 
     	for (int y = 0; y < 4; ++y)
     	{
-	    	XMVECTOR* pColor = reinterpret_cast<XMVECTOR*>(output);
+	    	float32x4* pColor = reinterpret_cast<float32x4*>(output);
     		const int blockIndex = y * 4;
 
     		for (int x = 0; x < 4; ++x)
@@ -407,7 +407,7 @@ namespace mango
 
     	for (int y = 0; y < 4; ++y)
     	{
-    		XMVECTOR* pColor = reinterpret_cast<XMVECTOR*>(output);
+    		float32x4* pColor = reinterpret_cast<float32x4*>(output);
     		const int blockIndex = y * 4;
 
     		for (int x = 0; x < 4; ++x)

@@ -31,18 +31,7 @@
 
 namespace DirectX
 {
-
     using namespace mango;
-
-    typedef mango::uint32 DWORD;
-    typedef mango::half HALF;
-    typedef mango::Vector<float, 4> XMFLOAT4A; // aligned
-    typedef mango::Vector<float, 4> XMVECTOR;
-
-    struct XMHALF4
-    {
-        HALF x, y, z, w;
-    };
 
 //-------------------------------------------------------------------------------------
 // Constants
@@ -50,7 +39,7 @@ namespace DirectX
 
 const uint16_t F16S_MASK    = 0x8000;   // f16 sign mask
 const uint16_t F16EM_MASK   = 0x7fff;   // f16 exp & mantissa mask
-const uint16_t F16MAX       = 0x7bff;   // MAXFLT bit pattern for XMHALF
+const uint16_t F16MAX       = 0x7bff;   // MAXFLT bit pattern for half
 
 #define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
 
@@ -367,9 +356,9 @@ public:
     void Set(const HDRColorA& c, bool bSigned)
     {
         // TODO: vectorize
-        HALF x = c.r;
-        HALF y = c.g;
-        HALF z = c.b;
+        half x = c.r;
+        half y = c.g;
+        half z = c.b;
         r = F16ToINT(x, bSigned);
         g = F16ToINT(y, bSigned);
         b = F16ToINT(z, bSigned);
@@ -391,7 +380,7 @@ public:
         return *this;
     }
 
-    void ToF16(HALF aF16[3], bool bSigned) const
+    void ToF16(half aF16[3], bool bSigned) const
     {
         aF16[0] = INT2F16(r, bSigned);
         aF16[1] = INT2F16(g, bSigned);
@@ -399,7 +388,7 @@ public:
     }
 
 private:
-    static int F16ToINT(const HALF& f, bool bSigned)
+    static int F16ToINT(const half& f, bool bSigned)
     {
         uint16_t input = *((const uint16_t*) &f);
         int out, s;
@@ -419,9 +408,9 @@ private:
         return out;
     }
 
-    static HALF INT2F16(int input, bool bSigned)
+    static half INT2F16(int input, bool bSigned)
     {
-        HALF h;
+        half h;
         uint16_t out;
         if(bSigned)
         {

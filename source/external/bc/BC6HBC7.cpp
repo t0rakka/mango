@@ -1225,7 +1225,7 @@ void D3DX_BC6H::Decode(bool bSigned, uint8* output, int stride) const
             fc.g = FinishUnquantize((g1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + g2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
             fc.b = FinishUnquantize((b1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + b2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
 
-            HALF rgb[3];
+            half rgb[3];
             fc.ToF16(rgb, bSigned);
 
 			HDRColorA* pOut = ComputeAddress(output, stride, i);
@@ -2742,14 +2742,14 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
 // BC6H Compression
 //-------------------------------------------------------------------------------------
 
-static void D3DXEncodeBC6HU(uint8_t *output, const XMVECTOR *input)
+static void D3DXEncodeBC6HU(uint8_t *output, const float32x4 *input)
 {
     assert( output && input );
     static_assert( sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes" );
     reinterpret_cast< D3DX_BC6H* >( output )->Encode(false, reinterpret_cast<const HDRColorA*>(input));
 }
 
-static void D3DXEncodeBC6HS(uint8_t *output, const XMVECTOR *input)
+static void D3DXEncodeBC6HS(uint8_t *output, const float32x4 *input)
 {
     assert( output && input );
     static_assert( sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes" );
@@ -2760,7 +2760,7 @@ static void D3DXEncodeBC6HS(uint8_t *output, const XMVECTOR *input)
 // BC7 Compression
 //-------------------------------------------------------------------------------------
 
-static void D3DXEncodeBC7(uint8_t *output, const XMVECTOR *input)
+static void D3DXEncodeBC7(uint8_t *output, const float32x4 *input)
 {
     assert( output && input );
     static_assert( sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes" );
