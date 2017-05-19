@@ -699,16 +699,27 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
-        char keys[32];
-        XQueryKeymap(m_handle->display, keys);
-
         bool pressed = false;
 
-        KeySym symbol = translateKeycodeToSymbol(code);
-        int keyidx = XKeysymToKeycode(m_handle->display, symbol);
+        // get window with input focus
+        ::Window focused;
+        int temp;
+        XGetInputFocus(m_handle->display, &focused, &temp);
 
-        if (keyidx >=0 && keyidx < 255)
-            pressed = (keys[keyidx / 8] & (1 << (keyidx % 8))) != 0;
+        // only report keys for our window when it has input focus
+        if (m_handle->window == focused)
+        {
+            char keys[32];
+            XQueryKeymap(m_handle->display, keys);
+
+            KeySym symbol = translateKeycodeToSymbol(code);
+            int keyidx = XKeysymToKeycode(m_handle->display, symbol);
+
+            if (keyidx >=0 && keyidx < 255)
+            {
+                pressed = (keys[keyidx / 8] & (1 << (keyidx % 8))) != 0;
+            }
+        }
 
         return pressed;
     }
@@ -806,7 +817,9 @@ namespace mango
                         }
 
                         if (!is_repeat)
+                        {
                             onKeyRelease(translateEventToKeycode(&e));
+                        }
                         break;
                     }
 
