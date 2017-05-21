@@ -75,7 +75,7 @@ https://godbolt.org/g/AoyqXi
     
         trn1    v2.4s, v2.4s, v2.4s
         dup     v3.4s, v1.s[3]
-r        zip1    v1.4s, v1.4s, v1.4s
+        zip1    v1.4s, v1.4s, v1.4s
         fsub    v2.4s, v2.4s, v0.4s
         fmul    v2.4s, v3.4s, v2.s[2]
         fmla    v2.4s, v1.4s, v0.4s[3]
@@ -85,7 +85,7 @@ clang 3.9 for X86_64 / SSE2:
 
         shufps   xmm2, xmm2, 160
         subps    xmm2, xmm0
-       shufps   xmm0, xmm0, 255
+        shufps   xmm0, xmm0, 255
         movaps   xmm3, xmm1
         unpcklps xmm3, xmm3
         mulps    xmm0, xmm3
