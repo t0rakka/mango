@@ -115,12 +115,14 @@ It's magic, but multiplying any value in the src format by this scale will yield
 There is also a promising 100% integer scale-and-bias algorithm which can handle every component size with correct rounding and w/o precision loss at very high rates but it is still in experimental stage. The best part is no compromise between precision and performance. More about that in the future.
 
 #### TODO
-Features currently being worked on:
-- pvr (done) / pvr2 decompressor
-- lightweight OpenEXR decompressor / compressor ("done", integration pending..)
+Features currently being worked on on considered for roadmap:
+- OpenEXR decompressor / compressor
+- More fileformats as external library?
+- Fun Commodore64/ATARI legacy fileformat plugin we used to have in older version of the library
 - Improved blitter
 - Rewrite some of the Intel specific SIMD code to be more portable (ARM NEON specificly)
 - Remove exceptions?
-- Complete security overhaul :(
-- Finalize the SIMD API; need prefixed functions for some operations (set, and, or, xor, ..)
+- Complete security overhaul
+- Memory leak audit: strenghten the code against thrown exceptions with RAII applied for dynamic allocations
 - More Short Vector Math specializations - the SIMD back-end is now much richer in functionality
+- Re-introduce the LLVM SIMD as external library?
