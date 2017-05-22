@@ -11,7 +11,7 @@
 namespace mango
 {
 
-    class DynamicLibrary : public NonCopyable
+    class DynamicLibrary : protected NonCopyable
     {
     protected:
 

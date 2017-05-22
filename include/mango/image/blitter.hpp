@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include "../core/object.hpp"
 #include "../simd/simd.hpp"
 #include "surface.hpp"
 
@@ -20,7 +21,7 @@ namespace mango
         int height;
     };
 
-    class Blitter
+    class Blitter : protected NonCopyable
     {
     public:
         Format srcFormat;

@@ -11,7 +11,7 @@
 namespace mango
 {
 
-    class FileObserver : public NonCopyable
+    class FileObserver : protected NonCopyable
 	{
 	protected:
 		struct FileObserverState* m_state;
