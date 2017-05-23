@@ -49,6 +49,7 @@ namespace opengl {
     struct ContextHandle
     {
 		GLXContext context { 0 };
+        bool fullscreen { false };
     };
 
     static void deleteContext(WindowHandle* window_handle, ContextHandle* context_handle)
@@ -276,7 +277,7 @@ namespace opengl {
         if (!m_context->context)
         {
             deleteContext(m_handle, m_context);
-            m_context = NULL;
+            m_context = nullptr;
             MANGO_EXCEPTION(ID"OpenGL Context creation failed.");
         }
 
@@ -382,7 +383,14 @@ namespace opengl {
         // Enable rendering now that all the tricks are done
         m_handle->busy = false;
         glXMakeCurrent(m_handle->display, m_handle->window, m_context->context);
+
+        m_context->fullscreen = !m_context->fullscreen;
     }
+
+    bool Context::isFullscreen() const
+	{
+		return m_context->fullscreen;
+	}
 
 } // namespace opengl
 } // namespace mango

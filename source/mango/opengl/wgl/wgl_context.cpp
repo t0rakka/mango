@@ -343,5 +343,10 @@ namespace opengl {
         m_context->fullscreen = !m_context->fullscreen;
     }
 
+    bool Context::isFullscreen() const
+	{
+		return m_context->fullscreen;
+	}
+
 } // namespace opengl
 } // namespace mango

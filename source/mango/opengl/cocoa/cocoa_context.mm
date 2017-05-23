@@ -309,12 +309,12 @@ using mango::opengl::Context;
     NSArray *verticalConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[subView]|"
                                                                            options:0
                                                                            metrics:nil
-                                                                             views:@{@"subView" : self}];
+                                                                           views:@{@"subView" : self}];
     
     NSArray *horizontalConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[subView]|"
                                                                              options:0
                                                                              metrics:nil
-                                                                               views:@{@"subView" : self}];
+                                                                             views:@{@"subView" : self}];
 
     [[window contentView] addConstraints:verticalConstraints];
     [[window contentView] addConstraints:horizontalConstraints];
@@ -813,14 +813,14 @@ namespace mango
     {
     }
 
-	namespace opengl {
-    
+namespace opengl {
+
     // -----------------------------------------------------------------------
     // Context
     // -----------------------------------------------------------------------
 
     Context::Context(int width, int height, const ContextAttribute* contextAttribute, Context* shared)
-	: Window(width, height), m_context(NULL)
+	: Window(width, height), m_context(nullptr)
     {
         [NSApplication sharedApplication];
         //xxx.autorelease_pool = [[NSAutoreleasePool alloc] init];
@@ -1050,6 +1050,10 @@ namespace mango
         [view setHidden:NO];
     }
 
-    } // namespace opengl
+    bool Context::isFullscreen() const
+	{
+        return [m_handle->view isInFullScreenMode];
+	}
 
+} // namespace opengl
 } // namespace mango

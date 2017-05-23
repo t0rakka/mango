@@ -123,7 +123,7 @@ namespace opengl {
         void initExtensionMask();
 
     public:
-        Context(int width, int height, const ContextAttribute* attrib = NULL, Context* shared = NULL);
+        Context(int width, int height, const ContextAttribute* attrib = nullptr, Context* shared = nullptr);
         ~Context();
 
         bool isExtension(const std::string& name) const;
@@ -134,6 +134,7 @@ namespace opengl {
         void swapBuffers();
         void swapInterval(int interval);
         void toggleFullscreen();
+        bool isFullscreen() const;
     };
 
 	// -------------------------------------------------------------------
