@@ -380,6 +380,11 @@ namespace simd {
         return sub(s, floor(s));
     }
 
+    static inline uint32 get_mask(float32x4 a)
+    {
+        return 0; // TODO
+    }
+
     // -----------------------------------------------------------------
     // float32x4_matrix
     // -----------------------------------------------------------------

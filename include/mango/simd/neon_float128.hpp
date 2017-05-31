@@ -482,6 +482,18 @@ namespace simd {
         return sub(s, floor(s));
     }
 
+    static inline uint32 get_mask(float32x4 f)
+    {
+        const uint32x4_t a = vreinterpretq_u32_f32(f);
+        const uint32x4_t mask = { 1, 2, 4, 8 };
+        const uint32x4_t masked = vandq_u32(a, mask);
+        const uint32x2_t high = vget_high_u32(masked);
+        const uint32x2_t low = vget_low_u32(masked);
+        const uint32x2_t d0 = vorr_u32(high, low);
+        const uint32x2_t d1 = vpadd_u32(d0, d0);
+        return vget_lane_u32(d1, 0);
+    }
+
     // -----------------------------------------------------------------
     // float32x4_matrix
     // -----------------------------------------------------------------

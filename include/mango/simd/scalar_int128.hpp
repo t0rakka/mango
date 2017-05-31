@@ -713,6 +713,16 @@ namespace simd {
         return scalar_unroll(scalar_max, a, b);
     }
 
+    static inline uint32 get_mask(uint32x4 a)
+    {
+        const uint32 x = a[0] & 0x80000000;
+        const uint32 y = a[1] & 0x80000000;
+        const uint32 z = a[2] & 0x80000000;
+        const uint32 w = a[3] & 0x80000000;
+        const uint32 mask = (x >> 31) | (y >> 30) | (z >> 29) | (w >> 28);
+        return mask;
+    }
+
     // -----------------------------------------------------------------
     // uint64x2
     // -----------------------------------------------------------------

@@ -786,6 +786,11 @@ namespace simd {
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
+    static inline uint32 get_mask(uint32x4 a)
+    {
+        return _mm_movemask_ps(_mm_castsi128_ps(a));
+    }
+
     // -----------------------------------------------------------------
     // uint64x2
     // -----------------------------------------------------------------

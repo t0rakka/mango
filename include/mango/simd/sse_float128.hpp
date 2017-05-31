@@ -458,6 +458,11 @@ namespace simd {
         return sub(s, floor(s));
     }
 
+    static inline uint32 get_mask(float32x4 a)
+    {
+        return _mm_movemask_ps(a);
+    }
+
     // -----------------------------------------------------------------
     // float32x4_matrix
     // -----------------------------------------------------------------

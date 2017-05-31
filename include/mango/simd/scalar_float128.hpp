@@ -444,6 +444,16 @@ namespace simd {
         return sub(s, floor(s));
     }
 
+    static inline uint32 get_mask(float32x4 a)
+    {
+        const uint32 x = a[0] < 0;
+        const uint32 y = a[1] < 0;
+        const uint32 z = a[2] < 0;
+        const uint32 w = a[3] < 0;
+        const uint32 mask = (x >> 31) | (y >> 30) | (z >> 29) | (w >> 28);
+        return mask;
+    }
+
     // -----------------------------------------------------------------
     // float32x4_matrix
     // -----------------------------------------------------------------
