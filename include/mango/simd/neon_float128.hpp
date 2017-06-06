@@ -18,6 +18,13 @@ namespace simd {
 #ifdef MANGO_COMPILER_CLANG
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
+    inline float32x4 shuffle(float32x4 a, float32x4 b)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+        return __builtin_shufflevector(a.data, b.data, x, y, z, w);
+    }
+
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
     inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -25,6 +32,15 @@ namespace simd {
     }
 
 #else
+
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    inline float32x4 shuffle(float32x4 a, float32x4 b)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+        float32x4_t va = a;
+        float32x4_t vb = b;
+        return (float32x4_t) { va[x], va[y], vb[z], vb[w] };
+    }
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
     inline float32x4 shuffle(float32x4 v)
