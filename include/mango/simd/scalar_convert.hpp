@@ -21,6 +21,13 @@ namespace simd {
         return reinterpret_cast<const D &>(s);
 	}
 
+	template <typename D, typename S>
+	inline D reinterpret(composite_vector<S> s)
+	{
+        static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
+        return reinterpret_cast<const D &>(s);
+	}
+
     // -----------------------------------------------------------------
     // convert
     // -----------------------------------------------------------------
@@ -150,6 +157,40 @@ namespace simd {
             v[i + 0] = std::min(int32(0x7fff), std::max(int32(-0x8000), a[i]));
             v[i + 4] = std::min(int32(0x7fff), std::max(int32(-0x8000), b[i]));
         }
+        return v;
+    }
+
+    // -----------------------------------------------------------------
+    // int32
+    // -----------------------------------------------------------------
+
+    static inline int32x4 get_low(int32x8 a)
+    {
+        return a.lo;
+    }
+
+    static inline int32x4 get_high(int32x8 a)
+    {
+        return a.hi;
+    }
+
+    static inline int32x8 set_low(int32x8 a, int32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+
+    static inline int32x8 set_high(int32x8 a, int32x4 high)
+    {
+        a.hi = high;
+        return a;
+    }
+
+    static inline int32x8 combine(int32x4 a, int32x4 b)
+    {
+        int32x8 v;
+        v.lo = a;
+        v.hi = b;
         return v;
     }
 

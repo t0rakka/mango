@@ -217,6 +217,40 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
+    // int32
+    // -----------------------------------------------------------------
+
+    static inline int32x4 get_low(int32x8 a)
+    {
+        return a.lo;
+    }
+
+    static inline int32x4 get_high(int32x8 a)
+    {
+        return a.hi;
+    }
+
+    static inline int32x8 set_low(int32x8 a, int32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+
+    static inline int32x8 set_high(int32x8 a, int32x4 high)
+    {
+        a.hi = high;
+        return a;
+    }
+
+    static inline int32x8 combine(int32x4 a, int32x4 b)
+    {
+        int32x8 v;
+        v.lo = a;
+        v.hi = b;
+        return v;
+    }
+
+    // -----------------------------------------------------------------
     // float32
     // -----------------------------------------------------------------
 

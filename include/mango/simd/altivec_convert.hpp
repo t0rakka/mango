@@ -113,6 +113,35 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
+    // int32
+    // -----------------------------------------------------------------
+
+    static inline int32x4 get_low(int32x8 a)
+    {
+        // TODO
+    }
+
+    static inline int32x4 get_high(int32x8 a)
+    {
+        // TODO
+    }
+
+    static inline int32x8 set_low(int32x8 a, int32x4 low)
+    {
+        // TODO
+    }
+
+    static inline int32x8 set_high(int32x8 a, int32x4 high)
+    {
+        // TODO
+    }
+
+    static inline int32x8 combine(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    // -----------------------------------------------------------------
     // float32
     // -----------------------------------------------------------------
 
