@@ -549,6 +549,26 @@ namespace detail {
         return _mm_shuffle_epi32(xzyw, 0xd8);
     }
 
+    template <>
+    inline float64x4 convert<float64x4>(int64x4 v)
+    {
+        double x = double(get_component<0>(v));
+        double y = double(get_component<1>(v));
+        double z = double(get_component<2>(v));
+        double w = double(get_component<3>(v));
+        return float64x4_set4(x, y, z, w);
+    }
+
+    template <>
+    inline int64x4 convert<int64x4>(float64x4 v)
+    {
+        int64 x = int64(get_component<0>(v));
+        int64 y = int64(get_component<1>(v));
+        int64 z = int64(get_component<2>(v));
+        int64 w = int64(get_component<3>(v));
+        return int64x4_set4(x, y, z, w);
+    }
+
     // -----------------------------------------------------------------
     // float16
     // -----------------------------------------------------------------
