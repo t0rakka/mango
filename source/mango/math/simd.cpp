@@ -598,17 +598,8 @@ namespace simd {
 
     float64x4 log2(float64x4 v)
     {
-#if 0
         // TODO: implement float64x4_log2() with 64 bit precision
-        return convert<float64x4>(float32x4_log2(convert<float32x4>(v)));
-#else
-        // Choose precision over performance (see above)
-        double x = std::log2(get_x(v));
-        double y = std::log2(get_y(v));
-        double z = std::log2(get_z(v));
-        double w = std::log2(get_w(v));
-        return float64x4_set4(x, y, z, w);
-#endif
+        return convert<float64x4>(log2(convert<float32x4>(v)));
     }
 
     float64x4 log(float64x4 v)
@@ -618,17 +609,8 @@ namespace simd {
 
     float64x4 exp2(float64x4 v)
     {
-#if 0
         // TODO: implement float64x4_exp2() with 64 bit precision
-        return convert<float64x4>(float32x4_exp2(convert<float32x4>(v)));
-#else
-        // Choose precision over performance (see above)
-        double x = std::exp2(get_x(v));
-        double y = std::exp2(get_y(v));
-        double z = std::exp2(get_z(v));
-        double w = std::exp2(get_w(v));
-        return float64x4_set4(x, y, z, w);
-#endif
+        return convert<float64x4>(exp2(convert<float32x4>(v)));
     }
 
     float64x4 pow(float64x4 a, float64x4 b)
