@@ -473,7 +473,7 @@ namespace mango
     template <typename Type, int Size>
     static inline Type dot(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
     {
-        Type s = 0;
+        Type s(0);
         for (int i = 0; i < Size; ++i)
         {
             s += a[i] * b[i];
@@ -484,7 +484,7 @@ namespace mango
     template <typename Type, int Size>
     static inline Type square(const Vector<Type, Size>& a)
     {
-        Type s = 0;
+        Type s(0);
         for (int i = 0; i < Size; ++i)
         {
             s += a[i] * a[i];
@@ -495,7 +495,7 @@ namespace mango
     template <typename Type, int Size>
     static inline Type length(const Vector<Type, Size>& a)
     {
-        Type s = 0;
+        Type s(0);
         for (int i = 0; i < Size; ++i)
         {
             s += a[i] * a[i];
