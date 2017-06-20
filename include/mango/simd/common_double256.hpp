@@ -13,6 +13,43 @@ namespace simd {
     // float64x4
     // -----------------------------------------------------------------
 
+    // set component
+
+    template <int Index>
+    static inline float64x4 set_component(float64x4 a, double s)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        switch (Index)
+        {
+            case 0: a.lo = set_component<0>(a.lo, s); break;
+            case 1: a.lo = set_component<1>(a.lo, s); break;
+            case 2: a.hi = set_component<0>(a.hi, s); break;
+            case 3: a.hi = set_component<1>(a.hi, s); break;
+        }
+        return a;
+    }
+
+    // get component
+
+    template <int Index>
+    static inline double get_component(float64x4 a)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        double s = 0.0;
+        switch (Index)
+        {
+            case 0: s = get_component<0>(a.lo); break;
+            case 1: s = get_component<1>(a.lo); break;
+            case 2: s = get_component<0>(a.hi); break;
+            case 3: s = get_component<1>(a.hi); break;
+        }
+        return s;
+    }
+
+#if defined(MANGO_ENABLE_SSE2)
+
+    // SSE2 specialized version known to result in two shuffle / permute instructions
+
     template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline float64x4 shuffle(float64x4 v)
     {
@@ -29,10 +66,27 @@ namespace simd {
         return result;
     }
 
+#else
+
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    static inline float64x4 shuffle(float64x4 v)
+    {
+        double c0 = get_component<x>(v);
+        double c1 = get_component<y>(v);
+        double c2 = get_component<z>(v);
+        double c3 = get_component<w>(v);
+        float64x4 result;
+        result.lo = float64x2_set2(c0, c1);
+        result.hi = float64x2_set2(c2, c3);
+        return result;
+    }
+
+#endif
+
     template <>
     inline float64x4 shuffle<0, 1, 2, 3>(float64x4 v)
     {
-        // .lozw
+        // .xyzw
         return v;
     }
 
@@ -40,7 +94,7 @@ namespace simd {
     inline float64x4 shuffle<0, 0, 0, 0>(float64x4 v)
     {
         // .xxxx
-        const __m128d xx = _mm_shuffle_pd(v.lo, v.lo, 0);
+        const float64x2 xx = shuffle<0, 0>(v.lo);
         float64x4 result;
         result.lo = xx;
         result.hi = xx;
@@ -51,7 +105,7 @@ namespace simd {
     inline float64x4 shuffle<1, 1, 1, 1>(float64x4 v)
     {
         // .yyyy
-        const __m128d yy = _mm_shuffle_pd(v.lo, v.lo, 3);
+        const float64x2 yy = shuffle<1, 1>(v.lo);
         float64x4 result;
         result.lo = yy;
         result.hi = yy;
@@ -62,7 +116,7 @@ namespace simd {
     inline float64x4 shuffle<2, 2, 2, 2>(float64x4 v)
     {
         // .zzzz
-        const __m128d zz = _mm_shuffle_pd(v.hi, v.hi, 0);
+        const float64x2 zz = shuffle<0, 0>(v.hi);
         float64x4 result;
         result.lo = zz;
         result.hi = zz;
@@ -73,113 +127,49 @@ namespace simd {
     inline float64x4 shuffle<3, 3, 3, 3>(float64x4 v)
     {
         // .wwww
-        const __m128d ww = _mm_shuffle_pd(v.hi, v.hi, 3);
+        const float64x2 ww = shuffle<1, 1>(v.hi);
         float64x4 result;
         result.lo = ww;
         result.hi = ww;
         return result;
     }
 
-    // set component
-
-    template <int Index>
-    static inline float64x4 set_component(float64x4 a, double s);
-
-    template <>
-    inline float64x4 set_component<0>(float64x4 a, double x)
-    {
-        a.lo = _mm_move_sd(a.lo, _mm_set1_pd(x));
-        return a;
-    }
-
-    template <>
-    inline float64x4 set_component<1>(float64x4 a, double y)
-    {
-        a.lo = _mm_move_sd(_mm_set1_pd(y), a.lo);
-        return a;
-    }
-
-    template <>
-    inline float64x4 set_component<2>(float64x4 a, double z)
-    {
-        a.hi = _mm_move_sd(a.hi, _mm_set1_pd(z));
-        return a;
-    }
-
-    template <>
-    inline float64x4 set_component<3>(float64x4 a, double w)
-    {
-        a.hi = _mm_move_sd(_mm_set1_pd(w), a.hi);
-        return a;
-    }
-
-    // get component
-
-    template <int Index>
-    static inline double get_component(float64x4 a);
-
-    template <>
-    inline double get_component<0>(float64x4 a)
-    {
-        return _mm_cvtsd_f64(a.lo);
-    }
-
-    template <>
-    inline double get_component<1>(float64x4 a)
-    {
-        const __m128d yy = _mm_unpackhi_pd(a.lo, a.lo);
-        return _mm_cvtsd_f64(yy);
-    }
-
-    template <>
-    inline double get_component<2>(float64x4 a)
-    {
-        return _mm_cvtsd_f64(a.hi);
-    }
-
-    template <>
-    inline double get_component<3>(float64x4 a)
-    {
-        const __m128d ww = _mm_unpackhi_pd(a.hi, a.hi);
-        return _mm_cvtsd_f64(ww);
-    }
-
     static inline float64x4 float64x4_zero()
     {
         float64x4 result;
-        result.lo =
-        result.hi = _mm_setzero_pd();
+        result.lo = float64x2_zero();
+        result.hi = float64x2_zero();
         return result;
     }
 
     static inline float64x4 float64x4_set1(double s)
     {
         float64x4 result;
-        result.lo =
-        result.hi = _mm_set1_pd(s);
+        result.lo = float64x2_set1(s);
+        result.hi = float64x2_set1(s);
         return result;
     }
 
     static inline float64x4 float64x4_set4(double x, double y, double z, double w)
     {
         float64x4 result;
-        result.lo = _mm_setr_pd(x, y);
-        result.hi = _mm_setr_pd(z, w);
+        result.lo = float64x2_set2(x, y);
+        result.hi = float64x2_set2(z, w);
         return result;
     }
 
     static inline float64x4 float64x4_uload(const double* source)
     {
         float64x4 result;
-        result.lo = _mm_loadu_pd(source + 0);
-        result.hi = _mm_loadu_pd(source + 2);
+        result.lo = float64x2_uload(source + 0);
+        result.hi = float64x2_uload(source + 2);
         return result;
     }
 
     static inline void float64x4_ustore(double* dest, float64x4 a)
     {
-        _mm_storeu_pd(dest + 0, a.lo);
-        _mm_storeu_pd(dest + 2, a.hi);
+        float64x2_ustore(dest + 0, a.lo);
+        float64x2_ustore(dest + 2, a.hi);
     }
 
     static inline float64x4 movelh(float64x4 a, float64x4 b)
@@ -201,16 +191,16 @@ namespace simd {
     static inline float64x4 unpackhi(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_unpackhi_pd(a.lo, b.lo);
-        result.hi = _mm_unpackhi_pd(a.hi, b.hi);
+        result.lo = unpackhi(a.lo, b.lo);
+        result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 unpacklo(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_unpacklo_pd(a.lo, b.lo);
-        result.hi = _mm_unpacklo_pd(a.hi, b.hi);
+        result.lo = unpacklo(a.lo, b.lo);
+        result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
@@ -219,127 +209,126 @@ namespace simd {
     static inline float64x4 bitwise_nand(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_andnot_pd(a.lo, b.lo);
-        result.hi = _mm_andnot_pd(a.hi, b.hi);
+        result.lo = bitwise_nand(a.lo, b.lo);
+        result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 bitwise_and(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_and_pd(a.lo, b.lo);
-        result.hi = _mm_and_pd(a.hi, b.hi);
+        result.lo = bitwise_and(a.lo, b.lo);
+        result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 bitwise_or(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_or_pd(a.lo, b.lo);
-        result.hi = _mm_or_pd(a.hi, b.hi);
+        result.lo = bitwise_or(a.lo, b.lo);
+        result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 bitwise_xor(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_xor_pd(a.lo, b.lo);
-        result.hi = _mm_xor_pd(a.hi, b.hi);
+        result.lo = bitwise_xor(a.lo, b.lo);
+        result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 min(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_min_pd(a.lo, b.lo);
-        result.hi = _mm_min_pd(a.hi, b.hi);
+        result.lo = min(a.lo, b.lo);
+        result.hi = min(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 max(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_max_pd(a.lo, b.lo);
-        result.hi = _mm_max_pd(a.hi, b.hi);
+        result.lo = max(a.lo, b.lo);
+        result.hi = max(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 hmin(float64x4 a)
     {
-        const __m128d xy = _mm_min_pd(a.lo, _mm_shuffle_pd(a.lo, a.lo, 0x01));
-        const __m128d zw = _mm_min_pd(a.lo, _mm_shuffle_pd(a.hi, a.hi, 0x01));
+        const float64x2 xy = min(a.lo, shuffle<1, 0>(a.lo));
+        const float64x2 zw = min(a.hi, shuffle<1, 0>(a.hi));
+        const float64x2 s = min(xy, zw);
         float64x4 result;
-        result.lo = _mm_min_pd(xy, _mm_shuffle_pd(zw, zw, 0x02));
-        result.hi = _mm_min_pd(zw, _mm_shuffle_pd(xy, xy, 0x02));
+        result.lo = s;
+        result.hi = s;
         return result;
     }
 
     static inline float64x4 hmax(float64x4 a)
     {
-        const __m128d xy = _mm_max_pd(a.lo, _mm_shuffle_pd(a.lo, a.lo, 0x01));
-        const __m128d zw = _mm_max_pd(a.lo, _mm_shuffle_pd(a.hi, a.hi, 0x01));
+        const float64x2 xy = max(a.lo, shuffle<1, 0>(a.lo));
+        const float64x2 zw = max(a.hi, shuffle<1, 0>(a.hi));
+        const float64x2 s = max(xy, zw);
         float64x4 result;
-        result.lo = _mm_max_pd(xy, _mm_shuffle_pd(zw, zw, 0x02));
-        result.hi = _mm_max_pd(zw, _mm_shuffle_pd(xy, xy, 0x02));
+        result.lo = s;
+        result.hi = s;
         return result;
     }
 
     static inline float64x4 abs(float64x4 a)
     {
-        const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7fffffffffffffff));
         float64x4 result;
-        result.lo = _mm_and_pd(a.lo, mask);
-        result.hi = _mm_and_pd(a.hi, mask);
+        result.lo = abs(a.lo);
+        result.hi = abs(a.hi);
         return result;
     }
 
     static inline float64x4 neg(float64x4 a)
     {
-        const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x8000000000000000));
         float64x4 result;
-        result.lo = _mm_xor_pd(a.lo, mask);
-        result.hi = _mm_xor_pd(a.hi, mask);
+        result.lo = neg(a.lo);
+        result.hi = neg(a.hi);
         return result;
     }
 
     static inline float64x4 add(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_add_pd(a.lo, b.lo);
-        result.hi = _mm_add_pd(a.hi, b.hi);
+        result.lo = add(a.lo, b.lo);
+        result.hi = add(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 sub(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_sub_pd(a.lo, b.lo);
-        result.hi = _mm_sub_pd(a.hi, b.hi);
+        result.lo = sub(a.lo, b.lo);
+        result.hi = sub(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 mul(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_mul_pd(a.lo, b.lo);
-        result.hi = _mm_mul_pd(a.hi, b.hi);
+        result.lo = mul(a.lo, b.lo);
+        result.hi = mul(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 div(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_div_pd(a.lo, b.lo);
-        result.hi = _mm_div_pd(a.hi, b.hi);
+        result.lo = div(a.lo, b.lo);
+        result.hi = div(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 div(float64x4 a, double b)
     {
-        const __m128d bb = _mm_set1_pd(b);
         float64x4 result;
-        result.lo = _mm_div_pd(a.lo, bb);
-        result.hi = _mm_div_pd(a.hi, bb);
+        result.lo = div(a.lo, b);
+        result.hi = div(a.hi, b);
         return result;
     }
 
@@ -361,65 +350,55 @@ namespace simd {
 
     static inline float64x4 fast_reciprocal(float64x4 a)
     {
-        const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
-        result.lo = _mm_div_pd(one, a.lo);
-        result.hi = _mm_div_pd(one, a.hi);
+        result.lo = fast_reciprocal(a.lo);
+        result.hi = fast_reciprocal(a.hi);
         return result;
     }
 
     static inline float64x4 fast_rsqrt(float64x4 a)
     {
-        const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
-        result.lo = _mm_div_pd(one, _mm_sqrt_pd(a.lo));
-        result.hi = _mm_div_pd(one, _mm_sqrt_pd(a.hi));
+        result.lo = fast_rsqrt(a.lo);
+        result.hi = fast_rsqrt(a.hi);
         return result;
     }
 
     static inline float64x4 fast_sqrt(float64x4 a)
     {
         float64x4 result;
-        result.lo = _mm_sqrt_pd(a.lo);
-        result.hi = _mm_sqrt_pd(a.hi);
+        result.lo = fast_sqrt(a.lo);
+        result.hi = fast_sqrt(a.hi);
         return result;
     }
 
     static inline float64x4 reciprocal(float64x4 a)
     {
-        const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
-        result.lo = _mm_div_pd(one, a.lo);
-        result.hi = _mm_div_pd(one, a.hi);
+        result.lo = reciprocal(a.lo);
+        result.hi = reciprocal(a.hi);
         return result;
     }
 
     static inline float64x4 rsqrt(float64x4 a)
     {
-        const __m128d one = _mm_set1_pd(1.0);
         float64x4 result;
-        result.lo = _mm_div_pd(one, _mm_sqrt_pd(a.lo));
-        result.hi = _mm_div_pd(one, _mm_sqrt_pd(a.hi));
+        result.lo = rsqrt(a.lo);
+        result.hi = rsqrt(a.hi);
         return result;
     }
 
     static inline float64x4 sqrt(float64x4 a)
     {
         float64x4 result;
-        result.lo = _mm_sqrt_pd(a.lo);
-        result.hi = _mm_sqrt_pd(a.hi);
+        result.lo = sqrt(a.lo);
+        result.hi = sqrt(a.hi);
         return result;
     }
 
     static inline float64x4 dot4(float64x4 a, float64x4 b)
     {
-        const __m128d xy = _mm_mul_pd(a.lo, b.lo);
-        const __m128d zw = _mm_mul_pd(a.hi, b.hi);
-        __m128d s;
-        s = _mm_add_pd(xy, zw);
-        s = _mm_add_pd(s, _mm_shuffle_pd(xy, xy, 0x01));
-        s = _mm_add_pd(s, _mm_shuffle_pd(zw, zw, 0x01));
-
+        const float64x2 s = add(dot2(a.lo, b.lo), dot2(a.hi, b.hi));
         float64x4 result;
         result.lo = s;
         result.hi = s;
@@ -431,48 +410,48 @@ namespace simd {
     static inline float64x4 compare_neq(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_cmpneq_pd(a.lo, b.lo);
-        result.hi = _mm_cmpneq_pd(a.hi, b.hi);
+        result.lo = compare_neq(a.lo, b.lo);
+        result.hi = compare_neq(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 compare_eq(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_cmpeq_pd(a.lo, b.lo);
-        result.hi = _mm_cmpeq_pd(a.hi, b.hi);
+        result.lo = compare_eq(a.lo, b.lo);
+        result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 compare_lt(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_cmplt_pd(a.lo, b.lo);
-        result.hi = _mm_cmplt_pd(a.hi, b.hi);
+        result.lo = compare_lt(a.lo, b.lo);
+        result.hi = compare_lt(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 compare_le(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_cmple_pd(a.lo, b.lo);
-        result.hi = _mm_cmple_pd(a.hi, b.hi);
+        result.lo = compare_le(a.lo, b.lo);
+        result.hi = compare_le(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 compare_gt(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_cmpgt_pd(a.lo, b.lo);
-        result.hi = _mm_cmpgt_pd(a.hi, b.hi);
+        result.lo = compare_gt(a.lo, b.lo);
+        result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
     static inline float64x4 compare_ge(float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result.lo = _mm_cmpge_pd(a.lo, b.lo);
-        result.hi = _mm_cmpge_pd(a.hi, b.hi);
+        result.lo = compare_ge(a.lo, b.lo);
+        result.hi = compare_ge(a.hi, b.hi);
         return result;
     }
 

@@ -146,13 +146,13 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "sse_int128.hpp"
-#include "avx2_int256.hpp"
 #include "scalar_float64.hpp"
+#include "sse_int128.hpp"
 #include "sse_float128.hpp"
-#include "avx_float256.hpp"
 #include "sse_double128.hpp"
+#include "avx_float256.hpp"
 #include "avx_double256.hpp"
+#include "avx2_int256.hpp"
 #include "avx_convert.hpp"
 
 #elif defined(MANGO_ENABLE_AVX)
@@ -194,12 +194,12 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "sse_int128.hpp"
-#include "common_int256.hpp"
 #include "scalar_float64.hpp"
+#include "sse_int128.hpp"
 #include "sse_float128.hpp"
-#include "avx_float256.hpp"
 #include "sse_double128.hpp"
+#include "common_int256.hpp"
+#include "avx_float256.hpp"
 #include "avx_double256.hpp"
 #include "avx_convert.hpp"
 
@@ -242,13 +242,13 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "sse_int128.hpp"
-#include "common_int256.hpp"
 #include "scalar_float64.hpp"
+#include "sse_int128.hpp"
 #include "sse_float128.hpp"
-#include "common_float256.hpp"
 #include "sse_double128.hpp"
-#include "sse_double256.hpp"
+#include "common_int256.hpp"
+#include "common_float256.hpp"
+#include "common_double256.hpp"
 #include "sse_convert.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
@@ -299,13 +299,13 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "neon_int128.hpp"
-#include "common_int256.hpp"
 #include "neon_float64.hpp"
+#include "neon_int128.hpp"
 #include "neon_float128.hpp"
-#include "common_float256.hpp"
 #include "scalar_double128.hpp"
 #include "scalar_double256.hpp"
+#include "common_int256.hpp"
+#include "common_float256.hpp"
 #include "neon_convert.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
@@ -347,10 +347,10 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "altivec_int128.hpp"
-#include "common_int256.hpp"
 #include "scalar_float64.hpp"
+#include "altivec_int128.hpp"
 #include "altivec_float128.hpp"
+#include "common_int256.hpp"
 #include "common_float256.hpp"
 #include "scalar_double128.hpp"
 #include "scalar_double256.hpp"
@@ -395,15 +395,64 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "spu_int128.hpp"
-#include "common_int256.hpp"
 #include "scalar_float64.hpp"
+#include "spu_int128.hpp"
 #include "spu_float128.hpp"
+#include "common_int256.hpp"
 #include "common_float256.hpp"
 #include "scalar_double128.hpp"
 #include "scalar_double256.hpp"
 #include "spu_convert.hpp"
 
+/* TODO:
+#elif defined(MANGO_ENABLE_MSA)
+
+namespace mango {
+namespace simd {
+
+    // --------------------------------------------------------------
+    // MIPS SIMD Architecture
+    // --------------------------------------------------------------
+
+    #define MANGO_ENABLE_SIMD
+
+    using int8x16   = hardware_vector<int8, 16, v16i8>;
+    using int16x8   = hardware_vector<int16, 8, v8i16>;
+    using int32x4   = hardware_vector<int32, 4, v4i32>;
+    using int64x2   = hardware_vector<int64, 2, v2i64>;
+    using uint8x16  = hardware_vector<uint8, 16, v16u8>;
+    using uint16x8  = hardware_vector<uint16, 8, v8u16>;
+    using uint32x4  = hardware_vector<uint32, 4, v4u32>;
+    using uint64x2  = hardware_vector<uint64, 2, v2u64>;
+    using float32x4 = hardware_vector<float, 4, v4f32>;
+    using float64x2 = hardware_vector<double, 2, v2f64>;
+
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
+
+    using int8x32   = composite_vector<int8x16>;
+    using int16x16  = composite_vector<int16x8>;
+    using int32x8   = composite_vector<int32x4>;
+    using int64x4   = composite_vector<int64x2>;
+    using uint8x32  = composite_vector<uint8x16>;
+    using uint16x16 = composite_vector<uint16x8>;
+    using uint32x8  = composite_vector<uint32x4>;
+    using uint64x4  = composite_vector<uint64x2>;
+    using float32x8 = composite_vector<float32x4>;
+    using float64x4 = composite_vector<float64x2>;
+
+} // namespace simd
+} // namespace mango
+
+#include "scalar_float64.hpp"
+#include "msa_int128.hpp"
+#include "msa_float128.hpp"
+#include "msa_double128.hpp"
+#include "common_int256.hpp"
+#include "common_float256.hpp"
+#include "common_double256.hpp"
+#include "msa_convert.hpp"
+*/
 #else
 
 namespace mango {
@@ -440,12 +489,12 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "scalar_int128.hpp"
-#include "common_int256.hpp"
 #include "scalar_float64.hpp"
+#include "scalar_int128.hpp"
 #include "scalar_float128.hpp"
-#include "common_float256.hpp"
 #include "scalar_double128.hpp"
+#include "common_int256.hpp"
+#include "common_float256.hpp"
 #include "scalar_double256.hpp"
 #include "scalar_convert.hpp"
 

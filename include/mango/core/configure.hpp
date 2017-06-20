@@ -522,6 +522,12 @@
     #define MANGO_ENABLE_SPU
     #include <spu_intrinsics.h>
 
+#elif defined(MANGO_CPU_MIPS) && defined(__mips_msa)
+
+    // MIPS SIMD Architecture
+    #define MANGO_ENABLE_MSA
+    #include <msa.h>
+
 #endif
 
 // -----------------------------------------------------------------------
