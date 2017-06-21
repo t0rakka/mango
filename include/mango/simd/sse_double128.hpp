@@ -20,6 +20,13 @@ namespace simd {
         return _mm_shuffle_pd(v, v, y * 2 + x);
     }
 
+    template <uint32 x, uint32 y>
+    static inline float64x2 shuffle(float64x2 a, float64x2 b)
+    {
+        static_assert(x < 2 && y < 2, "Index out of range.");
+        return _mm_shuffle_pd(a, b, y * 2 + x);
+    }
+
     // set component
 
     template <int Index>

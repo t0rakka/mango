@@ -13,75 +13,21 @@ namespace simd {
     // float64x4
     // -----------------------------------------------------------------
 
-    // set component
-
-    template <int Index>
-    static inline float64x4 set_component(float64x4 a, double s)
-    {
-        static_assert(Index < 4, "Index out of range.");
-        switch (Index)
-        {
-            case 0: a.lo = set_component<0>(a.lo, s); break;
-            case 1: a.lo = set_component<1>(a.lo, s); break;
-            case 2: a.hi = set_component<0>(a.hi, s); break;
-            case 3: a.hi = set_component<1>(a.hi, s); break;
-        }
-        return a;
-    }
-
-    // get component
-
-    template <int Index>
-    static inline double get_component(float64x4 a)
-    {
-        static_assert(Index < 4, "Index out of range.");
-        double s = 0.0;
-        switch (Index)
-        {
-            case 0: s = get_component<0>(a.lo); break;
-            case 1: s = get_component<1>(a.lo); break;
-            case 2: s = get_component<0>(a.hi); break;
-            case 3: s = get_component<1>(a.hi); break;
-        }
-        return s;
-    }
-
-#if defined(MANGO_ENABLE_SSE2)
-
-    // SSE2 specialized version known to result in two shuffle / permute instructions
+    // shuffle
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline float64x4 shuffle(float64x4 v)
     {
-        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        const int select0 = ((y & 1) << 1) | (x & 1);
-        const int select1 = ((w & 1) << 1) | (z & 1);
-        const __m128d& v0 = x & 2 ? v.hi : v.lo;
-        const __m128d& v1 = y & 2 ? v.hi : v.lo;
-        const __m128d& v2 = z & 2 ? v.hi : v.lo;
-        const __m128d& v3 = w & 2 ? v.hi : v.lo;
+        const float64x2 v0 = x & 2 ? v.hi : v.lo;
+        const float64x2 v1 = y & 2 ? v.hi : v.lo;
+        const float64x2 v2 = z & 2 ? v.hi : v.lo;
+        const float64x2 v3 = w & 2 ? v.hi : v.lo;
+
         float64x4 result;
-        result.lo = _mm_shuffle_pd(v0, v1, select0);
-        result.hi = _mm_shuffle_pd(v2, v3, select1);
+        result.lo = shuffle<x & 1, y & 1>(v0, v1);
+        result.hi = shuffle<z & 1, w & 1>(v2, v3);
         return result;
     }
-
-#else
-
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
-    static inline float64x4 shuffle(float64x4 v)
-    {
-        double c0 = get_component<x>(v);
-        double c1 = get_component<y>(v);
-        double c2 = get_component<z>(v);
-        double c3 = get_component<w>(v);
-        float64x4 result;
-        result.lo = float64x2_set2(c0, c1);
-        result.hi = float64x2_set2(c2, c3);
-        return result;
-    }
-
-#endif
 
     template <>
     inline float64x4 shuffle<0, 1, 2, 3>(float64x4 v)
@@ -132,6 +78,39 @@ namespace simd {
         result.lo = ww;
         result.hi = ww;
         return result;
+    }
+
+    // set component
+
+    template <int Index>
+    static inline float64x4 set_component(float64x4 a, double s)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        switch (Index)
+        {
+            case 0: a.lo = set_component<0>(a.lo, s); break;
+            case 1: a.lo = set_component<1>(a.lo, s); break;
+            case 2: a.hi = set_component<0>(a.hi, s); break;
+            case 3: a.hi = set_component<1>(a.hi, s); break;
+        }
+        return a;
+    }
+
+    // get component
+
+    template <int Index>
+    static inline double get_component(float64x4 a)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        double s = 0.0;
+        switch (Index)
+        {
+            case 0: s = get_component<0>(a.lo); break;
+            case 1: s = get_component<1>(a.lo); break;
+            case 2: s = get_component<0>(a.hi); break;
+            case 3: s = get_component<1>(a.hi); break;
+        }
+        return s;
     }
 
     static inline float64x4 float64x4_zero()
