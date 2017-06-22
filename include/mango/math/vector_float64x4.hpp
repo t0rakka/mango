@@ -602,6 +602,7 @@ namespace mango
     MAKE_VECTOR_FUNCTION1(round, simd::round)
     MAKE_VECTOR_FUNCTION1(floor, simd::floor)
     MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
+    MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
     MAKE_VECTOR_FUNCTION1(fract, simd::fract)
     MAKE_VECTOR_FUNCTION1(sin, simd::sin)
     MAKE_VECTOR_FUNCTION1(cos, simd::cos)
