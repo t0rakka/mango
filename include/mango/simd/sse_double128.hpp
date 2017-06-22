@@ -315,14 +315,14 @@ namespace simd {
 
     static inline float64x2 floor(float64x2 s)
     {
-        const __m128d temp = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s));
+        const __m128d temp = round(s);
         const __m128d mask = _mm_cmplt_pd(s, temp);
         return _mm_sub_pd(temp, _mm_and_pd(mask, _mm_set1_pd(1.0)));
     }
 
     static inline float64x2 ceil(float64x2 s)
     {
-        const __m128d temp = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s));
+        const __m128d temp = round(s);
         const __m128d mask = _mm_cmpgt_pd(s, temp);
         return _mm_add_pd(temp, _mm_and_pd(mask, _mm_set1_pd(1.0)));
     }
@@ -331,9 +331,7 @@ namespace simd {
 
     static inline float64x2 fract(float64x2 s)
     {
-        const __m128d temp = _mm_cvtepi32_pd(_mm_cvtpd_epi32(s));
-        const __m128d mask = _mm_cmplt_pd(s, temp);
-        return _mm_sub_pd(s, _mm_sub_pd(temp, _mm_and_pd(mask, _mm_set1_pd(1.0))));
+        return sub(s, floor(s));
     }
 
 } // namespace simd

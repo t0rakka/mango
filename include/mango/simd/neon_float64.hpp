@@ -323,14 +323,18 @@ namespace simd {
 
     static inline float32x2 round(float32x2 s)
     {
-        const float32x2_t magic = vdup_n_f32(12582912.0f); // 1.5 * (1 << 23)
-        return vsub_f32(vadd_f32(s, magic), magic);
+        float32x2_t magic = vdup_n_f32(12582912.0f); // 1.5 * (1 << 23)
+        float32x2_t result = vsub_f32(vadd_f32(s, magic), magic);
+        int32x2_t mask = vcle_f32(vabs_f32(s), vreinterpret_u32_f32(vdup_n_u32(0x4b000000)));
+        return vbsl_f32(mask, result, s);
     }
 
     static inline float32x2 trunc(float32x2 s)
     {
-        const int32x2_t truncated = vcvt_s32_f32(s);
-        return vcvt_f32_s32(truncated);
+        int32x2_t truncated = vcvt_s32_f32(s);
+        float32x2_t result = vcvt_f32_s32(truncated);
+        int32x2_t mask = vcle_f32(vabs_f32(s), vreinterpret_u32_f32(vdup_n_u32(0x4b000000)));
+        return vbsl_f32(mask, result, s);
     }
 
     static inline float32x2 floor(float32x2 s)
