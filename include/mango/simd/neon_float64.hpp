@@ -325,7 +325,7 @@ namespace simd {
     {
         float32x2_t magic = vdup_n_f32(12582912.0f); // 1.5 * (1 << 23)
         float32x2_t result = vsub_f32(vadd_f32(s, magic), magic);
-        int32x2_t mask = vcle_f32(vabs_f32(s), vreinterpret_u32_f32(vdup_n_u32(0x4b000000)));
+        uint32x2_t mask = vcle_f32(vabs_f32(s), vreinterpret_f32_u32(vdup_n_u32(0x4b000000)));
         return vbsl_f32(mask, result, s);
     }
 
@@ -333,7 +333,7 @@ namespace simd {
     {
         int32x2_t truncated = vcvt_s32_f32(s);
         float32x2_t result = vcvt_f32_s32(truncated);
-        int32x2_t mask = vcle_f32(vabs_f32(s), vreinterpret_u32_f32(vdup_n_u32(0x4b000000)));
+        uint32x2_t mask = vcle_f32(vabs_f32(s), vreinterpret_f32_u32(vdup_n_u32(0x4b000000)));
         return vbsl_f32(mask, result, s);
     }
 

@@ -467,7 +467,7 @@ namespace simd {
     {
         float32x4_t magic = vdupq_n_f32(12582912.0f); // 1.5 * (1 << 23)
         float32x4_t result = vsubq_f32(vaddq_f32(s, magic), magic);
-        int32x4_t mask = vcleq_f32(vabsq_f32(s), vreinterpretq_u32_f32(vdupq_n_u32(0x4b000000)));
+        uint32x4_t mask = vcleq_f32(vabsq_f32(s), vreinterpretq_f32_u32(vdupq_n_u32(0x4b000000)));
         return vbslq_f32(mask, result, s);
     }
 
@@ -475,7 +475,7 @@ namespace simd {
     {
         int32x4_t truncated = vcvtq_s32_f32(s);
         float32x4_t result = vcvtq_f32_s32(truncated);
-        int32x4_t mask = vcleq_f32(vabsq_f32(s), vreinterpretq_u32_f32(vdupq_n_u32(0x4b000000)));
+        uint32x4_t mask = vcleq_f32(vabsq_f32(s), vreinterpretq_f32_u32(vdupq_n_u32(0x4b000000)));
         return vbslq_f32(mask, result, s);
     }
 
