@@ -500,7 +500,7 @@ namespace simd {
         return _mm256_unpackhi_epi64(a, b);
     }
 
-    static inline uint64x4 add(int64x4 a, uint64x4 b)
+    static inline uint64x4 add(uint64x4 a, uint64x4 b)
     {
         return _mm256_add_epi64(a, b);
     }
