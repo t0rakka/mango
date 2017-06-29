@@ -105,6 +105,7 @@
     <ClInclude Include="..\..\include\mango\simd\avx_double256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx_float256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\common_double256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common_float256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common_int256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp" />
@@ -123,7 +124,6 @@
     <ClInclude Include="..\..\include\mango\simd\spu_int128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse_convert.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse_double128.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\sse_double256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse_float128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse_int128.hpp" />
     <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp" />
