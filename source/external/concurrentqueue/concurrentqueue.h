@@ -1615,14 +1615,14 @@ private:
 	
 	struct ProducerBase : public details::ConcurrentQueueProducerTypelessBase
 	{
-		ProducerBase(ConcurrentQueue* parent, bool isExplicit) :
+		ProducerBase(ConcurrentQueue* parent_, bool isExplicit_) :
 			tailIndex(0),
 			headIndex(0),
 			dequeueOptimisticCount(0),
 			dequeueOvercommit(0),
 			tailBlock(nullptr),
-			isExplicit(isExplicit),
-			parent(parent)
+			isExplicit(isExplicit_),
+			parent(parent_)
 		{
 		}
 		
@@ -2123,7 +2123,7 @@ private:
 							}
 							currentTailIndex = startTailIndex;
 							while (true) {
-								auto stopIndex = (currentTailIndex & ~static_cast<index_t>(BLOCK_SIZE - 1)) + static_cast<index_t>(BLOCK_SIZE);
+								stopIndex = (currentTailIndex & ~static_cast<index_t>(BLOCK_SIZE - 1)) + static_cast<index_t>(BLOCK_SIZE);
 								if (details::circular_less_than<index_t>(constructedStopIndex, stopIndex)) {
 									stopIndex = constructedStopIndex;
 								}
@@ -2560,7 +2560,7 @@ private:
 					currentTailIndex += static_cast<index_t>(BLOCK_SIZE);
 					
 					// Find out where we'll be inserting this block in the block index
-					BlockIndexEntry* idxEntry;
+					BlockIndexEntry* idxEntry = nullptr;  // initialization here unnecessary but compiler can't always tell
 					Block* newBlock;
 					bool indexInserted = false;
 					auto head = this->headIndex.load(std::memory_order_relaxed);
@@ -2644,7 +2644,7 @@ private:
 							}
 							currentTailIndex = startTailIndex;
 							while (true) {
-								auto stopIndex = (currentTailIndex & ~static_cast<index_t>(BLOCK_SIZE - 1)) + static_cast<index_t>(BLOCK_SIZE);
+								stopIndex = (currentTailIndex & ~static_cast<index_t>(BLOCK_SIZE - 1)) + static_cast<index_t>(BLOCK_SIZE);
 								if (details::circular_less_than<index_t>(constructedStopIndex, stopIndex)) {
 									stopIndex = constructedStopIndex;
 								}
@@ -2807,6 +2807,9 @@ private:
 		inline bool insert_block_index_entry(BlockIndexEntry*& idxEntry, index_t blockStartIndex)
 		{
 			auto localBlockIndex = blockIndex.load(std::memory_order_relaxed);		// We're the only writer thread, relaxed is OK
+			if (localBlockIndex == nullptr) {
+				return false;  // this can happen if new_block_index failed in the constructor
+			}
 			auto newTail = (localBlockIndex->tail.load(std::memory_order_relaxed) + 1) & (localBlockIndex->capacity - 1);
 			idxEntry = localBlockIndex->index[newTail];
 			if (idxEntry->key.load(std::memory_order_relaxed) == INVALID_BLOCK_BASE ||
