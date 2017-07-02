@@ -1016,3 +1016,4 @@ namespace mango
 #include "vector_float32x8.hpp"
 #include "vector_float64x2.hpp"
 #include "vector_float64x4.hpp"
+#include "vector_gather.hpp"
