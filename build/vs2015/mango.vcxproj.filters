@@ -786,6 +786,12 @@
     <ClInclude Include="..\..\include\mango\simd\common_int256.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\gather.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_gather.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mango">
