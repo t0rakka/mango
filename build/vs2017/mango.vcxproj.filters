@@ -603,6 +603,12 @@
     <ClInclude Include="..\..\include\mango\simd\neon_float64.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\math\vector_gather.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\gather.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">

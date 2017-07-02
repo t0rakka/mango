@@ -87,6 +87,7 @@
     <ClInclude Include="..\..\include\mango\math\vector_float32x8.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_float64x2.hpp" />
     <ClInclude Include="..\..\include\mango\math\vector_float64x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_gather.hpp" />
     <ClInclude Include="..\..\include\mango\opengl\func\glcorearb.hpp" />
     <ClInclude Include="..\..\include\mango\opengl\func\glext.hpp" />
     <ClInclude Include="..\..\include\mango\opengl\func\glxext.hpp" />
@@ -107,6 +108,7 @@
     <ClInclude Include="..\..\include\mango\simd\common_double256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common_float256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common_int256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\gather.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_float64.hpp" />
@@ -397,6 +399,8 @@
       <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
