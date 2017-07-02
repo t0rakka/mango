@@ -499,3 +499,5 @@ namespace simd {
 #include "scalar_convert.hpp"
 
 #endif
+
+#include "gather.hpp"
