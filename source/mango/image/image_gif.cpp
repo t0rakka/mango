@@ -322,7 +322,7 @@ namespace
             uint32 g = palette_data[1];
             uint32 b = palette_data[2];
 			palette_data += 3;
-            palette[i] = 0xff000000 | (r << 16) | (g << 8) | b;
+            palette[i] = makeBGRA(r, g, b, 0xff); 
 		}
 
 		// translucent color
