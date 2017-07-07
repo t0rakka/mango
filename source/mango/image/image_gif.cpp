@@ -278,55 +278,56 @@ namespace
 		}
 	}
 
-    void blit_palette(Surface& surface, const uint8* bits, const uint32* palette, int width, int height)
+    void blit_palette(Surface& surface, const uint8* bits, const Palette& palette, int width, int height)
     {
         for (int y = 0; y < height; ++y)
         {
             uint32* dest = surface.address<uint32>(0, y);
             for (int x = 0; x < width; ++x)
             {
-                dest[x] = palette[bits[x]];
+                dest[x] = palette.color[bits[x]];
             }
             bits += width;
         }
     }
 
-    void read_image(uint8*& data, uint8* end, const gif_logical_screen_descriptor& desc, Surface& surface)
+    void read_image(uint8*& data, uint8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
         image_desc.read(data, end);
 
-		// choose palette
-		int palette_size = 0;
-		uint8* palette_data = nullptr;
+		Palette palette;
 
+		// choose palette
 		if (image_desc.local_color_table())
 		{
 			// local palette
-			palette_size = image_desc.color_table_size();
-			palette_data = image_desc.palette;
+			palette.size = image_desc.color_table_size();
+
+			for (uint32 i = 0; i < palette.size; ++i)
+			{
+            	uint32 r = image_desc.palette[i * 3 + 0];
+            	uint32 g = image_desc.palette[i * 3 + 1];
+            	uint32 b = image_desc.palette[i * 3 + 2];
+            	palette.color[i] = PackedColor(r, g, b, 0xff);
+			}
 		}
 		else
 		{
 			// global palette
-			palette_size = desc.color_table_size();
-			palette_data = desc.palette;
-		}
+			palette.size = desc.color_table_size();
 
-		// convert palette
-		uint32 palette[256];
-
-		for (int i = 0; i < palette_size; ++i)
-		{
-            uint32 r = palette_data[0];
-            uint32 g = palette_data[1];
-            uint32 b = palette_data[2];
-			palette_data += 3;
-            palette[i] = makeBGRA(r, g, b, 0xff); 
+			for (uint32 i = 0; i < palette.size; ++i)
+			{
+            	uint32 r = desc.palette[i * 3 + 0];
+            	uint32 g = desc.palette[i * 3 + 1];
+            	uint32 b = desc.palette[i * 3 + 2];
+            	palette.color[i] = PackedColor(r, g, b, 0xff);
+			}
 		}
 
 		// translucent color
-		palette[desc.background] &= 0x00ffffff; // zero alpha bits
+		palette.color[desc.background][3] = 0; // zero alpha bits
 
         int width = image_desc.width;
         int height = image_desc.height;
@@ -343,25 +344,33 @@ namespace
             bits = temp;
 		}
 
-        bool direct = (surface.width == width &&
-                       surface.height == height &&
-                       surface.format == FORMAT_B8G8R8A8 &&
-                       !image_desc.left &&
-                       !image_desc.top);
+		bool dimensions = surface.width == width && surface.height == height;
 
-        if (direct)
-        {
-            blit_palette(surface, bits, palette, width, height);
-        }
-        else
-        {
-            Bitmap temp(width, height, FORMAT_B8G8R8A8);
-            blit_palette(temp, bits, palette, width, height);
+		if (ptr_palette && dimensions && surface.format.bits == 8)
+		{
+			*ptr_palette = palette;
+			uint8* dest = surface.address<uint8>(0,0);
+			std::memcpy(dest, bits, width * height);
+		}
+		else
+		{
+    	    bool suitable = dimensions && surface.format == FORMAT_B8G8R8A8;
+        	bool direct = suitable && !(image_desc.left || image_desc.top);
 
-            int x = image_desc.left;
-            int y = image_desc.top;
-            surface.blit(x, y, temp);
-        }
+        	if (direct)
+        	{
+            	blit_palette(surface, bits, palette, width, height);
+        	}
+        	else
+        	{
+            	Bitmap temp(width, height, FORMAT_B8G8R8A8);
+            	blit_palette(temp, bits, palette, width, height);
+
+            	int x = image_desc.left;
+            	int y = image_desc.top;
+            	surface.blit(x, y, temp);
+        	}
+		}
 
 		delete[] bits;
     }
@@ -398,7 +407,7 @@ namespace
 		}
     }
 
-    void read_chunks(uint8* data, uint8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface)
+    void read_chunks(uint8* data, uint8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
     {
         while (data < end)
 		{
@@ -419,7 +428,7 @@ namespace
                     //       This requires the decoding target to be unchanged between frames. The "animation"
                     //       will progressively fill the screen_desc. This is a curiosity we don't feel pressed to
                     //       support at this time.
-                    read_image(data, end, screen_desc, surface);
+                    read_image(data, end, screen_desc, surface, ptr_palette);
                     return;
 				}
 
@@ -469,9 +478,8 @@ namespace
             return header;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
@@ -482,7 +490,7 @@ namespace
             read_magic(data, end);
             gif_logical_screen_descriptor screen_desc;
             screen_desc.read(data, end);
-            read_chunks(data, end, screen_desc, dest);
+            read_chunks(data, end, screen_desc, dest, ptr_palette);
         }
     };
 
