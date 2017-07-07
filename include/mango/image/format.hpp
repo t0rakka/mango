@@ -16,15 +16,8 @@ namespace mango
         return (c3 << 6) | (c2 << 4) | (c1 << 2) | c0;
     }
 
-    class Format
+    struct Format
     {
-    private:
-        uint32 m_bits;
-        uint32 m_type;
-        PackedColor m_size;
-        PackedColor m_offset;
-
-    public:
         enum Component : uint32
         {
             RED   = 0,
@@ -104,7 +97,7 @@ namespace mango
             ABGR = makeOrderMask(3, 2, 1, 0)
         };
 
-        enum Type
+        enum Type : uint32
         {
             NONE   = 0,
             SRGB   = 1,
@@ -117,20 +110,30 @@ namespace mango
             FP64   = 8
         };
 
+        uint32 bits;
+        Type type;
+        PackedColor size;
+        PackedColor offset;
+
         constexpr Format()
-        : m_bits(0), m_type(NONE), m_size(PackedColor()), m_offset(PackedColor())
+            : bits(0)
+            , type(NONE)
+            , size(PackedColor())
+            , offset(PackedColor())
         {
         }
 
         constexpr Format(int bits, Type type, const PackedColor& size, const PackedColor& offset)
-        : m_bits(bits), m_type(type), m_size(size), m_offset(offset)
+            : bits(bits)
+            , type(type)
+            , size(size)
+            , offset(offset)
         {
         }
 
         explicit Format(int bits, uint32 luminanceMask, uint32 alphaMask);
         explicit Format(int bits, uint32 redMask, uint32 greenMask, uint32 blueMask, uint32 alphaMask);
         explicit Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3);
-
         Format(const Format& format) = default;
         ~Format() = default;
 
@@ -140,17 +143,24 @@ namespace mango
         bool operator != (const Format& format) const;
         bool operator < (const Format& format) const;
 
-        int bits() const;
-        int bytes() const;
         int float_bits() const;
-        Type type() const;
-        bool alpha() const;
-        PackedColor size() const;
-        PackedColor offset() const;
-        int size(int component) const;
-        int offset(int component) const;
-        uint32 mask(int component) const;
         uint32 pack(float red, float green, float blue, float alpha) const;
+
+        int bytes() const
+        {
+            return bits >> 3;
+        }
+
+        bool alpha() const
+        {
+            return size[3] > 0;
+        }
+
+        uint32 mask(int component) const
+        {
+            uint32 mask = uint32((1UL << size[component]) - 1) << offset[component];
+            return mask;
+        }
     };
 
     // ----------------------------------------------------------------------------

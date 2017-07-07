@@ -257,13 +257,13 @@ namespace mango
 
     void Surface::clear(float red, float green, float blue, float alpha)
     {
-        switch (format.type())
+        switch (format.type)
         {
             case Format::UNORM:
             {
                 void (*func)(uint8 *, int, uint32) = nullptr;
 
-                switch (format.bits())
+                switch (format.bits)
                 {
                     case 8: func = clear_uint8_scan; break;
                     case 16: func = clear_uint16_scan; break;
@@ -339,7 +339,7 @@ namespace mango
 
     void Surface::blit(int x, int y, const Surface& source)
     {
-        if (!source.width || !source.height || !source.format.bits() || !format.bits())
+        if (!source.width || !source.height || !source.format.bits || !format.bits)
             return;
 
         Surface dest(*this, x, y, source.width, source.height);

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/system.hpp>
@@ -168,10 +168,10 @@ namespace
     {
         int bits = 0;
 
-        switch (format.type())
+        switch (format.type)
         {
 			case Format::UNORM:
-				bits = format.bits();
+				bits = format.bits;
 				break;
 		
 			case Format::FP16:
@@ -284,10 +284,10 @@ namespace
 
         for (int i = 0; i < 4; ++i)
         {
-            if (df.size(i) && sf.size(i))
+            if (df.size[i] && sf.size[i])
             {
                 mask[components] = df.mask(i);
-                offset[components] = sf.offset(i) / (sizeof(SourceType) * 8);
+                offset[components] = sf.offset[i] / (sizeof(SourceType) * 8);
                 ++components;
             }
         }
@@ -296,7 +296,7 @@ namespace
         uint32 alphaMask = df.mask(3);
 
         // if source format has alpha channel use computed alpha instead of the default
-        if (sf.size(3) > 0)
+        if (sf.alpha())
             alphaMask = 0;
 
         for (int y = 0; y < rect.height; ++y)
@@ -415,7 +415,7 @@ namespace
 
     Blitter::ConvertFunc convert_fpu(int modeMask)
     {
-        Blitter::ConvertFunc func = NULL;
+        Blitter::ConvertFunc func = nullptr;
 
         switch (modeMask)
         {

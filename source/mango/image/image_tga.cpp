@@ -450,7 +450,7 @@ namespace
         header.image_origin_y   = 0;
         header.image_width      = static_cast<uint16>(width);
         header.image_height     = static_cast<uint16>(height);
-        header.pixel_size       = static_cast<uint8>(format.bits());
+        header.pixel_size       = static_cast<uint8>(format.bits);
         header.descriptor       = 0x20 | (isalpha ? 8 : 0);
 
         // write header

@@ -729,7 +729,7 @@ namespace
             }
             else
             {
-                if (!dxgi.format.bits())
+                if (!dxgi.format.bits)
                 {
                     // TODO: which format (id = header.dxgiFormat)
                     MANGO_EXCEPTION(ID"DXGI format not supported.");
@@ -738,7 +738,7 @@ namespace
                 pixelFormat.fourCC = 0;
                 pixelFormat.compression = TextureCompression::NONE;
 
-                switch (dxgi.format.type())
+                switch (dxgi.format.type)
                 {
                     case Format::FP16:
                     case Format::FP32:
@@ -821,7 +821,7 @@ namespace
             }
             else
             {
-                const int bytesPerPixel = round_to_next(pixelFormat.format.bits(), 8);
+                const int bytesPerPixel = round_to_next(pixelFormat.format.bits, 8);
                 pitch = xsize * bytesPerPixel;
             }
 
