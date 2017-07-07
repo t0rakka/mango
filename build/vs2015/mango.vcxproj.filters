@@ -792,6 +792,9 @@
     <ClInclude Include="..\..\include\mango\math\vector_gather.hpp">
       <Filter>mango\include\math</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\color.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mango">

@@ -609,6 +609,9 @@
     <ClInclude Include="..\..\include\mango\simd\gather.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\color.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">

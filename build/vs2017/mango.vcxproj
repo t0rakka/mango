@@ -48,6 +48,7 @@
     <ClInclude Include="..\..\include\mango\gui\gui.hpp" />
     <ClInclude Include="..\..\include\mango\gui\window.hpp" />
     <ClInclude Include="..\..\include\mango\image\blitter.hpp" />
+    <ClInclude Include="..\..\include\mango\image\color.hpp" />
     <ClInclude Include="..\..\include\mango\image\compression.hpp" />
     <ClInclude Include="..\..\include\mango\image\decoder.hpp" />
     <ClInclude Include="..\..\include\mango\image\encoder.hpp" />
