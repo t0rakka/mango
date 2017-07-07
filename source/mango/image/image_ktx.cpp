@@ -347,8 +347,10 @@ glBaseInternalFormat:
             return data;
         }
 
-        void decode(Surface& dest, int level, int depth, int face) override
+        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED_PARAMETER(palette);
+
             Memory data = m_header.getMemory(m_memory, level, depth, face);
 
             Format format;

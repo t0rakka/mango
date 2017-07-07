@@ -176,6 +176,37 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
+    Surface load_palette_surface(Memory memory, const std::string& extension, Palette* palette)
+    {
+        Surface surface(0, 0, Format(), 0, nullptr);
+
+        ImageDecoder decoder(memory, extension);
+        if (decoder.isDecoder())
+        {
+            ImageHeader header = decoder.header();
+
+            // configure surface
+            surface.width  = header.width;
+            surface.height = header.height;
+            surface.format = Format(8, 0xff, 0);
+            surface.stride = surface.width;
+            surface.image  = new uint8[surface.height * surface.stride];
+
+            // decode
+            decoder.decode(surface, palette, 0, 0, 0);
+        }
+
+        return surface;
+    }
+
+    Surface load_palette_surface(const std::string& filename, Palette* palette)
+    {
+        const std::string extension = getExtension(filename);
+        File file(filename);
+        Surface surface = load_palette_surface(file, extension, palette);
+        return surface;
+    }
+
     Surface load_surface(Memory memory, const std::string& extension, const Format* format)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
@@ -193,7 +224,7 @@ namespace
             surface.image  = new uint8[surface.height * surface.stride];
 
             // decode
-            decoder.decode(surface, 0, 0, 0);
+            decoder.decode(surface, nullptr, 0, 0, 0);
         }
 
         return surface;
@@ -217,17 +248,25 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Surface::Surface()
-    : width(0), height(0), stride(0), image(nullptr)
+        : width(0)
+        , height(0)
+        , stride(0)
+        , image(nullptr)
     {
     }
 
     Surface::Surface(int width, int height, const Format& format, int stride, uint8* image)
-    : width(width), height(height), stride(stride), format(format), image(image)
+        : width(width)
+        , height(height)
+        , stride(stride)
+        , format(format)
+        , image(image)
     {
     }
 
     Surface::Surface(const Surface& source, int x, int y, int _width, int _height)
-    : stride(source.stride), format(source.format)
+        : stride(source.stride)
+        , format(source.format)
     {
         // clip rectangle to source surface
         const int x0 = std::max(0, x);
@@ -476,7 +515,7 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Bitmap::Bitmap(int _width, int _height, const Format& _format, int _stride, uint8* _image)
-    : Surface(_width, _height, _format, _stride, _image)
+        : Surface(_width, _height, _format, _stride, _image)
     {
         if (!stride)
             stride = width * format.bytes();
@@ -486,22 +525,32 @@ namespace mango
     }
 
     Bitmap::Bitmap(Memory memory, const std::string& extension)
-    : Surface(load_surface(memory, extension, nullptr))
+        : Surface(load_surface(memory, extension, nullptr))
     {
     }
 
-    Bitmap::Bitmap(const std::string& filename, const Format& format)
-    : Surface(load_surface(filename, &format))
+    Bitmap::Bitmap(Memory memory, const std::string& extension, Palette& palette)
+        : Surface(load_palette_surface(memory, extension, &palette))
     {
     }
 
     Bitmap::Bitmap(const std::string& filename)
-    : Surface(load_surface(filename, nullptr))
+        : Surface(load_surface(filename, nullptr))
+    {
+    }
+
+    Bitmap::Bitmap(const std::string& filename, Palette& palette)
+        : Surface(load_palette_surface(filename, &palette))
+    {
+    }
+
+    Bitmap::Bitmap(const std::string& filename, const Format& format)
+        : Surface(load_surface(filename, &format))
     {
     }
 
     Bitmap::Bitmap(Bitmap&& bitmap)
-    : Surface(bitmap)
+        : Surface(bitmap)
     {
         bitmap.image = nullptr;
     }

@@ -899,8 +899,10 @@ namespace
             return m_header.getMemory(level, depth, face);
         }
 
-        void decode(Surface& dest, int level, int depth, int face) override
+        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED_PARAMETER(palette);
+
             Memory imageMemory = m_header.getMemory(level, depth, face);
             TextureCompression compression = m_header.getCompression();
 

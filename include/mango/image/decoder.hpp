@@ -21,7 +21,7 @@ namespace mango
         virtual ~ImageDecoderInterface() = default;
 
         virtual ImageHeader header() = 0;
-        virtual void decode(Surface& dest, int level, int depth, int face) = 0;
+        virtual void decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
 
         // optional interface
         virtual Exif exif();
@@ -44,7 +44,7 @@ namespace mango
         ImageHeader header();
         Exif exif();
         Memory memory(int level, int depth, int face);
-        void decode(Surface& dest, int level, int depth, int face);
+        void decode(Surface& dest, Palette* palette, int level, int depth, int face);
     };
 
     void registerImageDecoder(ImageDecoder::CreateFunc func, const std::string& extension);

@@ -355,8 +355,9 @@ namespace
             return header;
         }
 
-        void decode(Surface& dest, int level, int depth, int face) override
+        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED_PARAMETER(palette);
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);

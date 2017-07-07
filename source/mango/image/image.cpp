@@ -193,10 +193,10 @@ namespace mango
         return m_interface ? m_interface->memory(level, depth, face) : Memory();
     }
 
-    void ImageDecoder::decode(Surface& dest, int level, int depth, int face)
+    void ImageDecoder::decode(Surface& dest, Palette* palette, int level, int depth, int face)
     {
         if (m_interface)
-            m_interface->decode(dest, level, depth, face);
+            m_interface->decode(dest, palette, level, depth, face);
     }
 
     // ----------------------------------------------------------------------------
