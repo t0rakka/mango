@@ -384,52 +384,52 @@ namespace
             {
                 case 1:
                     switch (header.NPlanes)
-                {
-                    case 4:
-                        decode4p(temp, buffer, scansize, header.ColorMap);
-                        break;
-                    default:
-                        break;
-                }
+                    {
+                        case 4:
+                            decode4p(temp, buffer, scansize, header.ColorMap);
+                            break;
+                        default:
+                            break;
+                    }
                     break;
 
                 case 4:
                     switch (header.NPlanes)
-                {
-                    case 1:
-                        // TODO: 16 color palette
-                        break;
-                    case 4:
-                        // TODO: 4096 color ARGB4444
-                        break;
-                    default:
-                        break;
-                }
+                    {
+                        case 1:
+                            // TODO: 16 color palette
+                            break;
+                        case 4:
+                            // TODO: 4096 color ARGB4444
+                            break;
+                        default:
+                            break;
+                    }
                     break;
 
                 case 8:
                     switch (header.NPlanes)
-                {
-                    case 1:
-                        if (isPaletteMarker)
-                        {
-                            const uint8* palette = m_memory.address + m_memory.size - 768;
-                            decode8p(temp, buffer, scansize, palette);
-                        }
-                        else
-                        {
-                            decode8(temp, buffer, scansize); // TODO: testing required
-                        }
-                        break;
-                    case 3:
-                        decode24(temp, buffer, scansize);
-                        break;
-                    case 4:
-                        decode32(temp, buffer, scansize); // TODO: testing required
-                        break;
-                    default:
-                        break;
-                }
+                    {
+                        case 1:
+                            if (isPaletteMarker)
+                            {
+                                const uint8* palette = m_memory.address + m_memory.size - 768;
+                                decode8p(temp, buffer, scansize, palette);
+                            }
+                            else
+                            {
+                                decode8(temp, buffer, scansize); // TODO: testing required
+                            }
+                            break;
+                        case 3:
+                            decode24(temp, buffer, scansize);
+                            break;
+                        case 4:
+                            decode32(temp, buffer, scansize); // TODO: testing required
+                            break;
+                        default:
+                            break;
+                    }
                     break;
 
                 default:
