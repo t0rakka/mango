@@ -80,4 +80,10 @@ namespace mango
         }
     };
 
+    struct Palette
+    {
+        uint32 size { 0 };
+        PackedColor color[256];
+    };
+
 } // namespace mango
