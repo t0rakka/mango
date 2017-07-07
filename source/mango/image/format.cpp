@@ -52,7 +52,7 @@ namespace mango
         , type(type)
     {
         assert(!(bits & 7));
-        assert(bits >= 8 && bits <= 32);
+        assert(bits >= 8 && bits <= 128);
 
         // compute component indices from order mask
 		const int c0 = (order >> 0) & 3;
