@@ -63,9 +63,9 @@
 #elif defined(MANGO_PLATFORM_ANDROID)
 
     //#include <GLES/gl.h>
+    //#include <GLES/glext.h>
     //#include <GLES2/gl2.h>
     #include <GLES3/gl3.h>
-    #include <GLES/glext.h>
 
     #define MANGO_CONTEXT_EGL
 	// TODO: EGL context
