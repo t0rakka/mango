@@ -883,12 +883,13 @@ namespace
         {
             ImageHeader header;
 
-            header.width  = m_header.getWidth();
-            header.height = m_header.getHeight();
-            header.depth  = 0; // TODO: support volume images
-            header.levels = m_header.getMipmapCount();
-            header.faces  = m_header.getFaceCount();
-            header.format = m_header.getFormat();
+            header.width   = m_header.getWidth();
+            header.height  = m_header.getHeight();
+            header.depth   = 0; // TODO: support volume images
+            header.levels  = m_header.getMipmapCount();
+            header.faces   = m_header.getFaceCount();
+			header.palette = false;
+            header.format  = m_header.getFormat();
             header.compression = m_header.getCompression();
 
             return header;

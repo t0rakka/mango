@@ -264,12 +264,13 @@ namespace
 
             ImageHeader header;
 
-            header.width  = 0;
-            header.height = 0;
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
-            header.format = Format();
+            header.width   = 0;
+            header.height  = 0;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = Format();
             header.compression = TextureCompression::NONE;
 
             // chunk reader

@@ -473,11 +473,12 @@ namespace
 
         if (!m_error)
         {
-            header.width  = m_width;
-            header.height = m_height;
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
+            header.width   = m_width;
+            header.height  = m_height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
             header.compression = TextureCompression::NONE;
 
             // force alpha channel on when transparency is enabled

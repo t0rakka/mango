@@ -18,7 +18,8 @@ namespace mango
         int     depth = 0;   // depth
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
-        Format  format;      // pixel format
+        bool    palette = false;
+        Format  format;
         TextureCompression compression = TextureCompression::NONE;
     };
 

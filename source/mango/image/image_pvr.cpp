@@ -349,12 +349,13 @@ namespace
         {
             ImageHeader header;
 
-            header.width  = m_header.m_width;
-            header.height = m_header.m_height;
-            header.depth  = m_header.m_depth;
-            header.levels = m_header.m_mipmaps;
-            header.faces  = m_header.m_faces;
-            header.format = m_header.m_info.format;
+            header.width   = m_header.m_width;
+            header.height  = m_header.m_height;
+            header.depth   = m_header.m_depth;
+            header.levels  = m_header.m_mipmaps;
+            header.faces   = m_header.m_faces;
+			header.palette = false;
+            header.format  = m_header.m_info.format;
             header.compression = m_header.m_info.compression;
 
             return header;

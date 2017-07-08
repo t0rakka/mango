@@ -467,12 +467,13 @@ namespace
 
             ImageHeader header;
 
-            header.width  = screen_desc.width;
-            header.height = screen_desc.height;
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
-            header.format = FORMAT_B8G8R8A8;
+            header.width   = screen_desc.width;
+            header.height  = screen_desc.height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = true;
+            header.format  = FORMAT_B8G8R8A8;
             header.compression = TextureCompression::NONE;
 
             return header;

@@ -38,7 +38,6 @@ namespace mango
         }
 
         void save(const std::string& filename);
-
         void clear(float red, float green, float blue, float alpha);
         void blit(int x, int y, const Surface& source);
         void xflip();
@@ -50,10 +49,10 @@ namespace mango
     public:
         Bitmap(int width, int height, const Format& format, int stride = 0, uint8* image = nullptr);
         Bitmap(Memory memory, const std::string& extension);
-        Bitmap(Memory memory, const std::string& extension, Palette& palette);
-        Bitmap(const std::string& filename);
-        Bitmap(const std::string& filename, Palette& palette);
         Bitmap(const std::string& filename, const Format& format);
+        Bitmap(const std::string& filename);
+        Bitmap(Memory memory, const std::string& extension, Palette& palette);
+        Bitmap(const std::string& filename, Palette& palette);
         Bitmap(Bitmap&& bitmap);
         ~Bitmap();
 

@@ -887,12 +887,13 @@ namespace
                     Memory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
 
-                    header.width  = bmp_header.width;
-                    header.height = bmp_header.height;
-                    header.depth  = 0;
-                    header.levels = 0;
-                    header.faces  = 0;
-                    header.format = bmp_header.format;
+                    header.width   = bmp_header.width;
+                    header.height  = bmp_header.height;
+                    header.depth   = 0;
+                    header.levels  = 0;
+                    header.faces   = 0;
+        			header.palette = false;
+                    header.format  = bmp_header.format;
                     header.compression = TextureCompression::NONE;
                     break;
                 }

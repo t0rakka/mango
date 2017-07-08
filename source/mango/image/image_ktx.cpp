@@ -330,12 +330,13 @@ glBaseInternalFormat:
         {
             ImageHeader header;
 
-            header.width  = m_header.pixelWidth;
-            header.height = m_header.pixelHeight;
-            header.depth  = 0;
-            header.levels = m_header.numberOfMipmapLevels;
-            header.faces  = m_header.numberOfFaces;
-            header.format = FORMAT_NONE;
+            header.width   = m_header.pixelWidth;
+            header.height  = m_header.pixelHeight;
+            header.depth   = 0;
+            header.levels  = m_header.numberOfMipmapLevels;
+            header.faces   = m_header.numberOfFaces;
+			header.palette = false;
+            header.format  = FORMAT_NONE;
             header.compression = m_header.computeFormat(header.format);
 
             return header;

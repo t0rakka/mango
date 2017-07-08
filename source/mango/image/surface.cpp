@@ -176,37 +176,6 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    Surface load_palette_surface(Memory memory, const std::string& extension, Palette* palette)
-    {
-        Surface surface(0, 0, Format(), 0, nullptr);
-
-        ImageDecoder decoder(memory, extension);
-        if (decoder.isDecoder())
-        {
-            ImageHeader header = decoder.header();
-
-            // configure surface
-            surface.width  = header.width;
-            surface.height = header.height;
-            surface.format = Format(8, 0xff, 0);
-            surface.stride = surface.width;
-            surface.image  = new uint8[surface.height * surface.stride];
-
-            // decode
-            decoder.decode(surface, palette, 0, 0, 0);
-        }
-
-        return surface;
-    }
-
-    Surface load_palette_surface(const std::string& filename, Palette* palette)
-    {
-        const std::string extension = getExtension(filename);
-        File file(filename);
-        Surface surface = load_palette_surface(file, extension, palette);
-        return surface;
-    }
-
     Surface load_surface(Memory memory, const std::string& extension, const Format* format)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
@@ -235,6 +204,45 @@ namespace
         const std::string extension = getExtension(filename);
         File file(filename);
         Surface surface = load_surface(file, extension, format);
+        return surface;
+    }
+
+    Surface load_palette_surface(Memory memory, const std::string& extension, Palette& palette)
+    {
+        Surface surface(0, 0, Format(), 0, nullptr);
+        palette.size = 0;
+
+        ImageDecoder decoder(memory, extension);
+        if (decoder.isDecoder())
+        {
+            ImageHeader header = decoder.header();
+            if (header.palette)
+            {
+                // configure surface
+                surface.width  = header.width;
+                surface.height = header.height;
+                surface.format = Format(8, 0xff, 0);
+                surface.stride = surface.width;
+                surface.image  = new uint8[surface.height * surface.stride];
+
+                // decode
+                decoder.decode(surface, &palette, 0, 0, 0);
+            }
+            else
+            {
+                // fallback: client requests a palette but image doesn't have one
+                surface = load_surface(memory, extension, nullptr);
+            }
+        }
+
+        return surface;
+    }
+
+    Surface load_palette_surface(const std::string& filename, Palette& palette)
+    {
+        const std::string extension = getExtension(filename);
+        File file(filename);
+        Surface surface = load_palette_surface(file, extension, palette);
         return surface;
     }
 
@@ -529,8 +537,8 @@ namespace mango
     {
     }
 
-    Bitmap::Bitmap(Memory memory, const std::string& extension, Palette& palette)
-        : Surface(load_palette_surface(memory, extension, &palette))
+    Bitmap::Bitmap(const std::string& filename, const Format& format)
+        : Surface(load_surface(filename, &format))
     {
     }
 
@@ -539,13 +547,13 @@ namespace mango
     {
     }
 
-    Bitmap::Bitmap(const std::string& filename, Palette& palette)
-        : Surface(load_palette_surface(filename, &palette))
+    Bitmap::Bitmap(Memory memory, const std::string& extension, Palette& palette)
+        : Surface(load_palette_surface(memory, extension, palette))
     {
     }
 
-    Bitmap::Bitmap(const std::string& filename, const Format& format)
-        : Surface(load_surface(filename, &format))
+    Bitmap::Bitmap(const std::string& filename, Palette& palette)
+        : Surface(load_palette_surface(filename, palette))
     {
     }
 

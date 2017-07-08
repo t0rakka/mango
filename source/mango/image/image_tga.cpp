@@ -326,12 +326,13 @@ namespace
         ImageHeader header() override
         {
             ImageHeader header;
-            header.width  = m_header.image_width;
-            header.height = m_header.image_height;
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
-            header.format = m_header.getFormat();
+            header.width   = m_header.image_width;
+            header.height  = m_header.image_height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = m_header.getFormat();
             header.compression = TextureCompression::NONE;
             return header;
         }

@@ -103,12 +103,13 @@ namespace
         {
             ImageHeader header;
 
-            header.width  = m_header.extended_width;
-            header.height = m_header.extended_height;
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
-            header.format = m_header.format;
+            header.width   = m_header.extended_width;
+            header.height  = m_header.extended_height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = m_header.format;
             header.compression = m_header.compression;
 
             return header;

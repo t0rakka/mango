@@ -34,12 +34,13 @@ namespace
         {
             ImageHeader header;
 
-            header.width  = m_parser.header.width;
-            header.height = m_parser.header.height;
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
-            header.format = m_parser.header.format;
+            header.width   = m_parser.header.width;
+            header.height  = m_parser.header.height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = m_parser.header.format;
             header.compression = TextureCompression::NONE;
 
             return header;

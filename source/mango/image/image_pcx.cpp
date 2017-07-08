@@ -344,12 +344,13 @@ namespace
 
             ImageHeader header;
 
-            header.width  = m_header.getWidth();
-            header.height = m_header.getHeight();
-            header.depth  = 0;
-            header.levels = 0;
-            header.faces  = 0;
-            header.format = m_header.getFormat(isPaletteMarker);
+            header.width   = m_header.getWidth();
+            header.height  = m_header.getHeight();
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = m_header.getFormat(isPaletteMarker);
             header.compression = TextureCompression::NONE;
 
             return header;
