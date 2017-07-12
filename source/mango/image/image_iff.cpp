@@ -77,7 +77,7 @@ namespace
 		}
 	}
 
-	void p2c_ham(uint8* dest, const uint8* workptr, int width, int height, int nplanes, const uint8* palette)
+	void p2c_ham(uint8* dest, const uint8* workptr, int width, int height, int nplanes, const Palette& palette)
 	{
 		bool hamcode2b = (nplanes == 6 || nplanes == 8);
 		int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
@@ -87,9 +87,9 @@ namespace
 
 		for (int y = 0; y < height; ++y)
 		{
-			uint32 r = palette[2];
-			uint32 g = palette[1];
-			uint32 b = palette[0];
+			uint32 r = palette[0].r;
+			uint32 g = palette[0].g;
+			uint32 b = palette[0].b;
 
 			uint32 bitmask = 0x80;
 			const uint8* workptr2 = workptr;
@@ -134,9 +134,9 @@ namespace
 				switch (hamcode)
 				{
 					case 0:
-						r = palette[v * 4 + 2];
-						g = palette[v * 4 + 1];
-						b = palette[v * 4 + 0];
+						r = palette[v].r;
+						g = palette[v].g;
+						b = palette[v].b;
 						break;
 
 					case 1:
@@ -171,15 +171,14 @@ namespace
 		}
 	}
 
-    void expand_palette(uint8* dest, const uint8* src, int xsize, int ysize, const uint8* palette)
+    void expand_palette(uint8* dest, const uint8* src, int xsize, int ysize, const Palette& palette)
     {
-        const uint32* pal = reinterpret_cast<const uint32*>(palette);
-        uint32* image = reinterpret_cast<uint32*>(dest);
+        BGRA* image = reinterpret_cast<BGRA*>(dest);
         int count = xsize * ysize;
 
         for (int i = 0; i < count; ++i)
         {
-            image[i] = pal[src[i]];
+            image[i] = palette[src[i]];
         }
     }
 
@@ -309,6 +308,7 @@ namespace
                 }
             }
 
+            header.palette = nplanes <= 8 && !ham;
             header.format = select_format(nplanes, ham);
 
             return header;
@@ -326,8 +326,7 @@ namespace
 
             bool is_pbm = read_signature(data);
 
-            uint8 palette[1024];
-            int palette_size = 0;
+            Palette palette;
 
             uint8* buffer_allocated = nullptr;
             uint8* buffer = nullptr;
@@ -390,13 +389,10 @@ namespace
 
                     case makeReverseFourCC('C','M','A','P'):
                     {
-                        palette_size = size / 3;
-                        for (int i = 0; i < palette_size; ++i)
+                        palette.size = size / 3;
+                        for (uint32 i = 0; i < palette.size; ++i)
                         {
-                            palette[i * 4 + 0] = p[2];
-                            palette[i * 4 + 1] = p[1];
-                            palette[i * 4 + 2] = p[0];
-                            palette[i * 4 + 3] = 0xff;
+                            palette[i] = BGRA(p[0], p[1], p[2], 0xff);
                             p += 3;
                         }
                         break;
@@ -444,61 +440,81 @@ namespace
             }
 
             // fix ehb palette
-            if (ehb && (palette_size == 32 || palette_size == 64))
+            if (ehb && (palette.size == 32 || palette.size == 64))
             {
                 for (int i = 0; i < 32; ++i)
                 {
-                    palette[(i + 32) * 4 + 0] = palette[i * 4 + 0] >> 1;
-                    palette[(i + 32) * 4 + 1] = palette[i * 4 + 1] >> 1;
-                    palette[(i + 32) * 4 + 2] = palette[i * 4 + 2] >> 1;
-                    palette[(i + 32) * 4 + 3] = 0xff;
+                    palette[i + 32].r = palette[i].r >> 1;
+                    palette[i + 32].g = palette[i].g >> 1;
+                    palette[i + 32].b = palette[i].b >> 1;
+                    palette[i + 32].a = 0xff;
                 }
             }
 
-            // choose pixelformat
-            Format format = select_format(nplanes, ham);
-
-            Bitmap temp(xsize, ysize, format);
-
-            // planar-to-chunky conversion
-            if (ham)
+            if (palette.size > 0 && !ham && ptr_palette)
             {
-                p2c_ham(temp.image, buffer, xsize, ysize, nplanes, palette);
-            }
-            else
-            {
+                // client requests for palette and the image has one
+                *ptr_palette = palette;
+
                 if (is_pbm)
                 {
                     // linear
-                    if (nplanes <= 8)
-                    {
-                        expand_palette(temp.image, buffer, xsize, ysize, palette);
-                    }
-                    else
-                    {
-                        std::memcpy(temp.image, buffer, temp.stride * ysize);
-                    }
+                    std::memcpy(dest.image, buffer, xsize * ysize);
                 }
                 else
                 {
                     // interlaced
-                    if (nplanes <= 8)
+                    Bitmap raw(xsize, ysize, FORMAT_L8);
+                    p2c_raw(raw.image, buffer, xsize, ysize, nplanes, mask);
+                    std::memcpy(dest.image, raw.image, xsize * ysize);
+                }
+            }
+            else
+            {
+                // choose pixelformat
+                Format format = select_format(nplanes, ham);
+                Bitmap temp(xsize, ysize, format);
+
+                // planar-to-chunky conversion
+                if (ham)
+                {
+                    p2c_ham(temp.image, buffer, xsize, ysize, nplanes, palette);
+                }
+                else
+                {
+                    if (is_pbm)
                     {
-                        Bitmap raw(xsize, ysize, FORMAT_L8);
-                        p2c_raw(raw.image, buffer, xsize, ysize, nplanes, mask);
-                        expand_palette(temp.image, raw.image, xsize, ysize, palette);
+                        // linear
+                        if (nplanes <= 8)
+                        {
+                            expand_palette(temp.image, buffer, xsize, ysize, palette);
+                        }
+                        else
+                        {
+                            std::memcpy(temp.image, buffer, temp.stride * ysize);
+                        }
                     }
                     else
                     {
-                        p2c_raw(temp.image, buffer, xsize, ysize, nplanes, mask);
+                        // interlaced
+                        if (nplanes <= 8)
+                        {
+                            Bitmap raw(xsize, ysize, FORMAT_L8);
+                            p2c_raw(raw.image, buffer, xsize, ysize, nplanes, mask);
+                            expand_palette(temp.image, raw.image, xsize, ysize, palette);
+                        }
+                        else
+                        {
+                            p2c_raw(temp.image, buffer, xsize, ysize, nplanes, mask);
+                        }
                     }
                 }
+
+			    // NOTE: we could directly decode into dest if the formats match.
+                dest.blit(0, 0, temp);
             }
 
             delete[] buffer_allocated;
-
-			// NOTE: we could directly decode into dest if the formats match.
-            dest.blit(0, 0, temp);
         }
     };
 

@@ -285,7 +285,7 @@ namespace
             uint32* dest = surface.address<uint32>(0, y);
             for (int x = 0; x < width; ++x)
             {
-                dest[x] = palette.color[bits[x]];
+                dest[x] = palette[bits[x]];
             }
             bits += width;
         }
@@ -309,7 +309,7 @@ namespace
             	uint32 r = image_desc.palette[i * 3 + 0];
             	uint32 g = image_desc.palette[i * 3 + 1];
             	uint32 b = image_desc.palette[i * 3 + 2];
-            	palette.color[i] = PackedColor(r, g, b, 0xff);
+            	palette[i] = BGRA(r, g, b, 0xff);
 			}
 		}
 		else
@@ -322,12 +322,12 @@ namespace
             	uint32 r = desc.palette[i * 3 + 0];
             	uint32 g = desc.palette[i * 3 + 1];
             	uint32 b = desc.palette[i * 3 + 2];
-            	palette.color[i] = PackedColor(r, g, b, 0xff);
+            	palette[i] = BGRA(r, g, b, 0xff);
 			}
 		}
 
 		// translucent color
-		palette.color[desc.background][3] = 0; // zero alpha bits
+		palette[desc.background].a = 0;
 
         int width = image_desc.width;
         int height = image_desc.height;

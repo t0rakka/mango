@@ -10,16 +10,6 @@
 namespace mango
 {
 
-    constexpr uint32 makeBGRA(int r, int g, int b, int a) noexcept
-    {
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    constexpr uint32 makeRGBA(int r, int g, int b, int a) noexcept
-    {
-        return (a << 24) | (b << 16) | (g << 8) | r;
-    }
-
     struct PackedColor
     {
         uint8 component[4];
@@ -34,34 +24,14 @@ namespace mango
         {
         }
 
-        constexpr PackedColor(const PackedColor& color)
-        : component { color.component[0], color.component[1], color.component[2], color.component[3] }
-        {
-        }
-
         PackedColor(uint32 color)
         {
             ustore32le(component, color);
         }
 
-        PackedColor(const uint8* v)
-        {
-            std::memcpy(component, v, sizeof(PackedColor));
-        }
-
         operator uint32 () const
         {
             return uload32le(component);
-        }
-
-        operator uint8* ()
-        {
-            return component;
-        }
-
-        operator const uint8* () const
-        {
-            return component;
         }
 
         uint8& operator [] (int index)
@@ -80,10 +50,74 @@ namespace mango
         }
     };
 
+    struct BGRA
+    {
+        uint8 b, g, r, a;
+
+        BGRA() = default;
+
+        BGRA(uint8 r, uint8 g, uint8 b, uint8 a)
+        : b(b), g(g), r(r), a(a)
+        {
+        }
+
+        BGRA(uint32 value)
+        {
+            ustore32le(&b, value);
+        }
+
+        operator uint32 () const
+        {
+            return uload32le(&b);
+        }
+    };
+
+    struct RGBA
+    {
+        uint8 r, g, b, a;
+
+        RGBA() = default;
+
+        RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
+        : r(r), g(g), b(b), a(a)
+        {
+        }
+
+        RGBA(uint32 value)
+        {
+            ustore32le(&r, value);
+        }
+
+        operator uint32 () const
+        {
+            return uload32le(&r);
+        }
+    };
+
     struct Palette
     {
         uint32 size { 0 };
-        PackedColor color[256];
+        BGRA color[256];
+
+        BGRA& operator [] (int index)
+        {
+            return color[index];
+        }
+
+        BGRA operator [] (int index) const
+        {
+            return color[index];
+        }
     };
+
+    constexpr uint32 makeBGRA(uint32 r, uint32 g, uint32 b, uint32 a) noexcept
+    {
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    constexpr uint32 makeRGBA(uint32 r, uint32 g, uint32 b, uint32 a) noexcept
+    {
+        return (a << 24) | (b << 16) | (g << 8) | r;
+    }
 
 } // namespace mango
