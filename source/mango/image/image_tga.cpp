@@ -3,6 +3,7 @@
     Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
+#include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
@@ -15,6 +16,16 @@ namespace
 	// ------------------------------------------------------------
 	// header
 	// ------------------------------------------------------------
+
+    enum
+    {
+        TYPE_RAW_PALETTE   = 1,
+        TYPE_RAW_RGB       = 2,
+        TYPE_RAW_BW        = 3,
+        TYPE_RLE_PALETTE   = 9,
+        TYPE_RLE_RGB       = 10,
+        TYPE_RLE_BW        = 11,
+    };
 
     struct HeaderTGA
     {
@@ -48,11 +59,12 @@ namespace
 
             switch (data_type)
             {
-                case 1:
-                case 2:
-                case 3:
-                case 9:
-                case 10:
+                case TYPE_RAW_PALETTE:
+                case TYPE_RAW_RGB:
+                case TYPE_RAW_BW:
+                case TYPE_RLE_PALETTE:
+                case TYPE_RLE_RGB:
+                case TYPE_RLE_BW:
                     break;
                 default:
                     MANGO_EXCEPTION(ID"Invalid data type.");
@@ -74,10 +86,10 @@ namespace
                 MANGO_EXCEPTION(ID"Invalid colormap type.");
             }
 
-            if (data_type == 1 || data_type == 9)
+            if (data_type == TYPE_RAW_PALETTE || data_type == TYPE_RLE_PALETTE)
             {
                 // palette
-                if (colormap_bits != 24 || colormap_length > 256)
+                if ((colormap_bits != 16 && colormap_bits != 24) || colormap_length > 256)
                 {
                     MANGO_EXCEPTION(ID"Invalid colormap size.");
                 }
@@ -105,6 +117,21 @@ namespace
             s.write8(descriptor);
         }
 
+        bool isPalette() const
+        {
+            return (data_type & 3) == 1;
+        }
+
+        bool isRLE() const
+        {
+            return (data_type & 8) != 0;
+        }
+
+        int getBytesPerPixel() const
+        {
+            return pixel_size >> 3;
+        }
+
         Format getFormat() const
         {
             Format format;
@@ -112,15 +139,15 @@ namespace
             switch (pixel_size)
             {
                 case 8:
-                    if (data_type == 3)
-                    {
-                        // expand grayscale to 32 bits
-                        format = FORMAT_L8;
-                    }
-                    else
+                    if (isPalette())
                     {
                         // expand palette to 32 bits
                         format = FORMAT_B8G8R8A8;
+                    }
+                    else
+                    {
+                        // keep grayscale at 8 bits
+                        format = FORMAT_L8;
                     }
                     break;
 
@@ -145,163 +172,61 @@ namespace
 	// tga code
 	// ------------------------------------------------------------
 
-    void writeRGB(uint8* buffer, const uint8* color, int depth, int size)
+    void decompressRLE(uint8* temp, uint8* p, int width, int height, int bpp)
     {
-        for (int i = 0; i < size; ++i)
-        {
-            switch (depth)
-            {
-                // fall-through
-                case 4: buffer[3] = color[3];
-                case 3: buffer[2] = color[2];
-                case 2: buffer[1] = color[1];
-                case 1: buffer[0] = color[0];
-            }
-
-            buffer += depth;
-        }
-    }
-
-    void writePAL(uint8* buffer, const uint8* p, const uint8* palette, int depth, int size)
-    {
-        for (int i = 0; i < size; ++i)
-        {
-            const uint8* color = palette + p[i] * depth;
-
-            switch (depth)
-            {
-                // fall-through
-                case 4: buffer[3] = color[3];
-                case 3: buffer[2] = color[2];
-                case 2: buffer[1] = color[1];
-                case 1: buffer[0] = color[0];
-            }
-
-            buffer += depth;
-        }
-    }
-
-    void readImageRAW(Surface& dest, Surface& src, const uint8* palette)
-    {
-        if (palette)
-        {
-            const int depth = dest.format.bytes();
-
-            for (int y = 0; y < src.height; ++y)
-            {
-                writePAL(dest.image, src.image, palette, depth, src.width);
-                src.image += src.width;
-                dest.image += dest.stride;
-            }
-        }
-        else
-        {
-            dest.blit(0, 0, src);
-        }
-    }
-
-	void readImageRLE(const Surface& dest, const Surface& src, const uint8* palette)
-	{
-        uint8* buffer = dest.image;
-        uint8* p = src.image;
         int x = 0;
         int y = 0;
+        uint8* buffer = temp;
 
-        Blitter blitter(dest.format, src.format);
-        uint8* temp = NULL;
-
-        BlitRect rect;
-        rect.destImage = dest.image;
-        rect.destStride = dest.stride;
-        rect.srcImage = src.image;
-        rect.srcStride = src.stride;
-        rect.width = dest.width;
-        rect.height = 1;
-
-        int depth;
-        int sample_depth;
-
-        if (palette)
-        {
-            depth = dest.format.bytes();
-            sample_depth = 1;
-        }
-        else
-        {
-            depth = src.format.bytes();
-            sample_depth = depth;
-
-            if (dest.format != src.format)
-            {
-                temp = new uint8[src.width * depth];
-                buffer = temp;
-                rect.srcImage = temp;
-            }
-        }
-
-        for (; y < src.height;)
+        for (; y < height;)
         {
             uint8 sample = *p++;
             int count = (sample & 0x7f) + 1;
-
-            const uint8 *color = palette ? palette + p[0] * depth : p;
+            const uint8* color = p;
 
             if (sample & 0x80)
             {
-                p += sample_depth;
+                p += bpp;
             }
 
             for ( ; count > 0; )
             {
                 // clip to right edge
-                const int left = src.width - x;
+                const int left = width - x;
                 const int size = std::min(count, left);
 
                 if (sample & 0x80)
                 {
-                    writeRGB(buffer, color, depth, size);
+                    // repeat color
+                    for (int i = 0; i < size; ++i)
+                    {
+                        for (int j = 0; j < bpp; ++j)
+                        {
+                            buffer[j] = color[j];
+                        }
+                        buffer += bpp;
+                    }
                 }
                 else
                 {
-                    if (palette)
-                    {
-                        writePAL(buffer, p, palette, depth, size);
-                    }
-                    else
-                    {
-                        std::memcpy(buffer, p, size * depth);
-                    }
-
-                    p += size * sample_depth;
+                    std::memcpy(buffer, color, size * bpp);
+                    p += size * bpp;
+                    buffer += size * bpp;
                 }
-
-                buffer += size * depth;
 
                 count -= size;
                 x += size;
 
-                if (x >= src.width)
+                if (x >= width)
                 {
                     ++y;
                     x = 0;
-                    if (temp)
-                    {
-                        // NOTE: the conversion could be asynchronous but tga format is not high on priorities
-                        blitter.convert(rect);
-                        rect.destImage += rect.destStride;
-                        buffer = temp;
-                    }
-                    else
-                    {
-                        rect.destImage += rect.destStride;
-                        buffer = rect.destImage;
-                    }
+                    temp += width * bpp;
+                    buffer = temp;
                 }
             }
         }
-
-        delete [] temp;
-	}
+    }
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -331,7 +256,7 @@ namespace
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-			header.palette = false;
+			header.palette = m_header.isPalette();
             header.format  = m_header.getFormat();
             header.compression = TextureCompression::NONE;
             return header;
@@ -346,47 +271,63 @@ namespace
 
             LittleEndianPointer p = m_pointer;
 
-            // read palette
-            uint8 paletteImage[1024];
-            uint8* palette = nullptr;
+            Palette palette;
 
             switch (m_header.data_type)
             {
-                case 3:
+                case TYPE_RAW_BW:
+                case TYPE_RLE_BW:
                 {
                     // grayscale
                     break;
                 }
 
-                case 1:
-                case 9:
+                case TYPE_RAW_PALETTE:
+                case TYPE_RLE_PALETTE:
                 {
-                    // rgb palette
-                    int paletteSize = int(m_header.colormap_length);
+                    // read palette
+                    palette.size = uint32(m_header.colormap_length);
 
-                    // convert 24 bit palette into target surface format using blitter
-                    Surface srcPalette(paletteSize, 1, FORMAT_B8G8R8, 0, p);
-                    Surface destPalette(paletteSize, 1, surface.format, 0, paletteImage);
-                    destPalette.blit(0, 0, srcPalette);
-
-                    palette = paletteImage;
-                    p += paletteSize * 3;
+                    if (m_header.colormap_bits == 16)
+                    {
+                        for (uint32 i = 0; i < palette.size; ++i)
+                        {
+                            uint16 color = uload16le(p);
+                            uint32 r = (color >> 0) & 0x1f;
+                            uint32 g = (color >> 5) & 0x1f;
+                            uint32 b = (color >> 10) & 0x1f;
+                            r = (r * 255) / 31;
+                            g = (g * 255) / 31;
+                            b = (b * 255) / 31;
+                            palette[i] = BGRA(r, g, b, 0xff);
+                            p += 2;
+                        }
+                    }
+                    else if (m_header.colormap_bits == 24)
+                    {
+                        for (uint32 i = 0; i < palette.size; ++i)
+                        {
+                            palette[i] = BGRA(p[2], p[1], p[0], 0xff);
+                            p += 3;
+                        }
+                    }
                     break;
                 }
 
-                case 2:
-                case 10:
+                case TYPE_RAW_RGB:
+                case TYPE_RLE_RGB:
                 {
                     p += m_header.colormap_length * ((m_header.colormap_bits + 1) >> 3);
                     break;
                 }
             }
 
-            const int width = m_header.image_width;
-            const int height = m_header.image_height;
             Format format = m_header.getFormat();
 
-            Surface src(width, height, format, width * format.bytes(), p);
+            const int width = m_header.image_width;
+            const int height = m_header.image_height;
+            const int bpp = m_header.getBytesPerPixel();
+
             Surface dest(surface, 0, 0, width, height);
 
             if (m_header.descriptor & 0x20)
@@ -396,26 +337,59 @@ namespace
             }
             else
             {
+                // flip the image upside down
                 dest.image = surface.image + (height - 1) * surface.stride;
                 dest.stride = -surface.stride;
             }
 
-            // decode image
+            uint8* temp = nullptr;
+            uint8* data = p;
+
+            if (m_header.isRLE())
+            {
+                temp = new uint8[width * height * bpp];
+                decompressRLE(temp, p, width, height, bpp);
+                data = temp;
+            }
+
             switch (m_header.data_type)
             {
-                case 1:
-                case 2:
-                case 3:
-                    // linear memory layout can use the blitter to read the image
-                    readImageRAW(dest, src, palette);
+                case TYPE_RAW_BW:
+                case TYPE_RLE_BW:
+                case TYPE_RAW_RGB:
+                case TYPE_RLE_RGB:
+                {
+                    dest.blit(0, 0, Surface(width, height, format, width * bpp, data));
                     break;
+                }
 
-                case 9:
-                case 10:
-                    // run-length encoded layout requires custom routine
-                    readImageRLE(dest, src, palette);
+                case TYPE_RAW_PALETTE:
+                case TYPE_RLE_PALETTE:
+                {
+                    if (ptr_palette)
+                    {
+                        *ptr_palette = palette;
+                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, data));
+                    }
+                    else
+                    {
+                        Bitmap bitmap(width, height, FORMAT_B8G8R8A8);
+                        for (int y = 0; y < height; ++y)
+                        {
+                            BGRA* d = bitmap.address<BGRA>(0, y);
+                            uint8* s = data + y * width;
+                            for (int x = 0; x < width; ++x)
+                            {
+                                d[x] = palette[s[x]];
+                            }
+                        }
+                        dest.blit(0, 0, bitmap);
+                    }
                     break;
+                }
             }
+
+            delete[] temp;
         }
     };
 
