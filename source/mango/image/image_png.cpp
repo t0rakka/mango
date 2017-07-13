@@ -122,13 +122,12 @@ namespace
         int m_bytes_per_line;
 
         // PLTE
-        uint32 m_palette[256];
-        int m_palette_size = 0;
+        Palette m_palette;
 
         // tRNS
         bool m_transparent_enable = false;
         uint16 m_transparent_sample[3];
-        uint32 m_transparent_rgba;
+        BGRA m_transparent_color;
 
         // cHRM
         Chromaticity m_chromaticity;
@@ -161,8 +160,8 @@ namespace
         void process_i1to4(uint8* dest, int stride, const uint8* src);
         void process_i8(uint8* dest, int stride, const uint8* src);
         void process_rgb8(uint8* dest, int stride, const uint8* src);
-        void process_pal1to4(uint8* dest, int stride, const uint8* src);
-        void process_pal8(uint8* dest, int stride, const uint8* src);
+        void process_pal1to4(uint8* dest, int stride, const uint8* src, Palette* palette);
+        void process_pal8(uint8* dest, int stride, const uint8* src, Palette* palette);
         void process_ia8(uint8* dest, int stride, const uint8* src);
         void process_rgba8(uint8* dest, int stride, const uint8* src);
         void process_i16(uint8* dest, int stride, const uint8* src);
@@ -170,7 +169,7 @@ namespace
         void process_ia16(uint8* dest, int stride, const uint8* src);
         void process_rgba16(uint8* dest, int stride, const uint8* src);
 
-        uint8* process(uint8* image, int stride, uint8* src);
+        uint8* process(uint8* image, int stride, uint8* src, Palette* palette);
 
     public:
         ParserPNG(Memory memory);
@@ -179,7 +178,7 @@ namespace
         const char* getError() const;
 
         ImageHeader header() const;
-        const char* decode(Surface& dest);
+        const char* decode(Surface& dest, Palette* palette);
     };
 
     // ------------------------------------------------------------
@@ -354,10 +353,10 @@ namespace
             return;
         }
 
-        m_palette_size = size / 3;
-        for (int i = 0; i < m_palette_size; ++i)
+        m_palette.size = size / 3;
+        for (uint32 i = 0; i < m_palette.size; ++i)
         {
-            m_palette[i] = PackedColor(p[0], p[1], p[2], 0xff);
+            m_palette[i] = BGRA(p[0], p[1], p[2], 0xff);
             p += 3;
         }
     }
@@ -387,13 +386,13 @@ namespace
             m_transparent_sample[0] = p.read16();
             m_transparent_sample[1] = p.read16();
             m_transparent_sample[2] = p.read16();
-            m_transparent_rgba = PackedColor(m_transparent_sample[0] & 0xff,
-                                             m_transparent_sample[1] & 0xff,
-                                             m_transparent_sample[2] & 0xff, 0xff);
+            m_transparent_color = BGRA(m_transparent_sample[0] & 0xff,
+                                       m_transparent_sample[1] & 0xff,
+                                       m_transparent_sample[2] & 0xff, 0xff);
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
-            if (m_palette_size < int(size))
+            if (m_palette.size < uint32(size))
             {
                 setError("Incorrect alpha palette size.");
                 return;
@@ -401,9 +400,7 @@ namespace
 
             for (uint32 i = 0; i < size; ++i)
             {
-                uint32 alpha = p[i];
-                uint32 color = m_palette[i] & 0x00ffffff;
-                m_palette[i] = color | (alpha << 24);
+                m_palette[i].a = p[i];
             }
         }
         else
@@ -504,14 +501,15 @@ namespace
                     break;
 
                 case COLOR_TYPE_PALETTE:
-                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.palette = true;
+                    header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
                     break;
 
                 case COLOR_TYPE_RGB:
                 case COLOR_TYPE_RGBA:
                     header.format = m_bit_depth <= 8 ?
-                        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) :
-                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
+                        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) :
+                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // RGBA!
                     break;
             }
         }
@@ -882,9 +880,11 @@ namespace
 
                 for (int x = 0; x < width; ++x)
                 {
-                    PackedColor color(src[0], src[1], src[2], 0xff);
-                    if (uint32(color) == m_transparent_rgba)
-                        color[3] = 0;
+                    BGRA color(src[0], src[1], src[2], 0xff);
+                    if (color == m_transparent_color)
+                    {
+                        color.a = 0;
+                    }
                     *d++ = color;
                     src += 3;
                 }
@@ -900,59 +900,100 @@ namespace
 
                 for (int x = 0; x < width; ++x)
                 {
-                    *d++ = PackedColor(src[0], src[1], src[2], 0xff);
+                    *d++ = BGRA(src[0], src[1], src[2], 0xff);
                     src += 3;
                 }
             }
         }
     }
 
-    void ParserPNG::process_pal1to4(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_pal1to4(uint8* dest, int stride, const uint8* src, Palette* ptr_palette)
     {
         const int width = m_width;
         const int height = m_height;
         const int bits = m_bit_depth;
-        const uint32* palette = m_palette;
 
         const uint32 mask = (1 << bits) - 1;
 
-        for (int y = 0; y < height; ++y)
+        if (ptr_palette)
         {
-            uint32* d = reinterpret_cast<uint32*>(dest);
-            dest += stride;
-            ++src; // skip filter byte
+            *ptr_palette = m_palette;
 
-            uint32 data = 0;
-            int offset = -1;
-
-            for (int x = 0; x < width; ++x)
+            for (int y = 0; y < height; ++y)
             {
-                if (offset < 0)
+                uint8* d = reinterpret_cast<uint8*>(dest);
+                dest += stride;
+                ++src; // skip filter byte
+
+                uint32 data = 0;
+                int offset = -1;
+
+                for (int x = 0; x < width; ++x)
                 {
-                    offset = 8 - bits;
-                    data = *src++;
+                    if (offset < 0)
+                    {
+                        offset = 8 - bits;
+                        data = *src++;
+                    }
+                    *d++ = (data >> offset) & mask;
+                    offset -= bits;
                 }
-                *d++ = palette[(data >> offset) & mask];
-                offset -= bits;
+            }
+        }
+        else
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                uint32* d = reinterpret_cast<uint32*>(dest);
+                dest += stride;
+                ++src; // skip filter byte
+
+                uint32 data = 0;
+                int offset = -1;
+
+                for (int x = 0; x < width; ++x)
+                {
+                    if (offset < 0)
+                    {
+                        offset = 8 - bits;
+                        data = *src++;
+                    }
+                    *d++ = m_palette[(data >> offset) & mask];
+                    offset -= bits;
+                }
             }
         }
     }
 
-    void ParserPNG::process_pal8(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_pal8(uint8* dest, int stride, const uint8* src, Palette* ptr_palette)
     {
         const int width = m_width;
         const int height = m_height;
-        const uint32* palette = m_palette;
 
-        for (int y = 0; y < height; ++y)
+        if (ptr_palette)
         {
-            uint32* d = reinterpret_cast<uint32*>(dest);
-            dest += stride;
-            ++src; // skip filter byte
+            *ptr_palette = m_palette;
 
-            for (int x = 0; x < width; ++x)
+            for (int y = 0; y < height; ++y)
             {
-                *d++ = palette[*src++];
+                ++src; // skip filter byte
+                std::memcpy(dest, src, width);
+                src += width;
+                dest += stride;
+            }
+        }
+        else
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                uint32* d = reinterpret_cast<uint32*>(dest);
+                dest += stride;
+                ++src; // skip filter byte
+
+                for (int x = 0; x < width; ++x)
+                {
+                    *d++ = m_palette[*src++];
+                }
             }
         }
     }
@@ -989,7 +1030,7 @@ namespace
 
             for (int x = 0; x < width; ++x)
             {
-                *d++ = PackedColor(src[0], src[1], src[2], src[3]);
+                *d++ = BGRA(src[0], src[1], src[2], src[3]);
                 src += 4;
             }
         }
@@ -1132,9 +1173,9 @@ namespace
                 uint16 green = (src[2] << 8) | src[3];
                 uint16 blue  = (src[4] << 8) | src[5];
                 uint16 alpha = (src[6] << 8) | src[7];
-                d[0] = red;
+                d[0] = blue;
                 d[1] = green;
-                d[2] = blue;
+                d[2] = red;
                 d[3] = alpha;
                 d += 4;
                 src += 8;
@@ -1142,7 +1183,7 @@ namespace
         }
     }
 
-    uint8* ParserPNG::process(uint8* image, int stride, uint8* buffer)
+    uint8* ParserPNG::process(uint8* image, int stride, uint8* buffer, Palette* ptr_palette)
     {
         if (m_interlace)
         {
@@ -1180,9 +1221,9 @@ namespace
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
             if (m_bit_depth < 8)
-                process_pal1to4(image, stride, buffer);
+                process_pal1to4(image, stride, buffer, ptr_palette);
             else
-                process_pal8(image, stride, buffer);
+                process_pal8(image, stride, buffer, ptr_palette);
         }
         else if (m_color_type == COLOR_TYPE_IA)
         {
@@ -1202,7 +1243,7 @@ namespace
         return buffer;
     }
 
-    const char* ParserPNG::decode(Surface& dest)
+    const char* ParserPNG::decode(Surface& dest, Palette* ptr_palette)
     {
         if (!m_error)
         {
@@ -1251,20 +1292,20 @@ namespace
             status = mz_inflateInit(&stream);
             if (status != MZ_OK)
             {
-                // error
+                // TODO: error
             }
 
             status = mz_inflate(&stream, MZ_FINISH);
             if (status != MZ_STREAM_END)
             {
-                // error
+                // TODO: error
             }
 
             print("  # total_out: %d \n", int(stream.total_out));
             status = mz_inflateEnd(&stream);
 
             // process image
-            buffer = process(dest.image, dest.stride, buffer);
+            buffer = process(dest.image, dest.stride, buffer, ptr_palette);
             delete[] buffer;
         }
 
@@ -1397,9 +1438,8 @@ namespace
             return m_header;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
@@ -1408,17 +1448,26 @@ namespace
 
             if (dest.format == m_header.format &&
                 dest.width >= m_header.width &&
-                dest.height >= m_header.height)
+                dest.height >= m_header.height &&
+                !ptr_palette)
             {
                 // direct decoding
-                error = m_parser.decode(dest);
+                error = m_parser.decode(dest, nullptr);
             }
             else
             {
-                // indirect
-                Bitmap temp(m_header.width, m_header.height, m_header.format);
-                error = m_parser.decode(temp);
-                dest.blit(0, 0, temp);
+                if (ptr_palette && m_header.palette)
+                {
+                    // direct decoding with palette
+                    error = m_parser.decode(dest, ptr_palette);
+                }
+                else
+                {
+                    // indirect
+                    Bitmap temp(m_header.width, m_header.height, m_header.format);
+                    error = m_parser.decode(temp, nullptr);
+                    dest.blit(0, 0, temp);
+                }
             }
 
             if (error)
