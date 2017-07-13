@@ -336,14 +336,14 @@ namespace
                     importantColorCount = paletteSize;
                 }
 
-                // Convert indexed bmp files to argb
+                // Convert indexed bmp files to bgra
                 format = Format(32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
                 palette = memory.address + headerSize;
             }
             else
             {
                 // no palette
-                palette = NULL;
+                palette = nullptr;
 
                 uint32 colorMask = redMask | greenMask | blueMask;
                 if (colorMask)
@@ -372,28 +372,20 @@ namespace
                 }
             }
         }
+
+        bool isPalette() const
+        {
+            return palette != nullptr;
+        }
     };
 
     // ------------------------------------------------------------
     // .bmp decoder
     // ------------------------------------------------------------
 
-    void readRLE4(Surface& surface, const BitmapHeader& header, int stride, const uint8* data, const uint8* palette)
+    void readRLE4(Surface& surface, const BitmapHeader& header, int stride, const uint8* data)
     {
         MANGO_UNREFERENCED_PARAMETER(stride);
-
-        const uint32* table = reinterpret_cast<const uint32*>(palette);
-
-        // This could be optimized by doing color conversion to the palette and
-        // writing directly into the target surface using samples from the converted palette.
-        Bitmap temp(header.width, header.height, FORMAT_B8G8R8A8);
-
-        float red   = palette[0] / 255.0f;
-        float green = palette[1] / 255.0f;
-        float blue  = palette[2] / 255.0f;
-        float alpha = palette[3] / 255.0f;
-
-        temp.clear(red, green, blue, alpha);
 
         int x = 0;
         int y = 0;
@@ -401,7 +393,7 @@ namespace
 
         while (y < header.height)
         {
-            uint32* image = reinterpret_cast<uint32*>(temp.image + y * temp.stride);
+            uint8* image = surface.address<uint8>(0, y);
 
             if (x >= header.width)
             {
@@ -418,7 +410,7 @@ namespace
                 int ad = 4;
                 while (n--)
                 {
-                    image[x++] = table[((c >> ad) & 0xf)];
+                    image[x++] = (c >> ad) & 0xf;
                     ad = 4 - ad;
                 }
             }
@@ -457,14 +449,14 @@ namespace
                         while (count-- > 0)
                         {
                             uint8 s = data[offset++];
-                            image[x++] = table[s >> 4];
-                            image[x++] = table[s & 0xf];
+                            image[x++] = s >> 4;
+                            image[x++] = s & 0xf;
                         }
 
                         if (c & 1)
                         {
                             uint8 s = data[offset++];
-                            image[x++] = table[s >> 4];
+                            image[x++] = s >> 4;
                         }
 
                         int padding = (offset - offset0) & 1;
@@ -474,33 +466,18 @@ namespace
                 }
             }
         }
-
-        surface.blit(0, 0, temp);
     }
 
-    void readRLE8(Surface& surface, const BitmapHeader& header, int stride, const uint8* data, const uint8* palette)
+    void readRLE8(Surface& surface, const BitmapHeader& header, int stride, const uint8* data)
     {
         MANGO_UNREFERENCED_PARAMETER(stride);
-
-        const uint32* table = reinterpret_cast<const uint32*>(palette);
-
-        // This could be optimized by doing color conversion to the palette and
-        // writing directly into the target surface using samples from the converted palette.
-        Bitmap temp(header.width, header.height, FORMAT_B8G8R8A8);
-
-        float red   = palette[0] / 255.0f;
-        float green = palette[1] / 255.0f;
-        float blue  = palette[2] / 255.0f;
-        float alpha = palette[3] / 255.0f;
-
-        temp.clear(red, green, blue, alpha);
 
         int x = 0;
         int y = 0;
 
         while (y < header.height)
         {
-            uint32* image = reinterpret_cast<uint32*>(temp.image + y * temp.stride);
+            uint8* image = surface.address<uint8>(0, y);
 
             if (x >= header.width)
             {
@@ -514,10 +491,9 @@ namespace
             if (n > 0)
             {
                 // RLE run
-                uint32 value = table[c];
                 while (n--)
                 {
-                    image[x++] = value;
+                    image[x++] = c;
                 }
             }
             else
@@ -551,7 +527,7 @@ namespace
                         // linear imagedata
                         for (int i = 0; i < c; ++i)
                         {
-                            image[x++] = table[data[i]];
+                            image[x++] = data[i];
                         }
                         data += c;
                         data += (c & 1); // skip padding byte
@@ -560,29 +536,22 @@ namespace
                 }
             }
         }
-
-        surface.blit(0, 0, temp);
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, uint8* data, const uint8* palette)
+    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, uint8* data)
     {
         const int bits = header.bitsPerPixel;
         const uint32 mask = (1 << bits) - 1;
-        const uint32* table = reinterpret_cast<const uint32*>(palette);
 
-        // This could be optimized by doing color conversion to the palette and
-        // writing directly into the target surface using samples from the converted palette.
-        Bitmap temp(header.width, header.height, FORMAT_B8G8R8A8);
-
-        for (int y = 0; y < temp.height; ++y)
+        for (int y = 0; y < header.height; ++y)
         {
             BigEndianPointer p(data + y * stride);
-            uint32* dest = reinterpret_cast<uint32*>(temp.image + y * temp.stride);
+            uint8* dest = surface.address<uint8>(0, y);
 
             uint32 value = 0;
             int left = 0;
 
-            for (int x = 0; x < temp.width; ++x)
+            for (int x = 0; x < header.width; ++x)
             {
                 if (!left)
                 {
@@ -591,11 +560,9 @@ namespace
                 }
 
                 left -= bits;
-                dest[x] = table[(value >> left) & mask];
+                dest[x] = (value >> left) & mask;
             }
         }
-
-        surface.blit(0, 0, temp);
     }
 
     void readRGB(Surface surface, const BitmapHeader& header, int stride, uint8* data)
@@ -605,21 +572,41 @@ namespace
         surface.blit(0, 0, source);
     }
 
-    void decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon)
+    void blitPalette(Surface& dest, Surface& indices, const Palette& palette)
+    {
+        const int width = dest.width;
+        const int height = dest.height;
+
+        Bitmap temp(width, height, FORMAT_B8G8R8A8);
+
+        for (int y = 0; y < height; ++y)
+        {
+            uint8* s = indices.address<uint8>(0, y);
+            BGRA* d = temp.address<BGRA>(0, y);
+            for (int x = 0; x < width; ++x)
+            {
+                d[x] = palette[s[x]];
+            }
+        }
+
+        dest.blit(0, 0, temp);
+    }
+
+    void decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
 
-        uint8 palette[1024];
+        Palette palette;
 
         if (header.palette)
         {
+            palette.size = header.importantColorCount;
+
+            // read palette
             const uint8* p = header.palette;
-            for (int i = 0; i < header.importantColorCount; ++i)
+            for (uint32 i = 0; i < palette.size; ++i)
             {
-                palette[i * 4 + 0] = p[0];
-                palette[i * 4 + 1] = p[1];
-                palette[i * 4 + 2] = p[2];
-                palette[i * 4 + 3] = 0xff;
+                palette[i] = BGRA(p[2], p[1], p[0], 0xff);
                 p += header.paletteComponents;
             }
         }
@@ -646,14 +633,28 @@ namespace
                     case 2:
                     case 4:
                     case 8:
-                        readIndexed(mirror, header, stride, data, palette);
+                    {
+                        if (ptr_palette)
+                        {
+                            *ptr_palette = palette;
+                            readIndexed(mirror, header, stride, data);
+                        }
+                        else
+                        {
+                            Bitmap temp(header.width, header.height, FORMAT_L8);
+                            readIndexed(temp, header, stride, data);
+                            blitPalette(mirror, temp, palette);
+                        }
                         break;
+                    }
 
                     case 16:
                     case 24:
                     case 32:
+                    {
                         readRGB(mirror, header, stride, data);
                         break;
+                    }
 
                     default:
                         MANGO_EXCEPTION(ID"Incorrect number of color bits.");
@@ -663,12 +664,40 @@ namespace
             }
 
             case BIC_RLE8:
-                readRLE8(mirror, header, stride, data, palette);
+            {
+                if (ptr_palette)
+                {
+                    *ptr_palette = palette;
+                    std::memset(surface.image, 0, surface.width * surface.height);
+                    readRLE8(mirror, header, stride, data);
+                }
+                else
+                {
+                    Bitmap temp(header.width, header.height, FORMAT_L8);
+                    std::memset(temp.image, 0, temp.width * temp.height);
+                    readRLE8(temp, header, stride, data);
+                    blitPalette(mirror, temp, palette);
+                }
                 break;
+            }
 
             case BIC_RLE4:
-                readRLE4(mirror, header, stride, data, palette);
+            {
+                if (ptr_palette)
+                {
+                    *ptr_palette = palette;
+                    std::memset(surface.image, 0, surface.width * surface.height);
+                    readRLE4(mirror, header, stride, data);
+                }
+                else
+                {
+                    Bitmap temp(header.width, header.height, FORMAT_L8);
+                    std::memset(temp.image, 0, temp.width * temp.height);
+                    readRLE4(temp, header, stride, data);
+                    blitPalette(mirror, temp, palette);
+                }
                 break;
+            }
 
             case BIC_JPEG:
             case BIC_PNG:
@@ -818,18 +847,19 @@ namespace
 
                 if (imageHeader)
                 {
-                    imageHeader->width  = header.width;
-                    imageHeader->height = header.height;
-                    imageHeader->depth  = 0;
-                    imageHeader->levels = 0;
-                    imageHeader->faces  = 0;
-                    imageHeader->format = header.format;
+                    imageHeader->width   = header.width;
+                    imageHeader->height  = header.height;
+                    imageHeader->depth   = 0;
+                    imageHeader->levels  = 0;
+                    imageHeader->faces   = 0;
+                    imageHeader->palette = false;
+                    imageHeader->format  = header.format;
                     imageHeader->compression = TextureCompression::NONE;
                 }
 
                 if (surface)
                 {
-                    decodeBitmap(*surface, block, headersize + palettesize * 4, true);
+                    decodeBitmap(*surface, block, headersize + palettesize * 4, true, nullptr);
                 }
 
                 break;
@@ -892,14 +922,14 @@ namespace
                     header.depth   = 0;
                     header.levels  = 0;
                     header.faces   = 0;
-        			header.palette = false;
+        			header.palette = bmp_header.isPalette();
                     header.format  = bmp_header.format;
                     header.compression = TextureCompression::NONE;
                     break;
                 }
 
                 case 0x0000:
-                    parseIco(&header, NULL, m_memory);
+                    parseIco(&header, nullptr, m_memory);
                     break;
 
                 case 0x5089:
@@ -926,9 +956,8 @@ namespace
             return header;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
@@ -946,7 +975,7 @@ namespace
                     break;
 
                 case 0x0000:
-                    parseIco(NULL, &dest, m_memory);
+                    parseIco(nullptr, &dest, m_memory);
                     return;
 
                 case 0x5089:
@@ -971,7 +1000,7 @@ namespace
             }
 
             Memory block = m_memory.slice(14);
-            decodeBitmap(dest, block, fileHeader.offset - 14, false);
+            decodeBitmap(dest, block, fileHeader.offset - 14, false, ptr_palette);
         }
     };
 
