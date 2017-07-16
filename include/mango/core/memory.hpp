@@ -54,7 +54,7 @@ namespace mango
 
     public:
         VirtualMemory() = default;
-        ~VirtualMemory() {}
+        virtual ~VirtualMemory() {}
 
         const Memory* operator -> () const
         {
