@@ -249,7 +249,10 @@ namespace jpeg
     uint8* Parser::stepMarker(uint8* p)
     {
         uint16 size = uload16be(p);
-        return p + size;
+        p += size;
+        p += (p[1] == 0xff); // HACK: some really ancient jpeg encoders encode markers sometimes as
+                             // (0xff, 0xff, ID) ; this will skip to the "correct" 0xff (the second one)
+        return p;
     }
 
     uint8* Parser::seekMarker(uint8* start, uint8* end)
