@@ -457,6 +457,11 @@ namespace simd {
         return _mm256_max_epu32(a, b);
     }
 
+    static inline uint32 get_mask(uint32x8 a)
+    {
+        return _mm256_movemask_ps(_mm256_castsi256_ps(a));
+    }
+
     // -----------------------------------------------------------------
     // uint64x4
     // -----------------------------------------------------------------
@@ -1022,6 +1027,11 @@ namespace simd {
     static inline int32x8 max(int32x8 a, int32x8 b)
     {
         return _mm256_max_epi32(a, b);
+    }
+
+    static inline uint32 get_mask(int32x8 a)
+    {
+        return _mm256_movemask_ps(_mm256_castsi256_ps(a));
     }
 
     // -----------------------------------------------------------------

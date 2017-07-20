@@ -159,6 +159,11 @@ namespace mango
         return simd::compare_gt(a, b);
     }
 
+    static inline Vector<uint8, 32> operator < (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    {
+        return simd::compare_gt(b, a);
+    }
+
     static inline Vector<uint8, 32> operator == (Vector<uint8, 32> a, Vector<uint8, 32> b)
     {
         return simd::compare_eq(a, b);

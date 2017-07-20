@@ -22,6 +22,11 @@ namespace mango
         {
         }
 
+        Vector(uint32 s0, uint32 s1, uint32 s2, uint32 s3, uint32 s4, uint32 s5, uint32 s6, uint32 s7)
+        : m(simd::uint32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+        {
+        }
+
         Vector(simd::uint32x8 v)
         : m(v)
         {
@@ -47,6 +52,11 @@ namespace mango
         operator simd::uint32x8 ()
         {
             return m;
+        }
+
+        uint32 mask() const
+        {
+            return simd::get_mask(m);
         }
     };
 
@@ -157,6 +167,11 @@ namespace mango
     static inline Vector<uint32, 8> operator > (Vector<uint32, 8> a, Vector<uint32, 8> b)
     {
         return simd::compare_gt(a, b);
+    }
+
+    static inline Vector<uint32, 8> operator < (Vector<uint32, 8> a, Vector<uint32, 8> b)
+    {
+        return simd::compare_gt(b, a);
     }
 
     static inline Vector<uint32, 8> operator == (Vector<uint32, 8> a, Vector<uint32, 8> b)

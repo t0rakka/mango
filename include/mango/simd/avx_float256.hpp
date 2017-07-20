@@ -247,5 +247,10 @@ namespace simd {
         return _mm256_sub_ps(s, floor(s));
     }
 
+    static inline uint32 get_mask(float32x8 a)
+    {
+        return _mm256_movemask_ps(a);
+    }
+
 } // namespace simd
 } // namespace mango

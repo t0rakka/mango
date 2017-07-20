@@ -73,6 +73,11 @@ namespace mango
         {
             return m;
         }
+
+        uint32 mask() const
+        {
+            return simd::get_mask(m);
+        }
     };
 
     // ------------------------------------------------------------------

@@ -345,5 +345,11 @@ namespace simd {
         return result;
     }
 
+    static inline uint32 get_mask(float32x8 a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
+        return mask;
+    }
+
 } // namespace simd
 } // namespace mango
