@@ -441,6 +441,11 @@
         #include <immintrin.h>
     #endif
 
+    #if defined(__AVX512F__) && defined(__AVX512DQ__)
+        #define MANGO_ENABLE_AVX512
+        #include <immintrin.h>
+    #endif
+
     #ifdef __XOP__
         #if defined(MANGO_COMPILER_MICROSOFT)
             #define MANGO_ENABLE_XOP
