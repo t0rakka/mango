@@ -1417,9 +1417,5 @@ namespace simd {
     #define srli(Value, Count) srli<Count>(Value)
     #define srai(Value, Count) srai<Count>(Value)
 
-    #define slli(Value, Count) slli<Count>(Value)
-    #define srli(Value, Count) srli<Count>(Value)
-    #define srai(Value, Count) srai<Count>(Value)
-
 } // namespace simd
 } // namespace mango
