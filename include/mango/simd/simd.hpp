@@ -215,6 +215,7 @@ namespace simd {
 #include "avx512_float512.hpp"
 #include "avx512_double512.hpp"
 #include "avx512_convert.hpp"
+#include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_AVX2)
 
@@ -277,6 +278,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "avx_convert.hpp"
+#include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_AVX)
 
@@ -340,6 +342,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "avx_convert.hpp"
+#include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
 
@@ -402,6 +405,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "sse_convert.hpp"
+#include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
 
@@ -469,6 +473,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "neon_convert.hpp"
+#include "neon_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_ALTIVEC)
 
@@ -531,6 +536,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "altivec_convert.hpp"
+#include "altivec_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_SPU)
 
@@ -593,6 +599,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "spu_convert.hpp"
+#include "spu_matrix.hpp"
 
 /* TODO:
 #elif defined(MANGO_ENABLE_MSA)
@@ -656,6 +663,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "msa_convert.hpp"
+#include "msa_matrix.hpp"
 */
 #else
 
@@ -715,6 +723,7 @@ namespace simd {
 #include "common_float512.hpp"
 #include "common_double512.hpp"
 #include "scalar_convert.hpp"
+#include "scalar_matrix.hpp"
 
 #endif
 

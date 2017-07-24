@@ -401,56 +401,6 @@ namespace simd {
         return 0; // TODO
     }
 
-    // -----------------------------------------------------------------
-    // float32x4_matrix
-    // -----------------------------------------------------------------
-
-    /*
-    static inline void float32x4_matrix_set_scale(float32x4* result, float s)
-    {
-    }
-
-    static inline void float32x4_matrix_set_scale(float32x4* result, float x, float y, float z)
-    {
-    }
-
-    static inline void float32x4_matrix_set_translate(float32x4* result, float x, float y, float z)
-    {
-    }
-
-    static inline void float32x4_matrix_scale(float32x4* result, float s)
-    {
-    }
-
-    static inline void float32x4_matrix_scale(float32x4* result, float x, float y, float z)
-    {
-    }
-
-    static inline void float32x4_matrix_translate(float32x4* result, float x, float y, float z)
-    {
-    }
-
-    static inline void float32x4_matrix_transpose(float32x4* result, const float32x4* m)
-    {
-    }
-
-    static inline void float32x4_matrix_inverse(float32x4* result, const float32x4* m)
-    {
-    }
-
-    static inline void float32x4_matrix_inverse_transpose(float32x4* result, const float32x4* m)
-    {
-    }
-
-    static inline float32x4 float32x4_vector_matrix_multiply(float32x4 v, const float32x4* m)
-    {
-    }
-
-    static inline void float32x4_matrix_matrix_multiply(float32x4* result, const float32x4* a, const float32x4* b)
-    {
-    }
-    */
-
 #undef VEC_SH4
 
 } // namespace simd
