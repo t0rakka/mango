@@ -126,7 +126,7 @@ namespace simd {
 
     static inline float32x2 bitwise_not(float32x2 a)
     {
-        return vreinterpret_f32_u32(veor_u32(a, vceq_f32(a, a)));
+        return vreinterpret_f32_u32(veor_u32(vreinterpret_u32_f32(a), vceq_f32(a, a)));
     }
 
     static inline float32x2 min(float32x2 a, float32x2 b)

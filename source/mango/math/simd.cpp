@@ -37,6 +37,12 @@ namespace simd {
         return bitwise_or(a, b);
     }
 
+    static inline int32x4 slf_compare_gt(int32x4 a, int32x4 b)
+    {
+        int32x4::mask mask = compare_gt(a, b);
+        return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
+    }
+
     static inline float32x4 slf_compare_eq(float32x4 a, float32x4 b)
     {
         float32x4::mask mask = compare_eq(a, b);
@@ -277,7 +283,7 @@ namespace simd {
         lo = madd(1.0f, f, lo);
         float32x4 f2 = mul(f, f);
         float32x4 a = add(mul(mul(f2, f2), hi), lo);
-        float32x4 b = reinterpret<float32x4>(bitwise_and(slli((add(ix, 127)), 23), compare_gt(ix, -128)));
+        float32x4 b = reinterpret<float32x4>(bitwise_and(slli((add(ix, 127)), 23), slf_compare_gt(ix, int32x4_set1(-128))));
         int32x4 mask = select(compare_gt(ix, 128), int32x4_set1(0x7fffffff), int32x4_set1(0));
         return bitwise_or(mul(a, b), reinterpret<float32x4>(mask));
     }
