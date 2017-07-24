@@ -318,70 +318,70 @@ namespace simd {
     static inline float64x4::mask compare_neq(float64x4 a, float64x4 b)
     {
         float64x4::mask v = 0;
-        v |= uint32(a[0] != b[0]) << 0;
-        v |= uint32(a[1] != b[1]) << 1;
-        v |= uint32(a[2] != b[2]) << 2;
-        v |= uint32(a[3] != b[3]) << 3;
+        v.mask |= uint32(a[0] != b[0]) << 0;
+        v.mask |= uint32(a[1] != b[1]) << 1;
+        v.mask |= uint32(a[2] != b[2]) << 2;
+        v.mask |= uint32(a[3] != b[3]) << 3;
         return v;
     }
 
     static inline float64x4::mask compare_eq(float64x4 a, float64x4 b)
     {
         float64x4::mask v = 0;
-        v |= uint32(a[0] == b[0]) << 0;
-        v |= uint32(a[1] == b[1]) << 1;
-        v |= uint32(a[2] == b[2]) << 2;
-        v |= uint32(a[3] == b[3]) << 3;
+        v.mask |= uint32(a[0] == b[0]) << 0;
+        v.mask |= uint32(a[1] == b[1]) << 1;
+        v.mask |= uint32(a[2] == b[2]) << 2;
+        v.mask |= uint32(a[3] == b[3]) << 3;
         return v;
     }
 
     static inline float64x4::mask compare_lt(float64x4 a, float64x4 b)
     {
         float64x4::mask v = 0;
-        v |= uint32(a[0] < b[0]) << 0;
-        v |= uint32(a[1] < b[1]) << 1;
-        v |= uint32(a[2] < b[2]) << 2;
-        v |= uint32(a[3] < b[3]) << 3;
+        v.mask |= uint32(a[0] < b[0]) << 0;
+        v.mask |= uint32(a[1] < b[1]) << 1;
+        v.mask |= uint32(a[2] < b[2]) << 2;
+        v.mask |= uint32(a[3] < b[3]) << 3;
         return v;
     }
 
     static inline float64x4::mask compare_le(float64x4 a, float64x4 b)
     {
         float64x4::mask v = 0;
-        v |= uint32(a[0] <= b[0]) << 0;
-        v |= uint32(a[1] <= b[1]) << 1;
-        v |= uint32(a[2] <= b[2]) << 2;
-        v |= uint32(a[3] <= b[3]) << 3;
+        v.mask |= uint32(a[0] <= b[0]) << 0;
+        v.mask |= uint32(a[1] <= b[1]) << 1;
+        v.mask |= uint32(a[2] <= b[2]) << 2;
+        v.mask |= uint32(a[3] <= b[3]) << 3;
         return v;
     }
 
     static inline float64x4::mask compare_gt(float64x4 a, float64x4 b)
     {
         float64x4::mask v = 0;
-        v |= uint32(a[0] > b[0]) << 0;
-        v |= uint32(a[1] > b[1]) << 1;
-        v |= uint32(a[2] > b[2]) << 2;
-        v |= uint32(a[3] > b[3]) << 3;
+        v.mask |= uint32(a[0] > b[0]) << 0;
+        v.mask |= uint32(a[1] > b[1]) << 1;
+        v.mask |= uint32(a[2] > b[2]) << 2;
+        v.mask |= uint32(a[3] > b[3]) << 3;
         return v;
     }
 
     static inline float64x4::mask compare_ge(float64x4 a, float64x4 b)
     {
         float64x4::mask v = 0;
-        v |= uint32(a[0] >= b[0]) << 0;
-        v |= uint32(a[1] >= b[1]) << 1;
-        v |= uint32(a[2] >= b[2]) << 2;
-        v |= uint32(a[3] >= b[3]) << 3;
+        v.mask |= uint32(a[0] >= b[0]) << 0;
+        v.mask |= uint32(a[1] >= b[1]) << 1;
+        v.mask |= uint32(a[2] >= b[2]) << 2;
+        v.mask |= uint32(a[3] >= b[3]) << 3;
         return v;
     }
 
     static inline float64x4 select(float64x4::mask mask, float64x4 a, float64x4 b)
     {
         float64x4 result;
-        result[0] = mask & (1 << 0) ? a[0] : b[0];
-        result[1] = mask & (1 << 1) ? a[1] : b[1];
-        result[2] = mask & (1 << 2) ? a[2] : b[2];
-        result[3] = mask & (1 << 3) ? a[3] : b[3];
+        result[0] = mask.mask & (1 << 0) ? a[0] : b[0];
+        result[1] = mask.mask & (1 << 1) ? a[1] : b[1];
+        result[2] = mask.mask & (1 << 2) ? a[2] : b[2];
+        result[3] = mask.mask & (1 << 3) ? a[3] : b[3];
         return result;
     }
 

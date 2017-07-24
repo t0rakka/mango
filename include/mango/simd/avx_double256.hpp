@@ -17,12 +17,12 @@ namespace simd {
     static inline float64x4 shuffle(float64x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        const int select = ((w & 1) << 3) | ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
+        const int perm = ((w & 1) << 3) | ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
         const int mask = ((w & 2) << 2) | ((z & 2) << 1) | (y & 2) | ((x & 2) >> 1);
         __m256d xyxy = _mm256_permute2f128_pd(v, v, 0);
         __m256d zwzw = _mm256_permute2f128_pd(v, v, 0x11);
-        xyxy = _mm256_permute_pd(xyxy, select);
-        zwzw = _mm256_permute_pd(zwzw, select);
+        xyxy = _mm256_permute_pd(xyxy, perm);
+        zwzw = _mm256_permute_pd(zwzw, perm);
         return _mm256_blend_pd(xyxy, zwzw, mask);
     }
 

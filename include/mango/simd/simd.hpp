@@ -27,12 +27,30 @@ namespace simd {
     // strong types for the compiler to be able to resolve the overloads
     // when the underlying types are identical.
 
+    template <typename ScalarType, int Size, typename MaskType>
+    struct hardware_mask
+    {
+        MaskType mask;
+
+        hardware_mask() = default;
+        hardware_mask(MaskType mask)
+        : mask(mask)
+        {
+        }
+
+        operator MaskType () const
+        {
+            return mask;
+        }
+    };
+
     template <typename ScalarType, int Size, typename VectorType, typename MaskType>
     struct hardware_vector
     {
         using scalar = ScalarType;
         using vector = VectorType;
-        using mask = MaskType;
+        using mask = hardware_mask<ScalarType, Size, MaskType>;
+
         enum
         {
             scalar_bits = sizeof(ScalarType) * 8,
@@ -43,7 +61,6 @@ namespace simd {
         VectorType data;
 
         hardware_vector() = default;
-
         hardware_vector(VectorType v)
         : data(v)
         {
@@ -58,11 +75,29 @@ namespace simd {
     // Scalar Emulated vector types not supported by hardware instructions
 
     template <typename ScalarType, int Size>
+    struct scalar_mask
+    {
+        uint32 mask;
+
+        scalar_mask() = default;
+        scalar_mask(uint32 mask)
+        : mask(mask)
+        {
+        }
+
+        operator uint32 () const
+        {
+            return mask;
+        }
+    };
+
+    template <typename ScalarType, int Size>
     struct scalar_vector
     {
         using scalar = ScalarType;
         using vector = void;
-        using mask = uint32;
+        using mask = scalar_mask<ScalarType, Size>;
+
         enum
         {
             scalar_bits = sizeof(ScalarType) * 8,
@@ -85,30 +120,32 @@ namespace simd {
 
     // Vector types implemented as separate low/high parts, which typically have hardware support
 
-    template <typename T>
+    template <typename VectorType>
+    struct composite_mask
+    {
+        typename VectorType::mask lo;
+        typename VectorType::mask hi;
+    };
+
+    template <typename VectorType>
     struct composite_vector
     {
-        using scalar = typename T::scalar;
+        using scalar = typename VectorType::scalar;
         using vector = void;
-
-        struct mask
-        {
-            typename T::mask lo;
-            typename T::mask hi;
-        };
+        using mask = composite_mask<VectorType>;
 
         enum
         {
             scalar_bits = sizeof(scalar) * 8,
-            vector_bits = sizeof(T) * 2 * 8,
-            size = T::size * 2
+            vector_bits = sizeof(VectorType) * 2 * 8,
+            size = VectorType::size * 2
         };
 
-        T lo, hi;
+        VectorType lo;
+        VectorType hi;
 
         composite_vector() = default;
-
-        composite_vector(T lo, T hi)
+        composite_vector(VectorType lo, VectorType hi)
         : lo(lo), hi(hi)
         {
         }

@@ -247,48 +247,48 @@ namespace simd {
     static inline float32x2::mask compare_neq(float32x2 a, float32x2 b)
     {
         float32x2::mask v = 0;
-        v |= uint32(a[0] != b[0]) << 0;
-        v |= uint32(a[1] != b[1]) << 1;
+        v.mask |= uint32(a[0] != b[0]) << 0;
+        v.mask |= uint32(a[1] != b[1]) << 1;
         return v;
     }
 
     static inline float32x2::mask compare_eq(float32x2 a, float32x2 b)
     {
         float32x2::mask v = 0;
-        v |= uint32(a[0] == b[0]) << 0;
-        v |= uint32(a[1] == b[1]) << 1;
+        v.mask |= uint32(a[0] == b[0]) << 0;
+        v.mask |= uint32(a[1] == b[1]) << 1;
         return v;
     }
 
     static inline float32x2::mask compare_lt(float32x2 a, float32x2 b)
     {
         float32x2::mask v = 0;
-        v |= uint32(a[0] < b[0]) << 0;
-        v |= uint32(a[1] < b[1]) << 1;
+        v.mask |= uint32(a[0] < b[0]) << 0;
+        v.mask |= uint32(a[1] < b[1]) << 1;
         return v;
     }
 
     static inline float32x2::mask compare_le(float32x2 a, float32x2 b)
     {
         float32x2::mask v = 0;
-        v |= uint32(a[0] <= b[0]) << 0;
-        v |= uint32(a[1] <= b[1]) << 1;
+        v.mask |= uint32(a[0] <= b[0]) << 0;
+        v.mask |= uint32(a[1] <= b[1]) << 1;
         return v;
     }
 
     static inline float32x2::mask compare_gt(float32x2 a, float32x2 b)
     {
         float32x2::mask v = 0;
-        v |= uint32(a[0] > b[0]) << 0;
-        v |= uint32(a[1] > b[1]) << 1;
+        v.mask |= uint32(a[0] > b[0]) << 0;
+        v.mask |= uint32(a[1] > b[1]) << 1;
         return v;
     }
 
     static inline float32x2::mask compare_ge(float32x2 a, float32x2 b)
     {
         float32x2::mask v = 0;
-        v |= uint32(a[0] >= b[0]) << 0;
-        v |= uint32(a[1] >= b[1]) << 1;
+        v.mask |= uint32(a[0] >= b[0]) << 0;
+        v.mask |= uint32(a[1] >= b[1]) << 1;
         return v;
     }
 

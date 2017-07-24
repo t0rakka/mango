@@ -408,7 +408,7 @@ namespace simd {
 
     static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
-        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
+        return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b));
     }
 
 #endif

@@ -30,13 +30,6 @@ namespace simd {
     constexpr float R_LN2f = 1.442695040888963407359924681001892137426645954152985934135449406931f;
     constexpr float R_INFf = float(std::numeric_limits<float>::infinity());
 
-    static inline int32x4 slf_blend(int32x4 mask, int32x4 a, int32x4 b)
-    {
-        a = bitwise_and(a, mask);
-        b = bitwise_nand(b, mask);
-        return bitwise_or(a, b);
-    }
-
     static inline float32x4 slf_blend(float32x4 mask, float32x4 a, float32x4 b)
     {
         a = bitwise_and(a, mask);

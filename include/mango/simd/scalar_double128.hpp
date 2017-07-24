@@ -252,56 +252,56 @@ namespace simd {
     static inline float64x2::mask compare_neq(float64x2 a, float64x2 b)
     {
         float64x2::mask v = 0;
-        v |= uint32(a[0] != b[0]) << 0;
-        v |= uint32(a[1] != b[1]) << 1;
+        v.mask |= uint32(a[0] != b[0]) << 0;
+        v.mask |= uint32(a[1] != b[1]) << 1;
         return v;
     }
 
     static inline float64x2::mask compare_eq(float64x2 a, float64x2 b)
     {
         float64x2::mask v = 0;
-        v |= uint32(a[0] == b[0]) << 0;
-        v |= uint32(a[1] == b[1]) << 1;
+        v.mask |= uint32(a[0] == b[0]) << 0;
+        v.mask |= uint32(a[1] == b[1]) << 1;
         return v;
     }
 
     static inline float64x2::mask compare_lt(float64x2 a, float64x2 b)
     {
         float64x2::mask v = 0;
-        v |= uint32(a[0] < b[0]) << 0;
-        v |= uint32(a[1] < b[1]) << 1;
+        v.mask |= uint32(a[0] < b[0]) << 0;
+        v.mask |= uint32(a[1] < b[1]) << 1;
         return v;
     }
 
     static inline float64x2::mask compare_le(float64x2 a, float64x2 b)
     {
         float64x2::mask v = 0;
-        v |= uint32(a[0] <= b[0]) << 0;
-        v |= uint32(a[1] <= b[1]) << 1;
+        v.mask |= uint32(a[0] <= b[0]) << 0;
+        v.mask |= uint32(a[1] <= b[1]) << 1;
         return v;
     }
 
     static inline float64x2::mask compare_gt(float64x2 a, float64x2 b)
     {
         float64x2::mask v = 0;
-        v |= uint32(a[0] > b[0]) << 0;
-        v |= uint32(a[1] > b[1]) << 1;
+        v.mask |= uint32(a[0] > b[0]) << 0;
+        v.mask |= uint32(a[1] > b[1]) << 1;
         return v;
     }
 
     static inline float64x2::mask compare_ge(float64x2 a, float64x2 b)
     {
         float64x2::mask v = 0;
-        v |= uint32(a[0] >= b[0]) << 0;
-        v |= uint32(a[1] >= b[1]) << 1;
+        v.mask |= uint32(a[0] >= b[0]) << 0;
+        v.mask |= uint32(a[1] >= b[1]) << 1;
         return v;
     }
 
     static inline float64x2 select(float64x2::mask mask, float64x2 a, float64x2 b)
     {
         float64x2 result;
-        result[0] = mask & (1 << 0) ? a[0] : b[0];
-        result[1] = mask & (1 << 1) ? a[1] : b[1];
+        result[0] = mask.mask & (1 << 0) ? a[0] : b[0];
+        result[1] = mask.mask & (1 << 1) ? a[1] : b[1];
         return result;
     }
 
