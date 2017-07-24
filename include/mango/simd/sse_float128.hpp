@@ -176,6 +176,11 @@ namespace simd {
         return _mm_xor_ps(a, b);
     }
 
+    static inline float32x4 bitwise_not(float32x4 a)
+    {
+        return _mm_xor_ps(a, _mm_cmpeq_ps(a, a));
+    }
+
     static inline float32x4 min(float32x4 a, float32x4 b)
     {
         return _mm_min_ps(a, b);
@@ -362,46 +367,46 @@ namespace simd {
 
     // compare
 
-    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
     {
         return _mm_cmpneq_ps(a, b);
     }
 
-    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
     {
         return _mm_cmpeq_ps(a, b);
     }
 
-    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
     {
         return _mm_cmplt_ps(a, b);
     }
 
-    static inline float32x4 compare_le(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
     {
         return _mm_cmple_ps(a, b);
     }
 
-    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
     {
         return _mm_cmpgt_ps(a, b);
     }
 
-    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
     {
         return _mm_cmpge_ps(a, b);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
         return _mm_blendv_ps(b, a, mask);
     }
 
 #else
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
         return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
     }

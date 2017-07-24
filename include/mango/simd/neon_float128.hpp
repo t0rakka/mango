@@ -229,6 +229,11 @@ namespace simd {
         return vreinterpretq_f32_s32(veorq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_f32(b)));
     }
 
+    static inline float32x4 bitwise_not(float32x4 a)
+    {
+        return vreinterpretq_f32_u32(veorq_u32(a, vceqq_f32(a, a)));
+    }
+
     static inline float32x4 min(float32x4 a, float32x4 b)
     {
         return vminq_f32(a, b);
@@ -400,39 +405,39 @@ namespace simd {
 
     // compare
 
-    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_u32(vmvnq_u32(vceqq_f32(a, b)));
+        return vmvnq_u32(vceqq_f32(a, b));
     }
 
-    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_u32(vceqq_f32(a, b));
+        return vceqq_f32(a, b);
     }
 
-    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_u32(vcltq_f32(a, b));
+        return vcltq_f32(a, b);
     }
 
-    static inline float32x4 compare_le(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_u32(vcleq_f32(a, b));
+        return vcleq_f32(a, b);
     }
 
-    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_u32(vcgtq_f32(a, b));
+        return vcgtq_f32(a, b);
     }
 
-    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
     {
-        return vreinterpretq_f32_u32(vcgeq_f32(a, b));
+        return vcgeq_f32(a, b);
     }
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
-        return vbslq_f32(vreinterpretq_u32_f32(mask), a, b);
+        return vbslq_f32(mask, a, b);
     }
 
     // rounding

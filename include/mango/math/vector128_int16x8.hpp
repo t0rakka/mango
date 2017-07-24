@@ -12,7 +12,9 @@ namespace mango
     template <>
     struct Vector<int16, 8> : VectorBase<int16, 8>
     {
-        using vector_type = simd::int16x8;
+        using VectorType = simd::int16x8;
+        using Mask = simd::int16x8::mask;
+
         simd::int16x8 m;
 
         explicit Vector() = default;
@@ -169,37 +171,37 @@ namespace mango
         return simd::clamp(a, amin, amax);
     }
 
-    static inline Vector<int16, 8> operator > (Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8>::Mask operator > (Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline Vector<int16, 8> operator >= (Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8>::Mask operator >= (Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline Vector<int16, 8> operator < (Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8>::Mask operator < (Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline Vector<int16, 8> operator <= (Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8>::Mask operator <= (Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline Vector<int16, 8> operator == (Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8>::Mask operator == (Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline Vector<int16, 8> operator != (Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8>::Mask operator != (Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline Vector<int16, 8> select(Vector<int16, 8> mask, Vector<int16, 8> a, Vector<int16, 8> b)
+    static inline Vector<int16, 8> select(Vector<int16, 8>::Mask mask, Vector<int16, 8> a, Vector<int16, 8> b)
     {
         return simd::select(mask, a, b);
     }

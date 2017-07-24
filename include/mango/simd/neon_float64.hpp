@@ -124,6 +124,11 @@ namespace simd {
         return vreinterpret_f32_s32(veor_s32(vreinterpret_s32_f32(a), vreinterpret_s32_f32(b)));
     }
 
+    static inline float32x2 bitwise_not(float32x2 a)
+    {
+        return vreinterpret_f32_u32(veor_u32(a, vceq_f32(a, a)));
+    }
+
     static inline float32x2 min(float32x2 a, float32x2 b)
     {
         return vmin_f32(a, b);
@@ -258,39 +263,39 @@ namespace simd {
 
     // compare
 
-    static inline float32x2 compare_neq(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_neq(float32x2 a, float32x2 b)
     {
-        return vreinterpret_f32_u32(vmvn_u32(vceq_f32(a, b)));
+        return vmvn_u32(vceq_f32(a, b));
     }
 
-    static inline float32x2 compare_eq(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_eq(float32x2 a, float32x2 b)
     {
-        return vreinterpret_f32_u32(vceq_f32(a, b));
+        return vceq_f32(a, b);
     }
 
-    static inline float32x2 compare_lt(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_lt(float32x2 a, float32x2 b)
     {
-        return vreinterpret_f32_u32(vclt_f32(a, b));
+        return vclt_f32(a, b);
     }
 
-    static inline float32x2 compare_le(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_le(float32x2 a, float32x2 b)
     {
-        return vreinterpret_f32_u32(vcle_f32(a, b));
+        return vcle_f32(a, b);
     }
 
-    static inline float32x2 compare_gt(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_gt(float32x2 a, float32x2 b)
     {
-        return vreinterpret_f32_u32(vcgt_f32(a, b));
+        return vcgt_f32(a, b);
     }
 
-    static inline float32x2 compare_ge(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_ge(float32x2 a, float32x2 b)
     {
-        return vreinterpret_f32_u32(vcge_f32(a, b));
+        return vcge_f32(a, b);
     }
 
-    static inline float32x2 select(float32x2 mask, float32x2 a, float32x2 b)
+    static inline float32x2 select(float32x2::mask mask, float32x2 a, float32x2 b)
     {
-        return vbsl_f32(vreinterpret_u32_f32(mask), a, b);
+        return vbsl_f32(mask, a, b);
     }
 
     // rounding

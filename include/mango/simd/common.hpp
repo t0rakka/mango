@@ -63,35 +63,6 @@ namespace simd {
         return sub(a, uint8x16_set1(b));
     }
 
-#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline uint8x16 bitwise_not(uint8x16 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
-    }
-
-    static inline uint8x16 compare_neq(uint8x16 a, uint8x16 b)
-    {
-        return bitwise_not(compare_eq(b, a));
-    }
-
-    static inline uint8x16 compare_lt(uint8x16 a, uint8x16 b)
-    {
-        return compare_gt(b, a);
-    }
-
-    static inline uint8x16 compare_le(uint8x16 a, uint8x16 b)
-    {
-        return bitwise_not(compare_gt(a, b));
-    }
-
-    static inline uint8x16 compare_ge(uint8x16 a, uint8x16 b)
-    {
-        return bitwise_not(compare_gt(b, a));
-    }
-
-#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
     static inline uint8x16 clamp(uint8x16 v, uint8x16 vmin, uint8x16 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -120,35 +91,6 @@ namespace simd {
     {
         return sub(a, uint16x8_set1(b));
     }
-
-#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline uint16x8 bitwise_not(uint16x8 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
-    }
-
-    static inline uint16x8 compare_neq(uint16x8 a, uint16x8 b)
-    {
-        return bitwise_not(compare_eq(b, a));
-    }
-
-    static inline uint16x8 compare_lt(uint16x8 a, uint16x8 b)
-    {
-        return compare_gt(b, a);
-    }
-
-    static inline uint16x8 compare_le(uint16x8 a, uint16x8 b)
-    {
-        return bitwise_not(compare_gt(a, b));
-    }
-
-    static inline uint16x8 compare_ge(uint16x8 a, uint16x8 b)
-    {
-        return bitwise_not(compare_gt(b, a));
-    }
-
-#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline uint16x8 clamp(uint16x8 v, uint16x8 vmin, uint16x8 vmax)
     {
@@ -249,35 +191,6 @@ namespace simd {
         return min(uint32x4_set1(vmax), max(uint32x4_set1(vmin), v));
     }
 
-#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline uint32x4 bitwise_not(uint32x4 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
-    }
-
-    static inline uint32x4 compare_neq(uint32x4 a, uint32x4 b)
-    {
-        return bitwise_not(compare_eq(b, a));
-    }
-
-    static inline uint32x4 compare_lt(uint32x4 a, uint32x4 b)
-    {
-        return compare_gt(b, a);
-    }
-
-    static inline uint32x4 compare_le(uint32x4 a, uint32x4 b)
-    {
-        return bitwise_not(compare_gt(a, b));
-    }
-
-    static inline uint32x4 compare_ge(uint32x4 a, uint32x4 b)
-    {
-        return bitwise_not(compare_gt(b, a));
-    }
-
-#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
     // ------------------------------------------------------------------
     // int8x16
     // ------------------------------------------------------------------
@@ -301,35 +214,6 @@ namespace simd {
     {
         return sub(a, int8x16_set1(b));
     }
-
-#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline int8x16 bitwise_not(int8x16 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
-    }
-
-    static inline int8x16 compare_neq(int8x16 a, int8x16 b)
-    {
-        return bitwise_not(compare_eq(b, a));
-    }
-
-    static inline int8x16 compare_lt(int8x16 a, int8x16 b)
-    {
-        return compare_gt(b, a);
-    }
-
-    static inline int8x16 compare_le(int8x16 a, int8x16 b)
-    {
-        return bitwise_not(compare_gt(a, b));
-    }
-
-    static inline int8x16 compare_ge(int8x16 a, int8x16 b)
-    {
-        return bitwise_not(compare_gt(b, a));
-    }
-
-#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int8x16 clamp(int8x16 v, int8x16 vmin, int8x16 vmax)
     {
@@ -359,35 +243,6 @@ namespace simd {
     {
         return sub(a, int16x8_set1(b));
     }
-
-#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline int16x8 bitwise_not(int16x8 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
-    }
-
-    static inline int16x8 compare_neq(int16x8 a, int16x8 b)
-    {
-        return bitwise_not(compare_eq(b, a));
-    }
-
-    static inline int16x8 compare_lt(int16x8 a, int16x8 b)
-    {
-        return compare_gt(b, a);
-    }
-
-    static inline int16x8 compare_le(int16x8 a, int16x8 b)
-    {
-        return bitwise_not(compare_gt(a, b));
-    }
-
-    static inline int16x8 compare_ge(int16x8 a, int16x8 b)
-    {
-        return bitwise_not(compare_gt(b, a));
-    }
-
-#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
 
     static inline int16x8 clamp(int16x8 v, int16x8 vmin, int16x8 vmax)
     {
@@ -528,56 +383,27 @@ namespace simd {
         return bitwise_xor(a, int32x4_set1(b));
     }
 
-#if !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline int32x4 bitwise_not(int32x4 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
-    }
-
-    static inline int32x4 compare_neq(int32x4 a, int32x4 b)
-    {
-        return bitwise_not(compare_eq(b, a));
-    }
-
-    static inline int32x4 compare_lt(int32x4 a, int32x4 b)
-    {
-        return compare_gt(b, a);
-    }
-
-    static inline int32x4 compare_le(int32x4 a, int32x4 b)
-    {
-        return bitwise_not(compare_gt(a, b));
-    }
-
-    static inline int32x4 compare_ge(int32x4 a, int32x4 b)
-    {
-        return bitwise_not(compare_gt(b, a));
-    }
-
-#endif // !defined(MANGO_ENABLE_NEON) && !defined(MANGO_ENABLE_XOP)
-
-    static inline int32x4 compare_eq(int32x4 a, int b)
+    static inline int32x4::mask compare_eq(int32x4 a, int b)
     {
         return compare_eq(a, int32x4_set1(b));
     }
 
-    static inline int32x4 compare_gt(int32x4 a, int b)
+    static inline int32x4::mask compare_gt(int32x4 a, int b)
     {
         return compare_gt(a, int32x4_set1(b));
     }
 
-    static inline int32x4 select(int32x4 mask, int a, int32x4 b)
+    static inline int32x4 select(int32x4::mask mask, int a, int32x4 b)
     {
         return select(mask, int32x4_set1(a), b);
     }
 
-    static inline int32x4 select(int32x4 mask, int32x4 a, int b)
+    static inline int32x4 select(int32x4::mask mask, int32x4 a, int b)
     {
         return select(mask, a, int32x4_set1(b));
     }
 
-    static inline int32x4 select(int32x4 mask, int a, int b)
+    static inline int32x4 select(int32x4::mask mask, int a, int b)
     {
         return select(mask, int32x4_set1(a), int32x4_set1(b));
     }
@@ -696,47 +522,47 @@ namespace simd {
         return min(float32x2_set1(vmax), max(float32x2_set1(vmin), v));
     }
 
-    static inline float32x2 compare_neq(float32x2 a, float b)
+    static inline float32x2::mask compare_neq(float32x2 a, float b)
     {
         return compare_neq(a, float32x2_set1(b));
     }
 
-    static inline float32x2 compare_eq(float32x2 a, float b)
+    static inline float32x2::mask compare_eq(float32x2 a, float b)
     {
         return compare_eq(a, float32x2_set1(b));
     }
 
-    static inline float32x2 compare_lt(float32x2 a, float b)
+    static inline float32x2::mask compare_lt(float32x2 a, float b)
     {
         return compare_lt(a, float32x2_set1(b));
     }
 
-    static inline float32x2 compare_le(float32x2 a, float b)
+    static inline float32x2::mask compare_le(float32x2 a, float b)
     {
         return compare_le(a, float32x2_set1(b));
     }
 
-    static inline float32x2 compare_gt(float32x2 a, float b)
+    static inline float32x2::mask compare_gt(float32x2 a, float b)
     {
         return compare_gt(a, float32x2_set1(b));
     }
 
-    static inline float32x2 compare_ge(float32x2 a, float b)
+    static inline float32x2::mask compare_ge(float32x2 a, float b)
     {
         return compare_ge(a, float32x2_set1(b));
     }
 
-    static inline float32x2 select(float32x2 mask, float a, float32x2 b)
+    static inline float32x2 select(float32x2::mask mask, float a, float32x2 b)
     {
         return select(mask, float32x2_set1(a), b);
     }
 
-    static inline float32x2 select(float32x2 mask, float32x2 a, float b)
+    static inline float32x2 select(float32x2::mask mask, float32x2 a, float b)
     {
         return select(mask, a, float32x2_set1(b));
     }
 
-    static inline float32x2 select(float32x2 mask, float a, float b)
+    static inline float32x2 select(float32x2::mask mask, float a, float b)
     {
         return select(mask, float32x2_set1(a), float32x2_set1(b));
     }
@@ -749,10 +575,10 @@ namespace simd {
 
     static inline float32x2 sign(float32x2 a)
     {
-        const float32x2 zero_mask = compare_neq(a, float32x2_zero());
-        const float32x2 sign_bits = bitwise_and(a, float32x2_set1(-0.0f));
-        const float32x2 signed_one = bitwise_or(sign_bits, float32x2_set1(1.0f));
-        return bitwise_and(signed_one, zero_mask);
+        auto zero = float32x2_zero();
+        auto negative = select(compare_gt(zero, a), float32x2_set1(-1.0f), zero);
+        auto positive = select(compare_gt(a, zero), float32x2_set1( 1.0f), zero);
+        return bitwise_or(negative, positive);
     }
 
     static inline float32x2 radians(float32x2 a)
@@ -780,11 +606,6 @@ namespace simd {
     static inline float32x2 normalize(float32x2 a)
     {
         return mul(a, rsqrt(dot2(a, a)));
-    }
-
-    static inline float32x2 bitwise_not(float32x2 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------
@@ -931,49 +752,44 @@ namespace simd {
         return min(float32x4_set1(vmax), max(float32x4_set1(vmin), v));
     }
 
-    static inline float32x4 compare_neq(float32x4 a, float b)
+    static inline float32x4::mask compare_neq(float32x4 a, float b)
     {
         return compare_neq(a, float32x4_set1(b));
     }
 
-    static inline float32x4 compare_eq(float32x4 a, float b)
+    static inline float32x4::mask compare_eq(float32x4 a, float b)
     {
         return compare_eq(a, float32x4_set1(b));
     }
 
-    static inline float32x4 compare_lt(float32x4 a, float b)
+    static inline float32x4::mask compare_lt(float32x4 a, float b)
     {
         return compare_lt(a, float32x4_set1(b));
     }
 
-    static inline float32x4 compare_le(float32x4 a, float b)
+    static inline float32x4::mask compare_le(float32x4 a, float b)
     {
         return compare_le(a, float32x4_set1(b));
     }
 
-    static inline float32x4 compare_gt(float32x4 a, float b)
+    static inline float32x4::mask compare_gt(float32x4 a, float b)
     {
         return compare_gt(a, float32x4_set1(b));
     }
 
-    static inline float32x4 compare_ge(float32x4 a, float b)
+    static inline float32x4::mask compare_ge(float32x4 a, float b)
     {
         return compare_ge(a, float32x4_set1(b));
     }
 
-    static inline float32x4 select(float32x4 mask, float a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float a, float32x4 b)
     {
         return select(mask, float32x4_set1(a), b);
     }
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float b)
     {
         return select(mask, a, float32x4_set1(b));
-    }
-
-    static inline float32x4 select(float32x4 mask, float a, float b)
-    {
-        return select(mask, float32x4_set1(a), float32x4_set1(b));
     }
 
     static inline float32x4 mod(float32x4 a, float32x4 b)
@@ -984,10 +800,10 @@ namespace simd {
 
     static inline float32x4 sign(float32x4 a)
     {
-        const float32x4 zero_mask = compare_neq(a, float32x4_zero());
-        const float32x4 sign_bits = bitwise_and(a, float32x4_set1(-0.0f));
-        const float32x4 signed_one = bitwise_or(sign_bits, float32x4_set1(1.0f));
-        return bitwise_and(signed_one, zero_mask);
+        auto zero = float32x4_zero();
+        auto negative = select(compare_gt(zero, a), float32x4_set1(-1.0f), zero);
+        auto positive = select(compare_gt(a, zero), float32x4_set1( 1.0f), zero);
+        return bitwise_or(negative, positive);
     }
 
     static inline float32x4 radians(float32x4 a)
@@ -1015,11 +831,6 @@ namespace simd {
     static inline float32x4 normalize(float32x4 a)
     {
         return mul(a, rsqrt(dot4(a, a)));
-    }
-
-    static inline float32x4 bitwise_not(float32x4 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------
@@ -1106,49 +917,44 @@ namespace simd {
         return min(float32x8_set1(vmax), max(float32x8_set1(vmin), v));
     }
 
-    static inline float32x8 compare_neq(float32x8 a, float b)
+    static inline float32x8::mask compare_neq(float32x8 a, float b)
     {
         return compare_neq(a, float32x8_set1(b));
     }
 
-    static inline float32x8 compare_eq(float32x8 a, float b)
+    static inline float32x8::mask compare_eq(float32x8 a, float b)
     {
         return compare_eq(a, float32x8_set1(b));
     }
 
-    static inline float32x8 compare_lt(float32x8 a, float b)
+    static inline float32x8::mask compare_lt(float32x8 a, float b)
     {
         return compare_lt(a, float32x8_set1(b));
     }
 
-    static inline float32x8 compare_le(float32x8 a, float b)
+    static inline float32x8::mask compare_le(float32x8 a, float b)
     {
         return compare_le(a, float32x8_set1(b));
     }
 
-    static inline float32x8 compare_gt(float32x8 a, float b)
+    static inline float32x8::mask compare_gt(float32x8 a, float b)
     {
         return compare_gt(a, float32x8_set1(b));
     }
 
-    static inline float32x8 compare_ge(float32x8 a, float b)
+    static inline float32x8::mask compare_ge(float32x8 a, float b)
     {
         return compare_ge(a, float32x8_set1(b));
     }
 
-    static inline float32x8 select(float32x8 mask, float a, float32x8 b)
+    static inline float32x8 select(float32x8::mask mask, float a, float32x8 b)
     {
         return select(mask, float32x8_set1(a), b);
     }
 
-    static inline float32x8 select(float32x8 mask, float32x8 a, float b)
+    static inline float32x8 select(float32x8::mask mask, float32x8 a, float b)
     {
         return select(mask, a, float32x8_set1(b));
-    }
-
-    static inline float32x8 select(float32x8 mask, float a, float b)
-    {
-        return select(mask, float32x8_set1(a), float32x8_set1(b));
     }
 
     static inline float32x8 mod(float32x8 a, float32x8 b)
@@ -1159,10 +965,10 @@ namespace simd {
 
     static inline float32x8 sign(float32x8 a)
     {
-        const float32x8 zero_mask = compare_neq(a, float32x8_zero());
-        const float32x8 sign_bits = bitwise_and(a, float32x8_set1(-0.0f));
-        const float32x8 signed_one = bitwise_or(sign_bits, float32x8_set1(1.0f));
-        return bitwise_and(signed_one, zero_mask);
+        auto zero = float32x8_zero();
+        auto negative = select(compare_gt(zero, a), float32x8_set1(-1.0f), zero);
+        auto positive = select(compare_gt(a, zero), float32x8_set1( 1.0f), zero);
+        return bitwise_or(negative, positive);
     }
 
     static inline float32x8 radians(float32x8 a)
@@ -1175,11 +981,6 @@ namespace simd {
     {
         static const float32x8 s = float32x8_set1(57.2957795131f);
         return mul(a, s);
-    }
-
-    static inline float32x8 bitwise_not(float32x8 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------
@@ -1296,49 +1097,44 @@ namespace simd {
         return min(float64x2_set1(vmax), max(float64x2_set1(vmin), v));
     }
 
-    static inline float64x2 compare_neq(float64x2 a, double b)
+    static inline float64x2::mask compare_neq(float64x2 a, double b)
     {
         return compare_neq(a, float64x2_set1(b));
     }
 
-    static inline float64x2 compare_eq(float64x2 a, double b)
+    static inline float64x2::mask compare_eq(float64x2 a, double b)
     {
         return compare_eq(a, float64x2_set1(b));
     }
 
-    static inline float64x2 compare_lt(float64x2 a, double b)
+    static inline float64x2::mask compare_lt(float64x2 a, double b)
     {
         return compare_lt(a, float64x2_set1(b));
     }
 
-    static inline float64x2 compare_le(float64x2 a, double b)
+    static inline float64x2::mask compare_le(float64x2 a, double b)
     {
         return compare_le(a, float64x2_set1(b));
     }
 
-    static inline float64x2 compare_gt(float64x2 a, double b)
+    static inline float64x2::mask compare_gt(float64x2 a, double b)
     {
         return compare_gt(a, float64x2_set1(b));
     }
 
-    static inline float64x2 compare_ge(float64x2 a, double b)
+    static inline float64x2::mask compare_ge(float64x2 a, double b)
     {
         return compare_ge(a, float64x2_set1(b));
     }
 
-    static inline float64x2 select(float64x2 mask, double a, float64x2 b)
+    static inline float64x2 select(float64x2::mask mask, double a, float64x2 b)
     {
         return select(mask, float64x2_set1(a), b);
     }
 
-    static inline float64x2 select(float64x2 mask, float64x2 a, double b)
+    static inline float64x2 select(float64x2::mask mask, float64x2 a, double b)
     {
         return select(mask, a, float64x2_set1(b));
-    }
-
-    static inline float64x2 select(float64x2 mask, double a, double b)
-    {
-        return select(mask, float64x2_set1(a), float64x2_set1(b));
     }
 
     static inline float64x2 mod(float64x2 a, float64x2 b)
@@ -1349,10 +1145,10 @@ namespace simd {
 
     static inline float64x2 sign(float64x2 a)
     {
-        const float64x2 zero_mask = compare_neq(a, float64x2_zero());
-        const float64x2 sign_bits = bitwise_and(a, float64x2_set1(-0.0));
-        const float64x2 signed_one = bitwise_or(sign_bits, float64x2_set1(1.0));
-        return bitwise_and(signed_one, zero_mask);
+        auto zero = float64x2_zero();
+        auto negative = select(compare_gt(zero, a), float64x2_set1(-1.0), zero);
+        auto positive = select(compare_gt(a, zero), float64x2_set1( 1.0), zero);
+        return bitwise_or(negative, positive);
     }
 
     static inline float64x2 radians(float64x2 a)
@@ -1380,11 +1176,6 @@ namespace simd {
     static inline float64x2 normalize(float64x2 a)
     {
         return mul(a, rsqrt(dot2(a, a)));
-    }
-
-    static inline float64x2 bitwise_not(float64x2 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------
@@ -1531,49 +1322,44 @@ namespace simd {
         return min(float64x4_set1(vmax), max(float64x4_set1(vmin), v));
     }
 
-    static inline float64x4 compare_neq(float64x4 a, double b)
+    static inline float64x4::mask compare_neq(float64x4 a, double b)
     {
         return compare_neq(a, float64x4_set1(b));
     }
 
-    static inline float64x4 compare_eq(float64x4 a, double b)
+    static inline float64x4::mask compare_eq(float64x4 a, double b)
     {
         return compare_eq(a, float64x4_set1(b));
     }
 
-    static inline float64x4 compare_lt(float64x4 a, double b)
+    static inline float64x4::mask compare_lt(float64x4 a, double b)
     {
         return compare_lt(a, float64x4_set1(b));
     }
 
-    static inline float64x4 compare_le(float64x4 a, double b)
+    static inline float64x4::mask compare_le(float64x4 a, double b)
     {
         return compare_le(a, float64x4_set1(b));
     }
 
-    static inline float64x4 compare_gt(float64x4 a, double b)
+    static inline float64x4::mask compare_gt(float64x4 a, double b)
     {
         return compare_gt(a, float64x4_set1(b));
     }
 
-    static inline float64x4 compare_ge(float64x4 a, double b)
+    static inline float64x4::mask compare_ge(float64x4 a, double b)
     {
         return compare_ge(a, float64x4_set1(b));
     }
 
-    static inline float64x4 select(float64x4 mask, double a, float64x4 b)
+    static inline float64x4 select(float64x4::mask mask, double a, float64x4 b)
     {
         return select(mask, float64x4_set1(a), b);
     }
 
-    static inline float64x4 select(float64x4 mask, float64x4 a, double b)
+    static inline float64x4 select(float64x4::mask mask, float64x4 a, double b)
     {
         return select(mask, a, float64x4_set1(b));
-    }
-
-    static inline float64x4 select(float64x4 mask, double a, double b)
-    {
-        return select(mask, float64x4_set1(a), float64x4_set1(b));
     }
 
     static inline float64x4 mod(float64x4 a, float64x4 b)
@@ -1584,10 +1370,10 @@ namespace simd {
 
     static inline float64x4 sign(float64x4 a)
     {
-        const float64x4 zero_mask = compare_neq(a, float64x4_zero());
-        const float64x4 sign_bits = bitwise_and(a, float64x4_set1(-0.0));
-        const float64x4 signed_one = bitwise_or(sign_bits, float64x4_set1(1.0));
-        return bitwise_and(signed_one, zero_mask);
+        auto zero = float64x4_zero();
+        auto negative = select(compare_gt(zero, a), float64x4_set1(-1.0), zero);
+        auto positive = select(compare_gt(a, zero), float64x4_set1( 1.0), zero);
+        return bitwise_or(negative, positive);
     }
 
     static inline float64x4 radians(float64x4 a)
@@ -1615,11 +1401,6 @@ namespace simd {
     static inline float64x4 normalize(float64x4 a)
     {
         return mul(a, rsqrt(dot4(a, a)));
-    }
-
-    static inline float64x4 bitwise_not(float64x4 a)
-    {
-        return bitwise_xor(a, compare_eq(a, a));
     }
 
     // ------------------------------------------------------------------

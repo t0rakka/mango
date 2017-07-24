@@ -72,6 +72,11 @@ namespace simd {
          return _mm512_xor_ps(a, b);
     }
 
+    static inline float32x16 bitwise_not(float32x16 a)
+    {
+        return _mm512_xor_ps(a, _mm512_castsi512_ps(_mm512_set1_epi32(0xffffffff)));
+    }
+
     static inline float32x16 min(float32x16 a, float32x16 b)
     {
         return _mm512_min_ps(a, b);
@@ -159,52 +164,39 @@ namespace simd {
 
     // compare
 
-    static inline float32x16 compare_neq(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_neq(float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(a, b, 4);
-        const __m512i value = _mm512_mask_blend_epi32(mask16, _mm512_setzero_epi32(), _mm512_set1_epi32(0xffffffff));
-        return _mm512_castsi512_ps(value);
+        return _mm512_cmp_ps_mask(a, b, 4);
     }
 
-    static inline float32x16 compare_eq(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_eq(float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(a, b, 0);
-        const __m512i value = _mm512_mask_blend_epi32(mask16, _mm512_setzero_epi32(), _mm512_set1_epi32(0xffffffff));
-        return _mm512_castsi512_ps(value);
+        return _mm512_cmp_ps_mask(a, b, 0);
     }
 
-    static inline float32x16 compare_lt(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_lt(float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(a, b, 1);
-        const __m512i value = _mm512_mask_blend_epi32(mask16, _mm512_setzero_epi32(), _mm512_set1_epi32(0xffffffff));
-        return _mm512_castsi512_ps(value);
+        return _mm512_cmp_ps_mask(a, b, 1);
     }
 
-    static inline float32x16 compare_le(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_le(float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(a, b, 2);
-        const __m512i value = _mm512_mask_blend_epi32(mask16, _mm512_setzero_epi32(), _mm512_set1_epi32(0xffffffff));
-        return _mm512_castsi512_ps(value);
+        return _mm512_cmp_ps_mask(a, b, 2);
     }
 
-    static inline float32x16 compare_gt(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_gt(float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(b, a, 1);
-        const __m512i value = _mm512_mask_blend_epi32(mask16, _mm512_setzero_epi32(), _mm512_set1_epi32(0xffffffff));
-        return _mm512_castsi512_ps(value);
+        return _mm512_cmp_ps_mask(b, a, 1);
     }
 
-    static inline float32x16 compare_ge(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_ge(float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(b, a, 2);
-        const __m512i value = _mm512_mask_blend_epi32(mask16, _mm512_setzero_epi32(), _mm512_set1_epi32(0xffffffff));
-        return _mm512_castsi512_ps(value);
+        return _mm512_cmp_ps_mask(b, a, 2);
     }
 
-    static inline float32x16 select(float32x16 mask, float32x16 a, float32x16 b)
+    static inline float32x16 select(float32x16::mask mask, float32x16 a, float32x16 b)
     {
-        const __mmask16 mask16 = _mm512_cmp_ps_mask(mask, _mm512_setzero_ps(), 0);
-        return _mm512_mask_blend_ps(mask16, b, a);
+        return _mm512_mask_blend_ps(mask, b, a);
     }
 
     // rounding

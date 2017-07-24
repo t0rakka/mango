@@ -186,6 +186,11 @@ namespace simd {
         return float32x4_reinterpret(bitwise_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
+    static inline float32x4 bitwise_not(float32x4 a)
+    {
+		return bitwise_xor(a, (float32x4) vec_cmpeq(a, a));
+    }
+
     static inline float32x4 min(float32x4 a, float32x4 b)
     {
 		return vec_min(a, b);
@@ -328,38 +333,38 @@ namespace simd {
 
     // compare
 
-    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
     {
         const vector unsigned int mask = vec_cmpeq(a, b);
         return (float32x4) vec_nor(mask, mask);
     }
 
-    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
     {
 		return vec_cmpeq(a, b);
     }
 
-    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
     {
 		return vec_cmplt(a, b);
     }
 
-    static inline float32x4 compare_le(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
     {
 		return vec_cmple(a, b);
     }
 
-    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
     {
 		return vec_cmpgt(a, b);
     }
 
-    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
     {
 		return vec_cmpge(a, b);
     }
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
 		return vec_sel(b, a, (vector unsigned int)mask);
     }

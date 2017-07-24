@@ -27,11 +27,12 @@ namespace simd {
     // strong types for the compiler to be able to resolve the overloads
     // when the underlying types are identical.
 
-    template <typename ScalarType, int Size, typename VectorType>
+    template <typename ScalarType, int Size, typename VectorType, typename MaskType>
     struct hardware_vector
     {
-        using scalar_type = ScalarType;
-        using vector_type = VectorType;
+        using scalar = ScalarType;
+        using vector = VectorType;
+        using mask = MaskType;
         enum
         {
             scalar_bits = sizeof(ScalarType) * 8,
@@ -59,8 +60,9 @@ namespace simd {
     template <typename ScalarType, int Size>
     struct scalar_vector
     {
-        using scalar_type = ScalarType;
-        using vector_type = void;
+        using scalar = ScalarType;
+        using vector = void;
+        using mask = uint32;
         enum
         {
             scalar_bits = sizeof(ScalarType) * 8,
@@ -86,11 +88,18 @@ namespace simd {
     template <typename T>
     struct composite_vector
     {
-        using scalar_type = typename T::scalar_type;
-        using vector_type = void;
+        using scalar = typename T::scalar;
+        using vector = void;
+
+        struct mask
+        {
+            typename T::mask lo;
+            typename T::mask hi;
+        };
+
         enum
         {
-            scalar_bits = sizeof(scalar_type) * 8,
+            scalar_bits = sizeof(scalar) * 8,
             vector_bits = sizeof(T) * 2 * 8,
             size = T::size * 2
         };
@@ -119,38 +128,38 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using int8x16    = hardware_vector<int8, 16, __m128i, __m128i>;
+    using int16x8    = hardware_vector<int16, 8, __m128i, __m128i>;
+    using int32x4    = hardware_vector<int32, 4, __m128i, __m128i>;
+    using int64x2    = hardware_vector<int64, 2, __m128i, __m128i>;
+    using uint8x16   = hardware_vector<uint8, 16, __m128i, __m128i>;
+    using uint16x8   = hardware_vector<uint16, 8, __m128i, __m128i>;
+    using uint32x4   = hardware_vector<uint32, 4, __m128i, __m128i>;
+    using uint64x2   = hardware_vector<uint64, 2, __m128i, __m128i>;
+    using float32x4  = hardware_vector<float, 4, __m128, __m128>;
+    using float64x2  = hardware_vector<double, 2, __m128d, __m128d>;
 
-    using int8x32    = hardware_vector<int8, 32, __m256i>;
-    using int16x16   = hardware_vector<int16, 16, __m256i>;
-    using int32x8    = hardware_vector<int32, 8, __m256i>;
-    using int64x4    = hardware_vector<int64, 4, __m256i>;
-    using uint8x32   = hardware_vector<uint8, 32, __m256i>;
-    using uint16x16  = hardware_vector<uint16, 16, __m256i>;
-    using uint32x8   = hardware_vector<uint32, 8, __m256i>;
-    using uint64x4   = hardware_vector<uint64, 4, __m256i>;
-    using float32x8  = hardware_vector<float, 8, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d>;
+    using int8x32    = hardware_vector<int8, 32, __m256i, __m256i>;
+    using int16x16   = hardware_vector<int16, 16, __m256i, __m256i>;
+    using int32x8    = hardware_vector<int32, 8, __m256i, __m256i>;
+    using int64x4    = hardware_vector<int64, 4, __m256i, __m256i>;
+    using uint8x32   = hardware_vector<uint8, 32, __m256i, __m256i>;
+    using uint16x16  = hardware_vector<uint16, 16, __m256i, __m256i>;
+    using uint32x8   = hardware_vector<uint32, 8, __m256i, __m256i>;
+    using uint64x4   = hardware_vector<uint64, 4, __m256i, __m256i>;
+    using float32x8  = hardware_vector<float, 8, __m256, __m256>;
+    using float64x4  = hardware_vector<double, 4, __m256d, __m256d>;
 
-    using int8x64    = hardware_vector<int8, 64, __m512i>;
-    using int16x32   = hardware_vector<int16, 32, __m512i>;
-    using int32x16   = hardware_vector<int32, 16, __m512i>;
-    using int64x8    = hardware_vector<int64, 8, __m512i>;
-    using uint8x64   = hardware_vector<uint8, 64, __m512i>;
-    using uint16x32  = hardware_vector<uint16, 32, __m512i>;
-    using uint32x16  = hardware_vector<uint32, 16, __m512i>;
-    using uint64x8   = hardware_vector<uint64, 8, __m512i>;
-    using float32x16 = hardware_vector<float, 16, __m512>;
-    using float64x8  = hardware_vector<double, 8, __m512d>;
+    using int8x64    = hardware_vector<int8, 64, __m512i, __mmask64>;
+    using int16x32   = hardware_vector<int16, 32, __m512i, __mmask32>;
+    using int32x16   = hardware_vector<int32, 16, __m512i, __mmask16>;
+    using int64x8    = hardware_vector<int64, 8, __m512i, __mmask8>;
+    using uint8x64   = hardware_vector<uint8, 64, __m512i, __mmask64>;
+    using uint16x32  = hardware_vector<uint16, 32, __m512i, __mmask32>;
+    using uint32x16  = hardware_vector<uint32, 16, __m512i, __mmask16>;
+    using uint64x8   = hardware_vector<uint64, 8, __m512i, __mmask8>;
+    using float32x16 = hardware_vector<float, 16, __m512, __mmask16>;
+    using float64x8  = hardware_vector<double, 8, __m512d, __mmask8>;
 
     using float16x4  = scalar_vector<half, 4>;
     using float32x2  = scalar_vector<float, 2>;
@@ -181,27 +190,30 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using int8x16    = hardware_vector<int8, 16, __m128i, __m128i>;
+    using int16x8    = hardware_vector<int16, 8, __m128i, __m128i>;
+    using int32x4    = hardware_vector<int32, 4, __m128i, __m128i>;
+    using int64x2    = hardware_vector<int64, 2, __m128i, __m128i>;
+    using uint8x16   = hardware_vector<uint8, 16, __m128i, __m128i>;
+    using uint16x8   = hardware_vector<uint16, 8, __m128i, __m128i>;
+    using uint32x4   = hardware_vector<uint32, 4, __m128i, __m128i>;
+    using uint64x2   = hardware_vector<uint64, 2, __m128i, __m128i>;
+    using float32x4  = hardware_vector<float, 4, __m128, __m128>;
+    using float64x2  = hardware_vector<double, 2, __m128d, __m128d>;
 
-    using int8x32    = hardware_vector<int8, 32, __m256i>;
-    using int16x16   = hardware_vector<int16, 16, __m256i>;
-    using int32x8    = hardware_vector<int32, 8, __m256i>;
-    using int64x4    = hardware_vector<int64, 4, __m256i>;
-    using uint8x32   = hardware_vector<uint8, 32, __m256i>;
-    using uint16x16  = hardware_vector<uint16, 16, __m256i>;
-    using uint32x8   = hardware_vector<uint32, 8, __m256i>;
-    using uint64x4   = hardware_vector<uint64, 4, __m256i>;
-    using float32x8  = hardware_vector<float, 8, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d>;
+    using int8x32    = hardware_vector<int8, 32, __m256i, __m256i>;
+    using int16x16   = hardware_vector<int16, 16, __m256i, __m256i>;
+    using int32x8    = hardware_vector<int32, 8, __m256i, __m256i>;
+    using int64x4    = hardware_vector<int64, 4, __m256i, __m256i>;
+    using uint8x32   = hardware_vector<uint8, 32, __m256i, __m256i>;
+    using uint16x16  = hardware_vector<uint16, 16, __m256i, __m256i>;
+    using uint32x8   = hardware_vector<uint32, 8, __m256i, __m256i>;
+    using uint64x4   = hardware_vector<uint64, 4, __m256i, __m256i>;
+    using float32x8  = hardware_vector<float, 8, __m256, __m256>;
+    using float64x4  = hardware_vector<double, 4, __m256d, __m256d>;
+
+    using float16x4 = scalar_vector<half, 4>;
+    using float32x2 = scalar_vector<float, 2>;
 
     using int8x64    = composite_vector<int8x32>;
     using int16x32   = composite_vector<int16x16>;
@@ -213,9 +225,6 @@ namespace simd {
     using uint64x8   = composite_vector<uint64x4>;
     using float32x16 = composite_vector<float32x8>;
     using float64x8  = composite_vector<float64x4>;
-
-    using float16x4 = scalar_vector<half, 4>;
-    using float32x2 = scalar_vector<float, 2>;
 
 } // namespace simd
 } // namespace mango
@@ -243,19 +252,22 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using int8x16    = hardware_vector<int8, 16, __m128i, __m128i>;
+    using int16x8    = hardware_vector<int16, 8, __m128i, __m128i>;
+    using int32x4    = hardware_vector<int32, 4, __m128i, __m128i>;
+    using int64x2    = hardware_vector<int64, 2, __m128i, __m128i>;
+    using uint8x16   = hardware_vector<uint8, 16, __m128i, __m128i>;
+    using uint16x8   = hardware_vector<uint16, 8, __m128i, __m128i>;
+    using uint32x4   = hardware_vector<uint32, 4, __m128i, __m128i>;
+    using uint64x2   = hardware_vector<uint64, 2, __m128i, __m128i>;
+    using float32x4  = hardware_vector<float, 4, __m128, __m128>;
+    using float64x2  = hardware_vector<double, 2, __m128d, __m128d>;
 
-    using float32x8  = hardware_vector<float, 8, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d>;
+    using float32x8  = hardware_vector<float, 8, __m256, __m256>;
+    using float64x4  = hardware_vector<double, 4, __m256d, __m256d>;
+
+    using float16x4  = scalar_vector<half, 4>;
+    using float32x2  = scalar_vector<float, 2>;
 
     using int8x32    = composite_vector<int8x16>;
     using int16x16   = composite_vector<int16x8>;
@@ -276,9 +288,6 @@ namespace simd {
     using uint64x8   = composite_vector<uint64x4>;
     using float32x16 = composite_vector<float32x8>;
     using float64x8  = composite_vector<float64x4>;
-
-    using float16x4  = scalar_vector<half, 4>;
-    using float32x2  = scalar_vector<float, 2>;
 
 } // namespace simd
 } // namespace mango
@@ -306,16 +315,19 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using int8x16    = hardware_vector<int8, 16, __m128i, __m128i>;
+    using int16x8    = hardware_vector<int16, 8, __m128i, __m128i>;
+    using int32x4    = hardware_vector<int32, 4, __m128i, __m128i>;
+    using int64x2    = hardware_vector<int64, 2, __m128i, __m128i>;
+    using uint8x16   = hardware_vector<uint8, 16, __m128i, __m128i>;
+    using uint16x8   = hardware_vector<uint16, 8, __m128i, __m128i>;
+    using uint32x4   = hardware_vector<uint32, 4, __m128i, __m128i>;
+    using uint64x2   = hardware_vector<uint64, 2, __m128i, __m128i>;
+    using float32x4  = hardware_vector<float, 4, __m128, __m128>;
+    using float64x2  = hardware_vector<double, 2, __m128d, __m128d>;
+
+    using float16x4  = scalar_vector<half, 4>;
+    using float32x2  = scalar_vector<float, 2>;
 
     using int8x32    = composite_vector<int8x16>;
     using int16x16   = composite_vector<int16x8>;
@@ -338,9 +350,6 @@ namespace simd {
     using uint64x8   = composite_vector<uint64x4>;
     using float32x16 = composite_vector<float32x8>;
     using float64x8  = composite_vector<float64x4>;
-
-    using float16x4  = scalar_vector<half, 4>;
-    using float32x2  = scalar_vector<float, 2>;
 
 } // namespace simd
 } // namespace mango
@@ -368,22 +377,25 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, int8x16_t>;
-    using int16x8    = hardware_vector<int16, 8, int16x8_t>;
-    using int32x4    = hardware_vector<int32, 4, int32x4_t>;
-    using int64x2    = hardware_vector<int64, 2, int64x2_t>;
-    using uint8x16   = hardware_vector<uint8, 16, uint8x16_t>;
-    using uint16x8   = hardware_vector<uint16, 8, uint16x8_t>;
-    using uint32x4   = hardware_vector<uint32, 4, uint32x4_t>;
-    using uint64x2   = hardware_vector<uint64, 2, uint64x2_t>;
-    using float32x2  = hardware_vector<float, 2, float32x2_t>;
-    using float32x4  = hardware_vector<float, 4, float32x4_t>;
+    using int8x16    = hardware_vector<int8, 16, int8x16_t, uint8x16_t>;
+    using int16x8    = hardware_vector<int16, 8, int16x8_t, uint16x8_t>;
+    using int32x4    = hardware_vector<int32, 4, int32x4_t, uint32x4_t>;
+    using int64x2    = hardware_vector<int64, 2, int64x2_t, uint64x2_t>;
+    using uint8x16   = hardware_vector<uint8, 16, uint8x16_t, uint8x16_t>;
+    using uint16x8   = hardware_vector<uint16, 8, uint16x8_t, uint16x8_t>;
+    using uint32x4   = hardware_vector<uint32, 4, uint32x4_t, uint32x4_t>;
+    using uint64x2   = hardware_vector<uint64, 2, uint64x2_t, uint64x2_t>;
+    using float32x2  = hardware_vector<float, 2, float32x2_t, uint32x2_t>;
+    using float32x4  = hardware_vector<float, 4, float32x4_t, uint32x4_t>;
 
 #ifdef MANGO_ENABLE_FP16
-    using float16x4  = hardware_vector<half, 4, float16x4_t>;
+    using float16x4  = hardware_vector<half, 4, float16x4_t, void>;
 #else
     using float16x4  = scalar_vector<half, 4>;
 #endif
+
+    using float64x2  = scalar_vector<double, 2>;
+    using float64x4  = scalar_vector<double, 4>;
 
     using int8x32    = composite_vector<int8x16>;
     using int16x16   = composite_vector<int16x8>;
@@ -405,9 +417,6 @@ namespace simd {
     using uint64x8   = composite_vector<uint64x4>;
     using float32x16 = composite_vector<float32x8>;
     using float64x8  = composite_vector<float64x4>;
-
-    using float64x2  = scalar_vector<double, 2> ;
-    using float64x4  = scalar_vector<double, 4>;
 
 } // namespace simd
 } // namespace mango
@@ -435,13 +444,13 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, vector signed char>;
-    using int16x8    = hardware_vector<int16, 8, vector signed short>;
-    using int32x4    = hardware_vector<int32, 4, vector signed int>;
-    using uint8x16   = hardware_vector<uint8, 16, vector unsigned char>;
-    using uint16x8   = hardware_vector<uint16, 8, vector unsigned short>;
-    using uint32x4   = hardware_vector<uint32, 4, vector unsigned int>;
-    using float32x4  = hardware_vector<float, 4, vector float>;
+    using int8x16    = hardware_vector<int8, 16, vector signed char, vector signed char>;
+    using int16x8    = hardware_vector<int16, 8, vector signed short, vector signed short>;
+    using int32x4    = hardware_vector<int32, 4, vector signed int, vector signed int>;
+    using uint8x16   = hardware_vector<uint8, 16, vector unsigned char, vector unsigned char>;
+    using uint16x8   = hardware_vector<uint16, 8, vector unsigned short, vector unsigned short>;
+    using uint32x4   = hardware_vector<uint32, 4, vector unsigned int, vector unsigned int>;
+    using float32x4  = hardware_vector<float, 4, vector float, vector float>;
 
     using int64x2    = scalar_vector<int64, 2>;
     using uint64x2   = scalar_vector<uint64, 2>;
@@ -497,13 +506,13 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, vector signed char>;
-    using int16x8    = hardware_vector<int16, 8, vector signed short>;
-    using int32x4    = hardware_vector<int32, 4, vector signed int>;
-    using uint8x16   = hardware_vector<uint8, 16, vector unsigned char>;
-    using uint16x8   = hardware_vector<uint16, 8, vector unsigned short>;
-    using uint32x4   = hardware_vector<uint32, 4, vector unsigned int>;
-    using float32x4  = hardware_vector<float, 4, vector float>;
+    using int8x16    = hardware_vector<int8, 16, vector signed char, vector signed char>;
+    using int16x8    = hardware_vector<int16, 8, vector signed short, vector signed short>;
+    using int32x4    = hardware_vector<int32, 4, vector signed int, vector signed int>;
+    using uint8x16   = hardware_vector<uint8, 16, vector unsigned char, vector unsigned char>;
+    using uint16x8   = hardware_vector<uint16, 8, vector unsigned short, vector unsigned short>;
+    using uint32x4   = hardware_vector<uint32, 4, vector unsigned int, vector unsigned int>;
+    using float32x4  = hardware_vector<float, 4, vector float, vector float>;
 
     using int64x2    = scalar_vector<int64, 2>;
     using uint64x2   = scalar_vector<uint64, 2>;
@@ -560,16 +569,16 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, v16i8>;
-    using int16x8    = hardware_vector<int16, 8, v8i16>;
-    using int32x4    = hardware_vector<int32, 4, v4i32>;
-    using int64x2    = hardware_vector<int64, 2, v2i64>;
-    using uint8x16   = hardware_vector<uint8, 16, v16u8>;
-    using uint16x8   = hardware_vector<uint16, 8, v8u16>;
-    using uint32x4   = hardware_vector<uint32, 4, v4u32>;
-    using uint64x2   = hardware_vector<uint64, 2, v2u64>;
-    using float32x4  = hardware_vector<float, 4, v4f32>;
-    using float64x2  = hardware_vector<double, 2, v2f64>;
+    using int8x16    = hardware_vector<int8, 16, v16i8, v16i8>;
+    using int16x8    = hardware_vector<int16, 8, v8i16, v8i16>;
+    using int32x4    = hardware_vector<int32, 4, v4i32, v4i32>;
+    using int64x2    = hardware_vector<int64, 2, v2i64, v2i64>;
+    using uint8x16   = hardware_vector<uint8, 16, v16u8, v16u8>;
+    using uint16x8   = hardware_vector<uint16, 8, v8u16, v8u16>;
+    using uint32x4   = hardware_vector<uint32, 4, v4u32, v4u32>;
+    using uint64x2   = hardware_vector<uint64, 2, v2u64, v2u64>;
+    using float32x4  = hardware_vector<float, 4, v4f32, v4f32>;
+    using float64x2  = hardware_vector<double, 2, v2f64, v2f64>;
 
     using float16x4  = scalar_vector<half, 4>;
     using float32x2  = scalar_vector<float, 2>;

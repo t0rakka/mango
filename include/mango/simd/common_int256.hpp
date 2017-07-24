@@ -144,25 +144,33 @@ namespace simd {
         return result;
     }
 
-    // compare
-
-    static inline uint8x32 compare_eq(uint8x32 a, uint8x32 b)
+    static inline uint8x32 bitwise_not(uint8x32 a)
     {
         uint8x32 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline uint8x32::mask compare_eq(uint8x32 a, uint8x32 b)
+    {
+        uint8x32::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x32 compare_gt(uint8x32 a, uint8x32 b)
+    static inline uint8x32::mask compare_gt(uint8x32 a, uint8x32 b)
     {
-        uint8x32 result;
+        uint8x32::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x32 select(uint8x32 mask, uint8x32 a, uint8x32 b)
+    static inline uint8x32 select(uint8x32::mask mask, uint8x32 a, uint8x32 b)
     {
         uint8x32 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -313,25 +321,33 @@ namespace simd {
         return result;
     }
 
-    // compare
-
-    static inline uint16x16 compare_eq(uint16x16 a, uint16x16 b)
+    static inline uint16x16 bitwise_not(uint16x16 a)
     {
         uint16x16 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline uint16x16::mask compare_eq(uint16x16 a, uint16x16 b)
+    {
+        uint16x16::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x16 compare_gt(uint16x16 a, uint16x16 b)
+    static inline uint16x16::mask compare_gt(uint16x16 a, uint16x16 b)
     {
-        uint16x16 result;
+        uint16x16::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x16 select(uint16x16 mask, uint16x16 a, uint16x16 b)
+    static inline uint16x16 select(uint16x16::mask mask, uint16x16 a, uint16x16 b)
     {
         uint16x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -557,25 +573,33 @@ namespace simd {
         return result;
     }
 
-    // compare
-
-    static inline uint32x8 compare_eq(uint32x8 a, uint32x8 b)
+    static inline uint32x8 bitwise_not(uint32x8 a)
     {
         uint32x8 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline uint32x8::mask compare_eq(uint32x8 a, uint32x8 b)
+    {
+        uint32x8::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x8 compare_gt(uint32x8 a, uint32x8 b)
+    static inline uint32x8::mask compare_gt(uint32x8 a, uint32x8 b)
     {
-        uint32x8 result;
+        uint32x8::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x8 select(uint32x8 mask, uint32x8 a, uint32x8 b)
+    static inline uint32x8 select(uint32x8::mask mask, uint32x8 a, uint32x8 b)
     {
         uint32x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -765,7 +789,15 @@ namespace simd {
         return result;
     }
 
-    static inline uint64x4 select(uint64x4 mask, uint64x4 a, uint64x4 b)
+    static inline uint64x4 bitwise_not(uint64x4 a)
+    {
+        uint64x4 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    static inline uint64x4 select(uint64x4::mask mask, uint64x4 a, uint64x4 b)
     {
         uint64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -952,25 +984,33 @@ namespace simd {
         return result;
     }
 
-    // compare
-
-    static inline int8x32 compare_eq(int8x32 a, int8x32 b)
+    static inline int8x32 bitwise_not(int8x32 a)
     {
         int8x32 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline int8x32::mask compare_eq(int8x32 a, int8x32 b)
+    {
+        int8x32::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x32 compare_gt(int8x32 a, int8x32 b)
+    static inline int8x32::mask compare_gt(int8x32 a, int8x32 b)
     {
-        int8x32 result;
+        int8x32::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x32 select(int8x32 mask, int8x32 a, int8x32 b)
+    static inline int8x32 select(int8x32::mask mask, int8x32 a, int8x32 b)
     {
         int8x32 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -1137,25 +1177,33 @@ namespace simd {
         return result;
     }
 
-    // compare
-
-    static inline int16x16 compare_eq(int16x16 a, int16x16 b)
+    static inline int16x16 bitwise_not(int16x16 a)
     {
         int16x16 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline int16x16::mask compare_eq(int16x16 a, int16x16 b)
+    {
+        int16x16::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x16 compare_gt(int16x16 a, int16x16 b)
+    static inline int16x16::mask compare_gt(int16x16 a, int16x16 b)
     {
-        int16x16 result;
+        int16x16::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x16 select(int16x16 mask, int16x16 a, int16x16 b)
+    static inline int16x16 select(int16x16::mask mask, int16x16 a, int16x16 b)
     {
         int16x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -1397,25 +1445,33 @@ namespace simd {
         return result;
     }
 
-    // compare
-
-    static inline int32x8 compare_eq(int32x8 a, int32x8 b)
+    static inline int32x8 bitwise_not(int32x8 a)
     {
         int32x8 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline int32x8::mask compare_eq(int32x8 a, int32x8 b)
+    {
+        int32x8::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x8 compare_gt(int32x8 a, int32x8 b)
+    static inline int32x8::mask compare_gt(int32x8 a, int32x8 b)
     {
-        int32x8 result;
+        int32x8::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x8 select(int32x8 mask, int32x8 a, int32x8 b)
+    static inline int32x8 select(int32x8::mask mask, int32x8 a, int32x8 b)
     {
         int32x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
@@ -1605,7 +1661,15 @@ namespace simd {
         return result;
     }
 
-    static inline int64x4 select(int64x4 mask, int64x4 a, int64x4 b)
+    static inline int64x4 bitwise_not(int64x4 a)
+    {
+        int64x4 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    static inline int64x4 select(int64x4::mask mask, int64x4 a, int64x4 b)
     {
         int64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);

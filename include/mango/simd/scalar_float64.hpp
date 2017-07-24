@@ -105,6 +105,13 @@ namespace simd {
         return float32x2_set2(x, y);
     }
 
+    static inline float32x2 bitwise_not(float32x2 a)
+    {
+        const Float x(~Float(a[0]).u);
+        const Float y(~Float(a[1]).u);
+        return float32x2_set2(x, y);
+    }
+
     static inline float32x2 min(float32x2 a, float32x2 b)
     {
         float32x2 v;
@@ -237,57 +244,60 @@ namespace simd {
 
     // compare
 
-    static inline float32x2 compare_neq(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_neq(float32x2 a, float32x2 b)
     {
-        float32x2 v;
-        v[0] = Float(0 - uint32(a[0] != b[0]));
-        v[1] = Float(0 - uint32(a[1] != b[1]));
+        float32x2::mask v = 0;
+        v |= uint32(a[0] != b[0]) << 0;
+        v |= uint32(a[1] != b[1]) << 1;
         return v;
     }
 
-    static inline float32x2 compare_eq(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_eq(float32x2 a, float32x2 b)
     {
-        float32x2 v;
-        v[0] = Float(0 - uint32(a[0] == b[0]));
-        v[1] = Float(0 - uint32(a[1] == b[1]));
+        float32x2::mask v = 0;
+        v |= uint32(a[0] == b[0]) << 0;
+        v |= uint32(a[1] == b[1]) << 1;
         return v;
     }
 
-    static inline float32x2 compare_lt(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_lt(float32x2 a, float32x2 b)
     {
-        float32x2 v;
-        v[0] = Float(0 - uint32(a[0] < b[0]));
-        v[1] = Float(0 - uint32(a[1] < b[1]));
+        float32x2::mask v = 0;
+        v |= uint32(a[0] < b[0]) << 0;
+        v |= uint32(a[1] < b[1]) << 1;
         return v;
     }
 
-    static inline float32x2 compare_le(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_le(float32x2 a, float32x2 b)
     {
-        float32x2 v;
-        v[0] = Float(0 - uint32(a[0] <= b[0]));
-        v[1] = Float(0 - uint32(a[1] <= b[1]));
+        float32x2::mask v = 0;
+        v |= uint32(a[0] <= b[0]) << 0;
+        v |= uint32(a[1] <= b[1]) << 1;
         return v;
     }
 
-    static inline float32x2 compare_gt(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_gt(float32x2 a, float32x2 b)
     {
-        float32x2 v;
-        v[0] = Float(0 - uint32(a[0] > b[0]));
-        v[1] = Float(0 - uint32(a[1] > b[1]));
+        float32x2::mask v = 0;
+        v |= uint32(a[0] > b[0]) << 0;
+        v |= uint32(a[1] > b[1]) << 1;
         return v;
     }
 
-    static inline float32x2 compare_ge(float32x2 a, float32x2 b)
+    static inline float32x2::mask compare_ge(float32x2 a, float32x2 b)
     {
-        float32x2 v;
-        v[0] = Float(0 - uint32(a[0] >= b[0]));
-        v[1] = Float(0 - uint32(a[1] >= b[1]));
+        float32x2::mask v = 0;
+        v |= uint32(a[0] >= b[0]) << 0;
+        v |= uint32(a[1] >= b[1]) << 1;
         return v;
     }
 
-    static inline float32x2 select(float32x2 mask, float32x2 a, float32x2 b)
+    static inline float32x2 select(float32x2::mask mask, float32x2 a, float32x2 b)
     {
-        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
+        float32x2 result;
+        result[0] = mask & (1 << 0) ? a[0] : b[0];
+        result[1] = mask & (1 << 1) ? a[1] : b[1];
+        return result;
     }
 
     // rounding

@@ -105,37 +105,37 @@ namespace simd {
 
     // compare
 
-    static inline uint8x16 compare_neq(uint8x16 a, uint8x16 b)
-    {
-        return vmvnq_u8(vceqq_u8(a, b));
-    }
-
-    static inline uint8x16 compare_lt(uint8x16 a, uint8x16 b)
-    {
-        return vcltq_u8(a, b);
-    }
-
-    static inline uint8x16 compare_le(uint8x16 a, uint8x16 b)
-    {
-        return vcleq_u8(a, b);
-    }
-
-    static inline uint8x16 compare_ge(uint8x16 a, uint8x16 b)
-    {
-        return vcgeq_u8(a, b);
-    }
-
-    static inline uint8x16 compare_eq(uint8x16 a, uint8x16 b)
+    static inline uint8x16::mask compare_eq(uint8x16 a, uint8x16 b)
     {
         return vceqq_u8(a, b);
     }
 
-    static inline uint8x16 compare_gt(uint8x16 a, uint8x16 b)
+    static inline uint8x16::mask compare_gt(uint8x16 a, uint8x16 b)
     {
         return vcgtq_u8(a, b);
     }
 
-    static inline uint8x16 select(uint8x16 mask, uint8x16 a, uint8x16 b)
+    static inline uint8x16::mask compare_neq(uint8x16 a, uint8x16 b)
+    {
+        return vmvnq_u8(vceqq_u8(a, b));
+    }
+
+    static inline uint8x16::mask compare_lt(uint8x16 a, uint8x16 b)
+    {
+        return vcltq_u8(a, b);
+    }
+
+    static inline uint8x16::mask compare_le(uint8x16 a, uint8x16 b)
+    {
+        return vcleq_u8(a, b);
+    }
+
+    static inline uint8x16::mask compare_ge(uint8x16 a, uint8x16 b)
+    {
+        return vcgeq_u8(a, b);
+    }
+
+    static inline uint8x16 select(uint8x16::mask mask, uint8x16 a, uint8x16 b)
     {
         return vbslq_u8(mask, a, b);
     }
@@ -246,37 +246,37 @@ namespace simd {
 
     // compare
 
-    static inline uint16x8 compare_neq(uint16x8 a, uint16x8 b)
-    {
-        return vmvnq_u16(vceqq_u16(a, b));
-    }
-
-    static inline uint16x8 compare_lt(uint16x8 a, uint16x8 b)
-    {
-        return vcltq_u16(a, b);
-    }
-
-    static inline uint16x8 compare_le(uint16x8 a, uint16x8 b)
-    {
-        return vcleq_u16(a, b);
-    }
-
-    static inline uint16x8 compare_ge(uint16x8 a, uint16x8 b)
-    {
-        return vcgeq_u16(a, b);
-    }
-
-    static inline uint16x8 compare_eq(uint16x8 a, uint16x8 b)
+    static inline uint16x8::mask compare_eq(uint16x8 a, uint16x8 b)
     {
         return vceqq_u16(a, b);
     }
 
-    static inline uint16x8 compare_gt(uint16x8 a, uint16x8 b)
+    static inline uint16x8::mask compare_gt(uint16x8 a, uint16x8 b)
     {
         return vcgtq_u16(a, b);
     }
 
-    static inline uint16x8 select(uint16x8 mask, uint16x8 a, uint16x8 b)
+    static inline uint16x8::mask compare_neq(uint16x8 a, uint16x8 b)
+    {
+        return vmvnq_u16(vceqq_u16(a, b));
+    }
+
+    static inline uint16x8::mask compare_lt(uint16x8 a, uint16x8 b)
+    {
+        return vcltq_u16(a, b);
+    }
+
+    static inline uint16x8::mask compare_le(uint16x8 a, uint16x8 b)
+    {
+        return vcleq_u16(a, b);
+    }
+
+    static inline uint16x8::mask compare_ge(uint16x8 a, uint16x8 b)
+    {
+        return vcgeq_u16(a, b);
+    }
+
+    static inline uint16x8 select(uint16x8::mask mask, uint16x8 a, uint16x8 b)
     {
         return vbslq_u16(mask, a, b);
     }
@@ -464,37 +464,37 @@ namespace simd {
 
     // compare
 
-    static inline uint32x4 compare_neq(uint32x4 a, uint32x4 b)
-    {
-        return vmvnq_u32(vceqq_u32(a, b));
-    }
-
-    static inline uint32x4 compare_lt(uint32x4 a, uint32x4 b)
-    {
-        return vcltq_u32(a, b);
-    }
-
-    static inline uint32x4 compare_le(uint32x4 a, uint32x4 b)
-    {
-        return vcleq_u32(a, b);
-    }
-
-    static inline uint32x4 compare_ge(uint32x4 a, uint32x4 b)
-    {
-        return vcgeq_u32(a, b);
-    }
-
-    static inline uint32x4 compare_eq(uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_eq(uint32x4 a, uint32x4 b)
     {
         return vceqq_u32(a, b);
     }
 
-    static inline uint32x4 compare_gt(uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_gt(uint32x4 a, uint32x4 b)
     {
         return vcgtq_u32(a, b);
     }
 
-    static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_neq(uint32x4 a, uint32x4 b)
+    {
+        return vmvnq_u32(vceqq_u32(a, b));
+    }
+
+    static inline uint32x4::mask compare_lt(uint32x4 a, uint32x4 b)
+    {
+        return vcltq_u32(a, b);
+    }
+
+    static inline uint32x4::mask compare_le(uint32x4 a, uint32x4 b)
+    {
+        return vcleq_u32(a, b);
+    }
+
+    static inline uint32x4::mask compare_ge(uint32x4 a, uint32x4 b)
+    {
+        return vcgeq_u32(a, b);
+    }
+
+    static inline uint32x4 select(uint32x4::mask mask, uint32x4 a, uint32x4 b)
     {
         return vbslq_u32(mask, a, b);
     }
@@ -631,7 +631,12 @@ namespace simd {
         return veorq_u64(a, b);
     }
 
-    static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
+    static inline uint64x2 bitwise_not(uint64x2 a)
+    {
+        return veorq_u64(a, vdupq_n_u64(0xffffffffffffffffull));
+    }
+
+    static inline uint64x2 select(uint64x2::mask mask, uint64x2 a, uint64x2 b)
     {
         return vbslq_u64(mask, a, b);
     }
@@ -766,39 +771,39 @@ namespace simd {
 
     // compare
 
-    static inline int8x16 compare_neq(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_eq(int8x16 a, int8x16 b)
     {
-        return vreinterpretq_s8_u8(vmvnq_u8(vceqq_s8(a, b)));
+        return vceqq_s8(a, b);
     }
 
-    static inline int8x16 compare_lt(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_gt(int8x16 a, int8x16 b)
     {
-        return vreinterpretq_s8_u8(vcltq_s8(a, b));
+        return vcgtq_s8(a, b);
     }
 
-    static inline int8x16 compare_le(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_neq(int8x16 a, int8x16 b)
     {
-        return vreinterpretq_s8_u8(vcleq_s8(a, b));
+        return vmvnq_u8(vceqq_s8(a, b));
     }
 
-    static inline int8x16 compare_ge(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_lt(int8x16 a, int8x16 b)
     {
-        return vreinterpretq_s8_u8(vcgeq_s8(a, b));
+        return vcltq_s8(a, b);
     }
 
-    static inline int8x16 compare_eq(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_le(int8x16 a, int8x16 b)
     {
-        return vreinterpretq_s8_u8(vceqq_s8(a, b));
+        return vcleq_s8(a, b);
     }
 
-    static inline int8x16 compare_gt(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_ge(int8x16 a, int8x16 b)
     {
-        return vreinterpretq_s8_u8(vcgtq_s8(a, b));
+        return vcgeq_s8(a, b);
     }
 
-    static inline int8x16 select(int8x16 mask, int8x16 a, int8x16 b)
+    static inline int8x16 select(int8x16::mask mask, int8x16 a, int8x16 b)
     {
-        return vbslq_s8(vreinterpretq_u8_s8(mask), a, b);
+        return vbslq_s8(mask, a, b);
     }
 
     static inline int8x16 min(int8x16 a, int8x16 b)
@@ -917,39 +922,39 @@ namespace simd {
 
     // compare
 
-    static inline int16x8 compare_neq(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_eq(int16x8 a, int16x8 b)
     {
-        return vreinterpretq_s16_u16(vmvnq_u16(vceqq_s16(a, b)));
+        return vceqq_s16(a, b);
     }
 
-    static inline int16x8 compare_lt(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_gt(int16x8 a, int16x8 b)
     {
-        return vreinterpretq_s16_u16(vcltq_s16(a, b));
+        return vcgtq_s16(a, b);
     }
 
-    static inline int16x8 compare_le(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_neq(int16x8 a, int16x8 b)
     {
-        return vreinterpretq_s16_u16(vcleq_s16(a, b));
+        return vmvnq_u16(vceqq_s16(a, b));
     }
 
-    static inline int16x8 compare_ge(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_lt(int16x8 a, int16x8 b)
     {
-        return vreinterpretq_s16_u16(vcgeq_s16(a, b));
+        return vcltq_s16(a, b);
     }
 
-    static inline int16x8 compare_eq(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_le(int16x8 a, int16x8 b)
     {
-        return vreinterpretq_s16_u16(vceqq_s16(a, b));
+        return vcleq_s16(a, b);
     }
 
-    static inline int16x8 compare_gt(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_ge(int16x8 a, int16x8 b)
     {
-        return vreinterpretq_s16_u16(vcgtq_s16(a, b));
+        return vcgeq_s16(a, b);
     }
 
-    static inline int16x8 select(int16x8 mask, int16x8 a, int16x8 b)
+    static inline int16x8 select(int16x8::mask mask, int16x8 a, int16x8 b)
     {
-        return vbslq_s16(vreinterpretq_u16_s16(mask), a, b);
+        return vbslq_s16(mask, a, b);
     }
 
     // shift
@@ -1149,39 +1154,39 @@ namespace simd {
 
     // compare
 
-    static inline int32x4 compare_neq(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_eq(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vmvnq_u32(vceqq_s32(a, b)));
+        return vceqq_s32(a, b);
     }
 
-    static inline int32x4 compare_lt(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_gt(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vcltq_s32(a, b));
+        return vcgtq_s32(a, b);
     }
 
-    static inline int32x4 compare_le(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_neq(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vcleq_s32(a, b));
+        return vmvnq_u32(vceqq_s32(a, b));
     }
 
-    static inline int32x4 compare_ge(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_lt(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vcgeq_s32(a, b));
+        return vcltq_s32(a, b);
     }
 
-    static inline int32x4 compare_eq(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_le(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vceqq_s32(a, b));
+        return vcleq_s32(a, b);
     }
 
-    static inline int32x4 compare_gt(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_ge(int32x4 a, int32x4 b)
     {
-        return vreinterpretq_s32_u32(vcgtq_s32(a, b));
+        return vcgeq_s32(a, b);
     }
 
-    static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
+    static inline int32x4 select(int32x4::mask mask, int32x4 a, int32x4 b)
     {
-        return vbslq_s32(vreinterpretq_u32_s32(mask), a, b);
+        return vbslq_s32(mask, a, b);
     }
 
     // shift
@@ -1334,9 +1339,14 @@ namespace simd {
         return veorq_s64(a, b);
     }
 
-    static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
+    static inline int64x2 bitwise_not(int64x2 a)
     {
-        return vbslq_s64(vreinterpretq_u64_s64(mask), a, b);
+        return veorq_s64(a, vdupq_n_s64(0xffffffffffffffffull));
+    }
+
+    static inline int64x2 select(int64x2::mask mask, int64x2 a, int64x2 b)
+    {
+        return vbslq_s64(mask, a, b);
     }
 
     // shift

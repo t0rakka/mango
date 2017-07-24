@@ -139,6 +139,15 @@ namespace simd {
         return float32x4_set4(x, y, z, w);
     }
 
+    static inline float32x4 bitwise_not(float32x4 a)
+    {
+        const Float x(~Float(a[0]).u);
+        const Float y(~Float(a[1]).u);
+        const Float z(~Float(a[2]).u);
+        const Float w(~Float(a[3]).u);
+        return float32x4_set4(x, y, z, w);
+    }
+
     static inline float32x4 min(float32x4 a, float32x4 b)
     {
         float32x4 v;
@@ -339,69 +348,74 @@ namespace simd {
 
     // compare
 
-    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
     {
-        float32x4 v;
-        v[0] = Float(0 - uint32(a[0] != b[0]));
-        v[1] = Float(0 - uint32(a[1] != b[1]));
-        v[2] = Float(0 - uint32(a[2] != b[2]));
-        v[3] = Float(0 - uint32(a[3] != b[3]));
+        float32x4::mask v = 0;
+        v |= uint32(a[0] != b[0]) << 0;
+        v |= uint32(a[1] != b[1]) << 1;
+        v |= uint32(a[2] != b[2]) << 2;
+        v |= uint32(a[3] != b[3]) << 3;
         return v;
     }
 
-    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
     {
-        float32x4 v;
-        v[0] = Float(0 - uint32(a[0] == b[0]));
-        v[1] = Float(0 - uint32(a[1] == b[1]));
-        v[2] = Float(0 - uint32(a[2] == b[2]));
-        v[3] = Float(0 - uint32(a[3] == b[3]));
+        float32x4::mask v = 0;
+        v |= uint32(a[0] == b[0]) << 0;
+        v |= uint32(a[1] == b[1]) << 1;
+        v |= uint32(a[2] == b[2]) << 2;
+        v |= uint32(a[3] == b[3]) << 3;
         return v;
     }
 
-    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
     {
-        float32x4 v;
-        v[0] = Float(0 - uint32(a[0] < b[0]));
-        v[1] = Float(0 - uint32(a[1] < b[1]));
-        v[2] = Float(0 - uint32(a[2] < b[2]));
-        v[3] = Float(0 - uint32(a[3] < b[3]));
+        float32x4::mask v = 0;
+        v |= uint32(a[0] < b[0]) << 0;
+        v |= uint32(a[1] < b[1]) << 1;
+        v |= uint32(a[2] < b[2]) << 2;
+        v |= uint32(a[3] < b[3]) << 3;
         return v;
     }
 
-    static inline float32x4 compare_le(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
     {
-        float32x4 v;
-        v[0] = Float(0 - uint32(a[0] <= b[0]));
-        v[1] = Float(0 - uint32(a[1] <= b[1]));
-        v[2] = Float(0 - uint32(a[2] <= b[2]));
-        v[3] = Float(0 - uint32(a[3] <= b[3]));
+        float32x4::mask v = 0;
+        v |= uint32(a[0] <= b[0]) << 0;
+        v |= uint32(a[1] <= b[1]) << 1;
+        v |= uint32(a[2] <= b[2]) << 2;
+        v |= uint32(a[3] <= b[3]) << 3;
         return v;
     }
 
-    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
     {
-        float32x4 v;
-        v[0] = Float(0 - uint32(a[0] > b[0]));
-        v[1] = Float(0 - uint32(a[1] > b[1]));
-        v[2] = Float(0 - uint32(a[2] > b[2]));
-        v[3] = Float(0 - uint32(a[3] > b[3]));
+        float32x4::mask v = 0;
+        v |= uint32(a[0] > b[0]) << 0;
+        v |= uint32(a[1] > b[1]) << 1;
+        v |= uint32(a[2] > b[2]) << 2;
+        v |= uint32(a[3] > b[3]) << 3;
         return v;
     }
 
-    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
     {
-        float32x4 v;
-        v[0] = Float(0 - uint32(a[0] >= b[0]));
-        v[1] = Float(0 - uint32(a[1] >= b[1]));
-        v[2] = Float(0 - uint32(a[2] >= b[2]));
-        v[3] = Float(0 - uint32(a[3] >= b[3]));
+        float32x4::mask v = 0;
+        v |= uint32(a[0] >= b[0]) << 0;
+        v |= uint32(a[1] >= b[1]) << 1;
+        v |= uint32(a[2] >= b[2]) << 2;
+        v |= uint32(a[3] >= b[3]) << 3;
         return v;
     }
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
-        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
+        float32x4 result;
+        result[0] = mask & (1 << 0) ? a[0] : b[0];
+        result[1] = mask & (1 << 1) ? a[1] : b[1];
+        result[2] = mask & (1 << 2) ? a[2] : b[2];
+        result[3] = mask & (1 << 3) ? a[3] : b[3];
+        return result;
     }
 
     // rounding

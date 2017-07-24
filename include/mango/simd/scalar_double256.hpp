@@ -132,6 +132,15 @@ namespace simd {
         return float64x4_set4(x, y, z, w);
     }
 
+    static inline float64x4 bitwise_not(float64x4 a)
+    {
+        const Double x(~Double(a[0]).u);
+        const Double y(~Double(a[1]).u);
+        const Double z(~Double(a[2]).u);
+        const Double w(~Double(a[3]).u);
+        return float64x4_set4(x, y, z, w);
+    }
+
     static inline float64x4 min(float64x4 a, float64x4 b)
     {
         float64x4 v;
@@ -306,69 +315,74 @@ namespace simd {
 
     // compare
 
-    static inline float64x4 compare_neq(float64x4 a, float64x4 b)
+    static inline float64x4::mask compare_neq(float64x4 a, float64x4 b)
     {
-        float64x4 v;
-        v[0] = Double(0 - uint64(a[0] != b[0]));
-        v[1] = Double(0 - uint64(a[1] != b[1]));
-        v[2] = Double(0 - uint64(a[2] != b[2]));
-        v[3] = Double(0 - uint64(a[3] != b[3]));
+        float64x4::mask v = 0;
+        v |= uint32(a[0] != b[0]) << 0;
+        v |= uint32(a[1] != b[1]) << 1;
+        v |= uint32(a[2] != b[2]) << 2;
+        v |= uint32(a[3] != b[3]) << 3;
         return v;
     }
 
-    static inline float64x4 compare_eq(float64x4 a, float64x4 b)
+    static inline float64x4::mask compare_eq(float64x4 a, float64x4 b)
     {
-        float64x4 v;
-        v[0] = Double(0 - uint64(a[0] == b[0]));
-        v[1] = Double(0 - uint64(a[1] == b[1]));
-        v[2] = Double(0 - uint64(a[2] == b[2]));
-        v[3] = Double(0 - uint64(a[3] == b[3]));
+        float64x4::mask v = 0;
+        v |= uint32(a[0] == b[0]) << 0;
+        v |= uint32(a[1] == b[1]) << 1;
+        v |= uint32(a[2] == b[2]) << 2;
+        v |= uint32(a[3] == b[3]) << 3;
         return v;
     }
 
-    static inline float64x4 compare_lt(float64x4 a, float64x4 b)
+    static inline float64x4::mask compare_lt(float64x4 a, float64x4 b)
     {
-        float64x4 v;
-        v[0] = Double(0 - uint64(a[0] < b[0]));
-        v[1] = Double(0 - uint64(a[1] < b[1]));
-        v[2] = Double(0 - uint64(a[2] < b[2]));
-        v[3] = Double(0 - uint64(a[3] < b[3]));
+        float64x4::mask v = 0;
+        v |= uint32(a[0] < b[0]) << 0;
+        v |= uint32(a[1] < b[1]) << 1;
+        v |= uint32(a[2] < b[2]) << 2;
+        v |= uint32(a[3] < b[3]) << 3;
         return v;
     }
 
-    static inline float64x4 compare_le(float64x4 a, float64x4 b)
+    static inline float64x4::mask compare_le(float64x4 a, float64x4 b)
     {
-        float64x4 v;
-        v[0] = Double(0 - uint64(a[0] <= b[0]));
-        v[1] = Double(0 - uint64(a[1] <= b[1]));
-        v[2] = Double(0 - uint64(a[2] <= b[2]));
-        v[3] = Double(0 - uint64(a[3] <= b[3]));
+        float64x4::mask v = 0;
+        v |= uint32(a[0] <= b[0]) << 0;
+        v |= uint32(a[1] <= b[1]) << 1;
+        v |= uint32(a[2] <= b[2]) << 2;
+        v |= uint32(a[3] <= b[3]) << 3;
         return v;
     }
 
-    static inline float64x4 compare_gt(float64x4 a, float64x4 b)
+    static inline float64x4::mask compare_gt(float64x4 a, float64x4 b)
     {
-        float64x4 v;
-        v[0] = Double(0 - uint64(a[0] > b[0]));
-        v[1] = Double(0 - uint64(a[1] > b[1]));
-        v[2] = Double(0 - uint64(a[2] > b[2]));
-        v[3] = Double(0 - uint64(a[3] > b[3]));
+        float64x4::mask v = 0;
+        v |= uint32(a[0] > b[0]) << 0;
+        v |= uint32(a[1] > b[1]) << 1;
+        v |= uint32(a[2] > b[2]) << 2;
+        v |= uint32(a[3] > b[3]) << 3;
         return v;
     }
 
-    static inline float64x4 compare_ge(float64x4 a, float64x4 b)
+    static inline float64x4::mask compare_ge(float64x4 a, float64x4 b)
     {
-        float64x4 v;
-        v[0] = Double(0 - uint64(a[0] >= b[0]));
-        v[1] = Double(0 - uint64(a[1] >= b[1]));
-        v[2] = Double(0 - uint64(a[2] >= b[2]));
-        v[3] = Double(0 - uint64(a[3] >= b[3]));
+        float64x4::mask v = 0;
+        v |= uint32(a[0] >= b[0]) << 0;
+        v |= uint32(a[1] >= b[1]) << 1;
+        v |= uint32(a[2] >= b[2]) << 2;
+        v |= uint32(a[3] >= b[3]) << 3;
         return v;
     }
 
-    static inline float64x4 select(float64x4 mask, float64x4 a, float64x4 b)
+    static inline float64x4 select(float64x4::mask mask, float64x4 a, float64x4 b)
     {
-        return bitwise_or(bitwise_and(mask, a), bitwise_nand(mask, b));
+        float64x4 result;
+        result[0] = mask & (1 << 0) ? a[0] : b[0];
+        result[1] = mask & (1 << 1) ? a[1] : b[1];
+        result[2] = mask & (1 << 2) ? a[2] : b[2];
+        result[3] = mask & (1 << 3) ? a[3] : b[3];
+        return result;
     }
 
     // rounding

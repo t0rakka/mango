@@ -102,6 +102,14 @@ namespace simd {
         return result;
     }
 
+    static inline float32x16 bitwise_not(float32x16 a)
+    {
+        float32x16 result;
+        result.lo = bitwise_not(a.lo);
+        result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
     static inline float32x16 min(float32x16 a, float32x16 b)
     {
         float32x16 result;
@@ -240,55 +248,55 @@ namespace simd {
 
     // compare
 
-    static inline float32x16 compare_neq(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_neq(float32x16 a, float32x16 b)
     {
-        float32x16 result;
+        float32x16::mask result;
         result.lo = compare_neq(a.lo, b.lo);
         result.hi = compare_neq(a.hi, b.hi);
         return result;
     }
 
-    static inline float32x16 compare_eq(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_eq(float32x16 a, float32x16 b)
     {
-        float32x16 result;
+        float32x16::mask result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline float32x16 compare_lt(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_lt(float32x16 a, float32x16 b)
     {
-        float32x16 result;
+        float32x16::mask result;
         result.lo = compare_lt(a.lo, b.lo);
         result.hi = compare_lt(a.hi, b.hi);
         return result;
     }
 
-    static inline float32x16 compare_le(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_le(float32x16 a, float32x16 b)
     {
-        float32x16 result;
+        float32x16::mask result;
         result.lo = compare_le(a.lo, b.lo);
         result.hi = compare_le(a.hi, b.hi);
         return result;
     }
 
-    static inline float32x16 compare_gt(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_gt(float32x16 a, float32x16 b)
     {
-        float32x16 result;
+        float32x16::mask result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline float32x16 compare_ge(float32x16 a, float32x16 b)
+    static inline float32x16::mask compare_ge(float32x16 a, float32x16 b)
     {
-        float32x16 result;
+        float32x16::mask result;
         result.lo = compare_ge(a.lo, b.lo);
         result.hi = compare_ge(a.hi, b.hi);
         return result;
     }
 
-    static inline float32x16 select(float32x16 mask, float32x16 a, float32x16 b)
+    static inline float32x16 select(float32x16::mask mask, float32x16 a, float32x16 b)
     {
         float32x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);

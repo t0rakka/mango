@@ -181,6 +181,11 @@ namespace simd {
         return float32x4_reinterpret(bitwise_xor(int32x4_reinterpret(a), int32x4_reinterpret(b)));
     }
 
+    static inline float32x4 bitwise_not(float32x4 a)
+    {
+		return bitwise_xor(a, (float32x4) spu_cmpeq(a, a));
+    }
+
     static inline float32x4 min(float32x4 a, float32x4 b)
     {
         return spu_sel(a, b, spu_cmpgt(a, b));
@@ -319,40 +324,40 @@ namespace simd {
         return shuffle<1, 2, 0, 3>(c);
     }
 
-    static inline float32x4 compare_neq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
     {
         const vec_uint4 mask = spu_cmpeq(a, b);
         return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline float32x4 compare_eq(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
     {
 		return (float32x4) spu_cmpeq(a, b);
     }
 
-    static inline float32x4 compare_lt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
     {
         return (float32x4) spu_cmpgt(b, a);
     }
 
-    static inline float32x4 compare_le(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
     {
         const vec_uint4 mask = spu_cmpgt(a, b);
         return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline float32x4 compare_gt(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
     {
 		return (float32x4) spu_cmpgt(a, b);
     }
 
-    static inline float32x4 compare_ge(float32x4 a, float32x4 b)
+    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
     {
         const vec_uint4 mask = spu_cmpgt(b, a);
         return (float32x4) spu_nor(mask, mask);
     }
 
-    static inline float32x4 select(float32x4 mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
     {
         return spu_sel(b, a, (vec_uint4)mask);
     }

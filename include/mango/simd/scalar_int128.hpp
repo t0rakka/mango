@@ -157,15 +157,9 @@ namespace simd {
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_compare_eq(ScalarType a, ScalarType b)
+    static inline ScalarType scalar_not(ScalarType a)
     {
-        return a == b ? ~0 : 0;
-    }
-
-    template <typename ScalarType>
-    static inline ScalarType scalar_compare_gt(ScalarType a, ScalarType b)
-    {
-        return a > b ? ~0 : 0;
+        return ~a;
     }
 
     template <typename VectorType, typename ScalarType, int Count>
@@ -224,15 +218,83 @@ namespace simd {
         return std::max(a, b);
     }
 
+    // cmp
+
+    template <typename VectorType>
+    static inline uint32 scalar_compare_eq(VectorType a, VectorType b)
+    {
+        uint32 mask = 0;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            mask |= uint32(a[i] == b[i]) << i;
+        }
+        return mask;
+    }
+
+    template <typename VectorType>
+    static inline uint32 scalar_compare_gt(VectorType a, VectorType b)
+    {
+        uint32 mask = 0;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            mask |= uint32(a[i] > b[i]) << i;
+        }
+        return mask;
+    }
+
+    template <typename VectorType>
+    static inline uint32 scalar_compare_neq(VectorType a, VectorType b)
+    {
+        uint32 mask = 0;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            mask |= uint32(a[i] != b[i]) << i;
+        }
+        return mask;
+    }
+
+    template <typename VectorType>
+    static inline uint32 scalar_compare_lt(VectorType a, VectorType b)
+    {
+        uint32 mask = 0;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            mask |= uint32(a[i] < b[i]) << i;
+        }
+        return mask;
+    }
+
+    template <typename VectorType>
+    static inline uint32 scalar_compare_le(VectorType a, VectorType b)
+    {
+        uint32 mask = 0;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            mask |= uint32(a[i] <= b[i]) << i;
+        }
+        return mask;
+    }
+
+    template <typename VectorType>
+    static inline uint32 scalar_compare_ge(VectorType a, VectorType b)
+    {
+        uint32 mask = 0;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            mask |= uint32(a[i] >= b[i]) << i;
+        }
+        return mask;
+    }
+
     // misc
 
     template <typename ScalarType, int Size>
     static inline scalar_vector<ScalarType, Size>
-    scalar_select(scalar_vector<ScalarType, Size> mask, scalar_vector<ScalarType, Size> a, scalar_vector<ScalarType, Size> b)
+    scalar_select(uint32 mask, scalar_vector<ScalarType, Size> a, scalar_vector<ScalarType, Size> b)
     {
         scalar_vector<ScalarType, Size> v;
         for (int i = 0; i < Size; ++i) {
-            v[i] = (mask[i] & a[i]) | (~mask[i] & b[i]);
+            v[i] = mask & (1 << i) ? a[i] : b[i];
         }
         return v;
     }
@@ -350,19 +412,44 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
+    static inline uint8x16 bitwise_not(uint8x16 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
     // compare
 
-    static inline uint8x16 compare_eq(uint8x16 a, uint8x16 b)
+    static inline uint8x16::mask compare_eq(uint8x16 a, uint8x16 b)
     {
-        return scalar_unroll(scalar_compare_eq, a, b);
+        return scalar_compare_eq(a, b);
     }
 
-    static inline uint8x16 compare_gt(uint8x16 a, uint8x16 b)
+    static inline uint8x16::mask compare_gt(uint8x16 a, uint8x16 b)
     {
-        return scalar_unroll(scalar_compare_gt, a, b);
+        return scalar_compare_gt(a, b);
     }
 
-    static inline uint8x16 select(uint8x16 mask, uint8x16 a, uint8x16 b)
+    static inline uint8x16::mask compare_neq(uint8x16 a, uint8x16 b)
+    {
+        return scalar_compare_neq(a, b);
+    }
+
+    static inline uint8x16::mask compare_lt(uint8x16 a, uint8x16 b)
+    {
+        return scalar_compare_lt(a, b);
+    }
+
+    static inline uint8x16::mask compare_le(uint8x16 a, uint8x16 b)
+    {
+        return scalar_compare_le(a, b);
+    }
+
+    static inline uint8x16::mask compare_ge(uint8x16 a, uint8x16 b)
+    {
+        return scalar_compare_ge(a, b);
+    }
+
+    static inline uint8x16 select(uint8x16::mask mask, uint8x16 a, uint8x16 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -465,19 +552,44 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
+    static inline uint16x8 bitwise_not(uint16x8 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
     // compare
 
-    static inline uint16x8 compare_eq(uint16x8 a, uint16x8 b)
+    static inline uint16x8::mask compare_eq(uint16x8 a, uint16x8 b)
     {
-        return scalar_unroll(scalar_compare_eq, a, b);
+        return scalar_compare_eq(a, b);
     }
 
-    static inline uint16x8 compare_gt(uint16x8 a, uint16x8 b)
+    static inline uint16x8::mask compare_gt(uint16x8 a, uint16x8 b)
     {
-        return scalar_unroll(scalar_compare_gt, a, b);
+        return scalar_compare_gt(a, b);
     }
 
-    static inline uint16x8 select(uint16x8 mask, uint16x8 a, uint16x8 b)
+    static inline uint16x8::mask compare_neq(uint16x8 a, uint16x8 b)
+    {
+        return scalar_compare_neq(a, b);
+    }
+
+    static inline uint16x8::mask compare_lt(uint16x8 a, uint16x8 b)
+    {
+        return scalar_compare_lt(a, b);
+    }
+
+    static inline uint16x8::mask compare_le(uint16x8 a, uint16x8 b)
+    {
+        return scalar_compare_le(a, b);
+    }
+
+    static inline uint16x8::mask compare_ge(uint16x8 a, uint16x8 b)
+    {
+        return scalar_compare_ge(a, b);
+    }
+
+    static inline uint16x8 select(uint16x8::mask mask, uint16x8 a, uint16x8 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -651,19 +763,44 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
+    static inline uint32x4 bitwise_not(uint32x4 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
     // compare
 
-    static inline uint32x4 compare_eq(uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_eq(uint32x4 a, uint32x4 b)
     {
-        return scalar_unroll(scalar_compare_eq, a, b);
+        return scalar_compare_eq(a, b);
     }
 
-    static inline uint32x4 compare_gt(uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_gt(uint32x4 a, uint32x4 b)
     {
-        return scalar_unroll(scalar_compare_gt, a, b);
+        return scalar_compare_gt(a, b);
     }
 
-    static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_neq(uint32x4 a, uint32x4 b)
+    {
+        return scalar_compare_neq(a, b);
+    }
+
+    static inline uint32x4::mask compare_lt(uint32x4 a, uint32x4 b)
+    {
+        return scalar_compare_lt(a, b);
+    }
+
+    static inline uint32x4::mask compare_le(uint32x4 a, uint32x4 b)
+    {
+        return scalar_compare_le(a, b);
+    }
+
+    static inline uint32x4::mask compare_ge(uint32x4 a, uint32x4 b)
+    {
+        return scalar_compare_ge(a, b);
+    }
+
+    static inline uint32x4 select(uint32x4::mask mask, uint32x4 a, uint32x4 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -797,7 +934,12 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
-    static inline uint64x2 select(uint64x2 mask, uint64x2 a, uint64x2 b)
+    static inline uint64x2 bitwise_not(uint64x2 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
+    static inline uint64x2 select(uint64x2::mask mask, uint64x2 a, uint64x2 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -924,19 +1066,44 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
+    static inline int8x16 bitwise_not(int8x16 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
     // compare
 
-    static inline int8x16 compare_eq(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_eq(int8x16 a, int8x16 b)
     {
-        return scalar_unroll(scalar_compare_eq, a, b);
+        return scalar_compare_eq(a, b);
     }
 
-    static inline int8x16 compare_gt(int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_gt(int8x16 a, int8x16 b)
     {
-        return scalar_unroll(scalar_compare_gt, a, b);
+        return scalar_compare_gt(a, b);
     }
 
-    static inline int8x16 select(int8x16 mask, int8x16 a, int8x16 b)
+    static inline int8x16::mask compare_neq(int8x16 a, int8x16 b)
+    {
+        return scalar_compare_neq(a, b);
+    }
+
+    static inline int8x16::mask compare_lt(int8x16 a, int8x16 b)
+    {
+        return scalar_compare_lt(a, b);
+    }
+
+    static inline int8x16::mask compare_le(int8x16 a, int8x16 b)
+    {
+        return scalar_compare_le(a, b);
+    }
+
+    static inline int8x16::mask compare_ge(int8x16 a, int8x16 b)
+    {
+        return scalar_compare_ge(a, b);
+    }
+
+    static inline int8x16 select(int8x16::mask mask, int8x16 a, int8x16 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -1049,19 +1216,44 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
+    static inline int16x8 bitwise_not(int16x8 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
     // compare
 
-    static inline int16x8 compare_eq(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_eq(int16x8 a, int16x8 b)
     {
-        return scalar_unroll(scalar_compare_eq, a, b);
+        return scalar_compare_eq(a, b);
     }
 
-    static inline int16x8 compare_gt(int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_gt(int16x8 a, int16x8 b)
     {
-        return scalar_unroll(scalar_compare_gt, a, b);
+        return scalar_compare_gt(a, b);
     }
 
-    static inline int16x8 select(int16x8 mask, int16x8 a, int16x8 b)
+    static inline int16x8::mask compare_neq(int16x8 a, int16x8 b)
+    {
+        return scalar_compare_neq(a, b);
+    }
+
+    static inline int16x8::mask compare_lt(int16x8 a, int16x8 b)
+    {
+        return scalar_compare_lt(a, b);
+    }
+
+    static inline int16x8::mask compare_le(int16x8 a, int16x8 b)
+    {
+        return scalar_compare_le(a, b);
+    }
+
+    static inline int16x8::mask compare_ge(int16x8 a, int16x8 b)
+    {
+        return scalar_compare_ge(a, b);
+    }
+
+    static inline int16x8 select(int16x8::mask mask, int16x8 a, int16x8 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -1243,19 +1435,44 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
+    static inline int32x4 bitwise_not(int32x4 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
     // compare
 
-    static inline int32x4 compare_eq(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_eq(int32x4 a, int32x4 b)
     {
-        return scalar_unroll(scalar_compare_eq, a, b);
+        return scalar_compare_eq(a, b);
     }
 
-    static inline int32x4 compare_gt(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_gt(int32x4 a, int32x4 b)
     {
-        return scalar_unroll(scalar_compare_gt, a, b);
+        return scalar_compare_gt(a, b);
     }
 
-    static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_neq(int32x4 a, int32x4 b)
+    {
+        return scalar_compare_neq(a, b);
+    }
+
+    static inline int32x4::mask compare_lt(int32x4 a, int32x4 b)
+    {
+        return scalar_compare_lt(a, b);
+    }
+
+    static inline int32x4::mask compare_le(int32x4 a, int32x4 b)
+    {
+        return scalar_compare_le(a, b);
+    }
+
+    static inline int32x4::mask compare_ge(int32x4 a, int32x4 b)
+    {
+        return scalar_compare_ge(a, b);
+    }
+
+    static inline int32x4 select(int32x4::mask mask, int32x4 a, int32x4 b)
     {
         return scalar_select(mask, a, b);
     }
@@ -1408,7 +1625,12 @@ namespace simd {
         return scalar_unroll(scalar_xor, a, b);
     }
 
-    static inline int64x2 select(int64x2 mask, int64x2 a, int64x2 b)
+    static inline int64x2 bitwise_not(int64x2 a)
+    {
+        return scalar_unroll(scalar_not, a);
+    }
+
+    static inline int64x2 select(int64x2::mask mask, int64x2 a, int64x2 b)
     {
         return scalar_select(mask, a, b);
     }

@@ -318,19 +318,16 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 
 //-------------------------------------------------------------------------------------
 
-static const float32x4 g_XMIdentityR3 = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
-static const float32x4 g_XMSelect1110 = reinterpret<float32x4>(int32x4(0xffffffff, 0xffffffff, 0xffffffff, 0));
+static inline float32x4 XMLoadU565(uint16 data)
+{
+    static const float32x4 scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
+    int32x4 c = int32x4(data) & int32x4(0x1f << 11, 0x3f << 5, 0x1f, 0);
+    c = c | int32x4(0, 0, 0, 1);
+    float32x4 v = convert<float32x4>(c);
+    return v * scale;
+}
 
-    static inline float32x4 XMLoadU565(uint16 data)
-    {
-        static const float32x4 scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
-        int32x4 c = int32x4(data) & int32x4(0x1f << 11, 0x3f << 5, 0x1f, 0);
-        c = c | int32x4(0, 0, 0, 1);
-        float32x4 v = convert<float32x4>(c);
-        return v * scale;
-    }
-
-inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, bool isbc1)
+static inline void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, bool isbc1)
 {
     assert( pColor && pBC );
     static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
@@ -338,10 +335,8 @@ inline static void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
     float4 color[4];
     color[0] = XMLoadU565(pBC->rgb[0]);
     color[1] = XMLoadU565(pBC->rgb[1]);
-    color[0] = select(g_XMIdentityR3, color[0], g_XMSelect1110);
-    color[1] = select(g_XMIdentityR3, color[1], g_XMSelect1110);
 
-    if ( isbc1 && (pBC->rgb[0] <= pBC->rgb[1]) )
+    if (isbc1 && (pBC->rgb[0] <= pBC->rgb[1]))
     {
         color[2] = lerp(color[0], color[1], 0.5f);
         color[3] = float32x4(0.0f);  // Alpha of 0

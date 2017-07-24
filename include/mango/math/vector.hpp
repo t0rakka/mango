@@ -754,20 +754,20 @@ namespace mango
     // ------------------------------------------------------------------
 
     // The reinterpret and conversion casts forward the work to the simd abstraction.
-    // This is enforced by requiring "vector_type" declaration in the Vector specialization.
+    // This is enforced by requiring "VectorType" declaration in the Vector specialization.
 
     template <typename D, typename S>
     static inline  D reinterpret(S s)
     {
-        typename S::vector_type temp = s;
-        return simd::reinterpret<typename D::vector_type>(temp);
+        typename S::VectorType temp = s;
+        return simd::reinterpret<typename D::VectorType>(temp);
     }
 
     template <typename D, typename S>
     static inline  D convert(S s)
     {
-        typename S::vector_type temp = s;
-        return simd::convert<typename D::vector_type>(temp);
+        typename S::VectorType temp = s;
+        return simd::convert<typename D::VectorType>(temp);
     }
 
     // ------------------------------------------------------------------

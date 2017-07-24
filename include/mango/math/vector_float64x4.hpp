@@ -17,7 +17,9 @@ namespace mango
     template <>
     struct Vector<double, 4> : VectorBase<double, 4>
     {
-        using vector_type = simd::float64x4;
+        using VectorType = simd::float64x4;
+        using Mask = simd::float64x4::mask;
+
         union
         {
             simd::float64x4 xyzw;
@@ -699,37 +701,37 @@ namespace mango
 	// compare / select
     // ------------------------------------------------------------------
 
-    static inline double4 operator > (double4 a, double4 b)
+    static inline double4::Mask operator > (double4 a, double4 b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline double4 operator >= (double4 a, double4 b)
+    static inline double4::Mask operator >= (double4 a, double4 b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline double4 operator < (double4 a, double4 b)
+    static inline double4::Mask operator < (double4 a, double4 b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline double4 operator <= (double4 a, double4 b)
+    static inline double4::Mask operator <= (double4 a, double4 b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline double4 operator == (double4 a, double4 b)
+    static inline double4::Mask operator == (double4 a, double4 b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline double4 operator != (double4 a, double4 b)
+    static inline double4::Mask operator != (double4 a, double4 b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline double4 select(double4 mask, double4 a, double4 b)
+    static inline double4 select(double4::Mask mask, double4 a, double4 b)
     {
         return simd::select(mask, a, b);
     }

@@ -12,7 +12,9 @@ namespace mango
     template <>
     struct Vector<int64, 4> : VectorBase<int64, 4>
     {
-        using vector_type = simd::int64x4;
+        using VectorType = simd::int64x4;
+        using Mask = simd::int64x4::mask;
+
         union
         {
             simd::int64x4 xyzw;
@@ -147,7 +149,7 @@ namespace mango
         return simd::bitwise_xor(a, b);
     }
 
-    static inline Vector<int64, 4> select(Vector<int64, 4> mask, Vector<int64, 4> a, Vector<int64, 4> b)
+    static inline Vector<int64, 4> select(Vector<int64, 4>::Mask mask, Vector<int64, 4> a, Vector<int64, 4> b)
     {
         return simd::select(mask, a, b);
     }

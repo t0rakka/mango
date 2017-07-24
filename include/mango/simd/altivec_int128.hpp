@@ -164,19 +164,44 @@ namespace simd {
         return vec_xor(a, b);
     }
 
+    static inline uint32x4 bitwise_not(uint32x4 a)
+    {
+        return vec_xor(a, (uint32x4) vec_cmpeq(a, a));
+    }
+
     // compare
 
-    static inline uint32x4 compare_eq(uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_eq(uint32x4 a, uint32x4 b)
     {
         return vec_cmpeq(a, b);
     }
 
-    static inline uint32x4 compare_gt(uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_gt(uint32x4 a, uint32x4 b)
     {
         return vec_cmpgt(a, b);
     }
 
-    static inline uint32x4 select(uint32x4 mask, uint32x4 a, uint32x4 b)
+    static inline uint32x4::mask compare_neq(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask compare_lt(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask compare_le(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask compare_ge(uint32x4 a, uint32x4 b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4 select(uint32x4::mask mask, uint32x4 a, uint32x4 b)
     {
         return vec_sel(b, a, mask);
     }
@@ -389,19 +414,44 @@ namespace simd {
         return vec_xor(a, b);
     }
 
+    static inline int32x4 bitwise_not(int32x4 a)
+    {
+        return vec_xor(a, (int32x4) vec_cmpeq(a, a));
+    }
+
     // compare
 
-    static inline int32x4 compare_eq(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_eq(int32x4 a, int32x4 b)
     {
         return vec_cmpeq(a, b);
     }
 
-    static inline int32x4 compare_gt(int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_gt(int32x4 a, int32x4 b)
     {
         return vec_cmpgt(a, b);
     }
 
-    static inline int32x4 select(int32x4 mask, int32x4 a, int32x4 b)
+    static inline int32x4::mask compare_neq(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    static inline int32x4::mask compare_lt(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    static inline int32x4::mask compare_le(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    static inline int32x4::mask compare_ge(int32x4 a, int32x4 b)
+    {
+        // TODO
+    }
+
+    static inline int32x4 select(int32x4::mask mask, int32x4 a, int32x4 b)
     {
         return vec_sel(b, a, (vector unsigned int)mask);
     }

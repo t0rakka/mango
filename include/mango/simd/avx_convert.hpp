@@ -19,40 +19,40 @@ namespace detail {
 	{
 		__m128 data;
 
-	    template <typename ScalarType, int Size, typename VectorType>
-	    reinterpret_vector(hardware_vector<ScalarType, Size, VectorType> v)
+	    template <typename ScalarType, int Size, typename VectorType, typename MaskType>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, VectorType, MaskType> v)
         : data(v)
 	    {
 	    }
 
 	    template <typename ScalarType, int Size>
-	    reinterpret_vector(hardware_vector<ScalarType, Size, __m128i> v)
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m128i, __m128i> v)
         : data(_mm_castsi128_ps(v))
 	    {
 	    }
 
 	    template <typename ScalarType, int Size>
-	    reinterpret_vector(hardware_vector<ScalarType, Size, __m128d> v)
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m128d, __m128d> v)
         : data(_mm_castpd_ps(v))
 	    {
 	    }
 
-		template <typename ScalarType, int Size, typename VectorType>
-		operator hardware_vector<ScalarType, Size, VectorType> ()
+		template <typename ScalarType, int Size, typename VectorType, typename MaskType>
+		operator hardware_vector<ScalarType, Size, VectorType, MaskType> ()
 		{
-			return hardware_vector<ScalarType, Size, VectorType>(data);
+			return hardware_vector<ScalarType, Size, VectorType, MaskType>(data);
 		}
 
 		template <typename ScalarType, int Size>
-		operator hardware_vector<ScalarType, Size, __m128i> ()
+		operator hardware_vector<ScalarType, Size, __m128i, __m128i> ()
 		{
-			return hardware_vector<ScalarType, Size, __m128i>(_mm_castps_si128(data));
+			return hardware_vector<ScalarType, Size, __m128i, __m128i>(_mm_castps_si128(data));
 		}
 
 		template <typename ScalarType, int Size>
-		operator hardware_vector<ScalarType, Size, __m128d> ()
+		operator hardware_vector<ScalarType, Size, __m128d, __m128d> ()
 		{
-			return hardware_vector<ScalarType, Size, __m128d>(_mm_castps_pd(data));
+			return hardware_vector<ScalarType, Size, __m128d, __m128d>(_mm_castps_pd(data));
 		}
 	};
 
@@ -61,20 +61,20 @@ namespace detail {
 	{
 	    __m256 data;
 
-	    template <typename ScalarType, int Size, typename VectorType>
-	    reinterpret_vector(hardware_vector<ScalarType, Size, VectorType> v)
+	    template <typename ScalarType, int Size, typename VectorType, typename MaskType>
+	    reinterpret_vector(hardware_vector<ScalarType, Size, VectorType, MaskType> v)
         : data(v)
 	    {
 	    }
 
 	    template <typename ScalarType, int Size>
-	    reinterpret_vector(hardware_vector<ScalarType, Size, __m256i> v)
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m256i, __m256i> v)
         : data(_mm256_castsi256_ps(v))
 	    {
 	    }
 
 	    template <typename ScalarType, int Size>
-	    reinterpret_vector(hardware_vector<ScalarType, Size, __m256d> v)
+	    reinterpret_vector(hardware_vector<ScalarType, Size, __m256d, __m256d> v)
         : data(_mm256_castpd_ps(v))
 	    {
 	    }
@@ -85,22 +85,22 @@ namespace detail {
 		    std::memcpy(this, &v, 32);
 	    }
 
-    	template <typename ScalarType, int Size, typename VectorType>
-    	operator hardware_vector<ScalarType, Size, VectorType> ()
+    	template <typename ScalarType, int Size, typename VectorType, typename MaskType>
+    	operator hardware_vector<ScalarType, Size, VectorType, MaskType> ()
 	    {
-		    return hardware_vector<ScalarType, Size, VectorType>(data);
+		    return hardware_vector<ScalarType, Size, VectorType, MaskType>(data);
 	    }
 
 	    template <typename ScalarType, int Size>
-	    operator hardware_vector<ScalarType, Size, __m256i> ()
+	    operator hardware_vector<ScalarType, Size, __m256i, __m256i> ()
 	    {
-		    return hardware_vector<ScalarType, Size, __m256i>(_mm256_castps_si256(data));
+		    return hardware_vector<ScalarType, Size, __m256i, __m256i>(_mm256_castps_si256(data));
 	    }
 
 	    template <typename ScalarType, int Size>
-	    operator hardware_vector<ScalarType, Size, __m256d> ()
+	    operator hardware_vector<ScalarType, Size, __m256d, __m256d> ()
 	    {
-		    return hardware_vector<ScalarType, Size, __m256d>(_mm256_castps_pd(data));
+		    return hardware_vector<ScalarType, Size, __m256d, __m256d>(_mm256_castps_pd(data));
 	    }
 
 	    template <typename T>
@@ -118,11 +118,11 @@ namespace detail {
     // reinterpret
     // -----------------------------------------------------------------
 
-	template <typename D, typename S0, int S1, typename S2>
-	inline D reinterpret(hardware_vector<S0, S1, S2> s)
+	template <typename D, typename S0, int S1, typename S2, typename S3>
+	inline D reinterpret(hardware_vector<S0, S1, S2, S3> s)
 	{
-        static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
+        static_assert(sizeof(hardware_vector<S0, S1, S2, S3>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2, S3>::vector_bits>(s));
 	}
 
 	template <typename D, typename S>
@@ -779,7 +779,7 @@ namespace detail {
         int32x4 c = add(int32x4_set1(0x38000000), slli(no_sign, 13));
 
         // Select a, b, or c based on exponent
-        int32x4 mask;
+        int32x4::mask mask;
         int32x4 result;
 
         mask = compare_eq(exponent, int32x4_zero());
@@ -806,9 +806,9 @@ namespace detail {
         const int32x4 vexponent = int32x4_set1(0x7f800000);
 
         // Inf / NaN
-        const int32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
+        const int32x4::mask s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
         int32x4 mantissa = bitwise_and(u, int32x4_set1(0x007fffff));
-        int32x4 x0 = compare_eq(mantissa, int32x4_zero());
+        int32x4::mask x0 = compare_eq(mantissa, int32x4_zero());
         mantissa = select(x0, int32x4_zero(), srai(mantissa, 13));
         const int32x4 v0 = bitwise_or(int32x4_set1(0x7c00), mantissa);
 
