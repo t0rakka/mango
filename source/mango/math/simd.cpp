@@ -30,6 +30,13 @@ namespace simd {
     constexpr float R_LN2f = 1.442695040888963407359924681001892137426645954152985934135449406931f;
     constexpr float R_INFf = float(std::numeric_limits<float>::infinity());
 
+    static inline int32x4 slf_blend(int32x4 mask, int32x4 a, int32x4 b)
+    {
+        a = bitwise_and(a, mask);
+        b = bitwise_nand(b, mask);
+        return bitwise_or(a, b);
+    }
+
     static inline float32x4 slf_blend(float32x4 mask, float32x4 a, float32x4 b)
     {
         a = bitwise_and(a, mask);
@@ -40,6 +47,12 @@ namespace simd {
     static inline int32x4 slf_compare_gt(int32x4 a, int32x4 b)
     {
         int32x4::mask mask = compare_gt(a, b);
+        return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
+    }
+
+    static inline int32x4 slf_compare_eq(int32x4 a, int32x4 b)
+    {
+        int32x4::mask mask = compare_eq(a, b);
         return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
     }
 
@@ -220,7 +233,7 @@ namespace simd {
         u = madd(0.333331853151321411132812f, u, s);
 
         u = madd(x, s, mul(u, x));
-        u = select((float32x4::mask)m, div(float32x4_set1(1.0f), u), u);
+        u = slf_blend(reinterpret<float32x4>(mask), div(float32x4_set1(1.0f), u), u);
         u = bitwise_or(is_inf(d), u);
 
         return u;
@@ -352,11 +365,12 @@ namespace simd {
 
         t = madd(s, s, mul(t, u));
 
-        int32x4::mask m = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
-        t = select((float32x4::mask)m, sub(float32x4_set1(float_pi_2), t), t);
-
-        m = compare_eq(bitwise_and(q, int32x4_set1(2)), int32x4_set1(2));
-        t = select((float32x4::mask)m, neg(t), t);
+        const int32x4 i1 = int32x4_set1(1);
+        const int32x4 i2 = add(i1, i1);
+        float32x4 m = reinterpret<float32x4>(slf_compare_eq(bitwise_and(q, i1), i1));
+        t = slf_blend(m, sub(float32x4_set1(float_pi_2), t), t);
+        m = reinterpret<float32x4>(slf_compare_eq(bitwise_and(q, i2), i2));
+        t = slf_blend(m, neg(t), t);
 
         return t;
     }
