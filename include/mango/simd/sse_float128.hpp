@@ -413,6 +413,11 @@ namespace simd {
 
 #endif
 
+    static inline uint32 get_mask(float32x4::mask a)
+    {
+        return _mm_movemask_ps(a);
+    }
+
     // rounding
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -472,11 +477,6 @@ namespace simd {
     static inline float32x4 fract(float32x4 s)
     {
         return sub(s, floor(s));
-    }
-
-    static inline uint32 get_mask(float32x4 a)
-    {
-        return _mm_movemask_ps(a);
     }
 
 } // namespace simd

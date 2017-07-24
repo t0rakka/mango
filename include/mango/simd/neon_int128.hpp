@@ -499,6 +499,17 @@ namespace simd {
         return vbslq_u32(mask, a, b);
     }
 
+    static inline uint32 get_mask(uint32x4::mask a)
+    {
+        const uint32x4_t mask = { 1, 2, 4, 8 };
+        const uint32x4_t masked = vandq_u32(a, mask);
+        const uint32x2_t high = vget_high_u32(masked);
+        const uint32x2_t low = vget_low_u32(masked);
+        const uint32x2_t d0 = vorr_u32(high, low);
+        const uint32x2_t d1 = vpadd_u32(d0, d0);
+        return vget_lane_u32(d1, 0);
+    }
+
     // shift
 
     template <int Count>
@@ -544,17 +555,6 @@ namespace simd {
     static inline uint32x4 max(uint32x4 a, uint32x4 b)
     {
         return vmaxq_u32(a, b);
-    }
-
-    static inline uint32 get_mask(uint32x4 a)
-    {
-        const uint32x4_t mask = { 1, 2, 4, 8 };
-        const uint32x4_t masked = vandq_u32(a, mask);
-        const uint32x2_t high = vget_high_u32(masked);
-        const uint32x2_t low = vget_low_u32(masked);
-        const uint32x2_t d0 = vorr_u32(high, low);
-        const uint32x2_t d1 = vpadd_u32(d0, d0);
-        return vget_lane_u32(d1, 0);
     }
 
     // -----------------------------------------------------------------
@@ -1189,6 +1189,17 @@ namespace simd {
         return vbslq_s32(mask, a, b);
     }
 
+    static inline uint32 get_mask(int32x4::mask a)
+    {
+        const uint32x4_t mask = { 1, 2, 4, 8 };
+        const uint32x4_t masked = vandq_u32(a, mask);
+        const uint32x2_t high = vget_high_u32(masked);
+        const uint32x2_t low = vget_low_u32(masked);
+        const uint32x2_t d0 = vorr_u32(high, low);
+        const uint32x2_t d1 = vpadd_u32(d0, d0);
+        return vget_lane_u32(d1, 0);
+    }
+
     // shift
 
     template <int Count>
@@ -1236,17 +1247,6 @@ namespace simd {
     static inline int32x4 max(int32x4 a, int32x4 b)
     {
         return vmaxq_s32(a, b);
-    }
-
-    static inline uint32 get_mask(int32x4 a)
-    {
-        const int32x4_t mask = { 1, 2, 4, 8 };
-        const int32x4_t masked = vandq_s32(a, mask);
-        const int32x2_t high = vget_high_s32(masked);
-        const int32x2_t low = vget_low_s32(masked);
-        const int32x2_t d0 = vorr_s32(high, low);
-        const int32x2_t d1 = vpadd_s32(d0, d0);
-        return vget_lane_s32(d1, 0);
     }
 
     static inline uint32 pack(int32x4 s)

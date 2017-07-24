@@ -304,6 +304,12 @@ namespace simd {
         return result;
     }
 
+    static inline uint32 get_mask(float32x16::mask a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
+        return mask;
+    }
+
     // rounding
 
     static inline float32x16 round(float32x16 a)
@@ -344,12 +350,6 @@ namespace simd {
         result.lo = fract(a.lo);
         result.hi = fract(a.hi);
         return result;
-    }
-
-    static inline uint32 get_mask(float32x16 a)
-    {
-        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
-        return mask;
     }
 
 } // namespace simd

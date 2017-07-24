@@ -607,6 +607,12 @@ namespace simd {
         return result;
     }
 
+    static inline uint32 get_mask(uint32x8::mask a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
+        return mask;
+    }
+
     // shift
 
     template <int Count>
@@ -674,12 +680,6 @@ namespace simd {
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
-    }
-
-    static inline uint32 get_mask(uint32x8 a)
-    {
-        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
-        return mask;
     }
 
     // -----------------------------------------------------------------
@@ -1479,6 +1479,12 @@ namespace simd {
         return result;
     }
 
+    static inline uint32 get_mask(int32x8::mask a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
+        return mask;
+    }
+
     // shift
 
     template <int Count>
@@ -1546,12 +1552,6 @@ namespace simd {
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
-    }
-
-    static inline uint32 get_mask(int32x8 a)
-    {
-        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
-        return mask;
     }
 
     // -----------------------------------------------------------------

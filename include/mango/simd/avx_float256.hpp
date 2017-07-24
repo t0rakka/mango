@@ -225,6 +225,11 @@ namespace simd {
         return _mm256_blendv_ps(b, a, mask);
     }
 
+    static inline uint32 get_mask(float32x8::mask a)
+    {
+        return _mm256_movemask_ps(a);
+    }
+
     // rounding
 
     static inline float32x8 round(float32x8 s)
@@ -250,11 +255,6 @@ namespace simd {
     static inline float32x8 fract(float32x8 s)
     {
         return _mm256_sub_ps(s, floor(s));
-    }
-
-    static inline uint32 get_mask(float32x8 a)
-    {
-        return _mm256_movemask_ps(a);
     }
 
 } // namespace simd

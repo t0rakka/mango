@@ -805,6 +805,11 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    static inline uint32 get_mask(uint32x4::mask a)
+    {
+        return a.mask;
+    }
+
     // shift
 
     template <int Count>
@@ -848,16 +853,6 @@ namespace simd {
     static inline uint32x4 max(uint32x4 a, uint32x4 b)
     {
         return scalar_unroll(scalar_max, a, b);
-    }
-
-    static inline uint32 get_mask(uint32x4 a)
-    {
-        const uint32 x = a[0] & 0x80000000;
-        const uint32 y = a[1] & 0x80000000;
-        const uint32 z = a[2] & 0x80000000;
-        const uint32 w = a[3] & 0x80000000;
-        const uint32 mask = (x >> 31) | (y >> 30) | (z >> 29) | (w >> 28);
-        return mask;
     }
 
     // -----------------------------------------------------------------
@@ -1477,6 +1472,11 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    static inline uint32 get_mask(int32x4::mask a)
+    {
+        return a.mask;
+    }
+
     // shift
 
     template <int Count>
@@ -1520,16 +1520,6 @@ namespace simd {
     static inline int32x4 max(int32x4 a, int32x4 b)
     {
         return scalar_unroll(scalar_max, a, b);
-    }
-
-    static inline uint32 get_mask(int32x4 a)
-    {
-        const uint32 x = a[0] & 0x80000000;
-        const uint32 y = a[1] & 0x80000000;
-        const uint32 z = a[2] & 0x80000000;
-        const uint32 w = a[3] & 0x80000000;
-        const uint32 mask = (x >> 31) | (y >> 30) | (z >> 29) | (w >> 28);
-        return mask;
     }
 
     static inline uint32 pack(int32x4 s)

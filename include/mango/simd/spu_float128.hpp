@@ -362,10 +362,9 @@ namespace simd {
         return spu_sel(b, a, (vec_uint4)mask);
     }
 
-    static inline uint32 get_mask(int32x4 a)
+    static inline uint32 get_mask(float32x4::mask a)
     {
-        // TODO
-        return 0;
+        return 0; // TODO
     }
 
     static inline float32x4 round(float32x4 s)
@@ -420,11 +419,6 @@ namespace simd {
     static inline float32x4 fract(float32x4 s)
     {
 		return spu_sub(s, floor(s));
-    }
-
-    static inline uint32 get_mask(float32x4 a)
-    {
-        return 0; // TODO
     }
 
     // -----------------------------------------------------------------

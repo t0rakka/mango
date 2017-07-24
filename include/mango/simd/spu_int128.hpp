@@ -202,6 +202,12 @@ namespace simd {
 		return spu_sel(b, a, mask);
     }
 
+    static inline uint32 get_mask(uint32x4::mask a)
+    {
+        // TODO
+        return 0;
+    }
+
     // shift
 
     template <int Count>
@@ -245,12 +251,6 @@ namespace simd {
     static inline uint32x4 max(uint32x4 a, uint32x4 b)
     {
         return spu_sel(b, a, spu_cmpgt(a, b));
-    }
-
-    static inline uint32 get_mask(uint32x4 a)
-    {
-        // TODO
-        return 0;
     }
 
     // -----------------------------------------------------------------
@@ -452,6 +452,12 @@ namespace simd {
 		return spu_sel(b, a, (vec_uint4)mask);
     }
 
+    static inline uint32 get_mask(int32x4::mask a)
+    {
+        // TODO
+        return 0;
+    }
+
     // shift
 
     template <int Count>
@@ -495,12 +501,6 @@ namespace simd {
     static inline int32x4 max(int32x4 a, int32x4 b)
     {
         return spu_sel(b, a, spu_cmpgt(a, b));
-    }
-
-    static inline uint32 get_mask(int32x4 a)
-    {
-        // TODO
-        return 0;
     }
 
     static inline uint32 pack(int32x4 s)

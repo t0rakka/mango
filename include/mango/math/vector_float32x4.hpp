@@ -470,11 +470,6 @@ namespace mango
             const simd::int32x4 temp = simd::unpack(a);
             xyzw = simd::convert<simd::float32x4>(temp);
         }
-
-        uint32 mask() const
-        {
-            return simd::get_mask(xyzw);
-        }
     };
 
     // ------------------------------------------------------------------

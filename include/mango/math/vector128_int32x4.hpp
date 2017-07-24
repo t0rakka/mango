@@ -319,11 +319,6 @@ namespace mango
         {
             return xyzw;
         }
-
-        uint32 mask() const
-        {
-            return simd::get_mask(xyzw);
-        }
     };
 
     static inline const Vector<int32, 4> operator + (Vector<int32, 4> v)

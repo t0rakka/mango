@@ -369,6 +369,11 @@ namespace simd {
 		return vec_sel(b, a, (vector unsigned int)mask);
     }
 
+    static inline uint32 get_mask(float32x4::mask a)
+    {
+        return 0; // TODO
+    }
+
     // rounding
 
     static inline float32x4 round(float32x4 s)
@@ -394,11 +399,6 @@ namespace simd {
     static inline float32x4 float32x4_fract(float32x4 s)
     {
         return sub(s, floor(s));
-    }
-
-    static inline uint32 get_mask(float32x4 a)
-    {
-        return 0; // TODO
     }
 
 #undef VEC_SH4

@@ -786,6 +786,11 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
+    static inline uint32 get_mask(uint32x4::mask a)
+    {
+        return _mm_movemask_ps(_mm_castsi128_ps(a));
+    }
+
     // shift
 
     template <int Count>
@@ -846,11 +851,6 @@ namespace simd {
     }
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
-
-    static inline uint32 get_mask(uint32x4 a)
-    {
-        return _mm_movemask_ps(_mm_castsi128_ps(a));
-    }
 
     // -----------------------------------------------------------------
     // uint64x2
@@ -1737,6 +1737,11 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
+    static inline uint32 get_mask(int32x4::mask a)
+    {
+        return _mm_movemask_ps(_mm_castsi128_ps(a));
+    }
+
     // shift
 
     template <int Count>
@@ -1770,11 +1775,6 @@ namespace simd {
     static inline int32x4 sra(int32x4 a, int count)
     {
         return _mm_sra_epi32(a, _mm_cvtsi32_si128(count));
-    }
-
-    static inline uint32 get_mask(int32x4 a)
-    {
-        return _mm_movemask_ps(_mm_castsi128_ps(a));
     }
 
     static inline uint32 pack(int32x4 s)

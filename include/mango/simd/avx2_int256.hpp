@@ -432,6 +432,11 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    static inline uint32 get_mask(uint32x8::mask a)
+    {
+        return _mm256_movemask_ps(_mm256_castsi256_ps(a));
+    }
+
     // shift
 
     template <int Count>
@@ -475,11 +480,6 @@ namespace simd {
     static inline uint32x8 max(uint32x8 a, uint32x8 b)
     {
         return _mm256_max_epu32(a, b);
-    }
-
-    static inline uint32 get_mask(uint32x8 a)
-    {
-        return _mm256_movemask_ps(_mm256_castsi256_ps(a));
     }
 
     // -----------------------------------------------------------------
@@ -1024,6 +1024,11 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    static inline uint32 get_mask(int32x8::mask a)
+    {
+        return _mm256_movemask_ps(_mm256_castsi256_ps(a));
+    }
+
     // shift
 
     template <int Count>
@@ -1067,11 +1072,6 @@ namespace simd {
     static inline int32x8 max(int32x8 a, int32x8 b)
     {
         return _mm256_max_epi32(a, b);
-    }
-
-    static inline uint32 get_mask(int32x8 a)
-    {
-        return _mm256_movemask_ps(_mm256_castsi256_ps(a));
     }
 
     // -----------------------------------------------------------------

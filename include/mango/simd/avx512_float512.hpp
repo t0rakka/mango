@@ -199,6 +199,11 @@ namespace simd {
         return _mm512_mask_blend_ps(mask, b, a);
     }
 
+    static inline uint32 get_mask(float32x16::mask a)
+    {
+        return _mm512_mask2int(a.mask);
+    }
+
     // rounding
 
     static inline float32x16 round(float32x16 s)
@@ -224,14 +229,6 @@ namespace simd {
     static inline float32x16 fract(float32x16 s)
     {
         return _mm256_sub_ps(s, floor(s));
-    }
-
-    static inline uint32 get_mask(float32x16 a)
-    {
-        const __m512 mask = _mm512_set1_epi32(0x80000000);
-        const __m512 temp = _mm512_and_epi32(a, mask);
-        const __mask16 mask16 = _mm512_cmpeq_epu32_mask(temp, mask);
-        return _mm512mask2int(mask16);
     }
 
 } // namespace simd
