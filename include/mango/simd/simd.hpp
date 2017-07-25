@@ -27,7 +27,7 @@ namespace simd {
     // strong types for the compiler to be able to resolve the overloads
     // when the underlying types are identical.
 
-    template <typename ScalarType, int Size, typename MaskType>
+    template <typename ScalarType, int VectorSize, typename MaskType>
     struct hardware_mask
     {
         MaskType mask;
@@ -44,18 +44,18 @@ namespace simd {
         }
     };
 
-    template <typename ScalarType, int Size, typename VectorType, typename MaskType>
+    template <typename ScalarType, int VectorSize, typename VectorType, typename MaskType>
     struct hardware_vector
     {
         using scalar = ScalarType;
         using vector = VectorType;
-        using mask = hardware_mask<ScalarType, Size, MaskType>;
+        using mask = hardware_mask<ScalarType, VectorSize, MaskType>;
 
         enum
         {
             scalar_bits = sizeof(ScalarType) * 8,
             vector_bits = sizeof(VectorType) * 8,
-            size = Size
+            size = VectorSize
         };
 
         VectorType data;
@@ -74,7 +74,7 @@ namespace simd {
 
     // Scalar Emulated vector types not supported by hardware instructions
 
-    template <typename ScalarType, int Size>
+    template <typename ScalarType, int VectorSize>
     struct scalar_mask
     {
         uint32 mask;
@@ -91,21 +91,21 @@ namespace simd {
         }
     };
 
-    template <typename ScalarType, int Size>
+    template <typename ScalarType, int VectorSize>
     struct scalar_vector
     {
         using scalar = ScalarType;
         using vector = void;
-        using mask = scalar_mask<ScalarType, Size>;
+        using mask = scalar_mask<ScalarType, VectorSize>;
 
         enum
         {
             scalar_bits = sizeof(ScalarType) * 8,
-            vector_bits = sizeof(ScalarType) * Size * 8,
-            size = Size
+            vector_bits = sizeof(ScalarType) * VectorSize * 8,
+            size = VectorSize
         };
 
-        ScalarType data[Size];
+        ScalarType data[VectorSize];
 
         ScalarType & operator [] (int index)
         {
