@@ -205,15 +205,15 @@ namespace simd {
 } // namespace mango
 
 #include "scalar_float64.hpp"
-#include "sse_int128.hpp"
-#include "sse_float128.hpp"
-#include "sse_double128.hpp"
-#include "avx_float256.hpp"
-#include "avx_double256.hpp"
-#include "avx2_int256.hpp"
-#include "avx512_int512.hpp"
+#include "avx512_float128.hpp"
+#include "avx512_float256.hpp"
 #include "avx512_float512.hpp"
+#include "avx512_double128.hpp"
+#include "avx512_double256.hpp"
 #include "avx512_double512.hpp"
+#include "avx512_int128.hpp"
+#include "avx512_int256.hpp"
+#include "avx512_int512.hpp"
 #include "avx512_convert.hpp"
 #include "sse_matrix.hpp"
 
