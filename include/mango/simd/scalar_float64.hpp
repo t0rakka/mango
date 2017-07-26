@@ -197,7 +197,7 @@ namespace simd {
         return v;
     }
 
-    static inline float32x2 fast_reciprocal(float32x2 a)
+    static inline float32x2 fast_rcp(float32x2 a)
     {
         float32x2 v;
         v[0] = 1.0f / a[0];
@@ -221,9 +221,9 @@ namespace simd {
         return v;
     }
 
-    static inline float32x2 reciprocal(float32x2 a)
+    static inline float32x2 rcp(float32x2 a)
     {
-        return fast_reciprocal(a);
+        return fast_rcp(a);
     }
 
     static inline float32x2 rsqrt(float32x2 a)

@@ -197,7 +197,7 @@ namespace simd {
 
 #endif
 
-    static inline float64x2 fast_reciprocal(float64x2 a)
+    static inline float64x2 fast_rcp(float64x2 a)
     {
         return _mm_div_pd(_mm_set1_pd(1.0), a);
     }
@@ -212,7 +212,7 @@ namespace simd {
         return _mm_sqrt_pd(a);
     }
 
-    static inline float64x2 reciprocal(float64x2 a)
+    static inline float64x2 rcp(float64x2 a)
     {
         return _mm_div_pd(_mm_set1_pd(1.0), a);
     }

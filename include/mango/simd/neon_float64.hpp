@@ -208,7 +208,7 @@ namespace simd {
         return vmls_f32(a, b, c);
     }
 
-    static inline float32x2 fast_reciprocal(float32x2 a)
+    static inline float32x2 fast_rcp(float32x2 a)
     {
         float32x2_t n = vrecpe_f32(a);
         n = vmul_f32(vrecps_f32(n, a), n);
@@ -229,7 +229,7 @@ namespace simd {
         return vmul_f32(a, n);
     }
 
-    static inline float32x2 reciprocal(float32x2 a)
+    static inline float32x2 rcp(float32x2 a)
     {
         float32x2_t n = vrecpe_f32(a);
         n = vmul_f32(vrecps_f32(n, a), n);

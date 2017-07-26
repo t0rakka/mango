@@ -132,7 +132,7 @@ namespace simd {
         return _mm512_fnmadd_ps(b, c, a);
     }
 
-    static inline float32x16 fast_reciprocal(float32x16 a)
+    static inline float32x16 fast_rcp(float32x16 a)
     {
         return _mm512_rcp14_ps(a);
     }
@@ -147,7 +147,7 @@ namespace simd {
         return _mm512_sqrt_ps(a);
     }
 
-    static inline float32x16 reciprocal(float32x16 a)
+    static inline float32x16 rcp(float32x16 a)
     {
         return _mm512_rcp28_ps(a);
     }

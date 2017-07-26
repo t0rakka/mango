@@ -308,7 +308,7 @@ namespace simd {
 
 #endif
 
-    static inline float64x4 fast_reciprocal(float64x4 a)
+    static inline float64x4 fast_rcp(float64x4 a)
     {
         const __m256d one = _mm256_set1_pd(1.0);
         return _mm256_div_pd(one, a);
@@ -325,7 +325,7 @@ namespace simd {
         return _mm256_sqrt_pd(a);
     }
 
-    static inline float64x4 reciprocal(float64x4 a)
+    static inline float64x4 rcp(float64x4 a)
     {
         const __m256d one = _mm256_set1_pd(1.0);
         return _mm256_div_pd(one, a);

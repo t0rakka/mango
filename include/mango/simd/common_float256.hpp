@@ -205,11 +205,11 @@ namespace simd {
         return result;
     }
 
-    static inline float32x8 fast_reciprocal(float32x8 a)
+    static inline float32x8 fast_rcp(float32x8 a)
     {
         float32x8 result;
-        result.lo = fast_reciprocal(a.lo);
-        result.hi = fast_reciprocal(a.hi);
+        result.lo = fast_rcp(a.lo);
+        result.hi = fast_rcp(a.hi);
         return result;
     }
 
@@ -229,11 +229,11 @@ namespace simd {
         return result;
     }
 
-    static inline float32x8 reciprocal(float32x8 a)
+    static inline float32x8 rcp(float32x8 a)
     {
         float32x8 result;
-        result.lo = reciprocal(a.lo);
-        result.hi = reciprocal(a.hi);
+        result.lo = rcp(a.lo);
+        result.hi = rcp(a.hi);
         return result;
     }
 

@@ -262,7 +262,7 @@ namespace simd {
 		return spu_sub(a, spu_mul(b, c));
     }
 
-    static inline float32x4 fast_reciprocal(float32x4 a)
+    static inline float32x4 fast_rcp(float32x4 a)
     {
 		return spu_re(a);
     }
@@ -277,7 +277,7 @@ namespace simd {
 		return spu_sqrt(a);
     }
 
-    static inline float32x4 reciprocal(float32x4 a)
+    static inline float32x4 rcp(float32x4 a)
     {
         const vec_float4 onen = (vec_float4)spu_splats(0x3f800001);
         const vec_float4 y0 = spu_re(a);

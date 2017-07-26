@@ -151,7 +151,7 @@ namespace simd {
 
 #endif
 
-    static inline float32x8 fast_reciprocal(float32x8 a)
+    static inline float32x8 fast_rcp(float32x8 a)
     {
         return _mm256_rcp_ps(a);
     }
@@ -167,7 +167,7 @@ namespace simd {
         return _mm256_mul_ps(a, n);
     }
 
-    static inline float32x8 reciprocal(float32x8 a)
+    static inline float32x8 rcp(float32x8 a)
     {
         const __m256 n = _mm256_rcp_ps(a);
         const __m256 m = _mm256_mul_ps(_mm256_mul_ps(n, n), a);

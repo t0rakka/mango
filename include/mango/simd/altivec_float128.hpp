@@ -264,7 +264,7 @@ namespace simd {
 		return vec_sub(a, vec_mul(b, c));
     }
 
-    static inline float32x4 fast_reciprocal(float32x4 a)
+    static inline float32x4 fast_rcp(float32x4 a)
     {
 		return vec_re(a);
     }
@@ -279,7 +279,7 @@ namespace simd {
 		return vec_sqrt(a);
     }
 
-    static inline float32x4 reciprocal(float32x4 a)
+    static inline float32x4 rcp(float32x4 a)
     {
         const vector float one = __vec_splatsf4(1.0f);
         const vector float y0 = vec_re(a);

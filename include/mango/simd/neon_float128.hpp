@@ -333,7 +333,7 @@ namespace simd {
         return vmlsq_f32(a, b, c);
     }
 
-    static inline float32x4 fast_reciprocal(float32x4 a)
+    static inline float32x4 fast_rcp(float32x4 a)
     {
         float32x4 n = vrecpeq_f32(a);
         n = vmulq_f32(vrecpsq_f32(n, a), n);
@@ -354,7 +354,7 @@ namespace simd {
         return vmulq_f32(a, n);
     }
 
-    static inline float32x4 reciprocal(float32x4 a)
+    static inline float32x4 rcp(float32x4 a)
     {
         float32x4 n = vrecpeq_f32(a);
         n = vmulq_f32(vrecpsq_f32(n, a), n);

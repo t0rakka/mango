@@ -343,7 +343,7 @@ namespace simd {
         float32x4 s = abs(d);
 
         q = sel(float32x4_set1(1.0f), s, add(q, int32x4_set1(1)), q);
-        s = select(compare_lt(one, s), reciprocal(s), s);
+        s = select(compare_lt(one, s), rcp(s), s);
 
         float32x4 t = mul(s, s);
 
@@ -686,7 +686,7 @@ namespace simd {
         float64x4 s = abs(d);
 
         q = sel(one, s, add(q, int32x4_set1(1)), q);
-        s = select(compare_lt(one, s), reciprocal(s), s);
+        s = select(compare_lt(one, s), rcp(s), s);
 
         float64x4 t = mul(s, s);
 

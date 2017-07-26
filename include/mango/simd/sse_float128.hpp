@@ -293,7 +293,7 @@ namespace simd {
 
 #endif
 
-    static inline float32x4 fast_reciprocal(float32x4 a)
+    static inline float32x4 fast_rcp(float32x4 a)
     {
         return _mm_rcp_ps(a);
     }
@@ -309,7 +309,7 @@ namespace simd {
         return _mm_mul_ps(a, n);
     }
 
-    static inline float32x4 reciprocal(float32x4 a)
+    static inline float32x4 rcp(float32x4 a)
     {
         float32x4 n = _mm_rcp_ps(a);
         float32x4 m = _mm_mul_ps(_mm_mul_ps(n, n), a);
