@@ -140,6 +140,23 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    // mask
+
+    static inline uint8x32::mask operator & (uint8x32::mask a, uint8x32::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline uint8x32::mask operator | (uint8x32::mask a, uint8x32::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline uint8x32::mask operator ^ (uint8x32::mask a, uint8x32::mask b)
+    {
+        return _mm256_xor_si256(a, b);
+    }
+
     static inline uint8x32 min(uint8x32 a, uint8x32 b)
     {
         return _mm256_min_epu8(a, b);
@@ -258,6 +275,23 @@ namespace simd {
     static inline uint16x16 select(uint16x16::mask mask, uint16x16 a, uint16x16 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    // mask
+
+    static inline uint16x16::mask operator & (uint16x16::mask a, uint16x16::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline uint16x16::mask operator | (uint16x16::mask a, uint16x16::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline uint16x16::mask operator ^ (uint16x16::mask a, uint16x16::mask b)
+    {
+        return _mm256_xor_si256(a, b);
     }
 
     // shift
@@ -432,6 +466,23 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    // mask
+
+    static inline uint32x8::mask operator & (uint32x8::mask a, uint32x8::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline uint32x8::mask operator | (uint32x8::mask a, uint32x8::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline uint32x8::mask operator ^ (uint32x8::mask a, uint32x8::mask b)
+    {
+        return _mm256_xor_si256(a, b);
+    }
+
     static inline uint32 get_mask(uint32x8::mask a)
     {
         return _mm256_movemask_ps(_mm256_castsi256_ps(a));
@@ -563,6 +614,23 @@ namespace simd {
     static inline uint64x4 select(uint64x4::mask mask, uint64x4 a, uint64x4 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    // mask
+
+    static inline uint64x4::mask operator & (uint64x4::mask a, uint64x4::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline uint64x4::mask operator | (uint64x4::mask a, uint64x4::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline uint64x4::mask operator ^ (uint64x4::mask a, uint64x4::mask b)
+    {
+        return _mm256_xor_si256(a, b);
     }
 
     // shift
@@ -708,6 +776,23 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    // mask
+
+    static inline int8x32::mask operator & (int8x32::mask a, int8x32::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline int8x32::mask operator | (int8x32::mask a, int8x32::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline int8x32::mask operator ^ (int8x32::mask a, int8x32::mask b)
+    {
+        return _mm256_xor_si256(a, b);
+    }
+
     static inline int8x32 min(int8x32 a, int8x32 b)
     {
         return _mm256_min_epi8(a, b);
@@ -835,6 +920,23 @@ namespace simd {
     static inline int16x16 select(int16x16::mask mask, int16x16 a, int16x16 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    // mask
+
+    static inline int16x16::mask operator & (int16x16::mask a, int16x16::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline int16x16::mask operator | (int16x16::mask a, int16x16::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline int16x16::mask operator ^ (int16x16::mask a, int16x16::mask b)
+    {
+        return _mm256_xor_si256(a, b);
     }
 
     // shift
@@ -1024,6 +1126,23 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
+    // mask
+
+    static inline int32x8::mask operator & (int32x8::mask a, int32x8::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline int32x8::mask operator | (int32x8::mask a, int32x8::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline int32x8::mask operator ^ (int32x8::mask a, int32x8::mask b)
+    {
+        return _mm256_xor_si256(a, b);
+    }
+
     static inline uint32 get_mask(int32x8::mask a)
     {
         return _mm256_movemask_ps(_mm256_castsi256_ps(a));
@@ -1155,6 +1274,23 @@ namespace simd {
     static inline int64x4 select(int64x4::mask mask, int64x4 a, int64x4 b)
     {
         return _mm256_select_si256(mask, a, b);
+    }
+
+    // mask
+
+    static inline int64x4::mask operator & (int64x4::mask a, int64x4::mask b)
+    {
+        return _mm256_and_si256(a, b);
+    }
+
+    static inline int64x4::mask operator | (int64x4::mask a, int64x4::mask b)
+    {
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline int64x4::mask operator ^ (int64x4::mask a, int64x4::mask b)
+    {
+        return _mm256_xor_si256(a, b);
     }
 
     // shift

@@ -178,6 +178,32 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline uint8x32::mask operator & (uint8x32::mask a, uint8x32::mask b)
+    {
+        uint8x32::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline uint8x32::mask operator | (uint8x32::mask a, uint8x32::mask b)
+    {
+        uint8x32::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline uint8x32::mask operator ^ (uint8x32::mask a, uint8x32::mask b)
+    {
+        uint8x32::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
     static inline uint8x32 min(uint8x32 a, uint8x32 b)
     {
         uint8x32 result;
@@ -352,6 +378,32 @@ namespace simd {
         uint16x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    // mask
+
+    static inline uint16x16::mask operator & (uint16x16::mask a, uint16x16::mask b)
+    {
+        uint16x16::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline uint16x16::mask operator | (uint16x16::mask a, uint16x16::mask b)
+    {
+        uint16x16::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline uint16x16::mask operator ^ (uint16x16::mask a, uint16x16::mask b)
+    {
+        uint16x16::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -607,6 +659,32 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline uint32x8::mask operator & (uint32x8::mask a, uint32x8::mask b)
+    {
+        uint32x8::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline uint32x8::mask operator | (uint32x8::mask a, uint32x8::mask b)
+    {
+        uint32x8::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline uint32x8::mask operator ^ (uint32x8::mask a, uint32x8::mask b)
+    {
+        uint32x8::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
     static inline uint32 get_mask(uint32x8::mask a)
     {
         uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
@@ -802,6 +880,32 @@ namespace simd {
         uint64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    // mask
+
+    static inline uint64x4::mask operator & (uint64x4::mask a, uint64x4::mask b)
+    {
+        uint64x4::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline uint64x4::mask operator | (uint64x4::mask a, uint64x4::mask b)
+    {
+        uint64x4::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline uint64x4::mask operator ^ (uint64x4::mask a, uint64x4::mask b)
+    {
+        uint64x4::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -1018,6 +1122,32 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline int8x32::mask operator & (int8x32::mask a, int8x32::mask b)
+    {
+        int8x32::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline int8x32::mask operator | (int8x32::mask a, int8x32::mask b)
+    {
+        int8x32::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline int8x32::mask operator ^ (int8x32::mask a, int8x32::mask b)
+    {
+        int8x32::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
     static inline int8x32 min(int8x32 a, int8x32 b)
     {
         int8x32 result;
@@ -1208,6 +1338,32 @@ namespace simd {
         int16x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    // mask
+
+    static inline int16x16::mask operator & (int16x16::mask a, int16x16::mask b)
+    {
+        int16x16::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline int16x16::mask operator | (int16x16::mask a, int16x16::mask b)
+    {
+        int16x16::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline int16x16::mask operator ^ (int16x16::mask a, int16x16::mask b)
+    {
+        int16x16::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -1479,6 +1635,32 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline int32x8::mask operator & (int32x8::mask a, int32x8::mask b)
+    {
+        int32x8::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline int32x8::mask operator | (int32x8::mask a, int32x8::mask b)
+    {
+        int32x8::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline int32x8::mask operator ^ (int32x8::mask a, int32x8::mask b)
+    {
+        int32x8::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
     static inline uint32 get_mask(int32x8::mask a)
     {
         uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
@@ -1674,6 +1856,32 @@ namespace simd {
         int64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
+        return result;
+    }
+
+    // mask
+
+    static inline int64x4::mask operator & (int64x4::mask a, int64x4::mask b)
+    {
+        int64x4::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline int64x4::mask operator | (int64x4::mask a, int64x4::mask b)
+    {
+        int64x4::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline int64x4::mask operator ^ (int64x4::mask a, int64x4::mask b)
+    {
+        int64x4::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
         return result;
     }
 

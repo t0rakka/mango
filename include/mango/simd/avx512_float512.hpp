@@ -199,6 +199,23 @@ namespace simd {
         return _mm512_mask_blend_ps(mask, b, a);
     }
 
+    // mask
+
+    static inline float32x16::mask operator & (float32x16::mask a, float32x16::mask b)
+    {
+        return _mm512_kand(a.mask, b.mask);
+    }
+
+    static inline float32x16::mask operator | (float32x16::mask a, float32x16::mask b)
+    {
+        return _mm512_kor(a.mask, b.mask);
+    }
+
+    static inline float32x16::mask operator ^ (float32x16::mask a, float32x16::mask b)
+    {
+        return _mm512_kxor(a.mask, b.mask);
+    }
+
     static inline uint32 get_mask(float32x16::mask a)
     {
         return _mm512_mask2int(a.mask);

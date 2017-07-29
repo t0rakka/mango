@@ -282,6 +282,23 @@ namespace simd {
 
 #endif
 
+    // mask
+
+    static inline float64x2::mask operator & (float64x2::mask a, float64x2::mask b)
+    {
+        return _mm_and_pd(a, b);
+    }
+
+    static inline float64x2::mask operator | (float64x2::mask a, float64x2::mask b)
+    {
+        return _mm_or_pd(a, b);
+    }
+
+    static inline float64x2::mask operator ^ (float64x2::mask a, float64x2::mask b)
+    {
+        return _mm_xor_pd(a, b);
+    }
+
     // rounding
 
 #if defined(MANGO_ENABLE_SSE4_1)

@@ -305,6 +305,23 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline float64x2::mask operator & (float64x2::mask a, float64x2::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline float64x2::mask operator | (float64x2::mask a, float64x2::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline float64x2::mask operator ^ (float64x2::mask a, float64x2::mask b)
+    {
+        return a.mask ^ b.mask;
+    }
+
     // rounding
 
     static inline float64x2 round(float64x2 s)

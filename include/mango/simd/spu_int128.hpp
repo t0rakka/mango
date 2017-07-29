@@ -202,6 +202,23 @@ namespace simd {
 		return spu_sel(b, a, mask);
     }
 
+    // mask
+
+    static inline uint32x4::mask operator & (uint32x4::mask a, uint32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask operator | (uint32x4::mask a, uint32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask operator ^ (uint32x4::mask a, uint32x4::mask b)
+    {
+        // TODO
+    }
+
     static inline uint32 get_mask(uint32x4::mask a)
     {
         // TODO
@@ -450,6 +467,23 @@ namespace simd {
     static inline int32x4 select(int32x4::mask mask, int32x4 a, int32x4 b)
     {
 		return spu_sel(b, a, (vec_uint4)mask);
+    }
+
+    // mask
+
+    static inline int32x4::mask operator & (int32x4::mask a, int32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline int32x4::mask operator | (int32x4::mask a, int32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline int32x4::mask operator ^ (int32x4::mask a, int32x4::mask b)
+    {
+        // TODO
     }
 
     static inline uint32 get_mask(int32x4::mask a)

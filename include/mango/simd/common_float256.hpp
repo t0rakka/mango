@@ -311,6 +311,32 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline float32x8::mask operator & (float32x8::mask a, float32x8::mask b)
+    {
+        float32x8::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline float32x8::mask operator | (float32x8::mask a, float32x8::mask b)
+    {
+        float32x8::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline float32x8::mask operator ^ (float32x8::mask a, float32x8::mask b)
+    {
+        float32x8::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
     static inline uint32 get_mask(float32x8::mask a)
     {
         uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);

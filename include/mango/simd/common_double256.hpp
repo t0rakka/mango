@@ -450,6 +450,32 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline float64x4::mask operator & (float64x4::mask a, float64x4::mask b)
+    {
+        float64x4::mask result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline float64x4::mask operator | (float64x4::mask a, float64x4::mask b)
+    {
+        float64x4::mask result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline float64x4::mask operator ^ (float64x4::mask a, float64x4::mask b)
+    {
+        float64x4::mask result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
     // rounding
 
     static inline float64x4 round(float64x4 s)

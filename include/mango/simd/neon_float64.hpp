@@ -298,6 +298,23 @@ namespace simd {
         return vbsl_f32(mask, a, b);
     }
 
+    // mask
+
+    static inline float32x2::mask operator & (float32x2::mask a, float32x2::mask b)
+    {
+        return vand_u32(a, b);
+    }
+
+    static inline float32x2::mask operator | (float32x2::mask a, float32x2::mask b)
+    {
+        return vorr_u32(a, b);
+    }
+
+    static inline float32x2::mask operator ^ (float32x2::mask a, float32x2::mask b)
+    {
+        return veor_u32(a, b);
+    }
+
     // rounding
 
 #if __ARM_ARCH >= 8 && !defined(MANGO_COMPILER_CLANG)

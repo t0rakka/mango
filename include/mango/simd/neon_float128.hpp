@@ -440,6 +440,23 @@ namespace simd {
         return vbslq_f32(mask, a, b);
     }
 
+    // mask
+
+    static inline float32x4::mask operator & (float32x4::mask a, float32x4::mask b)
+    {
+        return vandq_u32(a, b);
+    }
+
+    static inline float32x4::mask operator | (float32x4::mask a, float32x4::mask b)
+    {
+        return vorrq_u32(a, b);
+    }
+
+    static inline float32x4::mask operator ^ (float32x4::mask a, float32x4::mask b)
+    {
+        return veorq_u32(a, b);
+    }
+
     static inline uint32 get_mask(float32x4::mask a)
     {
         const uint32x4_t mask = { 1, 2, 4, 8 };

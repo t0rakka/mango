@@ -454,6 +454,23 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // mask
+
+    static inline uint8x16::mask operator & (uint8x16::mask a, uint8x16::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline uint8x16::mask operator | (uint8x16::mask a, uint8x16::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline uint8x16::mask operator ^ (uint8x16::mask a, uint8x16::mask b)
+    {
+        return a.mask ^ b.mask;
+    }
+
     static inline uint8x16 min(uint8x16 a, uint8x16 b)
     {
         return scalar_unroll(scalar_min, a, b);
@@ -592,6 +609,23 @@ namespace simd {
     static inline uint16x8 select(uint16x8::mask mask, uint16x8 a, uint16x8 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    // mask
+
+    static inline uint16x8::mask operator & (uint16x8::mask a, uint16x8::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline uint16x8::mask operator | (uint16x8::mask a, uint16x8::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline uint16x8::mask operator ^ (uint16x8::mask a, uint16x8::mask b)
+    {
+        return a.mask ^ b.mask;
     }
 
     // shift
@@ -805,6 +839,23 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // mask
+
+    static inline uint32x4::mask operator & (uint32x4::mask a, uint32x4::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline uint32x4::mask operator | (uint32x4::mask a, uint32x4::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline uint32x4::mask operator ^ (uint32x4::mask a, uint32x4::mask b)
+    {
+        return a.mask ^ b.mask;
+    }
+
     static inline uint32 get_mask(uint32x4::mask a)
     {
         return a.mask;
@@ -937,6 +988,23 @@ namespace simd {
     static inline uint64x2 select(uint64x2::mask mask, uint64x2 a, uint64x2 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    // mask
+
+    static inline uint64x2::mask operator & (uint64x2::mask a, uint64x2::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline uint64x2::mask operator | (uint64x2::mask a, uint64x2::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline uint64x2::mask operator ^ (uint64x2::mask a, uint64x2::mask b)
+    {
+        return a.mask ^ b.mask;
     }
 
     // shift
@@ -1103,6 +1171,23 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // mask
+
+    static inline int8x16::mask operator & (int8x16::mask a, int8x16::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline int8x16::mask operator | (int8x16::mask a, int8x16::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline int8x16::mask operator ^ (int8x16::mask a, int8x16::mask b)
+    {
+        return a.mask ^ b.mask;
+    }
+
     static inline int8x16 min(int8x16 a, int8x16 b)
     {
         return scalar_unroll(scalar_min, a, b);
@@ -1251,6 +1336,23 @@ namespace simd {
     static inline int16x8 select(int16x8::mask mask, int16x8 a, int16x8 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    // mask
+
+    static inline int16x8::mask operator & (int16x8::mask a, int16x8::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline int16x8::mask operator | (int16x8::mask a, int16x8::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline int16x8::mask operator ^ (int16x8::mask a, int16x8::mask b)
+    {
+        return a.mask ^ b.mask;
     }
 
     template <int Count>
@@ -1472,6 +1574,23 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // mask
+
+    static inline int32x4::mask operator & (int32x4::mask a, int32x4::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline int32x4::mask operator | (int32x4::mask a, int32x4::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline int32x4::mask operator ^ (int32x4::mask a, int32x4::mask b)
+    {
+        return a.mask ^ b.mask;
+    }
+
     static inline uint32 get_mask(int32x4::mask a)
     {
         return a.mask;
@@ -1623,6 +1742,23 @@ namespace simd {
     static inline int64x2 select(int64x2::mask mask, int64x2 a, int64x2 b)
     {
         return scalar_select(mask, a, b);
+    }
+
+    // mask
+
+    static inline int64x2::mask operator & (int64x2::mask a, int64x2::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline int64x2::mask operator | (int64x2::mask a, int64x2::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline int64x2::mask operator ^ (int64x2::mask a, int64x2::mask b)
+    {
+        return a.mask ^ b.mask;
     }
 
     // shift

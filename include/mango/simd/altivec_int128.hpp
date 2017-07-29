@@ -206,6 +206,23 @@ namespace simd {
         return vec_sel(b, a, mask);
     }
 
+    // mask
+
+    static inline uint32x4::mask operator & (uint32x4::mask a, uint32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask operator | (uint32x4::mask a, uint32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline uint32x4::mask operator ^ (uint32x4::mask a, uint32x4::mask b)
+    {
+        // TODO
+    }
+
     static inline uint32 get_mask(uint32x4::mask a)
     {
         // TODO

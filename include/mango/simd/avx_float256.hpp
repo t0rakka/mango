@@ -225,6 +225,23 @@ namespace simd {
         return _mm256_blendv_ps(b, a, mask);
     }
 
+    // mask
+
+    static inline float32x8::mask operator & (float32x8::mask a, float32x8::mask b)
+    {
+         return _mm256_and_ps(a, b);
+    }
+
+    static inline float32x8::mask operator | (float32x8::mask a, float32x8::mask b)
+    {
+         return _mm256_or_ps(a, b);
+    }
+
+    static inline float32x8::mask operator ^ (float32x8::mask a, float32x8::mask b)
+    {
+         return _mm256_xor_ps(a, b);
+    }
+
     static inline uint32 get_mask(float32x8::mask a)
     {
         return _mm256_movemask_ps(a);

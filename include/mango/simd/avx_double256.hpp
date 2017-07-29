@@ -387,6 +387,23 @@ namespace simd {
         return _mm256_blendv_pd(b, a, mask);
     }
 
+    // mask
+
+    static inline float64x4::mask operator & (float64x4::mask a, float64x4::mask b)
+    {
+         return _mm256_and_pd(a, b);
+    }
+
+    static inline float64x4::mask operator | (float64x4::mask a, float64x4::mask b)
+    {
+         return _mm256_or_pd(a, b);
+    }
+
+    static inline float64x4::mask operator ^ (float64x4::mask a, float64x4::mask b)
+    {
+         return _mm256_xor_pd(a, b);
+    }
+
     // rounding
 
     static inline float64x4 round(float64x4 s)

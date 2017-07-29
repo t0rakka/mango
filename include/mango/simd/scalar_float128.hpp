@@ -418,6 +418,23 @@ namespace simd {
         return result;
     }
 
+    // mask
+
+    static inline float32x4::mask operator & (float32x4::mask a, float32x4::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline float32x4::mask operator | (float32x4::mask a, float32x4::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline float32x4::mask operator ^ (float32x4::mask a, float32x4::mask b)
+    {
+        return a.mask ^ b.mask;
+    }
+
     static inline uint32 get_mask(float32x4::mask a)
     {
         return a.mask;

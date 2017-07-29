@@ -165,27 +165,27 @@ namespace simd {
 
     #define MANGO_ENABLE_SIMD
 
-    using int8x16    = hardware_vector<int8, 16, __m128i, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d, __m128d>;
+    using int8x16    = hardware_vector<int8, 16, __m128i, __mmask16>;
+    using int16x8    = hardware_vector<int16, 8, __m128i, __mmask8>;
+    using int32x4    = hardware_vector<int32, 4, __m128i, __mmask8>;
+    using int64x2    = hardware_vector<int64, 2, __m128i, __mmask8>;
+    using uint8x16   = hardware_vector<uint8, 16, __m128i, __mmask16>;
+    using uint16x8   = hardware_vector<uint16, 8, __m128i, __mmask8>;
+    using uint32x4   = hardware_vector<uint32, 4, __m128i, __mmask8>;
+    using uint64x2   = hardware_vector<uint64, 2, __m128i, __mmask8>;
+    using float32x4  = hardware_vector<float, 4, __m128, __mmask8>;
+    using float64x2  = hardware_vector<double, 2, __m128d, __mmask8>;
 
-    using int8x32    = hardware_vector<int8, 32, __m256i, __m256i>;
-    using int16x16   = hardware_vector<int16, 16, __m256i, __m256i>;
-    using int32x8    = hardware_vector<int32, 8, __m256i, __m256i>;
-    using int64x4    = hardware_vector<int64, 4, __m256i, __m256i>;
-    using uint8x32   = hardware_vector<uint8, 32, __m256i, __m256i>;
-    using uint16x16  = hardware_vector<uint16, 16, __m256i, __m256i>;
-    using uint32x8   = hardware_vector<uint32, 8, __m256i, __m256i>;
-    using uint64x4   = hardware_vector<uint64, 4, __m256i, __m256i>;
-    using float32x8  = hardware_vector<float, 8, __m256, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d, __m256d>;
+    using int8x32    = hardware_vector<int8, 32, __m256i, __mmask32>;
+    using int16x16   = hardware_vector<int16, 16, __m256i, __mmask16>;
+    using int32x8    = hardware_vector<int32, 8, __m256i, __mmask8>;
+    using int64x4    = hardware_vector<int64, 4, __m256i, __mmask8>;
+    using uint8x32   = hardware_vector<uint8, 32, __m256i, __mmask32>;
+    using uint16x16  = hardware_vector<uint16, 16, __m256i, __mmask16>;
+    using uint32x8   = hardware_vector<uint32, 8, __m256i, __mmask8>;
+    using uint64x4   = hardware_vector<uint64, 4, __m256i, __mmask8>;
+    using float32x8  = hardware_vector<float, 8, __m256, __mmask8>;
+    using float64x4  = hardware_vector<double, 4, __m256d, __mmask8>;
 
     using int8x64    = hardware_vector<int8, 64, __m512i, __mmask64>;
     using int16x32   = hardware_vector<int16, 32, __m512i, __mmask32>;

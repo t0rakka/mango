@@ -369,6 +369,23 @@ namespace simd {
 		return vec_sel(b, a, (vector unsigned int)mask);
     }
 
+    // mask
+
+    static inline float32x4::mask operator & (float32x4::mask a, float32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline float32x4::mask operator | (float32x4::mask a, float32x4::mask b)
+    {
+        // TODO
+    }
+
+    static inline float32x4::mask operator ^ (float32x4::mask a, float32x4::mask b)
+    {
+        // TODO
+    }
+
     static inline uint32 get_mask(float32x4::mask a)
     {
         return 0; // TODO
