@@ -19,7 +19,6 @@ namespace mango
     struct Vector<float, 4> : VectorBase<float, 4>
     {
         using VectorType = simd::float32x4;
-        using Mask = simd::float32x4::mask;
 
         union
         {
@@ -405,7 +404,7 @@ namespace mango
         }
 
         explicit Vector(const Vector<float, 2>& xy, const Vector<float, 2>& zw)
-        : xyzw(simd::combine(xy, zw))
+        : xyzw(simd::float32x4_set4(xy.x, xy.y, zw.x, zw.y))
         {
         }
 
@@ -712,37 +711,37 @@ namespace mango
     // compare / select
     // ------------------------------------------------------------------
 
-    static inline float4::Mask operator > (float4 a, float4 b)
+    static inline mask32x4 operator > (float4 a, float4 b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline float4::Mask operator >= (float4 a, float4 b)
+    static inline mask32x4 operator >= (float4 a, float4 b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline float4::Mask operator < (float4 a, float4 b)
+    static inline mask32x4 operator < (float4 a, float4 b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline float4::Mask operator <= (float4 a, float4 b)
+    static inline mask32x4 operator <= (float4 a, float4 b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline float4::Mask operator == (float4 a, float4 b)
+    static inline mask32x4 operator == (float4 a, float4 b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline float4::Mask operator != (float4 a, float4 b)
+    static inline mask32x4 operator != (float4 a, float4 b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline float4 select(float4::Mask mask, float4 a, float4 b)
+    static inline float4 select(mask32x4 mask, float4 a, float4 b)
     {
         return simd::select(mask, a, b);
     }

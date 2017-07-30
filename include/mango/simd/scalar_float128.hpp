@@ -348,9 +348,9 @@ namespace simd {
 
     // compare
 
-    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_neq(float32x4 a, float32x4 b)
     {
-        float32x4::mask v = 0;
+        mask32x4 v = 0;
         v.mask |= uint32(a[0] != b[0]) << 0;
         v.mask |= uint32(a[1] != b[1]) << 1;
         v.mask |= uint32(a[2] != b[2]) << 2;
@@ -358,9 +358,9 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_eq(float32x4 a, float32x4 b)
     {
-        float32x4::mask v = 0;
+        mask32x4 v = 0;
         v.mask |= uint32(a[0] == b[0]) << 0;
         v.mask |= uint32(a[1] == b[1]) << 1;
         v.mask |= uint32(a[2] == b[2]) << 2;
@@ -368,9 +368,9 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_lt(float32x4 a, float32x4 b)
     {
-        float32x4::mask v = 0;
+        mask32x4 v = 0;
         v.mask |= uint32(a[0] < b[0]) << 0;
         v.mask |= uint32(a[1] < b[1]) << 1;
         v.mask |= uint32(a[2] < b[2]) << 2;
@@ -378,9 +378,9 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_le(float32x4 a, float32x4 b)
     {
-        float32x4::mask v = 0;
+        mask32x4 v = 0;
         v.mask |= uint32(a[0] <= b[0]) << 0;
         v.mask |= uint32(a[1] <= b[1]) << 1;
         v.mask |= uint32(a[2] <= b[2]) << 2;
@@ -388,9 +388,9 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_gt(float32x4 a, float32x4 b)
     {
-        float32x4::mask v = 0;
+        mask32x4 v = 0;
         v.mask |= uint32(a[0] > b[0]) << 0;
         v.mask |= uint32(a[1] > b[1]) << 1;
         v.mask |= uint32(a[2] > b[2]) << 2;
@@ -398,9 +398,9 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_ge(float32x4 a, float32x4 b)
     {
-        float32x4::mask v = 0;
+        mask32x4 v = 0;
         v.mask |= uint32(a[0] >= b[0]) << 0;
         v.mask |= uint32(a[1] >= b[1]) << 1;
         v.mask |= uint32(a[2] >= b[2]) << 2;
@@ -408,7 +408,7 @@ namespace simd {
         return v;
     }
 
-    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)
     {
         float32x4 result;
         result[0] = mask.mask & (1 << 0) ? a[0] : b[0];
@@ -416,28 +416,6 @@ namespace simd {
         result[2] = mask.mask & (1 << 2) ? a[2] : b[2];
         result[3] = mask.mask & (1 << 3) ? a[3] : b[3];
         return result;
-    }
-
-    // mask
-
-    static inline float32x4::mask operator & (float32x4::mask a, float32x4::mask b)
-    {
-        return a.mask & b.mask;
-    }
-
-    static inline float32x4::mask operator | (float32x4::mask a, float32x4::mask b)
-    {
-        return a.mask | b.mask;
-    }
-
-    static inline float32x4::mask operator ^ (float32x4::mask a, float32x4::mask b)
-    {
-        return a.mask ^ b.mask;
-    }
-
-    static inline uint32 get_mask(float32x4::mask a)
-    {
-        return a.mask;
     }
 
     // rounding

@@ -13,7 +13,6 @@ namespace mango
     struct Vector<int8, 16> : VectorBase<int8, 16>
     {
         using VectorType = simd::int8x16;
-        using Mask = simd::int8x16::mask;
 
         simd::int8x16 m;
 
@@ -171,37 +170,37 @@ namespace mango
         return simd::clamp(a, amin, amax);
     }
 
-    static inline Vector<int8, 16>::Mask operator > (Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline mask8x16 operator > (Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline Vector<int8, 16>::Mask operator >= (Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline mask8x16 operator >= (Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline Vector<int8, 16>::Mask operator < (Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline mask8x16 operator < (Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline Vector<int8, 16>::Mask operator <= (Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline mask8x16 operator <= (Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline Vector<int8, 16>::Mask operator == (Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline mask8x16 operator == (Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline Vector<int8, 16>::Mask operator != (Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline mask8x16 operator != (Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline Vector<int8, 16> select(Vector<int8, 16>::Mask mask, Vector<int8, 16> a, Vector<int8, 16> b)
+    static inline Vector<int8, 16> select(mask8x16 mask, Vector<int8, 16> a, Vector<int8, 16> b)
     {
         return simd::select(mask, a, b);
     }

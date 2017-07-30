@@ -98,7 +98,7 @@ namespace mango
             const float f = float(s);
 			x = f;
 			y = f;
-			x = f;
+			z = f;
         }
 
         explicit Vector(float s0, float s1, float s2)

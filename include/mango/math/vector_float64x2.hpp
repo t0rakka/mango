@@ -17,7 +17,6 @@ namespace mango
     struct Vector<double, 2> : VectorBase<double, 2>
     {
         using VectorType = simd::float64x2;
-        using Mask = simd::float64x2::mask;
 
         union
         {
@@ -268,37 +267,37 @@ namespace mango
     // compare / select
     // ------------------------------------------------------------------
 
-    static inline double2::Mask operator > (double2 a, double2 b)
+    static inline mask64x2 operator > (double2 a, double2 b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline double2::Mask operator >= (double2 a, double2 b)
+    static inline mask64x2 operator >= (double2 a, double2 b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline double2::Mask operator < (double2 a, double2 b)
+    static inline mask64x2 operator < (double2 a, double2 b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline double2::Mask operator <= (double2 a, double2 b)
+    static inline mask64x2 operator <= (double2 a, double2 b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline double2::Mask operator == (double2 a, double2 b)
+    static inline mask64x2 operator == (double2 a, double2 b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline double2::Mask operator != (double2 a, double2 b)
+    static inline mask64x2 operator != (double2 a, double2 b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline double2 select(double2::Mask mask, double2 a, double2 b)
+    static inline double2 select(mask64x2 mask, double2 a, double2 b)
     {
         return simd::select(mask, a, b);
     }

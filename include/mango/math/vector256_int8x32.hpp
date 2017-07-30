@@ -13,7 +13,6 @@ namespace mango
     struct Vector<int8, 32> : VectorBase<int8, 32>
     {
         using VectorType = simd::int8x32;
-        using Mask = simd::int8x32::mask;
 
         simd::int8x32 m;
 
@@ -156,22 +155,22 @@ namespace mango
         return simd::max(a, b);
     }
 
-    static inline Vector<int8, 32>::Mask operator > (Vector<int8, 32> a, Vector<int8, 32> b)
+    static inline mask8x32 operator > (Vector<int8, 32> a, Vector<int8, 32> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline Vector<int8, 32>::Mask operator < (Vector<int8, 32> a, Vector<int8, 32> b)
+    static inline mask8x32 operator < (Vector<int8, 32> a, Vector<int8, 32> b)
     {
         return simd::compare_gt(b, a);
     }
 
-    static inline Vector<int8, 32>::Mask operator == (Vector<int8, 32> a, Vector<int8, 32> b)
+    static inline mask8x32 operator == (Vector<int8, 32> a, Vector<int8, 32> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline Vector<int8, 32> select(Vector<int8, 32>::Mask mask, Vector<int8, 32> a, Vector<int8, 32> b)
+    static inline Vector<int8, 32> select(mask8x32 mask, Vector<int8, 32> a, Vector<int8, 32> b)
     {
         return simd::select(mask, a, b);
     }

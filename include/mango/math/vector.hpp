@@ -896,30 +896,9 @@ namespace mango
 
         operator Vector<ScalarType, 2> () const
         {
-            const VectorType temp = simd::shuffle<X, Y, X, Y>(m);
-            return simd::get_low(temp);
-        }
-    };
-
-    template <typename ScalarType, typename VectorType>
-    struct Permute4x2<ScalarType, VectorType, 0, 1>
-    {
-        VectorType m;
-
-        operator Vector<ScalarType, 2> () const
-        {
-            return simd::get_low(m);
-        }
-    };
-
-    template <typename ScalarType, typename VectorType>
-    struct Permute4x2<ScalarType, VectorType, 2, 3>
-    {
-        VectorType m;
-
-        operator Vector<ScalarType, 2> () const
-        {
-            return simd::get_high(m);
+            const ScalarType x = simd::get_component<X>(m);
+            const ScalarType y = simd::get_component<Y>(m);
+            return Vector<ScalarType, 2>(x, y);
         }
     };
 
@@ -965,15 +944,47 @@ namespace mango
     using uint32x8  = Vector<uint32, 8>;
     using uint64x4  = Vector<uint64, 4>;
 
+    // 512 bit integer vectors
+    /* TODO:
+    using int8x64   = Vector<int8, 64>;
+    using int16x32  = Vector<int16, 32>;
+    using int32x16  = Vector<int32, 16>;
+    using int64x8   = Vector<int64, 8>;
+    using uint8x64  = Vector<uint8, 64>;
+    using uint16x32 = Vector<uint16, 32>;
+    using uint32x16 = Vector<uint32, 16>;
+    using uint64x8  = Vector<uint64, 8>;
+    */
+
     // float vectors
-    using float16x4 = Vector<half, 4>;
-    using float32x2 = Vector<float, 2>;
-    using float32x3 = Vector<float, 3>;
-    using float32x4 = Vector<float, 4>;
-    using float32x8 = Vector<float, 8>;
-    using float64x2 = Vector<double, 2>;
-    using float64x3 = Vector<double, 3>;
-    using float64x4 = Vector<double, 4>;
+    using float16x4  = Vector<half, 4>;
+    using float32x2  = Vector<float, 2>;
+    using float32x3  = Vector<float, 3>;
+    using float32x4  = Vector<float, 4>;
+    using float32x8  = Vector<float, 8>;
+    //using float32x16 = Vector<float, 16>;
+    using float64x2  = Vector<double, 2>;
+    using float64x3  = Vector<double, 3>;
+    using float64x4  = Vector<double, 4>;
+    //using float64x8  = Vector<double, 8>;
+
+    // 128 bit vector masks
+    using mask8x16   = simd::mask8x16;
+    using mask16x8   = simd::mask16x8;
+    using mask32x4   = simd::mask32x4;
+    using mask64x2   = simd::mask64x2;
+
+    // 256 bit vector masks
+    using mask8x32   = simd::mask8x32;
+    using mask16x16  = simd::mask16x16;
+    using mask32x8   = simd::mask32x8;
+    using mask64x4   = simd::mask64x4;
+
+    // 512 bit vector masks
+    using mask8x64   = simd::mask8x64;
+    using mask16x32  = simd::mask16x32;
+    using mask32x16  = simd::mask32x16;
+    using mask64x8   = simd::mask64x8;
 
     // OpenCL vectors
     using int2    = Vector<int32, 2>;

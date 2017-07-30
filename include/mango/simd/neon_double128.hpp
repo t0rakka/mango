@@ -13,6 +13,7 @@ namespace simd {
     // float64x2
     // -----------------------------------------------------------------
 
+#if 0
     template <uint32 x, uint32 y>
     static inline float64x2 shuffle(float64x2 v)
     {
@@ -249,60 +250,77 @@ namespace simd {
 
     // compare
 
-    static inline mask64x2 compare_neq(float64x2 a, float64x2 b)
+    static inline float64x2::mask compare_neq(float64x2 a, float64x2 b)
     {
-        mask64x2 v = 0;
+        float64x2::mask v = 0;
         v.mask |= uint32(a[0] != b[0]) << 0;
         v.mask |= uint32(a[1] != b[1]) << 1;
         return v;
     }
 
-    static inline mask64x2 compare_eq(float64x2 a, float64x2 b)
+    static inline float64x2::mask compare_eq(float64x2 a, float64x2 b)
     {
-        mask64x2 v = 0;
+        float64x2::mask v = 0;
         v.mask |= uint32(a[0] == b[0]) << 0;
         v.mask |= uint32(a[1] == b[1]) << 1;
         return v;
     }
 
-    static inline mask64x2 compare_lt(float64x2 a, float64x2 b)
+    static inline float64x2::mask compare_lt(float64x2 a, float64x2 b)
     {
-        mask64x2 v = 0;
+        float64x2::mask v = 0;
         v.mask |= uint32(a[0] < b[0]) << 0;
         v.mask |= uint32(a[1] < b[1]) << 1;
         return v;
     }
 
-    static inline mask64x2 compare_le(float64x2 a, float64x2 b)
+    static inline float64x2::mask compare_le(float64x2 a, float64x2 b)
     {
-        mask64x2 v = 0;
+        float64x2::mask v = 0;
         v.mask |= uint32(a[0] <= b[0]) << 0;
         v.mask |= uint32(a[1] <= b[1]) << 1;
         return v;
     }
 
-    static inline mask64x2 compare_gt(float64x2 a, float64x2 b)
+    static inline float64x2::mask compare_gt(float64x2 a, float64x2 b)
     {
-        mask64x2 v = 0;
+        float64x2::mask v = 0;
         v.mask |= uint32(a[0] > b[0]) << 0;
         v.mask |= uint32(a[1] > b[1]) << 1;
         return v;
     }
 
-    static inline mask64x2 compare_ge(float64x2 a, float64x2 b)
+    static inline float64x2::mask compare_ge(float64x2 a, float64x2 b)
     {
-        mask64x2 v = 0;
+        float64x2::mask v = 0;
         v.mask |= uint32(a[0] >= b[0]) << 0;
         v.mask |= uint32(a[1] >= b[1]) << 1;
         return v;
     }
 
-    static inline float64x2 select(mask64x2 mask, float64x2 a, float64x2 b)
+    static inline float64x2 select(float64x2::mask mask, float64x2 a, float64x2 b)
     {
         float64x2 result;
         result[0] = mask.mask & (1 << 0) ? a[0] : b[0];
         result[1] = mask.mask & (1 << 1) ? a[1] : b[1];
         return result;
+    }
+
+    // mask
+
+    static inline float64x2::mask operator & (float64x2::mask a, float64x2::mask b)
+    {
+        return a.mask & b.mask;
+    }
+
+    static inline float64x2::mask operator | (float64x2::mask a, float64x2::mask b)
+    {
+        return a.mask | b.mask;
+    }
+
+    static inline float64x2::mask operator ^ (float64x2::mask a, float64x2::mask b)
+    {
+        return a.mask ^ b.mask;
     }
 
     // rounding
@@ -346,6 +364,7 @@ namespace simd {
         v[1] = s[1] - std::floor(s[1]);
         return v;
     }
+#endif
 
 } // namespace simd
 } // namespace mango

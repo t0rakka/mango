@@ -394,85 +394,59 @@ namespace simd {
 
     // compare
 
-    static inline float64x4::mask compare_neq(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_neq(float64x4 a, float64x4 b)
     {
-        float64x4::mask result;
+        mask64x4 result;
         result.lo = compare_neq(a.lo, b.lo);
         result.hi = compare_neq(a.hi, b.hi);
         return result;
     }
 
-    static inline float64x4::mask compare_eq(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_eq(float64x4 a, float64x4 b)
     {
-        float64x4::mask result;
+        mask64x4 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline float64x4::mask compare_lt(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_lt(float64x4 a, float64x4 b)
     {
-        float64x4::mask result;
+        mask64x4 result;
         result.lo = compare_lt(a.lo, b.lo);
         result.hi = compare_lt(a.hi, b.hi);
         return result;
     }
 
-    static inline float64x4::mask compare_le(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_le(float64x4 a, float64x4 b)
     {
-        float64x4::mask result;
+        mask64x4 result;
         result.lo = compare_le(a.lo, b.lo);
         result.hi = compare_le(a.hi, b.hi);
         return result;
     }
 
-    static inline float64x4::mask compare_gt(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_gt(float64x4 a, float64x4 b)
     {
-        float64x4::mask result;
+        mask64x4 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline float64x4::mask compare_ge(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_ge(float64x4 a, float64x4 b)
     {
-        float64x4::mask result;
+        mask64x4 result;
         result.lo = compare_ge(a.lo, b.lo);
         result.hi = compare_ge(a.hi, b.hi);
         return result;
     }
 
-    static inline float64x4 select(float64x4::mask mask, float64x4 a, float64x4 b)
+    static inline float64x4 select(mask64x4 mask, float64x4 a, float64x4 b)
     {
         float64x4 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline float64x4::mask operator & (float64x4::mask a, float64x4::mask b)
-    {
-        float64x4::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline float64x4::mask operator | (float64x4::mask a, float64x4::mask b)
-    {
-        float64x4::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline float64x4::mask operator ^ (float64x4::mask a, float64x4::mask b)
-    {
-        float64x4::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 

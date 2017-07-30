@@ -131,53 +131,27 @@ namespace simd {
 
     // compare
 
-    static inline uint8x64::mask compare_eq(uint8x64 a, uint8x64 b)
+    static inline mask8x64 compare_eq(uint8x64 a, uint8x64 b)
     {
-        uint8x64::mask result;
+        mask8x64 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64::mask compare_gt(uint8x64 a, uint8x64 b)
+    static inline mask8x64 compare_gt(uint8x64 a, uint8x64 b)
     {
-        uint8x64::mask result;
+        mask8x64 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 select(uint8x64::mask mask, uint8x64 a, uint8x64 b)
+    static inline uint8x64 select(mask8x64 mask, uint8x64 a, uint8x64 b)
     {
         uint8x64 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline uint8x64::mask operator & (uint8x64::mask a, uint8x64::mask b)
-    {
-        uint8x64::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline uint8x64::mask operator | (uint8x64::mask a, uint8x64::mask b)
-    {
-        uint8x64::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline uint8x64::mask operator ^ (uint8x64::mask a, uint8x64::mask b)
-    {
-        uint8x64::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -319,53 +293,27 @@ namespace simd {
 
     // compare
 
-    static inline uint16x32::mask compare_eq(uint16x32 a, uint16x32 b)
+    static inline mask16x32 compare_eq(uint16x32 a, uint16x32 b)
     {
-        uint16x32::mask result;
+        mask16x32 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32::mask compare_gt(uint16x32 a, uint16x32 b)
+    static inline mask16x32 compare_gt(uint16x32 a, uint16x32 b)
     {
-        uint16x32::mask result;
+        mask16x32 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 select(uint16x32::mask mask, uint16x32 a, uint16x32 b)
+    static inline uint16x32 select(mask16x32 mask, uint16x32 a, uint16x32 b)
     {
         uint16x32 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline uint16x32::mask operator & (uint16x32::mask a, uint16x32::mask b)
-    {
-        uint16x32::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline uint16x32::mask operator | (uint16x32::mask a, uint16x32::mask b)
-    {
-        uint16x32::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline uint16x32::mask operator ^ (uint16x32::mask a, uint16x32::mask b)
-    {
-        uint16x32::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -583,60 +531,28 @@ namespace simd {
 
     // compare
 
-    static inline uint32x16::mask compare_eq(uint32x16 a, uint32x16 b)
+    static inline mask32x16 compare_eq(uint32x16 a, uint32x16 b)
     {
-        uint32x16::mask result;
+        mask32x16 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16::mask compare_gt(uint32x16 a, uint32x16 b)
+    static inline mask32x16 compare_gt(uint32x16 a, uint32x16 b)
     {
-        uint32x16::mask result;
+        mask32x16 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 select(uint32x16::mask mask, uint32x16 a, uint32x16 b)
+    static inline uint32x16 select(mask32x16 mask, uint32x16 a, uint32x16 b)
     {
         uint32x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
-    }
-
-    // mask
-
-    static inline uint32x16::mask operator & (uint32x16::mask a, uint32x16::mask b)
-    {
-        uint32x16::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline uint32x16::mask operator | (uint32x16::mask a, uint32x16::mask b)
-    {
-        uint32x16::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline uint32x16::mask operator ^ (uint32x16::mask a, uint32x16::mask b)
-    {
-        uint32x16::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
-        return result;
-    }
-
-    static inline uint32 get_mask(uint32x16::mask a)
-    {
-        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
-        return mask;
     }
 
     // shift
@@ -808,37 +724,11 @@ namespace simd {
         return result;
     }
 
-    static inline uint64x8 select(uint64x8::mask mask, uint64x8 a, uint64x8 b)
+    static inline uint64x8 select(mask64x8 mask, uint64x8 a, uint64x8 b)
     {
         uint64x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline uint64x8::mask operator & (uint64x8::mask a, uint64x8::mask b)
-    {
-        uint64x8::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline uint64x8::mask operator | (uint64x8::mask a, uint64x8::mask b)
-    {
-        uint64x8::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline uint64x8::mask operator ^ (uint64x8::mask a, uint64x8::mask b)
-    {
-        uint64x8::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -1016,53 +906,27 @@ namespace simd {
 
     // compare
 
-    static inline int8x64::mask compare_eq(int8x64 a, int8x64 b)
+    static inline mask8x64 compare_eq(int8x64 a, int8x64 b)
     {
-        int8x64::mask result;
+        mask8x64 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64::mask compare_gt(int8x64 a, int8x64 b)
+    static inline mask8x64 compare_gt(int8x64 a, int8x64 b)
     {
-        int8x64::mask result;
+        mask8x64 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 select(int8x64::mask mask, int8x64 a, int8x64 b)
+    static inline int8x64 select(mask8x64 mask, int8x64 a, int8x64 b)
     {
         int8x64 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline int8x64::mask operator & (int8x64::mask a, int8x64::mask b)
-    {
-        int8x64::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline int8x64::mask operator | (int8x64::mask a, int8x64::mask b)
-    {
-        int8x64::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline int8x64::mask operator ^ (int8x64::mask a, int8x64::mask b)
-    {
-        int8x64::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -1220,53 +1084,27 @@ namespace simd {
 
     // compare
 
-    static inline int16x32::mask compare_eq(int16x32 a, int16x32 b)
+    static inline mask16x32 compare_eq(int16x32 a, int16x32 b)
     {
-        int16x32::mask result;
+        mask16x32 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32::mask compare_gt(int16x32 a, int16x32 b)
+    static inline mask16x32 compare_gt(int16x32 a, int16x32 b)
     {
-        int16x32::mask result;
+        mask16x32 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 select(int16x32::mask mask, int16x32 a, int16x32 b)
+    static inline int16x32 select(mask16x32 mask, int16x32 a, int16x32 b)
     {
         int16x32 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline int16x32::mask operator & (int16x32::mask a, int16x32::mask b)
-    {
-        int16x32::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline int16x32::mask operator | (int16x32::mask a, int16x32::mask b)
-    {
-        int16x32::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline int16x32::mask operator ^ (int16x32::mask a, int16x32::mask b)
-    {
-        int16x32::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -1500,60 +1338,28 @@ namespace simd {
 
     // compare
 
-    static inline int32x16::mask compare_eq(int32x16 a, int32x16 b)
+    static inline mask32x16 compare_eq(int32x16 a, int32x16 b)
     {
-        int32x16::mask result;
+        mask32x16 result;
         result.lo = compare_eq(a.lo, b.lo);
         result.hi = compare_eq(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16::mask compare_gt(int32x16 a, int32x16 b)
+    static inline mask32x16 compare_gt(int32x16 a, int32x16 b)
     {
-        int32x16::mask result;
+        mask32x16 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 select(int32x16::mask mask, int32x16 a, int32x16 b)
+    static inline int32x16 select(mask32x16 mask, int32x16 a, int32x16 b)
     {
         int32x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
-    }
-
-    // mask
-
-    static inline int32x16::mask operator & (int32x16::mask a, int32x16::mask b)
-    {
-        int32x16::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline int32x16::mask operator | (int32x16::mask a, int32x16::mask b)
-    {
-        int32x16::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline int32x16::mask operator ^ (int32x16::mask a, int32x16::mask b)
-    {
-        int32x16::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
-        return result;
-    }
-
-    static inline uint32 get_mask(int32x16::mask a)
-    {
-        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
-        return mask;
     }
 
     // shift
@@ -1725,37 +1531,11 @@ namespace simd {
         return result;
     }
 
-    static inline int64x8 select(int64x8::mask mask, int64x8 a, int64x8 b)
+    static inline int64x8 select(mask64x8 mask, int64x8 a, int64x8 b)
     {
         int64x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
-        return result;
-    }
-
-    // mask
-
-    static inline int64x8::mask operator & (int64x8::mask a, int64x8::mask b)
-    {
-        int64x8::mask result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
-        return result;
-    }
-
-    static inline int64x8::mask operator | (int64x8::mask a, int64x8::mask b)
-    {
-        int64x8::mask result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
-        return result;
-    }
-
-    static inline int64x8::mask operator ^ (int64x8::mask a, int64x8::mask b)
-    {
-        int64x8::mask result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
         return result;
     }
 
@@ -1792,6 +1572,124 @@ namespace simd {
         int64x8 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
+        return result;
+    }
+
+    // -----------------------------------------------------------------
+    // mask8x64
+    // -----------------------------------------------------------------
+
+    static inline mask8x64 operator & (mask8x64 a, mask8x64 b)
+    {
+        mask8x64 result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline mask8x64 operator | (mask8x64 a, mask8x64 b)
+    {
+        mask8x64 result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline mask8x64 operator ^ (mask8x64 a, mask8x64 b)
+    {
+        mask8x64 result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
+    // -----------------------------------------------------------------
+    // mask16x32
+    // -----------------------------------------------------------------
+
+    static inline mask16x32 operator & (mask16x32 a, mask16x32 b)
+    {
+        mask16x32 result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline mask16x32 operator | (mask16x32 a, mask16x32 b)
+    {
+        mask16x32 result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline mask16x32 operator ^ (mask16x32 a, mask16x32 b)
+    {
+        mask16x32 result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
+    // -----------------------------------------------------------------
+    // mask32x16
+    // -----------------------------------------------------------------
+
+    static inline mask32x16 operator & (mask32x16 a, mask32x16 b)
+    {
+        mask32x16 result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline mask32x16 operator | (mask32x16 a, mask32x16 b)
+    {
+        mask32x16 result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline mask32x16 operator ^ (mask32x16 a, mask32x16 b)
+    {
+        mask32x16 result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
+        return result;
+    }
+
+    static inline uint32 get_mask(mask32x16 a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
+        return mask;
+    }
+
+    // -----------------------------------------------------------------
+    // mask64x8
+    // -----------------------------------------------------------------
+
+    static inline mask64x8 operator & (mask64x8 a, mask64x8 b)
+    {
+        mask64x8 result;
+        result.lo = a.lo & b.lo;
+        result.hi = a.hi & b.hi;
+        return result;
+    }
+
+    static inline mask64x8 operator | (mask64x8 a, mask64x8 b)
+    {
+        mask64x8 result;
+        result.lo = a.lo | b.lo;
+        result.hi = a.hi | b.hi;
+        return result;
+    }
+
+    static inline mask64x8 operator ^ (mask64x8 a, mask64x8 b)
+    {
+        mask64x8 result;
+        result.lo = a.lo ^ b.lo;
+        result.hi = a.hi ^ b.hi;
         return result;
     }
 

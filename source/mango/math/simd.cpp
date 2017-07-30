@@ -39,19 +39,19 @@ namespace simd {
 
     static inline int32x4 slf_compare_gt(int32x4 a, int32x4 b)
     {
-        int32x4::mask mask = compare_gt(a, b);
+        mask32x4 mask = compare_gt(a, b);
         return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
     }
 
     static inline int32x4 slf_compare_eq(int32x4 a, int32x4 b)
     {
-        int32x4::mask mask = compare_eq(a, b);
+        mask32x4 mask = compare_eq(a, b);
         return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
     }
 
     static inline float32x4 slf_compare_eq(float32x4 a, float32x4 b)
     {
-        float32x4::mask mask = compare_eq(a, b);
+        mask32x4 mask = compare_eq(a, b);
         return select(mask, reinterpret<float32x4>(int32x4_set1(0xffffffff)), float32x4_zero());
     }
 
@@ -214,7 +214,7 @@ namespace simd {
         x = madd(x, u, -2.0f * PI4_Df);
 
         const float32x4 s = mul(x, x);
-        const int32x4::mask m = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
+        const mask32x4 m = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
         const int32x4 mask = select(m, int32x4_set1(0x80000000), int32x4_zero());
         x = bitwise_xor(x, reinterpret<float32x4>(mask)); // if (q & 1) x = -x;
 
@@ -459,7 +459,7 @@ namespace simd {
         float64x4 y = b;
 
         q = sel(x, y, add(q, int32x4_set1(1)), q);
-        float64x4::mask p = compare_lt(x, y);
+        mask64x4 p = compare_lt(x, y);
         float64x4 s = select(p, neg(x), y);
         float64x4 t = max(x, y);
 
@@ -550,7 +550,7 @@ namespace simd {
         d = madd(d, u, -2.0 * PI4_D);
 
         const float64x4 q2 = convert<float64x4>(bitwise_and(q, 2));
-        const float64x4::mask qmask = compare_eq(q2, float64x4_zero());
+        const mask64x4 qmask = compare_eq(q2, float64x4_zero());
         const float64x4 mask = select(qmask, reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
         d = bitwise_xor(bitwise_and(mask, float64x4_set1(-0.0)), d);
 
@@ -573,7 +573,7 @@ namespace simd {
 
         const float64x4 s = mul(x, x);
 
-        const float64x4::mask qmask = compare_eq(convert<float64x4>(bitwise_and(q, 1)), 1.0);
+        const mask64x4 qmask = compare_eq(convert<float64x4>(bitwise_and(q, 1)), 1.0);
         const float64x4 mask = select(qmask, reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
         x = bitwise_xor(bitwise_and(mask, float64x4_set1(-0.0)), x);
 

@@ -367,73 +367,51 @@ namespace simd {
 
     // compare
 
-    static inline float32x4::mask compare_neq(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_neq(float32x4 a, float32x4 b)
     {
         return _mm_cmpneq_ps(a, b);
     }
 
-    static inline float32x4::mask compare_eq(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_eq(float32x4 a, float32x4 b)
     {
         return _mm_cmpeq_ps(a, b);
     }
 
-    static inline float32x4::mask compare_lt(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_lt(float32x4 a, float32x4 b)
     {
         return _mm_cmplt_ps(a, b);
     }
 
-    static inline float32x4::mask compare_le(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_le(float32x4 a, float32x4 b)
     {
         return _mm_cmple_ps(a, b);
     }
 
-    static inline float32x4::mask compare_gt(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_gt(float32x4 a, float32x4 b)
     {
         return _mm_cmpgt_ps(a, b);
     }
 
-    static inline float32x4::mask compare_ge(float32x4 a, float32x4 b)
+    static inline mask32x4 compare_ge(float32x4 a, float32x4 b)
     {
         return _mm_cmpge_ps(a, b);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)
     {
         return _mm_blendv_ps(b, a, mask);
     }
 
 #else
 
-    static inline float32x4 select(float32x4::mask mask, float32x4 a, float32x4 b)
+    static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)
     {
         return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b));
     }
 
 #endif
-
-    // mask
-
-    static inline float32x4::mask operator & (float32x4::mask a, float32x4::mask b)
-    {
-        return _mm_and_ps(a, b);
-    }
-
-    static inline float32x4::mask operator | (float32x4::mask a, float32x4::mask b)
-    {
-        return _mm_or_ps(a, b);
-    }
-
-    static inline float32x4::mask operator ^ (float32x4::mask a, float32x4::mask b)
-    {
-        return _mm_xor_ps(a, b);
-    }
-
-    static inline uint32 get_mask(float32x4::mask a)
-    {
-        return _mm_movemask_ps(a);
-    }
 
     // rounding
 

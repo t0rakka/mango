@@ -232,46 +232,6 @@ namespace simd {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x2 get_low(float32x4 a)
-    {
-        float32x2 v;
-        v[0] = a[0];
-        v[1] = a[1];
-        return v;
-    }
-
-    static inline float32x2 get_high(float32x4 a)
-    {
-        float32x2 v;
-        v[0] = a[2];
-        v[1] = a[3];
-        return v;
-    }
-
-    static inline float32x4 set_low(float32x4 a, float32x2 low)
-    {
-        a[0] = low[0];
-        a[1] = low[1];
-        return a;
-    }
-
-    static inline float32x4 set_high(float32x4 a, float32x2 high)
-    {
-        a[2] = high[0];
-        a[3] = high[1];
-        return a;
-    }
-
-    static inline float32x4 combine(float32x2 a, float32x2 b)
-    {
-        float32x4 v;
-        v[0] = a[0];
-        v[1] = a[1];
-        v[2] = b[0];
-        v[3] = b[1];
-        return v;
-    }
-
     static inline float32x4 get_low(float32x8 a)
     {
         return a.lo;
@@ -299,15 +259,6 @@ namespace simd {
         float32x8 v;
         v.lo = a;
         v.hi = b;
-        return v;
-    }
-
-    template <>
-    inline float32x2 convert<float32x2>(float64x2 s)
-    {
-        float32x2 v;
-        v[0] = float(s[0]);
-        v[1] = float(s[1]);
         return v;
     }
 
@@ -408,50 +359,31 @@ namespace simd {
 
     static inline float64x2 get_low(float64x4 a)
     {
-        float64x2 v;
-        v[0] = a[0];
-        v[1] = a[1];
-        return v;
+        return a.lo;
     }
 
     static inline float64x2 get_high(float64x4 a)
     {
-        float64x2 v;
-        v[0] = a[2];
-        v[1] = a[3];
-        return v;
+        return a.hi;
     }
 
     static inline float64x4 set_low(float64x4 a, float64x2 low)
     {
-        a[0] = low[0];
-        a[1] = low[1];
+        a.lo = low;
         return a;
     }
 
     static inline float64x4 set_high(float64x4 a, float64x2 high)
     {
-        a[2] = high[0];
-        a[3] = high[1];
+        a.hi = high;
         return a;
     }
 
     static inline float64x4 combine(float64x2 a, float64x2 b)
     {
         float64x4 v;
-        v[0] = a[0];
-        v[1] = a[1];
-        v[2] = b[0];
-        v[3] = b[1];
-        return v;
-    }
-
-    template <>
-    inline float64x2 convert<float64x2>(float32x2 s)
-    {
-        float64x2 v;
-        v[0] = s[0];
-        v[1] = s[1];
+        v.lo = a;
+        v.hi = b;
         return v;
     }
 
@@ -459,10 +391,10 @@ namespace simd {
     inline float64x4 convert<float64x4>(int32x4 s)
     {
         float64x4 v;
-        v[0] = double(s[0]);
-        v[1] = double(s[1]);
-        v[2] = double(s[2]);
-        v[3] = double(s[3]);
+        v.lo[0] = double(s[0]);
+        v.lo[1] = double(s[1]);
+        v.hi[0] = double(s[2]);
+        v.hi[1] = double(s[3]);
         return v;
     }
 
@@ -470,30 +402,30 @@ namespace simd {
     inline float64x4 convert<float64x4>(float32x4 s)
     {
         float64x4 v;
-        v[0] = double(s[0]);
-        v[1] = double(s[1]);
-        v[2] = double(s[2]);
-        v[3] = double(s[3]);
+        v.lo[0] = double(s[0]);
+        v.lo[1] = double(s[1]);
+        v.hi[0] = double(s[2]);
+        v.hi[1] = double(s[3]);
         return v;
     }
 
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
     {
-        int x = int(s[0] + 0.5);
-        int y = int(s[1] + 0.5);
-        int z = int(s[2] + 0.5);
-        int w = int(s[3] + 0.5);
+        int x = int(s.lo[0] + 0.5);
+        int y = int(s.lo[1] + 0.5);
+        int z = int(s.hi[0] + 0.5);
+        int w = int(s.hi[1] + 0.5);
         return int32x4_set4(x, y, z, w);
     }
 
     template <>
     inline float32x4 convert<float32x4>(float64x4 s)
     {
-        float x = float(s[0]);
-        float y = float(s[1]);
-        float z = float(s[2]);
-        float w = float(s[3]);
+        float x = float(s.lo[0]);
+        float y = float(s.lo[1]);
+        float z = float(s.hi[0]);
+        float w = float(s.hi[1]);
         return float32x4_set4(x, y, z, w);
     }
 
@@ -501,30 +433,30 @@ namespace simd {
     inline float64x4 convert<float64x4>(uint32x4 u)
     {
         float64x4 v;
-        v[0] = u32_to_f64(u[0]);
-        v[1] = u32_to_f64(u[1]);
-        v[2] = u32_to_f64(u[2]);
-        v[3] = u32_to_f64(u[3]);
+        v.lo[0] = u32_to_f64(u[0]);
+        v.lo[1] = u32_to_f64(u[1]);
+        v.hi[0] = u32_to_f64(u[2]);
+        v.hi[1] = u32_to_f64(u[3]);
         return v;
     }
 
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
     {
-        uint32 x = f64_to_u32(d[0]);
-        uint32 y = f64_to_u32(d[1]);
-        uint32 z = f64_to_u32(d[2]);
-        uint32 w = f64_to_u32(d[3]);
+        uint32 x = f64_to_u32(d.lo[0]);
+        uint32 y = f64_to_u32(d.lo[1]);
+        uint32 z = f64_to_u32(d.hi[0]);
+        uint32 w = f64_to_u32(d.hi[1]);
         return uint32x4_set4(x, y, z, w);
     }
 
     template <>
     inline int32x4 truncate<int32x4>(float64x4 s)
     {
-        int x = int(s[0]);
-        int y = int(s[1]);
-        int z = int(s[2]);
-        int w = int(s[3]);
+        int x = int(s.lo[0]);
+        int y = int(s.lo[1]);
+        int z = int(s.hi[0]);
+        int w = int(s.hi[1]);
         return int32x4_set4(x, y, z, w);
     }
 

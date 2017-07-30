@@ -383,229 +383,29 @@ namespace simd {
         return bitwise_xor(a, int32x4_set1(b));
     }
 
-    static inline int32x4::mask compare_eq(int32x4 a, int b)
+    static inline mask32x4 compare_eq(int32x4 a, int b)
     {
         return compare_eq(a, int32x4_set1(b));
     }
 
-    static inline int32x4::mask compare_gt(int32x4 a, int b)
+    static inline mask32x4 compare_gt(int32x4 a, int b)
     {
         return compare_gt(a, int32x4_set1(b));
     }
 
-    static inline int32x4 select(int32x4::mask mask, int a, int32x4 b)
+    static inline int32x4 select(mask32x4 mask, int a, int32x4 b)
     {
         return select(mask, int32x4_set1(a), b);
     }
 
-    static inline int32x4 select(int32x4::mask mask, int32x4 a, int b)
+    static inline int32x4 select(mask32x4 mask, int32x4 a, int b)
     {
         return select(mask, a, int32x4_set1(b));
     }
 
-    static inline int32x4 select(int32x4::mask mask, int a, int b)
+    static inline int32x4 select(mask32x4 mask, int a, int b)
     {
         return select(mask, int32x4_set1(a), int32x4_set1(b));
-    }
-
-    // ------------------------------------------------------------------
-    // float32x2
-    // ------------------------------------------------------------------
-
-    static inline float32x2 set_x(float32x2 a, float x)
-    {
-        return set_component<0>(a, x);
-    }
-
-    static inline float32x2 set_y(float32x2 a, float y)
-    {
-        return set_component<1>(a, y);
-    }
-
-    static inline float get_x(float32x2 a)
-    {
-        return get_component<0>(a);
-    }
-
-    static inline float get_y(float32x2 a)
-    {
-        return get_component<1>(a);
-    }
-
-    static inline float32x2 splat_x(float32x2 a)
-    {
-        return shuffle<0, 0>(a);
-    }
-
-    static inline float32x2 splat_y(float32x2 a)
-    {
-        return shuffle<1, 1>(a);
-    }
-
-    static inline float32x2 add(float a, float32x2 b)
-    {
-        return add(float32x2_set1(a), b);
-    }
-
-    static inline float32x2 add(float32x2 a, float b)
-    {
-        return add(a, float32x2_set1(b));
-    }
-
-    static inline float32x2 sub(float a, float32x2 b)
-    {
-        return sub(float32x2_set1(a), b);
-    }
-
-    static inline float32x2 sub(float32x2 a, float b)
-    {
-        return sub(a, float32x2_set1(b));
-    }
-
-    static inline float32x2 mul(float32x2 a, float b)
-    {
-        return mul(a, float32x2_set1(b));
-    }
-
-    static inline float32x2 mul(float a, float32x2 b)
-    {
-        return mul(float32x2_set1(a), b);
-    }
-
-    static inline float32x2 div(float a, float32x2 b)
-    {
-        return div(float32x2_set1(a), b);
-    }
-
-    static inline float32x2 madd(float a, float32x2 b, float32x2 c)
-    {
-        return madd(float32x2_set1(a), b, c);
-    }
-
-    static inline float32x2 madd(float32x2 a, float b, float32x2 c)
-    {
-        return madd(a, float32x2_set1(b), c);
-    }
-
-    static inline float32x2 madd(float32x2 a, float32x2 b, float c)
-    {
-        return madd(a, b, float32x2_set1(c));
-    }
-
-    static inline float32x2 min(float a, float32x2 b)
-    {
-        return min(float32x2_set1(a), b);
-    }
-
-    static inline float32x2 min(float32x2 a, float b)
-    {
-        return min(a, float32x2_set1(b));
-    }
-
-    static inline float32x2 max(float a, float32x2 b)
-    {
-        return max(float32x2_set1(a), b);
-    }
-
-    static inline float32x2 max(float32x2 a, float b)
-    {
-        return max(a, float32x2_set1(b));
-    }
-
-    static inline float32x2 clamp(float32x2 v, float32x2 vmin, float32x2 vmax)
-    {
-        return min(vmax, max(vmin, v));
-    }
-
-    static inline float32x2 clamp(float32x2 v, float vmin, float vmax)
-    {
-        return min(float32x2_set1(vmax), max(float32x2_set1(vmin), v));
-    }
-
-    static inline float32x2::mask compare_neq(float32x2 a, float b)
-    {
-        return compare_neq(a, float32x2_set1(b));
-    }
-
-    static inline float32x2::mask compare_eq(float32x2 a, float b)
-    {
-        return compare_eq(a, float32x2_set1(b));
-    }
-
-    static inline float32x2::mask compare_lt(float32x2 a, float b)
-    {
-        return compare_lt(a, float32x2_set1(b));
-    }
-
-    static inline float32x2::mask compare_le(float32x2 a, float b)
-    {
-        return compare_le(a, float32x2_set1(b));
-    }
-
-    static inline float32x2::mask compare_gt(float32x2 a, float b)
-    {
-        return compare_gt(a, float32x2_set1(b));
-    }
-
-    static inline float32x2::mask compare_ge(float32x2 a, float b)
-    {
-        return compare_ge(a, float32x2_set1(b));
-    }
-
-    static inline float32x2 select(float32x2::mask mask, float a, float32x2 b)
-    {
-        return select(mask, float32x2_set1(a), b);
-    }
-
-    static inline float32x2 select(float32x2::mask mask, float32x2 a, float b)
-    {
-        return select(mask, a, float32x2_set1(b));
-    }
-
-    static inline float32x2 select(float32x2::mask mask, float a, float b)
-    {
-        return select(mask, float32x2_set1(a), float32x2_set1(b));
-    }
-
-    static inline float32x2 mod(float32x2 a, float32x2 b)
-    {
-        float32x2 temp = floor(div(a, b));
-        return sub(a, mul(b, temp));
-    }
-
-    static inline float32x2 sign(float32x2 a)
-    {
-        auto zero = float32x2_zero();
-        auto negative = select(compare_gt(zero, a), float32x2_set1(-1.0f), zero);
-        auto positive = select(compare_gt(a, zero), float32x2_set1( 1.0f), zero);
-        return bitwise_or(negative, positive);
-    }
-
-    static inline float32x2 radians(float32x2 a)
-    {
-        static const float32x2 s = float32x2_set1(0.01745329251f);
-        return mul(a, s);
-    }
-
-    static inline float32x2 degrees(float32x2 a)
-    {
-        static const float32x2 s = float32x2_set1(57.2957795131f);
-        return mul(a, s);
-    }
-
-    static inline float32x2 square(float32x2 a)
-    {
-        return dot2(a, a);
-    }
-
-    static inline float32x2 length(float32x2 a)
-    {
-        return sqrt(dot2(a, a));
-    }
-
-    static inline float32x2 normalize(float32x2 a)
-    {
-        return mul(a, rsqrt(dot2(a, a)));
     }
 
     // ------------------------------------------------------------------
@@ -752,42 +552,42 @@ namespace simd {
         return min(float32x4_set1(vmax), max(float32x4_set1(vmin), v));
     }
 
-    static inline float32x4::mask compare_neq(float32x4 a, float b)
+    static inline mask32x4 compare_neq(float32x4 a, float b)
     {
         return compare_neq(a, float32x4_set1(b));
     }
 
-    static inline float32x4::mask compare_eq(float32x4 a, float b)
+    static inline mask32x4 compare_eq(float32x4 a, float b)
     {
         return compare_eq(a, float32x4_set1(b));
     }
 
-    static inline float32x4::mask compare_lt(float32x4 a, float b)
+    static inline mask32x4 compare_lt(float32x4 a, float b)
     {
         return compare_lt(a, float32x4_set1(b));
     }
 
-    static inline float32x4::mask compare_le(float32x4 a, float b)
+    static inline mask32x4 compare_le(float32x4 a, float b)
     {
         return compare_le(a, float32x4_set1(b));
     }
 
-    static inline float32x4::mask compare_gt(float32x4 a, float b)
+    static inline mask32x4 compare_gt(float32x4 a, float b)
     {
         return compare_gt(a, float32x4_set1(b));
     }
 
-    static inline float32x4::mask compare_ge(float32x4 a, float b)
+    static inline mask32x4 compare_ge(float32x4 a, float b)
     {
         return compare_ge(a, float32x4_set1(b));
     }
 
-    static inline float32x4 select(float32x4::mask mask, float a, float32x4 b)
+    static inline float32x4 select(mask32x4 mask, float a, float32x4 b)
     {
         return select(mask, float32x4_set1(a), b);
     }
 
-    static inline float32x4 select(float32x4::mask mask, float32x4 a, float b)
+    static inline float32x4 select(mask32x4 mask, float32x4 a, float b)
     {
         return select(mask, a, float32x4_set1(b));
     }
@@ -917,42 +717,42 @@ namespace simd {
         return min(float32x8_set1(vmax), max(float32x8_set1(vmin), v));
     }
 
-    static inline float32x8::mask compare_neq(float32x8 a, float b)
+    static inline mask32x8 compare_neq(float32x8 a, float b)
     {
         return compare_neq(a, float32x8_set1(b));
     }
 
-    static inline float32x8::mask compare_eq(float32x8 a, float b)
+    static inline mask32x8 compare_eq(float32x8 a, float b)
     {
         return compare_eq(a, float32x8_set1(b));
     }
 
-    static inline float32x8::mask compare_lt(float32x8 a, float b)
+    static inline mask32x8 compare_lt(float32x8 a, float b)
     {
         return compare_lt(a, float32x8_set1(b));
     }
 
-    static inline float32x8::mask compare_le(float32x8 a, float b)
+    static inline mask32x8 compare_le(float32x8 a, float b)
     {
         return compare_le(a, float32x8_set1(b));
     }
 
-    static inline float32x8::mask compare_gt(float32x8 a, float b)
+    static inline mask32x8 compare_gt(float32x8 a, float b)
     {
         return compare_gt(a, float32x8_set1(b));
     }
 
-    static inline float32x8::mask compare_ge(float32x8 a, float b)
+    static inline mask32x8 compare_ge(float32x8 a, float b)
     {
         return compare_ge(a, float32x8_set1(b));
     }
 
-    static inline float32x8 select(float32x8::mask mask, float a, float32x8 b)
+    static inline float32x8 select(mask32x8 mask, float a, float32x8 b)
     {
         return select(mask, float32x8_set1(a), b);
     }
 
-    static inline float32x8 select(float32x8::mask mask, float32x8 a, float b)
+    static inline float32x8 select(mask32x8 mask, float32x8 a, float b)
     {
         return select(mask, a, float32x8_set1(b));
     }
@@ -1097,42 +897,42 @@ namespace simd {
         return min(float64x2_set1(vmax), max(float64x2_set1(vmin), v));
     }
 
-    static inline float64x2::mask compare_neq(float64x2 a, double b)
+    static inline mask64x2 compare_neq(float64x2 a, double b)
     {
         return compare_neq(a, float64x2_set1(b));
     }
 
-    static inline float64x2::mask compare_eq(float64x2 a, double b)
+    static inline mask64x2 compare_eq(float64x2 a, double b)
     {
         return compare_eq(a, float64x2_set1(b));
     }
 
-    static inline float64x2::mask compare_lt(float64x2 a, double b)
+    static inline mask64x2 compare_lt(float64x2 a, double b)
     {
         return compare_lt(a, float64x2_set1(b));
     }
 
-    static inline float64x2::mask compare_le(float64x2 a, double b)
+    static inline mask64x2 compare_le(float64x2 a, double b)
     {
         return compare_le(a, float64x2_set1(b));
     }
 
-    static inline float64x2::mask compare_gt(float64x2 a, double b)
+    static inline mask64x2 compare_gt(float64x2 a, double b)
     {
         return compare_gt(a, float64x2_set1(b));
     }
 
-    static inline float64x2::mask compare_ge(float64x2 a, double b)
+    static inline mask64x2 compare_ge(float64x2 a, double b)
     {
         return compare_ge(a, float64x2_set1(b));
     }
 
-    static inline float64x2 select(float64x2::mask mask, double a, float64x2 b)
+    static inline float64x2 select(mask64x2 mask, double a, float64x2 b)
     {
         return select(mask, float64x2_set1(a), b);
     }
 
-    static inline float64x2 select(float64x2::mask mask, float64x2 a, double b)
+    static inline float64x2 select(mask64x2 mask, float64x2 a, double b)
     {
         return select(mask, a, float64x2_set1(b));
     }
@@ -1322,42 +1122,42 @@ namespace simd {
         return min(float64x4_set1(vmax), max(float64x4_set1(vmin), v));
     }
 
-    static inline float64x4::mask compare_neq(float64x4 a, double b)
+    static inline mask64x4 compare_neq(float64x4 a, double b)
     {
         return compare_neq(a, float64x4_set1(b));
     }
 
-    static inline float64x4::mask compare_eq(float64x4 a, double b)
+    static inline mask64x4 compare_eq(float64x4 a, double b)
     {
         return compare_eq(a, float64x4_set1(b));
     }
 
-    static inline float64x4::mask compare_lt(float64x4 a, double b)
+    static inline mask64x4 compare_lt(float64x4 a, double b)
     {
         return compare_lt(a, float64x4_set1(b));
     }
 
-    static inline float64x4::mask compare_le(float64x4 a, double b)
+    static inline mask64x4 compare_le(float64x4 a, double b)
     {
         return compare_le(a, float64x4_set1(b));
     }
 
-    static inline float64x4::mask compare_gt(float64x4 a, double b)
+    static inline mask64x4 compare_gt(float64x4 a, double b)
     {
         return compare_gt(a, float64x4_set1(b));
     }
 
-    static inline float64x4::mask compare_ge(float64x4 a, double b)
+    static inline mask64x4 compare_ge(float64x4 a, double b)
     {
         return compare_ge(a, float64x4_set1(b));
     }
 
-    static inline float64x4 select(float64x4::mask mask, double a, float64x4 b)
+    static inline float64x4 select(mask64x4 mask, double a, float64x4 b)
     {
         return select(mask, float64x4_set1(a), b);
     }
 
-    static inline float64x4 select(float64x4::mask mask, float64x4 a, double b)
+    static inline float64x4 select(mask64x4 mask, float64x4 a, double b)
     {
         return select(mask, a, float64x4_set1(b));
     }

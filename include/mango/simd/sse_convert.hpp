@@ -34,22 +34,22 @@ namespace detail {
 		{
 		}
 
-		template <typename ScalarType, int Size, typename VectorType, typename MaskType>
-		operator hardware_vector<ScalarType, Size, VectorType, MaskType> ()
+		template <typename ScalarType, int VectorSize, typename VectorType>
+		operator hardware_vector<ScalarType, VectorSize, VectorType> ()
 		{
-			return hardware_vector<ScalarType, Size, VectorType, MaskType>(data);
+			return hardware_vector<ScalarType, VectorSize, VectorType>(data);
 		}
 
-		template <typename ScalarType, int Size>
-		operator hardware_vector<ScalarType, Size, __m128i, __m128i> ()
+		template <typename ScalarType, int VectorSize>
+		operator hardware_vector<ScalarType, VectorSize, __m128i> ()
 		{
-			return hardware_vector<ScalarType, Size, __m128i, __m128i>(_mm_castps_si128(data));
+			return hardware_vector<ScalarType, VectorSize, __m128i>(_mm_castps_si128(data));
 		}
 
-		template <typename ScalarType, int Size>
-		operator hardware_vector<ScalarType, Size, __m128d, __m128d> ()
+		template <typename ScalarType, int VectorSize>
+		operator hardware_vector<ScalarType, VectorSize, __m128d> ()
 		{
-			return hardware_vector<ScalarType, Size, __m128d, __m128d>(_mm_castps_pd(data));
+			return hardware_vector<ScalarType, VectorSize, __m128d>(_mm_castps_pd(data));
 		}
 	};
 
@@ -78,11 +78,11 @@ namespace detail {
     // reinterpret
     // -----------------------------------------------------------------
 
-	template <typename D, typename S0, int S1, typename S2, typename S3>
-	inline D reinterpret(hardware_vector<S0, S1, S2, S3> s)
+	template <typename D, typename S0, int S1, typename S2>
+	inline D reinterpret(hardware_vector<S0, S1, S2> s)
 	{
-        static_assert(sizeof(hardware_vector<S0, S1, S2, S3>) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2, S3>::vector_bits>(s));
+        static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
 	}
 
 	template <typename D, typename S>
@@ -288,39 +288,6 @@ namespace detail {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x2 get_low(float32x4 a)
-    {
-        float x = get_x(a);
-        float y = get_y(a);
-        return float32x2_set2(x, y);
-    }
-
-    static inline float32x2 get_high(float32x4 a)
-    {
-        float z = get_z(a);
-        float w = get_w(a);
-        return float32x2_set2(z, w);
-    }
-
-    static inline float32x4 set_low(float32x4 a, float32x2 low)
-    {
-        a = set_x(a, get_x(low));
-        a = set_y(a, get_y(low));
-        return a;
-    }
-
-    static inline float32x4 set_high(float32x4 a, float32x2 high)
-    {
-        a = set_z(a, get_x(high));
-        a = set_w(a, get_y(high));
-        return a;
-    }
-
-    static inline float32x4 combine(float32x2 a, float32x2 b)
-    {
-        return float32x4_set4(a[0], a[1], b[0], b[1]);
-    }
-
     static inline float32x4 get_low(float32x8 a)
     {
         return a.lo;
@@ -349,15 +316,6 @@ namespace detail {
         result.lo = a;
         result.hi = b;
         return result;
-    }
-
-    template <>
-    inline float32x2 convert<float32x2>(float64x2 s)
-    {
-        float32x4 temp = _mm_cvtpd_ps(s);
-        float x = get_x(temp);
-        float y = get_y(temp);
-        return float32x2_set2(x, y);
     }
 
     template <>
@@ -471,15 +429,6 @@ namespace detail {
         result.lo = a;
         result.hi = b;
         return result;
-    }
-
-    template <>
-    inline float64x2 convert<float64x2>(float32x2 s)
-    {
-        float x = s[0];
-        float y = s[1];
-        const __m128 temp = _mm_setr_ps(x, y, x, y);
-        return _mm_cvtps_pd(temp);
     }
 
     template <>
@@ -617,7 +566,7 @@ namespace detail {
         int32x4 c = add(int32x4_set1(0x38000000), slli(no_sign, 13));
 
         // Select a, b, or c based on exponent
-        int32x4::mask mask;
+        mask32x4 mask;
         int32x4 result;
 
         mask = compare_eq(exponent, int32x4_zero());
@@ -644,9 +593,9 @@ namespace detail {
         const int32x4 vexponent = int32x4_set1(0x7f800000);
 
         // Inf / NaN
-        const int32x4::mask s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
+        const mask32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
         int32x4 mantissa = bitwise_and(u, int32x4_set1(0x007fffff));
-        int32x4::mask x0 = compare_eq(mantissa, int32x4_zero());
+        mask32x4 x0 = compare_eq(mantissa, int32x4_zero());
         mantissa = select(x0, int32x4_zero(), srai(mantissa, 13));
         const int32x4 v0 = bitwise_or(int32x4_set1(0x7c00), mantissa);
 

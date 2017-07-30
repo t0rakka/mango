@@ -16,75 +16,89 @@ namespace mango
     template <>
     struct Vector<float, 2> : VectorBase<float, 2>
     {
-        using vector_type = simd::float32x2;
-        using mask = simd::float32x2::mask;
-        union
+        template <int X, int Y>
+        struct Permute2
         {
-            simd::float32x2 xy;
+			float v[2];
 
-            ScalarAccessor<float, simd::float32x2, 0> x;
-            ScalarAccessor<float, simd::float32x2, 1> y;
-
-            Permute2<float, simd::float32x2, 0, 0> xx;
-            Permute2<float, simd::float32x2, 1, 0> yx;
-            Permute2<float, simd::float32x2, 1, 1> yy;
+			operator Vector<float, 2> () const
+			{
+				return Vector<float, 2>(v[X], v[Y]);
+			}
         };
 
-        explicit Vector() = default;
+        union
+        {
+            struct { float x, y; };
+
+			Permute2<0, 0> xx;
+			Permute2<1, 0> yx;
+			Permute2<0, 1> xy;
+			Permute2<1, 1> yy;
+        };
+
+        explicit Vector()
+        {
+        }
 
         explicit Vector(float s)
-        : xy(simd::float32x2_set1(s))
         {
+			x = s;
+			y = s;
         }
 
         explicit Vector(int s)
-        : xy(simd::float32x2_set1(float(s)))
         {
+            const float f = float(s);
+			x = f;
+			y = f;
         }
 
-        explicit Vector(float x, float y)
-        : xy(simd::float32x2_set2(x, y))
+        explicit Vector(float s0, float s1)
         {
+			x = s0;
+			y = s1;
         }
 
-        Vector(simd::float32x2 v)
-        : xy(v)
+        Vector(const Vector& v)
+        {
+			x = v.x;
+			y = v.y;
+        }
+
+        template <int X, int Y>
+        Vector(const Permute2<X, Y>& p)
+        {
+			const float* v = p.v;
+			x = v[X];
+			y = v[Y];
+        }
+
+        ~Vector()
         {
         }
 
         template <int X, int Y>
-        Vector(const Permute2<float, simd::float32x2, X, Y>& p)
+        Vector& operator = (const Permute2<X, Y>& p)
         {
-            xy = p;
-        }
-
-        template <int X, int Y>
-        Vector& operator = (const Permute2<float, simd::float32x2, X, Y>& p)
-        {
-            xy = p;
-            return *this;
-        }
-
-        Vector& operator = (simd::float32x2 v)
-        {
-            xy = v;
+			const float* v = p.v;
+			x = v[X];
+			y = v[Y];
             return *this;
         }
 
         Vector& operator = (float s)
         {
-            xy = simd::float32x2_set1(s);
+			x = s;
+			y = s;
             return *this;
         }
 
-        operator simd::float32x2 () const
+        Vector& operator = (const Vector& v)
         {
-            return xy;
-        }
-
-        operator simd::float32x2 ()
-        {
-            return xy;
+			x = v.x;
+			y = v.y;
+            return *this;
         }
     };
 
@@ -92,214 +106,101 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const float2 operator + (float2 v)
+    static inline const float2& operator + (const float2& v)
     {
         return v;
     }
 
-    static inline float2 operator - (float2 v)
+    static inline float2 operator - (const float2& v)
     {
-        return simd::neg(v);
+        return float2(-v.x, -v.y);
     }
 
-    static inline float2& operator += (float2& a, float2 b)
+    static inline float2& operator += (float2& a, const float2& b)
     {
-        a = simd::add(a, b);
+        a.x += b.x;
+        a.y += b.y;
         return a;
     }
 
-    static inline float2& operator += (float2& a, float b)
+    static inline float2& operator -= (float2& a, const float2& b)
     {
-        a = simd::add(a, b);
+        a.x -= b.x;
+        a.y -= b.y;
         return a;
     }
 
-    static inline float2& operator -= (float2& a, float2 b)
+    static inline float2& operator *= (float2& a, const float2& b)
     {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline float2& operator -= (float2& a, float b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline float2& operator *= (float2& a, float2 b)
-    {
-        a = simd::mul(a, b);
+        a.x *= b.x;
+        a.y *= b.y;
         return a;
     }
 
     static inline float2& operator *= (float2& a, float b)
     {
-        a = simd::mul(a, b);
+        a.x *= b;
+        a.y *= b;
         return a;
     }
 
-    static inline float2& operator /= (float2& a, float2 b)
+    static inline float2& operator /= (float2& a, const float2& b)
     {
-        a = simd::div(a, b);
+        a.x /= b.x;
+        a.y /= b.y;
         return a;
     }
 
     static inline float2& operator /= (float2& a, float b)
     {
-        a = simd::div(a, b);
+        b = 1.0f / b;
+        a.x *= b;
+        a.y *= b;
         return a;
-    }
-
-    static inline float2 operator + (float2 a, float2 b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline float2 operator + (float2 a, float b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline float2 operator + (float a, float2 b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline float2 operator - (float2 a, float2 b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline float2 operator - (float2 a, float b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline float2 operator - (float a, float2 b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline float2 operator * (float2 a, float2 b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline float2 operator * (float2 a, float b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline float2 operator * (float a, float2 b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline float2 operator / (float2 a, float2 b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline float2 operator / (float2 a, float b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline float2 operator / (float a, float2 b)
-    {
-        return simd::div(a, b);
     }
 
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
 
-    static inline float2 clamp(float2 a, float2 amin, float2 amax)
+    static inline float2 clamp(const float2& a, const float2& amin, const float2& amax)
     {
-        return simd::clamp(a, amin, amax);
+        const float x = std::max(amin.x, std::min(amax.x, a.x));
+        const float y = std::max(amin.y, std::min(amax.y, a.y));
+        return float2(x, y);
     }
 
-    static inline float2 madd(float2 a, float2 b, float2 c)
+    static inline float2 madd(const float2& a, const float2& b, const float2& c)
     {
-        return simd::madd(a, b, c);
+        const float x = a.x + b.x * c.x;
+        const float y = a.y + b.y * c.y;
+        return float2(x, y);
     }
 
-    static inline float2 lerp(float2 a, float2 b, float factor)
+    static inline float2 lerp(const float2& a, const float2& b, float factor)
     {
-        return a + (b - a) * factor;
+        const float x = a.x + (b.x - a.x) * factor;
+        const float y = a.y + (b.y - a.y) * factor;
+        return float2(x, y);
     }
 
-    static inline float2 lerp(float2 a, float2 b, float2 factor)
+    static inline float2 lerp(const float2& a, const float2& b, const float2& factor)
     {
-        return a + (b - a) * factor;
+        const float x = a.x + (b.x - a.x) * factor.x;
+        const float y = a.y + (b.y - a.y) * factor.y;
+        return float2(x, y);
     }
 
-    // ------------------------------------------------------------------
-	// bitwise operators
-    // ------------------------------------------------------------------
-
-    static inline float2 nand(float2 a, float2 b)
+    static inline float2 hmin(const float2& v)
     {
-        return simd::bitwise_nand(a, b);
+        const float s = std::min(v.x, v.y);
+        return float2(s);
     }
 
-    static inline float2 operator & (float2 a, float2 b)
+    static inline float2 hmax(const float2& v)
     {
-        return simd::bitwise_and(a, b);
-    }
-
-    static inline float2 operator | (float2 a, float2 b)
-    {
-        return simd::bitwise_or(a, b);
-    }
-
-    static inline float2 operator ^ (float2 a, float2 b)
-    {
-        return simd::bitwise_xor(a, b);
-    }
-
-    static inline float2 operator ~ (float2 a)
-    {
-        return simd::bitwise_not(a);
-    }
-
-    // ------------------------------------------------------------------
-    // compare / select
-    // ------------------------------------------------------------------
-
-    static inline float2::mask operator > (float2 a, float2 b)
-    {
-        return simd::compare_gt(a, b);
-    }
-
-    static inline float2::mask operator >= (float2 a, float2 b)
-    {
-        return simd::compare_ge(a, b);
-    }
-
-    static inline float2::mask operator < (float2 a, float2 b)
-    {
-        return simd::compare_lt(a, b);
-    }
-
-    static inline float2::mask operator <= (float2 a, float2 b)
-    {
-        return simd::compare_le(a, b);
-    }
-
-    static inline float2::mask operator == (float2 a, float2 b)
-    {
-        return simd::compare_eq(a, b);
-    }
-
-    static inline float2::mask operator != (float2 a, float2 b)
-    {
-        return simd::compare_neq(a, b);
-    }
-
-    static inline float2 select(float2::mask mask, float2 a, float2 b)
-    {
-        return simd::select(mask, a, b);
+        const float s = std::max(v.x, v.y);
+        return float2(s);
     }
 
 } // namespace mango
