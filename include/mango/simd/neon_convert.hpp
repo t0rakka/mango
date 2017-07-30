@@ -161,11 +161,11 @@ namespace detail {
     // reinterpret
     // -----------------------------------------------------------------
 
-	template <typename D, typename S0, int S1, typename S2, typename S3>
-	inline D reinterpret(hardware_vector<S0, S1, S2, S3> s)
+	template <typename D, typename S0, int S1, typename S2>
+	inline D reinterpret(hardware_vector<S0, S1, S2> s)
 	{
-        static_assert(sizeof(hardware_vector<S0, S1, S2, S3>) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2, S3>::vector_bits>(s));
+        static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
+		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
 	}
 
 	template <typename D, typename S0, int S1>
@@ -346,31 +346,6 @@ namespace detail {
     // float32
     // -----------------------------------------------------------------
 
-    static inline float32x2 get_low(float32x4 a)
-    {
-        return vget_low_f32(a);
-    }
-
-    static inline float32x2 get_high(float32x4 a)
-    {
-        return vget_high_f32(a);
-    }
-
-    static inline float32x4 set_low(float32x4 a, float32x2 low)
-    {
-        return vcombine_f32(low, vget_high_f32(a));
-    }
-
-    static inline float32x4 set_high(float32x4 a, float32x2 high)
-    {
-        return vcombine_f32(vget_low_f32(a), high);
-    }
-
-    static inline float32x4 combine(float32x2 a, float32x2 b)
-    {
-        return vcombine_f32(a, b);
-    }
-
     static inline float32x4 get_low(float32x8 a)
     {
         return a.lo;
@@ -399,14 +374,6 @@ namespace detail {
         result.lo = a;
         result.hi = b;
         return result;
-    }
-
-    template <>
-    inline float32x2 convert<float32x2>(float64x2 s)
-    {
-        float x = float(s[0]);
-        float y = float(s[1]);
-        return float32x2_set2(x, y);
     }
 
     template <>
@@ -499,122 +466,102 @@ namespace detail {
 
     static inline float64x2 get_low(float64x4 a)
     {
-        float64x2 v;
-        v[0] = a[0];
-        v[1] = a[1];
-        return v;
+        return a.lo;
     }
 
     static inline float64x2 get_high(float64x4 a)
     {
-        float64x2 v;
-        v[0] = a[2];
-        v[1] = a[3];
-        return v;
+        return a.hi;
     }
 
     static inline float64x4 set_low(float64x4 a, float64x2 low)
     {
-        a[0] = low[0];
-        a[1] = low[1];
+        a.lo = low;
         return a;
     }
 
     static inline float64x4 set_high(float64x4 a, float64x2 high)
     {
-        a[2] = high[0];
-        a[3] = high[1];
+        a.hi = high;
         return a;
     }
 
     static inline float64x4 combine(float64x2 a, float64x2 b)
     {
-        float64x4 v;
-        v[0] = a[0];
-        v[1] = a[1];
-        v[2] = b[0];
-        v[3] = b[1];
-        return v;
-    }
-
-    template <>
-    inline float64x2 convert<float64x2>(float32x2 s)
-    {
-        float x = get_x(s);
-        float y = get_y(s);
-        return float64x2_set2(x, y);
+        double x = a.data[0];
+        double y = a.data[1];
+        double z = b.data[0];
+        double w = b.data[1];
+        return float64x4_set4(x, y, z, w);
     }
 
     template <>
     inline float64x4 convert<float64x4>(int32x4 s)
     {
-        float64x4 v;
-        v[0] = double(get_x(s));
-        v[1] = double(get_y(s));
-        v[2] = double(get_z(s));
-        v[3] = double(get_w(s));
-        return v;
+        double x = double(get_x(s));
+        double y = double(get_y(s));
+        double z = double(get_z(s));
+        double w = double(get_w(s));
+        return float64x4_set4(x, y, z, w);
     }
 
     template <>
     inline float64x4 convert<float64x4>(float32x4 s)
     {
-        float64x4 v;
-        v[0] = double(get_x(s));
-        v[1] = double(get_y(s));
-        v[2] = double(get_z(s));
-        v[3] = double(get_w(s));
-        return v;
+        double x = double(get_x(s));
+        double y = double(get_y(s));
+        double z = double(get_z(s));
+        double w = double(get_w(s));
+        return float64x4_set4(x, y, z, w);
     }
 
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
     {
-        int x = int(s[0] + 0.5);
-        int y = int(s[1] + 0.5);
-        int z = int(s[2] + 0.5);
-        int w = int(s[3] + 0.5);
+        int x = int(s.lo.data[0] + 0.5);
+        int y = int(s.lo.data[1] + 0.5);
+        int z = int(s.hi.data[0] + 0.5);
+        int w = int(s.hi.data[1] + 0.5);
         return int32x4_set4(x, y, z, w);
     }
 
     template <>
     inline float32x4 convert<float32x4>(float64x4 s)
     {
-        float x = float(s[0]);
-        float y = float(s[1]);
-        float z = float(s[2]);
-        float w = float(s[3]);
+        float x = float(s.lo.data[0]);
+        float y = float(s.lo.data[1]);
+        float z = float(s.hi.data[0]);
+        float w = float(s.hi.data[1]);
         return float32x4_set4(x, y, z, w);
     }
 
     template <>
     inline float64x4 convert<float64x4>(uint32x4 s)
     {
-        float64x4 v;
-        v[0] = u32_to_f64(get_x(s));
-        v[1] = u32_to_f64(get_y(s));
-        v[2] = u32_to_f64(get_z(s));
-        v[3] = u32_to_f64(get_w(s));
-        return v;
+        double x = u32_to_f64(get_x(s));
+        double y = u32_to_f64(get_y(s));
+        double z = u32_to_f64(get_z(s));
+        double w = u32_to_f64(get_w(s));
+        return float64x4_set4(x, y, z, w);
     }
 
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
     {
-        uint32 x = f64_to_u32(d[0]);
-        uint32 y = f64_to_u32(d[1]);
-        uint32 z = f64_to_u32(d[2]);
-        uint32 w = f64_to_u32(d[3]);
+        uint32 x = f64_to_u32(d.lo.data[0]);
+        uint32 y = f64_to_u32(d.lo.data[1]);
+        uint32 z = f64_to_u32(d.hi.data[0]);
+        uint32 w = f64_to_u32(d.hi.data[1]);
         return uint32x4_set4(x, y, z, w);
     }
 
     template <>
     inline int32x4 truncate<int32x4>(float64x4 s)
     {
-        int x = int(s[0]);
-        int y = int(s[1]);
-        int z = int(s[2]);
-        int w = int(s[3]);
+        int x = int(s.lo.data[0]);
+        int y = int(s.lo.data[1]);
+        int z = int(s.hi.data[0]);
+        int w = int(s.hi.data[1]);
         return int32x4_set4(x, y, z, w);
     }
 

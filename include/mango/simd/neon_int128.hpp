@@ -105,56 +105,39 @@ namespace simd {
 
     // compare
 
-    static inline uint8x16::mask compare_eq(uint8x16 a, uint8x16 b)
+    static inline mask8x16 compare_eq(uint8x16 a, uint8x16 b)
     {
         return vceqq_u8(a, b);
     }
 
-    static inline uint8x16::mask compare_gt(uint8x16 a, uint8x16 b)
+    static inline mask8x16 compare_gt(uint8x16 a, uint8x16 b)
     {
         return vcgtq_u8(a, b);
     }
 
-    static inline uint8x16::mask compare_neq(uint8x16 a, uint8x16 b)
+    static inline mask8x16 compare_neq(uint8x16 a, uint8x16 b)
     {
         return vmvnq_u8(vceqq_u8(a, b));
     }
 
-    static inline uint8x16::mask compare_lt(uint8x16 a, uint8x16 b)
+    static inline mask8x16 compare_lt(uint8x16 a, uint8x16 b)
     {
         return vcltq_u8(a, b);
     }
 
-    static inline uint8x16::mask compare_le(uint8x16 a, uint8x16 b)
+    static inline mask8x16 compare_le(uint8x16 a, uint8x16 b)
     {
         return vcleq_u8(a, b);
     }
 
-    static inline uint8x16::mask compare_ge(uint8x16 a, uint8x16 b)
+    static inline mask8x16 compare_ge(uint8x16 a, uint8x16 b)
     {
         return vcgeq_u8(a, b);
     }
 
-    static inline uint8x16 select(uint8x16::mask mask, uint8x16 a, uint8x16 b)
+    static inline uint8x16 select(mask8x16 mask, uint8x16 a, uint8x16 b)
     {
         return vbslq_u8(mask, a, b);
-    }
-
-    // mask
-
-    static inline uint8x16::mask operator & (uint8x16::mask a, uint8x16::mask b)
-    {
-        return vandq_u8(a, b);
-    }
-
-    static inline uint8x16::mask operator | (uint8x16::mask a, uint8x16::mask b)
-    {
-        return vorrq_u8(a, b);
-    }
-
-    static inline uint8x16::mask operator ^ (uint8x16::mask a, uint8x16::mask b)
-    {
-        return veorq_u8(a, b);
     }
 
     static inline uint8x16 min(uint8x16 a, uint8x16 b)
@@ -263,56 +246,39 @@ namespace simd {
 
     // compare
 
-    static inline uint16x8::mask compare_eq(uint16x8 a, uint16x8 b)
+    static inline mask16x8 compare_eq(uint16x8 a, uint16x8 b)
     {
         return vceqq_u16(a, b);
     }
 
-    static inline uint16x8::mask compare_gt(uint16x8 a, uint16x8 b)
+    static inline mask16x8 compare_gt(uint16x8 a, uint16x8 b)
     {
         return vcgtq_u16(a, b);
     }
 
-    static inline uint16x8::mask compare_neq(uint16x8 a, uint16x8 b)
+    static inline mask16x8 compare_neq(uint16x8 a, uint16x8 b)
     {
         return vmvnq_u16(vceqq_u16(a, b));
     }
 
-    static inline uint16x8::mask compare_lt(uint16x8 a, uint16x8 b)
+    static inline mask16x8 compare_lt(uint16x8 a, uint16x8 b)
     {
         return vcltq_u16(a, b);
     }
 
-    static inline uint16x8::mask compare_le(uint16x8 a, uint16x8 b)
+    static inline mask16x8 compare_le(uint16x8 a, uint16x8 b)
     {
         return vcleq_u16(a, b);
     }
 
-    static inline uint16x8::mask compare_ge(uint16x8 a, uint16x8 b)
+    static inline mask16x8 compare_ge(uint16x8 a, uint16x8 b)
     {
         return vcgeq_u16(a, b);
     }
 
-    static inline uint16x8 select(uint16x8::mask mask, uint16x8 a, uint16x8 b)
+    static inline uint16x8 select(mask16x8 mask, uint16x8 a, uint16x8 b)
     {
         return vbslq_u16(mask, a, b);
-    }
-
-    // mask
-
-    static inline uint16x8::mask operator & (uint16x8::mask a, uint16x8::mask b)
-    {
-        return vandq_u16(a, b);
-    }
-
-    static inline uint16x8::mask operator | (uint16x8::mask a, uint16x8::mask b)
-    {
-        return vorrq_u16(a, b);
-    }
-
-    static inline uint16x8::mask operator ^ (uint16x8::mask a, uint16x8::mask b)
-    {
-        return veorq_u16(a, b);
     }
 
     // shift
@@ -498,67 +464,39 @@ namespace simd {
 
     // compare
 
-    static inline uint32x4::mask compare_eq(uint32x4 a, uint32x4 b)
+    static inline mask32x4 compare_eq(uint32x4 a, uint32x4 b)
     {
         return vceqq_u32(a, b);
     }
 
-    static inline uint32x4::mask compare_gt(uint32x4 a, uint32x4 b)
+    static inline mask32x4 compare_gt(uint32x4 a, uint32x4 b)
     {
         return vcgtq_u32(a, b);
     }
 
-    static inline uint32x4::mask compare_neq(uint32x4 a, uint32x4 b)
+    static inline mask32x4 compare_neq(uint32x4 a, uint32x4 b)
     {
         return vmvnq_u32(vceqq_u32(a, b));
     }
 
-    static inline uint32x4::mask compare_lt(uint32x4 a, uint32x4 b)
+    static inline mask32x4 compare_lt(uint32x4 a, uint32x4 b)
     {
         return vcltq_u32(a, b);
     }
 
-    static inline uint32x4::mask compare_le(uint32x4 a, uint32x4 b)
+    static inline mask32x4 compare_le(uint32x4 a, uint32x4 b)
     {
         return vcleq_u32(a, b);
     }
 
-    static inline uint32x4::mask compare_ge(uint32x4 a, uint32x4 b)
+    static inline mask32x4 compare_ge(uint32x4 a, uint32x4 b)
     {
         return vcgeq_u32(a, b);
     }
 
-    static inline uint32x4 select(uint32x4::mask mask, uint32x4 a, uint32x4 b)
+    static inline uint32x4 select(mask32x4 mask, uint32x4 a, uint32x4 b)
     {
         return vbslq_u32(mask, a, b);
-    }
-
-    // mask
-
-    static inline uint32x4::mask operator & (uint32x4::mask a, uint32x4::mask b)
-    {
-        return vandq_u32(a, b);
-    }
-
-    static inline uint32x4::mask operator | (uint32x4::mask a, uint32x4::mask b)
-    {
-        return vorrq_u32(a, b);
-    }
-
-    static inline uint32x4::mask operator ^ (uint32x4::mask a, uint32x4::mask b)
-    {
-        return veorq_u32(a, b);
-    }
-
-    static inline uint32 get_mask(uint32x4::mask a)
-    {
-        const uint32x4_t mask = { 1, 2, 4, 8 };
-        const uint32x4_t masked = vandq_u32(a, mask);
-        const uint32x2_t high = vget_high_u32(masked);
-        const uint32x2_t low = vget_low_u32(masked);
-        const uint32x2_t d0 = vorr_u32(high, low);
-        const uint32x2_t d1 = vpadd_u32(d0, d0);
-        return vget_lane_u32(d1, 0);
     }
 
     // shift
@@ -687,26 +625,9 @@ namespace simd {
         return veorq_u64(a, vdupq_n_u64(0xffffffffffffffffull));
     }
 
-    static inline uint64x2 select(uint64x2::mask mask, uint64x2 a, uint64x2 b)
+    static inline uint64x2 select(mask64x2 mask, uint64x2 a, uint64x2 b)
     {
         return vbslq_u64(mask, a, b);
-    }
-
-    // mask
-
-    static inline uint64x2::mask operator & (uint64x2::mask a, uint64x2::mask b)
-    {
-        return vandq_u64(a, b);
-    }
-
-    static inline uint64x2::mask operator | (uint64x2::mask a, uint64x2::mask b)
-    {
-        return vorrq_u64(a, b);
-    }
-
-    static inline uint64x2::mask operator ^ (uint64x2::mask a, uint64x2::mask b)
-    {
-        return veorq_u64(a, b);
     }
 
     // shift
@@ -839,56 +760,39 @@ namespace simd {
 
     // compare
 
-    static inline int8x16::mask compare_eq(int8x16 a, int8x16 b)
+    static inline mask8x16 compare_eq(int8x16 a, int8x16 b)
     {
         return vceqq_s8(a, b);
     }
 
-    static inline int8x16::mask compare_gt(int8x16 a, int8x16 b)
+    static inline mask8x16 compare_gt(int8x16 a, int8x16 b)
     {
         return vcgtq_s8(a, b);
     }
 
-    static inline int8x16::mask compare_neq(int8x16 a, int8x16 b)
+    static inline mask8x16 compare_neq(int8x16 a, int8x16 b)
     {
         return vmvnq_u8(vceqq_s8(a, b));
     }
 
-    static inline int8x16::mask compare_lt(int8x16 a, int8x16 b)
+    static inline mask8x16 compare_lt(int8x16 a, int8x16 b)
     {
         return vcltq_s8(a, b);
     }
 
-    static inline int8x16::mask compare_le(int8x16 a, int8x16 b)
+    static inline mask8x16 compare_le(int8x16 a, int8x16 b)
     {
         return vcleq_s8(a, b);
     }
 
-    static inline int8x16::mask compare_ge(int8x16 a, int8x16 b)
+    static inline mask8x16 compare_ge(int8x16 a, int8x16 b)
     {
         return vcgeq_s8(a, b);
     }
 
-    static inline int8x16 select(int8x16::mask mask, int8x16 a, int8x16 b)
+    static inline int8x16 select(mask8x16 mask, int8x16 a, int8x16 b)
     {
         return vbslq_s8(mask, a, b);
-    }
-
-    // mask
-
-    static inline int8x16::mask operator & (int8x16::mask a, int8x16::mask b)
-    {
-        return vandq_u8(a, b);
-    }
-
-    static inline int8x16::mask operator | (int8x16::mask a, int8x16::mask b)
-    {
-        return vorrq_u8(a, b);
-    }
-
-    static inline int8x16::mask operator ^ (int8x16::mask a, int8x16::mask b)
-    {
-        return veorq_u8(a, b);
     }
 
     static inline int8x16 min(int8x16 a, int8x16 b)
@@ -1007,56 +911,39 @@ namespace simd {
 
     // compare
 
-    static inline int16x8::mask compare_eq(int16x8 a, int16x8 b)
+    static inline mask16x8 compare_eq(int16x8 a, int16x8 b)
     {
         return vceqq_s16(a, b);
     }
 
-    static inline int16x8::mask compare_gt(int16x8 a, int16x8 b)
+    static inline mask16x8 compare_gt(int16x8 a, int16x8 b)
     {
         return vcgtq_s16(a, b);
     }
 
-    static inline int16x8::mask compare_neq(int16x8 a, int16x8 b)
+    static inline mask16x8 compare_neq(int16x8 a, int16x8 b)
     {
         return vmvnq_u16(vceqq_s16(a, b));
     }
 
-    static inline int16x8::mask compare_lt(int16x8 a, int16x8 b)
+    static inline mask16x8 compare_lt(int16x8 a, int16x8 b)
     {
         return vcltq_s16(a, b);
     }
 
-    static inline int16x8::mask compare_le(int16x8 a, int16x8 b)
+    static inline mask16x8 compare_le(int16x8 a, int16x8 b)
     {
         return vcleq_s16(a, b);
     }
 
-    static inline int16x8::mask compare_ge(int16x8 a, int16x8 b)
+    static inline mask16x8 compare_ge(int16x8 a, int16x8 b)
     {
         return vcgeq_s16(a, b);
     }
 
-    static inline int16x8 select(int16x8::mask mask, int16x8 a, int16x8 b)
+    static inline int16x8 select(mask16x8 mask, int16x8 a, int16x8 b)
     {
         return vbslq_s16(mask, a, b);
-    }
-
-    // mask
-
-    static inline int16x8::mask operator & (int16x8::mask a, int16x8::mask b)
-    {
-        return vandq_u16(a, b);
-    }
-
-    static inline int16x8::mask operator | (int16x8::mask a, int16x8::mask b)
-    {
-        return vorrq_u16(a, b);
-    }
-
-    static inline int16x8::mask operator ^ (int16x8::mask a, int16x8::mask b)
-    {
-        return veorq_u16(a, b);
     }
 
     // shift
@@ -1256,67 +1143,39 @@ namespace simd {
 
     // compare
 
-    static inline int32x4::mask compare_eq(int32x4 a, int32x4 b)
+    static inline mask32x4 compare_eq(int32x4 a, int32x4 b)
     {
         return vceqq_s32(a, b);
     }
 
-    static inline int32x4::mask compare_gt(int32x4 a, int32x4 b)
+    static inline mask32x4 compare_gt(int32x4 a, int32x4 b)
     {
         return vcgtq_s32(a, b);
     }
 
-    static inline int32x4::mask compare_neq(int32x4 a, int32x4 b)
+    static inline mask32x4 compare_neq(int32x4 a, int32x4 b)
     {
         return vmvnq_u32(vceqq_s32(a, b));
     }
 
-    static inline int32x4::mask compare_lt(int32x4 a, int32x4 b)
+    static inline mask32x4 compare_lt(int32x4 a, int32x4 b)
     {
         return vcltq_s32(a, b);
     }
 
-    static inline int32x4::mask compare_le(int32x4 a, int32x4 b)
+    static inline mask32x4 compare_le(int32x4 a, int32x4 b)
     {
         return vcleq_s32(a, b);
     }
 
-    static inline int32x4::mask compare_ge(int32x4 a, int32x4 b)
+    static inline mask32x4 compare_ge(int32x4 a, int32x4 b)
     {
         return vcgeq_s32(a, b);
     }
 
-    static inline int32x4 select(int32x4::mask mask, int32x4 a, int32x4 b)
+    static inline int32x4 select(mask32x4 mask, int32x4 a, int32x4 b)
     {
         return vbslq_s32(mask, a, b);
-    }
-
-    // mask
-
-    static inline int32x4::mask operator & (int32x4::mask a, int32x4::mask b)
-    {
-        return vandq_u32(a, b);
-    }
-
-    static inline int32x4::mask operator | (int32x4::mask a, int32x4::mask b)
-    {
-        return vorrq_u32(a, b);
-    }
-
-    static inline int32x4::mask operator ^ (int32x4::mask a, int32x4::mask b)
-    {
-        return veorq_u32(a, b);
-    }
-
-    static inline uint32 get_mask(int32x4::mask a)
-    {
-        const uint32x4_t mask = { 1, 2, 4, 8 };
-        const uint32x4_t masked = vandq_u32(a, mask);
-        const uint32x2_t high = vget_high_u32(masked);
-        const uint32x2_t low = vget_low_u32(masked);
-        const uint32x2_t d0 = vorr_u32(high, low);
-        const uint32x2_t d1 = vpadd_u32(d0, d0);
-        return vget_lane_u32(d1, 0);
     }
 
     // shift
@@ -1463,26 +1322,9 @@ namespace simd {
         return veorq_s64(a, vdupq_n_s64(0xffffffffffffffffull));
     }
 
-    static inline int64x2 select(int64x2::mask mask, int64x2 a, int64x2 b)
+    static inline int64x2 select(mask64x2 mask, int64x2 a, int64x2 b)
     {
         return vbslq_s64(mask, a, b);
-    }
-
-    // mask
-
-    static inline int64x2::mask operator & (int64x2::mask a, int64x2::mask b)
-    {
-        return vandq_u64(a, b);
-    }
-
-    static inline int64x2::mask operator | (int64x2::mask a, int64x2::mask b)
-    {
-        return vorrq_u64(a, b);
-    }
-
-    static inline int64x2::mask operator ^ (int64x2::mask a, int64x2::mask b)
-    {
-        return veorq_u64(a, b);
     }
 
     // shift
@@ -1511,6 +1353,93 @@ namespace simd {
     {
         const uint64x2 temp = vshlq_u64(vreinterpretq_u64_s64(a), vdupq_n_s64(-count));
         return vreinterpretq_s64_u64(temp);
+    }
+
+    // -----------------------------------------------------------------
+    // mask8x16
+    // -----------------------------------------------------------------
+
+    static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
+    {
+        return vandq_u8(a, b);
+    }
+
+    static inline mask8x16 operator | (mask8x16 a, mask8x16 b)
+    {
+        return vorrq_u8(a, b);
+    }
+
+    static inline mask8x16 operator ^ (mask8x16 a, mask8x16 b)
+    {
+        return veorq_u8(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // mask16x8
+    // -----------------------------------------------------------------
+
+    static inline mask16x8 operator & (mask16x8 a, mask16x8 b)
+    {
+        return vandq_u16(a, b);
+    }
+
+    static inline mask16x8 operator | (mask16x8 a, mask16x8 b)
+    {
+        return vorrq_u16(a, b);
+    }
+
+    static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
+    {
+        return veorq_u16(a, b);
+    }
+
+    // -----------------------------------------------------------------
+    // mask32x4
+    // -----------------------------------------------------------------
+
+    static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
+    {
+        return vandq_u32(a, b);
+    }
+
+    static inline mask32x4 operator | (mask32x4 a, mask32x4 b)
+    {
+        return vorrq_u32(a, b);
+    }
+
+    static inline mask32x4 operator ^ (mask32x4 a, mask32x4 b)
+    {
+        return veorq_u32(a, b);
+    }
+
+    static inline uint32 get_mask(mask32x4 a)
+    {
+        const uint32x4_t mask = { 1, 2, 4, 8 };
+        const uint32x4_t masked = vandq_u32(a, mask);
+        const uint32x2_t high = vget_high_u32(masked);
+        const uint32x2_t low = vget_low_u32(masked);
+        const uint32x2_t d0 = vorr_u32(high, low);
+        const uint32x2_t d1 = vpadd_u32(d0, d0);
+        return vget_lane_u32(d1, 0);
+    }
+
+    // -----------------------------------------------------------------
+    // mask64x2
+    // -----------------------------------------------------------------
+
+    static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
+    {
+        return vandq_u64(a, b);
+    }
+
+    static inline mask64x2 operator | (mask64x2 a, mask64x2 b)
+    {
+        return vorrq_u64(a, b);
+    }
+
+    static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
+    {
+        return veorq_u64(a, b);
     }
 
 } // namespace simd

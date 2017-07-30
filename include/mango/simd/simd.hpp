@@ -413,12 +413,16 @@ namespace simd {
 
     struct float64x2_t
     {
-        double v[2];
+        double data[2];
+        float64x2_t() = default;
+        float64x2_t(double x, double y) { data[0] = x; data[1] = y; }
+        double & operator [] (int index) { return data[index]; }
+        const double & operator [] (int index) const { return data[index]; }
     };
 
     // 64 bit vector
 #ifdef MANGO_ENABLE_FP16
-    using float16x4  = hardware_vector<half, 4, float16x4_t, void>;
+    using float16x4  = hardware_vector<half, 4, float16x4_t>;
 #else
     using float16x4  = scalar_vector<half, 4>;
 #endif
