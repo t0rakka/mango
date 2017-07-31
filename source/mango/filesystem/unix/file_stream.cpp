@@ -2,8 +2,11 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#if __ANDROID_API__ < __ANDROID_API_N__
 #define _FILE_OFFSET_BITS 64 /* LFS: 64 bit off_t */
+#endif
 #include <cstdio>
+
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>

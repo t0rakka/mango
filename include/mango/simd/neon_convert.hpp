@@ -130,6 +130,8 @@ namespace detail {
         reinterpret_vector<128> lo;
         reinterpret_vector<128> hi;
 
+        reinterpret_vector() = default;
+
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
         : lo(v.lo), hi(v.hi)
@@ -160,6 +162,8 @@ namespace detail {
 	{
         reinterpret_vector<256> lo;
         reinterpret_vector<256> hi;
+
+        reinterpret_vector() = default;
 
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
