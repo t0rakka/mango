@@ -308,13 +308,13 @@ namespace simd {
 #include "sse_int128.hpp"
 #include "sse_float128.hpp"
 #include "sse_double128.hpp"
-#include "avx_float256.hpp"
-#include "avx_double256.hpp"
+#include "avx2_float256.hpp"
+#include "avx2_double256.hpp"
 #include "avx2_int256.hpp"
 #include "composite_int512.hpp"
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
-#include "avx_convert.hpp"
+#include "avx2_convert.hpp"
 #include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)

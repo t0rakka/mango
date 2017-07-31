@@ -190,61 +190,39 @@ namespace simd {
 
     // compare
 
-    static inline float32x8::mask compare_neq(float32x8 a, float32x8 b)
+    static inline mask32x8 compare_neq(float32x8 a, float32x8 b)
     {
         return _mm256_cmp_ps(a, b, 4);
     }
 
-    static inline float32x8::mask compare_eq(float32x8 a, float32x8 b)
+    static inline mask32x8 compare_eq(float32x8 a, float32x8 b)
     {
         return _mm256_cmp_ps(a, b, 0);
     }
 
-    static inline float32x8::mask compare_lt(float32x8 a, float32x8 b)
+    static inline mask32x8 compare_lt(float32x8 a, float32x8 b)
     {
         return _mm256_cmp_ps(a, b, 1);
     }
 
-    static inline float32x8::mask compare_le(float32x8 a, float32x8 b)
+    static inline mask32x8 compare_le(float32x8 a, float32x8 b)
     {
         return _mm256_cmp_ps(a, b, 2);
     }
 
-    static inline float32x8::mask compare_gt(float32x8 a, float32x8 b)
+    static inline mask32x8 compare_gt(float32x8 a, float32x8 b)
     {
         return _mm256_cmp_ps(b, a, 1);
     }
 
-    static inline float32x8::mask compare_ge(float32x8 a, float32x8 b)
+    static inline mask32x8 compare_ge(float32x8 a, float32x8 b)
     {
         return _mm256_cmp_ps(b, a, 2);
     }
 
-    static inline float32x8 select(float32x8::mask mask, float32x8 a, float32x8 b)
+    static inline float32x8 select(mask32x8 mask, float32x8 a, float32x8 b)
     {
         return _mm256_blendv_ps(b, a, mask);
-    }
-
-    // mask
-
-    static inline float32x8::mask operator & (float32x8::mask a, float32x8::mask b)
-    {
-         return _mm256_and_ps(a, b);
-    }
-
-    static inline float32x8::mask operator | (float32x8::mask a, float32x8::mask b)
-    {
-         return _mm256_or_ps(a, b);
-    }
-
-    static inline float32x8::mask operator ^ (float32x8::mask a, float32x8::mask b)
-    {
-         return _mm256_xor_ps(a, b);
-    }
-
-    static inline uint32 get_mask(float32x8::mask a)
-    {
-        return _mm256_movemask_ps(a);
     }
 
     // rounding

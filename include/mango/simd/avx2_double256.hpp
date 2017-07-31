@@ -352,56 +352,39 @@ namespace simd {
 
     // compare
 
-    static inline float64x4::mask compare_neq(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_neq(float64x4 a, float64x4 b)
     {
         return _mm256_cmp_pd(a, b, 4);
     }
 
-    static inline float64x4::mask compare_eq(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_eq(float64x4 a, float64x4 b)
     {
         return _mm256_cmp_pd(a, b, 0);
     }
 
-    static inline float64x4::mask compare_lt(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_lt(float64x4 a, float64x4 b)
     {
         return _mm256_cmp_pd(a, b, 1);
     }
 
-    static inline float64x4::mask compare_le(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_le(float64x4 a, float64x4 b)
     {
         return _mm256_cmp_pd(a, b, 2);
     }
 
-    static inline float64x4::mask compare_gt(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_gt(float64x4 a, float64x4 b)
     {
         return _mm256_cmp_pd(b, a, 1);
     }
 
-    static inline float64x4::mask compare_ge(float64x4 a, float64x4 b)
+    static inline mask64x4 compare_ge(float64x4 a, float64x4 b)
     {
         return _mm256_cmp_pd(b, a, 2);
     }
 
-    static inline float64x4 select(float64x4::mask mask, float64x4 a, float64x4 b)
+    static inline float64x4 select(mask64x4 mask, float64x4 a, float64x4 b)
     {
         return _mm256_blendv_pd(b, a, mask);
-    }
-
-    // mask
-
-    static inline float64x4::mask operator & (float64x4::mask a, float64x4::mask b)
-    {
-         return _mm256_and_pd(a, b);
-    }
-
-    static inline float64x4::mask operator | (float64x4::mask a, float64x4::mask b)
-    {
-         return _mm256_or_pd(a, b);
-    }
-
-    static inline float64x4::mask operator ^ (float64x4::mask a, float64x4::mask b)
-    {
-         return _mm256_xor_pd(a, b);
     }
 
     // rounding
