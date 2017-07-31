@@ -155,6 +155,37 @@ namespace detail {
 		}
 	};
 
+	template <>
+	struct reinterpret_vector<512>
+	{
+        reinterpret_vector<256> lo;
+        reinterpret_vector<256> hi;
+
+	    template <typename T>
+	    reinterpret_vector(composite_vector<T> v)
+        : lo(v.lo), hi(v.hi)
+	    {
+	    }
+
+		reinterpret_vector(float64x8 v)
+		{
+            std::memcpy(this, &v, 64);
+		}
+
+		template <typename T>
+		operator composite_vector<T> ()
+		{
+            return composite_vector<T>(lo, hi);
+		}
+
+		operator float64x8 ()
+		{
+            float64x8 temp;
+            std::memcpy(&temp, this, 64);
+            return temp;
+		}
+	};
+
 } // namespace detail
 
     // -----------------------------------------------------------------

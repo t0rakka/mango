@@ -72,6 +72,25 @@ namespace detail {
 		}
 	};
 
+	template <>
+	struct reinterpret_vector<512>
+	{
+        reinterpret_vector<256> lo;
+        reinterpret_vector<256> hi;
+
+	    template <typename T>
+	    reinterpret_vector(composite_vector<T> v)
+        : lo(v.lo), hi(v.hi)
+	    {
+	    }
+
+		template <typename T>
+		operator composite_vector<T> ()
+		{
+            return composite_vector<T>(lo, hi);
+		}
+	};
+
 } // namespace detail
 
     // -----------------------------------------------------------------
