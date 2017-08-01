@@ -51,22 +51,6 @@ namespace simd {
         float64x4_ustore(dest + 4, a.hi);
     }
 
-    static inline float64x8 movelh(float64x8 a, float64x8 b)
-    {
-        float64x8 result;
-        result.lo = a.lo;
-        result.hi = b.lo;
-        return result;
-    }
-
-    static inline float64x8 movehl(float64x8 a, float64x8 b)
-    {
-        float64x8 result;
-        result.lo = b.hi;
-        result.hi = a.hi;
-        return result;
-    }
-
     static inline float64x8 unpackhi(float64x8 a, float64x8 b)
     {
         float64x8 result;

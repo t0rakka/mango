@@ -206,6 +206,8 @@ namespace simd {
 	    return _mm_hadd_ps(a, b);
     }
 
+#if defined(MANGO_ENABLE_FMA3)
+
     static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
         return _mm_fmadd_ps(b, c, a);
@@ -215,6 +217,20 @@ namespace simd {
     {
         return _mm_fnmadd_ps(b, c, a);
     }
+
+#else
+
+    static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return _mm_add_ps(a, _mm_mul_ps(b, c));
+    }
+
+    static inline float32x4 msub(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return _mm_sub_ps(a, _mm_mul_ps(b, c));
+    }
+
+#endif
 
     static inline float32x4 fast_rcp(float32x4 a)
     {

@@ -945,7 +945,6 @@ namespace mango
     using uint64x4  = Vector<uint64, 4>;
 
     // 512 bit integer vectors
-    /* TODO:
     using int8x64   = Vector<int8, 64>;
     using int16x32  = Vector<int16, 32>;
     using int32x16  = Vector<int32, 16>;
@@ -954,7 +953,6 @@ namespace mango
     using uint16x32 = Vector<uint16, 32>;
     using uint32x16 = Vector<uint32, 16>;
     using uint64x8  = Vector<uint64, 8>;
-    */
 
     // float vectors
     using float16x4  = Vector<half, 4>;
@@ -962,11 +960,11 @@ namespace mango
     using float32x3  = Vector<float, 3>;
     using float32x4  = Vector<float, 4>;
     using float32x8  = Vector<float, 8>;
-    //using float32x16 = Vector<float, 16>;
+    using float32x16 = Vector<float, 16>;
     using float64x2  = Vector<double, 2>;
     using float64x3  = Vector<double, 3>;
     using float64x4  = Vector<double, 4>;
-    //using float64x8  = Vector<double, 8>;
+    using float64x8  = Vector<double, 8>;
 
     // 128 bit vector masks
     using mask8x16   = simd::mask8x16;
@@ -1012,6 +1010,7 @@ namespace mango
 #include "vector128_uint16x8.hpp"
 #include "vector128_uint32x4.hpp"
 #include "vector128_uint64x2.hpp"
+
 #include "vector256_int8x32.hpp"
 #include "vector256_int16x16.hpp"
 #include "vector256_int32x8.hpp"
@@ -1020,11 +1019,23 @@ namespace mango
 #include "vector256_uint16x16.hpp"
 #include "vector256_uint32x8.hpp"
 #include "vector256_uint64x4.hpp"
+
+#include "vector512_int8x64.hpp"
+#include "vector512_int16x32.hpp"
+#include "vector512_int32x16.hpp"
+#include "vector512_int64x8.hpp"
+#include "vector512_uint8x64.hpp"
+#include "vector512_uint16x32.hpp"
+#include "vector512_uint32x16.hpp"
+#include "vector512_uint64x8.hpp"
+
 #include "vector_float16x4.hpp"
 #include "vector_float32x2.hpp"
 #include "vector_float32x3.hpp"
 #include "vector_float32x4.hpp"
 #include "vector_float32x8.hpp"
+#include "vector_float32x16.hpp"
 #include "vector_float64x2.hpp"
 #include "vector_float64x4.hpp"
+#include "vector_float64x8.hpp"
 #include "vector_gather.hpp"

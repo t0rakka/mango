@@ -232,6 +232,7 @@ namespace simd {
 #include "avx512_int256.hpp"
 #include "avx512_int512.hpp"
 #include "avx512_convert.hpp"
+#include "avx512_gather.hpp"
 #include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_AVX2)
@@ -315,6 +316,7 @@ namespace simd {
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
 #include "avx2_convert.hpp"
+#include "avx2_gather.hpp"
 #include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
@@ -398,6 +400,7 @@ namespace simd {
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
 #include "sse_convert.hpp"
+#include "common_gather.hpp"
 #include "sse_matrix.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
@@ -494,6 +497,7 @@ namespace simd {
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
 #include "neon_convert.hpp"
+#include "common_gather.hpp"
 #include "neon_matrix.hpp"
 
 #else
@@ -575,8 +579,7 @@ namespace simd {
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
 #include "scalar_convert.hpp"
+#include "common_gather.hpp"
 #include "scalar_matrix.hpp"
 
 #endif
-
-#include "gather.hpp"

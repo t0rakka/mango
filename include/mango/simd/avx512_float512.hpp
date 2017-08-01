@@ -122,6 +122,8 @@ namespace simd {
         return _mm512_div_ps(a, _mm512_set1_ps(b));
     }
 
+#if defined(MANGO_ENABLE_FMA3)
+
     static inline float32x16 madd(float32x16 a, float32x16 b, float32x16 c)
     {
         return _mm512_fmadd_ps(b, c, a);
@@ -131,6 +133,20 @@ namespace simd {
     {
         return _mm512_fnmadd_ps(b, c, a);
     }
+
+#else
+
+    static inline float32x16 madd(float32x16 a, float32x16 b, float32x16 c)
+    {
+        return _mm512_add_ps(a, _mm512_mul_ps(b, c));
+    }
+
+    static inline float32x16 msub(float32x16 a, float32x16 b, float32x16 c)
+    {
+        return _mm512_sub_ps(a, _mm512_mul_ps(b, c));
+    }
+
+#endif
 
     static inline float32x16 fast_rcp(float32x16 a)
     {
@@ -164,37 +180,37 @@ namespace simd {
 
     // compare
 
-    static inline float32x16::mask compare_neq(float32x16 a, float32x16 b)
+    static inline mask32x16 compare_neq(float32x16 a, float32x16 b)
     {
         return _mm512_cmp_ps_mask(a, b, 4);
     }
 
-    static inline float32x16::mask compare_eq(float32x16 a, float32x16 b)
+    static inline mask32x16 compare_eq(float32x16 a, float32x16 b)
     {
         return _mm512_cmp_ps_mask(a, b, 0);
     }
 
-    static inline float32x16::mask compare_lt(float32x16 a, float32x16 b)
+    static inline mask32x16 compare_lt(float32x16 a, float32x16 b)
     {
         return _mm512_cmp_ps_mask(a, b, 1);
     }
 
-    static inline float32x16::mask compare_le(float32x16 a, float32x16 b)
+    static inline mask32x16 compare_le(float32x16 a, float32x16 b)
     {
         return _mm512_cmp_ps_mask(a, b, 2);
     }
 
-    static inline float32x16::mask compare_gt(float32x16 a, float32x16 b)
+    static inline mask32x16 compare_gt(float32x16 a, float32x16 b)
     {
         return _mm512_cmp_ps_mask(b, a, 1);
     }
 
-    static inline float32x16::mask compare_ge(float32x16 a, float32x16 b)
+    static inline mask32x16 compare_ge(float32x16 a, float32x16 b)
     {
         return _mm512_cmp_ps_mask(b, a, 2);
     }
 
-    static inline float32x16 select(float32x16::mask mask, float32x16 a, float32x16 b)
+    static inline float32x16 select(mask32x16 mask, float32x16 a, float32x16 b)
     {
         return _mm512_mask_blend_ps(mask, b, a);
     }
@@ -223,7 +239,7 @@ namespace simd {
 
     static inline float32x16 fract(float32x16 s)
     {
-        return _mm256_sub_ps(s, floor(s));
+        return _mm512_sub_ps(s, floor(s));
     }
 
 } // namespace simd

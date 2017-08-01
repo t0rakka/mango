@@ -173,7 +173,7 @@ namespace detail {
 
 #if defined(MANGO_COMPILER_GCC)
 
-    // These intrinsics are missing with GCC (tested with 7.1.0)
+    // These intrinsics are missing with GCC (tested with 7.1)
 
     static inline __m256 _mm256_set_m128(__m128 high, __m128 low)
     {
@@ -201,8 +201,6 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_SSE4_1)
-
     static inline uint16x8 extend16(uint8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
@@ -218,31 +216,9 @@ namespace detail {
         return _mm_cvtepu16_epi32(s);
     }
 
-#else
-
-    static inline uint16x8 extend16(uint8x16 s)
-    {
-        return _mm_unpacklo_epi8(s, _mm_setzero_si128());
-    }
-
-    static inline uint32x4 extend32(uint8x16 s)
-    {
-        const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
-        return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
-    }
-
-    static inline uint32x4 extend32(uint16x8 s)
-    {
-        return _mm_unpacklo_epi16(s, _mm_setzero_si128());
-    }
-
-#endif
-
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
-
-#if defined(MANGO_ENABLE_SSE4_1)
 
     static inline int16x8 extend16(int8x16 s)
     {
@@ -258,28 +234,6 @@ namespace detail {
     {
         return _mm_cvtepi16_epi32(s);
     }
-
-#else
-
-    static inline int16x8 extend16(int8x16 s)
-    {
-        const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
-        return _mm_unpacklo_epi8(s, sign);
-    }
-
-    static inline int32x4 extend32(int8x16 s)
-    {
-        const __m128i temp = _mm_unpacklo_epi8(s, _mm_cmpgt_epi8(_mm_setzero_si128(), s));
-        return _mm_unpacklo_epi16(temp, _mm_cmpgt_epi16(_mm_setzero_si128(), temp));
-    }
-
-    static inline int32x4 extend32(int16x8 s)
-    {
-        const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
-        return _mm_unpacklo_epi16(s, sign);
-    }
-
-#endif
 
     // -----------------------------------------------------------------
     // pack
@@ -309,8 +263,6 @@ namespace detail {
     // uint32
     // -----------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_AVX2)
-
     static inline uint32x4 get_low(uint32x8 a)
     {
         return _mm256_extracti128_si256(a, 0);
@@ -335,47 +287,11 @@ namespace detail {
     {
         return _mm256_setr_m128i(a, b);
     }
-
-#else
-
-    static inline uint32x4 get_low(uint32x8 a)
-    {
-        return a.lo;
-    }
-
-    static inline uint32x4 get_high(uint32x8 a)
-    {
-        return a.hi;
-    }
-
-    static inline uint32x8 set_low(uint32x8 a, uint32x4 low)
-    {
-        a.lo = low;
-        return a;
-    }
-
-    static inline uint32x8 set_high(uint32x8 a, uint32x4 high)
-    {
-        a.hi = high;
-        return a;
-    }
-
-    static inline uint32x8 combine(uint32x4 a, uint32x4 b)
-    {
-        uint32x8 v;
-        v.lo = a;
-        v.hi = b;
-        return v;
-    }
-
-#endif
 
     // -----------------------------------------------------------------
     // int32
     // -----------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_AVX2)
-
     static inline int32x4 get_low(int32x8 a)
     {
         return _mm256_extracti128_si256(a, 0);
@@ -400,40 +316,6 @@ namespace detail {
     {
         return _mm256_setr_m128i(a, b);
     }
-
-#else
-
-    static inline int32x4 get_low(int32x8 a)
-    {
-        return a.lo;
-    }
-
-    static inline int32x4 get_high(int32x8 a)
-    {
-        return a.hi;
-    }
-
-    static inline int32x8 set_low(int32x8 a, int32x4 low)
-    {
-        a.lo = low;
-        return a;
-    }
-
-    static inline int32x8 set_high(int32x8 a, int32x4 high)
-    {
-        a.hi = high;
-        return a;
-    }
-
-    static inline int32x8 combine(int32x4 a, int32x4 b)
-    {
-        int32x8 v;
-        v.lo = a;
-        v.hi = b;
-        return v;
-    }
-
-#endif
 
     // -----------------------------------------------------------------
     // float32
@@ -503,8 +385,6 @@ namespace detail {
         return _mm_cvttps_epi32(s);
     }
 
-#if defined(MANGO_ENABLE_AVX2)
-
     template <>
     inline int32x8 convert<int32x8>(float32x8 s)
     {
@@ -537,44 +417,6 @@ namespace detail {
         const __m256 f0 = _mm256_sub_ps(_mm256_castsi256_ps(x0), _mm256_castsi256_ps(onep39));
         return _mm256_add_ps(f0, f1);
     }
-
-#else
-
-    template <>
-    inline int32x8 convert<int32x8>(float32x8 s)
-    {
-        int32x8 result;
-        result.lo = convert<int32x4>(get_low(s));
-        result.hi = convert<int32x4>(get_high(s));
-        return result;
-    }
-
-    template <>
-    inline float32x8 convert<float32x8>(int32x8 s)
-    {
-        float32x4 lo = convert<float32x4>(s.lo);
-        float32x4 hi = convert<float32x4>(s.hi);
-        return combine(lo, hi);
-    }
-
-    template <>
-    inline uint32x8 convert<uint32x8>(float32x8 s)
-    {
-        uint32x8 result;
-        result.lo = convert<uint32x4>(get_low(s));
-        result.hi = convert<uint32x4>(get_high(s));
-        return result;
-    }
-
-    template <>
-    inline float32x8 convert<float32x8>(uint32x8 s)
-    {
-        float32x4 lo = convert<float32x4>(s.lo);
-        float32x4 hi = convert<float32x4>(s.hi);
-        return combine(lo, hi);
-    }
-
-#endif
 
     // -----------------------------------------------------------------
     // float64
@@ -629,8 +471,6 @@ namespace detail {
         return _mm256_cvtpd_ps(s);
     }
 
-#if defined(MANGO_ENABLE_AVX2)
-
     template <>
     inline float64x4 convert<float64x4>(uint32x4 ui)
     {
@@ -641,23 +481,6 @@ namespace detail {
         v = _mm256_sub_pd(v, bias);
         return v;
     }
-
-#else
-
-    template <>
-    inline float64x4 convert<float64x4>(uint32x4 ui)
-    {
-        const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
-        const __m128i mask = _mm_set1_epi32(0x43380000);
-        const __m128i xy = _mm_unpacklo_epi32(ui, mask);
-        const __m128i zw = _mm_unpackhi_epi32(ui, mask);
-        const __m256i xyzw = _mm256_insertf128_si256(_mm256_castsi128_si256(xy), zw, 1);
-        __m256d v = _mm256_castsi256_pd(xyzw);
-        v = _mm256_sub_pd(v, bias);
-        return v;
-    }
-
-#endif
 
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
@@ -780,23 +603,12 @@ namespace detail {
         v1 = reinterpret<int32x4>(mul(reinterpret<float32x4>(v1), magic));
         v1 = add(v1, int32x4_set1(0x1000));
 
-#if defined(MANGO_ENABLE_SSE4_1)
         v1 = _mm_min_epi32(v1, vinf);
         v1 = srai(v1, 13);
 
         int32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
-#else
-        v1 = int32x4_select(compare_gt(v1, vinf), vinf, v1);
-        v1 = srai(v1, 13);
-
-        int32x4 v = select(s0, v0, v1);
-        v = bitwise_or(v, sign);
-        v = _mm_slli_epi32 (v, 16);
-        v = _mm_srai_epi32 (v, 16);
-        v = _mm_packs_epi32 (v, v);
-#endif
 
         float16x4 h;
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&h), v);

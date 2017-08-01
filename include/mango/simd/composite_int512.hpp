@@ -469,24 +469,6 @@ namespace simd {
         return result;
     }
 
-    // saturated
-
-    static inline uint32x16 adds(uint32x16 a, uint32x16 b)
-    {
-        uint32x16 result;
-        result.lo = adds(a.lo, b.lo);
-        result.hi = adds(a.hi, b.hi);
-        return result;
-    }
-
-    static inline uint32x16 subs(uint32x16 a, uint32x16 b)
-    {
-        uint32x16 result;
-        result.lo = subs(a.lo, b.lo);
-        result.hi = subs(a.hi, b.hi);
-        return result;
-    }
-
     // bitwise
 
     static inline uint32x16 bitwise_nand(uint32x16 a, uint32x16 b)
@@ -1273,24 +1255,6 @@ namespace simd {
         int32x16 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
-        return result;
-    }
-
-    // saturated
-
-    static inline int32x16 adds(int32x16 a, int32x16 b)
-    {
-        int32x16 result;
-        result.lo = adds(a.lo, b.lo);
-        result.hi = adds(a.hi, b.hi);
-        return result;
-    }
-
-    static inline int32x16 subs(int32x16 a, int32x16 b)
-    {
-        int32x16 result;
-        result.lo = subs(a.lo, b.lo);
-        result.hi = subs(a.hi, b.hi);
         return result;
     }
 
