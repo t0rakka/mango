@@ -354,37 +354,37 @@ namespace simd {
 
     static inline mask64x4 compare_neq(float64x4 a, float64x4 b)
     {
-        return _mm256_cmp_pd(a, b, 4);
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 4));
     }
 
     static inline mask64x4 compare_eq(float64x4 a, float64x4 b)
     {
-        return _mm256_cmp_pd(a, b, 0);
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 0));
     }
 
     static inline mask64x4 compare_lt(float64x4 a, float64x4 b)
     {
-        return _mm256_cmp_pd(a, b, 1);
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 1));
     }
 
     static inline mask64x4 compare_le(float64x4 a, float64x4 b)
     {
-        return _mm256_cmp_pd(a, b, 2);
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 2));
     }
 
     static inline mask64x4 compare_gt(float64x4 a, float64x4 b)
     {
-        return _mm256_cmp_pd(b, a, 1);
+        return _mm256_castpd_si256(_mm256_cmp_pd(b, a, 1));
     }
 
     static inline mask64x4 compare_ge(float64x4 a, float64x4 b)
     {
-        return _mm256_cmp_pd(b, a, 2);
+        return _mm256_castpd_si256(_mm256_cmp_pd(b, a, 2));
     }
 
     static inline float64x4 select(mask64x4 mask, float64x4 a, float64x4 b)
     {
-        return _mm256_blendv_pd(b, a, mask);
+        return _mm256_blendv_pd(b, a, _mm256_castsi256_pd(mask));
     }
 
     // rounding

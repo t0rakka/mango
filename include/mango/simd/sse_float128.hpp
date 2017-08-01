@@ -369,46 +369,46 @@ namespace simd {
 
     static inline mask32x4 compare_neq(float32x4 a, float32x4 b)
     {
-        return _mm_cmpneq_ps(a, b);
+        return _mm_castps_si128(_mm_cmpneq_ps(a, b));
     }
 
     static inline mask32x4 compare_eq(float32x4 a, float32x4 b)
     {
-        return _mm_cmpeq_ps(a, b);
+        return _mm_castps_si128(_mm_cmpeq_ps(a, b));
     }
 
     static inline mask32x4 compare_lt(float32x4 a, float32x4 b)
     {
-        return _mm_cmplt_ps(a, b);
+        return _mm_castps_si128(_mm_cmplt_ps(a, b));
     }
 
     static inline mask32x4 compare_le(float32x4 a, float32x4 b)
     {
-        return _mm_cmple_ps(a, b);
+        return _mm_castps_si128(_mm_cmple_ps(a, b));
     }
 
     static inline mask32x4 compare_gt(float32x4 a, float32x4 b)
     {
-        return _mm_cmpgt_ps(a, b);
+        return _mm_castps_si128(_mm_cmpgt_ps(a, b));
     }
 
     static inline mask32x4 compare_ge(float32x4 a, float32x4 b)
     {
-        return _mm_cmpge_ps(a, b);
+        return _mm_castps_si128(_mm_cmpge_ps(a, b));
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)
     {
-        return _mm_blendv_ps(b, a, mask);
+        return _mm_blendv_ps(b, a, _mm_castsi128_ps(mask));
     }
 
 #else
 
     static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)
     {
-        return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b));
+        return _mm_or_ps(_mm_and_ps(_mm_castsi128_ps(mask), a), _mm_andnot_ps(_mm_castsi128_ps(mask), b));
     }
 
 #endif

@@ -72,7 +72,7 @@ namespace simd {
 
     static inline float64x8 bitwise_not(float64x8 a)
     {
-        __m512i mask = _mm512_castsi512_pd(_mm512_set1_epi64(0xffffffffffffffffull));
+        __m512d mask = _mm512_castsi512_pd(_mm512_set1_epi64(0xffffffffffffffffull));
         return _mm512_xor_pd(a, mask);
     }
 
@@ -88,7 +88,11 @@ namespace simd {
 
     static inline float64x8 abs(float64x8 a)
     {
-        return _mm512_abs_pd(a);
+        // gcc 7.1 compiler bug: expects __m512 argument
+        //return _mm512_abs_pd(a);
+        // workaround: return a < 0 ? 0 - a : a;
+        return _mm512_mask_blend_pd(_mm512_cmp_pd_mask(a, _mm512_setzero_pd(), 1), a, _mm512_sub_pd(_mm512_setzero_pd(), a));
+
     }
 
     static inline float64x8 neg(float64x8 a)

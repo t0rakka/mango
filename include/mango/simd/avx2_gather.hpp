@@ -127,12 +127,12 @@ namespace simd {
 
     static inline float32x4 gather4(const float* address, int32x4 offset, float32x4 value, mask32x4 mask)
     {
-        return _mm_mask_i32gather_ps(value, reinterpret_cast<const float*>(address), offset, mask, 4);
+        return _mm_mask_i32gather_ps(value, reinterpret_cast<const float*>(address), offset, _mm_castsi128_ps(mask), 4);
     }
 
     static inline float64x2 gather2(const double* address, int32x4 offset, float64x2 value, mask64x2 mask)
     {
-        return _mm_mask_i32gather_pd(value, reinterpret_cast<const double*>(address), offset, mask, 8);
+        return _mm_mask_i32gather_pd(value, reinterpret_cast<const double*>(address), offset, _mm_castsi128_pd(mask), 8);
     }
 
     static inline uint32x4 gather4(const uint32* address, int32x4 offset, uint32x4 value, mask32x4 mask)
@@ -159,12 +159,12 @@ namespace simd {
 
     static inline float32x8 gather8(const float* address, int32x8 offset, float32x8 value, mask32x8 mask)
     {
-        return _mm256_mask_i32gather_ps(value, reinterpret_cast<const float*>(address), offset, mask, 4);
+        return _mm256_mask_i32gather_ps(value, reinterpret_cast<const float*>(address), offset, _mm256_castsi256_ps(mask), 4);
     }
 
     static inline float64x4 gather4(const double* address, int32x4 offset, float64x4 value, mask64x4 mask)
     {
-        return _mm256_mask_i32gather_pd(value, reinterpret_cast<const double*>(address), offset, mask, 8);
+        return _mm256_mask_i32gather_pd(value, reinterpret_cast<const double*>(address), offset, _mm256_castsi256_pd(mask), 8);
     }
 
     static inline uint32x8 gather8(const uint32* address, int32x8 offset, uint32x8 value, mask32x8 mask)

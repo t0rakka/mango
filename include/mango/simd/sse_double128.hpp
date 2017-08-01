@@ -238,46 +238,46 @@ namespace simd {
 
     static inline mask64x2 compare_neq(float64x2 a, float64x2 b)
     {
-        return _mm_cmpneq_pd(a, b);
+        return _mm_castpd_si128(_mm_cmpneq_pd(a, b));
     }
 
     static inline mask64x2 compare_eq(float64x2 a, float64x2 b)
     {
-        return _mm_cmpeq_pd(a, b);
+        return _mm_castpd_si128(_mm_cmpeq_pd(a, b));
     }
 
     static inline mask64x2 compare_lt(float64x2 a, float64x2 b)
     {
-        return _mm_cmplt_pd(a, b);
+        return _mm_castpd_si128(_mm_cmplt_pd(a, b));
     }
 
     static inline mask64x2 compare_le(float64x2 a, float64x2 b)
     {
-        return _mm_cmple_pd(a, b);
+        return _mm_castpd_si128(_mm_cmple_pd(a, b));
     }
 
     static inline mask64x2 compare_gt(float64x2 a, float64x2 b)
     {
-        return _mm_cmpgt_pd(a, b);
+        return _mm_castpd_si128(_mm_cmpgt_pd(a, b));
     }
 
     static inline mask64x2 compare_ge(float64x2 a, float64x2 b)
     {
-        return _mm_cmpge_pd(a, b);
+        return _mm_castpd_si128(_mm_cmpge_pd(a, b));
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static inline float64x2 select(mask64x2 mask, float64x2 a, float64x2 b)
     {
-        return _mm_blendv_pd(b, a, mask);
+        return _mm_blendv_pd(b, a, _mm_castsi128_pd(mask));
     }
 
 #else
 
     static inline float64x2 select(mask64x2 mask, float64x2 a, float64x2 b)
     {
-        return _mm_or_pd(_mm_and_pd(mask, a), _mm_andnot_pd(mask, b));
+        return _mm_or_pd(_mm_and_pd(_mm_castsi128_pd(mask), a), _mm_andnot_pd(_mm_castsi128_pd(mask), b));
     }
 
 #endif

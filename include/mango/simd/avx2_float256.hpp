@@ -192,37 +192,37 @@ namespace simd {
 
     static inline mask32x8 compare_neq(float32x8 a, float32x8 b)
     {
-        return _mm256_cmp_ps(a, b, 4);
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 4));
     }
 
     static inline mask32x8 compare_eq(float32x8 a, float32x8 b)
     {
-        return _mm256_cmp_ps(a, b, 0);
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 0));
     }
 
     static inline mask32x8 compare_lt(float32x8 a, float32x8 b)
     {
-        return _mm256_cmp_ps(a, b, 1);
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 1));
     }
 
     static inline mask32x8 compare_le(float32x8 a, float32x8 b)
     {
-        return _mm256_cmp_ps(a, b, 2);
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 2));
     }
 
     static inline mask32x8 compare_gt(float32x8 a, float32x8 b)
     {
-        return _mm256_cmp_ps(b, a, 1);
+        return _mm256_castps_si256(_mm256_cmp_ps(b, a, 1));
     }
 
     static inline mask32x8 compare_ge(float32x8 a, float32x8 b)
     {
-        return _mm256_cmp_ps(b, a, 2);
+        return _mm256_castps_si256(_mm256_cmp_ps(b, a, 2));
     }
 
     static inline float32x8 select(mask32x8 mask, float32x8 a, float32x8 b)
     {
-        return _mm256_blendv_ps(b, a, mask);
+        return _mm256_blendv_ps(b, a, _mm256_castsi256_ps(mask));
     }
 
     // rounding
