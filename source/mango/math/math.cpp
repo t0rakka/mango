@@ -27,7 +27,11 @@ namespace mango
 
     const float4x4& float4x4::operator = (float s)
     {
-        simd::float32x4_matrix_set_scale(m, s);
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, s);
+        m[1] = simd::set_component<1>(zero, s);
+        m[2] = simd::set_component<2>(zero, s);
+        m[3] = simd::set_component<3>(zero, 1.0f);
         return *this;
     }
 
@@ -109,32 +113,56 @@ namespace mango
 
     void float4x4::identity()
     {
-        simd::float32x4_matrix_set_scale(m, 1.0f);
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, 1.0f);
+        m[1] = simd::set_component<1>(zero, 1.0f);
+        m[2] = simd::set_component<2>(zero, 1.0f);
+        m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
     void float4x4::translate(float x, float y, float z)
     {
-        simd::float32x4_matrix_translate(m, x, y, z);
+        const float32x4 v = float32x4(x, y, z, 0.0f);
+        m[0] = madd(m[0], m[0].wwww, v);
+        m[1] = madd(m[1], m[1].wwww, v);
+        m[2] = madd(m[2], m[2].wwww, v);
+        m[3] = madd(m[3], m[3].wwww, v);
     }
 
-    void float4x4::translate(const float3& trans)
+    void float4x4::translate(const float3& t)
     {
-        simd::float32x4_matrix_translate(m, trans.x, trans.y, trans.z);
+        const float32x4 v = float32x4(t.x, t.y, t.z, 0.0f);
+        m[0] = madd(m[0], m[0].wwww, v);
+        m[1] = madd(m[1], m[1].wwww, v);
+        m[2] = madd(m[2], m[2].wwww, v);
+        m[3] = madd(m[3], m[3].wwww, v);
     }
 
     void float4x4::scale(float s)
     {
-        simd::float32x4_matrix_scale(m, s);
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, s);
+        m[1] = simd::set_component<1>(zero, s);
+        m[2] = simd::set_component<2>(zero, s);
+        m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
     void float4x4::scale(float x, float y, float z)
     {
-        simd::float32x4_matrix_scale(m, x, y, z);
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, x);
+        m[1] = simd::set_component<1>(zero, y);
+        m[2] = simd::set_component<2>(zero, z);
+        m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
     void float4x4::scale(const float3& s)
     {
-        simd::float32x4_matrix_scale(m, s.x, s.y, s.z);
+        const float32x4 v = float32x4(s.x, s.y, s.z, 1.0f);
+        m[0] = m[0] * v;
+        m[1] = m[1] * v;
+        m[2] = m[2] * v;
+        m[3] = m[3] * v;
     }
 
 #if defined(MANGO_ENABLE_SIMD)
@@ -142,7 +170,7 @@ namespace mango
     void float4x4::rotate(float angle, const float3& axis)
     {
         const float4x4 temp = AngleAxis(angle, axis);
-        simd::float32x4_matrix_matrix_multiply(m, m, temp.m);
+        *this = *this * temp;
     }
 
 #else
@@ -234,7 +262,7 @@ namespace mango
     void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
         const float4x4 temp = matrix::rotateXYZ(xangle, yangle, zangle);
-        simd::float32x4_matrix_matrix_multiply(m, m, temp.m);
+        *this = *this * temp;
     }
 
 #else
@@ -280,6 +308,72 @@ namespace mango
     }
 
 #endif
+
+    float4x4 inverse(const float4x4& m)
+    {
+        return transpose(inverseTranspose(m));
+    }
+
+    float4x4 inverseTranspose(const float4x4& m)
+    {
+        float4x4 result;
+
+        const float32x4 m0zwyz = m[0].zwyz;
+        const float32x4 m0wzwy = m[0].wzwy;
+        const float32x4 m1zwyz = m[1].zwyz;
+        const float32x4 m1wzwy = m[1].wzwy;
+        const float32x4 m2zwyz = m[2].zwyz;
+        const float32x4 m2wzwy = m[2].wzwy;
+        const float32x4 m3zwyz = m[3].zwyz;
+        const float32x4 m3wzwy = m[3].wzwy;
+        const float32x4 m0yxxx = m[0].yxxx;
+        const float32x4 m1yxxx = m[1].yxxx;
+        const float32x4 m2yxxx = m[2].yxxx;
+        const float32x4 m3yxxx = m[3].yxxx;
+
+        const float32x4 v0 = msub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
+        const float32x4 v1 = msub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);
+        const float32x4 v2 = msub(m0wzwy * m3zwyz, m0zwyz, m3wzwy);
+        const float32x4 v3 = msub(m1wzwy * m2zwyz, m1zwyz, m2wzwy);
+        const float32x4 v4 = msub(m1zwyz * m3wzwy, m1wzwy, m3zwyz);
+        const float32x4 v5 = msub(m2zwyz * m3wzwy, m2wzwy, m3zwyz);
+        const float32x4 v6 = msub(m2wzwy * m3zwyz, m2zwyz, m3wzwy);
+
+        float32x4 a = m1yxxx * v5;
+        float32x4 b = m0yxxx * v6;
+        float32x4 c = m0yxxx * v4;
+        float32x4 d = m0yxxx * v3;
+        a = msub(a, m2yxxx, v4);
+        a = msub(a, m3yxxx, v3);
+        b = msub(b, m2yxxx, v2);
+        b = msub(b, m3yxxx, v1);
+        c = madd(c, m1yxxx, v2);
+        c = msub(c, m3yxxx, v0);
+        d = madd(d, m1yxxx, v1);
+        d = madd(d, m2yxxx, v0);
+
+        float32x4 det = 1.0f / dot(m[0], a);
+        result[0] = a * det;
+        result[1] = b * det;
+        result[2] = c * det;
+        result[3] = d * det;
+
+        return result;
+    }
+
+    float4x4 transpose(const float4x4& m)
+    {
+        float4x4 result;
+        const float32x4 temp0 = simd::unpacklo(m[0], m[1]);
+        const float32x4 temp1 = simd::unpacklo(m[2], m[3]);
+        const float32x4 temp2 = simd::unpackhi(m[0], m[1]);
+        const float32x4 temp3 = simd::unpackhi(m[2], m[3]);
+        result[0] = simd::movelh(temp0, temp1);
+        result[1] = simd::movehl(temp1, temp0);
+        result[2] = simd::movelh(temp2, temp3);
+        result[3] = simd::movehl(temp3, temp2);
+        return result;
+    }
 
 #if defined(MANGO_ENABLE_SIMD)
 
@@ -422,40 +516,57 @@ namespace mango
 
     float4x4 translate(float x, float y, float z)
     {
-        float4x4 temp;
-        simd::float32x4_matrix_set_translate(temp.m, x, y, z);
-        return temp;
+        float4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, 1.0f);
+        m[1] = simd::set_component<1>(zero, 1.0f);
+        m[2] = simd::set_component<2>(zero, 1.0f);
+        m[3] = float32x4(x, y, z, 1.0f);
+        return m;
     }
 
     float4x4 translate(const float3& translation)
     {
-        const float x = translation.x;
-        const float y = translation.y;
-        const float z = translation.z;
-        float4x4 temp;
-        simd::float32x4_matrix_set_translate(temp.m, x, y, z);
-        return temp;
+        float4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, 1.0f);
+        m[1] = simd::set_component<1>(zero, 1.0f);
+        m[2] = simd::set_component<2>(zero, 1.0f);
+        m[3] = float32x4(translation.x, translation.y, translation.z, 1.0f);
+        return m;
     }
 
     float4x4 scale(float s)
     {
-        float4x4 temp;
-        simd::float32x4_matrix_set_scale(temp.m, s);
-        return temp;
+        float4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, s);
+        m[1] = simd::set_component<1>(zero, s);
+        m[2] = simd::set_component<2>(zero, s);
+        m[3] = simd::set_component<3>(zero, 1.0f);
+        return m;
     }
 
     float4x4 scale(float x, float y, float z)
     {
-        float4x4 temp;
-        simd::float32x4_matrix_set_scale(temp.m, x, y, z);
-        return temp;
+        float4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, x);
+        m[1] = simd::set_component<1>(zero, y);
+        m[2] = simd::set_component<2>(zero, z);
+        m[3] = simd::set_component<3>(zero, 1.0f);
+        return m;
     }
 
     float4x4 scale(const float3& s)
     {
-        float4x4 temp;
-        simd::float32x4_matrix_set_scale(temp.m, s.x, s.y, s.z);
-        return temp;
+        float4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, s.x);
+        m[1] = simd::set_component<1>(zero, s.y);
+        m[2] = simd::set_component<2>(zero, s.z);
+        m[3] = simd::set_component<3>(zero, 1.0f);
+        return m;
     }
 
     float4x4 rotate(float angle, const float3& axis)

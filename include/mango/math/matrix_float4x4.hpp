@@ -56,7 +56,7 @@ namespace mango
     template <>
     struct Matrix<float, 4, 4> : MatrixBase<float, 4, 4>
     {
-        simd::float32x4 m[4];
+        float32x4 m[4];
 
         explicit Matrix()
         {
@@ -115,12 +115,12 @@ namespace mango
         const Matrix& operator = (const Quaternion& q);
         const Matrix& operator = (const AngleAxis& a);
 
-        operator simd::float32x4* ()
+        operator float32x4* ()
         {
             return m;
         }
 
-        operator const simd::float32x4* () const
+        operator const float32x4* () const
         {
             return m;
         }
@@ -148,19 +148,6 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline Matrix<float, 4, 4> operator * (const Matrix<float, 4, 4>& a, const Matrix<float, 4, 4>& b)
-    {
-        Matrix<float, 4, 4> result;
-        simd::float32x4_matrix_matrix_multiply(result, a, b);
-        return result;
-    }
-
-    static inline Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix<float, 4, 4>& m)
-    {
-        simd::float32x4 result = simd::float32x4_vector_matrix_multiply(v, m);
-        return result;
-    }
-
     static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix<float, 4, 4>& m)
     {
         float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0) + m(3, 0);
@@ -169,31 +156,32 @@ namespace mango
         return Vector<float, 3>(x, y, z);
     }
 
+    static inline Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix<float, 4, 4>& m)
+    {
+        float32x4 temp = m[0] * v.xxxx;
+        temp = madd(temp, m[1], v.yyyy);
+        temp = madd(temp, m[2], v.zzzz);
+        temp = madd(temp, m[3], v.wwww);
+        return temp;
+    }
+
+    static inline Matrix<float, 4, 4> operator * (const Matrix<float, 4, 4>& a, const Matrix<float, 4, 4>& b)
+    {
+        Matrix<float, 4, 4> result;
+        result[0] = a[0] * b;
+        result[1] = a[1] * b;
+        result[2] = a[2] * b;
+        result[3] = a[3] * b;
+        return result;
+    }
+
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
 
-    static inline float4x4 inverse(const float4x4& m)
-    {
-        float4x4 result;
-        simd::float32x4_matrix_inverse(result.m, m.m);
-        return result;
-    }
-
-    static inline float4x4 inverseTranspose(const float4x4& m)
-    {
-        float4x4 result;
-        simd::float32x4_matrix_inverse_transpose(result.m, m.m);
-        return result;
-    }
-
-    static inline float4x4 transpose(const float4x4& m)
-    {
-        float4x4 result;
-        simd::float32x4_matrix_transpose(result.m, m.m);
-        return result;
-    }
-
+    float4x4 inverse(const float4x4& m);
+    float4x4 inverseTranspose(const float4x4& m);
+    float4x4 transpose(const float4x4& m);
     float4x4 normalize(const float4x4& m);
     float4x4 mirror(const float4x4& m, const float4& plane);
     float4x4 affineInverse(const float4x4& m);
