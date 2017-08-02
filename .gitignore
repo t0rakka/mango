@@ -37,3 +37,4 @@
 *.db
 *.ipch
 *.vscode
+*.opendb
