@@ -14,9 +14,11 @@ namespace mango
     // MatrixBase
     // ------------------------------------------------------------------
 
-    template <typename Type, int Width, int Height>
+    template <typename ScalarType, int Width, int Height>
     struct MatrixBase
     {
+        using VectorType = Vector<ScalarType, Width>;
+
         operator const float* () const
         {
             return reinterpret_cast<const float*>(this);
@@ -27,30 +29,30 @@ namespace mango
             return reinterpret_cast<float*>(this);
         }
 
-        const Vector<Type, Width>& operator [] (int y) const
+        const VectorType& operator [] (int y) const
         {
             assert(y >= 0 && y < Height);
-            return reinterpret_cast<const Vector<Type, Width>*>(this)[y];
+            return reinterpret_cast<const VectorType *>(this)[y];
         }
 
-        Vector<Type, Width>& operator [] (int y)
+        VectorType& operator [] (int y)
         {
             assert(y >= 0 && y < Height);
-            return reinterpret_cast<Vector<Type, Width>*>(this)[y];
+            return reinterpret_cast<VectorType *>(this)[y];
         }
 
         float operator () (int y, int x) const
         {
             assert(x >= 0 && x < Width);
             assert(y >= 0 && y < Height);
-            return reinterpret_cast<const float*>(this)[y * Width + x];
+            return reinterpret_cast<const float *>(this)[y * Width + x];
         }
 
         float& operator () (int y, int x)
         {
             assert(x >= 0 && x < Width);
             assert(y >= 0 && y < Height);
-            return reinterpret_cast<float*>(this)[y * Width + x];
+            return reinterpret_cast<float *>(this)[y * Width + x];
         }
     };
 
@@ -58,10 +60,12 @@ namespace mango
     // Matrix
     // ------------------------------------------------------------------
 
-    template <typename Type, int Width, int Height>
-    struct Matrix : MatrixBase<Type, Width, Height>
+    template <typename ScalarType, int Width, int Height>
+    struct Matrix : MatrixBase<ScalarType, Width, Height>
     {
-        Type m[Height][Width];
+        using VectorType = Vector<ScalarType, Width>;
+
+        VectorType m[Height];
 
         explicit Matrix()
         {

@@ -17,39 +17,39 @@ namespace mango
     // ------------------------------------------------------------------
 
     /*
-    offsets: (memory layout)
+    offsets: [memory layout]
 
-    [ 0  4  8 12]
-    [ 1  5  9 13]
-    [ 2  6 10 14]
-    [ 3  7 11 15]
+    [ 0  1  2  3]  <- simd float32x4 #0
+    [ 4  5  6  7]  <- simd float32x4 #1
+    [ 8  9 10 11]  <- simd float32x4 #2
+    [12 13 14 15]  <- simd float32x4 #3
 
-    indices: (operator (i,j))
+    indices: [operator (y,x)]
 
-    [(0,0) (1,0) (2,0) (3,0)]
-    [(0,1) (1,1) (2,1) (3,1)]
-    [(0,1) (1,2) (2,2) (3,2)]
-    [(0,3) (1,3) (2,3) (3,3)]
+    [(0,0) (0,1) (0,2) (0,3)]
+    [(1,0) (1,1) (1,2) (1,3)]
+    [(2,0) (2,1) (2,2) (2,3)]
+    [(3,0) (3,1) (3,2) (3,3)]
 
-    scaling: (sx, sy, sz)
+    scaling: [sx, sy, sz]
 
     [sx -- -- --]
     [-- sy -- --]
     [-- -- sz --]
     [-- -- -- --]
 
-    translation: (tx, ty, tz)
+    translation: [tx, ty, tz]
 
-    [-- -- -- tx]
-    [-- -- -- ty]
-    [-- -- -- tz]
     [-- -- -- --]
+    [-- -- -- --]
+    [-- -- -- --]
+    [tx ty tz --]
 
-    rotation: (axis vectors)
+    rotation: [axis vectors]
 
-    [xx yx zx --]
-    [xy yy zy --]
-    [xz yz zz --]
+    [xx xy xz --]  <- x-axis
+    [yx yy yz --]  <- y-axis
+    [zx zy zz --]  <- z-axis
     [-- -- -- --]
     */
 
