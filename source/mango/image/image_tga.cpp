@@ -209,9 +209,11 @@ namespace
                 }
                 else
                 {
-                    std::memcpy(buffer, color, size * bpp);
-                    p += size * bpp;
-                    buffer += size * bpp;
+                    int bytes = size * bpp;
+                    std::memcpy(buffer, color, bytes);
+                    p += bytes;
+                    buffer += bytes;
+                    color += bytes;
                 }
 
                 count -= size;
