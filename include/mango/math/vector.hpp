@@ -879,7 +879,7 @@ namespace mango
     {
         VectorType m;
 
-		operator VectorType () const
+        operator Vector<ScalarType, 4> () const
 		{
 			return simd::shuffle<X, Y, Z, W>(m);
 		}
