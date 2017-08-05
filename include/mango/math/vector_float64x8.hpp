@@ -18,8 +18,8 @@ namespace mango
         union
         {
             simd::float64x8 xyzw;
-            //LowAccessor<Vector<double, 4>, simd::float64x8> low;
-            //HighAccessor<Vector<double, 4>, simd::float64x8> high;
+            LowAccessor<Vector<double, 4>, simd::float64x8> low;
+            HighAccessor<Vector<double, 4>, simd::float64x8> high;
         };
 
         explicit Vector()

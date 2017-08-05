@@ -23,29 +23,29 @@ namespace mango
     // VectorBase
     // ------------------------------------------------------------------
 
-    template <typename Type, int Size>
+    template <typename ScalarType, int VectorSize>
     struct VectorBase
     {
-        operator Type* ()
+        operator ScalarType* ()
         {
-            return reinterpret_cast<Type*>(this);
+            return reinterpret_cast<ScalarType *>(this);
         }
 
-        operator const Type* () const
+        operator const ScalarType* () const
         {
-            return reinterpret_cast<const Type*>(this);
+            return reinterpret_cast<const ScalarType *>(this);
         }
 
-        Type& operator [] (int index)
+        ScalarType& operator [] (int index)
         {
-            assert(index >= 0 && index < Size);
-            return reinterpret_cast<Type*>(this)[index];
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<ScalarType *>(this)[index];
         }
 
-        const Type& operator [] (int index) const
+        const ScalarType& operator [] (int index) const
         {
-            assert(index >= 0 && index < Size);
-            return reinterpret_cast<const Type*>(this)[index];
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<const ScalarType *>(this)[index];
         }
     };
 
