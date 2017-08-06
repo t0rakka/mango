@@ -537,13 +537,18 @@ namespace mango
     {
     }
 
-    Bitmap::Bitmap(const std::string& filename, const Format& format)
-        : Surface(load_surface(filename, &format))
+    Bitmap::Bitmap(Memory memory, const std::string& extension, const Format& format)
+        : Surface(load_surface(memory, extension, &format))
     {
     }
 
     Bitmap::Bitmap(const std::string& filename)
         : Surface(load_surface(filename, nullptr))
+    {
+    }
+
+    Bitmap::Bitmap(const std::string& filename, const Format& format)
+        : Surface(load_surface(filename, &format))
     {
     }
 
