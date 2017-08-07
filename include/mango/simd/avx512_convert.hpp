@@ -383,6 +383,8 @@ namespace detail {
         return _mm256_setr_m128(a, b);
     }
 
+    // 128 bit convert
+
     template <>
     inline float32x4 convert<float32x4>(uint32x4 s)
     {
@@ -422,6 +424,8 @@ namespace detail {
         return _mm_cvttps_epi32(s);
     }
 
+    // 256 bit convert
+
     template <>
     inline int32x8 convert<int32x8>(float32x8 s)
     {
@@ -453,6 +457,32 @@ namespace detail {
         const __m256 f1 = _mm256_cvtepi32_ps(x1);
         const __m256 f0 = _mm256_sub_ps(_mm256_castsi256_ps(x0), _mm256_castsi256_ps(onep39));
         return _mm256_add_ps(f0, f1);
+    }
+
+    // 512 bit convert
+
+    template <>
+    inline int32x16 convert<int32x16>(float32x16 s)
+    {
+        return _mm512_cvtps_epi32(s);
+    }
+
+    template <>
+    inline float32x16 convert<float32x16>(int32x16 s)
+    {
+        return _mm512_cvtepi32_ps(s);
+    }
+
+    template <>
+    inline uint32x16 convert<uint32x16>(float32x16 s)
+    {
+        return _mm512_cvtps_epu32(s);
+    }
+
+    template <>
+    inline float32x16 convert<float32x16>(uint32x16 s)
+    {
+        return _mm512_cvtepu32_ps(s);
     }
 
     // -----------------------------------------------------------------

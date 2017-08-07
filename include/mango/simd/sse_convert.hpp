@@ -337,6 +337,8 @@ namespace detail {
         return result;
     }
 
+    // 128 bit convert
+
     template <>
     inline float32x4 convert<float32x4>(uint32x4 s)
     {
@@ -380,6 +382,8 @@ namespace detail {
         return _mm_cvttps_epi32(s);
     }
 
+    // 256 bit convert
+
     template <>
     inline int32x8 convert<int32x8>(float32x8 s)
     {
@@ -413,6 +417,44 @@ namespace detail {
         float32x8 result;
         result.lo = convert<float32x4>(s.lo);
         result.hi = convert<float32x4>(s.hi);
+        return result;
+    }
+
+    // 512 bit convert
+
+    template <>
+    inline int32x16 convert<int32x16>(float32x16 s)
+    {
+        int32x16 result;
+        result.lo = convert<int32x8>(s.lo);
+        result.hi = convert<int32x8>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline float32x16 convert<float32x16>(int32x16 s)
+    {
+        float32x16 result;
+        result.lo = convert<float32x8>(s.lo);
+        result.hi = convert<float32x8>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline uint32x16 convert<uint32x16>(float32x16 s)
+    {
+        uint32x16 result;
+        result.lo = convert<uint32x8>(s.lo);
+        result.hi = convert<uint32x8>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline float32x16 convert<float32x16>(uint32x16 s)
+    {
+        float32x16 result;
+        result.lo = convert<float32x8>(s.lo);
+        result.hi = convert<float32x8>(s.hi);
         return result;
     }
 
