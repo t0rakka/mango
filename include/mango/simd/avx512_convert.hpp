@@ -406,10 +406,7 @@ namespace detail {
     template <>
     inline uint32x4 convert<uint32x4>(float32x4 s)
     {
-	    __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
-	    __m128 x1 = _mm_cmple_ps(x2, s);
-  	    __m128i x0 = _mm_cvtps_epi32(_mm_sub_ps(s, _mm_and_ps(x2, x1)));
-  	    return _mm_or_si128(x0, _mm_slli_epi32(_mm_castps_si128(x1), 31));
+        return _mm_cvtps_epu32(s);
     }
 
     template <>
@@ -441,22 +438,14 @@ namespace detail {
     template <>
     inline uint32x8 convert<uint32x8>(float32x8 s)
     {
-	    __m256 x2 = _mm256_castsi256_ps(_mm256_set1_epi32(0x4f000000));
-	    __m256 x1 = _mm256_cmp_ps(x2, s, 2);
-  	    __m256i x0 = _mm256_cvtps_epi32(_mm256_sub_ps(s, _mm256_and_ps(x2, x1)));
-  	    return _mm256_or_si256(x0, _mm256_slli_epi32(_mm256_castps_si256(x1), 31));
+        return _mm256_cvtps_epu32(s);
     }
 
     template <>
     inline float32x8 convert<float32x8>(uint32x8 s)
     {
-        const __m256i mask = _mm256_set1_epi32(0x0000ffff);
-        const __m256i onep39 = _mm256_set1_epi32(0x53000000);
-        const __m256i x0 = _mm256_or_si256(_mm256_srli_epi32(s, 16), onep39);
-        const __m256i x1 = _mm256_and_si256(s, mask);
-        const __m256 f1 = _mm256_cvtepi32_ps(x1);
-        const __m256 f0 = _mm256_sub_ps(_mm256_castsi256_ps(x0), _mm256_castsi256_ps(onep39));
-        return _mm256_add_ps(f0, f1);
+        __m512 temp = _mm512_cvtepu32_ps(_mm512_castsi256_si512(s));
+        return _mm512_castps512_ps256(temp);
     }
 
     // 512 bit convert
@@ -514,6 +503,8 @@ namespace detail {
         return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
     }
 
+    // 256 <- 128
+
     template <>
     inline float64x4 convert<float64x4>(int32x4 s)
     {
@@ -525,6 +516,8 @@ namespace detail {
     {
         return _mm256_cvtps_pd(s);
     }
+
+    // 128 <- 256
 
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
@@ -538,26 +531,20 @@ namespace detail {
         return _mm256_cvtpd_ps(s);
     }
 
+    // 256 <- 128
+
     template <>
     inline float64x4 convert<float64x4>(uint32x4 ui)
     {
-        const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
-        const __m256i xyzw = _mm256_cvtepu32_epi64(ui);
-        __m256d v = _mm256_castsi256_pd(xyzw);
-        v = _mm256_or_pd(v, bias);
-        v = _mm256_sub_pd(v, bias);
-        return v;
+        return _mm256_cvtepu32_pd(ui);
     }
+
+    // 128 <- 256
 
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
     {
-        const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
-        const __m256d v = _mm256_add_pd(d, bias);
-        const __m128d xxyy = _mm256_castpd256_pd128(v);
-        const __m128d zzww = _mm256_extractf128_pd(v, 1);
-        __m128 xyzw = _mm_shuffle_ps(_mm_castpd_ps(xxyy), _mm_castpd_ps(zzww), 0x88);
-        return _mm_castps_si128(xyzw);
+        return _mm256_cvtpd_epu32(d);
     }
 
     static inline int32x4 int32x4_truncate(float64x4 s)
@@ -565,24 +552,18 @@ namespace detail {
         return _mm256_cvttpd_epi32(s);
     }
 
+    // 256 <- 256
+
     template <>
     inline float64x4 convert<float64x4>(int64x4 v)
     {
-        double x = double(get_component<0>(v));
-        double y = double(get_component<1>(v));
-        double z = double(get_component<2>(v));
-        double w = double(get_component<3>(v));
-        return float64x4_set4(x, y, z, w);
+        return _mm256_cvtepi64_pd(v);
     }
 
     template <>
     inline int64x4 convert<int64x4>(float64x4 v)
     {
-        int64 x = int64(get_component<0>(v));
-        int64 y = int64(get_component<1>(v));
-        int64 z = int64(get_component<2>(v));
-        int64 w = int64(get_component<3>(v));
-        return int64x4_set4(x, y, z, w);
+        return _mm256_cvtpd_epi64(v);
     }
 
     // -----------------------------------------------------------------

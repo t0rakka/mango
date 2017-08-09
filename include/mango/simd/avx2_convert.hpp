@@ -489,6 +489,8 @@ namespace detail {
         return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
     }
 
+    // 256 <- 128
+
     template <>
     inline float64x4 convert<float64x4>(int32x4 s)
     {
@@ -500,6 +502,8 @@ namespace detail {
     {
         return _mm256_cvtps_pd(s);
     }
+
+    // 128 <- 256
 
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
@@ -513,6 +517,8 @@ namespace detail {
         return _mm256_cvtpd_ps(s);
     }
 
+    // 256 <- 128
+
     template <>
     inline float64x4 convert<float64x4>(uint32x4 ui)
     {
@@ -523,6 +529,8 @@ namespace detail {
         v = _mm256_sub_pd(v, bias);
         return v;
     }
+
+    // 128 <- 256
 
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
@@ -539,6 +547,8 @@ namespace detail {
     {
         return _mm256_cvttpd_epi32(s);
     }
+
+    // 256 <- 256
 
     template <>
     inline float64x4 convert<float64x4>(int64x4 v)
