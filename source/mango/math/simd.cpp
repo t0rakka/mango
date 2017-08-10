@@ -133,22 +133,12 @@ namespace simd {
         m = slli(sub(srai(add(m, q), 6), m), 4);
         const int32x4 p = sub(q, slli(m, 2));
         m = add(m, 0x7f);
-        m = select(compare_gt(m, int32x4_zero()), m, int32x4_zero()); // m = max(m, 0);
-        m = select(compare_gt(m, 0xff), int32x4_set1(0xff), m);
+        m = max(m, int32x4_set1(0));
+        m = min(m, int32x4_set1(0xff));
         u = reinterpret<float32x4>(slli(m, 23));
-        const float32x4 y = mul(mul(mul(mul(x, u), u), u), u);
+        x = mul(mul(mul(mul(x, u), u), u), u);
         u = reinterpret<float32x4>(slli(add(p, 0x7f), 23));
-        return mul(y, u);
-    }
-
-    static inline float32x4 sincos_post(float32x4 s)
-    {
-        float32x4 u;
-        u = float32x4_set1(2.6083159809786593541503e-06f);
-        u = madd(-0.0001981069071916863322258f, u, s);
-        u = madd(0.00833307858556509017944336f, u, s);
-        u = madd(-0.166666597127914428710938f, u, s);
-        return u;
+        return mul(x, u);
     }
 
     float32x4 sin(float32x4 v)
@@ -162,15 +152,15 @@ namespace simd {
         d = madd(d, u, -4.0f * PI4_Cf);
         d = madd(d, u, -4.0f * PI4_Df);
 
-        const int32x4 zero = int32x4_zero();
-        const int32x4 one = int32x4_set1(1);
-        const int32x4 q1 = bitwise_and(q, one);
-        const int32x4 qmask = sub(zero, q1);
-        const float32x4 mask = reinterpret<float32x4>(qmask);
-        d = bitwise_xor(bitwise_and(mask, float32x4_set1(-0.0f)), d);
+        int32x4 one = int32x4_set1(1);
+        mask32x4 mask = compare_eq(bitwise_and(q, 1), one);
+        d = select(mask, bitwise_xor(d, float32x4_set1(-0.0f)), d);
 
         const float32x4 s = mul(d, d);
-        u = sincos_post(s);
+        u = float32x4_set1(2.6083159809786593541503e-06f);
+        u = madd(-0.0001981069071916863322258f, u, s);
+        u = madd(0.00833307858556509017944336f, u, s);
+        u = madd(-0.166666597127914428710938f, u, s);
         u = madd(d, s, mul(u, d));
         u = bitwise_or(is_inf(d), u);
         return u;
@@ -189,14 +179,15 @@ namespace simd {
         d = madd(d, u, -2.0f * PI4_Cf);
         d = madd(d, u, -2.0f * PI4_Df);
 
-        const int32x4 zero = int32x4_zero();
-        const int32x4 q2 = bitwise_and(q, 2);
-        const int32x4 qmask = sub(zero, srli(q2, 1));
-        const float32x4 mask = reinterpret<float32x4>(qmask);
-        d = bitwise_xor(bitwise_and(mask, float32x4_set1(-0.0f)), d);
+        int32x4 zero = int32x4_zero();
+        mask32x4 mask = compare_eq(bitwise_and(q, 2), zero);
+        d = select(mask, bitwise_xor(d, float32x4_set1(-0.0f)), d);
 
         const float32x4 s = mul(d, d);
-        u = sincos_post(s);
+        u = float32x4_set1(2.6083159809786593541503e-06f);
+        u = madd(-0.0001981069071916863322258f, u, s);
+        u = madd(0.00833307858556509017944336f, u, s);
+        u = madd(-0.166666597127914428710938f, u, s);
         u = madd(d, s, mul(u, d));
         u = bitwise_or(is_inf(d), u);
         return u;
@@ -205,18 +196,18 @@ namespace simd {
     float32x4 tan(float32x4 d)
     {
         const int32x4 q = convert<int32x4>(mul(d, float32x4_set1(float_2_pi)));
-        float32x4 u = convert<float32x4>(q);
 
         float32x4 x = d;
+        float32x4 u = convert<float32x4>(q);
         x = madd(x, u, -2.0f * PI4_Af);
         x = madd(x, u, -2.0f * PI4_Bf);
         x = madd(x, u, -2.0f * PI4_Cf);
         x = madd(x, u, -2.0f * PI4_Df);
 
         const float32x4 s = mul(x, x);
-        const mask32x4 m = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
-        const int32x4 mask = select(m, int32x4_set1(0x80000000), int32x4_zero());
-        x = bitwise_xor(x, reinterpret<float32x4>(mask)); // if (q & 1) x = -x;
+
+        const mask32x4 mask = compare_eq(bitwise_and(q, int32x4_set1(1)), int32x4_set1(1));
+        x = select(mask, bitwise_xor(x, float32x4_set1(-0.0f)), x);
 
         u = float32x4_set1(0.00927245803177356719970703f);
         u = madd(0.00331984995864331722259521f, u, s);
@@ -226,7 +217,7 @@ namespace simd {
         u = madd(0.333331853151321411132812f, u, s);
 
         u = madd(x, s, mul(u, x));
-        u = slf_blend(reinterpret<float32x4>(mask), div(float32x4_set1(1.0f), u), u);
+        u = select(mask, rcp(u), u);
         u = bitwise_or(is_inf(d), u);
 
         return u;
