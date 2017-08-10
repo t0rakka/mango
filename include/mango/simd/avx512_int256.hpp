@@ -1187,6 +1187,11 @@ namespace simd {
         return _mm512_kxor(a, b);
     }
 
+    static inline uint32 get_mask(mask8x32 a)
+    {
+        return uint32(a);
+    }
+
     // -----------------------------------------------------------------
     // mask16x16
     // -----------------------------------------------------------------
@@ -1204,6 +1209,11 @@ namespace simd {
     static inline mask16x16 operator ^ (mask16x16 a, mask16x16 b)
     {
         return _mm512_kxor(a, b);
+    }
+
+    static inline uint32 get_mask(mask16x16 a)
+    {
+        return uint32(a);
     }
 
     // -----------------------------------------------------------------
@@ -1248,6 +1258,11 @@ namespace simd {
     static inline mask64x4 operator ^ (mask64x4 a, mask64x4 b)
     {
         return _mm512_kxor(a, b);
+    }
+
+    static inline uint32 get_mask(mask64x4 a)
+    {
+        return uint32(a);
     }
 
 } // namespace simd

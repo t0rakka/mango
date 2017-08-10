@@ -1000,6 +1000,70 @@ namespace mango
     using double3 = Vector<double, 3>;
     using double4 = Vector<double, 4>;
 
+    // ------------------------------------------------------------------
+    // maskToInt()
+    // ------------------------------------------------------------------
+
+    static inline uint32 maskToInt(mask8x16 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask16x8 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask32x4 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask64x2 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask8x32 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask16x16 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask32x8 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask64x4 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint64 maskToInt(mask8x64 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask16x32 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask32x16 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline uint32 maskToInt(mask64x8 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
 } // namespace mango
 
 #include "vector128_int8x16.hpp"

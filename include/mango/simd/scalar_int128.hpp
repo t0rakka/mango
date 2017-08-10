@@ -1658,6 +1658,11 @@ namespace simd {
         return a.mask ^ b.mask;
     }
 
+    static inline uint32 get_mask(mask8x16 a)
+    {
+        return a.mask;
+    }
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1675,6 +1680,11 @@ namespace simd {
     static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
     {
         return a.mask ^ b.mask;
+    }
+
+    static inline uint32 get_mask(mask16x8 a)
+    {
+        return a.mask;
     }
 
     // -----------------------------------------------------------------
@@ -1718,6 +1728,11 @@ namespace simd {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return a.mask ^ b.mask;
+    }
+
+    static inline uint32 get_mask(mask64x2 a)
+    {
+        return a.mask;
     }
 
 } // namespace simd

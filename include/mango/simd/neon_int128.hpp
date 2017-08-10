@@ -1374,6 +1374,29 @@ namespace simd {
         return veorq_u8(a, b);
     }
 
+    static inline uint32 get_mask(mask8x16 a)
+    {
+        // TODO: optimize
+        uint32 mask = 0;
+        mask |= vgetq_lane_u8(a, 0x0) & 0x0001;
+        mask |= vgetq_lane_u8(a, 0x1) & 0x0002;
+        mask |= vgetq_lane_u8(a, 0x2) & 0x0004;
+        mask |= vgetq_lane_u8(a, 0x3) & 0x0008;
+        mask |= vgetq_lane_u8(a, 0x4) & 0x0010;
+        mask |= vgetq_lane_u8(a, 0x5) & 0x0020;
+        mask |= vgetq_lane_u8(a, 0x6) & 0x0040;
+        mask |= vgetq_lane_u8(a, 0x7) & 0x0080;
+        mask |= vgetq_lane_u8(a, 0x8) & 0x0100;
+        mask |= vgetq_lane_u8(a, 0x9) & 0x0200;
+        mask |= vgetq_lane_u8(a, 0xa) & 0x0400;
+        mask |= vgetq_lane_u8(a, 0xb) & 0x0800;
+        mask |= vgetq_lane_u8(a, 0xc) & 0x1000;
+        mask |= vgetq_lane_u8(a, 0xd) & 0x2000;
+        mask |= vgetq_lane_u8(a, 0xe) & 0x4000;
+        mask |= vgetq_lane_u8(a, 0xf) & 0x8000;
+        return mask;
+    }
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1391,6 +1414,21 @@ namespace simd {
     static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
     {
         return veorq_u16(a, b);
+    }
+
+    static inline uint32 get_mask(mask16x8 a)
+    {
+        // TODO: optimize
+        uint32 mask = 0;
+        mask |= vgetq_lane_u16(a, 0x0) & 0x01;
+        mask |= vgetq_lane_u16(a, 0x1) & 0x02;
+        mask |= vgetq_lane_u16(a, 0x2) & 0x04;
+        mask |= vgetq_lane_u16(a, 0x3) & 0x08;
+        mask |= vgetq_lane_u16(a, 0x4) & 0x10;
+        mask |= vgetq_lane_u16(a, 0x5) & 0x20;
+        mask |= vgetq_lane_u16(a, 0x6) & 0x40;
+        mask |= vgetq_lane_u16(a, 0x7) & 0x80;
+        return mask;
     }
 
     // -----------------------------------------------------------------
@@ -1440,6 +1478,13 @@ namespace simd {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return veorq_u64(a, b);
+    }
+
+    static inline uint32 get_mask(mask64x2 a)
+    {
+        uint32 x = uint32(vgetq_lane_u64(a, 0)) & 1;
+        uint32 y = uint32(vgetq_lane_u64(a, 1)) & 2;
+        return x | y;
     }
 
 } // namespace simd

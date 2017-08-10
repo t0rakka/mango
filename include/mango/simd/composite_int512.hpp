@@ -1567,6 +1567,12 @@ namespace simd {
         return result;
     }
 
+    static inline uint64 get_mask(mask8x64 a)
+    {
+        uint64 mask = get_mask(a.lo) | (uint64(get_mask(a.hi)) << 32);
+        return mask;
+    }
+
     // -----------------------------------------------------------------
     // mask16x32
     // -----------------------------------------------------------------
@@ -1593,6 +1599,12 @@ namespace simd {
         result.lo = a.lo ^ b.lo;
         result.hi = a.hi ^ b.hi;
         return result;
+    }
+
+    static inline uint32 get_mask(mask16x32 a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 16);
+        return mask;
     }
 
     // -----------------------------------------------------------------
@@ -1655,6 +1667,12 @@ namespace simd {
         result.lo = a.lo ^ b.lo;
         result.hi = a.hi ^ b.hi;
         return result;
+    }
+
+    static inline uint32 get_mask(mask64x8 a)
+    {
+        uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
+        return mask;
     }
 
 } // namespace simd

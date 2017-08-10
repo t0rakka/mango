@@ -1964,6 +1964,11 @@ namespace simd {
         return _mm_xor_si128(a, b);
     }
 
+    static inline uint32 get_mask(mask8x16 a)
+    {
+        return _mm_movemask_epi8(a);
+    }
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1981,6 +1986,12 @@ namespace simd {
     static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
     {
         return _mm_xor_si128(a, b);
+    }
+
+    static inline uint32 get_mask(mask16x8 a)
+    {
+        __m128i temp = _mm_packus_epi16(a, _mm_setzero_si128());
+        return _mm_movemask_epi8(temp);
     }
 
     // -----------------------------------------------------------------
@@ -2024,6 +2035,11 @@ namespace simd {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return _mm_xor_si128(a, b);
+    }
+
+    static inline uint32 get_mask(mask64x2 a)
+    {
+        return _mm_movemask_pd(_mm_castsi128_pd(a));
     }
 
 #undef simd128_shuffle_epi32
