@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     This work is based on "SLEEF" library and converted to use MANGO SIMD abstraction
@@ -29,31 +29,6 @@ namespace simd {
     constexpr float L2Lf = 1.428606765330187045e-06f;
     constexpr float R_LN2f = 1.442695040888963407359924681001892137426645954152985934135449406931f;
     constexpr float R_INFf = float(std::numeric_limits<float>::infinity());
-
-    static inline float32x4 slf_blend(float32x4 mask, float32x4 a, float32x4 b)
-    {
-        a = bitwise_and(a, mask);
-        b = bitwise_nand(b, mask);
-        return bitwise_or(a, b);
-    }
-
-    static inline int32x4 slf_compare_gt(int32x4 a, int32x4 b)
-    {
-        mask32x4 mask = compare_gt(a, b);
-        return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
-    }
-
-    static inline int32x4 slf_compare_eq(int32x4 a, int32x4 b)
-    {
-        mask32x4 mask = compare_eq(a, b);
-        return select(mask, int32x4_set1(0xffffffff), int32x4_zero());
-    }
-
-    static inline float32x4 slf_compare_eq(float32x4 a, float32x4 b)
-    {
-        mask32x4 mask = compare_eq(a, b);
-        return select(mask, reinterpret<float32x4>(int32x4_set1(0xffffffff)), float32x4_zero());
-    }
 
     static inline float32x4 signbit(float32x4 f)
     {
@@ -93,14 +68,12 @@ namespace simd {
 
     static inline int32x4 sel(float32x4 f0, float32x4 f1, int32x4 x, int32x4 y)
     {
-        return reinterpret<int32x4>(select(compare_lt(f0, f1), 
-            reinterpret<float32x4>(x), 
-            reinterpret<float32x4>(y)));
+        return select(compare_lt(f0, f1), x, y);
     }
 
     static inline float32x4 atan2kf(float32x4 b, float32x4 a)
     {
-        int32x4 q = sel(a, float32x4_set1(0.0f), int32x4_set1(-2), int32x4_set1(0));
+        int32x4 q = sel(a, float32x4_zero(), int32x4_set1(-2), int32x4_set1(0));
         float32x4 x = abs(a);
         float32x4 y = b;
 
@@ -128,16 +101,19 @@ namespace simd {
 
     static inline float32x4 ldexp(float32x4 x, int32x4 q)
     {
-        float32x4 u;
         int32x4 m = srai(q, 31);
         m = slli(sub(srai(add(m, q), 6), m), 4);
-        const int32x4 p = sub(q, slli(m, 2));
+        q = sub(q, slli(m, 2));
         m = add(m, 0x7f);
+
         m = max(m, int32x4_set1(0));
         m = min(m, int32x4_set1(0xff));
+
+        float32x4 u;
         u = reinterpret<float32x4>(slli(m, 23));
         x = mul(mul(mul(mul(x, u), u), u), u);
-        u = reinterpret<float32x4>(slli(add(p, 0x7f), 23));
+        u = reinterpret<float32x4>(slli(add(q, 0x7f), 23));
+
         return mul(x, u);
     }
 
@@ -280,7 +256,8 @@ namespace simd {
         lo = madd(1.0f, f, lo);
         float32x4 f2 = mul(f, f);
         float32x4 a = add(mul(mul(f2, f2), hi), lo);
-        float32x4 b = reinterpret<float32x4>(bitwise_and(slli((add(ix, 127)), 23), slf_compare_gt(ix, int32x4_set1(-128))));
+        int32x4 xxx = select(compare_gt(ix, int32x4_set1(-128)), int32x4_set1(0xffffffff), int32x4_zero());
+        float32x4 b = reinterpret<float32x4>(bitwise_and(slli((add(ix, 127)), 23), xxx));
         int32x4 mask = select(compare_gt(ix, 128), int32x4_set1(0x7fffffff), int32x4_set1(0));
         return bitwise_or(mul(a, b), reinterpret<float32x4>(mask));
     }
@@ -351,10 +328,9 @@ namespace simd {
 
         const int32x4 i1 = int32x4_set1(1);
         const int32x4 i2 = add(i1, i1);
-        float32x4 m = reinterpret<float32x4>(slf_compare_eq(bitwise_and(q, i1), i1));
-        t = slf_blend(m, sub(float32x4_set1(float_pi_2), t), t);
-        m = reinterpret<float32x4>(slf_compare_eq(bitwise_and(q, i2), i2));
-        t = slf_blend(m, neg(t), t);
+        t = select(compare_eq(bitwise_and(q, i1), i1), sub(float32x4_set1(float_pi_2), t), t);
+        float32x4 mask = select(compare_eq(bitwise_and(q, i2), i2), convert<float32x4>(int32x4_set1(0xffffffff)), float32x4_set1(0.0f));
+        t = bitwise_xor(bitwise_and(mask, float32x4_set1(-0.0f)), t);
 
         return t;
     }
@@ -368,370 +344,11 @@ namespace simd {
         float32x4 r = atan2kf(abs(y), x);
         r = mulsign(r, x);
 
-        float32x4 mask = bitwise_or(is_inf(x), slf_compare_eq(x, float32x4_zero()));
-        r = slf_blend(mask, sub(pi_2, is_inf2(x, mulsign(pi_2, x))), r);
-        r = slf_blend(is_inf(y), sub(pi_2, is_inf2(x, mulsign(pi_4, x))), r);
-        r = slf_blend(slf_compare_eq(y, float32x4_zero()), bitwise_and(slf_compare_eq(signed_one(x), float32x4_set1(-1.0f)), pi), r);
+        r = select(compare_eq(abs(x), R_INFf), sub(pi_2, is_inf2(x, mulsign(pi_2, x))), r);
+        r = select(compare_eq(abs(y), R_INFf), sub(pi_2, is_inf2(x, mulsign(pi_4, x))), r);
+        r = select(compare_eq(y, float32x4_zero()), select(compare_eq(signed_one(x), float32x4_set1(-1.0f)), pi, float32x4_zero()), r);
         r = bitwise_or(bitwise_or(is_nan(x), is_nan(y)), mulsign(r, y));
         return r;
-    }
-
-    // ------------------------------------------------------------------------
-    // Sleef: float64x4
-    // ------------------------------------------------------------------------
-
-    constexpr double double_pi   = 3.14159265358979323846;
-    constexpr double double_pi_2 = 1.57079632679489661923;
-    //constexpr double double_pi_4 = 0.785398163397448309616;
-    constexpr double double_1_pi = 0.318309886183790671538;
-    constexpr double double_2_pi = 0.636619772367581343076;
-
-    constexpr double PI4_A = 0.78539816290140151978;
-    constexpr double PI4_B = 4.9604678871439933374e-10;
-    constexpr double PI4_C = 1.1258708853173288931e-18;
-    constexpr double PI4_D = 1.7607799325916000908e-27;
-    //constexpr double L2U = 0.69314718055966295651160180568695068359375;
-    //constexpr double L2L = 0.28235290563031577122588448175013436025525412068e-12;
-    constexpr double R_LN2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
-    constexpr double R_INF = double(std::numeric_limits<double>::infinity());
-
-    static inline float64x4 signbit(float64x4 v)
-    {
-        return bitwise_and(v, float64x4_set1(-0.0));
-    }
-
-    static inline float64x4 mulsign(float64x4 x, float64x4 y)
-    {
-        return bitwise_xor(x, signbit(y));
-    }
-
-#if 0
-    static inline float64x4 signed_one(float64x4 v)
-    {
-        // difference to sign() is that +0.0 -> 1.0, -0.0 -> -1.0
-        return bitwise_or(float64x4_set1(1.0), bitwise_and(float64x4_set1(-0.0), v));
-    }
-#endif
-
-    static inline float64x4 is_nan(float64x4 d)
-    {
-        return select(compare_neq(d, d), reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-    }
-
-    static inline float64x4 is_inf(float64x4 d)
-    {
-        return select(compare_eq(abs(d), R_INF), reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-    }
-
-#if 0
-    static inline float64x4 is_inf2(float64x4 d, float64x4 m)
-    {
-        return bitwise_and(is_inf(d), bitwise_or(signbit(d), m));
-    }
-#endif
-
-    static inline float64x4 is_negative_inf(float64x4 d)
-    {
-        return select(compare_eq(d, -R_INF), reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-    }
-
-    static inline int32x4 sel(float64x4 f0, float64x4 f1, int32x4 x, int32x4 y)
-    {
-        const float64x4 xd = convert<float64x4>(x);
-        const float64x4 yd = convert<float64x4>(y);
-        const float64x4 s = select(compare_lt(f0, f1), xd, yd);
-        return convert<int32x4>(s);
-    }
-
-    static inline float64x4 atan2k(float64x4 b, float64x4 a)
-    {
-        int32x4 q = sel(a, float64x4_zero(), int32x4_set1(-2), int32x4_zero());
-        float64x4 x = abs(a);
-        float64x4 y = b;
-
-        q = sel(x, y, add(q, int32x4_set1(1)), q);
-        mask64x4 p = compare_lt(x, y);
-        float64x4 s = select(p, neg(x), y);
-        float64x4 t = max(x, y);
-
-        s = div(s, t);
-        t = mul(s, s);
-
-        float64x4 u = float64x4_set1(-1.88796008463073496563746e-05);
-        u = madd(0.000209850076645816976906797, u, t);
-        u = madd(-0.00110611831486672482563471, u, t);
-        u = madd(0.00370026744188713119232403, u, t);
-        u = madd(-0.00889896195887655491740809, u, t);
-        u = madd(0.016599329773529201970117, u, t);
-        u = madd(-0.0254517624932312641616861, u, t);
-        u = madd(0.0337852580001353069993897, u, t);
-        u = madd(-0.0407629191276836500001934, u, t);
-        u = madd(0.0466667150077840625632675, u, t);
-        u = madd(-0.0523674852303482457616113, u, t);
-        u = madd(0.0587666392926673580854313, u, t);
-        u = madd(-0.0666573579361080525984562, u, t);
-        u = madd(0.0769219538311769618355029, u, t);
-        u = madd(-0.090908995008245008229153, u, t);
-        u = madd(0.111111105648261418443745, u, t);
-        u = madd(-0.14285714266771329383765, u, t);
-        u = madd(0.199999999996591265594148, u, t);
-        u = madd(-0.333333333333311110369124, u, t);
-
-        t = madd(s, s, mul(t, u));
-        t = madd(t, convert<float64x4>(q), float64x4_set1(double_pi_2));
-
-        return t;
-    }
-
-    static inline float64x4 ldexp(float64x4 x, int32x4 q)
-    {
-        // TODO: implement ldexp() with 64 bit precision
-        return convert<float64x4>(ldexp(convert<float32x4>(x), q));
-    }
-
-    static inline float64x4 sincos_post(float64x4 s)
-    {
-        float64x4 u;
-        u = float64x4_set1(-7.97255955009037868891952e-18);
-        u = madd(2.81009972710863200091251e-15, u, s);
-        u = madd(-7.64712219118158833288484e-13, u, s);
-        u = madd(1.60590430605664501629054e-10, u, s);
-        u = madd(-2.50521083763502045810755e-08, u, s);
-        u = madd(2.75573192239198747630416e-06, u, s);
-        u = madd(-0.000198412698412696162806809, u, s);
-        u = madd(0.00833333333333332974823815, u, s);
-        u = madd(-0.166666666666666657414808, u, s);
-        return u;
-    }
-
-    float64x4 sin(float64x4 v)
-    {
-        float64x4 d = v;
-
-        int32x4 q = convert<int32x4>(mul(d, double_1_pi));
-        float64x4 u = convert<float64x4>(q);
-
-        d = madd(d, u, -4.0 * PI4_A);
-        d = madd(d, u, -4.0 * PI4_B);
-        d = madd(d, u, -4.0 * PI4_C);
-        d = madd(d, u, -4.0 * PI4_D);
-
-        const float64x4 q1 = convert<float64x4>(bitwise_and(q, 1));
-        const float64x4 mask = select(compare_eq(q1, 1.0), reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-        d = mulsign(d, mask);
-
-        const float64x4 s = mul(d, d);
-        u = sincos_post(s);
-        u = madd(d, s, mul(u, d));
-        return u;
-    }
-
-    float64x4 cos(float64x4 v)
-    {
-        float64x4 d = v;
-
-        int32x4 q;
-        q = convert<int32x4>(madd(-0.5, d, float64x4_set1(double_1_pi)));
-        q = add(add(q, q), 1);
-        float64x4 u = convert<float64x4>(q);
-
-        d = madd(d, u, -2.0 * PI4_A);
-        d = madd(d, u, -2.0 * PI4_B);
-        d = madd(d, u, -2.0 * PI4_C);
-        d = madd(d, u, -2.0 * PI4_D);
-
-        const float64x4 q2 = convert<float64x4>(bitwise_and(q, 2));
-        const mask64x4 qmask = compare_eq(q2, float64x4_zero());
-        const float64x4 mask = select(qmask, reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-        d = bitwise_xor(bitwise_and(mask, float64x4_set1(-0.0)), d);
-
-        const float64x4 s = mul(d, d);
-        u = sincos_post(s);
-        u = madd(d, s, mul(u, d));
-        return u;
-    }
-
-    float64x4 tan(float64x4 d)
-    {
-        const int32x4 q = convert<int32x4>(mul(d, double_2_pi));
-        float64x4 u = convert<float64x4>(q);
-
-        float64x4 x = d;
-        x = madd(x, u, -2.0 * PI4_A);
-        x = madd(x, u, -2.0 * PI4_B);
-        x = madd(x, u, -2.0 * PI4_C);
-        x = madd(x, u, -2.0 * PI4_D);
-
-        const float64x4 s = mul(x, x);
-
-        const mask64x4 qmask = compare_eq(convert<float64x4>(bitwise_and(q, 1)), 1.0);
-        const float64x4 mask = select(qmask, reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-        x = bitwise_xor(bitwise_and(mask, float64x4_set1(-0.0)), x);
-
-        u = float64x4_set1(1.01419718511083373224408e-05);
-        u = madd(-2.59519791585924697698614e-05, u, s);
-        u = madd(5.23388081915899855325186e-05, u, s);
-        u = madd(-3.05033014433946488225616e-05, u, s);
-        u = madd(7.14707504084242744267497e-05, u, s);
-        u = madd(8.09674518280159187045078e-05, u, s);
-        u = madd(0.000244884931879331847054404, u, s);
-        u = madd(0.000588505168743587154904506, u, s);
-        u = madd(0.00145612788922812427978848, u, s);
-        u = madd(0.00359208743836906619142924, u, s);
-        u = madd(0.00886323944362401618113356, u, s);
-        u = madd(0.0218694882853846389592078, u, s);
-        u = madd(0.0539682539781298417636002, u, s);
-        u = madd(0.133333333333125941821962, u, s);
-        u = madd(0.333333333333334980164153, u, s);
-
-        u = madd(x, s, mul(u, x));
-        u = select(qmask, div(1.0, u), u);
-        u = bitwise_or(is_inf(d), u);
-
-        return u;
-    }
-
-    float64x4 exp(float64x4 v)
-    {
-        const int32x4 q = convert<int32x4>(mul(v, R_LN2));
-        const float64x4 p = convert<float64x4>(q);
-
-        float64x4 s;
-        s = madd(v, p, -L2Uf);
-        s = madd(s, p, -L2Lf);
-
-        float64x4 u = float64x4_set1(2.08860621107283687536341e-09);
-        u = madd(2.51112930892876518610661e-08, u, s);
-        u = madd(2.75573911234900471893338e-07, u, s);
-        u = madd(2.75572362911928827629423e-06, u, s);
-        u = madd(2.4801587159235472998791e-05, u, s);
-        u = madd(0.000198412698960509205564975, u, s);
-        u = madd(0.00138888888889774492207962, u, s);
-        u = madd(0.00833333333331652721664984, u, s);
-        u = madd(0.0416666666666665047591422, u, s);
-        u = madd(0.166666666666666851703837, u, s);
-        u = madd(0.5, u, s);
-
-        u = add(1.0, madd(s, mul(s, s), u));
-        u = ldexp(u, q);
-        u = bitwise_nand(is_negative_inf(v), u);
-
-        return u;
-    }
-
-    float64x4 log2(float64x4 v)
-    {
-        // TODO: implement float64x4_log2() with 64 bit precision
-        return convert<float64x4>(log2(convert<float32x4>(v)));
-    }
-
-    float64x4 log(float64x4 v)
-    {
-        return mul(log2(v), 0.69314718055994530941723212145818);
-    }
-
-    float64x4 exp2(float64x4 v)
-    {
-        // TODO: implement float64x4_exp2() with 64 bit precision
-        return convert<float64x4>(exp2(convert<float32x4>(v)));
-    }
-
-    float64x4 pow(float64x4 a, float64x4 b)
-    {
-        return exp2(mul(log2(abs(a)), b));
-    }
-
-    float64x4 asin(float64x4 d)
-    {
-        const float64x4 one = float64x4_set1(1.0);
-        float64x4 x, y;
-        x = add(one, d);
-        y = sub(one, d);
-        x = mul(x, y);
-        x = sqrt(x);
-
-        x = bitwise_or(is_nan(x), atan2k(abs(d), x));
-        return mulsign(x, d);
-    }
-
-    float64x4 acos(float64x4 d)
-    {
-        const float64x4 one = float64x4_set1(1.0);
-        float64x4 x, y;
-        x = add(one, d);
-        y = sub(one, d);
-        x = mul(x, y);
-        x = sqrt(x);
-
-        x = mulsign(atan2k(x, abs(d)), d);
-        y = select(compare_lt(d, float64x4_zero()), float64x4_set1(double_pi), float64x4_zero());
-        x = add(x, y);
-        return x;
-    }
-
-    float64x4 atan(float64x4 d)
-    {
-        const float64x4 one = float64x4_set1(1.0);
-
-        int32x4 q = sel(d, float64x4_set1(0.0), int32x4_set1(2), int32x4_set1(0));
-        float64x4 s = abs(d);
-
-        q = sel(one, s, add(q, int32x4_set1(1)), q);
-        s = select(compare_lt(one, s), rcp(s), s);
-
-        float64x4 t = mul(s, s);
-
-        float64x4 u = float64x4_set1(-1.88796008463073496563746e-05);
-        u = madd(0.000209850076645816976906797, u, t);
-        u = madd(-0.00110611831486672482563471, u, t);
-        u = madd(0.00370026744188713119232403, u, t);
-        u = madd(-0.00889896195887655491740809, u, t);
-        u = madd(0.016599329773529201970117, u, t);
-        u = madd(-0.0254517624932312641616861, u, t);
-        u = madd(0.0337852580001353069993897, u, t);
-        u = madd(-0.0407629191276836500001934, u, t);
-        u = madd(0.0466667150077840625632675, u, t);
-        u = madd(-0.0523674852303482457616113, u, t);
-        u = madd(0.0587666392926673580854313, u, t);
-        u = madd(-0.0666573579361080525984562, u, t);
-        u = madd(0.0769219538311769618355029, u, t);
-        u = madd(-0.090908995008245008229153, u, t);
-        u = madd(0.111111105648261418443745, u, t);
-        u = madd(-0.14285714266771329383765, u, t);
-        u = madd(0.199999999996591265594148, u, t);
-        u = madd(-0.333333333333311110369124, u, t);
-
-        t = madd(s, s, mul(t, u));
-
-        const float64x4 q1 = convert<float64x4>(bitwise_and(q, int32x4_set1(1)));
-        t = select(compare_eq(q1, one), sub(double_pi_2, t), t);
-
-        const float64x4 q2 = convert<float64x4>(bitwise_and(q, int32x4_set1(2)));
-        float64x4 mask = select(compare_eq(q2, float64x4_set1(2.0)), 
-                                reinterpret<float64x4>(int64x4_set1(0xffffffffffffffffull)), float64x4_zero());
-        t = mulsign(t, mask);
-
-        return t;
-    }
-
-    float64x4 atan2(float64x4 y, float64x4 x)
-    {
-#if 0
-        const float64x4 pi = float64x4_set1(double_pi);
-        const float64x4 pi_2 = float64x4_set1(double_pi_2);
-        const float64x4 pi_4 = float64x4_set1(double_pi_4);
-
-        float64x4 r = atan2k(abs(y), x);
-        r = mulsign(r, x);
-
-        r = select(bitwise_or(is_inf(x), compare_eq(x, float64x4_zero())), sub(pi_2, is_inf2(x, mulsign(pi_2, x))), r);
-        r = select(is_inf(y), sub(pi_2, is_inf2(x, mulsign(pi_4, x))), r);
-        r = select(compare_eq(y, float64x4_zero()), bitwise_and(compare_eq(signed_one(x), float64x4_set1(-1.0)), pi), r);
-        r = bitwise_or(bitwise_or(is_nan(x), is_nan(y)), mulsign(r, y));
-        return r;
-#endif
-        // TODO: implement float64x4_atan2() with 64 bit precision
-        return convert<float64x4>(atan2(convert<float32x4>(y), convert<float32x4>(x)));
     }
 
 } // namespace simd

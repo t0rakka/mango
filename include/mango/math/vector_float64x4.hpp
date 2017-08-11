@@ -605,16 +605,6 @@ namespace mango
     MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
     MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
     MAKE_VECTOR_FUNCTION1(fract, simd::fract)
-    MAKE_VECTOR_FUNCTION1(sin, simd::sin)
-    MAKE_VECTOR_FUNCTION1(cos, simd::cos)
-    MAKE_VECTOR_FUNCTION1(tan, simd::tan)
-    MAKE_VECTOR_FUNCTION1(asin, simd::asin)
-    MAKE_VECTOR_FUNCTION1(acos, simd::acos)
-    MAKE_VECTOR_FUNCTION1(atan, simd::atan)
-    MAKE_VECTOR_FUNCTION1(exp, simd::exp)
-    MAKE_VECTOR_FUNCTION1(log, simd::log)
-    MAKE_VECTOR_FUNCTION1(exp2, simd::exp2)
-    MAKE_VECTOR_FUNCTION1(log2, simd::log2)
     MAKE_VECTOR_FUNCTION1(sign, simd::sign)
     MAKE_VECTOR_FUNCTION1(radians, simd::radians)
     MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
@@ -626,8 +616,6 @@ namespace mango
     MAKE_VECTOR_FUNCTION2(dot, simd::dot4)
     //MAKE_VECTOR_FUNCTION2(cross, simd::cross3)
     MAKE_VECTOR_FUNCTION2(mod, simd::mod)
-    MAKE_VECTOR_FUNCTION2(pow, simd::pow)
-    MAKE_VECTOR_FUNCTION2(atan2, simd::atan2)
 
 #undef MAKE_VECTOR_FUNCTION1
 #undef MAKE_VECTOR_FUNCTION2

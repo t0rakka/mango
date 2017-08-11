@@ -26,19 +26,6 @@ namespace simd {
     float32x4 pow(float32x4 a, float32x4 b);
     float32x4 atan2(float32x4 a, float32x4 b);
 
-    float64x4 sin(float64x4 a);
-    float64x4 cos(float64x4 a);
-    float64x4 tan(float64x4 a);
-    float64x4 asin(float64x4 a);
-    float64x4 acos(float64x4 a);
-    float64x4 atan(float64x4 a);
-    float64x4 exp(float64x4 a);
-    float64x4 log(float64x4 a);
-    float64x4 exp2(float64x4 a);
-    float64x4 log2(float64x4 a);
-    float64x4 pow(float64x4 a, float64x4 b);
-    float64x4 atan2(float64x4 a, float64x4 b);
-
     // ------------------------------------------------------------------
     // uint8x16
     // ------------------------------------------------------------------
