@@ -320,161 +320,211 @@ namespace mango
         }
     };
 
-    static inline const Vector<int32, 4> operator + (Vector<int32, 4> v)
+    static inline const int32x4 operator + (int32x4 v)
     {
         return v;
     }
 
-    static inline Vector<int32, 4> operator - (Vector<int32, 4> v)
+    static inline int32x4 operator - (int32x4 v)
     {
         return simd::sub(simd::int32x4_zero(), v);
     }
 
-    static inline Vector<int32, 4>& operator += (Vector<int32, 4>& a, Vector<int32, 4> b)
+    static inline int32x4& operator += (int32x4& a, int32x4 b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<int32, 4>& operator += (Vector<int32, 4>& a, int32 b)
+    static inline int32x4& operator += (int32x4& a, int32 b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<int32, 4>& operator -= (Vector<int32, 4>& a, Vector<int32, 4> b)
+    static inline int32x4& operator -= (int32x4& a, int32x4 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<int32, 4>& operator -= (Vector<int32, 4>& a, int32 b)
+    static inline int32x4& operator -= (int32x4& a, int32 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<int32, 4> operator + (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 operator + (int32x4 a, int32x4 b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<int32, 4> operator + (Vector<int32, 4> a, int32 b)
+    static inline int32x4 operator + (int32x4 a, int32 b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<int32, 4> operator + (int32 a, Vector<int32, 4> b)
+    static inline int32x4 operator + (int32 a, int32x4 b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<int32, 4> operator - (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 operator - (int32x4 a, int32x4 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<int32, 4> operator - (Vector<int32, 4> a, int32 b)
+    static inline int32x4 operator - (int32x4 a, int32 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<int32, 4> operator - (int32 a, Vector<int32, 4> b)
+    static inline int32x4 operator - (int32 a, int32x4 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<int32, 4> nand(Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 nand(int32x4 a, int32x4 b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline Vector<int32, 4> operator & (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 nand(int32x4 a, int32 b)
+    {
+        return simd::bitwise_nand(a, int32x4(b));
+    }
+
+    static inline int32x4 operator & (int32x4 a, int32x4 b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline Vector<int32, 4> operator | (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 operator & (int32x4 a, int32 b)
+    {
+        return simd::bitwise_and(a, int32x4(b));
+    }
+
+    static inline int32x4 operator | (int32x4 a, int32x4 b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline Vector<int32, 4> operator ^ (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 operator | (int32x4 a, int32 b)
+    {
+        return simd::bitwise_or(a, int32x4(b));
+    }
+
+    static inline int32x4 operator ^ (int32x4 a, int32x4 b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline Vector<int32, 4> operator ~ (Vector<int32, 4> a)
+    static inline int32x4 operator ^ (int32x4 a, int32 b)
+    {
+        return simd::bitwise_xor(a, int32x4(b));
+    }
+
+    static inline int32x4 operator ~ (int32x4 a)
     {
         return simd::bitwise_not(a);
     }
 
-    static inline Vector<int32, 4> adds(Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 adds(int32x4 a, int32x4 b)
     {
         return simd::adds(a, b);
     }
 
-    static inline Vector<int32, 4> subs(Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 subs(int32x4 a, int32x4 b)
     {
         return simd::subs(a, b);
     }
 
-    static inline Vector<int32, 4> min(Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 min(int32x4 a, int32x4 b)
     {
         return simd::min(a, b);
     }
 
-    static inline Vector<int32, 4> max(Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline int32x4 max(int32x4 a, int32x4 b)
     {
         return simd::max(a, b);
     }
 
-    static inline Vector<int32, 4> clamp(Vector<int32, 4> a, Vector<int32, 4> amin, Vector<int32, 4> amax)
+    static inline int32x4 clamp(int32x4 a, int32x4 amin, int32x4 amax)
     {
         return simd::clamp(a, amin, amax);
     }
 
-    static inline mask32x4 operator > (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator > (int32x4 a, int32x4 b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask32x4 operator >= (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator > (int32x4 a, int32 b)
+    {
+        return simd::compare_gt(a, int32x4(b));
+    }
+
+    static inline mask32x4 operator >= (int32x4 a, int32x4 b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline mask32x4 operator < (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator >= (int32x4 a, int32 b)
+    {
+        return simd::compare_ge(a, int32x4(b));
+    }
+
+    static inline mask32x4 operator < (int32x4 a, int32x4 b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline mask32x4 operator <= (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator < (int32x4 a, int32 b)
+    {
+        return simd::compare_lt(a, int32x4(b));
+    }
+
+    static inline mask32x4 operator <= (int32x4 a, int32x4 b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline mask32x4 operator == (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator <= (int32x4 a, int32 b)
+    {
+        return simd::compare_le(a, int32x4(b));
+    }
+
+    static inline mask32x4 operator == (int32x4 a, int32x4 b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline mask32x4 operator != (Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator == (int32x4 a, int32 b)
+    {
+        return simd::compare_eq(a, int32x4(b));
+    }
+
+    static inline mask32x4 operator != (int32x4 a, int32x4 b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline Vector<int32, 4> select(mask32x4 mask, Vector<int32, 4> a, Vector<int32, 4> b)
+    static inline mask32x4 operator != (int32x4 a, int32 b)
+    {
+        return simd::compare_neq(a, int32x4(b));
+    }
+
+    static inline int32x4 select(mask32x4 mask, int32x4 a, int32x4 b)
     {
         return simd::select(mask, a, b);
     }
 
-    static inline Vector<int32, 4> operator << (Vector<int32, 4> a, int b)
+    static inline int32x4 operator << (int32x4 a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<int32, 4> operator >> (Vector<int32, 4> a, int b)
+    static inline int32x4 operator >> (int32x4 a, int b)
     {
         return simd::sra(a, b);
     }

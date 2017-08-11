@@ -10,23 +10,6 @@ namespace mango {
 namespace simd {
 
     // ------------------------------------------------------------------
-    // Trigonometric functions
-    // ------------------------------------------------------------------
-
-    float32x4 sin(float32x4 a);
-    float32x4 cos(float32x4 a);
-    float32x4 tan(float32x4 a);
-    float32x4 asin(float32x4 a);
-    float32x4 acos(float32x4 a);
-    float32x4 atan(float32x4 a);
-    float32x4 exp(float32x4 a);
-    float32x4 log(float32x4 a);
-    float32x4 exp2(float32x4 a);
-    float32x4 log2(float32x4 a);
-    float32x4 pow(float32x4 a, float32x4 b);
-    float32x4 atan2(float32x4 a, float32x4 b);
-
-    // ------------------------------------------------------------------
     // uint8x16
     // ------------------------------------------------------------------
 
