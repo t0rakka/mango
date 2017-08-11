@@ -18,7 +18,7 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(int32 s)
+        Vector(int32 s)
         : m(simd::int32x8_set1(s))
         {
         }
@@ -72,21 +72,9 @@ namespace mango
         return a;
     }
 
-    static inline Vector<int32, 8>& operator += (Vector<int32, 8>& a, int32 b)
-    {
-        a = simd::add(a, simd::int32x8_set1(b));
-        return a;
-    }
-
     static inline Vector<int32, 8>& operator -= (Vector<int32, 8>& a, Vector<int32, 8> b)
     {
         a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline Vector<int32, 8>& operator -= (Vector<int32, 8>& a, int32 b)
-    {
-        a = simd::sub(a, simd::int32x8_set1(b));
         return a;
     }
 
@@ -95,29 +83,9 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline Vector<int32, 8> operator + (Vector<int32, 8> a, int32 b)
-    {
-        return simd::add(a, simd::int32x8_set1(b));
-    }
-
-    static inline Vector<int32, 8> operator + (int32 a, Vector<int32, 8> b)
-    {
-        return simd::add(simd::int32x8_set1(a), b);
-    }
-
     static inline Vector<int32, 8> operator - (Vector<int32, 8> a, Vector<int32, 8> b)
     {
         return simd::sub(a, b);
-    }
-
-    static inline Vector<int32, 8> operator - (Vector<int32, 8> a, int32 b)
-    {
-        return simd::sub(a, simd::int32x8_set1(b));
-    }
-
-    static inline Vector<int32, 8> operator - (int32 a, Vector<int32, 8> b)
-    {
-        return simd::sub(simd::int32x8_set1(a), b);
     }
 
     static inline Vector<int32, 8> nand(Vector<int32, 8> a, Vector<int32, 8> b)

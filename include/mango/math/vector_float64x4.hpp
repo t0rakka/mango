@@ -374,13 +374,8 @@ namespace mango
         {
         }
 
-        explicit Vector(double s)
+        Vector(double s)
         : xyzw(simd::float64x4_set1(s))
-        {
-        }
-
-        explicit Vector(int s)
-        : xyzw(simd::float64x4_set1(double(s)))
         {
         }
 
@@ -480,31 +475,13 @@ namespace mango
         return a;
     }
 
-    static inline double4& operator += (double4& a, double b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
     static inline double4& operator -= (double4& a, double4 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline double4& operator -= (double4& a, double b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
     static inline double4& operator *= (double4& a, double4 b)
-    {
-        a = simd::mul(a, b);
-        return a;
-    }
-
-    static inline double4& operator *= (double4& a, double b)
     {
         a = simd::mul(a, b);
         return a;
@@ -527,42 +504,12 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline double4 operator + (double4 a, double b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline double4 operator + (double a, double4 b)
-    {
-        return simd::add(a, b);
-    }
-
     static inline double4 operator - (double4 a, double4 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline double4 operator - (double4 a, double b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline double4 operator - (double a, double4 b)
-    {
-        return simd::sub(a, b);
-    }
-
     static inline double4 operator * (double4 a, double4 b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline double4 operator * (double4 a, double b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline double4 operator * (double a, double4 b)
     {
         return simd::mul(a, b);
     }
@@ -573,11 +520,6 @@ namespace mango
     }
 
     static inline double4 operator / (double4 a, double b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline double4 operator / (double a, double4 b)
     {
         return simd::div(a, b);
     }

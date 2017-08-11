@@ -32,13 +32,8 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(double s)
+        Vector(double s)
         : xy(simd::float64x2_set1(s))
-        {
-        }
-
-        explicit Vector(int s)
-        : xy(simd::float64x2_set1(double(s)))
         {
         }
 
@@ -108,31 +103,13 @@ namespace mango
         return a;
     }
 
-    static inline double2& operator += (double2& a, double b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
     static inline double2& operator -= (double2& a, double2 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline double2& operator -= (double2& a, double b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
     static inline double2& operator *= (double2& a, double2 b)
-    {
-        a = simd::mul(a, b);
-        return a;
-    }
-
-    static inline double2& operator *= (double2& a, double b)
     {
         a = simd::mul(a, b);
         return a;
@@ -155,42 +132,12 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline double2 operator + (double2 a, double b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline double2 operator + (double a, double2 b)
-    {
-        return simd::add(a, b);
-    }
-
     static inline double2 operator - (double2 a, double2 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline double2 operator - (double2 a, double b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline double2 operator - (double a, double2 b)
-    {
-        return simd::sub(a, b);
-    }
-
     static inline double2 operator * (double2 a, double2 b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline double2 operator * (double2 a, double b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline double2 operator * (double a, double2 b)
     {
         return simd::mul(a, b);
     }
@@ -201,11 +148,6 @@ namespace mango
     }
 
     static inline double2 operator / (double2 a, double b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline double2 operator / (double a, double2 b)
     {
         return simd::div(a, b);
     }

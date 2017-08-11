@@ -282,12 +282,12 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(int32 s)
+        Vector(int32 s)
         : xyzw(simd::int32x4_set1(s))
         {
         }
 
-        Vector(int32 x, int32 y, int32 z, int32 w)
+        explicit Vector(int32 x, int32 y, int32 z, int32 w)
         : xyzw(simd::int32x4_set4(x, y, z, w))
         {
         }
@@ -336,19 +336,7 @@ namespace mango
         return a;
     }
 
-    static inline int32x4& operator += (int32x4& a, int32 b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
     static inline int32x4& operator -= (int32x4& a, int32x4 b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline int32x4& operator -= (int32x4& a, int32 b)
     {
         a = simd::sub(a, b);
         return a;
@@ -359,27 +347,7 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline int32x4 operator + (int32x4 a, int32 b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline int32x4 operator + (int32 a, int32x4 b)
-    {
-        return simd::add(a, b);
-    }
-
     static inline int32x4 operator - (int32x4 a, int32x4 b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline int32x4 operator - (int32x4 a, int32 b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline int32x4 operator - (int32 a, int32x4 b)
     {
         return simd::sub(a, b);
     }
@@ -389,19 +357,9 @@ namespace mango
         return simd::bitwise_nand(a, b);
     }
 
-    static inline int32x4 nand(int32x4 a, int32 b)
-    {
-        return simd::bitwise_nand(a, int32x4(b));
-    }
-
     static inline int32x4 operator & (int32x4 a, int32x4 b)
     {
         return simd::bitwise_and(a, b);
-    }
-
-    static inline int32x4 operator & (int32x4 a, int32 b)
-    {
-        return simd::bitwise_and(a, int32x4(b));
     }
 
     static inline int32x4 operator | (int32x4 a, int32x4 b)
@@ -409,19 +367,9 @@ namespace mango
         return simd::bitwise_or(a, b);
     }
 
-    static inline int32x4 operator | (int32x4 a, int32 b)
-    {
-        return simd::bitwise_or(a, int32x4(b));
-    }
-
     static inline int32x4 operator ^ (int32x4 a, int32x4 b)
     {
         return simd::bitwise_xor(a, b);
-    }
-
-    static inline int32x4 operator ^ (int32x4 a, int32 b)
-    {
-        return simd::bitwise_xor(a, int32x4(b));
     }
 
     static inline int32x4 operator ~ (int32x4 a)
@@ -459,19 +407,9 @@ namespace mango
         return simd::compare_gt(a, b);
     }
 
-    static inline mask32x4 operator > (int32x4 a, int32 b)
-    {
-        return simd::compare_gt(a, int32x4(b));
-    }
-
     static inline mask32x4 operator >= (int32x4 a, int32x4 b)
     {
         return simd::compare_ge(a, b);
-    }
-
-    static inline mask32x4 operator >= (int32x4 a, int32 b)
-    {
-        return simd::compare_ge(a, int32x4(b));
     }
 
     static inline mask32x4 operator < (int32x4 a, int32x4 b)
@@ -479,19 +417,9 @@ namespace mango
         return simd::compare_lt(a, b);
     }
 
-    static inline mask32x4 operator < (int32x4 a, int32 b)
-    {
-        return simd::compare_lt(a, int32x4(b));
-    }
-
     static inline mask32x4 operator <= (int32x4 a, int32x4 b)
     {
         return simd::compare_le(a, b);
-    }
-
-    static inline mask32x4 operator <= (int32x4 a, int32 b)
-    {
-        return simd::compare_le(a, int32x4(b));
     }
 
     static inline mask32x4 operator == (int32x4 a, int32x4 b)
@@ -499,19 +427,9 @@ namespace mango
         return simd::compare_eq(a, b);
     }
 
-    static inline mask32x4 operator == (int32x4 a, int32 b)
-    {
-        return simd::compare_eq(a, int32x4(b));
-    }
-
     static inline mask32x4 operator != (int32x4 a, int32x4 b)
     {
         return simd::compare_neq(a, b);
-    }
-
-    static inline mask32x4 operator != (int32x4 a, int32 b)
-    {
-        return simd::compare_neq(a, int32x4(b));
     }
 
     static inline int32x4 select(mask32x4 mask, int32x4 a, int32x4 b)

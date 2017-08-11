@@ -24,13 +24,8 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(float s)
+        Vector(float s)
         : m(simd::float32x16_set1(s))
-        {
-        }
-
-        explicit Vector(int s)
-        : m(simd::float32x16_set1(float(s)))
         {
         }
 
@@ -88,33 +83,15 @@ namespace mango
         return a;
     }
 
-    static inline float32x16& operator += (float32x16& a, float b)
-    {
-        a = simd::add(a, simd::float32x16_set1(b));
-        return a;
-    }
-
     static inline float32x16& operator -= (float32x16& a, float32x16 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline float32x16& operator -= (float32x16& a, float b)
-    {
-        a = simd::sub(a, simd::float32x16_set1(b));
-        return a;
-    }
-
     static inline float32x16& operator *= (float32x16& a, float32x16 b)
     {
         a = simd::mul(a, b);
-        return a;
-    }
-
-    static inline float32x16& operator *= (float32x16& a, float b)
-    {
-        a = simd::mul(a, simd::float32x16_set1(b));
         return a;
     }
 
@@ -135,44 +112,14 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline float32x16 operator + (float32x16 a, float b)
-    {
-        return simd::add(a, simd::float32x16_set1(b));
-    }
-
-    static inline float32x16 operator + (float a, float32x16 b)
-    {
-        return simd::add(simd::float32x16_set1(a), b);
-    }
-
     static inline float32x16 operator - (float32x16 a, float32x16 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline float32x16 operator - (float32x16 a, float b)
-    {
-        return simd::sub(a, simd::float32x16_set1(b));
-    }
-
-    static inline float32x16 operator - (float a, float32x16 b)
-    {
-        return simd::sub(simd::float32x16_set1(a), b);
-    }
-
     static inline float32x16 operator * (float32x16 a, float32x16 b)
     {
         return simd::mul(a, b);
-    }
-
-    static inline float32x16 operator * (float32x16 a, float b)
-    {
-        return simd::mul(a, simd::float32x16_set1(b));
-    }
-
-    static inline float32x16 operator * (float a, float32x16 b)
-    {
-        return simd::mul(simd::float32x16_set1(a), b);
     }
 
     static inline float32x16 operator / (float32x16 a, float32x16 b)
@@ -183,11 +130,6 @@ namespace mango
     static inline float32x16 operator / (float32x16 a, float b)
     {
         return simd::div(a, b);
-    }
-
-    static inline float32x16 operator / (float a, float32x16 b)
-    {
-        return simd::div(simd::float32x16_set1(a), b);
     }
 
     // ------------------------------------------------------------------

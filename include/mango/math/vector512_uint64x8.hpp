@@ -18,7 +18,7 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(uint64 s)
+        Vector(uint64 s)
         : xyzw(simd::uint64x8_set1(s))
         {
         }
@@ -72,21 +72,9 @@ namespace mango
         return a;
     }
 
-    static inline uint64x8& operator += (uint64x8& a, uint64 b)
-    {
-        a = simd::add(a, simd::uint64x8_set1(b));
-        return a;
-    }
-
     static inline uint64x8& operator -= (uint64x8& a, uint64x8 b)
     {
         a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline uint64x8& operator -= (uint64x8& a, uint64 b)
-    {
-        a = simd::sub(a, simd::uint64x8_set1(b));
         return a;
     }
 
@@ -95,29 +83,9 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline uint64x8 operator + (uint64x8 a, uint64 b)
-    {
-        return simd::add(a, simd::uint64x8_set1(b));
-    }
-
-    static inline uint64x8 operator + (uint64 a, uint64x8 b)
-    {
-        return simd::add(simd::uint64x8_set1(a), b);
-    }
-
     static inline uint64x8 operator - (uint64x8 a, uint64x8 b)
     {
         return simd::sub(a, b);
-    }
-
-    static inline uint64x8 operator - (uint64x8 a, uint64 b)
-    {
-        return simd::sub(a, simd::uint64x8_set1(b));
-    }
-
-    static inline uint64x8 operator - (uint64 a, uint64x8 b)
-    {
-        return simd::sub(simd::uint64x8_set1(a), b);
     }
 
     static inline uint64x8 nand(uint64x8 a, uint64x8 b)

@@ -18,9 +18,7 @@ namespace mango
 
         simd::float16x4 xyzw;
 
-        explicit Vector()
-        {
-        }
+        Vector() = default;
 
         explicit Vector(const Vector<float, 4>& v)
         : xyzw(simd::convert<simd::float16x4>(v.xyzw))

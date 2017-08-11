@@ -26,16 +26,6 @@ namespace mango
     template <typename ScalarType, int VectorSize>
     struct VectorBase
     {
-        operator ScalarType* ()
-        {
-            return reinterpret_cast<ScalarType *>(this);
-        }
-
-        operator const ScalarType* () const
-        {
-            return reinterpret_cast<const ScalarType *>(this);
-        }
-
         ScalarType& operator [] (int index)
         {
             assert(index >= 0 && index < VectorSize);

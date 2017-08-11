@@ -18,7 +18,7 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(uint16 s)
+        Vector(uint16 s)
         : m(simd::uint16x32_set1(s))
         {
         }
@@ -67,21 +67,9 @@ namespace mango
         return a;
     }
 
-    static inline uint16x32& operator += (uint16x32& a, uint16 b)
-    {
-        a = simd::add(a, simd::uint16x32_set1(b));
-        return a;
-    }
-
     static inline uint16x32& operator -= (uint16x32& a, uint16x32 b)
     {
         a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline uint16x32& operator -= (uint16x32& a, uint16 b)
-    {
-        a = simd::sub(a, simd::uint16x32_set1(b));
         return a;
     }
 
@@ -90,29 +78,9 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline uint16x32 operator + (uint16x32 a, uint16 b)
-    {
-        return simd::add(a, simd::uint16x32_set1(b));
-    }
-
-    static inline uint16x32 operator + (uint16 a, uint16x32 b)
-    {
-        return simd::add(simd::uint16x32_set1(a), b);
-    }
-
     static inline uint16x32 operator - (uint16x32 a, uint16x32 b)
     {
         return simd::sub(a, b);
-    }
-
-    static inline uint16x32 operator - (uint16x32 a, uint16 b)
-    {
-        return simd::sub(a, simd::uint16x32_set1(b));
-    }
-
-    static inline uint16x32 operator - (uint16 a, uint16x32 b)
-    {
-        return simd::sub(simd::uint16x32_set1(a), b);
     }
 
     static inline uint16x32 nand(uint16x32 a, uint16x32 b)

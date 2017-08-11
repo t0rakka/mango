@@ -371,15 +371,10 @@ namespace mango
             Permute4<float, simd::float32x4, 3, 3, 3, 3> wwww;
         };
 
-        explicit Vector() = default;
+        Vector() = default;
 
-        explicit Vector(float s)
+        Vector(float s)
         : xyzw(simd::float32x4_set1(s))
-        {
-        }
-
-        explicit Vector(int s)
-        : xyzw(simd::float32x4_set1(float(s)))
         {
         }
 
@@ -491,31 +486,13 @@ namespace mango
         return a;
     }
 
-    static inline float32x4& operator += (float32x4& a, float b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
     static inline float32x4& operator -= (float32x4& a, float32x4 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline float32x4& operator -= (float32x4& a, float b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
     static inline float32x4& operator *= (float32x4& a, float32x4 b)
-    {
-        a = simd::mul(a, b);
-        return a;
-    }
-
-    static inline float32x4& operator *= (float32x4& a, float b)
     {
         a = simd::mul(a, b);
         return a;
@@ -538,42 +515,12 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline float32x4 operator + (float32x4 a, float b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline float32x4 operator + (float a, float32x4 b)
-    {
-        return simd::add(a, b);
-    }
-
     static inline float32x4 operator - (float32x4 a, float32x4 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline float32x4 operator - (float32x4 a, float b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline float32x4 operator - (float a, float32x4 b)
-    {
-        return simd::sub(a, b);
-    }
-
     static inline float32x4 operator * (float32x4 a, float32x4 b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline float32x4 operator * (float32x4 a, float b)
-    {
-        return simd::mul(a, b);
-    }
-
-    static inline float32x4 operator * (float a, float32x4 b)
     {
         return simd::mul(a, b);
     }
@@ -584,11 +531,6 @@ namespace mango
     }
 
     static inline float32x4 operator / (float32x4 a, float b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline float32x4 operator / (float a, float32x4 b)
     {
         return simd::div(a, b);
     }
@@ -641,44 +583,9 @@ namespace mango
         return simd::madd(a, b, c);
     }
 
-    static inline float32x4 madd(float a, float32x4 b, float32x4 c)
-    {
-        return simd::madd(float32x4(a), b, c);
-    }
-
-    static inline float32x4 madd(float32x4 a, float b, float32x4 c)
-    {
-        return simd::madd(a, float32x4(b), c);
-    }
-
-    static inline float32x4 madd(float32x4 a, float32x4 b, float c)
-    {
-        return simd::madd(a, b, float32x4(c));
-    }
-
     static inline float32x4 msub(float32x4 a, float32x4 b, float32x4 c)
     {
         return simd::msub(a, b, c);
-    }
-
-    static inline float32x4 msub(float a, float32x4 b, float32x4 c)
-    {
-        return simd::msub(float32x4(a), b, c);
-    }
-
-    static inline float32x4 msub(float32x4 a, float b, float32x4 c)
-    {
-        return simd::msub(a, float32x4(b), c);
-    }
-
-    static inline float32x4 msub(float32x4 a, float32x4 b, float c)
-    {
-        return simd::msub(a, b, float32x4(c));
-    }
-
-    static inline float32x4 lerp(float32x4 a, float32x4 b, float factor)
-    {
-        return a + (b - a) * factor;
     }
 
     static inline float32x4 lerp(float32x4 a, float32x4 b, float32x4 factor)
@@ -722,19 +629,9 @@ namespace mango
         return simd::bitwise_nand(a, b);
     }
 
-    static inline float32x4 nand(float32x4 a, float b)
-    {
-        return simd::bitwise_nand(a, float32x4(b));
-    }
-
     static inline float32x4 operator & (float32x4 a, float32x4 b)
     {
         return simd::bitwise_and(a, b);
-    }
-
-    static inline float32x4 operator & (float32x4 a, float b)
-    {
-        return simd::bitwise_and(a, float32x4(b));
     }
 
     static inline float32x4 operator | (float32x4 a, float32x4 b)
@@ -742,19 +639,9 @@ namespace mango
         return simd::bitwise_or(a, b);
     }
 
-    static inline float32x4 operator | (float32x4 a, float b)
-    {
-        return simd::bitwise_or(a, float32x4(b));
-    }
-
     static inline float32x4 operator ^ (float32x4 a, float32x4 b)
     {
         return simd::bitwise_xor(a, b);
-    }
-
-    static inline float32x4 operator ^ (float32x4 a, float b)
-    {
-        return simd::bitwise_xor(a, float32x4(b));
     }
 
     static inline float32x4 operator ~ (float32x4 a)
@@ -771,19 +658,9 @@ namespace mango
         return simd::compare_gt(a, b);
     }
 
-    static inline mask32x4 operator > (float32x4 a, float b)
-    {
-        return simd::compare_gt(a, float32x4(b));
-    }
-
     static inline mask32x4 operator >= (float32x4 a, float32x4 b)
     {
         return simd::compare_ge(a, b);
-    }
-
-    static inline mask32x4 operator >= (float32x4 a, float b)
-    {
-        return simd::compare_ge(a, float32x4(b));
     }
 
     static inline mask32x4 operator < (float32x4 a, float32x4 b)
@@ -791,19 +668,9 @@ namespace mango
         return simd::compare_lt(a, b);
     }
 
-    static inline mask32x4 operator < (float32x4 a, float b)
-    {
-        return simd::compare_lt(a, float32x4(b));
-    }
-
     static inline mask32x4 operator <= (float32x4 a, float32x4 b)
     {
         return simd::compare_le(a, b);
-    }
-
-    static inline mask32x4 operator <= (float32x4 a, float b)
-    {
-        return simd::compare_le(a, float32x4(b));
     }
 
     static inline mask32x4 operator == (float32x4 a, float32x4 b)
@@ -811,19 +678,9 @@ namespace mango
         return simd::compare_eq(a, b);
     }
 
-    static inline mask32x4 operator == (float32x4 a, float b)
-    {
-        return simd::compare_eq(a, float32x4(b));
-    }
-
     static inline mask32x4 operator != (float32x4 a, float32x4 b)
     {
         return simd::compare_neq(a, b);
-    }
-
-    static inline mask32x4 operator != (float32x4 a, float b)
-    {
-        return simd::compare_neq(a, float32x4(b));
     }
 
     static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)

@@ -37,21 +37,12 @@ namespace mango
 			Permute2<1, 1> yy;
         };
 
-        explicit Vector()
-        {
-        }
+        Vector() = default;
 
         explicit Vector(float s)
         {
 			x = s;
 			y = s;
-        }
-
-        explicit Vector(int s)
-        {
-            const float f = float(s);
-			x = f;
-			y = f;
         }
 
         explicit Vector(float s0, float s1)

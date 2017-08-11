@@ -18,7 +18,7 @@ namespace mango
 
         explicit Vector() = default;
 
-        explicit Vector(int16 s)
+        Vector(int16 s)
         : m(simd::int16x8_set1(s))
         {
         }
@@ -67,19 +67,7 @@ namespace mango
         return a;
     }
 
-    static inline Vector<int16, 8>& operator += (Vector<int16, 8>& a, int16 b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
     static inline Vector<int16, 8>& operator -= (Vector<int16, 8>& a, Vector<int16, 8> b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline Vector<int16, 8>& operator -= (Vector<int16, 8>& a, int16 b)
     {
         a = simd::sub(a, b);
         return a;
@@ -90,27 +78,7 @@ namespace mango
         return simd::add(a, b);
     }
 
-    static inline Vector<int16, 8> operator + (Vector<int16, 8> a, int16 b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline Vector<int16, 8> operator + (int16 a, Vector<int16, 8> b)
-    {
-        return simd::add(a, b);
-    }
-
     static inline Vector<int16, 8> operator - (Vector<int16, 8> a, Vector<int16, 8> b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline Vector<int16, 8> operator - (Vector<int16, 8> a, int16 b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline Vector<int16, 8> operator - (int16 a, Vector<int16, 8> b)
     {
         return simd::sub(a, b);
     }

@@ -82,23 +82,13 @@ namespace mango
             Permute3<2, 2, 2> zzz;
         };
 
-        explicit Vector()
-        {
-        }
+        Vector() = default;
 
-        explicit Vector(float s)
+        Vector(float s)
         {
 			x = s;
 			y = s;
 			z = s;
-        }
-
-        explicit Vector(int s)
-        {
-            const float f = float(s);
-			x = f;
-			y = f;
-			z = f;
         }
 
         explicit Vector(float s0, float s1, float s2)
