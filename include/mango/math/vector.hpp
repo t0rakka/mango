@@ -740,7 +740,7 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
-    // reinterpret / convert / truncate
+    // reinterpret / convert
     // ------------------------------------------------------------------
 
     // The reinterpret and conversion casts forward the work to the simd abstraction.

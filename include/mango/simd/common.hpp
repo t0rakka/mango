@@ -13,26 +13,6 @@ namespace simd {
     // uint8x16
     // ------------------------------------------------------------------
 
-    static inline uint8x16 add(uint8 a, uint8x16 b)
-    {
-        return add(uint8x16_set1(a), b);
-    }
-
-    static inline uint8x16 add(uint8x16 a, uint8 b)
-    {
-        return add(a, uint8x16_set1(b));
-    }
-
-    static inline uint8x16 sub(uint8 a, uint8x16 b)
-    {
-        return sub(uint8x16_set1(a), b);
-    }
-
-    static inline uint8x16 sub(uint8x16 a, uint8 b)
-    {
-        return sub(a, uint8x16_set1(b));
-    }
-
     static inline uint8x16 clamp(uint8x16 v, uint8x16 vmin, uint8x16 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -41,26 +21,6 @@ namespace simd {
     // ------------------------------------------------------------------
     // uint16x8
     // ------------------------------------------------------------------
-
-    static inline uint16x8 add(uint16 a, uint16x8 b)
-    {
-        return add(uint16x8_set1(a), b);
-    }
-
-    static inline uint16x8 add(uint16x8 a, uint16 b)
-    {
-        return add(a, uint16x8_set1(b));
-    }
-
-    static inline uint16x8 sub(uint16 a, uint16x8 b)
-    {
-        return sub(uint16x8_set1(a), b);
-    }
-
-    static inline uint16x8 sub(uint16x8 a, uint16 b)
-    {
-        return sub(a, uint16x8_set1(b));
-    }
 
     static inline uint16x8 clamp(uint16x8 v, uint16x8 vmin, uint16x8 vmax)
     {
@@ -131,26 +91,6 @@ namespace simd {
         return shuffle<3, 3, 3, 3>(a);
     }
 
-    static inline uint32x4 add(uint32 a, uint32x4 b)
-    {
-        return add(uint32x4_set1(a), b);
-    }
-
-    static inline uint32x4 add(uint32x4 a, uint32 b)
-    {
-        return add(a, uint32x4_set1(b));
-    }
-
-    static inline uint32x4 sub(uint32 a, uint32x4 b)
-    {
-        return sub(uint32x4_set1(a), b);
-    }
-
-    static inline uint32x4 sub(uint32x4 a, uint32 b)
-    {
-        return sub(a, uint32x4_set1(b));
-    }
-
     static inline uint32x4 clamp(uint32x4 v, uint32x4 vmin, uint32x4 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -165,26 +105,6 @@ namespace simd {
     // int8x16
     // ------------------------------------------------------------------
 
-    static inline int8x16 add(int8 a, int8x16 b)
-    {
-        return add(int8x16_set1(a), b);
-    }
-
-    static inline int8x16 add(int8x16 a, int8 b)
-    {
-        return add(a, int8x16_set1(b));
-    }
-
-    static inline int8x16 sub(int8 a, int8x16 b)
-    {
-        return sub(int8x16_set1(a), b);
-    }
-
-    static inline int8x16 sub(int8x16 a, int8 b)
-    {
-        return sub(a, int8x16_set1(b));
-    }
-
     static inline int8x16 clamp(int8x16 v, int8x16 vmin, int8x16 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -193,26 +113,6 @@ namespace simd {
     // ------------------------------------------------------------------
     // int16x8
     // ------------------------------------------------------------------
-
-    static inline int16x8 add(int16 a, int16x8 b)
-    {
-        return add(int16x8_set1(a), b);
-    }
-
-    static inline int16x8 add(int16x8 a, int16 b)
-    {
-        return add(a, int16x8_set1(b));
-    }
-
-    static inline int16x8 sub(int16 a, int16x8 b)
-    {
-        return sub(int16x8_set1(a), b);
-    }
-
-    static inline int16x8 sub(int16x8 a, int16 b)
-    {
-        return sub(a, int16x8_set1(b));
-    }
 
     static inline int16x8 clamp(int16x8 v, int16x8 vmin, int16x8 vmax)
     {
@@ -293,91 +193,6 @@ namespace simd {
         return min(int32x4_set1(vmax), max(int32x4_set1(vmin), v));
     }
 
-    static inline int32x4 add(int a, int32x4 b)
-    {
-        return add(int32x4_set1(a), b);
-    }
-
-    static inline int32x4 add(int32x4 a, int b)
-    {
-        return add(a, int32x4_set1(b));
-    }
-
-    static inline int32x4 sub(int a, int32x4 b)
-    {
-        return sub(int32x4_set1(a), b);
-    }
-
-    static inline int32x4 sub(int32x4 a, int b)
-    {
-        return sub(a, int32x4_set1(b));
-    }
-
-    static inline int32x4 bitwise_nand(int a, int32x4 b)
-    {
-        return bitwise_nand(int32x4_set1(a), b);
-    }
-
-    static inline int32x4 bitwise_nand(int32x4 a, int b)
-    {
-        return bitwise_nand(a, int32x4_set1(b));
-    }
-
-    static inline int32x4 bitwise_and(int a, int32x4 b)
-    {
-        return bitwise_and(int32x4_set1(a), b);
-    }
-
-    static inline int32x4 bitwise_and(int32x4 a, int b)
-    {
-        return bitwise_and(a, int32x4_set1(b));
-    }
-
-    static inline int32x4 bitwise_or(int a, int32x4 b)
-    {
-        return bitwise_or(int32x4_set1(a), b);
-    }
-
-    static inline int32x4 bitwise_or(int32x4 a, int b)
-    {
-        return bitwise_or(a, int32x4_set1(b));
-    }
-
-    static inline int32x4 bitwise_xor(int a, int32x4 b)
-    {
-        return bitwise_xor(int32x4_set1(a), b);
-    }
-
-    static inline int32x4 bitwise_xor(int32x4 a, int b)
-    {
-        return bitwise_xor(a, int32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_eq(int32x4 a, int b)
-    {
-        return compare_eq(a, int32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_gt(int32x4 a, int b)
-    {
-        return compare_gt(a, int32x4_set1(b));
-    }
-
-    static inline int32x4 select(mask32x4 mask, int a, int32x4 b)
-    {
-        return select(mask, int32x4_set1(a), b);
-    }
-
-    static inline int32x4 select(mask32x4 mask, int32x4 a, int b)
-    {
-        return select(mask, a, int32x4_set1(b));
-    }
-
-    static inline int32x4 select(mask32x4 mask, int a, int b)
-    {
-        return select(mask, int32x4_set1(a), int32x4_set1(b));
-    }
-
     // ------------------------------------------------------------------
     // float32x4
     // ------------------------------------------------------------------
@@ -442,76 +257,6 @@ namespace simd {
         return shuffle<3, 3, 3, 3>(a);
     }
 
-    static inline float32x4 add(float a, float32x4 b)
-    {
-        return add(float32x4_set1(a), b);
-    }
-
-    static inline float32x4 add(float32x4 a, float b)
-    {
-        return add(a, float32x4_set1(b));
-    }
-
-    static inline float32x4 sub(float a, float32x4 b)
-    {
-        return sub(float32x4_set1(a), b);
-    }
-
-    static inline float32x4 sub(float32x4 a, float b)
-    {
-        return sub(a, float32x4_set1(b));
-    }
-
-    static inline float32x4 mul(float32x4 a, float b)
-    {
-        return mul(a, float32x4_set1(b));
-    }
-
-    static inline float32x4 mul(float a, float32x4 b)
-    {
-        return mul(float32x4_set1(a), b);
-    }
-
-    static inline float32x4 div(float a, float32x4 b)
-    {
-        return div(float32x4_set1(a), b);
-    }
-
-    static inline float32x4 madd(float a, float32x4 b, float32x4 c)
-    {
-        return madd(float32x4_set1(a), b, c);
-    }
-
-    static inline float32x4 madd(float32x4 a, float b, float32x4 c)
-    {
-        return madd(a, float32x4_set1(b), c);
-    }
-
-    static inline float32x4 madd(float32x4 a, float32x4 b, float c)
-    {
-        return madd(a, b, float32x4_set1(c));
-    }
-
-    static inline float32x4 min(float a, float32x4 b)
-    {
-        return min(float32x4_set1(a), b);
-    }
-
-    static inline float32x4 min(float32x4 a, float b)
-    {
-        return min(a, float32x4_set1(b));
-    }
-
-    static inline float32x4 max(float a, float32x4 b)
-    {
-        return max(float32x4_set1(a), b);
-    }
-
-    static inline float32x4 max(float32x4 a, float b)
-    {
-        return max(a, float32x4_set1(b));
-    }
-
     static inline float32x4 clamp(float32x4 v, float32x4 vmin, float32x4 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -520,46 +265,6 @@ namespace simd {
     static inline float32x4 clamp(float32x4 v, float vmin, float vmax)
     {
         return min(float32x4_set1(vmax), max(float32x4_set1(vmin), v));
-    }
-
-    static inline mask32x4 compare_neq(float32x4 a, float b)
-    {
-        return compare_neq(a, float32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_eq(float32x4 a, float b)
-    {
-        return compare_eq(a, float32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_lt(float32x4 a, float b)
-    {
-        return compare_lt(a, float32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_le(float32x4 a, float b)
-    {
-        return compare_le(a, float32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_gt(float32x4 a, float b)
-    {
-        return compare_gt(a, float32x4_set1(b));
-    }
-
-    static inline mask32x4 compare_ge(float32x4 a, float b)
-    {
-        return compare_ge(a, float32x4_set1(b));
-    }
-
-    static inline float32x4 select(mask32x4 mask, float a, float32x4 b)
-    {
-        return select(mask, float32x4_set1(a), b);
-    }
-
-    static inline float32x4 select(mask32x4 mask, float32x4 a, float b)
-    {
-        return select(mask, a, float32x4_set1(b));
     }
 
     static inline float32x4 mod(float32x4 a, float32x4 b)
@@ -607,76 +312,6 @@ namespace simd {
     // float32x8
     // ------------------------------------------------------------------
 
-    static inline float32x8 add(float a, float32x8 b)
-    {
-        return add(float32x8_set1(a), b);
-    }
-
-    static inline float32x8 add(float32x8 a, float b)
-    {
-        return add(a, float32x8_set1(b));
-    }
-
-    static inline float32x8 sub(float a, float32x8 b)
-    {
-        return sub(float32x8_set1(a), b);
-    }
-
-    static inline float32x8 sub(float32x8 a, float b)
-    {
-        return sub(a, float32x8_set1(b));
-    }
-
-    static inline float32x8 mul(float32x8 a, float b)
-    {
-        return mul(a, float32x8_set1(b));
-    }
-
-    static inline float32x8 mul(float a, float32x8 b)
-    {
-        return mul(float32x8_set1(a), b);
-    }
-
-    static inline float32x8 div(float a, float32x8 b)
-    {
-        return div(float32x8_set1(a), b);
-    }
-
-    static inline float32x8 madd(float a, float32x8 b, float32x8 c)
-    {
-        return madd(float32x8_set1(a), b, c);
-    }
-
-    static inline float32x8 madd(float32x8 a, float b, float32x8 c)
-    {
-        return madd(a, float32x8_set1(b), c);
-    }
-
-    static inline float32x8 madd(float32x8 a, float32x8 b, float c)
-    {
-        return madd(a, b, float32x8_set1(c));
-    }
-
-    static inline float32x8 min(float a, float32x8 b)
-    {
-        return min(float32x8_set1(a), b);
-    }
-
-    static inline float32x8 min(float32x8 a, float b)
-    {
-        return min(a, float32x8_set1(b));
-    }
-
-    static inline float32x8 max(float a, float32x8 b)
-    {
-        return max(float32x8_set1(a), b);
-    }
-
-    static inline float32x8 max(float32x8 a, float b)
-    {
-        return max(a, float32x8_set1(b));
-    }
-
     static inline float32x8 clamp(float32x8 v, float32x8 vmin, float32x8 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -685,46 +320,6 @@ namespace simd {
     static inline float32x8 clamp(float32x8 v, float vmin, float vmax)
     {
         return min(float32x8_set1(vmax), max(float32x8_set1(vmin), v));
-    }
-
-    static inline mask32x8 compare_neq(float32x8 a, float b)
-    {
-        return compare_neq(a, float32x8_set1(b));
-    }
-
-    static inline mask32x8 compare_eq(float32x8 a, float b)
-    {
-        return compare_eq(a, float32x8_set1(b));
-    }
-
-    static inline mask32x8 compare_lt(float32x8 a, float b)
-    {
-        return compare_lt(a, float32x8_set1(b));
-    }
-
-    static inline mask32x8 compare_le(float32x8 a, float b)
-    {
-        return compare_le(a, float32x8_set1(b));
-    }
-
-    static inline mask32x8 compare_gt(float32x8 a, float b)
-    {
-        return compare_gt(a, float32x8_set1(b));
-    }
-
-    static inline mask32x8 compare_ge(float32x8 a, float b)
-    {
-        return compare_ge(a, float32x8_set1(b));
-    }
-
-    static inline float32x8 select(mask32x8 mask, float a, float32x8 b)
-    {
-        return select(mask, float32x8_set1(a), b);
-    }
-
-    static inline float32x8 select(mask32x8 mask, float32x8 a, float b)
-    {
-        return select(mask, a, float32x8_set1(b));
     }
 
     static inline float32x8 mod(float32x8 a, float32x8 b)
@@ -787,76 +382,6 @@ namespace simd {
         return shuffle<1, 1>(a);
     }
 
-    static inline float64x2 add(double a, float64x2 b)
-    {
-        return add(float64x2_set1(a), b);
-    }
-
-    static inline float64x2 add(float64x2 a, double b)
-    {
-        return add(a, float64x2_set1(b));
-    }
-
-    static inline float64x2 sub(double a, float64x2 b)
-    {
-        return sub(float64x2_set1(a), b);
-    }
-
-    static inline float64x2 sub(float64x2 a, double b)
-    {
-        return sub(a, float64x2_set1(b));
-    }
-
-    static inline float64x2 mul(float64x2 a, double b)
-    {
-        return mul(a, float64x2_set1(b));
-    }
-
-    static inline float64x2 mul(double a, float64x2 b)
-    {
-        return mul(float64x2_set1(a), b);
-    }
-
-    static inline float64x2 div(double a, float64x2 b)
-    {
-        return div(float64x2_set1(a), b);
-    }
-
-    static inline float64x2 madd(double a, float64x2 b, float64x2 c)
-    {
-        return madd(float64x2_set1(a), b, c);
-    }
-
-    static inline float64x2 madd(float64x2 a, double b, float64x2 c)
-    {
-        return madd(a, float64x2_set1(b), c);
-    }
-
-    static inline float64x2 madd(float64x2 a, float64x2 b, double c)
-    {
-        return madd(a, b, float64x2_set1(c));
-    }
-
-    static inline float64x2 min(double a, float64x2 b)
-    {
-        return min(float64x2_set1(a), b);
-    }
-
-    static inline float64x2 min(float64x2 a, double b)
-    {
-        return min(a, float64x2_set1(b));
-    }
-
-    static inline float64x2 max(double a, float64x2 b)
-    {
-        return max(float64x2_set1(a), b);
-    }
-
-    static inline float64x2 max(float64x2 a, double b)
-    {
-        return max(a, float64x2_set1(b));
-    }
-
     static inline float64x2 clamp(float64x2 v, float64x2 vmin, float64x2 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -865,46 +390,6 @@ namespace simd {
     static inline float64x2 clamp(float64x2 v, double vmin, double vmax)
     {
         return min(float64x2_set1(vmax), max(float64x2_set1(vmin), v));
-    }
-
-    static inline mask64x2 compare_neq(float64x2 a, double b)
-    {
-        return compare_neq(a, float64x2_set1(b));
-    }
-
-    static inline mask64x2 compare_eq(float64x2 a, double b)
-    {
-        return compare_eq(a, float64x2_set1(b));
-    }
-
-    static inline mask64x2 compare_lt(float64x2 a, double b)
-    {
-        return compare_lt(a, float64x2_set1(b));
-    }
-
-    static inline mask64x2 compare_le(float64x2 a, double b)
-    {
-        return compare_le(a, float64x2_set1(b));
-    }
-
-    static inline mask64x2 compare_gt(float64x2 a, double b)
-    {
-        return compare_gt(a, float64x2_set1(b));
-    }
-
-    static inline mask64x2 compare_ge(float64x2 a, double b)
-    {
-        return compare_ge(a, float64x2_set1(b));
-    }
-
-    static inline float64x2 select(mask64x2 mask, double a, float64x2 b)
-    {
-        return select(mask, float64x2_set1(a), b);
-    }
-
-    static inline float64x2 select(mask64x2 mask, float64x2 a, double b)
-    {
-        return select(mask, a, float64x2_set1(b));
     }
 
     static inline float64x2 mod(float64x2 a, float64x2 b)
@@ -1012,76 +497,6 @@ namespace simd {
         return shuffle<3, 3, 3, 3>(a);
     }
 
-    static inline float64x4 add(double a, float64x4 b)
-    {
-        return add(float64x4_set1(a), b);
-    }
-
-    static inline float64x4 add(float64x4 a, double b)
-    {
-        return add(a, float64x4_set1(b));
-    }
-
-    static inline float64x4 sub(double a, float64x4 b)
-    {
-        return sub(float64x4_set1(a), b);
-    }
-
-    static inline float64x4 sub(float64x4 a, double b)
-    {
-        return sub(a, float64x4_set1(b));
-    }
-
-    static inline float64x4 mul(float64x4 a, double b)
-    {
-        return mul(a, float64x4_set1(b));
-    }
-
-    static inline float64x4 mul(double a, float64x4 b)
-    {
-        return mul(float64x4_set1(a), b);
-    }
-
-    static inline float64x4 div(double a, float64x4 b)
-    {
-        return div(float64x4_set1(a), b);
-    }
-
-    static inline float64x4 madd(double a, float64x4 b, float64x4 c)
-    {
-        return madd(float64x4_set1(a), b, c);
-    }
-
-    static inline float64x4 madd(float64x4 a, double b, float64x4 c)
-    {
-        return madd(a, float64x4_set1(b), c);
-    }
-
-    static inline float64x4 madd(float64x4 a, float64x4 b, double c)
-    {
-        return madd(a, b, float64x4_set1(c));
-    }
-
-    static inline float64x4 min(double a, float64x4 b)
-    {
-        return min(float64x4_set1(a), b);
-    }
-
-    static inline float64x4 min(float64x4 a, double b)
-    {
-        return min(a, float64x4_set1(b));
-    }
-
-    static inline float64x4 max(double a, float64x4 b)
-    {
-        return max(float64x4_set1(a), b);
-    }
-
-    static inline float64x4 max(float64x4 a, double b)
-    {
-        return max(a, float64x4_set1(b));
-    }
-
     static inline float64x4 clamp(float64x4 v, float64x4 vmin, float64x4 vmax)
     {
         return min(vmax, max(vmin, v));
@@ -1090,46 +505,6 @@ namespace simd {
     static inline float64x4 clamp(float64x4 v, double vmin, double vmax)
     {
         return min(float64x4_set1(vmax), max(float64x4_set1(vmin), v));
-    }
-
-    static inline mask64x4 compare_neq(float64x4 a, double b)
-    {
-        return compare_neq(a, float64x4_set1(b));
-    }
-
-    static inline mask64x4 compare_eq(float64x4 a, double b)
-    {
-        return compare_eq(a, float64x4_set1(b));
-    }
-
-    static inline mask64x4 compare_lt(float64x4 a, double b)
-    {
-        return compare_lt(a, float64x4_set1(b));
-    }
-
-    static inline mask64x4 compare_le(float64x4 a, double b)
-    {
-        return compare_le(a, float64x4_set1(b));
-    }
-
-    static inline mask64x4 compare_gt(float64x4 a, double b)
-    {
-        return compare_gt(a, float64x4_set1(b));
-    }
-
-    static inline mask64x4 compare_ge(float64x4 a, double b)
-    {
-        return compare_ge(a, float64x4_set1(b));
-    }
-
-    static inline float64x4 select(mask64x4 mask, double a, float64x4 b)
-    {
-        return select(mask, float64x4_set1(a), b);
-    }
-
-    static inline float64x4 select(mask64x4 mask, float64x4 a, double b)
-    {
-        return select(mask, a, float64x4_set1(b));
     }
 
     static inline float64x4 mod(float64x4 a, float64x4 b)

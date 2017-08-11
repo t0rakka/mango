@@ -25,12 +25,12 @@ namespace mango
         {
         }
 
-        explicit Vector(simd::float32x4 v)
+        Vector(simd::float32x4 v)
         : xyzw(simd::convert<simd::float16x4>(v))
         {
         }
 
-        explicit Vector(simd::float16x4 v)
+        Vector(simd::float16x4 v)
         : xyzw(v)
         {
         }

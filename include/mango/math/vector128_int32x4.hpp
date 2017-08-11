@@ -318,6 +318,16 @@ namespace mango
         {
             return xyzw;
         }
+
+        uint32 pack() const
+        {
+            return simd::pack(xyzw);
+        }
+
+        void unpack(uint32 a)
+        {
+            xyzw = simd::unpack(a);
+        }
     };
 
     static inline const int32x4 operator + (int32x4 v)

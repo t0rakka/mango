@@ -7,7 +7,6 @@
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/half.hpp>
 #include <mango/image/blitter.hpp>
-#include <mango/simd/simd.hpp>
 #include <mango/math/vector.hpp>
 #include <mango/math/srgb.hpp>
 
@@ -816,77 +815,73 @@ namespace
 
     void blit_rgba8888_from_rgba16f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd::float16x4);
+        INIT_POINTERS(uint32, float16x4);
         for (int x = 0; x < count; ++x)
         {
-            simd::float32x4 f = simd::convert<simd::float32x4>(s[x]);
-            f = simd::clamp(f, 0.0f, 1.0f);
-            f = simd::mul(f, 255.0f);
-            f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::convert<simd::int32x4>(f);
-            d[x] = simd::pack(i);
+            float32x4 f = convert<float32x4>(s[x]);
+            f = clamp(f, 0.0f, 1.0f);
+            f = f * 255.0f + 0.5f;
+            int32x4 i = convert<int32x4>(f);
+            d[x] = i.pack();
         }
     }
 
     void blit_bgra8888_from_rgba16f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd::float16x4);
+        INIT_POINTERS(uint32, float16x4);
         for (int x = 0; x < count; ++x)
         {
-            simd::float32x4 f = simd::convert<simd::float32x4>(s[x]);
-            f = simd::shuffle<2, 1, 0, 3>(f);
-            f = simd::clamp(f, 0.0f, 1.0f);
-            f = simd::mul(f, 255.0f);
-            f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::convert<simd::int32x4>(f);
-            d[x] = simd::pack(i);
+            float32x4 f = convert<float32x4>(s[x]);
+            f = f.zyxw;
+            f = clamp(f, 0.0f, 1.0f);
+            f = f * 255.0f + 0.5f;
+            int32x4 i = convert<int32x4>(f);
+            d[x] = i.pack();
         }
     }
 
     void blit_rgba8888_from_rgba32f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd::float32x4);
+        INIT_POINTERS(uint32, float32x4);
         for (int x = 0; x < count; ++x)
         {
-            simd::float32x4 f = s[x];
-            f = simd::clamp(f, 0.0f, 1.0f);
-            f = simd::mul(f, 255.0f);
-            f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::convert<simd::int32x4>(f);
-            d[x] = simd::pack(i);
+            float32x4 f = s[x];
+            f = clamp(f, 0.0f, 1.0f);
+            f = f * 255.0f + 0.5f;
+            int32x4 i = convert<int32x4>(f);
+            d[x] = i.pack();
         }
     }
 
     void blit_bgra8888_from_rgba32f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(uint32, simd::float32x4);
+        INIT_POINTERS(uint32, float32x4);
         for (int x = 0; x < count; ++x)
         {
-            simd::float32x4 f = s[x];
-            f = simd::shuffle<2, 1, 0, 3>(f);
-            f = simd::clamp(f, 0.0f, 1.0f);
-            f = simd::mul(f, 255.0f);
-            f = simd::add(f, 0.5f);
-            simd::int32x4 i = simd::convert<simd::int32x4>(f);
-            d[x] = simd::pack(i);
+            float32x4 f = s[x];
+            f = f.zyxw;
+            f = clamp(f, 0.0f, 1.0f);
+            f = f * 255.0f + 0.5f;
+            int32x4 i = convert<int32x4>(f);
+            d[x] = i.pack();
         }
     }
 
     void blit_rgba16f_from_rgba32f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(simd::float16x4, simd::float32x4);
+        INIT_POINTERS(float16x4, float32x4);
         for (int x = 0; x < count; ++x)
         {
-            d[x] = simd::convert<simd::float16x4>(s[x]);
+            d[x] = convert<float16x4>(s[x]);
         }
     }
 
     void blit_rgba32f_from_rgba16f(uint8* dest, const uint8* src, int count)
     {
-        INIT_POINTERS(simd::float32x4, simd::float16x4);
+        INIT_POINTERS(float32x4, float16x4);
         for (int x = 0; x < count; ++x)
         {
-            d[x] = simd::convert<simd::float32x4>(s[x]);
+            d[x] = convert<float32x4>(s[x]);
         }
     }
 

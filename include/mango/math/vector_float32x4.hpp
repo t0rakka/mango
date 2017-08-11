@@ -418,19 +418,6 @@ namespace mango
         {
         }
 
-        template <int X, int Y, int Z, int W>
-        Vector(const Permute4<float, simd::float32x4, X, Y, Z, W>& p)
-        {
-            xyzw = p;
-        }
-
-        template <int X, int Y, int Z, int W>
-        Vector& operator = (const Permute4<float, simd::float32x4, X, Y, Z, W>& p)
-        {
-            xyzw = p;
-            return *this;
-        }
-
         Vector& operator = (simd::float32x4 v)
         {
             xyzw = v;
