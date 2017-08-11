@@ -740,7 +740,7 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
-    // reinterpret / convert
+    // reinterpret / convert / truncate
     // ------------------------------------------------------------------
 
     // The reinterpret and conversion casts forward the work to the simd abstraction.
@@ -758,6 +758,13 @@ namespace mango
     {
         typename S::VectorType temp = s;
         return simd::convert<typename D::VectorType>(temp);
+    }
+
+    template <typename D, typename S>
+    static inline  D truncate(S s)
+    {
+        typename S::VectorType temp = s;
+        return simd::truncate<typename D::VectorType>(temp);
     }
 
     // ------------------------------------------------------------------

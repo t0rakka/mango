@@ -223,7 +223,8 @@ float32x4 exp(float32x4 v)
 
 float32x4 exp2(float32x4 v)
 {
-    const int32x4 ix = convert<int32x4>(trunc(v + reinterpret<float32x4>(nand(simd::srai(convert<int32x4>(v), 31), 0x3f7fffff))));
+    const float32x4 fx = v + reinterpret<float32x4>(nand(simd::srai(convert<int32x4>(v), 31), 0x3f7fffff));
+    const int32x4 ix = truncate<int32x4>(fx);
     float32x4 f = (convert<float32x4>(ix) - v) * 0.69314718055994530942f;
     float32x4 hi = madd(0.0013298820f, f, float32x4(-0.0001413161f));
     float32x4 lo = madd(0.4999999206f, f, float32x4(-0.1666653019f));
@@ -296,7 +297,7 @@ float32x4 atan(float32x4 d)
     const float32x4 zero(0.0f);
     const float32x4 one(1.0f);
 
-    const int32x4 i1 = int32x4(1);
+    const int32x4 i1 = 1;
     const int32x4 i2 = i1 + i1;
 
     int32x4 q = sel(d, zero, i2, int32x4(0));
