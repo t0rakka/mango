@@ -72,7 +72,7 @@ namespace
     static inline float32x4 signed_one(float32x4 f)
     {
         // difference to sign() is that +0.0 -> 1.0, -0.0 -> -1.0
-        return float32x4(1.0f) | (float32x4(-0.0f) & f);
+        return float32x4(1.0f) | signbit(f);
     }
 
     static inline float32x4 ldexp(float32x4 x, int32x4 q)
@@ -92,18 +92,13 @@ namespace
         return x * u;
     }
 
-    static inline int32x4 sel(float32x4 f0, float32x4 f1, int32x4 x, int32x4 y)
-    {
-        return select(f0 < f1, x, y);
-    }
-
     static inline float32x4 atan2kf(float32x4 b, float32x4 a)
     {
-        int32x4 q = sel(a, float32x4(0.0f), int32x4(-2), int32x4(0));
+        int32x4 q = select(a < 0.0f, int32x4(-2), int32x4(0));
         float32x4 x = abs(a);
         float32x4 y = b;
 
-        q = sel(x, y, q + int32x4(1), q);
+        q = select(x < y, q + 1, q);
         float32x4 s = select(x < y, -x, y);
         float32x4 t = max(x, y);
 
@@ -300,10 +295,10 @@ float32x4 atan(float32x4 d)
     const int32x4 i1 = 1;
     const int32x4 i2 = i1 + i1;
 
-    int32x4 q = sel(d, zero, i2, int32x4(0));
+    int32x4 q = select(d < zero, i2, 0);
     float32x4 s = abs(d);
 
-    q = sel(one, s, q + i1, q);
+    q = select(one < s, q + i1, q);
     s = select(one < s, 1.0f / s, s);
 
     float32x4 t = s * s;
