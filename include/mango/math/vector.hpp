@@ -43,10 +43,10 @@ namespace mango
     // Vector
     // ------------------------------------------------------------------
 
-    template <typename Type, int Size>
-    struct Vector : VectorBase<Type, Size>
+    template <typename Type, int VectorSize>
+    struct Vector : VectorBase<Type, VectorSize>
     {
-        Type m[Size];
+        Type m[VectorSize];
 
         explicit Vector()
         {
@@ -54,7 +54,7 @@ namespace mango
 
         explicit Vector(Type s)
         {
-            for (int i = 0; i < Size; ++i)
+            for (int i = 0; i < VectorSize; ++i)
             {
                 m[i] = s;
             }
@@ -62,7 +62,7 @@ namespace mango
 
         Vector(const Vector& v)
         {
-            for (int i = 0; i < Size; ++i)
+            for (int i = 0; i < VectorSize; ++i)
             {
                 m[i] = v[i];
             }
@@ -74,7 +74,7 @@ namespace mango
 
         Vector& operator = (Type s)
         {
-            for (int i = 0; i < Size; ++i)
+            for (int i = 0; i < VectorSize; ++i)
             {
                 m[i] = s;
             }
@@ -83,7 +83,7 @@ namespace mango
 
         Vector& operator = (const Vector& v)
         {
-            for (int i = 0; i < Size; ++i)
+            for (int i = 0; i < VectorSize; ++i)
             {
                 m[i] = v[i];
             }
@@ -94,10 +94,10 @@ namespace mango
     template <typename Type>
     struct Vector<Type, 2> : VectorBase<Type, 2>
     {
-        enum { Size = 2 };
+        enum { VectorSize = 2 };
         union
         {
-            Type m[Size];
+            Type m[VectorSize];
             struct
             {
                 Type x, y;
@@ -145,10 +145,10 @@ namespace mango
     template <typename Type>
     struct Vector<Type, 3> : VectorBase<Type, 3>
     {
-        enum { Size = 3 };
+        enum { VectorSize = 3 };
         union
         {
-            Type m[Size];
+            Type m[VectorSize];
             struct
             {
                 Type x, y, z;
@@ -203,10 +203,10 @@ namespace mango
     template <typename Type>
     struct Vector<Type, 4> : VectorBase<Type, 4>
     {
-        enum { Size = 4 };
+        enum { VectorSize = 4 };
         union
         {
-            Type m[Size];
+            Type m[VectorSize];
             struct
             {
                 Type x, y, z, w;
@@ -269,154 +269,154 @@ namespace mango
     // Vector operators
     // ------------------------------------------------------------------
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size>& operator + (const Vector<Type, Size>& v)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize>& operator + (const Vector<Type, VectorSize>& v)
     {
         return v;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator - (const Vector<Type, Size>& v)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator - (const Vector<Type, VectorSize>& v)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = -v[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size>& operator += (Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize>& operator += (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             a[i] += b[i];
         }
         return a;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size>& operator -= (Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize>& operator -= (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             a[i] -= b[i];
         }
         return a;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size>& operator *= (Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize>& operator *= (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             a[i] *= b[i];
         }
         return a;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size>& operator *= (Vector<Type, Size>& a, Type b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize>& operator *= (Vector<Type, VectorSize>& a, Type b)
     {
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             a[i] *= b;
         }
         return a;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size>& operator /= (Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize>& operator /= (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             a[i] /= b[i];
         }
         return a;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size>& operator /= (Vector<Type, Size>& a, Type b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize>& operator /= (Vector<Type, VectorSize>& a, Type b)
     {
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             a[i] /= b;
         }
         return a;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator + (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator + (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] + b[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator - (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator - (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] - b[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator * (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator * (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] * b[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator * (const Vector<Type, Size>& a, Type b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator * (const Vector<Type, VectorSize>& a, Type b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] * b;
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator * (Type a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator * (Type a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a * b[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator / (const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator / (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] / b[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> operator / (const Vector<Type, Size>& a, Type b)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> operator / (const Vector<Type, VectorSize>& a, Type b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] / b;
         }
@@ -427,102 +427,102 @@ namespace mango
     // Vector functions
     // ------------------------------------------------------------------
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size> abs(const Vector<Type, Size>& a)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize> abs(const Vector<Type, VectorSize>& a)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::abs(a[i]);
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size> min(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize> min(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::min(a[i], b[i]);
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size> max(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize> max(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::max(a[i], b[i]);
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Type dot(const Vector<Type, Size>& a, const Vector<Type, Size>& b)
+    template <typename Type, int VectorSize>
+    static inline Type dot(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
     {
         Type s(0);
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             s += a[i] * b[i];
         }
         return s;
     }
 
-    template <typename Type, int Size>
-    static inline Type square(const Vector<Type, Size>& a)
+    template <typename Type, int VectorSize>
+    static inline Type square(const Vector<Type, VectorSize>& a)
     {
         Type s(0);
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             s += a[i] * a[i];
         }
         return s;
     }
 
-    template <typename Type, int Size>
-    static inline Type length(const Vector<Type, Size>& a)
+    template <typename Type, int VectorSize>
+    static inline Type length(const Vector<Type, VectorSize>& a)
     {
         Type s(0);
-        for (int i = 0; i < Size; ++i)
+        for (int i = 0; i < VectorSize; ++i)
         {
             s += a[i] * a[i];
         }
         return static_cast<Type>(std::sqrt(s));
     }
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size> normalize(const Vector<Type, Size>& a)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize> normalize(const Vector<Type, VectorSize>& a)
     {
         return a * Type(1.0 / length(a));
     }
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size> clamp(const Vector<Type, Size>& a, const Vector<Type, Size>& amin, const Vector<Type, Size>& amax)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize> clamp(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& amin, const Vector<Type, VectorSize>& amax)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::min(amax[i], std::max(amin[i], a[i]));
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline Vector<Type, Size> madd(const Vector<Type, Size>& a, const Vector<Type, Size>& b, const Vector<Type, Size>& c)
+    template <typename Type, int VectorSize>
+    static inline Vector<Type, VectorSize> madd(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b, const Vector<Type, VectorSize>& c)
     {
-        Vector<Type, Size> temp;
-        for (int i = 0; i < Size; ++i)
+        Vector<Type, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] + b[i] * c[i];
         }
         return temp;
     }
 
-    template <typename Type, int Size>
-    static inline const Vector<Type, Size> lerp(const Vector<Type, Size>& a, const Vector<Type, Size>& b, Type factor)
+    template <typename Type, int VectorSize>
+    static inline const Vector<Type, VectorSize> lerp(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b, Type factor)
     {
         return a + (b - a) * factor;
     }
@@ -532,20 +532,20 @@ namespace mango
     // ------------------------------------------------------------------
 
 #define MAKE_VECTOR_FUNCTION1(Type, Name, Expression) \
-	template <int Size> \
-	static inline const Vector<Type, Size> Name(const Vector<Type, Size>& a) { \
-        Vector<Type, Size> temp; \
-        for (int i = 0; i < Size; ++i) { \
+	template <int VectorSize> \
+	static inline const Vector<Type, VectorSize> Name(const Vector<Type, VectorSize>& a) { \
+        Vector<Type, VectorSize> temp; \
+        for (int i = 0; i < VectorSize; ++i) { \
             temp[i] = Expression; \
         } \
         return temp; \
 	}
 
 #define MAKE_VECTOR_FUNCTION2(Type, Name, Expression) \
-	template <int Size> \
-	static inline const Vector<Type, Size> Name(const Vector<Type, Size>& a, const Vector<Type, Size>& b) { \
-        Vector<Type, Size> temp; \
-        for (int i = 0; i < Size; ++i) { \
+	template <int VectorSize> \
+	static inline const Vector<Type, VectorSize> Name(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b) { \
+        Vector<Type, VectorSize> temp; \
+        for (int i = 0; i < VectorSize; ++i) { \
             temp[i] = Expression; \
         } \
         return temp; \
