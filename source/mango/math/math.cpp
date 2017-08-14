@@ -1216,8 +1216,6 @@ namespace mango
         return n;
     }
 
-#if defined(MANGO_ENABLE_SIMD)
-
     static inline float32x4 pow24(float32x4 v)
     {
         int32x4 i = reinterpret<int32x4>(v);
@@ -1255,28 +1253,6 @@ namespace mango
         float32x4 c = (b * b) * root5(b * b);
         return select(curve < float32x4(0.04045f), a, c);
     }
-
-#else
-
-    float4 srgb_encode(float4 n)
-    {
-        float x = srgb_encode(n.x);
-        float y = srgb_encode(n.y);
-        float z = srgb_encode(n.z);
-        float w = srgb_encode(n.w);
-        return float4(x, y, z, w);
-    }
-
-    float4 srgb_decode(float4 s)
-    {
-        float x = srgb_decode(s.x);
-        float y = srgb_decode(s.y);
-        float z = srgb_decode(s.z);
-        float w = srgb_decode(s.w);
-        return float4(x, y, z, w);
-    }
-
-#endif
 
     float4 srgb_encode_packed(uint32 n)
     {
