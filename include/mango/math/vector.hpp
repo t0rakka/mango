@@ -776,6 +776,13 @@ namespace mango
     {
         VectorType m;
 
+        template <int VectorSize>
+        operator Vector<ScalarType, VectorSize> () const
+        {
+            ScalarType s = simd::get_component<Index>(m);
+            return Vector<ScalarType, VectorSize>(s);
+        }
+
         operator ScalarType () const
         {
             return simd::get_component<Index>(m);
