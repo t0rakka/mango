@@ -160,18 +160,6 @@ namespace mango
     MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
     MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
     MAKE_VECTOR_FUNCTION1(fract, simd::fract)
-#if 0
-    MAKE_VECTOR_FUNCTION1(sin, simd::sin)
-    MAKE_VECTOR_FUNCTION1(cos, simd::cos)
-    MAKE_VECTOR_FUNCTION1(tan, simd::tan)
-    MAKE_VECTOR_FUNCTION1(asin, simd::asin)
-    MAKE_VECTOR_FUNCTION1(acos, simd::acos)
-    MAKE_VECTOR_FUNCTION1(atan, simd::atan)
-    MAKE_VECTOR_FUNCTION1(exp, simd::exp)
-    MAKE_VECTOR_FUNCTION1(log, simd::log)
-    MAKE_VECTOR_FUNCTION1(exp2, simd::exp2)
-    MAKE_VECTOR_FUNCTION1(log2, simd::log2)
-#endif
     MAKE_VECTOR_FUNCTION1(sign, simd::sign)
     MAKE_VECTOR_FUNCTION1(radians, simd::radians)
     MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
@@ -181,10 +169,6 @@ namespace mango
     MAKE_VECTOR_FUNCTION2(min, simd::min)
     MAKE_VECTOR_FUNCTION2(max, simd::max)
     MAKE_VECTOR_FUNCTION2(mod, simd::mod)
-#if 0
-    MAKE_VECTOR_FUNCTION2(pow, simd::pow)
-    MAKE_VECTOR_FUNCTION2(atan2, simd::atan2)
-#endif
 
 #undef MAKE_VECTOR_FUNCTION1
 #undef MAKE_VECTOR_FUNCTION2
@@ -213,6 +197,23 @@ namespace mango
     {
         return a + (b - a) * factor;
     }
+
+    // ------------------------------------------------------------------
+    // trigonometric functions
+    // ------------------------------------------------------------------
+
+    float32x8 sin(float32x8 a);
+    float32x8 cos(float32x8 a);
+    float32x8 tan(float32x8 a);
+    float32x8 exp(float32x8 a);
+    float32x8 exp2(float32x8 a);
+    float32x8 log(float32x8 a);
+    float32x8 log2(float32x8 a);
+    float32x8 asin(float32x8 a);
+    float32x8 acos(float32x8 a);
+    float32x8 atan(float32x8 a);
+    float32x8 atan2(float32x8 a, float32x8 b);
+    float32x8 pow(float32x8 a, float32x8 b);
 
     // ------------------------------------------------------------------
 	// bitwise operators
