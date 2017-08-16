@@ -448,6 +448,12 @@ namespace detail {
         return _mm512_castps512_ps256(temp);
     }
 
+    template <>
+    inline int32x8 truncate<int32x8>(float32x8 s)
+    {
+        return _mm256_cvttps_epi32(s);
+    }
+
     // 512 bit convert
 
     template <>
@@ -472,6 +478,12 @@ namespace detail {
     inline float32x16 convert<float32x16>(uint32x16 s)
     {
         return _mm512_cvtepu32_ps(s);
+    }
+
+    template <>
+    inline int32x16 truncate<int32x16>(float32x16 s)
+    {
+        return _mm512_cvttps_epi32(s);
     }
 
     // -----------------------------------------------------------------

@@ -357,6 +357,15 @@ namespace simd {
         return result;
     }
 
+    template <>
+    inline int32x8 truncate<int32x8>(float32x8 s)
+    {
+        int32x8 result;
+        result.lo = truncate<int32x4>(s.lo);
+        result.hi = truncate<int32x4>(s.hi);
+        return result;
+    }
+
     // 512 bit convert
 
     template <>
@@ -392,6 +401,15 @@ namespace simd {
         float32x16 result;
         result.lo = convert<float32x8>(s.lo);
         result.hi = convert<float32x8>(s.hi);
+        return result;
+    }
+
+    template <>
+    inline int32x16 truncate<int32x16>(float32x16 s)
+    {
+        int32x16 result;
+        result.lo = truncate<int32x8>(s.lo);
+        result.hi = truncate<int32x8>(s.hi);
         return result;
     }
 
