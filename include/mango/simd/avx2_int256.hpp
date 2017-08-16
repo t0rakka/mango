@@ -1216,7 +1216,7 @@ namespace simd {
 
     static inline uint32 get_mask(mask16x16 a)
     {
-        __m256i temp = _mm256_packus_epi16(a, _mm_setzero_si256());
+        __m256i temp = _mm256_packus_epi16(a, _mm256_setzero_si256());
         return _mm256_movemask_epi8(temp);
     }
 
