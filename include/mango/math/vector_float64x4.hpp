@@ -459,67 +459,67 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline double4 operator + (double4 v)
+    static inline float64x4 operator + (float64x4 v)
     {
         return v;
     }
 
-    static inline double4 operator - (double4 v)
+    static inline float64x4 operator - (float64x4 v)
     {
         return simd::neg(v);
     }
 
-    static inline double4& operator += (double4& a, double4 b)
+    static inline float64x4& operator += (float64x4& a, float64x4 b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline double4& operator -= (double4& a, double4 b)
+    static inline float64x4& operator -= (float64x4& a, float64x4 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline double4& operator *= (double4& a, double4 b)
+    static inline float64x4& operator *= (float64x4& a, float64x4 b)
     {
         a = simd::mul(a, b);
         return a;
     }
 
-    static inline double4& operator /= (double4& a, double4 b)
+    static inline float64x4& operator /= (float64x4& a, float64x4 b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline double4& operator /= (double4& a, double b)
+    static inline float64x4& operator /= (float64x4& a, double b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline double4 operator + (double4 a, double4 b)
+    static inline float64x4 operator + (float64x4 a, float64x4 b)
     {
         return simd::add(a, b);
     }
 
-    static inline double4 operator - (double4 a, double4 b)
+    static inline float64x4 operator - (float64x4 a, float64x4 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline double4 operator * (double4 a, double4 b)
+    static inline float64x4 operator * (float64x4 a, float64x4 b)
     {
         return simd::mul(a, b);
     }
 
-    static inline double4 operator / (double4 a, double4 b)
+    static inline float64x4 operator / (float64x4 a, float64x4 b)
     {
         return simd::div(a, b);
     }
 
-    static inline double4 operator / (double4 a, double b)
+    static inline float64x4 operator / (float64x4 a, double b)
     {
         return simd::div(a, b);
     }
@@ -528,71 +528,132 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-#define MAKE_VECTOR_FUNCTION1(Name, SimdName) \
-    static inline double4 Name(double4 a) { \
-        return SimdName(a); \
+    static inline float64x4 abs(float64x4 a)
+    {
+        return simd::abs(a);
     }
 
-#define MAKE_VECTOR_FUNCTION2(Name, SimdName) \
-    static inline double4 Name(double4 a, double4 b) { \
-        return SimdName(a, b); \
+    static inline float64x4 square(float64x4 a)
+    {
+        return simd::square(a);
     }
 
-    MAKE_VECTOR_FUNCTION1(abs, simd::abs)
-    MAKE_VECTOR_FUNCTION1(square, simd::square)
-    MAKE_VECTOR_FUNCTION1(length, simd::length)
-    MAKE_VECTOR_FUNCTION1(normalize, simd::normalize)
-    MAKE_VECTOR_FUNCTION1(round, simd::round)
-    MAKE_VECTOR_FUNCTION1(floor, simd::floor)
-    MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
-    MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
-    MAKE_VECTOR_FUNCTION1(fract, simd::fract)
-    MAKE_VECTOR_FUNCTION1(sign, simd::sign)
-    MAKE_VECTOR_FUNCTION1(radians, simd::radians)
-    MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
-    MAKE_VECTOR_FUNCTION1(sqrt, simd::sqrt)
-    MAKE_VECTOR_FUNCTION1(rsqrt, simd::rsqrt)
+    static inline float64x4 length(float64x4 a)
+    {
+        return simd::length(a);
+    }
 
-    MAKE_VECTOR_FUNCTION2(min, simd::min)
-    MAKE_VECTOR_FUNCTION2(max, simd::max)
-    MAKE_VECTOR_FUNCTION2(dot, simd::dot4)
-    //MAKE_VECTOR_FUNCTION2(cross, simd::cross3)
-    MAKE_VECTOR_FUNCTION2(mod, simd::mod)
+    static inline float64x4 normalize(float64x4 a)
+    {
+        return simd::normalize(a);
+    }
 
-#undef MAKE_VECTOR_FUNCTION1
-#undef MAKE_VECTOR_FUNCTION2
+    static inline float64x4 round(float64x4 a)
+    {
+        return simd::round(a);
+    }
 
-    static inline double4 clamp(double4 a, double4 amin, double4 amax)
+    static inline float64x4 floor(float64x4 a)
+    {
+        return simd::floor(a);
+    }
+
+    static inline float64x4 ceil(float64x4 a)
+    {
+        return simd::ceil(a);
+    }
+
+    static inline float64x4 trunc(float64x4 a)
+    {
+        return simd::trunc(a);
+    }
+
+    static inline float64x4 fract(float64x4 a)
+    {
+        return simd::fract(a);
+    }
+
+    static inline float64x4 sign(float64x4 a)
+    {
+        return simd::sign(a);
+    }
+
+    static inline float64x4 radians(float64x4 a)
+    {
+        return simd::radians(a);
+    }
+
+    static inline float64x4 degrees(float64x4 a)
+    {
+        return simd::degrees(a);
+    }
+
+    static inline float64x4 sqrt(float64x4 a)
+    {
+        return simd::sqrt(a);
+    }
+
+    static inline float64x4 rsqrt(float64x4 a)
+    {
+        return simd::rsqrt(a);
+    }
+
+    static inline float64x4 rcp(float64x4 a)
+    {
+        return simd::rcp(a);
+    }
+
+    static inline float64x4 min(float64x4 a, float64x4 b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline float64x4 max(float64x4 a, float64x4 b)
+    {
+        return simd::max(a, b);
+    }
+
+    static inline float64x4 dot(float64x4 a, float64x4 b)
+    {
+        return simd::dot4(a, b);
+    }
+
+    static inline float64x4 mod(float64x4 a, float64x4 b)
+    {
+        return simd::mod(a, b);
+    }
+
+    static inline float64x4 clamp(float64x4 a, float64x4 amin, float64x4 amax)
     {
         return simd::clamp(a, amin, amax);
     }
 
-    static inline double4 madd(double4 a, double4 b, double4 c)
+    static inline float64x4 madd(float64x4 a, float64x4 b, float64x4 c)
     {
         return simd::madd(a, b, c);
     }
 
-    static inline double4 msub(double4 a, double4 b, double4 c)
+    static inline float64x4 msub(float64x4 a, float64x4 b, float64x4 c)
     {
         return simd::msub(a, b, c);
     }
 
-    static inline double4 lerp(double4 a, double4 b, double factor)
+    static inline float64x4 lerp(float64x4 a, float64x4 b, double factor)
     {
         return a + (b - a) * factor;
     }
 
-    static inline double4 lerp(double4 a, double4 b, double4 factor)
+    static inline float64x4 lerp(float64x4 a, float64x4 b, float64x4 factor)
     {
         return a + (b - a) * factor;
     }
 
-    static inline double4 hmin(double4 v)
+    static inline float64x4 hmin(float64x4 v)
     {
         return simd::hmin(v);
     }
 
-    static inline double4 hmax(double4 v)
+    static inline float64x4 hmax(float64x4 v)
     {
         return simd::hmax(v);
     }
@@ -601,27 +662,27 @@ namespace mango
 	// bitwise operators
     // ------------------------------------------------------------------
 
-    static inline double4 nand(double4 a, double4 b)
+    static inline float64x4 nand(float64x4 a, float64x4 b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline double4 operator & (double4 a, double4 b)
+    static inline float64x4 operator & (float64x4 a, float64x4 b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline double4 operator | (double4 a, double4 b)
+    static inline float64x4 operator | (float64x4 a, float64x4 b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline double4 operator ^ (double4 a, double4 b)
+    static inline float64x4 operator ^ (float64x4 a, float64x4 b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline double4 operator ~ (double4 a)
+    static inline float64x4 operator ~ (float64x4 a)
     {
         return simd::bitwise_not(a);
     }
@@ -630,37 +691,37 @@ namespace mango
 	// compare / select
     // ------------------------------------------------------------------
 
-    static inline mask64x4 operator > (double4 a, double4 b)
+    static inline mask64x4 operator > (float64x4 a, float64x4 b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask64x4 operator >= (double4 a, double4 b)
+    static inline mask64x4 operator >= (float64x4 a, float64x4 b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline mask64x4 operator < (double4 a, double4 b)
+    static inline mask64x4 operator < (float64x4 a, float64x4 b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline mask64x4 operator <= (double4 a, double4 b)
+    static inline mask64x4 operator <= (float64x4 a, float64x4 b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline mask64x4 operator == (double4 a, double4 b)
+    static inline mask64x4 operator == (float64x4 a, float64x4 b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline mask64x4 operator != (double4 a, double4 b)
+    static inline mask64x4 operator != (float64x4 a, float64x4 b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline double4 select(mask64x4 mask, double4 a, double4 b)
+    static inline float64x4 select(mask64x4 mask, float64x4 a, float64x4 b)
     {
         return simd::select(mask, a, b);
     }

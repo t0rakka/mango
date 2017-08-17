@@ -87,67 +87,67 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const double2 operator + (double2 v)
+    static inline const float64x2 operator + (float64x2 v)
     {
         return v;
     }
 
-    static inline double2 operator - (double2 v)
+    static inline float64x2 operator - (float64x2 v)
     {
         return simd::neg(v);
     }
 
-    static inline double2& operator += (double2& a, double2 b)
+    static inline float64x2& operator += (float64x2& a, float64x2 b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline double2& operator -= (double2& a, double2 b)
+    static inline float64x2& operator -= (float64x2& a, float64x2 b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline double2& operator *= (double2& a, double2 b)
+    static inline float64x2& operator *= (float64x2& a, float64x2 b)
     {
         a = simd::mul(a, b);
         return a;
     }
 
-    static inline double2& operator /= (double2& a, double2 b)
+    static inline float64x2& operator /= (float64x2& a, float64x2 b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline double2& operator /= (double2& a, double b)
+    static inline float64x2& operator /= (float64x2& a, double b)
     {
         a = simd::div(a, b);
         return a;
     }
 
-    static inline double2 operator + (double2 a, double2 b)
+    static inline float64x2 operator + (float64x2 a, float64x2 b)
     {
         return simd::add(a, b);
     }
 
-    static inline double2 operator - (double2 a, double2 b)
+    static inline float64x2 operator - (float64x2 a, float64x2 b)
     {
         return simd::sub(a, b);
     }
 
-    static inline double2 operator * (double2 a, double2 b)
+    static inline float64x2 operator * (float64x2 a, float64x2 b)
     {
         return simd::mul(a, b);
     }
 
-    static inline double2 operator / (double2 a, double2 b)
+    static inline float64x2 operator / (float64x2 a, float64x2 b)
     {
         return simd::div(a, b);
     }
 
-    static inline double2 operator / (double2 a, double b)
+    static inline float64x2 operator / (float64x2 a, double b)
     {
         return simd::div(a, b);
     }
@@ -156,22 +156,87 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-    static inline double2 clamp(double2 a, double2 amin, double2 amax)
+    static inline float64x2 abs(float64x2 a)
+    {
+        return simd::abs(a);
+    }
+
+    static inline float64x2 sqrt(float64x2 a)
+    {
+        return simd::sqrt(a);
+    }
+
+    static inline float64x2 rsqrt(float64x2 a)
+    {
+        return simd::rsqrt(a);
+    }
+
+    static inline float64x2 rcp(float64x2 a)
+    {
+        return simd::rcp(a);
+    }
+
+    static inline float64x2 round(float64x2 a)
+    {
+        return simd::round(a);
+    }
+
+    static inline float64x2 trunc(float64x2 a)
+    {
+        return simd::trunc(a);
+    }
+
+    static inline float64x2 floor(float64x2 a)
+    {
+        return simd::floor(a);
+    }
+
+    static inline float64x2 ceil(float64x2 a)
+    {
+        return simd::ceil(a);
+    }
+
+    static inline float64x2 fract(float64x2 a)
+    {
+        return simd::fract(a);
+    }
+
+    static inline float64x2 dot(float64x2 a, float64x2 b)
+    {
+        return simd::dot2(a, b);
+    }
+
+    static inline float64x2 min(float64x2 a, float64x2 b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline float64x2 max(float64x2 a, float64x2 b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline float64x2 clamp(float64x2 a, float64x2 amin, float64x2 amax)
     {
         return simd::clamp(a, amin, amax);
     }
 
-    static inline double2 madd(double2 a, double2 b, double2 c)
+    static inline float64x2 madd(float64x2 a, float64x2 b, float64x2 c)
     {
         return simd::madd(a, b, c);
     }
 
-    static inline double2 lerp(double2 a, double2 b, double factor)
+    static inline float64x2 msub(float64x2 a, float64x2 b, float64x2 c)
+    {
+        return simd::msub(a, b, c);
+    }
+
+    static inline float64x2 lerp(float64x2 a, float64x2 b, double factor)
     {
         return a + (b - a) * factor;
     }
 
-    static inline double2 lerp(double2 a, double2 b, double2 factor)
+    static inline float64x2 lerp(float64x2 a, float64x2 b, float64x2 factor)
     {
         return a + (b - a) * factor;
     }
@@ -180,27 +245,27 @@ namespace mango
 	// bitwise operators
     // ------------------------------------------------------------------
 
-    static inline double2 nand(double2 a, double2 b)
+    static inline float64x2 nand(float64x2 a, float64x2 b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline double2 operator & (double2 a, double2 b)
+    static inline float64x2 operator & (float64x2 a, float64x2 b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline double2 operator | (double2 a, double2 b)
+    static inline float64x2 operator | (float64x2 a, float64x2 b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline double2 operator ^ (double2 a, double2 b)
+    static inline float64x2 operator ^ (float64x2 a, float64x2 b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline double2 operator ~ (double2 a)
+    static inline float64x2 operator ~ (float64x2 a)
     {
         return simd::bitwise_not(a);
     }
@@ -209,37 +274,37 @@ namespace mango
     // compare / select
     // ------------------------------------------------------------------
 
-    static inline mask64x2 operator > (double2 a, double2 b)
+    static inline mask64x2 operator > (float64x2 a, float64x2 b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask64x2 operator >= (double2 a, double2 b)
+    static inline mask64x2 operator >= (float64x2 a, float64x2 b)
     {
         return simd::compare_ge(a, b);
     }
 
-    static inline mask64x2 operator < (double2 a, double2 b)
+    static inline mask64x2 operator < (float64x2 a, float64x2 b)
     {
         return simd::compare_lt(a, b);
     }
 
-    static inline mask64x2 operator <= (double2 a, double2 b)
+    static inline mask64x2 operator <= (float64x2 a, float64x2 b)
     {
         return simd::compare_le(a, b);
     }
 
-    static inline mask64x2 operator == (double2 a, double2 b)
+    static inline mask64x2 operator == (float64x2 a, float64x2 b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline mask64x2 operator != (double2 a, double2 b)
+    static inline mask64x2 operator != (float64x2 a, float64x2 b)
     {
         return simd::compare_neq(a, b);
     }
 
-    static inline double2 select(mask64x2 mask, double2 a, double2 b)
+    static inline float64x2 select(mask64x2 mask, float64x2 a, float64x2 b)
     {
         return simd::select(mask, a, b);
     }

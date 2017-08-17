@@ -97,52 +97,52 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const float2& operator + (const float2& v)
+    static inline const float32x2& operator + (const float32x2& v)
     {
         return v;
     }
 
-    static inline float2 operator - (const float2& v)
+    static inline float32x2 operator - (const float32x2& v)
     {
-        return float2(-v.x, -v.y);
+        return float32x2(-v.x, -v.y);
     }
 
-    static inline float2& operator += (float2& a, const float2& b)
+    static inline float32x2& operator += (float32x2& a, const float32x2& b)
     {
         a.x += b.x;
         a.y += b.y;
         return a;
     }
 
-    static inline float2& operator -= (float2& a, const float2& b)
+    static inline float32x2& operator -= (float32x2& a, const float32x2& b)
     {
         a.x -= b.x;
         a.y -= b.y;
         return a;
     }
 
-    static inline float2& operator *= (float2& a, const float2& b)
+    static inline float32x2& operator *= (float32x2& a, const float32x2& b)
     {
         a.x *= b.x;
         a.y *= b.y;
         return a;
     }
 
-    static inline float2& operator *= (float2& a, float b)
+    static inline float32x2& operator *= (float32x2& a, float b)
     {
         a.x *= b;
         a.y *= b;
         return a;
     }
 
-    static inline float2& operator /= (float2& a, const float2& b)
+    static inline float32x2& operator /= (float32x2& a, const float32x2& b)
     {
         a.x /= b.x;
         a.y /= b.y;
         return a;
     }
 
-    static inline float2& operator /= (float2& a, float b)
+    static inline float32x2& operator /= (float32x2& a, float b)
     {
         b = 1.0f / b;
         a.x *= b;
@@ -150,48 +150,119 @@ namespace mango
         return a;
     }
 
+    static inline float32x2 operator + (float32x2 a, float32x2 b)
+    {
+        float x = a.x + b.x;
+        float y = a.y + b.y;
+        return float32x2(x, y);
+    }
+
+    static inline float32x2 operator - (float32x2 a, float32x2 b)
+    {
+        float x = a.x - b.x;
+        float y = a.y - b.y;
+        return float32x2(x, y);
+    }
+
+    static inline float32x2 operator * (float32x2 a, float32x2 b)
+    {
+        float x = a.x * b.x;
+        float y = a.y * b.y;
+        return float32x2(x, y);
+    }
+
+    static inline float32x2 operator / (float32x2 a, float32x2 b)
+    {
+        float x = a.x / b.x;
+        float y = a.y / b.y;
+        return float32x2(x, y);
+    }
+
+    static inline float32x2 operator / (float32x2 a, float b)
+    {
+        float s = 1.0f / b;
+        float x = a.x * s;
+        float y = a.y * s;
+        return float32x2(x, y);
+    }
+
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
 
-    static inline float2 clamp(const float2& a, const float2& amin, const float2& amax)
+    static inline float32x2 abs(float32x2 a)
+    {
+        float x = std::abs(a.x);
+        float y = std::abs(a.y);
+        return float32x2(x, y);
+    }
+
+    static inline float square(float32x2 a)
+    {
+        return a.x * a.x + a.y * a.y;
+    }
+
+    static inline float length(float32x2 a)
+    {
+        return std::sqrt(a.x * a.x + a.y * a.y);
+    }
+
+    static inline float32x2 normalize(float32x2 a)
+    {
+        float s = 1.0f / length(a);
+        return a * s;
+    }
+
+    static inline float32x2 min(float32x2 a, float32x2 b)
+    {
+        float x = std::min(a.x, b.x);
+        float y = std::min(a.y, b.y);
+        return float32x2(x, y);
+    }
+
+    static inline float32x2 max(float32x2 a, float32x2 b)
+    {
+        float x = std::max(a.x, b.x);
+        float y = std::max(a.y, b.y);
+        return float32x2(x, y);
+    }
+
+    static inline float dot(float32x2 a, float32x2 b)
+    {
+        return a.x * b.x + a.y * b.y;
+    }
+
+    static inline float32x2 clamp(const float32x2& a, const float32x2& amin, const float32x2& amax)
     {
         const float x = std::max(amin.x, std::min(amax.x, a.x));
         const float y = std::max(amin.y, std::min(amax.y, a.y));
-        return float2(x, y);
+        return float32x2(x, y);
     }
 
-    static inline float2 madd(const float2& a, const float2& b, const float2& c)
-    {
-        const float x = a.x + b.x * c.x;
-        const float y = a.y + b.y * c.y;
-        return float2(x, y);
-    }
-
-    static inline float2 lerp(const float2& a, const float2& b, float factor)
+    static inline float32x2 lerp(const float32x2& a, const float32x2& b, float factor)
     {
         const float x = a.x + (b.x - a.x) * factor;
         const float y = a.y + (b.y - a.y) * factor;
-        return float2(x, y);
+        return float32x2(x, y);
     }
 
-    static inline float2 lerp(const float2& a, const float2& b, const float2& factor)
+    static inline float32x2 lerp(const float32x2& a, const float32x2& b, const float32x2& factor)
     {
         const float x = a.x + (b.x - a.x) * factor.x;
         const float y = a.y + (b.y - a.y) * factor.y;
-        return float2(x, y);
+        return float32x2(x, y);
     }
 
-    static inline float2 hmin(const float2& v)
+    static inline float32x2 hmin(const float32x2& v)
     {
         const float s = std::min(v.x, v.y);
-        return float2(s);
+        return float32x2(s);
     }
 
-    static inline float2 hmax(const float2& v)
+    static inline float32x2 hmax(const float32x2& v)
     {
         const float s = std::max(v.x, v.y);
-        return float2(s);
+        return float32x2(s);
     }
 
 } // namespace mango

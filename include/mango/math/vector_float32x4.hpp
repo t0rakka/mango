@@ -526,39 +526,105 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-#define MAKE_VECTOR_FUNCTION1(Name, SimdName) \
-    static inline float32x4 Name(float32x4 a) { \
-        return SimdName(a); \
+    static inline float32x4 abs(float32x4 a)
+    {
+        return simd::abs(a);
     }
 
-#define MAKE_VECTOR_FUNCTION2(Name, SimdName) \
-    static inline float32x4 Name(float32x4 a, float32x4 b) { \
-        return SimdName(a, b); \
+    static inline float32x4 square(float32x4 a)
+    {
+        return simd::square(a);
     }
 
-    MAKE_VECTOR_FUNCTION1(abs, simd::abs)
-    MAKE_VECTOR_FUNCTION1(square, simd::square)
-    MAKE_VECTOR_FUNCTION1(length, simd::length)
-    MAKE_VECTOR_FUNCTION1(normalize, simd::normalize)
-    MAKE_VECTOR_FUNCTION1(round, simd::round)
-    MAKE_VECTOR_FUNCTION1(floor, simd::floor)
-    MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
-    MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
-    MAKE_VECTOR_FUNCTION1(fract, simd::fract)
-    MAKE_VECTOR_FUNCTION1(sign, simd::sign)
-    MAKE_VECTOR_FUNCTION1(radians, simd::radians)
-    MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
-    MAKE_VECTOR_FUNCTION1(sqrt, simd::sqrt)
-    MAKE_VECTOR_FUNCTION1(rsqrt, simd::rsqrt)
+    static inline float32x4 length(float32x4 a)
+    {
+        return simd::length(a);
+    }
 
-    MAKE_VECTOR_FUNCTION2(min, simd::min)
-    MAKE_VECTOR_FUNCTION2(max, simd::max)
-    MAKE_VECTOR_FUNCTION2(dot, simd::dot4)
-    MAKE_VECTOR_FUNCTION2(cross, simd::cross3)
-    MAKE_VECTOR_FUNCTION2(mod, simd::mod)
+    static inline float32x4 normalize(float32x4 a)
+    {
+        return simd::normalize(a);
+    }
 
-#undef MAKE_VECTOR_FUNCTION1
-#undef MAKE_VECTOR_FUNCTION2
+    static inline float32x4 round(float32x4 a)
+    {
+        return simd::round(a);
+    }
+
+    static inline float32x4 floor(float32x4 a)
+    {
+        return simd::floor(a);
+    }
+
+    static inline float32x4 ceil(float32x4 a)
+    {
+        return simd::ceil(a);
+    }
+
+    static inline float32x4 trunc(float32x4 a)
+    {
+        return simd::trunc(a);
+    }
+
+    static inline float32x4 fract(float32x4 a)
+    {
+        return simd::fract(a);
+    }
+
+    static inline float32x4 sign(float32x4 a)
+    {
+        return simd::sign(a);
+    }
+
+    static inline float32x4 radians(float32x4 a)
+    {
+        return simd::radians(a);
+    }
+
+    static inline float32x4 degrees(float32x4 a)
+    {
+        return simd::degrees(a);
+    }
+
+    static inline float32x4 sqrt(float32x4 a)
+    {
+        return simd::sqrt(a);
+    }
+
+    static inline float32x4 rsqrt(float32x4 a)
+    {
+        return simd::rsqrt(a);
+    }
+
+    static inline float32x4 rcp(float32x4 a)
+    {
+        return simd::rcp(a);
+    }
+
+    static inline float32x4 min(float32x4 a, float32x4 b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline float32x4 max(float32x4 a, float32x4 b)
+    {
+        return simd::max(a, b);
+    }
+
+    static inline float32x4 dot(float32x4 a, float32x4 b)
+    {
+        return simd::dot4(a, b);
+    }
+
+    static inline float32x4 cross(float32x4 a, float32x4 b)
+    {
+        return simd::cross3(a, b);
+    }
+
+    static inline float32x4 mod(float32x4 a, float32x4 b)
+    {
+        return simd::mod(a, b);
+    }
 
     static inline float32x4 clamp(float32x4 a, float32x4 amin, float32x4 amax)
     {

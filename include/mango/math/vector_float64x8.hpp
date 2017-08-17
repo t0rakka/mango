@@ -137,47 +137,60 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-#define MAKE_VECTOR_FUNCTION1(Name, SimdName) \
-    static inline float64x8 Name(float64x8 a) { \
-        return SimdName(a); \
+    static inline float64x8 abs(float64x8 a)
+    {
+        return simd::abs(a);
     }
 
-#define MAKE_VECTOR_FUNCTION2(Name, SimdName) \
-    static inline float64x8 Name(float64x8 a, float64x8 b) { \
-        return SimdName(a, b); \
+    static inline float64x8 round(float64x8 a)
+    {
+        return simd::round(a);
     }
 
-    MAKE_VECTOR_FUNCTION1(abs, simd::abs)
-    MAKE_VECTOR_FUNCTION1(round, simd::round)
-    MAKE_VECTOR_FUNCTION1(floor, simd::floor)
-    MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
-    MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
-    MAKE_VECTOR_FUNCTION1(fract, simd::fract)
-#if 0
-    MAKE_VECTOR_FUNCTION1(sin, simd::sin)
-    MAKE_VECTOR_FUNCTION1(cos, simd::cos)
-    MAKE_VECTOR_FUNCTION1(tan, simd::tan)
-    MAKE_VECTOR_FUNCTION1(asin, simd::asin)
-    MAKE_VECTOR_FUNCTION1(acos, simd::acos)
-    MAKE_VECTOR_FUNCTION1(atan, simd::atan)
-    MAKE_VECTOR_FUNCTION1(exp, simd::exp)
-    MAKE_VECTOR_FUNCTION1(log, simd::log)
-    MAKE_VECTOR_FUNCTION1(exp2, simd::exp2)
-    MAKE_VECTOR_FUNCTION1(log2, simd::log2)
-    MAKE_VECTOR_FUNCTION1(sign, simd::sign)
-    MAKE_VECTOR_FUNCTION1(radians, simd::radians)
-    MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
-#endif
-    MAKE_VECTOR_FUNCTION1(sqrt, simd::sqrt)
-    MAKE_VECTOR_FUNCTION1(rsqrt, simd::rsqrt)
+    static inline float64x8 floor(float64x8 a)
+    {
+        return simd::floor(a);
+    }
 
-    MAKE_VECTOR_FUNCTION2(min, simd::min)
-    MAKE_VECTOR_FUNCTION2(max, simd::max)
-    //MAKE_VECTOR_FUNCTION2(pow, simd::pow)
-    //MAKE_VECTOR_FUNCTION2(atan2, simd::atan2)
+    static inline float64x8 ceil(float64x8 a)
+    {
+        return simd::ceil(a);
+    }
 
-#undef MAKE_VECTOR_FUNCTION1
-#undef MAKE_VECTOR_FUNCTION2
+    static inline float64x8 trunc(float64x8 a)
+    {
+        return simd::trunc(a);
+    }
+
+    static inline float64x8 fract(float64x8 a)
+    {
+        return simd::fract(a);
+    }
+
+    static inline float64x8 sqrt(float64x8 a)
+    {
+        return simd::sqrt(a);
+    }
+
+    static inline float64x8 rsqrt(float64x8 a)
+    {
+        return simd::rsqrt(a);
+    }
+
+    static inline float64x8 rcp(float64x8 a)
+    {
+        return simd::rcp(a);
+    }
+
+    static inline float64x8 min(float64x8 a, float64x8 b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline float64x8 max(float64x8 a, float64x8 b)
+    {
+        return simd::max(a, b);
+    }
 
     static inline float64x8 clamp(float64x8 a, float64x8 amin, float64x8 amax)
     {

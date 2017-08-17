@@ -144,34 +144,80 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
-#define MAKE_VECTOR_FUNCTION1(Name, SimdName) \
-    static inline float8 Name(float8 a) { \
-        return SimdName(a); \
+    static inline float8 abs(float8 a)
+    {
+        return simd::abs(a);
     }
 
-#define MAKE_VECTOR_FUNCTION2(Name, SimdName) \
-    static inline float8 Name(float8 a, float8 b) { \
-        return SimdName(a, b); \
+    static inline float8 round(float8 a)
+    {
+        return simd::round(a);
     }
 
-    MAKE_VECTOR_FUNCTION1(abs, simd::abs)
-    MAKE_VECTOR_FUNCTION1(round, simd::round)
-    MAKE_VECTOR_FUNCTION1(floor, simd::floor)
-    MAKE_VECTOR_FUNCTION1(ceil, simd::ceil)
-    MAKE_VECTOR_FUNCTION1(trunc, simd::trunc)
-    MAKE_VECTOR_FUNCTION1(fract, simd::fract)
-    MAKE_VECTOR_FUNCTION1(sign, simd::sign)
-    MAKE_VECTOR_FUNCTION1(radians, simd::radians)
-    MAKE_VECTOR_FUNCTION1(degrees, simd::degrees)
-    MAKE_VECTOR_FUNCTION1(sqrt, simd::sqrt)
-    MAKE_VECTOR_FUNCTION1(rsqrt, simd::rsqrt)
+    static inline float8 floor(float8 a)
+    {
+        return simd::floor(a);
+    }
 
-    MAKE_VECTOR_FUNCTION2(min, simd::min)
-    MAKE_VECTOR_FUNCTION2(max, simd::max)
-    MAKE_VECTOR_FUNCTION2(mod, simd::mod)
+    static inline float8 ceil(float8 a)
+    {
+        return simd::ceil(a);
+    }
 
-#undef MAKE_VECTOR_FUNCTION1
-#undef MAKE_VECTOR_FUNCTION2
+    static inline float8 trunc(float8 a)
+    {
+        return simd::trunc(a);
+    }
+
+    static inline float8 fract(float8 a)
+    {
+        return simd::fract(a);
+    }
+
+    static inline float8 sign(float8 a)
+    {
+        return simd::sign(a);
+    }
+
+    static inline float8 radians(float8 a)
+    {
+        return simd::radians(a);
+    }
+
+    static inline float8 degrees(float8 a)
+    {
+        return simd::degrees(a);
+    }
+
+    static inline float8 sqrt(float8 a)
+    {
+        return simd::sqrt(a);
+    }
+
+    static inline float8 rsqrt(float8 a)
+    {
+        return simd::rsqrt(a);
+    }
+
+    static inline float8 rcp(float8 a)
+    {
+        return simd::rcp(a);
+    }
+
+    static inline float8 min(float8 a, float8 b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline float8 max(float8 a, float8 b)
+    {
+        return simd::max(a, b);
+    }
+
+    static inline float8 mod(float8 a, float8 b)
+    {
+        return simd::mod(a, b);
+    }
 
     static inline float8 clamp(float8 a, float8 amin, float8 amax)
     {
