@@ -41,7 +41,7 @@ namespace mango
 
         uint64 flags = getCPUFlags();
 
-        info << "CPU Features: ";
+        info << "Detected CPU Features: ";
         if (!flags) info << "N/A";
         if (flags & CPU_MMX) info << "MMX ";
         if (flags & CPU_MMX_PLUS) info << "MMX+ ";
@@ -70,13 +70,16 @@ namespace mango
         if (flags & CPU_FMA4) info << "FMA4 ";
         if (flags & CPU_BMI1) info << "BMI1 ";
         if (flags & CPU_BMI2) info << "BMI2 ";
+        if (flags & CPU_SHA) info << "SHA ";
         if (flags & CPU_AVX512F) info << "AVX512F ";
         if (flags & CPU_AVX512PFI) info << "AVX512PFI ";
         if (flags & CPU_AVX512ERI) info << "AVX512ERI ";
         if (flags & CPU_AVX512CDI) info << "AVX512CDI ";
+        if (flags & CPU_AVX512BW) info << "AVX512BW ";
+        if (flags & CPU_AVX512VL) info << "AVX512VL ";
         info << std::endl;
 
-        info << "SIMD: ";
+        info << "Compiled SIMD Features: ";
 #if defined(MANGO_ENABLE_SIMD)
     #if defined(MANGO_ENABLE_SSE)
         info << "SSE ";
@@ -108,6 +111,10 @@ namespace mango
 
     #if defined(MANGO_ENABLE_AVX2)
         info << "AVX2 ";
+    #endif
+
+    #if defined(MANGO_ENABLE_AVX512)
+        info << "AVX512 ";
     #endif
 
     #if defined(MANGO_ENABLE_XOP)

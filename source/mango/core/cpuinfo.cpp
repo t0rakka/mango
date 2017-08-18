@@ -31,10 +31,8 @@ namespace
 
     void cpuid(int* info, int id)
     {
-        unsigned int regs[4];
-        std::memset(regs, 0, sizeof(regs));
-
-        __get_cpuid(id, regs + 0, regs + 1, regs + 2, regs + 3);
+        unsigned int regs[4] = { 0, 0, 0, 0 };
+        __cpuid_count(id, 0, regs[0], regs[1], regs[2], regs[3]);
 
         info[0] = regs[0];
         info[1] = regs[1];
@@ -56,8 +54,7 @@ namespace
     {
         uint64 flags = 0;
 
-		int cpuInfo[4];
-        std::memset(cpuInfo, 0, sizeof(cpuInfo));
+		int cpuInfo[4] = { 0, 0, 0, 0 };
 
 		// Get CPU information
 		cpuid(cpuInfo, 0);
@@ -66,7 +63,14 @@ namespace
 		for (unsigned int i = 0; i <= nIds; ++i)
 		{
             cpuid(cpuInfo, i);
-
+            /*
+            printf("%d:\n", i);
+            printf("  eax: 0x%.8x\n", cpuInfo[0]);
+            printf("  ebx: 0x%.8x\n", cpuInfo[1]);
+            printf("  ecx: 0x%.8x\n", cpuInfo[2]);
+            printf("  edx: 0x%.8x\n", cpuInfo[3]);
+            */
+            
 			switch (i)
 			{
                 case 1:
@@ -91,13 +95,9 @@ namespace
                     if ((cpuInfo[2] & 0x00002000) != 0) flags |= CPU_CMPXCHG16B;
                     break;
                 case 7:
-                    if (flags & CPU_AVX)
-                    {
-                        // ebx
-                        if ((cpuInfo[1] & 0x00000020) != 0) flags |= CPU_AVX2;
-                    }
                     // ebx
                     if ((cpuInfo[1] & 0x00000008) != 0) flags |= CPU_BMI1;
+                    if ((cpuInfo[1] & 0x00000020) != 0) flags |= CPU_AVX2;
                     if ((cpuInfo[1] & 0x00000100) != 0) flags |= CPU_BMI2;
                     if ((cpuInfo[1] & 0x00010000) != 0) flags |= CPU_AVX512F;
                     if ((cpuInfo[1] & 0x04000000) != 0) flags |= CPU_AVX512PFI;
@@ -130,7 +130,7 @@ namespace
                 if ((cpuInfo[3] & 0x80000000) != 0) flags |= CPU_3DNOW;
                 if ((cpuInfo[3] & 0x40000000) != 0) flags |= CPU_3DNOW_EXT;
             }
-		}
+        }
 
 		return flags;
 	}
