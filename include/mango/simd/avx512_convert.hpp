@@ -79,12 +79,6 @@ namespace detail {
 	    {
 	    }
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-	    {
-		    std::memcpy(this, &v, 32);
-	    }
-
     	template <typename ScalarType, int VectorSize, typename VectorType>
     	operator hardware_vector<ScalarType, VectorSize, VectorType> ()
 	    {
@@ -102,14 +96,6 @@ namespace detail {
 	    {
 		    return hardware_vector<ScalarType, VectorSize, __m256d>(_mm256_castps_pd(data));
 	    }
-
-	    template <typename T>
-	    operator composite_vector<T> ()
-	    {
-    		composite_vector<T> temp;
-		    std::memcpy(&temp, this, 32);
-		    return temp;
-	    }
     };
 
 	template <>
@@ -124,21 +110,15 @@ namespace detail {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256i> v)
+	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512i> v)
         : data(_mm512_castsi512_ps(v))
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256d> v)
+	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512d> v)
         : data(_mm512_castpd_ps(v))
 	    {
-	    }
-
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-	    {
-		    std::memcpy(this, &v, 64);
 	    }
 
     	template <typename ScalarType, int VectorSize, typename VectorType>
@@ -158,14 +138,6 @@ namespace detail {
 	    {
 		    return hardware_vector<ScalarType, VectorSize, __m512d>(_mm512_castps_pd(data));
 	    }
-
-	    template <typename T>
-	    operator composite_vector<T> ()
-	    {
-    		composite_vector<T> temp;
-		    std::memcpy(&temp, this, 64);
-		    return temp;
-	    }
     };
 
 } // namespace detail
@@ -179,13 +151,6 @@ namespace detail {
 	{
         static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
 		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
-	}
-
-	template <typename D, typename S>
-	inline D reinterpret(composite_vector<S> s)
-	{
-        static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<composite_vector<S>::vector_bits>(s));
 	}
 
     // -----------------------------------------------------------------
