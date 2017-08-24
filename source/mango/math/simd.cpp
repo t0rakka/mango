@@ -8,9 +8,8 @@
 */
 #include <mango/math/vector.hpp>
 
-namespace
-{
-    using namespace mango;
+namespace mango {
+namespace fp32 {
 
     constexpr float float_pi    = 3.14159265358979323846f;
     constexpr float float_pi_2  = 1.57079632679489661923f;
@@ -119,7 +118,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector sin_template(FloatVector d)
+    FloatVector sin(FloatVector d)
     {
         IntVector q = convert<IntVector>(d * float_1_pi);
         FloatVector u = convert<FloatVector>(q);
@@ -142,7 +141,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector cos_template(FloatVector d)
+    FloatVector cos(FloatVector d)
     {
         IntVector q = convert<IntVector>(madd(FloatVector(-0.5f), d, float_1_pi));
         q = q + q + 1;
@@ -166,7 +165,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector, typename Mask>
-    FloatVector tan_template(FloatVector d)
+    FloatVector tan(FloatVector d)
     {
         const IntVector q = convert<IntVector>(d * float_2_pi);
 
@@ -194,7 +193,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector exp_template(FloatVector v)
+    FloatVector exp(FloatVector v)
     {
         const IntVector q = convert<IntVector>(v * float_r_ln2);
         const FloatVector p = convert<FloatVector>(q);
@@ -217,7 +216,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector exp2_template(FloatVector v)
+    FloatVector exp2(FloatVector v)
     {
         const FloatVector fx = v + reinterpret<FloatVector>(nand(simd::srai(convert<IntVector>(v), 31), 0x3f7fffff));
         const IntVector ix = truncate<IntVector>(fx);
@@ -237,7 +236,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector log2_template(FloatVector v)
+    FloatVector log2(FloatVector v)
     {
         const IntVector exponent = simd::srli(reinterpret<IntVector>(v) & 0x7fffffff, 23) - 127;
         const FloatVector x = reinterpret<FloatVector>(reinterpret<IntVector>(v) - simd::slli(exponent, 23)) - 1.0f;
@@ -256,7 +255,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector asin_template(FloatVector d)
+    FloatVector asin(FloatVector d)
     {
         const FloatVector one(1.0f);
         FloatVector x, y;
@@ -269,7 +268,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector acos_template(FloatVector d)
+    FloatVector acos(FloatVector d)
     {
         const FloatVector zero(0.0f);
         const FloatVector one(1.0f);
@@ -287,7 +286,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector atan_template(FloatVector d)
+    FloatVector atan(FloatVector d)
     {
         const FloatVector zero(0.0f);
         const FloatVector one(1.0f);
@@ -318,7 +317,7 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector atan2_template(FloatVector y, FloatVector x)
+    FloatVector atan2(FloatVector y, FloatVector x)
     {
         static const FloatVector pi(float_pi);
         static const FloatVector pi_2(float_pi_2);
@@ -334,15 +333,13 @@ namespace
     }
 
     template <typename FloatVector, typename IntVector>
-    FloatVector pow_template(FloatVector a, FloatVector b)
+    FloatVector pow(FloatVector a, FloatVector b)
     {
-        FloatVector temp = log2_template<FloatVector, IntVector>(abs(a)) * b;
-        return exp2_template<FloatVector, IntVector>(temp);
+        FloatVector temp = log2<FloatVector, IntVector>(abs(a)) * b;
+        return exp2<FloatVector, IntVector>(temp);
     }
 
-} // namespace
-
-namespace mango {
+} // namespace fp32
 
     // ------------------------------------------------------------------------
     // float32x4
@@ -350,62 +347,62 @@ namespace mango {
 
     float32x4 sin(float32x4 v)
     {
-        return sin_template<float32x4, int32x4>(v);
+        return fp32::sin<float32x4, int32x4>(v);
     }
 
     float32x4 cos(float32x4 v)
     {
-        return cos_template<float32x4, int32x4>(v);
+        return fp32::cos<float32x4, int32x4>(v);
     }
 
     float32x4 tan(float32x4 v)
     {
-        return tan_template<float32x4, int32x4, mask32x4>(v);
+        return fp32::tan<float32x4, int32x4, mask32x4>(v);
     }
 
     float32x4 exp(float32x4 v)
     {
-        return exp_template<float32x4, int32x4>(v);
+        return fp32::exp<float32x4, int32x4>(v);
     }
 
     float32x4 exp2(float32x4 v)
     {
-        return exp2_template<float32x4, int32x4>(v);
+        return fp32::exp2<float32x4, int32x4>(v);
     }
 
     float32x4 log(float32x4 v)
     {
-        return log2_template<float32x4, int32x4>(v) * 0.69314718055995f;
+        return fp32::log2<float32x4, int32x4>(v) * 0.69314718055995f;
     }
 
     float32x4 log2(float32x4 v)
     {
-        return log2_template<float32x4, int32x4>(v);
+        return fp32::log2<float32x4, int32x4>(v);
     }
 
     float32x4 asin(float32x4 v)
     {
-        return asin_template<float32x4, int32x4>(v);
+        return fp32::asin<float32x4, int32x4>(v);
     }
 
     float32x4 acos(float32x4 v)
     {
-        return acos_template<float32x4, int32x4>(v);
+        return fp32::acos<float32x4, int32x4>(v);
     }
 
     float32x4 atan(float32x4 v)
     {
-        return atan_template<float32x4, int32x4>(v);
+        return fp32::atan<float32x4, int32x4>(v);
     }
 
     float32x4 atan2(float32x4 y, float32x4 x)
     {
-        return atan2_template<float32x4, int32x4>(y, x);
+        return fp32::atan2<float32x4, int32x4>(y, x);
     }
 
     float32x4 pow(float32x4 a, float32x4 b)
     {
-        return pow_template<float32x4, int32x4>(a, b);
+        return fp32::pow<float32x4, int32x4>(a, b);
     }
 
     // ------------------------------------------------------------------------
@@ -414,62 +411,62 @@ namespace mango {
 
     float32x8 sin(float32x8 v)
     {
-        return sin_template<float32x8, int32x8>(v);
+        return fp32::sin<float32x8, int32x8>(v);
     }
 
     float32x8 cos(float32x8 v)
     {
-        return cos_template<float32x8, int32x8>(v);
+        return fp32::cos<float32x8, int32x8>(v);
     }
 
     float32x8 tan(float32x8 v)
     {
-        return tan_template<float32x8, int32x8, mask32x8>(v);
+        return fp32::tan<float32x8, int32x8, mask32x8>(v);
     }
 
     float32x8 exp(float32x8 v)
     {
-        return exp_template<float32x8, int32x8>(v);
+        return fp32::exp<float32x8, int32x8>(v);
     }
 
     float32x8 exp2(float32x8 v)
     {
-        return exp2_template<float32x8, int32x8>(v);
+        return fp32::exp2<float32x8, int32x8>(v);
     }
 
     float32x8 log(float32x8 v)
     {
-        return log2_template<float32x8, int32x8>(v) * 0.69314718055995f;
+        return fp32::log2<float32x8, int32x8>(v) * 0.69314718055995f;
     }
 
     float32x8 log2(float32x8 v)
     {
-        return log2_template<float32x8, int32x8>(v);
+        return fp32::log2<float32x8, int32x8>(v);
     }
 
     float32x8 asin(float32x8 v)
     {
-        return asin_template<float32x8, int32x8>(v);
+        return fp32::asin<float32x8, int32x8>(v);
     }
 
     float32x8 acos(float32x8 v)
     {
-        return acos_template<float32x8, int32x8>(v);
+        return fp32::acos<float32x8, int32x8>(v);
     }
 
     float32x8 atan(float32x8 v)
     {
-        return atan_template<float32x8, int32x8>(v);
+        return fp32::atan<float32x8, int32x8>(v);
     }
 
     float32x8 atan2(float32x8 y, float32x8 x)
     {
-        return atan2_template<float32x8, int32x8>(y, x);
+        return fp32::atan2<float32x8, int32x8>(y, x);
     }
 
     float32x8 pow(float32x8 a, float32x8 b)
     {
-        return pow_template<float32x8, int32x8>(a, b);
+        return fp32::pow<float32x8, int32x8>(a, b);
     }
 
     // ------------------------------------------------------------------------
@@ -478,62 +475,62 @@ namespace mango {
 
     float32x16 sin(float32x16 v)
     {
-        return sin_template<float32x16, int32x16>(v);
+        return fp32::sin<float32x16, int32x16>(v);
     }
 
     float32x16 cos(float32x16 v)
     {
-        return cos_template<float32x16, int32x16>(v);
+        return fp32::cos<float32x16, int32x16>(v);
     }
 
     float32x16 tan(float32x16 v)
     {
-        return tan_template<float32x16, int32x16, mask32x16>(v);
+        return fp32::tan<float32x16, int32x16, mask32x16>(v);
     }
 
     float32x16 exp(float32x16 v)
     {
-        return exp_template<float32x16, int32x16>(v);
+        return fp32::exp<float32x16, int32x16>(v);
     }
 
     float32x16 exp2(float32x16 v)
     {
-        return exp2_template<float32x16, int32x16>(v);
+        return fp32::exp2<float32x16, int32x16>(v);
     }
 
     float32x16 log(float32x16 v)
     {
-        return log2_template<float32x16, int32x16>(v) * 0.69314718055995f;
+        return fp32::log2<float32x16, int32x16>(v) * 0.69314718055995f;
     }
 
     float32x16 log2(float32x16 v)
     {
-        return log2_template<float32x16, int32x16>(v);
+        return fp32::log2<float32x16, int32x16>(v);
     }
 
     float32x16 asin(float32x16 v)
     {
-        return asin_template<float32x16, int32x16>(v);
+        return fp32::asin<float32x16, int32x16>(v);
     }
 
     float32x16 acos(float32x16 v)
     {
-        return acos_template<float32x16, int32x16>(v);
+        return fp32::acos<float32x16, int32x16>(v);
     }
 
     float32x16 atan(float32x16 v)
     {
-        return atan_template<float32x16, int32x16>(v);
+        return fp32::atan<float32x16, int32x16>(v);
     }
 
     float32x16 atan2(float32x16 y, float32x16 x)
     {
-        return atan2_template<float32x16, int32x16>(y, x);
+        return fp32::atan2<float32x16, int32x16>(y, x);
     }
 
     float32x16 pow(float32x16 a, float32x16 b)
     {
-        return pow_template<float32x16, int32x16>(a, b);
+        return fp32::pow<float32x16, int32x16>(a, b);
     }
 
 } // namespace mango
