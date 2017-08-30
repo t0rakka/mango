@@ -13,11 +13,10 @@ namespace mango
     // sRGB
     // ------------------------------------------------------------------
 
-    float srgb_encode(float n);
-    float srgb_decode(float s);
-    float4 srgb_encode(float4 n);
-    float4 srgb_decode(float4 s);
-    float4 srgb_encode_packed(uint32 n);
-    uint32 srgb_decode_packed(float4 s);
+    float srgb_encode(float n); // linear to sRGB
+    float srgb_decode(float s); // sRGB to linear
+
+    float4 srgb_encode(float4 n); // linear to sRGB
+    float4 srgb_decode(float4 s); // sRGB to linear
 
 } // namespace mango

@@ -1254,17 +1254,4 @@ namespace mango
         return select(curve < float32x4(0.04045f), a, c);
     }
 
-    float4 srgb_encode_packed(uint32 n)
-    {
-        float4 s;
-        s.unpack(n);
-        return srgb_encode(s * (1.0f / 255.0f));
-    }
-
-    uint32 srgb_decode_packed(float4 s)
-    {
-        s = srgb_decode(s) * 255.0f;
-        return s.pack();
-    }
-
 } // namespace mango
