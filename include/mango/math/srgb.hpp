@@ -10,13 +10,70 @@ namespace mango
 {
 
     // ------------------------------------------------------------------
+    // linear / non-linear (sRGB) conversion functions
+    // ------------------------------------------------------------------
+
+    // The conversion functions do NOT consider w-component to contain alpha;
+    // every component is converted between linear and non-linear sRGB.
+    // The inputs and outputs are normalized.
+
+    float linear_to_srgb(float linear);
+    float srgb_to_linear(float srgb);
+
+    float32x4 linear_to_srgb(float32x4 linear);
+    float32x4 srgb_to_linear(float32x4 srgb);
+
+    // ------------------------------------------------------------------
     // sRGB
     // ------------------------------------------------------------------
 
-    float srgb_encode(float n); // linear to sRGB
-    float srgb_decode(float s); // sRGB to linear
+    // sRGB implements non-linear color container where each color component
+    // is stored as 8 bit UNORM sRGB. 
+    // The alpha component is always stored as a linear value.
 
-    float4 srgb_encode(float4 n); // linear to sRGB
-    float4 srgb_decode(float4 s); // sRGB to linear
+    struct sRGB
+    {
+        uint32 color;
+
+        sRGB() = default;
+
+        sRGB(uint32 srgb)
+        : color(srgb)
+        {
+        }
+
+        sRGB(float32x4 linear)
+        {
+            *this = linear;
+        }
+
+        sRGB& operator = (float32x4 linear)
+        {
+            float32x4 srgb = linear_to_srgb(linear) * 255.0f;
+            srgb.w = linear.w * 255.0f; // pass-through linear alpha
+            color = srgb.pack();
+            return *this;
+        }
+
+        sRGB& operator = (uint32 srgb)
+        {
+            color = srgb;
+            return *this;
+        }
+
+        operator uint32 () const
+        {
+            return color;
+        }
+
+        operator float32x4 () const
+        {
+            float32x4 srgb;
+            srgb.unpack(color);
+            float32x4 linear = srgb_to_linear(srgb / 255.0f);
+            linear.w = float(color >> 24) / 255.0f; // pass-through linear alpha
+            return linear;
+        }
+    };
 
 } // namespace mango

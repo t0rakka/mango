@@ -1192,10 +1192,10 @@ namespace mango
     // sRGB
     // ------------------------------------------------------------------------
 
-    float srgb_encode(float n)
+    float linear_to_srgb(float n)
     {
         float s = clamp(n, 0.0f, 1.0f);
-        if (s < 0.0031308) {
+        if (s < 0.0031308f) {
             s = 12.92f * s;
         }
         else {
@@ -1204,10 +1204,10 @@ namespace mango
         return s;
     }
 
-    float srgb_decode(float s)
+    float srgb_to_linear(float s)
     {
         float n;
-        if (s <= 0.04045) {
+        if (s <= 0.04045f) {
             n = s * (1.0f / 12.92f);
         }
         else {
@@ -1224,7 +1224,7 @@ namespace mango
         i += (i >> 8);
         i += 0x2a514d80;
         float32x4 s = reinterpret<float32x4>(i);
-        s = 0.3332454f * (2.0f * s + float32x4(v) / (s * s));
+        s = 0.3332454f * (2.0f * s + v / (s * s));
         return s * sqrt(sqrt(s));
     }
 
@@ -1239,19 +1239,21 @@ namespace mango
         return f;
     }
 
-    float4 srgb_encode(float4 linear)
+    float32x4 linear_to_srgb(float32x4 linear)
     {
         float32x4 a = linear * 12.92f;
         float32x4 b = 1.055f * pow24(linear) - 0.055f;
-        return select(linear <= float32x4(0.0031308f), a, b);
+        float32x4 srgb = select(linear <= 0.0031308f, a, b);
+        return srgb;
     }
 
-    float4 srgb_decode(float4 curve)
+    float32x4 srgb_to_linear(float32x4 srgb)
     {
-        float32x4 a = curve * (1.0f / 12.92f);
-        float32x4 b = (curve * (1.f / 1.055f) + 0.055f / 1.055f);
+        float32x4 a = srgb * (1.0f / 12.92f);
+        float32x4 b = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
         float32x4 c = (b * b) * root5(b * b);
-        return select(curve < float32x4(0.04045f), a, c);
+        float32x4 linear = select(srgb < 0.04045f, a, c);
+        return linear;
     }
 
 } // namespace mango
