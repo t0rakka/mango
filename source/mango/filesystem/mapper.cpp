@@ -151,7 +151,7 @@ namespace mango
         return filename;
     }
 
-	AbstractMapper* Mapper::create(AbstractMapper* parent, std::string& filename, const std::string& password)
+    AbstractMapper* Mapper::create(AbstractMapper* parent, std::string& filename, const std::string& password)
     {
         std::string f = toLower(filename);
 
@@ -187,16 +187,16 @@ namespace mango
         return m_mapper;
     }
 
-	void emplace(FileIndex &index, const std::string &name, uint64 size, uint32 flags)
-	{
-		index.emplace_back(name, size, flags);
+    void emplace(FileIndex &index, const std::string &name, uint64 size, uint32 flags)
+    {
+        index.emplace_back(name, size, flags);
 
-		const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-		if (isFile && Mapper::isCustomMapper(name))
-		{
-			// file is a container; add it into the index again as one
-			index.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
-		}
-	}
+        const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
+        if (isFile && Mapper::isCustomMapper(name))
+        {
+            // file is a container; add it into the index again as such
+            index.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
+        }
+    }
 
 } // namespace mango

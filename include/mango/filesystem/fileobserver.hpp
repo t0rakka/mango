@@ -12,11 +12,11 @@ namespace mango
 {
 
     class FileObserver : protected NonCopyable
-	{
-	protected:
-		struct FileObserverState* m_state;
+    {
+    protected:
+        struct FileObserverState* m_state;
 
-	public:
+    public:
         enum Flags
         {
             CREATED     = 0x0001,
@@ -26,8 +26,8 @@ namespace mango
             DIRECTORY   = 0x0200
         };
 
-		FileObserver();
-		virtual ~FileObserver();
+        FileObserver();
+        virtual ~FileObserver();
 
         void start(const std::string& pathname);
         void stop();
@@ -42,6 +42,6 @@ namespace mango
         //    Flags will indicate what happened and the filename will indicate the affected file.
         //    Currently only Linux and Windows platforms are able to generate extended notifications.
         virtual void onEvent(uint32 flags, const std::string& filename) = 0;
-	};
+    };
 
 } // namespace mango

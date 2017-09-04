@@ -12,29 +12,29 @@
 namespace mango
 {
 
-	struct FileInfo
-	{
-		enum Flags
-		{
-			DIRECTORY = 0x01,
-			CONTAINER = 0x02,
-			COMPRESSED = 0x04,
-		};
+    struct FileInfo
+    {
+        enum Flags
+        {
+            DIRECTORY = 0x01,
+            CONTAINER = 0x02,
+            COMPRESSED = 0x04,
+        };
 
-		uint64 size;
-		uint32 flags;
-		std::string name;
+        uint64 size;
+        uint32 flags;
+        std::string name;
 
-		FileInfo();
-		FileInfo(const std::string& name, uint64 size, uint32 flags = 0);
-		~FileInfo();
+        FileInfo();
+        FileInfo(const std::string& name, uint64 size, uint32 flags = 0);
+        ~FileInfo();
 
-		bool isDirectory() const;
-		bool isContainer() const;
-		bool isCompressed() const;
-	};
+        bool isDirectory() const;
+        bool isContainer() const;
+        bool isCompressed() const;
+    };
 
-	using FileIndex = std::vector<FileInfo>;
+    using FileIndex = std::vector<FileInfo>;
 
     class AbstractMapper
     {
