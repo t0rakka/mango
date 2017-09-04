@@ -488,7 +488,7 @@ namespace mango
             }
         }
 
-        bool isfile(const std::string& filename) const
+        bool isfile(const std::string& filename) const override
         {
             auto i = m_files.find(filename);
 
@@ -500,7 +500,7 @@ namespace mango
             return false;
         }
 
-        void index(FileIndex& index, const std::string& pathname)
+        void index(FileIndex& index, const std::string& pathname) override
         {
             for (auto i : m_files)
             {
@@ -524,20 +524,20 @@ namespace mango
                         {
                             flags |= FileInfo::COMPRESSED;
                         }
-                        emplace(index, filename, header.unpacked_size, flags);
+                        index.emplace(filename, header.unpacked_size, flags);
                     }
                     else
                     {
                         if (n == filename.length() - 1)
                         {
-                            emplace(index, filename, 0, FileInfo::DIRECTORY);
+                            index.emplace(filename, 0, FileInfo::DIRECTORY);
                         }
                     }
                 }
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename) override
         {
             auto i = m_files.find(filename);
             if (i == m_files.end())

@@ -34,11 +34,14 @@ namespace mango
         bool isCompressed() const;
     };
 
-    using FileIndex = std::vector<FileInfo>;
+    struct FileIndex : std::vector<FileInfo>
+    {
+        void emplace(const std::string &name, uint64 size, uint32 flags);
+    };
 
     class AbstractMapper
     {
-	public:
+    public:
         AbstractMapper() = default;
         virtual ~AbstractMapper() = default;
 
@@ -66,7 +69,5 @@ namespace mango
         operator AbstractMapper* () const;
         static bool isCustomMapper(const std::string& filename);
     };
-
-	void emplace(FileIndex &index, const std::string &name, uint64 size, uint32 flags);
 
 } // namespace mango

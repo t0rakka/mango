@@ -493,12 +493,12 @@ namespace
 					std::string s = mango::u16_toBytes(filename);
 					if (isDirectory(filename))
 					{
-						emplace(dropped, s + "/", 0, FileInfo::DIRECTORY);
+						dropped.emplace(s + "/", 0, FileInfo::DIRECTORY);
 					}
 					else
 					{
 						uint64 filesize = getFileSize(filename);
-						emplace(dropped, s, filesize, 0);
+						dropped.emplace(s, filesize, 0);
 					}
 				}
 			}

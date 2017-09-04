@@ -18,25 +18,25 @@ namespace
 {
     using namespace mango;
 
-	enum { DCKEYSIZE = 12 };
+    enum { DCKEYSIZE = 12 };
 
     struct LocalFileHeader
     {
-        uint32	signature;         // 0x04034b50 ("PK..")
-		uint16	versionNeeded;     // version needed to extract
-		uint16	flags;             //
-		uint16	compression;       // compression method
-		uint16	lastModTime;       // last mod file time
-		uint16	lastModDate;       // last mod file date
-		uint32	crc;               //
-		uint64	compressedSize;    //
-		uint64	uncompressedSize;  //
-		uint16	filenameLen;       // length of the filename field following this structure
-		uint16	extraFieldLen;     // length of the extra field following the filename field
+        uint32  signature;         // 0x04034b50 ("PK..")
+        uint16  versionNeeded;     // version needed to extract
+        uint16  flags;             //
+        uint16  compression;       // compression method
+        uint16  lastModTime;       // last mod file time
+        uint16  lastModDate;       // last mod file date
+        uint32  crc;               //
+        uint64  compressedSize;    //
+        uint64  uncompressedSize;  //
+        uint16  filenameLen;       // length of the filename field following this structure
+        uint16  extraFieldLen;     // length of the extra field following the filename field
 
         LocalFileHeader(LittleEndianPointer p)
         {
-			signature = p.read32();
+            signature = p.read32();
             if (status())
 			{
 			    versionNeeded    = p.read16();
@@ -270,8 +270,8 @@ namespace
     // zip functions
     // --------------------------------------------------------------------
 
-	inline uint32 zip_crc32(uint32 crc, uint8 v)
-	{
+    inline uint32 zip_crc32(uint32 crc, uint8 v)
+    {
         static const uint32 crc_table[] =
         {
             0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
@@ -410,7 +410,7 @@ namespace
 		}
 
 		return zstream.total_out;
-	}
+    }
 
 } // namespace
 
@@ -594,7 +594,7 @@ namespace mango
             return memory;
         }
 
-        bool isfile(const std::string& filename) const
+        bool isfile(const std::string& filename) const override
         {
             auto i = m_files.find(filename);
 
@@ -607,7 +607,7 @@ namespace mango
             return false;
         }
 
-        void index(FileIndex& index, const std::string& pathname)
+        void index(FileIndex& index, const std::string& pathname) override
         {
             for (auto i : m_files)
             {
@@ -628,7 +628,7 @@ namespace mango
                     {
                         if (n == (filename.length() - 1))
                         {
-                            emplace(index, filename, 0, FileInfo::DIRECTORY);
+                            index.emplace(filename, 0, FileInfo::DIRECTORY);
                         }
                     }
                     else
@@ -639,13 +639,13 @@ namespace mango
                             flags |= FileInfo::COMPRESSED;
                         }
 
-                        emplace(index, filename, header.uncompressedSize, flags);
+                        index.emplace(filename, header.uncompressedSize, flags);
                     }
                 }
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename) override
         {
             auto i = m_files.find(filename);
             if (i == m_files.end())

@@ -134,7 +134,7 @@ namespace
         {
         }
 
-        bool isfile(const std::string& filename) const
+        bool isfile(const std::string& filename) const override
         {
             bool is = false;
 
@@ -148,7 +148,7 @@ namespace
             return is;
         }
 
-        void index(FileIndex& index, const std::string& pathname)
+        void index(FileIndex& index, const std::string& pathname) override
         {
             std::wstring filespec = u16_fromBytes(pathname + "*");
 
@@ -171,11 +171,11 @@ namespace
                         if (isfile)
                         {
                             size_t filesize = static_cast<size_t>(cfile.size);
-                            emplace(index, filename, filesize, 0);
+                            index.emplace(filename, filesize, 0);
                         }
                         else
                         {
-                            emplace(index, filename + "/", 0, FileInfo::DIRECTORY);
+                            index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
                         }
                     }
 
@@ -187,7 +187,7 @@ namespace
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename) override
         {
             VirtualMemory* memory = new FileMemory(filename, 0, 0);
             return memory;

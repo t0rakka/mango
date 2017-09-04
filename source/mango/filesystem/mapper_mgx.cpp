@@ -62,15 +62,15 @@ namespace mango
     {
     public:
 
-        bool isfile(const std::string& filename) const
+        bool isfile(const std::string& filename) const override
         {
         }
 
-        void index(FileIndex& index, const std::string& pathname)
+        void index(FileIndex& index, const std::string& pathname) override
         {
         }
 
-        VirtualMemory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename) override
         {
         }
     };

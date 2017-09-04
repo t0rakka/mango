@@ -130,7 +130,7 @@ namespace
     class FileMapper : public AbstractMapper
     {
     protected:
-        void emplace(FileIndex& index, const std::string& pathname, const std::string& filename)
+        void emplace_helper(FileIndex& index, const std::string& pathname, const std::string& filename)
         {
             const std::string testname = pathname + filename;
 
@@ -140,11 +140,11 @@ namespace
                 if ((s.st_mode & S_IFDIR) == 0)
                 {
                     size_t size = static_cast<size_t>(s.st_size);
-                    ::emplace(index, filename, size, 0);
+                    index.emplace(filename, size, 0);
                 }
                 else
                 {
-                    ::emplace(index, filename + "/", 0, FileInfo::DIRECTORY);
+                    index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
                 }
             }
         }
@@ -158,7 +158,7 @@ namespace
         {
         }
 
-        bool isfile(const std::string& filename) const
+        bool isfile(const std::string& filename) const override
         {
             bool is = false;
 
@@ -174,7 +174,7 @@ namespace
 
 #if defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS) || defined(MANGO_PLATFORM_BSD)
 
-        void index(FileIndex& index, const std::string& pathname)
+        void index(FileIndex& index, const std::string& pathname) override
         {
             struct dirent** namelist = NULL;
 
@@ -196,7 +196,7 @@ namespace
             {
                 const std::string filename(namelist[i]->d_name);
                 free(namelist[i]);
-                emplace(index, pathname, filename);
+                emplace_helper(index, pathname, filename);
             }
 
             free(namelist);
@@ -204,7 +204,7 @@ namespace
 
 #else
 
-        void index(FileIndex& index, const std::string& pathname)
+        void index(FileIndex& index, const std::string& pathname) override
         {
             DIR* dirp = opendir(pathname.c_str());
             if (!dirp)
@@ -222,7 +222,7 @@ namespace
                 // skip "." and ".."
                 if (filename != "." && filename != "..")
                 {
-                    emplace(index, pathname, filename);
+                    emplace_helper(index, pathname, filename);
                 }
             }
 
@@ -231,7 +231,7 @@ namespace
 
 #endif
 
-        VirtualMemory* mmap(const std::string& filename)
+        VirtualMemory* mmap(const std::string& filename) override
         {
             VirtualMemory* memory = new FileMemory(filename, 0, 0);
             return memory;
