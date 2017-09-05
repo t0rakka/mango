@@ -16,20 +16,30 @@ namespace mango
     // -----------------------------------------------------------------
 
     File::File(const Path& path, const std::string& filename)
-    : m_offset(0)
     {
+        // use parent path's mapper
         m_mapper = path;
         m_pathname = path.pathname();
+
+        // parse and create mappers
         m_filename = parse(m_pathname + filename, "");
-        m_memory = std::unique_ptr<VirtualMemory>(m_mapper->mmap(m_filename));
+
+        // memory map the file
+        VirtualMemory* memory = m_mapper->mmap(m_filename);
+        m_memory = UniqueObject<VirtualMemory>(memory);
     }
 
     File::File(const std::string& filename)
-    : m_offset(0)
     {
+		// create mapper to raw filesystem
         m_mapper = getFileMapper();
+
+        // parse and create mappers
         m_filename = parse(filename, "");
-        m_memory = std::unique_ptr<VirtualMemory>(m_mapper->mmap(m_filename));
+
+        // memory map the file
+        VirtualMemory* memory = m_mapper->mmap(m_filename);
+        m_memory = UniqueObject<VirtualMemory>(memory);
     }
 
     File::~File()

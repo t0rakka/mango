@@ -39,7 +39,7 @@ namespace mango
         void emplace(const std::string &name, uint64 size, uint32 flags);
     };
 
-    class AbstractMapper
+    class AbstractMapper : protected NonCopyable
     {
     public:
         AbstractMapper() = default;

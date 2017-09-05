@@ -36,41 +36,47 @@ namespace mango
     };
 
     template <typename T>
-    class shared_object : public std::shared_ptr<T>
+    class SharedObject : public std::shared_ptr<T>
     {
     public:
         template <typename... Args>
-        shared_object(Args... args)
-        : std::shared_ptr<T>(std::make_shared<T>(args...))
+        SharedObject(Args... args)
+            : std::shared_ptr<T>(std::make_shared<T>(args...))
         {
         }
 
-        ~shared_object()
+        SharedObject(T* object)
+            : std::shared_ptr<T>(object)
         {
         }
+
+        ~SharedObject() = default;
     };
 
     template <typename T>
-    class unique_object : public std::unique_ptr<T>
+    class UniqueObject : public std::unique_ptr<T>
     {
     public:
 #if __cplusplus >= 201402L
         template <typename... Args>
-        unique_object(Args... args)
-        : std::unique_ptr<T>(std::make_unique<T>(args...))
+        UniqueObject(Args... args)
+            : std::unique_ptr<T>(std::make_unique<T>(args...))
         {
         }
 #else
         template <typename... Args>
-        unique_object(Args... args)
-        : std::unique_ptr<T>(new T(args...))
+        UniqueObject(Args... args)
+            : std::unique_ptr<T>(new T(args...))
         {
         }
 #endif
 
-        ~unique_object()
+        UniqueObject(T* object)
+            : std::unique_ptr<T>(object)
         {
         }
+
+        ~UniqueObject() = default;
     };
 
 } // namespace mango

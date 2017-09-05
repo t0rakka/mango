@@ -13,12 +13,8 @@
 namespace mango
 {
 
-    class Stream
+    class Stream : protected NonCopyable
     {
-    protected:
-        Stream() {}
-        Stream(const Stream&) {}
-
     public:
         enum OpenMode
         {
@@ -33,7 +29,8 @@ namespace mango
             END
         };
 
-        virtual ~Stream() {}
+        Stream() = default;
+        virtual ~Stream() = default;
 
         virtual uint64 size() const = 0;
         virtual uint64 offset() const = 0;

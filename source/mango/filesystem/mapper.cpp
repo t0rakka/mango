@@ -120,7 +120,9 @@ namespace mango
 
     Mapper::Mapper()
 		: m_mapper(nullptr)
-		, m_parent_memory(nullptr)
+        , m_parent_memory(nullptr)
+        , m_mappers()
+        , m_pathname()
     {
     }
 

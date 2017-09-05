@@ -18,7 +18,6 @@ namespace mango
     class File : public Mapper
     {
     protected:
-        uint64 m_offset;
         std::string m_filename;
         std::unique_ptr<VirtualMemory> m_memory;
 
