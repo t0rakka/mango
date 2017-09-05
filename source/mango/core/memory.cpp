@@ -50,13 +50,13 @@ namespace mango {
     SharedMemory::SharedMemory(size_t size)
     {
         uint8 *address = new uint8[size];
-        memory = Memory(address, size);
-        ptr = std::shared_ptr<uint8>(address, std::default_delete<uint8[]>());
+        m_memory = Memory(address, size);
+        m_ptr = std::shared_ptr<uint8>(address, std::default_delete<uint8[]>());
     }
 
     SharedMemory::SharedMemory(uint8* address, size_t size)
-        : memory(address, size)
-        , ptr(address, std::default_delete<uint8[]>())
+        : m_memory(address, size)
+        , m_ptr(address, std::default_delete<uint8[]>())
     {
     }
 

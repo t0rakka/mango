@@ -417,30 +417,25 @@ namespace
 namespace mango
 {
 
-    class VirtualMemoryPointer : public mango::VirtualMemory
+    // -----------------------------------------------------------------
+    // VirtualMemoryZIP
+    // -----------------------------------------------------------------
+
+    class VirtualMemoryZIP : public mango::VirtualMemory
     {
+    protected:
+        uint8* m_delete_address;
+
     public:
-        VirtualMemoryPointer(uint8* address, size_t size)
+        VirtualMemoryZIP(uint8* address, uint8* delete_address, size_t size)
+            : m_delete_address(delete_address)
         {
-            memory = Memory(address, size);
+            m_memory = Memory(address, size);
         }
 
-        ~VirtualMemoryPointer()
+        ~VirtualMemoryZIP()
         {
-        }
-    };
-
-    class VirtualMemoryBuffer : public mango::VirtualMemory
-    {
-    public:
-        VirtualMemoryBuffer(uint8* address, size_t size)
-        {
-            memory = Memory(address, size);
-        }
-
-        ~VirtualMemoryBuffer()
-        {
-            delete [] memory.address;
+            delete [] m_delete_address;
         }
     };
 
@@ -456,7 +451,8 @@ namespace mango
         std::map<std::string, DirFileHeader> m_files;
 
         MapperZIP(Memory parent, const std::string& password)
-        : m_parent_memory(parent), m_password(password)
+            : m_parent_memory(parent)
+            , m_password(password)
         {
             if (parent.address)
             {
@@ -581,14 +577,13 @@ namespace mango
             }
 
             VirtualMemory* memory;
-
             if (buffer)
             {
-                memory = new VirtualMemoryBuffer(buffer, static_cast<size_t>(size));
+                memory = new VirtualMemoryZIP(buffer, buffer, size_t(size));
             }
             else
             {
-                memory = new VirtualMemoryPointer(address, static_cast<size_t>(size));
+                memory = new VirtualMemoryZIP(address, nullptr, size_t(size));
             }
 
             return memory;
@@ -597,7 +592,6 @@ namespace mango
         bool isfile(const std::string& filename) const override
         {
             auto i = m_files.find(filename);
-
             if (i != m_files.end())
             {
                 // file does exist; check if it is a folder

@@ -42,8 +42,8 @@ namespace
 				// TODO: use UNC filename or ShortPath
 				if (filename.length() > MAX_PATH)
 				{
-					memory.address = NULL;
-					memory.size = 0;
+					m_memory.address = nullptr;
+					m_memory.size = 0;
 					return;
 				}
 			}
@@ -77,17 +77,17 @@ namespace
 							offsetLow = DWORD(page_offset & 0xffffffff);
 						}
 
-						memory.size = static_cast<size_t>(file_size.QuadPart);
+						m_memory.size = size_t(file_size.QuadPart);
 						if (_size > 0)
 						{
-							memory.size = std::min(memory.size, static_cast<size_t>(_size));
-							bytes = static_cast<SIZE_T>(memory.size);
+							m_memory.size = std::min(m_memory.size, static_cast<size_t>(_size));
+							bytes = static_cast<SIZE_T>(m_memory.size);
 						}
 
 						LPVOID address_ = MapViewOfFile(m_map, FILE_MAP_READ, offsetHigh, offsetLow, bytes);
 
 						m_address = address_;
-						memory.address = reinterpret_cast<uint8*>(address_) + (_offset - page_offset);
+						m_memory.address = reinterpret_cast<uint8*>(address_) + (_offset - page_offset);
 					}
 					else
 					{

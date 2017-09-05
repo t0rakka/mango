@@ -31,35 +31,24 @@ namespace
     typedef unsigned char uint8;
     typedef unsigned short uint16;
 
-    // Reference to existing memory
-    class VirtualMemoryPointer : public mango::VirtualMemory
+    class VirtualMemoryRAR : public mango::VirtualMemory
     {
+    protected:
+        uint8* m_delete_address;
+
     public:
-        VirtualMemoryPointer(uint8* address, size_t size)
+        VirtualMemoryRAR(uint8* address, uint8* delete_address, size_t size)
+            : m_delete_address(delete_address)
         {
-            memory = Memory(address, size);
+            m_memory = Memory(address, size);
         }
 
-        ~VirtualMemoryPointer()
+        ~VirtualMemoryRAR()
         {
+            delete [] m_delete_address;
         }
     };
-
-    // Take ownership of existing memory
-    class VirtualMemoryBuffer : public mango::VirtualMemory
-    {
-    public:
-        VirtualMemoryBuffer(uint8* address, size_t size)
-        {
-            memory = Memory(address, size);
-        }
-
-        ~VirtualMemoryBuffer()
-        {
-            delete [] memory.address;
-        }
-    };
-
+    
     bool decompress(uint8* output, uint8* input, uint64 unpacked_size, uint64 packed_size, uint8 version)
     {
         ComprDataIO subDataIO;
@@ -377,11 +366,11 @@ namespace
             if (method == 0x30)
             {
                 // no compression
-                memory = new VirtualMemoryPointer(data, static_cast<size_t>(unpacked_size));
+                memory = new VirtualMemoryRAR(data, nullptr, size_t(unpacked_size));
             }
             else
             {
-                size_t size = static_cast<size_t>(unpacked_size);
+                size_t size = size_t(unpacked_size);
                 uint8* buffer = new uint8[size];
 
                 bool status = decompress(buffer, data, unpacked_size, packed_size, version);
@@ -391,7 +380,7 @@ namespace
                     MANGO_EXCEPTION(ID"Decompression failed.");
                 }
 
-                memory = new VirtualMemoryBuffer(buffer, size);
+                memory = new VirtualMemoryRAR(buffer, buffer, size);
             }
 
             return memory;

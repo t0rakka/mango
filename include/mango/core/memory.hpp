@@ -34,8 +34,8 @@ namespace mango
     class SharedMemory
     {
     private:
-        Memory memory;
-        std::shared_ptr<uint8> ptr;
+        Memory m_memory;
+        std::shared_ptr<uint8> m_ptr;
 
     public:
         SharedMemory(size_t size);
@@ -43,14 +43,14 @@ namespace mango
 
         operator Memory () const
         {
-            return memory;
+            return m_memory;
         }
     };
 
     class VirtualMemory : private NonCopyable
     {
     protected:
-        Memory memory;
+        Memory m_memory;
 
     public:
         VirtualMemory() = default;
@@ -58,12 +58,12 @@ namespace mango
 
         const Memory* operator -> () const
         {
-            return &memory;
+            return &m_memory;
         }
 
         operator Memory () const
         {
-            return memory;
+            return m_memory;
         }
     };
 

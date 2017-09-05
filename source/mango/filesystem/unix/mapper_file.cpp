@@ -91,13 +91,13 @@ namespace
                             MANGO_EXCEPTION(msg);
                         }
 
-                        memory.size = m_size;
-                        memory.address = reinterpret_cast<uint8*>(m_address) + (file_offset - page_offset);
+                        m_memory.size = m_size;
+                        m_memory.address = reinterpret_cast<uint8*>(m_address) + (file_offset - page_offset);
                     }
                     else
                     {
-                        memory.size = 0;
-                        memory.address = nullptr;
+                        m_memory.size = 0;
+                        m_memory.address = nullptr;
                     }
                 }
             }
