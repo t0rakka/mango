@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -25,14 +25,14 @@ namespace mango
 
     struct MapperExtension
     {
-        std::string ext;
-        std::string extid;
+        std::string extension;
+        std::string decorated_extension;
         CreateMapperFunc createMapper;
 
-        MapperExtension(const char* extension, CreateMapperFunc func)
+        MapperExtension(const std::string& extension, CreateMapperFunc func)
+            : extension(extension)
         {
-            ext = extension;
-            extid = std::string(".") + extension + "/";
+            decorated_extension = std::string(".") + extension + "/";
             createMapper = func;
         }
 
@@ -61,23 +61,6 @@ namespace mango
 
         return extensions;
     } ();
-
-    // -----------------------------------------------------------------
-    // misc
-    // -----------------------------------------------------------------
-
-    bool Mapper::isCustomMapper(const std::string& filename)
-    {
-        const std::string ext = toLower(getExtension(filename));
-
-        for (auto& node : g_extensions) {
-            if (ext == node.ext) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     // -----------------------------------------------------------------
     // FileInfo
@@ -150,13 +133,13 @@ namespace mango
     {
         std::string filename = pathname;
 
-        for (; !filename.empty();)
+        for ( ; !filename.empty(); )
         {
-            AbstractMapper* custom = create(m_mapper, filename, password);
-            if (custom)
+            AbstractMapper* custom_mapper = create(m_mapper, filename, password);
+            if (custom_mapper)
             {
-                m_mappers.emplace_back(custom);
-                m_mapper = custom;
+                m_mappers.emplace_back(custom_mapper);
+                m_mapper = custom_mapper;
             }
             else
             {
@@ -171,27 +154,27 @@ namespace mango
     {
         std::string f = toLower(filename);
 
-        for (auto& i : g_extensions)
+        for (auto &extension : g_extensions)
         {
-            size_t n = f.find(i.extid);
-
+            size_t n = f.find(extension.decorated_extension);
             if (n != std::string::npos)
             {
-                MapperExtension* extension = &i;
+                // update string position to skip decorated extension (example: ".zip/")
+                n += extension.decorated_extension.length();
 
-                n += extension->extid.length();
-                std::string fn = filename.substr(0, n - 1);
+                // resolve container filename (example: "foo/bar/data.zip")
+                std::string container_filename = filename.substr(0, n - 1);
 
-                AbstractMapper* mapper = nullptr;
+                AbstractMapper* custom_mapper = nullptr;
 
-                if (parent->isfile(fn))
+                if (parent->isfile(container_filename))
                 {
-                    m_parent_memory = parent->mmap(fn);
-                    mapper = extension->create(*m_parent_memory, password);
+                    m_parent_memory = parent->mmap(container_filename);
+                    custom_mapper = extension.create(*m_parent_memory, password);
                     filename = filename.substr(n, std::string::npos);
                 }
 
-                return mapper;
+                return custom_mapper;
             }
         }
 
@@ -201,6 +184,19 @@ namespace mango
     Mapper::operator AbstractMapper* () const
     {
         return m_mapper;
+    }
+
+    bool Mapper::isCustomMapper(const std::string& filename)
+    {
+        const std::string extension = toLower(getExtension(filename));
+
+        for (auto &node : g_extensions) {
+            if (extension == node.extension) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 } // namespace mango

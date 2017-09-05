@@ -18,7 +18,6 @@
 
 namespace
 {
-
     using namespace mango;
 
     // -----------------------------------------------------------------
@@ -45,7 +44,9 @@ namespace
 
     public:
         FileMemory(const std::string& filename, uint64 _offset, uint64 _size)
-        : m_file(-1), m_size(0), m_address(nullptr)
+            : m_file(-1)
+            , m_size(0)
+            , m_address(nullptr)
         {
             m_file = open(filename.c_str(), O_RDONLY);
 
@@ -249,8 +250,8 @@ namespace mango
 
     AbstractMapper* Mapper::getFileMapper() const
     {
-        static FileMapper fileMapper;
-        return &fileMapper;
+        static FileMapper s_fileMapper;
+        return &s_fileMapper;
     }
 
 } // namespace mango

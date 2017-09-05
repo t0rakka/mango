@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -54,55 +54,6 @@ namespace mango
     const uint8* File::data() const
     {
         return (*m_memory)->address;
-    }
-
-    uint64 File::size() const
-    {
-        return (*m_memory)->size;
-    }
-
-    uint64 File::offset() const
-    {
-        return m_offset;
-    }
-
-    void File::seek(uint64 distance, SeekMode mode)
-    {
-        switch (mode)
-        {
-            case BEGIN:
-                m_offset = distance;
-                break;
-
-            case CURRENT:
-                m_offset += distance;
-                break;
-
-            case END:
-                m_offset = (*m_memory)->size - distance;
-                break;
-
-            default:
-                MANGO_EXCEPTION(ID"Invalid seek mode.");
-        }
-    }
-
-    void File::read(void* dest, size_t size)
-    {
-        const size_t left = (*m_memory)->size - static_cast<size_t>(m_offset);
-        if (left < size)
-        {
-            size = left;
-        }
-        std::memcpy(dest, (*m_memory)->address + m_offset, size);
-        m_offset += size;
-    }
-
-    void File::write(const void* data, size_t size)
-    {
-        MANGO_UNREFERENCED_PARAMETER(data);
-        MANGO_UNREFERENCED_PARAMETER(size);
-        MANGO_EXCEPTION(ID"Cannot write() in read-only file.");
     }
 
 } // namespace mango

@@ -87,7 +87,7 @@ namespace mango
     // -----------------------------------------------------------------
 
     FileStream::FileStream(const std::string& filename, OpenMode mode)
-    : m_handle(NULL)
+        : m_handle(nullptr)
     {
         DWORD access;
         DWORD disposition;
