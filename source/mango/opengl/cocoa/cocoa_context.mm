@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -28,7 +28,6 @@ namespace mango
 
 namespace
 {
-
     using namespace mango;
 
     template <typename ContainerType>
@@ -497,12 +496,12 @@ using mango::opengl::Context;
             std::string s = [path UTF8String];
             if (isDirectory)
             {
-                emplace(dropped, s + "/", 0, mango::FileInfo::DIRECTORY);
+                dropped.emplace(s + "/", 0, mango::FileInfo::DIRECTORY);
             }
             else
             {
                 uint64 size = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize];
-                emplace(dropped, s, size, 0);
+                dropped.emplace(s, size, 0);
             }
         }
 
