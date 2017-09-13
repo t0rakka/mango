@@ -8,26 +8,24 @@
 #include "endian.hpp"
 
 namespace mango {
-namespace detail {
 
     // --------------------------------------------------------------
     // Pointer
     // --------------------------------------------------------------
 
-    template <typename Type>
     class Pointer
     {
     protected:
-        Type* p;
+        uint8* p;
 
     public:
-        Pointer(const Pointer& pointer)
-        : p(pointer.p)
+        explicit Pointer(const Pointer& pointer)
+            : p(pointer.p)
         {
         }
 
-        Pointer(Type* address)
-        : p(address)
+        explicit Pointer(uint8* address)
+            : p(address)
         {
         }
 
@@ -35,75 +33,72 @@ namespace detail {
         {
         }
 
-        const Pointer& operator = (Type* address)
+        const Pointer& operator = (uint8* address)
         {
             p = address;
             return *this;
         }
 
-        operator Type* () const
+        operator uint8* () const
         {
             return p;
         }
 
-        Type& operator * () const
+        uint8& operator * () const
         {
             return *p;
         }
 
-        Type* operator ++ ()
+        uint8* operator ++ ()
         {
             return ++p;
         }
 
-        Type* operator ++ (int)
+        uint8* operator ++ (int)
         {
             return p++;
         }
 
-        Type* operator -- ()
+        uint8* operator -- ()
         {
             return --p;
         }
 
-        Type* operator -- (int)
+        uint8* operator -- (int)
         {
             return p--;
         }
 
-        Type* operator += (size_t count)
+        uint8* operator += (size_t count)
         {
             p += count;
             return p;
         }
 
-        Type* operator -= (size_t count)
+        uint8* operator -= (size_t count)
         {
             p -= count;
             return p;
         }
     };
 
-    template <typename Type>
-    ptrdiff_t operator - (const Pointer<Type>& a, const Pointer<Type>& b)
+    static inline ptrdiff_t operator - (const Pointer& a, const Pointer& b)
     {
-        return static_cast<const Type*>(a) - static_cast<const Type*>(b);
+        return static_cast<const uint8 *>(a) - static_cast<const uint8 *>(b);
     }
-
-} // namespace detail
 
     // --------------------------------------------------------------
     // LittleEndianPointer
     // --------------------------------------------------------------
 
-    class LittleEndianPointer : public detail::Pointer<uint8>
+    class LittleEndianPointer : public Pointer
     {
     protected:
-        using detail::Pointer<uint8>::p;
+        using Pointer::p;
 
     public:
         LittleEndianPointer(uint8* address)
-        : detail::Pointer<uint8>(address)
+            : Pointer(address)
         {
         }
 
@@ -219,14 +214,14 @@ namespace detail {
     // BigEndianPointer
     // --------------------------------------------------------------
 
-    class BigEndianPointer : public detail::Pointer<uint8>
+    class BigEndianPointer : public Pointer
     {
     protected:
-        using detail::Pointer<uint8>::p;
+        using Pointer::p;
 
     public:
         BigEndianPointer(uint8* address)
-        : detail::Pointer<uint8>(address)
+            : Pointer(address)
         {
         }
 
