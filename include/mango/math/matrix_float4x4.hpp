@@ -179,9 +179,27 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
+    static inline float4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    {
+        float32x4 temp0 = simd::unpacklo(m0, m1);
+        float32x4 temp1 = simd::unpacklo(m2, m3);
+        float32x4 temp2 = simd::unpackhi(m0, m1);
+        float32x4 temp3 = simd::unpackhi(m2, m3);
+        float4x4 result;
+        result[0] = simd::movelh(temp0, temp1);
+        result[1] = simd::movehl(temp1, temp0);
+        result[2] = simd::movelh(temp2, temp3);
+        result[3] = simd::movehl(temp3, temp2);
+        return result;
+    }
+
+    static inline float4x4 transpose(const float4x4& m)
+    {
+        return transpose(m[0], m[1], m[2], m[3]);
+    }
+
     float4x4 inverse(const float4x4& m);
     float4x4 inverseTranspose(const float4x4& m);
-    float4x4 transpose(const float4x4& m);
     float4x4 normalize(const float4x4& m);
     float4x4 mirror(const float4x4& m, const float4& plane);
     float4x4 affineInverse(const float4x4& m);
