@@ -305,6 +305,8 @@ namespace {
 
 #ifdef MANGO_CPU_64BIT
 
+    // 64 bit crc32 (generic)
+
     inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
     {
         uint64 data = *reinterpret_cast<const uint64 *>(ptr);
@@ -324,6 +326,8 @@ namespace {
     }
 
 #else
+
+    // 32 bit crc32 (generic)
 
     inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
     {
@@ -629,6 +633,8 @@ namespace {
 
 #ifdef MANGO_CPU_64BIT
 
+    // 64 bit crc32c (generic)
+
     inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
     {
         uint64 data = *reinterpret_cast<const uint64 *>(ptr);
@@ -648,6 +654,8 @@ namespace {
     }
 
 #else
+
+    // 32 bit crc32c (generic)
 
     inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
     {
@@ -681,12 +689,17 @@ namespace {
 
 #ifdef MANGO_CPU_64BIT
 
+    // 64 bit crc32c (SSE4.2)
+
     inline uint32 u64_crc32c(uint32 crc, const uint8* data)
     {
         return uint32(_mm_crc32_u64(crc, *reinterpret_cast<const uint64 *>(data)));
     }
 
 #else
+
+    // 32 bit crc32c (SSE4.2)
+    // (_mm_crc32_u64 is not available in 32 bit x86)
 
     inline uint32 u64_crc32c(uint32 crc, const uint8* data)
     {
