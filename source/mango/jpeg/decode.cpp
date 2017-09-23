@@ -1179,6 +1179,9 @@ namespace jpeg
 
             uint64 time1 = timer.us();
             jpegPrint("  Time: %d us\n\n", int(time1 - time0));
+
+            MANGO_UNREFERENCED_PARAMETER(time0);
+            MANGO_UNREFERENCED_PARAMETER(time1);
         }
     }
 
