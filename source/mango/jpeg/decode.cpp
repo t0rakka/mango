@@ -1018,10 +1018,14 @@ namespace jpeg
         uint8* end = memory.address + memory.size;
         uint8* p = memory.address;
 
+        Timer timer;
+
         for (; p < end;)
         {
             uint16 marker = uload16be(p);
             p += 2;
+
+            uint64 time0 = timer.us();
 
             switch (marker)
             {
@@ -1168,9 +1172,13 @@ namespace jpeg
                     break;
 
                 default:
+                    jpegPrint("[ 0x%x ]\n", marker);
                     p = seekMarker(p, end);
                     break;
             }
+
+            uint64 time1 = timer.us();
+            jpegPrint("  Time: %d us\n\n", int(time1 - time0));
         }
     }
 
@@ -1363,7 +1371,7 @@ namespace jpeg
                 const int y0 = y;
                 const int y1 = std::min(y + N, ymcu);
                 const int count = (y1 - y0) * xmcu;
-                jpegPrint("Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
+                jpegPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
                 BlockType* idata = data + y * (xmcu * mcu_data_size);
 
@@ -1603,7 +1611,7 @@ namespace jpeg
         {
             const int y0 = y;
             const int y1 = std::min(y + N, ymcu);
-            jpegPrint("Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
+            jpegPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
             // enqueue task
             queue.enqueue([=] {
