@@ -138,6 +138,11 @@
 		A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AB1E706FA000D4D499 /* etc.hpp */; };
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
+		A6DFCF0A1F7C192200DB6797 /* zstd_double_fast.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */; };
+		A6DFCF0C1F7C193400DB6797 /* zstd_fast.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF0B1F7C193400DB6797 /* zstd_fast.c */; };
+		A6DFCF0E1F7C194300DB6797 /* zstd_lazy.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF0D1F7C194300DB6797 /* zstd_lazy.c */; };
+		A6DFCF101F7C194B00DB6797 /* zstd_ldm.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF0F1F7C194B00DB6797 /* zstd_ldm.c */; };
+		A6DFCF121F7C195A00DB6797 /* zstd_opt.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF111F7C195A00DB6797 /* zstd_opt.c */; };
 		A6FCC37A1E8122D40037C15F /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC3791E8122D40037C15F /* zstd.h */; };
 		A6FCC38E1E8122EA0037C15F /* bitstream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC37C1E8122EA0037C15F /* bitstream.h */; };
 		A6FCC38F1E8122EA0037C15F /* entropy_common.c in Sources */ = {isa = PBXBuildFile; fileRef = A6FCC37D1E8122EA0037C15F /* entropy_common.c */; };
@@ -301,6 +306,11 @@
 		A63DD7AB1E706FA000D4D499 /* etc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = etc.hpp; path = external/google/etc.hpp; sourceTree = "<group>"; };
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
+		A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_double_fast.c; path = external/zstd/compress/zstd_double_fast.c; sourceTree = "<group>"; };
+		A6DFCF0B1F7C193400DB6797 /* zstd_fast.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_fast.c; path = external/zstd/compress/zstd_fast.c; sourceTree = "<group>"; };
+		A6DFCF0D1F7C194300DB6797 /* zstd_lazy.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_lazy.c; path = external/zstd/compress/zstd_lazy.c; sourceTree = "<group>"; };
+		A6DFCF0F1F7C194B00DB6797 /* zstd_ldm.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_ldm.c; path = external/zstd/compress/zstd_ldm.c; sourceTree = "<group>"; };
+		A6DFCF111F7C195A00DB6797 /* zstd_opt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_opt.c; path = external/zstd/compress/zstd_opt.c; sourceTree = "<group>"; };
 		A6FCC3791E8122D40037C15F /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/zstd.h; sourceTree = "<group>"; };
 		A6FCC37C1E8122EA0037C15F /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bitstream.h; path = external/zstd/common/bitstream.h; sourceTree = "<group>"; };
 		A6FCC37D1E8122EA0037C15F /* entropy_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy_common.c; path = external/zstd/common/entropy_common.c; sourceTree = "<group>"; };
@@ -710,6 +720,11 @@
 		A6FCC3A01E8122F30037C15F /* compress */ = {
 			isa = PBXGroup;
 			children = (
+				A6DFCF111F7C195A00DB6797 /* zstd_opt.c */,
+				A6DFCF0F1F7C194B00DB6797 /* zstd_ldm.c */,
+				A6DFCF0D1F7C194300DB6797 /* zstd_lazy.c */,
+				A6DFCF0B1F7C193400DB6797 /* zstd_fast.c */,
+				A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */,
 				A6FCC3A11E8123010037C15F /* fse_compress.c */,
 				A6FCC3A21E8123010037C15F /* huf_compress.c */,
 				A6FCC3A31E8123010037C15F /* zstd_compress.c */,
@@ -876,6 +891,7 @@
 				A6FCC3931E8122EA0037C15F /* fse_decompress.c in Sources */,
 				A6FCC3B01E8123150037C15F /* huf_decompress.c in Sources */,
 				A6FCC39B1E8122EA0037C15F /* xxhash.c in Sources */,
+				A6DFCF0E1F7C194300DB6797 /* zstd_lazy.c in Sources */,
 				A00559C91C93329A00A6D963 /* image_gif.cpp in Sources */,
 				A00559CD1C93329A00A6D963 /* image_ktx.cpp in Sources */,
 				A63DD6FC1E706D8600D4D499 /* encode.cpp in Sources */,
@@ -898,12 +914,14 @@
 				A6FCC3971E8122EA0037C15F /* pool.c in Sources */,
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
 				A63DD79D1E706F7600D4D499 /* miniz.cpp in Sources */,
+				A6DFCF101F7C194B00DB6797 /* zstd_ldm.c in Sources */,
 				A63DD75A1E706EB200D4D499 /* sha1.cpp in Sources */,
 				A00559C81C93329A00A6D963 /* image_dds.cpp in Sources */,
 				A63DD76F1E706EF100D4D499 /* lzfse_decode.c in Sources */,
 				A63DD7731E706EF100D4D499 /* lzfse_fse.c in Sources */,
 				A005599A1C93324E00A6D963 /* system.cpp in Sources */,
 				A63DD78D1E706F3400D4D499 /* bz_huffman.c in Sources */,
+				A6DFCF121F7C195A00DB6797 /* zstd_opt.c in Sources */,
 				A00559971C93324E00A6D963 /* memory.cpp in Sources */,
 				A63DD74E1E706EB200D4D499 /* crypt.cpp in Sources */,
 				A6FCC39D1E8122EA0037C15F /* zstd_common.c in Sources */,
@@ -931,6 +949,7 @@
 				A0F21EDB1CA062EA0084302D /* file_stream.cpp in Sources */,
 				A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */,
 				A00559D31C93329A00A6D963 /* image.cpp in Sources */,
+				A6DFCF0A1F7C192200DB6797 /* zstd_double_fast.c in Sources */,
 				A63DD6FA1E706D8600D4D499 /* arithmetic.cpp in Sources */,
 				A63DD7991E706F5400D4D499 /* minilzo.c in Sources */,
 				A6FCC3991E8122EA0037C15F /* threading.c in Sources */,
@@ -952,6 +971,7 @@
 				A0F21EDC1CA062EA0084302D /* mapper_file.cpp in Sources */,
 				A63DD7541E706EB200D4D499 /* rarvm.cpp in Sources */,
 				A00559A81C93327800A6D963 /* mapper.cpp in Sources */,
+				A6DFCF0C1F7C193400DB6797 /* zstd_fast.c in Sources */,
 				A00559C51C93329A00A6D963 /* format.cpp in Sources */,
 				A00559CB1C93329A00A6D963 /* image_iff.cpp in Sources */,
 				A00559CC1C93329A00A6D963 /* image_jpg.cpp in Sources */,
