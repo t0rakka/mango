@@ -183,6 +183,7 @@
     <ClInclude Include="..\..\source\external\unrar\suballoc.hpp" />
     <ClInclude Include="..\..\source\external\unrar\unpack.hpp" />
     <ClInclude Include="..\..\source\external\zstd\common\bitstream.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\compiler.h" />
     <ClInclude Include="..\..\source\external\zstd\common\error_private.h" />
     <ClInclude Include="..\..\source\external\zstd\common\error_public.h" />
     <ClInclude Include="..\..\source\external\zstd\common\fse.h" />
@@ -194,6 +195,11 @@
     <ClInclude Include="..\..\source\external\zstd\common\zstd_errors.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_double_fast.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_fast.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_lazy.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_ldm.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_opt.h" />
     <ClInclude Include="..\..\source\external\zstd\zstd.h" />
     <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp" />
@@ -243,6 +249,11 @@
     <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstdmt_compress.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_double_fast.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_fast.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_lazy.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_ldm.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_opt.c" />
     <ClCompile Include="..\..\source\external\zstd\decompress\huf_decompress.c" />
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c" />
     <ClCompile Include="..\..\source\mango\core\buffer.cpp" />
