@@ -100,7 +100,7 @@ static ZSTDMT_bufferPool* ZSTDMT_createBufferPool(unsigned nbThreads, ZSTD_custo
         sizeof(ZSTDMT_bufferPool) + (maxNbBuffers-1) * sizeof(buffer_t), cMem);
     if (bufPool==NULL) return NULL;
     if (pthread_mutex_init(&bufPool->poolMutex, NULL)) {
-        ZSTD_free(bufPool, cMem);
+        ZSTD_free(bufPool, cMem); // TODO: fix Xcode 9 warning: "code will never be executed"
         return NULL;
     }
     bufPool->bufferSize = 64 KB;
@@ -232,7 +232,7 @@ static ZSTDMT_CCtxPool* ZSTDMT_createCCtxPool(unsigned nbThreads,
         sizeof(ZSTDMT_CCtxPool) + (nbThreads-1)*sizeof(ZSTD_CCtx*), cMem);
     if (!cctxPool) return NULL;
     if (pthread_mutex_init(&cctxPool->poolMutex, NULL)) {
-        ZSTD_free(cctxPool, cMem);
+        ZSTD_free(cctxPool, cMem); // TODO: fix Xcode 9 warning: "code will never be executed"
         return NULL;
     }
     cctxPool->cMem = cMem;
@@ -460,11 +460,11 @@ ZSTDMT_CCtx* ZSTDMT_createCCtx_advanced(unsigned nbThreads, ZSTD_customMem cMem)
         return NULL;
     }
     if (pthread_mutex_init(&mtctx->jobCompleted_mutex, NULL)) {
-        ZSTDMT_freeCCtx(mtctx);
+        ZSTDMT_freeCCtx(mtctx); // TODO: fix Xcode 9 warning: "code will never be executed"
         return NULL;
     }
     if (pthread_cond_init(&mtctx->jobCompleted_cond, NULL)) {
-        ZSTDMT_freeCCtx(mtctx);
+        ZSTDMT_freeCCtx(mtctx); // TODO: fix Xcode 9 warning: "code will never be executed"
         return NULL;
     }
     DEBUGLOG(3, "mt_cctx created, for %u threads", nbThreads);
