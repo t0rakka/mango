@@ -441,15 +441,15 @@ namespace simd {
 
     static inline float32x4 round(float32x4 s)
     {
-        __m128 result = _mm_cvtepi32_ps(_mm_cvtps_epi32(s));
-        __m128 mask = _mm_cmple_ps(abs(s), _mm_castsi128_ps(_mm_set1_epi32(0x4b000000)));
+        float32x4 result = _mm_cvtepi32_ps(_mm_cvtps_epi32(s));
+        mask32x4 mask = _mm_castps_si128(_mm_cmple_ps(abs(s), _mm_castsi128_ps(_mm_set1_epi32(0x4b000000))));
         return select(mask, result, s);
     }
 
     static inline float32x4 trunc(float32x4 s)
     {
-        __m128 result = _mm_cvtepi32_ps(_mm_cvttps_epi32(s));
-        __m128 mask = _mm_cmple_ps(abs(s), _mm_castsi128_ps(_mm_set1_epi32(0x4b000000)));
+        float32x4 result = _mm_cvtepi32_ps(_mm_cvttps_epi32(s));
+        mask32x4 mask = _mm_castps_si128(_mm_cmple_ps(abs(s), _mm_castsi128_ps(_mm_set1_epi32(0x4b000000))));
         return select(mask, result, s);
     }
 
