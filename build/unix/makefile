@@ -134,9 +134,9 @@ ifeq (Darwin, $(OS))
   PLATFORM = x86-64
   CC  = clang $(OPTIONS) $(OPTIONS_X86) $(CC_STD) -mmacosx-version-min=10.7
   CPP = clang++ $(OPTIONS) $(OPTIONS_X86) $(CPP_STD) -mmacosx-version-min=10.7 $(STD) -stdlib=libc++
-  LINK_MANGO  = libtool -dynamic -o $(LIBRARY_MANGO) -undefined dynamic_lookup -macosx_version_min 10.7
-  LINK_OPENGL = libtool -dynamic -o $(LIBRARY_OPENGL) -undefined dynamic_lookup -macosx_version_min 10.7
-  LINK_VULKAN = libtool -dynamic -o $(LIBRARY_VULKAN) -undefined dynamic_lookup -macosx_version_min 10.7
+  LINK_MANGO  = ld -o $(LIBRARY_MANGO)  -dylib -undefined dynamic_lookup -macosx_version_min 10.7
+  LINK_OPENGL = ld -o $(LIBRARY_OPENGL) -dylib -undefined dynamic_lookup -macosx_version_min 10.7
+  LINK_VULKAN = ld -o $(LIBRARY_VULKAN) -dylib -undefined dynamic_lookup -macosx_version_min 10.7
   INSTALL  = $(LOCAL) ; cp *.dylib /usr/local/lib ; cp -r $(INCLUDE_BASE)/mango/ /usr/local/include/mango/
   CLEAN    = rm -fr $(OBJECTS_PATH) *.dylib so_locations
 
