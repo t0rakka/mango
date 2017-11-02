@@ -53,7 +53,7 @@ extern "C" {
 #endif
 
 /*! @abstract Get the required scratch buffer size to compress using LZFSE.   */
-LZFSE_API size_t lzfse_encode_scratch_size();
+LZFSE_API size_t lzfse_encode_scratch_size(void);
 
 /*! @abstract Compress a buffer using LZFSE.
  *
@@ -91,7 +91,7 @@ LZFSE_API size_t lzfse_encode_buffer(uint8_t *__restrict dst_buffer,
                                      void *__restrict scratch_buffer);
 
 /*! @abstract Get the required scratch buffer size to decompress using LZFSE. */
-LZFSE_API size_t lzfse_decode_scratch_size();
+LZFSE_API size_t lzfse_decode_scratch_size(void);
 
 /*! @abstract Decompress a buffer using LZFSE.
  *

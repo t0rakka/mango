@@ -1435,8 +1435,8 @@ MEM_STATIC size_t ZSTD_compressSequences_internal(seqStore_t* seqStorePtr,
     /* Sequences Header */
     if ((oend-op) < 3 /*max nbSeq Size*/ + 1 /*seqHead */) return ERROR(dstSize_tooSmall);
     if (nbSeq < 0x7F) *op++ = (BYTE)nbSeq;
-    else if (nbSeq < LONGNBSEQ) op[0] = (BYTE)((nbSeq>>8) + 0x80), op[1] = (BYTE)nbSeq, op+=2;
-    else op[0]=0xFF, MEM_writeLE16(op+1, (U16)(nbSeq - LONGNBSEQ)), op+=3;
+    else if (nbSeq < LONGNBSEQ) { op[0] = (BYTE)((nbSeq>>8) + 0x80); op[1] = (BYTE)nbSeq; op+=2; }
+    else { op[0]=0xFF; MEM_writeLE16(op+1, (U16)(nbSeq - LONGNBSEQ)); op+=3; }
     if (nbSeq==0) return op - ostart;
 
     /* seqHead : flags for FSE encoding type */
@@ -2646,8 +2646,10 @@ size_t ZSTD_compressStream_generic(ZSTD_CStream* zcs,
                 unsigned const lastBlock = (flushMode == ZSTD_e_end) && (ip==iend);
                 if (oSize >= ZSTD_compressBound(iSize))
                     cDst = op;   /* compress into output buffer, to skip flush stage */
-                else
-                    cDst = zcs->outBuff, oSize = zcs->outBuffSize;
+                else {
+                    cDst = zcs->outBuff;
+                    oSize = zcs->outBuffSize;
+                }
                 cSize = lastBlock ?
                         ZSTD_compressEnd(zcs, cDst, oSize,
                                     zcs->inBuff + zcs->inToCompress, iSize) :
@@ -2657,8 +2659,10 @@ size_t ZSTD_compressStream_generic(ZSTD_CStream* zcs,
                 zcs->frameEnded = lastBlock;
                 /* prepare next block */
                 zcs->inBuffTarget = zcs->inBuffPos + zcs->blockSize;
-                if (zcs->inBuffTarget > zcs->inBuffSize)
-                    zcs->inBuffPos = 0, zcs->inBuffTarget = zcs->blockSize;
+                if (zcs->inBuffTarget > zcs->inBuffSize) {
+                    zcs->inBuffPos = 0;
+                    zcs->inBuffTarget = zcs->blockSize;
+                }
                 DEBUGLOG(5, "inBuffTarget:%u / inBuffSize:%u",
                          (U32)zcs->inBuffTarget, (U32)zcs->inBuffSize);
                 if (!lastBlock)

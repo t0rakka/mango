@@ -54,8 +54,8 @@ size_t ZSTD_compressBlock_doubleFast_generic(ZSTD_CCtx* cctx,
     /* init */
     ip += (ip==lowest);
     {   U32 const maxRep = (U32)(ip-lowest);
-        if (offset_2 > maxRep) offsetSaved = offset_2, offset_2 = 0;
-        if (offset_1 > maxRep) offsetSaved = offset_1, offset_1 = 0;
+        if (offset_2 > maxRep) { offsetSaved = offset_2; offset_2 = 0; }
+        if (offset_1 > maxRep) { offsetSaved = offset_1; offset_1 = 0; }
     }
 
     /* Main Search Loop */
