@@ -678,8 +678,9 @@ size_t ZSTD_compressBlock_lazy_extDict_generic(ZSTD_CCtx* ctx,
                         size_t const repLength = ZSTD_count_2segments(ip+4, repMatch+4, iend, repEnd, prefixStart) + 4;
                         int const gain2 = (int)(repLength * 4);
                         int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 1);
-                        if ((repLength >= 4) && (gain2 > gain1))
+                        if ((repLength >= 4) && (gain2 > gain1)) {
                             matchLength = repLength; offset = 0; start = ip;
+                        }
                 }   }
 
                 /* search match, depth 2 */
