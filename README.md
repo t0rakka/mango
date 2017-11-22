@@ -45,7 +45,7 @@ After prototyping and benchmarking above methods the mango API practically wrote
 - Compressed Texture support for ALL formats in DirectX, OpenGL and Vulkan
 
 ##### SIMD Abstraction
-- Intel: SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2
+- Intel: SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512
 - ARM NEON
 - PPC Altivec (deprecated)
 - SPU (deprecated)
