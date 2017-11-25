@@ -136,14 +136,12 @@ namespace simd {
 
     static inline float64x2 abs(float64x2 a)
     {
-        const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x7fffffffffffffff));
-        return _mm_and_pd(a, mask);
+        return _mm_max_pd(a, _mm_sub_pd(_mm_setzero_pd(), a));
     }
 
     static inline float64x2 neg(float64x2 a)
     {
-        const __m128d mask = _mm_castsi128_pd(_mm_set1_epi64x(0x8000000000000000));
-        return _mm_xor_pd(a, mask);
+        return _mm_sub_pd(_mm_setzero_pd(), a);
     }
 
     static inline float64x2 add(float64x2 a, float64x2 b)

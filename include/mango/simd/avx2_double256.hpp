@@ -247,14 +247,12 @@ namespace simd {
 
     static inline float64x4 abs(float64x4 a)
     {
-        const __m256i mask = _mm256_set1_epi64x(0x7fffffffffffffff);
-        return _mm256_and_pd(a, _mm256_castsi256_pd(mask));
+        return _mm256_max_pd(a, _mm256_sub_pd(_mm256_setzero_pd(), a));
     }
 
     static inline float64x4 neg(float64x4 a)
     {
-        const __m256i mask = _mm256_set1_epi64x(0x8000000000000000);
-        return _mm256_xor_pd(a, _mm256_castsi256_pd(mask));
+        return _mm256_sub_pd(_mm256_setzero_pd(), a);
     }
 
     static inline float64x4 add(float64x4 a, float64x4 b)

@@ -205,12 +205,12 @@ namespace simd {
 
     static inline float32x4 abs(float32x4 a)
     {
-        return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff)));
+        return _mm_max_ps(a, _mm_sub_ps(_mm_setzero_ps(), a));
     }
 
     static inline float32x4 neg(float32x4 a)
     {
-        return _mm_xor_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x80000000)));
+        return _mm_sub_ps(_mm_setzero_ps(), a);
     }
 
     static inline float32x4 add(float32x4 a, float32x4 b)

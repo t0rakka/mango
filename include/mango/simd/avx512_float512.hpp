@@ -94,7 +94,7 @@ namespace simd {
 
     static inline float32x16 neg(float32x16 a)
     {
-        return _mm512_xor_ps(a, _mm512_castsi512_ps(_mm512_set1_epi32(0x80000000)));
+        return _mm512_sub_ps(_mm512_setzero_ps(), a);
     }
 
     static inline float32x16 add(float32x16 a, float32x16 b)

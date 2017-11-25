@@ -87,12 +87,12 @@ namespace simd {
 
     static inline float32x8 abs(float32x8 a)
     {
-        return _mm256_and_ps(a, _mm256_castsi256_ps(_mm256_set1_epi32(0x7fffffff)));
+        return _mm256_max_ps(a, _mm256_sub_ps(_mm256_setzero_ps(), a));
     }
 
     static inline float32x8 neg(float32x8 a)
     {
-        return _mm256_xor_ps(a, _mm256_castsi256_ps(_mm256_set1_epi32(0x80000000)));
+        return _mm256_sub_ps(_mm256_setzero_ps(), a);
     }
 
     static inline float32x8 add(float32x8 a, float32x8 b)
