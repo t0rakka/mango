@@ -258,7 +258,7 @@ namespace simd {
     static inline float64x4 sign(float64x4 a)
     {
         __m256d sign_mask = _mm256_set1_pd(-0.0);
-        __m256d value_mask = _mm256_cmpneq_pd(a, _mm256_setzero_pd());
+        __m256d value_mask = _mm256_cmp_pd(a, _mm256_setzero_pd(), 4);
         __m256d sign_bits = _mm256_and_pd(a, sign_mask);
         __m256d value_bits = _mm256_and_pd(_mm256_set1_pd(1.0), value_mask);
         return _mm256_or_pd(value_bits, sign_bits);
