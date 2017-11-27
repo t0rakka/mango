@@ -273,14 +273,6 @@ namespace simd {
         return sub(a, mul(b, temp));
     }
 
-    static inline float32x4 sign(float32x4 a)
-    {
-        auto zero = float32x4_zero();
-        auto negative = select(compare_gt(zero, a), float32x4_set1(-1.0f), zero);
-        auto positive = select(compare_gt(a, zero), float32x4_set1( 1.0f), zero);
-        return bitwise_or(negative, positive);
-    }
-
     static inline float32x4 radians(float32x4 a)
     {
         static const float32x4 s = float32x4_set1(0.01745329251f);
@@ -326,14 +318,6 @@ namespace simd {
     {
         float32x8 temp = floor(div(a, b));
         return sub(a, mul(b, temp));
-    }
-
-    static inline float32x8 sign(float32x8 a)
-    {
-        auto zero = float32x8_zero();
-        auto negative = select(compare_gt(zero, a), float32x8_set1(-1.0f), zero);
-        auto positive = select(compare_gt(a, zero), float32x8_set1( 1.0f), zero);
-        return bitwise_or(negative, positive);
     }
 
     static inline float32x8 radians(float32x8 a)
@@ -396,14 +380,6 @@ namespace simd {
     {
         float64x2 temp = floor(div(a, b));
         return sub(a, mul(b, temp));
-    }
-
-    static inline float64x2 sign(float64x2 a)
-    {
-        auto zero = float64x2_zero();
-        auto negative = select(compare_gt(zero, a), float64x2_set1(-1.0), zero);
-        auto positive = select(compare_gt(a, zero), float64x2_set1( 1.0), zero);
-        return bitwise_or(negative, positive);
     }
 
     static inline float64x2 radians(float64x2 a)
@@ -511,14 +487,6 @@ namespace simd {
     {
         float64x4 temp = floor(div(a, b));
         return sub(a, mul(b, temp));
-    }
-
-    static inline float64x4 sign(float64x4 a)
-    {
-        auto zero = float64x4_zero();
-        auto negative = select(compare_gt(zero, a), float64x4_set1(-1.0), zero);
-        auto positive = select(compare_gt(a, zero), float64x4_set1( 1.0), zero);
-        return bitwise_or(negative, positive);
     }
 
     static inline float64x4 radians(float64x4 a)

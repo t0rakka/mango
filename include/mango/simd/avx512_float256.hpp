@@ -95,6 +95,15 @@ namespace simd {
         return _mm256_sub_ps(_mm256_setzero_ps(), a);
     }
 
+    static inline float32x8 sign(float32x8 a)
+    {
+        __m256 sign_mask = _mm256_set1_ps(-0.0f);
+        __m256 value_mask = _mm256_cmpneq_ps(a, _mm256_setzero_ps());
+        __m256 sign_bits = _mm256_and_ps(a, sign_mask);
+        __m256 value_bits = _mm256_and_ps(_mm256_set1_ps(1.0f), value_mask);
+        return _mm256_or_ps(value_bits, sign_bits);
+    }
+
     static inline float32x8 add(float32x8 a, float32x8 b)
     {
         return _mm256_add_ps(a, b);

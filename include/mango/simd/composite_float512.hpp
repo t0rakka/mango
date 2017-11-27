@@ -142,6 +142,14 @@ namespace simd {
         return result;
     }
 
+    static inline float32x16 sign(float32x16 a)
+    {
+        float32x16 result;
+        result.lo = sign(a.lo);
+        result.hi = sign(a.hi);
+        return result;
+    }
+
     static inline float32x16 add(float32x16 a, float32x16 b)
     {
         float32x16 result;

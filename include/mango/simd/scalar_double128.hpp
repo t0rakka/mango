@@ -146,6 +146,14 @@ namespace simd {
         return float64x2_set2(-a[0], -a[1]);
     }
 
+    static inline float64x2 sign(float64x2 a)
+    {
+        float64x2 v;
+        v[0] = a[0] < 0 ? -1.0 : (a[0] > 0 ? 1.0 : 0.0);
+        v[1] = a[1] < 0 ? -1.0 : (a[1] > 0 ? 1.0 : 0.0);
+        return v;
+    }
+    
     static inline float64x2 add(float64x2 a, float64x2 b)
     {
         float64x2 v;

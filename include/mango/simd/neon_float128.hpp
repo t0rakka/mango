@@ -268,6 +268,15 @@ namespace simd {
         return vnegq_f32(a);
     }
 
+    static inline float32x4 sign(float32x4 a)
+    {
+        auto i = vreinterpretq_s32_f32(a);
+        auto value_mask = vmvnq_u32(vceqq_s32(i, vdupq_n_s32(0)));
+        auto sign_bits = vandq_s32(i, vdupq_n_s32(0x80000000));
+        auto value_bits = vandq_s32(vdupq_n_s32(0x3f800000), value_mask);
+        return vreinterpretq_f32_s32(vorrq_s32(value_bits, sign_bits));
+    }
+
     static inline float32x4 add(float32x4 a, float32x4 b)
     {
         return vaddq_f32(a, b);

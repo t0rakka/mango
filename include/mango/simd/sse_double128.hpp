@@ -144,6 +144,15 @@ namespace simd {
         return _mm_sub_pd(_mm_setzero_pd(), a);
     }
 
+    static inline float64x2 sign(float64x2 a)
+    {
+        __m128d sign_mask = _mm_set1_pd(-0.0);
+        __m128d value_mask = _mm_cmpneq_pd(a, _mm_setzero_pd());
+        __m128d sign_bits = _mm_and_pd(a, sign_mask);
+        __m128d value_bits = _mm_and_pd(_mm_set1_pd(1.0), value_mask);
+        return _mm_or_pd(value_bits, sign_bits);
+    }
+
     static inline float64x2 add(float64x2 a, float64x2 b)
     {
         return _mm_add_pd(a, b);

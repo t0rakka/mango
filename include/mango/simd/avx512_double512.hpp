@@ -98,6 +98,14 @@ namespace simd {
         return _mm512_sub_pd(_mm512_setzero_pd(), a);
     }
 
+    static inline float64x8 sign(float64x8 a)
+    {
+        __m512d zero = _mm512_setzero_pd();
+        __m512d negative = _mm512_mask_blend_pd(_mm512_cmp_pd_mask(a, zero, 1), zero, _mm512_set1_pd(-1.0));
+        __m512d positive = _mm512_mask_blend_pd(_mm512_cmp_pd_mask(zero, a, 1), zero, _mm512_set1_pd( 1.0));
+        return _mm512_or_pd(negative, positive);
+    }
+
     static inline float64x8 add(float64x8 a, float64x8 b)
     {
         return _mm512_add_pd(a, b);

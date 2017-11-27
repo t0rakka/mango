@@ -199,6 +199,16 @@ namespace simd {
         return float32x4_set4(-a[0], -a[1], -a[2], -a[3]);
     }
 
+    static inline float32x4 sign(float32x4 a)
+    {
+        float32x4 v;
+        v[0] = a[0] < 0 ? -1.0f : (a[0] > 0 ? 1.0f : 0.0f);
+        v[1] = a[1] < 0 ? -1.0f : (a[1] > 0 ? 1.0f : 0.0f);
+        v[2] = a[2] < 0 ? -1.0f : (a[2] > 0 ? 1.0f : 0.0f);
+        v[3] = a[3] < 0 ? -1.0f : (a[3] > 0 ? 1.0f : 0.0f);
+        return v;
+    }
+
     static inline float32x4 add(float32x4 a, float32x4 b)
     {
         float32x4 v;
