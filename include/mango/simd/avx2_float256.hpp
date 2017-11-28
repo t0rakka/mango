@@ -72,7 +72,7 @@ namespace simd {
 
     static inline float32x8 bitwise_not(float32x8 a)
     {
-         return _mm256_xor_ps(a, _mm256_cmp_ps(a, a, 0));
+         return _mm256_xor_ps(a, _mm256_cmp_ps(a, a, _CMP_EQ_OQ));
     }
 
     static inline float32x8 min(float32x8 a, float32x8 b)
@@ -98,7 +98,7 @@ namespace simd {
     static inline float32x8 sign(float32x8 a)
     {
         __m256 sign_mask = _mm256_set1_ps(-0.0f);
-        __m256 value_mask = _mm256_cmpneq_ps(a, _mm256_setzero_ps());
+        __m256 value_mask = _mm256_cmp_ps(a, _mm256_setzero_ps(), _CMP_NEQ_UQ);
         __m256 sign_bits = _mm256_and_ps(a, sign_mask);
         __m256 value_bits = _mm256_and_ps(_mm256_set1_ps(1.0f), value_mask);
         return _mm256_or_ps(value_bits, sign_bits);
@@ -201,32 +201,32 @@ namespace simd {
 
     static inline mask32x8 compare_neq(float32x8 a, float32x8 b)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 4));
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, _CMP_NEQ_UQ));
     }
 
     static inline mask32x8 compare_eq(float32x8 a, float32x8 b)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 0));
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, _CMP_EQ_OQ));
     }
 
     static inline mask32x8 compare_lt(float32x8 a, float32x8 b)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 1));
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, _CMP_LT_OQ));
     }
 
     static inline mask32x8 compare_le(float32x8 a, float32x8 b)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(a, b, 2));
+        return _mm256_castps_si256(_mm256_cmp_ps(a, b, _CMP_LE_OQ));
     }
 
     static inline mask32x8 compare_gt(float32x8 a, float32x8 b)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(b, a, 1));
+        return _mm256_castps_si256(_mm256_cmp_ps(b, a, _CMP_LT_OQ));
     }
 
     static inline mask32x8 compare_ge(float32x8 a, float32x8 b)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(b, a, 2));
+        return _mm256_castps_si256(_mm256_cmp_ps(b, a, _CMP_LE_OQ));
     }
 
     static inline float32x8 select(mask32x8 mask, float32x8 a, float32x8 b)

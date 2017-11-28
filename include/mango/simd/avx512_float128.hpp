@@ -248,7 +248,7 @@ namespace simd {
 
     static inline float32x4 fast_rsqrt(float32x4 a)
     {
-        return _mm_maskz_rsqrt14_ps(_mm_cmp_ps_mask(a, a, 0), a);
+        return _mm_maskz_rsqrt14_ps(_mm_cmp_ps_mask(a, a, _CMP_EQ_OQ), a);
     }
 
     static inline float32x4 fast_sqrt(float32x4 a)
@@ -298,32 +298,32 @@ namespace simd {
 
     static inline mask32x4 compare_neq(float32x4 a, float32x4 b)
     {
-        return _mm_cmp_ps_mask(a, b, 4);
+        return _mm_cmp_ps_mask(a, b, _CMP_NEQ_UQ);
     }
 
     static inline mask32x4 compare_eq(float32x4 a, float32x4 b)
     {
-        return _mm_cmp_ps_mask(a, b, 0);
+        return _mm_cmp_ps_mask(a, b, _CMP_EQ_OQ);
     }
 
     static inline mask32x4 compare_lt(float32x4 a, float32x4 b)
     {
-        return _mm_cmp_ps_mask(a, b, 1);
+        return _mm_cmp_ps_mask(a, b, _CMP_LT_OS);
     }
 
     static inline mask32x4 compare_le(float32x4 a, float32x4 b)
     {
-        return _mm_cmp_ps_mask(a, b, 2);
+        return _mm_cmp_ps_mask(a, b, _CMP_LE_OS);
     }
 
     static inline mask32x4 compare_gt(float32x4 a, float32x4 b)
     {
-        return _mm_cmp_ps_mask(b, a, 1);
+        return _mm_cmp_ps_mask(b, a, _CMP_LT_OS);
     }
 
     static inline mask32x4 compare_ge(float32x4 a, float32x4 b)
     {
-        return _mm_cmp_ps_mask(b, a, 2);
+        return _mm_cmp_ps_mask(b, a, _CMP_LE_OS);
     }
 
     static inline float32x4 select(mask32x4 mask, float32x4 a, float32x4 b)

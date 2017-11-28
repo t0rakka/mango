@@ -245,32 +245,32 @@ namespace simd {
 
     static inline mask64x2 compare_neq(float64x2 a, float64x2 b)
     {
-        return _mm_cmp_pd_mask(a, b, 4);
+        return _mm_cmp_pd_mask(a, b, _CMP_NEQ_UQ);
     }
 
     static inline mask64x2 compare_eq(float64x2 a, float64x2 b)
     {
-        return _mm_cmp_pd_mask(a, b, 0);
+        return _mm_cmp_pd_mask(a, b, _CMP_EQ_OQ);
     }
 
     static inline mask64x2 compare_lt(float64x2 a, float64x2 b)
     {
-        return _mm_cmp_pd_mask(a, b, 1);
+        return _mm_cmp_pd_mask(a, b, _CMP_LT_OS);
     }
 
     static inline mask64x2 compare_le(float64x2 a, float64x2 b)
     {
-        return _mm_cmp_pd_mask(a, b, 2);
+        return _mm_cmp_pd_mask(a, b, _CMP_LE_OS);
     }
 
     static inline mask64x2 compare_gt(float64x2 a, float64x2 b)
     {
-        return _mm_cmp_pd_mask(b, a, 1);
+        return _mm_cmp_pd_mask(b, a, _CMP_LT_OS);
     }
 
     static inline mask64x2 compare_ge(float64x2 a, float64x2 b)
     {
-        return _mm_cmp_pd_mask(b, a, 2);
+        return _mm_cmp_pd_mask(b, a, _CMP_LE_OS);
     }
 
     static inline float64x2 select(mask64x2 mask, float64x2 a, float64x2 b)

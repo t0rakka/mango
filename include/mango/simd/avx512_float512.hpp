@@ -100,8 +100,8 @@ namespace simd {
     static inline float32x16 sign(float32x16 a)
     {
         __m512 zero = _mm512_setzero_ps();
-        __m512 negative = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(a, zero, 1), zero, _mm512_set1_ps(-1.0f));
-        __m512 positive = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(zero, a, 1), zero, _mm512_set1_ps( 1.0f));
+        __m512 negative = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(a, zero, _CMP_LT_OS), zero, _mm512_set1_ps(-1.0f));
+        __m512 positive = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(zero, a, _CMP_LT_OS), zero, _mm512_set1_ps( 1.0f));
         return _mm512_or_ps(negative, positive);
     }
 
@@ -190,32 +190,32 @@ namespace simd {
 
     static inline mask32x16 compare_neq(float32x16 a, float32x16 b)
     {
-        return _mm512_cmp_ps_mask(a, b, 4);
+        return _mm512_cmp_ps_mask(a, b, _CMP_NEQ_UQ);
     }
 
     static inline mask32x16 compare_eq(float32x16 a, float32x16 b)
     {
-        return _mm512_cmp_ps_mask(a, b, 0);
+        return _mm512_cmp_ps_mask(a, b, _CMP_EQ_OQ);
     }
 
     static inline mask32x16 compare_lt(float32x16 a, float32x16 b)
     {
-        return _mm512_cmp_ps_mask(a, b, 1);
+        return _mm512_cmp_ps_mask(a, b, _CMP_LT_OS);
     }
 
     static inline mask32x16 compare_le(float32x16 a, float32x16 b)
     {
-        return _mm512_cmp_ps_mask(a, b, 2);
+        return _mm512_cmp_ps_mask(a, b, _CMP_LE_OS);
     }
 
     static inline mask32x16 compare_gt(float32x16 a, float32x16 b)
     {
-        return _mm512_cmp_ps_mask(b, a, 1);
+        return _mm512_cmp_ps_mask(b, a, _CMP_LT_OS);
     }
 
     static inline mask32x16 compare_ge(float32x16 a, float32x16 b)
     {
-        return _mm512_cmp_ps_mask(b, a, 2);
+        return _mm512_cmp_ps_mask(b, a, _CMP_LE_OS);
     }
 
     static inline float32x16 select(mask32x16 mask, float32x16 a, float32x16 b)

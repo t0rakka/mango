@@ -405,7 +405,7 @@ namespace detail {
     inline uint32x8 convert<uint32x8>(float32x8 s)
     {
 	    __m256 x2 = _mm256_castsi256_ps(_mm256_set1_epi32(0x4f000000));
-	    __m256 x1 = _mm256_cmp_ps(x2, s, 2);
+	    __m256 x1 = _mm256_cmp_ps(x2, s, _CMP_LE_OS);
   	    __m256i x0 = _mm256_cvtps_epi32(_mm256_sub_ps(s, _mm256_and_ps(x2, x1)));
   	    return _mm256_or_si256(x0, _mm256_slli_epi32(_mm256_castps_si256(x1), 31));
     }

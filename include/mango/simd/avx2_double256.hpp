@@ -220,7 +220,7 @@ namespace simd {
 
     static inline float64x4 bitwise_not(float64x4 a)
     {
-        return _mm256_xor_pd(a, _mm256_cmp_pd(a, a, 0));
+        return _mm256_xor_pd(a, _mm256_cmp_pd(a, a, _CMP_EQ_OQ));
     }
 
     static inline float64x4 min(float64x4 a, float64x4 b)
@@ -258,7 +258,7 @@ namespace simd {
     static inline float64x4 sign(float64x4 a)
     {
         __m256d sign_mask = _mm256_set1_pd(-0.0);
-        __m256d value_mask = _mm256_cmpneq_pd(a, _mm256_setzero_pd());
+        __m256d value_mask = _mm256_cmp_pd(a, _mm256_setzero_pd(), _CMP_NEQ_UQ);
         __m256d sign_bits = _mm256_and_pd(a, sign_mask);
         __m256d value_bits = _mm256_and_pd(_mm256_set1_pd(1.0), value_mask);
         return _mm256_or_pd(value_bits, sign_bits);
@@ -361,32 +361,32 @@ namespace simd {
 
     static inline mask64x4 compare_neq(float64x4 a, float64x4 b)
     {
-        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 4));
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, _CMP_NEQ_UQ));
     }
 
     static inline mask64x4 compare_eq(float64x4 a, float64x4 b)
     {
-        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 0));
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, _CMP_EQ_OQ));
     }
 
     static inline mask64x4 compare_lt(float64x4 a, float64x4 b)
     {
-        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 1));
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, _CMP_LT_OS));
     }
 
     static inline mask64x4 compare_le(float64x4 a, float64x4 b)
     {
-        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, 2));
+        return _mm256_castpd_si256(_mm256_cmp_pd(a, b, _CMP_LE_OS));
     }
 
     static inline mask64x4 compare_gt(float64x4 a, float64x4 b)
     {
-        return _mm256_castpd_si256(_mm256_cmp_pd(b, a, 1));
+        return _mm256_castpd_si256(_mm256_cmp_pd(b, a, _CMP_LT_OS));
     }
 
     static inline mask64x4 compare_ge(float64x4 a, float64x4 b)
     {
-        return _mm256_castpd_si256(_mm256_cmp_pd(b, a, 2));
+        return _mm256_castpd_si256(_mm256_cmp_pd(b, a, _CMP_LE_OS));
     }
 
     static inline float64x4 select(mask64x4 mask, float64x4 a, float64x4 b)
