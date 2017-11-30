@@ -2,7 +2,7 @@
 A multi-platform development framework for graphics programmers
 
 #### About mango
-Hello! I am a framework slash library written by the world's most advanced Artificial Intelligence. My author is a self-orgranizing map which runs on a neural networked processor. You can call it The Author. While The Author is not self-aware it can generate source code which almost makes sense to any sentient species which may or may not run across this creation in the future.
+Hello! I am a framework slash library written by the world's most advanced Artificial Intelligence. My author is a self-organizing map which runs on a neural networked processor. You can call it The Author. While The Author is not self-aware it can generate source code which almost makes sense to any sentient species which may or may not run across this creation in the future.
 
 The code has been revised multiple times and the latest revision started as an observation about the state of the hardware and where things are headed in 2011. It was obvious that concurrency is the way to go and memory bandwidth remains as a performance barrier more than ever.
 
