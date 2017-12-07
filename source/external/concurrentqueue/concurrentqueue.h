@@ -239,11 +239,19 @@ namespace details {
 			: static_cast<T>(-1);
 	};
 
-#if defined(__GNUC__) && !defined( __clang__ )
-	typedef ::max_align_t max_align_t;      // GCC forgot to add it to std:: for a while
+#if defined(__GLIBCXX__)
+	typedef ::max_align_t std_max_align_t;      // libstdc++ forgot to add it to std:: for a while
 #else
-	typedef std::max_align_t max_align_t;   // Others (e.g. MSVC) insist it can *only* be accessed via std::
+	typedef std::max_align_t std_max_align_t;   // Others (e.g. MSVC) insist it can *only* be accessed via std::
 #endif
+
+	// Some platforms have incorrectly set max_align_t to a type with <8 bytes alignment even while supporting
+	// 8-byte aligned scalar values (*cough* 32-bit iOS). Work around this with our own union. See issue #64.
+	typedef union {
+		std_max_align_t x;
+		long long y;
+		void* z;
+	} max_align_t;
 }
 
 // Default traits for the ConcurrentQueue. To change some of the
@@ -1398,14 +1406,14 @@ private:
 					assert((head->freeListRefs.load(std::memory_order_relaxed) & SHOULD_BE_ON_FREELIST) == 0);
 					
 					// Decrease refcount twice, once for our ref, and once for the list's ref
-					head->freeListRefs.fetch_add(-2, std::memory_order_release);
+					head->freeListRefs.fetch_sub(2, std::memory_order_release);
 					return head;
 				}
 				
 				// OK, the head must have changed on us, but we still need to decrease the refcount we increased.
 				// Note that we don't need to release any memory effects, but we do need to ensure that the reference
 				// count decrement happens-after the CAS on the head.
-				refs = prevHead->freeListRefs.fetch_add(-1, std::memory_order_acq_rel);
+				refs = prevHead->freeListRefs.fetch_sub(1, std::memory_order_acq_rel);
 				if (refs == SHOULD_BE_ON_FREELIST + 1) {
 					add_knowing_refcount_is_zero(prevHead);
 				}
@@ -3362,7 +3370,7 @@ private:
 					auto raw = static_cast<char*>((Traits::malloc)(sizeof(ImplicitProducerHash) + std::alignment_of<ImplicitProducerKVP>::value - 1 + sizeof(ImplicitProducerKVP) * newCapacity));
 					if (raw == nullptr) {
 						// Allocation failed
-						implicitProducerHashCount.fetch_add(-1, std::memory_order_relaxed);
+						implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);
 						implicitProducerHashResizeInProgress.clear(std::memory_order_relaxed);
 						return nullptr;
 					}
@@ -3391,11 +3399,11 @@ private:
 				bool recycled;
 				auto producer = static_cast<ImplicitProducer*>(recycle_or_create_producer(false, recycled));
 				if (producer == nullptr) {
-					implicitProducerHashCount.fetch_add(-1, std::memory_order_relaxed);
+					implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);
 					return nullptr;
 				}
 				if (recycled) {
-					implicitProducerHashCount.fetch_add(-1, std::memory_order_relaxed);
+					implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);
 				}
 				
 #ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED
