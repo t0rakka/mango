@@ -1384,7 +1384,9 @@ namespace simd {
     // mask8x16
     // -----------------------------------------------------------------
 
-    static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
+#if !defined(MANGO_COMPILER_MICROSOFT)
+
+	static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
     {
         return _mm512_kand(a, b);
     }
@@ -1399,6 +1401,8 @@ namespace simd {
         return _mm512_kxor(a, b);
     }
 
+#endif
+
     static inline uint32 get_mask(mask8x16 a)
     {
         return uint32(a);
@@ -1407,6 +1411,8 @@ namespace simd {
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
+
+#if !defined(MANGO_COMPILER_MICROSOFT)
 
     static inline mask16x8 operator & (mask16x8 a, mask16x8 b)
     {
@@ -1423,6 +1429,8 @@ namespace simd {
         return _mm512_kxor(a, b);
     }
 
+#endif
+
     static inline uint32 get_mask(mask16x8 a)
     {
         return uint32(a);
@@ -1432,7 +1440,9 @@ namespace simd {
     // mask32x4
     // -----------------------------------------------------------------
 
-    static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
+#if !defined(MANGO_COMPILER_MICROSOFT)
+	
+	static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
     {
         return _mm512_kand(a, b);
     }
@@ -1447,6 +1457,8 @@ namespace simd {
         return _mm512_kxor(a, b);
     }
 
+#endif
+
     static inline uint32 get_mask(mask32x4 a)
     {
         return uint32(a);
@@ -1456,7 +1468,9 @@ namespace simd {
     // mask64x2
     // -----------------------------------------------------------------
 
-    static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
+#if !defined(MANGO_COMPILER_MICROSOFT)
+
+	static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
     {
         return _mm512_kand(a, b);
     }
@@ -1470,6 +1484,8 @@ namespace simd {
     {
         return _mm512_kxor(a, b);
     }
+
+#endif
 
     static inline uint32 get_mask(mask64x2 a)
     {
