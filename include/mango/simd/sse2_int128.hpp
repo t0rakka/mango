@@ -1199,14 +1199,12 @@ namespace simd {
 
     static inline int8x16 min(int8x16 a, int8x16 b)
     {
-        const __m128i mask = _mm_cmpgt_epi8(a, b);
-        return _mm_select_si128(mask, b, a);
+        return _mm_select_si128(_mm_cmpgt_epi8(a, b), b, a);
     }
 
     static inline int8x16 max(int8x16 a, int8x16 b)
     {
-        const __m128i mask = _mm_cmpgt_epi8(a, b);
-        return _mm_select_si128(mask, a, b);
+        return _mm_select_si128(_mm_cmpgt_epi8(a, b), a, b);
     }
 
 #endif
