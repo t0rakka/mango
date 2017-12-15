@@ -305,9 +305,9 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "sse_int128.hpp"
-#include "sse_float128.hpp"
-#include "sse_double128.hpp"
+#include "sse2_int128.hpp"
+#include "sse2_float128.hpp"
+#include "sse2_double128.hpp"
 #include "avx2_float256.hpp"
 #include "avx2_double256.hpp"
 #include "avx2_int256.hpp"
@@ -388,16 +388,16 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
-#include "sse_int128.hpp"
-#include "sse_float128.hpp"
-#include "sse_double128.hpp"
+#include "sse2_int128.hpp"
+#include "sse2_float128.hpp"
+#include "sse2_double128.hpp"
 #include "composite_int256.hpp"
 #include "composite_float256.hpp"
 #include "composite_double256.hpp"
 #include "composite_int512.hpp"
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
-#include "sse_convert.hpp"
+#include "sse2_convert.hpp"
 #include "common_gather.hpp"
 
 #elif defined(MANGO_ENABLE_NEON)
@@ -496,6 +496,9 @@ namespace simd {
 #include "neon_convert.hpp"
 #include "common_gather.hpp"
 
+//#elif defined(MANGO_ENABLE_ALTIVEC)
+//#elif defined(MANGO_ENABLE_SPU)
+//#elif defined(MANGO_ENABLE_MSA)
 #else
 
 namespace mango {
