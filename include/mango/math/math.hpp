@@ -8,4 +8,5 @@
 #include "matrix.hpp"
 #include "quaternion.hpp"
 #include "geometry.hpp"
+#include "spline.hpp"
 #include "srgb.hpp"
