@@ -270,6 +270,6 @@ namespace mango
         return uint32(x.u);
     }
 
-    typedef Half half;
+    using half = Half;
 
 } // namespace mango

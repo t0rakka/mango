@@ -80,8 +80,8 @@ namespace mango
     // typedefs
     // ------------------------------------------------------------------
 
-    typedef Matrix<float, 3, 3> float3x3;
-    typedef Matrix<float, 4, 4> float4x4;
+    using float3x3 = Matrix<float, 3, 3>;
+    using float4x4 = Matrix<float, 4, 4>;
 
 } // namespace mango
 

@@ -18,6 +18,8 @@
 namespace mango
 {
 
+    // TODO: use lock-free MPMC queue for free objects and only lock
+    //       when running out of objects im the queue
     template <typename T>
     class ObjectCache
     {

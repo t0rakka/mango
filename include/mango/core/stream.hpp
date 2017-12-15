@@ -292,13 +292,13 @@ namespace mango
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    typedef detail::SameEndianStream LittleEndianStream;
-    typedef detail::SwapEndianStream BigEndianStream;
+    using LittleEndianStream = detail::SameEndianStream;
+    using BigEndianStream = detail::SwapEndianStream;
 
 #else
 
-    typedef detail::SwapEndianStream LittleEndianStream;
-    typedef detail::SameEndianStream BigEndianStream;
+    using LittleEndianStream = detail::SwapEndianStream;
+    using BigEndianStream = detail::SameEndianStream;
 
 #endif
 

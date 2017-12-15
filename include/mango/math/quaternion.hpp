@@ -239,6 +239,6 @@ namespace mango
     // typedefs
     // ------------------------------------------------------------------
 
-    typedef Quaternion quat;
+    using quat = Quaternion;
 
 } // namespace mango

@@ -161,99 +161,108 @@ namespace mango
 
     */
 
-    template <typename T>
-    class TypeCopy {
-    protected:
-        char data[sizeof(T)];
+    namespace detail
+    {
 
-    public:
-        TypeCopy() = default;
+        template <typename T>
+        class TypeCopy {
+        protected:
+            char data[sizeof(T)];
 
-        TypeCopy(const T &value) {
-            std::memcpy(data, &value, sizeof(T));
-        }
+        public:
+            TypeCopy() = default;
 
-        const TypeCopy& operator = (const T &value) {
-            std::memcpy(data, &value, sizeof(T));
-            return *this;
-        }
+            TypeCopy(const T &value) {
+                std::memcpy(data, &value, sizeof(T));
+            }
 
-        operator T () const {
-            T temp;
-            std::memcpy(&temp, data, sizeof(T));
-            return temp;
-        }
-    };
+            // copy-on-write
+            const TypeCopy& operator = (const T &value) {
+                std::memcpy(data, &value, sizeof(T));
+                return *this;
+            }
 
-    template <typename T>
-    class TypeSwap {
-    protected:
-        char data[sizeof(T)];
+            // copy-on-read
+            operator T () const {
+                T temp;
+                std::memcpy(&temp, data, sizeof(T));
+                return temp;
+            }
+        };
 
-    public:
-        TypeSwap() = default;
+        template <typename T>
+        class TypeSwap {
+        protected:
+            char data[sizeof(T)];
 
-        TypeSwap(const T &value) {
-            T temp = byteswap(value);
-            std::memcpy(data, &temp, sizeof(T));
-        }
+        public:
+            TypeSwap() = default;
 
-        const TypeSwap& operator = (const T &value) {
-            T temp = byteswap(value);
-            std::memcpy(data, &temp, sizeof(T));
-            return *this;
-        }
+            TypeSwap(const T &value) {
+                T temp = byteswap(value);
+                std::memcpy(data, &temp, sizeof(T));
+            }
 
-        operator T () const {
-            T temp;
-            std::memcpy(&temp, data, sizeof(T));
-            return byteswap(temp);
-        }
-    };
+            // swap-on-write
+            const TypeSwap& operator = (const T &value) {
+                T temp = byteswap(value);
+                std::memcpy(data, &temp, sizeof(T));
+                return *this;
+            }
+
+            // swap-on-read
+            operator T () const {
+                T temp;
+                std::memcpy(&temp, data, sizeof(T));
+                return byteswap(temp);
+            }
+        };
+
+    } // namespace detail
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    typedef TypeCopy<int16>   int16le;
-    typedef TypeCopy<int32>   int32le;
-    typedef TypeCopy<int64>   int64le;
-    typedef TypeCopy<uint16>  uint16le;
-    typedef TypeCopy<uint32>  uint32le;
-    typedef TypeCopy<uint64>  uint64le;
-    typedef TypeCopy<half>    float16le;
-    typedef TypeCopy<float>   float32le;
-    typedef TypeCopy<double>  float64le;
+    using int16le = detail::TypeCopy<int16>;
+    using int32le = detail::TypeCopy<int32>;
+    using int64le = detail::TypeCopy<int64>;
+    using uint16le = detail::TypeCopy<uint16>;
+    using uint32le = detail::TypeCopy<uint32>;
+    using uint64le = detail::TypeCopy<uint64>;
+    using float16le = detail::TypeCopy<half>;
+    using float32le = detail::TypeCopy<float>;
+    using float64le = detail::TypeCopy<double>;
 
-    typedef TypeSwap<int16>   int16be;
-    typedef TypeSwap<int32>   int32be;
-    typedef TypeSwap<int64>   int64be;
-    typedef TypeSwap<uint16>  uint16be;
-    typedef TypeSwap<uint32>  uint32be;
-    typedef TypeSwap<uint64>  uint64be;
-    typedef TypeSwap<half>    float16be;
-    typedef TypeSwap<float>   float32be;
-    typedef TypeSwap<double>  float64be;
+    using int16be = detail::TypeSwap<int16>;
+    using int32be = detail::TypeSwap<int32>;
+    using int64be = detail::TypeSwap<int64>;
+    using uint16be = detail::TypeSwap<uint16>;
+    using uint32be = detail::TypeSwap<uint32>;
+    using uint64be = detail::TypeSwap<uint64>;
+    using float16be = detail::TypeSwap<half>;
+    using float32be = detail::TypeSwap<float>;
+    using float64be = detail::TypeSwap<double>;
 
 #else
 
-    typedef TypeSwap<int16>   int16le;
-    typedef TypeSwap<int32>   int32le;
-    typedef TypeSwap<int64>   int64le;
-    typedef TypeSwap<uint16>  uint16le;
-    typedef TypeSwap<uint32>  uint32le;
-    typedef TypeSwap<uint64>  uint64le;
-    typedef TypeSwap<half>    float16le;
-    typedef TypeSwap<float>   float32le;
-    typedef TypeSwap<double>  float64le;
+    using int16le = detail::TypeSwap<int16>;
+    using int32le = detail::TypeSwap<int32>;
+    using int64le = detail::TypeSwap<int64>;
+    using uint16le = detail::TypeSwap<uint16>;
+    using uint32le = detail::TypeSwap<uint32>;
+    using uint64le = detail::TypeSwap<uint64>;
+    using float16le = detail::TypeSwap<half>;
+    using float32le = detail::TypeSwap<float>;
+    using float64le = detail::TypeSwap<double>;
 
-    typedef TypeCopy<int16>   int16be;
-    typedef TypeCopy<int32>   int32be;
-    typedef TypeCopy<int64>   int64be;
-    typedef TypeCopy<uint16>  uint16be;
-    typedef TypeCopy<uint32>  uint32be;
-    typedef TypeCopy<uint64>  uint64be;
-    typedef TypeCopy<half>    float16be;
-    typedef TypeCopy<float>   float32be;
-    typedef TypeCopy<double>  float64be;
+    using int16be = detail::TypeCopy<int16>;
+    using int32be = detail::TypeCopy<int32>;
+    using int64be = detail::TypeCopy<int64>;
+    using uint16be = detail::TypeCopy<uint16>;
+    using uint32be = detail::TypeCopy<uint32>;
+    using uint64be = detail::TypeCopy<uint64>;
+    using float16be = detail::TypeCopy<half>;
+    using float32be = detail::TypeCopy<float>;
+    using float64be = detail::TypeCopy<double>;
 
 #endif
     
