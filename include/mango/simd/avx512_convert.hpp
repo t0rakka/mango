@@ -21,19 +21,19 @@ namespace detail {
 
 	    template <typename ScalarType, int VectorSize, typename VectorType>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-        : data(v)
+            : data(v)
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128i> v)
-        : data(_mm_castsi128_ps(v))
+            : data(_mm_castsi128_ps(v))
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128d> v)
-        : data(_mm_castpd_ps(v))
+            : data(_mm_castpd_ps(v))
 	    {
 	    }
 
@@ -63,19 +63,19 @@ namespace detail {
 
 	    template <typename ScalarType, int VectorSize, typename VectorType>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-        : data(v)
+            : data(v)
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256i> v)
-        : data(_mm256_castsi256_ps(v))
+            : data(_mm256_castsi256_ps(v))
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256d> v)
-        : data(_mm256_castpd_ps(v))
+            : data(_mm256_castpd_ps(v))
 	    {
 	    }
 
@@ -105,19 +105,19 @@ namespace detail {
 
 	    template <typename ScalarType, int VectorSize, typename VectorType>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-        : data(v)
+            : data(v)
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512i> v)
-        : data(_mm512_castsi512_ps(v))
+            : data(_mm512_castsi512_ps(v))
 	    {
 	    }
 
 	    template <typename ScalarType, int VectorSize>
 	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512d> v)
-        : data(_mm512_castpd_ps(v))
+            : data(_mm512_castpd_ps(v))
 	    {
 	    }
 

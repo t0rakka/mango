@@ -22,47 +22,47 @@ namespace detail {
         reinterpret_vector() = default;
 
 		reinterpret_vector(int8x16 v)
-        : data(vreinterpretq_u32_s8(v))
+            : data(vreinterpretq_u32_s8(v))
 		{
 		}
 
 		reinterpret_vector(int16x8 v)
-        : data(vreinterpretq_u32_s16(v))
+            : data(vreinterpretq_u32_s16(v))
 		{
 		}
 
 		reinterpret_vector(int32x4 v)
-        : data(vreinterpretq_u32_s32(v))
+            : data(vreinterpretq_u32_s32(v))
 		{
 		}
 
 		reinterpret_vector(int64x2 v)
-        : data(vreinterpretq_u32_s64(v))
+            : data(vreinterpretq_u32_s64(v))
 		{
 		}
 
 		reinterpret_vector(uint8x16 v)
-        : data(vreinterpretq_u32_u8(v))
+            : data(vreinterpretq_u32_u8(v))
 		{
 		}
 
 		reinterpret_vector(uint16x8 v)
-        : data(vreinterpretq_u32_u16(v))
+            : data(vreinterpretq_u32_u16(v))
 		{
 		}
 
 		reinterpret_vector(uint32x4 v)
-        : data(v)
+            : data(v)
 		{
 		}
 
 		reinterpret_vector(uint64x2 v)
-        : data(vreinterpretq_u32_u64(v))
+            : data(vreinterpretq_u32_u64(v))
 		{
 		}
 
 		reinterpret_vector(float32x4 v)
-        : data(vreinterpretq_u32_f32(v))
+            : data(vreinterpretq_u32_f32(v))
 		{
 		}
 
@@ -134,7 +134,8 @@ namespace detail {
 
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
-        : lo(v.lo), hi(v.hi)
+            : lo(v.lo)
+            , hi(v.hi)
 	    {
 	    }
 
@@ -167,7 +168,8 @@ namespace detail {
 
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
-        : lo(v.lo), hi(v.hi)
+            : lo(v.lo)
+            , hi(v.hi)
 	    {
 	    }
 

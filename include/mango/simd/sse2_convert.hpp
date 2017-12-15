@@ -20,17 +20,17 @@ namespace detail {
 		__m128 data;
 
 		reinterpret_vector(__m128 data)
-		: data(data)
+		    : data(data)
 		{
 		}
 
 		reinterpret_vector(__m128i data)
-		: data(_mm_castsi128_ps(data))
+		    : data(_mm_castsi128_ps(data))
 		{
 		}
 
 		reinterpret_vector(__m128d data)
-		: data(_mm_castpd_ps(data))
+		    : data(_mm_castpd_ps(data))
 		{
 		}
 
@@ -61,7 +61,8 @@ namespace detail {
 
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
-        : lo(v.lo), hi(v.hi)
+            : lo(v.lo)
+            , hi(v.hi)
 	    {
 	    }
 
@@ -80,7 +81,8 @@ namespace detail {
 
 	    template <typename T>
 	    reinterpret_vector(composite_vector<T> v)
-        : lo(v.lo), hi(v.hi)
+            : lo(v.lo)
+            , hi(v.hi)
 	    {
 	    }
 
