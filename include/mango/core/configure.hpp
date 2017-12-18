@@ -515,17 +515,44 @@
         #include <arm_acle.h>
     #endif
 
-#elif defined(MANGO_CPU_PPC) && (defined(__VEC__) || defined(__PPU__))
+#elif defined(MANGO_CPU_PPC)
 
-    // PowerPC Altivec / AVX128
-    #define MANGO_ENABLE_ALTIVEC
-    #include <altivec.h>
+    #if defined(_ARCH_PWR9)
 
-#elif defined(MANGO_CPU_PPC) && defined(__SPU__)
+        // VMX 3 (Power ISA v3.0)
+        #define MANGO_ENABLE_ALTIVEC
+        #define MANGO_ENABLE_VSX
+        #include <altivec.h>
+        
+    #elif defined(_ARCH_PWR8)
 
-    // Cell BE SPU
-    #define MANGO_ENABLE_SPU
-    #include <spu_intrinsics.h>
+        // VMX 2 (Power ISA v2.07)
+        #define MANGO_ENABLE_ALTIVEC
+        #define MANGO_ENABLE_VSX
+        #include <altivec.h>
+        
+    #elif defined(_ARCH_PWR7)
+
+        // VSX (Power ISA v2.06)
+        #define MANGO_ENABLE_ALTIVEC
+        #define MANGO_ENABLE_VSX
+        #include <altivec.h>
+        
+    #elif defined(__PPU__) || defined(__SPU__)
+
+        // SONY Playstation 3 SPU / PPU (VMX)
+        
+    #elif defined(MANGO_PLATFORM_XBOX360)
+
+        // Microsoft Xbox 360 (VMX128)
+        
+    #elif defined(__VEC__)
+
+        // VMX (Power ISA v2.03)
+        #define MANGO_ENABLE_ALTIVEC
+        #include <altivec.h>
+
+    #endif
 
 #elif defined(MANGO_CPU_MIPS) && defined(__mips_msa)
 

@@ -149,7 +149,7 @@ namespace simd {
         __m128d sign_mask = _mm_set1_pd(-0.0);
         __m128d value_mask = _mm_cmpneq_pd(a, _mm_setzero_pd());
         __m128d sign_bits = _mm_and_pd(a, sign_mask);
-        __m128d value_bits = _mm_and_pd(_mm_set1_pd(1.0), value_mask);
+        __m128d value_bits = _mm_and_pd(value_mask, _mm_set1_pd(1.0));
         return _mm_or_pd(value_bits, sign_bits);
     }
 

@@ -91,14 +91,14 @@ namespace simd {
         return float32x4_set4(b[2], b[3], a[2], a[3]);
     }
 
-    static inline float32x4 unpackhi(float32x4 a, float32x4 b)
-    {
-        return float32x4_set4(a[2], b[2], a[3], b[3]);
-    }
-
     static inline float32x4 unpacklo(float32x4 a, float32x4 b)
     {
         return float32x4_set4(a[0], b[0], a[1], b[1]);
+    }
+
+    static inline float32x4 unpackhi(float32x4 a, float32x4 b)
+    {
+        return float32x4_set4(a[2], b[2], a[3], b[3]);
     }
 
     // bitwise

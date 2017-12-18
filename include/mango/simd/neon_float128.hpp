@@ -344,50 +344,70 @@ namespace simd {
 
     static inline float32x4 fast_rcp(float32x4 a)
     {
-        float32x4 n = vrecpeq_f32(a);
-        n = vmulq_f32(vrecpsq_f32(n, a), n);
-        return n;
+        float32x4 e = vrecpeq_f32(a);
+        e = vmulq_f32(vrecpsq_f32(a, e), e);
+        return e;
     }
 
     static inline float32x4 fast_rsqrt(float32x4 a)
     {
-        float32x4 n = vrsqrteq_f32(a);
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        return n;
+        float32x4 e = vrsqrteq_f32(a);
+        e = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(a, e), e));
+        return e;
     }
+
+#ifdef __aarch64__
 
     static inline float32x4 fast_sqrt(float32x4 a)
     {
-        float32x4 n = vrsqrteq_f32(a);
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        return vmulq_f32(a, n);
+        return vsqrtq_f32(a);
     }
+
+#else
+
+    static inline float32x4 fast_sqrt(float32x4 a)
+    {
+        float32x4 e = vrsqrteq_f32(a);
+        e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
+        return vmulq_f32(a, e);
+    }
+
+#endif
 
     static inline float32x4 rcp(float32x4 a)
     {
-        float32x4 n = vrecpeq_f32(a);
-        n = vmulq_f32(vrecpsq_f32(n, a), n);
-        n = vmulq_f32(vrecpsq_f32(n, a), n);
-        return n;
+        float32x4 e = vrecpeq_f32(a);
+        e = vmulq_f32(vrecpsq_f32(a, e), e);
+        e = vmulq_f32(vrecpsq_f32(a, e), e);
+        return e;
     }
 
     static inline float32x4 rsqrt(float32x4 a)
     {
-        float32x4 n = vrsqrteq_f32(a);
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        return n;
+        float32x4 e = vrsqrteq_f32(a);
+        e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
+        e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
+        return e;
     }
+
+#ifdef __aarch64__
+    
+    static inline float32x4 sqrt(float32x4 a)
+    {
+        return vsqrtq_f32(a);
+    }
+
+#else
 
     static inline float32x4 sqrt(float32x4 a)
     {
-        float32x4 n = vrsqrteq_f32(a);
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        n = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(n, a), n));
-        return vmulq_f32(a, n);
+        float32x4 e = vrsqrteq_f32(a);
+        e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
+        e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
+        return vmulq_f32(a, e);
     }
+
+#endif
 
     static inline float32x4 dot3(float32x4 a, float32x4 b)
     {

@@ -70,14 +70,14 @@ namespace simd {
         dest[1] = a[1];
     }
 
-    static inline float64x2 unpackhi(float64x2 a, float64x2 b)
-    {
-        return float64x2_set2(a[1], b[1]);
-    }
-
     static inline float64x2 unpacklo(float64x2 a, float64x2 b)
     {
         return float64x2_set2(a[0], b[0]);
+    }
+
+    static inline float64x2 unpackhi(float64x2 a, float64x2 b)
+    {
+        return float64x2_set2(a[1], b[1]);
     }
 
     // bitwise
@@ -153,7 +153,7 @@ namespace simd {
         v[1] = a[1] < 0 ? -1.0 : (a[1] > 0 ? 1.0 : 0.0);
         return v;
     }
-    
+
     static inline float64x2 add(float64x2 a, float64x2 b)
     {
         float64x2 v;
