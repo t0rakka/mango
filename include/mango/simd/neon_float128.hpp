@@ -352,7 +352,7 @@ namespace simd {
     static inline float32x4 fast_rsqrt(float32x4 a)
     {
         float32x4 e = vrsqrteq_f32(a);
-        e = vmulq_f32(n, vrsqrtsq_f32(vmulq_f32(a, e), e));
+        e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
         return e;
     }
 
