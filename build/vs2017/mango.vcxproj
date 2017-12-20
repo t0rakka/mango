@@ -149,10 +149,10 @@
     <ClInclude Include="..\..\include\mango\simd\scalar_float128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\scalar_int128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\simd.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\sse_convert.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\sse_double128.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\sse_float128.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\sse_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp" />
     <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp" />
     <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h" />
     <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h" />

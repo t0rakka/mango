@@ -429,117 +429,6 @@
     <ClInclude Include="..\..\include\mango\image\color.hpp">
       <Filter>mango\include\image</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_float512.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_gather.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_int128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_int256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_int512.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\common.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\common_gather.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\composite_double256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\composite_double512.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\composite_float256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\composite_float512.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\composite_int256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\composite_int512.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\neon_double128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\neon_int128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\scalar_convert.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\scalar_double128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\scalar_float128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\scalar_int128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\simd.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\sse_convert.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\sse_double128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\sse_float128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\sse_int128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx2_convert.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx2_double256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx2_float256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx2_gather.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx2_int256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_convert.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_double128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_double256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_double512.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_float128.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\simd\avx512_float256.hpp">
-      <Filter>mango\include\simd</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mango\math\vector_float64x2.hpp">
       <Filter>mango\include\math</Filter>
     </ClInclude>
@@ -680,6 +569,117 @@
     </ClInclude>
     <ClInclude Include="..\..\source\external\zstd\common\compiler.h">
       <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx2_convert.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx2_double256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx2_float256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx2_gather.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx2_int256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_convert.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_double128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_double256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_double512.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_float128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_float256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_float512.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_gather.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_int128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_int256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\avx512_int512.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\common.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\common_gather.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\composite_double256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\composite_double512.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\composite_float256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\composite_float512.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\composite_int256.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\composite_int512.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\neon_double128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\neon_int128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\scalar_convert.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\scalar_double128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\scalar_float128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\scalar_int128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\simd.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\sse2_convert.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\sse2_double128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\sse2_float128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp">
+      <Filter>mango\include\simd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
