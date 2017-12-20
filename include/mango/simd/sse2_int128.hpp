@@ -78,7 +78,7 @@ namespace simd {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
 
-#if defined(__x86_64__)
+#if defined(MANGO_CPU_64BIT)
 
     static inline __m128i simd128_cvtsi64_si128(int64 a)
     {
