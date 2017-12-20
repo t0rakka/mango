@@ -537,15 +537,15 @@
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
         #include <altivec.h>
-        
+
     #elif defined(__PPU__) || defined(__SPU__)
 
         // SONY Playstation 3 SPU / PPU (VMX)
-        
+
     #elif defined(MANGO_PLATFORM_XBOX360)
 
         // Microsoft Xbox 360 (VMX128)
-        
+
     #elif defined(__VEC__)
 
         // VMX (Power ISA v2.03)

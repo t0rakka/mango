@@ -19,6 +19,37 @@ namespace simd {
 #define simd128_shuffle_epi64(a, b, mask) \
     _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), mask))
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline __m128i simd128_shuffle_x0z0(__m128i a)
+    {
+        return _mm_blend_epi16(a, _mm_xor_si128(a, a), 0xcc);
+    }
+
+    static inline __m128i simd128_shuffle_4x4(__m128i a, __m128i b, __m128i c, __m128i d)
+    {
+        a = _mm_blend_epi16(a, b, 0x0c);
+        c = _mm_blend_epi16(c, d, 0xc0);
+        a = _mm_blend_epi16(a, c, 0xf0);
+        return a;
+    }
+
+#else
+
+    static inline __m128i simd128_shuffle_x0z0(__m128i a)
+    {
+        return _mm_and_si128(a, _mm_setr_epi32(0xffffffff, 0, 0xffffffff, 0));
+    }
+
+    static inline __m128i simd128_shuffle_4x4(__m128i a, __m128i b, __m128i c, __m128i d)
+    {
+        const __m128i v0 = simd128_shuffle_epi32(a, b, _MM_SHUFFLE(1, 1, 0, 0));
+        const __m128i v1 = simd128_shuffle_epi32(c, d, _MM_SHUFFLE(3, 3, 2, 2));
+        return simd128_shuffle_epi32(v0, v1, _MM_SHUFFLE(2, 0, 2, 0));
+    }
+
+#endif
+
     static inline __m128i simd128_mullo_epi32(__m128i a, __m128i b)
     {
         __m128i temp0 = _mm_mul_epu32(a, b);
@@ -437,7 +468,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint16x8 slli(uint16x8 a)
@@ -456,6 +487,8 @@ namespace simd {
     {
         return _mm_srai_epi16(a, Count);
     }
+
+    // shift by scalar
 
     static inline uint16x8 sll(uint16x8 a, int count)
     {
@@ -774,7 +807,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint32x4 slli(uint32x4 a)
@@ -794,6 +827,8 @@ namespace simd {
         return _mm_srai_epi32(a, Count);
     }
 
+    // shift by scalar
+
     static inline uint32x4 sll(uint32x4 a, int count)
     {
         return _mm_sll_epi32(a, _mm_cvtsi32_si128(count));
@@ -808,6 +843,68 @@ namespace simd {
     {
         return _mm_sra_epi32(a, _mm_cvtsi32_si128(count));
     }
+
+    // shift by vector
+
+#if defined(MANGO_ENABLE_AVX2)
+    
+    static inline uint32x4 sll(uint32x4 a, uint32x4 count)
+    {
+        return _mm_sllv_epi32(a, count);
+    }
+
+    static inline uint32x4 srl(uint32x4 a, uint32x4 count)
+    {
+        return _mm_srlv_epi32(a, count);
+    }
+
+    static inline uint32x4 sra(uint32x4 a, uint32x4 count)
+    {
+        return _mm_srav_epi32(a, count);
+    }
+
+#else
+
+    static inline uint32x4 sll(uint32x4 a, uint32x4 count)
+    {
+        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count1 = _mm_srli_epi64(count, 32);
+        __m128i count2 = _mm_srli_si128(count0, 8);
+        __m128i count3 = _mm_srli_si128(count, 12);
+        __m128i x = _mm_sll_epi32(a, count0);
+        __m128i y = _mm_sll_epi32(a, count1);
+        __m128i z = _mm_sll_epi32(a, count2);
+        __m128i w = _mm_sll_epi32(a, count3);
+        return simd128_shuffle_4x4(x, y, z, w);
+    }
+
+    static inline uint32x4 srl(uint32x4 a, uint32x4 count)
+    {
+        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count1 = _mm_srli_epi64(count, 32);
+        __m128i count2 = _mm_srli_si128(count0, 8);
+        __m128i count3 = _mm_srli_si128(count, 12);
+        __m128i x = _mm_srl_epi32(a, count0);
+        __m128i y = _mm_srl_epi32(a, count1);
+        __m128i z = _mm_srl_epi32(a, count2);
+        __m128i w = _mm_srl_epi32(a, count3);
+        return simd128_shuffle_4x4(x, y, z, w);
+    }
+
+    static inline uint32x4 sra(uint32x4 a, uint32x4 count)
+    {
+        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count1 = _mm_srli_epi64(count, 32);
+        __m128i count2 = _mm_srli_si128(count0, 8);
+        __m128i count3 = _mm_srli_si128(count, 12);
+        __m128i x = _mm_sra_epi32(a, count0);
+        __m128i y = _mm_sra_epi32(a, count1);
+        __m128i z = _mm_sra_epi32(a, count2);
+        __m128i w = _mm_sra_epi32(a, count3);
+        return simd128_shuffle_4x4(x, y, z, w);
+    }
+
+#endif
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
@@ -941,7 +1038,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint64x2 slli(uint64x2 a)
@@ -954,6 +1051,8 @@ namespace simd {
     {
         return _mm_srli_epi64(a, Count);
     }
+
+    // shift by scalar
 
     static inline uint64x2 sll(uint64x2 a, int count)
     {
@@ -1372,7 +1471,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int16x8 slli(int16x8 a)
@@ -1391,6 +1490,8 @@ namespace simd {
     {
         return _mm_srai_epi16(a, Count);
     }
+
+    // shift by scalar
 
     static inline int16x8 sll(int16x8 a, int count)
     {
@@ -1713,7 +1814,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int32x4 slli(int32x4 a)
@@ -1733,6 +1834,8 @@ namespace simd {
         return _mm_srai_epi32(a, Count);
     }
 
+    // shift by scalar
+
     static inline int32x4 sll(int32x4 a, int count)
     {
         return _mm_sll_epi32(a, _mm_cvtsi32_si128(count));
@@ -1747,6 +1850,68 @@ namespace simd {
     {
         return _mm_sra_epi32(a, _mm_cvtsi32_si128(count));
     }
+
+    // shift by vector
+
+#if defined(MANGO_ENABLE_AVX2)
+
+    static inline int32x4 sll(int32x4 a, uint32x4 count)
+    {
+        return _mm_sllv_epi32(a, count);
+    }
+
+    static inline int32x4 srl(int32x4 a, uint32x4 count)
+    {
+        return _mm_srlv_epi32(a, count);
+    }
+
+    static inline int32x4 sra(int32x4 a, uint32x4 count)
+    {
+        return _mm_srav_epi32(a, count);
+    }
+
+#else
+
+    static inline int32x4 sll(int32x4 a, uint32x4 count)
+    {
+        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count1 = _mm_srli_epi64(count, 32);
+        __m128i count2 = _mm_srli_si128(count0, 8);
+        __m128i count3 = _mm_srli_si128(count, 12);
+        __m128i x = _mm_sll_epi32(a, count0);
+        __m128i y = _mm_sll_epi32(a, count1);
+        __m128i z = _mm_sll_epi32(a, count2);
+        __m128i w = _mm_sll_epi32(a, count3);
+        return simd128_shuffle_4x4(x, y, z, w);
+    }
+
+    static inline int32x4 srl(int32x4 a, uint32x4 count)
+    {
+        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count1 = _mm_srli_epi64(count, 32);
+        __m128i count2 = _mm_srli_si128(count0, 8);
+        __m128i count3 = _mm_srli_si128(count, 12);
+        __m128i x = _mm_srl_epi32(a, count0);
+        __m128i y = _mm_srl_epi32(a, count1);
+        __m128i z = _mm_srl_epi32(a, count2);
+        __m128i w = _mm_srl_epi32(a, count3);
+        return simd128_shuffle_4x4(x, y, z, w);
+    }
+
+    static inline int32x4 sra(int32x4 a, uint32x4 count)
+    {
+        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count1 = _mm_srli_epi64(count, 32);
+        __m128i count2 = _mm_srli_si128(count0, 8);
+        __m128i count3 = _mm_srli_si128(count, 12);
+        __m128i x = _mm_sra_epi32(a, count0);
+        __m128i y = _mm_sra_epi32(a, count1);
+        __m128i z = _mm_sra_epi32(a, count2);
+        __m128i w = _mm_sra_epi32(a, count3);
+        return simd128_shuffle_4x4(x, y, z, w);
+    }
+
+#endif
 
     static inline uint32 pack(int32x4 s)
     {
@@ -1902,7 +2067,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int64x2 slli(int64x2 a)
@@ -1915,6 +2080,8 @@ namespace simd {
     {
         return _mm_srli_epi64(a, Count);
     }
+
+    // shift by scalar
 
     static inline int64x2 sll(int64x2 a, int count)
     {

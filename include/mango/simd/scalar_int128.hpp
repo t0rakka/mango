@@ -162,6 +162,8 @@ namespace simd {
         return ~a;
     }
 
+    // shift by constant
+
     template <typename VectorType, typename ScalarType, int Count>
     static inline VectorType scalar_shift_left(VectorType a)
     {
@@ -184,6 +186,8 @@ namespace simd {
         return v;
     }
 
+    // shift by scalar
+
     template <typename VectorType, typename ScalarType>
     static inline VectorType scalar_shift_left(VectorType a, int count)
     {
@@ -202,6 +206,30 @@ namespace simd {
         for (int i = 0; i < VectorType::size; ++i)
         {
             v[i] = count < sizeof(ScalarType) * 8 ? ScalarType(a[i]) >> count : 0;
+        }
+        return v;
+    }
+
+    // shift by vector
+
+    template <typename VectorType, typename ScalarType, typename CountVectorType>
+    static inline VectorType scalar_shift_left(VectorType a, CountVectorType count)
+    {
+        VectorType v;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            v[i] = count[i] < sizeof(ScalarType) * 8 ? ScalarType(a[i]) << count[i] : 0;
+        }
+        return v;
+    }
+
+    template <typename VectorType, typename ScalarType, typename CountVectorType>
+    static inline VectorType scalar_shift_right(VectorType a, CountVectorType count)
+    {
+        VectorType v;
+        for (int i = 0; i < VectorType::size; ++i)
+        {
+            v[i] = count[i] < sizeof(ScalarType) * 8 ? ScalarType(a[i]) >> count[i] : 0;
         }
         return v;
     }
@@ -589,7 +617,7 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint16x8 slli(uint16x8 a)
@@ -608,6 +636,8 @@ namespace simd {
     {
         return scalar_shift_right<uint16x8, int16, Count>(a);
     }
+
+    // shift by scalar
 
     static inline uint16x8 sll(uint16x8 a, int count)
     {
@@ -800,7 +830,7 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint32x4 slli(uint32x4 a)
@@ -820,6 +850,8 @@ namespace simd {
         return scalar_shift_right<uint32x4, int32, Count>(a);
     }
 
+    // shift by scalar
+
     static inline uint32x4 sll(uint32x4 a, int count)
     {
         return scalar_shift_left<uint32x4, uint32>(a, count);
@@ -833,6 +865,23 @@ namespace simd {
     static inline uint32x4 sra(uint32x4 a, int count)
     {
         return scalar_shift_right<uint32x4, int32>(a, count);
+    }
+
+    // shift by vector
+
+    static inline uint32x4 sll(uint32x4 a, uint32x4 count)
+    {
+        return scalar_shift_left<uint32x4, uint32, uint32x4>(a, count);
+    }
+
+    static inline uint32x4 srl(uint32x4 a, uint32x4 count)
+    {
+        return scalar_shift_right<uint32x4, uint32, uint32x4>(a, count);
+    }
+
+    static inline uint32x4 sra(uint32x4 a, uint32x4 count)
+    {
+        return scalar_shift_right<uint32x4, int32, uint32x4>(a, count);
     }
 
     static inline uint32x4 min(uint32x4 a, uint32x4 b)
@@ -929,7 +978,7 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint64x2 slli(uint64x2 a)
@@ -942,6 +991,8 @@ namespace simd {
     {
         return scalar_shift_right<uint64x2, uint64, Count>(a);
     }
+
+    // shift by scalar
 
     static inline uint64x2 sll(uint64x2 a, int count)
     {
@@ -1238,6 +1289,8 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
+    // shift by constant
+
     template <int Count>
     static inline int16x8 slli(int16x8 a)
     {
@@ -1255,6 +1308,8 @@ namespace simd {
     {
         return scalar_shift_right<int16x8, int16, Count>(a);
     }
+
+    // shift by scalar
 
     static inline int16x8 sll(int16x8 a, int count)
     {
@@ -1457,7 +1512,7 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int32x4 slli(int32x4 a)
@@ -1477,6 +1532,8 @@ namespace simd {
         return scalar_shift_right<int32x4, int32, Count>(a);
     }
 
+    // shift by scalar
+
     static inline int32x4 sll(int32x4 a, int count)
     {
         return scalar_shift_left<int32x4, uint32>(a, count);
@@ -1490,6 +1547,23 @@ namespace simd {
     static inline int32x4 sra(int32x4 a, int count)
     {
         return scalar_shift_right<int32x4, int32>(a, count);
+    }
+
+    // shift by vector
+
+    static inline int32x4 sll(int32x4 a, uint32x4 count)
+    {
+        return scalar_shift_left<int32x4, uint32, uint32x4>(a, count);
+    }
+
+    static inline int32x4 srl(int32x4 a, uint32x4 count)
+    {
+        return scalar_shift_right<int32x4, uint32, uint32x4>(a, count);
+    }
+
+    static inline int32x4 sra(int32x4 a, uint32x4 count)
+    {
+        return scalar_shift_right<int32x4, int32, uint32x4>(a, count);
     }
 
     static inline int32x4 min(int32x4 a, int32x4 b)
@@ -1605,7 +1679,7 @@ namespace simd {
         return scalar_select(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int64x2 slli(int64x2 a)
@@ -1618,6 +1692,8 @@ namespace simd {
     {
         return scalar_shift_right<int64x2, uint64, Count>(a);
     }
+
+    // shift by scalar
 
     static inline int64x2 sll(int64x2 a, int count)
     {

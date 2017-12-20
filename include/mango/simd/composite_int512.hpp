@@ -309,7 +309,7 @@ namespace simd {
         return result;
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint16x32 slli(uint16x32 a)
@@ -337,6 +337,8 @@ namespace simd {
         result.hi = srai<Count>(a.hi);
         return result;
     }
+
+    // shift by scalar
 
     static inline uint16x32 sll(uint16x32 a, int count)
     {
@@ -529,7 +531,7 @@ namespace simd {
         return result;
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint32x16 slli(uint32x16 a)
@@ -558,6 +560,8 @@ namespace simd {
         return result;
     }
 
+    // shift by scalar
+
     static inline uint32x16 sll(uint32x16 a, int count)
     {
         uint32x16 result;
@@ -580,6 +584,29 @@ namespace simd {
         result.lo = sra(a.lo, count);
         result.hi = sra(a.hi, count);
         return result;
+    }
+
+    // shift by vector
+
+    static inline uint32x16 sll(uint32x16 a, uint32x16 count)
+    {
+        a.lo = sll(a.lo, count.lo);
+        a.hi = sll(a.hi, count.hi);
+        return a;
+    }
+
+    static inline uint32x16 srl(uint32x16 a, uint32x16 count)
+    {
+        a.lo = srl(a.lo, count.lo);
+        a.hi = srl(a.hi, count.hi);
+        return a;
+    }
+
+    static inline uint32x16 sra(uint32x16 a, uint32x16 count)
+    {
+        a.lo = sra(a.lo, count.lo);
+        a.hi = sra(a.hi, count.hi);
+        return a;
     }
 
     static inline uint32x16 min(uint32x16 a, uint32x16 b)
@@ -706,7 +733,7 @@ namespace simd {
         return result;
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint64x8 slli(uint64x8 a)
@@ -725,6 +752,8 @@ namespace simd {
         result.hi = srli<Count>(a.hi);
         return result;
     }
+
+    // shift by scalar
 
     static inline uint64x8 sll(uint64x8 a, int count)
     {
@@ -1074,7 +1103,7 @@ namespace simd {
         return result;
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int16x32 slli(int16x32 a)
@@ -1102,6 +1131,8 @@ namespace simd {
         result.hi = srai<Count>(a.hi);
         return result;
     }
+
+    // shift by scalar
 
     static inline int16x32 sll(int16x32 a, int count)
     {
@@ -1310,7 +1341,7 @@ namespace simd {
         return result;
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int32x16 slli(int32x16 a)
@@ -1339,6 +1370,8 @@ namespace simd {
         return result;
     }
 
+    // shify by scalar
+
     static inline int32x16 sll(int32x16 a, int count)
     {
         int32x16 result;
@@ -1361,6 +1394,29 @@ namespace simd {
         result.lo = sra(a.lo, count);
         result.hi = sra(a.hi, count);
         return result;
+    }
+
+    // shift by vector
+
+    static inline int32x16 sll(int32x16 a, uint32x16 count)
+    {
+        a.lo = sll(a.lo, count.lo);
+        a.hi = sll(a.hi, count.hi);
+        return a;
+    }
+
+    static inline int32x16 srl(int32x16 a, uint32x16 count)
+    {
+        a.lo = srl(a.lo, count.lo);
+        a.hi = srl(a.hi, count.hi);
+        return a;
+    }
+
+    static inline int32x16 sra(int32x16 a, uint32x16 count)
+    {
+        a.lo = sra(a.lo, count.lo);
+        a.hi = sra(a.hi, count.hi);
+        return a;
     }
 
     static inline int32x16 min(int32x16 a, int32x16 b)
@@ -1487,7 +1543,7 @@ namespace simd {
         return result;
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int64x8 slli(int64x8 a)
@@ -1506,6 +1562,8 @@ namespace simd {
         result.hi = srli<Count>(a.hi);
         return result;
     }
+
+    // shift by scalar
 
     static inline int64x8 sll(int64x8 a, int count)
     {

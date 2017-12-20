@@ -248,7 +248,7 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint16x16 slli(uint16x16 a)
@@ -267,6 +267,8 @@ namespace simd {
     {
         return _mm256_srai_epi16(a, Count);
     }
+
+    // shift by scalar
 
     static inline uint16x16 sll(uint16x16 a, int count)
     {
@@ -420,7 +422,7 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint32x8 slli(uint32x8 a)
@@ -440,6 +442,8 @@ namespace simd {
         return _mm256_srai_epi32(a, Count);
     }
 
+    // shift by scalar
+
     static inline uint32x8 sll(uint32x8 a, int count)
     {
         return _mm256_sll_epi32(a, _mm_cvtsi32_si128(count));
@@ -453,6 +457,23 @@ namespace simd {
     static inline uint32x8 sra(uint32x8 a, int count)
     {
         return _mm256_sra_epi32(a, _mm_cvtsi32_si128(count));
+    }
+
+    // shift by vector
+
+    static inline uint32x8 sll(uint32x8 a, uint32x8 count)
+    {
+        return _mm256_sllv_epi32(a, count);
+    }
+
+    static inline uint32x8 srl(uint32x8 a, uint32x8 count)
+    {
+        return _mm256_srlv_epi32(a, count);
+    }
+
+    static inline uint32x8 sra(uint32x8 a, uint32x8 count)
+    {
+        return _mm256_srav_epi32(a, count);
     }
 
     static inline uint32x8 min(uint32x8 a, uint32x8 b)
@@ -548,7 +569,7 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline uint64x4 slli(uint64x4 a)
@@ -561,6 +582,8 @@ namespace simd {
     {
         return _mm256_srli_epi64(a, Count);
     }
+
+    // shift by scalar
 
     static inline uint64x4 sll(uint64x4 a, int count)
     {
@@ -815,7 +838,7 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int16x16 slli(int16x16 a)
@@ -834,6 +857,8 @@ namespace simd {
     {
         return _mm256_srai_epi16(a, Count);
     }
+
+    // shift by scalar
 
     static inline int16x16 sll(int16x16 a, int count)
     {
@@ -1002,7 +1027,7 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int32x8 slli(int32x8 a)
@@ -1022,6 +1047,8 @@ namespace simd {
         return _mm256_srai_epi32(a, Count);
     }
 
+    // shift by scalar
+
     static inline int32x8 sll(int32x8 a, int count)
     {
         return _mm256_sll_epi32(a, _mm_cvtsi32_si128(count));
@@ -1035,6 +1062,23 @@ namespace simd {
     static inline int32x8 sra(int32x8 a, int count)
     {
         return _mm256_sra_epi32(a, _mm_cvtsi32_si128(count));
+    }
+
+    // shift by vector
+
+    static inline int32x8 sll(int32x8 a, uint32x8 count)
+    {
+        return _mm256_sllv_epi32(a, count);
+    }
+
+    static inline int32x8 srl(int32x8 a, uint32x8 count)
+    {
+        return _mm256_srlv_epi32(a, count);
+    }
+
+    static inline int32x8 sra(int32x8 a, uint32x8 count)
+    {
+        return _mm256_srav_epi32(a, count);
     }
 
     static inline int32x8 min(int32x8 a, int32x8 b)
@@ -1130,7 +1174,7 @@ namespace simd {
         return _mm256_select_si256(mask, a, b);
     }
 
-    // shift
+    // shift by constant
 
     template <int Count>
     static inline int64x4 slli(int64x4 a)
@@ -1143,6 +1187,8 @@ namespace simd {
     {
         return _mm256_srli_epi64(a, Count);
     }
+
+    // shift by scalar
 
     static inline int64x4 sll(int64x4 a, int count)
     {
