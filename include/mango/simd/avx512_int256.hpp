@@ -13,13 +13,6 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    static inline __m256i simd256_mullo_epi8(__m256i a, __m256i b)
-    {
-        const __m256i temp0 = _mm256_mullo_epi16(a, b);
-        const __m256i temp1 = _mm256_mullo_epi16(_mm256_srli_epi16(a, 8),_mm256_srli_epi16(b, 8));
-        return _mm256_or_si256(_mm256_slli_epi16(temp1, 8), _mm256_srli_epi16(_mm256_slli_epi16(temp0, 8), 8));
-    }
-
     static inline __m256i _mm256_not_si256(__m256i a)
     {
         return _mm256_xor_si256(a, _mm256_cmpeq_epi8(a, a));
@@ -76,11 +69,6 @@ namespace simd {
     static inline uint8x32 sub(uint8x32 a, uint8x32 b)
     {
         return _mm256_sub_epi8(a, b);
-    }
-
-    static inline uint8x32 mullo(uint8x32 a, uint8x32 b)
-    {
-        return simd256_mullo_epi8(a, b);
     }
 
     // saturated
@@ -627,11 +615,6 @@ namespace simd {
     static inline int8x32 sub(int8x32 a, int8x32 b)
     {
         return _mm256_sub_epi8(a, b);
-    }
-
-    static inline int8x32 mullo(int8x32 a, int8x32 b)
-    {
-        return simd256_mullo_epi8(a, b);
     }
 
     // saturated

@@ -59,11 +59,6 @@ namespace simd {
         return vsubq_u8(a, b);
     }
 
-    static inline uint8x16 mullo(uint8x16 a, uint8x16 b)
-    {
-        return vmulq_u8(a, b);
-    }
-
     // bitwise
 
     static inline uint8x16 bitwise_nand(uint8x16 a, uint8x16 b)
@@ -702,11 +697,6 @@ namespace simd {
     static inline int8x16 sub(int8x16 a, int8x16 b)
     {
         return vsubq_s8(a, b);
-    }
-
-    static inline int8x16 mullo(int8x16 a, int8x16 b)
-    {
-        return vmulq_s8(a, b);
     }
 
     // saturated

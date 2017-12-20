@@ -84,14 +84,6 @@ namespace simd {
         return result;
     }
 
-    static inline uint8x32 mullo(uint8x32 a, uint8x32 b)
-    {
-        uint8x32 result;
-        result.lo = mullo(a.lo, b.lo);
-        result.hi = mullo(a.hi, b.hi);
-        return result;
-    }
-
     // saturated
 
     static inline uint8x32 adds(uint8x32 a, uint8x32 b)
@@ -899,14 +891,6 @@ namespace simd {
         int8x32 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
-        return result;
-    }
-
-    static inline int8x32 mullo(int8x32 a, int8x32 b)
-    {
-        int8x32 result;
-        result.lo = mullo(a.lo, b.lo);
-        result.hi = mullo(a.hi, b.hi);
         return result;
     }
 

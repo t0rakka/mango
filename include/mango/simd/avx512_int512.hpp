@@ -13,13 +13,6 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    static inline __m512i simd512_mullo_epi8(__m512i a, __m512i b)
-    {
-        const __m512i temp0 = _mm512_mullo_epi16(a, b);
-        const __m512i temp1 = _mm512_mullo_epi16(_mm512_srli_epi16(a, 8),_mm512_srli_epi16(b, 8));
-        return _mm512_or_si512(_mm512_slli_epi16(temp1, 8), _mm512_srli_epi16(_mm512_slli_epi16(temp0, 8), 8));
-    }
-
     static inline __m512i simd512_not(__m512i a)
     {
         return _mm512_xor_si512(a, _mm512_set1_epi32(0xffffffff));
@@ -57,11 +50,6 @@ namespace simd {
     static inline uint8x64 sub(uint8x64 a, uint8x64 b)
     {
         return _mm512_sub_epi8(a, b);
-    }
-
-    static inline uint8x64 mullo(uint8x64 a, uint8x64 b)
-    {
-        return simd512_mullo_epi8(a, b);
     }
 
     // saturated
@@ -539,11 +527,6 @@ namespace simd {
     static inline int8x64 sub(int8x64 a, int8x64 b)
     {
         return _mm512_sub_epi8(a, b);
-    }
-
-    static inline int8x64 mullo(int8x64 a, int8x64 b)
-    {
-        return simd512_mullo_epi8(a, b);
     }
 
     // saturated
