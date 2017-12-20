@@ -457,4 +457,14 @@ namespace mango
         return simd::sra(a, b);
     }
 
+    static inline int32x4 operator << (int32x4 a, uint32x4 b)
+    {
+        return simd::sll(a, b);
+    }
+
+    static inline int32x4 operator >> (int32x4 a, uint32x4 b)
+    {
+        return simd::sra(a, b);
+    }
+
 } // namespace mango

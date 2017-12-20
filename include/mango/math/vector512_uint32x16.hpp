@@ -149,4 +149,14 @@ namespace mango
         return simd::srl(a, b);
     }
 
+    static inline uint32x16 operator << (uint32x16 a, uint32x16 b)
+    {
+        return simd::sll(a, b);
+    }
+
+    static inline uint32x16 operator >> (uint32x16 a, uint32x16 b)
+    {
+        return simd::srl(a, b);
+    }
+
 } // namespace mango

@@ -447,4 +447,14 @@ namespace mango
         return simd::srl(a, b);
     }
 
+    static inline Vector<uint32, 4> operator << (Vector<uint32, 4> a, uint32x4 b)
+    {
+        return simd::sll(a, b);
+    }
+
+    static inline Vector<uint32, 4> operator >> (Vector<uint32, 4> a, uint32x4 b)
+    {
+        return simd::srl(a, b);
+    }
+
 } // namespace mango
