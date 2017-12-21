@@ -496,9 +496,172 @@ namespace simd {
 #include "neon_convert.hpp"
 #include "common_gather.hpp"
 
-//#elif defined(MANGO_ENABLE_ALTIVEC)
-//#elif defined(MANGO_ENABLE_SPU)
-//#elif defined(MANGO_ENABLE_MSA)
+#elif defined(MANGO_ENABLE_ALTIVEC) && defined(MANGO_ENABLE_VSX)
+
+namespace mango {
+namespace simd {
+    
+    // --------------------------------------------------------------
+    // Altivec / VSX
+    // --------------------------------------------------------------
+
+    #define MANGO_ENABLE_SIMD
+    
+    // 64 bit vector
+    using float16x4  = scalar_vector<half, 4>;
+
+    // 128 bit vector
+    using int8x16    = hardware_vector<int8, 16, __vector signed char>;
+    using int16x8    = hardware_vector<int16, 8, __vector signed short>;
+    using int32x4    = hardware_vector<int32, 4, __vector signed int>;
+    using int64x2    = hardware_vector<int64, 2, __vector signed long long>;
+    using uint8x16   = hardware_vector<uint8, 16, __vector unsigned char>;
+    using uint16x8   = hardware_vector<uint16, 8, __vector unsigned short>;
+    using uint32x4   = hardware_vector<uint32, 4, __vector unsigned int>;
+    using uint64x2   = hardware_vector<uint64, 2, __vector unsigned long long>;
+    using float32x4  = hardware_vector<float, 4, __vector float>;
+    using float64x2  = hardware_vector<double, 2, __vector double>;
+
+    // 256 bit vector
+    using int8x32    = composite_vector<int8x16>;
+    using int16x16   = composite_vector<int16x8>;
+    using int32x8    = composite_vector<int32x4>;
+    using int64x4    = composite_vector<int64x2>;
+    using uint8x32   = composite_vector<uint8x16>;
+    using uint16x16  = composite_vector<uint16x8>;
+    using uint32x8   = composite_vector<uint32x4>;
+    using uint64x4   = composite_vector<uint64x2>;
+    using float32x8  = composite_vector<float32x4>;
+    using float64x4  = composite_vector<float64x2>;
+
+    // 512 bit vector
+    using int8x64    = composite_vector<int8x32>;
+    using int16x32   = composite_vector<int16x16>;
+    using int32x16   = composite_vector<int32x8>;
+    using int64x8    = composite_vector<int64x4>;
+    using uint8x64   = composite_vector<uint8x32>;
+    using uint16x32  = composite_vector<uint16x16>;
+    using uint32x16  = composite_vector<uint32x8>;
+    using uint64x8   = composite_vector<uint64x4>;
+    using float32x16 = composite_vector<float32x8>;
+    using float64x8  = composite_vector<float64x4>;
+
+    // 128 bit vector mask
+    using mask8x16   = hardware_mask<8, 16, __vector bool char>;
+    using mask16x8   = hardware_mask<16, 8, __vector bool short>;
+    using mask32x4   = hardware_mask<32, 4, __vector bool int>;
+    using mask64x2   = hardware_mask<64, 2, __vector bool long long>;
+
+    // 256 bit vector mask
+    using mask8x32   = composite_mask<mask8x16>;
+    using mask16x16  = composite_mask<mask16x8>;
+    using mask32x8   = composite_mask<mask32x4>;
+    using mask64x4   = composite_mask<mask64x2>;
+
+    // 512 bit vector mask
+    using mask8x64   = composite_mask<mask8x32>;
+    using mask16x32  = composite_mask<mask16x16>;
+    using mask32x16  = composite_mask<mask32x8>;
+    using mask64x8   = composite_mask<mask64x4>;
+
+} // namespace simd
+} // namespace mango
+
+#include "altivec_int128.hpp"
+#include "altivec_float128.hpp"
+#include "altivec_double128.hpp"
+#include "composite_int256.hpp"
+#include "composite_float256.hpp"
+#include "composite_double256.hpp"
+#include "composite_int512.hpp"
+#include "composite_float512.hpp"
+#include "composite_double512.hpp"
+#include "altivec_convert.hpp"
+#include "common_gather.hpp"
+
+#elif defined(MANGO_ENABLE_MSA)
+
+namespace mango {
+namespace simd {
+
+    // --------------------------------------------------------------
+    // MIPS MSA
+    // --------------------------------------------------------------
+
+    #define MANGO_ENABLE_SIMD
+    
+    // 64 bit vector
+    using float16x4  = scalar_vector<half, 4>;
+
+    // 128 bit vector
+    using int8x16    = hardware_vector<int8, 16, v16i8>;
+    using int16x8    = hardware_vector<int16, 8, v8i16>;
+    using int32x4    = hardware_vector<int32, 4, v4i32>;
+    using int64x2    = hardware_vector<int64, 2, v2i64>;
+    using uint8x16   = hardware_vector<uint8, 16, v16u8>;
+    using uint16x8   = hardware_vector<uint16, 8, v8u16>;
+    using uint32x4   = hardware_vector<uint32, 4, v4u32>;
+    using uint64x2   = hardware_vector<uint64, 2, v2u64>;
+    using float32x4  = hardware_vector<float, 4, v4f32>;
+    using float64x2  = hardware_vector<double, 2, v2f64>;
+
+    // 256 bit vector
+    using int8x32    = composite_vector<int8x16>;
+    using int16x16   = composite_vector<int16x8>;
+    using int32x8    = composite_vector<int32x4>;
+    using int64x4    = composite_vector<int64x2>;
+    using uint8x32   = composite_vector<uint8x16>;
+    using uint16x16  = composite_vector<uint16x8>;
+    using uint32x8   = composite_vector<uint32x4>;
+    using uint64x4   = composite_vector<uint64x2>;
+    using float32x8  = composite_vector<float32x4>;
+    using float64x4  = composite_vector<float64x2>;
+
+    // 512 bit vector
+    using int8x64    = composite_vector<int8x32>;
+    using int16x32   = composite_vector<int16x16>;
+    using int32x16   = composite_vector<int32x8>;
+    using int64x8    = composite_vector<int64x4>;
+    using uint8x64   = composite_vector<uint8x32>;
+    using uint16x32  = composite_vector<uint16x16>;
+    using uint32x16  = composite_vector<uint32x8>;
+    using uint64x8   = composite_vector<uint64x4>;
+    using float32x16 = composite_vector<float32x8>;
+    using float64x8  = composite_vector<float64x4>;
+
+    // 128 bit vector mask
+    using mask8x16   = hardware_mask<8, 16, v16u8>;
+    using mask16x8   = hardware_mask<16, 8, v8u16>;
+    using mask32x4   = hardware_mask<32, 4, v4u32>;
+    using mask64x2   = hardware_mask<64, 2, v2u64>;
+
+    // 256 bit vector mask
+    using mask8x32   = composite_mask<mask8x16>;
+    using mask16x16  = composite_mask<mask16x8>;
+    using mask32x8   = composite_mask<mask32x4>;
+    using mask64x4   = composite_mask<mask64x2>;
+
+    // 512 bit vector mask
+    using mask8x64   = composite_mask<mask8x32>;
+    using mask16x32  = composite_mask<mask16x16>;
+    using mask32x16  = composite_mask<mask32x8>;
+    using mask64x8   = composite_mask<mask64x4>;
+    
+} // namespace simd
+} // namespace mango
+
+#include "msa_int128.hpp"
+#include "msa_float128.hpp"
+#include "msa_double128.hpp"
+#include "composite_int256.hpp"
+#include "composite_float256.hpp"
+#include "composite_double256.hpp"
+#include "composite_int512.hpp"
+#include "composite_float512.hpp"
+#include "composite_double512.hpp"
+#include "msa_convert.hpp"
+#include "common_gather.hpp"
+
 #else
 
 namespace mango {
