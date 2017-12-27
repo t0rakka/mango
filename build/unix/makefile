@@ -57,6 +57,9 @@ NEON          = -mfpu=neon-fp16 -mfp16-format=ieee
 OS   = $(shell uname)
 ARCH = $(shell uname -m)
 
+# define one of these to force cross compilation
+#ARCH = ppc64le
+
 # ---------------------------------------------------------------------------
 # Linux
 # ---------------------------------------------------------------------------
@@ -75,7 +78,12 @@ ifeq (Linux, $(OS))
   INSTALL  = cp *.so /usr/lib ; ldconfig ; rm -rf /usr/include/mango ; cp -r $(INCLUDE_BASE)/mango/ /usr/include/mango/
   LINK_POST += -lpthread -ldl
 
-  # Intel x86 64 bit GCC
+  ###############################################################################
+  #
+  # Intel x86-64
+  #
+  ###############################################################################
+
   ifeq (x86_64, $(ARCH))
     PLATFORM = x86-64
     CC  = gcc $(OPTIONS) $(OPTIONS_GCC) $(OPTIONS_X86) -fPIC $(CC_STD)
@@ -85,7 +93,12 @@ ifeq (Linux, $(OS))
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
-  # Intel x86 32 bit GCC
+  ###############################################################################
+  #
+  # Intel x86 32 bit
+  #
+  ###############################################################################
+
   ifeq (i686, $(ARCH))
     PLATFORM = x86
     CC  = gcc $(OPTIONS) $(OPTIONS_GCC) $(OPTIONS_X86) -g $(CC_STD)
@@ -95,7 +108,12 @@ ifeq (Linux, $(OS))
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
-  # ARM GCC (Tested on Raspberry Pi)
+  ###############################################################################
+  #
+  # ARM (Tested on Raspberry Pi)
+  #
+  ###############################################################################
+
   ifeq (armv6l, $(ARCH))
     PLATFORM = armv6l
     CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -g -mfpu=vfp -mfloat-abi=hard
@@ -105,7 +123,12 @@ ifeq (Linux, $(OS))
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
-  # ARM GCC (Tested on ODROID-U3, Raspberry Pi 3)
+  ###############################################################################
+  #
+  # ARM (Tested on ODROID-U3, Raspberry Pi 3)
+  #
+  ###############################################################################
+
   ifeq (armv7l, $(ARCH))
     PLATFORM = armv7l
     CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -g -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fPIC $(CC_STD)
@@ -113,6 +136,21 @@ ifeq (Linux, $(OS))
     LINK_MANGO  = g++ -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = g++ -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
+  endif
+
+  ###############################################################################
+  #
+  # PowerPC
+  #
+  ###############################################################################
+
+  ifeq (ppc64le, $(ARCH))
+    PLATFORM = ppc64le
+    CC  = powerpc64le-linux-gnu-gcc $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = powerpc64le-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    LINK_MANGO  = CPP -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
+    LINK_OPENGL = CPP -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
+    LINK_VULKAN = CPP -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
 endif
