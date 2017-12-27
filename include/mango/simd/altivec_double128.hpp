@@ -13,18 +13,26 @@ namespace simd {
     // float64x2
     // -----------------------------------------------------------------
 
-    template <uint32 x, uint32 y>
+    template <uint32 X, uint32 Y>
     static inline float64x2 shuffle(float64x2 v)
     {
-        static_assert(x < 2 && y < 2, "Index out of range.");
-        return vec_permi(v, v, x * 2 + y);
+        static_assert(X < 2 && Y < 2, "Index out of range.");
+        constexpr uint8 x = X * 8;
+        constexpr uint8 y = Y * 8;
+        return vec_perm(v.data, v.data, (uint8x16::vector) { 
+            x + 0, x + 1, x + 2, x + 3, x + 4, x + 5, x + 6, x + 7, 
+            y + 0, y + 1, y + 2, y + 3, y + 4, y + 5, y + 6, y + 7 });
     }
 
-    template <uint32 x, uint32 y>
+    template <uint32 X, uint32 Y>
     static inline float64x2 shuffle(float64x2 a, float64x2 b)
     {
-        static_assert(x < 2 && y < 2, "Index out of range.");
-        return vec_permi(a, b, x * 2 + y);
+        static_assert(X < 2 && Y < 2, "Index out of range.");
+        constexpr uint8 x = X * 8;
+        constexpr uint8 y = Y * 8 + 16;
+        return vec_perm(a.data, b.data, (uint8x16::vector) { 
+            x + 0, x + 1, x + 2, x + 3, x + 4, x + 5, x + 6, x + 7, 
+            y + 0, y + 1, y + 2, y + 3, y + 4, y + 5, y + 6, y + 7 });
     }
 
     template <>
@@ -38,14 +46,14 @@ namespace simd {
     inline float64x2 shuffle<0, 0>(float64x2 v)
     {
         // .xx
-        return vec_splat(v, 0);
+        return vec_splat(v.data, 0);
     }
 
     template <>
     inline float64x2 shuffle<1, 1>(float64x2 v)
     {
         // .yy
-        return vec_splat(v, 1);
+        return vec_splat(v.data, 1);
     }
     
     // indexed access
@@ -54,14 +62,14 @@ namespace simd {
     static inline float64x2 set_component(float64x2 a, double s)
     {
         static_assert(Index < 2, "Index out of range.");
-        return vec_insert(s, a, Index);
+        return vec_insert(s, a.data, Index);
     }
 
     template <int Index>
     static inline double get_component(float64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
-        return vec_extract(a, Index);
+        return vec_extract(a.data, Index);
     }
 
     static inline float64x2 float64x2_zero()
@@ -76,216 +84,216 @@ namespace simd {
 
     static inline float64x2 float64x2_set2(double x, double y)
     {
-        return {{ x, y }};
+        return (float64x2::vector) { x, y };
     }
 
     static inline float64x2 float64x2_uload(const double* s)
     {
-        return {{ s[0], s[1] }};
+        return (float64x2::vector) { s[0], s[1] };
     }
 
     static inline void float64x2_ustore(double* dest, float64x2 a)
     {
-        dest[0] = vec_extract(a, 0);
-        dest[1] = vec_extract(a, 1);
+        dest[0] = vec_extract(a.data, 0);
+        dest[1] = vec_extract(a.data, 1);
     }
 
     static inline float64x2 unpackhi(float64x2 a, float64x2 b)
     {
-        return vec_mergeh(a, b);
+        return vec_mergeh(a.data, b.data);
     }
 
     static inline float64x2 unpacklo(float64x2 a, float64x2 b)
     {
-        return vec_mergel(a, b);
+        return vec_mergel(a.data, b.data);
     }
 
     // bitwise
 
     static inline float64x2 bitwise_nand(float64x2 a, float64x2 b)
     {
-        return vec_nand(a, b);
+        return vec_nand(a.data, b.data);
     }
 
     static inline float64x2 bitwise_and(float64x2 a, float64x2 b)
     {
-        return vec_and(a, b);
+        return vec_and(a.data, b.data);
     }
 
     static inline float64x2 bitwise_or(float64x2 a, float64x2 b)
     {
-        return vec_or(a, b);
+        return vec_or(a.data, b.data);
     }
 
     static inline float64x2 bitwise_xor(float64x2 a, float64x2 b)
     {
-        return vec_xor(a, b);
+        return vec_xor(a.data, b.data);
     }
 
     static inline float64x2 bitwise_not(float64x2 a)
     {
-        return vec_nor(a, a);
+        return vec_nor(a.data, a.data);
     }
 
     static inline float64x2 min(float64x2 a, float64x2 b)
     {
-        return vec_min(a, b);
+        return vec_min(a.data, b.data);
     }
 
     static inline float64x2 max(float64x2 a, float64x2 b)
     {
-        return vec_max(a, b);
+        return vec_max(a.data, b.data);
     }
 
     static inline float64x2 abs(float64x2 a)
     {
-        return vec_abs(a);
+        return vec_abs(a.data);
     }
 
     static inline float64x2 neg(float64x2 a)
     {
-        return vec_neg(a);
+        return vec_sub(vec_xor(a.data, a.data), a.data);
     }
 
     static inline float64x2 sign(float64x2 a)
     {
         auto sign_mask = vec_splats(-0.0);
-        auto zero_mask = vec_cmpeq(a, vec_splats(0.0));
+        auto zero_mask = (float64x2::vector) vec_cmpeq(a.data, vec_splats(0.0));
         auto value_mask = vec_nor(zero_mask, zero_mask);
-        auto sign_bits = vec_and(a, sign_mask);
+        auto sign_bits = vec_and(a.data, sign_mask);
         auto value_bits = vec_and(value_mask, vec_splats(1.0));
         return vec_or(value_bits, sign_bits);
     }
 
     static inline float64x2 add(float64x2 a, float64x2 b)
     {
-        return vec_add(a, b);
+        return vec_add(a.data, b.data);
     }
 
     static inline float64x2 sub(float64x2 a, float64x2 b)
     {
-        return vec_sub(a, b);
+        return vec_sub(a.data, b.data);
     }
 
     static inline float64x2 mul(float64x2 a, float64x2 b)
     {
-        return vec_mul(a, b);
+        return vec_mul(a.data, b.data);
     }
 
     static inline float64x2 div(float64x2 a, float64x2 b)
     {
-        return vec_div(a, b);
+        return vec_div(a.data, b.data);
     }
 
     static inline float64x2 div(float64x2 a, double b)
     {
-        return vec_div(a, vec_splats(b));
+        return vec_div(a.data, vec_splats(b));
     }
 
     static inline float64x2 madd(float64x2 a, float64x2 b, float64x2 c)
     {
-        return vec_madd(b, c, a);
+        return vec_madd(b.data, c.data, a.data);
     }
 
     static inline float64x2 msub(float64x2 a, float64x2 b, float64x2 c)
     {
-        return vec_neg(vec_nmsub(b, c, a));
+        return neg(vec_nmsub(b.data, c.data, a.data));
     }
 
     static inline float64x2 fast_rcp(float64x2 a)
     {
-        return vec_re(a);
+        return vec_re(a.data);
     }
 
     static inline float64x2 fast_rsqrt(float64x2 a)
     {
-        return vec_re(vec_sqrt(a));
+        return vec_re(vec_sqrt(a.data));
     }
 
     static inline float64x2 fast_sqrt(float64x2 a)
     {
-        return vec_sqrt(a);
+        return vec_sqrt(a.data);
     }
 
     static inline float64x2 rcp(float64x2 a)
     {
-        return vec_re(a);
+        return vec_re(a.data);
     }
 
     static inline float64x2 rsqrt(float64x2 a)
     {
-        return vec_re(vec_sqrt(a));
+        return vec_re(vec_sqrt(a.data));
     }
 
     static inline float64x2 sqrt(float64x2 a)
     {
-        return vec_sqrt(a);
+        return vec_sqrt(a.data);
     }
 
     static inline float64x2 dot2(float64x2 a, float64x2 b)
     {
-        auto s = vec_mul(a, b);
-        return vec_add(s, vec_permi(s, s, 2));
+        auto s = vec_mul(a.data, b.data);
+        return vec_add(s, (float64x2::vector) shuffle<1, 0>(s, s));
     }
 
     // compare
 
     static inline mask64x2 compare_neq(float64x2 a, float64x2 b)
     {
-        auto mask = vec_cmpeq(a, b);
-        return vec_nor(mask, mask);
+        auto mask = vec_cmpeq(a.data, b.data);
+        return (mask64x2::vector) vec_nor((float64x2::vector)mask, (float64x2::vector)mask);
     }
 
     static inline mask64x2 compare_eq(float64x2 a, float64x2 b)
     {
-        return vec_cmpeq(a, b);
+        return vec_cmpeq(a.data, b.data);
     }
 
     static inline mask64x2 compare_lt(float64x2 a, float64x2 b)
     {
-        return vec_cmplt(a, b);
+        return vec_cmplt(a.data, b.data);
     }
 
     static inline mask64x2 compare_le(float64x2 a, float64x2 b)
     {
-        return vec_cmple(a, b);
+        return vec_cmple(a.data, b.data);
     }
 
     static inline mask64x2 compare_gt(float64x2 a, float64x2 b)
     {
-        return vec_cmpgt(a, b);
+        return vec_cmpgt(a.data, b.data);
     }
 
     static inline mask64x2 compare_ge(float64x2 a, float64x2 b)
     {
-        return vec_cmpge(a, b);
+        return vec_cmpge(a.data, b.data);
     }
 
     static inline float64x2 select(mask64x2 mask, float64x2 a, float64x2 b)
     {
-        return vec_sel(b, a, mask);
+        return vec_sel(b.data, a.data, mask.data);
     }
 
     // rounding
 
     static inline float64x2 round(float64x2 s)
     {
-        return vec_round(s);
+        return vec_round(s.data);
     }
 
     static inline float64x2 trunc(float64x2 s)
     {
-        return vec_trunc(s);
+        return vec_trunc(s.data);
     }
 
     static inline float64x2 floor(float64x2 s)
     {
-        return vec_floor(s);
+        return vec_floor(s.data);
     }
 
     static inline float64x2 ceil(float64x2 s)
     {
-        return vec_ceil(s);
+        return vec_ceil(s.data);
     }
 
     static inline float64x2 fract(float64x2 s)

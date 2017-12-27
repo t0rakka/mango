@@ -22,47 +22,47 @@ namespace detail {
         reinterpret_vector() = default;
 
 		reinterpret_vector(int8x16 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(int16x8 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(int32x4 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(int64x2 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(uint8x16 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(uint16x8 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(uint32x4 v)
-            : data(v)
+            : data(v.data)
 		{
 		}
 
 		reinterpret_vector(uint64x2 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
 		reinterpret_vector(float32x4 v)
-            : data((uint32x4::vector)v)
+            : data((uint32x4::vector) v.data)
 		{
 		}
 
@@ -204,18 +204,18 @@ namespace detail {
 
     static inline uint16x8 extend16(uint8x16 s)
     {
-        return vec_mergeh(s, vec_xor(s, s));
+        return (uint16x8::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
     }
 
     static inline uint32x4 extend32(uint8x16 s)
     {
-        auto temp = vec_mergeh(s, vec_xor(s, s));
-        return vec_mergeh(temp, vec_xor(temp, temp));
+        auto temp = vec_mergeh(s.data, vec_xor(s.data, s.data));
+        return (uint32x4::vector) vec_mergeh(temp, vec_xor(temp, temp));
     }
 
     static inline uint32x4 extend32(uint16x8 s)
     {
-        return vec_mergeh(s, vec_xor(s, s));
+        return (uint32x4::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
     }
 
     // -----------------------------------------------------------------
@@ -224,18 +224,18 @@ namespace detail {
 
     static inline int16x8 extend16(int8x16 s)
     {
-        return vec_mergeh(s, vec_xor(s, s));
+        return (int16x8::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
     }
 
     static inline int32x4 extend32(int8x16 s)
     {
-        auto temp = vec_mergeh(s, vec_xor(s, s));
-        return vec_mergeh(temp, vec_xor(temp, temp));
+        auto temp = vec_mergeh(s.data, vec_xor(s.data, s.data));
+        return (int32x4::vector) vec_mergeh(temp, vec_xor(temp, temp));
     }
 
     static inline int32x4 extend32(int16x8 s)
     {
-        return vec_mergeh(s, vec_xor(s, s));
+        return (int32x4::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
     }
 
     // -----------------------------------------------------------------
@@ -244,22 +244,22 @@ namespace detail {
 
     static inline uint8x16 narrow(uint16x8 a, uint16x8 b)
     {
-        return vec_pack(a, b);
+        return vec_pack(a.data, b.data);
     }
 
     static inline uint16x8 narrow(uint32x4 a, uint32x4 b)
     {
-        return vec_pack(a, b);
+        return vec_pack(a.data, b.data);
     }
 
     static inline int8x16 narrow(int16x8 a, int16x8 b)
     {
-        return vec_pack(a, b);
+        return vec_pack(a.data, b.data);
     }
 
     static inline int16x8 narrow(int32x4 a, int32x4 b)
     {
-        return vec_pack(a, b);
+        return vec_pack(a.data, b.data);
     }
 
     // -----------------------------------------------------------------
@@ -369,33 +369,33 @@ namespace detail {
     template <>
     inline float32x4 convert<float32x4>(uint32x4 s)
     {
-        return vec_ctf(s, 0);
+        return vec_ctf(s.data, 0);
     }
 
     template <>
     inline float32x4 convert<float32x4>(int32x4 s)
     {
-        return vec_ctf(s, 0);
+        return vec_ctf(s.data, 0);
     }
 
     template <>
     inline uint32x4 convert<uint32x4>(float32x4 s)
     {
-        s = add(s, float32x4_set1(0.5f));
-        return vec_ctu(s, 0);
+        s = add(s.data, float32x4_set1(0.5f).data);
+        return vec_ctu(s.data, 0);
     }
 
     template <>
     inline int32x4 convert<int32x4>(float32x4 s)
     {
-        s = add(s, float32x4_set1(0.5f));
-        return vec_cts(s, 0);
+        s = add(s.data, float32x4_set1(0.5f).data);
+        return vec_cts(s.data, 0);
     }
 
     template <>
     inline int32x4 truncate<int32x4>(float32x4 s)
     {
-        return vec_cts(s, 0);
+        return vec_cts(s.data, 0);
     }
 
     // 256 bit convert
@@ -539,38 +539,40 @@ namespace detail {
     template <>
     inline float64x4 convert<float64x4>(float32x4 s)
     {
-        float64x4 result;
-        result.lo = vec_cvf(unpacklo(s, s));
-        result.hi = vec_cvf(unpackhi(s, s));
-        return result;
+        double x = double(get_component<0>(s));
+        double y = double(get_component<1>(s));
+        double z = double(get_component<2>(s));
+        double w = double(get_component<3>(s));
+        return float64x4_set4(x, y, z, w);
     }
 
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
     {
-        int32 x = int32(get_component<0>(v) + 0.5);
-        int32 y = int32(get_component<1>(v) + 0.5);
-        int32 z = int32(get_component<2>(v) + 0.5);
-        int32 w = int32(get_component<3>(v) + 0.5);
+        int32 x = int32(get_component<0>(s) + 0.5);
+        int32 y = int32(get_component<1>(s) + 0.5);
+        int32 z = int32(get_component<2>(s) + 0.5);
+        int32 w = int32(get_component<3>(s) + 0.5);
         return int32x4_set4(x, y, z, w);
     }
 
     template <>
     inline float32x4 convert<float32x4>(float64x4 s)
     {
-        float32x4 a = vec_cvf(s.lo);
-        float32x4 b = vec_cvf(s.hi);
-        return unpacklo(unpacklo(a, b), unpackhi(a, b));
-        //return shuffle<0, 2, 0, 2>(a, b); // check if this is faster
+        float x = float(get_component<0>(s));
+        float y = float(get_component<1>(s));
+        float z = float(get_component<2>(s));
+        float w = float(get_component<3>(s));
+        return float32x4_set4(x, y, z, w);
     }
 
     template <>
     inline float64x4 convert<float64x4>(uint32x4 ui)
     {
-        double x = double(get_component<0>(v));
-        double y = double(get_component<1>(v));
-        double z = double(get_component<2>(v));
-        double w = double(get_component<3>(v));
+        double x = double(get_component<0>(ui));
+        double y = double(get_component<1>(ui));
+        double z = double(get_component<2>(ui));
+        double w = double(get_component<3>(ui));
         return float64x4_set4(x, y, z, w);
     }
 
@@ -631,10 +633,10 @@ namespace detail {
     template <>
     inline float16x4 convert<float16x4>(float32x4 f)
     {
-        float x = f32_to_f16(get_component<0>(f));
-        float y = f32_to_f16(get_component<1>(f));
-        float z = f32_to_f16(get_component<2>(f));
-        float w = f32_to_f16(get_component<3>(f));
+        float x = f32_to_f16(get_component<0>(f));
+        float y = f32_to_f16(get_component<1>(f));
+        float z = f32_to_f16(get_component<2>(f));
+        float w = f32_to_f16(get_component<3>(f));
         return {{ x, y, z, w }};
     }
 

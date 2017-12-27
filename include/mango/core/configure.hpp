@@ -522,27 +522,18 @@
         // VMX 3 (Power ISA v3.0)
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
-        #include <altivec.h>
-        #undef bool
-        #undef vector
         
     #elif defined(_ARCH_PWR8)
 
         // VMX 2 (Power ISA v2.07)
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
-        #include <altivec.h>
-        #undef bool
-        #undef vector
         
     #elif defined(_ARCH_PWR7)
 
         // VSX (Power ISA v2.06)
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
-        #include <altivec.h>
-        #undef bool
-        #undef vector
 
     #elif defined(__PPU__) || defined(__SPU__)
 
@@ -556,9 +547,6 @@
 
         // VMX (Power ISA v2.03)
         #define MANGO_ENABLE_ALTIVEC
-        #include <altivec.h>
-        #undef bool
-        #undef vector
 
     #endif
 

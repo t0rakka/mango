@@ -30,17 +30,19 @@ namespace simd {
     template <int ScalarBits, int VectorSize, typename MaskType>
     struct hardware_mask
     {
-        MaskType mask;
+        using vector = MaskType;
+
+        MaskType data;
 
         hardware_mask() = default;
         hardware_mask(MaskType mask)
-        : mask(mask)
+            : data(mask)
         {
         }
 
         operator MaskType () const
         {
-            return mask;
+            return data;
         }
     };
 
@@ -61,7 +63,7 @@ namespace simd {
 
         hardware_vector() = default;
         hardware_vector(VectorType v)
-        : data(v)
+            : data(v)
         {
         }
 
@@ -80,7 +82,7 @@ namespace simd {
 
         scalar_mask() = default;
         scalar_mask(uint32 mask)
-        : mask(mask)
+            : mask(mask)
         {
         }
 
@@ -143,7 +145,7 @@ namespace simd {
 
         composite_vector() = default;
         composite_vector(VectorType lo, VectorType hi)
-        : lo(lo), hi(hi)
+            : lo(lo), hi(hi)
         {
         }
     };
@@ -498,6 +500,8 @@ namespace simd {
 
 #elif defined(MANGO_ENABLE_ALTIVEC) && defined(MANGO_ENABLE_VSX)
 
+#include <altivec.h>
+
 namespace mango {
 namespace simd {
     
@@ -566,6 +570,14 @@ namespace simd {
 
 } // namespace simd
 } // namespace mango
+
+// <altivec.h> defined these; clean up
+#undef bool
+#undef vector
+#undef pixel
+#undef __bool
+#undef __vector
+#undef __pixel
 
 #include "altivec_int128.hpp"
 #include "altivec_float128.hpp"

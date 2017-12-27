@@ -146,11 +146,11 @@ ifeq (Linux, $(OS))
 
   ifeq (ppc64le, $(ARCH))
     PLATFORM = ppc64le
-    CC  = powerpc64le-linux-gnu-gcc $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
-    CPP = powerpc64le-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
-    LINK_MANGO  = CPP -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
-    LINK_OPENGL = CPP -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
-    LINK_VULKAN = CPP -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
+    CC  = powerpc64le-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -mcpu=power8 -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = powerpc64le-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -mcpu=power8 -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    LINK_MANGO  = $(CPP) -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
+    LINK_OPENGL = $(CPP) -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
+    LINK_VULKAN = $(CPP) -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
 endif
