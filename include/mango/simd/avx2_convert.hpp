@@ -237,25 +237,25 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
-    // pack
+    // narrow
     // -----------------------------------------------------------------
 
-    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 narrow(uint16x8 a, uint16x8 b)
     {
         return _mm_packus_epi16(a, b);
     }
 
-    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 narrow(uint32x4 a, uint32x4 b)
     {
         return simd128_packus_epi32(a, b);
     }
 
-    static inline int8x16 pack(int16x8 a, int16x8 b)
+    static inline int8x16 narrow(int16x8 a, int16x8 b)
     {
         return _mm_packs_epi16(a, b);
     }
 
-    static inline int16x8 pack(int32x4 a, int32x4 b)
+    static inline int16x8 narrow(int32x4 a, int32x4 b)
     {
         return _mm_packs_epi32(a, b);
     }

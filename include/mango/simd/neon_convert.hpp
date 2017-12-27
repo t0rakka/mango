@@ -239,6 +239,8 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
+#if 1
+
     static inline uint16x8 extend16(uint8x16 s)
     {
 	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
@@ -258,9 +260,33 @@ namespace detail {
 	    return vreinterpretq_u32_u16(vcombine_u16(a.val[0], a.val[1]));
     }
 
+#else
+
+    // TODO: test
+
+    static inline uint16x8 extend16(uint8x16 s)
+    {
+        return vmovl_u8(vget_low_u8(s));
+    }
+
+    static inline uint32x4 extend32(uint8x16 s)
+    {
+        auto temp = vmovl_u8(vget_low_u8(s));
+        return vmovl_u16(vget_low_u16(temp));
+    }
+
+    static inline uint32x4 extend32(uint16x8 s)
+    {
+        return vmovl_u16(vget_low_u16(s));
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
+
+#if 1
 
     static inline int16x8 extend16(int8x16 s)
     {
@@ -287,26 +313,48 @@ namespace detail {
 	    return vreinterpretq_s32_s16(vcombine_s16(temp.val[0], temp.val[1]));
     }
 
+#else
+
+    // TODO: test
+
+    static inline int16x8 extend16(int8x16 s)
+    {
+        return vmovl_s8(vget_low_s8(s));
+    }
+
+    static inline int32x4 extend32(int8x16 s)
+    {
+        auto temp = vmovl_s8(vget_low_s8(s));
+        return vmovl_s16(vget_low_s16(temp));
+    }
+
+    static inline int32x4 extend32(int16x8 s)
+    {
+        return vmovl_s16(vget_low_s16(s));
+    }
+
+#endif
+
     // -----------------------------------------------------------------
-    // pack
+    // narrow
     // -----------------------------------------------------------------
 
-    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 narrow(uint16x8 a, uint16x8 b)
     {
         return vcombine_u8(vqmovn_u16(a), vqmovn_u16(b));
     }
 
-    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 narrow(uint32x4 a, uint32x4 b)
     {
         return vcombine_u16(vqmovn_u32(a), vqmovn_u32(b));
     }
 
-    static inline int8x16 pack(int16x8 a, int16x8 b)
+    static inline int8x16 narrow(int16x8 a, int16x8 b)
     {
         return vcombine_s8(vqmovn_s16(a), vqmovn_s16(b));
     }
 
-    static inline int16x8 pack(int32x4 a, int32x4 b)
+    static inline int16x8 narrow(int32x4 a, int32x4 b)
     {
         return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
     }

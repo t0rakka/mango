@@ -113,10 +113,10 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
-    // pack
+    // narrow
     // -----------------------------------------------------------------
 
-    static inline uint8x16 pack(uint16x8 a, uint16x8 b)
+    static inline uint8x16 narrow(uint16x8 a, uint16x8 b)
     {
         uint8x16 v;
         for (int i = 0; i < 8; ++i)
@@ -127,7 +127,7 @@ namespace simd {
         return v;
     }
 
-    static inline uint16x8 pack(uint32x4 a, uint32x4 b)
+    static inline uint16x8 narrow(uint32x4 a, uint32x4 b)
     {
         uint16x8 v;
         for (int i = 0; i < 4; ++i)
@@ -138,7 +138,7 @@ namespace simd {
         return v;
     }
 
-    static inline int8x16 pack(int16x8 a, int16x8 b)
+    static inline int8x16 narrow(int16x8 a, int16x8 b)
     {
         int8x16 v;
         for (int i = 0; i < 8; ++i)
@@ -149,7 +149,7 @@ namespace simd {
         return v;
     }
 
-    static inline int16x8 pack(int32x4 a, int32x4 b)
+    static inline int16x8 narrow(int32x4 a, int32x4 b)
     {
         int16x8 v;
         for (int i = 0; i < 4; ++i)
