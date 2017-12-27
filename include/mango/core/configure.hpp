@@ -306,7 +306,7 @@
     #define MANGO_CPU_PPC
     #define MANGO_CPU_64BIT
 
-    #ifdef defined(__powerpc64le__) || defined(__ppc64le__) || defined(__PPC64LE__)
+    #if defined(__powerpc64le__) || defined(__ppc64le__) || defined(__PPC64LE__)
         #define MANGO_LITTLE_ENDIAN
     #else
         #define MANGO_BIG_ENDIAN /* bi-endian; depends on OS */
@@ -523,6 +523,8 @@
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
         #include <altivec.h>
+        #undef bool
+        #undef vector
         
     #elif defined(_ARCH_PWR8)
 
@@ -530,6 +532,8 @@
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
         #include <altivec.h>
+        #undef bool
+        #undef vector
         
     #elif defined(_ARCH_PWR7)
 
@@ -537,6 +541,8 @@
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
         #include <altivec.h>
+        #undef bool
+        #undef vector
 
     #elif defined(__PPU__) || defined(__SPU__)
 
@@ -551,6 +557,8 @@
         // VMX (Power ISA v2.03)
         #define MANGO_ENABLE_ALTIVEC
         #include <altivec.h>
+        #undef bool
+        #undef vector
 
     #endif
 
