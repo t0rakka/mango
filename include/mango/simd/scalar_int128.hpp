@@ -170,7 +170,7 @@ namespace simd {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
         {
-            v[i] = Count < sizeof(ScalarType) * 8 ? ScalarType(a[i]) << Count : 0;
+            v[i] = Count < int(sizeof(ScalarType) * 8) ? ScalarType(a[i]) << Count : 0;
         }
         return v;
     }
@@ -181,7 +181,7 @@ namespace simd {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
         {
-            v[i] = Count < sizeof(ScalarType) * 8 ? ScalarType(a[i]) >> Count : 0;
+            v[i] = Count < int(sizeof(ScalarType) * 8) ? ScalarType(a[i]) >> Count : 0;
         }
         return v;
     }
@@ -194,7 +194,7 @@ namespace simd {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
         {
-            v[i] = count < sizeof(ScalarType) * 8 ? ScalarType(a[i]) << count : 0;
+            v[i] = count < int(sizeof(ScalarType) * 8) ? ScalarType(a[i]) << count : 0;
         }
         return v;
     }
@@ -205,7 +205,7 @@ namespace simd {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
         {
-            v[i] = count < sizeof(ScalarType) * 8 ? ScalarType(a[i]) >> count : 0;
+            v[i] = count < int(sizeof(ScalarType) * 8) ? ScalarType(a[i]) >> count : 0;
         }
         return v;
     }

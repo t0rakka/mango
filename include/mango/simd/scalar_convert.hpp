@@ -18,14 +18,18 @@ namespace simd {
 	inline D reinterpret(scalar_vector<S0, S1> s)
 	{
         static_assert(sizeof(scalar_vector<S0, S1>) == sizeof(D), "Vectors must be same size.");
-        return reinterpret_cast<const D &>(s);
+        D temp;
+        std::memcpy(&temp, &s, sizeof(D));
+        return temp;
 	}
 
 	template <typename D, typename S>
 	inline D reinterpret(composite_vector<S> s)
 	{
         static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
-        return reinterpret_cast<const D &>(s);
+        D temp;
+        std::memcpy(&temp, &s, sizeof(D));
+        return temp;
 	}
 
     // -----------------------------------------------------------------
