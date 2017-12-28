@@ -492,7 +492,7 @@
 
 #elif defined(MANGO_CPU_ARM)
 
-    #ifdef __ARM_NEON__
+    #if defined(__ARM_NEON__) || defined(__ARM_NEON)
         // ARM NEON vector instrinsics
         #define MANGO_ENABLE_NEON
         #include <arm_neon.h>

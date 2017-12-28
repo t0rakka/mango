@@ -60,6 +60,7 @@ ARCH = $(shell uname -m)
 # define one of these to force cross compilation
 #ARCH = ppc64le
 #ARCH = mips64
+#ARCH = aarch64
 
 # ---------------------------------------------------------------------------
 # Linux
@@ -168,6 +169,21 @@ ifeq (Linux, $(OS))
     LINK_MANGO  = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
+  endif
+
+  ###############################################################################
+  #
+  # ARM64
+  #
+  ###############################################################################
+
+  ifeq (aarch64, $(ARCH))
+    PLATFORM = arm64
+    CC  = aarch64-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = aarch64-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    LINK_MANGO  = aarch64-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
+    LINK_OPENGL = aarch64-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
+    LINK_VULKAN = aarch64-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
 endif

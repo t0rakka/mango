@@ -471,13 +471,11 @@ namespace simd {
 
     // rounding
 
-#if __ARM_ARCH >= 8 && !defined(MANGO_COMPILER_CLANG)
-
-    // Disabled with clang until supported in NDK (tested last with r14b)
+#if __ARM_ARCH >= 8
 
     static inline float32x4 round(float32x4 s)
     {
-        return vrndqa_f32(s);
+        return vrndaq_f32(s);
     }
 
     static inline float32x4 trunc(float32x4 s)
@@ -487,12 +485,12 @@ namespace simd {
 
     static inline float32x4 floor(float32x4 s)
     {
-        return vrndqm_f32(s);
+        return vrndmq_f32(s);
     }
 
     static inline float32x4 ceil(float32x4 s)
     {
-        return vrndqp_f32(s);
+        return vrndpq_f32(s);
     }
 
 #else
