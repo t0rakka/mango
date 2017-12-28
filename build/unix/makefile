@@ -59,6 +59,7 @@ ARCH = $(shell uname -m)
 
 # define one of these to force cross compilation
 #ARCH = ppc64le
+#ARCH = mips64
 
 # ---------------------------------------------------------------------------
 # Linux
@@ -74,6 +75,7 @@ ifeq (Linux, $(OS))
   LIBRARY_MANGO  = lib$(LIBNAME_MANGO).so
   LIBRARY_OPENGL = lib$(LIBNAME_OPENGL).so
   LIBRARY_VULKAN = lib$(LIBNAME_VULKAN).so
+  
   CLEAN    = rm -fr *.so $(OBJECTS_PATH)
   INSTALL  = cp *.so /usr/lib ; ldconfig ; rm -rf /usr/include/mango ; cp -r $(INCLUDE_BASE)/mango/ /usr/include/mango/
   LINK_POST += -lpthread -ldl
@@ -148,9 +150,24 @@ ifeq (Linux, $(OS))
     PLATFORM = ppc64le
     CC  = powerpc64le-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -mcpu=power8 -funsafe-math-optimizations -fPIC $(CC_STD)
     CPP = powerpc64le-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -mcpu=power8 -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
-    LINK_MANGO  = $(CPP) -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
-    LINK_OPENGL = $(CPP) -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
-    LINK_VULKAN = $(CPP) -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
+    LINK_MANGO  = powerpc64le-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
+    LINK_OPENGL = powerpc64le-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
+    LINK_VULKAN = powerpc64le-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
+  endif
+
+  ###############################################################################
+  #
+  # MIPS
+  #
+  ###############################################################################
+
+  ifeq (mips64, $(ARCH))
+    PLATFORM = mips64
+    CC  = mips64-linux-gnuabi64-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = mips64-linux-gnuabi64-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    LINK_MANGO  = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
+    LINK_OPENGL = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
+    LINK_VULKAN = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
   endif
 
 endif
