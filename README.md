@@ -45,12 +45,12 @@ After prototyping and benchmarking above methods the mango API practically wrote
 - Compressed Texture support for ALL formats in DirectX, OpenGL and Vulkan
 
 ##### SIMD Abstraction
-- Intel: SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512
-- ARM NEON
-- PPC Altivec (deprecated)
-- SPU (deprecated)
-- FP16 conversion instruction support
-- Functional API ; simd vector objects are never modified in-place
+- x86/x86-64: SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512
+- ARM: NEON, NEON (aarch64)
+- PowerPC: Altivec (SVX)
+- MIPS: MSA (work in progress)
+- FP16 conversion instruction support where available
+- Functional API ; SIMD vector objects are never modified in-place
 
 ##### Short Vector Math
 - Super efficient implementation
