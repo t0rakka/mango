@@ -166,6 +166,8 @@ ifeq (Linux, $(OS))
     PLATFORM = mips64
     CC  = mips64-linux-gnuabi64-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
     CPP = mips64-linux-gnuabi64-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    CC += -mips64r5 -mfp64
+    CPP += -mips64r5 -mfp64
     LINK_MANGO  = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
@@ -189,7 +191,7 @@ ifeq (Linux, $(OS))
 endif
 
 # ---------------------------------------------------------------------------
-# Mac OS X
+# macOS
 # ---------------------------------------------------------------------------
 
 ifeq (Darwin, $(OS))

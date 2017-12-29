@@ -550,11 +550,15 @@
 
     #endif
 
-#elif defined(MANGO_CPU_MIPS) && defined(__mips_msa)
+#elif defined(MANGO_CPU_MIPS)
 
-    // MIPS SIMD Architecture
-    #define MANGO_ENABLE_MSA
-    #include <msa.h>
+    #if defined(__mips_msa)
+
+        // MIPS SIMD Architecture
+        #define MANGO_ENABLE_MSA
+        #include <msa.h>
+
+    #endif
 
 #endif
 
