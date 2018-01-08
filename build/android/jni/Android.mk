@@ -51,6 +51,10 @@ ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
     # OPTIONS += "-march=armv8.1-a+crypto"
 endif
 
+ifeq ($(TARGET_ARCH_ABI),mips64)
+    # OPTIONS += "-mmsa"
+endif
+
 # -------------------------------------------------------------
 # Mango library modules
 # -------------------------------------------------------------
