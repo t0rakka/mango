@@ -374,17 +374,32 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI2
 
+    static inline uint32 u32_deinterleave_bits(uint32 value)
+    {
+        return _pext_u32(value, 0x55555555);
+    }
+
     static inline uint32 u32_interleave_bits(uint32 value)
     {
         return _pdep_u32(value, 0x55555555);
     }
 
-    static inline uint32 u32_encode_morton(uint32 x, uint32 y)
+    static inline uint32 u32_interleave_bits(uint32 x, uint32 y)
     {
         return _pdep_u32(x, 0x55555555) | _pdep_u32(y, 0xaaaaaaaa);
     }
 
 #else
+
+    static inline uint32 u32_deinterleave_bits(uint32 value)
+    {
+        value &= 0x5555555555555555;
+        value = (value ^ (value >> 1 )) & 0x3333333333333333;
+        value = (value ^ (value >> 2 )) & 0x0f0f0f0f0f0f0f0f;
+        value = (value ^ (value >> 4 )) & 0x00ff00ff00ff00ff;
+        value = (value ^ (value >> 8 )) & 0x0000ffff0000ffff;
+        return value;
+    }
 
     static inline uint32 u32_interleave_bits(uint32 value)
     {
@@ -395,11 +410,9 @@ namespace mango
         return value;
     }
 
-    static inline uint32 u32_encode_morton(uint32 x, uint32 y)
+    static inline uint32 u32_interleave_bits(uint32 x, uint32 y)
     {
-        x = u32_interleave_bits(x);
-        y = u32_interleave_bits(y);
-        return x | (y << 1);
+        return u32_interleave_bits(x) | (u32_interleave_bits(y) << 1);
     }
 
 #endif
@@ -555,17 +568,33 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI2
 
-    static inline uint64 u64_interleave_bits(uint64 value)
+    static inline uint32 u64_deinterleave_bits(uint64 value)
     {
-        return _pdep_u64(value, 0x55555555);
+        return uint32(_pext_u64(value, 0x5555555555555555));
     }
 
-    static inline uint64 u64_encode_morton(uint64 x, uint64 y)
+    static inline uint64 u64_interleave_bits(uint64 value)
     {
-        return _pdep_u64(x, 0x55555555) | _pdep_u64(y, 0xaaaaaaaa);
+        return _pdep_u64(value, 0x5555555555555555);
+    }
+
+    static inline uint64 u64_interleave_bits(uint64 x, uint64 y)
+    {
+        return _pdep_u64(x, 0x5555555555555555) | _pdep_u64(y, 0xaaaaaaaaaaaaaaaa);
     }
 
 #else
+
+    static inline uint32 u64_deinterleave_bits(uint64 value)
+    {
+        value &= 0x5555555555555555;
+        value = (value ^ (value >> 1 )) & 0x3333333333333333;
+        value = (value ^ (value >> 2 )) & 0x0f0f0f0f0f0f0f0f;
+        value = (value ^ (value >> 4 )) & 0x00ff00ff00ff00ff;
+        value = (value ^ (value >> 8 )) & 0x0000ffff0000ffff;
+        value = (value ^ (value >> 16)) & 0x00000000ffffffff;
+        return uint32(value);
+    }
 
     static inline uint64 u64_interleave_bits(uint64 value)
     {
@@ -577,11 +606,9 @@ namespace mango
         return value;
     }
 
-    static inline uint64 u64_encode_morton(uint64 x, uint64 y)
+    static inline uint64 u64_interleave_bits(uint64 x, uint64 y)
     {
-        x = u64_interleave_bits(x);
-        y = u64_interleave_bits(y);
-        return x | (y << 1);
+        return u64_interleave_bits(x) | (u64_interleave_bits(y) << 1);
     }
 
 #endif

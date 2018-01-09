@@ -386,10 +386,10 @@ namespace
             int y0 = wrapWordIndex(i32NumYWords, wordY - 1);
             int y1 = wrapWordIndex(i32NumYWords, wordY);
             
-            PVRTCWord* P = pWordMembers + u32_encode_morton(y0, x0);
-            PVRTCWord* Q = pWordMembers + u32_encode_morton(y0, x1);
-            PVRTCWord* R = pWordMembers + u32_encode_morton(y1, x0);
-            PVRTCWord* S = pWordMembers + u32_encode_morton(y1, x1);
+            PVRTCWord* P = pWordMembers + u32_interleave_bits(y0, x0);
+            PVRTCWord* Q = pWordMembers + u32_interleave_bits(y0, x1);
+            PVRTCWord* R = pWordMembers + u32_interleave_bits(y1, x0);
+            PVRTCWord* S = pWordMembers + u32_interleave_bits(y1, x1);
             
             uint8 i32ModulationValues[8][16];
             
@@ -428,8 +428,8 @@ namespace
                 
                 P = Q;
                 R = S;
-                Q = pWordMembers + u32_encode_morton(y0, x1);
-                S = pWordMembers + u32_encode_morton(y1, x1);
+                Q = pWordMembers + u32_interleave_bits(y0, x1);
+                S = pWordMembers + u32_interleave_bits(y1, x1);
                 
                 moveModulationValues(i32ModulationValues, ui32WordWidth, ui8Bpp);
                 unpackModulations(*Q, ui32WordWidth, 0,              i32ModulationValues, ui8Bpp);
