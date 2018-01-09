@@ -55,6 +55,10 @@ ifeq ($(TARGET_ARCH_ABI),mips64)
     # OPTIONS += "-mmsa"
 endif
 
+ifeq ($(TARGET_ARCH_ABI),x86_64)
+    # OPTIONS += "-msha"
+endif
+
 # -------------------------------------------------------------
 # Mango library modules
 # -------------------------------------------------------------

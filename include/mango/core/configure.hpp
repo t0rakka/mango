@@ -475,6 +475,11 @@
         #define MANGO_ENABLE_BMI2
     #endif
 
+    #ifdef __SHA__
+        #define MANGO_ENABLE_SHA
+        #include <immintrin.h>
+    #endif
+
     #if defined(__FMA__) && !defined(MANGO_ENABLE_FMA3)
         #define MANGO_ENABLE_FMA3
         #include <immintrin.h>
