@@ -111,7 +111,7 @@ namespace mango {
         hash[2] = 0x98BADCFE;
         hash[3] = 0x10325476;
 
-        const uint32 size = memory.size;
+        const uint32 size = uint32(memory.size);
         uint32 i = 0;
         for ( ; size - i >= 64; i += 64)
         {

@@ -116,6 +116,10 @@
     <ClInclude Include="..\..\include\mango\opengl\khronos\glxext.h" />
     <ClInclude Include="..\..\include\mango\opengl\khronos\wglext.h" />
     <ClInclude Include="..\..\include\mango\opengl\opengl.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_int128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx2_convert.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx2_double256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx2_float256.hpp" />
@@ -268,9 +272,10 @@
     <ClCompile Include="..\..\source\mango\core\compress.cpp" />
     <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp" />
     <ClCompile Include="..\..\source\mango\core\crc32.cpp" />
-    <ClCompile Include="..\..\source\mango\core\hash.cpp" />
+    <ClCompile Include="..\..\source\mango\core\md5.cpp" />
     <ClCompile Include="..\..\source\mango\core\memory.cpp" />
     <ClCompile Include="..\..\source\mango\core\object.cpp" />
+    <ClCompile Include="..\..\source\mango\core\sha1.cpp" />
     <ClCompile Include="..\..\source\mango\core\string.cpp" />
     <ClCompile Include="..\..\source\mango\core\system.cpp" />
     <ClCompile Include="..\..\source\mango\core\thread.cpp" />

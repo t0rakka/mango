@@ -681,6 +681,18 @@
     <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\altivec_convert.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\altivec_double128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\altivec_float128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\altivec_int128.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -702,9 +714,6 @@
       <Filter>mango\source\core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\mango\core\crc32.cpp">
-      <Filter>mango\source\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\core\hash.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\mango\core\memory.cpp">
@@ -1000,6 +1009,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_opt.c">
       <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\md5.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\sha1.cpp">
+      <Filter>mango\source\core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
