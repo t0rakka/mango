@@ -695,11 +695,13 @@ namespace mango {
     void sha1(uint32 hash[5], Memory memory)
     {
         sha1_hash(memory.address, uint32(memory.size), hash);
+#ifdef MANGO_LITTLE_ENDIAN
         hash[0] = byteswap(hash[0]);
         hash[1] = byteswap(hash[1]);
         hash[2] = byteswap(hash[2]);
         hash[3] = byteswap(hash[3]);
         hash[4] = byteswap(hash[4]);
+#endif
     }
 
     void md5(uint32 hash[4], Memory memory)
