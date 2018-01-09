@@ -147,7 +147,6 @@ typedef   signed long long  int64; // signed 64 bits
 #define  MAXPASSWORD       128
 
 #include "array.hpp"
-#include "sha1.hpp"
 #include "crc.hpp"
 #include "rijndael.hpp"
 #include "crypt.hpp"

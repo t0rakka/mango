@@ -312,9 +312,6 @@
     <ClInclude Include="..\..\source\external\unrar\rijndael.hpp">
       <Filter>external\unrar</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\external\unrar\sha1.hpp">
-      <Filter>external\unrar</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\unrar\suballoc.hpp">
       <Filter>external\unrar</Filter>
     </ClInclude>
@@ -876,9 +873,6 @@
       <Filter>external\unrar</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\unrar\rijndael.cpp">
-      <Filter>external\unrar</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\unrar\sha1.cpp">
       <Filter>external\unrar</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\unrar\unpack.cpp">

@@ -191,7 +191,6 @@
     <ClInclude Include="..\..\source\external\unrar\rarvm.hpp" />
     <ClInclude Include="..\..\source\external\unrar\rdwrfn.hpp" />
     <ClInclude Include="..\..\source\external\unrar\rijndael.hpp" />
-    <ClInclude Include="..\..\source\external\unrar\sha1.hpp" />
     <ClInclude Include="..\..\source\external\unrar\suballoc.hpp" />
     <ClInclude Include="..\..\source\external\unrar\unpack.hpp" />
     <ClInclude Include="..\..\source\external\zstd\common\bitstream.h" />
@@ -248,7 +247,6 @@
     <ClCompile Include="..\..\source\external\unrar\rarvm.cpp" />
     <ClCompile Include="..\..\source\external\unrar\rdwrfn.cpp" />
     <ClCompile Include="..\..\source\external\unrar\rijndael.cpp" />
-    <ClCompile Include="..\..\source\external\unrar\sha1.cpp" />
     <ClCompile Include="..\..\source\external\unrar\unpack.cpp" />
     <ClCompile Include="..\..\source\external\zstd\common\entropy_common.c" />
     <ClCompile Include="..\..\source\external\zstd\common\error_private.c" />
