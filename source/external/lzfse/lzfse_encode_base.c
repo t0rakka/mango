@@ -126,7 +126,7 @@ lzfse_encode_v1_freq_table(lzfse_compressed_block_header_v2 *out,
     // Encode one value to accum
     int nbits = 0;
     uint32_t bits = lzfse_encode_v1_freq_value(src[i], &nbits);
-    assert(bits < uint32_t(1 << nbits));
+    assert(bits < (uint32_t)(1 << nbits));
     accum |= bits << accum_nbits;
     accum_nbits += nbits;
 
