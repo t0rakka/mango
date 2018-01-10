@@ -65,7 +65,6 @@
 		A0FF42CE1BBEDC9D0036141B /* simd in Headers */ = {isa = PBXBuildFile; fileRef = A0FF42CC1BBEDC630036141B /* simd */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
-		A630895E1DFC6D4700252BC4 /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895C1DFC6D4700252BC4 /* hash.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
 		A63DD6FA1E706D8600D4D499 /* arithmetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD6F31E706D8600D4D499 /* arithmetic.cpp */; };
 		A63DD6FB1E706D8600D4D499 /* decode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD6F41E706D8600D4D499 /* decode.cpp */; };
@@ -94,8 +93,6 @@
 		A63DD7571E706EB200D4D499 /* rdwrfn.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7421E706EB200D4D499 /* rdwrfn.hpp */; };
 		A63DD7581E706EB200D4D499 /* rijndael.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7431E706EB200D4D499 /* rijndael.cpp */; };
 		A63DD7591E706EB200D4D499 /* rijndael.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7441E706EB200D4D499 /* rijndael.hpp */; };
-		A63DD75A1E706EB200D4D499 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7451E706EB200D4D499 /* sha1.cpp */; };
-		A63DD75B1E706EB200D4D499 /* sha1.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7461E706EB200D4D499 /* sha1.hpp */; };
 		A63DD75C1E706EB200D4D499 /* suballoc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7471E706EB200D4D499 /* suballoc.hpp */; };
 		A63DD75D1E706EB200D4D499 /* unpack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7481E706EB200D4D499 /* unpack.cpp */; };
 		A63DD75E1E706EB200D4D499 /* unpack.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7491E706EB200D4D499 /* unpack.hpp */; };
@@ -138,6 +135,8 @@
 		A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AB1E706FA000D4D499 /* etc.hpp */; };
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
+		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
+		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
 		A6DFCF0A1F7C192200DB6797 /* zstd_double_fast.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */; };
 		A6DFCF0C1F7C193400DB6797 /* zstd_fast.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF0B1F7C193400DB6797 /* zstd_fast.c */; };
 		A6DFCF0E1F7C194300DB6797 /* zstd_lazy.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF0D1F7C194300DB6797 /* zstd_lazy.c */; };
@@ -233,7 +232,6 @@
 		A0FF42CC1BBEDC630036141B /* simd */ = {isa = PBXFileReference; lastKnownFileType = folder; name = simd; path = mango/simd; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
-		A630895C1DFC6D4700252BC4 /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
 		A63DD6F31E706D8600D4D499 /* arithmetic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = arithmetic.cpp; path = jpeg/arithmetic.cpp; sourceTree = "<group>"; };
 		A63DD6F41E706D8600D4D499 /* decode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = decode.cpp; path = jpeg/decode.cpp; sourceTree = "<group>"; };
@@ -262,8 +260,6 @@
 		A63DD7421E706EB200D4D499 /* rdwrfn.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = rdwrfn.hpp; path = external/unrar/rdwrfn.hpp; sourceTree = "<group>"; };
 		A63DD7431E706EB200D4D499 /* rijndael.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rijndael.cpp; path = external/unrar/rijndael.cpp; sourceTree = "<group>"; };
 		A63DD7441E706EB200D4D499 /* rijndael.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = rijndael.hpp; path = external/unrar/rijndael.hpp; sourceTree = "<group>"; };
-		A63DD7451E706EB200D4D499 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = external/unrar/sha1.cpp; sourceTree = "<group>"; };
-		A63DD7461E706EB200D4D499 /* sha1.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = sha1.hpp; path = external/unrar/sha1.hpp; sourceTree = "<group>"; };
 		A63DD7471E706EB200D4D499 /* suballoc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = suballoc.hpp; path = external/unrar/suballoc.hpp; sourceTree = "<group>"; };
 		A63DD7481E706EB200D4D499 /* unpack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = unpack.cpp; path = external/unrar/unpack.cpp; sourceTree = "<group>"; };
 		A63DD7491E706EB200D4D499 /* unpack.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = unpack.hpp; path = external/unrar/unpack.hpp; sourceTree = "<group>"; };
@@ -306,6 +302,8 @@
 		A63DD7AB1E706FA000D4D499 /* etc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = etc.hpp; path = external/google/etc.hpp; sourceTree = "<group>"; };
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
+		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
+		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
 		A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_double_fast.c; path = external/zstd/compress/zstd_double_fast.c; sourceTree = "<group>"; };
 		A6DFCF0B1F7C193400DB6797 /* zstd_fast.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_fast.c; path = external/zstd/compress/zstd_fast.c; sourceTree = "<group>"; };
 		A6DFCF0D1F7C194300DB6797 /* zstd_lazy.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_lazy.c; path = external/zstd/compress/zstd_lazy.c; sourceTree = "<group>"; };
@@ -373,11 +371,12 @@
 		A005598A1C93323D00A6D963 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				A6C8F4F5200612E900A25756 /* md5.cpp */,
+				A6C8F4F6200612E900A25756 /* sha1.cpp */,
+				A630895B1DFC6D4700252BC4 /* crc32.cpp */,
 				A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */,
 				A005598B1C93324E00A6D963 /* buffer.cpp */,
 				A005598C1C93324E00A6D963 /* compress.cpp */,
-				A630895B1DFC6D4700252BC4 /* crc32.cpp */,
-				A630895C1DFC6D4700252BC4 /* hash.cpp */,
 				A005598D1C93324E00A6D963 /* cpuinfo.cpp */,
 				A005598E1C93324E00A6D963 /* memory.cpp */,
 				A005598F1C93324E00A6D963 /* object.cpp */,
@@ -584,8 +583,6 @@
 				A63DD7421E706EB200D4D499 /* rdwrfn.hpp */,
 				A63DD7431E706EB200D4D499 /* rijndael.cpp */,
 				A63DD7441E706EB200D4D499 /* rijndael.hpp */,
-				A63DD7451E706EB200D4D499 /* sha1.cpp */,
-				A63DD7461E706EB200D4D499 /* sha1.hpp */,
 				A63DD7471E706EB200D4D499 /* suballoc.hpp */,
 				A63DD7481E706EB200D4D499 /* unpack.cpp */,
 				A63DD7491E706EB200D4D499 /* unpack.hpp */,
@@ -773,7 +770,6 @@
 				A63DD6FF1E706D8600D4D499 /* jpeg.hpp in Headers */,
 				A00559DA1C93337C00A6D963 /* core in Headers */,
 				A00559DE1C9333F100A6D963 /* filesystem in Headers */,
-				A63DD75B1E706EB200D4D499 /* sha1.hpp in Headers */,
 				A0FF42CE1BBEDC9D0036141B /* simd in Headers */,
 				A63DD7751E706EF100D4D499 /* lzfse_internal.h in Headers */,
 				A00559E41C9335E100A6D963 /* vulkan in Headers */,
@@ -904,18 +900,17 @@
 				A00559D41C93329A00A6D963 /* surface.cpp in Sources */,
 				A63DD7A61E706F8800D4D499 /* BC6HBC7.cpp in Sources */,
 				A63DD7721E706EF100D4D499 /* lzfse_encode.c in Sources */,
-				A630895E1DFC6D4700252BC4 /* hash.cpp in Sources */,
 				A00559CA1C93329A00A6D963 /* image_hdr.cpp in Sources */,
 				A63DD6FD1E706D8600D4D499 /* huffman.cpp in Sources */,
 				A00559991C93324E00A6D963 /* string.cpp in Sources */,
 				A00559C71C93329A00A6D963 /* image_bmp.cpp in Sources */,
 				A00559D01C93329A00A6D963 /* image_png.cpp in Sources */,
+				A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */,
 				A63DD6FE1E706D8600D4D499 /* idct.cpp in Sources */,
 				A6FCC3971E8122EA0037C15F /* pool.c in Sources */,
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
 				A63DD79D1E706F7600D4D499 /* miniz.cpp in Sources */,
 				A6DFCF101F7C194B00DB6797 /* zstd_ldm.c in Sources */,
-				A63DD75A1E706EB200D4D499 /* sha1.cpp in Sources */,
 				A00559C81C93329A00A6D963 /* image_dds.cpp in Sources */,
 				A63DD76F1E706EF100D4D499 /* lzfse_decode.c in Sources */,
 				A63DD7731E706EF100D4D499 /* lzfse_fse.c in Sources */,
@@ -958,6 +953,7 @@
 				A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */,
 				A63DD6FB1E706D8600D4D499 /* decode.cpp in Sources */,
 				A00559C01C93329A00A6D963 /* blitter.cpp in Sources */,
+				A6C8F4F7200612E900A25756 /* md5.cpp in Sources */,
 				A63DD7A31E706F8800D4D499 /* BC.cpp in Sources */,
 				A00559C21C93329A00A6D963 /* block_yuv.cpp in Sources */,
 				A6FCC3A81E8123010037C15F /* huf_compress.c in Sources */,
