@@ -40,12 +40,13 @@ namespace {
         uint32x4_t k2 = vdupq_n_u32(0x8F1BBCDC);
         uint32x4_t k3 = vdupq_n_u32(0xCA62C1D6);
 
+        // load state
+        uint32x4_t abcd = vld1q_u32(state);
+        uint32_t e = state[4];
+
         for (int i = 0; i < count; ++i)
         {
-            // load state
-            uint32x4_t abcd = vld1q_u32(state);
             uint32x4_t abcd0 = abcd;
-            uint32_t e = state[4];
 
             // load message
             uint32x4_t w0 = vld1q_u32(reinterpret_cast<const uint32_t *>(block +  0));
@@ -104,10 +105,14 @@ namespace {
             e0 = vsha1h_u32(a);
             abcd = vsha1pq_u32(abcd, e1, wk1);
 
-            // store state
-            vst1q_u32(state, vaddq_u32(abcd0, abcd));
-            state[4] = e + e0;
+            // update state
+            abcd = vaddq_u32(abcd, abcd0);
+            e += e0;
         }
+
+        // store state
+        vst1q_u32(state, abcd);
+        state[4] = e;
     }
 
 #undef ROUND0
