@@ -135,6 +135,7 @@
 		A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AB1E706FA000D4D499 /* etc.hpp */; };
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
+		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
 		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
 		A6DFCF0A1F7C192200DB6797 /* zstd_double_fast.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */; };
@@ -302,6 +303,7 @@
 		A63DD7AB1E706FA000D4D499 /* etc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = etc.hpp; path = external/google/etc.hpp; sourceTree = "<group>"; };
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
+		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
 		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
 		A6DFCF091F7C192200DB6797 /* zstd_double_fast.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_double_fast.c; path = external/zstd/compress/zstd_double_fast.c; sourceTree = "<group>"; };
@@ -373,6 +375,7 @@
 			children = (
 				A6C8F4F5200612E900A25756 /* md5.cpp */,
 				A6C8F4F6200612E900A25756 /* sha1.cpp */,
+				A690037B2008FF790080E5FA /* sha2.cpp */,
 				A630895B1DFC6D4700252BC4 /* crc32.cpp */,
 				A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */,
 				A005598B1C93324E00A6D963 /* buffer.cpp */,
@@ -965,6 +968,7 @@
 				A0F241D319D5E30D00218F92 /* math.cpp in Sources */,
 				A00559CE1C93329A00A6D963 /* image_pcx.cpp in Sources */,
 				A0F21EDC1CA062EA0084302D /* mapper_file.cpp in Sources */,
+				A690037C2008FF790080E5FA /* sha2.cpp in Sources */,
 				A63DD7541E706EB200D4D499 /* rarvm.cpp in Sources */,
 				A00559A81C93327800A6D963 /* mapper.cpp in Sources */,
 				A6DFCF0C1F7C193400DB6797 /* zstd_fast.c in Sources */,
