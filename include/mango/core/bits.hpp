@@ -226,12 +226,6 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
-    static inline uint32 u32_expand_lsb(uint32 value)
-    {
-		// NOTE: 0 expands to 0xffffffff
-        return value ^ (value - 1);
-    }
-
     static inline uint32 u32_expand_msb(uint32 value)
     {
         value |= value >> 1;
@@ -242,10 +236,50 @@ namespace mango
         return value;
     }
 
+#ifdef MANGO_ENABLE_BMI
+
+    static inline uint32 u32_clear_lsb(uint32 value)
+    {
+        return _blsr_u32(value);
+    }
+
+    static inline uint32 u32_expand_lsb(uint32 value)
+    {
+		// NOTE: 0 expands to 0xffffffff
+        return _blsmsk_u32(value);
+    }
+
+    static inline uint32 u32_lsb(uint32 value)
+    {
+        return _blsi_u32(value);
+    }
+
+#else
+
+    static inline uint32 u32_clear_lsb(uint32 value)
+    {
+        // value:     xxxxx100000
+        // value - 1: xxxxx011111
+        // Subtracting one from the value borrows from the first set bit
+        // that is encountered. The bitwise-and will yield 0 ONLY if the
+        // the other bits in the value (marked with x) are not set.
+        // The expression will evaluate to zero ONLY when a single bit is set,
+        // which means the value is a power of two.
+        return value & (value - 1);
+    }
+
+    static inline uint32 u32_expand_lsb(uint32 value)
+    {
+		// NOTE: 0 expands to 0xffffffff
+        return value ^ (value - 1);
+    }
+
     static inline uint32 u32_lsb(uint32 value)
     {
         return value & (0 - value);
     }
+
+#endif
 
     static inline uint32 u32_msb(uint32 value)
     {
@@ -273,11 +307,36 @@ namespace mango
         return table[(mask * 0x07c4acdd) >> 27];
     }
 
+#ifdef MANGO_ENABLE_BMI
+
+    static inline int u32_index_of_lsb(uint32 value)
+    {
+        return _tzcnt_u32(value);
+    }
+
+#else
+
     static inline int u32_index_of_lsb(uint32 value)
     {
         const uint32 lsb = u32_lsb(value);
         return u32_index_of_bit(lsb);
     }
+
+#endif
+
+#ifdef MANGO_ENABLE_LZCNT
+
+    static inline int u32_index_of_msb(uint32 value)
+    {
+        return _lzcnt_u32(value);
+    }
+
+    static inline int u32_index_of_msb_in_mask(uint32 mask)
+    {
+        return _lzcnt_u32(value);
+    }
+
+#else
 
     static inline int u32_index_of_msb(uint32 value)
     {
@@ -296,6 +355,8 @@ namespace mango
         const uint32 msb = mask & ~(mask >> 1);
         return u32_index_of_bit(msb);
     }
+
+#endif
 
     static inline uint32 u32_reverse_bits(uint32 value)
     {
@@ -325,18 +386,6 @@ namespace mango
     }
 
 #endif
-
-    static inline bool u32_is_power_of_two(uint32 value)
-    {
-        // value:     xxxxx100000
-        // value - 1: xxxxx011111
-        // Subtracting one from the value borrows from the first set bit
-        // that is encountered. The bitwise-and will yield 0 ONLY if the
-        // the other bits in the value (marked with x) are not set.
-        // The expression will evaluate to zero ONLY when a single bit is set,
-        // which means the value is a power of two.
-        return (value & (value - 1)) == 0;
-    }
 
     static inline uint32 u32_floor_power_of_two(uint32 value)
     {
@@ -422,15 +471,14 @@ namespace mango
 	    return ((value - 0x01010101) & ~value & 0x80808080) != 0;
     }
 
+    static inline bool u32_is_power_of_two(uint32 value)
+    {
+        return u32_clear_lsb(value) == 0;
+    }
+
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
-
-    static inline uint64 u64_expand_lsb(uint64 value)
-    {
-		// NOTE: 0 expands to 0xffffffffffffffff
-        return value ^ (value - 1);
-    }
 
     static inline uint64 u64_expand_msb(uint64 value)
     {
@@ -443,10 +491,43 @@ namespace mango
         return value;
     }
 
+#ifdef MANGO_ENABLE_BMI
+
+    static inline uint64 u64_clear_lsb(uint64 value)
+    {
+        return _blsr_u64(value);
+    }
+
+    static inline uint64 u64_expand_lsb(uint64 value)
+    {
+		// NOTE: 0 expands to 0xffffffffffffffff
+        return _blsmsk_u64(value);
+    }
+
+    static inline uint64 u64_lsb(uint64 value)
+    {
+        return _blsi_u64(value);
+    }
+
+#else
+
+    static inline uint64 u64_clear_lsb(uint64 value)
+    {
+        return value & (value - 1);
+    }
+
+    static inline uint64 u64_expand_lsb(uint64 value)
+    {
+		// NOTE: 0 expands to 0xffffffffffffffff
+        return value ^ (value - 1);
+    }
+
     static inline uint64 u64_lsb(uint64 value)
     {
         return value & (0 - value);
     }
+
+#endif
 
     static inline uint64 u64_msb(uint64 value)
     {
@@ -486,11 +567,36 @@ namespace mango
         return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
     }
 
+#ifdef MANGO_ENABLE_BMI
+
+    static inline int u64_index_of_lsb(uint64 value)
+    {
+        return _tzcnt_u64(value);
+    }
+
+#else
+
     static inline int u64_index_of_lsb(uint64 value)
     {
         const uint64 lsb = u64_lsb(value);
         return u64_index_of_bit(lsb);
     }
+
+#endif
+
+#ifdef MANGO_ENABLE_LZCNT
+
+    static inline int u64_index_of_msb(uint64 value)
+    {
+        return _lzcnt_u64(value);
+    }
+
+    static inline int u64_index_of_msb_in_mask(uint64 mask)
+    {
+        return _lzcnt_u64(value);
+    }
+
+#else
 
     static inline int u64_index_of_msb(uint64 value)
     {
@@ -503,6 +609,8 @@ namespace mango
         const uint64 msb = mask & ~(mask >> 1);
         return u64_index_of_bit(msb);
     }
+
+#endif
 
     static inline uint64 u64_reverse_bits(uint64 value)
     {
@@ -620,7 +728,7 @@ namespace mango
 
     static inline bool u64_is_power_of_two(uint64 value)
     {
-        return (value & (value - 1)) == 0;
+        return u64_clear_lsb(value) == 0;
     }
 
 } // namespace mango

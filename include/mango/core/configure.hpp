@@ -465,14 +465,22 @@
 
     #ifdef __POPCNT__
         #define MANGO_ENABLE_POPCNT
+        #include <immintrin.h>
     #endif
 
     #ifdef __BMI__
         #define MANGO_ENABLE_BMI
+        #include <immintrin.h>
     #endif
 
     #ifdef __BMI2__
         #define MANGO_ENABLE_BMI2
+        #include <immintrin.h>
+    #endif
+
+    #ifdef __LZCNT__
+        #define MANGO_ENABLE_LZCNT
+        #include <immintrin.h>
     #endif
 
     #ifdef __SHA__
