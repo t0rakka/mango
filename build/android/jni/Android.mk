@@ -56,6 +56,9 @@ ifeq ($(TARGET_ARCH_ABI),mips64)
 endif
 
 ifeq ($(TARGET_ARCH_ABI),x86_64)
+    # OPTIONS += "-mbmi"
+    # OPTIONS += "-mbmi2"
+    # OPTIONS += "-mlzcnt"
     # OPTIONS += "-msha"
 endif
 

@@ -333,7 +333,7 @@ namespace mango
 
     static inline int u32_index_of_msb_in_mask(uint32 mask)
     {
-        return _lzcnt_u32(value);
+        return _lzcnt_u32(mask);
     }
 
 #else
@@ -593,7 +593,7 @@ namespace mango
 
     static inline int u64_index_of_msb_in_mask(uint64 mask)
     {
-        return _lzcnt_u64(value);
+        return _lzcnt_u64(mask);
     }
 
 #else
