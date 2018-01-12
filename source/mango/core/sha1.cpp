@@ -545,12 +545,7 @@ namespace mango {
             memset(block, 0, 56);
         }
 
-        uint64 longLen = uint64(len) << 3;
-        for (i = 0; i < 8; i++)
-        {
-            block[64 - 1 - i] = longLen & 0xff;
-            longLen >>= 8;
-        }
+        ustore64be(block + 56, memory.size * 8);
         sha1_update(hash, block, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN
