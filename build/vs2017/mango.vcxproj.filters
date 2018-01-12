@@ -1010,5 +1010,8 @@
     <ClCompile Include="..\..\source\mango\core\sha1.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\sha2.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
