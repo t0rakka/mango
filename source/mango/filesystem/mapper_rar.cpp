@@ -536,24 +536,21 @@ namespace mango
             uint64 host_os = vint(p);
             uint64 length = vint(p);
 
-            MANGO_UNREFERENCED_PARAMETER(unpacked_size);
             MANGO_UNREFERENCED_PARAMETER(attributes);
             MANGO_UNREFERENCED_PARAMETER(mtime);
-            MANGO_UNREFERENCED_PARAMETER(compression);
             MANGO_UNREFERENCED_PARAMETER(host_os);
-            MANGO_UNREFERENCED_PARAMETER(length);
 
             bool is_directory = (flags & 1) != 0;
 
             // compression
-            uint32 algorithm = compression & 0x3f;
+            uint32 algorithm = compression & 0x3f; // 0
             bool is_solid = (compression & 0x40) != 0;
             uint32 method = (compression & 0x380) >> 7; // 0..5
             //uint32 min_dict_size = (compression & 0x3c00) >> 10;
 
             if (flags & 8)
             {
-                // unpacked_size is undefined -> ignore the file
+                // unpacked_size is undefined
                 return;
             }
 
