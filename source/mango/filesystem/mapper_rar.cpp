@@ -350,12 +350,17 @@ namespace
         uint32  crc;
         uint8   version;
         uint8   method;
+        bool    is_rar5;
 
         bool folder;
         uint8* data;
 
         bool compressed() const
         {
+            if (is_rar5)
+            {
+                return method != 0;
+            }
             return method != 0x30;
         }
 
@@ -363,7 +368,7 @@ namespace
         {
             VirtualMemory* memory;
 
-            if (method == 0x30)
+            if (!compressed())
             {
                 // no compression
                 memory = new VirtualMemoryRAR(data, nullptr, size_t(unpacked_size));
@@ -422,13 +427,28 @@ namespace mango
         {
             uint8* p = start;
 
-            const uint8 signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
+            const uint8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
+            const uint8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
 
-            if (std::memcmp(p, signature, 7))
+            if (!std::memcmp(p, rar4_signature, 7))
+            {
+                // RAR 4.x
+                parse_rar4(start + 7, end);
+            }
+            else if (!std::memcmp(p, rar5_signature, 8))
+            {
+                // RAR 5.0
+                parse_rar5(start + 8, end);
+            }
+            else
             {
                 MANGO_EXCEPTION(ID"Incorrect signature.");
             }
-            p += 7;
+        }
+
+        void parse_rar4(uint8* start, uint8* end)
+        {
+            uint8* p = start;
 
             for (; p < end;)
             {
@@ -449,6 +469,7 @@ namespace mango
                             file.crc = header.file_crc;
                             file.version = header.version;
                             file.method  = header.method;
+                            file.is_rar5 = false;
 
                             int dict_flags = (header.flags >> 5) & 7;
                             file.folder = (dict_flags == 7);
@@ -474,6 +495,161 @@ namespace mango
                         break;
                     }
                 }
+            }
+        }
+
+        uint64 vint(mango::LittleEndianPointer& p)
+        {
+            uint64 value = 0;
+            int shift = 0;
+            for (int i = 0; i < 10; ++i)
+            {
+                uint8 sample = *p++;
+                value |= ((sample & 0x7f) << shift);
+                shift += 7;
+                if ((sample & 0x80) != 0x80)
+                    break;
+            }
+            return value;
+        }
+
+        void parse_rar5_file_header(mango::LittleEndianPointer p, Memory compressed_data)
+        {
+            uint64 flags = vint(p);
+            uint64 unpacked_size = vint(p);
+            uint64 attributes = vint(p);
+
+            uint32 mtime = 0;
+            uint32 crc = 0;
+
+            if (flags & 2)
+            {
+                mtime = p.read32();
+            }
+            
+            if (flags & 4)
+            {
+                crc = p.read32();
+            }
+
+            uint64 compression = vint(p);
+            uint64 host_os = vint(p);
+            uint64 length = vint(p);
+
+            MANGO_UNREFERENCED_PARAMETER(unpacked_size);
+            MANGO_UNREFERENCED_PARAMETER(attributes);
+            MANGO_UNREFERENCED_PARAMETER(mtime);
+            MANGO_UNREFERENCED_PARAMETER(compression);
+            MANGO_UNREFERENCED_PARAMETER(host_os);
+            MANGO_UNREFERENCED_PARAMETER(length);
+
+            bool is_directory = (flags & 1) != 0;
+
+            // compression
+            uint32 algorithm = compression & 0x3f;
+            bool is_solid = (compression & 0x40) != 0;
+            uint32 method = (compression & 0x380) >> 7; // 0..5
+            //uint32 min_dict_size = (compression & 0x3c00) >> 10;
+
+            if (flags & 8)
+            {
+                // unpacked_size is undefined -> ignore the file
+                return;
+            }
+
+            if (is_solid)
+            {
+                // solid archives are unsupported at this time
+                return;
+            }
+
+            if (!compressed_data.size && !is_directory)
+            {
+                // empty non-directory files are not supported
+                return;
+            }
+
+            // read filename
+            uint8* ptr = p;
+            const char* s = reinterpret_cast<const char *>(ptr);
+            std::string filename(s, length);
+
+            //printf("  %s%s [algorithm: %d, solid: %d, method: %d]\n", 
+            //    filename.c_str(), is_directory ? "/" : "", algorithm, is_solid, method);
+
+            FileHeader file;
+
+            file.packed_size = compressed_data.size;
+            file.unpacked_size = unpacked_size;
+            file.crc = crc;
+            file.version = algorithm;
+            file.method  = method;
+            file.is_rar5 = true;
+
+            file.folder = is_directory;
+            file.data = compressed_data.address;
+
+            m_files[filename] = file;
+        }
+
+        void parse_rar5(uint8* start, uint8* end)
+        {
+            mango::LittleEndianPointer p = start;
+
+            for (; p < end;)
+            {
+                uint32 crc = p.read32();
+                uint64 header_size = vint(p);
+                uint8* base = p;
+
+                uint32 type = vint(p);
+                uint32 flags = vint(p);
+
+                uint64 extra_size = 0;
+                uint64 data_size = 0;
+
+                if (flags & 1)
+                {
+                    extra_size = vint(p);
+                }
+
+                if (flags & 2)
+                {
+                    data_size = vint(p);
+                }
+
+                Memory compressed_data(base + header_size, data_size);
+
+                //printf("crc: %.8x, type: %x, flags: %x, header: %x, extra: %x, data: %x\n", 
+                //    crc, type, flags, (int)header_size, (int)extra_size, (int)data_size);
+
+                MANGO_UNREFERENCED_PARAMETER(crc);
+                MANGO_UNREFERENCED_PARAMETER(extra_size);
+
+                // TODO: add support for AES decryption headers
+                // TODO: add support for RAR 5.0 compression
+
+                switch (type)
+                {
+                    case 1:
+                        // Main archive header
+                        break;
+                    case 2:
+                        // File header
+                        parse_rar5_file_header(p, compressed_data);
+                        break;
+                    case 3:
+                        // Service header
+                        break;
+                    case 4:
+                        // Archive encryption header
+                        break;
+                    case 5:
+                        // End of archive header
+                        break;
+                }
+
+                p = base + header_size + data_size;
             }
         }
 
