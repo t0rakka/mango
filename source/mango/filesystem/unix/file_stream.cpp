@@ -27,7 +27,7 @@ namespace mango
         std::string m_filename;
 
         FileHandle(const std::string& filename, const char* mode)
-        : m_filename(filename)
+            : m_filename(filename)
 		{
 			// open file
             m_file = std::fopen(filename.c_str(), mode);
@@ -81,7 +81,7 @@ namespace mango
     // -----------------------------------------------------------------
 
     FileStream::FileStream(const std::string& filename, OpenMode openmode)
-    : m_handle(NULL)
+        : m_handle(nullptr)
     {
 		const char* mode;
 

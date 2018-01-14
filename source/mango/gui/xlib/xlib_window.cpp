@@ -1,10 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include "xlib_handle.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define ID ""
 
@@ -295,24 +298,32 @@ namespace
         return PickTarget(disp, atom, count);
     }
 
-    char* URIToLocal(char* uri)
+    char* uri_to_local(char* uri)
     {
-        char *file = NULL;
-        bool local;
+        if (memcmp(uri,"file:/", 6) == 0)
+        {
+            uri += 6; // local file
+        }
+        else if (strstr(uri, ":/") != nullptr)
+        {
+            return nullptr; // wrong scheme
+        }
 
-        if (memcmp(uri,"file:/",6) == 0) uri += 6;      // local file?
-        else if (strstr(uri,":/") != NULL) return file; // wrong scheme
+        bool local = uri[0] != '/' || (uri[0] != '\0' && uri[1] == '/');
 
-        local = uri[0] != '/' || ( uri[0] != '\0' && uri[1] == '/' );
-
-        // got a hostname?
-        if ( !local && uri[0] == '/' && uri[2] != '/' ) {
-            char* hostname_end = strchr( uri+1, '/' );
-            if ( hostname_end != NULL ) {
-                char hostname[ 257 ];
-                if ( gethostname( hostname, 255 ) == 0 ) {
-                    hostname[ 256 ] = '\0';
-                    if ( memcmp( uri+1, hostname, hostname_end - ( uri+1 )) == 0 ) {
+        // is a hostname?
+        if (!local && uri[0] == '/' && uri[2] != '/')
+        {
+            // transform network filename into local filename
+            char* hostname_end = strchr(uri + 1, '/');
+            if (hostname_end != nullptr)
+            {
+                char hostname[257];
+                if (::gethostname(hostname, 255) == 0)
+                {
+                    hostname[256] = '\0';
+                    if (memcmp(uri + 1, hostname, hostname_end - (uri + 1)) == 0)
+                    {
                         uri = hostname_end + 1;
                         local = true;
                     }
@@ -320,11 +331,17 @@ namespace
             }
         }
 
-        if ( local ) {
+        char* file = nullptr;
+
+        if (local)
+        {
             file = uri;
-            if ( uri[1] == '/' ) {
+            if (uri[1] == '/')
+            {
                 file++;
-            } else {
+            }
+            else
+            {
                 file--;
             }
         }
@@ -379,55 +396,74 @@ namespace
         FileIndex dropped;
 
         bool expect_lf = false;
-        char* start = NULL;
+        char* start = nullptr;
         char* scan = (char*)p.data;
-        char* fn;
-        char* uri;
         int length = 0;
-        while (p.count--) {
-            if (!expect_lf) {
-                if (*scan == 0x0d) {
+
+        while (p.count--)
+        {
+            if (!expect_lf)
+            {
+                if (*scan == 0x0d) 
+                {
                     expect_lf = true;
                 }
-                if (start == NULL) {
+
+                if (start == nullptr)
+                {
                     start = scan;
                     length = 0;
                 }
+
                 length++;
-            } else {
-                if (*scan == 0x0a && length > 0) {
-                    uri = new char[length--];
-                    memcpy(uri, start, length);
+            }
+            else
+            {
+                if (*scan == 0x0a && length > 0)
+                {
+                    std::vector<char> uri(length--);
+                    memcpy(uri.data(), start, length);
                     uri[length] = '\0';
 
-                    fn = URIToLocal(uri);
-                    if (fn) {
+                    char* fn = uri_to_local(uri.data());
+                    if (fn)
+                    {
                         // decode HTML/URI encoded string to text
                         std::string filename = uri_decode(fn);
 
-                        struct stat s;
-                        if (stat(filename.c_str(), &s) == 0)
+                        int fd = ::open(filename.c_str(), O_RDONLY);
+                        if (fd >= 0)
                         {
-                            if ((s.st_mode & S_IFDIR) == 0) {
-                                // file
-                                uint64 filesize = uint64(s.st_size);
-                                dropped.emplace(filename, filesize, 0);
+                            struct stat s;
+                            if (::fstat(fd, &s) == 0)
+                            {
+                                if ((s.st_mode & S_IFDIR) == 0)
+                                {
+                                    // file
+                                    uint64 filesize = uint64(s.st_size);
+                                    dropped.emplace(filename, filesize, 0);
+                                }
+                                else
+                                {
+                                    // folder
+                                    dropped.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                                }
                             }
-                            else {
-                                // folder
-                                dropped.emplace(filename + "/", 0, FileInfo::DIRECTORY);
-                            }
+
+                            ::close(fd);
                         }
                     }
-                    delete[] uri;
                 }
+
                 expect_lf = false;
-                start = NULL;
+                start = nullptr;
             }
+
             scan++;
         }
 
-        if (!dropped.empty()) {
+        if (!dropped.empty())
+        {
             window->onDropFiles(dropped);
         }
     }
