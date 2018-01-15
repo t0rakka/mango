@@ -599,8 +599,8 @@ namespace mango
                 uint64 header_size = vint(p);
                 uint8* base = p;
 
-                uint32 type = vint(p);
-                uint32 flags = vint(p);
+                uint32 type = uint32(vint(p));
+                uint32 flags = uint32(vint(p));
 
                 uint64 extra_size = 0;
                 uint64 data_size = 0;
