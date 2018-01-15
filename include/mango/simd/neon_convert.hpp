@@ -239,31 +239,6 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
-#if 1
-
-    static inline uint16x8 extend16(uint8x16 s)
-    {
-	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
-        return vreinterpretq_u16_u8(vcombine_u8(a.val[0], a.val[1]));
-    }
-
-    static inline uint32x4 extend32(uint8x16 s)
-    {
-	    const uint8x8x2_t a = vzip_u8(vget_low_u8(s), vdup_n_u8(0));
-	    const uint16x4x2_t b = vzip_u16(vreinterpret_u16_u8(a.val[0]), vdup_n_u16(0));
-	    return vreinterpretq_u32_u16(vcombine_u16(b.val[0], b.val[1]));
-    }
-
-    static inline uint32x4 extend32(uint16x8 s)
-    {
-	    const uint16x4x2_t a = vzip_u16(vget_low_u16(s), vdup_n_u16(0));
-	    return vreinterpretq_u32_u16(vcombine_u16(a.val[0], a.val[1]));
-    }
-
-#else
-
-    // TODO: test
-
     static inline uint16x8 extend16(uint8x16 s)
     {
         return vmovl_u8(vget_low_u8(s));
@@ -280,42 +255,9 @@ namespace detail {
         return vmovl_u16(vget_low_u16(s));
     }
 
-#endif
-
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
-
-#if 1
-
-    static inline int16x8 extend16(int8x16 s)
-    {
-        const int8x8_t low = vget_low_s8(s);
-        const int8x8_t sign = vreinterpret_s8_u8(vcgt_s8(vdup_n_s8(0), low));
-	    const int8x8x2_t temp = vzip_s8(low, sign);
-        return vreinterpretq_s16_s8(vcombine_s8(temp.val[0], temp.val[1]));
-    }
-
-    static inline int32x4 extend32(int8x16 s)
-    {
-        const int8x8x2_t a = vzip_s8(vget_low_s8(s), vdup_n_s8(0));
-        const int16x4x2_t b = vzip_s16(vreinterpret_s16_s8(a.val[0]), vdup_n_s16(0));
-        const int32x4_t temp = vreinterpretq_s32_s16(vcombine_s16(b.val[0], b.val[1]));
-        const int32x4_t sign = vdupq_n_s32(0x80);
-        return vsubq_s32(veorq_s32(temp, sign), sign);
-    }
-
-    static inline int32x4 extend32(int16x8 s)
-    {
-        const int16x4_t low = vget_low_s16(s);
-        const int16x4_t sign = vreinterpret_s16_u16(vcgt_s16(vdup_n_s16(0), low));
-	    const int16x4x2_t temp = vzip_s16(low, sign);
-	    return vreinterpretq_s32_s16(vcombine_s16(temp.val[0], temp.val[1]));
-    }
-
-#else
-
-    // TODO: test
 
     static inline int16x8 extend16(int8x16 s)
     {
@@ -332,8 +274,6 @@ namespace detail {
     {
         return vmovl_s16(vget_low_s16(s));
     }
-
-#endif
 
     // -----------------------------------------------------------------
     // narrow
