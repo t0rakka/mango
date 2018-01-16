@@ -44,11 +44,11 @@ namespace mango
     const float4x4& float4x4::operator = (const quat& q)
     {
         const float3 s = q.xyz * 2.0f;
-        const float3 w = s * q[3];
-        const float3 x = s * q[0];
-        const float yy = q[1] * s.y;
-        const float yz = q[1] * s.z;
-        const float zz = q[2] * s.z;
+        const float3 w = s * q.w;
+        const float3 x = s * q.xyz.x;
+        const float yy = q.xyz.y * s.y;
+        const float yz = q.xyz.y * s.z;
+        const float zz = q.xyz.z * s.z;
 
         m[0] = float4(1.0f - yy - zz, x.y + w.z, x.z - w.y, 0.0f);
         m[1] = float4(x.y - w.z, 1.0f - x.x - zz, yz + w.x, 0.0f);
@@ -1125,7 +1125,7 @@ namespace mango
 
     Quaternion lerp(const Quaternion& a, const Quaternion& b, float time)
     {
-		const float3 xyz = lerp(a.xyz, b.xyz, time);
+		const float32x3 xyz = lerp(a.xyz, b.xyz, time);
 		const float w = a.w + (b.w - a.w) * time;
 		return Quaternion(xyz, w);
     }

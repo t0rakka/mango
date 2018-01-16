@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,21 +10,39 @@ namespace mango
 {
 
     template <>
-    struct Vector<int8, 16> : VectorBase<int8, 16>
+    struct Vector<int8, 16>
     {
         using VectorType = simd::int8x16;
+        using ScalarType = int8;
+        enum { VectorSize = 16 };
 
-        simd::int8x16 m;
+        union
+        {
+            VectorType m;
+            ScalarType component[VectorSize];
+        };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(int8 s)
-        : m(simd::int8x16_set1(s))
+            : m(simd::int8x16_set1(s))
         {
         }
 
         Vector(simd::int8x16 v)
-        : m(v)
+            : m(v)
         {
         }
 

@@ -38,7 +38,7 @@ namespace mango
         sRGB() = default;
 
         sRGB(uint32 srgb)
-        : color(srgb)
+            : color(srgb)
         {
         }
 

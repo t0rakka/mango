@@ -31,6 +31,10 @@ namespace
 
 #endif
 
+#if 0
+    //
+    // deprecated prototype
+    //
     struct MaskProcessor
     {
         uint32 m_mask[4];
@@ -58,18 +62,17 @@ namespace
             m_alpha = m_mask[3] ? 0.0 : 1.0;
         }
 
-        double4 unpack(uint32 sample) const
+        float64x4 unpack(uint32 sample) const
         {
-            double4 v;
-            v[0] = u32_to_f64(sample & m_mask[0]) * m_inv_scale[0];
-            v[1] = u32_to_f64(sample & m_mask[1]) * m_inv_scale[1];
-            v[2] = u32_to_f64(sample & m_mask[2]) * m_inv_scale[2];
-            v[3] = u32_to_f64(sample & m_mask[3]) * m_inv_scale[3];
-            v[3] += m_alpha;
-            return v;
+            double x = u32_to_f64(sample & m_mask[0]) * m_inv_scale[0];
+            double y = u32_to_f64(sample & m_mask[1]) * m_inv_scale[1];
+            double z = u32_to_f64(sample & m_mask[2]) * m_inv_scale[2];
+            double w = u32_to_f64(sample & m_mask[3]) * m_inv_scale[3];
+            w += m_alpha;
+            return float64x4(x, y, z, w);
         }
 
-        uint32 pack(const double4& value) const
+        uint32 pack(const float64x4& value) const
         {
             uint32 s = 0;
             s |= f64_to_u32(value[0] * m_scale[0]) & m_mask[0];
@@ -79,6 +82,7 @@ namespace
             return s;
         }
     };
+#endif
 
     // ----------------------------------------------------------------------------
     // abstract

@@ -16,37 +16,35 @@ namespace mango
     // Quaternion
     // ------------------------------------------------------------------
 
-    struct Quaternion : VectorBase<float, 4>
+    struct Quaternion
     {
         Vector<float, 3> xyz;
         float w;
 
         explicit Quaternion()
-        : w(0.0f)
+            : w(0.0f)
         {
         }
 
         explicit Quaternion(float x, float y, float z, float w)
-        : xyz(x, y, z), w(w)
+            : xyz(x, y, z), w(w)
         {
         }
 
         Quaternion(const Quaternion& q)
-        : xyz(q.xyz), w(q.w)
+            : xyz(q.xyz), w(q.w)
         {
         }
 
         Quaternion(const Vector<float, 3>& v, float w)
-        : xyz(v), w(w)
+            : xyz(v), w(w)
         {
         }
 
         Quaternion(const Vector<float, 4>& v)
         {
-            xyz[0] = v[0];
-            xyz[1] = v[1];
-            xyz[2] = v[2];
-            w = v[3];
+            xyz = v.xyz;
+            w = v.w;
         }
 
         explicit Quaternion(const Matrix<float, 4, 4>& m)
@@ -65,8 +63,8 @@ namespace mango
 
         const Quaternion& operator = (const Quaternion& q)
         {
-	    	xyz = q.xyz;
-    		w = q.w;
+            xyz = q.xyz;
+            w = q.w;
             return *this;
         }
 
@@ -75,29 +73,29 @@ namespace mango
 
         const Quaternion& operator += (const Quaternion& q)
         {
-    		xyz += q.xyz;
-    		w += q.w;
+            xyz += q.xyz;
+            w += q.w;
             return *this;
         }
 
         const Quaternion& operator -= (const Quaternion& q)
         {
-    		xyz -= q.xyz;
-    		w -= q.w;
+            xyz -= q.xyz;
+            w -= q.w;
             return *this;
         }
 
         const Quaternion& operator *= (const Quaternion& q)
         {
-            const float s = w * q.w - dot(xyz, q.xyz);
+            float s = w * q.w - dot(xyz, q.xyz);
             *this = Quaternion(w * q.xyz + xyz * q.w + cross(xyz, q.xyz), s);
             return *this;
         }
 
         const Quaternion& operator *= (float s)
         {
-    		xyz *= s;
-    		w *= s;
+            xyz *= s;
+            w *= s;
             return *this;
         }
 
@@ -111,14 +109,9 @@ namespace mango
     		return Quaternion(-xyz, -w);
         }
 
-        operator const Vector<float, 4>& () const
+        operator float32x4 () const
         {
-            return reinterpret_cast<const Vector<float, 4>*>(this)[0];
-        }
-
-        operator Vector<float, 4>& ()
-        {
-            return reinterpret_cast<Vector<float, 4>*>(this)[0];
+            return float32x4(xyz, w);
         }
 
         static Quaternion identity();
@@ -178,10 +171,10 @@ namespace mango
         return Quaternion(xyz, w);
     }
 
-    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Quaternion& q)
+    static inline Vector<float, 3> operator * (const Vector<float, 3>& v3, const Quaternion& q)
     {
-        const float3 n = cross(q.xyz, v);
-        return v + 2.0f * (q.w * n + cross(q.xyz, n));
+        const float32x3 n = cross(q.xyz, v3);
+        return v3 + 2.0f * (q.w * n + cross(q.xyz, n));
     }
 
     // ------------------------------------------------------------------

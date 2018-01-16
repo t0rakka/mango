@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -15,8 +15,12 @@ namespace mango
     // ------------------------------------------------------------------
 
     template <>
-    struct Vector<float, 3> : VectorBase<float, 3>
+    struct Vector<float, 3>
     {
+        using VectorType = void;
+        using ScalarType = float;
+        enum { VectorSize = 2 };
+
         template <int X, int Y>
         struct Permute2
         {
@@ -42,6 +46,7 @@ namespace mango
         union
         {
             struct { float x, y, z; };
+            ScalarType component[VectorSize];
 
 			Permute2<0, 0> xx;
 			Permute2<1, 0> yx;
@@ -81,6 +86,18 @@ namespace mango
             Permute3<1, 2, 2> yzz;
             Permute3<2, 2, 2> zzz;
         };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         Vector() = default;
 
@@ -156,6 +173,18 @@ namespace mango
 			y = v.y;
 			z = v.z;
             return *this;
+        }
+
+        ScalarType& operator [] (int index)
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<ScalarType *>(this)[index];
+        }
+
+        ScalarType operator [] (int index) const
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<const ScalarType *>(this)[index];
         }
     };
 

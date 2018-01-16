@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,27 +10,45 @@ namespace mango
 {
 
     template <>
-    struct Vector<int32, 16> : VectorBase<int32, 16>
+    struct Vector<int32, 16>
     {
         using VectorType = simd::int32x16;
+        using ScalarType = int32;
+        enum { VectorSize = 16 };
 
-        simd::int32x16 m;
+        union
+        {
+            VectorType m;
+            ScalarType component[VectorSize];
+        };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(int32 s)
-        : m(simd::int32x16_set1(s))
+            : m(simd::int32x16_set1(s))
         {
         }
 
         Vector(int32 s0, int32 s1, int32 s2, int32 s3, int32 s4, int32 s5, int32 s6, int32 s7, int s8,
             int s9, int s10, int s11, int s12, int s13, int s14, int s15)
-        : m(simd::int32x16_set16(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15))
+            : m(simd::int32x16_set16(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15))
         {
         }
 
         Vector(simd::int32x16 v)
-        : m(v)
+            : m(v)
         {
         }
 

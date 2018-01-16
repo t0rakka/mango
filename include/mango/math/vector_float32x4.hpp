@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -16,9 +16,11 @@ namespace mango
     // ------------------------------------------------------------------
 
     template <>
-    struct Vector<float, 4> : VectorBase<float, 4>
+    struct Vector<float, 4>
     {
         using VectorType = simd::float32x4;
+        using ScalarType = float;
+        enum { VectorSize = 4 };
 
         union
         {
@@ -369,52 +371,66 @@ namespace mango
             Permute4<float, simd::float32x4, 1, 3, 3, 3> ywww;
             Permute4<float, simd::float32x4, 2, 3, 3, 3> zwww;
             Permute4<float, simd::float32x4, 3, 3, 3, 3> wwww;
+
+            ScalarType component[VectorSize];
         };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         Vector() = default;
 
         Vector(float s)
-        : xyzw(simd::float32x4_set1(s))
+            : xyzw(simd::float32x4_set1(s))
         {
         }
 
         explicit Vector(float x, float y, float z, float w)
-        : xyzw(simd::float32x4_set4(x, y, z, w))
+            : xyzw(simd::float32x4_set4(x, y, z, w))
         {
         }
 
         explicit Vector(const Vector<float, 2>& v, float z, float w)
-        : xyzw(simd::float32x4_set4(v.x, v.y, z, w))
+            : xyzw(simd::float32x4_set4(v.x, v.y, z, w))
         {
         }
 
         explicit Vector(float x, float y, const Vector<float, 2>& v)
-        : xyzw(simd::float32x4_set4(x, y, v.x, v.y))
+            : xyzw(simd::float32x4_set4(x, y, v.x, v.y))
         {
         }
 
         explicit Vector(float x, const Vector<float, 2>& v, float w)
-        : xyzw(simd::float32x4_set4(x, v.x, v.y, w))
+            : xyzw(simd::float32x4_set4(x, v.x, v.y, w))
         {
         }
 
         explicit Vector(const Vector<float, 2>& xy, const Vector<float, 2>& zw)
-        : xyzw(simd::float32x4_set4(xy.x, xy.y, zw.x, zw.y))
+            : xyzw(simd::float32x4_set4(xy.x, xy.y, zw.x, zw.y))
         {
         }
 
         explicit Vector(const Vector<float, 3>& v, float w)
-        : xyzw(simd::float32x4_set4(v.x, v.y, v.z, w))
+            : xyzw(simd::float32x4_set4(v.x, v.y, v.z, w))
         {
         }
 
         explicit Vector(float x, const Vector<float, 3>& v)
-        : xyzw(simd::float32x4_set4(x, v.x, v.y, v.z))
+            : xyzw(simd::float32x4_set4(x, v.x, v.y, v.z))
         {
         }
 
         Vector(simd::float32x4 v)
-        : xyzw(v)
+            : xyzw(v)
         {
         }
 

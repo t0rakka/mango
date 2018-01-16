@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,9 +10,11 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint64, 2> : VectorBase<uint64, 2>
+    struct Vector<uint64, 2>
     {
         using VectorType = simd::uint64x2;
+        using ScalarType = uint64;
+        enum { VectorSize = 2 };
 
         union
         {
@@ -24,22 +26,36 @@ namespace mango
             Permute2<uint64, simd::uint64x2, 0, 0> xx;
             Permute2<uint64, simd::uint64x2, 1, 0> yx;
             Permute2<uint64, simd::uint64x2, 1, 1> yy;
+
+            ScalarType component[VectorSize];
         };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(uint64 s)
-        : xy(simd::uint64x2_set1(s))
+            : xy(simd::uint64x2_set1(s))
         {
         }
 
         explicit Vector(uint64 x, uint64 y)
-        : xy(simd::uint64x2_set2(x, y))
+            : xy(simd::uint64x2_set2(x, y))
         {
         }
 
         Vector(simd::uint64x2 v)
-        : xy(v)
+            : xy(v)
         {
         }
 

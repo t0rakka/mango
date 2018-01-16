@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -15,36 +15,51 @@ namespace mango
     // ------------------------------------------------------------------
 
     template <>
-    struct Vector<float, 8> : VectorBase<float, 8>
+    struct Vector<float, 8>
     {
         using VectorType = simd::float32x8;
+        using ScalarType = float;
+        enum { VectorSize = 8 };
 
         union
         {
             simd::float32x8 m;
             LowAccessor<Vector<float, 4>, simd::float32x8> low;
             HighAccessor<Vector<float, 4>, simd::float32x8> high;
+            ScalarType component[VectorSize];
         };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(float s)
-        : m(simd::float32x8_set1(s))
+            : m(simd::float32x8_set1(s))
         {
         }
 
         explicit Vector(float s0, float s1, float s2, float s3, float s4, float s5, float s6, float s7)
-        : m(simd::float32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::float32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
         explicit Vector(const Vector<float, 4>& v0, const Vector<float, 4>& v1)
-        : m(simd::combine(v0, v1))
+            : m(simd::combine(v0, v1))
         {
         }
 
         Vector(simd::float32x8 v)
-        : m(v)
+            : m(v)
         {
         }
 

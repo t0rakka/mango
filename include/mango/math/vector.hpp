@@ -8,51 +8,35 @@
 #include <algorithm>
 #include "../simd/simd.hpp"
 
-/* Abstract:
+/*
+    Abstract:
+
     The Short Vector Math code presented in this header was originally a straightforward
     template N-dimensional vector implementation. The low-level SIMD abstraction is a
     result of merging a separate SIMD library and this causes a chasm where the scalar
-    and SIMD vector classes have diverged. Eventually the code will be structured so
-    that the difference has more logical layout.
+    and SIMD vector classes have diverged.
+
 */
 
 namespace mango
 {
 
     // ------------------------------------------------------------------
-    // VectorBase
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, int VectorSize>
-    struct VectorBase
-    {
-        ScalarType& operator [] (int index)
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<ScalarType *>(this)[index];
-        }
-
-        const ScalarType& operator [] (int index) const
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<const ScalarType *>(this)[index];
-        }
-    };
-
-    // ------------------------------------------------------------------
     // Vector
     // ------------------------------------------------------------------
 
-    template <typename Type, int VectorSize>
-    struct Vector : VectorBase<Type, VectorSize>
+    template <typename ScalarType, int VectorSize>
+    struct Vector
     {
-        Type m[VectorSize];
+        using VectorType = void;
+
+        ScalarType m[VectorSize];
 
         explicit Vector()
         {
         }
 
-        explicit Vector(Type s)
+        explicit Vector(ScalarType s)
         {
             for (int i = 0; i < VectorSize; ++i)
             {
@@ -72,7 +56,7 @@ namespace mango
         {
         }
 
-        Vector& operator = (Type s)
+        Vector& operator = (ScalarType s)
         {
             for (int i = 0; i < VectorSize; ++i)
             {
@@ -89,18 +73,31 @@ namespace mango
             }
             return *this;
         }
+
+        ScalarType& operator [] (int index)
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<ScalarType *>(this)[index];
+        }
+
+        ScalarType operator [] (int index) const
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<const ScalarType *>(this)[index];
+        }
     };
 
-    template <typename Type>
-    struct Vector<Type, 2> : VectorBase<Type, 2>
+    template <typename ScalarType>
+    struct Vector<ScalarType, 2>
     {
+        using VectorType = void;
         enum { VectorSize = 2 };
         union
         {
-            Type m[VectorSize];
+            ScalarType m[VectorSize];
             struct
             {
-                Type x, y;
+                ScalarType x, y;
             };
         };
 
@@ -108,18 +105,18 @@ namespace mango
         {
         }
 
-        explicit Vector(Type s)
-        : x(s), y(s)
+        explicit Vector(ScalarType s)
+            : x(s), y(s)
         {
         }
 
-        explicit Vector(Type s0, Type s1)
-        : x(s0), y(s1)
+        explicit Vector(ScalarType x, ScalarType y)
+            : x(x), y(y)
         {
         }
 
         Vector(const Vector& v)
-        : x(v.x), y(v.y)
+            : x(v.x), y(v.y)
         {
         }
 
@@ -127,7 +124,7 @@ namespace mango
         {
         }
 
-        Vector& operator = (Type s)
+        Vector& operator = (ScalarType s)
         {
             x = s;
             y = s;
@@ -140,18 +137,31 @@ namespace mango
             y = v.y;
             return *this;
         }
+
+        ScalarType& operator [] (int index)
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<ScalarType *>(this)[index];
+        }
+
+        ScalarType operator [] (int index) const
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<const ScalarType *>(this)[index];
+        }
     };
 
-    template <typename Type>
-    struct Vector<Type, 3> : VectorBase<Type, 3>
+    template <typename ScalarType>
+    struct Vector<ScalarType, 3>
     {
+        using VectorType = void;
         enum { VectorSize = 3 };
         union
         {
-            Type m[VectorSize];
+            ScalarType m[VectorSize];
             struct
             {
-                Type x, y, z;
+                ScalarType x, y, z;
             };
         };
 
@@ -159,23 +169,23 @@ namespace mango
         {
         }
 
-        explicit Vector(Type s)
-        : x(s), y(s), z(s)
+        explicit Vector(ScalarType s)
+            : x(s), y(s), z(s)
         {
         }
 
-        explicit Vector(Type s0, Type s1, Type s2)
-        : x(s0), y(s1), z(s2)
+        explicit Vector(ScalarType x, ScalarType y, ScalarType z)
+            : x(x), y(y), z(z)
         {
         }
 
-        explicit Vector(const Vector<Type, 2>& v, Type s)
-        : x(v.x), y(v.y), z(s)
+        explicit Vector(const Vector<ScalarType, 2>& v, ScalarType s)
+            : x(v.x), y(v.y), z(s)
         {
         }
 
         Vector(const Vector& v)
-        : x(v.x), y(v.y), z(v.z)
+            : x(v.x), y(v.y), z(v.z)
         {
         }
 
@@ -183,7 +193,7 @@ namespace mango
         {
         }
 
-        Vector& operator = (Type s)
+        Vector& operator = (ScalarType s)
         {
             x = s;
             y = s;
@@ -198,18 +208,31 @@ namespace mango
             z = v.z;
             return *this;
         }
+
+        ScalarType& operator [] (int index)
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<ScalarType *>(this)[index];
+        }
+
+        ScalarType operator [] (int index) const
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<const ScalarType *>(this)[index];
+        }
     };
 
-    template <typename Type>
-    struct Vector<Type, 4> : VectorBase<Type, 4>
+    template <typename ScalarType>
+    struct Vector<ScalarType, 4>
     {
+        using VectorType = void;
         enum { VectorSize = 4 };
         union
         {
-            Type m[VectorSize];
+            ScalarType m[VectorSize];
             struct
             {
-                Type x, y, z, w;
+                ScalarType x, y, z, w;
             };
         };
 
@@ -217,28 +240,28 @@ namespace mango
         {
         }
 
-        explicit Vector(Type s)
-        : x(s), y(s), z(s), w(s)
+        explicit Vector(ScalarType s)
+            : x(s), y(s), z(s), w(s)
         {
         }
 
-        explicit Vector(Type s0, Type s1, Type s2, Type s3)
-        : x(s0), y(s1), z(s2), w(s3)
+        explicit Vector(ScalarType x, ScalarType y, ScalarType z, ScalarType w)
+            : x(x), y(y), z(z), w(w)
         {
         }
 
-        explicit Vector(const Vector<Type, 2>& v0, const Vector<Type, 2>& v1)
-        : x(v0.x), y(v0.y), z(v1.x), w(v1.y)
+        explicit Vector(const Vector<ScalarType, 2>& v0, const Vector<ScalarType, 2>& v1)
+            : x(v0.x), y(v0.y), z(v1.x), w(v1.y)
         {
         }
 
-        explicit Vector(const Vector<Type, 3>& v, Type s)
-        : x(v.x), y(v.y), z(v.z), w(s)
+        explicit Vector(const Vector<ScalarType, 3>& v, ScalarType s)
+            : x(v.x), y(v.y), z(v.z), w(s)
         {
         }
 
         Vector(const Vector& v)
-        : x(v.x), y(v.y), z(v.z), w(v.w)
+            : x(v.x), y(v.y), z(v.z), w(v.w)
         {
         }
 
@@ -246,7 +269,7 @@ namespace mango
         {
         }
 
-        Vector& operator = (Type s)
+        Vector& operator = (ScalarType s)
         {
             x = s;
             y = s;
@@ -263,22 +286,34 @@ namespace mango
             w = v.w;
             return *this;
         }
+
+        ScalarType& operator [] (int index)
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<ScalarType *>(this)[index];
+        }
+
+        ScalarType operator [] (int index) const
+        {
+            assert(index >= 0 && index < VectorSize);
+            return reinterpret_cast<const ScalarType *>(this)[index];
+        }
     };
 
     // ------------------------------------------------------------------
     // Vector operators
     // ------------------------------------------------------------------
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize>& operator + (const Vector<Type, VectorSize>& v)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize>& operator + (const Vector<ScalarType, VectorSize>& v)
     {
         return v;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator - (const Vector<Type, VectorSize>& v)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator - (const Vector<ScalarType, VectorSize>& v)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = -v[i];
@@ -286,8 +321,8 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize>& operator += (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator += (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
@@ -296,8 +331,8 @@ namespace mango
         return a;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize>& operator -= (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
@@ -306,8 +341,8 @@ namespace mango
         return a;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize>& operator *= (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator *= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
@@ -316,8 +351,8 @@ namespace mango
         return a;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize>& operator *= (Vector<Type, VectorSize>& a, Type b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator *= (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
@@ -326,8 +361,8 @@ namespace mango
         return a;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize>& operator /= (Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator /= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
@@ -336,8 +371,8 @@ namespace mango
         return a;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize>& operator /= (Vector<Type, VectorSize>& a, Type b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator /= (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
@@ -346,10 +381,10 @@ namespace mango
         return a;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator + (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator + (const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] + b[i];
@@ -357,10 +392,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator - (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator - (const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] - b[i];
@@ -368,10 +403,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator * (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator * (const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] * b[i];
@@ -379,10 +414,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator * (const Vector<Type, VectorSize>& a, Type b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator * (const Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] * b;
@@ -390,10 +425,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator * (Type a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator * (ScalarType a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a * b[i];
@@ -401,10 +436,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator / (const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator / (const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] / b[i];
@@ -412,10 +447,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> operator / (const Vector<Type, VectorSize>& a, Type b)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator / (const Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] / b;
@@ -427,10 +462,10 @@ namespace mango
     // Vector functions
     // ------------------------------------------------------------------
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize> abs(const Vector<Type, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> abs(const Vector<ScalarType, VectorSize>& a)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::abs(a[i]);
@@ -438,10 +473,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize> min(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> min(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::min(a[i], b[i]);
@@ -449,10 +484,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize> max(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> max(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::max(a[i], b[i]);
@@ -460,10 +495,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Type dot(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline ScalarType dot(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
-        Type s(0);
+        ScalarType s(0);
         for (int i = 0; i < VectorSize; ++i)
         {
             s += a[i] * b[i];
@@ -471,10 +506,10 @@ namespace mango
         return s;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Type square(const Vector<Type, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline ScalarType square(const Vector<ScalarType, VectorSize>& a)
     {
-        Type s(0);
+        ScalarType s(0);
         for (int i = 0; i < VectorSize; ++i)
         {
             s += a[i] * a[i];
@@ -482,27 +517,27 @@ namespace mango
         return s;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Type length(const Vector<Type, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline ScalarType length(const Vector<ScalarType, VectorSize>& a)
     {
-        Type s(0);
+        ScalarType s(0);
         for (int i = 0; i < VectorSize; ++i)
         {
             s += a[i] * a[i];
         }
-        return static_cast<Type>(std::sqrt(s));
+        return static_cast<ScalarType>(std::sqrt(s));
     }
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize> normalize(const Vector<Type, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> normalize(const Vector<ScalarType, VectorSize>& a)
     {
-        return a * Type(1.0 / length(a));
+        return a * ScalarType(1.0 / length(a));
     }
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize> clamp(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& amin, const Vector<Type, VectorSize>& amax)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> clamp(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& amin, const Vector<ScalarType, VectorSize>& amax)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = std::min(amax[i], std::max(amin[i], a[i]));
@@ -510,10 +545,10 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline Vector<Type, VectorSize> madd(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b, const Vector<Type, VectorSize>& c)
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> madd(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b, const Vector<ScalarType, VectorSize>& c)
     {
-        Vector<Type, VectorSize> temp;
+        Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] + b[i] * c[i];
@@ -521,8 +556,8 @@ namespace mango
         return temp;
     }
 
-    template <typename Type, int VectorSize>
-    static inline const Vector<Type, VectorSize> lerp(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b, Type factor)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> lerp(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b, ScalarType factor)
     {
         return a + (b - a) * factor;
     }
@@ -598,44 +633,44 @@ namespace mango
     // Vector2 functions
     // ------------------------------------------------------------------
 
-    template <typename Type>
-    static inline Type length(const Vector<Type, 2>& v)
+    template <typename ScalarType>
+    static inline ScalarType length(const Vector<ScalarType, 2>& v)
     {
-        Type s = square(v);
-        return static_cast<Type>(std::sqrt(s));
+        ScalarType s = square(v);
+        return static_cast<ScalarType>(std::sqrt(s));
     }
 
-    template <typename Type>
-    static inline Type distance(const Vector<Type, 2>& a, const Vector<Type, 2>& b)
+    template <typename ScalarType>
+    static inline ScalarType distance(const Vector<ScalarType, 2>& a, const Vector<ScalarType, 2>& b)
     {
         return length(a - b);
     }
 
-    template <typename Type>
-    static inline Vector<Type, 2> normalize(const Vector<Type, 2>& v)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> normalize(const Vector<ScalarType, 2>& v)
     {
-        Type s = length(v);
-        if (s) s = Type(1.0) / s;
+        ScalarType s = length(v);
+        if (s) s = ScalarType(1.0) / s;
         return v * s;
     }
 
-    template <typename Type>
-    static inline Vector<Type, 2> project(const Vector<Type, 2>& v, const Vector<Type, 2>& normal)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> project(const Vector<ScalarType, 2>& v, const Vector<ScalarType, 2>& normal)
     {
         return v - normal * (dot(v, normal) / dot(normal, normal));
     }
 
-    template <typename Type>
-    static inline Vector<Type, 2> reflect(const Vector<Type, 2>& v, const Vector<Type, 2>& normal)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> reflect(const Vector<ScalarType, 2>& v, const Vector<ScalarType, 2>& normal)
     {
-        return v - normal * (Type(2.0) * dot(v, normal));
+        return v - normal * (ScalarType(2.0) * dot(v, normal));
     }
 
-    template <typename Type>
-    static inline Vector<Type, 2> refract(const Vector<Type, 2>& v, const Vector<Type, 2>& normal, Type factor)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> refract(const Vector<ScalarType, 2>& v, const Vector<ScalarType, 2>& normal, ScalarType factor)
     {
-        Type vdotn = dot(v, normal);
-        Type p = Type(1.0) - factor * factor * (Type(1.0) - vdotn * vdotn);
+        ScalarType vdotn = dot(v, normal);
+        ScalarType p = ScalarType(1.0) - factor * factor * (ScalarType(1.0) - vdotn * vdotn);
         if (p < 0)
         {
             p = 0;
@@ -643,76 +678,76 @@ namespace mango
         }
         else
         {
-            p = Type(std::sqrt(p));
+            p = ScalarType(std::sqrt(p));
         }
         return v * factor - normal * (p + factor * vdotn);
     }
 
-    template <typename Type>
-    static inline Vector<Type, 2> hmin(const Vector<Type, 2>& v)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> hmin(const Vector<ScalarType, 2>& v)
     {
-        const Type s = std::min(v.x, v.y);
-        return Vector<Type, 2>(s);
+        const ScalarType s = std::min(v.x, v.y);
+        return Vector<ScalarType, 2>(s);
     }
 
-    template <typename Type>
-    static inline Vector<Type, 2> hmax(const Vector<Type, 2>& v)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> hmax(const Vector<ScalarType, 2>& v)
     {
-        const Type s = std::max(v.x, v.y);
-        return Vector<Type, 2>(s);
+        const ScalarType s = std::max(v.x, v.y);
+        return Vector<ScalarType, 2>(s);
     }
 
     // ------------------------------------------------------------------
     // Vector3 functions
     // ------------------------------------------------------------------
 
-    template <typename Type>
-    static inline Vector<Type, 3> cross(const Vector<Type, 3>& a, const Vector<Type, 3>& b)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> cross(const Vector<ScalarType, 3>& a, const Vector<ScalarType, 3>& b)
     {
-        Type x = a.y * b.z - a.z * b.y;
-        Type y = a.z * b.x - a.x * b.z;
-        Type z = a.x * b.y - a.y * b.x;
-        return Vector<Type, 3>(x, y, z);
+        ScalarType x = a.y * b.z - a.z * b.y;
+        ScalarType y = a.z * b.x - a.x * b.z;
+        ScalarType z = a.x * b.y - a.y * b.x;
+        return Vector<ScalarType, 3>(x, y, z);
     }
 
-    template <typename Type>
-    static inline Type length(const Vector<Type, 3>& v)
+    template <typename ScalarType>
+    static inline ScalarType length(const Vector<ScalarType, 3>& v)
     {
-        Type s = square(v);
-        return static_cast<Type>(std::sqrt(s));
+        ScalarType s = square(v);
+        return static_cast<ScalarType>(std::sqrt(s));
     }
 
-    template <typename Type>
-    static inline Type distance(const Vector<Type, 3>& a, const Vector<Type, 3>& b)
+    template <typename ScalarType>
+    static inline ScalarType distance(const Vector<ScalarType, 3>& a, const Vector<ScalarType, 3>& b)
     {
         return length(a - b);
     }
 
-    template <typename Type>
-    static inline Vector<Type, 3> normalize(const Vector<Type, 3>& v)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> normalize(const Vector<ScalarType, 3>& v)
     {
-        Type s = length(v);
-        if (s) s = Type(1.0) / s;
+        ScalarType s = length(v);
+        if (s) s = ScalarType(1.0) / s;
         return v * s;
     }
 
-    template <typename Type>
-    static inline Vector<Type, 3> project(const Vector<Type, 3>& v, const Vector<Type, 3>& normal)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> project(const Vector<ScalarType, 3>& v, const Vector<ScalarType, 3>& normal)
     {
         return v - normal * (dot(v, normal) / dot(normal, normal));
     }
 
-    template <typename Type>
-    static inline Vector<Type, 3> reflect(const Vector<Type, 3>& v, const Vector<Type, 3>& normal)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> reflect(const Vector<ScalarType, 3>& v, const Vector<ScalarType, 3>& normal)
     {
-        return v - normal * (Type(2.0) * dot(v, normal));
+        return v - normal * (ScalarType(2.0) * dot(v, normal));
     }
 
-    template <typename Type>
-    static inline Vector<Type, 3> refract(const Vector<Type, 3>& v, const Vector<Type, 3>& normal, Type factor)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> refract(const Vector<ScalarType, 3>& v, const Vector<ScalarType, 3>& normal, ScalarType factor)
     {
-        Type vdotn = dot(v, normal);
-        Type p = Type(1.0) - factor * factor * (Type(1.0) - vdotn * vdotn);
+        ScalarType vdotn = dot(v, normal);
+        ScalarType p = ScalarType(1.0) - factor * factor * (ScalarType(1.0) - vdotn * vdotn);
         if (p < 0)
         {
             p = 0;
@@ -720,23 +755,23 @@ namespace mango
         }
         else
         {
-            p = Type(std::sqrt(p));
+            p = ScalarType(std::sqrt(p));
         }
         return v * factor - normal * (p + factor * vdotn);
     }
 
-    template <typename Type>
-    static inline Vector<Type, 3> hmin(const Vector<Type, 3>& v)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> hmin(const Vector<ScalarType, 3>& v)
     {
-        const Type s = std::min(std::min(v.x, v.y), v.z);
-        return Vector<Type, 3>(s);
+        const ScalarType s = std::min(std::min(v.x, v.y), v.z);
+        return Vector<ScalarType, 3>(s);
     }
 
-    template <typename Type>
-    static inline Vector<Type, 3> hmax(const Vector<Type, 3>& v)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> hmax(const Vector<ScalarType, 3>& v)
     {
-        const Type s = std::max(std::max(v.x, v.y), v.z);
-        return Vector<Type, 3>(s);
+        const ScalarType s = std::max(std::max(v.x, v.y), v.z);
+        return Vector<ScalarType, 3>(s);
     }
 
     // ------------------------------------------------------------------
@@ -818,6 +853,84 @@ namespace mango
             return *this;
         }
     };
+
+    // operators
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) + ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        return ScalarType(a) + b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator + (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        return a + ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) - ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        return ScalarType(a) - b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator - (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        return a - ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) * ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        return ScalarType(a) * b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator * (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        return a * ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) / ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        return ScalarType(a) / b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator / (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        return a / ScalarType(b);
+    }
 
     // ------------------------------------------------------------------
     // LowAccessor

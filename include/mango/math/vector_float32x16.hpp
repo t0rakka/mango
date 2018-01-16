@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -11,32 +11,47 @@ namespace mango
 {
 
     template <>
-    struct Vector<float, 16> : VectorBase<float, 16>
+    struct Vector<float, 16>
     {
         using VectorType = simd::float32x16;
+        using ScalarType = float;
+        enum { VectorSize = 16 };
 
         union
         {
             simd::float32x16 m;
             LowAccessor<Vector<float, 8>, simd::float32x16> low;
             HighAccessor<Vector<float, 8>, simd::float32x16> high;
+            ScalarType component[VectorSize];
         };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(float s)
-        : m(simd::float32x16_set1(s))
+            : m(simd::float32x16_set1(s))
         {
         }
 
         explicit Vector(float s0, float s1, float s2, float s3, float s4, float s5, float s6, float s7,
             float s8, float s9, float s10, float s11, float s12, float s13, float s14, float s15)
-        : m(simd::float32x16_set16(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15))
+            : m(simd::float32x16_set16(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15))
         {
         }
 
         Vector(simd::float32x16 v)
-        : m(v)
+            : m(v)
         {
         }
 

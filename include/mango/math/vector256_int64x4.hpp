@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,9 +10,11 @@ namespace mango
 {
 
     template <>
-    struct Vector<int64, 4> : VectorBase<int64, 4>
+    struct Vector<int64, 4>
     {
         using VectorType = simd::int64x4;
+        using ScalarType = int64;
+        enum { VectorSize = 4 };
 
         union
         {
@@ -22,22 +24,36 @@ namespace mango
             ScalarAccessor<int64, simd::int64x4, 1> y;
             ScalarAccessor<int64, simd::int64x4, 2> z;
             ScalarAccessor<int64, simd::int64x4, 3> w;
+
+            ScalarType component[VectorSize];
         };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(int64 s)
-        : xyzw(simd::int64x4_set1(s))
+            : xyzw(simd::int64x4_set1(s))
         {
         }
 
         explicit Vector(int64 x, int64 y, int64 z, int64 w)
-        : xyzw(simd::int64x4_set4(x, y, z, w))
+            : xyzw(simd::int64x4_set4(x, y, z, w))
         {
         }
 
         Vector(simd::int64x4 v)
-        : xyzw(v)
+            : xyzw(v)
         {
         }
 

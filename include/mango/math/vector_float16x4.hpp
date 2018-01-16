@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,26 +12,44 @@ namespace mango
 
     // half4 is a storage class and does not support any arithmetic operations.
     template <>
-    struct Vector<half, 4> : VectorBase<half, 4>
+    struct Vector<half, 4>
     {
         using VectorType = simd::float16x4;
+        using ScalarType = half;
+        enum { VectorSize = 4 };
 
-        simd::float16x4 xyzw;
+        union
+        {
+            simd::float16x4 xyzw;
+            ScalarType component[VectorSize];
+        };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         Vector() = default;
 
         explicit Vector(const Vector<float, 4>& v)
-        : xyzw(simd::convert<simd::float16x4>(v.xyzw))
+            : xyzw(simd::convert<simd::float16x4>(v.xyzw))
         {
         }
 
         Vector(simd::float32x4 v)
-        : xyzw(simd::convert<simd::float16x4>(v))
+            : xyzw(simd::convert<simd::float16x4>(v))
         {
         }
 
         Vector(simd::float16x4 v)
-        : xyzw(v)
+            : xyzw(v)
         {
         }
 

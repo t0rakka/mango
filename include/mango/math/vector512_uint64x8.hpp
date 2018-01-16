@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,49 +10,67 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint64, 8> : VectorBase<uint64, 8>
+    struct Vector<uint64, 8>
     {
         using VectorType = simd::uint64x8;
+        using ScalarType = uint64;
+        enum { VectorSize = 8 };
 
-        simd::uint64x8 xyzw;
+        union
+        {
+            VectorType m;
+            ScalarType component[VectorSize];
+        };
+
+        ScalarType& operator [] (size_t index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (size_t index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector() = default;
 
         Vector(uint64 s)
-        : xyzw(simd::uint64x8_set1(s))
+            : m(simd::uint64x8_set1(s))
         {
         }
 
         explicit Vector(uint64 s0, uint64 s1, uint64 s2, uint64 s3, uint64 s4, uint64 s5, uint64 s6, uint64 s7)
-        : xyzw(simd::uint64x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::uint64x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
         Vector(simd::uint64x8 v)
-        : xyzw(v)
+            : m(v)
         {
         }
 
         Vector& operator = (simd::uint64x8 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (uint64 s)
         {
-            xyzw = simd::uint64x8_set1(s);
+            m = simd::uint64x8_set1(s);
             return *this;
         }
 
         operator simd::uint64x8 () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::uint64x8 ()
         {
-            return xyzw;
+            return m;
         }
     };
 
