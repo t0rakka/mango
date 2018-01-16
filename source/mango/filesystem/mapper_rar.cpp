@@ -569,7 +569,7 @@ namespace mango
             // read filename
             uint8* ptr = p;
             const char* s = reinterpret_cast<const char *>(ptr);
-            std::string filename(s, length);
+            std::string filename(s, int(length));
 
             //printf("  %s%s [algorithm: %d, solid: %d, method: %d]\n", 
             //    filename.c_str(), is_directory ? "/" : "", algorithm, is_solid, method);
@@ -615,7 +615,7 @@ namespace mango
                     data_size = vint(p);
                 }
 
-                Memory compressed_data(base + header_size, data_size);
+                Memory compressed_data(base + header_size, size_t(data_size));
 
                 //printf("crc: %.8x, type: %x, flags: %x, header: %x, extra: %x, data: %x\n", 
                 //    crc, type, flags, (int)header_size, (int)extra_size, (int)data_size);
