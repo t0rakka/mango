@@ -281,12 +281,6 @@ namespace mango
 
 #endif
 
-    static inline uint32 u32_msb(uint32 value)
-    {
-        const uint32 mask = u32_expand_msb(value);
-        return (mask + 1) >> 1;
-    }
-
     static inline int u32_index_of_bit(uint32 bit)
     {
         static const uint8 table[] =
@@ -309,15 +303,30 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI
 
+    static inline int u32_tzcnt(uint32 value)
+    {
+		// NOTE: value 0 is undefined
+        return _tzcnt_u32(value);
+    }
+
     static inline int u32_index_of_lsb(uint32 value)
     {
+		// NOTE: value 0 is undefined
         return _tzcnt_u32(value);
     }
 
 #else
 
+    static inline int u32_tzcnt(uint32 value)
+    {
+		// NOTE: value 0 is undefined
+        const uint32 lsb = u32_lsb(value);
+        return u32_index_of_bit(lsb);
+    }
+
     static inline int u32_index_of_lsb(uint32 value)
     {
+		// NOTE: value 0 is undefined
         const uint32 lsb = u32_lsb(value);
         return u32_index_of_bit(lsb);
     }
@@ -326,20 +335,42 @@ namespace mango
 
 #ifdef MANGO_ENABLE_LZCNT
 
-    static inline int u32_index_of_msb(uint32 value)
+    static inline int u32_lzcnt(uint32 value)
     {
+		// NOTE: value 0 is undefined
         return _lzcnt_u32(value);
     }
 
-    static inline int u32_index_of_msb_in_mask(uint32 mask)
+    static inline int u32_index_of_msb(uint32 value)
     {
-        return _lzcnt_u32(mask);
+		// NOTE: value 0 is undefined
+        return 31 - _lzcnt_u32(value);
+    }
+
+    static inline uint32 u32_msb(uint32 value)
+    {
+		// NOTE: value 0 is undefined
+        return 1u << u32_index_of_msb(value);
+    }
+
+    static inline int u32_log2(uint32 value)
+    {
+		// NOTE: value 0 is undefined
+        return u32_index_of_msb(value);
     }
 
 #else
 
+    static inline int u32_lzcnt(uint32 value)
+    {
+		// NOTE: value 0 is undefined
+        const uint32 msb = u32_expand_msb(value);
+        return 31 - u32_index_of_expanded_bit(msb);
+    }
+
     static inline int u32_index_of_msb(uint32 value)
     {
+		// NOTE: value 0 is undefined
         int base = 0;
         uint32 temp;
         temp = value & 0xffff0000; if (temp) { base |= 16; value = temp; }
@@ -350,10 +381,18 @@ namespace mango
         return base;
     }
 
-    static inline int u32_index_of_msb_in_mask(uint32 mask)
+    static inline uint32 u32_msb(uint32 value)
     {
-        const uint32 msb = mask & ~(mask >> 1);
-        return u32_index_of_bit(msb);
+		// NOTE: value 0 is undefined
+        const uint32 mask = u32_expand_msb(value);
+        return (mask + 1) >> 1;
+    }
+
+    static inline int u32_log2(uint32 value)
+    {
+		// NOTE: value 0 is undefined
+        const uint32 mask = u32_expand_msb(value);
+        return u32_index_of_expanded_bit(mask);
     }
 
 #endif
@@ -386,24 +425,6 @@ namespace mango
     }
 
 #endif
-
-    static inline uint32 u32_floor_power_of_two(uint32 value)
-    {
-        const uint32 mask = u32_expand_msb(value);
-        return (mask + 1) >> 1;
-    }
-
-    static inline uint32 u32_ceil_power_of_two(uint32 value)
-    {
-        const uint32 mask = u32_expand_msb(value - 1);
-        return mask + 1;
-    }
-
-    static inline int u32_log2(uint32 value)
-    {
-        const uint32 mask = u32_expand_msb(value);
-        return u32_index_of_expanded_bit(mask);
-    }
 
 #ifdef MANGO_ENABLE_BMI
 
@@ -476,6 +497,17 @@ namespace mango
         return u32_clear_lsb(value) == 0;
     }
 
+    static inline uint32 u32_floor_power_of_two(uint32 value)
+    {
+        return u32_msb(value);
+    }
+
+    static inline uint32 u32_ceil_power_of_two(uint32 value)
+    {
+        const uint32 mask = u32_expand_msb(value - 1);
+        return mask + 1;
+    }
+
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
@@ -529,12 +561,6 @@ namespace mango
 
 #endif
 
-    static inline uint64 u64_msb(uint64 value)
-    {
-        const uint64 mask = u64_expand_msb(value);
-        return (mask + 1) >> 1;
-    }
-
     static inline int u64_index_of_bit(uint64 bit)
     {
         static const uint8 table[] =
@@ -569,15 +595,30 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI
 
+    static inline int u64_tzcnt(uint64 value)
+    {
+		// NOTE: value 0 is undefined
+        return _tzcnt_u64(value);
+    }
+
     static inline int u64_index_of_lsb(uint64 value)
     {
+		// NOTE: value 0 is undefined
         return _tzcnt_u64(value);
     }
 
 #else
 
+    static inline int u64_tzcnt(uint64 value)
+    {
+		// NOTE: value 0 is undefined
+        const uint64 lsb = u64_lsb(value);
+        return u64_index_of_bit(lsb);
+    }
+
     static inline int u64_index_of_lsb(uint64 value)
     {
+		// NOTE: value 0 is undefined
         const uint64 lsb = u64_lsb(value);
         return u64_index_of_bit(lsb);
     }
@@ -586,28 +627,58 @@ namespace mango
 
 #ifdef MANGO_ENABLE_LZCNT
 
-    static inline int u64_index_of_msb(uint64 value)
+    static inline int u64_lzcnt(uint64 value)
     {
+		// NOTE: value 0 is undefined
         return _lzcnt_u64(value);
     }
 
-    static inline int u64_index_of_msb_in_mask(uint64 mask)
+    static inline int u64_index_of_msb(uint64 value)
     {
-        return _lzcnt_u64(mask);
+		// NOTE: value 0 is undefined
+        return 63 - _lzcnt_u64(value);
+    }
+
+    static inline uint64 u64_msb(uint64 value)
+    {
+		// NOTE: value 0 is undefined
+        return 1ull << u64_index_of_msb(value);
+    }
+
+    static inline int u64_log2(uint64 value)
+    {
+		// NOTE: value 0 is undefined
+        return u64_index_of_msb(value);
     }
 
 #else
 
+    static inline int u64_lzcnt(uint64 value)
+    {
+		// NOTE: value 0 is undefined
+        const uint64 msb = u64_expand_msb(value);
+        return 63 - u64_index_of_expanded_bit(msb);
+    }
+
     static inline int u64_index_of_msb(uint64 value)
     {
+		// NOTE: value 0 is undefined
         const uint64 msb = u64_expand_msb(value);
         return u64_index_of_expanded_bit(msb);
     }
 
-    static inline int u64_index_of_msb_in_mask(uint64 mask)
+    static inline uint64 u64_msb(uint64 value)
     {
-        const uint64 msb = mask & ~(mask >> 1);
-        return u64_index_of_bit(msb);
+		// NOTE: value 0 is undefined
+        const uint64 mask = u64_expand_msb(value);
+        return (mask + 1) >> 1;
+    }
+
+    static inline int u64_log2(uint64 value)
+    {
+		// NOTE: value 0 is undefined
+        const uint64 mask = u64_expand_msb(value);
+        return u64_index_of_expanded_bit(mask);
     }
 
 #endif
@@ -729,6 +800,17 @@ namespace mango
     static inline bool u64_is_power_of_two(uint64 value)
     {
         return u64_clear_lsb(value) == 0;
+    }
+
+    static inline uint64 u64_floor_power_of_two(uint64 value)
+    {
+        return u64_msb(value);
+    }
+
+    static inline uint64 u64_ceil_power_of_two(uint64 value)
+    {
+        const uint64 mask = u64_expand_msb(value - 1);
+        return mask + 1;
     }
 
 } // namespace mango
