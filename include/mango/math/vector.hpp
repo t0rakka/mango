@@ -30,7 +30,19 @@ namespace mango
     {
         using VectorType = void;
 
-        ScalarType m[VectorSize];
+        ScalarType component[VectorSize];
+
+        ScalarType& operator [] (unsigned int index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (unsigned int index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector()
         {
@@ -40,7 +52,7 @@ namespace mango
         {
             for (int i = 0; i < VectorSize; ++i)
             {
-                m[i] = s;
+                component[i] = s;
             }
         }
 
@@ -48,7 +60,7 @@ namespace mango
         {
             for (int i = 0; i < VectorSize; ++i)
             {
-                m[i] = v[i];
+                component[i] = v[i];
             }
         }
 
@@ -60,7 +72,7 @@ namespace mango
         {
             for (int i = 0; i < VectorSize; ++i)
             {
-                m[i] = s;
+                component[i] = s;
             }
             return *this;
         }
@@ -69,21 +81,9 @@ namespace mango
         {
             for (int i = 0; i < VectorSize; ++i)
             {
-                m[i] = v[i];
+                component[i] = v[i];
             }
             return *this;
-        }
-
-        ScalarType& operator [] (int index)
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<ScalarType *>(this)[index];
-        }
-
-        ScalarType operator [] (int index) const
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<const ScalarType *>(this)[index];
         }
     };
 
@@ -94,12 +94,24 @@ namespace mango
         enum { VectorSize = 2 };
         union
         {
-            ScalarType m[VectorSize];
+            ScalarType component[VectorSize];
             struct
             {
                 ScalarType x, y;
             };
         };
+
+        ScalarType& operator [] (unsigned int index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (unsigned int index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector()
         {
@@ -137,18 +149,6 @@ namespace mango
             y = v.y;
             return *this;
         }
-
-        ScalarType& operator [] (int index)
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<ScalarType *>(this)[index];
-        }
-
-        ScalarType operator [] (int index) const
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<const ScalarType *>(this)[index];
-        }
     };
 
     template <typename ScalarType>
@@ -158,12 +158,24 @@ namespace mango
         enum { VectorSize = 3 };
         union
         {
-            ScalarType m[VectorSize];
+            ScalarType component[VectorSize];
             struct
             {
                 ScalarType x, y, z;
             };
         };
+
+        ScalarType& operator [] (unsigned int index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (unsigned int index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector()
         {
@@ -208,18 +220,6 @@ namespace mango
             z = v.z;
             return *this;
         }
-
-        ScalarType& operator [] (int index)
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<ScalarType *>(this)[index];
-        }
-
-        ScalarType operator [] (int index) const
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<const ScalarType *>(this)[index];
-        }
     };
 
     template <typename ScalarType>
@@ -229,12 +229,24 @@ namespace mango
         enum { VectorSize = 4 };
         union
         {
-            ScalarType m[VectorSize];
+            ScalarType component[VectorSize];
             struct
             {
                 ScalarType x, y, z, w;
             };
         };
+
+        ScalarType& operator [] (unsigned int index)
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
+
+        ScalarType operator [] (unsigned int index) const
+        {
+            assert(index < VectorSize);
+            return component[index];
+        }
 
         explicit Vector()
         {
@@ -285,18 +297,6 @@ namespace mango
             z = v.z;
             w = v.w;
             return *this;
-        }
-
-        ScalarType& operator [] (int index)
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<ScalarType *>(this)[index];
-        }
-
-        ScalarType operator [] (int index) const
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<const ScalarType *>(this)[index];
         }
     };
 
