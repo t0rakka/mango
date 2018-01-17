@@ -381,6 +381,13 @@ namespace simd {
         return scalar_set<uint8, 16>(s);
     }
 
+    static inline uint8x16 uint8x16_set16(
+        uint8 s0, uint8 s1, uint8 s2, uint8 s3, uint8 s4, uint8 s5, uint8 s6, uint8 s7,
+        uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
+    {
+        return {{ s0, s1, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
+    }
+
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
     {
         return scalar_unpacklo(a, b);
@@ -514,6 +521,11 @@ namespace simd {
     static inline uint16x8 uint16x8_set1(uint16 s)
     {
         return scalar_set<uint16, 8>(s);
+    }
+
+    static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
+    {
+        return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -1033,6 +1045,13 @@ namespace simd {
         return scalar_set<int8, 16>(s);
     }
 
+    static inline int8x16 int8x16_set16(
+        int8 s0, int8 s1, int8 s2, int8 s3, int8 s4, int8 s5, int8 s6, int8 s7,
+        int8 s8, int8 s9, int8 s10, int8 s11, int8 s12, int8 s13, int8 s14, int8 s15)
+    {
+        return {{ s0, s1, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
+    }
+
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
     {
         return scalar_unpacklo(a, b);
@@ -1176,6 +1195,11 @@ namespace simd {
     static inline int16x8 int16x8_set1(int16 s)
     {
         return scalar_set<int16, 8>(s);
+    }
+
+    static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
+    {
+        return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)

@@ -41,6 +41,11 @@ namespace mango
         {
         }
 
+        Vector(uint8 s0, uint8 s1, uint8 s2, uint8 s3, uint8 s4, uint8 s5, uint8 s6, uint8 s7, uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
+            : m(simd::uint8x16_set16(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15))
+        {
+        }
+
         Vector(simd::uint8x16 v)
             : m(v)
         {
