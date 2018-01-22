@@ -1,16 +1,16 @@
 # mango
-A multi-platform development framework for graphics programmers
+A multi-platform low-level development framework for graphics programmers
 
 #### About mango
 Hello! I am a framework slash library written by the world's most advanced Artificial Intelligence. My author is a self-organizing map which runs on a neural networked processor. You can call it The Author. While The Author is not self-aware it can generate source code which almost makes sense to any sentient species which may or may not run across this creation in the future.
 
-The code has been revised multiple times and the latest revision started as an observation about the state of the hardware and where things are headed in 2011. It was obvious that concurrency is the way to go and memory bandwidth remains as a performance barrier more than ever.
+The code has been revised multiple times and the latest revision started as an observation about the state of the hardware and where things are headed in 2011. It was obvious that concurrency is the way to go and memory bandwidth remains a bottleneck for fully realizing the full hardware potential.
 
 The design started from some prototype code that had one goal in mind: memory map a file and transform it's contents to the GPU local memory as efficiently as possible. 
 
 The most direct approach is to simply mmap a compressed texture and let the GPU consume the data using virtual memory mapping. This is possible with the APPLE_client_storage OpenGL extension. The mango allows to connect the dots very easily; if such direct mapping is not available the next-best thing is to allocate GPU managed memory (OpenGL, DirectX, Vulkan) and map this memory to be visible in the client. Then mmap a file with image data in it. 
 
-Once again, mango connects the dots: the GPU mapped memory must be exposed in a format that mango can understand then create a decoder object for the file's mmap in correct fileformat. This establishes a bridge between GPU and the file with image data in it. The "win" here is that there are no intermediate buffers and multiple copies of the data in-flight as happens with more traditional method of loading an image. 
+This is where mango connects the dots: the GPU mapped memory must be exposed in a format that mango can understand then create a decoder object for the file's mmap in correct fileformat. This establishes a bridge between GPU and the file with image data in it. The "win" here is that there are no intermediate buffers and multiple copies of the data in-flight as happens with more traditional method of loading an image. 
 
 The traditional approach goes like this:
 - Open a file
@@ -36,6 +36,7 @@ After prototyping and benchmarking above methods the mango API practically wrote
 - Zero-overhead endianess adaptors
 - Filesystem observer
 - Compression Tools with unified interface: miniz, lz4, lzo, zstd, bzip2, lzfse
+- Hashing and checksum algorithms with enhanced CPU instruction support: SHA-1, SHA-256, MD5, CRC32, CRC32c
 
 ##### Image Format Support
 - Low-level toolkit for building image loading pipelines
@@ -46,9 +47,9 @@ After prototyping and benchmarking above methods the mango API practically wrote
 
 ##### SIMD Abstraction
 - x86/x86-64: SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512
-- ARM: NEON, NEON (aarch64)
-- PowerPC: Altivec (SVX)
-- MIPS: MSA (work in progress)
+- ARM: NEON, NEON64 (aarch64)
+- PowerPC: Altivec (VSX >= v2.06)
+- MIPS: MSA
 - FP16 conversion instruction support where available
 - Functional API ; SIMD vector objects are never modified in-place
 
@@ -110,9 +111,10 @@ The pixelformat conversion code, "the blitter" used to be JIT-compiled using a r
     uint32 dst = 0x00ffff00; // we want to convert to this mask
     double scale = double(dst) / src; // double because fp32 can only handle 24 bits of unorm w/o precision loss
 
-It's magic, but multiplying any value in the src format by this scale will yield the correct normalized value in the dst format. The largest cost here is the conversion between integer and floating-point but it can be handled efficiently. Our SIMD implementation is using AoS layout so each pixel is individually processed. This is wasteful but so is going full SoA as it requires more loads, stores and cache evictions. The best balance would be to process in batches using local SoA so that's definitely in the roadmap. The most common format conversions have custom loops so they are running on the reasonably fast path as it is. This is a disclaimer. :)
+It's magic, but multiplying any value in the src format by this scale will yield the correct normalized value in the dst format. The largest cost here is the conversion between integer and floating-point but it can be handled efficiently. Our SIMD implementation is using AoS layout so each pixel is individually processed. This approach is very wasteful and round-trip to floating-point format increases processing overhead. The work for improved blitter is on-going and it is built around two cornerstone principles: 
 
-There is also a promising 100% integer scale-and-bias algorithm which can handle every component size with correct rounding and w/o precision loss at very high rates but it is still in experimental stage. The best part is no compromise between precision and performance. More about that in the future.
+1. The innerloops process multiple pixels per iteration (up to supported SIMD register width)
+2. The value scaling is 100% integer based algorithm which is more efficient than the current floating point approach
 
 #### TODO
 Features currently being worked on or considered for future roadmap:
