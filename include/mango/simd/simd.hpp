@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -56,7 +56,9 @@ namespace simd {
         {
             scalar_bits = sizeof(ScalarType) * 8,
             vector_bits = sizeof(VectorType) * 8,
-            size = VectorSize
+            size = VectorSize,
+            is_hardware = 1,
+            is_composite = 0
         };
 
         VectorType data;
@@ -102,7 +104,9 @@ namespace simd {
         {
             scalar_bits = sizeof(ScalarType) * 8,
             vector_bits = sizeof(ScalarType) * VectorSize * 8,
-            size = VectorSize
+            size = VectorSize,
+            is_hardware = 0,
+            is_composite = 0
         };
 
         ScalarType data[VectorSize];
@@ -137,7 +141,9 @@ namespace simd {
         {
             scalar_bits = sizeof(scalar) * 8,
             vector_bits = sizeof(VectorType) * 2 * 8,
-            size = VectorType::size * 2
+            size = VectorType::size * 2,
+            is_hardware = VectorType::is_hardware,
+            is_composite = 1
         };
 
         VectorType lo;
@@ -163,6 +169,9 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_ENABLE_SIMD128
+    #define MANGO_ENABLE_SIMD256
+    #define MANGO_ENABLE_SIMD512
 
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -246,6 +255,8 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_ENABLE_SIMD128
+    #define MANGO_ENABLE_SIMD256
 
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -329,7 +340,8 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-
+    #define MANGO_ENABLE_SIMD128
+    
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
 
@@ -412,6 +424,7 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_ENABLE_SIMD128
 
     struct float64x2_t
     {
@@ -510,6 +523,7 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_ENABLE_SIMD128
     
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -601,6 +615,7 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_ENABLE_SIMD128
     
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
