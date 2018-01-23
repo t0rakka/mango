@@ -68,15 +68,15 @@ namespace mango {
         switch (mode)
         {
             case BEGIN:
-                m_offset = static_cast<size_t>(distance);
+                m_offset = size_t(distance);
                 break;
 
             case CURRENT:
-                m_offset += static_cast<size_t>(distance);
+                m_offset += size_t(distance);
                 break;
 
             case END:
-                m_offset = static_cast<size_t>(m_buffer.size() - distance);
+                m_offset = size_t(m_buffer.size() - distance);
                 break;
         }
     }
@@ -95,12 +95,12 @@ namespace mango {
     void Buffer::write(const void* data, size_t size)
     {
         const uint8 *source = reinterpret_cast<const uint8 *>(data);
-        const size_t left = m_buffer.size() - m_offset;
-        const size_t right = size - left;
+        const int64 left = m_buffer.size() - m_offset;
+        const int64 right = size - left;
 
         if (left > 0) {
             // write into existing array
-            size = std::min(size, left);
+            size = std::min(size, size_t(left));
             std::memcpy(&m_buffer[m_offset], source, size);
             source += size;
             m_offset += size;
