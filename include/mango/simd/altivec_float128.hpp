@@ -107,15 +107,12 @@ namespace simd {
 
     static inline float32x4 float32x4_uload(const float* s)
     {
-        return (float32x4::vector) { s[0], s[1], s[2], s[3] };
+        return vec_xl(0, s);
     }
 
     static inline void float32x4_ustore(float* dest, float32x4 a)
     {
-        dest[0] = vec_extract(a.data, 0);
-        dest[1] = vec_extract(a.data, 1);
-        dest[2] = vec_extract(a.data, 2);
-        dest[3] = vec_extract(a.data, 3);
+        vec_xst(a.data, 0, dest);
     }
 
     static inline float32x4 movelh(float32x4 a, float32x4 b)
@@ -255,7 +252,7 @@ namespace simd {
 
     static inline float32x4 fast_rsqrt(float32x4 a)
     {
-        return vec_re(vec_sqrt(a.data));
+        return vec_rsqrte(a.data);
     }
 
     static inline float32x4 fast_sqrt(float32x4 a)
@@ -270,7 +267,7 @@ namespace simd {
 
     static inline float32x4 rsqrt(float32x4 a)
     {
-        return vec_re(vec_sqrt(a.data));
+        return vec_rsqrt(a.data);
     }
 
     static inline float32x4 sqrt(float32x4 a)

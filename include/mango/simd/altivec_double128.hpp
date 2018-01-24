@@ -89,13 +89,12 @@ namespace simd {
 
     static inline float64x2 float64x2_uload(const double* s)
     {
-        return (float64x2::vector) { s[0], s[1] };
+        return vec_xl(0, s);
     }
 
     static inline void float64x2_ustore(double* dest, float64x2 a)
     {
-        dest[0] = vec_extract(a.data, 0);
-        dest[1] = vec_extract(a.data, 1);
+        vec_xst(a.data, 0, dest);
     }
 
     static inline float64x2 unpackhi(float64x2 a, float64x2 b)
@@ -207,7 +206,7 @@ namespace simd {
 
     static inline float64x2 fast_rsqrt(float64x2 a)
     {
-        return vec_re(vec_sqrt(a.data));
+        return vec_rsqrte(a.data);
     }
 
     static inline float64x2 fast_sqrt(float64x2 a)
@@ -222,7 +221,7 @@ namespace simd {
 
     static inline float64x2 rsqrt(float64x2 a)
     {
-        return vec_re(vec_sqrt(a.data));
+        return vec_rsqrt(a.data);
     }
 
     static inline float64x2 sqrt(float64x2 a)
