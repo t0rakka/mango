@@ -371,24 +371,23 @@ namespace mango
             Permute4<double, simd::float64x4, 2, 3, 3, 3> zwww;
             Permute4<double, simd::float64x4, 3, 3, 3, 3> wwww;
 
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        explicit Vector()
-        {
-        }
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(double s)
             : xyzw(simd::float64x4_set1(s))

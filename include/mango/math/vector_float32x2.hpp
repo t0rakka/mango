@@ -34,27 +34,29 @@ namespace mango
         union
         {
             struct { float x, y; };
-            ScalarType component[VectorSize];
 
 			Permute2<0, 0> xx;
 			Permute2<1, 0> yx;
 			Permute2<0, 1> xy;
 			Permute2<1, 1> yy;
+
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(float s)
         {
@@ -82,10 +84,6 @@ namespace mango
 			y = v[Y];
         }
 
-        ~Vector()
-        {
-        }
-
         template <int X, int Y>
         Vector& operator = (const Permute2<X, Y>& p)
         {
@@ -107,18 +105,6 @@ namespace mango
 			x = v.x;
 			y = v.y;
             return *this;
-        }
-
-        ScalarType& operator [] (int index)
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<ScalarType *>(this)[index];
-        }
-
-        ScalarType operator [] (int index) const
-        {
-            assert(index >= 0 && index < VectorSize);
-            return reinterpret_cast<const ScalarType *>(this)[index];
         }
     };
 

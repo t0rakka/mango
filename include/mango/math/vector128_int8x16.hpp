@@ -19,22 +19,23 @@ namespace mango
         union
         {
             VectorType m;
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        explicit Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(int8 s)
             : m(simd::int8x16_set1(s))

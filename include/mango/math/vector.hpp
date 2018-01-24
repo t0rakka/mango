@@ -1038,6 +1038,25 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
+    // DeAggregate
+    // ------------------------------------------------------------------
+
+    // HACK / workaround for non-stable GCC ABI for aggregate types with
+    // stricter alignment than the architecture default.
+
+    template <typename T>
+    struct DeAggregate
+    {
+        T data;
+
+        DeAggregate() {} // <-- this constructor is what makes the magic happen
+        ~DeAggregate() {}
+
+        DeAggregate& operator = (T t) { data = t; return *this; }
+        operator T () { return data; }
+    };
+
+    // ------------------------------------------------------------------
     // named vector types
     // ------------------------------------------------------------------
 

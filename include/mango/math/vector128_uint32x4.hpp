@@ -281,22 +281,23 @@ namespace mango
             Permute4<uint32, simd::uint32x4, 2, 3, 3, 3> zwww;
             Permute4<uint32, simd::uint32x4, 3, 3, 3, 3> wwww;
 
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        explicit Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(uint32 s)
             : xyzw(simd::uint32x4_set1(s))

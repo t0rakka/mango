@@ -25,22 +25,23 @@ namespace mango
             ScalarAccessor<uint64, simd::uint64x4, 2> z;
             ScalarAccessor<uint64, simd::uint64x4, 3> w;
 
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        explicit Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(uint64 s)
             : xyzw(simd::uint64x4_set1(s))

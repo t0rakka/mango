@@ -21,22 +21,23 @@ namespace mango
         union
         {
             simd::float16x4 xyzw;
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         explicit Vector(const Vector<float, 4>& v)
             : xyzw(simd::convert<simd::float16x4>(v.xyzw))
@@ -50,10 +51,6 @@ namespace mango
 
         Vector(simd::float16x4 v)
             : xyzw(v)
-        {
-        }
-
-        ~Vector()
         {
         }
 

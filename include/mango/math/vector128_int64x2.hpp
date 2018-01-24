@@ -27,22 +27,23 @@ namespace mango
             Permute2<int64, simd::int64x2, 1, 0> yx;
             Permute2<int64, simd::int64x2, 1, 1> yy;
 
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        explicit Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(int64 s)
             : xy(simd::int64x2_set1(s))

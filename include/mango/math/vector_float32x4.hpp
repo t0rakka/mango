@@ -372,22 +372,23 @@ namespace mango
             Permute4<float, simd::float32x4, 2, 3, 3, 3> zwww;
             Permute4<float, simd::float32x4, 3, 3, 3, 3> wwww;
 
-            ScalarType component[VectorSize];
+            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index];
+            return component[index].data;
         }
 
-        Vector() = default;
+        explicit Vector() {}
+        ~Vector() {}
 
         Vector(float s)
             : xyzw(simd::float32x4_set1(s))
