@@ -109,7 +109,7 @@ namespace mango {
         if (right > 0) {
             // append at end of existing array
             m_buffer.insert(m_buffer.end(), source, source + right);
-            m_offset += right;
+            m_offset += size_t(right);
         }
     }
 
