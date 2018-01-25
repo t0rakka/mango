@@ -441,7 +441,7 @@ static inline int lzfse_push_lmd(lzfse_encoder_state *s, uint32_t L,
   uint8_t *dst = s->literals + s->n_literals;
   const uint8_t *src = s->src + s->src_literal;
   uint8_t *dst_end = dst + L;
-  if (s->src_literal + L + 16 > s->src_end) {
+  if ((lzfse_offset)(s->src_literal + L + 16) > s->src_end) {
     // Careful at the end of SRC, we can't read 16 bytes
     if (L > 0)
       memcpy(dst, src, L);
@@ -772,7 +772,7 @@ int lzfse_encode_base(lzfse_encoder_state *s) {
     }
 
     // No overlap, emit pending, keep incoming
-    if (s->pending.pos + s->pending.length <= incoming.pos) {
+    if ((lzfse_offset)(s->pending.pos + s->pending.length) <= incoming.pos) {
       if (lzfse_backend_match(s, &s->pending) != LZFSE_STATUS_OK) {
         ok = 0;
         goto END;

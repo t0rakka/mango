@@ -561,7 +561,7 @@ FSE_INLINE int fse_check_freq(const uint16_t *freq_table,
                               const size_t table_size,
                               const size_t number_of_states) {
   size_t sum_of_freq = 0;
-  for (int i = 0; i < table_size; i++) {
+  for (int i = 0; i < (int)table_size; i++) {
     sum_of_freq += freq_table[i];
   }
   return (sum_of_freq > number_of_states) ? -1 : 0;

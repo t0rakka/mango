@@ -218,7 +218,7 @@ static int lzfse_decode_lmd(lzfse_decoder_state *s) {
     //  Error if D is out of range, so that we avoid passing through
     //  uninitialized data or accesssing memory out of the destination
     //  buffer.
-    if ((uint32_t)D > dst + L - s->dst_begin)
+    if ((ptrdiff_t)D > dst + L - s->dst_begin)
       return LZFSE_STATUS_ERROR;
 
     if (L + M <= remaining_bytes) {
@@ -237,7 +237,7 @@ static int lzfse_decode_lmd(lzfse_decoder_state *s) {
       if (D >= 8 || D >= M)
         copy(dst, dst - D, M);
       else
-        for (size_t i = 0; i < M; i++)
+        for (int32_t i = 0; i < M; i++)
           dst[i] = dst[i - D];
       dst += M;
     }
@@ -253,7 +253,7 @@ static int lzfse_decode_lmd(lzfse_decoder_state *s) {
       //  or there isn't; if there is, we copy the whole thing and
       //  update all the pointers and lengths to reflect the copy.
       if (L <= remaining_bytes) {
-        for (size_t i = 0; i < L; i++)
+        for (int32_t i = 0; i < L; i++)
           dst[i] = lit[i];
         dst += L;
         lit += L;
@@ -277,7 +277,7 @@ static int lzfse_decode_lmd(lzfse_decoder_state *s) {
       //  before finishing, we return to the caller indicating that
       //  the buffer is full.
       if (M <= remaining_bytes) {
-        for (size_t i = 0; i < M; i++)
+        for (int32_t i = 0; i < M; i++)
           dst[i] = dst[i - D];
         dst += M;
         remaining_bytes -= M;
@@ -579,12 +579,12 @@ int lzfse_decode(lzfse_decoder_state *s) {
       memset(&dstate, 0x00, sizeof(dstate));
       dstate.src = s->src;
       dstate.src_end = s->src_end;
-      if (dstate.src_end - s->src > bs->n_payload_bytes)
+      if (dstate.src_end - s->src > (ptrdiff_t)bs->n_payload_bytes)
         dstate.src_end = s->src + bs->n_payload_bytes; // limit to payload bytes
       dstate.dst_begin = s->dst_begin;
       dstate.dst = s->dst;
       dstate.dst_end = s->dst_end;
-      if (dstate.dst_end - s->dst > bs->n_raw_bytes)
+      if (dstate.dst_end - s->dst > (ptrdiff_t)bs->n_raw_bytes)
         dstate.dst_end = s->dst + bs->n_raw_bytes; // limit to raw bytes
       dstate.d_prev = bs->d_prev;
       dstate.end_of_stream = 0;
