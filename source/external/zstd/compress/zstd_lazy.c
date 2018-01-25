@@ -571,8 +571,9 @@ size_t ZSTD_compressBlock_lazy_generic(
                     size_t const ml2 = ZSTD_count(ip+4, ip+4-offset_1, iend) + 4;
                     int const gain2 = (int)(ml2 * 4);
                     int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 1);
-                    if ((ml2 >= 4) && (gain2 > gain1))
+                    if ((ml2 >= 4) && (gain2 > gain1)) {
                         matchLength = ml2; offset = 0; start = ip;
+                    }
                 }
                 {   size_t offset2=99999999;
                     size_t const ml2 = searchMax(ms, cParams, ip, iend, &offset2);
