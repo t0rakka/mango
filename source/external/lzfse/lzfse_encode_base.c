@@ -126,7 +126,7 @@ lzfse_encode_v1_freq_table(lzfse_compressed_block_header_v2 *out,
     // Encode one value to accum
     int nbits = 0;
     uint32_t bits = lzfse_encode_v1_freq_value(src[i], &nbits);
-    assert(bits < (uint32_t)(1 << nbits));
+    assert(bits < (1 << nbits));
     accum |= bits << accum_nbits;
     accum_nbits += nbits;
 
@@ -441,7 +441,7 @@ static inline int lzfse_push_lmd(lzfse_encoder_state *s, uint32_t L,
   uint8_t *dst = s->literals + s->n_literals;
   const uint8_t *src = s->src + s->src_literal;
   uint8_t *dst_end = dst + L;
-  if ((lzfse_offset)(s->src_literal + L + 16) > s->src_end) {
+  if (s->src_literal + L + 16 > s->src_end) {
     // Careful at the end of SRC, we can't read 16 bytes
     if (L > 0)
       memcpy(dst, src, L);
@@ -751,7 +751,7 @@ int lzfse_encode_base(lzfse_encoder_state *s) {
       incoming.pos--;
       incoming.ref--;
     }
-    incoming.length += (uint32_t)(pos - incoming.pos); // update length after expansion
+    incoming.length += pos - incoming.pos; // update length after expansion
 
     // Match filtering heuristic (from LZVN). INCOMING is always defined here.
 
@@ -772,7 +772,7 @@ int lzfse_encode_base(lzfse_encoder_state *s) {
     }
 
     // No overlap, emit pending, keep incoming
-    if ((lzfse_offset)(s->pending.pos + s->pending.length) <= incoming.pos) {
+    if (s->pending.pos + s->pending.length <= incoming.pos) {
       if (lzfse_backend_match(s, &s->pending) != LZFSE_STATUS_OK) {
         ok = 0;
         goto END;

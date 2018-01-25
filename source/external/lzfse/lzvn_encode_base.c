@@ -21,8 +21,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 // LZVN low-level encoder
 
-#define LZFSE_NO_TABLES
-
 #include "lzvn_encode_base.h"
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -69,8 +67,8 @@ static inline unsigned char *emit_literal(const unsigned char *p,
     x = L < 271 ? L : 271;
     if (q + x + 10 >= q1)
       goto OUT_FULL;
-    *(uint16_t *)q = (uint16_t)(0xE0 + ((x - 16) << 8));
-    q += 2; // non-aligned access OK
+    store2(q, 0xE0 + ((x - 16) << 8));
+    q += 2;
     L -= x;
     q = lzvn_copy8(q, p, x);
     p += x;
@@ -78,7 +76,7 @@ static inline unsigned char *emit_literal(const unsigned char *p,
   if (L > 0) {
     if (q + L + 10 >= q1)
       goto OUT_FULL;
-    *q++ = (unsigned char)(0xE0 + L); // 1110LLLL
+    *q++ = 0xE0 + L; // 1110LLLL
     q = lzvn_copy8(q, p, L);
   }
   return q;
@@ -102,8 +100,8 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
     x = L < 271 ? L : 271;
     if (q + x + 10 >= q1)
       goto OUT_FULL;
-    *(uint16_t *)q = (uint16_t)(0xE0 + ((x - 16) << 8));
-    q += 2; // non-aligned access OK
+    store2(q, 0xE0 + ((x - 16) << 8));
+    q += 2;
     L -= x;
     q = lzvn_copy64(q, p, x);
     p += x;
@@ -111,7 +109,7 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
   if (L > 3) {
     if (q + L + 10 >= q1)
       goto OUT_FULL;
-    *q++ = (unsigned char)(0xE0 + L); // 1110LLLL
+    *q++ = 0xE0 + L; // 1110LLLL
     q = lzvn_copy64(q, p, L);
     p += L;
     L = 0;
@@ -121,8 +119,7 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
   x -= 3; // M = (x+3) + M'    max value for x is 7-2*L
 
   // Here L<4 literals remaining, we read them here
-  uint32_t literal =
-      *(uint32_t *)p; // read 4 literal bytes, non-aligned access OK
+  uint32_t literal = load4(p);
   // P is not accessed after this point
 
   // Relaxed capacity test covering all cases
@@ -131,34 +128,34 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
 
   if (D == D_prev) {
     if (L == 0) {
-      *q++ = (unsigned char)(0xF0 + (x + 3)); // XM!
+      *q++ = 0xF0 + (x + 3); // XM!
     } else {
-      *q++ = (unsigned char)((L << 6) + (x << 3) + 6); //  LLxxx110
+      *q++ = (L << 6) + (x << 3) + 6; //  LLxxx110
     }
-    *(uint32_t *)q = literal;
-    q += L; // non-aligned access OK
+    store4(q, literal);
+    q += L;
   } else if (D < 2048 - 2 * 256) {
     // Short dist    D>>8 in 0..5
-    *q++ = (unsigned char)((D >> 8) + (L << 6) + (x << 3)); // LLxxxDDD
+    *q++ = (D >> 8) + (L << 6) + (x << 3); // LLxxxDDD
     *q++ = D & 0xFF;
-    *(uint32_t *)q = literal;
-    q += L; // non-aligned access OK
+    store4(q, literal);
+    q += L;
   } else if (D >= (1 << 14) || M == 0 || (x + 3) + M > 34) {
     // Long dist
-    *q++ = (unsigned char)((L << 6) + (x << 3) + 7);
-    *(uint16_t *)q = (uint16_t)(D);
-    q += 2; // non-aligned access OK
-    *(uint32_t *)q = literal;
-    q += L; // non-aligned access OK
+    *q++ = (L << 6) + (x << 3) + 7;
+    store2(q, D);
+    q += 2;
+    store4(q, literal);
+    q += L;
   } else {
     // Medium distance
     x += M;
     M = 0;
-    *q++ = (unsigned char)(0xA0 + (x >> 2) + (L << 3));
-    *(uint16_t *)q = (uint16_t)(D << 2 | (x & 3));
-    q += 2; // non-aligned access OK
-    *(uint32_t *)q = literal;
-    q += L; // non-aligned access OK
+    *q++ = 0xA0 + (x >> 2) + (L << 3);
+    store2(q, D << 2 | (x & 3));
+    q += 2;
+    store4(q, literal);
+    q += L;
   }
 
   // Issue remaining match
@@ -166,14 +163,14 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
     if (q + 2 >= q1)
       goto OUT_FULL;
     x = M < 271 ? M : 271;
-    *(uint16_t *)q = (uint16_t)(0xf0 + ((x - 16) << 8));
-    q += 2; // non-aligned access OK
+    store2(q, 0xf0 + ((x - 16) << 8));
+    q += 2;
     M -= x;
   }
   if (M > 0) {
     if (q + 1 >= q1)
       goto OUT_FULL;
-    *q++ = (unsigned char)(0xF0 + M); // M = 0..15
+    *q++ = 0xF0 + M; // M = 0..15
   }
 
   return q;
@@ -372,12 +369,13 @@ static inline void lzvn_init_table(lzvn_encoder_state *state) {
   lzvn_offset index = -LZVN_ENCODE_MAX_DISTANCE; // max match distance
   if (index < state->src_begin)
     index = state->src_begin;
-  const uint32_t value = load4(state->src + index);
-  const int32_t idx = offset_to_s32(index);
-  lzvn_encode_entry_type e = {
-    { idx, idx, idx, idx },
-    { value, value, value, value }
-  };
+  uint32_t value = load4(state->src + index);
+
+  lzvn_encode_entry_type e;
+  for (int i = 0; i < 4; i++) {
+    e.indices[i] = offset_to_s32(index);
+    e.values[i] = value;
+  }
   for (int u = 0; u < LZVN_ENCODE_HASH_VALUES; u++)
     state->table[u] = e; // fill entire table
 }

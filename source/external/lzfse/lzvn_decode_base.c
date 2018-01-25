@@ -21,8 +21,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 // LZVN low-level decoder
 
-#define LZFSE_NO_TABLES
-
 #include "lzvn_decode_base.h"
 
 #if !defined(HAVE_LABELS_AS_VALUES)
@@ -31,10 +29,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #  else
 #    define HAVE_LABELS_AS_VALUES 0
 #  endif
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4102)
 #endif
 
 //  Both the source and destination buffers are represented by a pointer and
@@ -434,7 +428,7 @@ copy_literal_and_match:
   //  Check if the match distance is valid; matches must not reference
   //  bytes that preceed the start of the output buffer, nor can the match
   //  distance be zero.
-  if (D > (size_t)(dst_ptr - state->dst_begin) || D == 0)
+  if (D > dst_ptr - state->dst_begin || D == 0)
     goto invalid_match_distance;
 copy_match:
   //  Now we copy the match from dst_ptr - D to dst_ptr. It is important to keep

@@ -1,7 +1,7 @@
 /*
 Copyright (c) 2015-2016, Apple Inc. All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:  
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
 1.  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 
@@ -42,14 +42,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #  define FSE_INLINE __forceinline
+#  define inline __inline
 #  pragma warning(disable : 4068) // warning C4068: unknown pragma
 #else
 #  define FSE_INLINE static inline __attribute__((__always_inline__))
 #endif
 
-#ifdef __APPLE__
-#pragma mark - Bit utils
-#endif
+// MARK: - Bit utils
 
 /*! @abstract Signed type used to represent bit count. */
 typedef int32_t fse_bit_count;
@@ -132,9 +131,7 @@ FSE_INLINE uint32_t fse_extract_bits32(uint32_t x, fse_bit_count start,
   return fse_mask_lsb32(x >> start, nbits);
 }
 
-#ifdef __APPLE__
-#pragma mark - Bit stream
-#endif
+// MARK: - Bit stream
 
 // I/O streams
 // The streams can be shared between several FSE encoders/decoders, which is why
@@ -424,9 +421,7 @@ FSE_INLINE uint32_t fse_in_pull32(fse_in_stream32 *s, fse_bit_count n) {
   return result;
 }
 
-#ifdef __APPLE__
-#pragma mark - Encode/Decode
-#endif
+// MARK: - Encode/Decode
 
 // Map to 32/64-bit implementations and types for I/O
 #if FSE_IOSTREAM_64
@@ -533,7 +528,7 @@ FSE_INLINE uint8_t fse_decode(fse_state *__restrict pstate,
   *pstate = (fse_state)(e >> 16) + (fse_state)fse_in_pull(in, e & 0xff);
 
   // Return the symbol for this state
-  return (uint8_t)fse_extract_bits(e, 8, 8); // symbol
+  return fse_extract_bits(e, 8, 8); // symbol
 }
 
 /*! @abstract Decode and return value using the decoder table, and update \c
@@ -553,9 +548,7 @@ fse_value_decode(fse_state *__restrict pstate,
                    fse_mask_lsb(state_and_value_bits, entry.value_bits));
 }
 
-#ifdef __APPLE__
-#pragma mark - Tables
-#endif
+// MARK: - Tables
 
 // IMPORTANT: To properly decode an FSE encoded stream, both encoder/decoder
 // tables shall be initialized with the same parameters, including the
@@ -568,7 +561,7 @@ FSE_INLINE int fse_check_freq(const uint16_t *freq_table,
                               const size_t table_size,
                               const size_t number_of_states) {
   size_t sum_of_freq = 0;
-  for (size_t i = 0; i < table_size; i++) {
+  for (int i = 0; i < table_size; i++) {
     sum_of_freq += freq_table[i];
   }
   return (sum_of_freq > number_of_states) ? -1 : 0;
@@ -636,5 +629,3 @@ void fse_init_value_decoder_table(int nstates, int nsymbols,
  *  \c freq[nsymbols]. */
 void fse_normalize_freq(int nstates, int nsymbols, const uint32_t *__restrict t,
                         uint16_t *__restrict freq);
-
-

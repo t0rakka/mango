@@ -21,7 +21,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 // LZFSE encode API
 
-#define LZFSE_NO_TABLES
 #include "lzfse.h"
 #include "lzfse_internal.h"
 
@@ -31,9 +30,9 @@ size_t lzfse_encode_scratch_size() {
   return (s1 > s2) ? s1 : s2; // max(lzfse,lzvn)
 }
 
-size_t lzfse_encode_buffer(uint8_t *__restrict dst_buffer, size_t dst_size,
-                           const uint8_t *__restrict src_buffer,
-                           size_t src_size, void *__restrict scratch_buffer) {
+size_t lzfse_encode_buffer_with_scratch(uint8_t *__restrict dst_buffer, 
+                       size_t dst_size, const uint8_t *__restrict src_buffer,
+                       size_t src_size, void *__restrict scratch_buffer) {
   const size_t original_size = src_size;
 
   // If input is really really small, go directly to uncompressed buffer
@@ -92,7 +91,7 @@ size_t lzfse_encode_buffer(uint8_t *__restrict dst_buffer, size_t dst_size,
       if (lzfse_encode_base(state) != LZFSE_STATUS_OK)
         goto try_uncompressed;
       src_size -= encoder_block_size;
-      while (src_size >= (size_t)encoder_block_size) {
+      while (src_size >= encoder_block_size) {
         //  All subsequent chunks require a translation to keep the offsets
         //  from getting too big.  Note that we are always going from
         //  encoder_block_size up to 2*encoder_block_size so that the
@@ -140,3 +139,25 @@ try_uncompressed:
   //  Otherwise, there's nothing we can do, so return zero.
   return 0;
 }
+
+size_t lzfse_encode_buffer(uint8_t *__restrict dst_buffer, size_t dst_size,
+                           const uint8_t *__restrict src_buffer,
+                           size_t src_size, void *__restrict scratch_buffer) {
+  int has_malloc = 0;
+  size_t ret = 0;
+
+  // Deal with the possible NULL pointer
+  if (scratch_buffer == NULL) {
+    // +1 in case scratch size could be zero
+    scratch_buffer = malloc(lzfse_encode_scratch_size() + 1);
+    has_malloc = 1;
+  }
+  if (scratch_buffer == NULL)
+    return 0;
+  ret = lzfse_encode_buffer_with_scratch(dst_buffer, 
+                        dst_size, src_buffer, 
+                        src_size, scratch_buffer);
+  if (has_malloc)
+    free(scratch_buffer);
+  return ret;
+} 
