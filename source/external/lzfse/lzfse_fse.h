@@ -528,7 +528,7 @@ FSE_INLINE uint8_t fse_decode(fse_state *__restrict pstate,
   *pstate = (fse_state)(e >> 16) + (fse_state)fse_in_pull(in, e & 0xff);
 
   // Return the symbol for this state
-  return fse_extract_bits(e, 8, 8); // symbol
+  return (uint8_t) fse_extract_bits(e, 8, 8); // symbol
 }
 
 /*! @abstract Decode and return value using the decoder table, and update \c

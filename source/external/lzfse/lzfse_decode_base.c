@@ -265,11 +265,11 @@ static int lzfse_decode_lmd(lzfse_decoder_state *s) {
       //  L, and report that the destination buffer is full. Note that
       //  we always write right up to the end of the destination buffer.
       else {
-        for (size_t i = 0; i < remaining_bytes; i++)
+        for (size_t i = 0; i < (size_t) remaining_bytes; i++)
           dst[i] = lit[i];
         dst += remaining_bytes;
         lit += remaining_bytes;
-        L -= remaining_bytes;
+        L -= (int32_t) remaining_bytes;
         goto DestinationBufferIsFull;
       }
       //  The match goes just like the literal does. We copy as much as
@@ -291,10 +291,10 @@ static int lzfse_decode_lmd(lzfse_decoder_state *s) {
                  //
                  // But we still set M = 0, to maintain the post-condition.
       } else {
-        for (size_t i = 0; i < remaining_bytes; i++)
+        for (size_t i = 0; i < (size_t) remaining_bytes; i++)
           dst[i] = dst[i - D];
         dst += remaining_bytes;
-        M -= remaining_bytes;
+        M -= (int32_t) remaining_bytes;
       DestinationBufferIsFull:
         //  Because we want to be able to resume decoding where we've left
         //  off (even in the middle of a literal or match), we need to

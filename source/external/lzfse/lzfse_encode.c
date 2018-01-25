@@ -91,7 +91,7 @@ size_t lzfse_encode_buffer_with_scratch(uint8_t *__restrict dst_buffer,
       if (lzfse_encode_base(state) != LZFSE_STATUS_OK)
         goto try_uncompressed;
       src_size -= encoder_block_size;
-      while (src_size >= encoder_block_size) {
+      while (src_size >= (size_t)encoder_block_size) {
         //  All subsequent chunks require a translation to keep the offsets
         //  from getting too big.  Note that we are always going from
         //  encoder_block_size up to 2*encoder_block_size so that the

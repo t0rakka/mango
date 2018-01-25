@@ -67,7 +67,7 @@ static inline unsigned char *emit_literal(const unsigned char *p,
     x = L < 271 ? L : 271;
     if (q + x + 10 >= q1)
       goto OUT_FULL;
-    store2(q, 0xE0 + ((x - 16) << 8));
+    store2(q, (uint16_t)(0xE0 + ((x - 16) << 8)));
     q += 2;
     L -= x;
     q = lzvn_copy8(q, p, x);
@@ -76,7 +76,7 @@ static inline unsigned char *emit_literal(const unsigned char *p,
   if (L > 0) {
     if (q + L + 10 >= q1)
       goto OUT_FULL;
-    *q++ = 0xE0 + L; // 1110LLLL
+    *q++ = (unsigned char)(0xE0 + L); // 1110LLLL
     q = lzvn_copy8(q, p, L);
   }
   return q;
@@ -100,7 +100,7 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
     x = L < 271 ? L : 271;
     if (q + x + 10 >= q1)
       goto OUT_FULL;
-    store2(q, 0xE0 + ((x - 16) << 8));
+    store2(q, (uint16_t)(0xE0 + ((x - 16) << 8)));
     q += 2;
     L -= x;
     q = lzvn_copy64(q, p, x);
@@ -109,7 +109,7 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
   if (L > 3) {
     if (q + L + 10 >= q1)
       goto OUT_FULL;
-    *q++ = 0xE0 + L; // 1110LLLL
+    *q++ = (unsigned char)(0xE0 + L); // 1110LLLL
     q = lzvn_copy64(q, p, L);
     p += L;
     L = 0;
@@ -128,22 +128,22 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
 
   if (D == D_prev) {
     if (L == 0) {
-      *q++ = 0xF0 + (x + 3); // XM!
+      *q++ = (unsigned char)(0xF0 + (x + 3)); // XM!
     } else {
-      *q++ = (L << 6) + (x << 3) + 6; //  LLxxx110
+      *q++ = (unsigned char)((L << 6) + (x << 3) + 6); //  LLxxx110
     }
     store4(q, literal);
     q += L;
   } else if (D < 2048 - 2 * 256) {
     // Short dist    D>>8 in 0..5
-    *q++ = (D >> 8) + (L << 6) + (x << 3); // LLxxxDDD
+    *q++ = (unsigned char)((D >> 8) + (L << 6) + (x << 3)); // LLxxxDDD
     *q++ = D & 0xFF;
     store4(q, literal);
     q += L;
   } else if (D >= (1 << 14) || M == 0 || (x + 3) + M > 34) {
     // Long dist
-    *q++ = (L << 6) + (x << 3) + 7;
-    store2(q, D);
+    *q++ = (unsigned char)((L << 6) + (x << 3) + 7);
+    store2(q, (uint16_t)D);
     q += 2;
     store4(q, literal);
     q += L;
@@ -151,8 +151,8 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
     // Medium distance
     x += M;
     M = 0;
-    *q++ = 0xA0 + (x >> 2) + (L << 3);
-    store2(q, D << 2 | (x & 3));
+    *q++ = (unsigned char)(0xA0 + (x >> 2) + (L << 3));
+    store2(q, (uint16_t)(D << 2 | (x & 3)));
     q += 2;
     store4(q, literal);
     q += L;
@@ -163,14 +163,14 @@ static inline unsigned char *emit(const unsigned char *p, unsigned char *q,
     if (q + 2 >= q1)
       goto OUT_FULL;
     x = M < 271 ? M : 271;
-    store2(q, 0xf0 + ((x - 16) << 8));
+    store2(q, (uint16_t)(0xf0 + ((x - 16) << 8)));
     q += 2;
     M -= x;
   }
   if (M > 0) {
     if (q + 1 >= q1)
       goto OUT_FULL;
-    *q++ = 0xF0 + M; // M = 0..15
+    *q++ = (unsigned char)(0xF0 + M); // M = 0..15
   }
 
   return q;

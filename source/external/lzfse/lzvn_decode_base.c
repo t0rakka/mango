@@ -126,8 +126,9 @@ void lzvn_decode(lzvn_decoder_state *state) {
 //  No error checking happens in the first stage, except for ensuring that
 //  the source has enough length to represent the full opcode before
 //  reading past the first byte.
+#if HAVE_LABELS_AS_VALUES
 sml_d:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 0:
   case 1:
   case 2:
@@ -269,8 +270,9 @@ sml_d:
   D = (size_t)extract(opc, 0, 3) << 8 | src_ptr[1];
   goto copy_literal_and_match;
 
+#if HAVE_LABELS_AS_VALUES
 med_d:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 160:
   case 161:
   case 162:
@@ -319,8 +321,9 @@ med_d:
   D = (size_t)extract(opc23, 2, 14);
   goto copy_literal_and_match;
 
+#if HAVE_LABELS_AS_VALUES
 lrg_d:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 7:
   case 15:
   case 23:
@@ -355,8 +358,9 @@ lrg_d:
   D = load2(&src_ptr[1]);
   goto copy_literal_and_match;
 
+#if HAVE_LABELS_AS_VALUES
 pre_d:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 70:
   case 78:
   case 86:
@@ -428,7 +432,7 @@ copy_literal_and_match:
   //  Check if the match distance is valid; matches must not reference
   //  bytes that preceed the start of the output buffer, nor can the match
   //  distance be zero.
-  if (D > dst_ptr - state->dst_begin || D == 0)
+  if ((ptrdiff_t)D > dst_ptr - state->dst_begin || D == 0)
     goto invalid_match_distance;
 copy_match:
   //  Now we copy the match from dst_ptr - D to dst_ptr. It is important to keep
@@ -488,8 +492,9 @@ copy_match:
 //  to encode is the match length. We are able to reuse the match copy
 //  sequence from the literal and match opcodes to perform the actual
 //  copy implementation.
+#if HAVE_LABELS_AS_VALUES
 sml_m:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 241:
   case 242:
   case 243:
@@ -517,8 +522,9 @@ sml_m:
   PTR_LEN_INC(src_ptr, src_len, opc_len);
   goto copy_match;
 
+#if HAVE_LABELS_AS_VALUES
 lrg_m:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 240:
 #endif
   UPDATE_GOOD;
@@ -539,8 +545,10 @@ lrg_m:
 //  These two opcodes (lrg_l and sml_l) encode only a literal.  There is no
 //  match length or match distance to worry about (but we need to *not*
 //  touch D, as it must be preserved between opcodes).
+
+#if HAVE_LABELS_AS_VALUES
 sml_l:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 225:
   case 226:
   case 227:
@@ -564,8 +572,9 @@ sml_l:
   L = (size_t)extract(opc, 0, 4);
   goto copy_literal;
 
+#if HAVE_LABELS_AS_VALUES
 lrg_l:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 224:
 #endif
   UPDATE_GOOD;
@@ -629,8 +638,9 @@ copy_literal:
 
 // ===============================================================
 // Other opcodes
+#if HAVE_LABELS_AS_VALUES
 nop:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 14:
   case 22:
 #endif
@@ -646,8 +656,9 @@ nop:
   break;
 #endif
 
+#if HAVE_LABELS_AS_VALUES
 eos:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 6:
 #endif
   opc_len = 8;
@@ -661,8 +672,9 @@ eos:
 
 // ===============================================================
 // Return on error
+#if HAVE_LABELS_AS_VALUES
 udef:
-#if !HAVE_LABELS_AS_VALUES
+#else
   case 30:
   case 38:
   case 46:
