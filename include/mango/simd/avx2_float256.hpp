@@ -146,6 +146,19 @@ namespace simd {
         return _mm256_fnmadd_ps(b, c, a);
     }
 
+#elif defined(MANGO_ENABLE_FMA4)
+
+    static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)
+    {
+        return _mm256_macc_ps(b, c, a);
+    }
+
+    static inline float32x8 msub(float32x8 a, float32x8 b, float32x8 c)
+    {
+        return _mm256_nmacc_ps(b, c, a);
+
+    }
+
 #else
 
     static inline float32x8 madd(float32x8 a, float32x8 b, float32x8 c)

@@ -268,13 +268,29 @@ namespace simd {
 
     static inline float32x4 madd(float32x4 a, float32x4 b, float32x4 c)
     {
+        // a + b * c
         return _mm_fmadd_ps(b, c, a);
     }
 
     static inline float32x4 msub(float32x4 a, float32x4 b, float32x4 c)
     {
+        // a - b * c
         return _mm_fnmadd_ps(b, c, a);
     }
+
+    /*
+    static inline float32x4 nmadd(float32x4 a, float32x4 b, float32x4 c)
+    {
+        // -(a + b * c)
+        return _mm_fnmsub_ps(b, c, a);
+    }
+
+    static inline float32x4 nmsub(float32x4 a, float32x4 b, float32x4 c)
+    {
+        // -(a - b * c)
+        return _mm_fmsub_ps(b, c, a);
+    }
+    */
 
 #elif defined(MANGO_ENABLE_FMA4)
 
@@ -285,8 +301,20 @@ namespace simd {
 
     static inline float32x4 msub(float32x4 a, float32x4 b, float32x4 c)
     {
-        return _mm_sub_ps(a, _mm_mul_ps(b, c));
+        return _mm_nmacc_ps(b, c, a);
     }
+
+    /*
+    static inline float32x4 nmadd(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return _mm_nmsub_ps(b, c, a);
+    }
+
+    static inline float32x4 nmsub(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return _mm_msub_ps(b, c, a);
+    }
+    */
 
 #else
 
@@ -299,6 +327,18 @@ namespace simd {
     {
         return _mm_sub_ps(a, _mm_mul_ps(b, c));
     }
+
+    /*
+    static inline float32x4 nmadd(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return _mm_sub_ps(_mm_setzero_ps(), _mm_add_ps(a, _mm_mul_ps(b, c)));
+    }
+
+    static inline float32x4 nmsub(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return _mm_sub_ps(_mm_mul_ps(b, c), a);
+    }
+    */
 
 #endif
 
