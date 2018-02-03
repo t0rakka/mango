@@ -30,7 +30,8 @@ SOURCE_DIRS := mango/core \
                external/miniz \
                external/lz4 \
                external/lzo \
-               external/bzip2
+               external/bzip2 \
+               external/aes
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS),$(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) $(wildcard $(MANGO_SOURCE)/$(dir)/*.c))
 mango_sources := $(SOURCES:$(LOCAL_PATH)/%=%)
@@ -60,6 +61,7 @@ ifeq ($(TARGET_ARCH_ABI),x86_64)
     # OPTIONS += "-mbmi2"
     # OPTIONS += "-mlzcnt"
     # OPTIONS += "-msha"
+    # OPTIONS += "-maes"
 endif
 
 # -------------------------------------------------------------
