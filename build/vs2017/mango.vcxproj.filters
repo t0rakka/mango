@@ -124,6 +124,9 @@
     <Filter Include="external\zstd\decompress">
       <UniqueIdentifier>{23707869-827d-4f33-b2a3-05764437c339}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\aes">
+      <UniqueIdentifier>{16fb7652-1881-47ab-8e72-64b044fded7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -690,6 +693,12 @@
     <ClInclude Include="..\..\include\mango\simd\altivec_int128.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\aes\bc_aes.h">
+      <Filter>external\aes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\aes.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1011,6 +1020,12 @@
       <Filter>mango\source\core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\mango\core\sha2.cpp">
+      <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\aes\bc_aes.cpp">
+      <Filter>external\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\aes.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
   </ItemGroup>

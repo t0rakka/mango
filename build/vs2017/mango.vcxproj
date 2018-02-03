@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\mango\core\aes.hpp" />
     <ClInclude Include="..\..\include\mango\core\atomic.hpp" />
     <ClInclude Include="..\..\include\mango\core\bits.hpp" />
     <ClInclude Include="..\..\include\mango\core\buffer.hpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h" />
     <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h" />
     <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp" />
+    <ClInclude Include="..\..\source\external\aes\bc_aes.h" />
     <ClInclude Include="..\..\source\external\bc\BC.h" />
     <ClInclude Include="..\..\source\external\bzip2\bzlib.h" />
     <ClInclude Include="..\..\source\external\bzip2\bzlib_private.h" />
@@ -217,6 +219,7 @@
     <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\external\aes\bc_aes.cpp" />
     <ClCompile Include="..\..\source\external\bc\BC.cpp" />
     <ClCompile Include="..\..\source\external\bc\BC4BC5.cpp" />
     <ClCompile Include="..\..\source\external\bc\BC6HBC7.cpp" />
@@ -266,6 +269,7 @@
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_opt.c" />
     <ClCompile Include="..\..\source\external\zstd\decompress\huf_decompress.c" />
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c" />
+    <ClCompile Include="..\..\source\mango\core\aes.cpp" />
     <ClCompile Include="..\..\source\mango\core\buffer.cpp" />
     <ClCompile Include="..\..\source\mango\core\compress.cpp" />
     <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp" />
