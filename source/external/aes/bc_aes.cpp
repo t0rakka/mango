@@ -234,7 +234,7 @@ int aes_encrypt_cbc(const BYTE in[], size_t in_len, BYTE out[], const WORD key[]
 	if (in_len % AES_BLOCK_SIZE != 0)
 		return(FALSE);
 
-	blocks = in_len / AES_BLOCK_SIZE;
+	blocks = int(in_len / AES_BLOCK_SIZE);
 
 	memcpy(iv_buf, iv, AES_BLOCK_SIZE);
 
@@ -257,7 +257,7 @@ int aes_encrypt_cbc_mac(const BYTE in[], size_t in_len, BYTE out[], const WORD k
 	if (in_len % AES_BLOCK_SIZE != 0)
 		return(FALSE);
 
-	blocks = in_len / AES_BLOCK_SIZE;
+	blocks = int(in_len / AES_BLOCK_SIZE);
 
 	memcpy(iv_buf, iv, AES_BLOCK_SIZE);
 
@@ -282,7 +282,7 @@ int aes_decrypt_cbc(const BYTE in[], size_t in_len, BYTE out[], const WORD key[]
 	if (in_len % AES_BLOCK_SIZE != 0)
 		return(FALSE);
 
-	blocks = in_len / AES_BLOCK_SIZE;
+	blocks = int(in_len / AES_BLOCK_SIZE);
 
 	memcpy(iv_buf, iv, AES_BLOCK_SIZE);
 

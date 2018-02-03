@@ -151,6 +151,9 @@
 		A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AB1E706FA000D4D499 /* etc.hpp */; };
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
+		A672D9122026633600947D7E /* bc_aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9102026633600947D7E /* bc_aes.cpp */; };
+		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
+		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
 		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
@@ -324,6 +327,9 @@
 		A63DD7AB1E706FA000D4D499 /* etc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = etc.hpp; path = external/google/etc.hpp; sourceTree = "<group>"; };
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
+		A672D9102026633600947D7E /* bc_aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bc_aes.cpp; path = external/aes/bc_aes.cpp; sourceTree = "<group>"; };
+		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
+		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
 		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
@@ -383,6 +389,7 @@
 		A005598A1C93323D00A6D963 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				A672D9142026634B00947D7E /* aes.cpp */,
 				A6C8F4F5200612E900A25756 /* md5.cpp */,
 				A6C8F4F6200612E900A25756 /* sha1.cpp */,
 				A690037B2008FF790080E5FA /* sha2.cpp */,
@@ -563,6 +570,7 @@
 		A63DD7011E706DAA00D4D499 /* external */ = {
 			isa = PBXGroup;
 			children = (
+				A672D90F2026632700947D7E /* aes */,
 				A6FCC3781E8122C80037C15F /* zstd */,
 				A63DD7A71E706F9300D4D499 /* google */,
 				A63DD79E1E706F7B00D4D499 /* bc */,
@@ -691,6 +699,15 @@
 			name = google;
 			sourceTree = "<group>";
 		};
+		A672D90F2026632700947D7E /* aes */ = {
+			isa = PBXGroup;
+			children = (
+				A672D9102026633600947D7E /* bc_aes.cpp */,
+				A672D9112026633600947D7E /* bc_aes.h */,
+			);
+			name = aes;
+			sourceTree = "<group>";
+		};
 		A6FCC3781E8122C80037C15F /* zstd */ = {
 			isa = PBXGroup;
 			children = (
@@ -804,6 +821,7 @@
 				A6FCC3921E8122EA0037C15F /* error_public.h in Headers */,
 				A63DD74F1E706EB200D4D499 /* crypt.hpp in Headers */,
 				A6FCC3951E8122EA0037C15F /* huf.h in Headers */,
+				A672D9132026633600947D7E /* bc_aes.h in Headers */,
 				A63DD7571E706EB200D4D499 /* rdwrfn.hpp in Headers */,
 				A63DD7531E706EB200D4D499 /* rar.hpp in Headers */,
 				A63DD77B1E706EF100D4D499 /* lzvn_encode_base.h in Headers */,
@@ -926,6 +944,7 @@
 				A00559CA1C93329A00A6D963 /* image_hdr.cpp in Sources */,
 				A63DD6FD1E706D8600D4D499 /* huffman.cpp in Sources */,
 				A00559991C93324E00A6D963 /* string.cpp in Sources */,
+				A672D9122026633600947D7E /* bc_aes.cpp in Sources */,
 				A00559C71C93329A00A6D963 /* image_bmp.cpp in Sources */,
 				A00559D01C93329A00A6D963 /* image_png.cpp in Sources */,
 				A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */,
@@ -939,6 +958,7 @@
 				A63DD7731E706EF100D4D499 /* lzfse_fse.c in Sources */,
 				A005599A1C93324E00A6D963 /* system.cpp in Sources */,
 				A63DD78D1E706F3400D4D499 /* bz_huffman.c in Sources */,
+				A672D9152026634B00947D7E /* aes.cpp in Sources */,
 				A00559971C93324E00A6D963 /* memory.cpp in Sources */,
 				A63DD74E1E706EB200D4D499 /* crypt.cpp in Sources */,
 				A6FCC39D1E8122EA0037C15F /* zstd_common.c in Sources */,
