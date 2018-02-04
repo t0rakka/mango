@@ -335,12 +335,6 @@ void aesni_key_expand(__m128i* schedule, const u8* key, int bits)
 
 #endif // defined(MANGO_ENABLE_AES)
 
-// ----------------------------------------------------------------------------------------
-// Generic C++ AES
-// ----------------------------------------------------------------------------------------
-
-// TODO: generic
-
 } // namespace
 
 namespace mango
@@ -355,7 +349,9 @@ struct KeySchedule
 #endif
         u32 w[128];
     };
-    bool aes_supported { false };
+#if defined(MANGO_ENABLE_AES)
+    bool aes_supported;
+#endif
 };
 
 AES::AES(const u8* key, int bits)
