@@ -96,7 +96,7 @@ int aes_encrypt_ccm(const aes_u8 plaintext[],              // IN  - Plaintext.
                     aes_u8 ciphertext[],                   // OUT - Ciphertext, a concatination of the plaintext and the MAC.
                     aes_u32 *ciphertext_len,                // OUT - The length of the ciphertext, always plaintext_len + mac_len.
                     aes_u32 mac_len,                        // IN  - The desired length of the MAC, must be 4, 6, 8, 10, 12, 14, or 16.
-                    const aes_u8 key[],                    // IN  - The AES key for encryption.
+                    const aes_u32 key[],                    // IN  - The AES key for encryption.
                     int keysize);                        // IN  - The length of the key in bits. Valid values are 128, 192, 256.
 
 // Returns True if the input parameters do not violate any constraint.
@@ -115,7 +115,7 @@ int aes_decrypt_ccm(const aes_u8 ciphertext[],             // IN  - Ciphertext, 
                     aes_u32 *plaintext_len,                 // OUT - Length in aes_u8s of the output plaintext, always ciphertext_len - mac_len .
                     aes_u32 mac_len,                        // IN  - The length of the MAC that was calculated.
                     int *mac_auth,                       // OUT - TRUE if authentication succeeded, FALSE if it did not. NULL pointer will ignore the authentication.
-                    const aes_u8 key[],                    // IN  - The AES key for decryption.
+                    const aes_u32 key[],                    // IN  - The AES key for decryption.
                     int keysize);                        // IN  - The length of the key in BITS. Valid values are 128, 192, 256.
 
 #endif   // AES_H

@@ -130,8 +130,8 @@ void aesni192_key_expand(__m128i* schedule, const u8* key)
 void aesni256_key_expand(__m128i* schedule, const u8* key)
 {
     // encryption schedule
-    schedule[ 0] = _mm_loadu_si128((__m128i*)key);
-    schedule[ 1] = _mm_loadu_si128((__m128i*)(key+16));
+    schedule[ 0] = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key + 0));
+    schedule[ 1] = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key + 16));
     schedule[ 2] = aesni256_key_expand<0x01, 0xff>(schedule[ 0], schedule[ 1]);
     schedule[ 3] = aesni256_key_expand<0x00, 0xaa>(schedule[ 1], schedule[ 2]);
     schedule[ 4] = aesni256_key_expand<0x02, 0xff>(schedule[ 2], schedule[ 3]);
@@ -436,14 +436,14 @@ void aesni_key_expand(__m128i* schedule, const u8* key, int bits)
 namespace mango
 {
 
-struct KeySchedule
+struct KeyScheduleAES
 {
     union
     {
 #if defined(MANGO_ENABLE_AES)
         __m128i schedule[28];
 #endif
-        u32 w[128];
+        u32 w[60];
     };
 #if defined(MANGO_ENABLE_AES)
     bool aes_supported;
@@ -451,7 +451,7 @@ struct KeySchedule
 };
 
 AES::AES(const u8* key, int bits)
-    : m_schedule(new KeySchedule())
+    : m_schedule(new KeyScheduleAES())
     , m_bits(bits)
 {
 #if defined(MANGO_ENABLE_AES)
@@ -544,6 +544,26 @@ void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
     aes_decrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
 }
 
-    // TODO: CCM mode
+void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
+{
+    aes_u32 cipher_length = output.size;
+    aes_encrypt_ccm(input.address, input.size,
+                    associated.address, associated.size,
+                    nonce.address, nonce.size,
+                    output.address, &cipher_length, mac_length,
+                    m_schedule->w, m_bits);
+}
+
+void AES::ccm_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
+{
+    aes_u32 plaintext_length = output.size;
+    int mac_authorized = 0;
+    aes_decrypt_ccm(input.address, input.size,
+                    associated.address, associated.size,
+                    nonce.address, nonce.size,
+                    output.address, &plaintext_length,
+                    mac_length, &mac_authorized,
+                    m_schedule->w, m_bits);
+}
 
 } // namespace mango

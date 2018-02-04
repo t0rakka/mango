@@ -349,11 +349,10 @@ void aes_decrypt_ctr(const aes_u8 in[], size_t in_len, aes_u8 out[], const aes_u
 // out_len = payload_len + assoc_len
 int aes_encrypt_ccm(const aes_u8 payload[], aes_u32 payload_len, const aes_u8 assoc[], unsigned short assoc_len,
                     const aes_u8 nonce[], unsigned short nonce_len, aes_u8 out[], aes_u32 *out_len,
-                    aes_u32 mac_len, const aes_u8 key_str[], int keysize)
+                    aes_u32 mac_len, const aes_u32 key[], int keysize)
 {
 	aes_u8 temp_iv[AES_BLOCK_SIZE], counter[AES_BLOCK_SIZE], mac[16], *buf;
 	int end_of_buf, payload_len_store_size;
-	aes_u32 key[60];
 
 	if (mac_len != 4 && mac_len != 6 && mac_len != 8 && mac_len != 10 &&
 	   mac_len != 12 && mac_len != 14 && mac_len != 16)
@@ -368,9 +367,6 @@ int aes_encrypt_ccm(const aes_u8 payload[], aes_u32 payload_len, const aes_u8 as
 	buf = (aes_u8*)malloc(payload_len + assoc_len + 48 /*Round both payload and associated data up a block size and add an extra block.*/);
 	if (! buf)
 		return(FALSE);
-
-	// Prepare the key for usage.
-	aes_key_setup(key_str, key, keysize);
 
 	// Format the first block of the formatted data.
 	payload_len_store_size = AES_BLOCK_SIZE - 1 - nonce_len;
@@ -412,11 +408,10 @@ int aes_encrypt_ccm(const aes_u8 payload[], aes_u32 payload_len, const aes_u8 as
 // Needs a flag for whether the MAC matches.
 int aes_decrypt_ccm(const aes_u8 ciphertext[], aes_u32 ciphertext_len, const aes_u8 assoc[], unsigned short assoc_len,
                     const aes_u8 nonce[], unsigned short nonce_len, aes_u8 plaintext[], aes_u32 *plaintext_len,
-                    aes_u32 mac_len, int *mac_auth, const aes_u8 key_str[], int keysize)
+                    aes_u32 mac_len, int *mac_auth, const aes_u32 key[], int keysize)
 {
 	aes_u8 temp_iv[AES_BLOCK_SIZE], counter[AES_BLOCK_SIZE], mac[16], mac_buf[16], *buf;
 	int end_of_buf, plaintext_len_store_size;
-	aes_u32 key[60];
 
 	if (ciphertext_len <= mac_len)
 		return(FALSE);
@@ -424,9 +419,6 @@ int aes_decrypt_ccm(const aes_u8 ciphertext[], aes_u32 ciphertext_len, const aes
 	buf = (aes_u8*)malloc(assoc_len + ciphertext_len /*ciphertext_len = plaintext_len + mac_len*/ + 48);
 	if (! buf)
 		return(FALSE);
-
-	// Prepare the key for usage.
-	aes_key_setup(key_str, key, keysize);
 
 	// Copy the plaintext and MAC to the output buffers.
 	*plaintext_len = ciphertext_len - mac_len;
