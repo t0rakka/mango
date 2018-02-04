@@ -45,9 +45,11 @@ CPP_STD = -std=c++14
 # common compiler options (LLVM/CLANG/GCC)
 OPTIONS       = -c -Wall -O3 -ffast-math
 OPTIONS_GCC   = -ftree-vectorize
-OPTIONS_X86   = -msse4
-#OPTIONS_X86   = -mavx2
+#OPTIONS_X86   = -msse4
+OPTIONS_X86   = -mavx
 #OPTIONS_X86 = -mavx512dq -mavx512vl -mavx512bw
+
+OPTIONS_X86   += -maes
 
 # linker options after objects (gcc 4.9 workaround)
 LINK_POST     =
