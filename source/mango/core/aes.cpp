@@ -333,7 +333,7 @@ void aesni_cbc_decrypt(u8* output, const u8* input, size_t blocks, __m128i iv, c
 
 void aesni_ecb_encrypt(u8* output, const u8* input, size_t length, const __m128i* schedule, int keybits)
 {
-    const int blocks = (length + 15) / 16;
+    const size_t blocks = (length + 15) / 16;
     switch (keybits)
     {
         case 128:
@@ -352,7 +352,7 @@ void aesni_ecb_encrypt(u8* output, const u8* input, size_t length, const __m128i
 
 void aesni_ecb_decrypt(u8* output, const u8* input, size_t length, const __m128i* schedule, int keybits)
 {
-    const int blocks = (length + 15) / 16;
+    const size_t blocks = (length + 15) / 16;
     switch (keybits)
     {
         case 128:
@@ -373,7 +373,7 @@ void aesni_ecb_decrypt(u8* output, const u8* input, size_t length, const __m128i
 
 void aesni_cbc_encrypt(u8* output, const u8* input, size_t length, const u8* ivec, const __m128i* schedule, int keybits)
 {
-    const int blocks = (length + 15) / 16;
+    const size_t blocks = (length + 15) / 16;
     __m128i iv = _mm_loadu_si128(reinterpret_cast<const __m128i *>(ivec));
     switch (keybits)
     {
@@ -393,7 +393,7 @@ void aesni_cbc_encrypt(u8* output, const u8* input, size_t length, const u8* ive
 
 void aesni_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ivec, const __m128i* schedule, int keybits)
 {
-    const int blocks = (length + 15) / 16;
+    const size_t blocks = (length + 15) / 16;
     __m128i iv = _mm_loadu_si128(reinterpret_cast<const __m128i *>(ivec));
     switch (keybits)
     {
