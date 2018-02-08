@@ -546,8 +546,8 @@ void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
 
 void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
 {
-    aes_u32 cipher_length = output.size;
-    aes_encrypt_ccm(input.address, input.size,
+    aes_u32 cipher_length = aes_u32(output.size);
+    aes_encrypt_ccm(input.address, aes_u32(input.size),
                     associated.address, associated.size,
                     nonce.address, nonce.size,
                     output.address, &cipher_length, mac_length,
@@ -556,9 +556,9 @@ void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory non
 
 void AES::ccm_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
 {
-    aes_u32 plaintext_length = output.size;
+    aes_u32 plaintext_length = aes_u32(output.size);
     int mac_authorized = 0;
-    aes_decrypt_ccm(input.address, input.size,
+    aes_decrypt_ccm(input.address, aes_u32(input.size),
                     associated.address, associated.size,
                     nonce.address, nonce.size,
                     output.address, &plaintext_length,
