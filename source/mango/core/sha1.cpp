@@ -6,6 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
+#include <mango/core/cpuinfo.hpp>
 
 namespace {
     using namespace mango;
@@ -32,7 +33,7 @@ namespace {
     A = vsha1su1q_u32(A, D);           \
     B = vsha1su0q_u32(B, C, D);
 
-    void sha1_update(uint32 state[5], const uint8* block, int count)
+    void arm_sha1_update(uint32 state[5], const uint8* block, int count)
     {
         // set K0..K3 constants
         uint32x4_t k0 = vdupq_n_u32(0x5A827999);
@@ -172,7 +173,7 @@ namespace {
     *
     *******************************************************************************/
 
-    void sha1_update(uint32 *digest, const uint8 *data, int num_blks)
+    void intel_sha1_update(uint32 *digest, const uint8 *data, int num_blks)
     {
         __m128i abcd, e0, e1;
         __m128i abcd_save, e_save;
@@ -362,7 +363,7 @@ namespace {
         *(digest+4) = _mm_extract_epi32(e0, 3);
     }
 
-#else
+#endif
 
     // ----------------------------------------------------------------------------------------
     // Generic C++ SHA1
@@ -402,7 +403,7 @@ namespace {
     e = ((a << 5) | (a >> 27)) + (b ^ c ^ d) + e + 0xCA62C1D6 + x; } \
     b = (b << 30) | (b >> 2)
 
-    void sha1_update(uint32 state[5], const uint8* block, int count)
+    void generic_sha1_update(uint32 state[5], const uint8* block, int count)
     {
         for (int i = 0; i < count; ++i)
         {
@@ -507,8 +508,6 @@ namespace {
         }
     }
 
-#endif
-
 } // namespace
 
 namespace mango {
@@ -521,11 +520,24 @@ namespace mango {
         hash[3] = 0x10325476;
         hash[4] = 0xC3D2E1F0;
 
+        auto transform = generic_sha1_update;
+#if defined(__ARM_FEATURE_CRYPTO)
+        if ((getCPUFlags() & CPU_SHA1) != 0)
+        {
+            transform = arm_sha1_update;
+        }
+#elif defined(MANGO_ENABLE_SHA)
+        if ((getCPUFlags() & CPU_SHA) != 0)
+        {
+            transform = intel_sha1_update;
+        }
+#endif
+
         const uint32 len = uint32(memory.size);
         const uint8* message = memory.address;
 
         int block_count = len / 64;
-        sha1_update(hash, message, block_count);
+        transform(hash, message, block_count);
         message += block_count * 64;
         uint32 i = block_count * 64;
 
@@ -541,12 +553,12 @@ namespace mango {
         else
         {
             memset(block + rem, 0, 64 - rem);
-            sha1_update(hash, block, 1);
+            transform(hash, block, 1);
             memset(block, 0, 56);
         }
 
         ustore64be(block + 56, memory.size * 8);
-        sha1_update(hash, block, 1);
+        transform(hash, block, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN
         hash[0] = byteswap(hash[0]);

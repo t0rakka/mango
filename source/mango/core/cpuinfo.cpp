@@ -145,9 +145,57 @@ namespace
 
         if (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM)
         {
-            if ((android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0)
+            uint64_t features = android_getCpuFeatures();
+
+            if ((features & ANDROID_CPU_ARM_FEATURE_NEON) != 0)
             {
                 flags |= CPU_NEON;
+            }
+
+            if ((features & ANDROID_CPU_ARM_FEATURE_AES) != 0)
+            {
+                flags |= CPU_ARM_AES;
+            }
+
+            if ((features & ANDROID_CPU_ARM_FEATURE_SHA1) != 0)
+            {
+                flags |= CPU_ARM_SHA1;
+            }
+
+            if ((features & ANDROID_CPU_ARM_FEATURE_SHA2) != 0)
+            {
+                flags |= CPU_ARM_SHA2;
+            }
+
+            if ((features & ANDROID_CPU_ARM_FEATURE_CRC32) != 0)
+            {
+                flags |= CPU_ARM_CRC32;
+            }
+        }
+        else if (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM64)
+        {
+            uint64_t features = android_getCpuFeatures();
+
+            flags |= CPU_NEON; // default for ARM64
+
+            if ((features & ANDROID_CPU_ARM64_FEATURE_AES) != 0)
+            {
+                flags |= CPU_ARM_AES;
+            }
+
+            if ((features & ANDROID_CPU_ARM64_FEATURE_SHA1) != 0)
+            {
+                flags |= CPU_ARM_SHA1;
+            }
+
+            if ((features & ANDROID_CPU_ARM64_FEATURE_SHA2) != 0)
+            {
+                flags |= CPU_ARM_SHA2;
+            }
+
+            if ((features & ANDROID_CPU_ARM64_FEATURE_CRC32) != 0)
+            {
+                flags |= CPU_ARM_CRC32;
             }
         }
 

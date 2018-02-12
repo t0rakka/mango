@@ -6,6 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
+#include <mango/core/cpuinfo.hpp>
 
 namespace {
     using namespace mango;
@@ -64,7 +65,7 @@ namespace {
     *
     *******************************************************************************/
 
-    void sha2_transform(uint32 digest[8], const uint8* data, int block_count)
+    void intel_sha2_transform(uint32 digest[8], const uint8* data, int block_count)
     {
         __m128i state0, state1;
         __m128i msg;
@@ -274,11 +275,11 @@ namespace {
         state0 = _mm_blend_epi16(tmp, state1, 0xF0); // DCBA
         state1 = _mm_alignr_epi8(state1, tmp, 8);    // ABEF
 
-        _mm_store_si128((__m128i*) digest, state0);
-        _mm_store_si128((__m128i*) (digest+4), state1);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(digest + 0), state0);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(digest + 4), state1);
     }
 
-#else
+#endif
 
     // ----------------------------------------------------------------------------------------
     // Generic C++ SHA-256
@@ -289,7 +290,7 @@ namespace {
         return (value >> count) | (value << (32 - count));
     }
 
-    void sha2_transform(uint32 state[8], const uint8* data, int block_count)
+    void generic_sha2_transform(uint32 state[8], const uint8* data, int block_count)
     {
         static const uint32 k[] =
         {
@@ -374,8 +375,6 @@ namespace {
         }
     }
 
-#endif
-
 } // namespace
 
 namespace mango {
@@ -391,11 +390,19 @@ namespace mango {
         hash[6] = 0x1f83d9ab;
         hash[7] = 0x5be0cd19;
 
+        auto transform = generic_sha2_transform;
+#if defined(MANGO_ENABLE_SHA)
+        if ((getCPUFlags() & CPU_SHA) != 0)
+        {
+            transform = intel_sha2_transform;
+        }
+#endif
+
         uint32 size = uint32(memory.size);
         const uint8* data = memory.address;
 
         const int block_count = size / 64;
-        sha2_transform(hash, data, block_count);
+        transform(hash, data, block_count);
         data += block_count * 64;
         size -= block_count * 64;
         
@@ -406,12 +413,12 @@ namespace mango {
 
         if (size >= 56)
         {
-            sha2_transform(hash, buffer, 1);
+            transform(hash, buffer, 1);
             std::memset(buffer, 0, 56);
         }
 
         ustore64be(buffer + 56, memory.size * 8);
-        sha2_transform(hash, buffer, 1);
+        transform(hash, buffer, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN
         hash[0] = byteswap(hash[0]);
