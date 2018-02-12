@@ -192,14 +192,10 @@ namespace mango
         return std::min(max, std::max(min, value));
     }
 
-    static inline uint32 byteclamp(int32 v)
+    static inline constexpr uint32 byteclamp(int32 v)
     {
         // clamp value to [0, 255] range
-        if (v & 0xffffff00)
-        {
-            v = (((~v) >> 31) & 0xff);
-        }
-        return uint32(v);
+        return v & 0xffffff00 ? uint32(((~v) >> 31) & 0xff) : uint32(v);
     }
 
     static inline int modulo(int value, int range)
@@ -213,13 +209,9 @@ namespace mango
         return std::max(1, (v + (multiple - 1)) / multiple);
     }
 
-    static inline float snap(float value, float gridsize)
+    static inline constexpr float snap(float value, float gridsize)
     {
-        if (gridsize)
-        {
-            value = std::floor(0.5f + value / gridsize) * gridsize;
-        }
-        return value;
+        return gridsize ? std::floor(0.5f + value / gridsize) * gridsize : value;
     }
 
     // ----------------------------------------------------------------------------
