@@ -10,7 +10,7 @@ However, if you are wondering why we are still looking at progress bars and wait
 
 The reason is very simple. A large body of programmers simply DO NOT CARE. In fact, they think it is a virtue to not optimize prematurely or waste time doing things "inefficiently" (as-in, programmer time). I have good news for you; I have wasted my time so that you do not have to waste yours.
 
-The library, right here, is end result of over 20 years of evolution. I know, this guy has just re-invented the same wheel multiple times and this is the roundest variation yet, right? It's okay to look at it that way as it is not very far from the truth. But the difference here is that this time around we are not trying to fit round peg into the square hole. We have taken radically different approach; the library consists of very low-level functional components which can be combined to do more complicated things.
+The library, right here, is end result of over 20 years of evolution. I know, this guy has just re-invented the same wheel multiple times and this is the roundest variation yet, right? It's okay to look at it that way as it is not very far from the truth. But the difference here is that this time around we are not trying to fit a round peg into a square hole. We have taken radically different approach; the library consists of very low-level functional components which can be combined to do more complicated things.
 
 Code speaks more than 1000 words.
 
