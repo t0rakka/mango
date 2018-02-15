@@ -2,30 +2,45 @@
 A multi-platform low-level development framework for graphics programmers
 
 #### About mango
-Hello! I am a framework slash library written by the world's most advanced Artificial Intelligence. My author is a self-organizing map which runs on a neural networked processor. You can call it The Author. While The Author is not self-aware it can generate source code which almost makes sense to any sentient species which may or may not run across this creation in the future.
+Pssst... hey you; looking for a really good time? You have come to the right place! What you will find here is a collection of essential graphics programming building blocks which seamlessly work together to create a fabric that brings the fun back into the programming. Despite the fact that the code is written in C++ which is indeed quite uncool and not very trendy at all.
 
-The code has been revised multiple times and the latest revision started as an observation about the state of the hardware and where things are headed in 2011. It was obvious that concurrency is the way to go and memory bandwidth remains a bottleneck for fully realizing the full hardware potential.
+Let's make it crystal clear from the beginning what this library is not: this is not a game or rendering engine. If you want to develop games or cool applications - look elsewhere. There are tons of engines these days with very liberal licenses with "pay as you go" licensing model and the engines are really, really good with excellent tools, ecosystems and communities with tons of support to go with them. That's it, you can stop reading now; thanks for coming by.
 
-The design started from some prototype code that had one goal in mind: memory map a file and transform it's contents to the GPU local memory as efficiently as possible. 
+However, if you are wondering why we are still looking at progress bars and waiting for computers when they should be waiting for us instead you should keep reading. The reason for this is very simple: there is a lot of software written using sloppy programming paradigms and ways of doing things. The hardware is capable of so much more. It's easy to have the false sense that the computer is doing heavy work because it's taking so long - we are after all waiting for something to happen. Most likely most of the time is spent waiting for data. It's not because the programming language used was bad, poorly performing or anything like that. One can write fast software in almost any language.
 
-The most direct approach is to simply mmap a compressed texture and let the GPU consume the data using virtual memory mapping. This is possible with the APPLE_client_storage OpenGL extension. The mango allows to connect the dots very easily; if such direct mapping is not available the next-best thing is to allocate GPU managed memory (OpenGL, DirectX, Vulkan) and map this memory to be visible in the client. Then mmap a file with image data in it. 
+The reason is very simple. A large body of programmers simply DO NOT CARE. In fact, they think it is a virtue to not optimize prematurely or waste time doing things "inefficiently" (as-in, programmer time). I have good news for you; I have wasted my time so that you do not have to waste yours.
 
-This is where mango connects the dots: the GPU mapped memory must be exposed in a format that mango can understand then create a decoder object for the file's mmap in correct fileformat. This establishes a bridge between GPU and the file with image data in it. The "win" here is that there are no intermediate buffers and multiple copies of the data in-flight as happens with more traditional method of loading an image. 
+The library, right here, is end result of over 20 years of evolution. I know, this guy has just re-invented the same wheel multiple times and this is the roundest variation yet, right? It's okay to look at it that was as it is NOT very far from the truth. But the difference here is that this time around we are not trying to fit round peg into the square hole. We have taken radically different approach; the library consists of very low-level functional components which can be combined to do more complicated things.
 
-The traditional approach goes like this:
+Code speaks more than 1000 words.
+
+    Bitmap bitmap("hello.zip/image.jpg", Format(32, Format::UNORM8, Format::BGRA, 8, 8, 8, 8));
+    u32* image = bitmap.address<u32>(0, 0);
+
+Looks fairly typical image loading library code. We give a filename and can get a pointer to the loaded image. This is the HIGH-LEVEL API, convenience to get started quickly.
+
+What is actually happening here is that first the URI is parsed: hello.zip + image.jpg, breaking it into components, in this case container (zip file) and filename. The container is memory mapped. If the zip is uncompressed, the offset of the file within the container is directly mapped. If the data is compressed, we use our virtual memory mechanism to decompress and return the data to the Bitmap object's constructor. The constructor finds a ImageDecoder for the format, in this case JPEG and parses the header from the mapped memory. Then the storage is allocated in the requested format (the pixel format is completely configurable, not just enumeration like in most libraries). Then the decoder is invoked and it decodes *and* does pixel format conversion when writing into the storage.
+
+The decoder is using lock-free work queue to distribute the decoding to available CPU resources and eventually the data is available. This variant of the code has a synchronization point before the constructore returns so that the data is in consistent state ; the call is "blocking" until the decoding operation is complete.
+
+The fun begins when you as a programmer realize that you can construct your own custom loading pipeline using the same exact components the above convenience constructor did.
+
+Let's assume we have a simple task: load image file and create OpenGL texture from it. Sounds simple? It is, actually, but let's take a look at how this is almost universally done with other existing libraries:
 - Open a file
 - Read the file contents into a buffer
-- Interpret the buffer and decode the image into another buffer (the Bitmap)
+- Interpret the buffer and decode the image into another (image) buffer
 - Copy the image buffer contents to the GL
 - GL will make a copy so that glTexImage2D call can return immediately and will transfer the buffer contents at it's leisure
 
-Let's look at the copies being done: Filesystem pages (4k) -> filesystem buffer -> client's buffer -> client's image -> GPU driver internal buffer -> GPU internal storage (5 memory copies)
+Let's look at the copies being done: Filesystem pages (4k) -> filesystem buffer -> client's buffer -> client's image -> GPU driver internal buffer -> GPU internal storage (data is copied or transformed 5 times!)
 
-On the other hand our approach
-- APPLE_client_storage: Filesystem pages (4k) -> GPU internal storage (1 memory copy)
-- Filesystem pages (4k) -> GPU driver internal buffer -> GPU internal storage (2 memory copies)
+We on the other hand have many alternatives:
 
-After prototyping and benchmarking above methods the mango API practically wrote itself.
+1. If we have APPLE_client_storage extension (we are on macOS or iOS), we can simply memory map a compressed texture file and directly copy it into the GPU internal storage. We have the low-level APIs to parse and dispatch or decompress compressed image file formats. The cost is as follows: Filesystem pages (4k) -> GPU internal storage (1 memory copy)
+
+2. We can decode the image file from the memory map directly to the GPU mapped memory using the low-level APIs. This is possible because the pixel format conversion is done in the decoding. The cost looks like this: Filesystem pages (4k) -> GPU driver internal buffer -> GPU internal storage (2 memory copies)
+
+This was just one example how we do things differently and give you, the programmer more control how things should work.
 
 #### Library Features
 
