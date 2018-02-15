@@ -21,7 +21,7 @@ Looks fairly typical image loading library code. We give a filename and can get 
 
 What is actually happening here is that first the URI is parsed: hello.zip + image.jpg, breaking it into components, in this case container (zip file) and filename. The container is memory mapped. If the zip is uncompressed, the offset of the file within the container is directly mapped. If the data is compressed, we use our virtual memory mechanism to decompress and return the data to the Bitmap object's constructor. The constructor finds a ImageDecoder for the format, in this case JPEG and parses the header from the mapped memory. Then the storage is allocated in the requested format (the pixel format is completely configurable, not just enumeration like in most libraries). Then the decoder is invoked and it decodes *and* does pixel format conversion when writing into the storage.
 
-The decoder is using lock-free work queue to distribute the decoding to available CPU resources and eventually the data is available. This variant of the code has a synchronization point before the constructore returns so that the data is in consistent state ; the call is "blocking" until the decoding operation is complete.
+The decoder is using lock-free work queue to distribute the decoding to available CPU resources and eventually the data is available. This variant of the code has a synchronization point before the constructor returns so that the data is in consistent state ; the call is "blocking" until the decoding operation is complete.
 
 The fun begins when you as a programmer realize that you can construct your own custom loading pipeline using the same exact components the above convenience constructor did.
 
@@ -81,7 +81,7 @@ https://github.com/t0rakka/mango-examples
 ##### Vector Math performance
 Let's take a look at example function:
 
-    float4 test(float4 a, float4 b, float4 c)
+    float32x4 test(float32x4 a, float32x4 b, float32x4 c)
     {
   	    return a.wwww * b.xxyy + (c.xxzz - a).zzzz * b.w;
     }
@@ -116,6 +116,8 @@ It is very easy to shoot yourself into the foot with intrinsics. The most basic 
 Sample workload: 672 MB of JPEG data in 410 individual files. 6196 KB of RGB image data when decompressed.
 Processing time: 3.2 seconds on i7-3770K CPU running 64 bit Ubuntu 16.04
 This means data rate of of nearly 2 GB/s for raw uncompressed image data.
+
+Let's do a CPU upgrade. Intel Core i9 with 10 cores, same workload. 1.1 seconds (5.6 GB/s). A single-threaded library would have improved the performance only marginally because of higher IPC and operating frequency, wasting most of the hardware investment. The only way to maximize throughput with code designed to be single-threaded is to decode multiple images simultaneously but this does not reduce latency which is something our design certainly does.
 
 The decoder can be up to three times the speed of jpeglib-turbo on "best conditions" and on worst case roughly same performance. What defines "best conditions" is a very simple observation: the Huffman decoding is the bottleneck; every bit has to come through the serial decompressor. The JPEG standard has a feature which was originally inteded for error correction: Restart Interval (RST marker). If a file has these markers we can find them at order of magnitude faster rate. When we find a marker we start a new Huffman decoder as the bitstream is literally restarted at the marker. This allows us to run as many times faster we have I/O bandwidth and hardware concurrency.
 
