@@ -14,7 +14,7 @@ The library, right here, is end result of over 20 years of evolution. I know, th
 
 Code speaks more than 1000 words.
 
-    Bitmap bitmap("hello.zip/image.jpg", Format(32, Format::UNORM8, Format::BGRA, 8, 8, 8, 8));
+    Bitmap bitmap("hello.zip/image.jpg", Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
     u32* image = bitmap.address<u32>(0, 0);
 
 Looks fairly typical image loading library code. We give a filename and can get a pointer to the loaded image. This is the HIGH-LEVEL API, convenience to get started quickly.
