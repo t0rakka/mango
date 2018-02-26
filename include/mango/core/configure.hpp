@@ -63,6 +63,12 @@
     #define MANGO_PLATFORM_WINDOWS
     #define MANGO_PLATFORM_NAME "MinGW"
 
+    #ifndef NOMINMAX
+    #define NOMINMAX
+    #endif
+
+    #include <windows.h>
+
 #elif defined(__APPLE__)
 
     #include "TargetConditionals.h"
