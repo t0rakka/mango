@@ -335,11 +335,11 @@ namespace mango
         return float32x3(x, y, z);
     }
 
-    static inline float32x3 clamp(const float32x3& a, const float32x3& amin, const float32x3& amax)
+    static inline float32x3 clamp(const float32x3& a, const float32x3& a_min, const float32x3& a_max)
     {
-        const float x = std::max(amin.x, std::min(amax.x, a.x));
-        const float y = std::max(amin.y, std::min(amax.y, a.y));
-        const float z = std::max(amin.z, std::min(amax.z, a.z));
+        const float x = std::max(a_min.x, std::min(a_max.x, a.x));
+        const float y = std::max(a_min.y, std::min(a_max.y, a.y));
+        const float z = std::max(a_min.z, std::min(a_max.z, a.z));
         return float32x3(x, y, z);
     }
 

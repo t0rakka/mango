@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -24,12 +24,12 @@ namespace mango
         }
 
         Rectangle(float x, float y, float width, float height)
-        : position(x, y), size(width, height)
+            : position(x, y), size(width, height)
         {
         }
 
         Rectangle(const float2& _position, const float2& _size)
-        : position(_position), size(_size)
+            : position(_position), size(_size)
         {
         }
 
@@ -55,12 +55,12 @@ namespace mango
         }
 
         Plane(const float3& _normal, float _dist)
-        : normal(_normal), dist(_dist)
+            : normal(_normal), dist(_dist)
         {
         }
 
         Plane(const float3& _normal, const float3& point)
-        : normal(_normal)
+            : normal(_normal)
         {
             dist = dot(normal, point);
         }
@@ -72,7 +72,7 @@ namespace mango
         }
 
         Plane(float x, float y, float z, float w)
-        : normal(x, y, z), dist(w)
+            : normal(x, y, z), dist(w)
         {
         }
 
@@ -172,7 +172,7 @@ namespace mango
         }
 
         Cone(const float3& _origin, const float3& _target, float _angle)
-        : origin(_origin), target(_target), angle(_angle)
+            : origin(_origin), target(_target), angle(_angle)
         {
         }
 
@@ -272,12 +272,12 @@ namespace mango
         }
 
         Ray(const float3& point0, const float3& point1)
-        : origin(point0), direction(point1 - point0)
+            : origin(point0), direction(point1 - point0)
         {
         }
 
         Ray(const Line& line)
-        : origin(line.position[0]), direction(line.direction())
+            : origin(line.position[0]), direction(line.direction())
         {
         }
 
