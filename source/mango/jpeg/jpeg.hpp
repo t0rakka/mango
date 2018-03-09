@@ -25,12 +25,12 @@
 
 #if defined(JPEG_ENABLE_SIMD) && defined(MANGO_ENABLE_SIMD)
 
-    #ifdef MANGO_ENABLE_SSE
-        #define JPEG_ENABLE_SSE
+    #if defined(MANGO_ENABLE_SSE4_1)
+        #define JPEG_ENABLE_SSE4
     #endif
 
-    #ifdef MANGO_ENABLE_NEON
-        #define JPEG_ENABLE_NEON
+    #if defined(MANGO_ENABLE_AVX2)
+        #define JPEG_ENABLE_AVX2
     #endif
 
 #endif
@@ -411,7 +411,6 @@ namespace jpeg
 #endif
 
     void idct                      (uint8* dest, int stride, const BlockType* data, const uint16* qt);
-
     void process_Y                 (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr             (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_CMYK              (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
@@ -420,14 +419,22 @@ namespace jpeg
     void process_YCbCr_16x8        (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x16       (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
-#if defined(JPEG_ENABLE_SSE) && defined(MANGO_ENABLE_SSE4_1)
+#if defined(JPEG_ENABLE_SSE4)
 
     void idct_sse41	               (uint8* dest, int stride, const BlockType* data, const uint16* qt);
-
     void process_YCbCr_8x8_sse41   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_8x16_sse41  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x8_sse41  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x16_sse41 (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+
+#endif
+
+#if defined(JPEG_ENABLE_AVX2)
+
+    void process_YCbCr_8x8_avx2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16_avx2  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
 #endif
 

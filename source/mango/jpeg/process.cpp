@@ -319,7 +319,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 #undef PACK_ARGB
 #undef PACK_CMYK
 
-#if defined(JPEG_ENABLE_SSE) && defined(MANGO_ENABLE_SSE4_1)
+#if defined(JPEG_ENABLE_SSE4)
 
 // ----------------------------------------------------------------------------
 // xxx
@@ -343,13 +343,13 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 */
 
 #if 0
-    // ABGR
+    // R,G,B,A
     static const __m128i weight_cb = _mm_set_epi32(0, 115671, -22479, 0);
     static const __m128i weight_cr = _mm_set_epi32(0, 0, -46596, 91750);
     static const __m128i weight_half = _mm_set_epi32(0, -14773120, 8874368, -11711232);
     static const __m128i g_alphamask = _mm_set1_epi32(0xff000000);
 #else
-    // ARGB
+    // B,G,R,A
     static const __m128i weight_cb = _mm_set_epi32(0, 0, -22479, 115671);
     static const __m128i weight_cr = _mm_set_epi32(0, 91750, -46596, 0);
     static const __m128i weight_half = _mm_set_epi32(0, -11711232, 8874368, -14773120);
@@ -361,7 +361,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     _mm_mullo_epi32(weight_cb, _mm_shuffle_epi32(cb8, 0x55 * i)), \
     _mm_mullo_epi32(weight_cr, _mm_shuffle_epi32(cr8, 0x55 * i)))
 
-inline void compute_YCbCr_sse41(__m128i* dest, __m128i cb, __m128i cr)
+static inline void compute_YCbCr_sse41(__m128i* dest, __m128i cb, __m128i cr)
 {
     __m128i cb8 = _mm_cvtepu8_epi32(cb);
     __m128i cr8 = _mm_cvtepu8_epi32(cr);
@@ -371,7 +371,7 @@ inline void compute_YCbCr_sse41(__m128i* dest, __m128i cb, __m128i cr)
     dest[3] = _mm_srai_epi32(_mm_add_epi32(YCBCR(3), weight_half), 16);
 }
 
-inline void pack4_YCbCr(uint8* dest, __m128i Y, __m128i c0, __m128i c1, __m128i c2, __m128i c3)
+static inline void pack4_YCbCr_sse41(uint8* dest, __m128i Y, __m128i c0, __m128i c1, __m128i c2, __m128i c3)
 {
     __m128i a = _mm_packus_epi32(_mm_add_epi32(SH(Y, 0), c0), _mm_add_epi32(SH(Y, 1), c1));
     __m128i b = _mm_packus_epi32(_mm_add_epi32(SH(Y, 2), c2), _mm_add_epi32(SH(Y, 3), c3));
@@ -402,18 +402,18 @@ void process_YCbCr_8x8_sse41(uint8* dest, int stride, const BlockType* data, Pro
         __m128i cs[4];
 
         compute_YCbCr_sse41(cs + 0, SH(cb_row, 0), SH(cr_row, 0));
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[1], cs[2], cs[3]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[1], cs[2], cs[3]);
 
         compute_YCbCr_sse41(cs + 0, SH(cb_row, 1), SH(cr_row, 1));
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[0], cs[1], cs[2], cs[3]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[0], cs[1], cs[2], cs[3]);
 
         dest += stride;
 
         compute_YCbCr_sse41(cs + 0, SH(cb_row, 2), SH(cr_row, 2));
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[1], cs[2], cs[3]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[1], cs[2], cs[3]);
 
         compute_YCbCr_sse41(cs + 0, SH(cb_row, 3), SH(cr_row, 3));
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[0], cs[1], cs[2], cs[3]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[0], cs[1], cs[2], cs[3]);
 
         dest += stride;
     }
@@ -444,13 +444,13 @@ void process_YCbCr_8x16_sse41(uint8* dest, int stride, const BlockType* data, Pr
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 0), SH(cbcr_row, 2));
         compute_YCbCr_sse41(cs + 4, SH(cbcr_row, 1), SH(cbcr_row, 3));
         
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[1], cs[2], cs[3]);
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[4], cs[5], cs[6], cs[7]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[1], cs[2], cs[3]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[4], cs[5], cs[6], cs[7]);
         
         dest += stride;
         
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[1], cs[2], cs[3]);
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[4], cs[5], cs[6], cs[7]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[1], cs[2], cs[3]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[4], cs[5], cs[6], cs[7]);
         
         dest += stride;
     }
@@ -479,12 +479,12 @@ void process_YCbCr_16x8_sse41(uint8* dest, int stride, const BlockType* data, Pr
         __m128i cs[4];
         
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 0), SH(cbcr_row, 2));
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[0], cs[1], cs[1]);
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[2], cs[2], cs[3], cs[3]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[0], cs[1], cs[1]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[2], cs[2], cs[3], cs[3]);
         
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 1), SH(cbcr_row, 3));
-        pack4_YCbCr(dest + 32, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[0], cs[1], cs[1]);
-        pack4_YCbCr(dest + 48, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[2], cs[2], cs[3], cs[3]);
+        pack4_YCbCr_sse41(dest + 32, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[0], cs[1], cs[1]);
+        pack4_YCbCr_sse41(dest + 48, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[2], cs[2], cs[3], cs[3]);
         
         dest += stride;
     }
@@ -519,17 +519,17 @@ void process_YCbCr_16x16_sse41(uint8* dest, int stride, const BlockType* data, P
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 0), SH(cbcr_row, 2));
         compute_YCbCr_sse41(cs + 4, SH(cbcr_row, 1), SH(cbcr_row, 3));
         
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row0, 0)), cs[0], cs[0], cs[1], cs[1]);
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row0, 1)), cs[2], cs[2], cs[3], cs[3]);
-        pack4_YCbCr(dest + 32, _mm_cvtepu8_epi32(SH(y_row0, 2)), cs[4], cs[4], cs[5], cs[5]);
-        pack4_YCbCr(dest + 48, _mm_cvtepu8_epi32(SH(y_row0, 3)), cs[6], cs[6], cs[7], cs[7]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row0, 0)), cs[0], cs[0], cs[1], cs[1]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row0, 1)), cs[2], cs[2], cs[3], cs[3]);
+        pack4_YCbCr_sse41(dest + 32, _mm_cvtepu8_epi32(SH(y_row0, 2)), cs[4], cs[4], cs[5], cs[5]);
+        pack4_YCbCr_sse41(dest + 48, _mm_cvtepu8_epi32(SH(y_row0, 3)), cs[6], cs[6], cs[7], cs[7]);
         
         dest += stride;
         
-        pack4_YCbCr(dest +  0, _mm_cvtepu8_epi32(SH(y_row1, 0)), cs[0], cs[0], cs[1], cs[1]);
-        pack4_YCbCr(dest + 16, _mm_cvtepu8_epi32(SH(y_row1, 1)), cs[2], cs[2], cs[3], cs[3]);
-        pack4_YCbCr(dest + 32, _mm_cvtepu8_epi32(SH(y_row1, 2)), cs[4], cs[4], cs[5], cs[5]);
-        pack4_YCbCr(dest + 48, _mm_cvtepu8_epi32(SH(y_row1, 3)), cs[6], cs[6], cs[7], cs[7]);
+        pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row1, 0)), cs[0], cs[0], cs[1], cs[1]);
+        pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row1, 1)), cs[2], cs[2], cs[3], cs[3]);
+        pack4_YCbCr_sse41(dest + 32, _mm_cvtepu8_epi32(SH(y_row1, 2)), cs[4], cs[4], cs[5], cs[5]);
+        pack4_YCbCr_sse41(dest + 48, _mm_cvtepu8_epi32(SH(y_row1, 3)), cs[6], cs[6], cs[7], cs[7]);
         
         dest += stride;
     }
@@ -538,6 +538,32 @@ void process_YCbCr_16x16_sse41(uint8* dest, int stride, const BlockType* data, P
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-#endif
+#endif // JPEG_ENABLE_SSE4
+
+#if defined(JPEG_ENABLE_AVX2)
+
+// TODO: AVX2 veriant (process 8 pixels in register)
+
+void process_YCbCr_8x8_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+{
+    process_YCbCr_8x8_sse41(dest, stride, data, state, width, height);
+}
+
+void process_YCbCr_8x16_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+{
+    process_YCbCr_8x16_sse41(dest, stride, data, state, width, height);
+}
+
+void process_YCbCr_16x8_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+{
+    process_YCbCr_16x8_sse41(dest, stride, data, state, width, height);
+}
+
+void process_YCbCr_16x16_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+{
+    process_YCbCr_16x16_sse41(dest, stride, data, state, width, height);
+}
+
+#endif // JPEG_ENABLE_AVX2
 
 } // namespace jpeg

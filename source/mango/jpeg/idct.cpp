@@ -138,7 +138,7 @@ namespace jpeg
 // SSE2 implementation
 // ----------------------------------------------------------------------------------------------------
 
-#if defined(JPEG_ENABLE_SSE) && defined(MANGO_ENABLE_SSE4_1)
+#if defined(JPEG_ENABLE_SSE4)
 
 #define SHUFFLE(reg,x,y,z,w) \
     _mm_shuffle_ps(reg, reg, _MM_SHUFFLE(x, y, z, w))

@@ -179,12 +179,12 @@ namespace jpeg
 		restartInterval = 0;
         restartCounter = 0;
 
-#if defined(JPEG_ENABLE_SSE) && defined(MANGO_ENABLE_SSE4_1)
         uint64 cpuFlags = getCPUFlags();
+
+#if defined(JPEG_ENABLE_SSE4)
         if (cpuFlags & CPU_SSE4_1)
         {
-            // configure SSE 4.1 implementation
-			processState.idct = idct_sse41;
+            processState.idct = idct_sse41;
             processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse41;
             processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse41;
             processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse41;
@@ -192,14 +192,27 @@ namespace jpeg
         }
 #endif
 
+#if defined(JPEG_ENABLE_AVX2)
+        if (cpuFlags & CPU_AVX2)
+        {
+            processState.idct = idct_sse41;
+            processState.process_YCbCr_8x8   = process_YCbCr_8x8_avx2;
+            processState.process_YCbCr_8x16  = process_YCbCr_8x16_avx2;
+            processState.process_YCbCr_16x8  = process_YCbCr_16x8_avx2;
+            processState.process_YCbCr_16x16 = process_YCbCr_16x16_avx2;
+        }
+#endif
+
+        MANGO_UNREFERENCED_PARAMETER(cpuFlags);
+
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
             quantTable[i].table = &quantTableVector[i * 64];
         }
 
-        exif_memory = Memory(NULL, 0);
-        icc_memory = Memory(NULL, 0);
-        scan_memory = Memory(NULL, 0);
+        exif_memory = Memory(nullptr, 0);
+        icc_memory = Memory(nullptr, 0);
+        scan_memory = Memory(nullptr, 0);
 
         m_surface = NULL;
 
