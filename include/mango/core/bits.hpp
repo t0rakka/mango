@@ -273,6 +273,11 @@ namespace mango
 
 #endif
 
+    static inline uint32 u32_expand_high_lsb(uint32 value)
+    {
+        return value | (0 - value);
+    }
+
     static inline int u32_index_of_bit(uint32 bit)
     {
         static const uint8 table[] =
@@ -552,6 +557,11 @@ namespace mango
     }
 
 #endif
+
+    static inline uint64 u64_expand_high_lsb(uint64 value)
+    {
+        return value | (0 - value);
+    }
 
     static inline int u64_index_of_bit(uint64 bit)
     {
