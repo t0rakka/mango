@@ -484,6 +484,12 @@ namespace mango
 
 #endif
 
+    static inline uint32 u32_select(uint32 mask, uint32 a, uint32 b)
+    {
+        // bitwise mask ? a : b
+        return (mask & (a ^ b)) ^ b;
+    }
+
     static inline bool u32_has_zero_byte(uint32 value)
     {
 	    return ((value - 0x01010101) & ~value & 0x80808080) != 0;
@@ -793,6 +799,12 @@ namespace mango
     }
 
 #endif
+
+    static inline uint64 u64_select(uint64 mask, uint64 a, uint64 b)
+    {
+        // bitwise mask ? a : b
+        return (mask & (a ^ b)) ^ b;
+    }
 
     static inline bool u64_has_zero_byte(uint64 value)
     {
