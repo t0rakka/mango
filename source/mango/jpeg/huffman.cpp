@@ -22,27 +22,29 @@ namespace jpeg
     // huffman decoder macros
     // ----------------------------------------------------------------------------
 
-#ifndef JPEG_ENABLE_MODERN_HUFFMAN
+    constexpr int huff_extend(int v, int nbits)
+    {
+        return v - ((((v + v) >> nbits) - 1) & ((1 << nbits) - 1));
+    }
 
     #define GET_BITS(buffer, nbits) \
         int(bextr(buffer.data, buffer.remain -= nbits, nbits))
-
-    #define PEEK_BITS(nbits) \
-        int(bextr(buffer.data, buffer.remain - nbits, nbits))
-
-    #define HUFF_EXTEND(v, nbits) \
-        v - ((((v + v) >> nbits) - 1) & ((1 << nbits) - 1))
 
     #define HUFF_RECEIVE(buffer, nbits) \
     { \
         buffer.ensure16(); \
         int code = GET_BITS(buffer, nbits); \
-        s = HUFF_EXTEND(code, nbits); \
+        s = huff_extend(code, nbits); \
     }
 
-    #define LOOKAHEAD_MASK0 ((1 << (JPEG_HUFF_LOOKUP_BITS + 0)) - 1)
-    #define LOOKAHEAD_MASK1 ((1 << (JPEG_HUFF_LOOKUP_BITS + 1)) - 1)
-    
+#ifndef JPEG_ENABLE_MODERN_HUFFMAN
+
+    #define PEEK_BITS(nbits) \
+        int(bextr(buffer.data, buffer.remain - nbits, nbits))
+
+    constexpr int LOOKAHEAD_MASK0 = ((1 << JPEG_HUFF_LOOKUP_BITS) - 1);
+    constexpr int LOOKAHEAD_MASK1 = ((2 << JPEG_HUFF_LOOKUP_BITS) - 1);
+
     #define HUFF_DECODE(symbol, h) \
     {                                                              \
         buffer.ensure16();                                         \
@@ -52,7 +54,7 @@ namespace jpeg
         buffer.remain -= size;                                     \
         symbol = symbol & LOOKAHEAD_MASK0;                         \
         if (size == JPEG_HUFF_LOOKUP_BITS + 1) {                   \
-            symbol = (buffer.data >> buffer.remain) & LOOKAHEAD_MASK1;  \
+            symbol = (buffer.data >> buffer.remain) & LOOKAHEAD_MASK1; \
             while (symbol > h->maxcode[size++]) {                  \
                 symbol += symbol;                                  \
                 symbol |= GET_BITS(buffer, 1);                     \
@@ -78,19 +80,6 @@ namespace jpeg
             symbol = h->valueAddress[size][v]; \
         } \
         buffer.remain -= size; \
-    }
-
-    #define GET_BITS(buffer, nbits) \
-        int(bextr(buffer.data, buffer.remain -= nbits, nbits))
-
-    #define HUFF_EXTEND(v, nbits) \
-        v - ((((v + v) >> nbits) - 1) & ((1 << nbits) - 1))
-
-    #define HUFF_RECEIVE(buffer, nbits) \
-    { \
-        buffer.ensure16(); \
-        int code = GET_BITS(buffer, nbits); \
-        s = HUFF_EXTEND(code, nbits); \
     }
 
 #endif
@@ -294,7 +283,7 @@ namespace jpeg
                         break;
                     }
                 }
-                
+
                 do
                 {
                     BlockType* coef = output + zigzagTable[k];
@@ -316,7 +305,7 @@ namespace jpeg
                         if (--r < 0)
                             break;
                     }
-                    
+
                     k++;
                 } while (k <= end);
                 
@@ -326,7 +315,7 @@ namespace jpeg
                 }
             }
         }
-        
+
         if (huffman.eob_run > 0)
         {
             for ( ; k <= end; k++)
@@ -378,7 +367,7 @@ namespace jpeg
         char huffsize[257];
         unsigned int huffcode[257];
         unsigned int code;
-        
+
         // Figure C.1: make table of Huffman code length for each symbol
         p = 0;
         for (l = 1; l <= 16; l++)
@@ -389,7 +378,7 @@ namespace jpeg
         }
         huffsize[p] = 0;
         //numsymbols = p;
-        
+
         // Figure C.2: generate the codes themselves
         code = 0;
         si = huffsize[0];
@@ -404,7 +393,7 @@ namespace jpeg
             code <<= 1;
             si++;
         }
-        
+
         // Figure F.15: generate decoding tables for bit-sequential decoding
         p = 0;
         for (l = 1; l <= 16; l++)
@@ -422,13 +411,13 @@ namespace jpeg
         }
         valoffset[17+1] = 0;
         maxcode[17] = 0xfffff; // ensures jpeg_huff_decode terminates
-        
+
         // Compute lookahead tables to speed up decoding.
         // First we set all the table entries to 0, indicating "too long";
         // then we iterate through the Huffman codes that are short enough and
         // fill in all the entries that correspond to bit sequences starting
         // with that code.
-        
+
         for (i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
         {
             lookup[i] = (JPEG_HUFF_LOOKUP_BITS + 1) << JPEG_HUFF_LOOKUP_BITS;
@@ -452,14 +441,14 @@ namespace jpeg
     }
 
 #else
-    
+
     void HuffTable::configure()
     {
         int p, si;
         char huffsize[257];
         unsigned int huffcode[257];
         unsigned int code;
-        
+
         // Figure C.1: make table of Huffman code length for each symbol
         p = 0;
         for (int l = 1; l <= 16; l++)
@@ -471,7 +460,7 @@ namespace jpeg
             }
         }
         huffsize[p] = 0;
-        
+
         // Figure C.2: generate the codes themselves
         code = 0;
         si = huffsize[0];
@@ -486,7 +475,7 @@ namespace jpeg
             code <<= 1;
             si++;
         }
-        
+
         // Figure F.15: generate decoding tables for bit-sequential decoding
         p = 0;
         for (int l = 1; l <= 16; l++)
@@ -507,7 +496,7 @@ namespace jpeg
         }
         valueAddress[18] = value + 0;
         maxcode[17] = ~DataType(0);//0xfffff; // ensures jpeg_huff_decode terminates
-        
+
         // Compute lookahead tables to speed up decoding.
         // First we set all the table entries to 0, indicating "too long";
         // then we iterate through the Huffman codes that are short enough and

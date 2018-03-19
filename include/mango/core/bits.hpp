@@ -425,16 +425,16 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI
 
-    static inline uint32 u32_extract_bits(uint32 src, int start, int len)
+    static inline uint32 u32_extract_bits(uint32value, int offset, int size)
     {
-        return _bextr_u32(src, start, len);
+        return _bextr_u32(value, offset, size);
     }
 
 #else
 
-    static inline uint32 u32_extract_bits(uint32 src, int start, int len)
+    static inline uint32 u32_extract_bits(uint32 value, int offset, int size)
     {
-        return (src >> start) & ((1 << len) - 1);
+        return (value >> offset) & ((1 << size) - 1);
     }
 
 #endif
@@ -739,16 +739,16 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI
 
-    static inline uint64 u64_extract_bits(uint64 src, int start, int len)
+    static inline uint64 u64_extract_bits(uint64 value, int offset, int size)
     {
-        return _bextr_u64(src, start, len);
+        return _bextr_u64(value, offset, size);
     }
 
 #else
 
-    static inline uint64 u64_extract_bits(uint64 src, int start, int len)
+    static inline uint64 u64_extract_bits(uint64 value, int offset, int size)
     {
-        return (src >> start) & ((1 << len) - 1);
+        return (value >> offset) & ((1 << size) - 1);
     }
 
 #endif
