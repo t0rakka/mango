@@ -151,6 +151,14 @@ namespace mango
             return bits >> 3;
         }
 
+        bool luminance() const
+        {
+            uint32 mask0 = mask(0);
+            uint32 mask1 = mask(1);
+            uint32 mask2 = mask(2);
+            return (mask0 != 0) && (mask0 == mask1) && (mask0 == mask2);
+        }
+
         bool alpha() const
         {
             return size[3] > 0;

@@ -1328,7 +1328,7 @@ namespace
         s.write32(chunk_crc);
     }
 
-    void write_IHDR(Stream& stream, const Surface& surface)
+    void write_IHDR(Stream& stream, const Surface& surface, uint8 color_bits, ColorType color_type)
     {
         Buffer buffer;
         BigEndianStream s(buffer);
@@ -1337,8 +1337,8 @@ namespace
 
         s.write32(surface.width);
         s.write32(surface.height);
-        s.write8(8); // color bits
-        s.write8(6); // color type
+        s.write8(color_bits);
+        s.write8(color_type);
         s.write8(0); // compression
         s.write8(0); // filter
         s.write8(0); // interlace
@@ -1348,7 +1348,7 @@ namespace
 
     void write_IDAT(Stream& stream, const Surface& surface)
     {
-        const int bytesPerLine = surface.width * sizeof(uint32);
+        const int bytesPerLine = surface.width * surface.format.bytes();
         const int bytes = (FILTER_BYTE + bytesPerLine) * surface.height;
 
         z_stream z = { 0 };
@@ -1387,7 +1387,7 @@ namespace
         writeChunk(stream, Memory(buffer, compressed_size));
     }
 
-    void writePNG(Stream& stream, const Surface& surface)
+    void writePNG(Stream& stream, const Surface& surface, uint8 color_bits, ColorType color_type)
     {
         static const uint8 magic[] =
         {
@@ -1399,7 +1399,7 @@ namespace
         // write magic
         s.write(magic, 8);
 
-        write_IHDR(stream, surface);
+        write_IHDR(stream, surface, color_bits, color_type);
         write_IDAT(stream, surface);
 
         // write IEND
@@ -1491,16 +1491,71 @@ namespace
     {
         MANGO_UNREFERENCED_PARAMETER(quality);
 
-        // keep it simple: only write 32 bit rgba
-        if (surface.format == FORMAT_R8G8B8A8)
+        // defaults
+        uint8 color_bits = 8;
+        ColorType color_type = COLOR_TYPE_RGBA;
+        Format format;
+
+        // select png format
+        if (surface.format.luminance())
         {
-            writePNG(stream, surface);
+            if (surface.format.alpha())
+            {
+                color_type = COLOR_TYPE_IA;
+
+                if (surface.format.size[0] > 8)
+                {
+                    color_bits = 16;
+                    format = Format(32, 0x0000ffff, 0xffff0000);
+                }
+                else
+                {
+                    color_bits = 8;
+                    format = Format(16, 0x00ff, 0xff00);
+                }
+            }
+            else
+            {
+                color_type = COLOR_TYPE_I;
+
+                if (surface.format.size[0] > 8)
+                {
+                    color_bits = 16;
+                    format = Format(16, 0xffff, 0x0000);
+                }
+                else
+                {
+                    color_bits = 8;
+                    format = Format(8, 0xff, 0x00);
+                }
+            }
         }
         else
         {
-            Bitmap temp(surface.width, surface.height, FORMAT_R8G8B8A8);
+            // always encode alpha in non-luminance formats
+            color_type = COLOR_TYPE_RGBA;
+
+            if (surface.format.size[0] > 8)
+            {
+                color_bits = 16;
+                format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
+            }
+            else
+            {
+                color_bits = 8;
+                format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            }
+        }
+
+        if (surface.format == format)
+        {
+            writePNG(stream, surface, color_bits, color_type);
+        }
+        else
+        {
+            Bitmap temp(surface.width, surface.height, format);
             temp.blit(0, 0, surface);
-            writePNG(stream, temp);
+            writePNG(stream, temp, color_bits, color_type);
         }
     }
 
