@@ -94,6 +94,11 @@ namespace mango
         return std::memcmp(this, &format, sizeof(Format)) < 0;
     }
 
+    int Format::bytes() const
+    {
+        return bits >> 3;
+    }
+
 	int Format::float_bits() const
 	{
 		uint32 f_bits = 0;
@@ -115,6 +120,27 @@ namespace mango
 
 		return f_bits;
 	}
+
+    bool Format::alpha() const
+    {
+        // check alpha channel size
+        return size[3] > 0;
+    }
+
+    bool Format::luminance() const
+    {
+        // check if red, green and blue channels are identical
+        uint32 mask0 = mask(0);
+        uint32 mask1 = mask(1);
+        uint32 mask2 = mask(2);
+        return (mask0 != 0) && (mask0 == mask1) && (mask0 == mask2);
+    }
+
+    uint32 Format::mask(int component) const
+    {
+        uint32 mask = uint32((1UL << size[component]) - 1) << offset[component];
+        return mask;
+    }
 
     uint32 Format::pack(float red, float green, float blue, float alpha) const
     {
