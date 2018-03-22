@@ -41,6 +41,10 @@ ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp
     ${IMAGE} ${JPEG} ${MATH} ${OPENGL} ${SIMD} ${VULKAN} ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} 
     ${miniz} ${UNRAR} ${ZSTD})
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 OPTION(ENABLE_FAST_MATH "Use fast math / relaxed-precision floating point operations" ON)
 OPTION(ENABLE_AVX2 "Enable AVX2 instructions. Most x64 CPUs should have this." ON)
 
@@ -54,6 +58,10 @@ IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         TARGET_COMPILE_OPTIONS(mango PRIVATE "/arch:AVX2")
     ENDIF()
 ELSE()
+    set(CMAKE_CXX_FLAGS "-Wall")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
     # Property only works for unix-style systems iirc
     SET_PROPERTY(TARGET mango PROPERTY CXX_STANDARD 14)
     IF (ENABLE_FAST_MATH) 
