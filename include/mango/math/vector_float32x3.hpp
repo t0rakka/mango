@@ -22,7 +22,7 @@ namespace mango
         enum { VectorSize = 3 };
 
         template <int X, int Y>
-        struct Permute2
+        struct ShuffleAccessor2
         {
 			float v[3];
 
@@ -33,7 +33,7 @@ namespace mango
         };
 
         template <int X, int Y, int Z>
-        struct Permute3
+        struct ShuffleAccessor3
         {
 			float v[3];
 
@@ -47,43 +47,43 @@ namespace mango
         {
             struct { float x, y, z; };
 
-			Permute2<0, 0> xx;
-			Permute2<1, 0> yx;
-			Permute2<2, 0> zx;
-			Permute2<0, 1> xy;
-			Permute2<1, 1> yy;
-			Permute2<2, 1> zy;
-			Permute2<0, 2> xz;
-			Permute2<1, 2> yz;
-			Permute2<2, 2> zz;
+			ShuffleAccessor2<0, 0> xx;
+			ShuffleAccessor2<1, 0> yx;
+			ShuffleAccessor2<2, 0> zx;
+			ShuffleAccessor2<0, 1> xy;
+			ShuffleAccessor2<1, 1> yy;
+			ShuffleAccessor2<2, 1> zy;
+			ShuffleAccessor2<0, 2> xz;
+			ShuffleAccessor2<1, 2> yz;
+			ShuffleAccessor2<2, 2> zz;
 
-            Permute3<0, 0, 0> xxx;
-            Permute3<1, 0, 0> yxx;
-            Permute3<2, 0, 0> zxx;
-            Permute3<0, 1, 0> xyx;
-            Permute3<1, 1, 0> yyx;
-            Permute3<2, 1, 0> zyx;
-            Permute3<0, 2, 0> xzx;
-            Permute3<1, 2, 0> yzx;
-            Permute3<2, 2, 0> zzx;
-            Permute3<0, 0, 1> xxy;
-            Permute3<1, 0, 1> yxy;
-            Permute3<2, 0, 1> zxy;
-            Permute3<0, 1, 1> xyy;
-            Permute3<1, 1, 1> yyy;
-            Permute3<2, 1, 1> zyy;
-            Permute3<0, 2, 1> xzy;
-            Permute3<1, 2, 1> yzy;
-            Permute3<2, 2, 1> zzy;
-            Permute3<0, 0, 2> xxz;
-            Permute3<1, 0, 2> yxz;
-            Permute3<2, 0, 2> zxz;
-            Permute3<0, 1, 2> xyz;
-            Permute3<1, 1, 2> yyz;
-            Permute3<2, 1, 2> zyz;
-            Permute3<0, 2, 2> xzz;
-            Permute3<1, 2, 2> yzz;
-            Permute3<2, 2, 2> zzz;
+            ShuffleAccessor3<0, 0, 0> xxx;
+            ShuffleAccessor3<1, 0, 0> yxx;
+            ShuffleAccessor3<2, 0, 0> zxx;
+            ShuffleAccessor3<0, 1, 0> xyx;
+            ShuffleAccessor3<1, 1, 0> yyx;
+            ShuffleAccessor3<2, 1, 0> zyx;
+            ShuffleAccessor3<0, 2, 0> xzx;
+            ShuffleAccessor3<1, 2, 0> yzx;
+            ShuffleAccessor3<2, 2, 0> zzx;
+            ShuffleAccessor3<0, 0, 1> xxy;
+            ShuffleAccessor3<1, 0, 1> yxy;
+            ShuffleAccessor3<2, 0, 1> zxy;
+            ShuffleAccessor3<0, 1, 1> xyy;
+            ShuffleAccessor3<1, 1, 1> yyy;
+            ShuffleAccessor3<2, 1, 1> zyy;
+            ShuffleAccessor3<0, 2, 1> xzy;
+            ShuffleAccessor3<1, 2, 1> yzy;
+            ShuffleAccessor3<2, 2, 1> zzy;
+            ShuffleAccessor3<0, 0, 2> xxz;
+            ShuffleAccessor3<1, 0, 2> yxz;
+            ShuffleAccessor3<2, 0, 2> zxz;
+            ShuffleAccessor3<0, 1, 2> xyz;
+            ShuffleAccessor3<1, 1, 2> yyz;
+            ShuffleAccessor3<2, 1, 2> zyz;
+            ShuffleAccessor3<0, 2, 2> xzz;
+            ShuffleAccessor3<1, 2, 2> yzz;
+            ShuffleAccessor3<2, 2, 2> zzz;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -139,7 +139,7 @@ namespace mango
         }
 
         template <int X, int Y, int Z>
-        Vector(const Permute3<X, Y, Z>& p)
+        Vector(const ShuffleAccessor3<X, Y, Z>& p)
         {
 			const float* v = p.v;
 			x = v[X];
@@ -148,7 +148,7 @@ namespace mango
         }
 
         template <int X, int Y, int Z>
-        Vector& operator = (const Permute3<X, Y, Z>& p)
+        Vector& operator = (const ShuffleAccessor3<X, Y, Z>& p)
         {
 			const float* v = p.v;
 			x = v[X];

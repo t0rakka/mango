@@ -21,7 +21,7 @@ namespace mango
         enum { VectorSize = 2 };
 
         template <int X, int Y>
-        struct Permute2
+        struct ShuffleAccessor2
         {
 			float v[2];
 
@@ -35,10 +35,10 @@ namespace mango
         {
             struct { float x, y; };
 
-			Permute2<0, 0> xx;
-			Permute2<1, 0> yx;
-			Permute2<0, 1> xy;
-			Permute2<1, 1> yy;
+			ShuffleAccessor2<0, 0> xx;
+			ShuffleAccessor2<1, 0> yx;
+			ShuffleAccessor2<0, 1> xy;
+			ShuffleAccessor2<1, 1> yy;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -77,7 +77,7 @@ namespace mango
         }
 
         template <int X, int Y>
-        Vector(const Permute2<X, Y>& p)
+        Vector(const ShuffleAccessor2<X, Y>& p)
         {
 			const float* v = p.v;
 			x = v[X];
@@ -85,7 +85,7 @@ namespace mango
         }
 
         template <int X, int Y>
-        Vector& operator = (const Permute2<X, Y>& p)
+        Vector& operator = (const ShuffleAccessor2<X, Y>& p)
         {
 			const float* v = p.v;
 			x = v[X];

@@ -23,9 +23,9 @@ namespace mango
             ScalarAccessor<uint64, simd::uint64x2, 0> x;
             ScalarAccessor<uint64, simd::uint64x2, 1> y;
 
-            Permute2<uint64, simd::uint64x2, 0, 0> xx;
-            Permute2<uint64, simd::uint64x2, 1, 0> yx;
-            Permute2<uint64, simd::uint64x2, 1, 1> yy;
+            ShuffleAccessor2<uint64, simd::uint64x2, 0, 0> xx;
+            ShuffleAccessor2<uint64, simd::uint64x2, 1, 0> yx;
+            ShuffleAccessor2<uint64, simd::uint64x2, 1, 1> yy;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -61,13 +61,13 @@ namespace mango
         }
 
         template <int X, int Y>
-        Vector(const Permute2<uint64, simd::uint64x2, X, Y>& p)
+        Vector(const ShuffleAccessor2<uint64, simd::uint64x2, X, Y>& p)
         {
             xy = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const Permute2<uint64, simd::uint64x2, X, Y>& p)
+        Vector& operator = (const ShuffleAccessor2<uint64, simd::uint64x2, X, Y>& p)
         {
             xy = p;
             return *this;

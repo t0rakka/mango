@@ -22,6 +22,27 @@ namespace mango
 {
 
     // ------------------------------------------------------------------
+    // scalar variants
+    // ------------------------------------------------------------------
+
+	static inline float sign(float a)
+	{
+		if (a < 0) a = -1.0f;
+		else if (a > 0) a = 1.0f;
+		return a;
+	}
+
+	constexpr static inline float radians(float a)
+	{
+        return a * 0.01745329251f;
+	}
+
+	constexpr static inline float degrees(float a)
+	{
+        return a * 57.2957795131f;
+	}
+
+    // ------------------------------------------------------------------
     // Vector
     // ------------------------------------------------------------------
 
@@ -562,72 +583,247 @@ namespace mango
         return a + (b - a) * factor;
     }
 
-    // ------------------------------------------------------------------
-    // Vector float functions
-    // ------------------------------------------------------------------
-
-#define MAKE_VECTOR_FUNCTION1(Type, Name, Expression) \
-	template <int VectorSize> \
-	static inline const Vector<Type, VectorSize> Name(const Vector<Type, VectorSize>& a) { \
-        Vector<Type, VectorSize> temp; \
-        for (int i = 0; i < VectorSize; ++i) { \
-            temp[i] = Expression; \
-        } \
-        return temp; \
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> sign(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = sign(a[i]);
+        }
+        return temp;
 	}
 
-#define MAKE_VECTOR_FUNCTION2(Type, Name, Expression) \
-	template <int VectorSize> \
-	static inline const Vector<Type, VectorSize> Name(const Vector<Type, VectorSize>& a, const Vector<Type, VectorSize>& b) { \
-        Vector<Type, VectorSize> temp; \
-        for (int i = 0; i < VectorSize; ++i) { \
-            temp[i] = Expression; \
-        } \
-        return temp; \
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> radians(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = radians(a[i]);
+        }
+        return temp;
 	}
 
-	static inline float sign(float a)
-	{
-		if (a < 0) a = -1.0f;
-		else if (a > 0) a = 1.0f;
-		return a;
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> degrees(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = degrees(a[i]);
+        }
+        return temp;
 	}
 
-	constexpr static inline float radians(float a)
-	{
-        return a * 0.01745329251f;
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> sin(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::sin(a[i]);
+        }
+        return temp;
 	}
 
-	constexpr static inline float degrees(float a)
-	{
-        return a * 57.2957795131f;
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> cos(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::cos(a[i]);
+        }
+        return temp;
 	}
 
-	MAKE_VECTOR_FUNCTION1(float, sign, sign(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, radians, radians(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, degrees, degrees(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, sin, std::sin(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, cos, std::cos(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, tan, std::tan(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, asin, std::asin(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, acos, std::acos(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, atan, std::atan(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, exp, std::exp(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, log, std::log(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, exp2, std::exp2(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, log2, std::log2(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, sqrt, float(std::sqrt(a[i])))
-	MAKE_VECTOR_FUNCTION1(float, rsqrt, 1.0f / std::sqrt(a[i]))
-    MAKE_VECTOR_FUNCTION1(float, round, std::round(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, floor, std::floor(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, ceil, std::ceil(a[i]))
-	MAKE_VECTOR_FUNCTION1(float, fract, a[i] - std::floor(a[i]))
-	MAKE_VECTOR_FUNCTION2(float, pow, std::pow(a[i], b[i]))
-	MAKE_VECTOR_FUNCTION2(float, mod, a[i] - b[i] * std::floor(a[i] / b[i]))
-    MAKE_VECTOR_FUNCTION2(float, atan2, std::atan2(a[i], b[i]))
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> tan(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::tan(a[i]);
+        }
+        return temp;
+	}
 
-#undef MAKE_VECTOR_FUNCTION1
-#undef MAKE_VECTOR_FUNCTION2
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> asin(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::asin(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> acos(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::acos(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> atan(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::atan(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> exp(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::exp(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> log(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::log(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> exp2(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::exp2(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> log2(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::log2(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> sqrt(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::sqrt(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> rsqrt(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = 1.0f / std::sqrt(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> round(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::round(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> floor(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::floor(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> ceil(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::ceil(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> fract(const Vector<ScalarType, VectorSize>& a)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a[i] - std::floor(a[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> pow(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::pow(a[i], b[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> mod(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a[i] - b[i] * std::floor(a[i] / b[i]);
+        }
+        return temp;
+	}
+
+	template <typename ScalarType, int VectorSize>
+	static inline const Vector<ScalarType, VectorSize> atan2(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = std::atan2(a[i], b[i]);
+        }
+        return temp;
+	}
 
     // ------------------------------------------------------------------
     // Vector2 functions
@@ -973,41 +1169,26 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
-    // Permute2
+    // ShuffleAccessor2
     // ------------------------------------------------------------------
 
     template <typename ScalarType, typename VectorType, int X, int Y>
-    struct Permute2
+    struct ShuffleAccessor2
     {
         VectorType m;
 
-		operator Vector<ScalarType, 2> () const
-		{
+        operator Vector<ScalarType, 2> () const
+        {
             return simd::shuffle<X, Y>(m);
-		}
+        }
     };
 
     // ------------------------------------------------------------------
-    // Permute4
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, typename VectorType, int X, int Y, int Z, int W>
-    struct Permute4
-    {
-        VectorType m;
-
-        operator Vector<ScalarType, 4> () const
-		{
-			return simd::shuffle<X, Y, Z, W>(m);
-		}
-    };
-
-    // ------------------------------------------------------------------
-    // Permute4x2
+    // ShuffleAccessor4x2
     // ------------------------------------------------------------------
 
     template <typename ScalarType, typename VectorType, int X, int Y>
-    struct Permute4x2
+    struct ShuffleAccessor4x2
     {
         VectorType m;
 
@@ -1020,11 +1201,11 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
-    // Permute4x3
+    // ShuffleAccessor4x3
     // ------------------------------------------------------------------
 
     template <typename ScalarType, typename VectorType, int X, int Y, int Z>
-    struct Permute4x3
+    struct ShuffleAccessor4x3
     {
         VectorType m;
 
@@ -1034,6 +1215,21 @@ namespace mango
             const ScalarType y = simd::get_component<Y>(m);
             const ScalarType z = simd::get_component<Z>(m);
             return Vector<ScalarType, 3>(x, y, z);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // ShuffleAccessor4
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int X, int Y, int Z, int W>
+    struct ShuffleAccessor4
+    {
+        VectorType m;
+
+        operator Vector<ScalarType, 4> () const
+        {
+            return simd::shuffle<X, Y, Z, W>(m);
         }
     };
 
