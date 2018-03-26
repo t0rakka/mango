@@ -1077,4 +1077,11 @@ namespace vulkan {
 } // namespace vulkan
 } // namespace mango
 
+#else
+
+    void dummy_vulkan_function_to_satisfy_linker()
+    {
+        // NOTE: this translation unit shouldn't be compiled on platforms w/o vulkan support
+    }
+
 #endif // MANGO_ENABLE_VULKAN

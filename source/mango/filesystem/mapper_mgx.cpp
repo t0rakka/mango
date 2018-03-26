@@ -87,4 +87,11 @@ namespace mango
 
 } // namespace mango
 
+#else
+
+    void dummy_mgx_function_to_satisfy_linker()
+    {
+        // TODO: remove this when .mgx support is done
+    }
+
 #endif // 0
