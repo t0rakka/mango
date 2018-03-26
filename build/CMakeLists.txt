@@ -1,6 +1,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(mango CXX C)
 
+# TODO: Separate mango-opengl library
+# TODO: Separate mango-vulkan library (only built on Linux & Windows)
+# TODO: Compile GUI components for OpenGL and Vulkan (when needed)
+# TODO: Fix compiling on ARM
+# TODO: make static / dynamic library compilation configurable
+
 FILE(GLOB CORE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp")
 FILE(GLOB FILESYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp")
 IF(WIN32)
@@ -13,8 +19,8 @@ ENDIF()
 FILE(GLOB IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
 FILE(GLOB JPEG "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
 FILE(GLOB MATH "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
-FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp")
 FILE(GLOB SIMD "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
+FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp")
 FILE(GLOB VULKAN "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/vulkan/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/vulkan/*.cpp")
 
 SOURCE_GROUP("core" FILES ${CORE})
@@ -37,9 +43,14 @@ FILE(GLOB miniz "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/miniz/miniz.cpp
 FILE(GLOB UNRAR "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/unrar/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
 FILE(GLOB_RECURSE ZSTD "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/zstd/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c")
 
-ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp" ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} 
-    ${IMAGE} ${JPEG} ${MATH} ${OPENGL} ${SIMD} ${VULKAN} ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} 
-    ${miniz} ${UNRAR} ${ZSTD})
+SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE}
+    ${LZ4} ${LZFSE} ${LZO} ${miniz} ${UNRAR} ${ZSTD})
+
+ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp"
+    ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
+    ${external}
+    ${OPENGL}
+    ${VULKAN})
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
