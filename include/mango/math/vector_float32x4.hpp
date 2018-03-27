@@ -24,7 +24,7 @@ namespace mango
 
         union
         {
-            simd::float32x4 xyzw;
+            simd::float32x4 m;
 
             LowAccessor<Vector<float, 2>, simd::float32x4> low;
             HighAccessor<Vector<float, 2>, simd::float32x4> high;
@@ -344,6 +344,7 @@ namespace mango
             ShuffleAccessor4<float, simd::float32x4, 1, 0, 2, 3> yxzw;
             ShuffleAccessor4<float, simd::float32x4, 2, 0, 2, 3> zxzw;
             ShuffleAccessor4<float, simd::float32x4, 3, 0, 2, 3> wxzw;
+            ShuffleAccessor4<float, simd::float32x4, 0, 1, 2, 3> xyzw;
             ShuffleAccessor4<float, simd::float32x4, 1, 1, 2, 3> yyzw;
             ShuffleAccessor4<float, simd::float32x4, 2, 1, 2, 3> zyzw;
             ShuffleAccessor4<float, simd::float32x4, 3, 1, 2, 3> wyzw;
@@ -391,82 +392,82 @@ namespace mango
         ~Vector() {}
 
         Vector(float s)
-            : xyzw(simd::float32x4_set1(s))
+            : m(simd::float32x4_set1(s))
         {
         }
 
         explicit Vector(float x, float y, float z, float w)
-            : xyzw(simd::float32x4_set4(x, y, z, w))
+            : m(simd::float32x4_set4(x, y, z, w))
         {
         }
 
         explicit Vector(const Vector<float, 2>& v, float z, float w)
-            : xyzw(simd::float32x4_set4(v.x, v.y, z, w))
+            : m(simd::float32x4_set4(v.x, v.y, z, w))
         {
         }
 
         explicit Vector(float x, float y, const Vector<float, 2>& v)
-            : xyzw(simd::float32x4_set4(x, y, v.x, v.y))
+            : m(simd::float32x4_set4(x, y, v.x, v.y))
         {
         }
 
         explicit Vector(float x, const Vector<float, 2>& v, float w)
-            : xyzw(simd::float32x4_set4(x, v.x, v.y, w))
+            :m(simd::float32x4_set4(x, v.x, v.y, w))
         {
         }
 
         explicit Vector(const Vector<float, 2>& xy, const Vector<float, 2>& zw)
-            : xyzw(simd::float32x4_set4(xy.x, xy.y, zw.x, zw.y))
+            : m(simd::float32x4_set4(xy.x, xy.y, zw.x, zw.y))
         {
         }
 
         explicit Vector(const Vector<float, 3>& v, float w)
-            : xyzw(simd::float32x4_set4(v.x, v.y, v.z, w))
+            : m(simd::float32x4_set4(v.x, v.y, v.z, w))
         {
         }
 
         explicit Vector(float x, const Vector<float, 3>& v)
-            : xyzw(simd::float32x4_set4(x, v.x, v.y, v.z))
+            : m(simd::float32x4_set4(x, v.x, v.y, v.z))
         {
         }
 
         Vector(simd::float32x4 v)
-            : xyzw(v)
+            : m(v)
         {
         }
 
         Vector& operator = (simd::float32x4 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (float s)
         {
-            xyzw = simd::float32x4_set1(s);
+            m = simd::float32x4_set1(s);
             return *this;
         }
 
         operator simd::float32x4 () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::float32x4 ()
         {
-            return xyzw;
+            return m;
         }
 
         uint32 pack() const
         {
-            const simd::int32x4 temp = simd::convert<simd::int32x4>(xyzw);
+            const simd::int32x4 temp = simd::convert<simd::int32x4>(m);
             return simd::pack(temp);
         }
 
         void unpack(uint32 a)
         {
             const simd::int32x4 temp = simd::unpack(a);
-            xyzw = simd::convert<simd::float32x4>(temp);
+            m = simd::convert<simd::float32x4>(temp);
         }
     };
 

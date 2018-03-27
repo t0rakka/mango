@@ -22,12 +22,13 @@ namespace mango
 
         union
         {
-            simd::float64x2 xy;
+            simd::float64x2 m;
 
             ScalarAccessor<double, simd::float64x2, 0> x;
             ScalarAccessor<double, simd::float64x2, 1> y;
 
             ShuffleAccessor2<double, simd::float64x2, 0, 0> xx;
+            ShuffleAccessor2<double, simd::float64x2, 0, 1> xy;
             ShuffleAccessor2<double, simd::float64x2, 1, 0> yx;
             ShuffleAccessor2<double, simd::float64x2, 1, 1> yy;
 
@@ -50,53 +51,53 @@ namespace mango
         ~Vector() {}
 
         Vector(double s)
-            : xy(simd::float64x2_set1(s))
+            : m(simd::float64x2_set1(s))
         {
         }
 
         explicit Vector(double x, double y)
-            : xy(simd::float64x2_set2(x, y))
+            : m(simd::float64x2_set2(x, y))
         {
         }
 
         Vector(simd::float64x2 v)
-            : xy(v)
+            : m(v)
         {
         }
 
         template <int X, int Y>
         Vector(const ShuffleAccessor2<double, simd::float64x2, X, Y>& p)
         {
-            xy = p;
+            m = p;
         }
 
         template <int X, int Y>
         Vector& operator = (const ShuffleAccessor2<double, simd::float64x2, X, Y>& p)
         {
-            xy = p;
+            m = p;
             return *this;
         }
 
         Vector& operator = (simd::float64x2 v)
         {
-            xy = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (double s)
         {
-            xy = simd::float64x2_set1(s);
+            m = simd::float64x2_set1(s);
             return *this;
         }
 
         operator simd::float64x2 () const
         {
-            return xy;
+            return m;
         }
 
         operator simd::float64x2 ()
         {
-            return xy;
+            return m;
         }
     };
 

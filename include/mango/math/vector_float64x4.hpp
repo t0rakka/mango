@@ -23,7 +23,7 @@ namespace mango
 
         union
         {
-            simd::float64x4 xyzw;
+            simd::float64x4 m;
 
             LowAccessor<Vector<double, 2>, simd::float64x4> low;
             HighAccessor<Vector<double, 2>, simd::float64x4> high;
@@ -343,6 +343,7 @@ namespace mango
             ShuffleAccessor4<double, simd::float64x4, 1, 0, 2, 3> yxzw;
             ShuffleAccessor4<double, simd::float64x4, 2, 0, 2, 3> zxzw;
             ShuffleAccessor4<double, simd::float64x4, 3, 0, 2, 3> wxzw;
+            ShuffleAccessor4<double, simd::float64x4, 0, 1, 2, 3> xyzw;
             ShuffleAccessor4<double, simd::float64x4, 1, 1, 2, 3> yyzw;
             ShuffleAccessor4<double, simd::float64x4, 2, 1, 2, 3> zyzw;
             ShuffleAccessor4<double, simd::float64x4, 3, 1, 2, 3> wyzw;
@@ -390,83 +391,83 @@ namespace mango
         ~Vector() {}
 
         Vector(double s)
-            : xyzw(simd::float64x4_set1(s))
+            : m(simd::float64x4_set1(s))
         {
         }
 
         explicit Vector(double s0, double s1, double s2, double s3)
-            : xyzw(simd::float64x4_set4(s0, s1, s2, s3))
+            : m(simd::float64x4_set4(s0, s1, s2, s3))
         {
         }
 
         explicit Vector(const Vector<double, 2>& v, double s0, double s1)
-            : xyzw(simd::float64x4_set4(v.x, v.y, s0, s1))
+            : m(simd::float64x4_set4(v.x, v.y, s0, s1))
         {
         }
 
         explicit Vector(double s0, double s1, const Vector<double, 2>& v)
-            : xyzw(simd::float64x4_set4(s0, s1, v.x, v.y))
+            : m(simd::float64x4_set4(s0, s1, v.x, v.y))
         {
         }
 
         explicit Vector(double s0, const Vector<double, 2>& v, double s1)
-            : xyzw(simd::float64x4_set4(s0, v.x, v.y, s1))
+            : m(simd::float64x4_set4(s0, v.x, v.y, s1))
         {
         }
 
         explicit Vector(const Vector<double, 2>& v0, const Vector<double, 2>& v1)
-            : xyzw(simd::combine(v0, v1))
+            : m(simd::combine(v0, v1))
         {
         }
 
         explicit Vector(const Vector<double, 3>& v, double s)
-            : xyzw(simd::float64x4_set4(v.x, v.y, v.z, s))
+            : m(simd::float64x4_set4(v.x, v.y, v.z, s))
         {
         }
 
         explicit Vector(double s, const Vector<double, 3>& v)
-            : xyzw(simd::float64x4_set4(s, v.x, v.y, v.z))
+            : m(simd::float64x4_set4(s, v.x, v.y, v.z))
         {
         }
 
         Vector(simd::float64x4 v)
-            : xyzw(v)
+            : m(v)
         {
         }
 
         template <int X, int Y, int Z, int W>
         Vector(const ShuffleAccessor4<double, simd::float64x4, X, Y, Z, W>& p)
         {
-            xyzw = p;
+            m = p;
         }
 
         template <int X, int Y, int Z, int W>
         Vector& operator = (const ShuffleAccessor4<double, simd::float64x4, X, Y, Z, W>& p)
         {
-            xyzw = p;
+            m = p;
             return *this;
         }
 
         Vector& operator = (simd::float64x4 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (double s)
         {
-            xyzw = simd::float64x4_set1(s);
+            m = simd::float64x4_set1(s);
             return *this;
         }
 
         operator simd::float64x4 () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::float64x4 ()
         {
-            return xyzw;
+            return m;
         }
     };
 

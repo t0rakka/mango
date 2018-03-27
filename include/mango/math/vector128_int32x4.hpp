@@ -18,7 +18,7 @@ namespace mango
 
         union
         {
-            simd::int32x4 xyzw;
+            simd::int32x4 m;
 
             ScalarAccessor<int32, simd::int32x4, 0> x;
             ScalarAccessor<int32, simd::int32x4, 1> y;
@@ -253,6 +253,7 @@ namespace mango
             ShuffleAccessor4<int32, simd::int32x4, 1, 0, 2, 3> yxzw;
             ShuffleAccessor4<int32, simd::int32x4, 2, 0, 2, 3> zxzw;
             ShuffleAccessor4<int32, simd::int32x4, 3, 0, 2, 3> wxzw;
+            ShuffleAccessor4<int32, simd::int32x4, 0, 1, 2, 3> xyzw;
             ShuffleAccessor4<int32, simd::int32x4, 1, 1, 2, 3> yyzw;
             ShuffleAccessor4<int32, simd::int32x4, 2, 1, 2, 3> zyzw;
             ShuffleAccessor4<int32, simd::int32x4, 3, 1, 2, 3> wyzw;
@@ -300,50 +301,50 @@ namespace mango
         ~Vector() {}
 
         Vector(int32 s)
-            : xyzw(simd::int32x4_set1(s))
+            : m(simd::int32x4_set1(s))
         {
         }
 
         explicit Vector(int32 x, int32 y, int32 z, int32 w)
-            : xyzw(simd::int32x4_set4(x, y, z, w))
+            : m(simd::int32x4_set4(x, y, z, w))
         {
         }
 
         Vector(simd::int32x4 v)
-            : xyzw(v)
+            : m(v)
         {
         }
 
         Vector& operator = (simd::int32x4 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (int32 s)
         {
-            xyzw = simd::int32x4_set1(s);
+            m = simd::int32x4_set1(s);
             return *this;
         }
 
         operator simd::int32x4 () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::int32x4 ()
         {
-            return xyzw;
+            return m;
         }
 
         uint32 pack() const
         {
-            return simd::pack(xyzw);
+            return simd::pack(m);
         }
 
         void unpack(uint32 a)
         {
-            xyzw = simd::unpack(a);
+            m = simd::unpack(a);
         }
     };
 

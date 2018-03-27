@@ -18,7 +18,7 @@ namespace mango
 
         union
         {
-            simd::uint64x4 xyzw;
+            simd::uint64x4 m;
 
             ScalarAccessor<uint64, simd::uint64x4, 0> x;
             ScalarAccessor<uint64, simd::uint64x4, 1> y;
@@ -44,40 +44,40 @@ namespace mango
         ~Vector() {}
 
         Vector(uint64 s)
-            : xyzw(simd::uint64x4_set1(s))
+            : m(simd::uint64x4_set1(s))
         {
         }
 
         explicit Vector(uint64 x, uint64 y, uint64 z, uint64 w)
-            : xyzw(simd::uint64x4_set4(x, y, z, w))
+            : m(simd::uint64x4_set4(x, y, z, w))
         {
         }
 
         Vector(simd::uint64x4 v)
-            : xyzw(v)
+            : m(v)
         {
         }
 
         Vector& operator = (simd::uint64x4 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (uint64 s)
         {
-            xyzw = simd::uint64x4_set1(s);
+            m = simd::uint64x4_set1(s);
             return *this;
         }
 
         operator simd::uint64x4 () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::uint64x4 ()
         {
-            return xyzw;
+            return m;
         }
     };
 

@@ -18,12 +18,13 @@ namespace mango
 
         union
         {
-            simd::uint64x2 xy;
+            simd::uint64x2 m;
 
             ScalarAccessor<uint64, simd::uint64x2, 0> x;
             ScalarAccessor<uint64, simd::uint64x2, 1> y;
 
             ShuffleAccessor2<uint64, simd::uint64x2, 0, 0> xx;
+            ShuffleAccessor2<uint64, simd::uint64x2, 0, 1> xy;
             ShuffleAccessor2<uint64, simd::uint64x2, 1, 0> yx;
             ShuffleAccessor2<uint64, simd::uint64x2, 1, 1> yy;
 
@@ -46,53 +47,53 @@ namespace mango
         ~Vector() {}
 
         Vector(uint64 s)
-            : xy(simd::uint64x2_set1(s))
+            : m(simd::uint64x2_set1(s))
         {
         }
 
         explicit Vector(uint64 x, uint64 y)
-            : xy(simd::uint64x2_set2(x, y))
+            : m(simd::uint64x2_set2(x, y))
         {
         }
 
         Vector(simd::uint64x2 v)
-            : xy(v)
+            : m(v)
         {
         }
 
         template <int X, int Y>
         Vector(const ShuffleAccessor2<uint64, simd::uint64x2, X, Y>& p)
         {
-            xy = p;
+            m = p;
         }
 
         template <int X, int Y>
         Vector& operator = (const ShuffleAccessor2<uint64, simd::uint64x2, X, Y>& p)
         {
-            xy = p;
+            m = p;
             return *this;
         }
 
         Vector& operator = (simd::uint64x2 v)
         {
-            xy = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (uint64 s)
         {
-            xy = simd::uint64x2_set1(s);
+            m = simd::uint64x2_set1(s);
             return *this;
         }
 
         operator simd::uint64x2 () const
         {
-            return xy;
+            return m;
         }
 
         operator simd::uint64x2 ()
         {
-            return xy;
+            return m;
         }
     };
 

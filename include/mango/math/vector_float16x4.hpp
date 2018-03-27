@@ -20,7 +20,7 @@ namespace mango
 
         union
         {
-            simd::float16x4 xyzw;
+            simd::float16x4 m;
             DeAggregate<ScalarType> component[VectorSize];
         };
 
@@ -40,57 +40,57 @@ namespace mango
         ~Vector() {}
 
         explicit Vector(const Vector<float, 4>& v)
-            : xyzw(simd::convert<simd::float16x4>(v.xyzw))
+            : m(simd::convert<simd::float16x4>(v.m))
         {
         }
 
         Vector(simd::float32x4 v)
-            : xyzw(simd::convert<simd::float16x4>(v))
+            : m(simd::convert<simd::float16x4>(v))
         {
         }
 
         Vector(simd::float16x4 v)
-            : xyzw(v)
+            : m(v)
         {
         }
 
         Vector& operator = (const Vector<float, 4>& v)
         {
-            xyzw = simd::convert<simd::float16x4>(v.xyzw);
+            m = simd::convert<simd::float16x4>(v.m);
             return *this;
         }
 
         Vector& operator = (simd::float32x4 v)
         {
-            xyzw = simd::convert<simd::float16x4>(v);
+            m = simd::convert<simd::float16x4>(v);
             return *this;
         }
 
         Vector& operator = (simd::float16x4 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (const Vector& v)
         {
-            xyzw = v.xyzw;
+            m = v.m;
             return *this;
         }
 
         operator Vector<float, 4> () const
         {
-            return Vector<float, 4>(simd::convert<simd::float32x4>(xyzw));
+            return Vector<float, 4>(simd::convert<simd::float32x4>(m));
         }
 
         operator const simd::float16x4& () const
         {
-            return xyzw;
+            return m;
         }
 
         operator simd::float16x4& ()
         {
-            return xyzw;
+            return m;
         }
     };
 
