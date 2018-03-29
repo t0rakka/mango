@@ -3,7 +3,6 @@ PROJECT(mango CXX C)
 
 # TODO: Separate mango-opengl library
 # TODO: Separate mango-vulkan library (only built on Linux & Windows)
-# TODO: Compile GUI components for OpenGL and Vulkan (when needed)
 # TODO: Fix compiling on ARM
 # TODO: make static / dynamic library compilation configurable
 
@@ -12,42 +11,59 @@ FILE(GLOB FILESYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.
 IF(WIN32)
     FILE(GLOB FILESYSTEM_PLATFORM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/win32/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp")
+    FILE(GLOB GUI "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/gui/win32/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/gui/win32/*.cpp")
+    FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp")
+ELSEIF(APPLE)
+    FILE(GLOB FILESYSTEM_PLATFORM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/unix/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
+    FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm")
 ELSE()
     FILE(GLOB FILESYSTEM_PLATFORM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/unix/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
+    FILE(GLOB GUI "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/gui/xlib/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/gui/xlib/*.cpp")
+    FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp")
 ENDIF()
 FILE(GLOB IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
 FILE(GLOB JPEG "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
 FILE(GLOB MATH "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
 FILE(GLOB SIMD "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
-FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp")
 FILE(GLOB VULKAN "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/vulkan/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/vulkan/*.cpp")
 
 SOURCE_GROUP("core" FILES ${CORE})
 SOURCE_GROUP("filesystem" FILES ${FILESYSTEM} ${FILESYSTEM_PLATFORM})
 SOURCE_GROUP("image" FILES ${IMAGE} ${JPEG})
 SOURCE_GROUP("math" FILES ${MATH})
+SOURCE_GROUP("gui" FILES ${GUI})
 SOURCE_GROUP("opengl" FILES ${OPENGL})
 SOURCE_GROUP("vulkan" FILES ${VULKAN})
 
-FILE(GLOB AES "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/aes/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.cpp")
-FILE(GLOB BC "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/bc/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.cpp")
-FILE(GLOB BZIP2 "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/bzip2/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.c")
-FILE(GLOB CONCURRENT_QUEUE "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/google/*.h")
-FILE(GLOB GOOGLE "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/google/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/google/etc1.h"
+FILE(GLOB AES "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.cpp")
+FILE(GLOB BC "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.cpp")
+FILE(GLOB BZIP2 "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.c")
+FILE(GLOB CONCURRENT_QUEUE "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.h")
+FILE(GLOB GOOGLE "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/google/etc1.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.cpp")
-FILE(GLOB LZ4 "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/lz4/*h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.c")
-FILE(GLOB LZFSE "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/lzfse/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c")
-FILE(GLOB LZO "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/lzo/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c")
+FILE(GLOB LZ4 "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.c")
+FILE(GLOB LZFSE "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c")
+FILE(GLOB LZO "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c")
 FILE(GLOB MINIZ "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/miniz/miniz.cpp")
-FILE(GLOB UNRAR "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/unrar/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
-FILE(GLOB_RECURSE ZSTD "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/zstd/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c")
+FILE(GLOB UNRAR "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
+FILE(GLOB_RECURSE ZSTD "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c")
 
 SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD})
 
 ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp"
     ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
     ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD}
+    ${GUI}
     ${OPENGL}
     ${VULKAN})
 
