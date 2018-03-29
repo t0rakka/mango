@@ -203,9 +203,9 @@ namespace
     uint32 computeKeyMask(NSUInteger flags)
     {
         uint32 mask = 0;
-        if (flags & NSControlKeyMask)    mask |= KEYMASK_CTRL;
-        if (flags & NSShiftKeyMask)      mask |= KEYMASK_SHIFT;
-        if (flags & NSCommandKeyMask)    mask |= KEYMASK_SUPER;
+        if (flags & NSEventModifierFlagControl)    mask |= KEYMASK_CTRL;
+        if (flags & NSEventModifierFlagShift)      mask |= KEYMASK_SHIFT;
+        if (flags & NSEventModifierFlagCommand)    mask |= KEYMASK_SUPER;
         return mask;
     }
     
@@ -717,7 +717,7 @@ namespace mango
         
         while (m_handle->looping)
         {
-            NSEvent* event = [NSApp nextEventMatchingMask: NSAnyEventMask
+            NSEvent* event = [NSApp nextEventMatchingMask: NSEventMaskAny
                               untilDate: nil
                               inMode: NSDefaultRunLoopMode
                               dequeue: YES];
@@ -835,8 +835,8 @@ namespace opengl {
 
         m_handle->view = nil;
         
-        unsigned int styleMask = NSTitledWindowMask | NSClosableWindowMask |
-            NSMiniaturizableWindowMask | NSResizableWindowMask;
+        unsigned int styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+            NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
         
         NSRect frame = NSMakeRect(0, 0, width, height);
 
@@ -954,7 +954,7 @@ namespace opengl {
             [m_handle->window setRestorable:NO];
         }
 
-        m_handle->modifiers = [NSEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+        m_handle->modifiers = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
 
         // parse extension string
 #ifdef MANGO_CORE_PROFILE
