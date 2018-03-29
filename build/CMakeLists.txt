@@ -39,16 +39,15 @@ FILE(GLOB GOOGLE "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/google/*.hpp" 
 FILE(GLOB LZ4 "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/lz4/*h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.c")
 FILE(GLOB LZFSE "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/lzfse/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c")
 FILE(GLOB LZO "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/lzo/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c")
-FILE(GLOB miniz "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/miniz/miniz.cpp")
+FILE(GLOB MINIZ "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/miniz/miniz.cpp")
 FILE(GLOB UNRAR "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/unrar/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
 FILE(GLOB_RECURSE ZSTD "${CMAKE_CURRENT_SOURCE_DIR}/../include/external/zstd/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c")
 
-SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE}
-    ${LZ4} ${LZFSE} ${LZO} ${miniz} ${UNRAR} ${ZSTD})
+SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD})
 
 ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp"
     ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
-    ${external}
+    ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD}
     ${OPENGL}
     ${VULKAN})
 
