@@ -74,11 +74,6 @@ endif()
 OPTION(ENABLE_FAST_MATH "Use fast math / relaxed-precision floating point operations" ON)
 OPTION(ENABLE_AVX2 "Enable AVX2 instructions. Most x64 CPUs should have this." ON)
 
-# TODO: test on ARM board
-#IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-#    add_definitions (-mfpu=neon -mfloat-abi=hard)
-#ENDIF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     # /Gm enables partial rebuild, is all.
     TARGET_COMPILE_OPTIONS(mango PRIVATE "/std:c++14" "/Gm")
@@ -100,6 +95,11 @@ ELSE()
     ENDIF()
     IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         TARGET_COMPILE_OPTIONS(mango PRIVATE "-ftree-vectorize")
+    ENDIF()
+
+    IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+        add_definitions (-mfpu=neon -mfloat-abi=hard)
+        set(CMAKE_CXX_FLAGS "-fpermissive")
     ENDIF()
 ENDIF()
 
