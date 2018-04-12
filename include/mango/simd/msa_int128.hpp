@@ -44,6 +44,16 @@ namespace simd {
         return (v16u8) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
     }
 
+    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    {
+        return (v2u64) { uload64(source), 0 };
+    }
+
+    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    {
+        std::memcpy(dest, &a, 8);
+    }
+
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
     {
         return (v16u8) __msa_ilvr_b((v16i8)b, (v16i8)a);
@@ -182,6 +192,16 @@ namespace simd {
     static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
     {
         return (v8u16) { s0, s1, s2, s3, s4, s5, s6, s7 };
+    }
+
+    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    {
+        return (v8u16) { source[0], source[1], source[2], source[3], 0, 0, 0, 0 };
+    }
+
+    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -393,6 +413,16 @@ namespace simd {
     static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
     {
         reinterpret_cast<v4u32 *>(dest)[0] = a;
+    }
+
+    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    {
+        return (v4u32) { source[0], source[1], 0, 0 };
+    }
+
+    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline uint32x4 unpacklo(uint32x4 a, uint32x4 b)
@@ -705,6 +735,16 @@ namespace simd {
         return (v16i8) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
     }
 
+    static inline int8x16 int8x16_load_low(const int8* source)
+    {
+        return (v2i64) { uload64(source), 0 };
+    }
+
+    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    {
+        std::memcpy(dest, &a, 8);
+    }
+
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
     {
         return __msa_ilvr_b(b, a);
@@ -854,6 +894,16 @@ namespace simd {
     static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
     {
         return (v8i16) { s0, s1, s2, s3, s4, s5, s6, s7 };
+    }
+
+    static inline int16x8 int16x8_load_low(const int16* source)
+    {
+        return (v8i16) { source[0], source[1], source[2], source[3], 0, 0, 0, 0 };
+    }
+
+    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)
@@ -1076,6 +1126,16 @@ namespace simd {
     static inline void int32x4_ustore(int* dest, int32x4 a)
     {
         reinterpret_cast<v4i32 *>(dest)[0] = a;
+    }
+
+    static inline int32x4 int32x4_load_low(const int32* source)
+    {
+        return (v4i32) { source[0], source[1], 0, 0 };
+    }
+
+    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline int32x4 unpacklo(int32x4 a, int32x4 b)

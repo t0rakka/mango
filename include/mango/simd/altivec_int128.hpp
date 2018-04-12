@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -42,6 +42,24 @@ namespace simd {
         uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
     {
         return (uint8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
+    }
+
+    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    {
+        auto s0 = source[0];
+        auto s1 = source[1];
+        auto s2 = source[2];
+        auto s3 = source[3];
+        auto s4 = source[4];
+        auto s5 = source[5];
+        auto s6 = source[6];
+        auto s7 = source[7];
+        return (uint8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, 0, 0, 0, 0, 0, 0, 0, 0 };
+    }
+
+    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
@@ -184,6 +202,20 @@ namespace simd {
     static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
     {
         return (uint16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
+    }
+
+    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    {
+        auto s0 = source[0];
+        auto s1 = source[1];
+        auto s2 = source[2];
+        auto s3 = source[3];
+        return (uint16x8::vector) { s0, s1, s2, s3, 0, 0, 0, 0 };
+    }
+
+    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -408,6 +440,19 @@ namespace simd {
         dest[1] = vec_extract(a.data, 1);
         dest[2] = vec_extract(a.data, 2);
         dest[3] = vec_extract(a.data, 3);
+    }
+
+    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    {
+        auto s0 = source[0];
+        auto s1 = source[1];
+        return (uint32x4::vector) { s0, s1, 0, 0 };
+    }
+
+    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    {
+        dest[0] = vec_extract(a.data, 0);
+        dest[1] = vec_extract(a.data, 1);
     }
 
     static inline uint32x4 unpacklo(uint32x4 a, uint32x4 b)
@@ -732,6 +777,24 @@ namespace simd {
         return (int8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
     }
 
+    static inline int8x16 int8x16_load_low(const int8* source)
+    {
+        auto s0 = source[0];
+        auto s1 = source[1];
+        auto s2 = source[2];
+        auto s3 = source[3];
+        auto s4 = source[4];
+        auto s5 = source[5];
+        auto s6 = source[6];
+        auto s7 = source[7];
+        return (int8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, 0, 0, 0, 0, 0, 0, 0, 0 };
+    }
+
+    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    {
+        std::memcpy(dest, &a, 8);
+    }
+
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
     {
         return vec_mergeh(a.data, b.data);
@@ -882,6 +945,20 @@ namespace simd {
     static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
     {
         return (int16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
+    }
+
+    static inline int16x8 int16x8_load_low(const int16* source)
+    {
+        auto s0 = source[0];
+        auto s1 = source[1];
+        auto s2 = source[2];
+        auto s3 = source[3];
+        return (int16x8::vector) { s0, s1, s2, s3, 0, 0, 0, 0 };
+    }
+
+    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    {
+        std::memcpy(dest, &a, 8);
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)
@@ -1116,6 +1193,19 @@ namespace simd {
         dest[1] = vec_extract(a.data, 1);
         dest[2] = vec_extract(a.data, 2);
         dest[3] = vec_extract(a.data, 3);
+    }
+
+    static inline int32x4 int32x4_load_low(const int32* source)
+    {
+        auto s0 = source[0];
+        auto s1 = source[1];
+        return (int32x4::vector) { s0, s1, 0, 0 };
+    }
+
+    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    {
+        dest[0] = vec_extract(a.data, 0);
+        dest[1] = vec_extract(a.data, 1);
     }
 
     static inline int32x4 unpacklo(int32x4 a, int32x4 b)

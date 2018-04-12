@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -43,6 +43,18 @@ namespace simd {
     {
         uint8x16_t temp = { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
         return temp;
+    }
+
+    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    {
+        const uint8x8_t low = vld1_u8(source);
+        const uint8x8_t high = vdup_n_u8(0);
+        return vcombine_u8(low, high);
+    }
+
+    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    {
+        vst1_u8(dest, vget_low_u8(a));
     }
 
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
@@ -185,6 +197,18 @@ namespace simd {
     {
         uint16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
+    }
+
+    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    {
+        const uint16x4_t low = vld1_u16(source);
+        const uint16x4_t high = vdup_n_u16(0);
+        return vcombine_u16(low, high);
+    }
+
+    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    {
+        vst1_u16(dest, vget_low_u16(a));
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -405,6 +429,18 @@ namespace simd {
         dest[1] = vgetq_lane_u32(a, 1);
         dest[2] = vgetq_lane_u32(a, 2);
         dest[3] = vgetq_lane_u32(a, 3);
+    }
+
+    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    {
+        const uint32x2_t low = vld1_u32(source);
+        const uint32x2_t high = vdup_n_u32(0);
+        return vcombine_u32(low, high);
+    }
+
+    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    {
+        vst1_u32(dest, vget_low_u32(a));
     }
 
     static inline uint32x4 unpacklo(uint32x4 a, uint32x4 b)
@@ -724,6 +760,18 @@ namespace simd {
         return temp;
     }
 
+    static inline int8x16 int8x16_load_low(const int8* source)
+    {
+        const int8x8_t low = vld1_s8(source);
+        const int8x8_t high = vdup_n_s8(0);
+        return vcombine_s8(low, high);
+    }
+
+    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    {
+        vst1_s8(dest, vget_low_s8(a));
+    }
+
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
     {
 	    const int8x8x2_t temp = vzip_s8(vget_low_s8(a), vget_low_s8(b));
@@ -874,6 +922,18 @@ namespace simd {
     {
         int16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
+    }
+
+    static inline int16x8 int16x8_load_low(const int16* source)
+    {
+        const int16x4_t low = vld1_s16(source);
+        const int16x4_t high = vdup_n_s16(0);
+        return vcombine_s16(low, high);
+    }
+
+    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    {
+        vst1_s16(dest, vget_low_s16(a));
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)
@@ -1108,6 +1168,18 @@ namespace simd {
         dest[1] = vgetq_lane_s32(a, 1);
         dest[2] = vgetq_lane_s32(a, 2);
         dest[3] = vgetq_lane_s32(a, 3);
+    }
+
+    static inline int32x4 int32x4_load_low(const int32* source)
+    {
+        const int32x2_t low = vld1_s32(source);
+        const int32x2_t high = vdup_n_s32(0);
+        return vcombine_s32(low, high);
+    }
+
+    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    {
+        vst1_s32(dest, vget_low_s32(a));
     }
 
     static inline int32x4 unpacklo(int32x4 a, int32x4 b)

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -388,6 +388,25 @@ namespace simd {
         return {{ s0, s1, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
     }
 
+    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    {
+        return {{ source[0], source[1], source[2], source[3],
+                  source[4], source[5], source[6], source[7],
+                  0, 0, 0, 0, 0, 0, 0, 0 }};
+    }
+
+    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
+        dest[2] = a[2];
+        dest[3] = a[3];
+        dest[4] = a[4];
+        dest[5] = a[5];
+        dest[6] = a[6];
+        dest[7] = a[7];
+    }
+
     static inline uint8x16 unpacklo(uint8x16 a, uint8x16 b)
     {
         return scalar_unpacklo(a, b);
@@ -526,6 +545,19 @@ namespace simd {
     static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
     {
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
+    }
+
+    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    {
+        return {{ source[0], source[1], source[2], source[3], 0, 0, 0, 0 }};
+    }
+
+    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
+        dest[2] = a[2];
+        dest[3] = a[3];
     }
 
     static inline uint16x8 unpacklo(uint16x8 a, uint16x8 b)
@@ -739,6 +771,17 @@ namespace simd {
         dest[1] = a[1];
         dest[2] = a[2];
         dest[3] = a[3];
+    }
+
+    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    {
+        return {{ source[0], source[1], 0, 0 }};
+    }
+
+    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
     }
 
     static inline uint32x4 unpacklo(uint32x4 a, uint32x4 b)
@@ -1052,6 +1095,25 @@ namespace simd {
         return {{ s0, s1, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
     }
 
+    static inline int8x16 int8x16_load_low(const int8* source)
+    {
+        return {{ source[0], source[1], source[2], source[3],
+                  source[4], source[5], source[6], source[7],
+                  0, 0, 0, 0, 0, 0, 0, 0 }};
+    }
+
+    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
+        dest[2] = a[2];
+        dest[3] = a[3];
+        dest[4] = a[4];
+        dest[5] = a[5];
+        dest[6] = a[6];
+        dest[7] = a[7];
+    }
+
     static inline int8x16 unpacklo(int8x16 a, int8x16 b)
     {
         return scalar_unpacklo(a, b);
@@ -1200,6 +1262,19 @@ namespace simd {
     static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
     {
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
+    }
+
+    static inline int16x8 int16x8_load_low(const int16* source)
+    {
+        return {{ source[0], source[1], source[2], source[3], 0, 0, 0, 0 }};
+    }
+
+    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
+        dest[2] = a[2];
+        dest[3] = a[3];
     }
 
     static inline int16x8 unpacklo(int16x8 a, int16x8 b)
@@ -1423,6 +1498,17 @@ namespace simd {
         dest[1] = a[1];
         dest[2] = a[2];
         dest[3] = a[3];
+    }
+
+    static inline int32x4 int32x4_load_low(const int32* source)
+    {
+        return {{ source[0], source[1], 0, 0 }};
+    }
+
+    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
     }
 
     static inline int32x4 unpacklo(int32x4 a, int32x4 b)
