@@ -263,12 +263,8 @@ namespace
         int         cols_in_right_mcus;
         int         rows_in_bottom_mcus;
 
-        int         rows;
-        int         cols;
-
         int         length_minus_mcu_width;
         int         length_minus_width;
-        int         incr;
         int         mcu_width_size;
         int         offset;
 
@@ -285,18 +281,19 @@ namespace
         jpeg_chan   channel[3];
         int         channel_count;
 
+        std::vector<BlockType> blocks;
+
         // huffman encoder
         uint32      lcode;
         uint16      bitindex;
 
-        void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input);
+        void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input, int rows, int cols, int incr);
 
         jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(uint32 quality);
         void write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height);
-        void encode_mcu(BigEndianPointer& p, BlockType* block);
 
         uint8* putbits(uint8* output, uint32 data, int numbits)
         {
@@ -537,13 +534,9 @@ namespace
     // read_xxx_format
     // ----------------------------------------------------------------------------
 
-    void read_400_format(jpeg_encode* jp, BlockType* block, uint8* input)
+    void read_400_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y1 = block;
-
-        int rows = jp->rows;
-        int cols = jp->cols;
-        int incr = jp->incr;
 
         for (int i = 0; i < rows; ++i)
         {
@@ -573,15 +566,11 @@ namespace
         }
     }
 
-    void read_rgb888_format(jpeg_encode* jp, BlockType* block, uint8* input)
+    void read_rgb888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y  = block + 0 * BLOCK_SIZE;
         BlockType* CB = block + 1 * BLOCK_SIZE;
         BlockType* CR = block + 2 * BLOCK_SIZE;
-
-        int rows = jp->rows;
-        int cols = jp->cols;
-        int incr = jp->incr;
 
         for (int i = 0; i < rows; ++i)
         {
@@ -626,15 +615,11 @@ namespace
         }
     }
 
-    void read_argb8888_format(jpeg_encode* jp, BlockType* block, uint8* input)
+    void read_argb8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y  = block + 0 * BLOCK_SIZE;
         BlockType* CB = block + 1 * BLOCK_SIZE;
         BlockType* CR = block + 2 * BLOCK_SIZE;
-
-        int rows = jp->rows;
-        int cols = jp->cols;
-        int incr = jp->incr;
 
         for (int i = 0; i < rows; ++i)
         {
@@ -679,15 +664,11 @@ namespace
         }
     }
 
-    void read_abgr8888_format(jpeg_encode* jp, BlockType* block, uint8* input)
+    void read_abgr8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y  = block + 0 * BLOCK_SIZE;
         BlockType* CB = block + 1 * BLOCK_SIZE;
         BlockType* CR = block + 2 * BLOCK_SIZE;
-
-        int rows = jp->rows;
-        int cols = jp->cols;
-        int incr = jp->incr;
 
         for (int i = 0; i < rows; ++i)
         {
@@ -800,6 +781,9 @@ namespace
 
         lcode = 0;
         bitindex = 0;
+
+        // allocate MCU blocks
+        blocks.resize(horizontal_mcus * vertical_mcus * channel_count * 64);
 
         init_quantization_tables(quality);
     }
@@ -924,16 +908,6 @@ namespace
         p.write8(0x00);
     }
 
-    void jpeg_encode::encode_mcu(BigEndianPointer& stream, BlockType* block)
-    {
-        for (int i = 0; i < channel_count; ++i)
-        {
-            BlockType temp[BLOCK_SIZE];
-            DCT(temp, block + i * BLOCK_SIZE, channel[i].qtable);
-            huffman(stream, this, channel[i].component, temp);
-        }
-    }
-
     // ----------------------------------------------------------------------------
     // encodeJPEG()
     // ----------------------------------------------------------------------------
@@ -947,44 +921,77 @@ namespace
         // writing marker data
         jp.write_markers(p, image_format, surface.width, surface.height);
 
+        ConcurrentQueue queue;
+
+        int rows;
+
         // encode MCUs
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
             if (y < jp.vertical_mcus - 1)
             {
-                jp.rows = jp.mcu_height;
+                rows = jp.mcu_height;
             }
             else
             {
                 // clipping
-                jp.rows = jp.rows_in_bottom_mcus;
+                rows = jp.rows_in_bottom_mcus;
             }
 
-            for (int x = 0; x < jp.horizontal_mcus; ++x)
-            {
-                if (x < jp.horizontal_mcus - 1)
+            BlockType* block_scan = jp.blocks.data() + y * jp.horizontal_mcus * jp.channel_count * BLOCK_SIZE;
+
+            queue.enqueue([&jp, input, block_scan, rows] {
+                u8* image = input;
+                int cols;
+                int incr;
+
+                for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
-                    jp.cols = jp.mcu_width;
-                    jp.incr = jp.length_minus_mcu_width;
+                    if (x < jp.horizontal_mcus - 1)
+                    {
+                        cols = jp.mcu_width;
+                        incr = jp.length_minus_mcu_width;
+                    }
+                    else
+                    {
+                        // clipping
+                        cols = jp.cols_in_right_mcus;
+                        incr = jp.length_minus_width;
+                    }
+
+                    BlockType block[BLOCK_SIZE * 3];
+
+                    // read MCU data
+                    jp.read_format(&jp, block, image, rows, cols, incr);
+
+                    // encode the data in MCU
+                    for (int i = 0; i < jp.channel_count; ++i)
+                    {
+                        BlockType* temp = block_scan + (x * jp.channel_count + i) * BLOCK_SIZE;
+                        DCT(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+                    }
+
+                    image += jp.mcu_width_size;
                 }
-                else
-                {
-                    // clipping
-                    jp.cols = jp.cols_in_right_mcus;
-                    jp.incr = jp.length_minus_width;
-                }
+            });
 
-                BlockType block[BLOCK_SIZE * 3];
-
-                // read MCU data
-                jp.read_format(&jp, block, input);
-
-                // encode the data in MCU
-                jp.encode_mcu(p, block);
-                input += jp.mcu_width_size;
-            }
-
+            input += jp.horizontal_mcus * jp.mcu_width_size;
             input += jp.offset;
+        }
+
+        queue.wait();
+
+        // Huffman encode the blocks
+        int block_count = jp.horizontal_mcus * jp.vertical_mcus;
+        BlockType* temp = jp.blocks.data();
+
+        for (int i = 0; i < block_count; ++i)
+        {
+            for (int c = 0; c < jp.channel_count; ++c)
+            {
+                huffman(p, &jp, jp.channel[c].component, temp);
+                temp += BLOCK_SIZE;
+            }
         }
 
         // close stream
