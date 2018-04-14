@@ -252,7 +252,6 @@ namespace
     {
         int         component;
         uint16*     qtable;
-        BlockType*  data;
     };
 
     struct jpeg_encode
@@ -282,25 +281,22 @@ namespace
         uint16      ILqt [BLOCK_SIZE];
         uint16      ICqt [BLOCK_SIZE];
 
-        // MCU data
-        BlockType   block[3*BLOCK_SIZE];
-
         // MCU configuration
-        jpeg_chan   channel[6];
+        jpeg_chan   channel[3];
         int         channel_count;
 
         // huffman encoder
         uint32      lcode;
         uint16      bitindex;
 
-        void (*read_format) (jpeg_encode* jp, uint8* input);
+        void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input);
 
         jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(uint32 quality);
         void write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height);
-        void encode_mcu(BigEndianPointer& p, uint32 format);
+        void encode_mcu(BigEndianPointer& p, BlockType* block);
 
         uint8* putbits(uint8* output, uint32 data, int numbits)
         {
@@ -541,9 +537,9 @@ namespace
     // read_xxx_format
     // ----------------------------------------------------------------------------
 
-    void read_400_format(jpeg_encode* jp, uint8* input)
+    void read_400_format(jpeg_encode* jp, BlockType* block, uint8* input)
     {
-        BlockType* Y1 = jp->block;
+        BlockType* Y1 = block;
 
         int rows = jp->rows;
         int cols = jp->cols;
@@ -577,11 +573,11 @@ namespace
         }
     }
 
-    void read_rgb888_format(jpeg_encode* jp, uint8* input)
+    void read_rgb888_format(jpeg_encode* jp, BlockType* block, uint8* input)
     {
-        BlockType* Y  = jp->block + 0 * BLOCK_SIZE;
-        BlockType* CB = jp->block + 1 * BLOCK_SIZE;
-        BlockType* CR = jp->block + 2 * BLOCK_SIZE;
+        BlockType* Y  = block + 0 * BLOCK_SIZE;
+        BlockType* CB = block + 1 * BLOCK_SIZE;
+        BlockType* CR = block + 2 * BLOCK_SIZE;
 
         int rows = jp->rows;
         int cols = jp->cols;
@@ -630,11 +626,11 @@ namespace
         }
     }
 
-    void read_argb8888_format(jpeg_encode* jp, uint8* input)
+    void read_argb8888_format(jpeg_encode* jp, BlockType* block, uint8* input)
     {
-        BlockType* Y  = jp->block + 0 * BLOCK_SIZE;
-        BlockType* CB = jp->block + 1 * BLOCK_SIZE;
-        BlockType* CR = jp->block + 2 * BLOCK_SIZE;
+        BlockType* Y  = block + 0 * BLOCK_SIZE;
+        BlockType* CB = block + 1 * BLOCK_SIZE;
+        BlockType* CR = block + 2 * BLOCK_SIZE;
 
         int rows = jp->rows;
         int cols = jp->cols;
@@ -683,11 +679,11 @@ namespace
         }
     }
 
-    void read_abgr8888_format(jpeg_encode* jp, uint8* input)
+    void read_abgr8888_format(jpeg_encode* jp, BlockType* block, uint8* input)
     {
-        BlockType* Y  = jp->block + 0 * BLOCK_SIZE;
-        BlockType* CB = jp->block + 1 * BLOCK_SIZE;
-        BlockType* CR = jp->block + 2 * BLOCK_SIZE;
+        BlockType* Y  = block + 0 * BLOCK_SIZE;
+        BlockType* CB = block + 1 * BLOCK_SIZE;
+        BlockType* CR = block + 2 * BLOCK_SIZE;
 
         int rows = jp->rows;
         int cols = jp->cols;
@@ -748,15 +744,12 @@ namespace
 
         channel[0].component = 1;
         channel[0].qtable = ILqt;
-        channel[0].data = block + 0 * BLOCK_SIZE;
 
         channel[1].component = 2;
         channel[1].qtable = ICqt;
-        channel[1].data = block + 1 * BLOCK_SIZE;
 
         channel[2].component = 3;
         channel[2].qtable = ICqt;
-        channel[2].data = block + 2 * BLOCK_SIZE;
 
         switch (format)
         {
@@ -931,16 +924,12 @@ namespace
         p.write8(0x00);
     }
 
-    void jpeg_encode::encode_mcu(BigEndianPointer& stream, uint32 format)
+    void jpeg_encode::encode_mcu(BigEndianPointer& stream, BlockType* block)
     {
-        MANGO_UNREFERENCED_PARAMETER(format);
-
         for (int i = 0; i < channel_count; ++i)
         {
             BlockType temp[BLOCK_SIZE];
-            BlockType* data = channel[i].data;
-
-            DCT(temp, data, channel[i].qtable);
+            DCT(temp, block + i * BLOCK_SIZE, channel[i].qtable);
             huffman(stream, this, channel[i].component, temp);
         }
     }
@@ -949,12 +938,14 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(uint8* input, BigEndianPointer& p, int quality, uint32 image_format, int image_width, int image_height)
+    void encodeJPEG(const Surface& surface, BigEndianPointer& p, int quality, uint32 image_format)
     {
-        jpeg_encode jp(image_format, image_width, image_height, quality);
+        u8* input = surface.image;
+
+        jpeg_encode jp(image_format, surface.width, surface.height, quality);
 
         // writing marker data
-        jp.write_markers(p, image_format, image_width, image_height);
+        jp.write_markers(p, image_format, surface.width, surface.height);
 
         // encode MCUs
         for (int y = 0; y < jp.vertical_mcus; ++y)
@@ -965,7 +956,7 @@ namespace
             }
             else
             {
-                    // clipping
+                // clipping
                 jp.rows = jp.rows_in_bottom_mcus;
             }
 
@@ -983,11 +974,13 @@ namespace
                     jp.incr = jp.length_minus_width;
                 }
 
+                BlockType block[BLOCK_SIZE * 3];
+
                 // read MCU data
-                jp.read_format(&jp, input);
+                jp.read_format(&jp, block, input);
 
                 // encode the data in MCU
-                jp.encode_mcu(p, image_format);
+                jp.encode_mcu(p, block);
                 input += jp.mcu_width_size;
             }
 
@@ -1031,15 +1024,14 @@ namespace jpeg
         // encode
         if (surface.format == sourceFormat)
         {
-            encodeJPEG(surface.image, p, iq, destFormat, surface.width, surface.height);
+            encodeJPEG(surface, p, iq, destFormat);
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface.width, surface.height, sourceFormat);
             temp.blit(0, 0, surface);
-
-            encodeJPEG(temp.image, p, iq, destFormat, surface.width, surface.height);
+            encodeJPEG(temp, p, iq, destFormat);
         }
 
         // flush the buffer
