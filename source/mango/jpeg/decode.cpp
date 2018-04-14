@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -181,25 +181,19 @@ namespace jpeg
 
         uint64 cpuFlags = getCPUFlags();
 
+#if defined(JPEG_ENABLE_SIMD)
+        processState.idct = simd_idct;
+#endif
+
+        // TODO: move these to JPEG_ENABLE_SIMD block after the implementation is
+        //       using the portable SIMD infrastructure.
 #if defined(JPEG_ENABLE_SSE4)
         if (cpuFlags & CPU_SSE4_1)
         {
-            processState.idct = idct_sse41;
             processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse41;
             processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse41;
             processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse41;
             processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse41;
-        }
-#endif
-
-#if defined(JPEG_ENABLE_AVX2)
-        if (cpuFlags & CPU_AVX2)
-        {
-            processState.idct = idct_sse41;
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_avx2;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_avx2;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_avx2;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_avx2;
         }
 #endif
 
