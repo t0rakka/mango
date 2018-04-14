@@ -999,6 +999,17 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
+    // specializations
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> load_low(const ScalarType *source)
+    {
+        // load_low() is not available by default
+		Vector<ScalarType, VectorSize>::undefined_operation();
+    }
+
+    // ------------------------------------------------------------------
     // ScalarAccessor
     // ------------------------------------------------------------------
 

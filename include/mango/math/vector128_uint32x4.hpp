@@ -338,6 +338,17 @@ namespace mango
         }
     };
 
+    template <>
+    inline Vector<uint32, 4> load_low<uint32, 4>(const uint32 *source)
+    {
+        return simd::uint32x4_load_low(source);
+    }
+
+    static inline void store_low(uint32 *dest, Vector<uint32, 4> v)
+    {
+        simd::uint32x4_store_low(dest, v);
+    }
+
     static inline const Vector<uint32, 4> operator + (Vector<uint32, 4> v)
     {
         return v;
