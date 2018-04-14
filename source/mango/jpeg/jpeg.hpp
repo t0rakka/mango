@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -8,7 +8,7 @@
 #include <string>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
-#include <mango/simd/simd.hpp>
+#include <mango/math/math.hpp>
 
 //#define JPEG_ENABLE_PRINT
 #define JPEG_ENABLE_THREAD
@@ -22,18 +22,6 @@
 #define JPEG_AC_STAT_BINS        256 // ...
 #define JPEG_HUFF_LOOKUP_BITS    8   // Huffman look-ahead table log2 size
 #define JPEG_HUFF_LOOKUP_SIZE    (1 << JPEG_HUFF_LOOKUP_BITS)
-
-#if defined(JPEG_ENABLE_SIMD) && defined(MANGO_ENABLE_SIMD)
-
-    #if defined(MANGO_ENABLE_SSE4_1)
-        #define JPEG_ENABLE_SSE4
-    #endif
-
-    #if defined(MANGO_ENABLE_AVX2)
-        #define JPEG_ENABLE_AVX2
-    #endif
-
-#endif
 
 namespace jpeg
 {
@@ -419,22 +407,18 @@ namespace jpeg
     void process_YCbCr_16x8        (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x16       (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(JPEG_ENABLE_SIMD)
 
-    void idct_sse41	               (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+    void simd_idct                 (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+
+    // TODO: implement process functions with portable SIMD like simd_idct() above
+    #if defined(MANGO_ENABLE_SSE4_1)
+    #define JPEG_ENABLE_SSE4
     void process_YCbCr_8x8_sse41   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_8x16_sse41  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x8_sse41  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x16_sse41 (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-
-#endif
-
-#if defined(JPEG_ENABLE_AVX2)
-
-    void process_YCbCr_8x8_avx2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16_avx2  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    #endif
 
 #endif
 

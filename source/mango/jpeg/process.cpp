@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -386,9 +386,9 @@ void process_YCbCr_8x8_sse41(uint8* dest, int stride, const BlockType* data, Pro
 {
     uint8 result[64 * 3];
 
-    idct_sse41(result +   0, 8, data +   0, state->block[0].qt->table); // Y
-    idct_sse41(result +  64, 8, data +  64, state->block[1].qt->table); // Cb
-    idct_sse41(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
+    simd_idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y
+    simd_idct(result +  64, 8, data +  64, state->block[1].qt->table); // Cb
+    simd_idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
     
     // color conversion
     for (int y = 0; y < 8; y += 2)
@@ -426,10 +426,10 @@ void process_YCbCr_8x16_sse41(uint8* dest, int stride, const BlockType* data, Pr
 {
     uint8 result[64 * 4];
     
-    idct_sse41(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
-    idct_sse41(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
-    idct_sse41(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    idct_sse41(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+    simd_idct(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
+    simd_idct(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
+    simd_idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
+    simd_idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
     
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -463,10 +463,10 @@ void process_YCbCr_16x8_sse41(uint8* dest, int stride, const BlockType* data, Pr
 {
     uint8 result[64 * 4];
     
-    idct_sse41(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    idct_sse41(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    idct_sse41(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    idct_sse41(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+    simd_idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+    simd_idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+    simd_idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
+    simd_idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -497,12 +497,12 @@ void process_YCbCr_16x16_sse41(uint8* dest, int stride, const BlockType* data, P
 {
     uint8 result[64 * 6];
     
-    idct_sse41(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    idct_sse41(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    idct_sse41(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
-    idct_sse41(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
-    idct_sse41(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
-    idct_sse41(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
+    simd_idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+    simd_idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+    simd_idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
+    simd_idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
+    simd_idct(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
+    simd_idct(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
     
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -539,31 +539,5 @@ void process_YCbCr_16x16_sse41(uint8* dest, int stride, const BlockType* data, P
 }
 
 #endif // JPEG_ENABLE_SSE4
-
-#if defined(JPEG_ENABLE_AVX2)
-
-// TODO: AVX2 veriant (process 8 pixels in register)
-
-void process_YCbCr_8x8_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
-{
-    process_YCbCr_8x8_sse41(dest, stride, data, state, width, height);
-}
-
-void process_YCbCr_8x16_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
-{
-    process_YCbCr_8x16_sse41(dest, stride, data, state, width, height);
-}
-
-void process_YCbCr_16x8_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
-{
-    process_YCbCr_16x8_sse41(dest, stride, data, state, width, height);
-}
-
-void process_YCbCr_16x16_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
-{
-    process_YCbCr_16x16_sse41(dest, stride, data, state, width, height);
-}
-
-#endif // JPEG_ENABLE_AVX2
 
 } // namespace jpeg
