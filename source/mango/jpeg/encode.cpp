@@ -257,21 +257,21 @@ namespace
 
     struct jpeg_encode
     {
-        uint16      mcu_width;
-        uint16      mcu_height;
-        uint16      horizontal_mcus;
-        uint16      vertical_mcus;
-        uint16      cols_in_right_mcus;
-        uint16      rows_in_bottom_mcus;
+        int         mcu_width;
+        int         mcu_height;
+        int         horizontal_mcus;
+        int         vertical_mcus;
+        int         cols_in_right_mcus;
+        int         rows_in_bottom_mcus;
 
-        uint16      rows;
-        uint16      cols;
+        int         rows;
+        int         cols;
 
-        uint32      length_minus_mcu_width;
-        uint32      length_minus_width;
-        uint32      incr;
-        uint32      mcu_width_size;
-        uint32      offset;
+        int         length_minus_mcu_width;
+        int         length_minus_width;
+        int         incr;
+        int         mcu_width_size;
+        int         offset;
 
         int         ldc1;
         int         ldc2;
@@ -283,7 +283,7 @@ namespace
         uint16      ICqt [BLOCK_SIZE];
 
         // MCU data
-        BlockType   block[6*BLOCK_SIZE];
+        BlockType   block[3*BLOCK_SIZE];
 
         // MCU configuration
         jpeg_chan   channel[6];
@@ -298,10 +298,9 @@ namespace
         jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality);
         ~jpeg_encode();
 
-        void    init_quantization_tables(uint32 quality);
-        void    quantization(BlockType* dest, BlockType* const data, uint16* const quant_table) const;
-        void    write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height);
-        void    encodeMCU(BigEndianPointer& p, uint32 format);
+        void init_quantization_tables(uint32 quality);
+        void write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height);
+        void encode_mcu(BigEndianPointer& p, uint32 format);
 
         uint8* putbits(uint8* output, uint32 data, int numbits)
         {
@@ -469,7 +468,7 @@ namespace
         }
     }
 
-    void DCT(BlockType* data)
+    void DCT(BlockType* dest, BlockType* data, const uint16* quant_table)
     {
         const uint16 c1 = 1420;  // cos  PI/16 * root(2)
         const uint16 c2 = 1338;  // cos  PI/8  * root(2)
@@ -492,14 +491,14 @@ namespace
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            data[0] = static_cast<BlockType>(x4 + x5);
-            data[4] = static_cast<BlockType>(x4 - x5);
-            data[2] = static_cast<BlockType>((x8*c2 + x7*c6) >> 10);
-            data[6] = static_cast<BlockType>((x8*c6 - x7*c2) >> 10);
-            data[7] = static_cast<BlockType>((x0*c7 - x1*c5 + x2*c3 - x3*c1) >> 10);
-            data[5] = static_cast<BlockType>((x0*c5 - x1*c1 + x2*c7 + x3*c3) >> 10);
-            data[3] = static_cast<BlockType>((x0*c3 - x1*c7 - x2*c1 - x3*c5) >> 10);
-            data[1] = static_cast<BlockType>((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> 10);
+            data[0] = BlockType(x4 + x5);
+            data[4] = BlockType(x4 - x5);
+            data[2] = BlockType((x8*c2 + x7*c6) >> 10);
+            data[6] = BlockType((x8*c6 - x7*c2) >> 10);
+            data[7] = BlockType((x0*c7 - x1*c5 + x2*c3 - x3*c1) >> 10);
+            data[5] = BlockType((x0*c5 - x1*c1 + x2*c7 + x3*c3) >> 10);
+            data[3] = BlockType((x0*c3 - x1*c7 - x2*c1 - x3*c5) >> 10);
+            data[1] = BlockType((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> 10);
             data += 8;
         }
 
@@ -507,27 +506,34 @@ namespace
 
         for (int i = 0; i < 8; ++i)
         {
-            int x8 = data [ 0] + data [56];
-            int x0 = data [ 0] - data [56];
-            int x7 = data [ 8] + data [48];
-            int x1 = data [ 8] - data [48];
-            int x6 = data [16] + data [40];
-            int x2 = data [16] - data [40];
-            int x5 = data [24] + data [32];
-            int x3 = data [24] - data [32];
+            int x8 = data [i +  0] + data [i + 56];
+            int x0 = data [i +  0] - data [i + 56];
+            int x7 = data [i +  8] + data [i + 48];
+            int x1 = data [i +  8] - data [i + 48];
+            int x6 = data [i + 16] + data [i + 40];
+            int x2 = data [i + 16] - data [i + 40];
+            int x5 = data [i + 24] + data [i + 32];
+            int x3 = data [i + 24] - data [i + 32];
             int x4 = x8 + x5;
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            data[ 0] = static_cast<BlockType>((x4 + x5) >> 3);
-            data[32] = static_cast<BlockType>((x4 - x5) >> 3);
-            data[16] = static_cast<BlockType>((x8*c2 + x7*c6) >> 13);
-            data[48] = static_cast<BlockType>((x8*c6 - x7*c2) >> 13);
-            data[56] = static_cast<BlockType>((x0*c7 - x1*c5 + x2*c3 - x3*c1) >> 13);
-            data[40] = static_cast<BlockType>((x0*c5 - x1*c1 + x2*c7 + x3*c3) >> 13);
-            data[24] = static_cast<BlockType>((x0*c3 - x1*c7 - x2*c1 - x3*c5) >> 13);
-            data[ 8] = static_cast<BlockType>((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> 13);
-            ++data;
+            auto v0 = BlockType((x4 + x5) >> 3);
+            auto v4 = BlockType((x4 - x5) >> 3);
+            auto v2 = BlockType((x8*c2 + x7*c6) >> 13);
+            auto v6 = BlockType((x8*c6 - x7*c2) >> 13);
+            auto v7 = BlockType((x0*c7 - x1*c5 + x2*c3 - x3*c1) >> 13);
+            auto v5 = BlockType((x0*c5 - x1*c1 + x2*c7 + x3*c3) >> 13);
+            auto v3 = BlockType((x0*c3 - x1*c7 - x2*c1 - x3*c5) >> 13);
+            auto v1 = BlockType((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> 13);
+            dest[zigzag_table[i + 0 * 8]] = BlockType((v0 * quant_table[i + 0 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 4 * 8]] = BlockType((v4 * quant_table[i + 4 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 2 * 8]] = BlockType((v2 * quant_table[i + 2 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 6 * 8]] = BlockType((v6 * quant_table[i + 6 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 7 * 8]] = BlockType((v7 * quant_table[i + 7 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 5 * 8]] = BlockType((v5 * quant_table[i + 5 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 3 * 8]] = BlockType((v3 * quant_table[i + 3 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 1 * 8]] = BlockType((v1 * quant_table[i + 1 * 8] + 0x4000) >> 15);
         }
     }
 
@@ -782,11 +788,11 @@ namespace
         mcu_width = 8;
         mcu_height = 8;
 
-        horizontal_mcus = static_cast<uint16>((width + mcu_width - 1) >> 3);
-        vertical_mcus   = static_cast<uint16>((height + mcu_height - 1) >> 3);
+        horizontal_mcus = (width + mcu_width - 1) >> 3;
+        vertical_mcus   = (height + mcu_height - 1) >> 3;
 
-        rows_in_bottom_mcus = static_cast<uint16>(height - (vertical_mcus - 1) * mcu_height);
-        cols_in_right_mcus  = static_cast<uint16>(width  - (horizontal_mcus - 1) * mcu_width);
+        rows_in_bottom_mcus = height - (vertical_mcus - 1) * mcu_height;
+        cols_in_right_mcus  = width  - (horizontal_mcus - 1) * mcu_width;
 
         length_minus_mcu_width = (width - mcu_width         ) * bytes_per_pixel;
         length_minus_width     = (width - cols_in_right_mcus) * bytes_per_pixel;
@@ -843,15 +849,6 @@ namespace
 
             Cqt [index] = (uint8) value;
             ICqt [i] = static_cast<uint16>(0x8000 / value);
-        }
-    }
-
-    void jpeg_encode::quantization(BlockType* dest, BlockType* const data, uint16* const quant_table) const
-    {
-        for (int i = 0; i < 64; ++i)
-        {
-            int value = data[i] * quant_table[i];
-            dest[zigzag_table[i]] = static_cast<BlockType>((value + 0x4000) >> 15);
         }
     }
 
@@ -934,18 +931,16 @@ namespace
         p.write8(0x00);
     }
 
-    void jpeg_encode::encodeMCU(BigEndianPointer& stream, uint32 format)
+    void jpeg_encode::encode_mcu(BigEndianPointer& stream, uint32 format)
     {
         MANGO_UNREFERENCED_PARAMETER(format);
 
-        BlockType temp[BLOCK_SIZE];
-
         for (int i = 0; i < channel_count; ++i)
         {
+            BlockType temp[BLOCK_SIZE];
             BlockType* data = channel[i].data;
 
-            DCT(data);
-            quantization(temp, data, channel[i].qtable);
+            DCT(temp, data, channel[i].qtable);
             huffman(stream, this, channel[i].component, temp);
         }
     }
@@ -962,26 +957,28 @@ namespace
         jp.write_markers(p, image_format, image_width, image_height);
 
         // encode MCUs
-        for (int i = 1; i <= jp.vertical_mcus; ++i)
+        for (int y = 0; y < jp.vertical_mcus; ++y)
         {
-            if (i < jp.vertical_mcus)
+            if (y < jp.vertical_mcus - 1)
             {
                 jp.rows = jp.mcu_height;
             }
             else
             {
+                    // clipping
                 jp.rows = jp.rows_in_bottom_mcus;
             }
 
-            for (int j = 1; j <= jp.horizontal_mcus; ++j)
+            for (int x = 0; x < jp.horizontal_mcus; ++x)
             {
-                if (j < jp.horizontal_mcus)
+                if (x < jp.horizontal_mcus - 1)
                 {
                     jp.cols = jp.mcu_width;
                     jp.incr = jp.length_minus_mcu_width;
                 }
                 else
                 {
+                    // clipping
                     jp.cols = jp.cols_in_right_mcus;
                     jp.incr = jp.length_minus_width;
                 }
@@ -990,7 +987,7 @@ namespace
                 jp.read_format(&jp, input);
 
                 // encode the data in MCU
-                jp.encodeMCU(p, image_format);
+                jp.encode_mcu(p, image_format);
                 input += jp.mcu_width_size;
             }
 
