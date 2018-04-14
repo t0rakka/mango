@@ -985,6 +985,8 @@ namespace
         int block_count = jp.horizontal_mcus * jp.vertical_mcus;
         BlockType* temp = jp.blocks.data();
 
+        // TODO: this can be done in parallel with RST markers
+        //       we really should, since our decoder is more efficient with them as well.
         for (int i = 0; i < block_count; ++i)
         {
             for (int c = 0; c < jp.channel_count; ++c)
