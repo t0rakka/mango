@@ -277,15 +277,13 @@ namespace
         jpeg_chan   channel[3];
         int         channel_count;
 
-        std::vector<BlockType> blocks;
-
         void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input, int rows, int cols, int incr);
 
         jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(uint32 quality);
-        void write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height);
+        void write_markers(BigEndianStream& p, uint32 format, uint32 width, uint32 height);
     };
 
     struct HuffmanEncoder
@@ -344,7 +342,7 @@ namespace
             return output;
         }
 
-        void flush(BigEndianPointer& p)
+        u8* flush(u8* p)
         {
             if (bitindex > 0)
             {
@@ -356,17 +354,19 @@ namespace
                 for (int i = 0; i < count; ++i)
                 {
                     uint8 v = *ptr--;
-                    p.write8(v);
+                    *p++ = v;
                     if (v == 0xff)
                     {
                         // write stuff byte
-                        p.write8(0);
+                        *p++ = 0;
                     }
                 }
             }
+
+            return p;
         }
 
-        void encode(BigEndianPointer& p, int component, BlockType* temp)
+        u8* encode(u8* p, int component, BlockType* temp)
         {
             const uint16* DcCodeTable;
             const uint16* DcSizeTable;
@@ -468,6 +468,8 @@ namespace
                 numbits = AcSizeTable [0];
                 p = putbits(p, data, numbits);
             }
+
+            return p;
         }
     };
 
@@ -785,9 +787,6 @@ namespace
 
         offset = (width * (mcu_height - 1) - (mcu_width - cols_in_right_mcus)) * bytes_per_pixel;
 
-        // allocate MCU blocks
-        blocks.resize(horizontal_mcus * vertical_mcus * channel_count * 64);
-
         init_quantization_tables(quality);
     }
 
@@ -832,7 +831,7 @@ namespace
         }
     }
 
-    void jpeg_encode::write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height)
+    void jpeg_encode::write_markers(BigEndianStream& p, uint32 format, uint32 width, uint32 height)
     {
         // Start of image marker
         p.write16(0xffd8);
@@ -920,18 +919,23 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(const Surface& surface, BigEndianPointer& p, int quality, uint32 image_format)
+    void encodeJPEG(const Surface& surface, Stream& stream, int quality, uint32 image_format)
     {
         u8* input = surface.image;
 
         jpeg_encode jp(image_format, surface.width, surface.height, quality);
 
+        BigEndianStream s(stream);
+
         // writing marker data
-        jp.write_markers(p, image_format, surface.width, surface.height);
+        jp.write_markers(s, image_format, surface.width, surface.height);
 
         ConcurrentQueue queue;
 
         int rows;
+
+        // bitstream for each MCU scan
+        Buffer* buffers = new Buffer[jp.vertical_mcus];
 
         // encode MCUs
         for (int y = 0; y < jp.vertical_mcus; ++y)
@@ -946,12 +950,15 @@ namespace
                 rows = jp.rows_in_bottom_mcus;
             }
 
-            BlockType* block_scan = jp.blocks.data() + y * jp.horizontal_mcus * jp.channel_count * BLOCK_SIZE;
-
-            queue.enqueue([&jp, input, block_scan, rows] {
+            queue.enqueue([&jp, y, buffers, input, rows] {
                 u8* image = input;
                 int cols;
                 int incr;
+
+                HuffmanEncoder huffman;
+
+                u8 huff_temp[1024];
+                u8* ptr = huff_temp;
 
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
@@ -975,12 +982,22 @@ namespace
                     // encode the data in MCU
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
-                        BlockType* temp = block_scan + (x * jp.channel_count + i) * BLOCK_SIZE;
+                        BlockType temp[BLOCK_SIZE];
                         DCT(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+                        ptr = huffman.encode(ptr, jp.channel[i].component, temp);
+                    }
+
+                    if (ptr - huff_temp > 512)
+                    {
+                        buffers[y].write(huff_temp, ptr - huff_temp);
+                        ptr = huff_temp;
                     }
 
                     image += jp.mcu_width_size;
                 }
+
+                ptr = huffman.flush(ptr);
+                buffers[y].write(huff_temp, ptr - huff_temp);
             });
 
             input += jp.horizontal_mcus * jp.mcu_width_size;
@@ -989,30 +1006,22 @@ namespace
 
         queue.wait();
 
-        // Huffman encode the blocks
-        BlockType* temp = jp.blocks.data();
-
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
+            Buffer& buffer = buffers[y];
+
+            // write restart marker
             int index = y & 7;
-            p.write16(0xffd0 + index);
+            s.write16(0xffd0 + index);
 
-            HuffmanEncoder huffman;
-
-            for (int x = 0; x < jp.horizontal_mcus; ++x)
-            {
-                for (int i = 0; i < jp.channel_count; ++i)
-                {
-                    huffman.encode(p, jp.channel[i].component, temp);
-                    temp += BLOCK_SIZE;
-                }
-            }
-
-            huffman.flush(p);
+            // write huffman bitstream
+            s.write(buffer, buffer.size());
         }
 
+        delete[] buffers;
+
         // EOI marker
-        p.write16(0xffd9);
+        s.write16(0xffd9);
     }
 
 } // namespace
@@ -1040,26 +1049,18 @@ namespace jpeg
             }
         }
 
-        // NOTE: excessive use of encoding buffer it would be more memory-efficient
-        //       to allocate buffer as the encoding is progressing.
-        Buffer buffer(surface.width * surface.height * 4 + 8192);
-        BigEndianPointer p(buffer);
-
         // encode
         if (surface.format == sourceFormat)
         {
-            encodeJPEG(surface, p, iq, destFormat);
+            encodeJPEG(surface, stream, iq, destFormat);
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface.width, surface.height, sourceFormat);
             temp.blit(0, 0, surface);
-            encodeJPEG(temp, p, iq, destFormat);
+            encodeJPEG(temp, stream, iq, destFormat);
         }
-
-        // flush the buffer
-        stream.write(buffer, p - buffer);
     }
 
 } // namespace jpeg
