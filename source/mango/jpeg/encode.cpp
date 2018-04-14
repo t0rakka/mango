@@ -330,7 +330,16 @@ namespace
             return output;
         }
 
-        void close_bitstream(BigEndianPointer& p)
+        void restart_huffman()
+        {
+            ldc1 = 0;
+            ldc2 = 0;
+            ldc3 = 0;
+            bitindex = 0;
+            lcode = 0;
+        }
+
+        void flush(BigEndianPointer& p)
         {
             if (bitindex > 0)
             {
@@ -350,6 +359,11 @@ namespace
                     }
                 }
             }
+        }
+
+        void close_bitstream(BigEndianPointer& p)
+        {
+            flush(p);
 
             // EOI marker
             p.write8(0xff);
@@ -890,6 +904,11 @@ namespace
         // huffman table(DHT)
         p.write(markerdata, sizeof(markerdata));
 
+        // Define Restart Interval marker
+        p.write16(0xffdd);
+        p.write16(4);
+        p.write16(horizontal_mcus);
+
         // Start of scan marker
         p.write16(0xffda);
         p.write16(6 + number_of_components * 2); // header length
@@ -982,18 +1001,24 @@ namespace
         queue.wait();
 
         // Huffman encode the blocks
-        int block_count = jp.horizontal_mcus * jp.vertical_mcus;
         BlockType* temp = jp.blocks.data();
 
-        // TODO: this can be done in parallel with RST markers
-        //       we really should, since our decoder is more efficient with them as well.
-        for (int i = 0; i < block_count; ++i)
+        for (int y = 0; y < jp.vertical_mcus; ++y)
         {
-            for (int c = 0; c < jp.channel_count; ++c)
+            int index = y & 7;
+            p.write16(0xffd0 + index);
+
+            for (int x = 0; x < jp.horizontal_mcus; ++x)
             {
-                huffman(p, &jp, jp.channel[c].component, temp);
-                temp += BLOCK_SIZE;
+                for (int i = 0; i < jp.channel_count; ++i)
+                {
+                    huffman(p, &jp, jp.channel[i].component, temp);
+                    temp += BLOCK_SIZE;
+                }
             }
+
+            jp.flush(p);
+            jp.restart_huffman();
         }
 
         // close stream
