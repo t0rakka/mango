@@ -268,10 +268,6 @@ namespace
         int         mcu_width_size;
         int         offset;
 
-        int         ldc1;
-        int         ldc2;
-        int         ldc3;
-
         uint8       Lqt [BLOCK_SIZE];
         uint8       Cqt [BLOCK_SIZE];
         uint16      ILqt [BLOCK_SIZE];
@@ -283,10 +279,6 @@ namespace
 
         std::vector<BlockType> blocks;
 
-        // huffman encoder
-        uint32      lcode;
-        uint16      bitindex;
-
         void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input, int rows, int cols, int incr);
 
         jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality);
@@ -294,6 +286,28 @@ namespace
 
         void init_quantization_tables(uint32 quality);
         void write_markers(BigEndianPointer& p, uint32 format, uint32 width, uint32 height);
+    };
+
+    struct HuffmanEncoder
+    {
+        int     ldc1;
+        int     ldc2;
+        int     ldc3;
+        uint32  lcode;
+        uint16  bitindex;
+
+        HuffmanEncoder()
+        {
+            ldc1 = 0;
+            ldc2 = 0;
+            ldc3 = 0;
+            lcode = 0;
+            bitindex = 0;
+        }
+
+        ~HuffmanEncoder()
+        {
+        }
 
         uint8* putbits(uint8* output, uint32 data, int numbits)
         {
@@ -330,15 +344,6 @@ namespace
             return output;
         }
 
-        void restart_huffman()
-        {
-            ldc1 = 0;
-            ldc2 = 0;
-            ldc3 = 0;
-            bitindex = 0;
-            lcode = 0;
-        }
-
         void flush(BigEndianPointer& p)
         {
             if (bitindex > 0)
@@ -361,119 +366,110 @@ namespace
             }
         }
 
-        void close_bitstream(BigEndianPointer& p)
+        void encode(BigEndianPointer& p, int component, BlockType* temp)
         {
-            flush(p);
+            const uint16* DcCodeTable;
+            const uint16* DcSizeTable;
+            const uint16* AcCodeTable;
+            const uint16* AcSizeTable;
 
-            // EOI marker
-            p.write8(0xff);
-            p.write8(0xd9);
+            int Coeff, LastDc;
+            uint16 AbsCoeff, HuffCode, HuffSize, RunLength = 0, DataSize = 0, index;
+
+            Coeff = *temp++;
+
+            if (component == 1)
+            {
+                DcCodeTable = luminance_dc_code_table;
+                DcSizeTable = luminance_dc_size_table;
+                AcCodeTable = luminance_ac_code_table;
+                AcSizeTable = luminance_ac_size_table;
+
+                LastDc = ldc1;
+                ldc1 = Coeff;
+            }
+            else
+            {
+                DcCodeTable = chrominance_dc_code_table;
+                DcSizeTable = chrominance_dc_size_table;
+                AcCodeTable = chrominance_ac_code_table;
+                AcSizeTable = chrominance_ac_size_table;
+
+                if (component == 2)
+                {
+                    LastDc = ldc2;
+                    ldc2 = Coeff;
+                }
+                else
+                {
+                    LastDc = ldc3;
+                    ldc3 = Coeff;
+                }
+            }
+
+            Coeff -= LastDc;
+            AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
+
+            while (AbsCoeff != 0)
+            {
+                AbsCoeff >>= 1;
+                DataSize++;
+            }
+
+            HuffCode = DcCodeTable [DataSize];
+            HuffSize = DcSizeTable [DataSize];
+
+            Coeff &= (1 << DataSize) - 1;
+
+            uint32 data = (HuffCode << DataSize) | Coeff;
+            int numbits = HuffSize + DataSize;
+            p = putbits(p, data, numbits);
+
+            for (int i = 0; i < 63; ++i)
+            {
+                if ((Coeff = *temp++) != 0)
+                {
+                    while (RunLength > 15)
+                    {
+                        RunLength -= 16;
+
+                        data = AcCodeTable [161];
+                        numbits = AcSizeTable [161];
+                        p = putbits(p, data, numbits);
+                    }
+
+                    AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
+                    if (AbsCoeff >> 8 == 0)
+                        DataSize = bitsize [AbsCoeff];
+                    else
+                        DataSize = bitsize [AbsCoeff >> 8] + 8;
+
+                    index = RunLength * 10 + DataSize;
+                    HuffCode = AcCodeTable [index];
+                    HuffSize = AcSizeTable [index];
+
+                    Coeff &= (1 << DataSize) - 1;
+
+                    data = (HuffCode << DataSize) | Coeff;
+                    numbits = HuffSize + DataSize;
+                    p = putbits(p, data, numbits);
+
+                    RunLength = 0;
+                }
+                else
+                {
+                    ++RunLength;
+                }
+            }
+
+            if (RunLength != 0)
+            {
+                data = AcCodeTable [0];
+                numbits = AcSizeTable [0];
+                p = putbits(p, data, numbits);
+            }
         }
     };
-
-    void huffman(BigEndianPointer& p, jpeg_encode* jp, int component, BlockType* temp)
-    {
-        const uint16* DcCodeTable;
-        const uint16* DcSizeTable;
-        const uint16* AcCodeTable;
-        const uint16* AcSizeTable;
-
-        int Coeff, LastDc;
-        uint16 AbsCoeff, HuffCode, HuffSize, RunLength = 0, DataSize = 0, index;
-
-        Coeff = *temp++;
-
-        if (component == 1)
-        {
-            DcCodeTable = luminance_dc_code_table;
-            DcSizeTable = luminance_dc_size_table;
-            AcCodeTable = luminance_ac_code_table;
-            AcSizeTable = luminance_ac_size_table;
-
-            LastDc = jp->ldc1;
-            jp->ldc1 = Coeff;
-        }
-        else
-        {
-            DcCodeTable = chrominance_dc_code_table;
-            DcSizeTable = chrominance_dc_size_table;
-            AcCodeTable = chrominance_ac_code_table;
-            AcSizeTable = chrominance_ac_size_table;
-
-            if (component == 2)
-            {
-                LastDc = jp->ldc2;
-                jp->ldc2 = Coeff;
-            }
-            else
-            {
-                LastDc = jp->ldc3;
-                jp->ldc3 = Coeff;
-            }
-        }
-
-        Coeff -= LastDc;
-        AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
-
-        while (AbsCoeff != 0)
-        {
-            AbsCoeff >>= 1;
-            DataSize++;
-        }
-
-        HuffCode = DcCodeTable [DataSize];
-        HuffSize = DcSizeTable [DataSize];
-
-        Coeff &= (1 << DataSize) - 1;
-
-        uint32 data = (HuffCode << DataSize) | Coeff;
-        int numbits = HuffSize + DataSize;
-        p = jp->putbits(p, data, numbits);
-
-        for (int i = 0; i < 63; ++i)
-        {
-            if ((Coeff = *temp++) != 0)
-            {
-                while (RunLength > 15)
-                {
-                    RunLength -= 16;
-
-                    data = AcCodeTable [161];
-                    numbits = AcSizeTable [161];
-                    p = jp->putbits(p, data, numbits);
-                }
-
-                AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
-                if (AbsCoeff >> 8 == 0)
-                    DataSize = bitsize [AbsCoeff];
-                else
-                    DataSize = bitsize [AbsCoeff >> 8] + 8;
-
-                index = RunLength * 10 + DataSize;
-                HuffCode = AcCodeTable [index];
-                HuffSize = AcSizeTable [index];
-
-                Coeff &= (1 << DataSize) - 1;
-
-                data = (HuffCode << DataSize) | Coeff;
-                numbits = HuffSize + DataSize;
-                p = jp->putbits(p, data, numbits);
-
-                RunLength = 0;
-            }
-            else
-            {
-                ++RunLength;
-            }
-        }
-
-        if (RunLength != 0)
-        {
-            data = AcCodeTable [0];
-            numbits = AcSizeTable [0];
-            p = jp->putbits(p, data, numbits);
-        }
-    }
 
     void DCT(BlockType* dest, BlockType* data, const uint16* quant_table)
     {
@@ -789,13 +785,6 @@ namespace
 
         offset = (width * (mcu_height - 1) - (mcu_width - cols_in_right_mcus)) * bytes_per_pixel;
 
-        ldc1 = 0;
-        ldc2 = 0;
-        ldc3 = 0;
-
-        lcode = 0;
-        bitindex = 0;
-
         // allocate MCU blocks
         blocks.resize(horizontal_mcus * vertical_mcus * channel_count * 64);
 
@@ -1008,21 +997,22 @@ namespace
             int index = y & 7;
             p.write16(0xffd0 + index);
 
+            HuffmanEncoder huffman;
+
             for (int x = 0; x < jp.horizontal_mcus; ++x)
             {
                 for (int i = 0; i < jp.channel_count; ++i)
                 {
-                    huffman(p, &jp, jp.channel[i].component, temp);
+                    huffman.encode(p, jp.channel[i].component, temp);
                     temp += BLOCK_SIZE;
                 }
             }
 
-            jp.flush(p);
-            jp.restart_huffman();
+            huffman.flush(p);
         }
 
-        // close stream
-        jp.close_bitstream(p);
+        // EOI marker
+        p.write16(0xffd9);
     }
 
 } // namespace
