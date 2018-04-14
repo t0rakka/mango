@@ -1010,12 +1010,12 @@ namespace
         {
             Buffer& buffer = buffers[y];
 
+            // write huffman bitstream
+            s.write(buffer, buffer.size());
+
             // write restart marker
             int index = y & 7;
             s.write16(0xffd0 + index);
-
-            // write huffman bitstream
-            s.write(buffer, buffer.size());
         }
 
         delete[] buffers;
