@@ -140,11 +140,6 @@ namespace jpeg
 
 #if defined(JPEG_ENABLE_SIMD)
 
-#define LOAD_DATA_QT(x) \
-    simd::convert<simd::float32x4>(simd::extend32(simd::mullo( \
-        simd::int16x8_load_low((int16 const *)(data + x)), \
-        simd::int16x8_load_low((int16 const *)(qt + x)))));
-
 namespace jpeg
 {
 
@@ -153,9 +148,9 @@ namespace jpeg
         float32x4 a = x - y;
         float32x4 b = x + y;
         b = b.wzyx;
-        simd::int16x8 c0 = narrow(convert<int32x4>(a).m, convert<int32x4>(b).m);
-        simd::uint16x8 c1 = simd::reinterpret<simd::uint16x8>(c0);
-        return narrow(c1, c1);
+        int16x8 c0 = simd::narrow(convert<int32x4>(a).m, convert<int32x4>(b).m);
+        uint16x8 c1 = reinterpret<uint16x8>(c0);
+        return simd::narrow(c1.m, c1.m);
     }
 
     void simd_idct(uint8* dest, int stride, const BlockType* data, const uint16* qt)
@@ -179,8 +174,16 @@ namespace jpeg
 
         for (int i = 0; i < 8; ++i)
         {
-            float32x4 s0 = LOAD_DATA_QT(0);
-            float32x4 s1 = LOAD_DATA_QT(4);
+            int16x8 d = *reinterpret_cast<const int16x8 *>(data);
+            int16x8 q = *reinterpret_cast<const int16x8 *>(qt);
+            int16x8 dq = simd::mullo(d, q);
+            
+            int32x4 r0 = simd::extend32(dq);
+            int64x2 temp0 = reinterpret<int64x2>(dq);
+            int32x4 r1 = simd::extend32(reinterpret<int16x8>(simd::unpackhi(temp0, temp0)));
+
+            float32x4 s0 = convert<float32x4>(r0);
+            float32x4 s1 = convert<float32x4>(r1);
 
             float32x4 v0 = s0.xxxx;
             float32x4 v2 = s0.zzzz;
