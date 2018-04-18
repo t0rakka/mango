@@ -52,7 +52,7 @@ namespace simd {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         uint16x8 v;
         for (int i = 0; i < 8; ++i)
@@ -62,7 +62,7 @@ namespace simd {
         return v;
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         uint32x4 v;
         for (int i = 0; i < 4; ++i)
@@ -72,12 +72,23 @@ namespace simd {
         return v;
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         uint32x4 v;
         for (int i = 0; i < 4; ++i)
         {
             v[i] = s[i];
+        }
+        return v;
+    }
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        uint32x8 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v.lo[i] = s[i + 0];
+            v.hi[i] = s[i + 4];
         }
         return v;
     }
@@ -86,7 +97,7 @@ namespace simd {
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         int16x8 v;
         for (int i = 0; i < 8; ++i)
@@ -96,7 +107,7 @@ namespace simd {
         return v;
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         int32x4 v;
         for (int i = 0; i < 4; ++i)
@@ -106,12 +117,23 @@ namespace simd {
         return v;
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         int32x4 v;
         for (int i = 0; i < 4; ++i)
         {
             v[i] = s[i];
+        }
+        return v;
+    }
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        int32x8 v;
+        for (int i = 0; i < 4; ++i)
+        {
+            v.lo[i] = s[i + 0];
+            v.hi[i] = s[i + 4];
         }
         return v;
     }

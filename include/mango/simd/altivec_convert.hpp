@@ -202,40 +202,58 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         return (uint16x8::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         auto temp = vec_mergeh(s.data, vec_xor(s.data, s.data));
         return (uint32x4::vector) vec_mergeh(temp, vec_xor(temp, temp));
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         return (uint32x4::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
+    }
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        uint16x8 s_high = (uint16x8::vector) vec_insert(vec_extract(s.data, 1), s.data, 0);
+        uint32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         return (int16x8::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         auto temp = vec_mergeh(s.data, vec_xor(s.data, s.data));
         return (int32x4::vector) vec_mergeh(temp, vec_xor(temp, temp));
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         return (int32x4::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
+    }
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        int16x8 s_high = (int16x8::vector) vec_insert(vec_extract(s.data, 1), s.data, 0);
+        int32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
     }
 
     // -----------------------------------------------------------------

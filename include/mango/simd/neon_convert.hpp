@@ -239,40 +239,56 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         return vmovl_u8(vget_low_u8(s));
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         auto temp = vmovl_u8(vget_low_u8(s));
         return vmovl_u16(vget_low_u16(temp));
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         return vmovl_u16(vget_low_u16(s));
+    }
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        uint32x8 v;
+        v.lo = vmovl_u16(vget_low_u16(s));
+        v.hi = vmovl_u16(vget_high_u16(s));
+        return v;
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         return vmovl_s8(vget_low_s8(s));
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         auto temp = vmovl_s8(vget_low_s8(s));
         return vmovl_s16(vget_low_s16(temp));
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         return vmovl_s16(vget_low_s16(s));
+    }
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        int32x8 v;
+        v.lo = vmovl_s16(vget_low_s16(s));
+        v.hi = vmovl_s16(vget_high_s16(s));
+        return v;
     }
 
     // -----------------------------------------------------------------

@@ -203,38 +203,48 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         return _mm_cvtepu8_epi32(s);
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
+    }
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        return  _mm256_cvtepu16_epi32(s);
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         return _mm_cvtepi8_epi16(s);
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         return _mm_cvtepi8_epi32(s);
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
+    }
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        return _mm256_cvtepi16_epi32(s);
     }
 
     // -----------------------------------------------------------------

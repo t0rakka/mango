@@ -135,40 +135,49 @@ namespace detail {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         return _mm_cvtepu8_epi32(s);
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
     }
 
 #else
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         return _mm_unpacklo_epi8(s, _mm_setzero_si128());
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
         return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         return _mm_unpacklo_epi16(s, _mm_setzero_si128());
     }
 
 #endif
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        uint16x8 s_high = _mm_unpackhi_epi64(s, s);
+        uint32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
+    }
 
     // -----------------------------------------------------------------
     // sign extend
@@ -176,42 +185,51 @@ namespace detail {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         return _mm_cvtepi8_epi16(s);
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         return _mm_cvtepi8_epi32(s);
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
     }
 
 #else
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi8(s, sign);
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_cmpgt_epi8(_mm_setzero_si128(), s));
         return _mm_unpacklo_epi16(temp, _mm_cmpgt_epi16(_mm_setzero_si128(), temp));
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi16(s, sign);
     }
 
 #endif
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        int16x8 s_high = _mm_unpackhi_epi64(s, s);
+        int32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
+    }
 
     // -----------------------------------------------------------------
     // narrow

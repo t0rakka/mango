@@ -202,42 +202,60 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
-    static inline uint16x8 extend16(uint8x16 s)
+    static inline uint16x8 extend16x8(uint8x16 s)
     {
         return (v16u8) __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
     }
 
-    static inline uint32x4 extend32(uint8x16 s)
+    static inline uint32x4 extend32x4(uint8x16 s)
     {
         v16u8 temp16 = __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
         return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)temp16);
     }
 
-    static inline uint32x4 extend32(uint16x8 s)
+    static inline uint32x4 extend32x4(uint16x8 s)
     {
         return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)s);
+    }
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        uint16x8 s_high = (v8u16) __msa_ilvl_d((v2i64)s, (v2i64)s);
+        uint32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
 
-    static inline int16x8 extend16(int8x16 s)
+    static inline int16x8 extend16x8(int8x16 s)
     {
         v16i8 sign = __msa_clt_s_b(s, __msa_fill_b(0));
         return (v16i8) __msa_ilvr_b(sign, (v16i8)s);
     }
 
-    static inline int32x4 extend32(int8x16 s)
+    static inline int32x4 extend32x4(int8x16 s)
     {
         v16i8 temp16 = __msa_ilvr_b(__msa_clt_s_b(s, __msa_fill_b(0)), (v16i8)s);
         return (v4i32) __msa_ilvr_h(__msa_clt_s_h(s, __msa_fill_h(0)), (v8i16)temp16);
     }
 
-    static inline int32x4 extend32(int16x8 s)
+    static inline int32x4 extend32x4(int16x8 s)
     {
         v8i16 sign = __msa_clt_s_h(s, __msa_fill_h(0));
         return (v4i32) __msa_ilvr_h(sign, (v8i16)s);
+    }
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        int16x8 s_high = (v8i16) __msa_ilvl_d((v2i64)s, (v2i64)s);
+        int32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
     }
 
     // -----------------------------------------------------------------
