@@ -177,13 +177,9 @@ namespace jpeg
             int16x8 d = *reinterpret_cast<const int16x8 *>(data);
             int16x8 q = *reinterpret_cast<const int16x8 *>(qt);
             int16x8 dq = simd::mullo(d, q);
-            
-            int32x4 r0 = simd::extend32(dq);
-            int64x2 temp0 = reinterpret<int64x2>(dq);
-            int32x4 r1 = simd::extend32(reinterpret<int16x8>(simd::unpackhi(temp0, temp0)));
-
-            float32x4 s0 = convert<float32x4>(r0);
-            float32x4 s1 = convert<float32x4>(r1);
+            float32x8 s = convert<float32x8>(int32x8(simd::extend32x8(dq)));
+            float32x4 s0 = s.low;
+            float32x4 s1 = s.high;
 
             float32x4 v0 = s0.xxxx;
             float32x4 v2 = s0.zzzz;
