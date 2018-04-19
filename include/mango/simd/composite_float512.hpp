@@ -193,16 +193,16 @@ namespace simd {
     static inline float32x16 madd(float32x16 a, float32x16 b, float32x16 c)
     {
         float32x16 result;
-        result.lo = madd(b.lo, c.lo, a.lo);
-        result.hi = madd(b.hi, c.hi, a.hi);
+        result.lo = madd(a.lo, b.lo, c.lo);
+        result.hi = madd(a.hi, b.hi, c.hi);
         return result;
     }
 
     static inline float32x16 msub(float32x16 a, float32x16 b, float32x16 c)
     {
         float32x16 result;
-        result.lo = msub(b.lo, c.lo, a.lo);
-        result.hi = msub(b.hi, c.hi, a.hi);
+        result.lo = msub(a.lo, b.lo, c.lo);
+        result.hi = msub(a.hi, b.hi, c.hi);
         return result;
     }
 
