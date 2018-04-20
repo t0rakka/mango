@@ -121,9 +121,6 @@
     <ClInclude Include="..\..\include\mango\simd\altivec_double128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\altivec_float128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\altivec_int128.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\avx2_convert.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\avx2_double256.hpp" />
-    <ClInclude Include="..\..\include\mango\simd\avx2_float256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx2_gather.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx2_int256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx512_convert.hpp" />
@@ -137,6 +134,10 @@
     <ClInclude Include="..\..\include\mango\simd\avx512_int128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx512_int256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\avx512_int512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_int256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common.hpp" />
     <ClInclude Include="..\..\include\mango\simd\common_gather.hpp" />
     <ClInclude Include="..\..\include\mango\simd\composite_double256.hpp" />
@@ -145,6 +146,10 @@
     <ClInclude Include="..\..\include\mango\simd\composite_float512.hpp" />
     <ClInclude Include="..\..\include\mango\simd\composite_int256.hpp" />
     <ClInclude Include="..\..\include\mango\simd\composite_int512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_int128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_double128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp" />
