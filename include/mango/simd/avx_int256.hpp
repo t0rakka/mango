@@ -25,57 +25,57 @@ namespace detail {
 
     static inline mask8x16 get_low(mask8x32 a)
     {
-        return _mm256_extracti128_si256(a, 0);
+        return _mm256_extractf128_si256(a, 0);
     }
 
     static inline mask8x16 get_high(mask8x32 a)
     {
-        return _mm256_extracti128_si256(a, 1);
+        return _mm256_extractf128_si256(a, 1);
     }
 
     static inline mask16x8 get_low(mask16x16 a)
     {
-        return _mm256_extracti128_si256(a, 0);
+        return _mm256_extractf128_si256(a, 0);
     }
     
     static inline mask16x8 get_high(mask16x16 a)
     {
-        return _mm256_extracti128_si256(a, 1);
+        return _mm256_extractf128_si256(a, 1);
     }
 
     static inline mask32x4 get_low(mask32x8 a)
     {
-        return _mm256_extracti128_si256(a, 0);
+        return _mm256_extractf128_si256(a, 0);
     }
     
     static inline mask32x4 get_high(mask32x8 a)
     {
-        return _mm256_extracti128_si256(a, 1);
+        return _mm256_extractf128_si256(a, 1);
     }
 
     static inline mask64x2 get_low(mask64x4 a)
     {
-        return _mm256_extracti128_si256(a, 0);
+        return _mm256_extractf128_si256(a, 0);
     }
     
     static inline mask64x2 get_high(mask64x4 a)
     {
-        return _mm256_extracti128_si256(a, 1);
+        return _mm256_extractf128_si256(a, 1);
     }
 
     static inline mask8x32 combine(mask8x16 lo, mask8x16 hi)
     {
-        return _mm256_setr_m128i(lo, hi);
+        return _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1);
     }
 
     static inline mask16x16 combine(mask16x8 lo, mask16x8 hi)
     {
-        return _mm256_setr_m128i(lo, hi);
+        return _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1);
     }
 
     static inline mask32x8 combine(mask32x4 lo, mask32x4 hi)
     {
-        return _mm256_setr_m128i(lo, hi);
+        return _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1);
     }
 
 } // namespace detail

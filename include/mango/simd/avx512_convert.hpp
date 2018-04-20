@@ -175,7 +175,7 @@ namespace detail {
 
 #if defined(MANGO_COMPILER_GCC)
 
-    // These intrinsics are missing with GCC (tested with 7.1)
+    // These intrinsics are missing with GCC (tested with 7.3)
 
     static inline __m256 _mm256_set_m128(__m128 high, __m128 low)
     {

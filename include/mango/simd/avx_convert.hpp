@@ -174,7 +174,7 @@ namespace detail {
 
 #if defined(MANGO_COMPILER_GCC)
 
-    // These intrinsics are missing with GCC (tested with 7.1)
+    // These intrinsics are missing with GCC (tested with 7.3)
 
     static inline __m256 _mm256_set_m128(__m128 high, __m128 low)
     {
@@ -544,8 +544,8 @@ namespace detail {
     {
         __m256i temp = _mm256_cvtps_epi32(s);
         int32x8 result;
-        result.lo = _mm256_extracti128_si256(temp, 0);
-        result.hi = _mm256_extracti128_si256(temp, 1);
+        result.lo = _mm256_extractf128_si256(temp, 0);
+        result.hi = _mm256_extractf128_si256(temp, 1);
         return result;
     }
 
@@ -560,8 +560,8 @@ namespace detail {
     inline uint32x8 convert<uint32x8>(float32x8 s)
     {
         uint32x8 result;
-        float32x4 lo = _mm256_extracti128_si256(s, 0);
-        float32x4 hi = _mm256_extracti128_si256(s, 1);
+        float32x4 lo = _mm256_extractf128_ps(s, 0);
+        float32x4 hi = _mm256_extractf128_ps(s, 1);
         result.lo = convert<uint32x4>(lo);
         result.hi = convert<uint32x4>(hi);
         return result;
@@ -580,8 +580,8 @@ namespace detail {
     {
         __m256i temp = _mm256_cvttps_epi32(s);
         int32x8 result;
-        result.lo = _mm256_extracti128_si256(temp, 0);
-        result.hi = _mm256_extracti128_si256(temp, 1);
+        result.lo = _mm256_extractf128_si256(temp, 0);
+        result.hi = _mm256_extractf128_si256(temp, 1);
         return result;
     }
 
