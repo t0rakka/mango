@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -217,10 +217,25 @@ namespace detail {
         return _mm_cvtepu16_epi32(s);
     }
 
+#if defined(MANGO_ENABLE_AVX2)
+
     static inline uint32x8 extend32x8(uint16x8 s)
     {
         return  _mm256_cvtepu16_epi32(s);
     }
+
+#else
+
+    static inline uint32x8 extend32x8(uint16x8 s)
+    {
+        uint16x8 s_high = _mm_unpackhi_epi64(s, s);
+        uint32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
+    }
+
+#endif
 
     // -----------------------------------------------------------------
     // sign extend
@@ -241,10 +256,25 @@ namespace detail {
         return _mm_cvtepi16_epi32(s);
     }
 
+#if defined(MANGO_ENABLE_AVX2)
+
     static inline int32x8 extend32x8(int16x8 s)
     {
         return _mm256_cvtepi16_epi32(s);
     }
+
+#else
+
+    static inline int32x8 extend32x8(int16x8 s)
+    {
+        int16x8 s_high = _mm_unpackhi_epi64(s, s);
+        int32x8 v;
+        v.lo = extend32x4(s);
+        v.hi = extend32x4(s_high);
+        return v;
+    }
+
+#endif
 
     // -----------------------------------------------------------------
     // narrow
@@ -274,6 +304,8 @@ namespace detail {
     // uint32
     // -----------------------------------------------------------------
 
+#if defined(MANGO_ENABLE_AVX2)
+
     static inline uint32x4 get_low(uint32x8 a)
     {
         return _mm256_extracti128_si256(a, 0);
@@ -299,9 +331,42 @@ namespace detail {
         return _mm256_setr_m128i(a, b);
     }
 
+#else
+
+    static inline uint32x4 get_low(uint32x8 a)
+    {
+        return a.lo;
+    }
+    
+    static inline uint32x4 get_high(uint32x8 a)
+    {
+        return a.hi;
+    }
+    
+    static inline uint32x8 set_low(uint32x8 a, uint32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+    
+    static inline uint32x8 set_high(uint32x8 a, uint32x4 high)
+    {
+        a.hi = high;
+        return a;
+    }
+
+    static inline uint32x8 combine(uint32x4 a, uint32x4 b)
+    {
+        return uint32x8(a, b);
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // int32
     // -----------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_AVX2)
 
     static inline int32x4 get_low(int32x8 a)
     {
@@ -327,6 +392,37 @@ namespace detail {
     {
         return _mm256_setr_m128i(a, b);
     }
+
+#else
+
+    static inline int32x4 get_low(int32x8 a)
+    {
+        return a.lo;
+    }
+    
+    static inline int32x4 get_high(int32x8 a)
+    {
+        return a.hi;
+    }
+    
+    static inline int32x8 set_low(int32x8 a, int32x4 low)
+    {
+        a.lo = low;
+        return a;
+    }
+    
+    static inline int32x8 set_high(int32x8 a, int32x4 high)
+    {
+        a.hi = high;
+        return a;
+    }
+
+    static inline int32x8 combine(int32x4 a, int32x4 b)
+    {
+        return int32x8(a, b);
+    }
+
+#endif
 
     // -----------------------------------------------------------------
     // float32
@@ -400,6 +496,8 @@ namespace detail {
 
     // 256 bit convert
 
+#if defined(MANGO_ENABLE_AVX2)
+
     template <>
     inline int32x8 convert<int32x8>(float32x8 s)
     {
@@ -438,6 +536,56 @@ namespace detail {
     {
         return _mm256_cvttps_epi32(s);
     }
+
+#else
+
+    template <>
+    inline int32x8 convert<int32x8>(float32x8 s)
+    {
+        __m256i temp = _mm256_cvtps_epi32(s);
+        int32x8 result;
+        result.lo = _mm256_extracti128_si256(temp, 0);
+        result.hi = _mm256_extracti128_si256(temp, 1);
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(int32x8 s)
+    {
+        __m256i temp = _mm256_setr_m128i(s.lo, s.hi);
+        return _mm256_cvtepi32_ps(temp);
+    }
+
+    template <>
+    inline uint32x8 convert<uint32x8>(float32x8 s)
+    {
+        uint32x8 result;
+        float32x4 lo = _mm256_extracti128_si256(s, 0);
+        float32x4 hi = _mm256_extracti128_si256(s, 1);
+        result.lo = convert<uint32x4>(lo);
+        result.hi = convert<uint32x4>(hi);
+        return result;
+    }
+
+    template <>
+    inline float32x8 convert<float32x8>(uint32x8 s)
+    {
+        __m128 lo = convert<float32x4>(s.lo);
+        __m128 hi = convert<float32x4>(s.hi);
+        return _mm256_setr_m128(lo, hi);
+    }
+
+    template <>
+    inline int32x8 truncate<int32x8>(float32x8 s)
+    {
+        __m256i temp = _mm256_cvttps_epi32(s);
+        int32x8 result;
+        result.lo = _mm256_extracti128_si256(temp, 0);
+        result.hi = _mm256_extracti128_si256(temp, 1);
+        return result;
+    }
+
+#endif
 
     // 512 bit convert
 

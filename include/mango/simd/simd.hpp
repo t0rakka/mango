@@ -321,14 +321,99 @@ namespace simd {
 #include "sse2_int128.hpp"
 #include "sse2_float128.hpp"
 #include "sse2_double128.hpp"
-#include "avx2_float256.hpp"
-#include "avx2_double256.hpp"
 #include "avx2_int256.hpp"
+#include "avx_float256.hpp"
+#include "avx_double256.hpp"
 #include "composite_int512.hpp"
 #include "composite_float512.hpp"
 #include "composite_double512.hpp"
-#include "avx2_convert.hpp"
+#include "avx_convert.hpp"
 #include "avx2_gather.hpp"
+
+#elif defined(MANGO_ENABLE_AVX)
+
+namespace mango {
+namespace simd {
+
+    // --------------------------------------------------------------
+    // Intel AVX vector intrinsics
+    // --------------------------------------------------------------
+
+    #define MANGO_ENABLE_SIMD
+    #define MANGO_ENABLE_SIMD128
+    #define MANGO_ENABLE_SIMD256
+    
+    // 64 bit vector
+    using float16x4  = scalar_vector<half, 4>;
+
+    // 128 bit vector
+    using int8x16    = hardware_vector<int8, 16, __m128i>;
+    using int16x8    = hardware_vector<int16, 8, __m128i>;
+    using int32x4    = hardware_vector<int32, 4, __m128i>;
+    using int64x2    = hardware_vector<int64, 2, __m128i>;
+    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
+    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
+    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
+    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
+    using float32x4  = hardware_vector<float, 4, __m128>;
+    using float64x2  = hardware_vector<double, 2, __m128d>;
+
+    // 256 bit vector
+    using int8x32    = composite_vector<int8x16>;
+    using int16x16   = composite_vector<int16x8>;
+    using int32x8    = composite_vector<int32x4>;
+    using int64x4    = composite_vector<int64x2>;
+    using uint8x32   = composite_vector<uint8x16>;
+    using uint16x16  = composite_vector<uint16x8>;
+    using uint32x8   = composite_vector<uint32x4>;
+    using uint64x4   = composite_vector<uint64x2>;
+    using float32x8  = hardware_vector<float, 8, __m256>;
+    using float64x4  = hardware_vector<double, 4, __m256d>;
+
+    // 512 bit vector
+    using int8x64    = composite_vector<int8x32>;
+    using int16x32   = composite_vector<int16x16>;
+    using int32x16   = composite_vector<int32x8>;
+    using int64x8    = composite_vector<int64x4>;
+    using uint8x64   = composite_vector<uint8x32>;
+    using uint16x32  = composite_vector<uint16x16>;
+    using uint32x16  = composite_vector<uint32x8>;
+    using uint64x8   = composite_vector<uint64x4>;
+    using float32x16 = composite_vector<float32x8>;
+    using float64x8  = composite_vector<float64x4>;
+
+    // 128 bit vector mask
+    using mask8x16   = hardware_mask<8, 16, __m128i>;
+    using mask16x8   = hardware_mask<16, 8, __m128i>;
+    using mask32x4   = hardware_mask<32, 4, __m128i>;
+    using mask64x2   = hardware_mask<64, 2, __m128i>;
+
+    // 256 bit vector mask
+    using mask8x32   = hardware_mask<8, 32, __m256i>;
+    using mask16x16  = hardware_mask<16, 16, __m256i>;
+    using mask32x8   = hardware_mask<32, 8, __m256i>;
+    using mask64x4   = hardware_mask<64, 4, __m256i>;
+
+    // 512 bit vector mask
+    using mask8x64   = composite_mask<mask8x32>;
+    using mask16x32  = composite_mask<mask16x16>;
+    using mask32x16  = composite_mask<mask32x8>;
+    using mask64x8   = composite_mask<mask64x4>;
+
+} // namespace simd
+} // namespace mango
+
+#include "sse2_int128.hpp"
+#include "sse2_float128.hpp"
+#include "sse2_double128.hpp"
+#include "avx_int256.hpp"
+#include "avx_float256.hpp"
+#include "avx_double256.hpp"
+#include "composite_int512.hpp"
+#include "composite_float512.hpp"
+#include "composite_double512.hpp"
+#include "avx_convert.hpp"
+#include "common_gather.hpp"
 
 #elif defined(MANGO_ENABLE_SSE2)
 

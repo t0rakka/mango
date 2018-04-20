@@ -81,14 +81,14 @@ namespace simd {
     {
         uint32x4 a = gather4(address, get_low(offset));
         uint32x4 b = gather4(address, get_high(offset));
-        return combine(a, b);
+        return uint32x8(a, b);
     }
 
     static inline int32x8 gather8(const int32* address, int32x8 offset)
     {
         int32x4 a = gather4(address, get_low(offset));
         int32x4 b = gather4(address, get_high(offset));
-        return combine(a, b);
+        return int32x8(a, b);
     }
 
     static inline uint64x4 gather4(const uint64* address, int32x4 offset)
