@@ -2774,13 +2774,16 @@ namespace
     using namespace mango;
 
     // TODO: add stride support to encoder to eliminate this step
-    void convert_block(float4* output, const uint8* input, int stride)
+    void convert_block(float32x4* output, const uint8* input, int stride)
     {
         for (int y = 0; y < 4; ++y)
         {
-            const uint8* image = input + y * stride;
-            std::memcpy(output, image, 64);
-            output += 64;
+            const float* image = reinterpret_cast<const float *>(input + y * stride);
+            output[0] = simd::float32x4_uload(image + 0);
+            output[1] = simd::float32x4_uload(image + 4);
+            output[2] = simd::float32x4_uload(image + 8);
+            output[3] = simd::float32x4_uload(image + 12);
+            output += 4;
         }
     }
 
@@ -2793,31 +2796,31 @@ namespace mango
     void decode_block_bc6hu(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
-        assert( output && input );
-        static_assert( sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes" );
+        assert(output && input);
+        static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
         reinterpret_cast< const D3DX_BC6H* >( input )->Decode(false, output, stride);
     }
 
     void decode_block_bc6hs(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
-        assert( output && input );
-        static_assert( sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes" );
+        assert(output && input);
+        static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
         reinterpret_cast< const D3DX_BC6H* >( input )->Decode(true, output, stride);
     }
 
     void decode_block_bc7(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
-        assert( output && input );
-        static_assert( sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes" );
+        assert(output && input);
+        static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
         reinterpret_cast< const D3DX_BC7* >( input )->Decode(output, stride);
     }
 
     void encode_block_bc6hu(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         D3DXEncodeBC6HU(output, temp);
     }
@@ -2825,7 +2828,7 @@ namespace mango
     void encode_block_bc6hs(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         D3DXEncodeBC6HS(output, temp);
     }
@@ -2833,7 +2836,7 @@ namespace mango
     void encode_block_bc7(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         D3DXEncodeBC7(output, temp);
     }

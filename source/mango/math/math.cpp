@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <limits>
@@ -37,7 +37,10 @@ namespace mango
 
     const float4x4& float4x4::operator = (const float* v)
     {
-        std::memcpy(this, v, 16 * sizeof(float));
+        m[0] = float32x4(v[0], v[1], v[2], v[3]);
+        m[1] = float32x4(v[4], v[5], v[6], v[7]);
+        m[2] = float32x4(v[8], v[9], v[10], v[11]);
+        m[3] = float32x4(v[12], v[13], v[14], v[15]);
         return *this;
     }
 
@@ -50,10 +53,10 @@ namespace mango
         const float yz = q.xyz.y * s.z;
         const float zz = q.xyz.z * s.z;
 
-        m[0] = float4(1.0f - yy - zz, x.y + w.z, x.z - w.y, 0.0f);
-        m[1] = float4(x.y - w.z, 1.0f - x.x - zz, yz + w.x, 0.0f);
-        m[2] = float4(x.z + w.y, yz - w.x, 1.0f - x.x - yy, 0.0f);
-        m[3] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        m[0] = float32x4(1.0f - yy - zz, x.y + w.z, x.z - w.y, 0.0f);
+        m[1] = float32x4(x.y - w.z, 1.0f - x.x - zz, yz + w.x, 0.0f);
+        m[2] = float32x4(x.z + w.y, yz - w.x, 1.0f - x.x - yy, 0.0f);
+        m[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
 
         return *this;
     }
@@ -86,10 +89,10 @@ namespace mango
         const float ys = y * s;
         const float zs = z * s;
 
-        m[0] = float4(xx, xy + zs, zx - ys, 0.0f);
-        m[1] = float4(xy - zs, yy, yz + xs, 0.0f);
-        m[2] = float4(zx + ys, yz - xs, zz, 0.0f);
-        m[3] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        m[0] = float32x4(xx, xy + zs, zx - ys, 0.0f);
+        m[1] = float32x4(xy - zs, yy, yz + xs, 0.0f);
+        m[2] = float32x4(zx + ys, yz - xs, zz, 0.0f);
+        m[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
 
         return *this;
     }

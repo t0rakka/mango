@@ -45,6 +45,8 @@ CPP_STD = -std=c++14
 # common compiler options (LLVM/CLANG/GCC)
 OPTIONS       = -c -Wall -O3 -ffast-math
 OPTIONS_GCC   = -ftree-vectorize
+
+#OPTIONS_X86   = -msse2
 #OPTIONS_X86   = -msse4
 OPTIONS_X86   = -mavx
 #OPTIONS_X86   = -mavx2
