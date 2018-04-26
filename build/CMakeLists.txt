@@ -3,8 +3,51 @@ PROJECT(mango CXX C)
 
 # TODO: Separate mango-opengl library
 # TODO: Separate mango-vulkan library (only built on Linux & Windows)
-# TODO: Fix compiling on ARM
 # TODO: make static / dynamic library compilation configurable
+
+# ------------------------------------------------------------------
+# compiler
+# ------------------------------------------------------------------
+
+message("-- Compiler is ${CMAKE_CXX_COMPILER_ID}")
+
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+    set(COMPILER_MSVC 1)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(COMPILER_CLANG 1)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
+    set(COMPILER_INTEL 1)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+    set(COMPILER_GCC 1)
+else()
+    message("-- Compiler is not supported!")
+endif()
+
+# ------------------------------------------------------------------
+# processor
+# ------------------------------------------------------------------
+
+message("-- Processor is ${CMAKE_SYSTEM_PROCESSOR}")
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+    set(X86_64 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|AMD64.*")
+    set(X86 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+    set(ARM 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+    set(AARCH64 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
+    set(PPC64 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
+    set(PPC 1)
+else()
+    message("-- Processor is not supported!")
+endif()
+
+# ------------------------------------------------------------------
+# source directories
+# ------------------------------------------------------------------
 
 FILE(GLOB CORE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp")
 FILE(GLOB FILESYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp")
@@ -71,18 +114,32 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-OPTION(ENABLE_FAST_MATH "Use fast math / relaxed-precision floating point operations" ON)
-OPTION(ENABLE_AVX2 "Enable AVX2 instructions. Most x64 CPUs should have this." ON)
+# ------------------------------------------------------------------
+# options
+# ------------------------------------------------------------------
 
-IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+OPTION(ENABLE_FAST_MATH "Use fast math / relaxed-precision floating point operations" ON)
+OPTION(ENABLE_SSE2 "Enable SSE2 instructions" OFF)
+OPTION(ENABLE_SSE4 "Enable SSE4 instructions" ON)
+OPTION(ENABLE_AVX "Enable AVX instructions" OFF)
+OPTION(ENABLE_AVX2 "Enable AVX2 instructions" OFF)
+OPTION(ENABLE_AVX512 "Enable AVX-512 instructions" OFF)
+
+# ------------------------------------------------------------------
+# configuration
+# ------------------------------------------------------------------
+
+if(COMPILER_MSVC)
     # /Gm enables partial rebuild, is all.
     TARGET_COMPILE_OPTIONS(mango PRIVATE "/std:c++14" "/Gm")
     IF (ENABLE_FAST_MATH)
         TARGET_COMPILE_OPTIONS(mango PRIVATE "/fp:fast")
     ENDIF()
-    IF (ENABLE_AVX2) 
+    if (ENABLE_AVX512)
+        TARGET_COMPILE_DEFINITIONS(mango PRIVATE "-D__AVX512F__" "-D__AVX512DQ__")
+    elseif (ENABLE_AVX2) 
         TARGET_COMPILE_OPTIONS(mango PRIVATE "/arch:AVX2")
-    ENDIF()
+    endif()
 ELSE()
     set(CMAKE_CXX_FLAGS "-Wall")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -90,26 +147,43 @@ ELSE()
 
     # Property only works for unix-style systems iirc
     SET_PROPERTY(TARGET mango PROPERTY CXX_STANDARD 14)
-    IF (ENABLE_FAST_MATH) 
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "-ffast-math")
-    ENDIF()
+
     IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         TARGET_COMPILE_OPTIONS(mango PRIVATE "-ftree-vectorize")
     ENDIF()
 
-    IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+    IF (ENABLE_FAST_MATH) 
+        TARGET_COMPILE_OPTIONS(mango PRIVATE "-ffast-math")
+    ENDIF()
+
+    if (ARM OR ARCH64)
         add_definitions (-mfpu=neon -mfloat-abi=hard)
         set(CMAKE_CXX_FLAGS "-fpermissive")
-    ENDIF()
+    endif()
+
+    if (X86 OR X86_64)
+        # enable only one (the most recent) SIMD extension
+        if (ENABLE_AVX512)
+            message("-- SIMD: AVX-512 (2015)")
+            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx512dq -mavx512vl -mavx512bw")
+        elseif (ENABLE_AVX2)
+            message("-- SIMD: AVX2 (2013)")
+            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx2")
+        elseif (ENABLE_AVX)
+            message("-- SIMD: AVX (2008)")
+            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx")
+        elseif (ENABLE_SSE4)
+            message("-- SIMD: SSE4 (2006)")
+            TARGET_COMPILE_OPTIONS(mango PRIVATE "-msse4")
+        elseif (ENABLE_SSE2)
+            message("-- SIMD: SSE2 (2001)")
+            TARGET_COMPILE_OPTIONS(mango PRIVATE "-msse2")
+        endif()
+    endif()
 ENDIF()
 
 TARGET_INCLUDE_DIRECTORIES(mango PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>)
-
-OPTION(USE_AVX512 "Enable AVX-512 intrinsics if the current hardware supports it" OFF)
-IF(USE_AVX512)
-    TARGET_COMPILE_DEFINITIONS(mango PRIVATE "-D__AVX512F__" "-D__AVX512DQ__")
-ENDIF()
 
 INSTALL(TARGETS mango LIBRARY DESTINATION "lib" ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin")
