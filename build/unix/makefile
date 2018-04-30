@@ -84,7 +84,7 @@ ifeq (Linux, $(OS))
   LIBRARY_VULKAN = lib$(LIBNAME_VULKAN).so
   
   CLEAN    = rm -fr *.so $(OBJECTS_PATH)
-  INSTALL  = cp *.so /usr/lib ; ldconfig ; rm -rf /usr/include/mango ; cp -r $(INCLUDE_BASE)/mango/ /usr/include/mango/
+  INSTALL  = cp *.so /usr/local/lib ; ldconfig ; rm -rf /usr/local/include/mango ; cp -r $(INCLUDE_BASE)/mango/ /usr/local/include/mango/
   LINK_POST += -lpthread -ldl
 
   ###############################################################################
