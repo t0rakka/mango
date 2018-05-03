@@ -27,6 +27,7 @@ namespace mango
     void registerKTX();
     void registerPVR();
     void registerASTC();
+    void register_zpng();
 
     class ImageServer
     {
@@ -51,6 +52,7 @@ namespace mango
             registerKTX();
             registerPVR();
             registerASTC();
+            register_zpng();
         }
 
         ~ImageServer()
@@ -196,7 +198,9 @@ namespace mango
     void ImageDecoder::decode(Surface& dest, Palette* palette, int level, int depth, int face)
     {
         if (m_interface)
+        {
             m_interface->decode(dest, palette, level, depth, face);
+        }
     }
 
     // ----------------------------------------------------------------------------
@@ -220,7 +224,9 @@ namespace mango
     void ImageEncoder::encode(Stream& output, const Surface& source, float quality)
     {
         if (m_encode)
+        {
             m_encode(output, source,quality);
+        }
     }
 
 } // namespace mango

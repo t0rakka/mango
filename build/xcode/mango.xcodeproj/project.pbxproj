@@ -157,6 +157,9 @@
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
 		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
+		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
+		A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD2BD4209B3958000B0EF8 /* zpng.h */; };
+		A6CD2BD8209B3BA7000B0EF8 /* image_zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */; };
 		A6FCC37A1E8122D40037C15F /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC3791E8122D40037C15F /* zstd.h */; };
 		A6FCC38E1E8122EA0037C15F /* bitstream.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC37C1E8122EA0037C15F /* bitstream.h */; };
 		A6FCC38F1E8122EA0037C15F /* entropy_common.c in Sources */ = {isa = PBXBuildFile; fileRef = A6FCC37D1E8122EA0037C15F /* entropy_common.c */; };
@@ -333,6 +336,9 @@
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
 		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
+		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
+		A6CD2BD4209B3958000B0EF8 /* zpng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpng.h; path = external/zpng/zpng.h; sourceTree = "<group>"; };
+		A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_zpng.cpp; path = image/image_zpng.cpp; sourceTree = "<group>"; };
 		A6FCC3791E8122D40037C15F /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/zstd.h; sourceTree = "<group>"; };
 		A6FCC37C1E8122EA0037C15F /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bitstream.h; path = external/zstd/common/bitstream.h; sourceTree = "<group>"; };
 		A6FCC37D1E8122EA0037C15F /* entropy_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = entropy_common.c; path = external/zstd/common/entropy_common.c; sourceTree = "<group>"; };
@@ -447,6 +453,7 @@
 				A00559BB1C93329A00A6D963 /* image_png.cpp */,
 				A00559BC1C93329A00A6D963 /* image_pvr.cpp */,
 				A00559BD1C93329A00A6D963 /* image_tga.cpp */,
+				A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */,
 				A00559BE1C93329A00A6D963 /* image.cpp */,
 				A00559BF1C93329A00A6D963 /* surface.cpp */,
 			);
@@ -570,6 +577,7 @@
 		A63DD7011E706DAA00D4D499 /* external */ = {
 			isa = PBXGroup;
 			children = (
+				A6CD2BCE209B3817000B0EF8 /* zpng */,
 				A672D90F2026632700947D7E /* aes */,
 				A6FCC3781E8122C80037C15F /* zstd */,
 				A63DD7A71E706F9300D4D499 /* google */,
@@ -708,6 +716,15 @@
 			name = aes;
 			sourceTree = "<group>";
 		};
+		A6CD2BCE209B3817000B0EF8 /* zpng */ = {
+			isa = PBXGroup;
+			children = (
+				A6CD2BD3209B3957000B0EF8 /* zpng.cpp */,
+				A6CD2BD4209B3958000B0EF8 /* zpng.h */,
+			);
+			name = zpng;
+			sourceTree = "<group>";
+		};
 		A6FCC3781E8122C80037C15F /* zstd */ = {
 			isa = PBXGroup;
 			children = (
@@ -792,6 +809,7 @@
 				A6FCC39F1E8122EA0037C15F /* zstd_internal.h in Headers */,
 				A62FDF622019D435004BD27C /* zstd_ldm.h in Headers */,
 				A63DD7591E706EB200D4D499 /* rijndael.hpp in Headers */,
+				A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */,
 				A63DD7A41E706F8800D4D499 /* BC.h in Headers */,
 				A6FCC38E1E8122EA0037C15F /* bitstream.h in Headers */,
 				A6FCC39A1E8122EA0037C15F /* threading.h in Headers */,
@@ -874,7 +892,7 @@
 		A0F981B015B9E61D00B8C49F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0910;
+				LastUpgradeCheck = 0930;
 			};
 			buildConfigurationList = A0F981B315B9E61D00B8C49F /* Build configuration list for PBXProject "mango" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -964,7 +982,9 @@
 				A6FCC39D1E8122EA0037C15F /* zstd_common.c in Sources */,
 				A6FCC3B11E8123150037C15F /* zstd_decompress.c in Sources */,
 				A63DD74C1E706EB200D4D499 /* crc.cpp in Sources */,
+				A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */,
 				A00559C31C93329A00A6D963 /* block.cpp in Sources */,
+				A6CD2BD8209B3BA7000B0EF8 /* image_zpng.cpp in Sources */,
 				A63DD7061E706DFA00D4D499 /* lz4.c in Sources */,
 				A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */,
 				A63DD7001E706D8600D4D499 /* process.cpp in Sources */,
@@ -1031,11 +1051,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -1087,11 +1109,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -1132,6 +1156,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "~/Library/Frameworks";
@@ -1160,6 +1185,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "~/Library/Frameworks";

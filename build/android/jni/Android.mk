@@ -23,6 +23,7 @@ SOURCE_DIRS := mango/core \
                external/zstd/common \
                external/zstd/compress \
                external/zstd/decompress \
+               external/zpng \
                external/lzfse \
                external/unrar \
                external/bc \
