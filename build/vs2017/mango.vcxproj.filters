@@ -127,6 +127,9 @@
     <Filter Include="external\aes">
       <UniqueIdentifier>{16fb7652-1881-47ab-8e72-64b044fded7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\zpng">
+      <UniqueIdentifier>{de5df2cf-76d5-4e4d-972e-84af57a8bc90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -714,6 +717,9 @@
     <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zpng\zpng.h">
+      <Filter>external\zpng</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1042,6 +1048,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\core\aes.cpp">
       <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zpng\zpng.cpp">
+      <Filter>external\zpng</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
