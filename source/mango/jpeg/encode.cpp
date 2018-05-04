@@ -26,9 +26,6 @@
 // The code has been modified for integration with MANGO image encode/decode and streaming API.
 //
 
-// TODO: Implement CPU architecture specific optimizations
-// TODO: Implement ThreadPool assisted asynchronous encoding
-
 #include <mango/core/pointer.hpp>
 #include "jpeg.hpp"
 #include <cstring>
@@ -44,9 +41,9 @@ namespace
     enum
     {
         JPEG_FORMAT_YUV400,
-        JPEG_FORMAT_RGB888,
-        JPEG_FORMAT_ARGB8888,
-        JPEG_FORMAT_ABGR8888,
+        JPEG_FORMAT_BGR888,
+        JPEG_FORMAT_BGRA8888,
+        JPEG_FORMAT_RGBA8888,
     };
 
     struct xxx
@@ -56,9 +53,9 @@ namespace
     } g_format_table[] =
     {
         { FORMAT_L8, JPEG_FORMAT_YUV400 },
-        { FORMAT_B8G8R8, JPEG_FORMAT_RGB888 },
-        { FORMAT_B8G8R8A8, JPEG_FORMAT_ARGB8888 },
-        { FORMAT_R8G8B8A8, JPEG_FORMAT_ABGR8888 },
+        { FORMAT_B8G8R8, JPEG_FORMAT_BGR888 },
+        { FORMAT_B8G8R8A8, JPEG_FORMAT_BGRA8888 },
+        { FORMAT_R8G8B8A8, JPEG_FORMAT_RGBA8888 },
     };
     const int g_format_table_size = sizeof(g_format_table) / sizeof(g_format_table[0]);
 
@@ -266,7 +263,6 @@ namespace
         int         length_minus_mcu_width;
         int         length_minus_width;
         int         mcu_width_size;
-        int         offset;
 
         uint8       Lqt [BLOCK_SIZE];
         uint8       Cqt [BLOCK_SIZE];
@@ -279,7 +275,7 @@ namespace
 
         void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input, int rows, int cols, int incr);
 
-        jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality);
+        jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 stride, uint32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(uint32 quality);
@@ -578,7 +574,7 @@ namespace
         }
     }
 
-    void read_rgb888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_bgr888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y  = block + 0 * BLOCK_SIZE;
         BlockType* CB = block + 1 * BLOCK_SIZE;
@@ -627,7 +623,7 @@ namespace
         }
     }
 
-    void read_argb8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_bgra8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y  = block + 0 * BLOCK_SIZE;
         BlockType* CB = block + 1 * BLOCK_SIZE;
@@ -676,7 +672,7 @@ namespace
         }
     }
 
-    void read_abgr8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_rgba8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
         BlockType* Y  = block + 0 * BLOCK_SIZE;
         BlockType* CB = block + 1 * BLOCK_SIZE;
@@ -729,7 +725,7 @@ namespace
     // jpeg_encode methods
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 quality)
+    jpeg_encode::jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 stride, uint32 quality)
     {
         int bytes_per_pixel = 0;
 
@@ -752,20 +748,20 @@ namespace
                 channel_count = 1;
                 break;
 
-            case JPEG_FORMAT_RGB888:
-                read_format = read_rgb888_format;
+            case JPEG_FORMAT_BGR888:
+                read_format = read_bgr888_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
 
-            case JPEG_FORMAT_ARGB8888:
-                read_format = read_argb8888_format;
+            case JPEG_FORMAT_BGRA8888:
+                read_format = read_bgra8888_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
                 break;
 
-            case JPEG_FORMAT_ABGR8888:
-                read_format = read_abgr8888_format;
+            case JPEG_FORMAT_RGBA8888:
+                read_format = read_rgba8888_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
                 break;
@@ -780,12 +776,10 @@ namespace
         rows_in_bottom_mcus = height - (vertical_mcus - 1) * mcu_height;
         cols_in_right_mcus  = width  - (horizontal_mcus - 1) * mcu_width;
 
-        length_minus_mcu_width = (width - mcu_width         ) * bytes_per_pixel;
-        length_minus_width     = (width - cols_in_right_mcus) * bytes_per_pixel;
+        length_minus_mcu_width = stride - mcu_width * bytes_per_pixel;
+        length_minus_width     = stride - cols_in_right_mcus * bytes_per_pixel;
 
         mcu_width_size = mcu_width * bytes_per_pixel;
-
-        offset = (width * (mcu_height - 1) - (mcu_width - cols_in_right_mcus)) * bytes_per_pixel;
 
         init_quantization_tables(quality);
     }
@@ -796,9 +790,7 @@ namespace
 
     void jpeg_encode::init_quantization_tables(uint32 quality)
     {
-        if (quality > 1024)
-            quality = 1024;
-        quality *= 16;
+        quality = std::min(quality, 1024u) * 16;
 
         for (int i = 0; i < 64; ++i)
         {
@@ -863,9 +855,9 @@ namespace
                 number_of_components = 1;
                 break;
 
-            case JPEG_FORMAT_RGB888:
-            case JPEG_FORMAT_ARGB8888:
-            case JPEG_FORMAT_ABGR8888:
+            case JPEG_FORMAT_BGR888:
+            case JPEG_FORMAT_BGRA8888:
+            case JPEG_FORMAT_RGBA8888:
                 number_of_components = 3;
                 break;
         }
@@ -923,7 +915,7 @@ namespace
     {
         u8* input = surface.image;
 
-        jpeg_encode jp(image_format, surface.width, surface.height, quality);
+        jpeg_encode jp(image_format, surface.width, surface.height, surface.stride, quality);
 
         BigEndianStream s(stream);
 
@@ -932,15 +924,17 @@ namespace
 
         ConcurrentQueue queue;
 
-        int rows;
-
         // bitstream for each MCU scan
         Buffer* buffers = new Buffer[jp.vertical_mcus];
 
         // encode MCUs
+        const int bottom_mcu = jp.vertical_mcus - 1;
+
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
-            if (y < jp.vertical_mcus - 1)
+            int rows;
+
+            if (y < bottom_mcu)
             {
                 rows = jp.mcu_height;
             }
@@ -952,17 +946,20 @@ namespace
 
             queue.enqueue([&jp, y, buffers, input, rows] {
                 u8* image = input;
-                int cols;
-                int incr;
 
                 HuffmanEncoder huffman;
 
                 u8 huff_temp[1024];
                 u8* ptr = huff_temp;
 
+                const int right_mcu = jp.horizontal_mcus - 1;
+
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
-                    if (x < jp.horizontal_mcus - 1)
+                    int cols;
+                    int incr;
+
+                    if (x < right_mcu)
                     {
                         cols = jp.mcu_width;
                         incr = jp.length_minus_mcu_width;
@@ -1000,8 +997,7 @@ namespace
                 buffers[y].write(huff_temp, ptr - huff_temp);
             });
 
-            input += jp.horizontal_mcus * jp.mcu_width_size;
-            input += jp.offset;
+            input += surface.stride * jp.mcu_height;
         }
 
         queue.wait();
@@ -1037,7 +1033,7 @@ namespace jpeg
 
         // set default format
         Format sourceFormat = FORMAT_R8G8B8A8;
-        int destFormat = JPEG_FORMAT_ABGR8888;
+        int destFormat = JPEG_FORMAT_RGBA8888;
 
         // search for a better match
         for (int i = 0; i < g_format_table_size; ++i)
@@ -1046,6 +1042,7 @@ namespace jpeg
             {
                 sourceFormat = g_format_table[i].source;
                 destFormat = g_format_table[i].dest;
+                break;
             }
         }
 
