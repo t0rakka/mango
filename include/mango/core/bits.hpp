@@ -425,7 +425,7 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI
 
-    static inline uint32 u32_extract_bits(uint32value, int offset, int size)
+    static inline uint32 u32_extract_bits(uint32 value, int offset, int size)
     {
         return _bextr_u32(value, offset, size);
     }
