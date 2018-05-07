@@ -13,7 +13,7 @@ namespace jpeg
 
     using namespace mango;
 
-	static const int zigzagTable[] =
+	static const int g_zigzagTable[] =
 	{
         0,  8,  1,  2,  9, 16, 24, 17,
         10,  3,  4, 11, 18, 25, 32, 40,
@@ -162,9 +162,10 @@ namespace jpeg
     // ----------------------------------------------------------------------------
 
     Parser::Parser(Memory memory)
-    : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN), blockVector(NULL)
+        : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
+        , blockVector(nullptr)
     {
-        decodeState.zigzagTable = zigzagTable;
+        decodeState.zigzagTable = g_zigzagTable;
 
         // configure default implementation
 		processState.idct = idct;
@@ -867,14 +868,14 @@ namespace jpeg
                 case 0:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[zigzagTable[i]] = *p++;
+                        table.table[g_zigzagTable[i]] = *p++;
                     }
                     break;
 
                 case 1:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[zigzagTable[i]] = uload16be(p);
+                        table.table[g_zigzagTable[i]] = uload16be(p);
                         p += 2;
                     }
                     break;

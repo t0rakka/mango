@@ -181,14 +181,14 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
 void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 3];
-    
+
     idct(result +  0, 24, data +   0, state->block[0].qt->table); // Y
     idct(result +  8, 24, data +  64, state->block[1].qt->table); // Cb
     idct(result + 16, 24, data + 128, state->block[2].qt->table); // Cr
-    
+
     // color conversion
     const uint8* src = result;
-    
+
     for (int y = 0; y < 8; ++y)
     {
         const uint8* s = src;
@@ -201,7 +201,7 @@ void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessSt
             COMPUTE_CBCR(cb, cr);
             PACK_ARGB(d[x], s[x]);
         }
-        
+
         src += 24;
         dest += stride;
     }

@@ -40,16 +40,16 @@ namespace jpeg
 	using mango::Stream;
     using mango::ThreadPool;
 
-    typedef mango::int16 BlockType;
+    using BlockType = mango::int16;
 
 #ifdef MANGO_CPU_64BIT
 
-    typedef uint64 DataType;
+    using DataType = uint64;
     #define JPEG_REGISTER_SIZE 64
 
 #else
 
-    typedef uint32 DataType;
+    using DataType = uint32;
     #define JPEG_REGISTER_SIZE 32
 
 #endif
