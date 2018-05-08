@@ -165,7 +165,7 @@ ELSE()
 
     if (ARM OR ARCH64)
         add_definitions (-mfpu=neon -mfloat-abi=hard)
-        set(CMAKE_CXX_FLAGS "-fpermissive")
+        set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
     endif()
 
     if (X86 OR X86_64)

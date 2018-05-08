@@ -142,7 +142,7 @@ ifeq (Linux, $(OS))
   ifeq (armv7l, $(ARCH))
     PLATFORM = armv7l
     CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -g -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fPIC $(CC_STD)
-    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) -g -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) -g -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fpermissive -Wno-psabi -fPIC -ansi $(CPP_STD)
     LINK_MANGO  = g++ -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = g++ -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
