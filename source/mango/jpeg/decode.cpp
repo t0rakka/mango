@@ -168,7 +168,7 @@ namespace jpeg
         decodeState.zigzagTable = g_zigzagTable;
 
         // configure default implementation
-		processState.idct = idct;
+        processState.idct = idct;
         processState.process_Y           = process_Y;
         processState.process_YCbCr       = process_YCbCr;
         processState.process_CMYK        = process_CMYK;
@@ -177,7 +177,7 @@ namespace jpeg
         processState.process_YCbCr_16x8  = process_YCbCr_16x8;
         processState.process_YCbCr_16x16 = process_YCbCr_16x16;
 
-		restartInterval = 0;
+        restartInterval = 0;
         restartCounter = 0;
 
         uint64 cpuFlags = getCPUFlags();
@@ -186,8 +186,11 @@ namespace jpeg
         processState.idct = simd_idct;
 #endif
 
-        // TODO: move these to JPEG_ENABLE_SIMD block after the implementation is
-        //       using the portable SIMD infrastructure.
+#if defined(MANGO_ENABLE_NEON)
+        // HACK: force non-simd idct for ARM NEON
+        processState.idct = idct;
+#endif
+
 #if defined(JPEG_ENABLE_SSE4)
         if (cpuFlags & CPU_SSE4_1)
         {

@@ -13,15 +13,15 @@ namespace jpeg
 // ----------------------------------------------------------------------------
 
 /*
- 
+
     Full-range YCbCr color conversion:
- 
+
     |R|     |1.000  0.000  1.400|     | Y      |
     |G|  =  |1.000 -0.343 -0.711|  *  |Cb - 128|
     |B|     |1.000  1.765  0.000|     |Cr - 128|
- 
+
     Pseudo code:
- 
+
     R = Y +               Cr * 1.400   - (128 * 1.4)
     G = Y + Cb * -0.343 + Cr * -0.711  - (128 * (-0.343 - 0.711))
     B = Y + Cb * 1.765                 - (128 * 1.765)
@@ -35,7 +35,7 @@ namespace jpeg
     r = 1.0 - min(1.0, c * i + k)
     g = 1.0 - min(1.0, m * i + k)
     b = 1.0 - min(1.0, y * i + k)
- 
+
     NOTE: we use alternate conversion formula in PACK_CMYK()
 */
 
@@ -182,9 +182,9 @@ void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessSt
 {
     uint8 result[64 * 3];
 
-    idct(result +  0, 24, data +   0, state->block[0].qt->table); // Y
-    idct(result +  8, 24, data +  64, state->block[1].qt->table); // Cb
-    idct(result + 16, 24, data + 128, state->block[2].qt->table); // Cr
+    state->idct(result +  0, 24, data +   0, state->block[0].qt->table); // Y
+    state->idct(result +  8, 24, data +  64, state->block[1].qt->table); // Cb
+    state->idct(result + 16, 24, data + 128, state->block[2].qt->table); // Cr
 
     // color conversion
     const uint8* src = result;
@@ -213,19 +213,19 @@ void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessSt
 void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 4];
-    
-    idct(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
-    idct(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
-    idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
-    
+
+    state->idct(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
+    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
         uint32* d0 = reinterpret_cast<uint32*>(dest);
         uint32* d1 = reinterpret_cast<uint32*>(dest + stride);
         const uint8* s = result + y * 16;
-        
+
         for (int x = 0; x < 8; ++x)
         {
             int cb = s[x + 128];
@@ -234,7 +234,7 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
             PACK_ARGB(d0[x], s[x + 0]);
             PACK_ARGB(d1[x], s[x + 8]);
         }
-        
+
         dest += stride * 2;
     }
 
@@ -245,12 +245,12 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
 void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 4];
-    
-    idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
-    
+
+    state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
+    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
@@ -279,12 +279,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 {
     uint8 result[64 * 6];
 
-    idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
-    idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
-    idct(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
-    idct(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
+    state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
+    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
+    state->idct(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
+    state->idct(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -307,7 +307,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             d0 += 2;
             d1 += 2;
         }
-        
+
         dest += stride * 2;
     }
 
@@ -331,7 +331,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     // - color component shuffling is free, so do it
     // - do NOT set up __m128i registers before CPU support is determined
     // - mm_mullo_epi32() replacement and profiling
-    
+
 /*
      // SSE2 variation
      static inline __m128i x_mm_mullo_epi32(const __m128i& a, const __m128i& b)
@@ -386,10 +386,10 @@ void process_YCbCr_8x8_sse41(uint8* dest, int stride, const BlockType* data, Pro
 {
     uint8 result[64 * 3];
 
-    simd_idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y
-    simd_idct(result +  64, 8, data +  64, state->block[1].qt->table); // Cb
-    simd_idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
-    
+    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y
+    state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Cb
+    state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
+
     // color conversion
     for (int y = 0; y < 8; y += 2)
     {
@@ -425,33 +425,33 @@ void process_YCbCr_8x8_sse41(uint8* dest, int stride, const BlockType* data, Pro
 void process_YCbCr_8x16_sse41(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 4];
-    
-    simd_idct(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
-    simd_idct(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
-    simd_idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    simd_idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
-    
+
+    state->idct(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
+    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
         const uint8* s = result + y * 16;
-        
+
         __m128i y_row = _mm_load_si128(reinterpret_cast<const __m128i*>(s + 0));
         __m128i cbcr_row = _mm_load_si128(reinterpret_cast<const __m128i*>(s + 128));
-        
+
         __m128i cs[8];
-        
+
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 0), SH(cbcr_row, 2));
         compute_YCbCr_sse41(cs + 4, SH(cbcr_row, 1), SH(cbcr_row, 3));
-        
+
         pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[1], cs[2], cs[3]);
         pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[4], cs[5], cs[6], cs[7]);
-        
+
         dest += stride;
-        
+
         pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[1], cs[2], cs[3]);
         pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[4], cs[5], cs[6], cs[7]);
-        
+
         dest += stride;
     }
 
@@ -462,30 +462,30 @@ void process_YCbCr_8x16_sse41(uint8* dest, int stride, const BlockType* data, Pr
 void process_YCbCr_16x8_sse41(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 4];
-    
-    simd_idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    simd_idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    simd_idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    simd_idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+
+    state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
+    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
         uint8* s = result + y * 16;
-        
+
         __m128i y_row = _mm_load_si128(reinterpret_cast<const __m128i*>(s));
         __m128i cbcr_row = _mm_load_si128(reinterpret_cast<const __m128i*>(s + 128));
-        
+
         __m128i cs[4];
-        
+
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 0), SH(cbcr_row, 2));
         pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row, 0)), cs[0], cs[0], cs[1], cs[1]);
         pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row, 1)), cs[2], cs[2], cs[3], cs[3]);
-        
+
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 1), SH(cbcr_row, 3));
         pack4_YCbCr_sse41(dest + 32, _mm_cvtepu8_epi32(SH(y_row, 2)), cs[0], cs[0], cs[1], cs[1]);
         pack4_YCbCr_sse41(dest + 48, _mm_cvtepu8_epi32(SH(y_row, 3)), cs[2], cs[2], cs[3], cs[3]);
-        
+
         dest += stride;
     }
 
@@ -496,41 +496,41 @@ void process_YCbCr_16x8_sse41(uint8* dest, int stride, const BlockType* data, Pr
 void process_YCbCr_16x16_sse41(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 6];
-    
-    simd_idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    simd_idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    simd_idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
-    simd_idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
-    simd_idct(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
-    simd_idct(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
-    
+
+    state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
+    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
+    state->idct(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
+    state->idct(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
+
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
         const uint8* s = result + y * 32;
         const uint8* c = result + y * 16 + 256;
-        
+
         __m128i y_row0 = _mm_load_si128(reinterpret_cast<const __m128i*>(s + 0));
         __m128i y_row1 = _mm_load_si128(reinterpret_cast<const __m128i*>(s + 16));
         __m128i cbcr_row = _mm_load_si128(reinterpret_cast<const __m128i*>(c));
-        
+
         __m128i cs[8];
-        
+
         compute_YCbCr_sse41(cs + 0, SH(cbcr_row, 0), SH(cbcr_row, 2));
         compute_YCbCr_sse41(cs + 4, SH(cbcr_row, 1), SH(cbcr_row, 3));
-        
+
         pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row0, 0)), cs[0], cs[0], cs[1], cs[1]);
         pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row0, 1)), cs[2], cs[2], cs[3], cs[3]);
         pack4_YCbCr_sse41(dest + 32, _mm_cvtepu8_epi32(SH(y_row0, 2)), cs[4], cs[4], cs[5], cs[5]);
         pack4_YCbCr_sse41(dest + 48, _mm_cvtepu8_epi32(SH(y_row0, 3)), cs[6], cs[6], cs[7], cs[7]);
-        
+
         dest += stride;
-        
+
         pack4_YCbCr_sse41(dest +  0, _mm_cvtepu8_epi32(SH(y_row1, 0)), cs[0], cs[0], cs[1], cs[1]);
         pack4_YCbCr_sse41(dest + 16, _mm_cvtepu8_epi32(SH(y_row1, 1)), cs[2], cs[2], cs[3], cs[3]);
         pack4_YCbCr_sse41(dest + 32, _mm_cvtepu8_epi32(SH(y_row1, 2)), cs[4], cs[4], cs[5], cs[5]);
         pack4_YCbCr_sse41(dest + 48, _mm_cvtepu8_epi32(SH(y_row1, 3)), cs[6], cs[6], cs[7], cs[7]);
-        
+
         dest += stride;
     }
 
