@@ -34,9 +34,56 @@ namespace mango
         bool isCompressed() const;
     };
 
-    struct FileIndex : std::vector<FileInfo>
+    struct FileIndex
     {
+        std::vector<FileInfo> files;
+
         void emplace(const std::string &name, uint64 size, uint32 flags);
+
+        size_t size() const
+        {
+            return files.size();
+        }
+
+        bool empty() const
+        {
+            return files.empty();
+        }
+
+        void clear()
+        {
+            files.clear();
+        }
+
+        FileInfo& operator [] (int index)
+        {
+            return files[index];
+        }
+
+        const FileInfo& operator [] (int index) const
+        {
+            return files[index];
+        }
+
+        std::vector<FileInfo>::iterator begin()
+        {
+            return files.begin();
+        }
+
+        std::vector<FileInfo>::const_iterator begin() const
+        {
+            return files.begin();
+        }
+
+        std::vector<FileInfo>::iterator end()
+        {
+            return files.end();
+        }
+
+        std::vector<FileInfo>::const_iterator end() const
+        {
+            return files.end();
+        }
     };
 
     class AbstractMapper : protected NonCopyable

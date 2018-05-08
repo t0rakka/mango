@@ -104,13 +104,13 @@ namespace mango
 
     void FileIndex::emplace(const std::string &name, uint64 size, uint32 flags)
     {
-        emplace_back(name, size, flags);
+        files.emplace_back(name, size, flags);
 
         const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
         if (isFile && Mapper::isCustomMapper(name))
         {
             // file is a container; add it into the index again as such
-            emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
+            files.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
         }
     }
 
