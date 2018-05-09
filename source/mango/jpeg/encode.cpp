@@ -171,7 +171,7 @@ namespace
         0x000A
     };
 
-    const uint8 bitsize [] =
+    const uint8 bit_size [] =
     {
         0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -191,7 +191,7 @@ namespace
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
     };
 
-    const uint8 markerdata [] =
+    const uint8 marker_data [] =
     {
         0xFF, 0xC4, 0x00, 0x1F, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
         0xFF, 0xC4, 0x00, 0xB5, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06,
@@ -423,7 +423,8 @@ namespace
 
             for (int i = 0; i < 63; ++i)
             {
-                if ((Coeff = *temp++) != 0)
+                BlockType Coeff = *temp++;
+                if (Coeff)
                 {
                     while (RunLength > 15)
                     {
@@ -436,9 +437,9 @@ namespace
 
                     AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
                     if (AbsCoeff >> 8 == 0)
-                        DataSize = bitsize [AbsCoeff];
+                        DataSize = bit_size [AbsCoeff];
                     else
-                        DataSize = bitsize [AbsCoeff >> 8] + 8;
+                        DataSize = bit_size [AbsCoeff >> 8] + 8;
 
                     index = RunLength * 10 + DataSize;
                     HuffCode = AcCodeTable [index];
@@ -469,7 +470,7 @@ namespace
         }
     };
 
-    void DCT(BlockType* dest, BlockType* data, const uint16* quant_table)
+    void fdct(BlockType* dest, BlockType* data, const uint16* quant_table)
     {
         const uint16 c1 = 1420;  // cos  PI/16 * root(2)
         const uint16 c2 = 1338;  // cos  PI/8  * root(2)
@@ -882,7 +883,7 @@ namespace
         p.write(nfdata + (number_of_components - 1) * 3, number_of_components * 3);
 
         // huffman table(DHT)
-        p.write(markerdata, sizeof(markerdata));
+        p.write(marker_data, sizeof(marker_data));
 
         // Define Restart Interval marker
         p.write16(0xffdd);
@@ -949,7 +950,7 @@ namespace
 
                 HuffmanEncoder huffman;
 
-                u8 huff_temp[1024];
+                u8 huff_temp[1024]; // encoding buffer
                 u8* ptr = huff_temp;
 
                 const int right_mcu = jp.horizontal_mcus - 1;
@@ -980,10 +981,11 @@ namespace
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
                         BlockType temp[BLOCK_SIZE];
-                        DCT(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+                        fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
                         ptr = huffman.encode(ptr, jp.channel[i].component, temp);
                     }
 
+                    // flush encoding buffer
                     if (ptr - huff_temp > 512)
                     {
                         buffers[y].write(huff_temp, ptr - huff_temp);
@@ -993,6 +995,7 @@ namespace
                     image += jp.mcu_width_size;
                 }
 
+                // flush encoding buffer
                 ptr = huffman.flush(ptr);
                 buffers[y].write(huff_temp, ptr - huff_temp);
             });
