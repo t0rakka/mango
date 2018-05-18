@@ -78,11 +78,13 @@
     #include <GL/gl.h>
     #include <GL/glx.h>
 
+#if 0 // NOTE: use platform headers
     #define GL_GLEXT_PROTOTYPES
     #include "khronos/glext.h"
 
     #define GLX_GLXEXT_PROTOTYPES
     #include "khronos/glxext.h"
+#endif
 
     #define MANGO_CONTEXT_GLX
 
