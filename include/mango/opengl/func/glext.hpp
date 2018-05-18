@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifdef GLEXT_PROC
 
@@ -793,6 +793,15 @@ GLEXT_PROC(PFNGLGETNMINMAXPROC, glGetnMinmax);
 GLEXT_PROC(PFNGLTEXTUREBARRIERPROC, glTextureBarrier);
 
 // ---------------------------------------------------------------------------------
+// GL_VERSION_4_6
+// ---------------------------------------------------------------------------------
+
+GLEXT_PROC(PFNGLSPECIALIZESHADERPROC, glSpecializeShader);
+GLEXT_PROC(PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC, glMultiDrawArraysIndirectCount);
+GLEXT_PROC(PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC, glMultiDrawElementsIndirectCount);
+GLEXT_PROC(PFNGLPOLYGONOFFSETCLAMPPROC, glPolygonOffsetClamp);
+
+// ---------------------------------------------------------------------------------
 // ARB
 // ---------------------------------------------------------------------------------
 
@@ -869,6 +878,9 @@ GLEXT_PROC(PFNGLPROGRAMPARAMETERIARBPROC, glProgramParameteriARB);
 GLEXT_PROC(PFNGLFRAMEBUFFERTEXTUREARBPROC, glFramebufferTextureARB);
 GLEXT_PROC(PFNGLFRAMEBUFFERTEXTURELAYERARBPROC, glFramebufferTextureLayerARB);
 GLEXT_PROC(PFNGLFRAMEBUFFERTEXTUREFACEARBPROC, glFramebufferTextureFaceARB);
+
+// GL_ARB_gl_spirv
+GLEXT_PROC(PFNGLSPECIALIZESHADERARBPROC, glSpecializeShaderARB);
 
 // GL_ARB_imaging
 GLEXT_PROC(PFNGLCOLORTABLEPROC, glColorTable);
@@ -1379,6 +1391,12 @@ GLEXT_PROC(PFNGLBLENDFUNCINDEXEDAMDPROC, glBlendFuncIndexedAMD);
 GLEXT_PROC(PFNGLBLENDFUNCSEPARATEINDEXEDAMDPROC, glBlendFuncSeparateIndexedAMD);
 GLEXT_PROC(PFNGLBLENDEQUATIONINDEXEDAMDPROC, glBlendEquationIndexedAMD);
 GLEXT_PROC(PFNGLBLENDEQUATIONSEPARATEINDEXEDAMDPROC, glBlendEquationSeparateIndexedAMD);
+
+// GL_AMD_framebuffer_sample_positions
+GLEXT_PROC(PFNGLFRAMEBUFFERSAMPLEPOSITIONSFVAMDPROC, glFramebufferSamplePositionsfvAMD);
+GLEXT_PROC(PFNGLNAMEDFRAMEBUFFERSAMPLEPOSITIONSFVAMDPROC, glNamedFramebufferSamplePositionsfvAMD);
+GLEXT_PROC(PFNGLGETFRAMEBUFFERPARAMETERFVAMDPROC, glGetFramebufferParameterfvAMD);
+GLEXT_PROC(PFNGLGETNAMEDFRAMEBUFFERPARAMETERFVAMDPROC, glGetNamedFramebufferParameterfvAMD);
 
 // GL_AMD_gpu_shader_int64
 GLEXT_PROC(PFNGLUNIFORM1I64NVPROC, glUniform1i64NV);
@@ -2253,7 +2271,66 @@ GLEXT_PROC(PFNGLFRAMEBUFFERTEXTURELAYEREXTPROC, glFramebufferTextureLayerEXT);
 
 // GL_EXT_window_rectangles
 GLEXT_PROC(PFNGLWINDOWRECTANGLESEXTPROC, glWindowRectanglesEXT);
-           
+
+// GL_EXT_EGL_image_storage
+GLEXT_PROC(PFNGLEGLIMAGETARGETTEXSTORAGEEXTPROC, glEGLImageTargetTexStorageEXT);
+GLEXT_PROC(PFNGLEGLIMAGETARGETTEXTURESTORAGEEXTPROC, glEGLImageTargetTextureStorageEXT);
+
+// GL_EXT_external_buffer
+GLEXT_PROC(PFNGLBUFFERSTORAGEEXTERNALEXTPROC, glBufferStorageExternalEXT);
+GLEXT_PROC(PFNGLNAMEDBUFFERSTORAGEEXTERNALEXTPROC, glNamedBufferStorageExternalEXT);
+
+// GL_EXT_memory_object
+GLEXT_PROC(PFNGLGETUNSIGNEDBYTEVEXTPROC, glGetUnsignedBytevEXT);
+GLEXT_PROC(PFNGLGETUNSIGNEDBYTEI_VEXTPROC, glGetUnsignedBytei_vEXT);
+GLEXT_PROC(PFNGLDELETEMEMORYOBJECTSEXTPROC, glDeleteMemoryObjectsEXT);
+GLEXT_PROC(PFNGLISMEMORYOBJECTEXTPROC, glIsMemoryObjectEXT);
+GLEXT_PROC(PFNGLCREATEMEMORYOBJECTSEXTPROC, glCreateMemoryObjectsEXT);
+GLEXT_PROC(PFNGLMEMORYOBJECTPARAMETERIVEXTPROC, glMemoryObjectParameterivEXT);
+GLEXT_PROC(PFNGLGETMEMORYOBJECTPARAMETERIVEXTPROC, glGetMemoryObjectParameterivEXT);
+GLEXT_PROC(PFNGLTEXSTORAGEMEM2DEXTPROC, glTexStorageMem2DEXT);
+GLEXT_PROC(PFNGLTEXSTORAGEMEM2DMULTISAMPLEEXTPROC, glTexStorageMem2DMultisampleEXT);
+GLEXT_PROC(PFNGLTEXSTORAGEMEM3DEXTPROC, glTexStorageMem3DEXT);
+GLEXT_PROC(PFNGLTEXSTORAGEMEM3DMULTISAMPLEEXTPROC, glTexStorageMem3DMultisampleEXT);
+GLEXT_PROC(PFNGLBUFFERSTORAGEMEMEXTPROC, glBufferStorageMemEXT);
+GLEXT_PROC(PFNGLTEXTURESTORAGEMEM2DEXTPROC, glTextureStorageMem2DEXT);
+GLEXT_PROC(PFNGLTEXTURESTORAGEMEM2DMULTISAMPLEEXTPROC, glTextureStorageMem2DMultisampleEXT);
+GLEXT_PROC(PFNGLTEXTURESTORAGEMEM3DEXTPROC, glTextureStorageMem3DEXT);
+GLEXT_PROC(PFNGLTEXTURESTORAGEMEM3DMULTISAMPLEEXTPROC, glTextureStorageMem3DMultisampleEXT);
+GLEXT_PROC(PFNGLNAMEDBUFFERSTORAGEMEMEXTPROC, glNamedBufferStorageMemEXT);
+GLEXT_PROC(PFNGLTEXSTORAGEMEM1DEXTPROC, glTexStorageMem1DEXT);
+GLEXT_PROC(PFNGLTEXTURESTORAGEMEM1DEXTPROC, glTextureStorageMem1DEXT);
+
+// GL_EXT_memory_object_fd
+GLEXT_PROC(PFNGLIMPORTMEMORYFDEXTPROC, glImportMemoryFdEXT);
+
+// GL_EXT_memory_object_win32
+GLEXT_PROC(PFNGLIMPORTMEMORYWIN32HANDLEEXTPROC, glImportMemoryWin32HandleEXT);
+GLEXT_PROC(PFNGLIMPORTMEMORYWIN32NAMEEXTPROC, glImportMemoryWin32NameEXT);
+
+// GL_EXT_semaphore
+GLEXT_PROC(PFNGLGENSEMAPHORESEXTPROC, glGenSemaphoresEXT);
+GLEXT_PROC(PFNGLDELETESEMAPHORESEXTPROC, glDeleteSemaphoresEXT);
+GLEXT_PROC(PFNGLISSEMAPHOREEXTPROC, glIsSemaphoreEXT);
+GLEXT_PROC(PFNGLSEMAPHOREPARAMETERUI64VEXTPROC, glSemaphoreParameterui64vEXT);
+GLEXT_PROC(PFNGLGETSEMAPHOREPARAMETERUI64VEXTPROC, glGetSemaphoreParameterui64vEXT);
+GLEXT_PROC(PFNGLWAITSEMAPHOREEXTPROC, glWaitSemaphoreEXT);
+GLEXT_PROC(PFNGLSIGNALSEMAPHOREEXTPROC, glSignalSemaphoreEXT);
+
+// GL_EXT_semaphore_fd
+GLEXT_PROC(PFNGLIMPORTSEMAPHOREFDEXTPROC, glImportSemaphoreFdEXT);
+
+// GL_EXT_semaphore_win32
+GLEXT_PROC(PFNGLIMPORTSEMAPHOREWIN32HANDLEEXTPROC, glImportSemaphoreWin32HandleEXT);
+GLEXT_PROC(PFNGLIMPORTSEMAPHOREWIN32NAMEEXTPROC, glImportSemaphoreWin32NameEXT);
+
+// GL_EXT_shader_framebuffer_fetch_non_coherent
+GLEXT_PROC(PFNGLFRAMEBUFFERFETCHBARRIEREXTPROC, glFramebufferFetchBarrierEXT);
+
+// GL_EXT_win32_keyed_mutex
+GLEXT_PROC(PFNGLACQUIREKEYEDMUTEXWIN32EXTPROC, glAcquireKeyedMutexWin32EXT);
+GLEXT_PROC(PFNGLRELEASEKEYEDMUTEXWIN32EXTPROC, glReleaseKeyedMutexWin32EXT);
+
 // ---------------------------------------------------------------------------------
 // GREMEDY
 // ---------------------------------------------------------------------------------
@@ -2907,6 +2984,43 @@ GLEXT_PROC(PFNGLCONSERVATIVERASTERPARAMETERINVPROC, glConservativeRasterParamete
 // GL_NV_viewport_swizzle
 GLEXT_PROC(PFNGLVIEWPORTSWIZZLENVPROC, glViewportSwizzleNV);
 
+// GL_NVX_linked_gpu_multicast
+GLEXT_PROC(PFNGLLGPUNAMEDBUFFERSUBDATANVXPROC, glLGPUNamedBufferSubDataNVX);
+GLEXT_PROC(PFNGLLGPUCOPYIMAGESUBDATANVXPROC, glLGPUCopyImageSubDataNVX);
+GLEXT_PROC(PFNGLLGPUINTERLOCKNVXPROC, glLGPUInterlockNVX);
+
+// GL_NV_alpha_to_coverage_dither_control
+GLEXT_PROC(PFNGLALPHATOCOVERAGEDITHERCONTROLNVPROC, glAlphaToCoverageDitherControlNV);
+
+// GL_NV_draw_vulkan_image
+GLEXT_PROC(PFNGLDRAWVKIMAGENVPROC, glDrawVkImageNV);
+GLEXT_PROC(PFNGLGETVKPROCADDRNVPROC, glGetVkProcAddrNV);
+GLEXT_PROC(PFNGLWAITVKSEMAPHORENVPROC, glWaitVkSemaphoreNV);
+GLEXT_PROC(PFNGLSIGNALVKSEMAPHORENVPROC, glSignalVkSemaphoreNV);
+GLEXT_PROC(PFNGLSIGNALVKFENCENVPROC, glSignalVkFenceNV);
+
+// GL_NV_gpu_multicast
+GLEXT_PROC(PFNGLRENDERGPUMASKNVPROC, glRenderGpuMaskNV);
+GLEXT_PROC(PFNGLMULTICASTBUFFERSUBDATANVPROC, glMulticastBufferSubDataNV);
+GLEXT_PROC(PFNGLMULTICASTCOPYBUFFERSUBDATANVPROC, glMulticastCopyBufferSubDataNV);
+GLEXT_PROC(PFNGLMULTICASTCOPYIMAGESUBDATANVPROC, glMulticastCopyImageSubDataNV);
+GLEXT_PROC(PFNGLMULTICASTBLITFRAMEBUFFERNVPROC, glMulticastBlitFramebufferNV);
+GLEXT_PROC(PFNGLMULTICASTFRAMEBUFFERSAMPLELOCATIONSFVNVPROC, glMulticastFramebufferSampleLocationsfvNV);
+GLEXT_PROC(PFNGLMULTICASTBARRIERNVPROC, glMulticastBarrierNV);
+GLEXT_PROC(PFNGLMULTICASTWAITSYNCNVPROC, glMulticastWaitSyncNV);
+GLEXT_PROC(PFNGLMULTICASTGETQUERYOBJECTIVNVPROC, glMulticastGetQueryObjectivNV);
+GLEXT_PROC(PFNGLMULTICASTGETQUERYOBJECTUIVNVPROC, glMulticastGetQueryObjectuivNV);
+GLEXT_PROC(PFNGLMULTICASTGETQUERYOBJECTI64VNVPROC, glMulticastGetQueryObjecti64vNV);
+GLEXT_PROC(PFNGLMULTICASTGETQUERYOBJECTUI64VNVPROC, glMulticastGetQueryObjectui64vNV);
+
+// GL_NV_query_resource
+GLEXT_PROC(PFNGLQUERYRESOURCENVPROC, glQueryResourceNV);
+
+// GL_NV_query_resource_tag
+GLEXT_PROC(PFNGLGENQUERYRESOURCETAGNVPROC, glGenQueryResourceTagNV);
+GLEXT_PROC(PFNGLDELETEQUERYRESOURCETAGNVPROC, glDeleteQueryResourceTagNV);
+GLEXT_PROC(PFNGLQUERYRESOURCETAGNVPROC, glQueryResourceTagNV);
+
 // ---------------------------------------------------------------------------------
 // OVR
 // ---------------------------------------------------------------------------------
@@ -3136,6 +3250,9 @@ GLEXT_PROC(PFNGLREPLACEMENTCODEUITEXCOORD2FCOLOR4FNORMAL3FVERTEX3FVSUNPROC, glRe
 
 // GL_KHR_blend_equation_advanced
 GLEXT_PROC(PFNGLBLENDBARRIERKHRPROC, glBlendBarrierKHR);
+
+// GL_KHR_parallel_shader_compile
+GLEXT_PROC(PFNGLMAXSHADERCOMPILERTHREADSKHRPROC, glMaxShaderCompilerThreadsKHR);
 
 #endif // GLEXT_PROC
 
@@ -3647,6 +3764,64 @@ GL_EXTENSION(NV_bindless_multi_draw_indirect_count)
 GL_EXTENSION(NV_shader_atomic_int64)
 GL_EXTENSION(NV_internalformat_sample_query)
 GL_EXTENSION(NV_viewport_array2)
+GL_EXTENSION(WGL_ARB_create_context_no_error)
+GL_EXTENSION(GLX_ARB_create_context_no_error)
+GL_EXTENSION(GLX_EXT_no_config_context)
+GL_EXTENSION(GLX_MESA_swap_control)
+GL_EXTENSION(ARB_gl_spirv)
+GL_EXTENSION(ARB_polygon_offset_clamp)
+GL_EXTENSION(ARB_spirv_extensions)
+GL_EXTENSION(ARB_texture_filter_anisotropic)
+GL_EXTENSION(KHR_parallel_shader_compile)
+GL_EXTENSION(AMD_framebuffer_sample_positions)
+GL_EXTENSION(AMD_gpu_shader_int16)
+GL_EXTENSION(AMD_shader_gpu_shader_half_float_fetch)
+GL_EXTENSION(AMD_shader_image_load_store_lod)
+GL_EXTENSION(AMD_texture_gather_bias_lod)
+GL_EXTENSION(EXT_EGL_image_storage)
+GL_EXTENSION(EXT_external_buffer)
+GL_EXTENSION(EXT_memory_object)
+GL_EXTENSION(EXT_memory_object_fd)
+GL_EXTENSION(EXT_memory_object_win32)
+GL_EXTENSION(EXT_semaphore)
+GL_EXTENSION(EXT_semaphore_fd)
+GL_EXTENSION(EXT_semaphore_win32)
+GL_EXTENSION(EXT_shader_framebuffer_fetch)
+GL_EXTENSION(EXT_shader_framebuffer_fetch_non_coherent)
+GL_EXTENSION(EXT_win32_keyed_mutex)
+GL_EXTENSION(INTEL_blackhole_render)
+GL_EXTENSION(MESA_program_binary_formats)
+GL_EXTENSION(MESA_shader_integer_functions)
+GL_EXTENSION(MESA_tile_raster_order)
+GL_EXTENSION(NVX_blend_equation_advanced_multi_draw_buffers)
+GL_EXTENSION(NVX_linked_gpu_multicast)
+GL_EXTENSION(NV_alpha_to_coverage_dither_control)
+GL_EXTENSION(NV_blend_minmax_factor)
+GL_EXTENSION(NV_conservative_raster_pre_snap)
+GL_EXTENSION(NV_conservative_raster_underestimation)
+GL_EXTENSION(NV_draw_vulkan_image)
+GL_EXTENSION(NV_gpu_multicast)
+GL_EXTENSION(NV_query_resource)
+GL_EXTENSION(NV_query_resource_tag)
+GL_EXTENSION(NV_texture_rectangle_compressed)
+GL_EXTENSION(ARB_ES3_2_compatibility)
+GL_EXTENSION(ARB_fragment_shader_interlock)
+GL_EXTENSION(ARB_gpu_shader_int64)
+GL_EXTENSION(ARB_parallel_shader_compile)
+GL_EXTENSION(ARB_post_depth_coverage)
+GL_EXTENSION(ARB_sample_locations)
+GL_EXTENSION(ARB_shader_atomic_counter_ops)
+GL_EXTENSION(ARB_shader_ballot)
+GL_EXTENSION(ARB_shader_clock)
+GL_EXTENSION(ARB_shader_viewport_layer_array)
+GL_EXTENSION(ARB_sparse_texture_clamp)
+GL_EXTENSION(ARB_texture_filter_minmax)
+GL_EXTENSION(NV_clip_space_w_scaling)
+GL_EXTENSION(NV_command_list)
+GL_EXTENSION(NV_conservative_raster_dilate)
+GL_EXTENSION(NV_shader_atomic_float64)
+GL_EXTENSION(NV_stereo_view_rendering)
+GL_EXTENSION(NV_uniform_buffer_unified_memory)
 
 // ---------------------------------------------------------------------------------
 // OpenGL|ES Extensions
@@ -3757,7 +3932,6 @@ GL_EXTENSION(OES_surfaceless_context)
 GL_EXTENSION(QCOM_binning_control)
 GL_EXTENSION(ARM_mali_program_binary)
 GL_EXTENSION(EXT_map_buffer_range)
-GL_EXTENSION(EXT_shader_framebuffer_fetch)
 GL_EXTENSION(APPLE_copy_texture_levels)
 GL_EXTENSION(APPLE_sync)
 GL_EXTENSION(EXT_multiview_draw_buffers)
@@ -3819,5 +3993,89 @@ GL_EXTENSION(EXT_texture_cube_map_array)
 GL_EXTENSION(EXT_texture_view)
 GL_EXTENSION(EXT_primitive_bounding_box)
 GL_EXTENSION(ANDROID_extension_pack_es31a)
+GL_EXTENSION(EXT_compressed_ETC1_RGB8_sub_texture)
+//GLX_ARB_context_flush_control
+//WGL_ARB_context_flush_control
+GL_EXTENSION(DMP_program_binary)
+GL_EXTENSION(APPLE_clip_distance)
+GL_EXTENSION(APPLE_color_buffer_packed_float)
+GL_EXTENSION(APPLE_texture_packed_float)
+GL_EXTENSION(NV_image_formats)
+GL_EXTENSION(NV_shader_noperspective_interpolation)
+GL_EXTENSION(NV_viewport_array)
+GL_EXTENSION(EXT_base_instance)
+GL_EXTENSION(EXT_draw_elements_base_vertex)
+GL_EXTENSION(EXT_multi_draw_indirect)
+GL_EXTENSION(EXT_render_snorm)
+GL_EXTENSION(EXT_texture_norm16)
+GL_EXTENSION(OES_copy_image)
+GL_EXTENSION(OES_draw_buffers_indexed)
+GL_EXTENSION(OES_geometry_shader)
+GL_EXTENSION(OES_gpu_shader5)
+GL_EXTENSION(OES_primitive_bounding_box)
+GL_EXTENSION(OES_shader_io_blocks)
+GL_EXTENSION(OES_tessellation_shader)
+GL_EXTENSION(OES_texture_border_clamp)
+GL_EXTENSION(OES_texture_buffer)
+GL_EXTENSION(OES_texture_cube_map_array)
+GL_EXTENSION(OES_texture_view)
+GL_EXTENSION(OES_draw_elements_base_vertex)
+GL_EXTENSION(OES_EGL_image_external_essl3)
+GL_EXTENSION(EXT_texture_sRGB_R8)
+GL_EXTENSION(EXT_YUV_target)
+GL_EXTENSION(EXT_texture_sRGB_RG8)
+GL_EXTENSION(EXT_float_blend)
+GL_EXTENSION(EXT_post_depth_coverage)
+GL_EXTENSION(EXT_raster_multisample)
+GL_EXTENSION(EXT_texture_filter_minmax)
+GL_EXTENSION(NV_conservative_raster)
+GL_EXTENSION(NV_fragment_coverage_to_color)
+GL_EXTENSION(NV_fragment_shader_interlock)
+GL_EXTENSION(NV_framebuffer_mixed_samples)
+GL_EXTENSION(NV_fill_rectangle)
+GL_EXTENSION(NV_geometry_shader_passthrough)
+GL_EXTENSION(NV_path_rendering_shared_edge)
+GL_EXTENSION(NV_sample_locations)
+GL_EXTENSION(NV_sample_mask_override_coverage)
+GL_EXTENSION(NV_polygon_mode)
+GL_EXTENSION(EXT_buffer_storage)
+GL_EXTENSION(EXT_sparse_texture)
+GL_EXTENSION(OVR_multiview)
+GL_EXTENSION(OVR_multiview2)
+GL_EXTENSION(KHR_no_error)
+GL_EXTENSION(INTEL_framebuffer_CMAA)
+GL_EXTENSION(EXT_blend_func_extended)
+GL_EXTENSION(EXT_multisample_compatibility)
+GL_EXTENSION(KHR_texture_compression_astc_sliced_3d)
+GL_EXTENSION(OVR_multiview_multisampled_render_to_texture)
+GL_EXTENSION(IMG_texture_filter_cubic)
+GL_EXTENSION(EXT_polygon_offset_clamp)
+GL_EXTENSION(EXT_shader_pixel_local_storage2)
+GL_EXTENSION(EXT_shader_group_vote)
+GL_EXTENSION(IMG_framebuffer_downsample)
+GL_EXTENSION(EXT_protected_textures)
+GL_EXTENSION(EXT_clip_cull_distance)
+GL_EXTENSION(NV_viewport_swizzle)
+GL_EXTENSION(EXT_sparse_texture2)
+GL_EXTENSION(NV_shader_atomic_fp16_vector)
+GL_EXTENSION(NV_conservative_raster_pre_snap_triangles)
+GL_EXTENSION(EXT_window_rectangles)
+GL_EXTENSION(EXT_shader_non_constant_global_initializers)
+GL_EXTENSION(INTEL_conservative_rasterization)
+GL_EXTENSION(OES_viewport_array)
+GL_EXTENSION(EXT_conservative_depth)
+GL_EXTENSION(EXT_clear_texture)
+GL_EXTENSION(IMG_bindless_texture)
+GL_EXTENSION(QCOM_framebuffer_foveated)
+GL_EXTENSION(EXT_multisampled_render_to_texture2)
+GL_EXTENSION(EXT_texture_compression_astc_decode_mode)
+GL_EXTENSION(EXT_texture_compression_astc_decode_mode_rgb9e5)
+GL_EXTENSION(EXT_texture_compression_bptc)
+GL_EXTENSION(EXT_texture_compression_s3tc_srgb)
+GL_EXTENSION(EXT_clip_control)
+GL_EXTENSION(EXT_texture_mirror_clamp_to_edge)
+GL_EXTENSION(QCOM_texture_foveated)
+GL_EXTENSION(EXT_EGL_image_external_wrap_modes)
+GL_EXTENSION(EXT_texture_format_sRGB_override)
 
 #endif // GL_EXTENSION

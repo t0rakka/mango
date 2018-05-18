@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifdef GLEXT_PROC
 
@@ -35,7 +35,7 @@ GLEXT_PROC(PFNGLXGETPROCADDRESSPROC, glXGetProcAddress);
 // ---------------------------------------------------------------------------------
 // GLX extensions
 // ---------------------------------------------------------------------------------
-    
+
 // GLX_ARB_create_context
 GLEXT_PROC(PFNGLXCREATECONTEXTATTRIBSARBPROC, glXCreateContextAttribsARB);
 
@@ -87,6 +87,10 @@ GLEXT_PROC(PFNGLXRELEASEBUFFERSMESAPROC, glXReleaseBuffersMESA);
 
 // GLX_MESA_set_3dfx_mode
 GLEXT_PROC(PFNGLXSET3DFXMODEMESAPROC, glXSet3DfxModeMESA);
+
+// GLX_MESA_swap_control
+GLEXT_PROC(PFNGLXGETSWAPINTERVALMESAPROC, glXGetSwapIntervalMESA);
+GLEXT_PROC(PFNGLXSWAPINTERVALMESAPROC, glXSwapIntervalMESA);
 
 // GLX_NV_copy_image
 GLEXT_PROC(PFNGLXCOPYIMAGESUBDATANVPROC, glXCopyImageSubDataNV);
