@@ -23,6 +23,22 @@
 #define JPEG_HUFF_LOOKUP_BITS    8   // Huffman look-ahead table log2 size
 #define JPEG_HUFF_LOOKUP_SIZE    (1 << JPEG_HUFF_LOOKUP_BITS)
 
+#ifdef JPEG_ENABLE_SIMD
+
+    #if defined(MANGO_ENABLE_SSE2)
+        #define JPEG_ENABLE_SSE2
+    #endif
+
+    #if defined(MANGO_ENABLE_SSE4_1)
+        #define JPEG_ENABLE_SSE4
+    #endif
+
+    #if defined(MANGO_ENABLE_NEON)
+        #define JPEG_ENABLE_NEON
+    #endif
+
+#endif
+
 namespace jpeg
 {
 
@@ -408,18 +424,18 @@ namespace jpeg
     void process_YCbCr_16x16       (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
 #if defined(JPEG_ENABLE_SIMD)
+    void idct_simd                 (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+#endif
 
-    void simd_idct                 (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+#if defined(JPEG_ENABLE_SSE2)
+    void idct_sse2                 (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+#endif
 
-    // TODO: implement process functions with portable SIMD like simd_idct() above
-    #if defined(MANGO_ENABLE_SSE4_1)
-    #define JPEG_ENABLE_SSE4
+#if defined(JPEG_ENABLE_SSE4)
     void process_YCbCr_8x8_sse41   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_8x16_sse41  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x8_sse41  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x16_sse41 (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    #endif
-
 #endif
 
 	void EncodeImage(Stream& stream, const Surface& surface, float quality);

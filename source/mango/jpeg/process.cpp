@@ -61,6 +61,7 @@ void process_Y(uint8* dest, int stride, const BlockType* data, ProcessState* sta
 {
 	if (width == 8 && height == 8)
 	{
+        // Optimization: FULL block can be directly decoded into the target surface
 	    state->idct(dest, stride, data, state->block[0].qt->table); // Y
 	}
 	else
@@ -181,31 +182,30 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
 void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 3];
-
-    state->idct(result +  0, 24, data +   0, state->block[0].qt->table); // Y
-    state->idct(result +  8, 24, data +  64, state->block[1].qt->table); // Cb
-    state->idct(result + 16, 24, data + 128, state->block[2].qt->table); // Cr
-
+    
+    state->idct(result + 64 * 0, 8, data + 64 * 0, state->block[0].qt->table); // Y
+    state->idct(result + 64 * 1, 8, data + 64 * 1, state->block[1].qt->table); // Cb
+    state->idct(result + 64 * 2, 8, data + 64 * 2, state->block[2].qt->table); // Cr
+    
     // color conversion
     const uint8* src = result;
-
+    
     for (int y = 0; y < 8; ++y)
     {
-        const uint8* s = src;
+        const uint8* s = src + y * 8;
         uint32* d = reinterpret_cast<uint32*>(dest);
 
         for (int x = 0; x < 8; ++x)
         {
-            int cb = s[x + 8];
-            int cr = s[x + 16];
+            int cb = s[x + 64];
+            int cr = s[x + 128];
             COMPUTE_CBCR(cb, cr);
             PACK_ARGB(d[x], s[x]);
         }
-
-        src += 24;
+        
         dest += stride;
     }
-
+    
     MANGO_UNREFERENCED_PARAMETER(width);
     MANGO_UNREFERENCED_PARAMETER(height);
 }
@@ -214,10 +214,10 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
 {
     uint8 result[64 * 4];
 
-    state->idct(result +   0,  8, data +   0, state->block[0].qt->table); // Y0
-    state->idct(result +  64,  8, data +  64, state->block[1].qt->table); // Y1
-    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
+    state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -225,11 +225,12 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
         uint32* d0 = reinterpret_cast<uint32*>(dest);
         uint32* d1 = reinterpret_cast<uint32*>(dest + stride);
         const uint8* s = result + y * 16;
+        const uint8* c = result + y * 8 + 128;
 
         for (int x = 0; x < 8; ++x)
         {
-            int cb = s[x + 128];
-            int cr = s[x + 136];
+            int cb = c[x + 0];
+            int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
             PACK_ARGB(d0[x], s[x + 0]);
             PACK_ARGB(d1[x], s[x + 8]);
@@ -246,28 +247,36 @@ void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessS
 {
     uint8 result[64 * 4];
 
-    state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Cb
-    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Cr
+    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
+    state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
         uint32* d = reinterpret_cast<uint32*>(dest);
-        uint8* s = result + y * 16;
-        uint8* c = result + y * 16 + 128;
+        uint8* s = result + y * 8;
+        uint8* c = result + y * 8 + 128;
 
-        for (int x = 0; x < 8; ++x)
+        for (int x = 0; x < 4; ++x)
         {
             int cb = c[x + 0];
-            int cr = c[x + 8];
+            int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d[0], s[0]);
-            PACK_ARGB(d[1], s[1]);
-            s += 2;
-            d += 2;
+            PACK_ARGB(d[x * 2 + 0], s[x * 2 + 0]);
+            PACK_ARGB(d[x * 2 + 1], s[x * 2 + 1]);
         }
+
+        for (int x = 0; x < 4; ++x)
+        {
+            int cb = c[x + 4];
+            int cr = c[x + 68];
+            COMPUTE_CBCR(cb, cr);
+            PACK_ARGB(d[x * 2 + 8], s[x * 2 + 64]);
+            PACK_ARGB(d[x * 2 + 9], s[x * 2 + 65]);
+        }
+
         dest += stride;
     }
 
@@ -279,33 +288,41 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 {
     uint8 result[64 * 6];
 
-    state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-    state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-    state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
-    state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
-    state->idct(result + 256, 16, data + 256, state->block[4].qt->table); // Cb
-    state->idct(result + 264, 16, data + 320, state->block[5].qt->table); // Cr
+    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
+    state->idct(result + 128, 8, data +  64, state->block[1].qt->table); // Y1
+    state->idct(result +  64, 8, data + 128, state->block[2].qt->table); // Y2
+    state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Y3
+    state->idct(result + 256, 8, data + 256, state->block[4].qt->table); // Cb
+    state->idct(result + 320, 8, data + 320, state->block[5].qt->table); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
         uint32* d0 = reinterpret_cast<uint32*>(dest);
         uint32* d1 = reinterpret_cast<uint32*>(dest + stride);
-        const uint8* s = result + y * 32;
-        const uint8* c = result + y * 16 + 256;
+        const uint8* s = result + y * 16;
+        const uint8* c = result + y * 8 + 256;
 
-        for (int x = 0; x < 8; ++x)
+        for (int x = 0; x < 4; ++x)
         {
             int cb = c[x + 0];
-            int cr = c[x + 8];
+            int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d0[0], s[0]);
-            PACK_ARGB(d0[1], s[1]);
-            PACK_ARGB(d1[0], s[16]);
-            PACK_ARGB(d1[1], s[17]);
-            s += 2;
-            d0 += 2;
-            d1 += 2;
+            PACK_ARGB(d0[x * 2 + 0], s[x * 2 + 0]);
+            PACK_ARGB(d0[x * 2 + 1], s[x * 2 + 1]);
+            PACK_ARGB(d1[x * 2 + 0], s[x * 2 + 8]);
+            PACK_ARGB(d1[x * 2 + 1], s[x * 2 + 9]);
+        }
+
+        for (int x = 0; x < 4; ++x)
+        {
+            int cb = c[x + 4];
+            int cr = c[x + 68];
+            COMPUTE_CBCR(cb, cr);
+            PACK_ARGB(d0[x * 2 + 8], s[x * 2 + 128]);
+            PACK_ARGB(d0[x * 2 + 9], s[x * 2 + 129]);
+            PACK_ARGB(d1[x * 2 + 8], s[x * 2 + 136]);
+            PACK_ARGB(d1[x * 2 + 9], s[x * 2 + 137]);
         }
 
         dest += stride * 2;

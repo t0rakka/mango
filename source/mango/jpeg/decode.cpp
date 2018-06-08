@@ -13,9 +13,24 @@ namespace jpeg
 
     using namespace mango;
 
-	static const int g_zigzagTable[] =
-	{
-        0,  8,  1,  2,  9, 16, 24, 17,
+    static const int g_zigzag_table_standard [] =
+    {
+        0 , 1 , 8 , 16, 9 , 2 , 3 , 10,
+        17, 24, 32, 25, 18, 11, 4 , 5 ,
+        12, 19, 26, 33, 40, 48, 41, 34,
+        27, 20, 13, 6 , 7 , 14, 21, 28,
+        35, 42, 49, 56, 57, 50, 43, 36,
+        29, 22, 15, 23, 30, 37, 44, 51,
+        58, 59, 52, 45, 38, 31, 39, 46,
+        53, 60, 61, 54, 47, 55, 62, 63,
+
+        63, 63, 63, 63, 63, 63, 63, 63,
+        63, 63, 63, 63, 63, 63, 63, 63,
+    };
+
+    static const int g_zigzag_table_variant [] =
+    {
+         0,  8,  1,  2,  9, 16, 24, 17,
         10,  3,  4, 11, 18, 25, 32, 40,
         33, 26, 19, 12,  5,  6, 13, 20,
         27, 34, 41, 48, 56, 49, 42, 35,
@@ -23,9 +38,10 @@ namespace jpeg
         43, 50, 57, 58, 51, 44, 37, 30,
         23, 31, 38, 45, 52, 59, 60, 53,
         46, 39, 47, 54, 61, 62, 55, 63,
-		63, 63, 63, 63, 63, 63, 63, 63,
+
         63, 63, 63, 63, 63, 63, 63, 63,
-	};
+        63, 63, 63, 63, 63, 63, 63, 63,
+    };
 
     // ----------------------------------------------------------------------------
     // markers
@@ -165,10 +181,10 @@ namespace jpeg
         : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
         , blockVector(nullptr)
     {
-        decodeState.zigzagTable = g_zigzagTable;
-
         // configure default implementation
+        decodeState.zigzagTable = g_zigzag_table_variant;
         processState.idct = idct;
+
         processState.process_Y           = process_Y;
         processState.process_YCbCr       = process_YCbCr;
         processState.process_CMYK        = process_CMYK;
@@ -182,13 +198,14 @@ namespace jpeg
 
         uint64 cpuFlags = getCPUFlags();
 
-#if defined(JPEG_ENABLE_SIMD)
-        processState.idct = simd_idct;
+#if defined(JPEG_ENABLE_SIMD) && !defined(JPEG_ENABLE_NEON)
+        decodeState.zigzagTable = g_zigzag_table_variant;
+        processState.idct = idct_simd;
 #endif
 
-#if defined(MANGO_ENABLE_NEON)
-        // HACK: force non-simd idct for ARM NEON
-        processState.idct = idct;
+#if defined(JPEG_ENABLE_SSE2)
+        decodeState.zigzagTable = g_zigzag_table_standard;
+        processState.idct = idct_sse2;
 #endif
 
 #if defined(JPEG_ENABLE_SSE4)
@@ -871,14 +888,14 @@ namespace jpeg
                 case 0:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[g_zigzagTable[i]] = *p++;
+                        table.table[decodeState.zigzagTable[i]] = *p++;
                     }
                     break;
 
                 case 1:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[g_zigzagTable[i]] = uload16be(p);
+                        table.table[decodeState.zigzagTable[i]] = uload16be(p);
                         p += 2;
                     }
                     break;
