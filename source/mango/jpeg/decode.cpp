@@ -206,16 +206,11 @@ namespace jpeg
 #if defined(JPEG_ENABLE_SSE2)
         decodeState.zigzagTable = g_zigzag_table_standard;
         processState.idct = idct_sse2;
-#endif
 
-#if defined(JPEG_ENABLE_SSE4)
-        if (cpuFlags & CPU_SSE4_1)
-        {
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse41;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse41;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse41;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse41;
-        }
+        processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse2;
+        processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse2;
+        processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse2;
+        processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse2;
 #endif
 
         MANGO_UNREFERENCED_PARAMETER(cpuFlags);
