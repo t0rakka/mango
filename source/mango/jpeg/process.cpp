@@ -347,36 +347,39 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     // [License]
     // Public Domain <unlicense.org>
 
-#define JPEG_YCBCR_PREC 12
-#define JPEG_YCBCR_SCALE(x) ((x) << JPEG_YCBCR_PREC)
-#define JPEG_YCBCR_FIXED(x) static_cast<int>(((double)(x) * (double)(1 << JPEG_YCBCR_PREC) + 0.5))
-#define J0 JPEG_YCBCR_FIXED(1.00000),  JPEG_YCBCR_FIXED(1.40200)
-#define J1 JPEG_YCBCR_FIXED(1.00000),  JPEG_YCBCR_FIXED(1.77200)
-#define J2 -JPEG_YCBCR_FIXED(0.34414), -JPEG_YCBCR_FIXED(0.71414)
+#define JPEG_PREC      12
+#define JPEG_SCALE(x)  ((x) << JPEG_PREC)
+#define JPEG_FIXED(x)  int((double(x) * double(1 << JPEG_PREC) + 0.5))
 
-#define jpeg_yycr _mm_shuffle_epi32(constant, 0x00)
-#define jpeg_yycb _mm_shuffle_epi32(constant, 0x55)
-#define jpeg_cbcr _mm_shuffle_epi32(constant, 0xaa)
-#define jpeg_tosigned _mm_shuffle_epi32(constant, 0xff)
+#define sse2_yycr      _mm_shuffle_epi32(constant, 0x00)
+#define sse2_yycb      _mm_shuffle_epi32(constant, 0x55)
+#define sse2_cbcr      _mm_shuffle_epi32(constant, 0xaa)
+#define sse2_tosigned  _mm_shuffle_epi32(constant, 0xff)
 
-    static inline void convert_ycbcr(uint8* dest, __m128i y, __m128i cb, __m128i cr, __m128i constant, __m128i rounding)
+    static const __m128i g_sse2_constant = _mm_setr_epi16(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200),
+                                                          JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200),
+                                                          JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414),
+                                                          -128, -128);
+    static const __m128i g_sse2_rounding = _mm_set1_epi32(1 << (JPEG_PREC - 1));
+
+    static inline void convert_ycbcr_8x1_sse2(uint8* dest, __m128i y, __m128i cb, __m128i cr, __m128i constant, __m128i rounding)
     {
         __m128i zero = _mm_setzero_si128();
 
-        cb = _mm_add_epi16(cb, jpeg_tosigned);
-        cr = _mm_add_epi16(cr, jpeg_tosigned);
+        cb = _mm_add_epi16(cb, sse2_tosigned);
+        cr = _mm_add_epi16(cr, sse2_tosigned);
 
-        __m128i r_l = _mm_madd_epi16(_mm_unpacklo_epi16(y, cr), jpeg_yycr);
-        __m128i r_h = _mm_madd_epi16(_mm_unpackhi_epi16(y, cr), jpeg_yycr);
+        __m128i r_l = _mm_madd_epi16(_mm_unpacklo_epi16(y, cr), sse2_yycr);
+        __m128i r_h = _mm_madd_epi16(_mm_unpackhi_epi16(y, cr), sse2_yycr);
 
-        __m128i b_l = _mm_madd_epi16(_mm_unpacklo_epi16(y, cb), jpeg_yycb);
-        __m128i b_h = _mm_madd_epi16(_mm_unpackhi_epi16(y, cb), jpeg_yycb);
+        __m128i b_l = _mm_madd_epi16(_mm_unpacklo_epi16(y, cb), sse2_yycb);
+        __m128i b_h = _mm_madd_epi16(_mm_unpackhi_epi16(y, cb), sse2_yycb);
 
-        __m128i g_l = _mm_madd_epi16(_mm_unpacklo_epi16(cb, cr), jpeg_cbcr);
-        __m128i g_h = _mm_madd_epi16(_mm_unpackhi_epi16(cb, cr), jpeg_cbcr);
+        __m128i g_l = _mm_madd_epi16(_mm_unpacklo_epi16(cb, cr), sse2_cbcr);
+        __m128i g_h = _mm_madd_epi16(_mm_unpackhi_epi16(cb, cr), sse2_cbcr);
 
-        g_l = _mm_add_epi32(g_l, _mm_slli_epi32(_mm_unpacklo_epi16(y, zero), JPEG_YCBCR_PREC));
-        g_h = _mm_add_epi32(g_h, _mm_slli_epi32(_mm_unpackhi_epi16(y, zero), JPEG_YCBCR_PREC));
+        g_l = _mm_add_epi32(g_l, _mm_slli_epi32(_mm_unpacklo_epi16(y, zero), JPEG_PREC));
+        g_h = _mm_add_epi32(g_h, _mm_slli_epi32(_mm_unpackhi_epi16(y, zero), JPEG_PREC));
 
         r_l = _mm_add_epi32(r_l, rounding);
         r_h = _mm_add_epi32(r_h, rounding);
@@ -387,14 +390,14 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         g_l = _mm_add_epi32(g_l, rounding);
         g_h = _mm_add_epi32(g_h, rounding);
 
-        r_l = _mm_srai_epi32(r_l, JPEG_YCBCR_PREC);
-        r_h = _mm_srai_epi32(r_h, JPEG_YCBCR_PREC);
+        r_l = _mm_srai_epi32(r_l, JPEG_PREC);
+        r_h = _mm_srai_epi32(r_h, JPEG_PREC);
 
-        b_l = _mm_srai_epi32(b_l, JPEG_YCBCR_PREC);
-        b_h = _mm_srai_epi32(b_h, JPEG_YCBCR_PREC);
+        b_l = _mm_srai_epi32(b_l, JPEG_PREC);
+        b_h = _mm_srai_epi32(b_h, JPEG_PREC);
 
-        g_l = _mm_srai_epi32(g_l, JPEG_YCBCR_PREC);
-        g_h = _mm_srai_epi32(g_h, JPEG_YCBCR_PREC);
+        g_l = _mm_srai_epi32(g_l, JPEG_PREC);
+        g_h = _mm_srai_epi32(g_h, JPEG_PREC);
 
         __m128i r = _mm_packs_epi32(r_l, r_h);
         __m128i g = _mm_packs_epi32(g_l, g_h);
@@ -410,8 +413,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         __m128i bgra0 = _mm_unpacklo_epi16(bg, ra);
         __m128i bgra1 = _mm_unpackhi_epi16(bg, ra);
 
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest +  0), bgra0);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 16), bgra1);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), bgra0);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 16), bgra1);
     }
 
     void process_YCbCr_8x8_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
@@ -423,8 +426,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
 
         // color conversion
-        const __m128i rounding = _mm_set1_epi32(1 << (JPEG_YCBCR_PREC - 1));
-        const __m128i constant = _mm_setr_epi16(J0, J1, J2, -128, -128);
+        const __m128i constant = g_sse2_constant;
+        const __m128i rounding = g_sse2_rounding;
 
         for (int y = 0; y < 4; ++y)
         {
@@ -438,10 +441,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             __m128i cb1 = _mm_unpackhi_epi8(cb, zero);
             __m128i cr1 = _mm_unpackhi_epi8(cr, zero);
 
-            convert_ycbcr(dest, _mm_unpacklo_epi8(yy, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest, _mm_unpacklo_epi8(yy, zero), cb0, cr0, constant, rounding);
             dest += stride;
 
-            convert_ycbcr(dest, _mm_unpackhi_epi8(yy, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest, _mm_unpackhi_epi8(yy, zero), cb1, cr1, constant, rounding);
             dest += stride;
         }
 
@@ -459,8 +462,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
 
         // color conversion
-        const __m128i rounding = _mm_set1_epi32(1 << (JPEG_YCBCR_PREC - 1));
-        const __m128i constant = _mm_setr_epi16(J0, J1, J2, -128, -128);
+        const __m128i constant = g_sse2_constant;
+        const __m128i rounding = g_sse2_rounding;
 
         for (int y = 0; y < 4; ++y)
         {
@@ -475,16 +478,16 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             __m128i cb1 = _mm_unpackhi_epi8(cb, zero);
             __m128i cr1 = _mm_unpackhi_epi8(cr, zero);
 
-            convert_ycbcr(dest, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
             dest += stride;
 
-            convert_ycbcr(dest, _mm_unpackhi_epi8(y0, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest, _mm_unpackhi_epi8(y0, zero), cb0, cr0, constant, rounding);
             dest += stride;
 
-            convert_ycbcr(dest, _mm_unpacklo_epi8(y1, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest, _mm_unpacklo_epi8(y1, zero), cb1, cr1, constant, rounding);
             dest += stride;
             
-            convert_ycbcr(dest, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
             dest += stride;
         }
 
@@ -502,8 +505,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         state->idct(result + 192,  8, data + 192, state->block[3].qt->table); // Cr
         
         // color conversion
-        const __m128i rounding = _mm_set1_epi32(1 << (JPEG_YCBCR_PREC - 1));
-        const __m128i constant = _mm_setr_epi16(J0, J1, J2, -128, -128);
+        const __m128i constant = g_sse2_constant;
+        const __m128i rounding = g_sse2_rounding;
 
         for (int y = 0; y < 4; ++y)
         {
@@ -520,24 +523,26 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
             cb0 = _mm_unpacklo_epi8(cb, cb);
             cr0 = _mm_unpacklo_epi8(cr, cr);
+
             cb1 = _mm_unpackhi_epi8(cb0, zero);
             cr1 = _mm_unpackhi_epi8(cr0, zero);
             cb0 = _mm_unpacklo_epi8(cb0, zero);
             cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-            convert_ycbcr(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
-            convert_ycbcr(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, constant, rounding);
             dest += stride;
 
             cb0 = _mm_unpackhi_epi8(cb, cb);
             cr0 = _mm_unpackhi_epi8(cr, cr);
+
             cb1 = _mm_unpackhi_epi8(cb0, zero);
             cr1 = _mm_unpackhi_epi8(cr0, zero);
             cb0 = _mm_unpacklo_epi8(cb0, zero);
             cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-            convert_ycbcr(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, constant, rounding);
-            convert_ycbcr(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
             dest += stride;
         }
 
@@ -557,8 +562,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         state->idct(result + 320,  8, data + 320, state->block[5].qt->table); // Cr
 
         // color conversion
-        const __m128i rounding = _mm_set1_epi32(1 << (JPEG_YCBCR_PREC - 1));
-        const __m128i constant = _mm_setr_epi16(J0, J1, J2, -128, -128);
+        const __m128i constant = g_sse2_constant;
+        const __m128i rounding = g_sse2_rounding;
 
         for (int y = 0; y < 4; ++y)
         {
@@ -577,32 +582,34 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
             cb0 = _mm_unpacklo_epi8(cb, cb);
             cr0 = _mm_unpacklo_epi8(cr, cr);
+
             cb1 = _mm_unpackhi_epi8(cb0, zero);
             cr1 = _mm_unpackhi_epi8(cr0, zero);
             cb0 = _mm_unpacklo_epi8(cb0, zero);
             cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-            convert_ycbcr(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
-            convert_ycbcr(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, constant, rounding);
             dest += stride;
 
-            convert_ycbcr(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, constant, rounding);
-            convert_ycbcr(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
             dest += stride;
 
             cb0 = _mm_unpackhi_epi8(cb, cb);
             cr0 = _mm_unpackhi_epi8(cr, cr);
+
             cb1 = _mm_unpackhi_epi8(cb0, zero);
             cr1 = _mm_unpackhi_epi8(cr0, zero);
             cb0 = _mm_unpacklo_epi8(cb0, zero);
             cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-            convert_ycbcr(dest +  0, _mm_unpacklo_epi8(y2, zero), cb0, cr0, constant, rounding);
-            convert_ycbcr(dest + 32, _mm_unpackhi_epi8(y2, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y2, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y2, zero), cb1, cr1, constant, rounding);
             dest += stride;
 
-            convert_ycbcr(dest +  0, _mm_unpacklo_epi8(y3, zero), cb0, cr0, constant, rounding);
-            convert_ycbcr(dest + 32, _mm_unpackhi_epi8(y3, zero), cb1, cr1, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y3, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y3, zero), cb1, cr1, constant, rounding);
             dest += stride;
         }
 
@@ -611,5 +618,270 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     }
 
 #endif // JPEG_ENABLE_SSE2
+
+#if defined(JPEG_ENABLE_AVX2)
+
+    // ------------------------------------------------------------------------------------------------
+    // AVX2 implementation
+    // ------------------------------------------------------------------------------------------------
+
+    #define avx2_yycr      _mm256_shuffle_epi32(constant, 0x00)
+    #define avx2_yycb      _mm256_shuffle_epi32(constant, 0x55)
+    #define avx2_cbcr      _mm256_shuffle_epi32(constant, 0xaa)
+    //#define avx2_tosigned  _mm256_shuffle_epi32(constant, 0xff)
+
+    static const __m256i g_avx2_constant = _mm256_setr_epi16(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200),
+                                                             JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200),
+                                                             JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414),
+                                                             -128, -128,
+                                                             JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200),
+                                                             JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200),
+                                                             JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414),
+                                                             -128, -128);
+    static const __m256i g_avx2_rounding = _mm256_set1_epi32(1 << (JPEG_PREC - 1));
+
+    static inline void convert_ycbcr_8x1_avx2(uint8* dest, __m128i y, __m128i cb, __m128i cr, __m256i constant, __m256i rounding)
+    {
+        __m128i zero = _mm_setzero_si128();
+        __m128i bias = _mm_set1_epi16(-128);
+
+        cb = _mm_add_epi16(cb, bias);
+        cr = _mm_add_epi16(cr, bias);
+
+        // TODO: optimize
+        __m256i yy00 = _mm256_setr_m128i(_mm_unpacklo_epi16(y, zero), _mm_unpackhi_epi16(y, zero));
+        __m256i yycr = _mm256_setr_m128i(_mm_unpacklo_epi16(y, cr), _mm_unpackhi_epi16(y, cr));
+        __m256i yycb = _mm256_setr_m128i(_mm_unpacklo_epi16(y, cb), _mm_unpackhi_epi16(y, cb));
+        __m256i cbcr2 = _mm256_setr_m128i(_mm_unpacklo_epi16(cb, cr), _mm_unpackhi_epi16(cb, cr));
+
+        __m256i r = _mm256_madd_epi16(yycr, avx2_yycr);
+        __m256i b = _mm256_madd_epi16(yycb, avx2_yycb);
+        __m256i g = _mm256_madd_epi16(cbcr2, avx2_cbcr);
+        __m256i a = _mm256_cmpeq_epi8(r, r);
+
+        g = _mm256_add_epi32(g, _mm256_slli_epi32(yy00, JPEG_PREC));
+        r = _mm256_add_epi32(r, rounding);
+        b = _mm256_add_epi32(b, rounding);
+        g = _mm256_add_epi32(g, rounding);
+        r = _mm256_srai_epi32(r, JPEG_PREC);
+        b = _mm256_srai_epi32(b, JPEG_PREC);
+        g = _mm256_srai_epi32(g, JPEG_PREC);
+
+        __m256i bg0 = _mm256_unpacklo_epi32(b, g);
+        __m256i ra0 = _mm256_unpacklo_epi32(r, a);
+        __m256i bg1 = _mm256_unpackhi_epi32(b, g);
+        __m256i ra1 = _mm256_unpackhi_epi32(r, a);
+
+        __m256i bg = _mm256_packs_epi32(bg0, bg1);
+        __m256i ra = _mm256_packs_epi32(ra0, ra1);
+        bg = _mm256_packus_epi16(bg, bg);
+        ra = _mm256_packus_epi16(ra, ra);
+
+        __m256i bgra = _mm256_unpacklo_epi16(bg, ra);
+
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest + 0), bgra);
+    }
+
+    void process_YCbCr_8x8_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        uint8 result[64 * 3];
+        
+        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y
+        state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Cb
+        state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
+
+        // color conversion
+        const __m256i constant = g_avx2_constant;
+        const __m256i rounding = g_avx2_rounding;
+
+        for (int y = 0; y < 4; ++y)
+        {
+            __m128i yy = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
+            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
+            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
+            
+            __m128i zero = _mm_setzero_si128();
+            __m128i cb0 = _mm_unpacklo_epi8(cb, zero);
+            __m128i cr0 = _mm_unpacklo_epi8(cr, zero);
+            __m128i cb1 = _mm_unpackhi_epi8(cb, zero);
+            __m128i cr1 = _mm_unpackhi_epi8(cr, zero);
+
+            convert_ycbcr_8x1_avx2(dest, _mm_unpacklo_epi8(yy, zero), cb0, cr0, constant, rounding);
+            dest += stride;
+
+            convert_ycbcr_8x1_avx2(dest, _mm_unpackhi_epi8(yy, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+        }
+
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
+    
+    void process_YCbCr_8x16_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        uint8 result[64 * 4];
+        
+        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
+        state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
+        state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
+        state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
+
+        // color conversion
+        const __m256i constant = g_avx2_constant;
+        const __m256i rounding = g_avx2_rounding;
+
+        for (int y = 0; y < 4; ++y)
+        {
+            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
+            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
+            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
+            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
+            
+            __m128i zero = _mm_setzero_si128();
+            __m128i cb0 = _mm_unpacklo_epi8(cb, zero);
+            __m128i cr0 = _mm_unpacklo_epi8(cr, zero);
+            __m128i cb1 = _mm_unpackhi_epi8(cb, zero);
+            __m128i cr1 = _mm_unpackhi_epi8(cr, zero);
+            
+            convert_ycbcr_8x1_avx2(dest, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
+            dest += stride;
+            
+            convert_ycbcr_8x1_avx2(dest, _mm_unpackhi_epi8(y0, zero), cb0, cr0, constant, rounding);
+            dest += stride;
+            
+            convert_ycbcr_8x1_avx2(dest, _mm_unpacklo_epi8(y1, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+            
+            convert_ycbcr_8x1_avx2(dest, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+        }
+
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
+    
+    void process_YCbCr_16x8_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        uint8 result[64 * 4];
+        
+        state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+        state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+        state->idct(result + 128,  8, data + 128, state->block[2].qt->table); // Cb
+        state->idct(result + 192,  8, data + 192, state->block[3].qt->table); // Cr
+
+        // color conversion
+        const __m256i constant = g_avx2_constant;
+        const __m256i rounding = g_avx2_rounding;
+
+        for (int y = 0; y < 4; ++y)
+        {
+            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
+            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
+            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
+            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
+            
+            __m128i zero = _mm_setzero_si128();
+            __m128i cb0;
+            __m128i cb1;
+            __m128i cr0;
+            __m128i cr1;
+            
+            cb0 = _mm_unpacklo_epi8(cb, cb);
+            cr0 = _mm_unpacklo_epi8(cr, cr);
+            
+            cb1 = _mm_unpackhi_epi8(cb0, zero);
+            cr1 = _mm_unpackhi_epi8(cr0, zero);
+            cb0 = _mm_unpacklo_epi8(cb0, zero);
+            cr0 = _mm_unpacklo_epi8(cr0, zero);
+            
+            convert_ycbcr_8x1_avx2(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_avx2(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+            
+            cb0 = _mm_unpackhi_epi8(cb, cb);
+            cr0 = _mm_unpackhi_epi8(cr, cr);
+            
+            cb1 = _mm_unpackhi_epi8(cb0, zero);
+            cr1 = _mm_unpackhi_epi8(cr0, zero);
+            cb0 = _mm_unpacklo_epi8(cb0, zero);
+            cr0 = _mm_unpacklo_epi8(cr0, zero);
+            
+            convert_ycbcr_8x1_avx2(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_avx2(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+        }
+
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
+    
+    void process_YCbCr_16x16_avx2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        uint8 result[64 * 6];
+        
+        state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
+        state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
+        state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
+        state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
+        state->idct(result + 256,  8, data + 256, state->block[4].qt->table); // Cb
+        state->idct(result + 320,  8, data + 320, state->block[5].qt->table); // Cr
+
+        // color conversion
+        const __m256i constant = g_avx2_constant;
+        const __m256i rounding = g_avx2_rounding;
+        
+        for (int y = 0; y < 4; ++y)
+        {
+            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 0));
+            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 16));
+            __m128i y2 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 32));
+            __m128i y3 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 48));
+            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 256));
+            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 320));
+            
+            __m128i zero = _mm_setzero_si128();
+            __m128i cb0;
+            __m128i cb1;
+            __m128i cr0;
+            __m128i cr1;
+            
+            cb0 = _mm_unpacklo_epi8(cb, cb);
+            cr0 = _mm_unpacklo_epi8(cr, cr);
+            
+            cb1 = _mm_unpackhi_epi8(cb0, zero);
+            cr1 = _mm_unpackhi_epi8(cr0, zero);
+            cb0 = _mm_unpacklo_epi8(cb0, zero);
+            cr0 = _mm_unpacklo_epi8(cr0, zero);
+            
+            convert_ycbcr_8x1_avx2(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_avx2(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+            
+            convert_ycbcr_8x1_avx2(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_avx2(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+            
+            cb0 = _mm_unpackhi_epi8(cb, cb);
+            cr0 = _mm_unpackhi_epi8(cr, cr);
+            
+            cb1 = _mm_unpackhi_epi8(cb0, zero);
+            cr1 = _mm_unpackhi_epi8(cr0, zero);
+            cb0 = _mm_unpacklo_epi8(cb0, zero);
+            cr0 = _mm_unpacklo_epi8(cr0, zero);
+            
+            convert_ycbcr_8x1_avx2(dest +  0, _mm_unpacklo_epi8(y2, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_avx2(dest + 32, _mm_unpackhi_epi8(y2, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+            
+            convert_ycbcr_8x1_avx2(dest +  0, _mm_unpacklo_epi8(y3, zero), cb0, cr0, constant, rounding);
+            convert_ycbcr_8x1_avx2(dest + 32, _mm_unpackhi_epi8(y3, zero), cb1, cr1, constant, rounding);
+            dest += stride;
+        }
+
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
+
+#endif // JPEG_ENABLE_AVX2
 
 } // namespace jpeg

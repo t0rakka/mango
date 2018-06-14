@@ -213,6 +213,16 @@ namespace jpeg
         processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse2;
 #endif
 
+#if defined(JPEG_ENABLE_AVX2)
+        if (cpuFlags & CPU_AVX2)
+        {
+            processState.process_YCbCr_8x8   = process_YCbCr_8x8_avx2;
+            processState.process_YCbCr_8x16  = process_YCbCr_8x16_avx2;
+            processState.process_YCbCr_16x8  = process_YCbCr_16x8_avx2;
+            processState.process_YCbCr_16x16 = process_YCbCr_16x16_avx2;
+        }
+#endif
+
         MANGO_UNREFERENCED_PARAMETER(cpuFlags);
 
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)

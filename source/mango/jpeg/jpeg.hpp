@@ -29,8 +29,8 @@
         #define JPEG_ENABLE_SSE2
     #endif
 
-    #if defined(MANGO_ENABLE_SSE4_1)
-        #define JPEG_ENABLE_SSE4
+    #if defined(MANGO_ENABLE_AVX2)
+        #define JPEG_ENABLE_AVX2
     #endif
 
     #if defined(MANGO_ENABLE_NEON)
@@ -433,6 +433,13 @@ namespace jpeg
     void process_YCbCr_8x16_sse2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x8_sse2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x16_sse2  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+#endif
+
+#if defined(JPEG_ENABLE_AVX2)
+    void process_YCbCr_8x8_avx2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16_avx2  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 #endif
 
 	void EncodeImage(Stream& stream, const Surface& surface, float quality);
