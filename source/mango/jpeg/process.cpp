@@ -669,12 +669,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         __m256i yy00 = _mm256_setr_m128i(_mm_unpacklo_epi16(y, zero), _mm_unpackhi_epi16(y, zero));
         __m256i yycr = _mm256_setr_m128i(_mm_unpacklo_epi16(y, cr), _mm_unpackhi_epi16(y, cr));
         __m256i yycb = _mm256_setr_m128i(_mm_unpacklo_epi16(y, cb), _mm_unpackhi_epi16(y, cb));
-        __m256i cbcr2 = _mm256_setr_m128i(_mm_unpacklo_epi16(cb, cr), _mm_unpackhi_epi16(cb, cr));
+        __m256i cbcr = _mm256_setr_m128i(_mm_unpacklo_epi16(cb, cr), _mm_unpackhi_epi16(cb, cr));
 
         __m256i r = _mm256_madd_epi16(yycr, s0);
         __m256i b = _mm256_madd_epi16(yycb, s1);
-        __m256i g = _mm256_madd_epi16(cbcr2, s2);
-        __m256i a = _mm256_cmpeq_epi8(r, r);
+        __m256i g = _mm256_madd_epi16(cbcr, s2);
+        __m256i a = _mm256_unpacklo_epi16(_mm256_cmpeq_epi8(r, r), _mm256_setzero_si256());
 
         g = _mm256_add_epi32(g, _mm256_slli_epi32(yy00, JPEG_PREC));
         r = _mm256_add_epi32(r, rounding);
