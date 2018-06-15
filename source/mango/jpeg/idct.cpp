@@ -268,16 +268,8 @@ namespace jpeg
 
     // Derived from jidctint's `jpeg_idct_islow`
     constexpr int JPEG_IDCT_PREC = 12;
-
-    constexpr int JPEG_IDCT_HALF(int precision)
-    {
-        return (1 << ((precision) - 1));
-    }
-
-    constexpr int JPEG_IDCT_FIXED(double x)
-    {
-        return static_cast<int>(((double)(x) * (double)(1 << JPEG_IDCT_PREC) + 0.5));
-    }
+    constexpr int JPEG_IDCT_HALF(int precision) { return (1 << ((precision) - 1)); }
+    constexpr int JPEG_IDCT_FIXED(double x) { return int((x * double(1 << JPEG_IDCT_PREC) + 0.5)); }
 
     constexpr int JPEG_IDCT_M_2_562915447 = JPEG_IDCT_FIXED(-2.562915447);
     constexpr int JPEG_IDCT_M_1_961570560 = JPEG_IDCT_FIXED(-1.961570560);
