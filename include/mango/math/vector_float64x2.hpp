@@ -259,6 +259,12 @@ namespace mango
         return a + (b - a) * factor;
     }
 
+    template <int x, int y>
+    static inline float64x2 shuffle(float64x2 a, float64x2 b)
+    {
+        return simd::shuffle<x, y>(a, b);
+    }
+
     // ------------------------------------------------------------------
 	// bitwise operators
     // ------------------------------------------------------------------

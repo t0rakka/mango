@@ -674,6 +674,22 @@ namespace mango
         return simd::hmax(v);
     }
 
+    template <int x, int y, int z, int w>
+    static inline float32x4 shuffle(float32x4 a, float32x4 b)
+    {
+        return simd::shuffle<x, y, z, w>(a, b);
+    }
+
+    static inline float32x4 movelh(float32x4 a, float32x4 b)
+    {
+        return simd::movelh(a, b);
+    }
+    
+    static inline float32x4 movehl(float32x4 a, float32x4 b)
+    {
+        return simd::movehl(a, b);
+    }
+
     // ------------------------------------------------------------------
     // trigonometric functions
     // ------------------------------------------------------------------
