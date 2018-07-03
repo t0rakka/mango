@@ -193,89 +193,114 @@ namespace mango
         return result;
     }
 
+    static inline float4x4 inverse(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    {
+        // Original Intel SSE code (C) Rune Stubbe. All rights reserved.
+        // Modified to use our SIMD abstraction so that compiles for more architectures.
+        // ~15% faster than our inverseTranspose() + transpose() method we used here earlier.
+        float32x4 r0y_r1y_r0x_r1x = movelh(m1, m0);
+        float32x4 r0z_r1z_r0w_r1w = movelh(m2, m3);
+        float32x4 r2y_r3y_r2x_r3x = movehl(m0, m1);
+        float32x4 r2z_r3z_r2w_r3w = movehl(m3, m2);
+
+        float32x4 r1y_r2y_r1x_r2x = shuffle<1, 2, 1, 2>(m1, m0);
+        float32x4 r1z_r2z_r1w_r2w = shuffle<1, 2, 1, 2>(m2, m3);
+        float32x4 r3y_r0y_r3x_r0x = shuffle<3, 0, 3, 0>(m1, m0);
+        float32x4 r3z_r0z_r3w_r0w = shuffle<3, 0, 3, 0>(m2, m3);
+
+        float32x4 r0_wzyx = shuffle<2, 0, 0, 2>(r0z_r1z_r0w_r1w, r0y_r1y_r0x_r1x);
+        float32x4 r1_wzyx = shuffle<3, 1, 1, 3>(r0z_r1z_r0w_r1w, r0y_r1y_r0x_r1x);
+        float32x4 r2_wzyx = shuffle<2, 0, 0, 2>(r2z_r3z_r2w_r3w, r2y_r3y_r2x_r3x);
+        float32x4 r3_wzyx = shuffle<3, 1, 1, 3>(r2z_r3z_r2w_r3w, r2y_r3y_r2x_r3x);
+        float32x4 r0_xyzw = shuffle<2, 0, 0, 2>(r0y_r1y_r0x_r1x, r0z_r1z_r0w_r1w);
+        
+        float32x4 inner12_23 = r1y_r2y_r1x_r2x * r2z_r3z_r2w_r3w - r1z_r2z_r1w_r2w * r2y_r3y_r2x_r3x;
+        float32x4 inner02_13 = r0y_r1y_r0x_r1x * r2z_r3z_r2w_r3w - r0z_r1z_r0w_r1w * r2y_r3y_r2x_r3x;
+        float32x4 inner30_01 = r3z_r0z_r3w_r0w * r0y_r1y_r0x_r1x - r3y_r0y_r3x_r0x * r0z_r1z_r0w_r1w;
+        
+        float32x4 inner12 = shuffle<0, 2, 2, 0>(inner12_23, inner12_23);
+        float32x4 inner23 = shuffle<1, 3, 3, 1>(inner12_23, inner12_23);
+        
+        float32x4 inner02 = shuffle<0, 2, 2, 0>(inner02_13, inner02_13);
+        float32x4 inner13 = shuffle<1, 3, 3, 1>(inner02_13, inner02_13);
+        
+        float32x4 minors0 = r3_wzyx * inner12 - r2_wzyx * inner13 + r1_wzyx * inner23;
+        
+        float32x4 denom = r0_xyzw * minors0;
+        
+        denom += shuffle<1, 0, 3, 2>(denom, denom); // x+y        x+y            z+w            z+w
+        denom -= shuffle<2, 2, 0, 0>(denom, denom); // x+y-z-w    x+y-z-w        z+w-x-y        z+w-x-y
+
+        float32x4 rcp_denom_ppnn = 1.0f / denom;
+
+        float32x4 inner30 = shuffle<0, 2, 2, 0>(inner30_01, inner30_01);
+        float32x4 inner01 = shuffle<1, 3, 3, 1>(inner30_01, inner30_01);
+
+        float32x4 minors1 = r2_wzyx * inner30 - r0_wzyx * inner23 - r3_wzyx * inner02;
+        float32x4 minors2 = r0_wzyx * inner13 - r1_wzyx * inner30 - r3_wzyx * inner01;
+        float32x4 minors3 = r1_wzyx * inner02 - r0_wzyx * inner12 + r2_wzyx * inner01;
+
+        float4x4 result;
+        result[0] = minors0 * rcp_denom_ppnn;
+        result[1] = minors1 * rcp_denom_ppnn;
+        result[2] = minors2 * rcp_denom_ppnn;
+        result[3] = minors3 * rcp_denom_ppnn;
+        return result;
+    }
+
+    static inline float4x4 inverseTranspose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    {
+        const float32x4 m0zwyz = m0.zwyz;
+        const float32x4 m0wzwy = m0.wzwy;
+        const float32x4 m1zwyz = m1.zwyz;
+        const float32x4 m1wzwy = m1.wzwy;
+        const float32x4 m2zwyz = m2.zwyz;
+        const float32x4 m2wzwy = m2.wzwy;
+        const float32x4 m3zwyz = m3.zwyz;
+        const float32x4 m3wzwy = m3.wzwy;
+        const float32x4 m0yxxx = m0.yxxx;
+        const float32x4 m1yxxx = m1.yxxx;
+        const float32x4 m2yxxx = m2.yxxx;
+        const float32x4 m3yxxx = m3.yxxx;
+
+        const float32x4 v0 = msub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
+        const float32x4 v1 = msub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);
+        const float32x4 v2 = msub(m0wzwy * m3zwyz, m0zwyz, m3wzwy);
+        const float32x4 v3 = msub(m1wzwy * m2zwyz, m1zwyz, m2wzwy);
+        const float32x4 v4 = msub(m1zwyz * m3wzwy, m1wzwy, m3zwyz);
+        const float32x4 v5 = msub(m2zwyz * m3wzwy, m2wzwy, m3zwyz);
+        const float32x4 v6 = msub(m2wzwy * m3zwyz, m2zwyz, m3wzwy);
+
+        float32x4 a = m1yxxx * v5;
+        float32x4 b = m0yxxx * v6;
+        float32x4 c = m0yxxx * v4;
+        float32x4 d = m0yxxx * v3;
+        a = msub(a, m2yxxx, v4);
+        a = msub(a, m3yxxx, v3);
+        b = msub(b, m2yxxx, v2);
+        b = msub(b, m3yxxx, v1);
+        c = madd(c, m1yxxx, v2);
+        c = msub(c, m3yxxx, v0);
+        d = madd(d, m1yxxx, v1);
+        d = madd(d, m2yxxx, v0);
+
+        float32x4 det = 1.0f / dot(m0, a);
+        return float4x4(a * det, b * det, c * det, d * det);
+    }
+
     static inline float4x4 transpose(const float4x4& m)
     {
         return transpose(m[0], m[1], m[2], m[3]);
     }
-
+    
     static inline float4x4 inverse(const float4x4& m)
     {
-        const float32x4 m0zwyz = m[0].zwyz;
-        const float32x4 m0wzwy = m[0].wzwy;
-        const float32x4 m1zwyz = m[1].zwyz;
-        const float32x4 m1wzwy = m[1].wzwy;
-        const float32x4 m2zwyz = m[2].zwyz;
-        const float32x4 m2wzwy = m[2].wzwy;
-        const float32x4 m3zwyz = m[3].zwyz;
-        const float32x4 m3wzwy = m[3].wzwy;
-        const float32x4 m0yxxx = m[0].yxxx;
-        const float32x4 m1yxxx = m[1].yxxx;
-        const float32x4 m2yxxx = m[2].yxxx;
-        const float32x4 m3yxxx = m[3].yxxx;
-
-        const float32x4 v0 = msub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
-        const float32x4 v1 = msub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);
-        const float32x4 v2 = msub(m0wzwy * m3zwyz, m0zwyz, m3wzwy);
-        const float32x4 v3 = msub(m1wzwy * m2zwyz, m1zwyz, m2wzwy);
-        const float32x4 v4 = msub(m1zwyz * m3wzwy, m1wzwy, m3zwyz);
-        const float32x4 v5 = msub(m2zwyz * m3wzwy, m2wzwy, m3zwyz);
-        const float32x4 v6 = msub(m2wzwy * m3zwyz, m2zwyz, m3wzwy);
-
-        float32x4 a = m1yxxx * v5;
-        float32x4 b = m0yxxx * v6;
-        float32x4 c = m0yxxx * v4;
-        float32x4 d = m0yxxx * v3;
-        a = msub(a, m2yxxx, v4);
-        a = msub(a, m3yxxx, v3);
-        b = msub(b, m2yxxx, v2);
-        b = msub(b, m3yxxx, v1);
-        c = madd(c, m1yxxx, v2);
-        c = msub(c, m3yxxx, v0);
-        d = madd(d, m1yxxx, v1);
-        d = madd(d, m2yxxx, v0);
-
-        float32x4 det = 1.0f / dot(m[0], a);
-        return transpose(a * det, b * det, c * det, d * det);
+        return inverse(m[0], m[1], m[2], m[3]);
     }
 
     static inline float4x4 inverseTranspose(const float4x4& m)
     {
-        const float32x4 m0zwyz = m[0].zwyz;
-        const float32x4 m0wzwy = m[0].wzwy;
-        const float32x4 m1zwyz = m[1].zwyz;
-        const float32x4 m1wzwy = m[1].wzwy;
-        const float32x4 m2zwyz = m[2].zwyz;
-        const float32x4 m2wzwy = m[2].wzwy;
-        const float32x4 m3zwyz = m[3].zwyz;
-        const float32x4 m3wzwy = m[3].wzwy;
-        const float32x4 m0yxxx = m[0].yxxx;
-        const float32x4 m1yxxx = m[1].yxxx;
-        const float32x4 m2yxxx = m[2].yxxx;
-        const float32x4 m3yxxx = m[3].yxxx;
-
-        const float32x4 v0 = msub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
-        const float32x4 v1 = msub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);
-        const float32x4 v2 = msub(m0wzwy * m3zwyz, m0zwyz, m3wzwy);
-        const float32x4 v3 = msub(m1wzwy * m2zwyz, m1zwyz, m2wzwy);
-        const float32x4 v4 = msub(m1zwyz * m3wzwy, m1wzwy, m3zwyz);
-        const float32x4 v5 = msub(m2zwyz * m3wzwy, m2wzwy, m3zwyz);
-        const float32x4 v6 = msub(m2wzwy * m3zwyz, m2zwyz, m3wzwy);
-
-        float32x4 a = m1yxxx * v5;
-        float32x4 b = m0yxxx * v6;
-        float32x4 c = m0yxxx * v4;
-        float32x4 d = m0yxxx * v3;
-        a = msub(a, m2yxxx, v4);
-        a = msub(a, m3yxxx, v3);
-        b = msub(b, m2yxxx, v2);
-        b = msub(b, m3yxxx, v1);
-        c = madd(c, m1yxxx, v2);
-        c = msub(c, m3yxxx, v0);
-        d = madd(d, m1yxxx, v1);
-        d = madd(d, m2yxxx, v0);
-
-        float32x4 det = 1.0f / dot(m[0], a);
-        return float4x4(a * det, b * det, c * det, d * det);
+        return inverseTranspose(m[0], m[1], m[2], m[3]);
     }
 
     float4x4 normalize(const float4x4& m);
