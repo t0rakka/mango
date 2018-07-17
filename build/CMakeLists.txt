@@ -100,13 +100,13 @@ FILE(GLOB LZO "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.h" "${CMAKE_
 FILE(GLOB MINIZ "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/miniz/miniz.cpp")
 FILE(GLOB UNRAR "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
 FILE(GLOB_RECURSE ZSTD "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c")
-FILE(GLOB_RECURSE ZPNG "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.cpp")
+FILE(GLOB_RECURSE ZPNG "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp")
 
 SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG})
 
 ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp"
     ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
-    ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD}
+    ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG}
     ${GUI}
     ${OPENGL}
     ${VULKAN})
