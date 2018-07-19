@@ -15,7 +15,69 @@ namespace
     using namespace mango;
 
     // ----------------------------------------------------------------------------
-    // prototype
+    // prototype.2018.07
+    // ----------------------------------------------------------------------------
+
+#if 0
+
+    // accelerated fragment sizes:
+    // 16 -> 16
+    // 16 -> 32
+    // 32 -> 16
+    // 32 -> 32
+    //
+    // accelerated component sizes:
+    // 1..12 bits
+
+    void foo()
+    {
+
+        // 8 bit read4
+        uint32x4 sample(source[0], source[1], source[2], source[3]);
+        uint32x4 r = (sample & mask[0]) >> offset[0];
+        uint32x4 g = (sample & mask[1]) >> offset[1];
+        uint32x4 b = (sample & mask[2]) >> offset[2];
+        uint32x4 a = (sample & mask[3]) >> offset[3];
+        source += 4;
+
+        // 16 bit read4
+        uint32x4 sample(source[0], source[1], source[2], source[3]);
+        uint32x4 r = (sample & mask[0]) >> offset[0];
+        uint32x4 g = (sample & mask[1]) >> offset[1];
+        uint32x4 b = (sample & mask[2]) >> offset[2];
+        uint32x4 a = (sample & mask[3]) >> offset[3];
+        source += 4;
+
+        // 24 bit read4
+        uint32x4 r(source[0], source[3], source[6], source[9]);
+        uint32x4 g(source[1], source[4], source[7], source[10]);
+        uint32x4 b(source[2], source[5], source[8], source[11]);
+        uint32x4 a(0xff);
+        source += 12;
+
+        // 32 bit read4
+        uint32x4 sample = source[x];
+        uint32x4 r = (sample & mask[0]) >> offset[0];
+        uint32x4 g = (sample & mask[1]) >> offset[1];
+        uint32x4 b = (sample & mask[2]) >> offset[2];
+        uint32x4 a = (sample & mask[3]) >> offset[3];
+
+        for (int x = 0; x < width; ++x)
+        {
+            uint32x4 sample = source[x];
+            uint32x4 r = (sample & mask[0]) >> offset[0];
+            uint32x4 g = (sample & mask[1]) >> offset[1];
+            uint32x4 b = (sample & mask[2]) >> offset[2];
+            uint32x4 a = (sample & mask[3]) >> offset[3];
+            // hocus-pocus ... simsala-bim...
+            uint32x4 color = (a << offset[3]) | (b << offset[2]) | (g << offset[1]) | (r << offset[0]);
+            dest[x] = color;
+        }
+    }
+#endif
+
+    // ----------------------------------------------------------------------------
+    // prototype.xxxx.xx
     // ----------------------------------------------------------------------------
 
 #if 0
