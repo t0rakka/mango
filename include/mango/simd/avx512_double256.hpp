@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -17,13 +17,7 @@ namespace simd {
     static inline float64x4 shuffle(float64x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        const int perm = ((w & 1) << 3) | ((z & 1) << 2) | ((y & 1) << 1) | (x & 1);
-        const int mask = ((w & 2) << 2) | ((z & 2) << 1) | (y & 2) | ((x & 2) >> 1);
-        __m256d xyxy = _mm256_permute2f128_pd(v, v, 0);
-        __m256d zwzw = _mm256_permute2f128_pd(v, v, 0x11);
-        xyxy = _mm256_permute_pd(xyxy, perm);
-        zwzw = _mm256_permute_pd(zwzw, perm);
-        return _mm256_blend_pd(xyxy, zwzw, mask);
+        return _mm256_permute4x64_pd(v, _MM_SHUFFLE(w, z, y, x));
     }
 
     template <>
@@ -45,38 +39,6 @@ namespace simd {
     {
         // .zwxy
         return _mm256_shuffle_pd(v, v, 0x0a);
-    }
-
-    template <>
-    inline float64x4 shuffle<0, 0, 0, 0>(float64x4 v)
-    {
-        // .xxxx
-        const __m256d xyxy = _mm256_permute2f128_pd(v, v, 0);
-        return _mm256_permute_pd(xyxy, 0);
-    }
-
-    template <>
-    inline float64x4 shuffle<1, 1, 1, 1>(float64x4 v)
-    {
-        // .yyyy
-        const __m256d xyxy = _mm256_permute2f128_pd(v, v, 0);
-        return _mm256_permute_pd(xyxy, 0xf);
-    }
-
-    template <>
-    inline float64x4 shuffle<2, 2, 2, 2>(float64x4 v)
-    {
-        // .zzzz
-        const __m256d zwzw = _mm256_permute2f128_pd(v, v, 0x11);
-        return _mm256_permute_pd(zwzw, 0);
-    }
-
-    template <>
-    inline float64x4 shuffle<3, 3, 3, 3>(float64x4 v)
-    {
-        // .wwww
-        const __m256d zwzw = _mm256_permute2f128_pd(v, v, 0x11);
-        return _mm256_permute_pd(zwzw, 0xf);
     }
 
     // set component

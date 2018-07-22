@@ -13,6 +13,17 @@ namespace simd {
     // float64x4
     // -----------------------------------------------------------------
 
+#ifdef MANGO_ENABLE_AVX2
+
+    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    static inline float64x4 shuffle(float64x4 v)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+        return _mm256_permute4x64_pd(v, _MM_SHUFFLE(w, z, y, x));
+    }
+
+#else
+
     template <uint32 x, uint32 y, uint32 z, uint32 w>
     static inline float64x4 shuffle(float64x4 v)
     {
@@ -24,27 +35,6 @@ namespace simd {
         xyxy = _mm256_permute_pd(xyxy, perm);
         zwzw = _mm256_permute_pd(zwzw, perm);
         return _mm256_blend_pd(xyxy, zwzw, mask);
-    }
-
-    template <>
-    inline float64x4 shuffle<0, 1, 2, 3>(float64x4 v)
-    {
-        // .xyzw
-        return v;
-    }
-
-    template <>
-    inline float64x4 shuffle<1, 0, 3, 2>(float64x4 v)
-    {
-        // .yxwz
-        return _mm256_shuffle_pd(v, v, 0x05);
-    }
-
-    template <>
-    inline float64x4 shuffle<2, 3, 0, 1>(float64x4 v)
-    {
-        // .zwxy
-        return _mm256_shuffle_pd(v, v, 0x0a);
     }
 
     template <>
@@ -77,6 +67,29 @@ namespace simd {
         // .wwww
         const __m256d zwzw = _mm256_permute2f128_pd(v, v, 0x11);
         return _mm256_permute_pd(zwzw, 0xf);
+    }
+
+#endif
+
+    template <>
+    inline float64x4 shuffle<0, 1, 2, 3>(float64x4 v)
+    {
+        // .xyzw
+        return v;
+    }
+
+    template <>
+    inline float64x4 shuffle<1, 0, 3, 2>(float64x4 v)
+    {
+        // .yxwz
+        return _mm256_shuffle_pd(v, v, 0x05);
+    }
+
+    template <>
+    inline float64x4 shuffle<2, 3, 0, 1>(float64x4 v)
+    {
+        // .zwxy
+        return _mm256_shuffle_pd(v, v, 0x0a);
     }
 
     // set component
