@@ -175,27 +175,19 @@ namespace detail {
 
 #if defined(MANGO_COMPILER_GCC)
 
-    // These intrinsics are missing with GCC (tested with 7.3)
+    // These intrinsics are missing with GCC (tested with 7.3 - 8.1)
 
-    static inline __m256 _mm256_set_m128(__m128 high, __m128 low)
-    {
-        return _mm256_insertf128_ps(_mm256_castps128_ps256(low), high, 1);
-    }
+    #define _mm256_set_m128(high, low) \
+        _mm256_insertf128_ps(_mm256_castps128_ps256(low), high, 1)
 
-    static inline __m256 _mm256_setr_m128(__m128 low, __m128 high)
-    {
-        return _mm256_insertf128_ps(_mm256_castps128_ps256(low), high, 1);
-    }
+    #define _mm256_setr_m128(low, high) \
+        _mm256_insertf128_ps(_mm256_castps128_ps256(low), high, 1)
 
-    static inline __m256i _mm256_set_m128i(__m128i high, __m128i low)
-    {
-        return _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1);
-    }
+    #define _mm256_set_m128i(high, low) \
+        _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1)
 
-    static inline __m256i _mm256_setr_m128i(__m128i low, __m128i high)
-    {
-        return _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1);
-    }
+    #define _mm256_setr_m128i(low, high) \
+        _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1)
 
 #endif
 

@@ -653,7 +653,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 #endif // JPEG_ENABLE_SSE2
 
 #if defined(JPEG_ENABLE_AVX2)
-    
+
     // ------------------------------------------------------------------------------------------------
     // AVX2 implementation
     // ------------------------------------------------------------------------------------------------
