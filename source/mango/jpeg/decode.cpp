@@ -13,6 +13,8 @@ namespace jpeg
 
     using namespace mango;
 
+#if defined(JPEG_ENABLE_SSE2)
+
     static const int g_zigzag_table_standard [] =
     {
         0 , 1 , 8 , 16, 9 , 2 , 3 , 10,
@@ -27,6 +29,8 @@ namespace jpeg
         63, 63, 63, 63, 63, 63, 63, 63,
         63, 63, 63, 63, 63, 63, 63, 63,
     };
+
+#endif
 
     static const int g_zigzag_table_variant [] =
     {
