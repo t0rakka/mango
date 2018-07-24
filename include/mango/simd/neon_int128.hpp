@@ -1537,6 +1537,44 @@ namespace simd {
         return mask;
     }
 
+#ifdef __aarch64__
+
+    static inline bool none_of(mask8x16 a)
+    {
+        return vmaxvq_u8(a) == 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return vmaxvq_u8(a) != 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return vminvq_u8(a) != 0;
+    }
+
+#else
+
+    // TODO: optimize
+
+    static inline bool none_of(mask8x16 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return get_mask(a) == 0xffff;
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1571,6 +1609,44 @@ namespace simd {
         return mask;
     }
 
+#ifdef __aarch64__
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return vmaxvq_u16(a) == 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return vmaxvq_u16(a) != 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return vminvq_u16(a) != 0;
+    }
+
+#else
+
+    // TODO: optimize
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return get_mask(a) == 0xff;
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // mask32x4
     // -----------------------------------------------------------------
@@ -1601,6 +1677,46 @@ namespace simd {
         return vget_lane_u32(d1, 0);
     }
 
+#ifdef __aarch64__
+
+    static inline bool none_of(mask32x4 a)
+    {
+        return vmaxvq_u32(a) == 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        return vmaxvq_u32(a) != 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        return vminvq_u32(a) != 0;
+    }
+
+#else
+
+    static inline bool none_of(mask32x4 a)
+    {
+        uint32x2_t temp = vorr_u32(vget_low_u32(a), vget_high_u32(a));
+        return vget_lane_u32(vpmax_u32(temp, temp), 0) == 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        uint32x2_t temp = vorr_u32(vget_low_u32(a), vget_high_u32(a));
+        return vget_lane_u32(vpmax_u32(temp, temp), 0) != 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        uint32x2_t temp = vand_u32(vget_low_u32(a), vget_high_u32(a));
+        uint32_t mask = vget_lane_u32(temp, 0) & vget_lane_u32(temp, 1);
+        return mask != 0;
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // mask64x2
     // -----------------------------------------------------------------
@@ -1626,6 +1742,47 @@ namespace simd {
         uint32 y = uint32(vgetq_lane_u64(a, 1)) & 2;
         return x | y;
     }
+
+#ifdef __aarch64__
+
+    static inline bool none_of(mask64x2 a)
+    {
+        const uint64x2_t ones = vandq_u64(a, vdupq_n_u64(1));
+        return vaddvq_u64(ones) == 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        const uint64x2_t ones = vandq_u64(a, vdupq_n_u64(1));
+        return vaddvq_u64(ones) != 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        const uint64x2_t ones = vandq_u64(a, vdupq_n_u64(1));
+        return vaddvq_u64(ones) == 2;
+    }
+
+#else
+
+    // TODO: optimize
+
+    static inline bool none_of(mask64x2 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        return get_mask(a) == 0x3;
+    }
+
+#endif
 
 } // namespace simd
 } // namespace mango

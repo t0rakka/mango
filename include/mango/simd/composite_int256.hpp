@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -1783,6 +1783,21 @@ namespace simd {
         return mask;
     }
 
+    static inline bool none_of(mask8x32 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask8x32 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask8x32 a)
+    {
+        return get_mask(a) == 0xffffffff;
+    }
+
     // -----------------------------------------------------------------
     // mask16x16
     // -----------------------------------------------------------------
@@ -1815,6 +1830,21 @@ namespace simd {
     {
         uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
         return mask;
+    }
+
+    static inline bool none_of(mask16x16 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask16x16 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask16x16 a)
+    {
+        return get_mask(a) == 0xffff;
     }
 
     // -----------------------------------------------------------------
@@ -1851,6 +1881,21 @@ namespace simd {
         return mask;
     }
 
+    static inline bool none_of(mask32x8 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask32x8 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask32x8 a)
+    {
+        return get_mask(a) == 0xff;
+    }
+
     // -----------------------------------------------------------------
     // mask64x4
     // -----------------------------------------------------------------
@@ -1883,6 +1928,21 @@ namespace simd {
     {
         uint32 mask = get_mask(a.lo) | (get_mask(a.hi) << 2);
         return mask;
+    }
+
+    static inline bool none_of(mask64x4 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask64x4 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask64x4 a)
+    {
+        return get_mask(a) == 0xf;
     }
 
 #undef SET_COMPONENT

@@ -1839,6 +1839,21 @@ namespace simd {
         return a.mask;
     }
 
+    static inline bool none_of(mask8x16 a)
+    {
+        return a.mask == 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return a.mask != 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return a.mask == 0xffff;
+    }
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1861,6 +1876,21 @@ namespace simd {
     static inline uint32 get_mask(mask16x8 a)
     {
         return a.mask;
+    }
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return a.mask == 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return a.mask != 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return a.mask == 0xff;
     }
 
     // -----------------------------------------------------------------
@@ -1887,6 +1917,21 @@ namespace simd {
         return a.mask;
     }
 
+    static inline bool none_of(mask32x4 a)
+    {
+        return a.mask == 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        return a.mask != 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        return a.mask == 0xf;
+    }
+
     // -----------------------------------------------------------------
     // mask64x2
     // -----------------------------------------------------------------
@@ -1909,6 +1954,21 @@ namespace simd {
     static inline uint32 get_mask(mask64x2 a)
     {
         return a.mask;
+    }
+
+    static inline bool none_of(mask64x2 a)
+    {
+        return a.mask == 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        return a.mask != 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        return a.mask == 0x3;
     }
 
 } // namespace simd

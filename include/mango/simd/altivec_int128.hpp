@@ -1547,6 +1547,21 @@ namespace simd {
         return vec_extract(vec_sums(sum, vec_xor(sum, sum)), 3);
     }
 
+    static inline bool none_of(mask8x16 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return get_mask(a) == 0xffff;
+    }
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1572,6 +1587,21 @@ namespace simd {
         int16x8::vector masked = (int16x8::vector) vec_and(a.data, (int16x8::vector) { 1, 2, 4, 8, 16, 32, 64, 128 });
         int32x4::vector sum = vec_sum4s(masked, zero);
         return vec_extract(vec_sums(sum, zero), 3);
+    }
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return get_mask(a) == 0xff;
     }
 
     // -----------------------------------------------------------------
@@ -1600,6 +1630,21 @@ namespace simd {
         return vec_extract(vec_sums(masked, zero), 3);
     }
 
+    static inline bool none_of(mask32x4 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        return get_mask(a) == 0xf;
+    }
+
     // -----------------------------------------------------------------
     // mask64x2
     // -----------------------------------------------------------------
@@ -1625,6 +1670,21 @@ namespace simd {
         uint32 x = uint32(get_component<0>(temp)) & 1;
         uint32 y = uint32(get_component<1>(temp)) & 2;
         return x | y;
+    }
+
+    static inline bool none_of(mask64x2 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        return get_mask(a) == 0x3;
     }
 
 } // namespace simd

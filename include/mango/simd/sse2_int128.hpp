@@ -2201,6 +2201,42 @@ namespace simd {
         return _mm_movemask_epi8(a);
     }
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline bool none_of(mask8x16 a)
+    {
+        return _mm_testz_si128(a, a) != 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return _mm_testz_si128(a, a) == 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return _mm_testc_si128(a, _mm_cmpeq_epi8(a, a));
+    }
+
+#else
+
+    static inline bool none_of(mask8x16 a)
+    {
+        return _mm_movemask_epi8(a) == 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return _mm_movemask_epi8(a) != 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return _mm_movemask_epi8(a) == 0xffff;
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -2226,6 +2262,42 @@ namespace simd {
         return _mm_movemask_epi8(temp);
     }
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return _mm_testz_si128(a, a) != 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return _mm_testz_si128(a, a) == 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return _mm_testc_si128(a, _mm_cmpeq_epi16(a, a));
+    }
+
+#else
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return _mm_movemask_epi8(a) == 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return _mm_movemask_epi8(a) != 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return _mm_movemask_epi8(a) == 0xffff;
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // mask32x4
     // -----------------------------------------------------------------
@@ -2250,6 +2322,42 @@ namespace simd {
         return _mm_movemask_ps(_mm_castsi128_ps(a));
     }
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline bool none_of(mask32x4 a)
+    {
+        return _mm_testz_si128(a, a) != 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        return _mm_testz_si128(a, a) == 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        return _mm_testc_si128(a, _mm_cmpeq_epi32(a, a));
+    }
+
+#else
+
+    static inline bool none_of(mask32x4 a)
+    {
+        return _mm_movemask_ps(_mm_castsi128_ps(a)) == 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        return _mm_movemask_ps(_mm_castsi128_ps(a)) != 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        return _mm_movemask_ps(_mm_castsi128_ps(a)) == 0xf;
+    }
+
+#endif
+
     // -----------------------------------------------------------------
     // mask64x2
     // -----------------------------------------------------------------
@@ -2273,6 +2381,42 @@ namespace simd {
     {
         return _mm_movemask_pd(_mm_castsi128_pd(a));
     }
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline bool none_of(mask64x2 a)
+    {
+        return _mm_testz_si128(a, a) != 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        return _mm_testz_si128(a, a) == 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        return _mm_testc_si128(a, _mm_cmpeq_epi64(a, a));
+    }
+
+#else
+
+    static inline bool none_of(mask64x2 a)
+    {
+        return _mm_movemask_pd(_mm_castsi128_pd(a)) == 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        return _mm_movemask_pd(_mm_castsi128_pd(a)) != 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        return _mm_movemask_pd(_mm_castsi128_pd(a)) == 0x3;
+    }
+
+#endif
 
 #undef simd128_shuffle_epi32
 #undef simd128_shuffle_epi64

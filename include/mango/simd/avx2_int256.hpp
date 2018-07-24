@@ -1224,6 +1224,21 @@ namespace simd {
         return _mm256_movemask_epi8(a);
     }
 
+    static inline bool none_of(mask8x32 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask8x32 a)
+    {
+        return _mm_testz_si128(a, a) == 0;
+    }
+
+    static inline bool all_of(mask8x32 a)
+    {
+        return _mm256_testc_si256(a, _mm256_cmpeq_epi8(a, a));
+    }
+
     // -----------------------------------------------------------------
     // mask16x16
     // -----------------------------------------------------------------
@@ -1247,6 +1262,21 @@ namespace simd {
     {
         __m256i temp = _mm256_packus_epi16(a, _mm256_setzero_si256());
         return _mm256_movemask_epi8(temp);
+    }
+
+    static inline bool none_of(mask16x16 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask16x16 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask16x16 a)
+    {
+        return _mm256_testc_si256(a, _mm256_cmpeq_epi16(a, a));
     }
 
     // -----------------------------------------------------------------
@@ -1273,6 +1303,21 @@ namespace simd {
         return _mm256_movemask_ps(_mm256_castsi256_ps(a));
     }
 
+    static inline bool none_of(mask32x8 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask32x8 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask32x8 a)
+    {
+        return _mm256_testc_si256(a, _mm256_cmpeq_epi32(a, a));
+    }
+
     // -----------------------------------------------------------------
     // mask64x4
     // -----------------------------------------------------------------
@@ -1296,6 +1341,21 @@ namespace simd {
     {
         return _mm256_movemask_pd(_mm256_castsi256_pd(a));
         
+    }
+
+    static inline bool none_of(mask64x4 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask64x4 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask64x4 a)
+    {
+        return _mm256_testc_si256(a, _mm256_cmpeq_epi64(a, a));
     }
 
 } // namespace simd

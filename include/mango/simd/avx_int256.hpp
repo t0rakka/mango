@@ -1814,6 +1814,21 @@ namespace detail {
         return _mm256_movemask_ps(_mm256_castsi256_ps(a));
     }
 
+    static inline bool none_of(mask8x32 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask8x32 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask8x32 a)
+    {
+        return _mm256_testc_si256(a, _mm256_set1_epi8(0xff));
+    }
+
     // -----------------------------------------------------------------
     // mask16x16
     // -----------------------------------------------------------------
@@ -1837,6 +1852,21 @@ namespace detail {
     {
         uint32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 8);
         return mask;
+    }
+
+    static inline bool none_of(mask16x16 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask16x16 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask16x16 a)
+    {
+        return _mm256_testc_si256(a, _mm256_set1_epi16(0xffff));
     }
 
     // -----------------------------------------------------------------
@@ -1864,6 +1894,21 @@ namespace detail {
         return mask;
     }
 
+    static inline bool none_of(mask32x8 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask32x8 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask32x8 a)
+    {
+        return _mm256_testc_si256(a, _mm256_set1_epi32(0xffffffff));
+    }
+
     // -----------------------------------------------------------------
     // mask64x4
     // -----------------------------------------------------------------
@@ -1887,6 +1932,21 @@ namespace detail {
     {
         uint32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 2);
         return mask;
+    }
+
+    static inline bool none_of(mask64x4 a)
+    {
+        return _mm256_testz_si256(a, a) != 0;
+    }
+
+    static inline bool any_of(mask64x4 a)
+    {
+        return _mm256_testz_si256(a, a) == 0;
+    }
+
+    static inline bool all_of(mask64x4 a)
+    {
+        return _mm256_testc_si256(a, _mm256_set1_epi32(0xffffffff));
     }
 
 #undef SET_COMPONENT

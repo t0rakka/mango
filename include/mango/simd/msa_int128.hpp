@@ -1474,6 +1474,21 @@ namespace simd {
         return w | z | y | x;
     }
 
+    static inline bool none_of(mask8x16 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask8x16 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask8x16 a)
+    {
+        return get_mask(a) == 0xffff;
+    }
+
     // -----------------------------------------------------------------
     // mask16x8
     // -----------------------------------------------------------------
@@ -1500,6 +1515,21 @@ namespace simd {
         uint32 z = __msa_copy_u_w(a, 2) & 0x00018000;
         uint32 w = __msa_copy_u_w(a, 3) & 0x00018000;
         return (w >> 9) | (z >> 11) | (y >> 13) | (x >> 15);
+    }
+
+    static inline bool none_of(mask16x8 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask16x8 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask16x8 a)
+    {
+        return get_mask(a) == 0xff;
     }
 
     // -----------------------------------------------------------------
@@ -1530,6 +1560,21 @@ namespace simd {
         return w | z | y | x;
     }
 
+    static inline bool none_of(mask32x4 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask32x4 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask32x4 a)
+    {
+        return get_mask(a) == 0xf;
+    }
+
     // -----------------------------------------------------------------
     // mask64x2
     // -----------------------------------------------------------------
@@ -1554,6 +1599,21 @@ namespace simd {
         uint32 x = __msa_copy_u_d(a, 0) & 1;
         uint32 y = __msa_copy_u_d(a, 1) & 2;
         return y | x;
+    }
+
+    static inline bool none_of(mask64x2 a)
+    {
+        return get_mask(a) == 0;
+    }
+
+    static inline bool any_of(mask64x2 a)
+    {
+        return get_mask(a) != 0;
+    }
+
+    static inline bool all_of(mask64x2 a)
+    {
+        return get_mask(a) == 0x3;
     }
 
 } // namespace simd
