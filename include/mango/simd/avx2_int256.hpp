@@ -1231,7 +1231,7 @@ namespace simd {
 
     static inline bool any_of(mask8x32 a)
     {
-        return _mm_testz_si128(a, a) == 0;
+        return _mm256_testz_si256(a, a) == 0;
     }
 
     static inline bool all_of(mask8x32 a)
