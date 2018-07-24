@@ -20,6 +20,8 @@ This is probably the most generic build script we have; it has been tested on Li
 The library will be installed typically in /usr/local/include and /usr/local/lib 
 The cmake build script will compile everything into one (.a) library
 
+Pro tip! "cmake -DENABLE_AVX512=ON .." to compile for AVX-512, for example.
+
 ------------------------------------------------------------------------------------------------
 
 * MAKE!
