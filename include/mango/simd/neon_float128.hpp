@@ -37,9 +37,17 @@ namespace simd {
     inline float32x4 shuffle(float32x4 a, float32x4 b)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        float32x4_t va = a;
-        float32x4_t vb = b;
-        return (float32x4_t) { va[x], va[y], vb[z], vb[w] };
+#if 1
+        float32x4_t result;
+	    result = vmovq_n_f32(vgetq_lane_f32(a, x));
+	    result = vsetq_lane_f32(vgetq_lane_f32(a, y), result, 1);
+	    result = vsetq_lane_f32(vgetq_lane_f32(b, z), result, 2);
+	    result = vsetq_lane_f32(vgetq_lane_f32(b, w), result, 3);
+        return result;
+#else
+        // warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+        return (float32x4_t) { a.data[x], a.data[y], b.data[z], b.data[w] };
+#endif
     }
 
     template <uint32 x, uint32 y, uint32 z, uint32 w>
