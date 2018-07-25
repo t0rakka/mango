@@ -435,13 +435,6 @@ namespace jpeg
     void process_YCbCr_16x16_sse2  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 #endif
 
-#if defined(JPEG_ENABLE_AVX2)
-    void process_YCbCr_8x8_avx2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8_avx2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16_avx2  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-#endif
-
 	void EncodeImage(Stream& stream, const Surface& surface, float quality);
 
 } // namespace jpeg

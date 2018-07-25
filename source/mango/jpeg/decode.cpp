@@ -208,22 +208,15 @@ namespace jpeg
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
-        decodeState.zigzagTable = g_zigzag_table_standard;
-        processState.idct = idct_sse2;
-
-        processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse2;
-        processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse2;
-        processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse2;
-        processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse2;
-#endif
-
-#if defined(JPEG_ENABLE_AVX2)
-        if (cpuFlags & CPU_AVX2)
+        if (cpuFlags & CPU_SSE2)
         {
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_avx2;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_avx2;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_avx2;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_avx2;
+            decodeState.zigzagTable = g_zigzag_table_standard;
+            processState.idct = idct_sse2;
+
+            processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse2;
+            processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse2;
+            processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse2;
+            processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse2;
         }
 #endif
 

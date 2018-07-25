@@ -320,8 +320,6 @@ namespace jpeg
 
 #define JPEG_CONST_XMM(x) (*(const __m128i*)(dejpeg_sse2_consts.x))
 
-#if 1
-
 #define JPEG_IDCT_ROTATE_XMM(dst0, dst1, x, y, c0, c1) \
     __m128i c0##_l = _mm_unpacklo_epi16(x, y); \
     __m128i c0##_h = _mm_unpackhi_epi16(x, y); \
@@ -353,7 +351,7 @@ namespace jpeg
     JPEG_IDCT_WSUB_XMM(diff, abiased, b) \
     dst0 = _mm_packs_epi32(_mm_srai_epi32(sum_l, norm), _mm_srai_epi32(sum_h, norm)); \
     dst1 = _mm_packs_epi32(_mm_srai_epi32(diff_l, norm), _mm_srai_epi32(diff_h, norm)); \
-}
+    }
     
 #define JPEG_IDCT_IDCT_PASS_XMM(bias, norm) { \
     JPEG_IDCT_ROTATE_XMM(t2e, t3e, v2, v6, rot0_0, rot0_1) \
@@ -378,96 +376,7 @@ namespace jpeg
     JPEG_IDCT_BFLY_XMM(v1, v6, x1, x6, bias, norm) \
     JPEG_IDCT_BFLY_XMM(v2, v5, x2, x5, bias, norm) \
     JPEG_IDCT_BFLY_XMM(v3, v4, x3, x4, bias, norm) \
-}
-
-#else
-
-    // WIP: AVX2 idct
-    
-    struct DeJPEG_AVXConsts
-    {
-        int16 rot0_0[16], rot0_1[16];
-        int16 rot1_0[16], rot1_1[16];
-        int16 rot2_0[16], rot2_1[16];
-        int16 rot3_0[16], rot3_1[16];
-        int32 colBias[8];
-        int32 rowBias[8];
-    };
-
-#define DATA_8X(...) { __VA_ARGS__, __VA_ARGS__, __VA_ARGS__, __VA_ARGS__, __VA_ARGS__, __VA_ARGS__, __VA_ARGS__, __VA_ARGS__ }
-    SIMD_ALIGN_VAR(static const DeJPEG_AVXConsts, dejpeg_avx_consts, 32) = {
-        DATA_8X(JPEG_IDCT_P_0_541196100                          , JPEG_IDCT_P_0_541196100 + JPEG_IDCT_M_1_847759065),
-        DATA_8X(JPEG_IDCT_P_0_541196100 + JPEG_IDCT_P_0_765366865, JPEG_IDCT_P_0_541196100                          ),
-        DATA_8X(JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_0_899976223, JPEG_IDCT_P_1_175875602                          ),
-        DATA_8X(JPEG_IDCT_P_1_175875602                          , JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_2_562915447),
-        DATA_8X(JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_0_298631336, JPEG_IDCT_M_1_961570560                          ),
-        DATA_8X(JPEG_IDCT_M_1_961570560                          , JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_3_072711026),
-        DATA_8X(JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_2_053119869, JPEG_IDCT_M_0_390180644                          ),
-        DATA_8X(JPEG_IDCT_M_0_390180644                          , JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_1_501321110),
-        DATA_8X(JPEG_IDCT_COL_BIAS),
-        DATA_8X(JPEG_IDCT_ROW_BIAS),
-    };
-#undef DATA_8X
-    
-#define JPEG_CONST_XMM(x) (*(const __m256i*)(dejpeg_avx_consts.x))
-    
-#define JPEG_IDCT_ROTATE_XMM(dst0, dst1, x, y, c0, c1) \
-    __m256i c0##x = _mm256_setr_m128i(_mm_unpacklo_epi16(x, y), \
-    _mm_unpackhi_epi16(x, y)); \
-    __m256i dst0 = _mm256_madd_epi16(c0##x, JPEG_CONST_XMM(c0)); \
-    __m256i dst1 = _mm256_madd_epi16(c0##x, JPEG_CONST_XMM(c1));
-    
-    // out = in << 12  (in 16-bit, out 32-bit)
-#define JPEG_IDCT_WIDEN_XMM(dst, in) \
-    __m256i dst = _mm256_setr_m128i(_mm_unpacklo_epi16(_mm_setzero_si128(), in), \
-    _mm_unpackhi_epi16(_mm_setzero_si128(), in)); \
-    dst = _mm256_srai_epi32(dst, 4);
-    
-    // wide add
-#define JPEG_IDCT_WADD_XMM(dst, a, b) \
-    __m256i dst = _mm256_add_epi32(a, b);
-    
-    // wide sub
-#define JPEG_IDCT_WSUB_XMM(dst, a, b) \
-    __m256i dst = _mm256_sub_epi32(a, b);
-    
-    // butterfly a/b, add bias, then shift by `norm` and pack to 16-bit
-#define JPEG_IDCT_BFLY_XMM(dst0, dst1, a, b, bias, norm) { \
-    __m256i a_biased = _mm256_add_epi32(a, bias); \
-    JPEG_IDCT_WADD_XMM(sum, a_biased, b) \
-    JPEG_IDCT_WSUB_XMM(diff, a_biased, b) \
-    sum = _mm256_srai_epi32(sum, norm); \
-    diff = _mm256_srai_epi32(diff, norm); \
-    dst0 = _mm_packs_epi32(_mm256_extractf128_si256(sum, 0), _mm256_extractf128_si256(sum, 1)); \
-    dst1 = _mm_packs_epi32(_mm256_extractf128_si256(diff, 0), _mm256_extractf128_si256(diff, 1)); \
-}
-    
-#define JPEG_IDCT_IDCT_PASS_XMM(bias, norm) { \
-    JPEG_IDCT_ROTATE_XMM(t2e, t3e, v2, v6, rot0_0, rot0_1) \
-    __m128i sum04 = _mm_add_epi16(v0, v4); \
-    __m128i dif04 = _mm_sub_epi16(v0, v4); \
-    JPEG_IDCT_WIDEN_XMM(t0e, sum04) \
-    JPEG_IDCT_WIDEN_XMM(t1e, dif04) \
-    JPEG_IDCT_WADD_XMM(x0, t0e, t3e) \
-    JPEG_IDCT_WSUB_XMM(x3, t0e, t3e) \
-    JPEG_IDCT_WADD_XMM(x1, t1e, t2e) \
-    JPEG_IDCT_WSUB_XMM(x2, t1e, t2e) \
-    JPEG_IDCT_ROTATE_XMM(y0o, y2o, v7, v3, rot2_0, rot2_1) \
-    JPEG_IDCT_ROTATE_XMM(y1o, y3o, v5, v1, rot3_0, rot3_1) \
-    __m128i sum17 = _mm_add_epi16(v1, v7); \
-    __m128i sum35 = _mm_add_epi16(v3, v5); \
-    JPEG_IDCT_ROTATE_XMM(y4o,y5o, sum17, sum35, rot1_0, rot1_1) \
-    JPEG_IDCT_WADD_XMM(x4, y0o, y4o) \
-    JPEG_IDCT_WADD_XMM(x5, y1o, y5o) \
-    JPEG_IDCT_WADD_XMM(x6, y2o, y5o) \
-    JPEG_IDCT_WADD_XMM(x7, y3o, y4o) \
-    JPEG_IDCT_BFLY_XMM(v0, v7, x0, x7, bias, norm) \
-    JPEG_IDCT_BFLY_XMM(v1, v6, x1, x6, bias, norm) \
-    JPEG_IDCT_BFLY_XMM(v2, v5, x2, x5, bias, norm) \
-    JPEG_IDCT_BFLY_XMM(v3, v4, x3, x4, bias, norm) \
-}
-
-#endif
+    }
 
     static inline void interleave8(__m128i &a, __m128i &b)
     {
