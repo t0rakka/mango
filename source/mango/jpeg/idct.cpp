@@ -392,6 +392,12 @@ namespace jpeg
         b = _mm_unpackhi_epi16(c, b);
     }
 
+    static inline void store_8x2_sse2(u8* dest, int stride, __m128i s)
+    {
+        _mm_storel_pi(reinterpret_cast<__m64 *>(dest + stride * 0), _mm_castsi128_ps(s));
+        _mm_storeh_pi(reinterpret_cast<__m64 *>(dest + stride * 1), _mm_castsi128_ps(s));
+    }
+
     void idct_sse2(uint8* dest, int stride, const BlockType* src, const uint16* qt)
     {
         const __m128i* data = reinterpret_cast<const __m128i *>(src);
@@ -454,21 +460,10 @@ namespace jpeg
         }
         else
         {
-            uint8* dst0 = dest;
-            uint8* dst1 = dest + stride;
-            int dstStride2 = stride * 2;
-
-            _mm_storel_pi((__m64 *)dst0, _mm_castsi128_ps(s0)); dst0 += dstStride2;
-            _mm_storeh_pi((__m64 *)dst1, _mm_castsi128_ps(s0)); dst1 += dstStride2;
-
-            _mm_storel_pi((__m64 *)dst0, _mm_castsi128_ps(s2)); dst0 += dstStride2;
-            _mm_storeh_pi((__m64 *)dst1, _mm_castsi128_ps(s2)); dst1 += dstStride2;
-
-            _mm_storel_pi((__m64 *)dst0, _mm_castsi128_ps(s1)); dst0 += dstStride2;
-            _mm_storeh_pi((__m64 *)dst1, _mm_castsi128_ps(s1)); dst1 += dstStride2;
-
-            _mm_storel_pi((__m64 *)dst0, _mm_castsi128_ps(s3));
-            _mm_storeh_pi((__m64 *)dst1, _mm_castsi128_ps(s3));
+            store_8x2_sse2(dest + stride * 0, stride, s0);
+            store_8x2_sse2(dest + stride * 2, stride, s2);
+            store_8x2_sse2(dest + stride * 4, stride, s1);
+            store_8x2_sse2(dest + stride * 6, stride, s3);
         }
     }
 
