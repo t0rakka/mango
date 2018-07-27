@@ -96,10 +96,13 @@ namespace
                     break;
                 case 7:
                     // ebx
+                    if ((cpuInfo[1] & 0x00000002) != 0) flags |= CPU_AVX512VBMI;
                     if ((cpuInfo[1] & 0x00000008) != 0) flags |= CPU_BMI1;
                     if ((cpuInfo[1] & 0x00000020) != 0) flags |= CPU_AVX2;
                     if ((cpuInfo[1] & 0x00000100) != 0) flags |= CPU_BMI2;
                     if ((cpuInfo[1] & 0x00010000) != 0) flags |= CPU_AVX512F;
+                    if ((cpuInfo[1] & 0x00020000) != 0) flags |= CPU_AVX512DQ;
+                    if ((cpuInfo[1] & 0x00200000) != 0) flags |= CPU_AVX512IFMA;
                     if ((cpuInfo[1] & 0x04000000) != 0) flags |= CPU_AVX512PFI;
                     if ((cpuInfo[1] & 0x08000000) != 0) flags |= CPU_AVX512ERI;
                     if ((cpuInfo[1] & 0x10000000) != 0) flags |= CPU_AVX512CDI;
