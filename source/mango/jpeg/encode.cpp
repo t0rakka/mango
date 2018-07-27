@@ -287,8 +287,13 @@ namespace
         int     ldc1;
         int     ldc2;
         int     ldc3;
+
+#if defined(MANGO_CPU_64BIT)
+        uint64  lcode;
+#else
         uint32  lcode;
-        uint16  bitindex;
+#endif
+        int     bitindex;
 
         HuffmanEncoder()
         {
@@ -303,27 +308,47 @@ namespace
         {
         }
 
+        u8* write32_stuff(u8* output, u32 code) const
+        {
+            // JPEG bitstream uses 0xff as a marker, followed by ID byte
+            // If the ID byte is zero ("stuff") that means the preceding 0xff is a literal value
+            if ((*output++ = uint8(code >> 24)) == 0xff) *output++ = 0; // write stuff byte
+            if ((*output++ = uint8(code >> 16)) == 0xff) *output++ = 0;
+            if ((*output++ = uint8(code >>  8)) == 0xff) *output++ = 0;
+            if ((*output++ = uint8(code >>  0)) == 0xff) *output++ = 0;
+            return output;
+        }
+
         uint8* putbits(uint8* output, uint32 data, int numbits)
         {
-            int bits_in_next_word = bitindex + numbits - 32;
+            constexpr int regbits = sizeof(lcode) * 8;
+
+            int bits_in_next_word = bitindex + numbits - regbits;
             if (bits_in_next_word < 0)
             {
                 lcode = (lcode << numbits) | data;
-                bitindex += static_cast<uint16>(numbits);
+                bitindex += numbits;
             }
             else
             {
-                lcode = (lcode << (32 - bitindex)) | (data >> bits_in_next_word);
+                lcode = (lcode << (regbits - bitindex)) | (data >> bits_in_next_word);
 
-                // NOTE: we trade some arithmetic here to avoid
-                // branching in the statistically more common case.
+#if defined(MANGO_CPU_64BIT)
+                if (u64_has_zero_byte(~lcode))
+                {
+                    output = write32_stuff(output, lcode >> 32);
+                    output = write32_stuff(output, lcode);
+                }
+                else
+                {
+                    ustore64be(output, lcode);
+                    output += 8;
+                }
+
+#else
                 if (u32_has_zero_byte(~lcode))
                 {
-                    // lcode contains at least one 0xff byte, which each require a stuff byte (0x00) to follow.
-                    if ((*output++ = static_cast<uint8>(lcode >> 24)) == 0xff) *output++ = 0;
-                    if ((*output++ = static_cast<uint8>(lcode >> 16)) == 0xff) *output++ = 0;
-                    if ((*output++ = static_cast<uint8>(lcode >>  8)) == 0xff) *output++ = 0;
-                    if ((*output++ = static_cast<uint8>(lcode >>  0)) == 0xff) *output++ = 0;
+                    output = write32_stuff(output, lcode);
                 }
                 else
                 {
@@ -331,8 +356,9 @@ namespace
                     output += 4;
                 }
 
+#endif
                 lcode = data;
-                bitindex = static_cast<uint16>(bits_in_next_word);
+                bitindex = bits_in_next_word;
             }
 
             return output;
@@ -342,10 +368,11 @@ namespace
         {
             if (bitindex > 0)
             {
-                lcode <<= (32 - bitindex);
+                constexpr int regbits = sizeof(lcode) * 8;
+                lcode <<= (regbits - bitindex);
 
-                uint16 count = (bitindex + 7) >> 3;
-                uint8* ptr = reinterpret_cast<uint8*>(&lcode) + 3;
+                int count = (bitindex + 7) >> 3;
+                uint8* ptr = reinterpret_cast<uint8 *>(&lcode) + (sizeof(lcode) - 1);
 
                 for (int i = 0; i < count; ++i)
                 {
@@ -369,10 +396,8 @@ namespace
             const uint16* AcCodeTable;
             const uint16* AcSizeTable;
 
-            int Coeff, LastDc;
-            uint16 AbsCoeff, HuffCode, HuffSize, RunLength = 0, DataSize = 0, index;
-
-            Coeff = *temp++;
+            int Coeff = *temp++;
+            int LastDc;
 
             if (component == 1)
             {
@@ -404,7 +429,9 @@ namespace
             }
 
             Coeff -= LastDc;
-            AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
+            int AbsCoeff = (Coeff < 0) ? -Coeff-- : Coeff;
+
+            int DataSize = 0;
 
             while (AbsCoeff != 0)
             {
@@ -412,14 +439,16 @@ namespace
                 DataSize++;
             }
 
-            HuffCode = DcCodeTable [DataSize];
-            HuffSize = DcSizeTable [DataSize];
+            uint16 HuffCode = DcCodeTable [DataSize];
+            uint16 HuffSize = DcSizeTable [DataSize];
 
             Coeff &= (1 << DataSize) - 1;
 
             uint32 data = (HuffCode << DataSize) | Coeff;
             int numbits = HuffSize + DataSize;
             p = putbits(p, data, numbits);
+
+            int RunLength = 0;
 
             for (int i = 0; i < 63; ++i)
             {
@@ -435,13 +464,13 @@ namespace
                         p = putbits(p, data, numbits);
                     }
 
-                    AbsCoeff = static_cast<uint16>((Coeff < 0) ? -Coeff-- : Coeff);
+                    AbsCoeff = (Coeff < 0) ? -Coeff-- : Coeff;
                     if (AbsCoeff >> 8 == 0)
                         DataSize = bit_size [AbsCoeff];
                     else
                         DataSize = bit_size [AbsCoeff >> 8] + 8;
 
-                    index = RunLength * 10 + DataSize;
+                    int index = RunLength * 10 + DataSize;
                     HuffCode = AcCodeTable [index];
                     HuffSize = AcSizeTable [index];
 
