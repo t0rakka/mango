@@ -77,6 +77,9 @@ namespace mango
         if (flags & CPU_AVX512CDI) info << "AVX512CDI ";
         if (flags & CPU_AVX512BW) info << "AVX512BW ";
         if (flags & CPU_AVX512VL) info << "AVX512VL ";
+        if (flags & CPU_AVX512DQ) info << "AVX512DQ ";
+        if (flags & CPU_AVX512IFMA) info << "AVX512IFMA ";
+        if (flags & CPU_AVX512VBMI) info << "AVX512VBMI ";
         info << std::endl;
 
         info << "Compiled SIMD Features: ";
