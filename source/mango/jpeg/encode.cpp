@@ -336,8 +336,8 @@ namespace
 #if defined(MANGO_CPU_64BIT)
                 if (u64_has_zero_byte(~lcode))
                 {
-                    output = write32_stuff(output, lcode >> 32);
-                    output = write32_stuff(output, lcode);
+                    output = write32_stuff(output, u32(lcode >> 32));
+                    output = write32_stuff(output, u32(lcode));
                 }
                 else
                 {
