@@ -506,10 +506,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     {
         uint8 result[64 * 4];
         
-        state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-        state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-        state->idct(result + 128,  8, data + 128, state->block[2].qt->table); // Cb
-        state->idct(result + 192,  8, data + 192, state->block[3].qt->table); // Cr
+        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
+        state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
+        state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
+        state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
         
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
@@ -520,8 +520,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
-            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
+            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
+            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
             __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
             __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
 
@@ -545,7 +545,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             cr1 = _mm_add_epi16(cr1, tosigned);
 
             convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
             dest += stride;
 
             cb0 = _mm_unpackhi_epi8(cb, cb);
@@ -561,7 +561,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             cb1 = _mm_add_epi16(cb1, tosigned);
             cr1 = _mm_add_epi16(cr1, tosigned);
 
-            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, s0, s1, s2, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
             convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
             dest += stride;
         }
@@ -574,12 +574,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     {
         uint8 result[64 * 6];
 
-        state->idct(result +   0, 16, data +   0, state->block[0].qt->table); // Y0
-        state->idct(result +   8, 16, data +  64, state->block[1].qt->table); // Y1
-        state->idct(result + 128, 16, data + 128, state->block[2].qt->table); // Y2
-        state->idct(result + 136, 16, data + 192, state->block[3].qt->table); // Y3
-        state->idct(result + 256,  8, data + 256, state->block[4].qt->table); // Cb
-        state->idct(result + 320,  8, data + 320, state->block[5].qt->table); // Cr
+        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
+        state->idct(result + 128, 8, data +  64, state->block[1].qt->table); // Y1
+        state->idct(result +  64, 8, data + 128, state->block[2].qt->table); // Y2
+        state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Y3
+        state->idct(result + 256, 8, data + 256, state->block[4].qt->table); // Cb
+        state->idct(result + 320, 8, data + 320, state->block[5].qt->table); // Cr
 
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
@@ -590,10 +590,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 0));
-            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 16));
-            __m128i y2 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 32));
-            __m128i y3 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 64 + 48));
+            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
+            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 128));
+            __m128i y2 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
+            __m128i y3 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 144));
             __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 256));
             __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 320));
 
@@ -617,10 +617,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             cr1 = _mm_add_epi16(cr1, tosigned);
 
             convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
             dest += stride;
 
-            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y1, zero), cb0, cr0, s0, s1, s2, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
             convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
             dest += stride;
 
@@ -638,10 +638,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             cr1 = _mm_add_epi16(cr1, tosigned);
 
             convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
-            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y2, zero), cb1, cr1, s0, s1, s2, rounding);
+            convert_ycbcr_8x1_sse2(dest + 32, _mm_unpacklo_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
             dest += stride;
 
-            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpacklo_epi8(y3, zero), cb0, cr0, s0, s1, s2, rounding);
+            convert_ycbcr_8x1_sse2(dest +  0, _mm_unpackhi_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
             convert_ycbcr_8x1_sse2(dest + 32, _mm_unpackhi_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
             dest += stride;
         }

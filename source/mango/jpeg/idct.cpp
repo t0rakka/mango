@@ -392,14 +392,10 @@ namespace jpeg
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    static inline void store_8x2_sse2(u8* dest, int stride, __m128i s)
-    {
-        _mm_storel_pi(reinterpret_cast<__m64 *>(dest + stride * 0), _mm_castsi128_ps(s));
-        _mm_storeh_pi(reinterpret_cast<__m64 *>(dest + stride * 1), _mm_castsi128_ps(s));
-    }
-
     void idct_sse2(uint8* dest, int stride, const BlockType* src, const uint16* qt)
     {
+        MANGO_UNREFERENCED_PARAMETER(stride);
+
         const __m128i* data = reinterpret_cast<const __m128i *>(src);
         const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
 
@@ -450,21 +446,11 @@ namespace jpeg
         interleave8(s1, s3);
 
         // Store
-        if (stride == 8)
-        {
-            __m128i* d = reinterpret_cast<__m128i *>(dest);
-            d[0] = s0;
-            d[1] = s2;
-            d[2] = s1;
-            d[3] = s3;
-        }
-        else
-        {
-            store_8x2_sse2(dest + stride * 0, stride, s0);
-            store_8x2_sse2(dest + stride * 2, stride, s2);
-            store_8x2_sse2(dest + stride * 4, stride, s1);
-            store_8x2_sse2(dest + stride * 6, stride, s3);
-        }
+        __m128i* d = reinterpret_cast<__m128i *>(dest);
+        d[0] = s0;
+        d[1] = s2;
+        d[2] = s1;
+        d[3] = s3;
     }
 
 #endif // JPEG_ENABLE_SSE2
