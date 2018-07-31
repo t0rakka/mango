@@ -260,12 +260,6 @@ namespace jpeg
     // [License]
     // Public Domain <unlicense.org>
 
-#if defined(_MSC_VER)
-    #define SIMD_ALIGN_VAR(type, name, alignment) __declspec(align(alignment)) type name
-#else
-    #define SIMD_ALIGN_VAR(type, name, alignment) type __attribute__((__aligned__(alignment))) name
-#endif
-
     // Derived from jidctint's `jpeg_idct_islow`
     constexpr int JPEG_IDCT_PREC = 12;
     constexpr int JPEG_IDCT_HALF(int precision) { return (1 << ((precision) - 1)); }
@@ -293,40 +287,27 @@ namespace jpeg
     constexpr int JPEG_IDCT_ROW_NORM = (JPEG_IDCT_PREC + 2 + 3);
     constexpr int JPEG_IDCT_ROW_BIAS = (JPEG_IDCT_HALF(JPEG_IDCT_ROW_NORM) + (128 << JPEG_IDCT_ROW_NORM));
 
-    struct DeJPEG_SSE2Consts
-    {
-        int16_t rot0_0[8], rot0_1[8];
-        int16_t rot1_0[8], rot1_1[8];
-        int16_t rot2_0[8], rot2_1[8];
-        int16_t rot3_0[8], rot3_1[8];
-        int32_t colBias[4];
-        int32_t rowBias[4];
-    };
+#define JPEG_CONST16_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
+#define JPEG_CONST32_SSE2(x)     _mm_setr_epi32(x, x, x, x)
 
-#define DATA_4X(...) { __VA_ARGS__, __VA_ARGS__, __VA_ARGS__, __VA_ARGS__ }
-    SIMD_ALIGN_VAR(static const DeJPEG_SSE2Consts, dejpeg_sse2_consts, 16) = {
-        DATA_4X(JPEG_IDCT_P_0_541196100                          , JPEG_IDCT_P_0_541196100 + JPEG_IDCT_M_1_847759065),
-        DATA_4X(JPEG_IDCT_P_0_541196100 + JPEG_IDCT_P_0_765366865, JPEG_IDCT_P_0_541196100                          ),
-        DATA_4X(JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_0_899976223, JPEG_IDCT_P_1_175875602                          ),
-        DATA_4X(JPEG_IDCT_P_1_175875602                          , JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_2_562915447),
-        DATA_4X(JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_0_298631336, JPEG_IDCT_M_1_961570560                          ),
-        DATA_4X(JPEG_IDCT_M_1_961570560                          , JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_3_072711026),
-        DATA_4X(JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_2_053119869, JPEG_IDCT_M_0_390180644                          ),
-        DATA_4X(JPEG_IDCT_M_0_390180644                          , JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_1_501321110),
-        DATA_4X(JPEG_IDCT_COL_BIAS),
-        DATA_4X(JPEG_IDCT_ROW_BIAS),
-    };
-#undef DATA_4X
-
-#define JPEG_CONST_XMM(x) (*(const __m128i*)(dejpeg_sse2_consts.x))
+    static const __m128i rot0_0 = JPEG_CONST16_SSE2(JPEG_IDCT_P_0_541196100                          , JPEG_IDCT_P_0_541196100 + JPEG_IDCT_M_1_847759065);
+    static const __m128i rot0_1 = JPEG_CONST16_SSE2(JPEG_IDCT_P_0_541196100 + JPEG_IDCT_P_0_765366865, JPEG_IDCT_P_0_541196100                          );
+    static const __m128i rot1_0 = JPEG_CONST16_SSE2(JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_0_899976223, JPEG_IDCT_P_1_175875602                          );
+    static const __m128i rot1_1 = JPEG_CONST16_SSE2(JPEG_IDCT_P_1_175875602                          , JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_2_562915447);
+    static const __m128i rot2_0 = JPEG_CONST16_SSE2(JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_0_298631336, JPEG_IDCT_M_1_961570560                          );
+    static const __m128i rot2_1 = JPEG_CONST16_SSE2(JPEG_IDCT_M_1_961570560                          , JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_3_072711026);
+    static const __m128i rot3_0 = JPEG_CONST16_SSE2(JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_2_053119869, JPEG_IDCT_M_0_390180644                          );
+    static const __m128i rot3_1 = JPEG_CONST16_SSE2(JPEG_IDCT_M_0_390180644                          , JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_1_501321110);
+    static const __m128i colBias = JPEG_CONST32_SSE2(JPEG_IDCT_COL_BIAS);
+    static const __m128i rowBias = JPEG_CONST32_SSE2(JPEG_IDCT_ROW_BIAS);
 
 #define JPEG_IDCT_ROTATE_XMM(dst0, dst1, x, y, c0, c1) \
     __m128i c0##_l = _mm_unpacklo_epi16(x, y); \
     __m128i c0##_h = _mm_unpackhi_epi16(x, y); \
-    __m128i dst0##_l = _mm_madd_epi16(c0##_l, JPEG_CONST_XMM(c0)); \
-    __m128i dst0##_h = _mm_madd_epi16(c0##_h, JPEG_CONST_XMM(c0)); \
-    __m128i dst1##_l = _mm_madd_epi16(c0##_l, JPEG_CONST_XMM(c1)); \
-    __m128i dst1##_h = _mm_madd_epi16(c0##_h, JPEG_CONST_XMM(c1));
+    __m128i dst0##_l = _mm_madd_epi16(c0##_l, c0); \
+    __m128i dst0##_h = _mm_madd_epi16(c0##_h, c0); \
+    __m128i dst1##_l = _mm_madd_epi16(c0##_l, c1); \
+    __m128i dst1##_h = _mm_madd_epi16(c0##_h, c1);
 
     // out = in << 12  (in 16-bit, out 32-bit)
 #define JPEG_IDCT_WIDEN_XMM(dst, in) \
@@ -410,7 +391,7 @@ namespace jpeg
         __m128i v7 = _mm_mullo_epi16(data[7], qtable[7]);
 
         // IDCT columns
-        JPEG_IDCT_IDCT_PASS_XMM(JPEG_CONST_XMM(colBias), 10)
+        JPEG_IDCT_IDCT_PASS_XMM(colBias, 10)
 
         // Transpose
         interleave16(v0, v4);
@@ -429,7 +410,7 @@ namespace jpeg
         interleave16(v6, v7);
 
         // IDCT rows
-        JPEG_IDCT_IDCT_PASS_XMM(JPEG_CONST_XMM(rowBias), 17)
+        JPEG_IDCT_IDCT_PASS_XMM(rowBias, 17)
 
         // Pack to 8-bit integers, also saturates the result to 0..255
         __m128i s0 = _mm_packus_epi16(v0, v1);
