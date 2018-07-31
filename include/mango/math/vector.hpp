@@ -1427,6 +1427,28 @@ namespace mango
         return simd::get_mask(mask);
     }
 
+    // ------------------------------------------------------------------
+    // mask reduction
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    static inline bool none_of(T mask)
+    {
+        return simd::none_of(mask);
+    }
+
+    template <typename T>
+    static inline bool any_of(T mask)
+    {
+        return simd::any_of(mask);
+    }
+
+    template <typename T>
+    static inline bool all_of(T mask)
+    {
+        return simd::all_of(mask);
+    }
+
 } // namespace mango
 
 #include "vector128_uint8x16.hpp"
