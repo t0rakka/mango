@@ -292,13 +292,13 @@ namespace mango
     {
     }
 
-    void Surface::save(const std::string& filename)
+    void Surface::save(const std::string& filename, float quality)
     {
         ImageEncoder encoder(filename);
         if (encoder.isEncoder())
         {
             FileStream file(filename, Stream::WRITE);
-            encoder.encode(file, *this, 1.0f);
+            encoder.encode(file, *this, quality);
         }
     }
 

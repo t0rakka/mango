@@ -37,7 +37,7 @@ namespace mango
             return reinterpret_cast<SampleType*>(sample);
         }
 
-        void save(const std::string& filename);
+        void save(const std::string& filename, float quality = 1.0f);
         void clear(float red, float green, float blue, float alpha);
         void blit(int x, int y, const Surface& source);
         void xflip();
