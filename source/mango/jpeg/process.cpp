@@ -182,14 +182,14 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
 void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
     uint8 result[64 * 3];
-    
+
     state->idct(result + 64 * 0, 8, data + 64 * 0, state->block[0].qt->table); // Y
     state->idct(result + 64 * 1, 8, data + 64 * 1, state->block[1].qt->table); // Cb
     state->idct(result + 64 * 2, 8, data + 64 * 2, state->block[2].qt->table); // Cr
-    
+
     // color conversion
     const uint8* src = result;
-    
+
     for (int y = 0; y < 8; ++y)
     {
         const uint8* s = src + y * 8;
@@ -423,9 +423,9 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i yy = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
-            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
-            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
+            __m128i yy = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
+            __m128i cb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
+            __m128i cr = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
 
             __m128i zero = _mm_setzero_si128();
 
@@ -453,7 +453,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     void process_YCbCr_8x16_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
         uint8 result[64 * 4];
-        
+
         state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
         state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
         state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
@@ -468,10 +468,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
-            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
-            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
-            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
+            __m128i y0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
+            __m128i y1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
+            __m128i cb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
+            __m128i cr = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
 
             __m128i zero = _mm_setzero_si128();
 
@@ -505,12 +505,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     void process_YCbCr_16x8_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
         uint8 result[64 * 4];
-        
+
         state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
         state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
         state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
         state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
-        
+
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
         const __m128i s1 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
@@ -520,10 +520,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
-            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
-            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
-            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
+            __m128i y0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
+            __m128i y1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
+            __m128i cb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
+            __m128i cr = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 192));
 
             __m128i zero = _mm_setzero_si128();
             __m128i cb0;
@@ -590,12 +590,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i y0 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
-            __m128i y1 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 128));
-            __m128i y2 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
-            __m128i y3 = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 144));
-            __m128i cb = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 256));
-            __m128i cr = _mm_load_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 320));
+            __m128i y0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
+            __m128i y1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 128));
+            __m128i y2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
+            __m128i y3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 144));
+            __m128i cb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 256));
+            __m128i cr = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 320));
 
             __m128i zero = _mm_setzero_si128();
             __m128i cb0;

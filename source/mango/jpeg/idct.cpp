@@ -428,10 +428,10 @@ namespace jpeg
 
         // Store
         __m128i* d = reinterpret_cast<__m128i *>(dest);
-        d[0] = s0;
-        d[1] = s2;
-        d[2] = s1;
-        d[3] = s3;
+        _mm_storeu_si128(d + 0, s0);
+        _mm_storeu_si128(d + 1, s2);
+        _mm_storeu_si128(d + 2, s1);
+        _mm_storeu_si128(d + 3, s3);
     }
 
 #endif // JPEG_ENABLE_SSE2
