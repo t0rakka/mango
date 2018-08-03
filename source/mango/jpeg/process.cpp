@@ -62,12 +62,12 @@ void process_Y(uint8* dest, int stride, const BlockType* data, ProcessState* sta
 	if (width == 8 && height == 8)
 	{
         // Optimization: FULL block can be directly decoded into the target surface
-	    state->idct(dest, stride, data, state->block[0].qt->table); // Y
+	    idct(dest, stride, data, state->block[0].qt->table); // Y
 	}
 	else
 	{
 		uint8 result[64];
-	    state->idct(result, 8, data, state->block[0].qt->table); // Y
+	    idct(result, 8, data, state->block[0].qt->table); // Y
 
 	    for (int y = 0; y < height; ++y)
 		{
@@ -84,7 +84,7 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
     for (int i = 0; i < state->blocks; ++i)
     {
         Block& block = state->block[i];
-        state->idct(result + block.offset, block.stride, data, block.qt->table);
+        idct(result + block.offset, block.stride, data, block.qt->table);
         data += 64;
     }
 
@@ -134,7 +134,7 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
     for (int i = 0; i < state->blocks; ++i)
     {
         Block& block = state->block[i];
-        state->idct(result + block.offset, block.stride, data, block.qt->table);
+        idct(result + block.offset, block.stride, data, block.qt->table);
         data += 64;
     }
 
