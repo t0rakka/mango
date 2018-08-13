@@ -42,6 +42,7 @@ namespace
     {
         JPEG_FORMAT_YUV400,
         JPEG_FORMAT_BGR888,
+        JPEG_FORMAT_RGB888,
         JPEG_FORMAT_BGRA8888,
         JPEG_FORMAT_RGBA8888,
     };
@@ -54,6 +55,7 @@ namespace
     {
         { FORMAT_L8, JPEG_FORMAT_YUV400 },
         { FORMAT_B8G8R8, JPEG_FORMAT_BGR888 },
+        { FORMAT_R8G8B8, JPEG_FORMAT_RGB888 },
         { FORMAT_B8G8R8A8, JPEG_FORMAT_BGRA8888 },
         { FORMAT_R8G8B8A8, JPEG_FORMAT_RGBA8888 },
     };
@@ -522,12 +524,12 @@ namespace
             x7 = x7 - x6;
             data[0] = BlockType(x4 + x5);
             data[4] = BlockType(x4 - x5);
-            data[2] = BlockType((x8*c2 + x7*c6) >> 10);
-            data[6] = BlockType((x8*c6 - x7*c2) >> 10);
-            data[7] = BlockType((x0*c7 - x1*c5 + x2*c3 - x3*c1) >> 10);
-            data[5] = BlockType((x0*c5 - x1*c1 + x2*c7 + x3*c3) >> 10);
-            data[3] = BlockType((x0*c3 - x1*c7 - x2*c1 - x3*c5) >> 10);
-            data[1] = BlockType((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> 10);
+            data[2] = BlockType((x8 * c2 + x7 * c6) >> 10);
+            data[6] = BlockType((x8 * c6 - x7 * c2) >> 10);
+            data[7] = BlockType((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10);
+            data[5] = BlockType((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10);
+            data[3] = BlockType((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10);
+            data[1] = BlockType((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10);
             data += 8;
         }
 
@@ -549,12 +551,12 @@ namespace
             x7 = x7 - x6;
             auto v0 = BlockType((x4 + x5) >> 3);
             auto v4 = BlockType((x4 - x5) >> 3);
-            auto v2 = BlockType((x8*c2 + x7*c6) >> 13);
-            auto v6 = BlockType((x8*c6 - x7*c2) >> 13);
-            auto v7 = BlockType((x0*c7 - x1*c5 + x2*c3 - x3*c1) >> 13);
-            auto v5 = BlockType((x0*c5 - x1*c1 + x2*c7 + x3*c3) >> 13);
-            auto v3 = BlockType((x0*c3 - x1*c7 - x2*c1 - x3*c5) >> 13);
-            auto v1 = BlockType((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> 13);
+            auto v2 = BlockType((x8 * c2 + x7 * c6) >> 13);
+            auto v6 = BlockType((x8 * c6 - x7 * c2) >> 13);
+            auto v7 = BlockType((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13);
+            auto v5 = BlockType((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13);
+            auto v3 = BlockType((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13);
+            auto v1 = BlockType((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13);
             dest[zigzag_table[i + 0 * 8]] = BlockType((v0 * quant_table[i + 0 * 8] + 0x4000) >> 15);
             dest[zigzag_table[i + 1 * 8]] = BlockType((v1 * quant_table[i + 1 * 8] + 0x4000) >> 15);
             dest[zigzag_table[i + 2 * 8]] = BlockType((v2 * quant_table[i + 2 * 8] + 0x4000) >> 15);
@@ -572,20 +574,18 @@ namespace
 
     void read_400_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
-        BlockType* Y1 = block;
-
         for (int i = 0; i < rows; ++i)
         {
             for (int j = cols; j > 0; --j)
             {
-                *Y1++ = (*input++) - 128;
+                *block++ = (*input++) - 128;
             }
 
             // replicate last column
             for (int j = 8 - cols; j > 0; --j)
             {
-                *Y1 = *(Y1 - 1);
-                ++Y1;
+                *block = *(block - 1);
+                ++block;
             }
 
             input += incr;
@@ -596,44 +596,38 @@ namespace
         {
             for (int j = 8; j > 0; --j)
             {
-                *Y1 = *(Y1 - 8);
-                ++Y1;
+                *block = *(block - 8);
+                ++block;
             }
         }
     }
 
     void read_bgr888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
-        BlockType* Y  = block + 0 * BLOCK_SIZE;
-        BlockType* CB = block + 1 * BLOCK_SIZE;
-        BlockType* CR = block + 2 * BLOCK_SIZE;
-
         for (int i = 0; i < rows; ++i)
         {
             for (int j = 0; j < cols; ++j)
             {
-                int y = (76*input[2] + 151*input[1] + 29*input[0]) >> 8;
-                int cr = ((input[2] + - y) * 182) >> 8;
-                int cb = ((input[0] + - y) * 144) >> 8;
-
-                *Y++ = static_cast<BlockType>(y - 128);
-                *CB++ = static_cast<BlockType>(cb);
-                *CR++ = static_cast<BlockType>(cr);
-
+                int r = input[2];
+                int g = input[1];
+                int b = input[0];
+                int y = (76 * r + 151 * g + 29 * b) >> 8;
+                int cr = ((r - y) * 182) >> 8;
+                int cb = ((b - y) * 144) >> 8;
+                block[0 * 64] = BlockType(y - 128);
+                block[1 * 64] = BlockType(cb);
+                block[2 * 64] = BlockType(cr);
+                ++block;
                 input += 3;
             }
 
             // replicate last column
             for (int j = 8 - cols; j > 0; --j)
             {
-                *Y = *(Y - 1);
-                ++Y;
-            }
-
-            for (int j = 8 - cols; j > 0; --j)
-            {
-                *CB = *(CB - 1); ++CB;
-                *CR = *(CR - 1); ++CR;
+                block[0 * 64] = block[0 * 64 - 1];
+                block[1 * 64] = block[1 * 64 - 1];
+                block[2 * 64] = block[2 * 64 - 1];
+                ++block;
             }
 
             input += incr;
@@ -644,45 +638,84 @@ namespace
         {
             for (int j = 8; j > 0; --j)
             {
-                *Y = *(Y - 8); ++Y;
-                *CB = *(CB - 8); ++CB;
-                *CR = *(CR - 8); ++CR;
+                block[0 * 64] = block[0 * 64 - 8];
+                block[1 * 64] = block[1 * 64 - 8];
+                block[2 * 64] = block[2 * 64 - 8];
+                ++block;
+            }
+        }
+    }
+
+    void read_rgb888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    {
+        for (int i = 0; i < rows; ++i)
+        {
+            for (int j = 0; j < cols; ++j)
+            {
+                int r = input[0];
+                int g = input[1];
+                int b = input[2];
+                int y = (76 * r + 151 * g + 29 * b) >> 8;
+                int cr = ((r - y) * 182) >> 8;
+                int cb = ((b - y) * 144) >> 8;
+                block[0 * 64] = BlockType(y - 128);
+                block[1 * 64] = BlockType(cb);
+                block[2 * 64] = BlockType(cr);
+                ++block;
+                input += 3;
+            }
+
+            // replicate last column
+            for (int j = 8 - cols; j > 0; --j)
+            {
+                block[0 * 64] = block[0 * 64 - 1];
+                block[1 * 64] = block[1 * 64 - 1];
+                block[2 * 64] = block[2 * 64 - 1];
+                ++block;
+            }
+
+            input += incr;
+        }
+
+        // replicate last row
+        for (int i = 8 - rows; i > 0; --i)
+        {
+            for (int j = 8; j > 0; --j)
+            {
+                block[0 * 64] = block[0 * 64 - 8];
+                block[1 * 64] = block[1 * 64 - 8];
+                block[2 * 64] = block[2 * 64 - 8];
+                ++block;
             }
         }
     }
 
     void read_bgra8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
-        BlockType* Y  = block + 0 * BLOCK_SIZE;
-        BlockType* CB = block + 1 * BLOCK_SIZE;
-        BlockType* CR = block + 2 * BLOCK_SIZE;
-
         for (int i = 0; i < rows; ++i)
         {
             for (int j = 0; j < cols; ++j)
             {
-                int y = (76*input[2] + 151*input[1] + 29*input[0]) >> 8;
-                int cr = ((input[2] + - y) * 182) >> 8;
-                int cb = ((input[0] + - y) * 144) >> 8;
-
-                *Y++ = static_cast<BlockType>(y - 128);
-                *CB++ = static_cast<BlockType>(cb);
-                *CR++ = static_cast<BlockType>(cr);
-
+                int r = input[2];
+                int g = input[1];
+                int b = input[0];
+                int y = (76 * r + 151 * g + 29 * b) >> 8;
+                int cr = ((r - y) * 182) >> 8;
+                int cb = ((b - y) * 144) >> 8;
+                block[0 * 64] = BlockType(y - 128);
+                block[1 * 64] = BlockType(cb);
+                block[2 * 64] = BlockType(cr);
+                ++block;
                 input += 4;
             }
 
             // replicate last column
             for (int j = 8 - cols; j > 0; --j)
             {
-                *Y = *(Y - 1);
-                ++Y;
-            }
-
-            for (int j = 8 - cols; j > 0; --j)
-            {
-                *CB = *(CB - 1); ++CB;
-                *CR = *(CR - 1); ++CR;
+                block[0 * 64] = block[0 * 64 - 1];
+                block[1 * 64] = block[1 * 64 - 1];
+                block[2 * 64] = block[2 * 64 - 1];
+                ++block;
             }
 
             input += incr;
@@ -693,45 +726,40 @@ namespace
         {
             for (int j = 8; j > 0; --j)
             {
-                *Y = *(Y - 8); ++Y;
-                *CB = *(CB - 8); ++CB;
-                *CR = *(CR - 8); ++CR;
+                block[0 * 64] = block[0 * 64 - 8];
+                block[1 * 64] = block[1 * 64 - 8];
+                block[2 * 64] = block[2 * 64 - 8];
+                ++block;
             }
         }
     }
 
     void read_rgba8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
     {
-        BlockType* Y  = block + 0 * BLOCK_SIZE;
-        BlockType* CB = block + 1 * BLOCK_SIZE;
-        BlockType* CR = block + 2 * BLOCK_SIZE;
-
         for (int i = 0; i < rows; ++i)
         {
             for (int j = 0; j < cols; ++j)
             {
-                int y = (76*input[0] + 151*input[1] + 29*input[2]) >> 8;
-                int cr = ((input[0] + - y) * 182) >> 8;
-                int cb = ((input[2] + - y) * 144) >> 8;
-
-                *Y++ = static_cast<BlockType>(y - 128);
-                *CB++ = static_cast<BlockType>(cb);
-                *CR++ = static_cast<BlockType>(cr);
-
+                int r = input[0];
+                int g = input[1];
+                int b = input[2];
+                int y = (76 * r + 151 * g + 29 * b) >> 8;
+                int cr = ((r - y) * 182) >> 8;
+                int cb = ((b - y) * 144) >> 8;
+                block[0 * 64] = BlockType(y - 128);
+                block[1 * 64] = BlockType(cb);
+                block[2 * 64] = BlockType(cr);
+                ++block;
                 input += 4;
             }
 
             // replicate last column
             for (int j = 8 - cols; j > 0; --j)
             {
-                *Y = *(Y - 1);
-                ++Y;
-            }
-
-            for (int j = 8 - cols; j > 0; --j)
-            {
-                *CB = *(CB - 1); ++CB;
-                *CR = *(CR - 1); ++CR;
+                block[0 * 64] = block[0 * 64 - 1];
+                block[1 * 64] = block[1 * 64 - 1];
+                block[2 * 64] = block[2 * 64 - 1];
+                ++block;
             }
 
             input += incr;
@@ -742,9 +770,10 @@ namespace
         {
             for (int j = 8; j > 0; --j)
             {
-                *Y = *(Y - 8); ++Y;
-                *CB = *(CB - 8); ++CB;
-                *CR = *(CR - 8); ++CR;
+                block[0 * 64] = block[0 * 64 - 8];
+                block[1 * 64] = block[1 * 64 - 8];
+                block[2 * 64] = block[2 * 64 - 8];
+                ++block;
             }
         }
     }
@@ -778,6 +807,12 @@ namespace
 
             case JPEG_FORMAT_BGR888:
                 read_format = read_bgr888_format;
+                bytes_per_pixel = 3;
+                channel_count = 3;
+                break;
+
+            case JPEG_FORMAT_RGB888:
+                read_format = read_rgb888_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
@@ -977,7 +1012,10 @@ namespace
 
                 HuffmanEncoder huffman;
 
-                u8 huff_temp[1024]; // encoding buffer
+                constexpr int buffer_size = 2048;
+                constexpr int flush_threshold = buffer_size - 512;
+
+                u8 huff_temp[buffer_size]; // encoding buffer
                 u8* ptr = huff_temp;
 
                 const int right_mcu = jp.horizontal_mcus - 1;
@@ -1013,7 +1051,7 @@ namespace
                     }
 
                     // flush encoding buffer
-                    if (ptr - huff_temp > 512)
+                    if (ptr - huff_temp > flush_threshold)
                     {
                         buffers[y].write(huff_temp, ptr - huff_temp);
                         ptr = huff_temp;
