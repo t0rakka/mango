@@ -460,11 +460,11 @@ namespace mango
 
     static inline uint32 u32_deinterleave_bits(uint32 value)
     {
-        value &= 0x5555555555555555;
-        value = (value ^ (value >> 1 )) & 0x3333333333333333;
-        value = (value ^ (value >> 2 )) & 0x0f0f0f0f0f0f0f0f;
-        value = (value ^ (value >> 4 )) & 0x00ff00ff00ff00ff;
-        value = (value ^ (value >> 8 )) & 0x0000ffff0000ffff;
+        value &= 0x55555555;
+        value = (value ^ (value >> 1 )) & 0x33333333;
+        value = (value ^ (value >> 2 )) & 0x0f0f0f0f;
+        value = (value ^ (value >> 4 )) & 0x00ff00ff;
+        value = (value ^ (value >> 8 )) & 0x0000ffff;
         return value;
     }
 
