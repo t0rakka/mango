@@ -137,7 +137,7 @@ namespace jpeg
         int remain;
 
         void restart();
-        void bytes(int n);
+        DataType bytes(int n);
 
 #ifdef MANGO_CPU_64BIT
 
@@ -147,15 +147,19 @@ namespace jpeg
             if (remain < 16)
             {
                 remain += 48;
+                DataType temp;
+
                 if (ptr + 8 < nextFF)
                 {
-                    data = (data << 48) | (uload64be(ptr) >> 16);
+                    temp = uload64be(ptr) >> 16;
                     ptr += 6;
                 }
                 else
                 {
-                    bytes(6);
+                    temp = bytes(6);
                 }
+
+                data = (data << 48) | temp;
             }
         }
 
@@ -167,15 +171,19 @@ namespace jpeg
             if (remain < 16)
             {
                 remain += 16;
+                DataType temp;
+
                 if (ptr + 2 < nextFF)
                 {
-                    data = (data << 16) | uload16be(ptr);
+                    temp = uload16be(ptr);
                     ptr += 2;
                 }
                 else
                 {
-                    bytes(2);
+                    temp = bytes(2);
                 }
+
+                data = (data << 16) | temp;
             }
         }
 

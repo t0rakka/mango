@@ -27,20 +27,35 @@ namespace jpeg
         return v - ((((v + v) >> nbits) - 1) & ((1 << nbits) - 1));
     }
 
+#if 0
+
+    static inline int GET_BITS(jpegBuffer &buffer, int nbits)
+    {
+        return int(bextr(buffer.data, buffer.remain -= nbits, nbits));
+    }
+
+    static inline int PEEK_BITS(jpegBuffer &buffer, int nbits)
+    {
+        return int(bextr(buffer.data, buffer.remain - nbits, nbits));
+    }
+
+#else
+
     #define GET_BITS(buffer, nbits) \
         int(bextr(buffer.data, buffer.remain -= nbits, nbits))
+
+    #define PEEK_BITS(buffer, nbits) \
+        int(bextr(buffer.data, buffer.remain - nbits, nbits))
+
+#endif
 
     #define HUFF_RECEIVE(buffer, nbits) \
     { \
         buffer.ensure16(); \
-        int code = GET_BITS(buffer, nbits); \
-        s = huff_extend(code, nbits); \
+        s = huff_extend(GET_BITS(buffer, nbits), nbits); \
     }
 
 #ifndef JPEG_ENABLE_MODERN_HUFFMAN
-
-    #define PEEK_BITS(nbits) \
-        int(bextr(buffer.data, buffer.remain - nbits, nbits))
 
     constexpr int LOOKAHEAD_MASK0 = ((1 << JPEG_HUFF_LOOKUP_BITS) - 1);
     constexpr int LOOKAHEAD_MASK1 = ((2 << JPEG_HUFF_LOOKUP_BITS) - 1);
@@ -48,7 +63,7 @@ namespace jpeg
     #define HUFF_DECODE(symbol, h) \
     {                                                              \
         buffer.ensure16();                                         \
-        symbol = PEEK_BITS(JPEG_HUFF_LOOKUP_BITS);                 \
+        symbol = PEEK_BITS(buffer, JPEG_HUFF_LOOKUP_BITS);         \
         symbol = h->lookup[symbol];                                \
         int size = symbol >> JPEG_HUFF_LOOKUP_BITS;                \
         buffer.remain -= size;                                     \
@@ -68,7 +83,7 @@ namespace jpeg
     #define HUFF_DECODE(symbol, h) \
     { \
         buffer.ensure16(); \
-        int v = int(bextr(buffer.data, buffer.remain - JPEG_HUFF_LOOKUP_BITS, JPEG_HUFF_LOOKUP_BITS)); \
+        int v = PEEK_BITS(buffer, JPEG_HUFF_LOOKUP_BITS); \
         symbol = h->lookupValue[v]; \
         int size = h->lookupSize[v]; \
         if (size == JPEG_HUFF_LOOKUP_BITS + 1) { \

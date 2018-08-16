@@ -143,8 +143,10 @@ namespace jpeg
         nextFF = reinterpret_cast<uint8*>(std::memchr(ptr, 0xff, end - ptr));
     }
 
-    void jpegBuffer::bytes(int n)
+    DataType jpegBuffer::bytes(int n)
     {
+        DataType temp = 0;
+
         for (int i = 0; i < n; ++i)
         {
             int a = ptr < end ? *ptr++ : 0;
@@ -158,7 +160,7 @@ namespace jpeg
                     a = 0;
                 }
             }
-            data = (data << 8) | a;
+            temp = (temp << 8) | a;
         }
 
         // When nextFF is NULL that means no 0xff bytes left in the stream which means corruted jpeg
@@ -170,6 +172,8 @@ namespace jpeg
         {
             nextFF = reinterpret_cast<uint8*>(std::memchr(ptr, 0xff, end - ptr));
         }
+    
+        return temp;
     }
 
     // ----------------------------------------------------------------------------
