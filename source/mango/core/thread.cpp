@@ -64,6 +64,27 @@ using std::chrono::milliseconds;
 
 #endif
 
+// MinGW usually uses winpthreads as std::thread backend, so we need
+// to convert winpthreads' pthread_t to Win32 HANDLE.
+#if defined(__WINPTHREADS_VERSION)
+
+#include <pthread.h>
+
+    static auto get_native_handle(std::thread& t)
+    {
+        // Note: this function is documented as private.
+        return pthread_gethandle(t.native_handle());
+    }
+
+#else
+
+    static auto get_native_handle(std::thread& t)
+    {
+        return t.native_handle();
+    }
+
+#endif
+
 namespace mango
 {
 
@@ -101,7 +122,7 @@ namespace mango
             });
 
 			if (affinity)
-                set_thread_affinity(m_threads[i].native_handle(), int(i + 1));
+                set_thread_affinity(get_native_handle(m_threads[i]), int(i + 1));
         }
     }
 
