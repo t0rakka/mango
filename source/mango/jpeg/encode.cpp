@@ -38,7 +38,7 @@ namespace
     using namespace mango;
     using namespace jpeg;
 
-    enum
+    enum jpegSampleFormat
     {
         JPEG_FORMAT_YUV400,
         JPEG_FORMAT_BGR888,
@@ -50,7 +50,7 @@ namespace
     struct xxx
     {
         Format source;
-        int dest;
+        jpegSampleFormat sample;
     } g_format_table[] =
     {
         { FORMAT_L8, JPEG_FORMAT_YUV400 },
@@ -277,7 +277,7 @@ namespace
 
         void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input, int rows, int cols, int incr);
 
-        jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 stride, uint32 quality);
+        jpeg_encode(jpegSampleFormat format, uint32 width, uint32 height, uint32 stride, uint32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(uint32 quality);
@@ -782,7 +782,7 @@ namespace
     // jpeg_encode methods
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(uint32 format, uint32 width, uint32 height, uint32 stride, uint32 quality)
+    jpeg_encode::jpeg_encode(jpegSampleFormat format, uint32 width, uint32 height, uint32 stride, uint32 quality)
     {
         int bytes_per_pixel = 0;
 
@@ -918,6 +918,7 @@ namespace
                 number_of_components = 1;
                 break;
 
+            case JPEG_FORMAT_RGB888:
             case JPEG_FORMAT_BGR888:
             case JPEG_FORMAT_BGRA8888:
             case JPEG_FORMAT_RGBA8888:
@@ -974,16 +975,16 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(const Surface& surface, Stream& stream, int quality, uint32 image_format)
+    void encodeJPEG(const Surface& surface, Stream& stream, int quality, jpegSampleFormat sample_format)
     {
         u8* input = surface.image;
 
-        jpeg_encode jp(image_format, surface.width, surface.height, surface.stride, quality);
+        jpeg_encode jp(sample_format, surface.width, surface.height, surface.stride, quality);
 
         BigEndianStream s(stream);
 
         // writing marker data
-        jp.write_markers(s, image_format, surface.width, surface.height);
+        jp.write_markers(s, sample_format, surface.width, surface.height);
 
         ConcurrentQueue queue;
 
@@ -1101,7 +1102,7 @@ namespace jpeg
 
         // set default format
         Format sourceFormat = FORMAT_R8G8B8A8;
-        int destFormat = JPEG_FORMAT_RGBA8888;
+        jpegSampleFormat sample = JPEG_FORMAT_RGBA8888;
 
         // search for a better match
         for (int i = 0; i < g_format_table_size; ++i)
@@ -1109,7 +1110,7 @@ namespace jpeg
             if (surface.format == g_format_table[i].source)
             {
                 sourceFormat = g_format_table[i].source;
-                destFormat = g_format_table[i].dest;
+                sample = g_format_table[i].sample;
                 break;
             }
         }
@@ -1117,14 +1118,14 @@ namespace jpeg
         // encode
         if (surface.format == sourceFormat)
         {
-            encodeJPEG(surface, stream, iq, destFormat);
+            encodeJPEG(surface, stream, iq, sample);
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface.width, surface.height, sourceFormat);
             temp.blit(0, 0, surface);
-            encodeJPEG(temp, stream, iq, destFormat);
+            encodeJPEG(temp, stream, iq, sample);
         }
     }
 
