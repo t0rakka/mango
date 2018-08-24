@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -19,6 +19,7 @@ namespace mango
 
     public:
         Path(const std::string& pathname, const std::string& password = "");
+        Path(const Memory& memory, const std::string& extension, const std::string& password = "");
         Path(const Path& path, const std::string& filename, const std::string& password = "");
         ~Path();
 

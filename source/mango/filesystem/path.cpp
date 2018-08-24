@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/filesystem/path.hpp>
@@ -20,6 +20,19 @@ namespace mango
 		// parse and create mappers
         m_pathname = parse(pathname, password);
         m_mapper->index(m_files, m_pathname);
+    }
+
+    Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
+    {
+        // create mapper to raw memory
+        m_mapper = getMemoryMapper(memory, extension, password);
+
+        // parse and create mappers
+        m_pathname = "";
+        if (m_mapper)
+        {
+            m_mapper->index(m_files, m_pathname);
+        }
     }
 
     Path::Path(const Path& path, const std::string& pathname, const std::string& password)

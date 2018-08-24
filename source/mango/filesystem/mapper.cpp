@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -176,6 +176,30 @@ namespace mango
                     filename = filename.substr(n, std::string::npos);
                 }
 
+                return custom_mapper;
+            }
+        }
+
+        return nullptr;
+    }
+
+    AbstractMapper* Mapper::getMemoryMapper(Memory memory, const std::string& extension, const std::string& password) const
+    {
+        std::string f = toLower(extension);
+
+        for (auto &extension : g_extensions)
+        {
+            size_t n = f.find(extension.decorated_extension);
+            if (n == std::string::npos)
+            {
+                // try again with a non-decorated extension
+                n = f.find(extension.extension);
+            }
+
+            if (n != std::string::npos)
+            {
+                // found a container interface; let's create it
+                AbstractMapper* custom_mapper = extension.create(memory, password);
                 return custom_mapper;
             }
         }
