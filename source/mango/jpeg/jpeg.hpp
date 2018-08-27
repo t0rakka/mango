@@ -343,8 +343,8 @@ namespace jpeg
 
         bool isJPEG(Memory memory) const;
 
-        uint8* stepMarker(uint8* p);
-        uint8* seekMarker(uint8* p, uint8* end);
+        uint8* stepMarker(uint8* p) const;
+        uint8* seekMarker(uint8* p, uint8* end) const;
 
         void processSOI();
         void processEOI();

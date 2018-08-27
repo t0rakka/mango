@@ -275,7 +275,7 @@ namespace jpeg
 #endif
     }
 
-    uint8* Parser::stepMarker(uint8* p)
+    uint8* Parser::stepMarker(uint8* p) const
     {
         uint16 size = uload16be(p);
         p += size;
@@ -284,20 +284,68 @@ namespace jpeg
         return p;
     }
 
-    uint8* Parser::seekMarker(uint8* start, uint8* end)
+    uint8* Parser::seekMarker(uint8* start, uint8* end) const
     {
         uint8* p = start;
         --end; // marker is two bytes: don't look at last byte
 
-        for ( ; p < end; ++p)
+        while (p < end)
         {
-            if (p[0] == 0xff)
+#if 0
+            const int count = int(end - p) / 16;
+            for (int i = 0; i < count; ++i)
             {
-                if (p[1])
+                __m128i ref = _mm_set1_epi8(0xff);
+                __m128i value = _mm_loadu_si128( (__m128i const*) p);
+                __m128i mask = _mm_cmpeq_epi8(value, ref);
+                if (_mm_movemask_epi8(mask) != 0)
                 {
-                    return p; // found marker
+                    break;
                 }
+                p += 16;
             }
+
+            u8* end16 = p + 16 > end ? end : p + 16;
+            while (p < end16)
+            {
+                if (p[0] == 0xff && p[1])
+                {
+                    return p; // found a marker
+                }
+                ++p;
+            }
+#endif
+
+#if 0
+            const int count = int(end - p) / 4;
+            for (int i = 0; i < count; ++i)
+            {
+                uint32 value = uload32(p);
+                if (u32_has_zero_byte(~value))
+                {
+                    break;
+                }
+                p += 4;
+            }
+
+            u8* end4 = p + 4 > end ? end : p + 4;
+            while (p < end4)
+            {
+                if (p[0] == 0xff && p[1])
+                {
+                    return p; // found a marker
+                }
+                ++p;
+            }
+#endif
+            
+#if 1
+            if (p[0] == 0xff && p[1])
+            {
+                return p; // found a marker
+            }
+            ++p;
+#endif
         }
 
         //if (*p != 0xff)
