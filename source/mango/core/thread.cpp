@@ -14,8 +14,6 @@ using std::chrono::milliseconds;
 // thread affinity
 // ------------------------------------------------------------
 
-// TODO: IOS, OSX, ANDROID
-
 #if defined(MANGO_PLATFORM_LINUX) || defined(MANGO_PLATFORM_BSD)
 
 #include <pthread.h>
@@ -49,6 +47,8 @@ using std::chrono::milliseconds;
     }
 
 #else
+
+    // TODO: IOS, OSX, ANDROID
 
     template <typename H>
     static void set_thread_affinity(H handle, int processor)
@@ -103,7 +103,9 @@ namespace mango
     // ------------------------------------------------------------
 
     ThreadPool::ThreadPool(size_t size)
-    : m_queue_cache(32), m_queues(nullptr), m_threads(size)
+        : m_queue_cache(32)
+        , m_queues(nullptr)
+        , m_threads(size)
     {
         m_queues = new TaskQueue[3];
         m_static_queue = createQueue("static", static_cast<int>(Priority::NORMAL));
@@ -113,7 +115,9 @@ namespace mango
         //       use for the affinity (eg. dependent tasks using same cache)
         const bool affinity = false;//std::thread::hardware_concurrency() > 1;
 		if (affinity)
+        {
             set_current_thread_affinity(0);
+        }
 
         for (size_t i = 0; i < size; ++i)
         {
@@ -122,7 +126,9 @@ namespace mango
             });
 
 			if (affinity)
+            {
                 set_thread_affinity(get_native_handle(m_threads[i]), int(i + 1));
+            }
         }
     }
 
