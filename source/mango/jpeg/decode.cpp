@@ -133,6 +133,51 @@ namespace jpeg
     };
 
     // ----------------------------------------------------------------------------
+    // jpeg_memchr()
+    // ----------------------------------------------------------------------------
+
+#if defined(JPEG_ENABLE_SSE2)
+
+    static inline u8* jpeg_memchr(u8* p, u8 value, size_t count)
+    {
+        __m128i ref = _mm_set1_epi8(value);
+        while (count >= 16)
+        {
+            __m128i v = _mm_loadu_si128(reinterpret_cast<__m128i const *>(p));
+            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(v, ref));
+            if (mask)
+            {
+                int index = u32_tzcnt(mask);
+                for (int i = index; i < 16; ++i)
+                {
+                    if (p[i] == value)
+                        return p + i;
+                }
+            }
+            count -= 16;
+            p += 16;
+        }
+        
+        for (size_t i = 0; i < count; ++i)
+        {
+            if (p[i] == value)
+                return p + i;
+        }
+        
+        return p;
+    }
+
+#else
+
+    static inline u8* jpeg_memchr(u8* p, u8 value, size_t count)
+    {
+        p = reinterpret_cast<u8 *>(std::memchr(p, value, count));
+        return p ? p : p + count;
+    }
+
+#endif
+
+    // ----------------------------------------------------------------------------
     // jpegBuffer
     // ----------------------------------------------------------------------------
 
@@ -170,9 +215,9 @@ namespace jpeg
         // do know the stream is corrupted we want to guard every read against EOF condition.
         if (nextFF)
         {
-            nextFF = reinterpret_cast<uint8*>(std::memchr(ptr, 0xff, end - ptr));
+            nextFF = jpeg_memchr(ptr, 0xff, end - ptr);
         }
-    
+
         return temp;
     }
 
@@ -291,61 +336,12 @@ namespace jpeg
 
         while (p < end)
         {
-#if 0
-            const int count = int(end - p) / 16;
-            for (int i = 0; i < count; ++i)
-            {
-                __m128i ref = _mm_set1_epi8(0xff);
-                __m128i value = _mm_loadu_si128( (__m128i const*) p);
-                __m128i mask = _mm_cmpeq_epi8(value, ref);
-                if (_mm_movemask_epi8(mask) != 0)
-                {
-                    break;
-                }
-                p += 16;
-            }
-
-            u8* end16 = p + 16 > end ? end : p + 16;
-            while (p < end16)
-            {
-                if (p[0] == 0xff && p[1])
-                {
-                    return p; // found a marker
-                }
-                ++p;
-            }
-#endif
-
-#if 0
-            const int count = int(end - p) / 4;
-            for (int i = 0; i < count; ++i)
-            {
-                uint32 value = uload32(p);
-                if (u32_has_zero_byte(~value))
-                {
-                    break;
-                }
-                p += 4;
-            }
-
-            u8* end4 = p + 4 > end ? end : p + 4;
-            while (p < end4)
-            {
-                if (p[0] == 0xff && p[1])
-                {
-                    return p; // found a marker
-                }
-                ++p;
-            }
-#endif
-            
-#if 1
-            if (p[0] == 0xff && p[1])
+            p = jpeg_memchr(p, 0xff, end - p);
+            if (p[1])
             {
                 return p; // found a marker
             }
-            ++p;
-#endif
+            p += 2;
         }
 
         //if (*p != 0xff)
