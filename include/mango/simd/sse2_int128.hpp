@@ -1213,9 +1213,8 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSSE3)
         return _mm_abs_epi8(a);
 #else
-        const __m128i zero = _mm_setzero_si128();
-        const __m128i mask = _mm_cmpgt_epi8(zero, a);
-        return _mm_select_si128(mask, _mm_sub_epi8(zero, a), a);
+        const __m128i negative = _mm_cmplt_epi16(a, _mm_setzero_si128());
+        return _mm_sub_epi16(_mm_xor_si128(a, negative), negative);
 #endif
     }
 
