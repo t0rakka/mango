@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/string.hpp>
@@ -28,7 +28,7 @@ namespace mango
     void registerImageDecoderPVR();
     void registerImageDecoderASTC();
     void registerImageDecoderZPNG();
-    //void registerImageDecoderSGI();
+    void registerImageDecoderSGI();
 
     class ImageServer
     {
@@ -54,7 +54,7 @@ namespace mango
             registerImageDecoderPVR();
             registerImageDecoderASTC();
             registerImageDecoderZPNG();
-            //registerImageDecoderSGI();
+            registerImageDecoderSGI();
         }
 
         ~ImageServer()
