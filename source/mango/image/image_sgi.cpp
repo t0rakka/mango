@@ -30,7 +30,6 @@ namespace
         u32 colormap;
 
         Format format;
-        u8* data;
 
         HeaderSGI(Memory memory)
         {
@@ -52,9 +51,6 @@ namespace
             p += 2; // maximum pixel value
             p += 84;
             colormap  = p.read32(); // 0 - NORMAL, 1 - DITHERED, 2- SCREEN, 3 - COLORMAP
-
-            p += 404;
-            data = p; // image data begins 512 bytes from start of the file
 
             if (bpc != 1 || colormap != 0)
             {
@@ -123,6 +119,8 @@ namespace
             int height = m_header.ysize;
             int channels = m_header.zsize;
 
+            u8* data = m_memory.address + 512;
+            
             for (int channel = 0; channel < channels; ++channel)
             {
                 for (int y = 0; y < height; ++y)
@@ -131,7 +129,7 @@ namespace
                     u8* dest = s.address<u8>(0, scanline) + channel;
 
                     int offset = (y + channel * height) * width;
-                    u8* src = m_header.data + offset;
+                    u8* src = data + offset;
 
                     for (int x = 0; x < width; ++x)
                     {
@@ -147,16 +145,24 @@ namespace
             int height = m_header.ysize;
             int channels = m_header.zsize;
 
-            u8* end = m_memory.address + m_memory.size;
+            u8* data = m_memory.address;
 
-            BigEndianPointer p = m_header.data;
+            BigEndianPointer p = data + 512;
 
             // read RLE offset table
-            std::vector<u32> offsets(height * channels);
+            int num = height * channels;
 
-            for (size_t i = 0; i < offsets.size(); ++i)
+            std::vector<u32> offsets(num);
+            std::vector<s32> sizes(num);
+
+            for (int i = 0; i < num; ++i)
             {
                 offsets[i] = p.read32();
+            }
+
+            for (int i = 0; i < num; ++i)
+            {
+                sizes[i] = p.read32();
             }
 
             for (int channel = 0; channel < channels; ++channel)
@@ -166,8 +172,10 @@ namespace
                     int scanline = (height - 1) - y; // mirror y-axis
                     u8* dest = s.address<u8>(0, scanline) + channel;
 
-                    int offset = offsets[y + channel * height];
-                    u8* src = m_header.data + offset;
+                    int index = y + channel * height;
+                    int offset = offsets[index];
+                    u8* src = data + offset;
+                    u8* end = src + sizes[index];
 
                     for (; src < end;)
                     {
@@ -178,7 +186,7 @@ namespace
 
                         if (pixel & 0x80)
                         {
-                            for (int i = 0; i < count; ++i)
+                            while (count--)
                             {
                                 *dest = *src++;
                                 dest += channels;
@@ -187,7 +195,7 @@ namespace
                         else
                         {
                             pixel = *src++;
-                            while (count-- > 0)
+                            while (count--)
                             {
                                 *dest = pixel;
                                 dest += channels;
@@ -205,14 +213,31 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            switch (m_header.encoding)
+            if (dest.format == m_header.format && dest.width >= m_header.xsize && dest.height >= m_header.ysize)
             {
-                case 0:
-                    decode_uncompressed(dest);
-                    break;
-                case 1:
-                    decode_rle(dest);
-                    break;
+                switch (m_header.encoding)
+                {
+                    case 0:
+                        decode_uncompressed(dest);
+                        break;
+                    case 1:
+                        decode_rle(dest);
+                        break;
+                }
+            }
+            else
+            {
+                Bitmap temp(m_header.xsize, m_header.ysize, m_header.format);
+                switch (m_header.encoding)
+                {
+                    case 0:
+                        decode_uncompressed(temp);
+                        break;
+                    case 1:
+                        decode_rle(temp);
+                        break;
+                }
+                dest.blit(0, 0, temp);
             }
         }
     };
