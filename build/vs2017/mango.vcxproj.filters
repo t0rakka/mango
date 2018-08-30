@@ -1055,5 +1055,8 @@
     <ClCompile Include="..\..\source\mango\image\image_zpng.cpp">
       <Filter>mango\source\image</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_sgi.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
