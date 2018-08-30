@@ -151,6 +151,7 @@
 		A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AB1E706FA000D4D499 /* etc.hpp */; };
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
+		A645DD1C21381E2D00EC714B /* image_sgi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD1B21381E2D00EC714B /* image_sgi.cpp */; };
 		A672D9122026633600947D7E /* bc_aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9102026633600947D7E /* bc_aes.cpp */; };
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
@@ -330,6 +331,7 @@
 		A63DD7AB1E706FA000D4D499 /* etc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = etc.hpp; path = external/google/etc.hpp; sourceTree = "<group>"; };
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
+		A645DD1B21381E2D00EC714B /* image_sgi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_sgi.cpp; path = image/image_sgi.cpp; sourceTree = "<group>"; };
 		A672D9102026633600947D7E /* bc_aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bc_aes.cpp; path = external/aes/bc_aes.cpp; sourceTree = "<group>"; };
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
@@ -454,6 +456,7 @@
 				A00559BC1C93329A00A6D963 /* image_pvr.cpp */,
 				A00559BD1C93329A00A6D963 /* image_tga.cpp */,
 				A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */,
+				A645DD1B21381E2D00EC714B /* image_sgi.cpp */,
 				A00559BE1C93329A00A6D963 /* image.cpp */,
 				A00559BF1C93329A00A6D963 /* surface.cpp */,
 			);
@@ -969,6 +972,7 @@
 				A63DD6FE1E706D8600D4D499 /* idct.cpp in Sources */,
 				A6FCC3971E8122EA0037C15F /* pool.c in Sources */,
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
+				A645DD1C21381E2D00EC714B /* image_sgi.cpp in Sources */,
 				A63DD79D1E706F7600D4D499 /* miniz.cpp in Sources */,
 				A62FDF682019D435004BD27C /* zstd_opt.c in Sources */,
 				A00559C81C93329A00A6D963 /* image_dds.cpp in Sources */,
