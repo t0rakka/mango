@@ -1564,7 +1564,7 @@ namespace
 namespace mango
 {
 
-    void registerPNG()
+    void registerImageDecoderPNG()
     {
         registerImageDecoder(createInterface, "png");
         registerImageEncoder(imageEncode, "png");

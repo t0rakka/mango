@@ -14,20 +14,21 @@ namespace mango
     // ImageServer
     // ----------------------------------------------------------------------------
 
-    void registerTGA();
-    void registerPKM();
-    void registerDDS();
-    void registerPNG();
-    void registerJPG();
-    void registerBMP();
-    void registerPCX();
-    void registerIFF();
-    void registerHDR();
-    void registerGIF();
-    void registerKTX();
-    void registerPVR();
-    void registerASTC();
-    void register_zpng();
+    void registerImageDecoderTGA();
+    void registerImageDecoderPKM();
+    void registerImageDecoderDDS();
+    void registerImageDecoderPNG();
+    void registerImageDecoderJPG();
+    void registerImageDecoderBMP();
+    void registerImageDecoderPCX();
+    void registerImageDecoderIFF();
+    void registerImageDecoderHDR();
+    void registerImageDecoderGIF();
+    void registerImageDecoderKTX();
+    void registerImageDecoderPVR();
+    void registerImageDecoderASTC();
+    void registerImageDecoderZPNG();
+    //void registerImageDecoderSGI();
 
     class ImageServer
     {
@@ -39,20 +40,21 @@ namespace mango
 
         ImageServer()
         {
-            registerTGA();
-            registerPKM();
-            registerDDS();
-            registerPNG();
-            registerJPG();
-            registerBMP();
-            registerPCX();
-            registerIFF();
-            registerHDR();
-            registerGIF();
-            registerKTX();
-            registerPVR();
-            registerASTC();
-            register_zpng();
+            registerImageDecoderTGA();
+            registerImageDecoderPKM();
+            registerImageDecoderDDS();
+            registerImageDecoderPNG();
+            registerImageDecoderJPG();
+            registerImageDecoderBMP();
+            registerImageDecoderPCX();
+            registerImageDecoderIFF();
+            registerImageDecoderHDR();
+            registerImageDecoderGIF();
+            registerImageDecoderKTX();
+            registerImageDecoderPVR();
+            registerImageDecoderASTC();
+            registerImageDecoderZPNG();
+            //registerImageDecoderSGI();
         }
 
         ~ImageServer()

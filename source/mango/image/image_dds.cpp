@@ -942,7 +942,7 @@ namespace
 namespace mango
 {
 
-    void registerDDS()
+    void registerImageDecoderDDS()
     {
         registerImageDecoder(createInterface, "dds");
     }

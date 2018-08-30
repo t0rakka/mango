@@ -181,7 +181,7 @@ namespace
 namespace mango
 {
 
-    void register_zpng()
+    void registerImageDecoderZPNG()
     {
         registerImageDecoder(createInterface, "zpng");
         registerImageEncoder(imageEncode, "zpng");
