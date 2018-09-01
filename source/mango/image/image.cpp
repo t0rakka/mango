@@ -29,6 +29,7 @@ namespace mango
     void registerImageDecoderASTC();
     void registerImageDecoderZPNG();
     void registerImageDecoderSGI();
+    void registerImageDecoderPNM();
 
     class ImageServer
     {
@@ -55,6 +56,7 @@ namespace mango
             registerImageDecoderASTC();
             registerImageDecoderZPNG();
             registerImageDecoderSGI();
+            registerImageDecoderPNM();
         }
 
         ~ImageServer()
