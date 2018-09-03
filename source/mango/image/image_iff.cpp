@@ -529,7 +529,7 @@ namespace
 namespace mango
 {
 
-    void registerIFF()
+    void registerImageDecoderIFF()
     {
         registerImageDecoder(createInterface, "iff");
         registerImageDecoder(createInterface, "lbm");

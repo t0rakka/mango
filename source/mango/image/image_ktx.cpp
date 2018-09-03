@@ -383,7 +383,7 @@ glBaseInternalFormat:
 namespace mango
 {
 
-    void registerKTX()
+    void registerImageDecoderKTX()
     {
         registerImageDecoder(createInterface, "ktx");
     }

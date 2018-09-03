@@ -191,7 +191,7 @@ namespace
 namespace mango
 {
 
-    void registerPKM()
+    void registerImageDecoderPKM()
     {
         registerImageDecoder(createInterface, "pkm");
         registerImageEncoder(imageEncode, "pkm");

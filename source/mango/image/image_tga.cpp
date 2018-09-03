@@ -459,7 +459,7 @@ namespace
 namespace mango
 {
 
-    void registerTGA()
+    void registerImageDecoderTGA()
     {
         registerImageDecoder(createInterface, "tga");
         registerImageEncoder(imageEncode, "tga");

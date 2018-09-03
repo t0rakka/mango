@@ -88,7 +88,7 @@ namespace
 namespace mango
 {
 
-    void registerJPG()
+    void registerImageDecoderJPG()
     {
         registerImageDecoder(createInterface, "jpg");
         registerImageDecoder(createInterface, "jpeg");

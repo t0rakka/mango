@@ -399,7 +399,7 @@ namespace
 namespace mango
 {
 
-    void registerPVR()
+    void registerImageDecoderPVR()
     {
         registerImageDecoder(createInterface, "pvr");
     }
