@@ -285,9 +285,6 @@
     <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp">
       <Filter>mango\source\gui\win32</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp">
-      <Filter>mango\source\jpeg</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\unrar\array.hpp">
       <Filter>external\unrar</Filter>
     </ClInclude>
@@ -720,6 +717,9 @@
     <ClInclude Include="..\..\source\external\zpng\zpng.h">
       <Filter>external\zpng</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -868,24 +868,6 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp">
       <Filter>mango\source\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\jpeg\process.cpp">
-      <Filter>mango\source\jpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\jpeg\arithmetic.cpp">
-      <Filter>mango\source\jpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\jpeg\decode.cpp">
-      <Filter>mango\source\jpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\jpeg\encode.cpp">
-      <Filter>mango\source\jpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\jpeg\huffman.cpp">
-      <Filter>mango\source\jpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\jpeg\idct.cpp">
-      <Filter>mango\source\jpeg</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\unrar\crc.cpp">
       <Filter>external\unrar</Filter>
@@ -1057,6 +1039,27 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\image\image_sgi.cpp">
       <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_pnm.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_arithmetic.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_decode.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_encode.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_huffman.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_idct.cpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_process.cpp">
+      <Filter>mango\source\jpeg</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
     Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
+#include <cctype>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
