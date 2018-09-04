@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -18,7 +18,7 @@ namespace mango
         int     depth = 0;   // depth
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
-        bool    palette = false;
+        bool    palette = false; // decoder supports palette export
         Format  format;
         TextureCompression compression = TextureCompression::NONE;
     };

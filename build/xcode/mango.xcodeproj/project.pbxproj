@@ -153,6 +153,8 @@
 		A645DD2A213D53C000EC714B /* jpeg_process.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD23213D53C000EC714B /* jpeg_process.cpp */; };
 		A645DD2B213D53C100EC714B /* jpeg_encode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD24213D53C000EC714B /* jpeg_encode.cpp */; };
 		A645DD2C213D53C100EC714B /* jpeg_idct.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD25213D53C000EC714B /* jpeg_idct.cpp */; };
+		A645DD2F213ED71100EC714B /* image_atari.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD2D213ED71100EC714B /* image_atari.cpp */; };
+		A645DD30213ED71100EC714B /* image_c64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD2E213ED71100EC714B /* image_c64.cpp */; };
 		A672D9122026633600947D7E /* bc_aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9102026633600947D7E /* bc_aes.cpp */; };
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
@@ -334,6 +336,8 @@
 		A645DD23213D53C000EC714B /* jpeg_process.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jpeg_process.cpp; path = jpeg/jpeg_process.cpp; sourceTree = "<group>"; };
 		A645DD24213D53C000EC714B /* jpeg_encode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jpeg_encode.cpp; path = jpeg/jpeg_encode.cpp; sourceTree = "<group>"; };
 		A645DD25213D53C000EC714B /* jpeg_idct.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jpeg_idct.cpp; path = jpeg/jpeg_idct.cpp; sourceTree = "<group>"; };
+		A645DD2D213ED71100EC714B /* image_atari.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_atari.cpp; path = image/image_atari.cpp; sourceTree = "<group>"; };
+		A645DD2E213ED71100EC714B /* image_c64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_c64.cpp; path = image/image_c64.cpp; sourceTree = "<group>"; };
 		A672D9102026633600947D7E /* bc_aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bc_aes.cpp; path = external/aes/bc_aes.cpp; sourceTree = "<group>"; };
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
@@ -460,6 +464,8 @@
 				A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */,
 				A645DD1B21381E2D00EC714B /* image_sgi.cpp */,
 				A645DD1D213A9A9300EC714B /* image_pnm.cpp */,
+				A645DD2D213ED71100EC714B /* image_atari.cpp */,
+				A645DD2E213ED71100EC714B /* image_c64.cpp */,
 				A00559BE1C93329A00A6D963 /* image.cpp */,
 				A00559BF1C93329A00A6D963 /* surface.cpp */,
 			);
@@ -983,6 +989,7 @@
 				A645DD1E213A9A9300EC714B /* image_pnm.cpp in Sources */,
 				A63DD78D1E706F3400D4D499 /* bz_huffman.c in Sources */,
 				A672D9152026634B00947D7E /* aes.cpp in Sources */,
+				A645DD2F213ED71100EC714B /* image_atari.cpp in Sources */,
 				A00559971C93324E00A6D963 /* memory.cpp in Sources */,
 				A63DD74E1E706EB200D4D499 /* crypt.cpp in Sources */,
 				A6FCC39D1E8122EA0037C15F /* zstd_common.c in Sources */,
@@ -1042,6 +1049,7 @@
 				A00559C51C93329A00A6D963 /* format.cpp in Sources */,
 				A62FDF612019D435004BD27C /* zstd_double_fast.c in Sources */,
 				A00559CB1C93329A00A6D963 /* image_iff.cpp in Sources */,
+				A645DD30213ED71100EC714B /* image_c64.cpp in Sources */,
 				A00559CC1C93329A00A6D963 /* image_jpg.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
