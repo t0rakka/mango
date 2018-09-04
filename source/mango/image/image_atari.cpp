@@ -195,7 +195,7 @@ namespace
             else
             {
                 const uint16be* buffer = reinterpret_cast<const uint16be *>(data);
-                
+
                 if (bitplanes == 1)
                 {
                     palette.color[0] = 0xffeeeeee;
@@ -288,174 +288,152 @@ namespace
     // ImageDecoder: NEOchrome
 	// ------------------------------------------------------------
 
-#if 0
-
 	struct header_neo
 	{
-		int width;
-		int height;
+		int width = 0;
+		int height = 0;
         int bitplanes;
-	};
 
-	const uint8* read_header_neo(header_neo& header, const uint8* data, int size)
-	{
-		header.width = 0;
-		header.height = 0;
-
-        if (size != 32128)
+        u8* parse(u8* data, size_t size)
         {
-            return NULL;
-        }
-
-        infilter xf(data);
-
-        uint16 flag = xf.read<uint16>();
-        uint16 resolution_data = xf.read<uint16>();
-
-        if (flag)
-        {
-            return NULL;
-        }
-        else
-        {
-            if (resolution_data == 0)
+            if (size != 32128)
             {
-                header.width = 320;
-                header.height = 200;
-                header.bitplanes = 4;
+                return nullptr;
             }
-            else if (resolution_data == 1)
+
+            BigEndianPointer p = data;
+
+            u16 flag = p.read16();
+            u16 resolution_data = p.read16();
+
+            if (flag)
             {
-                header.width = 640;
-                header.height = 200;
-                header.bitplanes = 2;
-            }
-            else if (resolution_data == 2)
-            {
-                header.width = 640;
-                header.height = 400;
-                header.bitplanes = 1;
+                return nullptr;
             }
             else
             {
-                FUSIONCORE_EXCEPTION("Neochrome header: unsupported resolution.");
+                if (resolution_data == 0)
+                {
+                    width = 320;
+                    height = 200;
+                    bitplanes = 4;
+                }
+                else if (resolution_data == 1)
+                {
+                    width = 640;
+                    height = 200;
+                    bitplanes = 2;
+                }
+                else if (resolution_data == 2)
+                {
+                    width = 640;
+                    height = 400;
+                    bitplanes = 1;
+                }
+                else
+                {
+                    MANGO_EXCEPTION(ID"Unsupported resolution.");
+                }
             }
+
+            return p;
         }
 
-        return xf;
-	}
-
-	imageheader neo_header(stream* s)
-	{
-		imageheader image_header;
-
-		int size = int(s->size());
-		const uint8* data = s->read(size);
-
-		header_neo header;
-		data = read_header_neo(header, data, size);
-
-        if (data)
+        void decode(Surface& s, u8* data, u8* end)
         {
-		    image_header.width = header.width;
-		    image_header.height = header.height;
+            BigEndianPointer p = data;
 
-            ucolor *palette = NULL;
-            image_header.format = pixelformat(palette);
-        }
-        else
-        {
-            image_header.width = 0;
-            image_header.height = 0;
-        }
+            // read palette
+            Palette palette;
+            palette.size = 16;
 
-		return image_header;
-	}
-
-	surface* neo_load(stream* s, bool thumbnail)
-	{
-		(void) thumbnail;
-
-        int i, j, k;
-		int size = int(s->size());
-		const uint8* data = s->read(size);
-        const uint8* end = data + size;
-
-		header_neo header;
-        data = read_header_neo(header, data, size);
-
-        if (data)
-        {
-            infilter xf(data);
-
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-
-            for (i = 0; i < 16; ++i)
+            for (int i = 0; i < 16; ++i)
             {
-                uint16 palette_color = xf.read<uint16>();
+                u16 palette_color = p.read16();
                 palette[i] = convert_atari_color(palette_color);
             }
 
-            // Skip unnecessary data
-            xf += 12 + 2 + 2 + 2 + 2 + 2 + 2 + 2 + 66;
-
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-		    uint8* image = so->lock<uint8>();
-
-            int num_words = 16000;
-            for (i = 0; i < (num_words / header.bitplanes); ++i)
+            // patch palette
+            if (bitplanes == 1)
             {
-                uint16 word[4];
+                palette.color[0] = 0xffeeeeee;
+                palette.color[1] = 0xff000000;
+            }
 
-                for (j = 0; j < header.bitplanes; ++j)
+            // Skip unnecessary data
+            p += 12 + 2 + 2 + 2 + 2 + 2 + 2 + 2 + 66;
+
+            const int num_words = 16000;
+            std::vector<u8> buffer(width * height);
+
+            for (int i = 0; i < (num_words / bitplanes); ++i)
+            {
+                u16 word[4];
+
+                for (int j = 0; j < bitplanes; ++j)
                 {
-                    word[j] = xf.read<uint16>();
+                    word[j] = p.read16();
 
-                    if (xf > end)
+                    if (p > end)
                     {
-                        so->unlock();
-                        so->release();
-                        return NULL;
+                        return;
                     }
                 }
 
-                for (j = 15; j >= 0; --j)
+                for (int j = 15; j >= 0; --j)
                 {
-                    uint8 index = 0;
+                    u8 index = 0;
 
-                    for (k = 0; k < header.bitplanes; ++k)
+                    for (int k = 0; k < bitplanes; ++k)
                     {
                         index |= (((word[k] & (1 << j)) >> j) << k);
                     }
 
-                    image[(i * 16) + (15 - j)] = index;
+                    buffer[(i * 16) + (15 - j)] = index;
                 }
             }
 
-		    so->unlock();
+            // resolve palette
+            for (int y = 0; y < height; ++y)
+            {
+                BGRA* scan = s.address<BGRA>(0, y);
+                u8* src = buffer.data() + y * width;
 
-		    return so;
-	    }
-
-        return NULL;
-    }
-
-#endif
+                for (int x = 0; x < width; ++x)
+                {
+                    u8 index = src[x];
+                    scan[x] = palette[index & 15];
+                }
+            }
+        }
+	};
 
     struct InterfaceNEO : Interface
     {
+        header_neo m_neo_header;
+        u8* m_data;
+
         InterfaceNEO(Memory memory)
             : Interface(memory)
+            , m_data(nullptr)
         {
-            m_header.width   = 0; // TODO
-            m_header.height  = 0; // TODO
-            m_header.format  = Format(); // TODO
+            m_data = m_neo_header.parse(memory.address, memory.size);
+            if (m_data)
+            {
+                m_header.width  = m_neo_header.width;
+                m_header.height = m_neo_header.height;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
         }
 
-        void decodeImage(Surface& dest) override
+        void decodeImage(Surface& s) override
         {
-            // TODO
+            if (!m_data)
+                return;
+
+            u8* end = m_memory.address + m_memory.size;
+
+            m_neo_header.decode(s, m_data, end);
         }
     };
 
