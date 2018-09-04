@@ -67,14 +67,13 @@ namespace
 	// ImageDecoder: Degas/Degas Elite
 	// ------------------------------------------------------------
 
-	void depack_packbits(u8* buffer, const u8* input, int scansize, int insize)
+	void degas_decompress(u8* buffer, const u8* input, const u8* input_end, int scansize)
 	{
 		u8* buffer_end = buffer + scansize;
-		const u8* input_end = input + insize;
 
 		for ( ; buffer < buffer_end && input < input_end; )
 		{
-			uint8 v = *input++;
+			u8 v = *input++;
 
 			if (v > 128)
 			{
@@ -158,6 +157,83 @@ namespace
 
             return p;
         }
+
+        void decode(Surface& s, Palette& palette, u8* data, u8* end)
+        {
+            std::vector<u8> imageVector(width * height);
+            u8* image = imageVector.data();
+            std::memset(image, 0, width * height);
+
+            const int words_per_scan = bitplanes == 1 ? 40 : 80;
+
+            if (compressed)
+            {
+                std::vector<u8> buffer(32000);
+			    degas_decompress(buffer.data(), data, end, 32000);
+
+                BigEndianPointer p = buffer.data();
+
+                for (int y = 0; y < height; ++y)
+                {
+                    for (int j = 0; j < bitplanes; ++j)
+                    {
+                        for (int k = 0; k < words_per_scan / bitplanes; ++k)
+                        {
+                            u16 word = p.read16();
+
+                            if (p > end)
+                                return;
+
+                            for (int l = 15; l >= 0; --l)
+                            {
+                                image[(y * width) + (k * 16) + (15 - l)] |= (((word & (1 << l)) >> l) << j);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                const uint16be* buffer = reinterpret_cast<const uint16be *>(data);
+                
+                if (bitplanes == 1)
+                {
+                    palette.color[0] = 0xffeeeeee;
+                    palette.color[1] = 0xff000000;
+                }
+
+                for (int y = 0; y < height; ++y)
+                {
+                    int yoffset = y * (bitplanes == 1 ? 40 : 80);
+                    for (int x = 0; x < width; ++x)
+                    {
+                        int x_offset = 15 - (x & 15);
+                        int word_offset = (x >> 4) * bitplanes + yoffset;
+
+                        u8 index = 0;
+                        for (int i = 0; i < bitplanes; ++i)
+                        {
+                            u16 v = buffer[word_offset + i];
+                            int bit_pattern = (v >> x_offset) & 0x1;
+                            index |= (bit_pattern << i);
+                        }
+                        image[x + y * width] = index;
+                    }
+                }
+            }
+
+            // Resolve palette
+            for (int y = 0; y < height; ++y)
+            {
+                u32* dst = s.address<u32>(0, y);
+                u8* src = image + y * width;
+                for (int x = 0; x < width; ++x)
+                {
+                    u8 index = src[x];
+                    dst[x] = palette.color[index];
+                }
+            }
+        }
 	};
 
     struct InterfaceDEGAS : Interface
@@ -178,16 +254,16 @@ namespace
             }
         }
 
-        void decodeImage(Surface& dest) override
+        void decodeImage(Surface& s) override
         {
             if (!m_data)
                 return;
 
-            u8* data = m_data;
             u8* end = m_memory.address + m_memory.size;
 
-            BigEndianPointer p = data;
+            BigEndianPointer p = m_data;
 
+            // read palette
             Palette palette;
             palette.size = 1 << m_degas_header.bitplanes;
 
@@ -197,81 +273,8 @@ namespace
                 palette[i] = convert_atari_color(palette_color);
             }
 
-            std::vector<u8> imageVector(m_header.width * m_header.height);
-            u8* image = imageVector.data();
-            std::memset(image, 0, m_header.width * m_header.height);
-
-            const int words_per_scan = m_degas_header.bitplanes == 1 ? 40 : 80;
-            printf("-- compressed: %d, planes: %d \n", m_degas_header.compressed, m_degas_header.bitplanes);
-
-            if (m_degas_header.compressed)
-            {
-                std::vector<u8> buffer(32000);
-			    depack_packbits(buffer.data(), p, 32000, int(end - p));
-
-                p = buffer.data();
-
-                for (int y = 0; y < m_header.height; ++y)
-                {
-                    for (int j = 0; j < m_degas_header.bitplanes; ++j)
-                    {
-                        for (int k = 0; k < words_per_scan / m_degas_header.bitplanes; ++k)
-                        {
-                            u16 word = p.read16();
-
-                            if (p > end)
-                                return;
-
-                            for (int l = 15; l >= 0; --l)
-                            {
-                                image[(y * m_header.width) + (k * 16) + (15 - l)] |= (((word & (1 << l)) >> l) << j);
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                data = p;
-                const uint16be* buffer = reinterpret_cast<const uint16be *>(data);
-                
-                if (m_degas_header.bitplanes == 1)
-                {
-                    palette.color[0] = 0xffeeeeee;
-                    palette.color[1] = 0xff000000;
-                }
-
-                for (int y = 0; y < m_header.height; ++y)
-                {
-                    int yoffset = y * (m_degas_header.bitplanes == 1 ? 40 : 80);
-                    for (int x = 0; x < m_header.width; ++x)
-                    {
-                        int x_offset = 15 - (x & 15);
-                        int word_offset = (x >> 4) * m_degas_header.bitplanes + yoffset;
-
-                        u8 index = 0;
-                        for (int i = 0; i < m_degas_header.bitplanes; ++i)
-                        {
-                            u16 v = buffer[word_offset + i];
-                            int bit_pattern = (v >> x_offset) & 0x1;
-                            index |= (bit_pattern << i);
-                        }
-                        image[x + y * m_header.width] = index;
-                    }
-                }
-            }
-
-            // Resolve palette
-            for (int y = 0; y < m_header.height; ++y)
-            {
-                u32* dst = dest.address<u32>(0, y);
-                u8* src = image + y * m_header.width;
-                for (int x = 0; x < m_header.width; ++x)
-                {
-                    u8 index = src[x];
-                    dst[x] = palette.color[index];
-                }
-            }
+            // decode image
+            m_degas_header.decode(s, palette, p, end);
         }
     };
 
@@ -466,16 +469,31 @@ namespace
     // ImageDecoder: Spectrum 512
 	// ------------------------------------------------------------
 
-#if 0
+    u8 find_spectrum_palette_index(u32 x, u8 c)
+    {
+        u32 t = 10 * c;
 
-	void depack_spu(uint8* buffer, const uint8* input, int scansize, int insize)
+        if (c & 1)
+            t -= 5;
+        else
+            t++;
+
+        if (x < t)
+            return c;
+        if (x >= t + 160)
+            return c + 32;
+
+        return c + 16;
+    }
+
+	void spu_decompress(u8* buffer, const u8* input, int scansize, int insize)
 	{
-		uint8* buffer_end = buffer + scansize;
-		const uint8* input_end = input + insize;
+		u8* buffer_end = buffer + scansize;
+		const u8* input_end = input + insize;
 
-		for (; buffer < buffer_end && input < input_end;)
+		for ( ; buffer < buffer_end && input < input_end; )
 		{
-			uint8 v = *input++;
+			u8 v = *input++;
 
 			if (v >= 128)
 			{
@@ -495,213 +513,132 @@ namespace
 
 	struct header_spu
 	{
-		int width;
-		int height;
-        int bitplanes;
-        bool compressed;
-        int length_of_data_bit_map;
-        int length_of_color_bit_map;
-	};
+		int width = 0;
+		int height = 0;
+        int bitplanes = 4;
+        bool compressed = false;
+        int length_of_data_bit_map = 0;
+        int length_of_color_bit_map = 0;
 
-	const uint8* read_header_spu(header_spu& header, const uint8* data, int size)
-	{
-		header.width = 0;
-		header.height = 0;
-        header.bitplanes = 4;
-        header.compressed = false;
-        header.length_of_data_bit_map = 0;
-        header.length_of_color_bit_map = 0;
-
-        infilter xf(data);
-
-        uint16 flag = xf.read<uint16>();
-
-        if (flag == 0x5350)
+        u8* parse(u8* data, size_t size)
         {
-            header.compressed = true;
-            xf.read<uint16>();  // skip reserved word
-            header.length_of_data_bit_map = xf.read<uint32>();
-            header.length_of_color_bit_map = xf.read<uint32>();
+            if (size < 12)
+                return nullptr;
 
-            if (size != 12 + header.length_of_data_bit_map + header.length_of_color_bit_map)
+            BigEndianPointer p = data;
+
+            u16 flag = p.read16();
+
+            if (flag == 0x5350)
             {
-                return NULL;
+                compressed = true;
+                p += 2; // skip reserved
+                length_of_data_bit_map = p.read32();
+                length_of_color_bit_map = p.read32();
+
+                const size_t total_size = 12 + length_of_data_bit_map + length_of_color_bit_map;
+                if (size != total_size)
+                {
+                    return nullptr;
+                }
             }
-        }
-        else
-        {
-            if (size != 51104)
+            else
             {
-                return NULL;
+                if (size != 51104)
+                {
+                    return nullptr;
+                }
+
+                p -= sizeof(u16);
             }
 
-            xf -= sizeof(uint16);
-        }
+            width = 320;
+            height = 200;
 
-        header.width = 320;
-        header.height = 200;
-
-        return xf;
-	}
-
-	imageheader spu_header(stream* s)
-	{
-		imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-        image_header.format = pixelformat::argb8888;
-
-		int size = int(s->size());
-		const uint8* data = s->read(size);
-
-        if (size > 12)
-        {
-		    header_spu header;
-		    data = read_header_spu(header, data, size);
-
-            if (data)
-            {
-		        image_header.width = header.width;
-		        image_header.height = header.height;
-            }
+            return p;
         }
 
-		return image_header;
-	}
-
-    uint8 find_spectrum_palette_index(uint32 x, uint8 c)
-    {
-        uint32 t = 10 * c;
-
-        if (c & 1)
-            t -= 5;
-        else
-            t++;
-
-        if (x < t)
-            return c;
-        if (x >= t + 160)
-            return c + 32;
-
-        return c + 16;
-    }
-
-	surface* spu_load(stream* s, bool thumbnail)
-	{
-		(void) thumbnail;
-
-        int i, j, k, l;
-		int size = int(s->size());
-		const uint8* data = s->read(size);
-        const uint8* end = data + size;
-
-		header_spu header;
-        data = read_header_spu(header, data, size);
-
-        if (data)
+        void decode(Surface& s, u8* data, u8* end)
         {
-            infilter xf(data);
+            BigEndianPointer p = data;
 
-            surface* so = bitmap::create(header.width, header.height, pixelformat::argb8888);
-		    ucolor* image = so->lock<ucolor>();
-            std::memset(image, 0, header.width * header.height * sizeof(ucolor));
-
-            uint8* bitmap = new uint8[header.width * header.height];
-            ucolor* palette = new ucolor[16 * 3 * (header.height - 1)];
-            std::memset(bitmap, 0, header.width * header.height);
-
-            for (i = 0; i < 16 * 3 * (header.height - 1); ++i)
-            {
-                palette[i].a = 0xff;
-                palette[i].r = 0;
-                palette[i].g = 0;
-                palette[i].b = 0;
-            }
+            std::vector<u8> bitmap(width * height, 0);
+            std::vector<BGRA> palette(16 * 3 * (height - 1), BGRA(0, 0, 0, 0xff));
 
             int num_words = 16000;
             int words_per_scan = 20;
-            if (header.compressed)
+
+            if (compressed)
             {
-			    uint8* buffer = new uint8[31840];
-                depack_spu(buffer, xf, 31840, header.length_of_data_bit_map);
+                std::vector<u8> buffer(31840);
+                spu_decompress(buffer.data(), p, 31840, length_of_data_bit_map);
 
-                xf = buffer;
-                end = buffer + 31840;
+                p = buffer.data();
+                end = buffer.data() + 31840;
 
-                for (i = 0; i < header.bitplanes; ++i)
+                for (int i = 0; i < bitplanes; ++i)
                 {
-                    for (j = 1; j < header.height; ++j)
+                    for (int j = 1; j < height; ++j)
                     {
-                        for (k = 0; k < words_per_scan; ++k)
+                        for (int k = 0; k < words_per_scan; ++k)
                         {
-                            uint16 word = xf.read<uint16>();
+                            u16 word = p.read16();
 
-                            if (xf > end)
+                            if (p > end)
                             {
-                                so->unlock();
-                                so->release();
-                                delete [] bitmap;
-                                delete [] palette;
-                                delete [] buffer;
-                                return NULL;
+                                return;
                             }
 
-                            for (l = 15; l >= 0; --l)
+                            for (int l = 15; l >= 0; --l)
                             {
-                                bitmap[(j * header.width) + (k * 16) + (15 - l)] |= (((word & (1 << l)) >> l) << i);
+                                bitmap[(j * width) + (k * 16) + (15 - l)] |= (((word & (1 << l)) >> l) << i);
                             }
                         }
                     }
                 }
 
-                xf = data + header.length_of_data_bit_map;
-                end = xf + header.length_of_color_bit_map;
+                p = data + length_of_data_bit_map;
+                end = p + length_of_color_bit_map;
 
                 int palette_set = 0;
-                while (xf < end)
+                while (p < end)
                 {
-                    uint16 vector = xf.read<uint16>();
+                    u16 vector = p.read16();
 
-                    for (i = 0; i < 16; ++i)
+                    for (int i = 0; i < 16; ++i)
                     {
                         if (vector & (1 << i))
                         {
                             int index = (palette_set * 16) + i;
-                            uint16 palette_color = xf.read<uint16>();
+                            u16 palette_color = p.read16();
                             palette[index] = convert_atari_color(palette_color);
                         }
                     }
 
                     ++palette_set;
                 }
-
-                delete [] buffer;
             }
             else
             {
-                for (i = 0; i < (num_words / header.bitplanes); ++i)
+                for (int i = 0; i < (num_words / bitplanes); ++i)
                 {
-                    uint16 word[4] = {0};
+                    u16 word[4] = { 0 };
 
-                    for (j = 0; j < header.bitplanes; ++j)
+                    for (int j = 0; j < bitplanes; ++j)
                     {
-                        word[j] = xf.read<uint16>();
+                        word[j] = p.read16();
 
-                        if (xf > end)
+                        if (p > end)
                         {
-                            so->unlock();
-                            so->release();
-                            delete [] bitmap;
-                            delete [] palette;
-                            return NULL;
+                            return;
                         }
                     }
 
-                    for (j = 15; j >= 0; --j)
+                    for (int j = 15; j >= 0; --j)
                     {
-                        uint8 index = 0;
+                        u8 index = 0;
 
-                        for (k = 0; k < header.bitplanes; ++k)
+                        for (int k = 0; k < bitplanes; ++k)
                         {
                             index |= (((word[k] & (1 << j)) >> j) << k);
                         }
@@ -710,20 +647,16 @@ namespace
                     }
                 }
 
-                for (i = 0; i < (header.height - 1); ++i)
+                for (int i = 0; i < (height - 1); ++i)
                 {
-                    for (j = 0; j < 16 * 3; ++j)
+                    for (int j = 0; j < 16 * 3; ++j)
                     {
-                        uint16 palette_color = xf.read<uint16>();
+                        uint16 palette_color = p.read16();
                         int index = (i * 16 * 3) + j;
 
-                        if (xf > end)
+                        if (p > end)
                         {
-                            so->unlock();
-                            so->release();
-                            delete [] bitmap;
-                            delete [] palette;
-                            return NULL;
+                            return;
                         }
 
                         palette[index] = convert_atari_color(palette_color);
@@ -731,49 +664,57 @@ namespace
                 }
             }
 
-            for (i = 1; i < header.height; ++i)
+            // HACK: clear first scanline - not sure what we should do here..
+            std::memset(s.address<u8>(0, 0), 0, width * 4);
+
+            // Resolve palette
+            for (int y = 1; y < height; ++y)
             {
-                for (j = 0; j < header.width; ++j)
+                BGRA* image = s.address<BGRA>(0, y);
+
+                for (int x = 0; x < width; ++x)
                 {
-                    uint8 palette_index = bitmap[(i * header.width) + j];
-                    palette_index = find_spectrum_palette_index(j, palette_index);
+                    uint8 palette_index = bitmap[(y * width) + x];
+                    palette_index = find_spectrum_palette_index(x, palette_index);
 
-                    int offset = (i * header.width) + j;
-                    int index = (i - 1) * 16 * 3 + palette_index;
-
-                    image[offset].a = 0xff;
-                    image[offset].r = palette[index].r;
-                    image[offset].g = palette[index].g;
-                    image[offset].b = palette[index].b;
+                    int index = (y - 1) * 16 * 3 + palette_index;
+                    image[x] = palette[index];
                 }
             }
-
-            delete [] bitmap;
-            delete [] palette;
-
-		    so->unlock();
-
-		    return so;
-	    }
-
-        return NULL;
-    }
-
-#endif
+        }
+	};
 
     struct InterfaceSPU : Interface
     {
+        header_spu m_spu_header;
+        u8* m_data;
+
         InterfaceSPU(Memory memory)
             : Interface(memory)
+            , m_data(nullptr)
         {
-            m_header.width   = 0; // TODO
-            m_header.height  = 0; // TODO
-            m_header.format  = Format(); // TODO
+            m_data = m_spu_header.parse(memory.address, memory.size);
+            if (m_data)
+            {
+                m_header.width  = m_spu_header.width;
+                m_header.height = m_spu_header.height;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+            else
+            {
+                MANGO_EXCEPTION(ID"Incorrect header.");
+            }
         }
 
-        void decodeImage(Surface& dest) override
+        void decodeImage(Surface& s) override
         {
-            // TODO
+            if (!m_data)
+                return;
+
+            u8* data = m_data;
+            u8* end = m_memory.address + m_memory.size;
+
+            m_spu_header.decode(s, data, end);
         }
     };
 
