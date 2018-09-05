@@ -64,6 +64,36 @@ namespace
     };
 
     // ------------------------------------------------------------
+    // ST helper functions
+    // ------------------------------------------------------------
+
+    BGRA convert_atari_color(u16 atari_color)
+    {
+        BGRA color;
+
+        color.b = ((atari_color & 0x7  ) << 5) | ((atari_color & 0x8  ) << 1) | ((atari_color & 0x7  ) << 1) | ((atari_color & 0x8  ) >> 3);
+        color.g = ((atari_color & 0x70 ) << 1) | ((atari_color & 0x80 ) >> 3) | ((atari_color & 0x70 ) >> 3) | ((atari_color & 0x80 ) >> 7);
+        color.r = ((atari_color & 0x700) >> 3) | ((atari_color & 0x800) >> 7) | ((atari_color & 0x700) >> 7) | ((atari_color & 0x800) >> 11);
+        color.a = 0xff;
+
+        return color;
+    }
+
+    void resolve_palette(Surface& s, int width, int height, const u8* image, Palette& palette)
+    {
+        for (int y = 0; y < height; ++y)
+        {
+            BGRA* scan = s.address<BGRA>(0, y);
+            const u8* src = image + y * width;
+
+            for (int x = 0; x < width; ++x)
+            {
+                scan[x] = palette[src[x]];
+            }
+        }
+    }
+
+    // ------------------------------------------------------------
 	// ImageDecoder: Degas/Degas Elite
 	// ------------------------------------------------------------
 
@@ -95,18 +125,6 @@ namespace
 			}
 		}
 	}
-
-    BGRA convert_atari_color(u16 atari_color)
-    {
-        BGRA color;
-
-        color.b = ((atari_color & 0x7  ) << 5) | ((atari_color & 0x8  ) << 1) | ((atari_color & 0x7  ) << 1) | ((atari_color & 0x8  ) >> 3);
-        color.g = ((atari_color & 0x70 ) << 1) | ((atari_color & 0x80 ) >> 3) | ((atari_color & 0x70 ) >> 3) | ((atari_color & 0x80 ) >> 7);
-        color.r = ((atari_color & 0x700) >> 3) | ((atari_color & 0x800) >> 7) | ((atari_color & 0x700) >> 7) | ((atari_color & 0x800) >> 11);
-        color.a = 0xff;
-
-        return color;
-    }
 
 	struct header_degas
 	{
@@ -222,17 +240,7 @@ namespace
                 }
             }
 
-            // Resolve palette
-            for (int y = 0; y < height; ++y)
-            {
-                u32* dst = s.address<u32>(0, y);
-                u8* src = image + y * width;
-                for (int x = 0; x < width; ++x)
-                {
-                    u8 index = src[x];
-                    dst[x] = palette.color[index];
-                }
-            }
+            resolve_palette(s, width, height, image, palette);
         }
 	};
 
@@ -393,18 +401,7 @@ namespace
                 }
             }
 
-            // resolve palette
-            for (int y = 0; y < height; ++y)
-            {
-                BGRA* scan = s.address<BGRA>(0, y);
-                u8* src = buffer.data() + y * width;
-
-                for (int x = 0; x < width; ++x)
-                {
-                    u8 index = src[x];
-                    scan[x] = palette[index & 15];
-                }
-            }
+            resolve_palette(s, width, height, buffer.data(), palette);
         }
 	};
 
@@ -706,19 +703,16 @@ namespace
     // ImageDecoder: Crack Art
 	// ------------------------------------------------------------
 
-#if 0
-
-	void depack_ca(uint8* buffer, const uint8* input, const int scansize, const int insize, const uint8 escape_char, const uint16 offset)
+	void ca_decompress(u8* buffer, const u8* input, const int scansize, const int __insize, const u8 escape_char, const u16 offset)
 	{
-        (void)insize;
-
-		uint8* buffer_start = buffer;
-		uint8* buffer_end = buffer + scansize;
+		u8* buffer_start = buffer;
+		u8* buffer_end = buffer + scansize;
 
         int count = scansize;
+
 		while (count > 0)
 		{
-			uint8 v = *input++;
+			u8 v = *input++;
 			if (v != escape_char)
 			{
 				*buffer = v;
@@ -871,161 +865,113 @@ namespace
 
 	struct header_ca
 	{
-		int width;
-		int height;
-        int bitplanes;
-        bool compressed;
-	};
+		int width = 0;
+		int height = 0;
+        int bitplanes = 0;
+        bool compressed = false;
 
-	const uint8* read_header_ca(header_ca& header, const uint8* data, int size)
-	{
-		header.width = 0;
-		header.height = 0;
-
-        infilter xf(data);
-
-        uint8 keyword[] = "CA";
-        if (std::memcmp(keyword, xf, sizeof(keyword) - 1) == 0)
+        u8* parse(u8* data, size_t size)
         {
-            xf += 2;
+            BigEndianPointer p = data;
 
-            header.compressed = xf.read<uint8>() ? true : false;
-            uint8 resolution = xf.read<uint8>();
+            u8 keyword[] = "CA";
+            if (std::memcmp(keyword, p, 2))
+                return nullptr;
+
+            p += 2;
+
+            compressed = p.read8() != 0;
+            u8 resolution = p.read8();
 
             if (resolution == 0)
             {
-                header.width = 320;
-                header.height = 200;
-                header.bitplanes = 4;
+                width = 320;
+                height = 200;
+                bitplanes = 4;
             }
             else if (resolution == 1)
             {
-                header.width = 640;
-                header.height = 200;
-                header.bitplanes = 2;
+                width = 640;
+                height = 200;
+                bitplanes = 2;
             }
             else if (resolution == 2)
             {
-                header.width = 640;
-                header.height = 400;
-                header.bitplanes = 1;
+                width = 640;
+                height = 400;
+                bitplanes = 1;
             }
             else
             {
-                FUSIONCORE_EXCEPTION("Crack Art: unsupported resolution.");
+                MANGO_EXCEPTION(ID"Unsupported resolution.");
             }
 
-            if (!header.compressed)
+            if (!compressed)
             {
-                if (size < 32000 + 2 + 1 + 1 + (1 << header.bitplanes))
+                if (size < 32000 + 2 + 1 + 1 + (1 << bitplanes))
                 {
-                    return NULL;
+                    return nullptr;
                 }
             }
 
-            return xf;
+            return p;
         }
 
-        return NULL;
-	}
-
-	imageheader ca_header(stream* s)
-	{
-		imageheader image_header;
-
-		int size = int(s->size());
-		const uint8* data = s->read(size);
-
-		header_ca header;
-		data = read_header_ca(header, data, size);
-
-        if (data)
+        void decode(Surface& s, u8* data, u8* end)
         {
-		    image_header.width = header.width;
-		    image_header.height = header.height;
+            BigEndianPointer p = data;
 
-            ucolor *palette = NULL;
-            image_header.format = pixelformat(palette);
-        }
-        else
-        {
-            image_header.width = 0;
-            image_header.height = 0;
-        }
+            Palette palette;
+            palette.size = 1 << bitplanes;
 
-		return image_header;
-	}
-
-	surface* ca_load(stream* s, bool thumbnail)
-	{
-		(void) thumbnail;
-
-        int i, j, k;
-		int size = int(s->size());
-		const uint8* data = s->read(size);
-        const uint8* end = data + size;
-        uint8* temp = NULL;
-
-		header_ca header;
-        data = read_header_ca(header, data, size);
-
-        if (data)
-        {
-            infilter xf(data);
-
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-
-            for (i = 0; i < (1 << header.bitplanes); ++i)
+            for (int i = 0; i < palette.size; ++i)
             {
-                uint16 palette_color = xf.read<uint16>();
+                u16 palette_color = p.read16();
                 palette[i] = convert_atari_color(palette_color);
             }
 
-            const uint8* buffer = xf;
+            std::vector<u8> temp;
+            u8* buffer = p;
 
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-		    uint8* image = so->lock<uint8>();
-
-            if (header.compressed)
+            if (compressed)
             {
-                const uint8 escape_char = xf.read<uint8>();
-                const uint8 initial_value = xf.read<uint8>();
-                const uint16 offset = xf.read<uint16>() & 0x7fff;
+                const uint8 escape_char = p.read8();
+                const uint8 initial_value = p.read8();
+                const uint16 offset = p.read16() & 0x7fff;
 
-			    temp = new uint8[32000];
-                std::memset(temp, initial_value, 32000);
+                temp = std::vector<u8>(32000);
+                std::memset(temp.data(), initial_value, 32000);
 
-			    depack_ca(temp, xf, 32000, int(end - xf), escape_char, offset);
+			    ca_decompress(temp.data(), p, 32000, int(end - p), escape_char, offset);
 
-                buffer = temp;
-                end = temp + 32000;
+                buffer = temp.data();
+                end = temp.data() + 32000;
             }
 
-            xf = buffer;
+            p = buffer;
 
-            int num_words = 16000;
-            for (i = 0; i < (num_words / header.bitplanes); ++i)
+            const int num_words = 16000;
+            std::vector<u8> image(width * height);
+
+            for (int i = 0; i < (num_words / bitplanes); ++i)
             {
-                uint16 word[4];
+                u16 word[4];
 
-                for (j = 0; j < header.bitplanes; ++j)
+                for (int j = 0; j < bitplanes; ++j)
                 {
-                    word[j] = xf.read<uint16>();
+                    word[j] = p.read16();
 
-                    if (xf > end)
+                    if (p > end)
                     {
-                        so->unlock();
-                        so->release();
-                        return NULL;
+                        return;
                     }
                 }
 
-                for (j = 15; j >= 0; --j)
+                for (int j = 15; j >= 0; --j)
                 {
-                    uint8 index = 0;
+                    u8 index = 0;
 
-                    for (k = 0; k < header.bitplanes; ++k)
+                    for (int k = 0; k < bitplanes; ++k)
                     {
                         index |= (((word[k] & (1 << j)) >> j) << k);
                     }
@@ -1034,34 +980,35 @@ namespace
                 }
             }
 
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-		    so->unlock();
-
-		    return so;
+            resolve_palette(s, width, height, image.data(), palette);
         }
-
-        return NULL;
-	}
-    
-#endif
+	};
 
     struct InterfaceCA : Interface
     {
+        header_ca m_ca_header;
+        u8* m_data;
+
         InterfaceCA(Memory memory)
             : Interface(memory)
+            , m_data(nullptr)
         {
-            m_header.width   = 0; // TODO
-            m_header.height  = 0; // TODO
-            m_header.format  = Format(); // TODO
+            m_data = m_ca_header.parse(memory.address, memory.size);
+            if (m_data)
+            {
+                m_header.width  = m_ca_header.width;
+                m_header.height = m_ca_header.height;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
         }
 
-        void decodeImage(Surface& dest) override
+        void decodeImage(Surface& s) override
         {
-            // TODO
+            if (!m_data)
+                return;
+
+            u8* end = m_memory.address + m_memory.size;
+            m_ca_header.decode(s, m_data, end);
         }
     };
 
