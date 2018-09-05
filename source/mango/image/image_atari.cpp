@@ -498,7 +498,9 @@ namespace
         u8* parse(u8* data, size_t size)
         {
             if (size < 12)
+            {
                 return nullptr;
+            }
 
             BigEndianPointer p = data;
 
@@ -512,7 +514,9 @@ namespace
                 length_of_color_bit_map = p.read32();
 
                 const size_t total_size = 12 + length_of_data_bit_map + length_of_color_bit_map;
-                if (size != total_size)
+                const size_t total_size_other = total_size + 78; // HACK: some files also have this size..
+
+                if (size != total_size && size != total_size_other)
                 {
                     return nullptr;
                 }
@@ -649,7 +653,7 @@ namespace
 
                 for (int x = 0; x < width; ++x)
                 {
-                    uint8 palette_index = bitmap[(y * width) + x];
+                    uint8 palette_index = bitmap[y * width + x];
                     palette_index = find_spectrum_palette_index(x, palette_index);
 
                     int index = (y - 1) * 16 * 3 + palette_index;
