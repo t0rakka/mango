@@ -57,7 +57,6 @@ namespace
         }
     }
 
-#if 0
     void rle_ecb(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
         u8* buffer_end = buffer + scansize;
@@ -83,7 +82,6 @@ namespace
             }
         }
     }
-#endif
 
     void convert_multicolor_bitmap(int width, int height, u8* image, 
                                    const u8* bitmap_c64, const u8* video_ram, const u8* color_ram, 
@@ -285,6 +283,7 @@ namespace
         delete[] bitmap2;
         delete[] bitmap1;
     }
+#endif
 
     void convert_hires_bitmap(int width, int height, 
                               u8* image, const u8* bitmap_c64, const u8* video_ram, 
@@ -351,26 +350,28 @@ namespace
         }
     }
 
-    surface* hires_to_surface(const u8* data, int width, int height, 
+    void hires_to_surface(Surface& s, const u8* data, int width, int height, 
                               u32 bitmap_offset, u32 video_ram_offset, 
                               bool fli = false,
                               bool show_fli_bug = false,
                               u8 fli_bug_color = 0)
     {
-        ucolor palette[256];
-        std::memset(palette, 0, 256 * sizeof(ucolor));
-        std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
+        Palette palette;
+        palette.size = 16;
 
-        surface* so = bitmap::create(width, height, pixelformat(palette));
-        u8* image = so->lock<u8>();
+        for (int i = 0; i < 16; ++i)
+        {
+            palette[i] = c64_palette[i];
+        }
 
-        std::memset(image, 0, width * height);
-        convert_hires_bitmap(width, height, image, data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
+        std::vector<u8> temp(width * height, 0);
 
-        so->unlock();
-        return so;
+        convert_hires_bitmap(width, height, temp.data(), data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
+
+        resolve_palette(s, temp.data(), width, height, palette);
     }
 
+#if 0
     surface* hires_interlace_to_surface(const u8* data, int width, int height, u32 
                                         bitmap_offset_1, u32 bitmap_offset_2, 
                                         u32 video_ram_offset_1, u32 video_ram_offset_2, 
@@ -479,111 +480,6 @@ namespace
         return NULL;
     }
 
-    // ------------------------------------------------------------
-    // imagefilter AFLI-editor v2.0
-    // ------------------------------------------------------------
-    imageheader afl_header(stream* s)
-    {
-        return generic_header(s, 0x4000, 16385);
-    }
-
-    surface* afl_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, 0x4000, 16385);
-
-        if (data)
-        {
-            return hires_to_surface(data, header.width, header.height, 0x2000, 0x0, true, false, 0);
-        }
-
-        return NULL;
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Amica Painter
-    // ------------------------------------------------------------
-    const u8* read_header_ami(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        xf.read<u16>();  // skip load address
-
-        if (data[size - 1] == 0x0 && 
-            data[size - 2] == 0xc2)
-        {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = true;
-            header.escape_char = 0xc2;
-            return xf;
-        }
-
-        return NULL;
-    }
-
-    imageheader ami_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_ami(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* ami_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_ami(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-            u8* temp = NULL;
-
-            if (header.compressed)
-            {
-                temp = new u8[10513];
-                rle_ecb(temp, data, 10513, size - 3, header.escape_char);
-                buffer = temp;
-            }
-
-            surface* so = multicolor_to_surface(buffer, header.width, header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            return so;
-        }
-
-        return NULL;
-    }
 
     // ------------------------------------------------------------
     // imagefilter Art Studio
@@ -2758,22 +2654,23 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: AFL
+    // ImageDecoder: AFL (AFLI-editor v2.0)
     // ------------------------------------------------------------
-#if 0
+
     struct InterfaceAFL : Interface
     {
+        header_generic m_generic_header;
         u8* m_data;
 
         InterfaceAFL(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
+            m_data = m_generic_header.parse(memory.address, memory.size, 0x4000, 16385);
             if (m_data)
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width  = m_generic_header.width;
+                m_header.height = m_generic_header.height;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             }
         }
@@ -2783,7 +2680,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            hires_to_surface(s, m_data, m_header.width, m_header.height, 0x2000, 0x0, true, false, 0);
         }
     };
 
@@ -2794,23 +2691,31 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: AMI
+    // ImageDecoder: AMI (Amica Painter)
     // ------------------------------------------------------------
 
     struct InterfaceAMI : Interface
     {
+        header_generic m_generic_header;
         u8* m_data;
 
         InterfaceAMI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            if (m_data)
+            // read header
+            u8* end = memory.address + memory.size;
+
+            if (end[-1] == 0x0 && end[-2] == 0xc2)
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width = 320;
+                m_header.height = 200;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_generic_header.compressed = true;
+                m_generic_header.escape_char = 0xc2;
+
+                m_data = memory.address + 2;
             }
         }
 
@@ -2819,7 +2724,18 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            u8* buffer = m_data;
+            u8* temp = nullptr;
+
+            if (m_generic_header.compressed)
+            {
+                temp = new u8[10513];
+                rle_ecb(temp, m_data, 10513, int(m_memory.size - 3), m_generic_header.escape_char);
+                buffer = temp;
+            }
+
+            multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
+            delete [] temp;
         }
     };
 
@@ -2832,6 +2748,7 @@ namespace
     // ------------------------------------------------------------
     // ImageDecoder: ART
     // ------------------------------------------------------------
+#if 0
 
     struct InterfaceART : Interface
     {
@@ -3845,9 +3762,8 @@ namespace mango
     void registerImageDecoderC64()
     {
         // Advanced Art Studio
-        registerImageDecoder(createInterfaceMPIC, "mpic");
+        registerImageDecoder(createInterfaceMPIC, "mpic"); // TODO: test
 
-#if 0
         // AFLI-editor v2.0
         registerImageDecoder(createInterfaceAFL, "afl");
         registerImageDecoder(createInterfaceAFL, "afli");
@@ -3855,6 +3771,7 @@ namespace mango
         // Amica Paint
         registerImageDecoder(createInterfaceAMI, "ami");
 
+#if 0
         // Art Studio
         registerImageDecoder(createInterfaceART, "art");
         registerImageDecoder(createInterfaceART, "ocp");
@@ -3875,6 +3792,8 @@ namespace mango
 
         // Doodle
         registerImageDecoder(createInterfaceDD, "dd");
+        //registerImageDecoder(createInterfaceDD, "ddl");
+        //registerImageDecoder(createInterfaceDD, "jj");
 
         // Drazlace
         registerImageDecoder(createInterfaceDRL, "drl");
