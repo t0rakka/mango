@@ -13,15 +13,17 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageStream.C64: "
-
-#if 0
+#define ID "ImageDecoder.C64: "
 
 namespace
 {
-    using namespace fusion::core;
+    using namespace mango;
 
-    ucolor c64_palette[16] =
+    // ------------------------------------------------------------
+    // Commodore 64 utilities
+    // ------------------------------------------------------------
+
+    const BGRA c64_palette[16] =
     { 
         0xFF000000,
         0xFFFFFFFF,
@@ -41,19 +43,29 @@ namespace
         0xFF959595,
     };
 
-    typedef inputfilter<little_endian>  infilter;
-
-    // ------------------------------------------------------------
-    // RLE depacker (ESCAPE, COUNT, BYTE)
-    // ------------------------------------------------------------
-    void rle_ecb(uint8* buffer, const uint8* input, int scansize, int insize, uint8 escape_char)
+    void resolve_palette(Surface& s, u8* data, int width, int height, Palette& palette)
     {
-        uint8* buffer_end = buffer + scansize;
-        const uint8* input_end = input + insize;
-
-        for (; buffer < buffer_end && input < input_end;)
+        for (int y = 0; y < height; ++y)
         {
-            uint8 v = *input++;
+            BGRA* scan = s.address<BGRA>(0, y);
+
+            for (int x = 0; x < width; ++x)
+            {
+                u8 index = *data++;
+                scan[x] = palette[index];
+            }
+        }
+    }
+
+#if 0
+    void rle_ecb(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
+    {
+        u8* buffer_end = buffer + scansize;
+        const u8* input_end = input + insize;
+
+        for ( ; buffer < buffer_end && input < input_end; )
+        {
+            u8 v = *input++;
 
             if (v == escape_char)
             {
@@ -71,20 +83,17 @@ namespace
             }
         }
     }
+#endif
 
-    // ------------------------------------------------------------
-    // Bitmap conversion functions
-    // ------------------------------------------------------------
-    void convert_multicolor_bitmap(int width, int height, uint8* image, 
-                                   const uint8* bitmap_c64, const uint8* video_ram, const uint8* color_ram, 
-                                   const uint8* background, 
-                                   const uint8* opcode_colors,
+    void convert_multicolor_bitmap(int width, int height, u8* image, 
+                                   const u8* bitmap_c64, const u8* video_ram, const u8* color_ram, 
+                                   const u8* background, 
+                                   const u8* opcode_colors,
                                    int background_mode, bool fli)
     {
-        int x, y;
-        for (y = 0; y < height; ++y)
+        for (int y = 0; y < height; ++y)
         {
-            for (x = 0; x < width; ++x)
+            for (int x = 0; x < width; ++x)
             {
                 int x_offset = x & 0x7;
                 int y_offset = y & 0x7;
@@ -92,10 +101,10 @@ namespace
                 int screen_offset = bitmap_offset >> 3;
                 int offset = x + (y * width);
 
-                uint8 byte = bitmap_c64[bitmap_offset];
+                u8 byte = bitmap_c64[bitmap_offset];
                 int bit_pattern = (byte >> (6 - (x_offset & 0x6))) & 0x3;
 
-                uint8 index = 0;
+                u8 index = 0;
                 switch (bit_pattern)
                 {
                 case 0:
@@ -178,113 +187,57 @@ namespace
         }
     }
 
-/*
-    void convert_multicolor_sprite(int width, int height, uint8* image, int sprite_x, int sprite_y, const uint8* sprite_data,
-                                   uint8 sprite_color1, uint8 sprite_color2, const uint8 *sprite_color, bool fli)
+    void multicolor_to_surface(Surface& s, const u8 *data, int width, int height, 
+                            u32 bitmap_offset, u32 video_ram_offset, u32 color_ram_offset, 
+                            u32 background_offset, u32 opcode_colors_offset, 
+                            int background_mode, bool fli)
     {
-        int i, j;
+        Palette palette;
+        palette.size = 16;
 
-        for (i = 0; i < 63; ++i)
+        for (int i = 0; i < 16; ++i)
         {
-            uint8 data = sprite_data[i];
-
-            int x = (i % 3) * 8;
-            int y = (i / 3);
-
-            for (j = 0; j < 4; ++j)
-            {
-                int bit_pattern = (data >> (6 - (j * 2))) & 0x3;
-                int x_offset = sprite_x + (x + (j * 2));
-                int y_offset = (sprite_y + y);
-
-                if (x >= 0 && x < width && y >= 0 && y < height)
-                {
-                    int offset = x_offset + (y_offset * width);
-
-                    uint8 index = 0;
-                    switch (bit_pattern)
-                    {
-                    case 1:
-                        index = sprite_color1;
-                        break;
-
-                    case 2:
-                        if (fli)
-                        {
-                            index = sprite_color[y];
-                        }
-                        else
-                        {
-                            index = *sprite_color;
-                        }
-                        break;
-                        break;
-
-                    case 3:
-                        index = sprite_color2;
-                    }
-
-                    if (index != 0)
-                    {
-                        image[offset + 0] = index;
-                        image[offset + 1] = index;
-                    }
-                }
-            }
+            palette[i] = c64_palette[i];
         }
-    }
-*/
 
-    surface* multicolor_to_surface(const uint8 *data, int width, int height, 
-                                   uint32 bitmap_offset, uint32 video_ram_offset, uint32 color_ram_offset, 
-                                   uint32 background_offset, uint32 opcode_colors_offset, 
-                                   int background_mode, bool fli)
-    {
-        ucolor palette[256];
-        std::memset(palette, 0, 256 * sizeof(ucolor));
-        std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
+        std::vector<u8> temp(width * height, 0);
 
-        surface* so = bitmap::create(width, height, pixelformat(palette));
-        uint8* image = so->lock<uint8>();
-        std::memset(image, 0, width * height);
-
-        convert_multicolor_bitmap(width, height, image, 
+        convert_multicolor_bitmap(width, height, temp.data(), 
                                   data + bitmap_offset, data + video_ram_offset, 
                                   data + color_ram_offset, data + background_offset, data + opcode_colors_offset,
                                   background_mode, fli);
 
-        so->unlock();
-        return so;
+        resolve_palette(s, temp.data(), width, height, palette);
     }
 
-    surface* multicolor_interlace_to_surface(const uint8 *data, int width, int height, uint32 
-                                             bitmap_offset_1, uint32 bitmap_offset_2, 
-                                             uint32 video_ram_offset_1, uint32 video_ram_offset_2, 
-                                             uint32 color_ram_offset, uint8 *background_colors,
-                                             uint8 *opcode_colors,
+#if 0
+
+    surface* multicolor_interlace_to_surface(const u8 *data, int width, int height, u32 
+                                             bitmap_offset_1, u32 bitmap_offset_2, 
+                                             u32 video_ram_offset_1, u32 video_ram_offset_2, 
+                                             u32 color_ram_offset, u8 *background_colors,
+                                             u8 *opcode_colors,
                                              int background_mode,
                                              bool fli,
                                              int mode)
     {
-        int x, y;
-
         ucolor palette[256];
         std::memset(palette, 0, 256 * sizeof(ucolor));
         std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
-        uint8 *bitmap1 = new uint8[width * height];
-        uint8 *bitmap2 = new uint8[width * height];
+        u8 *bitmap1 = new u8[width * height];
+        u8 *bitmap2 = new u8[width * height];
 
         convert_multicolor_bitmap(width, height, bitmap1, data + bitmap_offset_1, data + video_ram_offset_1, data + color_ram_offset, background_colors, opcode_colors, background_mode, fli);
         convert_multicolor_bitmap(width, height, bitmap2, data + bitmap_offset_2, data + video_ram_offset_2, data + color_ram_offset, background_colors, opcode_colors, background_mode, fli);
 
-        surface* so = bitmap::create(width, height, pixelformat::argb8888);
-        ucolor* image = so->lock<ucolor>();
-        std::memset(image, 0, width * height * sizeof(ucolor));
+        //surface* so = bitmap::create(width, height, pixelformat::argb8888);
+        //ucolor* image = so->lock<ucolor>();
+        //std::memset(image, 0, width * height * sizeof(ucolor));
 
-        for (y = 0; y < height; ++y)
+        for (int y = 0; y < height; ++y)
         {
-            for (x = 0; x < width; ++x)
+            for (int x = 0; x < width; ++x)
             {
                 int offset = x + (y * width);
 
@@ -329,19 +282,15 @@ namespace
             }
         }
 
-        so->unlock();
-        
         delete[] bitmap2;
         delete[] bitmap1;
-        
-        return so;
     }
 
     void convert_hires_bitmap(int width, int height, 
-                              uint8* image, const uint8* bitmap_c64, const uint8* video_ram, 
+                              u8* image, const u8* bitmap_c64, const u8* video_ram, 
                               bool fli,
                               bool show_fli_bug, 
-                              uint8 fli_bug_color)
+                              u8 fli_bug_color)
     {
         int x, y;
         for (y = 0; y < height; ++y)
@@ -354,10 +303,10 @@ namespace
                 int screen_offset = bitmap_offset >> 3;
                 int offset = x + (y * width);
 
-                uint8 byte = bitmap_c64[bitmap_offset];
+                u8 byte = bitmap_c64[bitmap_offset];
                 int bit_pattern = (byte >> (7 - x_offset)) & 0x1;
 
-                uint8 index = 0;
+                u8 index = 0;
                 if (x < 24)
                 {
                     if (show_fli_bug)
@@ -401,82 +350,19 @@ namespace
             }
         }
     }
-/*
-    void convert_hires_sprite(int width, int height, uint8* image, int sprite_x, int sprite_y, const uint8* sprite_data,
-                              bool x_stretch, bool y_stretch, uint8 sprite_color)
-    {
-        int i, j;
 
-        for (i = 0; i < 63; ++i)
-        {
-            uint8 data = sprite_data[i];
-
-            for (j = 0; j < 8; ++j)
-            {
-                int bit_pattern = (data >> (7 - j)) & 0x1;
-
-                int x = (i % 3) * 8 + j;
-                int y = (i / 3);
-
-                x *= (x_stretch ? 2 : 1);
-                y *= (y_stretch ? 2 : 1);
-
-                int x_offset = sprite_x + x;
-                int y_offset = sprite_y + y;
-
-                if (x_offset >= 0 && x_offset < width && y_offset >= 0 && y_offset < height)
-                {
-                    int offset = x_offset + (y_offset * width);
-
-                    uint8 index = 0;
-                    switch (bit_pattern)
-                    {
-                    case 1:
-                        index = sprite_color;
-                        break;
-                    }
-
-                    if (index != 0)
-                    {
-                        if (!x_stretch && !y_stretch)
-                        {
-                            image[offset] = index;
-                        }
-                        else if (x_stretch && !y_stretch)
-                        {
-                            image[offset + 0] = index;
-                            image[offset + 1] = index;
-                        }
-                        else if (!x_stretch && y_stretch)
-                        {
-                            image[offset + 0] = index;
-                            image[offset + width] = index;
-                        }
-                        else
-                        {
-                            image[offset + 0] = index;
-                            image[offset + 1] = index;
-                            image[offset + width + 0] = index;
-                            image[offset + width + 1] = index;
-                        }
-                    }
-                }
-            }
-        }
-    }
-*/
-    surface* hires_to_surface(const uint8* data, int width, int height, 
-                              uint32 bitmap_offset, uint32 video_ram_offset, 
+    surface* hires_to_surface(const u8* data, int width, int height, 
+                              u32 bitmap_offset, u32 video_ram_offset, 
                               bool fli = false,
                               bool show_fli_bug = false,
-                              uint8 fli_bug_color = 0)
+                              u8 fli_bug_color = 0)
     {
         ucolor palette[256];
         std::memset(palette, 0, 256 * sizeof(ucolor));
         std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
         surface* so = bitmap::create(width, height, pixelformat(palette));
-        uint8* image = so->lock<uint8>();
+        u8* image = so->lock<u8>();
 
         std::memset(image, 0, width * height);
         convert_hires_bitmap(width, height, image, data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
@@ -485,12 +371,12 @@ namespace
         return so;
     }
 
-    surface* hires_interlace_to_surface(const uint8* data, int width, int height, uint32 
-                                        bitmap_offset_1, uint32 bitmap_offset_2, 
-                                        uint32 video_ram_offset_1, uint32 video_ram_offset_2, 
+    surface* hires_interlace_to_surface(const u8* data, int width, int height, u32 
+                                        bitmap_offset_1, u32 bitmap_offset_2, 
+                                        u32 video_ram_offset_1, u32 video_ram_offset_2, 
                                         bool fli = false,
                                         bool show_fli_bug = false,
-                                        uint8 fli_bug_color = 0)
+                                        u8 fli_bug_color = 0)
     {
         int x, y;
 
@@ -498,8 +384,8 @@ namespace
         std::memset(palette, 0, 256 * sizeof(ucolor));
         std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
-        uint8* bitmap1 = new uint8[width * height];
-        uint8* bitmap2 = new uint8[width * height];
+        u8* bitmap1 = new u8[width * height];
+        u8* bitmap2 = new u8[width * height];
 
         convert_hires_bitmap(width, height, bitmap1, data + bitmap_offset_1, data + video_ram_offset_1, fli, show_fli_bug, fli_bug_color);
         convert_hires_bitmap(width, height, bitmap2, data + bitmap_offset_2, data + video_ram_offset_2, fli, show_fli_bug, fli_bug_color);
@@ -529,100 +415,58 @@ namespace
         return so;
     }
 
-    bool check_format(uint16 format_address, int format_size, uint16 load_address, int size)
-    {
-        if (load_address == format_address && size == format_size)
-        {
-            return true;
-        }
+#endif
 
-        return false;
+    bool check_format(u16 format_address, size_t format_size, u16 load_address, size_t size)
+    {
+        return load_address == format_address && size == format_size;
     }
 
     // ------------------------------------------------------------
-    // imagefilter generic
+    // generic
     // ------------------------------------------------------------
+
     struct header_generic
     {
-        int width;
-        int height;
-        bool compressed;
-        uint8 escape_char;
+        int width = 0;
+        int height = 0;
+        bool compressed = false;
+        u8 escape_char = 0;
 
-        header_generic()
-        : width(0), height(0), compressed(false), escape_char(0)
+        u8* parse(u8* data, size_t size, u16 format_address, size_t format_size)
         {
+            LittleEndianPointer p = data;
+            u16 load_address = p.read16();
+
+            if (check_format(format_address, format_size, load_address, size))
+            {
+                width = 320;
+                height = 200;
+                return p;
+            }
+
+            return nullptr;
         }
 
-        ~header_generic()
+        void multicolor_load(Surface& s, u8* data,
+                            u32 bitmap_offset, u32 video_ram_offset, 
+                            u32 color_ram_offset, u32 background_offset, u32 opcode_colors_offset,
+                            int background_mode, bool fli)
         {
+            multicolor_to_surface(s, data, width, height, 
+                                  bitmap_offset, video_ram_offset, color_ram_offset, background_offset, opcode_colors_offset,
+                                  background_mode, fli);
         }
     };
 
-    const uint8* read_header_generic(header_generic& header, const uint8* data, int size, uint16 format_address, int format_size)
-    {
-        infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
 
-        if (check_format(format_address, format_size, load_address, size))
-        {
-            header.width = 320;
-            header.height = 200;
-            return xf;
-        }
+#if 0
 
-        return NULL;
-    }
 
-    imageheader generic_header(stream* s, uint16 format_address, uint32 format_size)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const uint8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, format_address, format_size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* generic_multicolor_load(stream* s, uint16 format_address, int format_size, 
-                                     uint32 bitmap_offset, uint32 video_ram_offset, 
-                                     uint32 color_ram_offset, uint32 background_offset, uint32 opcode_colors_offset,
-                                     int background_mode, bool fli)
+    surface* generic_hires_load(stream* s, u16 format_address, int format_size, u32 bitmap_offset, u32 video_ram_offset, bool fli)
     {
         int size = int(s->size());
-        const uint8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, format_address, format_size);
-
-        if (data)
-        {
-            return multicolor_to_surface(data, header.width, header.height, 
-                                         bitmap_offset, video_ram_offset, color_ram_offset, background_offset, opcode_colors_offset,
-                                         background_mode, fli);
-        }
-
-        return NULL;
-    }
-
-    surface* generic_hires_load(stream* s, uint16 format_address, int format_size, uint32 bitmap_offset, uint32 video_ram_offset, bool fli)
-    {
-        int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, format_address, format_size);
@@ -633,20 +477,6 @@ namespace
         }
 
         return NULL;
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Advanced Art Studio
-    // ------------------------------------------------------------
-    imageheader mpic_header(stream* s)
-    {
-        return generic_header(s, 0x2000, 10018);
-    }
-
-    surface* mpic_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x2000, 10018, 0x0, 0x1f40, 0x2338, 0x2329, 0x0, 1, false);
     }
 
     // ------------------------------------------------------------
@@ -662,7 +492,7 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x4000, 16385);
@@ -678,10 +508,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Amica Painter
     // ------------------------------------------------------------
-    const uint8* read_header_ami(header_generic& header, const uint8* data, int size)
+    const u8* read_header_ami(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        xf.read<uint16>();  // skip load address
+        xf.read<u16>();  // skip load address
 
         if (data[size - 1] == 0x0 && 
             data[size - 2] == 0xc2)
@@ -706,7 +536,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_ami(header, data, size);
@@ -725,19 +555,19 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_ami(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
-            uint8* temp = NULL;
+            const u8* buffer = data;
+            u8* temp = NULL;
 
             if (header.compressed)
             {
-                temp = new uint8[10513];
+                temp = new u8[10513];
                 rle_ecb(temp, data, 10513, size - 3, header.escape_char);
                 buffer = temp;
             }
@@ -842,10 +672,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Drazlace
     // ------------------------------------------------------------
-    const uint8* read_header_drl(header_generic& header, const uint8* data, int size)
+    const u8* read_header_drl(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x5800, 18242, load_address, size))
         {
@@ -858,7 +688,7 @@ namespace
         {
             if (load_address == 0x5800)
             {
-                uint8 keyword[] = "DRAZLACE! 1.0";
+                u8 keyword[] = "DRAZLACE! 1.0";
                 if (std::memcmp(keyword, xf, sizeof(keyword) - 1) == 0)
                 {
                     xf += sizeof(keyword) - 1;
@@ -866,7 +696,7 @@ namespace
                     header.width = 320;
                     header.height = 200;
                     header.compressed = true;
-                    header.escape_char = xf.read<uint8>();
+                    header.escape_char = xf.read<u8>();
 
                     return xf;
                 }
@@ -884,7 +714,7 @@ namespace
         image_header.format = pixelformat::argb8888;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_drl(header, data, size);
@@ -903,24 +733,24 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_drl(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
-            uint8* temp = NULL;
+            const u8* buffer = data;
+            u8* temp = NULL;
 
             if (header.compressed)
             {
-                temp = new uint8[18240];
+                temp = new u8[18240];
                 rle_ecb(temp, data, 18240, size - 3, header.escape_char);
                 buffer = temp;
             }
 
-            uint8* background = new uint8[200];
+            u8* background = new u8[200];
             std::memset(background, *(buffer + 0x2740), 200);
 
             surface* so = multicolor_interlace_to_surface(buffer, header.width, header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
@@ -942,10 +772,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Drazpaint
     // ------------------------------------------------------------
-    const uint8* read_header_drz(header_generic& header, const uint8* data, int size)
+    const u8* read_header_drz(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x5800, 10051, load_address, size))
         {
@@ -958,7 +788,7 @@ namespace
         {
             if (load_address == 0x5800)
             {
-                uint8 keyword[] = "DRAZPAINT 2.0";
+                u8 keyword[] = "DRAZPAINT 2.0";
                 if (std::memcmp(keyword, xf, sizeof(keyword) - 1) == 0)
                 {
                     xf += sizeof(keyword) - 1;
@@ -966,7 +796,7 @@ namespace
                     header.width = 320;
                     header.height = 200;
                     header.compressed = true;
-                    header.escape_char = xf.read<uint8>();
+                    header.escape_char = xf.read<u8>();
 
                     return xf;
                 }
@@ -986,7 +816,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_drz(header, data, size);
@@ -1005,19 +835,19 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_drz(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
-            uint8* temp = NULL;
+            const u8* buffer = data;
+            u8* temp = NULL;
 
             if (header.compressed)
             {
-                temp = new uint8[10049];
+                temp = new u8[10049];
                 rle_ecb(temp, data, 10049, size - 3, header.escape_char);
                 buffer = temp;
             }
@@ -1038,10 +868,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter ECI Graphic Editor v1.0
     // ------------------------------------------------------------
-    const uint8* read_header_eci(header_generic& header, const uint8* data, int size)
+    const u8* read_header_eci(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x4000, 32770, load_address, size))
         {
@@ -1057,7 +887,7 @@ namespace
                 header.width = 320;
                 header.height = 200;
                 header.compressed = true;
-                header.escape_char = xf.read<uint8>();
+                header.escape_char = xf.read<u8>();
                 return xf;
             }
         }
@@ -1075,7 +905,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_eci(header, data, size);
@@ -1094,19 +924,19 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_eci(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
-            uint8* temp = NULL;
+            const u8* buffer = data;
+            u8* temp = NULL;
 
             if (header.compressed)
             {
-                temp = new uint8[32768];
+                temp = new u8[32768];
                 rle_ecb(temp, data, 32768, size - 3, header.escape_char);
                 buffer = temp;
             }
@@ -1167,23 +997,23 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x3780, 18370);
 
         if (data)
         {
-            uint8 sprite_color1 = data[0x448];
-            uint8 sprite_color2 = data[0x449];
-            const uint8 *sprite_colors = data + 0x280;
+            u8 sprite_color1 = data[0x448];
+            u8 sprite_color2 = data[0x449];
+            const u8 *sprite_colors = data + 0x280;
 
             ucolor palette[256];
             std::memset(palette, 0, 256 * sizeof(ucolor));
             std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
             surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            uint8* image = so->lock<uint8>();
+            u8* image = so->lock<u8>();
             std::memset(image, 0, header.width * header.height);
 
             convert_multicolor_bitmap(header.width, header.height, image, data + 0x2880, data + 0x880, data + 0x480, NULL, data + 0x380, 0, true);
@@ -1197,7 +1027,7 @@ namespace
                 for (x = 0; x < 24; ++x)
                 {
                     int offset = x + (y * header.width);
-                    uint8 index = 0;
+                    u8 index = 0;
 
                     int sprite_nb = y / 42;
                     int sprite_line = (y % 42) >> 1;
@@ -1205,7 +1035,7 @@ namespace
                     int sprite_offset = (sprite_line * 3) + (sprite_nb * 64) + (vic_bank * 0x140);
                     int sprite_byte_offset = (x % 24) >> 3;
 
-                    uint8 sprite_byte = data[sprite_offset + sprite_byte_offset];
+                    u8 sprite_byte = data[sprite_offset + sprite_byte_offset];
                     int sprite_bit_pattern = (sprite_byte >> (6 - (x & 0x6))) & 0x3;
 
                     switch (sprite_bit_pattern)
@@ -1240,14 +1070,14 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Funpaint 2
     // ------------------------------------------------------------
-    void depack_fun(uint8* buffer, const uint8* input, int scansize, int insize, uint8 escape_char)
+    void depack_fun(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
-        uint8* buffer_end = buffer + scansize;
-        const uint8* input_end = input + insize;
+        u8* buffer_end = buffer + scansize;
+        const u8* input_end = input + insize;
 
         for (; buffer < buffer_end && input < input_end;)
         {
-            uint8 v = *input++;
+            u8 v = *input++;
 
             if (v == escape_char)
             {
@@ -1266,19 +1096,19 @@ namespace
         }
     }
 
-    const uint8* read_header_fun(header_generic& header, const uint8* data, int size)
+    const u8* read_header_fun(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (load_address == 0x3ff0 && size > 16)
         {
-            uint8 keyword[] = "FUNPAINT (MT) ";
+            u8 keyword[] = "FUNPAINT (MT) ";
             if (std::memcmp(keyword, xf, sizeof(keyword) - 1) == 0)
             {
                 xf += 14;
-                header.compressed = xf.read<uint8>() ? true : false;
-                header.escape_char = xf.read<uint8>();
+                header.compressed = xf.read<u8>() ? true : false;
+                header.escape_char = xf.read<u8>();
 
                 if (!header.compressed)
                 {
@@ -1311,7 +1141,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_fun(header, data, size);
@@ -1330,24 +1160,24 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
-        uint8* temp = NULL;
+        const u8* data = s->read(size);
+        u8* temp = NULL;
 
         header_generic header;
         data = read_header_fun(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
+            const u8* buffer = data;
 
             if (header.compressed)
             {
-                temp = new uint8[33678];
+                temp = new u8[33678];
                 depack_fun(temp, data, 33678, size - 18, header.escape_char);
                 buffer = temp;
             }
 
-            uint8* background = new uint8[200];
+            u8* background = new u8[200];
             std::memcpy(background, buffer + 0x3f48, 100);
             std::memcpy(background + 100, buffer + 0x8328, 100);
 
@@ -1369,14 +1199,14 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Gunpaint
     // ------------------------------------------------------------
-    const uint8* read_header_gun(header_generic& header, const uint8* data, int size)
+    const u8* read_header_gun(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x4000, 33603, load_address, size))
         {
-            uint8 keyword[] = "GUNPAINT (JZ)   ";
+            u8 keyword[] = "GUNPAINT (JZ)   ";
             if (std::memcmp(keyword, data + 0x3ea, 16) == 0)
             {
                 header.width = 320;
@@ -1398,7 +1228,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_gun(header, data, size);
@@ -1417,14 +1247,14 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_gun(header, data, size);
 
         if (data)
         {
-            uint8 *background = new uint8[200];
+            u8 *background = new u8[200];
             std::memcpy(background, data + 0x3f4f, 177);
             std::memcpy(background + 177, data + 0x47e8, 20);
             background[197] = background[198] = background[199] = background[196];  // replicate the last color four times
@@ -1448,24 +1278,24 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x5000, 12148);
 
         if (data)
         {
-            const uint8* bitmap_c64 = data + 0x1000;
-            const uint8* video_ram = data + 0x800;
-            const uint8* color_ram = data;
-            const uint8* background = data + 0x2f40;
+            const u8* bitmap_c64 = data + 0x1000;
+            const u8* video_ram = data + 0x800;
+            const u8* color_ram = data;
+            const u8* background = data + 0x2f40;
 
             ucolor palette[256];
             std::memset(palette, 0, 256 * sizeof(ucolor));
             std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
             surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            uint8* image = so->lock<uint8>();
+            u8* image = so->lock<u8>();
             std::memset(image, 0, header.width * header.height);
 
             int x, y;
@@ -1479,10 +1309,10 @@ namespace
                     int screen_offset = bitmap_offset >> 3;
                     int offset = x + (y * header.width);
 
-                    uint8 byte = bitmap_c64[bitmap_offset];
+                    u8 byte = bitmap_c64[bitmap_offset];
                     int bit_pattern = (byte >> (6 - (x_offset & 0x6))) & 0x3;
 
-                    uint8 index = 0;
+                    u8 index = 0;
                     switch (bit_pattern)
                     {
                     case 0:
@@ -1550,7 +1380,7 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x4000, 16386);
@@ -1566,15 +1396,15 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Hires Manager
     // ------------------------------------------------------------
-    void depack_him(uint8* buffer, const uint8* input, int scansize, int insize, uint8 escape_char)
+    void depack_him(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
         (void) scansize;
 
-        const uint8* in = input + insize - 1;
-        const uint8* in_end = input + 0x10 - 1;
+        const u8* in = input + insize - 1;
+        const u8* in_end = input + 0x10 - 1;
 
-        uint8* out = buffer + 0x3ff2 - 1;
-        const uint8* out_end = buffer - 1;
+        u8* out = buffer + 0x3ff2 - 1;
+        const u8* out_end = buffer - 1;
         
         while (in > in_end && out > out_end)
         {
@@ -1612,10 +1442,10 @@ namespace
         }
     }
 
-    const uint8* read_header_him(header_generic& header, const uint8* data, int size)
+    const u8* read_header_him(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x4000, 16385, load_address, size))
         {
@@ -1646,7 +1476,7 @@ namespace
         image_header.format = pixelformat::argb8888;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_him(header, data, size);
@@ -1665,19 +1495,19 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
-        uint8* temp = NULL;
+        const u8* data = s->read(size);
+        u8* temp = NULL;
 
         header_generic header;
         data = read_header_him(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
+            const u8* buffer = data;
 
             if (header.compressed)
             {
-                temp = new uint8[16383];
+                temp = new u8[16383];
                 depack_him(temp, data, 16383, size - 2, 0);
                 buffer = temp;
             }
@@ -1698,10 +1528,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Koala Painter
     // ------------------------------------------------------------
-    const uint8* read_header_koa(header_generic& header, const uint8* data, int size)
+    const u8* read_header_koa(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x6000, 10003, load_address, size))
         {
@@ -1723,7 +1553,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_koa(header, data, size);
@@ -1742,7 +1572,7 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_koa(header, data, size);
@@ -1768,7 +1598,7 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x3f8e, 9332);
@@ -1780,10 +1610,10 @@ namespace
             std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
             surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            uint8* image = so->lock<uint8>();
+            u8* image = so->lock<u8>();
             std::memset(image, 0, header.width * header.height);
 
-            uint8* color_ram = new uint8[1000];
+            u8* color_ram = new u8[1000];
             std::memset(color_ram, *(data + 0x1fb5), 1000);
 
             convert_multicolor_bitmap(header.width, header.height, image, 
@@ -1803,14 +1633,14 @@ namespace
     // ------------------------------------------------------------
     // imagefilter Pixel Perfect
     // ------------------------------------------------------------
-    void depack_ppp(uint8* buffer, const uint8* input, int scansize, int insize, uint8 escape_char)
+    void depack_ppp(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
-        uint8* buffer_end = buffer + scansize;
-        const uint8* input_end = input + insize;
+        u8* buffer_end = buffer + scansize;
+        const u8* input_end = input + insize;
 
         for (; buffer < buffer_end && input < input_end;)
         {
-            uint8 v = *input++;
+            u8 v = *input++;
 
             if (v == escape_char)
             {
@@ -1825,10 +1655,10 @@ namespace
         }
     }
 
-    const uint8* read_header_pp(header_generic& header, const uint8* data, int size)
+    const u8* read_header_pp(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x3c00, 33602, load_address, size))
         {
@@ -1850,7 +1680,7 @@ namespace
                     header.width = 320;
                     header.height = 200;
                     header.compressed = true;
-                    header.escape_char = xf.read<uint8>();
+                    header.escape_char = xf.read<u8>();
                     return xf;
                 }
             }
@@ -1867,7 +1697,7 @@ namespace
         image_header.format = pixelformat::argb8888;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_pp(header, data, size);
@@ -1886,24 +1716,24 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_pp(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
-            uint8* temp = NULL;
+            const u8* buffer = data;
+            u8* temp = NULL;
 
             if (header.compressed)
             {
-                temp = new uint8[33600];
+                temp = new u8[33600];
                 depack_ppp(temp, data, 33600, size - 6, header.escape_char);
                 buffer = temp;
             }
 
-            uint8* background = new uint8[200];
+            u8* background = new u8[200];
             std::memset(background, *(buffer + 0x437f), 200);
 
             surface* so = multicolor_interlace_to_surface(buffer, header.width, header.height, 0x2400, 0x6400, 0x400, 0x4400, 0x0, background, NULL, 1, true, 2);
@@ -1953,10 +1783,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter SHF-Editor v1.0
     // ------------------------------------------------------------
-    const uint8* read_header_shf(header_generic& header, const uint8* data, int size)
+    const u8* read_header_shf(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x4000, 15874, load_address, size))
         {
@@ -1970,7 +1800,7 @@ namespace
             header.width = 96;
             header.height = 167;
             header.compressed = true;
-            header.escape_char = xf.read<uint8>();
+            header.escape_char = xf.read<u8>();
             return xf;
         }
 
@@ -1987,7 +1817,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_shf(header, data, size);
@@ -2006,19 +1836,19 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
-        uint8* temp = NULL;
+        const u8* data = s->read(size);
+        u8* temp = NULL;
 
         header_generic header;
         data = read_header_shf(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
+            const u8* buffer = data;
 /*
             if (header.compressed)
             {
-                temp = new uint8[15874];
+                temp = new u8[15874];
                 rle_ecb(temp, data, 15874, size - 3, header.escape_char);
                 buffer = temp;
 
@@ -2027,17 +1857,17 @@ namespace
                 fclose(f);
             }
 */
-            const uint8 *bitmap_c64 = buffer + 0x2000;
-            const uint8 *video_ram = buffer;
-            uint8 sprite_color1 = *(buffer + 0x3e8);
-            uint8 sprite_color2 = *(buffer + 0x3e9);
+            const u8 *bitmap_c64 = buffer + 0x2000;
+            const u8 *video_ram = buffer;
+            u8 sprite_color1 = *(buffer + 0x3e8);
+            u8 sprite_color2 = *(buffer + 0x3e9);
 
             ucolor palette[256];
             std::memset(palette, 0, 256 * sizeof(ucolor));
             std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
             surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            uint8* image = so->lock<uint8>();
+            u8* image = so->lock<u8>();
             std::memset(image, 0, header.width * header.height);
 
             int x, y;
@@ -2046,7 +1876,7 @@ namespace
                 for (x = 0; x < header.width; ++x)
                 {
                     int offset = x + (y * header.width);
-                    uint8 index = 0;
+                    u8 index = 0;
 
                     // Hires data
                     int x_offset = (x + 112) & 0x7;
@@ -2054,7 +1884,7 @@ namespace
                     int bitmap_offset = ((x + 112) & 0xfffffff8) + ((y + 1) & 0x7) + (((y + 1) >> 3) * (40 * 8));
                     int screen_offset = bitmap_offset >> 3;
 
-                    uint8 byte = bitmap_c64[bitmap_offset];
+                    u8 byte = bitmap_c64[bitmap_offset];
                     int bit_pattern = (byte >> (7 - x_offset)) & 0x1;
 
                     // 2 x overlay sprite data
@@ -2063,7 +1893,7 @@ namespace
                     int sprite_line = (y % 21);
                     int sprite_ram_bank = y & 0x7;
 
-                    uint8 sprite_pointer1 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
+                    u8 sprite_pointer1 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
                     /*
                     if (sprite_pointer1 > 15872)
                     {
@@ -2072,10 +1902,10 @@ namespace
                     */
 
                     int sprite_byte_offset1 = (sprite_pointer1 * 64) + (sprite_line * 3) + (x % 24) / 8;
-                    uint8 sprite_byte1 = buffer[sprite_byte_offset1];
+                    u8 sprite_byte1 = buffer[sprite_byte_offset1];
                     int sprite_bit_pattern1 = (sprite_byte1 >> (7 - (x & 0x7))) & 0x1;
 
-                    uint8 sprite_pointer2 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb + 4];
+                    u8 sprite_pointer2 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb + 4];
                     /*
                     if (sprite_pointer2 > 15872)
                     {
@@ -2084,7 +1914,7 @@ namespace
                     */
 
                     int sprite_byte_offset2 = (sprite_pointer2 * 64) + (sprite_line * 3) + (x % 24) / 8;
-                    uint8 sprite_byte2 = buffer[sprite_byte_offset2];
+                    u8 sprite_byte2 = buffer[sprite_byte_offset2];
                     int sprite_bit_pattern2 = (sprite_byte2 >> (7 - (x & 0x7))) & 0x1;
 
                     switch (bit_pattern)
@@ -2136,7 +1966,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x4000, 15362);
@@ -2155,7 +1985,7 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_generic(header, data, size, 0x4000, 15362);
@@ -2165,16 +1995,16 @@ namespace
             header.width = 144;
             header.height = 168;
 
-            const uint8 *bitmap_c64 = data + 0x2000;
-            const uint8 *video_ram = data;
-            uint8 sprite_color = *(data + 0x3e9);
+            const u8 *bitmap_c64 = data + 0x2000;
+            const u8 *video_ram = data;
+            u8 sprite_color = *(data + 0x3e9);
 
             ucolor palette[256];
             std::memset(palette, 0, 256 * sizeof(ucolor));
             std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
             surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            uint8* image = so->lock<uint8>();
+            u8* image = so->lock<u8>();
             std::memset(image, 0, header.width * header.height);
 
             int x, y;
@@ -2183,7 +2013,7 @@ namespace
                 for (x = 0; x < header.width; ++x)
                 {
                     int offset = x + (y * header.width);
-                    uint8 index = 0;
+                    u8 index = 0;
 
                     // Hires data
                     int x_offset = (x + 88) & 0x7;
@@ -2191,7 +2021,7 @@ namespace
                     int bitmap_offset = ((x + 88) & 0xfffffff8) + (y & 0x7) + ((y >> 3) * (40 * 8));
                     int screen_offset = bitmap_offset >> 3;
 
-                    uint8 byte = bitmap_c64[bitmap_offset];
+                    u8 byte = bitmap_c64[bitmap_offset];
                     int bit_pattern = (byte >> (7 - x_offset)) & 0x1;
 
                     // Overlay sprite data
@@ -2199,7 +2029,7 @@ namespace
                     int sprite_nb = (x / 24) + 1;
                     int sprite_line = (y % 21);
                     int sprite_ram_bank = (y + 7) & 0x7;
-                    uint8 sprite_pointer = data[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
+                    u8 sprite_pointer = data[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
                     int sprite_byte_offset = (sprite_pointer * 64) + (sprite_line * 3) + (x % 24) / 8;
 
                     if (sprite_byte_offset > 15360)
@@ -2207,7 +2037,7 @@ namespace
                         FUSIONCORE_EXCEPTION("SHF-XL: invalid sprite pointer.");
                     }
 
-                    uint8 sprite_byte = data[sprite_byte_offset];
+                    u8 sprite_byte = data[sprite_byte_offset];
                     int sprite_bit_pattern = (sprite_byte >> (7 - (x & 0x7))) & 0x1;
 
                     switch (bit_pattern)
@@ -2240,13 +2070,13 @@ namespace
     // ------------------------------------------------------------
     // imagefilter True Paint
     // ------------------------------------------------------------
-    void depack_mci(uint8* buffer, const uint8* input, int scansize, int insize)
+    void depack_mci(u8* buffer, const u8* input, int scansize, int insize)
     {
-        const uint8* in = input + insize - 1;
-        const uint8* in_end = input + 272;
+        const u8* in = input + insize - 1;
+        const u8* in_end = input + 272;
 
-        uint8* out = buffer + scansize - 1;
-        const uint8* out_end = buffer - 1;
+        u8* out = buffer + scansize - 1;
+        const u8* out_end = buffer - 1;
         
         while (in > in_end && out > out_end)
         {
@@ -2357,10 +2187,10 @@ namespace
         }
     }
 
-    const uint8* read_header_mci(header_generic& header, const uint8* data, int size)
+    const u8* read_header_mci(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x9c00, 19434, load_address, size))
         {
@@ -2371,7 +2201,7 @@ namespace
         }
         else if (load_address == 0x0801)
         {
-            uint8 keyword[] = "2059";
+            u8 keyword[] = "2059";
             if (std::memcmp(keyword, xf + 5, sizeof(keyword) - 1) == 0)
             {
                 header.width = 320;
@@ -2392,7 +2222,7 @@ namespace
         image_header.format = pixelformat::argb8888;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_mci(header, data, size);
@@ -2411,24 +2241,24 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
-        uint8* temp = NULL;
+        const u8* data = s->read(size);
+        u8* temp = NULL;
 
         header_generic header;
         data = read_header_mci(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
+            const u8* buffer = data;
 
             if (header.compressed)
             {
-                temp = new uint8[19432];
+                temp = new u8[19432];
                 depack_mci(temp, data, 19432, size - 2);
                 buffer = temp;
             }
 
-            uint8* background = new uint8[200];
+            u8* background = new u8[200];
             std::memset(background, *(buffer + 0x3e8), 200);
 
             surface* so = multicolor_interlace_to_surface(buffer, header.width, header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background, 0x0, 2, false, 2);
@@ -2449,10 +2279,10 @@ namespace
     // ------------------------------------------------------------
     // imagefilter UFLI-Editor v1.0 & v2.0
     // ------------------------------------------------------------
-    const uint8* read_header_ufli(header_generic& header, const uint8* data, int size)
+    const u8* read_header_ufli(header_generic& header, const u8* data, int size)
     {
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (check_format(0x4000, 16194, load_address, size))
         {
@@ -2466,7 +2296,7 @@ namespace
             header.width = 320;
             header.height = 200;
             header.compressed = true;
-            header.escape_char = xf.read<uint8>();
+            header.escape_char = xf.read<u8>();
             return xf;
         }
 
@@ -2483,7 +2313,7 @@ namespace
         image_header.format = pixelformat(palette);
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_ufli(header, data, size);
@@ -2502,27 +2332,27 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
-        uint8* temp = NULL;
+        const u8* data = s->read(size);
+        u8* temp = NULL;
 
         header_generic header;
         data = read_header_ufli(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
+            const u8* buffer = data;
 
             if (header.compressed)
             {
-                temp = new uint8[16192];
+                temp = new u8[16192];
                 rle_ecb(temp, data, 16192, size - 3, header.escape_char);
                 buffer = temp;
             }
 
-            const uint8* bitmap_c64 = buffer + 0x2000;
-            const uint8* video_ram = buffer + 0x1000;
-            const uint8* sprite_colors = buffer + 0xff0;
-            const uint8 background_color = *(buffer + 0xff1);
+            const u8* bitmap_c64 = buffer + 0x2000;
+            const u8* video_ram = buffer + 0x1000;
+            const u8* sprite_colors = buffer + 0xff0;
+            const u8 background_color = *(buffer + 0xff1);
             bool ufli2 = *(buffer + 0xfef) ? true : false;
 
             ucolor palette[256];
@@ -2530,7 +2360,7 @@ namespace
             std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
 
             surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            uint8* image = so->lock<uint8>();
+            u8* image = so->lock<u8>();
             std::memset(image, 0, header.width * header.height);
 
             int x, y;
@@ -2539,7 +2369,7 @@ namespace
                 for (x = 0; x < header.width; ++x)
                 {
                     int offset = x + (y * header.width);
-                    uint8 index = 0;
+                    u8 index = 0;
 
                     if (x < 24 || x >= 312)
                     {
@@ -2553,7 +2383,7 @@ namespace
                         int bitmap_offset = (x & 0xfffffff8) + (y & 0x7) + ((y >> 3) * (40 * 8));
                         int screen_offset = bitmap_offset >> 3;
 
-                        uint8 byte = bitmap_c64[bitmap_offset];
+                        u8 byte = bitmap_c64[bitmap_offset];
                         int bit_pattern = (byte >> (7 - x_offset)) & 0x1;
 
                         // Underlay sprite data
@@ -2569,7 +2399,7 @@ namespace
                         int sprite_offset = (sprite_line * 3) + ((sprite_nb % 6) * 64) + (vic_bank * 0x180) + (sprite_nb / 6) * 0x300;
                         int sprite_byte_offset = (sprite_x_offset % 48) / 16;
 
-                        uint8 sprite_byte = buffer[sprite_offset + sprite_byte_offset];
+                        u8 sprite_byte = buffer[sprite_offset + sprite_byte_offset];
                         int sprite_bit_pattern = (sprite_byte >> (7 - ((sprite_x_offset >> 1) & 0x7))) & 0x1;
 
                         switch (bit_pattern)
@@ -2617,17 +2447,17 @@ namespace
     // ------------------------------------------------------------
     // imagefilter UIFLI Editor v1.0
     // ------------------------------------------------------------
-    void depack_uifli(uint8* buffer, const uint8* input, int scansize, int insize, uint8 escape_char)
+    void depack_uifli(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
-        uint8* buffer_end = buffer + scansize;
-        const uint8* input_end = input + insize;
+        u8* buffer_end = buffer + scansize;
+        const u8* input_end = input + insize;
 
         for (; buffer < buffer_end && input < input_end;)
         {
-            uint8 look_ahead1 = *(input + 2);
-            uint8 look_ahead2 = *(input + 3);
-            uint8 look_ahead3 = *(input + 4);
-            uint8 v = *input++;
+            u8 look_ahead1 = *(input + 2);
+            u8 look_ahead2 = *(input + 3);
+            u8 look_ahead3 = *(input + 4);
+            u8 v = *input++;
 
             if (look_ahead1 == escape_char && 
                 look_ahead2 != escape_char && 
@@ -2650,19 +2480,19 @@ namespace
         }
     }
 
-    const uint8* read_header_uifli(header_generic& header, const uint8* data, int size)
+    const u8* read_header_uifli(header_generic& header, const u8* data, int size)
     {
         (void) size;
 
         infilter xf(data);
-        uint16 load_address = xf.read<uint16>();
+        u16 load_address = xf.read<u16>();
 
         if (load_address == 0x4000)
         {
             header.width = 320;
             header.height = 200;
             header.compressed = true;
-            header.escape_char = xf.read<uint8>();
+            header.escape_char = xf.read<u8>();
             return xf;
         }
 
@@ -2677,7 +2507,7 @@ namespace
         image_header.format =  pixelformat::argb8888;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
+        const u8* data = s->read(size);
 
         header_generic header;
         data = read_header_ufli(header, data, size);
@@ -2696,27 +2526,27 @@ namespace
         (void) thumbnail;
 
         int size = int(s->size());
-        const uint8* data = s->read(size);
-        uint8* temp = NULL;
+        const u8* data = s->read(size);
+        u8* temp = NULL;
 
         header_generic header;
         data = read_header_uifli(header, data, size);
 
         if (data)
         {
-            const uint8* buffer = data;
+            const u8* buffer = data;
 
             if (header.compressed)
             {
-                temp = new uint8[32897];
+                temp = new u8[32897];
                 depack_uifli(temp, data, 32897, size - 3, header.escape_char);
                 buffer = temp;
             }
 
-            const uint8* bitmap_c64[2] = { buffer + 0x2000, buffer + 0x6000 };
-            const uint8* video_ram[2] = { buffer, buffer + 0x4000 };
-            uint8 sprite_color[2] = { *(buffer + 0xff0), *(buffer + 0x4ff0) };
-            const uint8* sprites[2] = { buffer + 0x1000, buffer + 0x5000 };
+            const u8* bitmap_c64[2] = { buffer + 0x2000, buffer + 0x6000 };
+            const u8* video_ram[2] = { buffer, buffer + 0x4000 };
+            u8 sprite_color[2] = { *(buffer + 0xff0), *(buffer + 0x4ff0) };
+            const u8* sprites[2] = { buffer + 0x1000, buffer + 0x5000 };
 
             surface* so = bitmap::create(header.width, header.height, pixelformat::argb8888);
             ucolor* image = so->lock<ucolor>();
@@ -2728,7 +2558,7 @@ namespace
                 for (x = 0; x < header.width; ++x)
                 {
                     int offset = x + (y * header.width);
-                    uint8 index[2] = { 0, 0 };
+                    u8 index[2] = { 0, 0 };
 
                     if (x < 24)
                     {
@@ -2743,9 +2573,9 @@ namespace
                         int bitmap_offset = (x & 0xfffffff8) + (y & 0x7) + ((y >> 3) * (40 * 8));
                         int screen_offset = bitmap_offset >> 3;
 
-                        uint8 byte[2];
+                        u8 byte[2];
                         int bit_pattern[2];
-                        uint8 sprite_byte[2];
+                        u8 sprite_byte[2];
                         int sprite_bit_pattern[2];
 
                         byte[0] = bitmap_c64[0][bitmap_offset];
@@ -2845,10 +2675,6 @@ namespace
 
 #endif
 
-namespace
-{
-    using namespace mango;
-
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -2894,19 +2720,34 @@ namespace
         virtual void decodeImage(Surface& dest) = 0;
     };
 
+    // ------------------------------------------------------------
+    // ImageDecoder: MPIC (Advanced Art Studio)
+    // ------------------------------------------------------------
+
     struct InterfaceMPIC : Interface
     {
+        header_generic m_generic_header;
+        u8* m_data;
+
         InterfaceMPIC(Memory memory)
             : Interface(memory)
+            , m_data(nullptr)
         {
-            m_header.width   = 0; // TODO
-            m_header.height  = 0; // TODO
-            m_header.format  = Format(); // TODO
+            m_data = m_generic_header.parse(memory.address, memory.size, 0x2000, 10018);
+            if (m_data)
+            {
+                m_header.width  = m_generic_header.width;
+                m_header.height = m_generic_header.height;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
         }
 
-        void decodeImage(Surface& dest) override
+        void decodeImage(Surface& s) override
         {
-            // TODO
+            if (!m_data)
+                return;
+
+            m_generic_header.multicolor_load(s, m_data, 0x0, 0x1f40, 0x2338, 0x2329, 0x0, 1, false);
         }
     };
 
@@ -2916,6 +2757,1086 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // ImageDecoder: AFL
+    // ------------------------------------------------------------
+#if 0
+    struct InterfaceAFL : Interface
+    {
+        u8* m_data;
+
+        InterfaceAFL(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceAFL(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceAFL(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: AMI
+    // ------------------------------------------------------------
+
+    struct InterfaceAMI : Interface
+    {
+        u8* m_data;
+
+        InterfaceAMI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceAMI(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceAMI(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: ART
+    // ------------------------------------------------------------
+
+    struct InterfaceART : Interface
+    {
+        u8* m_data;
+
+        InterfaceART(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceART(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceART(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: A64
+    // ------------------------------------------------------------
+
+    struct InterfaceA64 : Interface
+    {
+        u8* m_data;
+
+        InterfaceA64(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceA64(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceA64(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: BLP
+    // ------------------------------------------------------------
+
+    struct InterfaceBLP : Interface
+    {
+        u8* m_data;
+
+        InterfaceBLP(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceBLP(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceBLP(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: CDU
+    // ------------------------------------------------------------
+
+    struct InterfaceCDU : Interface
+    {
+        u8* m_data;
+
+        InterfaceCDU(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceCDU(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceCDU(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: DOL
+    // ------------------------------------------------------------
+
+    struct InterfaceDOL : Interface
+    {
+        u8* m_data;
+
+        InterfaceDOL(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceDOL(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceDOL(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: DD
+    // ------------------------------------------------------------
+
+    struct InterfaceDD : Interface
+    {
+        u8* m_data;
+
+        InterfaceDD(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceDD(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceDD(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: DRL
+    // ------------------------------------------------------------
+
+    struct InterfaceDRL : Interface
+    {
+        u8* m_data;
+
+        InterfaceDRL(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceDRL(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceDRL(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: DRZ
+    // ------------------------------------------------------------
+
+    struct InterfaceDRZ : Interface
+    {
+        u8* m_data;
+
+        InterfaceDRZ(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceDRZ(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceDRZ(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: ECI
+    // ------------------------------------------------------------
+
+    struct InterfaceECI : Interface
+    {
+        u8* m_data;
+
+        InterfaceECI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceECI(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceECI(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: FPT
+    // ------------------------------------------------------------
+
+    struct InterfaceFPT : Interface
+    {
+        u8* m_data;
+
+        InterfaceFPT(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceFPT(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceFPT(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: FD2
+    // ------------------------------------------------------------
+
+    struct InterfaceFD2 : Interface
+    {
+        u8* m_data;
+
+        InterfaceFD2(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceFD2(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceFD2(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: FPR
+    // ------------------------------------------------------------
+
+    struct InterfaceFPR : Interface
+    {
+        u8* m_data;
+
+        InterfaceFPR(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceFPR(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceFPR(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: FUN
+    // ------------------------------------------------------------
+
+    struct InterfaceFUN : Interface
+    {
+        u8* m_data;
+
+        InterfaceFUN(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceFUN(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceFUN(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: GUN
+    // ------------------------------------------------------------
+
+    struct InterfaceGUN : Interface
+    {
+        u8* m_data;
+
+        InterfaceGUN(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceGUN(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceGUN(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: HCB
+    // ------------------------------------------------------------
+
+    struct InterfaceHCB : Interface
+    {
+        u8* m_data;
+
+        InterfaceHCB(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceHCB(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceHCB(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: HFC
+    // ------------------------------------------------------------
+
+    struct InterfaceHFC : Interface
+    {
+        u8* m_data;
+
+        InterfaceHFC(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceHFC(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceHFC(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: HIM
+    // ------------------------------------------------------------
+
+    struct InterfaceHIM : Interface
+    {
+        u8* m_data;
+
+        InterfaceHIM(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceHIM(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceHIM(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: KOA
+    // ------------------------------------------------------------
+
+    struct InterfaceKOA : Interface
+    {
+        u8* m_data;
+
+        InterfaceKOA(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceKOA(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceKOA(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: PMG
+    // ------------------------------------------------------------
+
+    struct InterfacePMG : Interface
+    {
+        u8* m_data;
+
+        InterfacePMG(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfacePMG(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfacePMG(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: PP
+    // ------------------------------------------------------------
+
+    struct InterfacePP : Interface
+    {
+        u8* m_data;
+
+        InterfacePP(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfacePP(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfacePP(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: RPM
+    // ------------------------------------------------------------
+
+    struct InterfaceRPM : Interface
+    {
+        u8* m_data;
+
+        InterfaceRPM(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceRPM(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceRPM(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: SAR
+    // ------------------------------------------------------------
+
+    struct InterfaceSAR : Interface
+    {
+        u8* m_data;
+
+        InterfaceSAR(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceSAR(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceSAR(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: SHF
+    // ------------------------------------------------------------
+
+    struct InterfaceSHF : Interface
+    {
+        u8* m_data;
+
+        InterfaceSHF(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceSHF(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceSHF(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: SHFXL
+    // ------------------------------------------------------------
+
+    struct InterfaceSHFXL : Interface
+    {
+        u8* m_data;
+
+        InterfaceSHFXL(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceSHFXL(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceSHFXL(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: MCI
+    // ------------------------------------------------------------
+
+    struct InterfaceMCI : Interface
+    {
+        u8* m_data;
+
+        InterfaceMCI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceMCI(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceMCI(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: UFLI
+    // ------------------------------------------------------------
+
+    struct InterfaceUFLI : Interface
+    {
+        u8* m_data;
+
+        InterfaceUFLI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceUFLI(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceUFLI(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: UIFLI
+    // ------------------------------------------------------------
+
+    struct InterfaceUIFLI : Interface
+    {
+        u8* m_data;
+
+        InterfaceUIFLI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceUIFLI(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceUIFLI(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: VID
+    // ------------------------------------------------------------
+
+    struct InterfaceVID : Interface
+    {
+        u8* m_data;
+
+        InterfaceVID(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            if (m_data)
+            {
+                // TODO
+                m_header.width  = 0;
+                m_header.height = 0;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+        }
+
+        void decodeImage(Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            // TODO
+        }
+    };
+
+    ImageDecoderInterface* createInterfaceVID(Memory memory)
+    {
+        ImageDecoderInterface* x = new InterfaceVID(memory);
+        return x;
+    }
+#endif
 } // namespace
 
 namespace mango
@@ -2926,7 +3847,7 @@ namespace mango
         // Advanced Art Studio
         registerImageDecoder(createInterfaceMPIC, "mpic");
 
-#if 0 // TODO
+#if 0
         // AFLI-editor v2.0
         registerImageDecoder(createInterfaceAFL, "afl");
         registerImageDecoder(createInterfaceAFL, "afli");
@@ -2939,7 +3860,7 @@ namespace mango
         registerImageDecoder(createInterfaceART, "ocp");
 
         // Artist 64
-        registerImageDecoder(createInterface, "a64");
+        registerImageDecoder(createInterfaceA64, "a64");
 
         // Blazing Paddles
         registerImageDecoder(createInterfaceBLP, "blp");
