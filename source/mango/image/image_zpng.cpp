@@ -6,7 +6,7 @@
 #include <mango/image/image.hpp>
 #include "../../external/zpng/zpng.h"
 
-#define ID "ImageStream.ZPNG: "
+#define ID "ImageDecoder.ZPNG: "
 
 namespace
 {

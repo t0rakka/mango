@@ -12,7 +12,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageStream.ATARI: "
+#define ID "ImageDecoder.ATARI: "
 
 namespace
 {
