@@ -178,9 +178,8 @@ namespace
 
         void decode(Surface& s, Palette& palette, u8* data, u8* end)
         {
-            std::vector<u8> imageVector(width * height);
-            u8* image = imageVector.data();
-            std::memset(image, 0, width * height);
+            std::vector<u8> temp(width * height, 0);
+            u8* image = temp.data();
 
             const int words_per_scan = bitplanes == 1 ? 40 : 80;
 
@@ -943,9 +942,7 @@ namespace
                 const uint8 initial_value = p.read8();
                 const uint16 offset = p.read16() & 0x7fff;
 
-                temp = std::vector<u8>(32000);
-                std::memset(temp.data(), initial_value, 32000);
-
+                temp = std::vector<u8>(32000, initial_value);
 			    ca_decompress(temp.data(), p, 32000, int(end - p), escape_char, offset);
 
                 buffer = temp.data();

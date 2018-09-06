@@ -410,9 +410,9 @@ namespace
 
         so->unlock();
 
-				delete[] bitmap2;
+        delete[] bitmap2;
         delete[] bitmap1;
-        
+
         return so;
     }
 
@@ -2718,24 +2718,23 @@ namespace
                 m_data = memory.address + 2;
             }
         }
-
+            
         void decodeImage(Surface& s) override
         {
             if (!m_data)
                 return;
 
+            std::vector<u8> temp;
             u8* buffer = m_data;
-            u8* temp = nullptr;
 
             if (m_generic_header.compressed)
             {
-                temp = new u8[10513];
-                rle_ecb(temp, m_data, 10513, int(m_memory.size - 3), m_generic_header.escape_char);
-                buffer = temp;
+                temp = std::vector<u8>(10513);
+                rle_ecb(temp.data(), m_data, 10513, int(m_memory.size - 3), m_generic_header.escape_char);
+                buffer = temp.data();
             }
 
             multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
-            delete [] temp;
         }
     };
 
