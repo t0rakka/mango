@@ -2159,23 +2159,40 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: UFLI
+    // ImageDecoder: UFLI (UFLI-Editor v1.0 & v2.0)
     // ------------------------------------------------------------
 
     struct InterfaceUFLI : Interface
     {
         u8* m_data;
+        bool m_compressed = false;
+        u8 m_escape_char = 0;
 
         InterfaceUFLI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            if (m_data)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x4000, 16194, load_address, memory.size))
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width = 320;
+                m_header.height = 200;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = false;
+                m_data = p;
+            }
+            else if (load_address == 0x8000)
+            {
+                m_header.width = 320;
+                m_header.height = 200;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = true;
+                m_escape_char = p.read8();
+                m_data = p;
             }
         }
 
@@ -2184,59 +2201,15 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
-        }
-    };
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
 
-#if 0
-
-    // ------------------------------------------------------------
-    // imagefilter UFLI-Editor v1.0 & v2.0
-    // ------------------------------------------------------------
-    const u8* read_header_ufli(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (check_format(0x4000, 16194, load_address, size))
-        {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = false;
-            return xf;
-        }
-        else if (load_address == 0x8000)
-        {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = true;
-            header.escape_char = xf.read<u8>();
-            return xf;
-        }
-
-        return NULL;
-    }
-
-    surface* ufli_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-        u8* temp = NULL;
-
-        header_generic header;
-        data = read_header_ufli(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-
-            if (header.compressed)
+            if (m_compressed)
             {
-                temp = new u8[16192];
-                rle_ecb(temp, data, 16192, size - 3, header.escape_char);
-                buffer = temp;
+                temp = std::vector<u8>(16192);
+                u8* end = m_memory.address + m_memory.size;
+                rle_ecb(temp.data(), m_data, 16192, end, m_escape_char);
+                buffer = temp.data();
             }
 
             const u8* bitmap_c64 = buffer + 0x2000;
@@ -2245,20 +2218,16 @@ namespace
             const u8 background_color = *(buffer + 0xff1);
             bool ufli2 = *(buffer + 0xfef) ? true : false;
 
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-            std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
+            PaletteC64 palette;
 
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            u8* image = so->lock<u8>();
-            std::memset(image, 0, header.width * header.height);
+            std::vector<u8> tempImage(m_header.width * m_header.height, 0);
+            u8* image = tempImage.data();
 
-            int x, y;
-            for (y = 0; y < header.height; ++y)
+            for (int y = 0; y < m_header.height; ++y)
             {
-                for (x = 0; x < header.width; ++x)
+                for (int x = 0; x < m_header.width; ++x)
                 {
-                    int offset = x + (y * header.width);
+                    int offset = x + y * m_header.width;
                     u8 index = 0;
 
                     if (x < 24 || x >= 312)
@@ -2322,18 +2291,9 @@ namespace
                 }
             }
 
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            so->unlock();
-            return so;
+            resolve_palette(s, tempImage.data(), m_header.width, m_header.height, palette);
         }
-
-        return NULL;
-    }
-#endif
+    };
 
     ImageDecoderInterface* createInterfaceUFLI(Memory memory)
     {
@@ -2342,40 +2302,9 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: UIFLI
+    // ImageDecoder: UIFLI (UIFLI Editor v1.0)
     // ------------------------------------------------------------
 
-    struct InterfaceUIFLI : Interface
-    {
-        u8* m_data;
-
-        InterfaceUIFLI(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
-        {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
-        }
-
-        void decodeImage(Surface& s) override
-        {
-            if (!m_data)
-                return;
-
-            // TODO
-        }
-    };
-
-#if 0
-
-    // ------------------------------------------------------------
-    // imagefilter UIFLI Editor v1.0
-    // ------------------------------------------------------------
     void depack_uifli(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
         u8* buffer_end = buffer + scansize;
@@ -2409,45 +2338,44 @@ namespace
         }
     }
 
-    const u8* read_header_uifli(header_generic& header, const u8* data, int size)
+    struct InterfaceUIFLI : Interface
     {
-        (void) size;
+        u8* m_data;
+        bool m_compressed = false;
+        u8 m_escape_char = 0;
 
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (load_address == 0x4000)
+        InterfaceUIFLI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
         {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = true;
-            header.escape_char = xf.read<u8>();
-            return xf;
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (load_address == 0x4000)
+            {
+                m_header.width = 320;
+                m_header.height = 200;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = true;
+                m_escape_char = p.read8();
+                m_data = p;
+            }
         }
 
-        return NULL;
-    }
-
-    surface* uifli_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-        u8* temp = NULL;
-
-        header_generic header;
-        data = read_header_uifli(header, data, size);
-
-        if (data)
+        void decodeImage(Surface& s) override
         {
-            const u8* buffer = data;
+            if (!m_data)
+                return;
 
-            if (header.compressed)
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
+
+            if (m_compressed)
             {
-                temp = new u8[32897];
-                depack_uifli(temp, data, 32897, size - 3, header.escape_char);
-                buffer = temp;
+                temp = std::vector<u8>(32897);
+                depack_uifli(temp.data(), m_data, 32897, int(m_memory.size - 3), m_escape_char);
+                buffer = temp.data();
             }
 
             const u8* bitmap_c64[2] = { buffer + 0x2000, buffer + 0x6000 };
@@ -2455,16 +2383,12 @@ namespace
             u8 sprite_color[2] = { *(buffer + 0xff0), *(buffer + 0x4ff0) };
             const u8* sprites[2] = { buffer + 0x1000, buffer + 0x5000 };
 
-            surface* so = bitmap::create(header.width, header.height, pixelformat::argb8888);
-            ucolor* image = so->lock<ucolor>();
-            std::memset(image, 0, header.width * header.height);
-
-            int x, y;
-            for (y = 0; y < header.height; ++y)
+            for (int y = 0; y < m_header.height; ++y)
             {
-                for (x = 0; x < header.width; ++x)
+                BGRA* image = s.address<BGRA>(0, y);
+
+                for (int x = 0; x < m_header.width; ++x)
                 {
-                    int offset = x + (y * header.width);
                     u8 index[2] = { 0, 0 };
 
                     if (x < 24)
@@ -2546,25 +2470,14 @@ namespace
                         }
                     }
 
-                    image[offset].a = 0xff;
-                    image[offset].r = (c64_palette[index[0]].r >> 1) + (c64_palette[index[1]].r >> 1);
-                    image[offset].g = (c64_palette[index[0]].g >> 1) + (c64_palette[index[1]].g >> 1);
-                    image[offset].b = (c64_palette[index[0]].b >> 1) + (c64_palette[index[1]].b >> 1);
+                    image[x].b = (c64_palette[index[0]].b >> 1) + (c64_palette[index[1]].b >> 1);
+                    image[x].g = (c64_palette[index[0]].g >> 1) + (c64_palette[index[1]].g >> 1);
+                    image[x].r = (c64_palette[index[0]].r >> 1) + (c64_palette[index[1]].r >> 1);
+                    image[x].a = 0xff;
                 }
             }
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            so->unlock();
-            return so;
         }
-
-        return NULL;
-    }
-#endif
+    };
 
     ImageDecoderInterface* createInterfaceUIFLI(Memory memory)
     {
