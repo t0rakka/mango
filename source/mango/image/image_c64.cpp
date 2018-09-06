@@ -43,6 +43,18 @@ namespace
         0xFF959595,
     };
 
+    struct PaletteC64 : Palette
+    {
+        PaletteC64()
+        {
+            size = 16;
+            for (int i = 0; i < 16; ++i)
+            {
+                color[i] = c64_palette[i];
+            }
+        }
+    };
+
     void resolve_palette(Surface& s, u8* data, int width, int height, Palette& palette)
     {
         for (int y = 0; y < height; ++y)
@@ -190,14 +202,7 @@ namespace
                             u32 background_offset, u32 opcode_colors_offset, 
                             int background_mode, bool fli)
     {
-        Palette palette;
-        palette.size = 16;
-
-        for (int i = 0; i < 16; ++i)
-        {
-            palette[i] = c64_palette[i];
-        }
-
+        PaletteC64 palette;
         std::vector<u8> temp(width * height, 0);
 
         convert_multicolor_bitmap(width, height, temp.data(), 
@@ -356,14 +361,7 @@ namespace
                               bool show_fli_bug = false,
                               u8 fli_bug_color = 0)
     {
-        Palette palette;
-        palette.size = 16;
-
-        for (int i = 0; i < 16; ++i)
-        {
-            palette[i] = c64_palette[i];
-        }
-
+        PaletteC64 palette;
         std::vector<u8> temp(width * height, 0);
 
         convert_hires_bitmap(width, height, temp.data(), data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
@@ -420,6 +418,7 @@ namespace
 
     bool check_format(u16 format_address, size_t format_size, u16 load_address, size_t size)
     {
+        //printf("format_address: %d, format_size: %d, load_address: %d, size: %d \n", int(format_address), int(format_size), int(load_address), int(size));
         return load_address == format_address && size == format_size;
     }
 
@@ -458,112 +457,15 @@ namespace
                                   bitmap_offset, video_ram_offset, color_ram_offset, background_offset, opcode_colors_offset,
                                   background_mode, fli);
         }
+
+        void hires_load(Surface& s, u8* data, 
+                                u32 bitmap_offset, u32 video_ram_offset, bool fli)
+        {
+            hires_to_surface(s, data, width, height, bitmap_offset, video_ram_offset, fli);
+        }
     };
 
-
 #if 0
-
-
-    surface* generic_hires_load(stream* s, u16 format_address, int format_size, u32 bitmap_offset, u32 video_ram_offset, bool fli)
-    {
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, format_address, format_size);
-
-        if (data)
-        {
-            return hires_to_surface(data, header.width, header.height, bitmap_offset, video_ram_offset, fli);
-        }
-
-        return NULL;
-    }
-
-
-    // ------------------------------------------------------------
-    // imagefilter Art Studio
-    // ------------------------------------------------------------
-    imageheader art_header(stream* s)
-    {
-        return generic_header(s, 0x2000, 9009);
-    }
-
-    surface* art_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_hires_load(s, 0x2000, 9009, 0x0, 0x1f40, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Artist 64
-    // ------------------------------------------------------------
-    imageheader a64_header(stream* s)
-    {
-        return generic_header(s, 0x4000, 10242);
-    }
-
-    surface* a64_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x4000, 10242, 0x0, 0x2000, 0x2400, 0x27ff, 0x0, 1, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Blazing Paddles
-    // ------------------------------------------------------------
-    imageheader blp_header(stream* s)
-    {
-        return generic_header(s, 0xa000, 10242);
-    }
-
-    surface* blp_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0xa000, 10242, 0x0, 0x2000, 0x2400, 0x1f80, 0x0, 1, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter CDU-Paint
-    // ------------------------------------------------------------
-    imageheader cdu_header(stream* s)
-    {
-        return generic_header(s, 0x7eef, 10277);
-    }
-
-    surface* cdu_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x7eef, 10277, 0x111, 0x2051, 0x2439, 0x2821, 0x0, 1, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Dolphin Ed
-    // ------------------------------------------------------------
-    imageheader dol_header(stream* s)
-    {
-        return generic_header(s, 0x5800, 10242);
-    }
-
-    surface* dol_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x5800, 10242, 0x800, 0x400, 0x0, 0x7e8, 0x0, 1, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Doodle
-    // ------------------------------------------------------------
-    imageheader dd_header(stream* s)
-    {
-        return generic_header(s, 0x1c00, 9218);
-    }
-
-    surface* dd_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_hires_load(s, 0x1c00, 9218, 0x400, 0x0, false);
-    }
 
     // ------------------------------------------------------------
     // imagefilter Drazlace
@@ -850,34 +752,6 @@ namespace
         }
 
         return NULL;
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Face Painter
-    // ------------------------------------------------------------
-    imageheader fpt_header(stream* s)
-    {
-        return generic_header(s, 0x4000, 10004);
-    }
-
-    surface* fpt_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x4000, 10004, 0x0, 0x1f40, 0x2328, 0x2712, 0x0, 1, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter FLI Designer 1.1 & 2.0 (FBI Crew)
-    // ------------------------------------------------------------
-    imageheader fd2_header(stream* s)
-    {
-        return generic_header(s, 0x3c00, 17409);
-    }
-
-    surface* fd2_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x3c00, 17409, 0x2400, 0x400, 0x0, 0x0, 0x0, 0, true);
     }
 
     // ------------------------------------------------------------
@@ -1264,32 +1138,6 @@ namespace
     }
     
     // ------------------------------------------------------------
-    // imagefilter Hires FLI Designer
-    // ------------------------------------------------------------
-    imageheader hfc_header(stream* s)
-    {
-        return generic_header(s, 0x4000, 16386);
-    }
-
-    surface* hfc_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, 0x4000, 16386);
-
-        if (data)
-        {
-            return hires_to_surface(data, header.width, header.height, 0x0, 0x2000, true, false, 0);
-        }
-
-        return NULL;
-    }
-
-    // ------------------------------------------------------------
     // imagefilter Hires Manager
     // ------------------------------------------------------------
     void depack_him(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
@@ -1648,33 +1496,6 @@ namespace
         return NULL;
     }
 
-    // ------------------------------------------------------------
-    // imagefilter Run Paint
-    // ------------------------------------------------------------
-    imageheader rpm_header(stream* s)
-    {
-        return generic_header(s, 0x6000, 10006);
-    }
-
-    surface* rpm_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x6000, 10006, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, 1, false);
-    }
-
-    // ------------------------------------------------------------
-    // imagefilter Saracen Paint
-    // ------------------------------------------------------------
-    imageheader sar_header(stream* s)
-    {
-        return generic_header(s, 0x7800, 10018);
-    }
-
-    surface* sar_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x7800, 10018, 0x400, 0x0, 0x2400, 0x3f0, 0x0, 1, false);
-    }
 
     // ------------------------------------------------------------
     // imagefilter SHF-Editor v1.0
@@ -2554,21 +2375,6 @@ namespace
         return NULL;
     }
 
-    // ------------------------------------------------------------
-    // imagefilter Vidcom 64
-    // ------------------------------------------------------------
-    imageheader vid_header(stream* s)
-    {
-        return generic_header(s, 0x5800, 10050);
-    }
-
-    surface* vid_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-        return generic_multicolor_load(s, 0x5800, 10050, 0x800, 0x400, 0x0, 0x7e9, 0x0, 1, false);
-    }
-}
-
 #endif
 
     // ------------------------------------------------------------
@@ -2616,26 +2422,34 @@ namespace
         virtual void decodeImage(Surface& dest) = 0;
     };
 
-    // ------------------------------------------------------------
-    // ImageDecoder: MPIC (Advanced Art Studio)
-    // ------------------------------------------------------------
-
-    struct InterfaceMPIC : Interface
+    struct GenericInterface : Interface
     {
         header_generic m_generic_header;
         u8* m_data;
 
-        InterfaceMPIC(Memory memory)
+        GenericInterface(Memory memory, u16 format_address, size_t format_size)
             : Interface(memory)
             , m_data(nullptr)
         {
-            m_data = m_generic_header.parse(memory.address, memory.size, 0x2000, 10018);
+            m_data = m_generic_header.parse(memory.address, memory.size, format_address, format_size);
             if (m_data)
             {
                 m_header.width  = m_generic_header.width;
                 m_header.height = m_generic_header.height;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             }
+        }
+    };
+
+    // ------------------------------------------------------------
+    // ImageDecoder: MPIC (Advanced Art Studio)
+    // ------------------------------------------------------------
+
+    struct InterfaceMPIC : GenericInterface
+    {
+        InterfaceMPIC(Memory memory)
+            : GenericInterface(memory, 0x2000, 10018)
+        {
         }
 
         void decodeImage(Surface& s) override
@@ -2657,22 +2471,11 @@ namespace
     // ImageDecoder: AFL (AFLI-editor v2.0)
     // ------------------------------------------------------------
 
-    struct InterfaceAFL : Interface
+    struct InterfaceAFL : GenericInterface
     {
-        header_generic m_generic_header;
-        u8* m_data;
-
         InterfaceAFL(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x4000, 16385)
         {
-            m_data = m_generic_header.parse(memory.address, memory.size, 0x4000, 16385);
-            if (m_data)
-            {
-                m_header.width  = m_generic_header.width;
-                m_header.height = m_generic_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2745,25 +2548,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: ART
+    // ImageDecoder: ART (Art Studio)
     // ------------------------------------------------------------
-#if 0
 
-    struct InterfaceART : Interface
+    struct InterfaceART : GenericInterface
     {
-        u8* m_data;
-
         InterfaceART(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x2000, 9009)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2771,7 +2563,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.hires_load(s, m_data, 0x0, 0x1f40, false);
         }
     };
 
@@ -2785,21 +2577,11 @@ namespace
     // ImageDecoder: A64
     // ------------------------------------------------------------
 
-    struct InterfaceA64 : Interface
+    struct InterfaceA64 : GenericInterface
     {
-        u8* m_data;
-
         InterfaceA64(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x4000, 10242)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2807,7 +2589,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x0, 0x2000, 0x2400, 0x27ff, 0x0, 1, false);
         }
     };
 
@@ -2818,24 +2600,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: BLP
+    // ImageDecoder: BLP (Blazing Paddles)
     // ------------------------------------------------------------
 
-    struct InterfaceBLP : Interface
+    struct InterfaceBLP : GenericInterface
     {
-        u8* m_data;
-
         InterfaceBLP(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0xa000, 10242)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2843,7 +2615,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+        m_generic_header.multicolor_load(s, m_data, 0x0, 0x2000, 0x2400, 0x1f80, 0x0, 1, false);
         }
     };
 
@@ -2854,24 +2626,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: CDU
+    // ImageDecoder: CDU (CDU-Paint)
     // ------------------------------------------------------------
 
-    struct InterfaceCDU : Interface
+    struct InterfaceCDU : GenericInterface
     {
-        u8* m_data;
-
         InterfaceCDU(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x7eef, 10277)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2879,7 +2641,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x111, 0x2051, 0x2439, 0x2821, 0x0, 1, false);
         }
     };
 
@@ -2890,24 +2652,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: DOL
+    // ImageDecoder: DOL (Dolphin Ed)
     // ------------------------------------------------------------
 
-    struct InterfaceDOL : Interface
+    struct InterfaceDOL : GenericInterface
     {
-        u8* m_data;
-
         InterfaceDOL(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x5800, 10242)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2915,7 +2667,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x800, 0x400, 0x0, 0x7e8, 0x0, 1, false);
         }
     };
 
@@ -2926,24 +2678,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: DD
+    // ImageDecoder: DD (Doodle)
     // ------------------------------------------------------------
 
-    struct InterfaceDD : Interface
+    struct InterfaceDD : GenericInterface
     {
-        u8* m_data;
-
         InterfaceDD(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x1c00, 9218)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -2951,7 +2693,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.hires_load(s, m_data, 0x400, 0x0, false);
         }
     };
 
@@ -2960,6 +2702,8 @@ namespace
         ImageDecoderInterface* x = new InterfaceDD(memory);
         return x;
     }
+
+#if 0
 
     // ------------------------------------------------------------
     // ImageDecoder: DRL
@@ -3068,26 +2812,17 @@ namespace
         ImageDecoderInterface* x = new InterfaceECI(memory);
         return x;
     }
+#endif
 
     // ------------------------------------------------------------
-    // ImageDecoder: FPT
+    // ImageDecoder: FPT (Face Painter)
     // ------------------------------------------------------------
 
-    struct InterfaceFPT : Interface
+    struct InterfaceFPT : GenericInterface
     {
-        u8* m_data;
-
         InterfaceFPT(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x4000, 10004)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -3095,7 +2830,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x0, 0x1f40, 0x2328, 0x2712, 0x0, 1, false);
         }
     };
 
@@ -3106,24 +2841,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: FD2
+    // ImageDecoder: FD2 (FLI Designer 1.1 & 2.0 (FBI Crew))
     // ------------------------------------------------------------
 
-    struct InterfaceFD2 : Interface
+    struct InterfaceFD2 : GenericInterface
     {
-        u8* m_data;
-
         InterfaceFD2(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x3c00, 17409)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -3131,7 +2856,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x2400, 0x400, 0x0, 0x0, 0x0, 0, true);
         }
     };
 
@@ -3145,6 +2870,7 @@ namespace
     // ImageDecoder: FPR
     // ------------------------------------------------------------
 
+#if 0
     struct InterfaceFPR : Interface
     {
         u8* m_data;
@@ -3284,26 +3010,17 @@ namespace
         ImageDecoderInterface* x = new InterfaceHCB(memory);
         return x;
     }
+#endif
 
     // ------------------------------------------------------------
-    // ImageDecoder: HFC
+    // ImageDecoder: HFC (Hires FLI Designer)
     // ------------------------------------------------------------
 
-    struct InterfaceHFC : Interface
+    struct InterfaceHFC : GenericInterface
     {
-        u8* m_data;
-
         InterfaceHFC(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x4000, 16386)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -3311,7 +3028,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            hires_to_surface(s, m_data, m_header.width, m_header.height, 0x0, 0x2000, true, false, 0);
         }
     };
 
@@ -3321,6 +3038,7 @@ namespace
         return x;
     }
 
+#if 0
     // ------------------------------------------------------------
     // ImageDecoder: HIM
     // ------------------------------------------------------------
@@ -3465,25 +3183,16 @@ namespace
         return x;
     }
 
+#endif
     // ------------------------------------------------------------
-    // ImageDecoder: RPM
+    // ImageDecoder: RPM (Run Paint)
     // ------------------------------------------------------------
 
-    struct InterfaceRPM : Interface
+    struct InterfaceRPM : GenericInterface
     {
-        u8* m_data;
-
         InterfaceRPM(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x6000, 10006)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -3491,7 +3200,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, 1, false);
         }
     };
 
@@ -3502,24 +3211,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: SAR
+    // ImageDecoder: SAR (Saracen Paint)
     // ------------------------------------------------------------
 
-    struct InterfaceSAR : Interface
+    struct InterfaceSAR : GenericInterface
     {
-        u8* m_data;
-
         InterfaceSAR(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x7800, 10018)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -3527,7 +3226,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x400, 0x0, 0x2400, 0x3f0, 0x0, 1, false);
         }
     };
 
@@ -3536,6 +3235,8 @@ namespace
         ImageDecoderInterface* x = new InterfaceSAR(memory);
         return x;
     }
+
+#if 0
 
     // ------------------------------------------------------------
     // ImageDecoder: SHF
@@ -3716,26 +3417,17 @@ namespace
         ImageDecoderInterface* x = new InterfaceUIFLI(memory);
         return x;
     }
+#endif
 
     // ------------------------------------------------------------
-    // ImageDecoder: VID
+    // ImageDecoder: VID (Vidcom 64)
     // ------------------------------------------------------------
 
-    struct InterfaceVID : Interface
+    struct InterfaceVID : GenericInterface
     {
-        u8* m_data;
-
         InterfaceVID(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x5800, 10050)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -3743,7 +3435,7 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            m_generic_header.multicolor_load(s, m_data, 0x800, 0x400, 0x0, 0x7e9, 0x0, 1, false);
         }
     };
 
@@ -3752,7 +3444,7 @@ namespace
         ImageDecoderInterface* x = new InterfaceVID(memory);
         return x;
     }
-#endif
+
 } // namespace
 
 namespace mango
@@ -3770,10 +3462,9 @@ namespace mango
         // Amica Paint
         registerImageDecoder(createInterfaceAMI, "ami");
 
-#if 0
         // Art Studio
         registerImageDecoder(createInterfaceART, "art");
-        registerImageDecoder(createInterfaceART, "ocp");
+        registerImageDecoder(createInterfaceART, "ocp"); // TODO: check the format_size
 
         // Artist 64
         registerImageDecoder(createInterfaceA64, "a64");
@@ -3791,9 +3482,10 @@ namespace mango
 
         // Doodle
         registerImageDecoder(createInterfaceDD, "dd");
-        //registerImageDecoder(createInterfaceDD, "ddl");
-        //registerImageDecoder(createInterfaceDD, "jj");
+        registerImageDecoder(createInterfaceDD, "ddl");
+        //registerImageDecoder(createInterfaceDD, "jj"); // TODO: support compression
 
+#if 0
         // Drazlace
         registerImageDecoder(createInterfaceDRL, "drl");
         registerImageDecoder(createInterfaceDRL, "dlp");
@@ -3806,7 +3498,7 @@ namespace mango
 
         // ECI Graphic Editor v1.0
         registerImageDecoder(createInterfaceECI, "eci");
-
+#endif
         // Face Painter
         registerImageDecoder(createInterfaceFPT, "fpt");
         registerImageDecoder(createInterfaceFPT, "fcp");
@@ -3814,6 +3506,7 @@ namespace mango
         // FLI Designer 1.1 & 2.0 (FBI Crew)
         registerImageDecoder(createInterfaceFD2, "fd2");
 
+#if 0
         // FLI-Profi
         registerImageDecoder(createInterfaceFPR, "fpr");
 
@@ -3827,10 +3520,12 @@ namespace mango
 
         // HCB-Editor v0.05
         registerImageDecoder(createInterfaceHCB, "hcb");
+#endif
 
         // Hires FLI Designer
         registerImageDecoder(createInterfaceHFC, "hfc");
 
+#if 0
         // Hires Manager
         registerImageDecoder(createInterfaceHIM, "him");
 
@@ -3844,13 +3539,14 @@ namespace mango
         // Pixel Perfect
         registerImageDecoder(createInterfacePP, "pp");
         registerImageDecoder(createInterfacePP, "ppp");
-
+#endif
         // Run paint
         registerImageDecoder(createInterfaceRPM, "rpm");
 
         // Saracen Paint
         registerImageDecoder(createInterfaceSAR, "sar");
 
+#if 0
         // SHF-Editor v1.0
         registerImageDecoder(createInterfaceSHF, "unp");
         registerImageDecoder(createInterfaceSHF, "shfli");
@@ -3869,10 +3565,10 @@ namespace mango
 
         // UIFLI Editor v1.0
         registerImageDecoder(createInterfaceUIFLI, "uifli");
+#endif
 
         // Vidcom 64
         registerImageDecoder(createInterfaceVID, "vid");
-#endif
     }
 
 } // namespace mango
