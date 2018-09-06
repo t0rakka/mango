@@ -186,7 +186,7 @@
 		A645DD8E21415B3F00EC714B /* miniz_tdef.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8921415B3F00EC714B /* miniz_tdef.h */; };
 		A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8A21415B3F00EC714B /* miniz_tinfl.h */; };
 		A645DD9021415B3F00EC714B /* miniz_common.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8B21415B3F00EC714B /* miniz_common.h */; };
-		A645DD92214195E800EC714B /* xxhash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD91214195E800EC714B /* xxhash.cpp */; };
+		A645DD9421419C7F00EC714B /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD9321419C7F00EC714B /* hash.cpp */; };
 		A672D9122026633600947D7E /* bc_aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9102026633600947D7E /* bc_aes.cpp */; };
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
@@ -381,7 +381,7 @@
 		A645DD8921415B3F00EC714B /* miniz_tdef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_tdef.h; path = external/miniz/miniz_tdef.h; sourceTree = "<group>"; };
 		A645DD8A21415B3F00EC714B /* miniz_tinfl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_tinfl.h; path = external/miniz/miniz_tinfl.h; sourceTree = "<group>"; };
 		A645DD8B21415B3F00EC714B /* miniz_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_common.h; path = external/miniz/miniz_common.h; sourceTree = "<group>"; };
-		A645DD91214195E800EC714B /* xxhash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = xxhash.cpp; path = core/xxhash.cpp; sourceTree = "<group>"; };
+		A645DD9321419C7F00EC714B /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
 		A672D9102026633600947D7E /* bc_aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bc_aes.cpp; path = external/aes/bc_aes.cpp; sourceTree = "<group>"; };
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
@@ -431,8 +431,8 @@
 				A6C8F4F5200612E900A25756 /* md5.cpp */,
 				A6C8F4F6200612E900A25756 /* sha1.cpp */,
 				A690037B2008FF790080E5FA /* sha2.cpp */,
+				A645DD9321419C7F00EC714B /* hash.cpp */,
 				A630895B1DFC6D4700252BC4 /* crc32.cpp */,
-				A645DD91214195E800EC714B /* xxhash.cpp */,
 				A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */,
 				A005598B1C93324E00A6D963 /* buffer.cpp */,
 				A005598C1C93324E00A6D963 /* compress.cpp */,
@@ -992,13 +992,13 @@
 				A63DD76E1E706EF100D4D499 /* lzfse_decode_base.c in Sources */,
 				A645DD752141551200EC714B /* fse_compress.c in Sources */,
 				A63DD7781E706EF100D4D499 /* lzvn_decode_base.c in Sources */,
+				A645DD9421419C7F00EC714B /* hash.cpp in Sources */,
 				A00559941C93324E00A6D963 /* buffer.cpp in Sources */,
 				A00559A71C93327800A6D963 /* mapper_zip.cpp in Sources */,
 				A63DD7AE1E706FA000D4D499 /* astc.cpp in Sources */,
 				A645DD51214154F400EC714B /* debug.c in Sources */,
 				A005599B1C93324E00A6D963 /* thread.cpp in Sources */,
 				A63DD7561E706EB200D4D499 /* rdwrfn.cpp in Sources */,
-				A645DD92214195E800EC714B /* xxhash.cpp in Sources */,
 				A00559C61C93329A00A6D963 /* image_astc.cpp in Sources */,
 				A645DD6F2141551200EC714B /* zstd_compress.c in Sources */,
 				A63DD78A1E706F3400D4D499 /* bz_compress.c in Sources */,
