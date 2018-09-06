@@ -178,8 +178,7 @@ namespace
 
         void decode(Surface& s, Palette& palette, u8* data, u8* end)
         {
-            std::vector<u8> temp(width * height, 0);
-            u8* image = temp.data();
+            std::vector<u8> tempImage(width * height, 0);
 
             const int words_per_scan = bitplanes == 1 ? 40 : 80;
 
@@ -192,23 +191,22 @@ namespace
 
                 for (int y = 0; y < height; ++y)
                 {
-                    for (int j = 0; j < bitplanes; ++j)
+					u8* image = tempImage.data() + y * width;
+
+					for (int j = 0; j < bitplanes; ++j)
                     {
                         for (int k = 0; k < words_per_scan / bitplanes; ++k)
                         {
                             u16 word = p.read16();
 
-                            if (p > end)
-                                return;
-
                             for (int l = 15; l >= 0; --l)
                             {
-                                image[(y * width) + (k * 16) + (15 - l)] |= (((word & (1 << l)) >> l) << j);
+                                image[k * 16 + (15 - l)] |= (((word & (1 << l)) >> l) << j);
                             }
                         }
                     }
                 }
-            }
+			}
             else
             {
                 const uint16be* buffer = reinterpret_cast<const uint16be *>(data);
@@ -221,8 +219,10 @@ namespace
 
                 for (int y = 0; y < height; ++y)
                 {
-                    int yoffset = y * (bitplanes == 1 ? 40 : 80);
-                    for (int x = 0; x < width; ++x)
+					u8* image = tempImage.data() + y * width;
+					int yoffset = y * (bitplanes == 1 ? 40 : 80);
+
+					for (int x = 0; x < width; ++x)
                     {
                         int x_offset = 15 - (x & 15);
                         int word_offset = (x >> 4) * bitplanes + yoffset;
@@ -234,12 +234,13 @@ namespace
                             int bit_pattern = (v >> x_offset) & 0x1;
                             index |= (bit_pattern << i);
                         }
-                        image[x + y * width] = index;
+
+						image[x] = index;
                     }
                 }
-            }
+			}
 
-            resolve_palette(s, width, height, image, palette);
+            resolve_palette(s, width, height, tempImage.data(), palette);
         }
 	};
 
@@ -263,11 +264,10 @@ namespace
 
         void decodeImage(Surface& s) override
         {
-            if (!m_data)
+			if (!m_data)
                 return;
 
             u8* end = m_memory.address + m_memory.size;
-
             BigEndianPointer p = m_data;
 
             // read palette
@@ -276,8 +276,8 @@ namespace
 
             for (int i = 0; i < 16; ++i)
             {
-                u16 palette_color = p.read16();
-                palette[i] = convert_atari_color(palette_color);
+                u16 color = p.read16();
+                palette[i] = convert_atari_color(color);
             }
 
             // decode image
@@ -706,7 +706,7 @@ namespace
     // ImageDecoder: Crack Art
 	// ------------------------------------------------------------
 
-	void ca_decompress(u8* buffer, const u8* input, const int scansize, const int __insize, const u8 escape_char, const u16 offset)
+	void ca_decompress(u8* buffer, const u8* input, const int scansize, const u8 escape_char, const u16 offset)
 	{
 		u8* buffer_start = buffer;
 		u8* buffer_end = buffer + scansize;
@@ -877,8 +877,7 @@ namespace
         {
             BigEndianPointer p = data;
 
-            u8 keyword[] = "CA";
-            if (std::memcmp(keyword, p, 2))
+            if (std::memcmp(p, "CA", 2))
                 return nullptr;
 
             p += 2;
@@ -911,7 +910,7 @@ namespace
 
             if (!compressed)
             {
-                if (int(size) < 32000 + 2 + 1 + 1 + (1 << bitplanes))
+                if (size < size_t(32000 + 2 + 1 + 1 + (1 << bitplanes)))
                 {
                     return nullptr;
                 }
@@ -927,7 +926,7 @@ namespace
             Palette palette;
             palette.size = 1 << bitplanes;
 
-            for (uint32 i = 0; i < palette.size; ++i)
+            for (int i = 0; i < int(palette.size); ++i)
             {
                 u16 palette_color = p.read16();
                 palette[i] = convert_atari_color(palette_color);
@@ -943,7 +942,7 @@ namespace
                 const uint16 offset = p.read16() & 0x7fff;
 
                 temp = std::vector<u8>(32000, initial_value);
-			    ca_decompress(temp.data(), p, 32000, int(end - p), escape_char, offset);
+			    ca_decompress(temp.data(), p, 32000, escape_char, offset);
 
                 buffer = temp.data();
                 end = temp.data() + 32000;
@@ -1010,7 +1009,7 @@ namespace
 
             u8* end = m_memory.address + m_memory.size;
             m_ca_header.decode(s, m_data, end);
-        }
+		}
     };
 
     ImageDecoderInterface* createInterfaceCA(Memory memory)
