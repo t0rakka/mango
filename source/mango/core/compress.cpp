@@ -11,9 +11,7 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
-#define MINIZ_HEADER_FILE_ONLY
-#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
-#include "../../external/miniz/miniz.cpp"
+#include "../../external/miniz/miniz.h"
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
 #include "../../external/lz4/lz4.h"

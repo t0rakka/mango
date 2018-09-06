@@ -6,8 +6,8 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
-#define MINIZ_HEADER_FILE_ONLY
-#include "../../external/miniz/miniz.cpp"
+#include "../../external/miniz/miniz.h"
+#undef crc32 // fix miniz pollution
 
 #define ID "ImageDecoder.PNG: "
 #define FILTER_BYTE 1

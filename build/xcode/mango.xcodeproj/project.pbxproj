@@ -117,7 +117,6 @@
 		A63DD7981E706F5400D4D499 /* lzodefs.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7941E706F5400D4D499 /* lzodefs.h */; };
 		A63DD7991E706F5400D4D499 /* minilzo.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7951E706F5400D4D499 /* minilzo.c */; };
 		A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7961E706F5400D4D499 /* minilzo.h */; };
-		A63DD79D1E706F7600D4D499 /* miniz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD79C1E706F7600D4D499 /* miniz.cpp */; };
 		A63DD7A31E706F8800D4D499 /* BC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD79F1E706F8800D4D499 /* BC.cpp */; };
 		A63DD7A41E706F8800D4D499 /* BC.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7A01E706F8800D4D499 /* BC.h */; };
 		A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7A11E706F8800D4D499 /* BC4BC5.cpp */; };
@@ -180,6 +179,13 @@
 		A645DD7E2141551200EC714B /* zstdmt_compress.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD6C2141551200EC714B /* zstdmt_compress.h */; };
 		A645DD812141551D00EC714B /* zstd_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A645DD7F2141551D00EC714B /* zstd_decompress.c */; };
 		A645DD822141551D00EC714B /* huf_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A645DD802141551D00EC714B /* huf_decompress.c */; };
+		A645DD8521415A7200EC714B /* miniz.c in Sources */ = {isa = PBXBuildFile; fileRef = A645DD8321415A7200EC714B /* miniz.c */; };
+		A645DD8621415A7200EC714B /* miniz.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8421415A7200EC714B /* miniz.h */; };
+		A645DD8C21415B3F00EC714B /* miniz_tdef.c in Sources */ = {isa = PBXBuildFile; fileRef = A645DD8721415B3F00EC714B /* miniz_tdef.c */; };
+		A645DD8D21415B3F00EC714B /* miniz_tinfl.c in Sources */ = {isa = PBXBuildFile; fileRef = A645DD8821415B3F00EC714B /* miniz_tinfl.c */; };
+		A645DD8E21415B3F00EC714B /* miniz_tdef.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8921415B3F00EC714B /* miniz_tdef.h */; };
+		A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8A21415B3F00EC714B /* miniz_tinfl.h */; };
+		A645DD9021415B3F00EC714B /* miniz_common.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8B21415B3F00EC714B /* miniz_common.h */; };
 		A672D9122026633600947D7E /* bc_aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9102026633600947D7E /* bc_aes.cpp */; };
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
@@ -305,7 +311,6 @@
 		A63DD7941E706F5400D4D499 /* lzodefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lzodefs.h; path = external/lzo/lzodefs.h; sourceTree = "<group>"; };
 		A63DD7951E706F5400D4D499 /* minilzo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = minilzo.c; path = external/lzo/minilzo.c; sourceTree = "<group>"; };
 		A63DD7961E706F5400D4D499 /* minilzo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = minilzo.h; path = external/lzo/minilzo.h; sourceTree = "<group>"; };
-		A63DD79C1E706F7600D4D499 /* miniz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = miniz.cpp; path = external/miniz/miniz.cpp; sourceTree = "<group>"; };
 		A63DD79F1E706F8800D4D499 /* BC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BC.cpp; path = external/bc/BC.cpp; sourceTree = "<group>"; };
 		A63DD7A01E706F8800D4D499 /* BC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BC.h; path = external/bc/BC.h; sourceTree = "<group>"; };
 		A63DD7A11E706F8800D4D499 /* BC4BC5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BC4BC5.cpp; path = external/bc/BC4BC5.cpp; sourceTree = "<group>"; };
@@ -368,6 +373,13 @@
 		A645DD6C2141551200EC714B /* zstdmt_compress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstdmt_compress.h; path = external/zstd/compress/zstdmt_compress.h; sourceTree = "<group>"; };
 		A645DD7F2141551D00EC714B /* zstd_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_decompress.c; path = external/zstd/decompress/zstd_decompress.c; sourceTree = "<group>"; };
 		A645DD802141551D00EC714B /* huf_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = huf_decompress.c; path = external/zstd/decompress/huf_decompress.c; sourceTree = "<group>"; };
+		A645DD8321415A7200EC714B /* miniz.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = miniz.c; path = external/miniz/miniz.c; sourceTree = "<group>"; };
+		A645DD8421415A7200EC714B /* miniz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz.h; path = external/miniz/miniz.h; sourceTree = "<group>"; };
+		A645DD8721415B3F00EC714B /* miniz_tdef.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = miniz_tdef.c; path = external/miniz/miniz_tdef.c; sourceTree = "<group>"; };
+		A645DD8821415B3F00EC714B /* miniz_tinfl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = miniz_tinfl.c; path = external/miniz/miniz_tinfl.c; sourceTree = "<group>"; };
+		A645DD8921415B3F00EC714B /* miniz_tdef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_tdef.h; path = external/miniz/miniz_tdef.h; sourceTree = "<group>"; };
+		A645DD8A21415B3F00EC714B /* miniz_tinfl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_tinfl.h; path = external/miniz/miniz_tinfl.h; sourceTree = "<group>"; };
+		A645DD8B21415B3F00EC714B /* miniz_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_common.h; path = external/miniz/miniz_common.h; sourceTree = "<group>"; };
 		A672D9102026633600947D7E /* bc_aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bc_aes.cpp; path = external/aes/bc_aes.cpp; sourceTree = "<group>"; };
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
@@ -700,7 +712,13 @@
 		A63DD79B1E706F6700D4D499 /* miniz */ = {
 			isa = PBXGroup;
 			children = (
-				A63DD79C1E706F7600D4D499 /* miniz.cpp */,
+				A645DD8B21415B3F00EC714B /* miniz_common.h */,
+				A645DD8721415B3F00EC714B /* miniz_tdef.c */,
+				A645DD8921415B3F00EC714B /* miniz_tdef.h */,
+				A645DD8821415B3F00EC714B /* miniz_tinfl.c */,
+				A645DD8A21415B3F00EC714B /* miniz_tinfl.h */,
+				A645DD8321415A7200EC714B /* miniz.c */,
+				A645DD8421415A7200EC714B /* miniz.h */,
 			);
 			name = miniz;
 			sourceTree = "<group>";
@@ -827,11 +845,14 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A645DD8621415A7200EC714B /* miniz.h in Headers */,
 				A63DD74D1E706EB200D4D499 /* crc.hpp in Headers */,
 				A63DD78F1E706F3400D4D499 /* bzlib_private.h in Headers */,
 				A645DD28213D53C000EC714B /* jpeg.hpp in Headers */,
 				A63DD7521E706EB200D4D499 /* model.hpp in Headers */,
 				A645DD53214154F400EC714B /* pool.h in Headers */,
+				A645DD9021415B3F00EC714B /* miniz_common.h in Headers */,
+				A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */,
 				A645DD54214154F400EC714B /* compiler.h in Headers */,
 				A63DD7B31E706FA000D4D499 /* etc1.h in Headers */,
 				A645DD722141551200EC714B /* zstd_opt.h in Headers */,
@@ -858,6 +879,7 @@
 				A00559E41C9335E100A6D963 /* vulkan in Headers */,
 				A003D308192B9998009FED25 /* math in Headers */,
 				A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */,
+				A645DD8E21415B3F00EC714B /* miniz_tdef.h in Headers */,
 				A645DD4D214154F400EC714B /* bitstream.h in Headers */,
 				A645DD59214154F400EC714B /* zstd_errors.h in Headers */,
 				A645DD762141551200EC714B /* zstd_lazy.h in Headers */,
@@ -958,6 +980,7 @@
 			files = (
 				A63DD7891E706F3400D4D499 /* bz_blocksort.c in Sources */,
 				A00559D21C93329A00A6D963 /* image_tga.cpp in Sources */,
+				A645DD8D21415B3F00EC714B /* miniz_tinfl.c in Sources */,
 				A63DD7701E706EF100D4D499 /* lzfse_encode_base.c in Sources */,
 				A00559981C93324E00A6D963 /* object.cpp in Sources */,
 				A00559A51C93327800A6D963 /* mapper_mgx.cpp in Sources */,
@@ -999,7 +1022,6 @@
 				A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */,
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
 				A645DD1C21381E2D00EC714B /* image_sgi.cpp in Sources */,
-				A63DD79D1E706F7600D4D499 /* miniz.cpp in Sources */,
 				A00559C81C93329A00A6D963 /* image_dds.cpp in Sources */,
 				A645DD7B2141551200EC714B /* zstd_ldm.c in Sources */,
 				A645DD4F214154F400EC714B /* zstd_common.c in Sources */,
@@ -1039,6 +1061,7 @@
 				A63DD78B1E706F3400D4D499 /* bz_crctable.c in Sources */,
 				A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */,
 				A0F241D419D5E30D00218F92 /* simd.cpp in Sources */,
+				A645DD8C21415B3F00EC714B /* miniz_tdef.c in Sources */,
 				A63DD7081E706DFA00D4D499 /* lz4hc.c in Sources */,
 				A63DD78E1E706F3400D4D499 /* bz_randtable.c in Sources */,
 				A00559951C93324E00A6D963 /* compress.cpp in Sources */,
@@ -1052,6 +1075,7 @@
 				A00559C01C93329A00A6D963 /* blitter.cpp in Sources */,
 				A6C8F4F7200612E900A25756 /* md5.cpp in Sources */,
 				A63DD7A31E706F8800D4D499 /* BC.cpp in Sources */,
+				A645DD8521415A7200EC714B /* miniz.c in Sources */,
 				A00559C21C93329A00A6D963 /* block_yuv.cpp in Sources */,
 				A00559CF1C93329A00A6D963 /* image_pkm.cpp in Sources */,
 				A645DD2C213D53C100EC714B /* jpeg_idct.cpp in Sources */,

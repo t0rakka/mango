@@ -74,6 +74,7 @@ include $(CLEAR_VARS)
 #
 # select static / shared library
 #
+
 #LOCAL_MODULE := mango_static
 LOCAL_MODULE := mango_shared
 

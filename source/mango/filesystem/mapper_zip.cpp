@@ -9,8 +9,7 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-#define MINIZ_HEADER_FILE_ONLY
-#include "../../external/miniz/miniz.cpp"
+#include "../../external/miniz/miniz.h"
 
 #define ID ".zip mapper: "
 
