@@ -177,7 +177,6 @@
     <ClInclude Include="..\..\source\external\google\etc1.h" />
     <ClInclude Include="..\..\source\external\lz4\lz4.h" />
     <ClInclude Include="..\..\source\external\lz4\lz4hc.h" />
-    <ClInclude Include="..\..\source\external\lz4\lz4opt.h" />
     <ClInclude Include="..\..\source\external\lzfse\lzfse.h" />
     <ClInclude Include="..\..\source\external\lzfse\lzfse_encode_tables.h" />
     <ClInclude Include="..\..\source\external\lzfse\lzfse_fse.h" />
@@ -188,6 +187,10 @@
     <ClInclude Include="..\..\source\external\lzo\lzoconf.h" />
     <ClInclude Include="..\..\source\external\lzo\lzodefs.h" />
     <ClInclude Include="..\..\source\external\lzo\minilzo.h" />
+    <ClInclude Include="..\..\source\external\miniz\miniz.h" />
+    <ClInclude Include="..\..\source\external\miniz\miniz_common.h" />
+    <ClInclude Include="..\..\source\external\miniz\miniz_tdef.h" />
+    <ClInclude Include="..\..\source\external\miniz\miniz_tinfl.h" />
     <ClInclude Include="..\..\source\external\unrar\array.hpp" />
     <ClInclude Include="..\..\source\external\unrar\compress.hpp" />
     <ClInclude Include="..\..\source\external\unrar\crc.hpp" />
@@ -203,8 +206,9 @@
     <ClInclude Include="..\..\source\external\zpng\zpng.h" />
     <ClInclude Include="..\..\source\external\zstd\common\bitstream.h" />
     <ClInclude Include="..\..\source\external\zstd\common\compiler.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\cpu.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\debug.h" />
     <ClInclude Include="..\..\source\external\zstd\common\error_private.h" />
-    <ClInclude Include="..\..\source\external\zstd\common\error_public.h" />
     <ClInclude Include="..\..\source\external\zstd\common\fse.h" />
     <ClInclude Include="..\..\source\external\zstd\common\huf.h" />
     <ClInclude Include="..\..\source\external\zstd\common\mem.h" />
@@ -213,8 +217,9 @@
     <ClInclude Include="..\..\source\external\zstd\common\xxhash.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_errors.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\hist.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h" />
-    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_internal.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_double_fast.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_fast.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_lazy.h" />
@@ -249,7 +254,9 @@
     <ClCompile Include="..\..\source\external\lzfse\lzvn_decode_base.c" />
     <ClCompile Include="..\..\source\external\lzfse\lzvn_encode_base.c" />
     <ClCompile Include="..\..\source\external\lzo\minilzo.c" />
-    <ClCompile Include="..\..\source\external\miniz\miniz.cpp" />
+    <ClCompile Include="..\..\source\external\miniz\miniz.c" />
+    <ClCompile Include="..\..\source\external\miniz\miniz_tdef.c" />
+    <ClCompile Include="..\..\source\external\miniz\miniz_tinfl.c" />
     <ClCompile Include="..\..\source\external\unrar\crc.cpp" />
     <ClCompile Include="..\..\source\external\unrar\crypt.cpp" />
     <ClCompile Include="..\..\source\external\unrar\getbits.cpp" />
@@ -258,6 +265,7 @@
     <ClCompile Include="..\..\source\external\unrar\rijndael.cpp" />
     <ClCompile Include="..\..\source\external\unrar\unpack.cpp" />
     <ClCompile Include="..\..\source\external\zpng\zpng.cpp" />
+    <ClCompile Include="..\..\source\external\zstd\common\debug.c" />
     <ClCompile Include="..\..\source\external\zstd\common\entropy_common.c" />
     <ClCompile Include="..\..\source\external\zstd\common\error_private.c" />
     <ClCompile Include="..\..\source\external\zstd\common\fse_decompress.c" />
@@ -266,6 +274,7 @@
     <ClCompile Include="..\..\source\external\zstd\common\xxhash.c" />
     <ClCompile Include="..\..\source\external\zstd\common\zstd_common.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\fse_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\hist.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstdmt_compress.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c" />
@@ -281,6 +290,7 @@
     <ClCompile Include="..\..\source\mango\core\compress.cpp" />
     <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp" />
     <ClCompile Include="..\..\source\mango\core\crc32.cpp" />
+    <ClCompile Include="..\..\source\mango\core\hash.cpp" />
     <ClCompile Include="..\..\source\mango\core\md5.cpp" />
     <ClCompile Include="..\..\source\mango\core\memory.cpp" />
     <ClCompile Include="..\..\source\mango\core\object.cpp" />
@@ -310,7 +320,9 @@
     <ClCompile Include="..\..\source\mango\image\format.cpp" />
     <ClCompile Include="..\..\source\mango\image\image.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_astc.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_atari.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_bmp.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_c64.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_dds.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_gif.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_hdr.cpp" />
