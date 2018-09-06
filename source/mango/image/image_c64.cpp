@@ -69,10 +69,9 @@ namespace
         }
     }
 
-    void rle_ecb(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
+    void rle_ecb(u8* buffer, const u8* input, int scansize, u8* input_end, u8 escape_char)
     {
         u8* buffer_end = buffer + scansize;
-        const u8* input_end = input + insize;
 
         for ( ; buffer < buffer_end && input < input_end; )
         {
@@ -359,7 +358,6 @@ namespace
         resolve_palette(s, temp.data(), width, height, palette);
     }
 
-#if 0
     void hires_interlace_to_surface(Surface& s, const u8* data, int width, int height,
                                         u32 bitmap_offset_1, u32 bitmap_offset_2, 
                                         u32 video_ram_offset_1, u32 video_ram_offset_2, 
@@ -390,8 +388,6 @@ namespace
             }
         }
     }
-
-#endif
 
     bool check_format(u16 format_address, size_t format_size, u16 load_address, size_t size)
     {
@@ -592,13 +588,15 @@ namespace
             if (!m_data)
                 return;
 
+            u8* end = m_memory.address + m_memory.size;
+
             std::vector<u8> temp;
             u8* buffer = m_data;
 
             if (m_generic_header.compressed)
             {
                 temp = std::vector<u8>(10513);
-                rle_ecb(temp.data(), m_data, 10513, int(m_memory.size - 3), m_generic_header.escape_char);
+                rle_ecb(temp.data(), m_data, 10513, end, m_generic_header.escape_char);
                 buffer = temp.data();
             }
 
@@ -768,26 +766,52 @@ namespace
         return x;
     }
 
-#if 0
-
     // ------------------------------------------------------------
-    // ImageDecoder: DRL
+    // ImageDecoder: DRL (Drazlace)
     // ------------------------------------------------------------
 
     struct InterfaceDRL : Interface
     {
         u8* m_data;
+        bool m_compressed;
+        u8 m_escape_char;
 
         InterfaceDRL(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
+            , m_compressed(false)
+            , m_escape_char(0)
         {
-            if (m_data)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x5800, 18242, load_address, memory.size))
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width = 320;
+                m_header.height = 200;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = false;
+                m_data = p;
+            }
+            else
+            {
+                if (load_address == 0x5800)
+                {
+                    u8 keyword[] = "DRAZLACE! 1.0";
+                    if (std::memcmp(keyword, p, sizeof(keyword) - 1) == 0)
+                    {
+                        p += sizeof(keyword) - 1;
+
+                        m_header.width = 320;
+                        m_header.height = 200;
+                        m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                        m_compressed = true;
+                        m_escape_char = p.read8();
+                        m_data = p;
+                    }
+                }
             }
         }
 
@@ -796,7 +820,21 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            u8* end = m_memory.address + m_memory.size;
+
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
+
+            if (m_compressed)
+            {
+                temp = std::vector<u8>(18240);
+                rle_ecb(temp.data(), m_data, 18240, end, m_escape_char);
+                buffer = temp.data();
+            }
+
+            std::vector<u8> background(200, *(buffer + 0x2740));
+
+            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background.data(), 0x0, 2, false, 2);
         }
     };
 
@@ -806,128 +844,49 @@ namespace
         return x;
     }
 
-    /*
-
     // ------------------------------------------------------------
-    // imagefilter Drazlace
-    // ------------------------------------------------------------
-    const u8* read_header_drl(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (check_format(0x5800, 18242, load_address, size))
-        {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = false;
-            return xf;
-        }
-        else
-        {
-            if (load_address == 0x5800)
-            {
-                u8 keyword[] = "DRAZLACE! 1.0";
-                if (std::memcmp(keyword, xf, sizeof(keyword) - 1) == 0)
-                {
-                    xf += sizeof(keyword) - 1;
-
-                    header.width = 320;
-                    header.height = 200;
-                    header.compressed = true;
-                    header.escape_char = xf.read<u8>();
-
-                    return xf;
-                }
-            }
-        }
-
-        return NULL;
-    }
-
-    imageheader drl_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-        image_header.format = pixelformat::argb8888;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_drl(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* drl_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_drl(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-            u8* temp = NULL;
-
-            if (header.compressed)
-            {
-                temp = new u8[18240];
-                rle_ecb(temp, data, 18240, size - 3, header.escape_char);
-                buffer = temp;
-            }
-
-            u8* background = new u8[200];
-            std::memset(background, *(buffer + 0x2740), 200);
-
-            surface* so = multicolor_interlace_to_surface(buffer, header.width, header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
-
-            delete [] background;
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            return so;
-
-        }
-
-        return NULL;
-    }
-
-    */
-
-    // ------------------------------------------------------------
-    // ImageDecoder: DRZ
+    // ImageDecoder: DRZ (Drazpaint)
     // ------------------------------------------------------------
 
     struct InterfaceDRZ : Interface
     {
-        u8* m_data;
+        u8* m_data = nullptr;
+        bool m_compressed = false;
+        u8 m_escape_char = 0;
 
         InterfaceDRZ(Memory memory)
             : Interface(memory)
-            , m_data(nullptr)
         {
-            if (m_data)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x5800, 10051, load_address, memory.size))
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width = 320;
+                m_header.height = 200;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = false;
+                m_data = p;
+            }
+            else
+            {
+                if (load_address == 0x5800)
+                {
+                    u8 keyword[] = "DRAZPAINT 2.0";
+                    if (std::memcmp(keyword, p, sizeof(keyword) - 1) == 0)
+                    {
+                        p += sizeof(keyword) - 1;
+
+                        m_header.width = 320;
+                        m_header.height = 200;
+                        m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                        m_compressed = true;
+                        m_escape_char = p.read8();
+                        m_data = p;
+                    }
+                }
             }
         }
 
@@ -936,7 +895,19 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            u8* end = m_memory.address + m_memory.size;
+
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
+
+            if (m_compressed)
+            {
+                temp = std::vector<u8>(10049);
+                rle_ecb(temp.data(), m_data, 10049, end, m_escape_char);
+                buffer = temp.data();
+            }
+
+            multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x400, 0x0, 0x2740, 0x0, false, false);
         }
     };
 
@@ -946,124 +917,44 @@ namespace
         return x;
     }
 
-    /*
-
     // ------------------------------------------------------------
-    // imagefilter Drazpaint
-    // ------------------------------------------------------------
-    const u8* read_header_drz(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (check_format(0x5800, 10051, load_address, size))
-        {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = false;
-            return xf;
-        }
-        else
-        {
-            if (load_address == 0x5800)
-            {
-                u8 keyword[] = "DRAZPAINT 2.0";
-                if (std::memcmp(keyword, xf, sizeof(keyword) - 1) == 0)
-                {
-                    xf += sizeof(keyword) - 1;
-
-                    header.width = 320;
-                    header.height = 200;
-                    header.compressed = true;
-                    header.escape_char = xf.read<u8>();
-
-                    return xf;
-                }
-            }
-        }
-
-        return NULL;
-    }
-
-    imageheader drz_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_drz(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* drz_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_drz(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-            u8* temp = NULL;
-
-            if (header.compressed)
-            {
-                temp = new u8[10049];
-                rle_ecb(temp, data, 10049, size - 3, header.escape_char);
-                buffer = temp;
-            }
-
-            surface* so = multicolor_to_surface(buffer, header.width, header.height, 0x800, 0x400, 0x0, 0x2740, 0x0, false, false);
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            return so;
-        }
-
-        return NULL;
-    }
-
-    */
-
-    // ------------------------------------------------------------
-    // ImageDecoder: ECI
+    // ImageDecoder: ECI (ECI Graphic Editor v1.0)
     // ------------------------------------------------------------
 
     struct InterfaceECI : Interface
     {
-        u8* m_data;
+        u8* m_data = nullptr;
+        bool m_compressed = false;
+        u8 m_escape_char = 0;
 
         InterfaceECI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            if (m_data)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x4000, 32770, load_address, memory.size))
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width = 320;
+                m_header.height = 200;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = false;
+                m_data = p;
+            }
+            else
+            {
+                if (load_address == 0x4000)
+                {
+                    m_header.width = 320;
+                    m_header.height = 200;
+                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                    m_compressed = true;
+                    m_escape_char = p.read8();
+                    m_data = p;
+                }
             }
         }
 
@@ -1072,110 +963,27 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
+            u8* end = m_memory.address + m_memory.size;
+
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
+
+            if (m_compressed)
+            {
+                temp = std::vector<u8>(32768);
+                rle_ecb(temp.data(), m_data, 32768, end, m_escape_char);
+                buffer = temp.data();
+            }
+
+            hires_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
         }
     };
-
-    /*
-
-    // ------------------------------------------------------------
-    // imagefilter ECI Graphic Editor v1.0
-    // ------------------------------------------------------------
-    const u8* read_header_eci(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (check_format(0x4000, 32770, load_address, size))
-        {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = false;
-            return xf;
-        }
-        else
-        {
-            if (load_address == 0x4000)
-            {
-                header.width = 320;
-                header.height = 200;
-                header.compressed = true;
-                header.escape_char = xf.read<u8>();
-                return xf;
-            }
-        }
-
-        return NULL;
-    }
-
-    imageheader eci_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_eci(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* eci_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_eci(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-            u8* temp = NULL;
-
-            if (header.compressed)
-            {
-                temp = new u8[32768];
-                rle_ecb(temp, data, 32768, size - 3, header.escape_char);
-                buffer = temp;
-            }
-
-            surface* so = hires_interlace_to_surface(buffer, header.width, header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            return so;
-
-//            return hires_interlace_to_surface(data, header.width, header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
-        }
-
-        return NULL;
-    }
-    */
 
     ImageDecoderInterface* createInterfaceECI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceECI(memory);
         return x;
     }
-#endif
 
     // ------------------------------------------------------------
     // ImageDecoder: FPT (Face Painter)
@@ -1230,25 +1038,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: FPR
+    // ImageDecoder: FPR (FLI-Profi)
     // ------------------------------------------------------------
 
-#if 0
-    struct InterfaceFPR : Interface
+    struct InterfaceFPR : GenericInterface
     {
-        u8* m_data;
-
         InterfaceFPR(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x3780, 18370)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -1256,55 +1053,25 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
-        }
-    };
+            u8 sprite_color1 = m_data[0x448];
+            u8 sprite_color2 = m_data[0x449];
+            const u8 *sprite_colors = m_data + 0x280;
 
-    /*
+            PaletteC64 palette;
 
-    // ------------------------------------------------------------
-    // imagefilter FLI-Profi
-    // ------------------------------------------------------------
-    imageheader fpr_header(stream* s)
-    {
-        return generic_header(s, 0x3780, 18370);
-    }
+            std::vector<u8> temp(m_header.width * m_header.height, 0);
+            u8* image = temp.data();
 
-    surface* fpr_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, 0x3780, 18370);
-
-        if (data)
-        {
-            u8 sprite_color1 = data[0x448];
-            u8 sprite_color2 = data[0x449];
-            const u8 *sprite_colors = data + 0x280;
-
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-            std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
-
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            u8* image = so->lock<u8>();
-            std::memset(image, 0, header.width * header.height);
-
-            convert_multicolor_bitmap(header.width, header.height, image, data + 0x2880, data + 0x880, data + 0x480, NULL, data + 0x380, 0, true);
+            convert_multicolor_bitmap(m_header.width, m_header.height, image, m_data + 0x2880, m_data + 0x880, m_data + 0x480, NULL, m_data + 0x380, 0, true);
 
             // Overlay sprite data
             // - Y-expanded
             // - Switching VIC bank every two scanlines, pattern: 1221
-            int x, y;
-            for (y = 0; y < 200; ++y)
+            for (int y = 0; y < 200; ++y)
             {
-                for (x = 0; x < 24; ++x)
+                for (int x = 0; x < 24; ++x)
                 {
-                    int offset = x + (y * header.width);
+                    int offset = x + y * m_header.width;
                     u8 index = 0;
 
                     int sprite_nb = y / 42;
@@ -1313,7 +1080,7 @@ namespace
                     int sprite_offset = (sprite_line * 3) + (sprite_nb * 64) + (vic_bank * 0x140);
                     int sprite_byte_offset = (x % 24) >> 3;
 
-                    u8 sprite_byte = data[sprite_offset + sprite_byte_offset];
+                    u8 sprite_byte = m_data[sprite_offset + sprite_byte_offset];
                     int sprite_bit_pattern = (sprite_byte >> (6 - (x & 0x6))) & 0x3;
 
                     switch (sprite_bit_pattern)
@@ -1338,20 +1105,15 @@ namespace
                 }
             }
 
-            so->unlock();
-            return so;
+            resolve_palette(s, temp.data(), m_header.width, m_header.height, palette);
         }
-
-        return NULL;
-    }
-    */
+    };
 
     ImageDecoderInterface* createInterfaceFPR(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceFPR(memory);
         return x;
     }
-#endif
 
     // ------------------------------------------------------------
     // ImageDecoder: FUN (Funpaint 2)
@@ -1457,9 +1219,8 @@ namespace
         return x;
     }
 
-#if 0
     // ------------------------------------------------------------
-    // ImageDecoder: GUN
+    // ImageDecoder: GUN (Gunpaint)
     // ------------------------------------------------------------
 
     struct InterfaceGUN : Interface
@@ -1470,12 +1231,20 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
-            if (m_data)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x4000, 33603, load_address, memory.size))
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                u8 keyword[] = "GUNPAINT (JZ)   ";
+                if (std::memcmp(keyword, memory.address + 0x3ea, 16) == 0)
+                {
+                    m_header.width = 320;
+                    m_header.height = 200;
+                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                    m_data = p;
+                }
             }
         }
 
@@ -1484,82 +1253,14 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
-        }
-    };
-
-    /*
-
-    // ------------------------------------------------------------
-    // imagefilter Gunpaint
-    // ------------------------------------------------------------
-    const u8* read_header_gun(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (check_format(0x4000, 33603, load_address, size))
-        {
-            u8 keyword[] = "GUNPAINT (JZ)   ";
-            if (std::memcmp(keyword, data + 0x3ea, 16) == 0)
-            {
-                header.width = 320;
-                header.height = 200;
-                return xf;
-            }
-        }
-
-        return NULL;
-    }
-
-    imageheader gun_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_gun(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* gun_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_gun(header, data, size);
-
-        if (data)
-        {
-            u8 *background = new u8[200];
-            std::memcpy(background, data + 0x3f4f, 177);
-            std::memcpy(background + 177, data + 0x47e8, 20);
+            std::vector<u8> background(200);
+            std::memcpy(background.data() +   0, m_data + 0x3f4f, 177);
+            std::memcpy(background.data() + 177, m_data + 0x47e8, 20);
             background[197] = background[198] = background[199] = background[196];  // replicate the last color four times
 
-            return multicolor_interlace_to_surface(data, header.width, header.height, 0x2000, 0x6400, 0x0, 0x4400, 0x4000, background, 0x0, 2, true, 2);
+            multicolor_interlace_to_surface(s, m_data, m_header.width, m_header.height, 0x2000, 0x6400, 0x0, 0x4400, 0x4000, background.data(), 0x0, 2, true, 2);
         }
-
-        return NULL;
-    }
-
-    */
+    };
 
     ImageDecoderInterface* createInterfaceGUN(Memory memory)
     {
@@ -1568,24 +1269,14 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: HCB
+    // ImageDecoder: HCB (HCB-Editor v0.05)
     // ------------------------------------------------------------
 
-    struct InterfaceHCB : Interface
+    struct InterfaceHCB : GenericInterface
     {
-        u8* m_data;
-
         InterfaceHCB(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x5000, 12148)
         {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
         }
 
         void decodeImage(Surface& s) override
@@ -1593,56 +1284,25 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
-        }
-    };
+            const u8* bitmap_c64 = m_data + 0x1000;
+            const u8* video_ram = m_data + 0x800;
+            const u8* color_ram = m_data;
+            const u8* background = m_data + 0x2f40;
 
-    /*
+            PaletteC64 palette;
 
+            std::vector<u8> temp(m_header.width * m_header.height, 0);
+            u8* image = temp.data();
 
-    // ------------------------------------------------------------
-    // imagefilter HCB-Editor v0.05
-    // ------------------------------------------------------------
-    imageheader hcb_header(stream* s)
-    {
-        return generic_header(s, 0x5000, 12148);
-    }
-
-    surface* hcb_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, 0x5000, 12148);
-
-        if (data)
-        {
-            const u8* bitmap_c64 = data + 0x1000;
-            const u8* video_ram = data + 0x800;
-            const u8* color_ram = data;
-            const u8* background = data + 0x2f40;
-
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-            std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
-
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            u8* image = so->lock<u8>();
-            std::memset(image, 0, header.width * header.height);
-
-            int x, y;
-            for (y = 0; y < header.height; ++y)
+            for (int y = 0; y < m_header.height; ++y)
             {
-                for (x = 0; x < header.width; ++x)
+                for (int x = 0; x < m_header.width; ++x)
                 {
                     int x_offset = x & 0x7;
                     int y_offset = (y >> 2) & 0x1;
                     int bitmap_offset = (x & 0xfffffff8) + (y & 0x7) + ((y >> 3) * (40 * 8));
                     int screen_offset = bitmap_offset >> 3;
-                    int offset = x + (y * header.width);
+                    int offset = x + y * m_header.width;
 
                     u8 byte = bitmap_c64[bitmap_offset];
                     int bit_pattern = (byte >> (6 - (x_offset & 0x6))) & 0x3;
@@ -1695,20 +1355,15 @@ namespace
                 }
             }
 
-            so->unlock();
-            return so;
+            resolve_palette(s, temp.data(), m_header.width, m_header.height, palette);
         }
-
-        return NULL;
-    }
-    */
+    };
 
     ImageDecoderInterface* createInterfaceHCB(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceHCB(memory);
         return x;
     }
-#endif
 
     // ------------------------------------------------------------
     // ImageDecoder: HFC (Hires FLI Designer)
@@ -1736,42 +1391,10 @@ namespace
         return x;
     }
 
-#if 0
     // ------------------------------------------------------------
-    // ImageDecoder: HIM
+    // ImageDecoder: HIM (Hires Manager)
     // ------------------------------------------------------------
 
-    struct InterfaceHIM : Interface
-    {
-        u8* m_data;
-
-        InterfaceHIM(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
-        {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
-        }
-
-        void decodeImage(Surface& s) override
-        {
-            if (!m_data)
-                return;
-
-            // TODO
-        }
-    };
-
-    /*
-
-    // ------------------------------------------------------------
-    // imagefilter Hires Manager
-    // ------------------------------------------------------------
     void depack_him(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
         (void) scansize;
@@ -1793,7 +1416,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("Hires Manager: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"Hires Manager: unpacked size does not match file format.");
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -1807,7 +1430,7 @@ namespace
 
                 if (out - n < out_end || in - n < in_end)
                 {
-                    FUSIONCORE_EXCEPTION("Hires Manager: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"Hires Manager: unpacked size does not match file format.");
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -1818,97 +1441,65 @@ namespace
         }
     }
 
-    const u8* read_header_him(header_generic& header, const u8* data, int size)
+    struct InterfaceHIM : Interface
     {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
+        u8* m_data;
+        bool m_compressed = false;
 
-        if (check_format(0x4000, 16385, load_address, size))
+        InterfaceHIM(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
         {
-            if (*xf == 0xff)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x4000, 16385, load_address, memory.size))
             {
-                header.width = 320;
-                header.height = 192;
-                header.compressed = false;
-                return xf;
+                if (*p == 0xff)
+                {
+                    m_header.width = 320;
+                    m_header.height = 192;
+                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                    m_compressed = false;
+                    m_data = p;
+                }
+            }
+            else if (load_address == 0x4000)
+            {
+                m_header.width = 320;
+                m_header.height = 192;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = true;
+                m_data = p;
             }
         }
-        else if (load_address == 0x4000)
+
+        void decodeImage(Surface& s) override
         {
-            header.width = 320;
-            header.height = 192;
-            header.compressed = true;
-            return xf;
-        }
+            if (!m_data)
+                return;
 
-        return NULL;
-    }
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
 
-    imageheader him_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-        image_header.format = pixelformat::argb8888;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_him(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
-    surface* him_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-        u8* temp = NULL;
-
-        header_generic header;
-        data = read_header_him(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-
-            if (header.compressed)
+            if (m_compressed)
             {
-                temp = new u8[16383];
-                depack_him(temp, data, 16383, size - 2, 0);
-                buffer = temp;
+                temp = std::vector<u8>(16383);
+                depack_him(temp.data(), m_data, 16383, int(m_memory.size - 2), 0);
+                buffer = temp.data();
             }
 
-            surface* so = hires_to_surface(buffer, header.width, header.height, 0x140, 0x2028, true, false, 0);
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            return so;
+            hires_to_surface(s, buffer, m_header.width, m_header.height, 0x140, 0x2028, true, false, 0);
         }
-
-        return NULL;
-    }
-
-    */
+    };
 
     ImageDecoderInterface* createInterfaceHIM(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceHIM(memory);
         return x;
     }
-#endif
 
     // ------------------------------------------------------------
     // ImageDecoder: KOA (Koala Painter)
@@ -2142,26 +1733,41 @@ namespace
         return x;
     }
 
-#if 0
-
     // ------------------------------------------------------------
-    // ImageDecoder: SHF
+    // ImageDecoder: SHF (SHF-Editor v1.0)
     // ------------------------------------------------------------
 
     struct InterfaceSHF : Interface
     {
         u8* m_data;
+        bool m_compressed = false;
+        u8 m_escape_char = 0;
 
         InterfaceSHF(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            if (m_data)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x4000, 15874, load_address, memory.size))
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
+                m_header.width = 96;
+                m_header.height = 167;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = false;
+                m_data = p;
+            }
+            else if (load_address == 0xa000)
+            {
+                m_header.width = 96;
+                m_header.height = 167;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = true;
+                m_escape_char = p.read8();
+                m_data = p;
             }
         }
 
@@ -2170,108 +1776,38 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
-        }
-    };
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
 
-#if 0
-
-    // ------------------------------------------------------------
-    // imagefilter SHF-Editor v1.0
-    // ------------------------------------------------------------
-    const u8* read_header_shf(header_generic& header, const u8* data, int size)
-    {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
-
-        if (check_format(0x4000, 15874, load_address, size))
-        {
-            header.width = 96;
-            header.height = 167;
-            header.compressed = false;
-            return xf;
-        }
-        else if (load_address == 0xa000)
-        {
-            header.width = 96;
-            header.height = 167;
-            header.compressed = true;
-            header.escape_char = xf.read<u8>();
-            return xf;
-        }
-
-        return NULL;
-    }
-
-    imageheader shf_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_shf(header, data, size);
-
-        if (data)
-        {
-            image_header.width = 96;
-            image_header.height = 167;
-        }
-
-        return image_header;
-    }
-
-    surface* shf_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-        u8* temp = NULL;
-
-        header_generic header;
-        data = read_header_shf(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-/*
-            if (header.compressed)
+            /*
+            if (m_compressed)
             {
-                temp = new u8[15874];
-                rle_ecb(temp, data, 15874, size - 3, header.escape_char);
-                buffer = temp;
+                temp = std::vector<u8>(15874);
+                u8* end = m_memory.address + m_memory.size;
+                rle_ecb(temp.data(), m_data, 15874, end, m_escape_char);
+                buffer = temp.data();
 
-                FILE *f = fopen("unpacked.shf", "wb");
-                fwrite(buffer, 1, 15874, f);
-                fclose(f);
+                //FILE *f = fopen("unpacked.shf", "wb");
+                //fwrite(buffer, 1, 15874, f);
+                //fclose(f);
             }
-*/
-            const u8 *bitmap_c64 = buffer + 0x2000;
-            const u8 *video_ram = buffer;
+            */
+
+            const u8* bitmap_c64 = buffer + 0x2000;
+            const u8* video_ram = buffer;
             u8 sprite_color1 = *(buffer + 0x3e8);
             u8 sprite_color2 = *(buffer + 0x3e9);
 
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-            std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
+            PaletteC64 palette;
 
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            u8* image = so->lock<u8>();
-            std::memset(image, 0, header.width * header.height);
+            std::vector<u8> tempImage(m_header.width * m_header.height, 0);
+            u8* image = tempImage.data();
 
-            int x, y;
-            for (y = 0; y < header.height; ++y)
+            for (int y = 0; y < m_header.height; ++y)
             {
-                for (x = 0; x < header.width; ++x)
+                for (int x = 0; x < m_header.width; ++x)
                 {
-                    int offset = x + (y * header.width);
+                    int offset = x + y * m_header.width;
                     u8 index = 0;
 
                     // Hires data
@@ -2293,7 +1829,7 @@ namespace
                     /*
                     if (sprite_pointer1 > 15872)
                     {
-                        FUSIONCORE_EXCEPTION("SHF: invalid sprite pointer.");
+                        MANGO_EXCEPTION("SHF: invalid sprite pointer.");
                     }
                     */
 
@@ -2305,7 +1841,7 @@ namespace
                     /*
                     if (sprite_pointer2 > 15872)
                     {
-                        FUSIONCORE_EXCEPTION("SHF: invalid sprite pointer.");
+                        MANGO_EXCEPTION("SHF: invalid sprite pointer.");
                     }
                     */
 
@@ -2337,19 +1873,9 @@ namespace
                 }
             }
 
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            so->unlock();
-            return so;
+            resolve_palette(s, tempImage.data(), m_header.width, m_header.height, palette);
         }
-
-        return NULL;
-    }
-
-#endif
+    };
 
     ImageDecoderInterface* createInterfaceSHF(Memory memory)
     {
@@ -2358,23 +1884,18 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: SHFXL
+    // ImageDecoder: SHFXL (SHF-XL v1.0)
     // ------------------------------------------------------------
 
-    struct InterfaceSHFXL : Interface
+    struct InterfaceSHFXL : GenericInterface
     {
-        u8* m_data;
-
         InterfaceSHFXL(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
+            : GenericInterface(memory, 0x4000, 15362)
         {
             if (m_data)
             {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.width = 144;
+                m_header.height = 168;
             }
         }
 
@@ -2383,72 +1904,20 @@ namespace
             if (!m_data)
                 return;
 
-            // TODO
-        }
-    };
+            const u8* bitmap_c64 = m_data + 0x2000;
+            const u8* video_ram = m_data;
+            u8 sprite_color = *(m_data + 0x3e9);
 
-#if 0
+            PaletteC64 palette;
 
-    // ------------------------------------------------------------
-    // imagefilter SHF-XL v1.0
-    // ------------------------------------------------------------
-    imageheader shfxl_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
+            std::vector<u8> tempImage(m_header.width * m_header.height, 0);
+            u8* image = tempImage.data();
 
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, 0x4000, 15362);
-
-        if (data)
-        {
-            image_header.width = 144;
-            image_header.height = 168;
-        }
-
-        return image_header;
-    }
-
-    surface* shfxl_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_generic(header, data, size, 0x4000, 15362);
-
-        if (data)
-        {
-            header.width = 144;
-            header.height = 168;
-
-            const u8 *bitmap_c64 = data + 0x2000;
-            const u8 *video_ram = data;
-            u8 sprite_color = *(data + 0x3e9);
-
-            ucolor palette[256];
-            std::memset(palette, 0, 256 * sizeof(ucolor));
-            std::memcpy(palette, c64_palette, 16 * sizeof(ucolor));
-
-            surface* so = bitmap::create(header.width, header.height, pixelformat(palette));
-            u8* image = so->lock<u8>();
-            std::memset(image, 0, header.width * header.height);
-
-            int x, y;
-            for (y = 0; y < header.height; ++y)
+            for (int y = 0; y < m_header.height; ++y)
             {
-                for (x = 0; x < header.width; ++x)
+                for (int x = 0; x < m_header.width; ++x)
                 {
-                    int offset = x + (y * header.width);
+                    int offset = x + y * m_header.width;
                     u8 index = 0;
 
                     // Hires data
@@ -2465,15 +1934,15 @@ namespace
                     int sprite_nb = (x / 24) + 1;
                     int sprite_line = (y % 21);
                     int sprite_ram_bank = (y + 7) & 0x7;
-                    u8 sprite_pointer = data[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
+                    u8 sprite_pointer = m_data[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
                     int sprite_byte_offset = (sprite_pointer * 64) + (sprite_line * 3) + (x % 24) / 8;
 
                     if (sprite_byte_offset > 15360)
                     {
-                        FUSIONCORE_EXCEPTION("SHF-XL: invalid sprite pointer.");
+                        MANGO_EXCEPTION(ID"SHF-XL: invalid sprite pointer.");
                     }
 
-                    u8 sprite_byte = data[sprite_byte_offset];
+                    u8 sprite_byte = m_data[sprite_byte_offset];
                     int sprite_bit_pattern = (sprite_byte >> (7 - (x & 0x7))) & 0x1;
 
                     switch (bit_pattern)
@@ -2496,13 +1965,9 @@ namespace
                 }
             }
 
-            so->unlock();
-            return so;
+            resolve_palette(s, tempImage.data(), m_header.width, m_header.height, palette);
         }
-
-        return NULL;
-    }
-#endif
+    };
 
     ImageDecoderInterface* createInterfaceSHFXL(Memory memory)
     {
@@ -2511,40 +1976,9 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // ImageDecoder: MCI
+    // ImageDecoder: MCI (True Paint)
     // ------------------------------------------------------------
 
-    struct InterfaceMCI : Interface
-    {
-        u8* m_data;
-
-        InterfaceMCI(Memory memory)
-            : Interface(memory)
-            , m_data(nullptr)
-        {
-            if (m_data)
-            {
-                // TODO
-                m_header.width  = 0;
-                m_header.height = 0;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            }
-        }
-
-        void decodeImage(Surface& s) override
-        {
-            if (!m_data)
-                return;
-
-            // TODO
-        }
-    };
-
-#if 0
-
-    // ------------------------------------------------------------
-    // imagefilter True Paint
-    // ------------------------------------------------------------
     void depack_mci(u8* buffer, const u8* input, int scansize, int insize)
     {
         const u8* in = input + insize - 1;
@@ -2569,7 +2003,7 @@ namespace
 
                 if (out - 3 < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 *out-- = v;
@@ -2584,7 +2018,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -2597,7 +2031,7 @@ namespace
                 // 3-zero run
                 if (out - 3 < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 *out-- = 0;
@@ -2614,7 +2048,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -2627,7 +2061,7 @@ namespace
                 // 1st 2-character run
                 if (out - 2 < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 *out-- = *(input + 0x88);
@@ -2638,7 +2072,7 @@ namespace
                 // 2nd 2-character run
                 if (out - 2 < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 *out-- = *(input + 0x89);
@@ -2649,7 +2083,7 @@ namespace
                 // 3rd 2-character run
                 if (out - 2 < out_end)
                 {
-                    FUSIONCORE_EXCEPTION("True Paint: unpacked size does not match file format.");
+                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
                 }
 
                 *out-- = *(input + 0x8a);
@@ -2662,95 +2096,62 @@ namespace
         }
     }
 
-    const u8* read_header_mci(header_generic& header, const u8* data, int size)
+    struct InterfaceMCI : Interface
     {
-        infilter xf(data);
-        u16 load_address = xf.read<u16>();
+        u8* m_data;
+        bool m_compressed = false;
 
-        if (check_format(0x9c00, 19434, load_address, size))
+        InterfaceMCI(Memory memory)
+            : Interface(memory)
+            , m_data(nullptr)
         {
-            header.width = 320;
-            header.height = 200;
-            header.compressed = false;
-            return xf;
-        }
-        else if (load_address == 0x0801)
-        {
-            u8 keyword[] = "2059";
-            if (std::memcmp(keyword, xf + 5, sizeof(keyword) - 1) == 0)
+            LittleEndianPointer p = memory.address;
+
+            u16 load_address = p.read16();
+            if (check_format(0x9c00, 19434, load_address, memory.size))
             {
-                header.width = 320;
-                header.height = 200;
-                header.compressed = true;
-                return xf;
+                m_header.width = 320;
+                m_header.height = 200;
+                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                m_compressed = false;
+                m_data = p;
+            }
+            else if (load_address == 0x0801)
+            {
+                u8 keyword[] = "2059";
+                if (std::memcmp(keyword, p + 5, sizeof(keyword) - 1) == 0)
+                {
+                    m_header.width = 320;
+                    m_header.height = 200;
+                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+
+                    m_compressed = true;
+                    m_data = p;
+                }
             }
         }
 
-        return NULL;
-    }
-
-    imageheader mci_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-        image_header.format = pixelformat::argb8888;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_mci(header, data, size);
-
-        if (data)
+        void decodeImage(Surface& s) override
         {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
+            if (!m_data)
+                return;
 
-        return image_header;
-    }
+            std::vector<u8> temp;
+            const u8* buffer = m_data;
 
-    surface* mci_load(stream* s, bool thumbnail)
-    {
-        (void) thumbnail;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-        u8* temp = NULL;
-
-        header_generic header;
-        data = read_header_mci(header, data, size);
-
-        if (data)
-        {
-            const u8* buffer = data;
-
-            if (header.compressed)
+            if (m_compressed)
             {
-                temp = new u8[19432];
-                depack_mci(temp, data, 19432, size - 2);
-                buffer = temp;
+                temp = std::vector<u8>(19432);
+                depack_mci(temp.data(), m_data, 19432, int(m_memory.size - 2));
+                buffer = temp.data();
             }
 
-            u8* background = new u8[200];
-            std::memset(background, *(buffer + 0x3e8), 200);
-
-            surface* so = multicolor_interlace_to_surface(buffer, header.width, header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background, 0x0, 2, false, 2);
-
-            delete [] background;
-
-            if (temp)
-            {
-                delete [] temp;
-            }
-
-            return so;
+            std::vector<u8> background(200, *(buffer + 0x3e8));
+            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background.data(), 0x0, 2, false, 2);
         }
+    };
 
-        return NULL;
-    }
-#endif
     ImageDecoderInterface* createInterfaceMCI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceMCI(memory);
@@ -2814,30 +2215,6 @@ namespace
         }
 
         return NULL;
-    }
-
-    imageheader ufli_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-
-        ucolor *palette = NULL;
-        image_header.format = pixelformat(palette);
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_ufli(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
     }
 
     surface* ufli_load(stream* s, bool thumbnail)
@@ -3051,28 +2428,6 @@ namespace
         return NULL;
     }
 
-    imageheader uifli_header(stream* s)
-    {
-        imageheader image_header;
-        image_header.width = 0;
-        image_header.height = 0;
-        image_header.format =  pixelformat::argb8888;
-
-        int size = int(s->size());
-        const u8* data = s->read(size);
-
-        header_generic header;
-        data = read_header_ufli(header, data, size);
-
-        if (data)
-        {
-            image_header.width = header.width;
-            image_header.height = header.height;
-        }
-
-        return image_header;
-    }
-
     surface* uifli_load(stream* s, bool thumbnail)
     {
         (void) thumbnail;
@@ -3216,7 +2571,6 @@ namespace
         ImageDecoderInterface* x = new InterfaceUIFLI(memory);
         return x;
     }
-#endif
 
     // ------------------------------------------------------------
     // ImageDecoder: VID (Vidcom 64)
@@ -3284,7 +2638,6 @@ namespace mango
         registerImageDecoder(createInterfaceDD, "ddl");
         //registerImageDecoder(createInterfaceDD, "jj"); // TODO: support compression
 
-#if 0
         // Drazlace
         registerImageDecoder(createInterfaceDRL, "drl");
         registerImageDecoder(createInterfaceDRL, "dlp");
@@ -3297,7 +2650,7 @@ namespace mango
 
         // ECI Graphic Editor v1.0
         registerImageDecoder(createInterfaceECI, "eci");
-#endif
+
         // Face Painter
         registerImageDecoder(createInterfaceFPT, "fpt");
         registerImageDecoder(createInterfaceFPT, "fcp");
@@ -3305,31 +2658,25 @@ namespace mango
         // FLI Designer 1.1 & 2.0 (FBI Crew)
         registerImageDecoder(createInterfaceFD2, "fd2");
 
-#if 0
         // FLI-Profi
         registerImageDecoder(createInterfaceFPR, "fpr");
-#endif
 
         // Funpaint 2
         registerImageDecoder(createInterfaceFUN, "fun");
         registerImageDecoder(createInterfaceFUN, "fp2");
 
-#if 0
         // Gunpaint
         registerImageDecoder(createInterfaceGUN, "gun");
         registerImageDecoder(createInterfaceGUN, "ifl");
 
         // HCB-Editor v0.05
         registerImageDecoder(createInterfaceHCB, "hcb");
-#endif
 
         // Hires FLI Designer
         registerImageDecoder(createInterfaceHFC, "hfc");
 
-#if 0
         // Hires Manager
         registerImageDecoder(createInterfaceHIM, "him");
-#endif
 
         // Koala Painter II
         registerImageDecoder(createInterfaceKOA, "koa");
@@ -3348,13 +2695,12 @@ namespace mango
         // Saracen Paint
         registerImageDecoder(createInterfaceSAR, "sar");
 
-#if 0
         // SHF-Editor v1.0
         registerImageDecoder(createInterfaceSHF, "unp");
         registerImageDecoder(createInterfaceSHF, "shfli");
 
         // SHF-XL v1.0
-        registerImageDecoder(createInterfaceSHFXL, "shx");
+        registerImageDecoder(createInterfaceSHFXL, "shx"); // TODO: support compression
         registerImageDecoder(createInterfaceSHFXL, "shfxl");
 
         // True Paint
@@ -3367,7 +2713,6 @@ namespace mango
 
         // UIFLI Editor v1.0
         registerImageDecoder(createInterfaceUIFLI, "uifli");
-#endif
 
         // Vidcom 64
         registerImageDecoder(createInterfaceVID, "vid");
