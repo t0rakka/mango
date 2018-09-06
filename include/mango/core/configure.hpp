@@ -643,12 +643,13 @@
 #endif
 
 // -----------------------------------------------------------------------
-// typedefs
+// integer types
 // -----------------------------------------------------------------------
 
 namespace mango
 {
 
+    // legacy names
     using int8   = std::int8_t;
     using int16  = std::int16_t;
     using int32  = std::int32_t;
@@ -658,6 +659,7 @@ namespace mango
     using uint32 = std::uint32_t;
     using uint64 = std::uint64_t;
 
+    // "modern" names
     using s8  = std::int8_t;
     using s16 = std::int16_t;
     using s32 = std::int32_t;

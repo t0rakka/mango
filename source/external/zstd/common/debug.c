@@ -1,6 +1,7 @@
 /* ******************************************************************
-   Error codes list
-   Copyright (C) 2016, Yann Collet
+   debug
+   Part of FSE library
+   Copyright (C) 2013-present, Yann Collet.
 
    BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
 
@@ -28,50 +29,16 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    You can contact the author at :
-   - Homepage : http://www.zstd.net
+   - Source repository : https://github.com/Cyan4973/FiniteStateEntropy
 ****************************************************************** */
-#ifndef ERROR_PUBLIC_H_MODULE
-#define ERROR_PUBLIC_H_MODULE
-
-#if defined (__cplusplus)
-extern "C" {
-#endif
 
 
-/* ****************************************
-*  error codes list
-******************************************/
-typedef enum {
-  ZSTD_error_no_error,
-  ZSTD_error_GENERIC,
-  ZSTD_error_prefix_unknown,
-  ZSTD_error_frameParameter_unsupported,
-  ZSTD_error_frameParameter_unsupportedBy32bits,
-  ZSTD_error_compressionParameter_unsupported,
-  ZSTD_error_init_missing,
-  ZSTD_error_memory_allocation,
-  ZSTD_error_stage_wrong,
-  ZSTD_error_dstSize_tooSmall,
-  ZSTD_error_srcSize_wrong,
-  ZSTD_error_corruption_detected,
-  ZSTD_error_checksum_wrong,
-  ZSTD_error_tableLog_tooLarge,
-  ZSTD_error_maxSymbolValue_tooLarge,
-  ZSTD_error_maxSymbolValue_tooSmall,
-  ZSTD_error_dictionary_corrupted,
-  ZSTD_error_dictionary_wrong,
-  ZSTD_error_maxCode
-} ZSTD_ErrorCode;
+/*
+ * This module only hosts one global variable
+ * which can be used to dynamically influence the verbosity of traces,
+ * such as DEBUGLOG and RAWLOG
+ */
 
-/*! ZSTD_getErrorCode() :
-    convert a `size_t` function result into a `ZSTD_ErrorCode` enum type,
-    which can be used to compare directly with enum list published into "error_public.h" */
-ZSTD_ErrorCode ZSTD_getErrorCode(size_t functionResult);
-const char* ZSTD_getErrorString(ZSTD_ErrorCode code);
+#include "debug.h"
 
-
-#if defined (__cplusplus)
-}
-#endif
-
-#endif /* ERROR_PUBLIC_H_MODULE */
+int g_debuglevel = DEBUGLEVEL;

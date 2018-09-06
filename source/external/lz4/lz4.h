@@ -266,7 +266,7 @@ LZ4LIB_API int LZ4_loadDict (LZ4_stream_t* streamPtr, const char* dictionary, in
  *  'dst' buffer must be already allocated.
  *  If dstCapacity >= LZ4_compressBound(srcSize), compression is guaranteed to succeed, and runs faster.
  *
- *  Important : The previous 64KB of compressed data is assumed to remain present and unmodified in memory!
+ *  Important : The previous 64KB of source data is assumed to remain present and unmodified in memory!
  *
  *  Special 1 : When input is a double-buffer, they can have any size, including < 64 KB.
  *              Make sure that buffers are separated by at least one byte.
@@ -305,7 +305,7 @@ LZ4LIB_API int                 LZ4_freeStreamDecode (LZ4_streamDecode_t* LZ4_str
 /*! LZ4_setStreamDecode() :
  *  An LZ4_streamDecode_t context can be allocated once and re-used multiple times.
  *  Use this function to start decompression of a new stream of blocks.
- *  A dictionary can optionnally be set. Use NULL or size 0 for a reset order.
+ *  A dictionary can optionally be set. Use NULL or size 0 for a reset order.
  *  Dictionary is presumed stable : it must remain accessible and unmodified during next decompression.
  * @return : 1 if OK, 0 if error
  */

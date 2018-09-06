@@ -29,14 +29,18 @@ namespace mango {
         {
         }
 
-        ~Pointer()
-        {
-        }
+        ~Pointer() = default;
 
         const Pointer& operator = (uint8* address)
         {
             p = address;
             return *this;
+        }
+
+        template <typename T>
+        T* cast() const
+        {
+            return reinterpret_cast<T*>(p);
         }
 
         operator uint8* () const

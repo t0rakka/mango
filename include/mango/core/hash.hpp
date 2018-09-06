@@ -14,4 +14,7 @@ namespace mango
     void sha1(uint32 hash[5], Memory memory);
     void sha2(uint32 hash[8], Memory memory);
 
+    uint32 xxhash32(Memory memory);
+    uint64 xxhash64(Memory memory);
+
 } // namespace mango

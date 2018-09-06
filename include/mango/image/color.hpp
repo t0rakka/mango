@@ -15,7 +15,7 @@ namespace mango
         uint8 component[4];
 
         constexpr PackedColor()
-        : component { 0, 0, 0, 0 }
+            : component { 0, 0, 0, 0 }
         {
         }
 
@@ -57,7 +57,7 @@ namespace mango
         BGRA() = default;
 
         BGRA(uint8 r, uint8 g, uint8 b, uint8 a)
-        : b(b), g(g), r(r), a(a)
+            : b(b), g(g), r(r), a(a)
         {
         }
 
@@ -79,7 +79,7 @@ namespace mango
         RGBA() = default;
 
         RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
-        : r(r), g(g), b(b), a(a)
+            : r(r), g(g), b(b), a(a)
         {
         }
 
