@@ -911,7 +911,7 @@ namespace
 
             if (!compressed)
             {
-                if (size < 32000 + 2 + 1 + 1 + (1 << bitplanes))
+                if (int(size) < 32000 + 2 + 1 + 1 + (1 << bitplanes))
                 {
                     return nullptr;
                 }
@@ -927,7 +927,7 @@ namespace
             Palette palette;
             palette.size = 1 << bitplanes;
 
-            for (int i = 0; i < palette.size; ++i)
+            for (uint32 i = 0; i < palette.size; ++i)
             {
                 u16 palette_color = p.read16();
                 palette[i] = convert_atari_color(palette_color);
