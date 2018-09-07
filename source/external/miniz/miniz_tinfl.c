@@ -617,18 +617,20 @@ common_exit:
         {
             for (i = 0; i + 7 < block_len; i += 8, ptr += 8)
             {
-                s1 += ptr[0], s2 += s1;
-                s1 += ptr[1], s2 += s1;
-                s1 += ptr[2], s2 += s1;
-                s1 += ptr[3], s2 += s1;
-                s1 += ptr[4], s2 += s1;
-                s1 += ptr[5], s2 += s1;
-                s1 += ptr[6], s2 += s1;
-                s1 += ptr[7], s2 += s1;
+                s1 += ptr[0]; s2 += s1;
+                s1 += ptr[1]; s2 += s1;
+                s1 += ptr[2]; s2 += s1;
+                s1 += ptr[3]; s2 += s1;
+                s1 += ptr[4]; s2 += s1;
+                s1 += ptr[5]; s2 += s1;
+                s1 += ptr[6]; s2 += s1;
+                s1 += ptr[7]; s2 += s1;
             }
             for (; i < block_len; ++i)
-                s1 += *ptr++, s2 += s1;
-            s1 %= 65521U, s2 %= 65521U;
+            {
+                s1 += *ptr++; s2 += s1;
+            }
+            s1 %= 65521U; s2 %= 65521U;
             buf_len -= block_len;
             block_len = 5552;
         }
