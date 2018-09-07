@@ -655,6 +655,8 @@ namespace jpeg
         jpegPrint("  Image: %d x %d\n", xsize, ysize);
         jpegPrint("  Clip: %d x %d\n", xclip, yclip);
 
+        bool generic_idct = true;
+
         // determine jpeg type
         switch (comps)
         {
@@ -673,21 +675,25 @@ namespace jpeg
                     if (xblock == 8 && yblock == 8)
                     {
                         processState.process = processState.process_YCbCr_8x8;
+                        generic_idct = false;
                     }
 
                     if (xblock == 8 && yblock == 16)
                     {
                         processState.process = processState.process_YCbCr_8x16;
+                        generic_idct = false;
                     }
 
                     if (xblock == 16 && yblock == 8)
                     {
                         processState.process = processState.process_YCbCr_16x8;
+                        generic_idct = false;
                     }
 
                     if (xblock == 16 && yblock == 16)
                     {
                         processState.process = processState.process_YCbCr_16x16;
+                        generic_idct = false;
                     }
                 }
                 break;
@@ -696,6 +702,12 @@ namespace jpeg
                 processState.process = processState.process_CMYK;
                 processState.clipped = processState.process_CMYK;
                 break;
+        }
+
+        if (generic_idct)
+        {
+            // generic_idct supports stride and uses different zigzag order than the optimized 8x8 block routines
+            decodeState.zigzagTable = g_zigzag_table_variant;
         }
 
         // configure header
