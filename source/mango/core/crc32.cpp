@@ -309,10 +309,7 @@ namespace {
 
     inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
     {
-        uint64 data = *reinterpret_cast<const uint64 *>(ptr);
-#ifdef MANGO_BIG_ENDIAN
-        data = byteswap(data);
-#endif
+        uint64 data = *reinterpret_cast<const uint64le *>(ptr);
         data = data ^ uint64(crc);
         crc = g_crc32_table[((data>>56) & 0xff) + 0x000] ^
               g_crc32_table[((data>>48) & 0xff) + 0x100] ^
@@ -331,12 +328,13 @@ namespace {
 
     inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
     {
+        const uint32le* p = reinterpret_cast<const uint32le *>(ptr);
 #ifdef MANGO_LITTLE_ENDIAN
-        uint32 one = *reinterpret_cast<const uint32 *>(ptr + 0) ^ crc;
-        uint32 two = *reinterpret_cast<const uint32 *>(ptr + 4);
+        uint32 one = p[0] ^ crc;
+        uint32 two = p[1];
 #else
-        uint32 one = byteswap(*reinterpret_cast<const uint32 *>(ptr + 4)) ^ crc;
-        uint32 two = byteswap(*reinterpret_cast<const uint32 *>(ptr + 0));
+        uint32 one = p[1] ^ crc;
+        uint32 two = p[0];
 #endif
         crc = g_crc32_table[((two>>24) & 0xff) + 0x000] ^
               g_crc32_table[((two>>16) & 0xff) + 0x100] ^
@@ -637,10 +635,7 @@ namespace {
 
     inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
     {
-        uint64 data = *reinterpret_cast<const uint64 *>(ptr);
-#ifdef MANGO_BIG_ENDIAN
-        data = byteswap(data);
-#endif
+        uint64 data = *reinterpret_cast<const uint64le *>(ptr);
         data = data ^ uint64(crc);
         crc = g_crc32c_table[((data>>56) & 0xff) + 0x000] ^
               g_crc32c_table[((data>>48) & 0xff) + 0x100] ^
@@ -659,12 +654,13 @@ namespace {
 
     inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
     {
+        const uint32le* p = reinterpret_cast<const uint32le *>(ptr);
 #ifdef MANGO_LITTLE_ENDIAN
-        uint32 one = *reinterpret_cast<const uint32 *>(ptr + 0) ^ crc;
-        uint32 two = *reinterpret_cast<const uint32 *>(ptr + 4);
+        uint32 one = p[0] ^ crc;
+        uint32 two = p[1];
 #else
-        uint32 one = byteswap(*reinterpret_cast<const uint32 *>(ptr + 4)) ^ crc;
-        uint32 two = byteswap(*reinterpret_cast<const uint32 *>(ptr + 0));
+        uint32 one = p[1] ^ crc;
+        uint32 two = p[0];
 #endif
         crc = g_crc32c_table[((two>>24) & 0xff) + 0x000] ^
               g_crc32c_table[((two>>16) & 0xff) + 0x100] ^

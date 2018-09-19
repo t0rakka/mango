@@ -18,17 +18,17 @@ namespace mango
 
 #if defined(MANGO_COMPILER_MICROSOFT)
 
-    static inline uint16 byteswap16(uint16 v)
+    static inline uint16 byteswap(uint16 v)
     {
         return _byteswap_ushort(v);
     }
 
-    static inline uint32 byteswap32(uint32 v)
+    static inline uint32 byteswap(uint32 v)
     {
         return _byteswap_ulong(v);
     }
 
-    static inline uint64 byteswap64(uint64 v)
+    static inline uint64 byteswap(uint64 v)
     {
         return _byteswap_uint64(v);
     }
@@ -37,17 +37,17 @@ namespace mango
 
     // GCC / CLANG intrinsics
 
-    static inline uint16 byteswap16(uint16 v)
+    static inline uint16 byteswap(uint16 v)
     {
         return __builtin_bswap32(v << 16);
     }
 
-    static inline uint32 byteswap32(uint32 v)
+    static inline uint32 byteswap(uint32 v)
     {
         return __builtin_bswap32(v);
     }
 
-    static inline uint64 byteswap64(uint64 v)
+    static inline uint64 byteswap(uint64 v)
     {
         return __builtin_bswap64(v);
     }
@@ -59,73 +59,44 @@ namespace mango
     // These idioms are often recognized by compilers and result in bswap instruction being generated
     // but cannot be guaranteed so compiler intrinsics above are preferred when available.
 
-    static inline uint16 byteswap16(uint16 v)
+    static inline uint16 byteswap(uint16 v)
     {
         return static_cast<uint16>((v << 8) | (v >> 8));
     }
 
-    static inline uint32 byteswap32(uint32 v)
+    static inline uint32 byteswap(uint32 v)
     {
         return (v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | (v << 24);
     }
 
-    static inline uint64 byteswap64(uint64 v)
+    static inline uint64 byteswap(uint64 v)
     {
         // We could unroll the computation to be done with 64 bits but this approach results in
         // simpler and more efficient code (has been measured on gcc 5.4 on x86-64 and ARMv7)
         uint32 low = v & 0xffffffff;
         uint32 high = v >> 32;
-        low = byteswap32(low);
-        high = byteswap32(high);
-        return (static_cast<uint64>(low) << 32) | high;
+        low = byteswap(low);
+        high = byteswap(high);
+        return (uint64(low) << 32) | high;
     }
 
 #endif
 
-    // byteswap templates
-
-    template <typename Type>
-    static inline Type byteswap(Type v)
+    static inline Half byteswap(Half v)
     {
+        v.u = byteswap(v.u);
         return v;
     }
 
-    template <>
-    inline uint16 byteswap<uint16>(uint16 v)
+    static inline Float byteswap(Float v)
     {
-        return byteswap16(v);
-    }
-
-    template <>
-    inline uint32 byteswap<uint32>(uint32 v)
-    {
-        return byteswap32(v);
-    }
-
-    template <>
-    inline uint64 byteswap<uint64>(uint64 v)
-    {
-        return byteswap64(v);
-    }
-
-    template <>
-    inline Half byteswap<Half>(Half v)
-    {
-        v.u = byteswap16(v.u);
+        v.u = byteswap(v.u);
         return v;
     }
 
-    template <>
-    inline Float byteswap<Float>(Float v)
+    static inline Double byteswap(Double v)
     {
-        v.u = byteswap32(v.u);
-        return v;
-    }
-
-    template <>
-    inline Double byteswap<Double>(Double v)
-    {
-        v.u = byteswap64(v.u);
+        v.u = byteswap(v.u);
         return v;
     }
 
@@ -146,7 +117,6 @@ namespace mango
             *this = v;
         }
 
-#ifdef MANGO_LITTLE_ENDIAN
         operator uint32 () const
         {
             uint32 v = (data[2] << 16) | (data[1] << 8) | data[0];
@@ -160,21 +130,6 @@ namespace mango
             data[2] = uint8(v >> 16);
             return *this;
         }
-#else
-        operator uint32 () const
-        {
-            uint32 v = (data[0] << 16) | (data[1] << 8) | data[2];
-            return v;
-        }
-
-        uint24& operator = (uint32 v)
-        {
-            data[0] = uint8(v >> 16);
-            data[1] = uint8(v >> 8);
-            data[2] = uint8(v);
-            return *this;
-        }
-#endif
     };
 
     // ----------------------------------------------------------------------------

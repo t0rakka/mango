@@ -58,7 +58,7 @@ namespace mango
 
         public:
             SameEndianStream(Stream& stream)
-            : s(stream)
+                : s(stream)
             {
             }
 
@@ -174,7 +174,7 @@ namespace mango
 
         public:
             SwapEndianStream(Stream& stream)
-            : s(stream)
+                : s(stream)
             {
             }
 
@@ -194,7 +194,7 @@ namespace mango
             {
                 uint16 value;
                 s.read(&value, sizeof(uint16));
-                value = byteswap16(value);
+                value = byteswap(value);
                 return value;
             }
 
@@ -202,7 +202,7 @@ namespace mango
             {
                 uint32 value;
                 s.read(&value, sizeof(uint32));
-                value = byteswap32(value);
+                value = byteswap(value);
                 return value;
             }
 
@@ -210,7 +210,7 @@ namespace mango
             {
                 uint64 value;
                 s.read(&value, sizeof(uint64));
-                value = byteswap64(value);
+                value = byteswap(value);
                 return value;
             }
 
@@ -252,19 +252,19 @@ namespace mango
 
             void write16(uint16 value)
             {
-                value = byteswap16(value);
+                value = byteswap(value);
                 s.write(&value, 2);
             }
 
             void write32(uint32 value)
             {
-                value = byteswap32(value);
+                value = byteswap(value);
                 s.write(&value, 4);
             }
 
             void write64(uint64 value)
             {
-                value = byteswap64(value);
+                value = byteswap(value);
                 s.write(&value, 8);
             }
 

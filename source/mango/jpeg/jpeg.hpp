@@ -151,7 +151,7 @@ namespace jpeg
 
                 if (ptr + 8 < nextFF)
                 {
-                    temp = uload64be(ptr) >> 16;
+                    temp = mango::uload64be(ptr) >> 16;
                     ptr += 6;
                 }
                 else
@@ -175,7 +175,7 @@ namespace jpeg
 
                 if (ptr + 2 < nextFF)
                 {
-                    temp = uload16be(ptr);
+                    temp = mango::uload16be(ptr);
                     ptr += 2;
                 }
                 else
