@@ -738,7 +738,7 @@ namespace mango {
     {
         crc = ~crc;
 
-        size_t alignment = (reinterpret_cast<uint8 *>(0) - memory.address) & 0x7;
+        intptr_t alignment = -reinterpret_cast<intptr_t>(memory.address) & 7;
         if (alignment <= memory.size)
         {
             memory.size -= alignment;
@@ -767,7 +767,7 @@ namespace mango {
     {
         crc = ~crc;
 
-        size_t alignment = (reinterpret_cast<const uint8 *>(0) - memory.address) & 0x7;
+        intptr_t alignment = -reinterpret_cast<intptr_t>(memory.address) & 7;
         if (alignment <= memory.size)
         {
             memory.size -= alignment;
