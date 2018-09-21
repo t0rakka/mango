@@ -730,11 +730,8 @@ namespace {
 
 #endif
 
-} // namespace
-
-namespace mango {
-    
-    uint32 crc32(uint32 crc, Memory memory)
+    template <typename F8, typename F64>
+    inline u32 crc_template(u32 crc, Memory memory, F8 u8_func, F64 u64_func)
     {
         crc = ~crc;
 
@@ -744,12 +741,12 @@ namespace mango {
             memory.size -= alignment;
             while (alignment--)
             {
-                crc = u8_crc32(crc, *memory.address++);
+                crc = u8_func(crc, *memory.address++);
             }
 
             while (memory.size >= 8)
             {
-                crc = u64_crc32(crc, memory.address);
+                crc = u64_func(crc, memory.address);
                 memory.address += 8;
                 memory.size -= 8;
             }
@@ -757,39 +754,24 @@ namespace mango {
 
         while (memory.size--)
         {
-            crc = u8_crc32(crc, *memory.address++);
+            crc = u8_func(crc, *memory.address++);
         }
 
         return ~crc;
     }
 
-    uint32 crc32c(uint32 crc, Memory memory)
+} // namespace
+
+namespace mango {
+
+    u32 crc32(u32 crc, Memory memory)
     {
-        crc = ~crc;
+        return crc_template(crc, memory, u8_crc32, u64_crc32);
+    }
 
-        intptr_t alignment = -reinterpret_cast<intptr_t>(memory.address) & 7;
-        if (alignment <= memory.size)
-        {
-            memory.size -= alignment;
-            while (alignment--)
-            {
-                crc = u8_crc32c(crc, *memory.address++);
-            }
-
-            while (memory.size >= 8)
-            {
-                crc = u64_crc32c(crc, memory.address);
-                memory.address += 8;
-                memory.size -= 8;
-            }
-        }
-
-        while (memory.size--)
-        {
-            crc = u8_crc32c(crc, *memory.address++);
-        }
-
-        return ~crc;
+    u32 crc32c(u32 crc, Memory memory)
+    {
+        return crc_template(crc, memory, u8_crc32c, u64_crc32c);
     }
 
 } // namespace mango
