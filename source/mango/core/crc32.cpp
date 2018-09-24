@@ -735,7 +735,7 @@ namespace {
     {
         crc = ~crc;
 
-        intptr_t alignment = -reinterpret_cast<intptr_t>(memory.address) & 7;
+        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(memory.address)) & 7;
         if (alignment <= memory.size)
         {
             memory.size -= alignment;
