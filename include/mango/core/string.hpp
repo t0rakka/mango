@@ -31,10 +31,10 @@ namespace mango
     std::vector<std::string> split(const std::string& s, const char* delimiter);
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
 
-    // filename manipulation
-    std::string getPath(const std::string& filename);
-    std::string removePath(const std::string& filename);
-    std::string getExtension(const std::string& filename);
-    std::string removeExtension(const std::string& filename);
+    // filename manipulation (example: "foo/bar/readme.txt")
+    std::string getPath(const std::string& filename);           // "foo/bar/"
+    std::string removePath(const std::string& filename);        // "readme.txt"
+    std::string getExtension(const std::string& filename);      // "txt" (dot is removed!)
+    std::string removeExtension(const std::string& filename);   // "foo/bar/readme"
 
 } // namespace mango
