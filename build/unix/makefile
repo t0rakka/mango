@@ -8,34 +8,29 @@
 # configuration
 # ---------------------------------------------------------------------------
 
-ifeq ($(SIMD),)
-    # default options
+ifeq ($(simd),)
     OPTIONS_X86   =
-else ifeq ($(SIMD), SSE2)
+else ifeq ($(simd), sse2)
     OPTIONS_X86   = -msse2
-else ifeq ($(SIMD), SSE4)
+else ifeq ($(simd), sse4)
     OPTIONS_X86   = -msse4
-else ifeq ($(SIMD), AVX)
+else ifeq ($(simd), avx)
     OPTIONS_X86   = -mavx
-else ifeq ($(SIMD), AVX2)
+else ifeq ($(simd), avx2)
     OPTIONS_X86   = -mavx2
-else ifeq ($(SIMD), AVX512)
+else ifeq ($(simd), avx512)
     OPTIONS_X86   = -mavx512dq -mavx512vl -mavx512bw
 else
     incorrect option
 endif
 
-ifeq ($(ARCH),)
-    # compile with local toolchain
+ifeq ($(arch),)
     ARCH = $(shell uname -m)
-else ifeq ($(ARCH), PPC64)
-    # cross compile for 64 bit PowerPC
+else ifeq ($(arch), ppc64le)
     ARCH = ppc64le
-else ifeq ($(ARCH), MIPS64)
-    # cross compile for 64 bit MIPS
+else ifeq ($(arch), mips64)
     ARCH = mips64
-else ifeq ($(ARCH), ARM64)
-    # cross compile for 64 bit ARM
+else ifeq ($(arch), aarch64)
     ARCH = aarch64
 else
     incorrect option
@@ -48,16 +43,16 @@ CC_STD = -std=c11
 CPP_STD = -std=c++14
 
 # common compiler options (LLVM/CLANG/GCC)
-OPTIONS       = -c -Wall -O3 -ffast-math
-OPTIONS_GCC   = -ftree-vectorize
+OPTIONS     = -c -Wall -O3 -ffast-math
+OPTIONS_GCC = -ftree-vectorize
 
-#OPTIONS_X86   += -maes
+#OPTIONS_X86 += -maes
 
 # linker options after objects (gcc 4.9 workaround)
-LINK_POST     =
+LINK_POST =
 
-#NEON          = -mfpu=neon
-NEON          = -mfpu=neon-fp16 -mfp16-format=ieee
+#NEON = -mfpu=neon
+NEON = -mfpu=neon-fp16 -mfp16-format=ieee
 
 # ---------------------------------------------------------------------------
 # sources
