@@ -8,6 +8,61 @@
 # configuration
 # ---------------------------------------------------------------------------
 
+ifeq ($(SIMD),)
+    # default options
+    OPTIONS_X86   =
+else ifeq ($(SIMD), SSE2)
+    OPTIONS_X86   = -msse2
+else ifeq ($(SIMD), SSE4)
+    OPTIONS_X86   = -msse4
+else ifeq ($(SIMD), AVX)
+    OPTIONS_X86   = -mavx
+else ifeq ($(SIMD), AVX2)
+    OPTIONS_X86   = -mavx2
+else ifeq ($(SIMD), AVX512)
+    OPTIONS_X86   = -mavx512dq -mavx512vl -mavx512bw
+else
+    incorrect option
+endif
+
+ifeq ($(ARCH),)
+    # compile with local toolchain
+    ARCH = $(shell uname -m)
+else ifeq ($(ARCH), PPC64)
+    # cross compile for 64 bit PowerPC
+    ARCH = ppc64le
+else ifeq ($(ARCH), MIPS64)
+    # cross compile for 64 bit MIPS
+    ARCH = mips64
+else ifeq ($(ARCH), ARM64)
+    # cross compile for 64 bit ARM
+    ARCH = aarch64
+else
+    incorrect option
+endif
+
+OS = $(shell uname)
+
+# language versions
+CC_STD = -std=c11
+CPP_STD = -std=c++14
+
+# common compiler options (LLVM/CLANG/GCC)
+OPTIONS       = -c -Wall -O3 -ffast-math
+OPTIONS_GCC   = -ftree-vectorize
+
+#OPTIONS_X86   += -maes
+
+# linker options after objects (gcc 4.9 workaround)
+LINK_POST     =
+
+#NEON          = -mfpu=neon
+NEON          = -mfpu=neon-fp16 -mfp16-format=ieee
+
+# ---------------------------------------------------------------------------
+# sources
+# ---------------------------------------------------------------------------
+
 LIBNAME_MANGO  = mango
 LIBNAME_OPENGL = mango-opengl
 LIBNAME_VULKAN = mango-vulkan
@@ -38,36 +93,6 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/aes
 SOURCE_DIRS_OPENGL = mango/opengl
 SOURCE_DIRS_VULKAN = mango/vulkan
-
-# language versions
-CC_STD = -std=c11
-CPP_STD = -std=c++14
-
-# common compiler options (LLVM/CLANG/GCC)
-OPTIONS       = -c -Wall -O3 -ffast-math
-OPTIONS_GCC   = -ftree-vectorize
-
-#OPTIONS_X86   = -msse2
-#OPTIONS_X86   = -msse4
-OPTIONS_X86   = -mavx
-#OPTIONS_X86   = -mavx2
-#OPTIONS_X86 = -mavx512dq -mavx512vl -mavx512bw
-
-OPTIONS_X86   += -maes
-
-# linker options after objects (gcc 4.9 workaround)
-LINK_POST     =
-
-#NEON          = -mfpu=neon
-NEON          = -mfpu=neon-fp16 -mfp16-format=ieee
-
-OS   = $(shell uname)
-ARCH = $(shell uname -m)
-
-# define one of these to force cross compilation
-#ARCH = ppc64le
-#ARCH = mips64
-#ARCH = aarch64
 
 # ---------------------------------------------------------------------------
 # Linux
