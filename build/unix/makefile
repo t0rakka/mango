@@ -46,7 +46,7 @@ CPP_STD = -std=c++14
 OPTIONS     = -c -Wall -O3 -ffast-math
 OPTIONS_GCC = -ftree-vectorize
 
-#OPTIONS_X86 += -maes
+OPTIONS_X86 += -maes
 
 # linker options after objects (gcc 4.9 workaround)
 LINK_POST =
