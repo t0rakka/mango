@@ -173,6 +173,9 @@ ELSE()
     endif()
 
     if (X86 OR X86_64)
+        # enable AES (2008) by default
+        TARGET_COMPILE_OPTIONS(mango PRIVATE "-maes")
+
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
             message("-- SIMD: AVX-512 (2015)")
