@@ -271,7 +271,13 @@ using mango::opengl::Context;
     }
 
     // enable file drop events
+#if 0
+    // deprecated in 10.14
     [self registerForDraggedTypes:[NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
+#else
+    // requires 10.13 or later version
+    [self registerForDraggedTypes:[NSArray arrayWithObjects: NSPasteboardTypeFileURL, nil]];
+#endif
     
     return self;
 }
@@ -478,10 +484,22 @@ using mango::opengl::Context;
 - (BOOL) performDragOperation:(id <NSDraggingInfo>)sender
 {
     NSPasteboard *pboard = [sender draggingPasteboard];
-    
+
+#if 0
+    // deprecated in 10.14
     if ([[pboard types] containsObject:NSFilenamesPboardType])
+#else
+    // requires 10.13 or later version
+    if ([[pboard types] containsObject:NSPasteboardTypeFileURL])
+#endif
     {
+#if 0
+        // deprecated in 10.14
         NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
+#else
+        // requires 10.13 or later version
+        NSArray *files = [pboard propertyListForType:NSPasteboardTypeFileURL];
+#endif
         int numberOfFiles = (int) [files count];
 
         FileIndex dropped;
@@ -1023,7 +1041,7 @@ namespace opengl {
     void Context::swapInterval(int interval)
     {
         GLint sync = interval;
-        [m_handle->ctx setValues:&sync forParameter:NSOpenGLCPSwapInterval];
+        [m_handle->ctx setValues:&sync forParameter:NSOpenGLContextParameterSwapInterval];
     }
 
     void Context::toggleFullscreen()

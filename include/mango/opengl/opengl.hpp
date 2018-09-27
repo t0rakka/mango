@@ -46,6 +46,8 @@
 
 #elif defined(MANGO_PLATFORM_OSX)
 
+    #define GL_SILENCE_DEPRECATION /* macOS 10.14 deprecated OpenGL API */
+
     #define MANGO_CORE_PROFILE
 
     #ifdef MANGO_CORE_PROFILE
