@@ -1,10 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(mango CXX C)
 
-# TODO: Separate mango-opengl library
-# TODO: Separate mango-vulkan library (only built on Linux & Windows)
-# TODO: make static / dynamic library compilation configurable
-
 # ------------------------------------------------------------------
 # compiler
 # ------------------------------------------------------------------
@@ -48,6 +44,8 @@ endif()
 # ------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------
+
+include_directories("../include/")
 
 FILE(GLOB CORE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp")
 FILE(GLOB FILESYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp")
@@ -104,12 +102,23 @@ FILE(GLOB_RECURSE ZPNG "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
 
 SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG})
 
-ADD_LIBRARY(mango STATIC "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp"
+ADD_LIBRARY(mango STATIC
     ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
     ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG}
+    )
+
+ADD_LIBRARY(mango-opengl STATIC
     ${GUI}
     ${OPENGL}
-    ${VULKAN})
+    )
+
+ADD_LIBRARY(mango-vulkan STATIC
+    ${GUI}
+    ${VULKAN}
+    )
+
+target_link_libraries(mango-opengl PUBLIC mango)
+target_link_libraries(mango-vulkan PUBLIC mango)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -132,22 +141,22 @@ OPTION(ENABLE_AVX512 "Enable AVX-512 instructions" OFF)
 
 if(COMPILER_MSVC)
     # /Gm enables partial rebuild, is all.
-    TARGET_COMPILE_OPTIONS(mango PRIVATE "/std:c++14" "/Gm")
+    TARGET_COMPILE_OPTIONS(mango PUBLIC "/std:c++14" "/Gm")
     IF (ENABLE_FAST_MATH)
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "/fp:fast")
+        TARGET_COMPILE_OPTIONS(mango PUBLIC "/fp:fast")
     ENDIF()
 
-    TARGET_COMPILE_OPTIONS(mango PRIVATE "/DUNICODE")
+    TARGET_COMPILE_OPTIONS(mango PUBLIC "/DUNICODE")
 
     if (ENABLE_AVX512)
         message("-- SIMD: AVX-512 (2015)")
-        TARGET_COMPILE_DEFINITIONS(mango PRIVATE "-D__AVX512F__" "-D__AVX512DQ__")
+        TARGET_COMPILE_DEFINITIONS(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
     elseif (ENABLE_AVX2)
         message("-- SIMD: AVX2 (2013)")
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "/arch:AVX2")
+        TARGET_COMPILE_OPTIONS(mango PUBLIC "/arch:AVX2")
     elseif (ENABLE_AVX)
         message("-- SIMD: AVX (2008)")
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "/arch:AVX")
+        TARGET_COMPILE_OPTIONS(mango PUBLIC "/arch:AVX")
     endif()
 ELSE()
     set(CMAKE_CXX_FLAGS "-Wall")
@@ -155,16 +164,18 @@ ELSE()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
     # Property only works for unix-style systems iirc
-    SET_PROPERTY(TARGET mango PROPERTY CXX_STANDARD 14)
+    SET_PROPERTY(TARGET mango        PROPERTY CXX_STANDARD 14)
+    SET_PROPERTY(TARGET mango-opengl PROPERTY CXX_STANDARD 14)
+    SET_PROPERTY(TARGET mango-vulkan PROPERTY CXX_STANDARD 14)
 
-    TARGET_COMPILE_DEFINITIONS(mango PRIVATE $<$<PLATFORM_ID:Windows>:UNICODE>)
+    TARGET_COMPILE_DEFINITIONS(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
 
     IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "-ftree-vectorize")
+        TARGET_COMPILE_OPTIONS(mango PUBLIC "-ftree-vectorize")
     ENDIF()
 
     IF (ENABLE_FAST_MATH) 
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "-ffast-math")
+        TARGET_COMPILE_OPTIONS(mango PUBLIC "-ffast-math")
     ENDIF()
 
     if (ARM OR ARCH64)
@@ -174,26 +185,26 @@ ELSE()
 
     if (X86 OR X86_64)
         # enable AES (2008) by default
-        TARGET_COMPILE_OPTIONS(mango PRIVATE "-maes")
+        TARGET_COMPILE_OPTIONS(mango PUBLIC "-maes")
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
             message("-- SIMD: AVX-512 (2015)")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx512dq")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx512vl")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx512bw")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx512dq")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx512vl")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx512bw")
         elseif (ENABLE_AVX2)
             message("-- SIMD: AVX2 (2013)")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx2")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx2")
         elseif (ENABLE_AVX)
             message("-- SIMD: AVX (2008)")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-mavx")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx")
         elseif (ENABLE_SSE4)
             message("-- SIMD: SSE4.2 (2006)")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-msse4")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-msse4")
         elseif (ENABLE_SSE2)
             message("-- SIMD: SSE2 (2001)")
-            TARGET_COMPILE_OPTIONS(mango PRIVATE "-msse2")
+            TARGET_COMPILE_OPTIONS(mango PUBLIC "-msse2")
         endif()
     endif()
 ENDIF()
@@ -201,8 +212,9 @@ ENDIF()
 TARGET_INCLUDE_DIRECTORIES(mango PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>)
 
-INSTALL(TARGETS mango LIBRARY DESTINATION "lib" ARCHIVE DESTINATION "lib"
+INSTALL(TARGETS mango mango-opengl mango-vulkan LIBRARY DESTINATION "lib" ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin")
+
 INSTALL(
     DIRECTORY ${CMAKE_SOURCE_DIR}/../include/
     DESTINATION include
