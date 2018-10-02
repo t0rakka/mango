@@ -7,7 +7,7 @@ NDK_TOOLCHAIN_VERSION := clang
 # select abi: armeabi / armeabi-v7a / arm64-v8a / x86 / x86_64 / mips / mips64 / all
 # broken:     -------                                            ----            ---
 #
-APP_ABI := armeabi-v7a arm64-v8a x86 x86_64 mips64
+APP_ABI := armeabi-v7a arm64-v8a x86 x86_64
 
 #
 # select platform
