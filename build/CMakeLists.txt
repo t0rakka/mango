@@ -1,9 +1,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(mango CXX C)
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # compiler
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 message("-- Compiler is ${CMAKE_CXX_COMPILER_ID}")
 
@@ -19,9 +19,9 @@ else()
     message("-- Compiler is not supported!")
 endif()
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # processor
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 message("-- Processor is ${CMAKE_SYSTEM_PROCESSOR}")
 
@@ -41,9 +41,9 @@ else()
     message("-- Processor is not supported!")
 endif()
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # source directories
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 include_directories("../include/")
 
@@ -102,17 +102,21 @@ FILE(GLOB_RECURSE ZPNG "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
 
 SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG})
 
-ADD_LIBRARY(mango STATIC
+# ------------------------------------------------------------------------------
+# libraries
+# ------------------------------------------------------------------------------
+
+ADD_LIBRARY(mango
     ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
     ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG}
     )
 
-ADD_LIBRARY(mango-opengl STATIC
+ADD_LIBRARY(mango-opengl
     ${GUI}
     ${OPENGL}
     )
 
-ADD_LIBRARY(mango-vulkan STATIC
+ADD_LIBRARY(mango-vulkan
     ${GUI}
     ${VULKAN}
     )
@@ -120,24 +124,29 @@ ADD_LIBRARY(mango-vulkan STATIC
 target_link_libraries(mango-opengl PUBLIC mango)
 target_link_libraries(mango-vulkan PUBLIC mango)
 
-if(NOT CMAKE_BUILD_TYPE)
+if (APPLE AND BUILD_SHARED_LIBS)
+    target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
+endif ()
+
+if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # options
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-OPTION(ENABLE_FAST_MATH "Use fast math / relaxed-precision floating point operations" ON)
-OPTION(ENABLE_SSE2 "Enable SSE2 instructions" OFF)
-OPTION(ENABLE_SSE4 "Enable SSE4.1 and SSE4.2 instructions" ON)
-OPTION(ENABLE_AVX "Enable AVX instructions" OFF)
-OPTION(ENABLE_AVX2 "Enable AVX2 instructions" OFF)
-OPTION(ENABLE_AVX512 "Enable AVX-512 instructions" OFF)
+OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    OFF)
+OPTION(ENABLE_FAST_MATH     "Use relaxed-precision floating point"      ON)
+OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
+OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
+OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
+OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
+OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # configuration
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 if(COMPILER_MSVC)
     # /Gm enables partial rebuild, is all.
