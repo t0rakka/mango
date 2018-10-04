@@ -106,6 +106,13 @@ SOURCE_GROUP("external" FILES ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE
 # libraries
 # ------------------------------------------------------------------------------
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 ADD_LIBRARY(mango
     ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
     ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${ZPNG}
@@ -128,10 +135,6 @@ if (APPLE AND BUILD_SHARED_LIBS)
     target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
 endif ()
 
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
 # ------------------------------------------------------------------------------
 # options
 # ------------------------------------------------------------------------------
@@ -148,75 +151,73 @@ OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 # configuration
 # ------------------------------------------------------------------------------
 
-if(COMPILER_MSVC)
-    # /Gm enables partial rebuild, is all.
-    TARGET_COMPILE_OPTIONS(mango PUBLIC "/std:c++14" "/Gm")
-    IF (ENABLE_FAST_MATH)
-        TARGET_COMPILE_OPTIONS(mango PUBLIC "/fp:fast")
-    ENDIF()
+if (COMPILER_MSVC)
+    target_compile_options(mango PUBLIC "/Gm")
+    target_compile_options(mango PUBLIC "/DUNICODE")
 
-    TARGET_COMPILE_OPTIONS(mango PUBLIC "/DUNICODE")
+    if (ENABLE_FAST_MATH)
+        target_compile_options(mango PUBLIC "/fp:fast")
+    endif ()
 
     if (ENABLE_AVX512)
         message("-- SIMD: AVX-512 (2015)")
-        TARGET_COMPILE_DEFINITIONS(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
+        target_compile_definitions(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
     elseif (ENABLE_AVX2)
         message("-- SIMD: AVX2 (2013)")
-        TARGET_COMPILE_OPTIONS(mango PUBLIC "/arch:AVX2")
+        target_compile_options(mango PUBLIC "/arch:AVX2")
     elseif (ENABLE_AVX)
         message("-- SIMD: AVX (2008)")
-        TARGET_COMPILE_OPTIONS(mango PUBLIC "/arch:AVX")
-    endif()
-ELSE()
+        target_compile_options(mango PUBLIC "/arch:AVX")
+    endif ()
+else ()
     set(CMAKE_CXX_FLAGS "-Wall")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-    # Property only works for unix-style systems iirc
-    SET_PROPERTY(TARGET mango        PROPERTY CXX_STANDARD 14)
-    SET_PROPERTY(TARGET mango-opengl PROPERTY CXX_STANDARD 14)
-    SET_PROPERTY(TARGET mango-vulkan PROPERTY CXX_STANDARD 14)
+    target_compile_definitions(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
 
-    TARGET_COMPILE_DEFINITIONS(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        target_compile_options(mango PUBLIC "-ftree-vectorize")
+    endif ()
 
-    IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        TARGET_COMPILE_OPTIONS(mango PUBLIC "-ftree-vectorize")
-    ENDIF()
-
-    IF (ENABLE_FAST_MATH) 
-        TARGET_COMPILE_OPTIONS(mango PUBLIC "-ffast-math")
-    ENDIF()
+    if (ENABLE_FAST_MATH) 
+        target_compile_options(mango PUBLIC "-ffast-math")
+    endif ()
 
     if (ARM OR ARCH64)
         add_definitions (-mfpu=neon -mfloat-abi=hard)
         set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
-    endif()
+    endif ()
 
     if (X86 OR X86_64)
         # enable AES (2008) by default
-        TARGET_COMPILE_OPTIONS(mango PUBLIC "-maes")
+        target_compile_options(mango PUBLIC "-maes")
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
             message("-- SIMD: AVX-512 (2015)")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx512dq")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx512vl")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx512bw")
+            target_compile_options(mango PUBLIC "-mavx512dq")
+            target_compile_options(mango PUBLIC "-mavx512vl")
+            target_compile_options(mango PUBLIC "-mavx512bw")
         elseif (ENABLE_AVX2)
             message("-- SIMD: AVX2 (2013)")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx2")
+            target_compile_options(mango PUBLIC "-mavx2")
         elseif (ENABLE_AVX)
             message("-- SIMD: AVX (2008)")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-mavx")
+            target_compile_options(mango PUBLIC "-mavx")
         elseif (ENABLE_SSE4)
             message("-- SIMD: SSE4.2 (2006)")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-msse4")
+            target_compile_options(mango PUBLIC "-msse4")
         elseif (ENABLE_SSE2)
             message("-- SIMD: SSE2 (2001)")
-            TARGET_COMPILE_OPTIONS(mango PUBLIC "-msse2")
-        endif()
-    endif()
-ENDIF()
+            target_compile_options(mango PUBLIC "-msse2")
+        endif ()
+    endif ()
+endif ()
+
+# ------------------------------------------------------------------------------
+# install
+# ------------------------------------------------------------------------------
 
 TARGET_INCLUDE_DIRECTORIES(mango PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>)
