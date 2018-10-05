@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -51,7 +51,7 @@ namespace mango
         // SameEndianStream
         // --------------------------------------------------------------
 
-        class SameEndianStream : protected NonCopyable
+        class SameEndianStream
         {
         private:
             Stream& s;
@@ -60,6 +60,21 @@ namespace mango
             SameEndianStream(Stream& stream)
                 : s(stream)
             {
+            }
+
+            uint64 size() const
+            {
+                return s.size();
+            }
+
+            uint64 offset() const
+            {
+                return s.offset();
+            }
+
+            void seek(uint64 distance, Stream::SeekMode mode)
+            {
+                s.seek(distance, mode);
             }
 
             void read(void* dest, size_t size)
@@ -167,7 +182,7 @@ namespace mango
         // SwapEndianStream
         // --------------------------------------------------------------
 
-        class SwapEndianStream : protected NonCopyable
+        class SwapEndianStream
         {
         private:
             Stream& s;
@@ -176,6 +191,21 @@ namespace mango
             SwapEndianStream(Stream& stream)
                 : s(stream)
             {
+            }
+
+            uint64 size() const
+            {
+                return s.size();
+            }
+
+            uint64 offset() const
+            {
+                return s.offset();
+            }
+
+            void seek(uint64 distance, Stream::SeekMode mode)
+            {
+                s.seek(distance, mode);
             }
 
             void read(void* dest, size_t size)

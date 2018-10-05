@@ -21,6 +21,8 @@ namespace mango
         std::string m_filename;
         std::unique_ptr<VirtualMemory> m_memory;
 
+        Memory getMemory() const;
+
     public:
         File(const Path& path, const std::string& filename);
         File(const std::string& filename);
@@ -33,6 +35,7 @@ namespace mango
         operator Memory () const;
         operator const uint8* () const;
         const uint8* data() const;
+        size_t size() const;
     };
 
     class FileStream : public Stream

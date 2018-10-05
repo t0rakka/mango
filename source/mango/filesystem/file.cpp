@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -44,7 +44,8 @@ namespace mango
 
     File::File(const Memory& memory, const std::string& extension, const std::string& filename)
     {
-        Path path(memory, extension, filename);
+        std::string password;
+        Path path(memory, extension, password);
 
         // use temporary path's mapper
         m_mapper = path;
@@ -69,17 +70,27 @@ namespace mango
 
     File::operator Memory () const
     {
-        return *m_memory;
+        return getMemory();
     }
 
 	File::operator const uint8* () const
 	{
-        return (*m_memory)->address;
+        return getMemory().address;
 	}
 
     const uint8* File::data() const
     {
-        return (*m_memory)->address;
+        return getMemory().address;
+    }
+
+    size_t File::size() const
+    {
+        return getMemory().size;
+    }
+
+    Memory File::getMemory() const
+    {
+        return m_memory ? *m_memory : Memory(nullptr, 0);
     }
 
 } // namespace mango
