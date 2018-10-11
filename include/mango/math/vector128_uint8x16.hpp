@@ -69,10 +69,12 @@ namespace mango
             return m;
         }
 
-        operator simd::uint8x16 ()
+#ifdef int128_is_hardware_vector
+        operator simd::uint8x16::vector () const
         {
-            return m;
+            return m.data;
         }
+#endif
     };
 
     template <>

@@ -81,10 +81,12 @@ namespace mango
             return m;
         }
 
-        operator simd::float32x8 ()
+#ifdef float256_is_hardware_vector
+        operator simd::float32x8::vector () const
         {
-            return m;
+            return m.data;
         }
+#endif
     };
 
     // ------------------------------------------------------------------

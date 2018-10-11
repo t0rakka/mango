@@ -91,10 +91,12 @@ namespace mango
             return m;
         }
 
-        operator simd::uint64x2 ()
+#ifdef int128_is_hardware_vector
+        operator simd::uint64x2::vector () const
         {
-            return m;
+            return m.data;
         }
+#endif
     };
 
     static inline const Vector<uint64, 2> operator + (Vector<uint64, 2> v)

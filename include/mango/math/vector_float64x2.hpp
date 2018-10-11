@@ -95,10 +95,12 @@ namespace mango
             return m;
         }
 
-        operator simd::float64x2 ()
+#ifdef float128_is_hardware_vector
+        operator simd::float64x2::vector () const
         {
-            return m;
+            return m.data;
         }
+#endif
     };
 
     // ------------------------------------------------------------------

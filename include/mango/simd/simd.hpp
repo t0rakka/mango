@@ -151,7 +151,8 @@ namespace simd {
 
         composite_vector() = default;
         composite_vector(VectorType lo, VectorType hi)
-            : lo(lo), hi(hi)
+            : lo(lo)
+            , hi(hi)
         {
         }
     };
@@ -169,9 +170,13 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
-    #define MANGO_ENABLE_SIMD256
-    #define MANGO_ENABLE_SIMD512
+
+    #define int128_is_hardware_vector
+    #define int256_is_hardware_vector
+    #define int512_is_hardware_vector
+    #define float128_is_hardware_vector
+    #define float256_is_hardware_vector
+    #define float512_is_hardware_vector
 
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -255,8 +260,11 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
-    #define MANGO_ENABLE_SIMD256
+
+    #define int128_is_hardware_vector
+    #define int256_is_hardware_vector
+    #define float128_is_hardware_vector
+    #define float256_is_hardware_vector
 
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -340,8 +348,10 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
-    #define MANGO_ENABLE_SIMD256
+
+    #define int128_is_hardware_vector
+    #define float128_is_hardware_vector
+    #define float256_is_hardware_vector
     
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -425,7 +435,9 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
+
+    #define int128_is_hardware_vector
+    #define float128_is_hardware_vector
     
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -509,7 +521,9 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
+
+    #define int128_is_hardware_vector
+    #define float128_is_hardware_vector
 
     struct float64x2_t
     {
@@ -608,7 +622,9 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
+
+    #define int128_is_hardware_vector
+    #define float128_is_hardware_vector
     
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;
@@ -700,7 +716,9 @@ namespace simd {
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-    #define MANGO_ENABLE_SIMD128
+
+    #define int128_is_hardware_vector
+    #define float128_is_hardware_vector
     
     // 64 bit vector
     using float16x4  = scalar_vector<half, 4>;

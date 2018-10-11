@@ -64,10 +64,12 @@ namespace mango
             return m;
         }
 
-        operator simd::int8x64 ()
+#ifdef int512_is_hardware_vector
+        operator simd::int8x64::vector () const
         {
-            return m;
+            return m.data;
         }
+#endif
     };
 
     static inline const int8x64 operator + (int8x64 v)

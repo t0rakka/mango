@@ -19,7 +19,7 @@ namespace mango
 
         union
         {
-            simd::float64x8 xyzw;
+            simd::float64x8 m;
             LowAccessor<Vector<double, 4>, simd::float64x8> low;
             HighAccessor<Vector<double, 4>, simd::float64x8> high;
             DeAggregate<ScalarType> component[VectorSize];
@@ -41,41 +41,43 @@ namespace mango
         ~Vector() {}
 
         Vector(double s)
-            : xyzw(simd::float64x8_set1(s))
+            : m(simd::float64x8_set1(s))
         {
         }
 
         explicit Vector(double s0, double s1, double s2, double s3, double s4, double s5, double s6, double s7)
-            : xyzw(simd::float64x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::float64x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
         Vector(simd::float64x8 v)
-            : xyzw(v)
+            : m(v)
         {
         }
 
         Vector& operator = (simd::float64x8 v)
         {
-            xyzw = v;
+            m = v;
             return *this;
         }
 
         Vector& operator = (double s)
         {
-            xyzw = simd::float64x8_set1(s);
+            m = simd::float64x8_set1(s);
             return *this;
         }
 
         operator simd::float64x8 () const
         {
-            return xyzw;
+            return m;
         }
 
-        operator simd::float64x8 ()
+#ifdef float512_is_hardware_vector
+        operator simd::float64x8::vector () const
         {
-            return xyzw;
+            return m.data;
         }
+#endif
     };
 
     // ------------------------------------------------------------------
