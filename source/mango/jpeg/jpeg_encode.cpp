@@ -1076,7 +1076,7 @@ namespace
             Buffer& buffer = buffers[y];
 
             // write huffman bitstream
-            s.write(buffer, buffer.size());
+            s.write(buffer, size_t(buffer.size()));
 
             // write restart marker
             int index = y & 7;
