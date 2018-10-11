@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <vector>
@@ -11,6 +11,7 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
+#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
 #include "../../external/miniz/miniz.h"
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
