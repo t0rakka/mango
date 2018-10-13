@@ -20,7 +20,8 @@ This is probably the most generic build script we have; it has been tested on Li
 The library will be installed typically in /usr/local/include and /usr/local/lib 
 The cmake build script will compile everything into one (.a) library
 
-Pro tip! "cmake -DENABLE_AVX512=ON .." to compile for AVX-512, for example.
+Pro tip! "cmake -DENABLE_AVX512=ON .." to enable Intel AVX-512 SIMD instructions.
+         "cmake -DBUILD_SHARED_LIBS=ON .." to compile .so/.dll/.dylib instead of .a/.lib
 
 ------------------------------------------------------------------------------------------------
 
@@ -39,6 +40,8 @@ The library will be compiled as shared object (.so) files:
   - libmango-vulkan.so
 
 The separation is done so that when not using OpenGL or Vulkan don't have to pull in X11 libraries.
+
+Pro tip! "make simd=avx2" to enable Intel AVX2 SIMD instructions.
 
 ------------------------------------------------------------------------------------------------
 
