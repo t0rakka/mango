@@ -36,7 +36,7 @@ namespace jpeg
     g = 1.0 - min(1.0, m * i + k)
     b = 1.0 - min(1.0, y * i + k)
 
-    NOTE: we use alternate conversion formula in PACK_CMYK()
+    NOTE: we use alternate conversion formula in COMPUTE_CMYK()
 */
 
 #define COMPUTE_CBCR(cb, cr) \
@@ -44,14 +44,13 @@ namespace jpeg
     int g = (cb * -22479 + cr * -46596 + 8874368) >> 16; \
     int b = (cb * 115671 - 14773120) >> 16;
 
-#define PACK_ARGB(dest, y) \
-    dest = 0xff000000 | (byteclamp(y + r) << 16) | (byteclamp(y + g) << 8) | byteclamp(y + b);
-
-#define PACK_CMYK(dest, y, k) \
+#define COMPUTE_CMYK(y, k) \
     r = ((255 - r - y) * k) / 255; \
     g = ((255 - g - y) * k) / 255; \
-    b = ((255 - b - y) * k) / 255; \
-    dest = 0xff000000 | (byteclamp(r) << 16) | (byteclamp(g) << 8) | byteclamp(b);
+    b = ((255 - b - y) * k) / 255;
+
+#define PACK_BGRA(y) \
+    0xff000000 | (byteclamp(y + r) << 16) | (byteclamp(y + g) << 8) | byteclamp(y + b);
 
 // ----------------------------------------------------------------------------
 // Generic C++ implementation
@@ -119,7 +118,7 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
                     uint8 cb = cb_scan[x >> cb_xshift];
                     uint8 cr = cr_scan[x >> cr_xshift];
                     COMPUTE_CBCR(cb, cr);
-                    PACK_ARGB(d[x], Y);
+                    d[x] = PACK_BGRA(Y);
                 }
                 dest_block += stride;
                 y_block += 8;
@@ -186,7 +185,8 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
                     uint8 cr = cr_scan[x >> cr_xshift];
                     uint8 ck = ck_scan[x >> ck_xshift];
                     COMPUTE_CBCR(cb, cr);
-                    PACK_CMYK(d[x], Y, ck);
+                    COMPUTE_CMYK(Y, ck);
+                    d[x] = PACK_BGRA(0);
                 }
                 dest_block += stride;
                 y_block += 8;
@@ -216,7 +216,7 @@ void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessSt
             int cb = s[x + 64];
             int cr = s[x + 128];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d[x], s[x]);
+            d[x] = PACK_BGRA(s[x]);
         }
         
         dest += stride;
@@ -248,8 +248,8 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
             int cb = c[x + 0];
             int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d0[x], s[x + 0]);
-            PACK_ARGB(d1[x], s[x + 8]);
+            d0[x] = PACK_BGRA(s[x + 0]);
+            d1[x] = PACK_BGRA(s[x + 8]);
         }
 
         dest += stride * 2;
@@ -280,8 +280,8 @@ void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessS
             int cb = c[x + 0];
             int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d[x * 2 + 0], s[x * 2 + 0]);
-            PACK_ARGB(d[x * 2 + 1], s[x * 2 + 1]);
+            d[x * 2 + 0] = PACK_BGRA(s[x * 2 + 0]);
+            d[x * 2 + 1] = PACK_BGRA(s[x * 2 + 1]);
         }
 
         for (int x = 0; x < 4; ++x)
@@ -289,8 +289,8 @@ void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessS
             int cb = c[x + 4];
             int cr = c[x + 68];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d[x * 2 + 8], s[x * 2 + 64]);
-            PACK_ARGB(d[x * 2 + 9], s[x * 2 + 65]);
+            d[x * 2 + 8] = PACK_BGRA(s[x * 2 + 64]);
+            d[x * 2 + 9] = PACK_BGRA(s[x * 2 + 65]);
         }
 
         dest += stride;
@@ -324,10 +324,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             int cb = c[x + 0];
             int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d0[x * 2 + 0], s[x * 2 + 0]);
-            PACK_ARGB(d0[x * 2 + 1], s[x * 2 + 1]);
-            PACK_ARGB(d1[x * 2 + 0], s[x * 2 + 8]);
-            PACK_ARGB(d1[x * 2 + 1], s[x * 2 + 9]);
+            d0[x * 2 + 0] = PACK_BGRA(s[x * 2 + 0]);
+            d0[x * 2 + 1] = PACK_BGRA(s[x * 2 + 1]);
+            d1[x * 2 + 0] = PACK_BGRA(s[x * 2 + 8]);
+            d1[x * 2 + 1] = PACK_BGRA(s[x * 2 + 9]);
         }
 
         for (int x = 0; x < 4; ++x)
@@ -335,10 +335,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
             int cb = c[x + 4];
             int cr = c[x + 68];
             COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d0[x * 2 + 8], s[x * 2 + 128]);
-            PACK_ARGB(d0[x * 2 + 9], s[x * 2 + 129]);
-            PACK_ARGB(d1[x * 2 + 8], s[x * 2 + 136]);
-            PACK_ARGB(d1[x * 2 + 9], s[x * 2 + 137]);
+            d0[x * 2 + 8] = PACK_BGRA(s[x * 2 + 128]);
+            d0[x * 2 + 9] = PACK_BGRA(s[x * 2 + 129]);
+            d1[x * 2 + 8] = PACK_BGRA(s[x * 2 + 136]);
+            d1[x * 2 + 9] = PACK_BGRA(s[x * 2 + 137]);
         }
 
         dest += stride * 2;
@@ -349,8 +349,8 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 }
 
 #undef COMPUTE_CBCR
-#undef PACK_ARGB
-#undef PACK_CMYK
+#undef COMPUTE_CMYK
+#undef PACK_BGRA
 
 #if defined(JPEG_ENABLE_SSE2)
     
