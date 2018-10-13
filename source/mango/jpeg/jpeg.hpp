@@ -271,20 +271,19 @@ namespace jpeg
 
     struct Block
     {
-        QuantTable* qt;
-        int offset;
-        int stride;
+        uint16* qt;
     };
 
     struct ProcessState
     {
+        // NOTE: this is just quantization tables
         Block block[JPEG_MAX_BLOCKS_IN_MCU];
         int blocks;
 
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
 
-	    void (*idct)(uint8* dest, int stride, const BlockType* data, const uint16* qt);
+	    void (*idct)(uint8* dest, const BlockType* data, const uint16* qt);
         void (*process)(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
         void (*clipped)(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
@@ -422,7 +421,7 @@ namespace jpeg
     void arith_decode_ac_refine    (BlockType* output, DecodeState* state);
 #endif
 
-    void idct                      (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+    void idct                      (uint8* dest, const BlockType* data, const uint16* qt);
     void process_Y                 (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr             (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_CMYK              (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
@@ -432,11 +431,11 @@ namespace jpeg
     void process_YCbCr_16x16       (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
 #if defined(JPEG_ENABLE_SIMD)
-    void idct_simd                 (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+    void idct_simd                 (uint8* dest, const BlockType* data, const uint16* qt);
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
-    void idct_sse2                 (uint8* dest, int stride, const BlockType* data, const uint16* qt);
+    void idct_sse2                 (uint8* dest, const BlockType* data, const uint16* qt);
     void process_YCbCr_8x8_sse2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_8x16_sse2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr_16x8_sse2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);

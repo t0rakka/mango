@@ -59,22 +59,14 @@ namespace jpeg
 
 void process_Y(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-	if (width == 8 && height == 8)
-	{
-        // Optimization: FULL block can be directly decoded into the target surface
-	    idct(dest, stride, data, state->block[0].qt->table); // Y
-	}
-	else
-	{
-		uint8 result[64];
-	    idct(result, 8, data, state->block[0].qt->table); // Y
+    uint8 result[64];
+    state->idct(result, data, state->block[0].qt); // Y
 
-	    for (int y = 0; y < height; ++y)
-		{
-			std::memcpy(dest, result + y * 8, width);
-			dest += stride;
-		}
-	}
+    for (int y = 0; y < height; ++y)
+    {
+        std::memcpy(dest, result + y * 8, width);
+        dest += stride;
+    }
 }
 
 void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
@@ -84,46 +76,55 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
     for (int i = 0; i < state->blocks; ++i)
     {
         Block& block = state->block[i];
-        idct(result + block.offset, block.stride, data, block.qt->table);
+        state->idct(result + i * 64, data, block.qt);
         data += 64;
     }
 
-    const int offset0 = state->frame[0].offset;
-    const int offset1 = state->frame[1].offset;
-    const int offset2 = state->frame[2].offset;
+    // MCU size in blocks
+    int xsize = width / 8;
+    int ysize = height / 8;
 
-    const int stride0 = state->block[offset0].stride;
-    const int stride1 = state->block[offset1].stride;
-    const int stride2 = state->block[offset2].stride;
+    int cb_offset = state->frame[1].offset * 64;
+    int cb_xshift = state->frame[1].Hsf;
+    int cb_yshift = state->frame[1].Vsf;
 
-    const int h0 = state->frame[0].Hsf;
-    const int v0 = state->frame[0].Vsf;
-    const int h1 = state->frame[1].Hsf;
-    const int v1 = state->frame[1].Vsf;
-    const int h2 = state->frame[2].Hsf;
-    const int v2 = state->frame[2].Vsf;
+    int cr_offset = state->frame[2].offset * 64;
+    int cr_xshift = state->frame[2].Hsf;
+    int cr_yshift = state->frame[2].Vsf;
 
-    const uint8* p0 = result + offset0 * 64;
-    const uint8* p1 = result + offset1 * 64;
-    const uint8* p2 = result + offset2 * 64;
+    uint8* cb_data = result + cb_offset;
+    uint8* cr_data = result + cr_offset;
 
-    for (int y = 0; y < height; ++y)
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
     {
-        uint32* d = reinterpret_cast<uint32*>(dest);
-        const uint8* s0 = p0 + (y >> v0) * stride0;
-        const uint8* s1 = p1 + (y >> v1) * stride1;
-        const uint8* s2 = p2 + (y >> v2) * stride2;
-
-        for (int x = 0; x < width; ++x)
+        for (int xb = 0; xb < xsize; ++xb)
         {
-            int cb = s1[x >> h1];
-            int cr = s2[x >> h2];
-            int Y = s0[x >> h0];
-            COMPUTE_CBCR(cb, cr);
-            PACK_ARGB(d[x], Y);
-        }
+            uint8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(uint32);
+            uint8* y_block = result + (yb * xsize + xb) * 64;
+            uint8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            uint8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
 
-        dest += stride;
+            // process 8x8 block
+            for (int y = 0; y < 8; ++y)
+            {
+                uint32* d = reinterpret_cast<uint32*>(dest_block);
+
+                uint8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                uint8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+
+                for (int x = 0; x < 8; ++x)
+                {
+                    uint8 Y = y_block[x];
+                    uint8 cb = cb_scan[x >> cb_xshift];
+                    uint8 cr = cr_scan[x >> cr_xshift];
+                    COMPUTE_CBCR(cb, cr);
+                    PACK_ARGB(d[x], Y);
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
     }
 }
 
@@ -134,48 +135,63 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
     for (int i = 0; i < state->blocks; ++i)
     {
         Block& block = state->block[i];
-        idct(result + block.offset, block.stride, data, block.qt->table);
+        state->idct(result + i * 64, data, block.qt);
         data += 64;
     }
 
-    const uint8* p0 = result + state->frame[0].offset * 64;
-    const uint8* p1 = result + state->frame[1].offset * 64;
-    const uint8* p2 = result + state->frame[2].offset * 64;
-    const uint8* p3 = result + state->frame[3].offset * 64;
+    // MCU size in blocks
+    int xsize = width / 8;
+    int ysize = height / 8;
 
-    const int stride0 = state->block[state->frame[0].offset].stride;
-    const int stride1 = state->block[state->frame[1].offset].stride;
-    const int stride2 = state->block[state->frame[2].offset].stride;
-    const int stride3 = state->block[state->frame[3].offset].stride;
+    int cb_offset = state->frame[1].offset * 64;
+    int cb_xshift = state->frame[1].Hsf;
+    int cb_yshift = state->frame[1].Vsf;
 
-    const int h0 = state->frame[0].Hsf;
-    const int v0 = state->frame[0].Vsf;
-    const int h1 = state->frame[1].Hsf;
-    const int v1 = state->frame[1].Vsf;
-    const int h2 = state->frame[2].Hsf;
-    const int v2 = state->frame[2].Vsf;
-    const int h3 = state->frame[3].Hsf;
-    const int v3 = state->frame[3].Vsf;
+    int cr_offset = state->frame[2].offset * 64;
+    int cr_xshift = state->frame[2].Hsf;
+    int cr_yshift = state->frame[2].Vsf;
 
-    for (int y = 0; y < height; ++y)
+    int ck_offset = state->frame[3].offset * 64;
+    int ck_xshift = state->frame[3].Hsf;
+    int ck_yshift = state->frame[3].Vsf;
+
+    uint8* cb_data = result + cb_offset;
+    uint8* cr_data = result + cr_offset;
+    uint8* ck_data = result + ck_offset;
+
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
     {
-        uint32* d = reinterpret_cast<uint32*>(dest);
-        const uint8* s0 = p0 + (y >> v0) * stride0;
-        const uint8* s1 = p1 + (y >> v1) * stride1;
-        const uint8* s2 = p2 + (y >> v2) * stride2;
-        const uint8* s3 = p3 + (y >> v3) * stride3;
-
-        for (int x = 0; x < width; ++x)
+        for (int xb = 0; xb < xsize; ++xb)
         {
-            int cb = s1[x >> h1];
-            int cr = s2[x >> h2];
-            int K = s3[x >> h3];
-            int Y = s0[x >> h0];
-            COMPUTE_CBCR(cb, cr);
-            PACK_CMYK(d[x], Y, K);
-        }
+            uint8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(uint32);
+            uint8* y_block = result + (yb * xsize + xb) * 64;
+            uint8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            uint8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+            uint8* ck_block = ck_data + yb * (8 >> ck_yshift) * 8 + xb * (8 >> ck_xshift);
 
-        dest += stride;
+            // process 8x8 block
+            for (int y = 0; y < 8; ++y)
+            {
+                uint32* d = reinterpret_cast<uint32*>(dest_block);
+
+                uint8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                uint8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+                uint8* ck_scan = ck_block + (y >> ck_yshift) * 8;
+
+                for (int x = 0; x < 8; ++x)
+                {
+                    uint8 Y = y_block[x];
+                    uint8 cb = cb_scan[x >> cb_xshift];
+                    uint8 cr = cr_scan[x >> cr_xshift];
+                    uint8 ck = ck_scan[x >> ck_xshift];
+                    COMPUTE_CBCR(cb, cr);
+                    PACK_CMYK(d[x], Y, ck);
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
     }
 }
 
@@ -183,9 +199,9 @@ void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessSt
 {
     uint8 result[64 * 3];
 
-    state->idct(result + 64 * 0, 8, data + 64 * 0, state->block[0].qt->table); // Y
-    state->idct(result + 64 * 1, 8, data + 64 * 1, state->block[1].qt->table); // Cb
-    state->idct(result + 64 * 2, 8, data + 64 * 2, state->block[2].qt->table); // Cr
+    state->idct(result + 64 * 0, data + 64 * 0, state->block[0].qt); // Y
+    state->idct(result + 64 * 1, data + 64 * 1, state->block[1].qt); // Cb
+    state->idct(result + 64 * 2, data + 64 * 2, state->block[2].qt); // Cr
 
     // color conversion
     const uint8* src = result;
@@ -214,10 +230,10 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
 {
     uint8 result[64 * 4];
 
-    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
-    state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
-    state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
-    state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
+    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
+    state->idct(result + 128, data + 128, state->block[2].qt); // Cb
+    state->idct(result + 192, data + 192, state->block[3].qt); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -247,10 +263,10 @@ void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessS
 {
     uint8 result[64 * 4];
 
-    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
-    state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
-    state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
-    state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
+    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
+    state->idct(result + 128, data + 128, state->block[2].qt); // Cb
+    state->idct(result + 192, data + 192, state->block[3].qt); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -288,12 +304,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 {
     uint8 result[64 * 6];
 
-    state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
-    state->idct(result + 128, 8, data +  64, state->block[1].qt->table); // Y1
-    state->idct(result +  64, 8, data + 128, state->block[2].qt->table); // Y2
-    state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Y3
-    state->idct(result + 256, 8, data + 256, state->block[4].qt->table); // Cb
-    state->idct(result + 320, 8, data + 320, state->block[5].qt->table); // Cr
+    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+    state->idct(result + 128, data +  64, state->block[1].qt); // Y1
+    state->idct(result +  64, data + 128, state->block[2].qt); // Y2
+    state->idct(result + 192, data + 192, state->block[3].qt); // Y3
+    state->idct(result + 256, data + 256, state->block[4].qt); // Cb
+    state->idct(result + 320, data + 320, state->block[5].qt); // Cr
 
     // color conversion
     for (int y = 0; y < 8; ++y)
@@ -410,9 +426,9 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     {
         uint8 result[64 * 3];
 
-        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y
-        state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Cb
-        state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cr
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y
+        state->idct(result +  64, data +  64, state->block[1].qt); // Cb
+        state->idct(result + 128, data + 128, state->block[2].qt); // Cr
 
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
@@ -454,10 +470,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     {
         uint8 result[64 * 4];
 
-        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
-        state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
-        state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
-        state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+        state->idct(result +  64, data +  64, state->block[1].qt); // Y1
+        state->idct(result + 128, data + 128, state->block[2].qt); // Cb
+        state->idct(result + 192, data + 192, state->block[3].qt); // Cr
 
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
@@ -506,10 +522,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     {
         uint8 result[64 * 4];
 
-        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
-        state->idct(result +  64, 8, data +  64, state->block[1].qt->table); // Y1
-        state->idct(result + 128, 8, data + 128, state->block[2].qt->table); // Cb
-        state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Cr
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+        state->idct(result +  64, data +  64, state->block[1].qt); // Y1
+        state->idct(result + 128, data + 128, state->block[2].qt); // Cb
+        state->idct(result + 192, data + 192, state->block[3].qt); // Cr
 
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
@@ -574,12 +590,12 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     {
         uint8 result[64 * 6];
 
-        state->idct(result +   0, 8, data +   0, state->block[0].qt->table); // Y0
-        state->idct(result + 128, 8, data +  64, state->block[1].qt->table); // Y1
-        state->idct(result +  64, 8, data + 128, state->block[2].qt->table); // Y2
-        state->idct(result + 192, 8, data + 192, state->block[3].qt->table); // Y3
-        state->idct(result + 256, 8, data + 256, state->block[4].qt->table); // Cb
-        state->idct(result + 320, 8, data + 320, state->block[5].qt->table); // Cr
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+        state->idct(result + 128, data +  64, state->block[1].qt); // Y1
+        state->idct(result +  64, data + 128, state->block[2].qt); // Y2
+        state->idct(result + 192, data + 192, state->block[3].qt); // Y3
+        state->idct(result + 256, data + 256, state->block[4].qt); // Cb
+        state->idct(result + 320, data + 320, state->block[5].qt); // Cr
 
         // color conversion
         const __m128i s0 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));

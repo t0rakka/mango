@@ -51,7 +51,7 @@ namespace jpeg
     // Generic C++ implementation
     // ------------------------------------------------------------------------------------------------
 
-    void idct(uint8* dest, int stride, const BlockType* data, const uint16* qt)
+    void idct(uint8* dest, const BlockType* data, const uint16* qt)
     {
         int temp[64];
         int* v;
@@ -128,7 +128,7 @@ namespace jpeg
             dest[5] = byteclamp((idct.x2 - idct.y1) >> 17);
             dest[6] = byteclamp((idct.x1 - idct.y2) >> 17);
             dest[7] = byteclamp((idct.x0 - idct.y3) >> 17);
-            dest += stride;
+            dest += 8;
         }
     }
 
@@ -167,7 +167,7 @@ namespace jpeg
         return simd::narrow(d0.m, d1.m);
     }
 
-    void idct_simd(uint8* dest, int stride, const BlockType* data, const uint16* qt)
+    void idct_simd(uint8* dest, const BlockType* data, const uint16* qt)
     {
         float32x4 temp[16];
         float32x4* v = temp;
@@ -228,21 +228,10 @@ namespace jpeg
             float32x4 y2 = madd(madd(madd(v1.zzzz * c4, v3.zzzz, c5), v5.zzzz, c6), v7.zzzz, c7);
             float32x4 y3 = madd(madd(madd(v1.wwww * c4, v3.wwww, c5), v5.wwww, c6), v7.wwww, c7);
 
-            if (stride == 8)
-            {
-                uint8x16* d = reinterpret_cast<uint8x16 *>(dest);
-                d[0] = packRow2(x3, y3, x2, y2);
-                d[1] = packRow2(x1, y1, x0, y0);
-            }
-            else
-            {
-                store_low(dest + stride * 0, packRow(x3, y3));
-                store_low(dest + stride * 1, packRow(x2, y2));
-                store_low(dest + stride * 2, packRow(x1, y1));
-                store_low(dest + stride * 3, packRow(x0, y0));
-            }
-
-            dest += stride * 4;
+            uint8x16* d = reinterpret_cast<uint8x16 *>(dest);
+            d[0] = packRow2(x3, y3, x2, y2);
+            d[1] = packRow2(x1, y1, x0, y0);
+            dest += 8 * 4;
             --v;
         }
     }
@@ -373,10 +362,8 @@ namespace jpeg
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    void idct_sse2(uint8* dest, int stride, const BlockType* src, const uint16* qt)
+    void idct_sse2(uint8* dest, const BlockType* src, const uint16* qt)
     {
-        MANGO_UNREFERENCED_PARAMETER(stride);
-
         const __m128i* data = reinterpret_cast<const __m128i *>(src);
         const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
 
