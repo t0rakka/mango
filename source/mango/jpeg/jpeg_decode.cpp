@@ -509,6 +509,7 @@ namespace jpeg
         is_progressive = false;
         is_arithmetic = false;
         is_lossless = false;
+        is_differential = false;
 
         uint16 length = uload16be(p + 0);
         precision = p[2];
@@ -562,10 +563,12 @@ namespace jpeg
 
         switch (marker)
         {
-            case MARKER_SOF3:
             case MARKER_SOF7:
-            case MARKER_SOF11:
             case MARKER_SOF15:
+                is_differential = true;
+                // fall-through
+            case MARKER_SOF3:
+            case MARKER_SOF11:
                 is_lossless = true;
                 break;
         }

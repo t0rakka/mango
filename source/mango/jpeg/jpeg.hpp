@@ -331,6 +331,7 @@ namespace jpeg
         bool is_progressive;
         bool is_arithmetic;
         bool is_lossless;
+        bool is_differential;
         int Hmax;
         int Vmax;
         int blocks_in_mcu;
