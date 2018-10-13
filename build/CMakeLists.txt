@@ -131,6 +131,13 @@ ADD_LIBRARY(mango-vulkan
 target_link_libraries(mango-opengl PUBLIC mango)
 target_link_libraries(mango-vulkan PUBLIC mango)
 
+# add "-lpthreads" linker option when platform has support
+find_package(Threads)
+if (CMAKE_THREAD_LIBS_INIT)
+    target_link_libraries(mango "${CMAKE_THREAD_LIBS_INIT}")
+endif ()
+
+# OpenGL requires Cocoa and OpenGL frameworks on macOS
 if (APPLE AND BUILD_SHARED_LIBS)
     target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
 endif ()
@@ -180,7 +187,7 @@ else ()
         target_compile_options(mango PUBLIC "-ftree-vectorize")
     endif ()
 
-    if (ENABLE_FAST_MATH) 
+    if (ENABLE_FAST_MATH)
         target_compile_options(mango PUBLIC "-ffast-math")
     endif ()
 
