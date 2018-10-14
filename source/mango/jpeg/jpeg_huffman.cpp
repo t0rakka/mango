@@ -103,6 +103,28 @@ namespace jpeg
     // huffman decoder
     // ----------------------------------------------------------------------------
 
+    void huff_decode_mcu_lossless(BlockType* output, DecodeState* state)
+    {
+        Huffman& huffman = state->huffman;
+        jpegBuffer& buffer = state->buffer;
+
+        for (int j = 0; j < state->blocks; ++j)
+        {
+            const DecodeBlock* block = state->block + j;
+            const HuffTable* dc_table = block->table.dc;
+
+            int s;
+            HUFF_DECODE(s, dc_table);
+            if (s)
+            {
+                HUFF_RECEIVE(buffer, s);
+            }
+
+            s += huffman.last_dc_value[block->pred];
+            output[j] = s;
+        }
+    }
+
     void huff_decode_mcu(BlockType* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;

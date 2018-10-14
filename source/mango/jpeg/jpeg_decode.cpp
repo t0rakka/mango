@@ -808,7 +808,11 @@ namespace jpeg
 
             arithmetic.restart(decodeState.buffer);
 
-            if (is_progressive)
+            if (is_lossless)
+            {
+                // TODO: arithmetic lossless decoder - NEED TEST FILES
+            }
+            else if (is_progressive)
             {
                 if (dc_scan)
                 {
@@ -857,7 +861,11 @@ namespace jpeg
 
             huffman.restart();
 
-            if (is_progressive)
+            if (is_lossless)
+            {
+                decodeLossless();
+            }
+            else if (is_progressive)
             {
                 if (dc_scan)
                 {
@@ -1360,6 +1368,80 @@ namespace jpeg
         status.info = m_info;
 
         return status;
+    }
+
+    void Parser::decodeLossless()
+    {
+        uint8 predictor = decodeState.spectralStart;
+        int *previousDC = decodeState.huffman.last_dc_value;
+
+        std::vector<int> scanLineCache[JPEG_MAX_BLOCKS_IN_MCU];
+
+        const int components = decodeState.comps_in_scan;
+        const int xlast = m_surface->width - 1;
+
+        for (int i = 0; i < components; ++i)
+        {
+            scanLineCache[i] = std::vector<int>(m_surface->width + 1, 0);
+        }
+
+        for (int y = 0; y < m_surface->height; ++y)
+        {
+            for (int x = 0; x < m_surface->width; ++x)
+            {
+                BlockType data[JPEG_MAX_BLOCKS_IN_MCU];
+                huff_decode_mcu_lossless(data, &decodeState);
+
+                for (int currentComponent = 0; currentComponent < components; ++currentComponent)
+                {
+                    // Predictors
+                    int* slc = scanLineCache[currentComponent].data();
+                    int Ra = data[currentComponent];
+                    int Rb = slc[x + 1];
+                    int Rc = slc[x];
+
+                    if (x == 0 && y == 0)
+                        previousDC[currentComponent] = 0; // TODO: initial value
+                    else if (predictor == 0) 
+                        previousDC[currentComponent] = 0;
+                    else if (x == xlast)
+                        previousDC[currentComponent] = slc[0];
+                    else if (predictor == 1 || y == 0)
+                        previousDC[currentComponent] = Ra;
+                    else if (predictor == 2)
+                        previousDC[currentComponent] = Rb;
+                    else if (predictor == 3)
+                        previousDC[currentComponent] = Rc;
+                    else if (predictor == 4)
+                        previousDC[currentComponent] = Ra + Rb - Rc;
+                    else if (predictor == 5)
+                        previousDC[currentComponent] = Ra + ((Rb - Rc) >> 1);
+                    else if (predictor == 6)
+                        previousDC[currentComponent] = Rb + ((Ra - Rc) >> 1);
+                    else if (predictor == 7)
+                        previousDC[currentComponent] = (Ra + Rb) >> 1;
+
+                    slc[x] = data[currentComponent];
+                    data[currentComponent] = data[currentComponent] >> (precision - 8);
+                }
+
+                // TODO: optimize
+                if (components == 1)
+                {
+                    int s = byteclamp(data[0] + 128);
+                    uint8* image = m_surface->address<uint8>(x, y);
+                    image[0] = s;
+                }
+                else
+                {
+                    int r = byteclamp(data[0] + 128);
+                    int g = byteclamp(data[1] + 128);
+                    int b = byteclamp(data[2] + 128);
+                    uint32* image = m_surface->address<uint32>(x, y);
+                    image[0] = makeBGRA(r, g, b, 255);
+                }
+            }
+        }
     }
 
     void Parser::decodeSequential()
