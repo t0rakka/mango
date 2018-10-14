@@ -80,8 +80,8 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
     }
 
     // MCU size in blocks
-    int xsize = width / 8;
-    int ysize = height / 8;
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
 
     int cb_offset = state->frame[1].offset * 64;
     int cb_xshift = state->frame[1].Hsf;
@@ -97,6 +97,9 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
     // process MCU
     for (int yb = 0; yb < ysize; ++yb)
     {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
         for (int xb = 0; xb < xsize; ++xb)
         {
             uint8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(uint32);
@@ -104,15 +107,18 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
             uint8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
             uint8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
 
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
             // process 8x8 block
-            for (int y = 0; y < 8; ++y)
+            for (int y = 0; y < ymax; ++y)
             {
                 uint32* d = reinterpret_cast<uint32*>(dest_block);
 
                 uint8* cb_scan = cb_block + (y >> cb_yshift) * 8;
                 uint8* cr_scan = cr_block + (y >> cr_yshift) * 8;
 
-                for (int x = 0; x < 8; ++x)
+                for (int x = 0; x < xmax; ++x)
                 {
                     uint8 Y = y_block[x];
                     uint8 cb = cb_scan[x >> cb_xshift];
@@ -139,8 +145,8 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
     }
 
     // MCU size in blocks
-    int xsize = width / 8;
-    int ysize = height / 8;
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
 
     int cb_offset = state->frame[1].offset * 64;
     int cb_xshift = state->frame[1].Hsf;
@@ -161,6 +167,9 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
     // process MCU
     for (int yb = 0; yb < ysize; ++yb)
     {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
         for (int xb = 0; xb < xsize; ++xb)
         {
             uint8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(uint32);
@@ -169,8 +178,11 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
             uint8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
             uint8* ck_block = ck_data + yb * (8 >> ck_yshift) * 8 + xb * (8 >> ck_xshift);
 
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
             // process 8x8 block
-            for (int y = 0; y < 8; ++y)
+            for (int y = 0; y < ymax; ++y)
             {
                 uint32* d = reinterpret_cast<uint32*>(dest_block);
 
@@ -178,7 +190,7 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
                 uint8* cr_scan = cr_block + (y >> cr_yshift) * 8;
                 uint8* ck_scan = ck_block + (y >> ck_yshift) * 8;
 
-                for (int x = 0; x < 8; ++x)
+                for (int x = 0; x < xmax; ++x)
                 {
                     uint8 Y = y_block[x];
                     uint8 cb = cb_scan[x >> cb_xshift];
