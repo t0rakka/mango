@@ -1375,13 +1375,15 @@ namespace jpeg
     void Parser::decodeLossless()
     {
         int predictor = decodeState.spectralStart;
-        //int pointTransform = decodeState.successiveLow;
+        int pointTransform = decodeState.successiveLow;
         int* previousDC = decodeState.huffman.last_dc_value;
 
         const int width = m_surface->width;
         const int height = m_surface->height;
         const int xlast = width - 1;
         const int components = decodeState.comps_in_scan;
+
+        int initPredictor = 1 << (precision - pointTransform - 1);
 
         std::vector<int> scanLineCache[JPEG_MAX_BLOCKS_IN_MCU];
 
@@ -1407,28 +1409,34 @@ namespace jpeg
                     int* cache = scanLineCache[currentComponent].data();
                     int Ra = data[currentComponent];
                     int Rb = cache[x + 1];
-                    int Rc = cache[x];
+                    int Rc = cache[x + 0];
 
-                    if (x == 0 && y == 0)
-                        previousDC[currentComponent] = 0; // TODO: initial value
+                    int Px;
+
+                    if ((x == 0 && y == 0) || restarted)
+                        Px = initPredictor;
                     else if (predictor == 0) 
-                        previousDC[currentComponent] = 0;
+                        Px = 0;
                     else if (x == xlast)
-                        previousDC[currentComponent] = cache[0];
-                    else if (predictor == 1 || y == 0)
-                        previousDC[currentComponent] = Ra;
+                        Px = cache[0];
+                    else if (predictor == 1 || y == 0 || restarted)
+                        Px = Ra;
                     else if (predictor == 2)
-                        previousDC[currentComponent] = Rb;
+                        Px = Rb;
                     else if (predictor == 3)
-                        previousDC[currentComponent] = Rc;
+                        Px = Rc;
                     else if (predictor == 4)
-                        previousDC[currentComponent] = Ra + Rb - Rc;
+                        Px = Ra + Rb - Rc;
                     else if (predictor == 5)
-                        previousDC[currentComponent] = Ra + ((Rb - Rc) >> 1);
+                        Px = Ra + ((Rb - Rc) >> 1);
                     else if (predictor == 6)
-                        previousDC[currentComponent] = Rb + ((Ra - Rc) >> 1);
+                        Px = Rb + ((Ra - Rc) >> 1);
                     else if (predictor == 7)
-                        previousDC[currentComponent] = (Ra + Rb) >> 1;
+                        Px = (Ra + Rb) >> 1;
+                    else
+                        Px = 0;
+
+                    previousDC[currentComponent] = Px;
 
                     cache[x] = data[currentComponent];
                     data[currentComponent] = data[currentComponent] >> (precision - 8);
