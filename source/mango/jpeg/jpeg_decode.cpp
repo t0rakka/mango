@@ -810,7 +810,8 @@ namespace jpeg
 
             if (is_lossless)
             {
-                // TODO: arithmetic lossless decoder - NEED TEST FILES
+                // TODO: arithmetic lossless decoder
+                // NOTE: NEED TEST FILES!!!
             }
             else if (is_progressive)
             {
