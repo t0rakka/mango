@@ -1303,10 +1303,11 @@ namespace jpeg
             {
                 restart();
                 decodeState.buffer.ptr += 2;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     Status Parser::decode(Surface& target)
@@ -1373,40 +1374,47 @@ namespace jpeg
 
     void Parser::decodeLossless()
     {
-        uint8 predictor = decodeState.spectralStart;
-        int *previousDC = decodeState.huffman.last_dc_value;
+        int predictor = decodeState.spectralStart;
+        //int pointTransform = decodeState.successiveLow;
+        int* previousDC = decodeState.huffman.last_dc_value;
+
+        const int width = m_surface->width;
+        const int height = m_surface->height;
+        const int xlast = width - 1;
+        const int components = decodeState.comps_in_scan;
 
         std::vector<int> scanLineCache[JPEG_MAX_BLOCKS_IN_MCU];
 
-        const int components = decodeState.comps_in_scan;
-        const int xlast = m_surface->width - 1;
-
         for (int i = 0; i < components; ++i)
         {
-            scanLineCache[i] = std::vector<int>(m_surface->width + 1, 0);
+            scanLineCache[i] = std::vector<int>(width + 1, 0);
         }
 
-        for (int y = 0; y < m_surface->height; ++y)
+        for (int y = 0; y < height; ++y)
         {
-            for (int x = 0; x < m_surface->width; ++x)
+            for (int x = 0; x < width; ++x)
             {
                 BlockType data[JPEG_MAX_BLOCKS_IN_MCU];
                 huff_decode_mcu_lossless(data, &decodeState);
+                bool restarted = handleRestart();
+                if (restarted)
+                {
+                }
 
                 for (int currentComponent = 0; currentComponent < components; ++currentComponent)
                 {
                     // Predictors
-                    int* slc = scanLineCache[currentComponent].data();
+                    int* cache = scanLineCache[currentComponent].data();
                     int Ra = data[currentComponent];
-                    int Rb = slc[x + 1];
-                    int Rc = slc[x];
+                    int Rb = cache[x + 1];
+                    int Rc = cache[x];
 
                     if (x == 0 && y == 0)
                         previousDC[currentComponent] = 0; // TODO: initial value
                     else if (predictor == 0) 
                         previousDC[currentComponent] = 0;
                     else if (x == xlast)
-                        previousDC[currentComponent] = slc[0];
+                        previousDC[currentComponent] = cache[0];
                     else if (predictor == 1 || y == 0)
                         previousDC[currentComponent] = Ra;
                     else if (predictor == 2)
@@ -1422,7 +1430,7 @@ namespace jpeg
                     else if (predictor == 7)
                         previousDC[currentComponent] = (Ra + Rb) >> 1;
 
-                    slc[x] = data[currentComponent];
+                    cache[x] = data[currentComponent];
                     data[currentComponent] = data[currentComponent] >> (precision - 8);
                 }
 
