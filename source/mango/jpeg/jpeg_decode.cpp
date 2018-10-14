@@ -810,8 +810,7 @@ namespace jpeg
 
             if (is_lossless)
             {
-                // TODO: arithmetic lossless decoder
-                // NOTE: NEED TEST FILES!!!
+                decodeLossless();
             }
             else if (is_progressive)
             {
@@ -1423,6 +1422,9 @@ namespace jpeg
                     int Rc = cache[x + 0];
 
                     int Px;
+
+                    // NOTE: need more test files to make this more conformant
+                    // NOTE: color sub-sampling is not supported (need test files)
 
                     if ((x == 0 && y == 0) || restarted)
                         Px = initPredictor;
