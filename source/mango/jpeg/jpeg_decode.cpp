@@ -1376,7 +1376,20 @@ namespace jpeg
     {
         int predictor = decodeState.spectralStart;
         int pointTransform = decodeState.successiveLow;
+
+        auto decodeFunction = huff_decode_mcu_lossless;
         int* previousDC = decodeState.huffman.last_dc_value;
+
+        if (is_arithmetic)
+        {
+#ifdef MANGO_ENABLE_LICENSE_BSD
+            decodeFunction = arith_decode_mcu_lossless;
+            previousDC = decodeState.arithmetic.last_dc_value;
+#else
+            // We don't have a license for arithmetic decoder
+            return;
+#endif
+        }
 
         const int width = m_surface->width;
         const int height = m_surface->height;
@@ -1397,11 +1410,9 @@ namespace jpeg
             for (int x = 0; x < width; ++x)
             {
                 BlockType data[JPEG_MAX_BLOCKS_IN_MCU];
-                huff_decode_mcu_lossless(data, &decodeState);
+
+                decodeFunction(data, &decodeState);
                 bool restarted = handleRestart();
-                if (restarted)
-                {
-                }
 
                 for (int currentComponent = 0; currentComponent < components; ++currentComponent)
                 {

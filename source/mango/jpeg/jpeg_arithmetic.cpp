@@ -145,6 +145,76 @@ namespace jpeg
     // arithmetic decoder
     // ----------------------------------------------------------------------------
 
+    void arith_decode_mcu_lossless(BlockType* output, DecodeState* state)
+    {
+        Arithmetic& arithmetic = state->arithmetic;
+        jpegBuffer& buffer = state->buffer;
+        DecodeBlock* block = state->block;
+
+        for (int j = 0; j < state->blocks; ++j)
+        {
+            const int ci = block->pred;
+
+            // DC
+            int tbl = block->index.dc;
+            uint8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
+
+            if (arith_decode(arithmetic, buffer, st) == 0)
+            {
+                arithmetic.dc_context[ci] = 0;
+            }
+            else
+            {
+                int sign;
+                int v, m;
+
+                sign = arith_decode(arithmetic, buffer, st + 1);
+                st += 2;
+                st += sign;
+
+                if ((m = arith_decode(arithmetic, buffer, st)) != 0)
+                {
+                    st = arithmetic.dc_stats[tbl] + 20;
+                    while (arith_decode(arithmetic, buffer, st))
+                    {
+                        m <<= 1;
+                        ++st;
+                    }
+                }
+
+                if (m < (int) ((1L << arithmetic.dc_L[tbl]) >> 1))
+                {
+                    // zero diff category
+                    arithmetic.dc_context[ci] = 0;
+                }
+                else if (m > (int) ((1L << arithmetic.dc_U[tbl]) >> 1))
+                {
+                    // large diff category
+                    arithmetic.dc_context[ci] = 12 + (sign * 4);
+                }
+                else
+                {
+                    // small diff category
+                    arithmetic.dc_context[ci] = 4 + (sign * 4);
+                }
+
+                v = m;
+
+                st += 14;
+                while (m >>= 1)
+                {
+                    if (arith_decode(arithmetic, buffer, st))
+                        v |= m;
+                }
+
+                v += 1; if (sign) v = -v;
+                arithmetic.last_dc_value[ci] += v;
+            }
+
+            output[j] = static_cast<BlockType>(arithmetic.last_dc_value[ci]);
+        }
+    }
+
     void arith_decode_mcu(BlockType* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;

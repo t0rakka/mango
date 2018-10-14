@@ -417,6 +417,7 @@ namespace jpeg
     void huff_decode_ac_refine      (BlockType* output, DecodeState* state);
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
+    void arith_decode_mcu_lossless  (BlockType* output, DecodeState* state);
     void arith_decode_mcu           (BlockType* output, DecodeState* state);
     void arith_decode_dc_first      (BlockType* output, DecodeState* state);
     void arith_decode_dc_refine     (BlockType* output, DecodeState* state);
