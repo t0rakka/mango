@@ -271,11 +271,12 @@ using mango::opengl::Context;
     }
 
     // enable file drop events
-#if 0
+#if 1
     // deprecated in 10.14
     [self registerForDraggedTypes:[NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
 #else
     // requires 10.13 or later version
+    // TODO: does not work, fix
     [self registerForDraggedTypes:[NSArray arrayWithObjects: NSPasteboardTypeFileURL, nil]];
 #endif
     
@@ -485,19 +486,21 @@ using mango::opengl::Context;
 {
     NSPasteboard *pboard = [sender draggingPasteboard];
 
-#if 0
+#if 1
     // deprecated in 10.14
     if ([[pboard types] containsObject:NSFilenamesPboardType])
 #else
     // requires 10.13 or later version
+    // TODO: does not work, fix
     if ([[pboard types] containsObject:NSPasteboardTypeFileURL])
 #endif
     {
-#if 0
+#if 1
         // deprecated in 10.14
         NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
 #else
         // requires 10.13 or later version
+        // TODO: does not work, fix
         NSArray *files = [pboard propertyListForType:NSPasteboardTypeFileURL];
 #endif
         int numberOfFiles = (int) [files count];
