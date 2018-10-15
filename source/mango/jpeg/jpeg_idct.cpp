@@ -138,6 +138,7 @@ namespace jpeg
     // SIMD implementation
     // ------------------------------------------------------------------------------------------------
 
+#if 0
     static inline uint8x16 packRow(float32x4 x, float32x4 y)
     {
         float32x4 a = x - y;
@@ -147,6 +148,7 @@ namespace jpeg
         uint16x8 c1 = reinterpret<uint16x8>(c0);
         return simd::narrow(c1.m, c1.m);
     }
+#endif
 
     static inline uint8x16 packRow2(float32x4 x0, float32x4 y0, float32x4 x1, float32x4 y1)
     {
