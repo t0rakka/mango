@@ -100,7 +100,7 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Opening \"%s\" failed.". filename.c_str());
+                MANGO_EXCEPTION(ID"Opening \"%s\" failed.", filename.c_str());
             }
         }
 
