@@ -19,6 +19,20 @@ namespace
 
     enum { DCKEYSIZE = 12 };
 
+    enum Compression : u8
+    {
+        COMPRESSION_STORE = 0,
+        COMPRESSION_DEFLATE = 8,
+        COMPRESSION_ENHANCED_DEFLATE = 9,
+        COMPRESSION_BZIP2 = 12,
+        COMPRESSION_WAVPACK = 97,
+        COMPRESSION_PPMD = 98,
+        COMPRESSION_LZMA = 14,
+        COMPRESSION_JPEG = 96,
+        COMPRESSION_AES = 99,
+        COMPRESSION_XZ = 95
+    };
+
     struct LocalFileHeader
     {
         uint32  signature;         // 0x04034b50 ("PK..")
@@ -507,13 +521,24 @@ namespace mango
 
             switch (header.compression)
             {
-                case 0:
+                case COMPRESSION_STORE:
                     compressed = false;
                     break;
 
-                case 8:
+                case COMPRESSION_DEFLATE:
                     compressed = true;
                     break;
+
+#if 0 // new compression/encryption methods in .zipx format
+                case COMPRESSION_ENHANCED_DEFLATE:
+                case COMPRESSION_BZIP2:
+                case COMPRESSION_WAVPACK:
+                case COMPRESSION_PPMD:
+                case COMPRESSION_LZMA:
+                case COMPRESSION_JPEG:
+                case COMPRESSION_AES:
+                case COMPRESSION_XZ:
+#endif
 
                 default:
                     // compression algorithm not supported
