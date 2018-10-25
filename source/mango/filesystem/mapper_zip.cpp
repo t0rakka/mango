@@ -286,14 +286,14 @@ namespace
 	inline uint8 zip_decrypt_value(uint32* keys)
 	{
 		uint32 temp = (keys[2] & 0xffff) | 2;
-		return static_cast<uint8>(((temp * (temp ^ 1)) >> 8) & 0xff);
+		return u8(((temp * (temp ^ 1)) >> 8) & 0xff);
 	}
 
 	inline void zip_update(uint32* keys, uint8 v)
 	{
 		keys[0] = zip_crc32(keys[0], v);
 		keys[1] = 1 + (keys[1] + (keys[0] & 0xff)) * 134775813L;
-		keys[2] = zip_crc32(keys[2], static_cast<uint8>(keys[1] >> 24));
+		keys[2] = zip_crc32(keys[2], u8(keys[1] >> 24));
 	}
 
 	void zip_decrypt_buffer(uint8* out, const uint8* in, uint64 size, uint32* keys)
@@ -357,6 +357,14 @@ namespace
 		    // NOTE: the CRC/password check should be same for version > 3.0
 		    //       but some compression programs don't create compatible
 		    //       dcheader so the check would fail above.
+
+#if 0 // TODO: the condition is reversed here.. need more testing (check specs!)
+			if (keyfile[11] == (crc >> 24))
+			{
+				// incorrect password
+				return false;
+			}
+#endif
 		}
 
 		// read compressed data & decrypt
