@@ -39,6 +39,14 @@
 
 #endif
 
+#ifdef JPEG_ENABLE_PRINT
+
+    #define jpegPrint(...) printf(__VA_ARGS__)
+#else
+
+    #define jpegPrint(...)
+#endif
+
 namespace jpeg
 {
 
@@ -390,18 +398,6 @@ namespace jpeg
 
         Status decode(Surface& target);
     };
-
-    // ----------------------------------------------------------------------------
-    // jpegPrint
-    // ----------------------------------------------------------------------------
-
-#ifdef JPEG_ENABLE_PRINT
-
-    #define jpegPrint(...) printf(__VA_ARGS__)
-#else
-
-    #define jpegPrint(...)
-#endif
 
     // ----------------------------------------------------------------------------
     // functions

@@ -6,6 +6,7 @@
 
 #include <string>
 #include "configure.hpp"
+#include "string.hpp"
 
 namespace mango
 {
@@ -53,11 +54,11 @@ namespace mango
     };
 
 #ifdef MANGO_PLATFORM_WINDOWS
-    #define MANGO_EXCEPTION(message) \
-        throw mango::Exception(message, __FUNCTION__, __FILE__, __LINE__)
+    #define MANGO_EXCEPTION(...) \
+        throw mango::Exception(mango::makeString(__VA_ARGS__), __FUNCTION__, __FILE__, __LINE__)
 #else
-    #define MANGO_EXCEPTION(message) \
-        throw mango::Exception(message, __func__, __FILE__, __LINE__)
+    #define MANGO_EXCEPTION(...) \
+        throw mango::Exception(mango::makeString(__VA_ARGS__), __func__, __FILE__, __LINE__)
 #endif
 
 } // namespace mango

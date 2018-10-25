@@ -517,7 +517,7 @@ namespace mango
 
                 default:
                     // compression algorithm not supported
-                    MANGO_EXCEPTION(ID"Unsupported compression algorithm.");
+                    MANGO_EXCEPTION(ID"Unsupported compression algorithm (%d).", header.compression);
             }
 
             LittleEndianPointer p = start + header.localOffset;

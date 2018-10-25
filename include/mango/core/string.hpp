@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdarg>
 #include "configure.hpp"
 
 namespace mango
@@ -30,6 +31,8 @@ namespace mango
     std::vector<std::string> split(const std::string& s, char delimiter);
     std::vector<std::string> split(const std::string& s, const char* delimiter);
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
+    std::string makeString(const std::string& s);
+    std::string makeString(const char* format, ...);
 
     // filename manipulation (example: "foo/bar/readme.txt")
     std::string getPath(const std::string& filename);           // "foo/bar/"
