@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/pointer.hpp>
@@ -19,6 +19,15 @@ namespace
 
     enum { DCKEYSIZE = 12 };
 
+    enum Encryption : u8
+    {
+        ENCRYPTION_NONE = 0,
+        ENCRYPTION_CLASSIC = 1,
+        ENCRYPTION_AES128 = 2,
+        ENCRYPTION_AES192 = 3,
+        ENCRYPTION_AES256 = 4,
+    };
+
     enum Compression : u8
     {
         COMPRESSION_STORE = 0,
@@ -32,6 +41,27 @@ namespace
         COMPRESSION_AES = 99,
         COMPRESSION_XZ = 95
     };
+
+    u32 getSaltLength(Encryption encryption)
+    {
+        u32 length = 0;
+        switch (encryption)
+        {
+            case ENCRYPTION_AES128:
+                length = 8;
+                break;
+            case ENCRYPTION_AES192:
+                length = 12;
+                break;
+            case ENCRYPTION_AES256:
+                length = 16;
+                break;
+            default:
+                length = 0;
+                break;
+        }
+        return length;
+    }
 
     struct LocalFileHeader
     {
@@ -76,10 +106,14 @@ namespace
                     uint8* next = e + size;
                     switch (magic)
                     {
-                        case 0x01:
+                        case 0x0001:
                             // ZIP64 extended field
                             if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
                             if (compressedSize == 0xffffffff) compressedSize = e.read64();
+                            break;
+
+                        case 0x9901:
+                            // AES header
                             break;
                     }
                     ext = next;
@@ -115,6 +149,7 @@ namespace
 
         std::string filename;      // filename is stored after the header
         bool        folder;        // if the last character of filename is "/", it is a folder
+        Encryption  encryption;
 
         DirFileHeader()
         {
@@ -158,11 +193,12 @@ namespace
                 }
 
                 filename = std::string(s, filenameLen);
+                encryption = flags & 1 ? ENCRYPTION_CLASSIC : ENCRYPTION_NONE;
 
                 // read extra fields
                 uint8* ext = p;
                 uint8* end = p + extraFieldLen;
-                for (; ext < end;)
+                for ( ; ext < end;)
                 {
                     LittleEndianPointer e = ext;
                     uint16 magic = e.read16();
@@ -170,12 +206,30 @@ namespace
                     uint8* next = e + size;
                     switch (magic)
                     {
-                        case 0x01:
+                        case 0x0001:
                             // ZIP64 extended field
                             if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
                             if (compressedSize == 0xffffffff) compressedSize = e.read64();
                             if (localOffset == 0xffffffff) localOffset = e.read64();
                             if (diskStart == 0xffff) e += 4;
+                            break;
+
+                        case 0x9901:
+                            // AES header
+                            u16 version = e.read16();
+                            u16 magic = e.read16(); // must be 'AE' (0x41, 0x45)
+                            u8 mode = e.read8();
+                            compression = e.read8(); // override compression algorithm
+
+                            if (version < 1 || version > 2 || magic != 0x4541)
+                                MANGO_EXCEPTION(ID"Incorrect AES header.");
+
+                            // select encryption mode
+                            if (mode == 1) encryption = ENCRYPTION_AES128;
+                            else if (mode == 2) encryption = ENCRYPTION_AES192;
+                            else if (mode == 3) encryption = ENCRYPTION_AES256;
+                            else MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+
                             break;
                     }
                     ext = next;
@@ -516,7 +570,6 @@ namespace mango
 
         VirtualMemory* mmap(const DirFileHeader& header, uint8* start, const std::string& password)
         {
-            bool encrypted = (header.flags & 1) != 0;
             bool compressed = false;
 
             switch (header.compression)
@@ -560,14 +613,14 @@ namespace mango
 
             uint8* buffer = nullptr; // remember allocated memory
 
-            if (encrypted)
+            if (header.encryption == ENCRYPTION_CLASSIC)
             {
                 // decryption header
                 uint8* dcheader = address;
                 address += DCKEYSIZE;
 
-                // NOTE: decryption limited on 32 bit platforms
-                const std::size_t compressed_size = static_cast<std::size_t>(header.compressedSize);
+                // NOTE: decryption capability reduced on 32 bit platforms
+                const size_t compressed_size = size_t(header.compressedSize);
                 buffer = new uint8[compressed_size];
 
                 bool status = zip_decrypt(buffer, address, header.compressedSize, dcheader,
@@ -579,6 +632,32 @@ namespace mango
                 }
 
                 address = buffer;
+            }
+            else if (header.encryption == ENCRYPTION_AES128 ||
+                     header.encryption == ENCRYPTION_AES192 ||
+                     header.encryption == ENCRYPTION_AES256)
+            {
+                u32 salt_length = getSaltLength(header.encryption);
+                MANGO_UNREFERENCED_PARAMETER(salt_length);
+
+                MANGO_EXCEPTION(ID"AES encryption is not yet supported.");
+#if 0                
+                u8* saltvalue = address;
+                address += salt_length;
+
+                u8* passverify = address;
+                address += AES_PWVERIFYSIZE;
+
+                address += HMAC_LENGTH;
+
+                size_t compressed_size = size_t(header.compressedSize);
+                compressed_size -= salt_length;
+                compressed_size -= AES_PWVERIFYSIZE;
+                compressed_size -= HMAC_LENGTH;
+
+                // TODO: password + salt --> key
+                // TODO: decrypt using the generated key
+#endif                
             }
 
             if (compressed)
