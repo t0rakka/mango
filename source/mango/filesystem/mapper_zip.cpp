@@ -6,6 +6,7 @@
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
+#include <mango/core/compress.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
@@ -30,9 +31,9 @@ namespace
 
     enum Compression : u8
     {
-        COMPRESSION_STORE = 0,
+        COMPRESSION_NONE = 0,
         COMPRESSION_DEFLATE = 8,
-        COMPRESSION_ENHANCED_DEFLATE = 9,
+        COMPRESSION_DEFLATE64 = 9,
         COMPRESSION_BZIP2 = 12,
         COMPRESSION_WAVPACK = 97,
         COMPRESSION_PPMD = 98,
@@ -570,34 +571,6 @@ namespace mango
 
         VirtualMemory* mmap(const DirFileHeader& header, uint8* start, const std::string& password)
         {
-            bool compressed = false;
-
-            switch (header.compression)
-            {
-                case COMPRESSION_STORE:
-                    compressed = false;
-                    break;
-
-                case COMPRESSION_DEFLATE:
-                    compressed = true;
-                    break;
-
-#if 0 // new compression/encryption methods in .zipx format
-                case COMPRESSION_ENHANCED_DEFLATE:
-                case COMPRESSION_BZIP2:
-                case COMPRESSION_WAVPACK:
-                case COMPRESSION_PPMD:
-                case COMPRESSION_LZMA:
-                case COMPRESSION_JPEG:
-                case COMPRESSION_AES:
-                case COMPRESSION_XZ:
-#endif
-
-                default:
-                    // compression algorithm not supported
-                    MANGO_EXCEPTION(ID"Unsupported compression algorithm (%d).", header.compression);
-            }
-
             LittleEndianPointer p = start + header.localOffset;
 
             LocalFileHeader localHeader(p);
@@ -613,78 +586,116 @@ namespace mango
 
             uint8* buffer = nullptr; // remember allocated memory
 
-            if (header.encryption == ENCRYPTION_CLASSIC)
+            switch (header.encryption)
             {
-                // decryption header
-                uint8* dcheader = address;
-                address += DCKEYSIZE;
+                case ENCRYPTION_NONE:
+                    break;
 
-                // NOTE: decryption capability reduced on 32 bit platforms
-                const size_t compressed_size = size_t(header.compressedSize);
-                buffer = new uint8[compressed_size];
-
-                bool status = zip_decrypt(buffer, address, header.compressedSize, dcheader,
-                                          header.versionUsed & 0xff, header.crc, password);
-                if (!status)
+                case ENCRYPTION_CLASSIC:
                 {
-                    delete[] buffer;
-                    MANGO_EXCEPTION(ID"Decryption failed (probably incorrect password).");
+                    // decryption header
+                    uint8* dcheader = address;
+                    address += DCKEYSIZE;
+
+                    // NOTE: decryption capability reduced on 32 bit platforms
+                    const size_t compressed_size = size_t(header.compressedSize);
+                    buffer = new uint8[compressed_size];
+
+                    bool status = zip_decrypt(buffer, address, header.compressedSize, dcheader,
+                                            header.versionUsed & 0xff, header.crc, password);
+                    if (!status)
+                    {
+                        delete[] buffer;
+                        MANGO_EXCEPTION(ID"Decryption failed (probably incorrect password).");
+                    }
+
+                    address = buffer;
+                    break;
                 }
 
-                address = buffer;
-            }
-            else if (header.encryption == ENCRYPTION_AES128 ||
-                     header.encryption == ENCRYPTION_AES192 ||
-                     header.encryption == ENCRYPTION_AES256)
-            {
-                u32 salt_length = getSaltLength(header.encryption);
-                MANGO_UNREFERENCED_PARAMETER(salt_length);
-
-                MANGO_EXCEPTION(ID"AES encryption is not yet supported.");
+                case ENCRYPTION_AES128:
+                case ENCRYPTION_AES192:
+                case ENCRYPTION_AES256:
+                {
+                    u32 salt_length = getSaltLength(header.encryption);
+                    MANGO_UNREFERENCED_PARAMETER(salt_length);
+                    MANGO_EXCEPTION(ID"AES encryption is not yet supported.");
 #if 0                
-                u8* saltvalue = address;
-                address += salt_length;
+                    u8* saltvalue = address;
+                    address += salt_length;
 
-                u8* passverify = address;
-                address += AES_PWVERIFYSIZE;
+                    u8* passverify = address;
+                    address += AES_PWVERIFYSIZE;
 
-                address += HMAC_LENGTH;
+                    address += HMAC_LENGTH;
 
-                size_t compressed_size = size_t(header.compressedSize);
-                compressed_size -= salt_length;
-                compressed_size -= AES_PWVERIFYSIZE;
-                compressed_size -= HMAC_LENGTH;
+                    size_t compressed_size = size_t(header.compressedSize);
+                    compressed_size -= salt_length;
+                    compressed_size -= AES_PWVERIFYSIZE;
+                    compressed_size -= HMAC_LENGTH;
 
-                // TODO: password + salt --> key
-                // TODO: decrypt using the generated key
+                    // TODO: password + salt --> key
+                    // TODO: decrypt using the generated key
 #endif                
+                    break;
+                }
             }
 
-            if (compressed)
+            switch (header.compression)
             {
-                // NOTE: decompression limited on 32 bit platforms
-                const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
-                uint8* uncompressed_buffer = new uint8[uncompressed_size];
+                case COMPRESSION_NONE:
+                    size = header.uncompressedSize;
+                    break;
 
-                uint64 outsize = zip_decompress(address, uncompressed_buffer, header.compressedSize, header.uncompressedSize);
-
-                delete[] buffer;
-                buffer = uncompressed_buffer;
-
-                if (outsize != header.uncompressedSize)
+                case COMPRESSION_DEFLATE:
                 {
-                    // incorrect output size
+                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
+                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+
+                    uint64 outsize = zip_decompress(address, uncompressed_buffer, header.compressedSize, header.uncompressedSize);
+
                     delete[] buffer;
-                    MANGO_EXCEPTION(ID"Incorrect decompressed size.");
+                    buffer = uncompressed_buffer;
+
+                    if (outsize != header.uncompressedSize)
+                    {
+                        // incorrect output size
+                        delete[] buffer;
+                        MANGO_EXCEPTION(ID"Incorrect decompressed size.");
+                    }
+
+                    // use decode_buffer as memory map
+                    address = buffer;
+                    size = header.uncompressedSize;
+                    break;
                 }
 
-                // use decode_buffer as memory map
-                address = buffer;
-                size = header.uncompressedSize;
-            }
-            else
-            {
-                size = header.uncompressedSize;
+                case COMPRESSION_BZIP2:
+                {
+                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
+                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+
+                    bzip2::decompress(Memory(uncompressed_buffer, header.uncompressedSize), Memory(address, header.compressedSize));
+
+                    delete[] buffer;
+                    buffer = uncompressed_buffer;
+
+                    // use decode_buffer as memory map
+                    address = buffer;
+                    size = header.uncompressedSize;
+
+                    break;
+                }
+
+                case COMPRESSION_DEFLATE64:
+                case COMPRESSION_WAVPACK:
+                case COMPRESSION_PPMD:
+                case COMPRESSION_LZMA:
+                case COMPRESSION_JPEG:
+                case COMPRESSION_AES:
+                case COMPRESSION_XZ:
+                    MANGO_EXCEPTION(ID"Unsupported compression algorithm (%d).", header.compression);
+                    break;
             }
 
             VirtualMemory* memory;
