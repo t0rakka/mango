@@ -85,10 +85,7 @@ namespace
 
                         if (m_address == MAP_FAILED)
                         {
-                            std::string msg = ID"Memory mapping \"";
-                            msg += filename;
-                            msg += "\" failed.";
-                            MANGO_EXCEPTION(msg);
+                            MANGO_EXCEPTION(ID"Memory mapping \"%s\" failed.", filename.c_str());
                         }
 
                         m_memory.size = m_size;
@@ -103,10 +100,7 @@ namespace
             }
             else
             {
-                std::string msg = ID"Opening \"";
-                msg += filename;
-                msg += "\" failed.";
-                MANGO_EXCEPTION(msg);
+                MANGO_EXCEPTION(ID"Opening \"%s\" failed.". filename.c_str());
             }
         }
 

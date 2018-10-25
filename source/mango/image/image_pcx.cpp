@@ -149,7 +149,7 @@ namespace
         }
         else if (memory.size < 128)
         {
-            MANGO_EXCEPTION(ID"Incorrect filesize.");
+            MANGO_EXCEPTION(ID"Incorrect file size.");
         }
 
         return isPaletteMarker;

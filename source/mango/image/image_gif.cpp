@@ -251,6 +251,7 @@ namespace
 
         if (terminator != 0)
 		{
+			// Disable terminator check for animated gif files
             //delete[] q_buffer;
 			//MANGO_EXCEPTION(ID"Terminator missing from the gif stream.");
 		}

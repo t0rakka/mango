@@ -825,6 +825,7 @@ namespace vulkan {
 			std::string error(function);
 			error += " -> ";
 			error += getResultString(result);
+
 			if (result < 0)
 			{
 				// error
