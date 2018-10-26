@@ -97,54 +97,54 @@ namespace
                 }
 
                 p = nextline(p);
-                if (std::strncmp(p, "ENDHDR\n", 7))
+                if (std::strncmp(p, "ENDHDR", 6))
                     MANGO_EXCEPTION(ID"Incorrect endhdr");
             }
             else
             {
-                if (!std::strncmp(p, "P1\n", 3))
+                if (!std::strncmp(p, "P1", 2))
                 {
                     ascii = true;
                     channels = 1;
                     maxvalue = 1;
                 }
-                else if (!std::strncmp(p, "P2\n", 3))
+                else if (!std::strncmp(p, "P2", 2))
                 {
                     ascii = true;
                     channels = 1;
                 }
-                else if (!std::strncmp(p, "P3\n", 3))
+                else if (!std::strncmp(p, "P3", 2))
                 {
                     ascii = true;
                     channels = 3;
                 }
-                else if (!std::strncmp(p, "P4\n", 3))
+                else if (!std::strncmp(p, "P4", 2))
                 {
                     channels = 1;
                     maxvalue = 1;
                 }
-                else if (!std::strncmp(p, "P5\n", 3))
+                else if (!std::strncmp(p, "P5", 2))
                 {
                     channels = 1;
                 }
-                else if (!std::strncmp(p, "P6\n", 3))
+                else if (!std::strncmp(p, "P6", 2))
                 {
                     channels = 3;
                 }
                 else
                 {
-                    MANGO_EXCEPTION(ID"Incorrect header");
+                    MANGO_EXCEPTION(ID"Incorrect header magic (%s)", p);
                 }
 
                 p = nextline(p);
                 if (std::sscanf(p, "%i %i", &width, &height) < 2)
-                    MANGO_EXCEPTION(ID"Incorrect header");
+                    MANGO_EXCEPTION(ID"Incorrect header (missing dimension fields)");
 
                 if (!maxvalue)
                 {
                     p = nextline(p);
                     if (std::sscanf(p, "%i", &maxvalue) < 1)
-                        MANGO_EXCEPTION(ID"Incorrect header");
+                        MANGO_EXCEPTION(ID"Incorrect header (missing max value)");
                 }
             }
 
