@@ -159,6 +159,11 @@ OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 # configuration
 # ------------------------------------------------------------------------------
 
+if (APPLE)
+    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
+    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
+endif ()
+
 if (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/Gm")
     target_compile_options(mango PUBLIC "/DUNICODE")
