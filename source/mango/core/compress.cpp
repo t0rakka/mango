@@ -27,8 +27,9 @@
 #include "../../external/lzfse/lzfse.h"
 #endif
 
-#include "../../external/7z/LzmaDec.h"
 #include "../../external/7z/Alloc.h"
+#include "../../external/7z/LzmaDec.h"
+#include "../../external/7z/LzmaEnc.h"
 
 namespace mango {
 
@@ -606,20 +607,66 @@ namespace lzfse {
 namespace lzma
 {
 
+    static const char* lzma_error_string(SRes result)
+    {
+        const char* error = nullptr;
+        if (result != SZ_OK)
+        {
+            switch (result)
+            {
+                case SZ_ERROR_DATA: error = "data error"; break;
+                case SZ_ERROR_MEM: error = "memory allocation failed"; break;
+                case SZ_ERROR_UNSUPPORTED: error = "unsupported properties"; break;
+                case SZ_ERROR_INPUT_EOF: error = "insufficient input"; break;
+                default: error = "undefined error"; break;
+            }
+        }
+        return error;
+    }
+
     size_t bound(size_t size)
     {
-        // TODO
-        MANGO_UNREFERENCED_PARAMETER(size);
-        return 0;
+        // NOTE: conservative estimate since the lzma-sdk
+        //       cannot provide more accurate value.
+        return size + 1024 * 16;
     }
 
     size_t compress(Memory dest, Memory source, int level)
     {
-        // TODO
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
-        MANGO_UNREFERENCED_PARAMETER(level);
-        return 0;
+        CLzmaEncProps props;
+        LzmaEncProps_Init(&props);
+
+        level = clamp(level - 1, 0, 9);
+
+        props.level = level; // [0, 9] (default: 5)
+        props.dictSize = 2048 << level; // use (1 << N) or (3 << N). 4 KB < dictSize <= 128 MB
+        props.lc = 3; // [0, 8] (default: 3)
+        props.lp = 0; // [0, 4] (default: 0)
+        props.pb = 2; // [0, 4] (default: 2)
+        props.fb = 32; // [5, 273] (default: 32)
+        props.numThreads = 1;
+
+        SizeT dest_length = dest.size;
+        SizeT source_length = source.size;
+
+        // write the 5 byte props header before compressed data
+        u8* props_output = dest.address;
+        SizeT props_output_size = LZMA_PROPS_SIZE;
+        dest.address += LZMA_PROPS_SIZE;
+        dest.size -= LZMA_PROPS_SIZE;
+
+        SRes result = LzmaEncode(
+            dest.address, &dest_length, source.address, source_length,
+            &props, props_output, &props_output_size, 0,
+            nullptr, &g_Alloc, &g_Alloc);
+
+        const char* error = lzma_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA: %s", error);
+        }
+
+        return dest_length;    
     }
 
     void decompress(Memory dest, Memory source)
@@ -636,16 +683,10 @@ namespace lzma
 
         SRes result = LzmaDecode(dest.address, &destLen, source.address, &srcLen,
             prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &status, alloc);
-        if (result != SZ_OK)
+
+        const char* error = lzma_error_string(result);
+        if (error)
         {
-            const char* error = "undefined error";
-            switch (result)
-            {
-                case SZ_ERROR_DATA: error = "data error"; break;
-                case SZ_ERROR_MEM: error = "memory allocation failed"; break;
-                case SZ_ERROR_UNSUPPORTED: error = "unsupported properties"; break;
-                case SZ_ERROR_INPUT_EOF: error = "insufficient input"; break;
-            }
             MANGO_EXCEPTION("LZMA: %s", error);
         }
     }
@@ -711,35 +752,6 @@ namespace ppmd
     }
 
 } // namespace ppmd
-
-// ----------------------------------------------------------------------------
-// deflate64
-// ----------------------------------------------------------------------------
-
-namespace deflate64
-{
-
-    size_t bound(size_t size)
-    {
-        MANGO_UNREFERENCED_PARAMETER(size);
-        return 0;
-    }
-
-    size_t compress(Memory dest, Memory source, int level)
-    {
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
-        MANGO_UNREFERENCED_PARAMETER(level);
-        return 0;
-    }
-
-    void decompress(Memory dest, Memory source)
-    {
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
-    }
-
-} // namespace deflate64
 
 #endif
 

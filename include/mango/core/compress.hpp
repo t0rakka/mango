@@ -150,13 +150,6 @@ namespace mango
         size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
-
-    namespace deflate64
-    {
-        size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
-    }
 #endif
 
 } // namespace mango
