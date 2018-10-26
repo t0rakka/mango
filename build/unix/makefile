@@ -85,7 +85,8 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/lz4 \
                      external/lzo \
                      external/bzip2 \
-                     external/aes
+                     external/aes \
+                     external/7z
 SOURCE_DIRS_OPENGL = mango/opengl
 SOURCE_DIRS_VULKAN = mango/vulkan
 
