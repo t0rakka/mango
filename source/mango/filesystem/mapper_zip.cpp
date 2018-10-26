@@ -108,14 +108,18 @@ namespace
                     switch (magic)
                     {
                         case 0x0001:
+                        {
                             // ZIP64 extended field
                             if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
                             if (compressedSize == 0xffffffff) compressedSize = e.read64();
                             break;
+                        }
 
                         case 0x9901:
+                        {
                             // AES header
                             break;
+                        }
                     }
                     ext = next;
                 }
@@ -208,14 +212,17 @@ namespace
                     switch (magic)
                     {
                         case 0x0001:
+                        {
                             // ZIP64 extended field
                             if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
                             if (compressedSize == 0xffffffff) compressedSize = e.read64();
                             if (localOffset == 0xffffffff) localOffset = e.read64();
                             if (diskStart == 0xffff) e += 4;
                             break;
+                        }
 
                         case 0x9901:
+                        {
                             // AES header
                             u16 version = e.read16();
                             u16 magic = e.read16(); // must be 'AE' (0x41, 0x45)
@@ -232,6 +239,7 @@ namespace
                             else MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
 
                             break;
+                        }
                     }
                     ext = next;
                 }
@@ -586,6 +594,8 @@ namespace mango
 
             uint8* buffer = nullptr; // remember allocated memory
 
+            //printf("[ZIP] compression: %d, encryption: %d \n", header.compression, header.encryption);
+
             switch (header.encryption)
             {
                 case ENCRYPTION_NONE:
@@ -649,7 +659,7 @@ namespace mango
 
                 case COMPRESSION_DEFLATE:
                 {
-                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
+                    const size_t uncompressed_size = size_t(header.uncompressedSize);
                     uint8* uncompressed_buffer = new uint8[uncompressed_size];
 
                     uint64 outsize = zip_decompress(address, uncompressed_buffer, header.compressedSize, header.uncompressedSize);
@@ -667,6 +677,35 @@ namespace mango
                     // use decode_buffer as memory map
                     address = buffer;
                     size = header.uncompressedSize;
+                    break;
+                }
+
+                case COMPRESSION_LZMA:
+                {
+                    const size_t uncompressed_size = size_t(header.uncompressedSize);
+                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+
+                    // parse LZMA compression header
+                    p = address;
+                    p += 2; // skip LZMA version
+                    u16 lzma_propsize = p.read16();
+                    if (lzma_propsize != 5)
+                    {
+                        delete[] buffer;
+                        MANGO_EXCEPTION(ID"Incorrect LZMA header.");
+                    }
+                    address = p;
+                    u64 compressed_size = header.compressedSize - 4;
+
+                    lzma::decompress(Memory(uncompressed_buffer, header.uncompressedSize), Memory(address, compressed_size));
+
+                    delete[] buffer;
+                    buffer = uncompressed_buffer;
+
+                    // use decode_buffer as memory map
+                    address = buffer;
+                    size = header.uncompressedSize;
+
                     break;
                 }
 
@@ -690,7 +729,6 @@ namespace mango
                 case COMPRESSION_DEFLATE64:
                 case COMPRESSION_WAVPACK:
                 case COMPRESSION_PPMD:
-                case COMPRESSION_LZMA:
                 case COMPRESSION_JPEG:
                 case COMPRESSION_AES:
                 case COMPRESSION_XZ:
