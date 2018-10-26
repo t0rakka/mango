@@ -20,8 +20,7 @@ void Ppmd8_RangeEnc_FlushData(CPpmd8 *p)
 
 static void RangeEnc_Normalize(CPpmd8 *p)
 {
-  while ((p->Low ^ (p->Low + p->Range)) < kTop ||
-      (p->Range < kBot && ((p->Range = (0 - p->Low) & (kBot - 1)), 1)))
+  while ((p->Low ^ (p->Low + p->Range)) < kTop || (p->Range < kBot && ((p->Range = (0 - p->Low) & (kBot - 1)))))
   {
     IByteOut_Write(p->Stream.Out, (Byte)(p->Low >> 24));
     p->Range <<= 8;
