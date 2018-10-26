@@ -705,7 +705,6 @@ namespace mango
                     // use decode_buffer as memory map
                     address = buffer;
                     size = header.uncompressedSize;
-
                     break;
                 }
 
@@ -722,7 +721,6 @@ namespace mango
                     // use decode_buffer as memory map
                     address = buffer;
                     size = header.uncompressedSize;
-
                     break;
                 }
 

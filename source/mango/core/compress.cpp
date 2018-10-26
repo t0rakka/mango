@@ -634,20 +634,17 @@ namespace lzma
         source.address += LZMA_PROPS_SIZE;
         source.size -= LZMA_PROPS_SIZE;
 
-        SRes result = LzmaDecode(
-            dest.address, &destLen,
-            source.address, &srcLen,
-            prop, LZMA_PROPS_SIZE,
-            LZMA_FINISH_ANY, &status, alloc);
+        SRes result = LzmaDecode(dest.address, &destLen, source.address, &srcLen,
+            prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &status, alloc);
         if (result != SZ_OK)
         {
-            const char* error = "UNKNOWN";
+            const char* error = "undefined error";
             switch (result)
             {
-                case SZ_ERROR_DATA: error = "DATA_ERROR"; break;
-                case SZ_ERROR_MEM: error = "MEMORY_ALLOC_FAILED"; break;
-                case SZ_ERROR_UNSUPPORTED: error = "UNSUPPORTED_PROPERTIES"; break;
-                case SZ_ERROR_INPUT_EOF: error = "INSUFFICIENT_INPUT"; break;
+                case SZ_ERROR_DATA: error = "data error"; break;
+                case SZ_ERROR_MEM: error = "memory allocation failed"; break;
+                case SZ_ERROR_UNSUPPORTED: error = "unsupported properties"; break;
+                case SZ_ERROR_INPUT_EOF: error = "insufficient input"; break;
             }
             MANGO_EXCEPTION("LZMA: %s", error);
         }
