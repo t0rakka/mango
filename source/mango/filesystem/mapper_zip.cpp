@@ -708,6 +708,22 @@ namespace mango
                     break;
                 }
 
+                case COMPRESSION_PPMD:
+                {
+                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
+                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+
+                    ppmd8::decompress(Memory(uncompressed_buffer, header.uncompressedSize), Memory(address, header.compressedSize));
+
+                    delete[] buffer;
+                    buffer = uncompressed_buffer;
+
+                    // use decode_buffer as memory map
+                    address = buffer;
+                    size = header.uncompressedSize;
+                    break;
+                }
+
                 case COMPRESSION_BZIP2:
                 {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
@@ -726,7 +742,6 @@ namespace mango
 
                 case COMPRESSION_DEFLATE64:
                 case COMPRESSION_WAVPACK:
-                case COMPRESSION_PPMD:
                 case COMPRESSION_JPEG:
                 case COMPRESSION_AES:
                 case COMPRESSION_XZ:

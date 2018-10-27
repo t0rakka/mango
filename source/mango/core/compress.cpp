@@ -30,6 +30,7 @@
 #include "../../external/7z/Alloc.h"
 #include "../../external/7z/LzmaDec.h"
 #include "../../external/7z/LzmaEnc.h"
+#include "../../external/7z/Ppmd8.h"
 
 namespace mango {
 
@@ -704,8 +705,7 @@ namespace lzma2
 
     size_t bound(size_t size)
     {
-        MANGO_UNREFERENCED_PARAMETER(size);
-        return 0;
+        return lzma::bound(size);
     }
 
     size_t compress(Memory dest, Memory source, int level)
@@ -724,35 +724,145 @@ namespace lzma2
 
 } // namespace lzma2
 
+#endif
+
 // ----------------------------------------------------------------------------
-// ppmd
+// ppmd8
 // ----------------------------------------------------------------------------
 
-namespace ppmd
+namespace ppmd8
 {
+
+    struct OutputStream : IByteOut
+    {
+        Memory memory;
+        size_t offset;
+
+        OutputStream(Memory memory)
+            : memory(memory)
+            , offset(0)
+        {
+            Write = write_byte;
+        }
+
+        static void write_byte(const IByteOut *p, Byte b)
+        {
+            OutputStream* stream = (OutputStream *) p;
+            if (stream->offset < stream->memory.size)
+            {
+                stream->memory.address[stream->offset++] = b;
+            }
+        }
+    };
+
+    struct InputStream : IByteIn
+    {
+        Memory memory;
+        size_t offset;
+
+        InputStream(Memory memory)
+            : memory(memory)
+            , offset(0)
+        {
+            Read = read_byte;
+        }
+
+        static u8 read_byte(const IByteIn *p)
+        {
+            InputStream* stream = (InputStream *) p;
+            u8 value = 0;
+            if (stream->offset < stream->memory.size)
+            {
+                value = stream->memory.address[stream->offset++];
+            }
+            return value;
+        }
+    };
 
     size_t bound(size_t size)
     {
-        MANGO_UNREFERENCED_PARAMETER(size);
-        return 0;
+        return lzma::bound(size);
     }
 
     size_t compress(Memory dest, Memory source, int level)
     {
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
-        MANGO_UNREFERENCED_PARAMETER(level);
-        return 0;
+        u8* start = dest.address;
+
+        level = clamp(level, 0, 10);
+
+        // encoding parameters
+        u16 opt_order = level + 2; // 2..16
+        u16 opt_mem = 4 + level * 8; // 1..256 MB
+        u16 opt_restore = level >= 8 ? 1 : 0; // 0..2
+
+        // compute header
+        u16 header = (opt_restore << 12) | ((opt_mem - 1) << 4) | (opt_order - 1);
+
+        // write header
+        LittleEndianPointer p = dest.address;
+        p.write16(header);
+        dest.address += 2;
+        dest.size -= 2;
+
+        CPpmd8 ppmd;
+
+        OutputStream stream(dest);
+        ppmd.Stream.Out = &stream;
+
+        Ppmd8_Construct(&ppmd);
+        Ppmd8_Alloc(&ppmd, opt_mem << 20, &g_Alloc);
+        Ppmd8_RangeEnc_Init(&ppmd);
+        Ppmd8_Init(&ppmd, opt_order, 0);
+
+        for (size_t i = 0; i < source.size; ++i)
+        {
+            Ppmd8_EncodeSymbol(&ppmd, source.address[i]);
+        }
+
+        Ppmd8_EncodeSymbol(&ppmd, -1); // EndMark
+        Ppmd8_RangeEnc_FlushData(&ppmd);
+
+        size_t bytes_written = stream.memory.address + stream.offset - start;
+        return bytes_written;
     }
 
     void decompress(Memory dest, Memory source)
     {
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
+        // read 2 byte header
+        LittleEndianPointer p = source.address;
+        u16 header = p.read16();
+        source.address += 2;
+        source.size -= 2;
+
+        // parse header
+        u16 opt_order = (header & 0x000f) + 1;
+        u16 opt_mem = ((header & 0x0ff0) >> 4) + 1;
+        u16 opt_restore = ((header & 0xf000) >> 12);
+
+        CPpmd8 ppmd;
+
+        InputStream stream(source);
+        ppmd.Stream.In = &stream;
+
+        Ppmd8_Construct(&ppmd);
+        Ppmd8_Alloc(&ppmd, opt_mem << 20, &g_Alloc);
+        Ppmd8_RangeDec_Init(&ppmd);
+        Ppmd8_Init(&ppmd, opt_order, opt_restore);
+
+        size_t offset = 0;
+        for (;;)
+        {
+            int c = Ppmd8_DecodeSymbol(&ppmd);
+            if (c < 0 || offset >= dest.size)
+                break;
+            dest.address[offset++] = c;
+        }
+
+        if (!Ppmd8_RangeDec_IsFinishedOK(&ppmd))
+        {
+            MANGO_EXCEPTION("PPMd: decoding error.");
+        }
     }
 
 } // namespace ppmd
-
-#endif
-
 } // namespace mango
