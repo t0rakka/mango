@@ -33,7 +33,7 @@ SOURCE_DIRS := mango/core \
                external/lzo \
                external/bzip2 \
                external/aes \
-               external/7z
+               external/lzma
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS),$(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) $(wildcard $(MANGO_SOURCE)/$(dir)/*.c))
 mango_sources := $(SOURCES:$(LOCAL_PATH)/%=%)

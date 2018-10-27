@@ -27,10 +27,10 @@
 #include "../../external/lzfse/lzfse.h"
 #endif
 
-#include "../../external/7z/Alloc.h"
-#include "../../external/7z/LzmaDec.h"
-#include "../../external/7z/LzmaEnc.h"
-#include "../../external/7z/Ppmd8.h"
+#include "../../external/lzma/Alloc.h"
+#include "../../external/lzma/LzmaDec.h"
+#include "../../external/lzma/LzmaEnc.h"
+#include "../../external/lzma/Ppmd8.h"
 
 namespace mango {
 
