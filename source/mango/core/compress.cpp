@@ -649,14 +649,16 @@ namespace lzma
         props.fb = 32; // [5, 273] (default: 32)
         props.numThreads = 1;
 
-        SizeT dest_length = dest.size;
-        SizeT source_length = source.size;
+        u8* start = dest.address;
 
         // write the 5 byte props header before compressed data
         u8* props_output = dest.address;
         SizeT props_output_size = LZMA_PROPS_SIZE;
         dest.address += LZMA_PROPS_SIZE;
         dest.size -= LZMA_PROPS_SIZE;
+
+        SizeT dest_length = dest.size;
+        SizeT source_length = source.size;
 
         SRes result = LzmaEncode(
             dest.address, &dest_length, source.address, source_length,
@@ -669,7 +671,8 @@ namespace lzma
             MANGO_EXCEPTION("LZMA: %s", error);
         }
 
-        return dest_length;    
+        size_t bytes_written = dest.address + dest_length - start;
+        return bytes_written;
     }
 
     void decompress(Memory dest, Memory source)
