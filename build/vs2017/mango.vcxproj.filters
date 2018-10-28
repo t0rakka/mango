@@ -130,6 +130,9 @@
     <Filter Include="external\zpng">
       <UniqueIdentifier>{de5df2cf-76d5-4e4d-972e-84af57a8bc90}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\lzma">
+      <UniqueIdentifier>{0b1e07e0-fa5b-4ef1-b1d2-ef4a4a95971f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -735,6 +738,117 @@
     <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h">
       <Filter>external\zstd\compress</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7z.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zAlloc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zBuf.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zCrc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zFile.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zTypes.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zVersion.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Alloc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Bcj2.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Blake2.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Bra.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\BwtSort.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Compiler.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\CpuArch.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Delta.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\DllSecur.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\HuffEnc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\LzFind.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\LzHash.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Lzma2Dec.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Lzma2Enc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Lzma86.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\LzmaDec.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\LzmaEnc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\LzmaLib.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Ppmd.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Ppmd7.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Ppmd8.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Precomp.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\RotateDefs.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Sort.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\Xz.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\XzCrc64.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\XzEnc.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zAes.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zSha1.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\lzma\7zSha256.h">
+      <Filter>external\lzma</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1096,6 +1210,144 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\core\hash.cpp">
       <Filter>mango\source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zAlloc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zArcIn.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zBuf.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zBuf2.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zCrc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zCrcOpt.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zDec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zFile.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zStream.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\AesOpt.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Alloc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Bcj2.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Bcj2Enc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Blake2s.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Bra.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Bra86.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\BraIA64.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\BwtSort.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\CpuArch.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Delta.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\DllSecur.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\HuffEnc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\LzFind.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Lzma2Dec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Lzma2Enc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Lzma86Dec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Lzma86Enc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\LzmaDec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\LzmaEnc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\LzmaLib.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Ppmd7.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Ppmd7Dec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Ppmd7Enc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Ppmd8.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Ppmd8Dec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Ppmd8Enc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Sort.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\Xz.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\XzCrc64.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\XzCrc64Opt.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\XzDec.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\XzEnc.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\XzIn.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zAes.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zSha1.c">
+      <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\lzma\7zSha256.c">
+      <Filter>external\lzma</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

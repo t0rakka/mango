@@ -697,7 +697,7 @@ namespace mango
                     address = p;
                     u64 compressed_size = header.compressedSize - 4;
 
-                    lzma::decompress(Memory(uncompressed_buffer, header.uncompressedSize), Memory(address, compressed_size));
+                    lzma::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(compressed_size)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -713,7 +713,7 @@ namespace mango
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
                     uint8* uncompressed_buffer = new uint8[uncompressed_size];
 
-                    ppmd8::decompress(Memory(uncompressed_buffer, header.uncompressedSize), Memory(address, header.compressedSize));
+                    ppmd8::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -729,7 +729,7 @@ namespace mango
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
                     uint8* uncompressed_buffer = new uint8[uncompressed_size];
 
-                    bzip2::decompress(Memory(uncompressed_buffer, header.uncompressedSize), Memory(address, header.compressedSize));
+                    bzip2::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;

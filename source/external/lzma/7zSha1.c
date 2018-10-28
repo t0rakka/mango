@@ -8,7 +8,7 @@ This code is based on public domain code of Steve Reid from Wei Dai's Crypto++ l
 
 #include "CpuArch.h"
 #include "RotateDefs.h"
-#include "Sha1.h"
+#include "7zSha1.h"
 
 // define it for speed optimization
 // #define _SHA1_UNROLL

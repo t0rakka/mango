@@ -8,7 +8,7 @@ This code is based on public domain code from Wei Dai's Crypto++ library. */
 
 #include "CpuArch.h"
 #include "RotateDefs.h"
-#include "Sha256.h"
+#include "7zSha256.h"
 
 /* define it for speed optimization */
 #ifndef _SFX

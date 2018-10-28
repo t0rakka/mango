@@ -4,7 +4,7 @@
 #ifndef __XZ_H
 #define __XZ_H
 
-#include "Sha256.h"
+#include "7zSha256.h"
 
 EXTERN_C_BEGIN
 

@@ -3,7 +3,7 @@
 
 #include "Precomp.h"
 
-#include "Aes.h"
+#include "7zAes.h"
 #include "CpuArch.h"
 
 static UInt32 T[256 * 4];
