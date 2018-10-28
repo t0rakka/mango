@@ -30,6 +30,8 @@
 #include "../../external/lzma/Alloc.h"
 #include "../../external/lzma/LzmaDec.h"
 #include "../../external/lzma/LzmaEnc.h"
+#include "../../external/lzma/Lzma2Dec.h"
+#include "../../external/lzma/Lzma2Enc.h"
 #include "../../external/lzma/Ppmd8.h"
 
 namespace mango {
@@ -608,7 +610,7 @@ namespace lzfse {
 namespace lzma
 {
 
-    static const char* lzma_error_string(SRes result)
+    static const char* get_error_string(SRes result)
     {
         const char* error = nullptr;
         if (result != SZ_OK)
@@ -661,7 +663,7 @@ namespace lzma
             &props, props_output, &props_output_size, 0,
             nullptr, &g_Alloc, &g_Alloc);
 
-        const char* error = lzma_error_string(result);
+        const char* error = get_error_string(result);
         if (error)
         {
             MANGO_EXCEPTION("LZMA: %s", error);
@@ -672,20 +674,19 @@ namespace lzma
 
     void decompress(Memory dest, Memory source)
     {
-        SizeT destLen = dest.size;
-        SizeT srcLen = source.size;
-
-        ELzmaStatus status;
-        ISzAllocPtr alloc = &g_Alloc;
-
+        // read props header
         u8* prop = source.address;
         source.address += LZMA_PROPS_SIZE;
         source.size -= LZMA_PROPS_SIZE;
 
-        SRes result = LzmaDecode(dest.address, &destLen, source.address, &srcLen,
-            prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &status, alloc);
+        SizeT destLen = dest.size;
+        SizeT srcLen = source.size;
 
-        const char* error = lzma_error_string(result);
+        ELzmaStatus status;
+        SRes result = LzmaDecode(dest.address, &destLen, source.address, &srcLen,
+            prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &status, &g_Alloc);
+
+        const char* error = get_error_string(result);
         if (error)
         {
             MANGO_EXCEPTION("LZMA: %s", error);
@@ -693,8 +694,6 @@ namespace lzma
     }
 
 } // namespace lzma
-
-#if 0
 
 // ----------------------------------------------------------------------------
 // lzma2
@@ -710,21 +709,68 @@ namespace lzma2
 
     size_t compress(Memory dest, Memory source, int level)
     {
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
-        MANGO_UNREFERENCED_PARAMETER(level);
-        return 0;
+        CLzma2EncProps props;
+        Lzma2EncProps_Init(&props);
+        Lzma2EncProps_Normalize(&props);
+
+        level = clamp(level, 0, 10);
+
+        CLzma2EncHandle encoder = Lzma2Enc_Create(&g_Alloc, &g_Alloc);
+
+        Lzma2Enc_SetProps(encoder, &props);
+        Byte p = Lzma2Enc_WriteProperties(encoder);
+
+        u8* start = dest.address;
+
+        // write props header
+        dest.address[0] = p;
+        dest.address++;
+        dest.size--;
+
+        Byte *outBuf = dest.address;
+        size_t outBufSize = dest.size;
+
+        const Byte *inData = source.address;
+        size_t inDataSize = source.size;
+
+        SRes result = Lzma2Enc_Encode2(encoder,
+            nullptr, outBuf, &outBufSize,
+            nullptr, inData, inDataSize, nullptr);
+
+        Lzma2Enc_Destroy(encoder);
+
+        const char* error = lzma::get_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA2: %s", error);
+        }
+
+        size_t bytes_written = dest.address + outBufSize - start;
+        return bytes_written;
     }
 
     void decompress(Memory dest, Memory source)
     {
-        MANGO_UNREFERENCED_PARAMETER(dest);
-        MANGO_UNREFERENCED_PARAMETER(source);
+        // read props header
+        Byte prop = source.address[0];
+        source.address++;
+        source.size--;
+
+        SizeT destLen = dest.size;
+        SizeT srcLen = source.size;
+
+        ELzmaStatus status;
+        SRes result = Lzma2Decode(dest.address, &destLen, source.address, &srcLen,
+            prop, LZMA_FINISH_ANY, &status, &g_Alloc);
+
+        const char* error = lzma::get_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA2: %s", error);
+        }
     }
 
 } // namespace lzma2
-
-#endif
 
 // ----------------------------------------------------------------------------
 // ppmd8
