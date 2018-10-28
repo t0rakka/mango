@@ -129,7 +129,6 @@
 		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
 		A642435421852AEF0044B763 /* Bcj2.c in Sources */ = {isa = PBXBuildFile; fileRef = A642430121852AE80044B763 /* Bcj2.c */; };
 		A642435521852AEF0044B763 /* 7zCrc.h in Headers */ = {isa = PBXBuildFile; fileRef = A642430221852AE80044B763 /* 7zCrc.h */; };
-		A642435621852AEF0044B763 /* Aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A642430321852AE80044B763 /* Aes.h */; };
 		A642435721852AEF0044B763 /* Ppmd8Enc.c in Sources */ = {isa = PBXBuildFile; fileRef = A642430421852AE80044B763 /* Ppmd8Enc.c */; };
 		A642435821852AEF0044B763 /* XzCrc64Opt.c in Sources */ = {isa = PBXBuildFile; fileRef = A642430521852AE80044B763 /* XzCrc64Opt.c */; };
 		A642435921852AEF0044B763 /* Lzma86Dec.c in Sources */ = {isa = PBXBuildFile; fileRef = A642430621852AE80044B763 /* Lzma86Dec.c */; };
@@ -144,24 +143,20 @@
 		A642436221852AEF0044B763 /* RotateDefs.h in Headers */ = {isa = PBXBuildFile; fileRef = A642430F21852AE90044B763 /* RotateDefs.h */; };
 		A642436321852AEF0044B763 /* Blake2s.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431021852AE90044B763 /* Blake2s.c */; };
 		A642436421852AEF0044B763 /* HuffEnc.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431121852AE90044B763 /* HuffEnc.c */; };
-		A642436521852AEF0044B763 /* Sha256.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431221852AE90044B763 /* Sha256.c */; };
 		A642436621852AEF0044B763 /* Sort.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431321852AE90044B763 /* Sort.c */; };
 		A642436721852AEF0044B763 /* XzCrc64.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431421852AE90044B763 /* XzCrc64.c */; };
 		A642436821852AEF0044B763 /* LzFind.h in Headers */ = {isa = PBXBuildFile; fileRef = A642431521852AE90044B763 /* LzFind.h */; };
 		A642436921852AEF0044B763 /* 7zAlloc.h in Headers */ = {isa = PBXBuildFile; fileRef = A642431621852AE90044B763 /* 7zAlloc.h */; };
-		A642436A21852AEF0044B763 /* Sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431721852AE90044B763 /* Sha1.c */; };
 		A642436B21852AEF0044B763 /* Precomp.h in Headers */ = {isa = PBXBuildFile; fileRef = A642431821852AE90044B763 /* Precomp.h */; };
 		A642436C21852AEF0044B763 /* LzmaDec.h in Headers */ = {isa = PBXBuildFile; fileRef = A642431921852AE90044B763 /* LzmaDec.h */; };
 		A642436D21852AEF0044B763 /* Alloc.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431A21852AE90044B763 /* Alloc.c */; };
 		A642436E21852AEF0044B763 /* LzFind.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431B21852AEA0044B763 /* LzFind.c */; };
-		A642436F21852AEF0044B763 /* Sha1.h in Headers */ = {isa = PBXBuildFile; fileRef = A642431C21852AEA0044B763 /* Sha1.h */; };
 		A642437021852AEF0044B763 /* Ppmd7.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431D21852AEA0044B763 /* Ppmd7.c */; };
 		A642437121852AEF0044B763 /* Compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = A642431E21852AEA0044B763 /* Compiler.h */; };
 		A642437221852AEF0044B763 /* Ppmd8Dec.c in Sources */ = {isa = PBXBuildFile; fileRef = A642431F21852AEA0044B763 /* Ppmd8Dec.c */; };
 		A642437321852AEF0044B763 /* Xz.c in Sources */ = {isa = PBXBuildFile; fileRef = A642432021852AEA0044B763 /* Xz.c */; };
 		A642437421852AEF0044B763 /* 7zTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = A642432121852AEA0044B763 /* 7zTypes.h */; };
 		A642437521852AEF0044B763 /* XzEnc.h in Headers */ = {isa = PBXBuildFile; fileRef = A642432221852AEA0044B763 /* XzEnc.h */; };
-		A642437621852AEF0044B763 /* Sha256.h in Headers */ = {isa = PBXBuildFile; fileRef = A642432321852AEA0044B763 /* Sha256.h */; };
 		A642437721852AEF0044B763 /* BwtSort.c in Sources */ = {isa = PBXBuildFile; fileRef = A642432421852AEA0044B763 /* BwtSort.c */; };
 		A642437821852AEF0044B763 /* Bcj2.h in Headers */ = {isa = PBXBuildFile; fileRef = A642432521852AEA0044B763 /* Bcj2.h */; };
 		A642437921852AEF0044B763 /* Lzma2Dec.c in Sources */ = {isa = PBXBuildFile; fileRef = A642432621852AEA0044B763 /* Lzma2Dec.c */; };
@@ -200,7 +195,6 @@
 		A642439A21852AEF0044B763 /* Ppmd8.h in Headers */ = {isa = PBXBuildFile; fileRef = A642434721852AEE0044B763 /* Ppmd8.h */; };
 		A642439B21852AEF0044B763 /* 7zStream.c in Sources */ = {isa = PBXBuildFile; fileRef = A642434821852AEE0044B763 /* 7zStream.c */; };
 		A642439C21852AEF0044B763 /* BwtSort.h in Headers */ = {isa = PBXBuildFile; fileRef = A642434921852AEE0044B763 /* BwtSort.h */; };
-		A642439D21852AEF0044B763 /* Aes.c in Sources */ = {isa = PBXBuildFile; fileRef = A642434A21852AEE0044B763 /* Aes.c */; };
 		A642439E21852AEF0044B763 /* 7zFile.c in Sources */ = {isa = PBXBuildFile; fileRef = A642434B21852AEE0044B763 /* 7zFile.c */; };
 		A642439F21852AEF0044B763 /* XzDec.c in Sources */ = {isa = PBXBuildFile; fileRef = A642434C21852AEE0044B763 /* XzDec.c */; };
 		A64243A021852AEF0044B763 /* 7zBuf2.c in Sources */ = {isa = PBXBuildFile; fileRef = A642434D21852AEF0044B763 /* 7zBuf2.c */; };
@@ -210,6 +204,12 @@
 		A64243A421852AEF0044B763 /* Sort.h in Headers */ = {isa = PBXBuildFile; fileRef = A642435121852AEF0044B763 /* Sort.h */; };
 		A64243A521852AEF0044B763 /* Xz.h in Headers */ = {isa = PBXBuildFile; fileRef = A642435221852AEF0044B763 /* Xz.h */; };
 		A64243A621852AEF0044B763 /* 7zArcIn.c in Sources */ = {isa = PBXBuildFile; fileRef = A642435321852AEF0044B763 /* 7zArcIn.c */; };
+		A64243A92185E6EF0044B763 /* 7zAes.h in Headers */ = {isa = PBXBuildFile; fileRef = A64243A72185E6EE0044B763 /* 7zAes.h */; };
+		A64243AA2185E6EF0044B763 /* 7zAes.c in Sources */ = {isa = PBXBuildFile; fileRef = A64243A82185E6EF0044B763 /* 7zAes.c */; };
+		A64243AF2185E70B0044B763 /* 7zSha256.c in Sources */ = {isa = PBXBuildFile; fileRef = A64243AB2185E70B0044B763 /* 7zSha256.c */; };
+		A64243B02185E70B0044B763 /* 7zSha1.c in Sources */ = {isa = PBXBuildFile; fileRef = A64243AC2185E70B0044B763 /* 7zSha1.c */; };
+		A64243B12185E70B0044B763 /* 7zSha256.h in Headers */ = {isa = PBXBuildFile; fileRef = A64243AD2185E70B0044B763 /* 7zSha256.h */; };
+		A64243B22185E70B0044B763 /* 7zSha1.h in Headers */ = {isa = PBXBuildFile; fileRef = A64243AE2185E70B0044B763 /* 7zSha1.h */; };
 		A645DD1C21381E2D00EC714B /* image_sgi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD1B21381E2D00EC714B /* image_sgi.cpp */; };
 		A645DD1E213A9A9300EC714B /* image_pnm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD1D213A9A9300EC714B /* image_pnm.cpp */; };
 		A645DD26213D53C000EC714B /* jpeg_arithmetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD1F213D53C000EC714B /* jpeg_arithmetic.cpp */; };
@@ -407,7 +407,6 @@
 		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
 		A642430121852AE80044B763 /* Bcj2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Bcj2.c; path = external/lzma/Bcj2.c; sourceTree = "<group>"; };
 		A642430221852AE80044B763 /* 7zCrc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zCrc.h; path = external/lzma/7zCrc.h; sourceTree = "<group>"; };
-		A642430321852AE80044B763 /* Aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Aes.h; path = external/lzma/Aes.h; sourceTree = "<group>"; };
 		A642430421852AE80044B763 /* Ppmd8Enc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Ppmd8Enc.c; path = external/lzma/Ppmd8Enc.c; sourceTree = "<group>"; };
 		A642430521852AE80044B763 /* XzCrc64Opt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = XzCrc64Opt.c; path = external/lzma/XzCrc64Opt.c; sourceTree = "<group>"; };
 		A642430621852AE80044B763 /* Lzma86Dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Lzma86Dec.c; path = external/lzma/Lzma86Dec.c; sourceTree = "<group>"; };
@@ -422,24 +421,20 @@
 		A642430F21852AE90044B763 /* RotateDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RotateDefs.h; path = external/lzma/RotateDefs.h; sourceTree = "<group>"; };
 		A642431021852AE90044B763 /* Blake2s.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Blake2s.c; path = external/lzma/Blake2s.c; sourceTree = "<group>"; };
 		A642431121852AE90044B763 /* HuffEnc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = HuffEnc.c; path = external/lzma/HuffEnc.c; sourceTree = "<group>"; };
-		A642431221852AE90044B763 /* Sha256.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Sha256.c; path = external/lzma/Sha256.c; sourceTree = "<group>"; };
 		A642431321852AE90044B763 /* Sort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Sort.c; path = external/lzma/Sort.c; sourceTree = "<group>"; };
 		A642431421852AE90044B763 /* XzCrc64.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = XzCrc64.c; path = external/lzma/XzCrc64.c; sourceTree = "<group>"; };
 		A642431521852AE90044B763 /* LzFind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LzFind.h; path = external/lzma/LzFind.h; sourceTree = "<group>"; };
 		A642431621852AE90044B763 /* 7zAlloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zAlloc.h; path = external/lzma/7zAlloc.h; sourceTree = "<group>"; };
-		A642431721852AE90044B763 /* Sha1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Sha1.c; path = external/lzma/Sha1.c; sourceTree = "<group>"; };
 		A642431821852AE90044B763 /* Precomp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Precomp.h; path = external/lzma/Precomp.h; sourceTree = "<group>"; };
 		A642431921852AE90044B763 /* LzmaDec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LzmaDec.h; path = external/lzma/LzmaDec.h; sourceTree = "<group>"; };
 		A642431A21852AE90044B763 /* Alloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Alloc.c; path = external/lzma/Alloc.c; sourceTree = "<group>"; };
 		A642431B21852AEA0044B763 /* LzFind.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = LzFind.c; path = external/lzma/LzFind.c; sourceTree = "<group>"; };
-		A642431C21852AEA0044B763 /* Sha1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sha1.h; path = external/lzma/Sha1.h; sourceTree = "<group>"; };
 		A642431D21852AEA0044B763 /* Ppmd7.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Ppmd7.c; path = external/lzma/Ppmd7.c; sourceTree = "<group>"; };
 		A642431E21852AEA0044B763 /* Compiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Compiler.h; path = external/lzma/Compiler.h; sourceTree = "<group>"; };
 		A642431F21852AEA0044B763 /* Ppmd8Dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Ppmd8Dec.c; path = external/lzma/Ppmd8Dec.c; sourceTree = "<group>"; };
 		A642432021852AEA0044B763 /* Xz.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Xz.c; path = external/lzma/Xz.c; sourceTree = "<group>"; };
 		A642432121852AEA0044B763 /* 7zTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zTypes.h; path = external/lzma/7zTypes.h; sourceTree = "<group>"; };
 		A642432221852AEA0044B763 /* XzEnc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = XzEnc.h; path = external/lzma/XzEnc.h; sourceTree = "<group>"; };
-		A642432321852AEA0044B763 /* Sha256.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sha256.h; path = external/lzma/Sha256.h; sourceTree = "<group>"; };
 		A642432421852AEA0044B763 /* BwtSort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = BwtSort.c; path = external/lzma/BwtSort.c; sourceTree = "<group>"; };
 		A642432521852AEA0044B763 /* Bcj2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Bcj2.h; path = external/lzma/Bcj2.h; sourceTree = "<group>"; };
 		A642432621852AEA0044B763 /* Lzma2Dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Lzma2Dec.c; path = external/lzma/Lzma2Dec.c; sourceTree = "<group>"; };
@@ -478,7 +473,6 @@
 		A642434721852AEE0044B763 /* Ppmd8.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Ppmd8.h; path = external/lzma/Ppmd8.h; sourceTree = "<group>"; };
 		A642434821852AEE0044B763 /* 7zStream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zStream.c; path = external/lzma/7zStream.c; sourceTree = "<group>"; };
 		A642434921852AEE0044B763 /* BwtSort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BwtSort.h; path = external/lzma/BwtSort.h; sourceTree = "<group>"; };
-		A642434A21852AEE0044B763 /* Aes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Aes.c; path = external/lzma/Aes.c; sourceTree = "<group>"; };
 		A642434B21852AEE0044B763 /* 7zFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zFile.c; path = external/lzma/7zFile.c; sourceTree = "<group>"; };
 		A642434C21852AEE0044B763 /* XzDec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = XzDec.c; path = external/lzma/XzDec.c; sourceTree = "<group>"; };
 		A642434D21852AEF0044B763 /* 7zBuf2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zBuf2.c; path = external/lzma/7zBuf2.c; sourceTree = "<group>"; };
@@ -488,6 +482,12 @@
 		A642435121852AEF0044B763 /* Sort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sort.h; path = external/lzma/Sort.h; sourceTree = "<group>"; };
 		A642435221852AEF0044B763 /* Xz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Xz.h; path = external/lzma/Xz.h; sourceTree = "<group>"; };
 		A642435321852AEF0044B763 /* 7zArcIn.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zArcIn.c; path = external/lzma/7zArcIn.c; sourceTree = "<group>"; };
+		A64243A72185E6EE0044B763 /* 7zAes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zAes.h; path = external/lzma/7zAes.h; sourceTree = "<group>"; };
+		A64243A82185E6EF0044B763 /* 7zAes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zAes.c; path = external/lzma/7zAes.c; sourceTree = "<group>"; };
+		A64243AB2185E70B0044B763 /* 7zSha256.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zSha256.c; path = external/lzma/7zSha256.c; sourceTree = "<group>"; };
+		A64243AC2185E70B0044B763 /* 7zSha1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = 7zSha1.c; path = external/lzma/7zSha1.c; sourceTree = "<group>"; };
+		A64243AD2185E70B0044B763 /* 7zSha256.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zSha256.h; path = external/lzma/7zSha256.h; sourceTree = "<group>"; };
+		A64243AE2185E70B0044B763 /* 7zSha1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zSha1.h; path = external/lzma/7zSha1.h; sourceTree = "<group>"; };
 		A645DD1B21381E2D00EC714B /* image_sgi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_sgi.cpp; path = image/image_sgi.cpp; sourceTree = "<group>"; };
 		A645DD1D213A9A9300EC714B /* image_pnm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_pnm.cpp; path = image/image_pnm.cpp; sourceTree = "<group>"; };
 		A645DD1F213D53C000EC714B /* jpeg_arithmetic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jpeg_arithmetic.cpp; path = jpeg/jpeg_arithmetic.cpp; sourceTree = "<group>"; };
@@ -923,6 +923,8 @@
 				A642433821852AEC0044B763 /* 7z.h */,
 				A642433721852AEC0044B763 /* 7zAlloc.c */,
 				A642431621852AE90044B763 /* 7zAlloc.h */,
+				A64243A82185E6EF0044B763 /* 7zAes.c */,
+				A64243A72185E6EE0044B763 /* 7zAes.h */,
 				A642435321852AEF0044B763 /* 7zArcIn.c */,
 				A642430B21852AE90044B763 /* 7zBuf.c */,
 				A642433221852AEC0044B763 /* 7zBuf.h */,
@@ -936,8 +938,10 @@
 				A642434821852AEE0044B763 /* 7zStream.c */,
 				A642432121852AEA0044B763 /* 7zTypes.h */,
 				A642433B21852AED0044B763 /* 7zVersion.h */,
-				A642434A21852AEE0044B763 /* Aes.c */,
-				A642430321852AE80044B763 /* Aes.h */,
+				A64243AC2185E70B0044B763 /* 7zSha1.c */,
+				A64243AE2185E70B0044B763 /* 7zSha1.h */,
+				A64243AB2185E70B0044B763 /* 7zSha256.c */,
+				A64243AD2185E70B0044B763 /* 7zSha256.h */,
 				A642433F21852AED0044B763 /* AesOpt.c */,
 				A642431A21852AE90044B763 /* Alloc.c */,
 				A642430D21852AE90044B763 /* Alloc.h */,
@@ -988,10 +992,6 @@
 				A642430421852AE80044B763 /* Ppmd8Enc.c */,
 				A642431821852AE90044B763 /* Precomp.h */,
 				A642430F21852AE90044B763 /* RotateDefs.h */,
-				A642431721852AE90044B763 /* Sha1.c */,
-				A642431C21852AEA0044B763 /* Sha1.h */,
-				A642431221852AE90044B763 /* Sha256.c */,
-				A642432321852AEA0044B763 /* Sha256.h */,
 				A642431321852AE90044B763 /* Sort.c */,
 				A642435121852AEF0044B763 /* Sort.h */,
 				A642432021852AEA0044B763 /* Xz.c */,
@@ -1108,7 +1108,6 @@
 				A645DD8621415A7200EC714B /* miniz.h in Headers */,
 				A63DD74D1E706EB200D4D499 /* crc.hpp in Headers */,
 				A63DD78F1E706F3400D4D499 /* bzlib_private.h in Headers */,
-				A642435621852AEF0044B763 /* Aes.h in Headers */,
 				A645DD28213D53C000EC714B /* jpeg.hpp in Headers */,
 				A642436821852AEF0044B763 /* LzFind.h in Headers */,
 				A63DD7521E706EB200D4D499 /* model.hpp in Headers */,
@@ -1116,7 +1115,6 @@
 				A645DD9021415B3F00EC714B /* miniz_common.h in Headers */,
 				A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */,
 				A645DD54214154F400EC714B /* compiler.h in Headers */,
-				A642436F21852AEF0044B763 /* Sha1.h in Headers */,
 				A642439C21852AEF0044B763 /* BwtSort.h in Headers */,
 				A63DD7B31E706FA000D4D499 /* etc1.h in Headers */,
 				A642437121852AEF0044B763 /* Compiler.h in Headers */,
@@ -1130,13 +1128,14 @@
 				A645DD4A214154F400EC714B /* cpu.h in Headers */,
 				A645DD57214154F400EC714B /* mem.h in Headers */,
 				A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */,
+				A64243B12185E70B0044B763 /* 7zSha256.h in Headers */,
+				A64243A92185E6EF0044B763 /* 7zAes.h in Headers */,
 				A642438B21852AEF0044B763 /* 7z.h in Headers */,
 				A642435F21852AEF0044B763 /* Lzma2Dec.h in Headers */,
 				A645DD4C214154F400EC714B /* fse.h in Headers */,
 				A63DD7A41E706F8800D4D499 /* BC.h in Headers */,
 				A642438C21852AEF0044B763 /* Blake2.h in Headers */,
 				A00559E21C93340600A6D963 /* image in Headers */,
-				A642437621852AEF0044B763 /* Sha256.h in Headers */,
 				A642435521852AEF0044B763 /* 7zCrc.h in Headers */,
 				A63DD7971E706F5400D4D499 /* lzoconf.h in Headers */,
 				A63DD7551E706EB200D4D499 /* rarvm.hpp in Headers */,
@@ -1164,6 +1163,7 @@
 				A63DD7791E706EF100D4D499 /* lzvn_decode_base.h in Headers */,
 				A642437E21852AEF0044B763 /* HuffEnc.h in Headers */,
 				A645DD712141551200EC714B /* zstd_ldm.h in Headers */,
+				A64243B22185E70B0044B763 /* 7zSha1.h in Headers */,
 				A003D309192B9998009FED25 /* opengl in Headers */,
 				A642438E21852AEF0044B763 /* 7zVersion.h in Headers */,
 				A645DD5A214154F400EC714B /* zstd_internal.h in Headers */,
@@ -1295,7 +1295,6 @@
 				A00559941C93324E00A6D963 /* buffer.cpp in Sources */,
 				A00559A71C93327800A6D963 /* mapper_zip.cpp in Sources */,
 				A63DD7AE1E706FA000D4D499 /* astc.cpp in Sources */,
-				A642436A21852AEF0044B763 /* Sha1.c in Sources */,
 				A645DD51214154F400EC714B /* debug.c in Sources */,
 				A005599B1C93324E00A6D963 /* thread.cpp in Sources */,
 				A63DD7561E706EB200D4D499 /* rdwrfn.cpp in Sources */,
@@ -1336,6 +1335,7 @@
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
 				A642435421852AEF0044B763 /* Bcj2.c in Sources */,
 				A64243A621852AEF0044B763 /* 7zArcIn.c in Sources */,
+				A64243AA2185E6EF0044B763 /* 7zAes.c in Sources */,
 				A645DD1C21381E2D00EC714B /* image_sgi.cpp in Sources */,
 				A642438821852AEF0044B763 /* LzmaDec.c in Sources */,
 				A642437C21852AEF0044B763 /* Bra.c in Sources */,
@@ -1378,14 +1378,14 @@
 				A642437F21852AEF0044B763 /* Lzma2Enc.c in Sources */,
 				A63DD7061E706DFA00D4D499 /* lz4.c in Sources */,
 				A645DD26213D53C000EC714B /* jpeg_arithmetic.cpp in Sources */,
+				A64243B02185E70B0044B763 /* 7zSha1.c in Sources */,
 				A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */,
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
 				A642437321852AEF0044B763 /* Xz.c in Sources */,
+				A64243AF2185E70B0044B763 /* 7zSha256.c in Sources */,
 				A63DD7581E706EB200D4D499 /* rijndael.cpp in Sources */,
 				A645DD50214154F400EC714B /* fse_decompress.c in Sources */,
-				A642436521852AEF0044B763 /* Sha256.c in Sources */,
 				A00559A41C93327800A6D963 /* file.cpp in Sources */,
-				A642439D21852AEF0044B763 /* Aes.c in Sources */,
 				A0F21EDA1CA062EA0084302D /* file_observer.cpp in Sources */,
 				A642435E21852AEF0044B763 /* 7zBuf.c in Sources */,
 				A63DD78C1E706F3400D4D499 /* bz_decompress.c in Sources */,
