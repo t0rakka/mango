@@ -10,6 +10,7 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
+#include <mango/core/pointer.hpp>
 
 #define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
 #include "../../external/miniz/miniz.h"
@@ -25,6 +26,13 @@
 #include "../../external/bzip2/bzlib.h"
 #include "../../external/lzfse/lzfse.h"
 #endif
+
+#include "../../external/lzma/Alloc.h"
+#include "../../external/lzma/LzmaDec.h"
+#include "../../external/lzma/LzmaEnc.h"
+#include "../../external/lzma/Lzma2Dec.h"
+#include "../../external/lzma/Lzma2Enc.h"
+#include "../../external/lzma/Ppmd8.h"
 
 namespace mango {
 
@@ -44,46 +52,47 @@ namespace miniz {
 	{
         level = clamp(level, 0, 10);
 
-        mz_ulong size = static_cast<mz_ulong>(dest.size);
-        int status = mz_compress2(dest, &size, source, static_cast<mz_ulong>(source.size), level);
+        mz_ulong dest_size = mz_ulong(dest.size);
+        mz_ulong source_size = mz_ulong(source.size);
 
+        int status = mz_compress2(dest, &dest_size, source, source_size, level);
         if (status != MZ_OK)
         {
             MANGO_EXCEPTION("miniz: compression failed.");
         }
 
-        return size;
+        return dest_size;
 	}
 
     void decompress(Memory dest, Memory source)
     {
-        mz_ulong zd = static_cast<mz_ulong>(dest.size);
-        int status = mz_uncompress(dest, &zd, source, static_cast<mz_ulong>(source.size));
+        mz_ulong dest_size = mz_ulong(dest.size);
+        mz_ulong source_size = mz_ulong(source.size);
 
-        const char* msg;
-
-        switch (status)
+        int status = mz_uncompress(dest, &dest_size, source, source_size);
+        if (status != MZ_OK)
         {
-            case MZ_OK:
-                msg = nullptr;
-                break;
-            case MZ_MEM_ERROR:
-                msg = "miniz: not enough memory.";
-                break;
-            case MZ_BUF_ERROR:
-                msg = "miniz: not enough room in the output buffer.";
-                break;
-            case MZ_DATA_ERROR:
-                msg = "miniz: corrupted input data.";
-                break;
-            default:
-                msg = "miniz: undefined error.";
-                break;
-        }
+            const char* msg = nullptr;
+            switch (status)
+            {
+                case MZ_MEM_ERROR:
+                    msg = "miniz: not enough memory.";
+                    break;
+                case MZ_BUF_ERROR:
+                    msg = "miniz: not enough room in the output buffer.";
+                    break;
+                case MZ_DATA_ERROR:
+                    msg = "miniz: corrupted input data.";
+                    break;
+                default:
+                    msg = "miniz: undefined error.";
+                    break;
+            }
 
-        if (msg)
-        {
-            MANGO_EXCEPTION(msg);
+            if (msg)
+            {
+                MANGO_EXCEPTION(msg);
+            }
         }
     }
 
@@ -332,16 +341,17 @@ namespace zstd {
 
     size_t compress(Memory dest, Memory source, int level)
     {
+        // zstd compress does not support encoding of empty source
+        if (!source.size)
+            return 0;
+
         level = clamp(level * 2, 1, 20);
 
         const size_t x = ZSTD_compress(dest.address, dest.size,
                                        source.address, source.size, level);
         if (ZSTD_isError(x))
         {
-            const char* error = ZSTD_getErrorName(x);
-            std::string s = "ZSTD: ";
-            s += error;
-            MANGO_EXCEPTION(s);
+            MANGO_EXCEPTION("ZSTD: %s", ZSTD_getErrorName(x));
         }
 
         return x;
@@ -353,10 +363,7 @@ namespace zstd {
                                    source.address, source.size);
         if (ZSTD_isError(x))
         {
-            const char* error = ZSTD_getErrorName(x);
-            std::string s = "ZSTD: ";
-            s += error;
-            MANGO_EXCEPTION(s);
+            MANGO_EXCEPTION("ZSTD: %s", ZSTD_getErrorName(x));
         }
     }
 
@@ -595,4 +602,315 @@ namespace lzfse {
 
 #endif // MANGO_ENABLE_LICENSE_ZLIB
 
+// ----------------------------------------------------------------------------
+// lzma
+// ----------------------------------------------------------------------------
+
+namespace lzma
+{
+
+    static const char* get_error_string(SRes result)
+    {
+        const char* error = nullptr;
+        if (result != SZ_OK)
+        {
+            switch (result)
+            {
+                case SZ_ERROR_DATA: error = "data error"; break;
+                case SZ_ERROR_MEM: error = "memory allocation failed"; break;
+                case SZ_ERROR_UNSUPPORTED: error = "unsupported properties"; break;
+                case SZ_ERROR_INPUT_EOF: error = "insufficient input"; break;
+                default: error = "undefined error"; break;
+            }
+        }
+        return error;
+    }
+
+    size_t bound(size_t size)
+    {
+        // NOTE: conservative estimate since the lzma-sdk
+        //       cannot provide more accurate value.
+        return (size * 3) / 2 + 1024 * 16;
+    }
+
+    size_t compress(Memory dest, Memory source, int level)
+    {
+        CLzmaEncProps props;
+        LzmaEncProps_Init(&props);
+
+        level = clamp(level - 1, 0, 9);
+
+        props.level = level; // [0, 9] (default: 5)
+        props.dictSize = 2048 << level; // use (1 << N) or (3 << N). 4 KB < dictSize <= 128 MB
+        props.lc = 3; // [0, 8] (default: 3)
+        props.lp = 0; // [0, 4] (default: 0)
+        props.pb = 2; // [0, 4] (default: 2)
+        props.fb = 32; // [5, 273] (default: 32)
+        props.numThreads = 1;
+
+        u8* start = dest.address;
+
+        // write the 5 byte props header before compressed data
+        u8* props_output = dest.address;
+        SizeT props_output_size = LZMA_PROPS_SIZE;
+        dest.address += LZMA_PROPS_SIZE;
+        dest.size -= LZMA_PROPS_SIZE;
+
+        SizeT dest_length = dest.size;
+        SizeT source_length = source.size;
+
+        SRes result = LzmaEncode(
+            dest.address, &dest_length, source.address, source_length,
+            &props, props_output, &props_output_size, 0,
+            nullptr, &g_Alloc, &g_Alloc);
+
+        const char* error = get_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA: %s", error);
+        }
+
+        size_t bytes_written = dest.address + dest_length - start;
+        return bytes_written;
+    }
+
+    void decompress(Memory dest, Memory source)
+    {
+        // read props header
+        u8* prop = source.address;
+        source.address += LZMA_PROPS_SIZE;
+        source.size -= LZMA_PROPS_SIZE;
+
+        SizeT destLen = dest.size;
+        SizeT srcLen = source.size;
+
+        ELzmaStatus status;
+        SRes result = LzmaDecode(dest.address, &destLen, source.address, &srcLen,
+            prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &status, &g_Alloc);
+
+        const char* error = get_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA: %s", error);
+        }
+    }
+
+} // namespace lzma
+
+// ----------------------------------------------------------------------------
+// lzma2
+// ----------------------------------------------------------------------------
+
+namespace lzma2
+{
+
+    size_t bound(size_t size)
+    {
+        return lzma::bound(size);
+    }
+
+    size_t compress(Memory dest, Memory source, int level)
+    {
+        CLzma2EncProps props;
+        Lzma2EncProps_Init(&props);
+        Lzma2EncProps_Normalize(&props);
+
+        level = clamp(level, 0, 10);
+
+        CLzma2EncHandle encoder = Lzma2Enc_Create(&g_Alloc, &g_Alloc);
+
+        Lzma2Enc_SetProps(encoder, &props);
+        Byte p = Lzma2Enc_WriteProperties(encoder);
+
+        u8* start = dest.address;
+
+        // write props header
+        dest.address[0] = p;
+        dest.address++;
+        dest.size--;
+
+        Byte *outBuf = dest.address;
+        size_t outBufSize = dest.size;
+
+        const Byte *inData = source.address;
+        size_t inDataSize = source.size;
+
+        SRes result = Lzma2Enc_Encode2(encoder,
+            nullptr, outBuf, &outBufSize,
+            nullptr, inData, inDataSize, nullptr);
+
+        Lzma2Enc_Destroy(encoder);
+
+        const char* error = lzma::get_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA2: %s", error);
+        }
+
+        size_t bytes_written = dest.address + outBufSize - start;
+        return bytes_written;
+    }
+
+    void decompress(Memory dest, Memory source)
+    {
+        // read props header
+        Byte prop = source.address[0];
+        source.address++;
+        source.size--;
+
+        SizeT destLen = dest.size;
+        SizeT srcLen = source.size;
+
+        ELzmaStatus status;
+        SRes result = Lzma2Decode(dest.address, &destLen, source.address, &srcLen,
+            prop, LZMA_FINISH_ANY, &status, &g_Alloc);
+
+        const char* error = lzma::get_error_string(result);
+        if (error)
+        {
+            MANGO_EXCEPTION("LZMA2: %s", error);
+        }
+    }
+
+} // namespace lzma2
+
+// ----------------------------------------------------------------------------
+// ppmd8
+// ----------------------------------------------------------------------------
+
+namespace ppmd8
+{
+
+    struct OutputStream : IByteOut
+    {
+        Memory memory;
+        size_t offset;
+
+        OutputStream(Memory memory)
+            : memory(memory)
+            , offset(0)
+        {
+            Write = write_byte;
+        }
+
+        static void write_byte(const IByteOut *p, Byte b)
+        {
+            OutputStream* stream = (OutputStream *) p;
+            if (stream->offset < stream->memory.size)
+            {
+                stream->memory.address[stream->offset++] = b;
+            }
+        }
+    };
+
+    struct InputStream : IByteIn
+    {
+        Memory memory;
+        size_t offset;
+
+        InputStream(Memory memory)
+            : memory(memory)
+            , offset(0)
+        {
+            Read = read_byte;
+        }
+
+        static u8 read_byte(const IByteIn *p)
+        {
+            InputStream* stream = (InputStream *) p;
+            u8 value = 0;
+            if (stream->offset < stream->memory.size)
+            {
+                value = stream->memory.address[stream->offset++];
+            }
+            return value;
+        }
+    };
+
+    size_t bound(size_t size)
+    {
+        return lzma::bound(size);
+    }
+
+    size_t compress(Memory dest, Memory source, int level)
+    {
+        u8* start = dest.address;
+
+        level = clamp(level, 0, 10);
+
+        // encoding parameters
+        u16 opt_order = level + 2; // 2..16
+        u16 opt_mem = 8 + level * 12; // 1..256 MB
+        u16 opt_restore = 0; // 0..2 (only restore mode 0 works reliably)
+
+        // compute header
+        u16 header = (opt_restore << 12) | ((opt_mem - 1) << 4) | (opt_order - 1);
+
+        // write header
+        LittleEndianPointer p = dest.address;
+        p.write16(header);
+        dest.address += 2;
+        dest.size -= 2;
+
+        CPpmd8 ppmd;
+
+        OutputStream stream(dest);
+        ppmd.Stream.Out = &stream;
+
+        Ppmd8_Construct(&ppmd);
+        Ppmd8_Alloc(&ppmd, opt_mem << 20, &g_Alloc);
+        Ppmd8_RangeEnc_Init(&ppmd);
+        Ppmd8_Init(&ppmd, opt_order, 0);
+
+        for (size_t i = 0; i < source.size; ++i)
+        {
+            Ppmd8_EncodeSymbol(&ppmd, source.address[i]);
+        }
+
+        Ppmd8_EncodeSymbol(&ppmd, -1); // EndMark
+        Ppmd8_RangeEnc_FlushData(&ppmd);
+
+        size_t bytes_written = stream.memory.address + stream.offset - start;
+        return bytes_written;
+    }
+
+    void decompress(Memory dest, Memory source)
+    {
+        // read 2 byte header
+        LittleEndianPointer p = source.address;
+        u16 header = p.read16();
+        source.address += 2;
+        source.size -= 2;
+
+        // parse header
+        u16 opt_order = (header & 0x000f) + 1;
+        u16 opt_mem = ((header & 0x0ff0) >> 4) + 1;
+        u16 opt_restore = ((header & 0xf000) >> 12);
+
+        CPpmd8 ppmd;
+
+        InputStream stream(source);
+        ppmd.Stream.In = &stream;
+
+        Ppmd8_Construct(&ppmd);
+        Ppmd8_Alloc(&ppmd, opt_mem << 20, &g_Alloc);
+        Ppmd8_RangeDec_Init(&ppmd);
+        Ppmd8_Init(&ppmd, opt_order, opt_restore);
+
+        size_t offset = 0;
+        for (;;)
+        {
+            int c = Ppmd8_DecodeSymbol(&ppmd);
+            if (c < 0 || offset >= dest.size)
+                break;
+            dest.address[offset++] = c;
+        }
+
+        if (!Ppmd8_RangeDec_IsFinishedOK(&ppmd))
+        {
+            MANGO_EXCEPTION("PPMd: decoding error.");
+        }
+    }
+
+} // namespace ppmd
 } // namespace mango

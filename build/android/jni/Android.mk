@@ -1,7 +1,7 @@
 # -------------------------------------------------------------
 # mango Android.mk
 #
-# Copyright (C) 2012-2016 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2018 Twilight 3D Finland Oy Ltd.
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
@@ -32,7 +32,8 @@ SOURCE_DIRS := mango/core \
                external/lz4 \
                external/lzo \
                external/bzip2 \
-               external/aes
+               external/aes \
+               external/lzma
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS),$(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) $(wildcard $(MANGO_SOURCE)/$(dir)/*.c))
 mango_sources := $(SOURCES:$(LOCAL_PATH)/%=%)
