@@ -840,8 +840,8 @@ namespace ppmd8
 
         // encoding parameters
         u16 opt_order = level + 2; // 2..16
-        u16 opt_mem = 4 + level * 8; // 1..256 MB
-        u16 opt_restore = level >= 8 ? 1 : 0; // 0..2
+        u16 opt_mem = 8 + level * 12; // 1..256 MB
+        u16 opt_restore = 0; // 0..2 (only restore mode 0 works reliably)
 
         // compute header
         u16 header = (opt_restore << 12) | ((opt_mem - 1) << 4) | (opt_order - 1);
