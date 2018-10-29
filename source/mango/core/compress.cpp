@@ -630,7 +630,7 @@ namespace lzma
     {
         // NOTE: conservative estimate since the lzma-sdk
         //       cannot provide more accurate value.
-        return size + 1024 * 16;
+        return (size * 3) / 2 + 1024 * 16;
     }
 
     size_t compress(Memory dest, Memory source, int level)
