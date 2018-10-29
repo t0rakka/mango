@@ -52,46 +52,47 @@ namespace miniz {
 	{
         level = clamp(level, 0, 10);
 
-        mz_ulong size = static_cast<mz_ulong>(dest.size);
-        int status = mz_compress2(dest, &size, source, static_cast<mz_ulong>(source.size), level);
+        mz_ulong dest_size = mz_ulong(dest.size);
+        mz_ulong source_size = mz_ulong(source.size);
 
+        int status = mz_compress2(dest, &dest_size, source, source_size, level);
         if (status != MZ_OK)
         {
             MANGO_EXCEPTION("miniz: compression failed.");
         }
 
-        return size;
+        return dest_size;
 	}
 
     void decompress(Memory dest, Memory source)
     {
-        mz_ulong zd = static_cast<mz_ulong>(dest.size);
-        int status = mz_uncompress(dest, &zd, source, static_cast<mz_ulong>(source.size));
+        mz_ulong dest_size = mz_ulong(dest.size);
+        mz_ulong source_size = mz_ulong(source.size);
 
-        const char* msg;
-
-        switch (status)
+        int status = mz_uncompress(dest, &dest_size, source, source_size);
+        if (status != MZ_OK)
         {
-            case MZ_OK:
-                msg = nullptr;
-                break;
-            case MZ_MEM_ERROR:
-                msg = "miniz: not enough memory.";
-                break;
-            case MZ_BUF_ERROR:
-                msg = "miniz: not enough room in the output buffer.";
-                break;
-            case MZ_DATA_ERROR:
-                msg = "miniz: corrupted input data.";
-                break;
-            default:
-                msg = "miniz: undefined error.";
-                break;
-        }
+            const char* msg = nullptr;
+            switch (status)
+            {
+                case MZ_MEM_ERROR:
+                    msg = "miniz: not enough memory.";
+                    break;
+                case MZ_BUF_ERROR:
+                    msg = "miniz: not enough room in the output buffer.";
+                    break;
+                case MZ_DATA_ERROR:
+                    msg = "miniz: corrupted input data.";
+                    break;
+                default:
+                    msg = "miniz: undefined error.";
+                    break;
+            }
 
-        if (msg)
-        {
-            MANGO_EXCEPTION(msg);
+            if (msg)
+            {
+                MANGO_EXCEPTION(msg);
+            }
         }
     }
 
