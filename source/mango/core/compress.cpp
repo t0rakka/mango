@@ -341,16 +341,17 @@ namespace zstd {
 
     size_t compress(Memory dest, Memory source, int level)
     {
+        // zstd compress does not support encoding of empty source
+        if (!source.size)
+            return 0;
+
         level = clamp(level * 2, 1, 20);
 
         const size_t x = ZSTD_compress(dest.address, dest.size,
                                        source.address, source.size, level);
         if (ZSTD_isError(x))
         {
-            const char* error = ZSTD_getErrorName(x);
-            std::string s = "ZSTD: ";
-            s += error;
-            MANGO_EXCEPTION(s);
+            MANGO_EXCEPTION("ZSTD: %s", ZSTD_getErrorName(x));
         }
 
         return x;
@@ -362,10 +363,7 @@ namespace zstd {
                                    source.address, source.size);
         if (ZSTD_isError(x))
         {
-            const char* error = ZSTD_getErrorName(x);
-            std::string s = "ZSTD: ";
-            s += error;
-            MANGO_EXCEPTION(s);
+            MANGO_EXCEPTION("ZSTD: %s", ZSTD_getErrorName(x));
         }
     }
 
