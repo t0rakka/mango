@@ -179,7 +179,7 @@ namespace simd {
     #define float512_is_hardware_vector
 
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = hardware_vector<int8, 16, __m128i>;
@@ -267,7 +267,7 @@ namespace simd {
     #define float256_is_hardware_vector
 
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = hardware_vector<int8, 16, __m128i>;
@@ -354,7 +354,7 @@ namespace simd {
     #define float256_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = hardware_vector<int8, 16, __m128i>;
@@ -440,7 +440,7 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = hardware_vector<int8, 16, __m128i>;
@@ -536,9 +536,9 @@ namespace simd {
 
     // 64 bit vector
 #ifdef MANGO_ENABLE_FP16
-    using float16x4  = hardware_vector<half, 4, float16x4_t>;
+    using float16x4  = hardware_vector<float16, 4, float16x4_t>;
 #else
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 #endif
 
     // 128 bit vector
@@ -627,7 +627,7 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = hardware_vector<int8, 16, __vector signed char>;
@@ -721,7 +721,7 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = hardware_vector<int8, 16, v16i8>;
@@ -802,7 +802,7 @@ namespace simd {
     // --------------------------------------------------------------
 
     // 64 bit vector
-    using float16x4  = scalar_vector<half, 4>;
+    using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using int8x16    = scalar_vector<int8, 16>;

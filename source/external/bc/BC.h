@@ -39,7 +39,7 @@ namespace DirectX
 
 const uint16_t F16S_MASK    = 0x8000;   // f16 sign mask
 const uint16_t F16EM_MASK   = 0x7fff;   // f16 exp & mantissa mask
-const uint16_t F16MAX       = 0x7bff;   // MAXFLT bit pattern for half
+const uint16_t F16MAX       = 0x7bff;   // MAXFLT bit pattern for float16
 
 #define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
 
@@ -356,9 +356,9 @@ public:
     void Set(const HDRColorA& c, bool bSigned)
     {
         // TODO: vectorize
-        half x = c.r;
-        half y = c.g;
-        half z = c.b;
+        float16 x = c.r;
+        float16 y = c.g;
+        float16 z = c.b;
         r = F16ToINT(x, bSigned);
         g = F16ToINT(y, bSigned);
         b = F16ToINT(z, bSigned);
@@ -380,7 +380,7 @@ public:
         return *this;
     }
 
-    void ToF16(half aF16[3], bool bSigned) const
+    void ToF16(float16 aF16[3], bool bSigned) const
     {
         aF16[0] = INT2F16(r, bSigned);
         aF16[1] = INT2F16(g, bSigned);
@@ -388,7 +388,7 @@ public:
     }
 
 private:
-    static int F16ToINT(const half& f, bool bSigned)
+    static int F16ToINT(const float16& f, bool bSigned)
     {
         uint16_t input = *((const uint16_t*) &f);
         int out, s;
@@ -408,9 +408,9 @@ private:
         return out;
     }
 
-    static half INT2F16(int input, bool bSigned)
+    static float16 INT2F16(int input, bool bSigned)
     {
-        half h;
+        float16 h;
         uint16_t out;
         if(bSigned)
         {

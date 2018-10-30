@@ -322,9 +322,9 @@ namespace mango
     using uint16le = detail::TypeCopy<uint16>;
     using uint32le = detail::TypeCopy<uint32>;
     using uint64le = detail::TypeCopy<uint64>;
-    using float16le = detail::TypeCopy<half>;
-    using float32le = detail::TypeCopy<float>;
-    using float64le = detail::TypeCopy<double>;
+    using float16le = detail::TypeCopy<float16>;
+    using float32le = detail::TypeCopy<float32>;
+    using float64le = detail::TypeCopy<float64>;
 
     using int16be = detail::TypeSwap<int16>;
     using int32be = detail::TypeSwap<int32>;
@@ -332,9 +332,9 @@ namespace mango
     using uint16be = detail::TypeSwap<uint16>;
     using uint32be = detail::TypeSwap<uint32>;
     using uint64be = detail::TypeSwap<uint64>;
-    using float16be = detail::TypeSwap<half>;
-    using float32be = detail::TypeSwap<float>;
-    using float64be = detail::TypeSwap<double>;
+    using float16be = detail::TypeSwap<float16>;
+    using float32be = detail::TypeSwap<float32>;
+    using float64be = detail::TypeSwap<float64>;
 
 #else
 
@@ -344,9 +344,9 @@ namespace mango
     using uint16le = detail::TypeSwap<uint16>;
     using uint32le = detail::TypeSwap<uint32>;
     using uint64le = detail::TypeSwap<uint64>;
-    using float16le = detail::TypeSwap<half>;
-    using float32le = detail::TypeSwap<float>;
-    using float64le = detail::TypeSwap<double>;
+    using float16le = detail::TypeSwap<float16>;
+    using float32le = detail::TypeSwap<float32>;
+    using float64le = detail::TypeSwap<float64>;
 
     using int16be = detail::TypeCopy<int16>;
     using int32be = detail::TypeCopy<int32>;
@@ -354,9 +354,9 @@ namespace mango
     using uint16be = detail::TypeCopy<uint16>;
     using uint32be = detail::TypeCopy<uint32>;
     using uint64be = detail::TypeCopy<uint64>;
-    using float16be = detail::TypeCopy<half>;
-    using float32be = detail::TypeCopy<float>;
-    using float64be = detail::TypeCopy<double>;
+    using float16be = detail::TypeCopy<float16>;
+    using float32be = detail::TypeCopy<float32>;
+    using float64be = detail::TypeCopy<float64>;
 
 #endif
     

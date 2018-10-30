@@ -354,12 +354,12 @@ namespace mango
 
             case Format::FP16:
             {
-                half color[4];
-                int size = config_clear_color<half>(color, format, red, green, blue, alpha);
+                float16 color[4];
+                int size = config_clear_color<float16>(color, format, red, green, blue, alpha);
 
                 for (int y = 0; y < height; ++y)
                 {
-                    clear_float_scan<half>(image + y * stride, width, color, size);
+                    clear_float_scan<float16>(image + y * stride, width, color, size);
                 }
 
                 break;

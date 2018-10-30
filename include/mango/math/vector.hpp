@@ -1318,7 +1318,7 @@ namespace mango
     using uint64x8  = Vector<uint64, 8>;
 
     // float vectors
-    using float16x4  = Vector<half, 4>;
+    using float16x4  = Vector<float16, 4>;
     using float32x2  = Vector<float, 2>;
     using float32x3  = Vector<float, 3>;
     using float32x4  = Vector<float, 4>;
@@ -1354,7 +1354,7 @@ namespace mango
     using uint2   = Vector<uint32, 2>;
     using uint3   = Vector<uint32, 3>;
     using uint4   = Vector<uint32, 4>;
-    using half4   = Vector<half, 4>;
+    using half4   = Vector<float16, 4>;
     using float2  = Vector<float, 2>;
     using float3  = Vector<float, 3>;
     using float4  = Vector<float, 4>;

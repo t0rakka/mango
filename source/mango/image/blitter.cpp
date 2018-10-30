@@ -500,25 +500,25 @@ namespace
             case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm_fpu<uint32, uint16>; break;
             case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm_fpu<uint32, uint24>; break;
             case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm_fpu<uint32, uint32>; break;
-            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp_fpu<uint8, half>; break;
-            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp_fpu<uint16, half>; break;
-            case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp_fpu<uint24, half>; break;
-            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp_fpu<uint32, half>; break;
+            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp_fpu<uint8, float16>; break;
+            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp_fpu<uint16, float16>; break;
+            case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp_fpu<uint24, float16>; break;
+            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp_fpu<uint32, float16>; break;
             case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp_fpu<uint8, float>; break;
             case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp_fpu<uint16, float>; break;
             case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp_fpu<uint24, float>; break;
             case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp_fpu<uint32, float>; break;
-            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm_fpu<half, uint8>; break;
-            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm_fpu<half, uint16>; break;
-            case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm_fpu<half, uint24>; break;
-            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm_fpu<half, uint32>; break;
+            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm_fpu<float16, uint8>; break;
+            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm_fpu<float16, uint16>; break;
+            case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm_fpu<float16, uint24>; break;
+            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm_fpu<float16, uint32>; break;
             case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm_fpu<float, uint8>; break;
             case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm_fpu<float, uint16>; break;
             case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm_fpu<float, uint24>; break;
             case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm_fpu<float, uint32>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp_fpu<half, half>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp_fpu<half, float>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp_fpu<float, half>; break;
+            case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp_fpu<float16, float16>; break;
+            case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp_fpu<float16, float>; break;
+            case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp_fpu<float, float16>; break;
             case MAKE_MODEMASK(BITS_FP32, BITS_FP32): func = convert_template_fp_fp_fpu<float, float>; break;
         }
 

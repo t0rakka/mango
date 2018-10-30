@@ -141,7 +141,7 @@ namespace mango {
             return value;
         }
 
-        half read16f()
+        float16 read16f()
         {
             Half value;
             value.u = uload16le(p);
@@ -264,7 +264,7 @@ namespace mango {
             return value;
         }
 
-        half read16f()
+        float16 read16f()
         {
             Half value;
             value.u = uload16be(p);

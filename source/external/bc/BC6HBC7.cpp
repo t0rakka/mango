@@ -1225,7 +1225,7 @@ void D3DX_BC6H::Decode(bool bSigned, uint8* output, int stride) const
             fc.g = FinishUnquantize((g1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + g2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
             fc.b = FinishUnquantize((b1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + b2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
 
-            half rgb[3];
+            float16 rgb[3];
             fc.ToF16(rgb, bSigned);
 
 			HDRColorA* pOut = ComputeAddress(output, stride, i);

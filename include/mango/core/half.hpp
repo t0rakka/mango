@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Based on Half/Float conversion code by Fabian "ryg" Giesen.
@@ -246,6 +246,8 @@ namespace mango
         }
     };
 
+    // conversions
+
     static inline Half f32_to_f16(float f)
     {
         return Half(f);
@@ -270,6 +272,10 @@ namespace mango
         return uint32(x.u);
     }
 
-    using half = Half;
+    // floating-point types
+
+    using float16 = Half;
+    using float32 = float;
+    using float64 = double;
 
 } // namespace mango

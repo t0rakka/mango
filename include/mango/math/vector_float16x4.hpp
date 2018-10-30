@@ -10,12 +10,11 @@
 namespace mango
 {
 
-    // half4 is a storage class and does not support any arithmetic operations.
     template <>
-    struct Vector<half, 4>
+    struct Vector<float16, 4>
     {
         using VectorType = simd::float16x4;
-        using ScalarType = half;
+        using ScalarType = float16;
         enum { VectorSize = 4 };
 
         union

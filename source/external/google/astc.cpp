@@ -446,7 +446,7 @@ namespace
             {
                 for (int c = 0; c < 4; c++)
                 {
-                    Half h = static_cast<uint16>(rgba[c]);
+                    float16 h = u16(rgba[c]);
                     if (isFloat16InfOrNan(h))
                     {
                         //throw tcu::InternalError("Infinity or NaN color component in HDR void extent block in ASTC texture (behavior undefined by ASTC specification)");
@@ -456,7 +456,7 @@ namespace
                 for (int i = 0; i < blockWidth*blockHeight; i++)
                     for (int c = 0; c < 4; c++)
                     {
-                        Half h = static_cast<uint16>(rgba[c]);
+                        float16 h = u16(rgba[c]);
                         dstF[i*4 + c] = h;
                     }
             }
@@ -1529,10 +1529,10 @@ namespace mango
 
                 for (int x = 0; x < blockWidth; ++x)
                 {
-                    dest[0] = uint8(src[0] * 255);
-                    dest[1] = uint8(src[1] * 255);
-                    dest[2] = uint8(src[2] * 255);
-                    dest[3] = uint8(src[3] * 255);
+                    dest[0] = u8(src[0] * 255);
+                    dest[1] = u8(src[1] * 255);
+                    dest[2] = u8(src[2] * 255);
+                    dest[3] = u8(src[3] * 255);
                     dest += 4;
                     src += 4;
                 }
