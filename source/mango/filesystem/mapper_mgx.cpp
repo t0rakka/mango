@@ -32,7 +32,7 @@ namespace
 
     // The way this works is that when client memory maps a file in the container, in case of
     // a small file the decompressed Block is represented as VirtualMemory block which is
-    // reference counted object in the heap. WHen the last reference to the Block goes out of
+    // reference counted object in the heap. When the last reference to the Block goes out of
     // scope the object is "collected". The collection means it is placed at tail of LRU cache,
     // which protects against pathological use cases which would cause decompression to
     // to be performed on a Block that was just evicted (in case of no caching of mmap operations).
