@@ -170,7 +170,7 @@ namespace mango
 
                 AbstractMapper* custom_mapper = nullptr;
 
-                if (parent->isfile(container_filename))
+                if (parent->isFile(container_filename))
                 {
                     m_parent_memory = parent->mmap(container_filename);
                     custom_mapper = extension.create(*m_parent_memory, password);

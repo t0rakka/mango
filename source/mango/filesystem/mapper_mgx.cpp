@@ -92,13 +92,13 @@ namespace mango
         {
         }
 
-        bool isfile(const std::string& filename) const override
+        bool isFile(const std::string& filename) const override
         {
             MANGO_UNREFERENCED_PARAMETER(filename);
             return false;
         }
 
-        void index(FileIndex& index, const std::string& pathname) override
+        void getIndex(FileIndex& index, const std::string& pathname) override
         {
             MANGO_UNREFERENCED_PARAMETER(index);
             MANGO_UNREFERENCED_PARAMETER(pathname);

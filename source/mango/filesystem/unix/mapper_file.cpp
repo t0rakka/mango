@@ -153,7 +153,7 @@ namespace
         {
         }
 
-        bool isfile(const std::string& filename) const override
+        bool isFile(const std::string& filename) const override
         {
             bool is = false;
 
@@ -169,7 +169,7 @@ namespace
 
 #if defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS) || defined(MANGO_PLATFORM_BSD)
 
-        void index(FileIndex& index, const std::string& pathname) override
+        void getIndex(FileIndex& index, const std::string& pathname) override
         {
             struct dirent** namelist = NULL;
 
@@ -199,7 +199,7 @@ namespace
 
 #else
 
-        void index(FileIndex& index, const std::string& pathname) override
+        void getIndex(FileIndex& index, const std::string& pathname) override
         {
             DIR* dirp = opendir(pathname.c_str());
             if (!dirp)

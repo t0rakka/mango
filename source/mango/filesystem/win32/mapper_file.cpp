@@ -135,7 +135,7 @@ namespace
         {
         }
 
-        bool isfile(const std::string& filename) const override
+        bool isFile(const std::string& filename) const override
         {
             bool is = false;
 
@@ -149,7 +149,7 @@ namespace
             return is;
         }
 
-        void index(FileIndex& index, const std::string& pathname) override
+        void getIndex(FileIndex& index, const std::string& pathname) override
         {
             std::wstring filespec = u16_fromBytes(pathname + "*");
 

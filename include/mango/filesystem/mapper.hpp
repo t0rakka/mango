@@ -92,8 +92,8 @@ namespace mango
         AbstractMapper() = default;
         virtual ~AbstractMapper() = default;
 
-        virtual bool isfile(const std::string& filename) const = 0;
-        virtual void index(FileIndex& index, const std::string& pathname) = 0;
+        virtual bool isFile(const std::string& filename) const = 0;
+        virtual void getIndex(FileIndex& index, const std::string& pathname) = 0;
         virtual VirtualMemory* mmap(const std::string& filename) = 0;
     };
 

@@ -762,7 +762,7 @@ namespace mango
             return memory;
         }
 
-        bool isfile(const std::string& filename) const override
+        bool isFile(const std::string& filename) const override
         {
             auto i = m_files.find(filename);
             if (i != m_files.end())
@@ -774,7 +774,7 @@ namespace mango
             return false;
         }
 
-        void index(FileIndex& index, const std::string& pathname) override
+        void getIndex(FileIndex& index, const std::string& pathname) override
         {
             for (auto i : m_files)
             {

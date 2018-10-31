@@ -19,7 +19,7 @@ namespace mango
 
 		// parse and create mappers
         m_pathname = parse(pathname, password);
-        m_mapper->index(m_files, m_pathname);
+        m_mapper->getIndex(m_files, m_pathname);
     }
 
     Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
@@ -31,7 +31,7 @@ namespace mango
         m_pathname = "";
         if (m_mapper)
         {
-            m_mapper->index(m_files, m_pathname);
+            m_mapper->getIndex(m_files, m_pathname);
         }
     }
 
@@ -42,7 +42,7 @@ namespace mango
 
 		// parse and create mappers
         m_pathname = parse(path.m_pathname + pathname, password);
-        m_mapper->index(m_files, m_pathname);
+        m_mapper->getIndex(m_files, m_pathname);
     }
 
     Path::~Path()
@@ -52,7 +52,7 @@ namespace mango
     void Path::updateIndex()
     {
         m_files.clear();
-        m_mapper->index(m_files, m_pathname);
+        m_mapper->getIndex(m_files, m_pathname);
     }
 
     const std::string& Path::pathname() const
