@@ -869,6 +869,7 @@ namespace ppmd8
 
         Ppmd8_EncodeSymbol(&ppmd, -1); // EndMark
         Ppmd8_RangeEnc_FlushData(&ppmd);
+        Ppmd8_Free(&ppmd, &g_Alloc);
 
         size_t bytes_written = stream.memory.address + stream.offset - start;
         return bytes_written;
