@@ -458,6 +458,19 @@ namespace mango
         return s;
     }
 
+    std::string removePrefix(const std::string& s, const std::string& prefix)
+    {
+        std::string temp = s;
+        size_t pos = temp.find(prefix);
+    
+        if (pos != std::string::npos)
+        {
+            temp.erase(pos, prefix.length());
+        }
+
+        return temp;
+    }
+
     bool isPrefix(const std::string& str, const std::string& prefix)
     {
         return str.length() > prefix.length() && !str.find(prefix, 0);
