@@ -225,11 +225,12 @@ namespace mango
                 // check if the task is cancelled
                 if (task.stamp > queue->stamp_cancel)
                 {
-                    // wait until task is not blocked by a barrier
-                    while (task.barrier > queue->task_complete_count)
+                    // check if the task blocked by a barrier
+                    if (task.barrier > queue->task_complete_count)
                     {
-                        // NOTE: waste of CPU
-                        break;
+                        // re-schedule (place at end of the queue)
+                        m_queues[priority].tasks.enqueue(std::move(task));
+                        return false;
                     }
 
                     // process task
