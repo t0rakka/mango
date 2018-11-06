@@ -169,7 +169,7 @@ namespace mango
 
         while (!m_stop.load(std::memory_order_relaxed))
         {
-            if (dequeue_process())
+            if (dequeue_and_process())
             {
                 // remember the last time we processed a task
                 time0 = high_resolution_clock::now();
@@ -212,7 +212,7 @@ namespace mango
             m_condition.notify_one();
     }
 
-    bool ThreadPool::dequeue_process()
+    bool ThreadPool::dequeue_and_process()
     {
         // scan task queues in priority order
         for (size_t priority = 0; priority < 3; ++priority)
@@ -221,21 +221,24 @@ namespace mango
             if (m_queues[priority].tasks.try_dequeue(task))
             {
                 Queue* queue = task.queue;
-                
+
                 // check if the task is cancelled
                 if (task.stamp > queue->stamp_cancel)
                 {
                     // wait until task is not blocked by a barrier
                     while (task.barrier > queue->task_complete_count)
-                        ;
-                    
+                    {
+                        // NOTE: waste of CPU
+                        break;
+                    }
+
                     // process task
                     task.func();
                 }
 
                 ++queue->task_complete_count;
                 queue->release();
-                
+
                 return true;
             }
         }
@@ -248,7 +251,7 @@ namespace mango
         // NOTE: we might be waiting here a while if other threads keep enqueuing tasks
         while (queue->task_complete_count < queue->task_input_count)
         {
-            if (!dequeue_process())
+            if (!dequeue_and_process())
             {
                 std::this_thread::yield();
             }
@@ -286,15 +289,15 @@ namespace mango
     // ------------------------------------------------------------
 
     ConcurrentQueue::ConcurrentQueue()
-    : m_pool(ThreadPool::getInstance())
+        : m_pool(ThreadPool::getInstance())
     {
-        m_queue = m_pool.createQueue("none", static_cast<int>(Priority::NORMAL));
+        m_queue = m_pool.createQueue("none", int(Priority::NORMAL));
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name, Priority priority)
-    : m_pool(ThreadPool::getInstance())
+        : m_pool(ThreadPool::getInstance())
     {
-        m_queue = m_pool.createQueue(name, static_cast<int>(priority));
+        m_queue = m_pool.createQueue(name, int(priority));
     }
 
     ConcurrentQueue::~ConcurrentQueue()
@@ -322,15 +325,15 @@ namespace mango
     // ------------------------------------------------------------
 
     SerialQueue::SerialQueue()
-    : m_pool(ThreadPool::getInstance())
+        : m_pool(ThreadPool::getInstance())
     {
-        m_queue = m_pool.createQueue("none", static_cast<int>(Priority::NORMAL));
+        m_queue = m_pool.createQueue("none", int(Priority::NORMAL));
     }
 
     SerialQueue::SerialQueue(const std::string& name, Priority priority)
-    : m_pool(ThreadPool::getInstance())
+        : m_pool(ThreadPool::getInstance())
     {
-        m_queue = m_pool.createQueue(name, static_cast<int>(priority));
+        m_queue = m_pool.createQueue(name, int(priority));
     }
 
     SerialQueue::~SerialQueue()

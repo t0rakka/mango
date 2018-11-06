@@ -138,7 +138,7 @@ namespace mango
         void deleteQueue(Queue* queue);
 
         void enqueue(Queue* queue, std::function<void()>&& func);
-        bool dequeue_process();
+        bool dequeue_and_process();
         void cancel(Queue* queue);
         void wait(Queue* queue);
 
