@@ -23,19 +23,12 @@ namespace mango
 	struct FileHandle
 	{
 		FILE* m_file;
-		uint64 m_size;
         std::string m_filename;
 
         FileHandle(const std::string& filename, const char* mode)
-            : m_filename(filename)
+            : m_file(std::fopen(filename.c_str(), mode))
+            , m_filename(filename)
 		{
-			// open file
-            m_file = std::fopen(filename.c_str(), mode);
-
-			// cache file size
-	        fseeko(m_file, 0, SEEK_END);
-	        m_size = static_cast<uint64>(ftello(m_file));
-	        fseeko(m_file, 0, SEEK_SET);
 		}
 
 		~FileHandle()
@@ -50,7 +43,13 @@ namespace mango
 
         uint64 size() const
 		{
-			return m_size;
+            u64 current = ftello(m_file);
+	        fseeko(m_file, 0, SEEK_END);
+
+	        u64 size = u64(ftello(m_file));
+	        fseeko(m_file, current, SEEK_SET);
+
+			return size;
 		}
 
 		uint64 offset() const

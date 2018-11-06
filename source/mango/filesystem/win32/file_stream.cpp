@@ -19,18 +19,11 @@ namespace mango
 	{
         std::string m_filename;
 		HANDLE m_handle;
-		uint64 m_size;
 
 		FileHandle(const std::string& filename, HANDLE handle)
-		: m_filename(filename), m_handle(handle), m_size(0)
+		    : m_filename(filename)
+            , m_handle(handle)
 		{
-			// cache file size
-	        LARGE_INTEGER integer;
-	        BOOL status = GetFileSizeEx(m_handle, &integer);
-	        if (status)
-	        {
-	            m_size = static_cast<size_t>(integer.QuadPart);
-	        }
 		}
 
 		~FileHandle()
@@ -45,7 +38,9 @@ namespace mango
 
 	    uint64 size() const
 	    {
-			return m_size;
+	        LARGE_INTEGER integer;
+	        BOOL status = GetFileSizeEx(m_handle, &integer);
+            return status ? u64(integer.QuadPart) : 0;
 	    }
 
 	    uint64 offset() const
