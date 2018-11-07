@@ -94,6 +94,11 @@ namespace mango
             std::atomic<int> task_complete_count;
             std::atomic<int> stamp_cancel;
             std::string name;
+
+            bool empty() const
+            {
+                return task_input_count.load() == task_complete_count.load();
+            }
         };
 
         struct Task
@@ -219,10 +224,13 @@ namespace mango
     protected:
         using Task = std::function<void()>;
 
+        ThreadPool& m_pool;
+        ThreadPool::Queue* m_queue;
+
         std::thread m_thread;
         std::atomic<bool> m_stop { false };
 
-        std::atomic<bool> m_executing { false };
+        std::atomic<bool> m_waiting { false };
         std::queue<Task> m_task_queue;
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
@@ -231,7 +239,7 @@ namespace mango
 
     public:
         SerialQueue();
-        SerialQueue(const std::string& name);
+        SerialQueue(const std::string& name, Priority priority = Priority::NORMAL);
         ~SerialQueue();
 
         template <class F, class... Args>
@@ -239,7 +247,6 @@ namespace mango
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
             m_task_queue.emplace(f, (args)...);
-            lock.unlock();
             m_condition.notify_one();
         }
 

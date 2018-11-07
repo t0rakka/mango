@@ -279,7 +279,7 @@ namespace mango
     ConcurrentQueue::ConcurrentQueue()
         : m_pool(ThreadPool::getInstance())
     {
-        m_queue = m_pool.createQueue("none", int(Priority::NORMAL));
+        m_queue = m_pool.createQueue("concurrent.default", int(Priority::NORMAL));
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name, Priority priority)
@@ -309,15 +309,18 @@ namespace mango
     // ------------------------------------------------------------
 
     SerialQueue::SerialQueue()
+        : m_pool(ThreadPool::getInstance())
     {
+        m_queue = m_pool.createQueue("serial.default", int(Priority::NORMAL));
         m_thread = std::thread([this] {
             thread();
         });
     }
 
-    SerialQueue::SerialQueue(const std::string& name)
+    SerialQueue::SerialQueue(const std::string& name, Priority priority)
+        : m_pool(ThreadPool::getInstance())
     {
-        MANGO_UNREFERENCED_PARAMETER(name);
+        m_queue = m_pool.createQueue(name, int(priority));
         m_thread = std::thread([this] {
             thread();
         });
@@ -334,20 +337,22 @@ namespace mango
 
     void SerialQueue::thread()
     {
+        // NOTE: we have to feed the concurrent queue from the same thread to guarantee
+        //       sequential consistency; we want to dequeue the tasks in the same exact order
+        //       they were committed. So; we have less-efficient std thread-queue-mutex to
+        //       keep the order of the tasks until they are enqueued into the pool here.
         while (!m_stop.load(std::memory_order_relaxed))
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
-            if (!m_task_queue.empty())
+            if (!m_task_queue.empty() && m_queue->empty() && !m_waiting.load())
             {
+                // get task from queue
                 Task task = m_task_queue.front();
                 m_task_queue.pop();
                 lock.unlock();
 
-                m_executing = true;
-                task();
-                m_executing = false;
-
-                m_condition.notify_one();
+                // enqueue task to the pool
+                m_pool.enqueue(m_queue, std::move(task));
             }
             else
             {
@@ -358,25 +363,41 @@ namespace mango
 
     void SerialQueue::cancel()
     {
+        m_pool.cancel(m_queue);
         std::unique_lock<std::mutex> lock(m_queue_mutex);
-        m_task_queue = std::queue<Task>();
+        m_task_queue = std::queue<Task>(); // clear queue
     }
 
     void SerialQueue::wait()
     {
+        // exclusive access into the task queue
+        m_waiting = true;
+
+        // flush pooled tasks
+        m_pool.wait(m_queue);
+
+        // execute remaining tasks in the current thread
         for (;;)
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
-            if (m_task_queue.empty() && !m_executing.load())
+            if (m_task_queue.empty())
             {
                 break;
             }
             else
             {
-                // let's sleep.. the worker thread will wake us up when it's done
-                m_condition.wait_for(lock, milliseconds(32));
+                // get task from queue
+                Task task = m_task_queue.front();
+                m_task_queue.pop();
+                lock.unlock();
+
+                // execute task
+                task();
             }
         }
+
+        // release exclusivity
+        m_waiting = false;
     }
 
 } // namespace mango
