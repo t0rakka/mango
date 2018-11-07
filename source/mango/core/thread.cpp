@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <chrono>
 #include <mango/core/thread.hpp>
@@ -48,7 +48,7 @@ using std::chrono::milliseconds;
 
 #else
 
-    // TODO: IOS, OSX, ANDROID
+    // TODO: iOS, macOS, Android
 
     template <typename H>
     static void set_thread_affinity(H handle, int processor)
@@ -108,7 +108,7 @@ namespace mango
         , m_threads(size)
     {
         m_queues = new TaskQueue[3];
-        m_static_queue = createQueue("static", static_cast<int>(Priority::NORMAL));
+        m_static_queue = createQueue("static", int(Priority::NORMAL));
 
         // NOTE: let OS scheduler shuffle tasks as it sees fit
         //       this gives better performance overall UNTIL we have some practical
@@ -198,18 +198,17 @@ namespace mango
 
     void ThreadPool::enqueue(Queue* queue, std::function<void()>&& func)
     {
-        queue->retain();
-
         Task task;
         task.queue = queue;
         task.stamp = queue->task_input_count++;
-        task.barrier = queue->stamp_barrier;
         task.func = std::move(func);
 
         m_queues[queue->priority].tasks.enqueue(std::move(task));
 
         if (m_sleep_count > 0)
+        {
             m_condition.notify_one();
+        }
     }
 
     bool ThreadPool::dequeue_and_process()
@@ -225,21 +224,11 @@ namespace mango
                 // check if the task is cancelled
                 if (task.stamp > queue->stamp_cancel)
                 {
-                    // check if the task blocked by a barrier
-                    if (task.barrier > queue->task_complete_count)
-                    {
-                        // re-schedule (place at end of the queue)
-                        m_queues[priority].tasks.enqueue(std::move(task));
-                        return false;
-                    }
-
                     // process task
                     task.func();
                 }
 
                 ++queue->task_complete_count;
-                queue->release();
-
                 return true;
             }
         }
@@ -270,11 +259,9 @@ namespace mango
 
         queue->pool = this;
         queue->priority = priority;
-        queue->reference_count = 1;
         queue->task_input_count = 0;
         queue->task_complete_count = 0;
         queue->stamp_cancel = -1;
-        queue->stamp_barrier = 0;
         queue->name = name;
 
         return queue;
@@ -303,12 +290,8 @@ namespace mango
 
     ConcurrentQueue::~ConcurrentQueue()
     {
-        m_queue->release();
-    }
-
-    void ConcurrentQueue::barrier()
-    {
-        m_queue->stamp_barrier = m_queue->task_input_count;
+        wait();
+        m_pool.deleteQueue(m_queue);
     }
 
     void ConcurrentQueue::cancel()
@@ -326,30 +309,68 @@ namespace mango
     // ------------------------------------------------------------
 
     SerialQueue::SerialQueue()
-        : m_pool(ThreadPool::getInstance())
     {
-        m_queue = m_pool.createQueue("none", int(Priority::NORMAL));
+        m_thread = std::thread([this] {
+            thread();
+        });
     }
 
-    SerialQueue::SerialQueue(const std::string& name, Priority priority)
-        : m_pool(ThreadPool::getInstance())
+    SerialQueue::SerialQueue(const std::string& name)
     {
-        m_queue = m_pool.createQueue(name, int(priority));
+        m_thread = std::thread([this] {
+            thread();
+        });
     }
 
     SerialQueue::~SerialQueue()
     {
-        m_queue->release();
+        wait();
+
+        m_stop = true;
+        m_condition.notify_one();
+        m_thread.join();
+    }
+
+    void SerialQueue::thread()
+    {
+        while (!m_stop.load(std::memory_order_relaxed))
+        {
+            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            if (!m_task_queue.empty())
+            {
+                Task task = m_task_queue.front();
+                m_task_queue.pop();
+                task();
+            }
+            else
+            {
+                m_condition.wait_for(lock, milliseconds(32));
+            }
+        }
     }
 
     void SerialQueue::cancel()
     {
-        m_pool.cancel(m_queue);
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        m_task_queue = std::queue<Task>();
     }
 
     void SerialQueue::wait()
     {
-        m_pool.wait(m_queue);
+        for (;;)
+        {
+            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            if (!m_task_queue.empty())
+            {
+                Task task = m_task_queue.front();
+                m_task_queue.pop();
+                task();
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 
 } // namespace mango

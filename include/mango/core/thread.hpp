@@ -1,9 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
+#include <queue>
 #include <vector>
 #include <memory>
 #include <thread>
@@ -89,31 +90,16 @@ namespace mango
         {
             ThreadPool* pool;
             int priority;
-            std::atomic<int> reference_count;
             std::atomic<int> task_input_count;
             std::atomic<int> task_complete_count;
             std::atomic<int> stamp_cancel;
-            int stamp_barrier;
             std::string name;
-
-            void retain()
-            {
-                ++reference_count;
-            }
-
-            void release()
-            {
-                if (!--reference_count) {
-                    pool->deleteQueue(this);
-                }
-            }
         };
 
         struct Task
         {
             Queue* queue;
             int stamp;
-            int barrier;
             std::function<void()> func;
         };
 
@@ -162,6 +148,28 @@ namespace mango
         LOW = 2
     };
 
+    /*
+        ConcurrentQueue is API to submit work into the ThreadPool. The tasks have no
+        dependency to each other and can be executed in any order. Any number of queues
+        can be created from any thread in the program. The ThreadPool is shared between
+        queues. The queues can be configuted to different priorities to control which tasks
+        are more time critical.
+
+        Usage example:
+
+        // create queue
+        ConcurrentQueue q;
+
+        // submit work into the queue
+        q.enqueue([] {
+            // TODO: do your stuff here..
+        });
+
+        // wait until the queue is drained
+        q.wait();
+
+    */
+
     class ConcurrentQueue : private NonCopyable
     {
     protected:
@@ -179,32 +187,69 @@ namespace mango
             m_pool.enqueue(m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
 
-        void barrier();
         void cancel();
         void wait();
     };
 
+    /*
+        SerialQueue is API to serialize tasks to be executed after previous task
+        in the queue has completed. The tasks are NOT executed in the ThreadPool; each
+        queue has it's own execution thread.
+
+        SerialQueue and ConcurrentQueue can be freely mixed can can enqueue work to other
+        queues from their tasks.
+
+        Usage example:
+
+        // create queue
+        SerialQueue s;
+
+        // submit work into the queue
+        s.enqueue([] {
+            // TODO: do your stuff here..
+        });
+
+        // wait until the queue is drained
+        s.wait();
+
+    */
+
     class SerialQueue : private NonCopyable
     {
     protected:
-        ThreadPool& m_pool;
-        ThreadPool::Queue* m_queue;
+        using Task = std::function<void()>;
+
+        std::thread m_thread;
+        std::atomic<bool> m_stop { false };
+
+        std::queue<Task> m_task_queue;
+        std::mutex m_queue_mutex;
+        std::condition_variable m_condition;
+
+        void thread();
 
     public:
         SerialQueue();
-        SerialQueue(const std::string& name, Priority priority = Priority::NORMAL);
+        SerialQueue(const std::string& name);
         ~SerialQueue();
 
         template <class F, class... Args>
         void enqueue(F&& f, Args&&... args)
         {
-            m_pool.enqueue(m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-            m_queue->stamp_barrier = m_queue->task_input_count;
+            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            m_task_queue.emplace(f, (args)...);
+            lock.unlock();
+            m_condition.notify_one();
         }
 
         void cancel();
         void wait();
     };
+
+    /*
+        Task is a simple queue-less convenience object to enqueue work into the ThreadPool.
+        The synchronization has to be done "manually", for example, with atomic flag.
+    */
 
     class Task
     {
@@ -217,9 +262,23 @@ namespace mango
         }
     };
 
-#if 0
-    // TODO: should probably be deprecated and/or refactored into
-    //       SharedPromise<T> class which only assists in capturing promises.
+    /*
+        FutureTask is an asynchronous API to submit tasks into the ThreadPool.
+        The get() member function will block the current thread until the result is available
+        and does not consume any significant amount of CPU; the thread will yield/sleep
+        while waiting for the result.
+
+        Usage example:
+
+        // enqueue a simple task into the ThreadPool
+        FutureTask<int> task([] () -> int {
+            return 7;
+        });
+
+        // this will block until the task has been completed
+        int x = task.get();
+
+    */
 
     template <typename T>
     class FutureTask
@@ -237,7 +296,7 @@ namespace mango
         FutureTask(F&& f, Args&&... args)
         {
             SharedPromise shared_promise = std::make_shared<Promise>();
-            m_future = std::move(shared_promise->get_future());
+            m_future = shared_promise->get_future();
 
             Function func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
             auto container = std::bind([shared_promise] (Function func) {
@@ -276,7 +335,7 @@ namespace mango
         FutureTask(F&& f, Args&&... args)
         {
             SharedPromise shared_promise = std::make_shared<Promise>();
-            m_future = std::move(shared_promise->get_future());
+            m_future = shared_promise->get_future();
 
             Function func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
             auto container = std::bind([shared_promise] (Function func) {
@@ -298,6 +357,5 @@ namespace mango
             m_future.wait();
         }
     };
-#endif
 
 } // namespace mango
