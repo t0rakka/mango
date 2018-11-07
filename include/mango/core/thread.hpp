@@ -222,6 +222,7 @@ namespace mango
         std::thread m_thread;
         std::atomic<bool> m_stop { false };
 
+        std::atomic<bool> m_executing { false };
         std::queue<Task> m_task_queue;
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;

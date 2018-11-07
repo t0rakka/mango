@@ -317,6 +317,7 @@ namespace mango
 
     SerialQueue::SerialQueue(const std::string& name)
     {
+        MANGO_UNREFERENCED_PARAMETER(name);
         m_thread = std::thread([this] {
             thread();
         });
@@ -340,7 +341,13 @@ namespace mango
             {
                 Task task = m_task_queue.front();
                 m_task_queue.pop();
+                lock.unlock();
+
+                m_executing = true;
                 task();
+                m_executing = false;
+
+                m_condition.notify_one();
             }
             else
             {
@@ -360,15 +367,14 @@ namespace mango
         for (;;)
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
-            if (!m_task_queue.empty())
+            if (m_task_queue.empty() && !m_executing.load())
             {
-                Task task = m_task_queue.front();
-                m_task_queue.pop();
-                task();
+                break;
             }
             else
             {
-                break;
+                // let's sleep.. the worker thread will wake us up when it's done
+                m_condition.wait_for(lock, milliseconds(32));
             }
         }
     }
