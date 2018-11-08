@@ -224,14 +224,12 @@ namespace mango
     protected:
         using Task = std::function<void()>;
 
-        ThreadPool& m_pool;
-        ThreadPool::Queue* m_queue;
-
+        std::string m_name;
         std::thread m_thread;
         std::atomic<bool> m_stop { false };
+        std::atomic<bool> m_thread_sleeping { false };
 
-        std::atomic<bool> m_waiting { false };
-        std::queue<Task> m_task_queue;
+        std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
 
@@ -239,14 +237,14 @@ namespace mango
 
     public:
         SerialQueue();
-        SerialQueue(const std::string& name, Priority priority = Priority::NORMAL);
+        SerialQueue(const std::string& name);
         ~SerialQueue();
 
         template <class F, class... Args>
         void enqueue(F&& f, Args&&... args)
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
-            m_task_queue.emplace(f, (args)...);
+            m_task_queue.emplace_back(f, (args)...);
             m_condition.notify_one();
         }
 
@@ -294,22 +292,21 @@ namespace mango
     private:
         using Future = std::future<T>;
         using Promise = std::promise<T>;
-        using SharedPromise = std::shared_ptr<Promise>;
         using Function = std::function<T()>;
 
+        Promise m_promise;
         Future m_future;
 
     public:
         template <class F, class... Args>
         FutureTask(F&& f, Args&&... args)
+            : m_promise()
+            , m_future(m_promise.get_future())
         {
-            SharedPromise shared_promise = std::make_shared<Promise>();
-            m_future = shared_promise->get_future();
-
             Function func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-            auto container = std::bind([shared_promise] (Function func) {
+            auto container = std::bind([this] (Function func) {
                 T value = func();
-                shared_promise->set_value(value);
+                m_promise.set_value(value);
             }, func);
 
             ThreadPool& pool = ThreadPool::getInstance();
@@ -333,22 +330,21 @@ namespace mango
     private:
         using Future = std::future<void>;
         using Promise = std::promise<void>;
-        using SharedPromise = std::shared_ptr<Promise>;
         using Function = std::function<void()>;
 
+        Promise m_promise;
         Future m_future;
 
     public:
         template <class F, class... Args>
         FutureTask(F&& f, Args&&... args)
+            : m_promise()
+            , m_future(m_promise.get_future())
         {
-            SharedPromise shared_promise = std::make_shared<Promise>();
-            m_future = shared_promise->get_future();
-
             Function func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-            auto container = std::bind([shared_promise] (Function func) {
+            auto container = std::bind([this] (Function func) {
                 func();
-                shared_promise->set_value();
+                m_promise.set_value();
             }, func);
 
             ThreadPool& pool = ThreadPool::getInstance();
