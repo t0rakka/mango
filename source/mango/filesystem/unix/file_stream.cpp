@@ -6,6 +6,7 @@
 #define _FILE_OFFSET_BITS 64 /* LFS: 64 bit off_t */
 #endif
 #include <cstdio>
+#include <sys/stat.h>
 
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -43,13 +44,10 @@ namespace mango
 
         uint64 size() const
 		{
-            u64 current = ftello(m_file);
-	        fseeko(m_file, 0, SEEK_END);
-
-	        u64 size = u64(ftello(m_file));
-	        fseeko(m_file, current, SEEK_SET);
-
-			return size;
+            struct stat sb;
+            int fd = ::fileno(m_file);
+            ::fstat(fd, &sb);
+            return sb.st_size;
 		}
 
 		uint64 offset() const

@@ -62,8 +62,8 @@ namespace
                 }
                 else
                 {
-					const size_t file_size = static_cast<size_t>(sb.st_size);
-					const size_t file_offset = static_cast<size_t>(_offset);
+					const size_t file_size = size_t(sb.st_size);
+					const size_t file_offset = size_t(_offset);
 
 					size_t page_offset = 0;
 					if (file_offset > 0)
