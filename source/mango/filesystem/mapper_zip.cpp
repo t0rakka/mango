@@ -496,6 +496,11 @@ namespace
 		return zstream.total_out;
     }
 
+    struct Folder
+    {
+        std::map<std::string, DirFileHeader> files;
+    };
+
 } // namespace
 
 namespace mango
@@ -532,7 +537,7 @@ namespace mango
     public:
         Memory m_parent_memory;
         std::string m_password;
-        std::map<std::string, DirFileHeader> m_files;
+        std::map<std::string, Folder> m_folders;
 
         MapperZIP(Memory parent, const std::string& password)
             : m_parent_memory(parent)
@@ -553,20 +558,23 @@ namespace mango
                         DirFileHeader header(p);
                         if (header.status())
                         {
-                            m_files[header.filename] = header;
+                            std::string folder = getPath(header.filename);
 
+                            m_folders[folder].files[header.filename] = header;
+
+#if 1
                             // generate missing folder entries for zip files generated with -D option
-                            std::string path = getPath(header.filename);
-                            if (!path.empty())
+                            if (!folder.empty())
                             {
-                                path = path.substr(0, path.length() - 1); // remove trailing '/'
+                                std::string path = folder.substr(0, folder.length() - 1); // remove trailing '/'
 
                                 DirFileHeader temp;
                                 temp.filename = path;
                                 temp.folder = true;
 
-                                m_files[path] = temp;
+                                m_folders[path].files[header.filename] = header;
                             }
+#endif
                         }
                     }
                 }
@@ -764,11 +772,17 @@ namespace mango
 
         bool isFile(const std::string& filename) const override
         {
-            auto i = m_files.find(filename);
-            if (i != m_files.end())
+            std::string pn = getPath(filename);
+            auto iPath = m_folders.find(pn);
+            if (iPath != m_folders.end())
             {
-                // file does exist; check if it is a folder
-                return !i->second.folder;
+                const Folder& folder = iPath->second;
+                auto iFile = folder.files.find(filename);
+                if (iFile != folder.files.end())
+                {
+                    const DirFileHeader& file = iFile->second;
+                    return !file.folder;
+                }
             }
 
             return false;
@@ -776,51 +790,59 @@ namespace mango
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            for (auto i : m_files)
+            auto iPath = m_folders.find(pathname);
+            if (iPath != m_folders.end())
             {
-                DirFileHeader& header = i.second;
-                std::string filename = header.filename;
+                const Folder& folder = iPath->second;
 
-                if (header.folder)
+                for (auto i : folder.files)
                 {
-                    filename += "/";
-                }
+                    const DirFileHeader& file = i.second;
+                    std::string filename = i.first;
 
-                if (isPrefix(filename, pathname))
-                {
                     filename = filename.substr(pathname.length());
-                    size_t n = filename.find_first_of("/");
 
-                    if (n != std::string::npos)
-                    {
-                        if (n == (filename.length() - 1))
-                        {
-                            index.emplace(filename, 0, FileInfo::DIRECTORY);
-                        }
-                    }
-                    else
-                    {
-                        uint32 flags = 0;
-                        if (header.compression > 0)
-                        {
-                            flags |= FileInfo::COMPRESSED;
-                        }
+                    u32 flags = 0;
+                    u64 size = file.uncompressedSize;
 
-                        index.emplace(filename, header.uncompressedSize, flags);
+                    if (file.folder)
+                    {
+                        flags |= FileInfo::DIRECTORY;
+                        size = 0;
                     }
+
+                    if (file.compression > 0)
+                    {
+                        flags |= FileInfo::COMPRESSED;
+                    }
+
+                    index.emplace(filename, size, flags);
                 }
             }
         }
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            auto i = m_files.find(filename);
-            if (i == m_files.end())
+            const DirFileHeader* ptrFile = nullptr;
+
+            std::string pathname = getPath(filename);
+
+            auto iPath = m_folders.find(pathname);
+            if (iPath != m_folders.end())
             {
-                MANGO_EXCEPTION(ID"File not found.");
+                const Folder& folder = iPath->second;
+
+                auto iFile = folder.files.find(filename);
+                if (iFile == folder.files.end())
+                {
+                    MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                }
+
+                ptrFile = &iFile->second;
             }
 
-            return mmap(i->second, m_parent_memory.address, m_password);
+            const DirFileHeader& file = *ptrFile;
+            return mmap(file, m_parent_memory.address, m_password);
         }
     };
 
