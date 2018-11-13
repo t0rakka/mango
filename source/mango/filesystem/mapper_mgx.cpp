@@ -140,7 +140,6 @@ namespace
             u32 size;
         };
 
-        std::string filename;
         u64 size;
         bool is_compressed;
         std::vector<Segment> segments;
@@ -166,10 +165,15 @@ namespace
         }
     };
 
+    struct Folder
+    {
+        std::map<std::string, FileHeader> files;
+    };
+
     struct HeaderMGX
     {
         Memory m_memory;
-        std::map<std::string, FileHeader> m_files;
+        std::map<std::string, Folder> m_folders;
         std::vector<Block> m_blocks;
 
         HeaderMGX(Memory memory)
@@ -250,9 +254,9 @@ namespace
                 std::string filename(reinterpret_cast<const char *>(ptr), length);
                 p += length;
 
-                file.filename = filename;
                 file.size = p.read64();
                 file.is_compressed = false;
+
                 u32 num_segment = p.read32();
                 for (u32 j = 0; j < num_segment; ++j)
                 {
@@ -271,7 +275,11 @@ namespace
                     }
                 }
 
-                m_files[filename] = file;
+                std::string folder = file.isFolder() ?
+                    getPath(filename.substr(0, length - 1)) :
+                    getPath(filename);
+
+                m_folders[folder].files[filename] = file;
             }
 
             u32 magic3 = p.read32();
@@ -328,11 +336,17 @@ namespace mango
 
         bool isFile(const std::string& filename) const override
         {
-            auto i = m_header.m_files.find(filename);
-            if (i != m_header.m_files.end())
+            std::string pn = getPath(filename);
+            auto iPath = m_header.m_folders.find(pn);
+            if (iPath != m_header.m_folders.end())
             {
-                const FileHeader& file = i->second;
-                return !file.isFolder();
+                const Folder& folder = iPath->second;
+                auto iFile = folder.files.find(filename);
+                if (iFile != folder.files.end())
+                {
+                    const FileHeader& file = iFile->second;
+                    return !file.isFolder();
+                }
             }
 
             return false;
@@ -340,47 +354,56 @@ namespace mango
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            for (auto i : m_header.m_files)
+            auto iPath = m_header.m_folders.find(pathname);
+            if (iPath != m_header.m_folders.end())
             {
-                const FileHeader& file = i.second;
-                std::string filename = file.filename;
+                const Folder& folder = iPath->second;
 
-                if (isPrefix(filename, pathname))
+                for (auto i : folder.files)
                 {
+                    const FileHeader& file = i.second;
+                    std::string filename = i.first;
+
                     filename = filename.substr(pathname.length());
 
-                    size_t n = filename.find_first_of("/");
+                    u32 flags = 0;
 
-                    if (n != std::string::npos)
+                    if (file.isFolder())
                     {
-                        if (n == (filename.length() - 1))
-                        {
-                            index.emplace(filename, 0, FileInfo::DIRECTORY);
-                        }
+                        flags |= FileInfo::DIRECTORY;
                     }
-                    else
-                    {
-                        u32 flags = 0;
-                        if (file.isCompressed())
-                        {
-                            flags |= FileInfo::COMPRESSED;
-                        }
 
-                        index.emplace(filename, file.size, flags);
+                    if (file.isCompressed())
+                    {
+                        flags |= FileInfo::COMPRESSED;
                     }
+
+                    index.emplace(filename, file.size, flags);
                 }
             }
         }
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            auto i = m_header.m_files.find(filename);
-            if (i == m_header.m_files.end())
+            const FileHeader* ptrFile = nullptr;
+
+            std::string pathname = getPath(filename);
+
+            auto iPath = m_header.m_folders.find(pathname);
+            if (iPath != m_header.m_folders.end())
             {
-                MANGO_EXCEPTION(ID"File not found.");
+                const Folder& folder = iPath->second;
+
+                auto iFile = folder.files.find(filename);
+                if (iFile == folder.files.end())
+                {
+                    MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                }
+
+                ptrFile = &iFile->second;
             }
 
-            const FileHeader& file = i->second;
+            const FileHeader& file = *ptrFile;
 
             if (file.isDirectMapped())
             {
@@ -391,7 +414,7 @@ namespace mango
                 u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
                 u64 size = file.size;
 
-                printf("## direct mapped \n");
+                printf("## direct mapped: %s \n", filename.c_str());
 
                 // return reference to parent's memory
                 VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size);
@@ -399,7 +422,6 @@ namespace mango
             }
 
             // TODO: remove debug prints
-            // TODO: map stored files directly to parent memory
             // TODO: compute segment.size instead of storing it in .mgx container
             // TODO: decompression cache for small-file blocks
 
@@ -408,7 +430,7 @@ namespace mango
             u64 bytes = file.size;
             u8* x = ptr;
 
-            printf("## segments: %d\n", (u32)file.segments.size());
+            printf("## segmented: %s\n", filename.c_str());
 
             for (auto &segment : file.segments)
             {

@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include <cinttypes>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
