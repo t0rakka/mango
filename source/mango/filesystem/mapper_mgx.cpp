@@ -5,51 +5,123 @@
 #include <map>
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
+#include <mango/core/compress.hpp>
+#include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 #include <mango/image/fourcc.hpp>
 
-#define ID ".mgx mapper: "
+#define ID "[mapper.mgx] "
 
 namespace
 {
     using namespace mango;
 
-    constexpr u64 mgx_header_size = 24;
+    // TODO: the compressor query should be in the compress.hpp
 
-    struct HeaderMGX
+    struct Compressor
     {
-        Memory blocks;
-        Memory files;
-        bool status = false;
-
-        HeaderMGX(Memory memory)
+        enum Method
         {
-            if (!memory.address)
-                return;
+            COMPRESS_NONE = 0,
+            COMPRESS_MINIZ,
+            COMPRESS_BZIP2,
+            COMPRESS_LZ4,
+            COMPRESS_LZO,
+            COMPRESS_ZSTD,
+            COMPRESS_LZFSE,
+            COMPRESS_LZMA,
+            COMPRESS_LZMA2,
+            COMPRESS_PPMD8,
+        };
 
-            u64 header_offset = memory.size - mgx_header_size;
-            LittleEndianPointer p = memory.address + header_offset;
-
-            u32 magic = p.read32();
-            u32 version = p.read32();
-            u64 block_offset = p.read64();
-            u64 file_offset = p.read64();
-
-            if (magic != makeFourCC('m', 'g', 'x', '0'))
-            {
-                // Incorrect header magic
-                return;
-            }
-
-            blocks = Memory(memory.address + block_offset, file_offset - block_offset);
-            files = Memory(memory.address + file_offset, header_offset - file_offset);
-
-            status = true;
-            MANGO_UNREFERENCED_PARAMETER(version);
-        }
+        size_t (*bound)(size_t size) = nullptr;
+        size_t (*compress)(Memory dest, Memory source, int level) = nullptr;
+        void (*decompress)(Memory dest, Memory source) = nullptr;
+        const char* name = nullptr;
+        Method method = COMPRESS_NONE;
     };
+
+    Compressor getCompressor(Compressor::Method method)
+    {
+        Compressor compressor;
+
+        switch (method)
+        {
+            case Compressor::COMPRESS_NONE:
+                // TODO: fill w/ memcpy "compression"
+                break;
+            case Compressor::COMPRESS_MINIZ:
+                compressor.bound = miniz::bound;
+                compressor.compress = miniz::compress;
+                compressor.decompress = miniz::decompress;
+                compressor.name = "miniz";
+                compressor.method = Compressor::COMPRESS_MINIZ;
+                break;
+            case Compressor::COMPRESS_BZIP2:
+                compressor.bound = bzip2::bound;
+                compressor.compress = bzip2::compress;
+                compressor.decompress = bzip2::decompress;
+                compressor.name = "bzip2";
+                compressor.method = Compressor::COMPRESS_BZIP2;
+            case Compressor::COMPRESS_LZ4:
+                compressor.bound = lz4::bound;
+                compressor.compress = lz4::compress;
+                compressor.decompress = lz4::decompress;
+                compressor.name = "lz4";
+                compressor.method = Compressor::COMPRESS_LZ4;
+                break;
+            case Compressor::COMPRESS_LZO:
+                compressor.bound = lzo::bound;
+                compressor.compress = lzo::compress;
+                compressor.decompress = lzo::decompress;
+                compressor.name = "lzo";
+                compressor.method = Compressor::COMPRESS_LZO;
+                break;
+            case Compressor::COMPRESS_ZSTD:
+                compressor.bound = zstd::bound;
+                compressor.compress = zstd::compress;
+                compressor.decompress = zstd::decompress;
+                compressor.name = "zstd";
+                compressor.method = Compressor::COMPRESS_ZSTD;
+                break;
+            case Compressor::COMPRESS_LZFSE:
+                compressor.bound = lzfse::bound;
+                compressor.compress = lzfse::compress;
+                compressor.decompress = lzfse::decompress;
+                compressor.name = "lzfse";
+                compressor.method = Compressor::COMPRESS_LZFSE;
+                break;
+            case Compressor::COMPRESS_LZMA:
+                compressor.bound = lzma::bound;
+                compressor.compress = lzma::compress;
+                compressor.decompress = lzma::decompress;
+                compressor.name = "lzma";
+                compressor.method = Compressor::COMPRESS_LZMA;
+                break;
+            case Compressor::COMPRESS_LZMA2:
+                compressor.bound = lzma2::bound;
+                compressor.compress = lzma2::compress;
+                compressor.decompress = lzma2::decompress;
+                compressor.name = "lzma2";
+                compressor.method = Compressor::COMPRESS_LZMA2;
+                break;
+            case Compressor::COMPRESS_PPMD8:
+                compressor.bound = ppmd8::bound;
+                compressor.compress = ppmd8::compress;
+                compressor.decompress = ppmd8::decompress;
+                compressor.name = "ppmd8";
+                compressor.method = Compressor::COMPRESS_PPMD8;
+                break;
+            default:
+                MANGO_EXCEPTION("Incorrect compression method: %d", method);
+        }
+
+        return compressor;
+    }
+
+    constexpr u64 mgx_header_size = 24;
 
     struct Block
     {
@@ -65,25 +137,148 @@ namespace
         {
             u32 block;
             u32 offset;
+            u32 size;
         };
 
         std::string filename;
         u64 size;
+        bool is_compressed;
         std::vector<Segment> segments;
+
+        bool isCompressed() const
+        {
+            return is_compressed;
+        }
+
+        bool isDirectMapped() const
+        {
+            return !isCompressed() && !isMultiSegmnet();
+        }
+
+        bool isMultiSegmnet() const
+        {
+            return segments.size() > 1;
+        }
 
         bool isFolder() const
         {
-            size_t n = filename.find_first_of("/");
-            if (n != std::string::npos)
+            return segments.empty();
+        }
+    };
+
+    struct HeaderMGX
+    {
+        Memory m_memory;
+        std::map<std::string, FileHeader> m_files;
+        std::vector<Block> m_blocks;
+
+        HeaderMGX(Memory memory)
+            : m_memory(memory)
+        {
+            if (!memory.address)
             {
-                if (n == (filename.length() - 1))
-                {
-                    return true;
-                }
+                MANGO_EXCEPTION(ID"Parent container doesn't have memory");
             }
 
-            return false;
-            //return segments.empty();
+            LittleEndianPointer p = memory.address;
+            u32 magic0 = p.read32();
+            if (magic0 != makeFourCC('m', 'g', 'x', '0'))
+            {
+                MANGO_EXCEPTION(ID"Incorrect file identifier (%x)", magic0);
+            }
+
+            u64 header_offset = memory.size - mgx_header_size;
+            p = memory.address + header_offset;
+
+            u32 magic3 = p.read32();
+            if (magic3 != makeFourCC('m', 'g', 'x', '3'))
+            {
+                MANGO_EXCEPTION(ID"Incorrect header identifier (%x)", magic3);
+            }
+
+            u32 version = p.read32();
+            u64 block_offset = p.read64();
+            u64 file_offset = p.read64();
+
+            read_blocks(memory.address + block_offset);
+            read_files(memory.address + file_offset);
+
+            MANGO_UNREFERENCED_PARAMETER(version);
+        }
+
+        void read_blocks(LittleEndianPointer p)
+        {
+            u32 magic1 = p.read32();
+            if (magic1 != makeFourCC('m', 'g', 'x', '1'))
+            {
+                MANGO_EXCEPTION(ID"Incorrect block identifier (%x)", magic1);
+            }
+
+            u32 num_blocks = p.read32();
+            for (u32 i = 0; i < num_blocks; ++i)
+            {
+                Block block;
+                block.offset = p.read64();
+                block.compressed = p.read64();
+                block.uncompressed = p.read64();
+                block.method = p.read32();
+                m_blocks.push_back(block);
+            }
+
+            u32 magic2 = p.read32();
+            if (magic2 != makeFourCC('m', 'g', 'x', '2'))
+            {
+                MANGO_EXCEPTION(ID"Incorrect block terminator (%x)", magic2);
+            }
+        }
+
+        void read_files(LittleEndianPointer p)
+        {
+            u32 magic2 = p.read32();
+            if (magic2 != makeFourCC('m', 'g', 'x', '2'))
+            {
+                MANGO_EXCEPTION(ID"Incorrect block identifier (%x)", magic2);
+            }
+
+            u32 num_files = p.read32();
+            for (u32 i = 0; i < num_files; ++i)
+            {
+                FileHeader file;
+
+                u32 length = p.read32();
+                const u8* ptr = p;
+                std::string filename(reinterpret_cast<const char *>(ptr), length);
+                p += length;
+
+                file.filename = filename;
+                file.size = p.read64();
+                file.is_compressed = false;
+                u32 num_segment = p.read32();
+                for (u32 j = 0; j < num_segment; ++j)
+                {
+                    u32 block_idx = p.read32();
+                    u32 offset = p.read32();
+                    u32 size = p.read32();
+                    file.segments.push_back({block_idx, offset, size});
+
+                    // inspect block
+                    Block& block = m_blocks[block_idx];
+                    if (block.method > 0)
+                    {
+                        // if ANY of the blocks in the file segments is compressed
+                        // the whole file is considered compressed (= cannot be mapped directly)
+                        file.is_compressed = true;
+                    }
+                }
+
+                m_files[filename] = file;
+            }
+
+            u32 magic3 = p.read32();
+            if (magic3 != makeFourCC('m', 'g', 'x', '3'))
+            {
+                MANGO_EXCEPTION(ID"Incorrect block terminator (%x)", magic3);
+            }
         }
     };
 
@@ -121,89 +316,20 @@ namespace mango
     class MapperMGX : public AbstractMapper
     {
     public:
-        Memory m_parent_memory;
+        HeaderMGX m_header;
         std::string m_password;
-        std::map<std::string, FileHeader> m_files;
-        std::vector<Block> m_blocks;
-
-    protected:
-        void read_blocks(const HeaderMGX& header)
-        {
-            LittleEndianPointer p = header.blocks.address;
-
-            u32 magic = p.read32();
-            if (magic != makeFourCC('m', 'g', 'x', '1'))
-            {
-                // Incorrect file index magic
-                return;
-            }
-
-            u32 num_blocks = p.read32();
-            for (u32 i = 0; i < num_blocks; ++i)
-            {
-                Block block;
-                block.offset = p.read64();
-                block.compressed = p.read64();
-                block.uncompressed = p.read64();
-                block.method = p.read64();
-                m_blocks.push_back(block);
-            }
-        }
-
-        void read_files(const HeaderMGX& header)
-        {
-            LittleEndianPointer p = header.files.address;
-
-            u32 magic = p.read32();
-            if (magic != makeFourCC('m', 'g', 'x', '2'))
-            {
-                // Incorrect file index magic
-                return;
-            }
-
-            u32 num_files = p.read32();
-            for (u32 i = 0; i < num_files; ++i)
-            {
-                FileHeader file;
-
-                u32 length = p.read32();
-                const u8* ptr = p;
-                std::string filename(reinterpret_cast<const char *>(ptr), length);
-                p += length;
-                //printf(" # %s \n", filename.c_str());
-
-                file.filename = filename;
-                file.size = p.read64();
-                u32 num_segment = p.read32();
-                for (u32 j = 0; j < num_segment; ++j)
-                {
-                    u32 block = p.read32(); // block
-                    u32 offset = p.read32(); // offset
-                    //printf("   - blk: %d, off: %d\n", block, offset);
-                    file.segments.push_back({block, offset});
-                }
-
-                m_files[filename] = file;
-            }
-        }
 
     public:
         MapperMGX(Memory parent, const std::string& password)
-            : m_parent_memory(parent)
+            : m_header(parent)
             , m_password(password)
         {
-                HeaderMGX header(parent);
-                if (header.status)
-                {
-                    read_blocks(header);
-                    read_files(header);
-                }
         }
 
         bool isFile(const std::string& filename) const override
         {
-            auto i = m_files.find(filename);
-            if (i != m_files.end())
+            auto i = m_header.m_files.find(filename);
+            if (i != m_header.m_files.end())
             {
                 const FileHeader& file = i->second;
                 return !file.isFolder();
@@ -214,7 +340,7 @@ namespace mango
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            for (auto i : m_files)
+            for (auto i : m_header.m_files)
             {
                 const FileHeader& file = i.second;
                 std::string filename = file.filename;
@@ -235,12 +361,10 @@ namespace mango
                     else
                     {
                         u32 flags = 0;
-                        /*
-                        if (file.compression > 0)
+                        if (file.isCompressed())
                         {
                             flags |= FileInfo::COMPRESSED;
                         }
-                        */
 
                         index.emplace(filename, file.size, flags);
                     }
@@ -250,30 +374,75 @@ namespace mango
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            auto i = m_files.find(filename);
-            if (i == m_files.end())
+            auto i = m_header.m_files.find(filename);
+            if (i == m_header.m_files.end())
             {
                 MANGO_EXCEPTION(ID"File not found.");
             }
 
             const FileHeader& file = i->second;
 
+            if (file.isDirectMapped())
+            {
+                // file is encoded as a single, non-compressed block
+                const auto& segment = file.segments[0];
+                Block& block = m_header.m_blocks[segment.block];
+
+                u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
+                u64 size = file.size;
+
+                printf("## direct mapped \n");
+
+                // return reference to parent's memory
+                VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size);
+                return vm;
+            }
+
+            // TODO: remove debug prints
+            // TODO: map stored files directly to parent memory
+            // TODO: compute segment.size instead of storing it in .mgx container
+            // TODO: decompression cache for small-file blocks
+
             u8* ptr = new u8[file.size];
+            std::memset(ptr, 0, file.size);
+            u64 bytes = file.size;
+            u8* x = ptr;
+
+            printf("## segments: %d\n", (u32)file.segments.size());
 
             for (auto &segment : file.segments)
             {
-                const Block& block = m_blocks[segment.block];
+                const Block& block = m_header.m_blocks[segment.block];
                 u32 offset = segment.offset;
+                u32 size = segment.size;
+                bytes -= size;
 
-                //block.offset;
-                //block.compressed;
-                //block.uncompressed;
-                //block.method;
-                (void) block;
-                (void) offset;
+                printf("  ## size: %d, block.offset: %d, segment.offset: %d, segment.size: %d, method: %d, c: %d, u: %d\n",
+                    (u32)size, (u32)block.offset, offset, size, block.method, 
+                    (u32)block.compressed, (u32)block.uncompressed);
+
+                if (block.method)
+                {
+                    std::vector<u8> temp(block.uncompressed);
+                    Memory d(temp.data(), block.uncompressed);
+                    Memory s(m_header.m_memory.address + block.offset, block.compressed);
+
+                    Compressor compressor = getCompressor(Compressor::Method(block.method));
+                    compressor.decompress(d, s);
+
+                    std::memcpy(x, d.address + offset, size);
+                    x += size;
+                }
+                else
+                {
+                    std::memcpy(x, m_header.m_memory.address + block.offset + offset, size);
+                    printf("%x %x \n", x[0], x[1]);
+                    x += size;
+                }
             }
 
-            // TODO: decompress
+            printf("  ## bytes left: %d\n", (u32)bytes);
+
             VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
             return vm;
         }
