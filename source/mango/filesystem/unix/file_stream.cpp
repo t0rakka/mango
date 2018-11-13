@@ -6,6 +6,7 @@
 #define _FILE_OFFSET_BITS 64 /* LFS: 64 bit off_t */
 #endif
 #include <cstdio>
+#include <unistd.h>
 #include <sys/stat.h>
 
 #include <mango/core/string.hpp>
@@ -46,6 +47,7 @@ namespace mango
 		{
             struct stat sb;
             int fd = ::fileno(m_file);
+            ::fflush(m_file);
             ::fstat(fd, &sb);
             return sb.st_size;
 		}
