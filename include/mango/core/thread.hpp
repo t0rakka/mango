@@ -215,7 +215,7 @@ namespace mango
         });
 
         // wait until the queue is drained
-        s.wait();
+        s.wait(); // non-cooperative, CPU-sink
 
     */
 
@@ -231,7 +231,6 @@ namespace mango
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
-        std::mutex m_task_mutex;
         std::condition_variable m_condition;
 
         void thread();
@@ -256,7 +255,7 @@ namespace mango
 
     /*
         Task is a simple queue-less convenience object to enqueue work into the ThreadPool.
-        The synchronization has to be done "manually", for example, with atomic flag.
+        Synchronization must be done manually.
     */
 
     class Task

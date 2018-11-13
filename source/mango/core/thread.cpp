@@ -340,16 +340,12 @@ namespace mango
             std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
             if (!m_task_queue.empty())
             {
-                std::vector<Task> temp(m_task_queue.begin(), m_task_queue.end());
-                m_task_queue.clear();
+                auto task = m_task_queue.front();
+                m_task_queue.pop_front();
                 queue_lock.unlock();
 
-                for (auto& task : temp)
-                {
-                    std::unique_lock<std::mutex> task_lock(m_task_mutex);
-                    task();
-                    --m_task_counter;
-                }
+                task();
+                --m_task_counter;
             }
             else
             {
@@ -361,24 +357,12 @@ namespace mango
     void SerialQueue::cancel()
     {
         std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+        m_task_counter -= u32(m_task_queue.size());
         m_task_queue.clear();
     }
 
     void SerialQueue::wait()
     {
-        std::vector<Task> temp;
-
-        bool enable_job_stealing = true;
-        if (enable_job_stealing)
-        {
-            std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
-
-            // steal work from the worker thread...
-            temp = std::vector<Task>(m_task_queue.begin(), m_task_queue.end());
-            m_task_queue.clear();
-            m_task_counter -= u32(temp.size());
-        }
-
         for (;;)
         {
             if (!m_task_counter.load(std::memory_order_relaxed))
@@ -386,16 +370,6 @@ namespace mango
 
             // NOTE: we are wasting CPU here and we know it
             std::this_thread::sleep_for(std::chrono::microseconds(10));
-        }
-
-        if (enable_job_stealing)
-        {
-            // ... and process it in the current thread
-            for (auto& task : temp)
-            {
-                std::unique_lock<std::mutex> task_lock(m_task_mutex);
-                task();
-            }
         }
     }
 
