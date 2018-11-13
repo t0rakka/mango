@@ -346,14 +346,14 @@ namespace mango
 
                 for (auto& task : temp)
                 {
+                    std::unique_lock<std::mutex> task_lock(m_task_mutex);
                     task();
+                    --m_task_counter;
                 }
             }
             else
             {
-                m_thread_sleeping = true;
                 m_condition.wait_for(queue_lock, milliseconds(32));
-                m_thread_sleeping = false;
             }
         }
     }
@@ -366,26 +366,36 @@ namespace mango
 
     void SerialQueue::wait()
     {
-        std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+        std::vector<Task> temp;
 
-        // steal work from the worker thread...
-        std::vector<Task> temp(m_task_queue.begin(), m_task_queue.end());
-        m_task_queue.clear();
-        queue_lock.unlock();
+        bool enable_job_stealing = true;
+        if (enable_job_stealing)
+        {
+            std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+
+            // steal work from the worker thread...
+            temp = std::vector<Task>(m_task_queue.begin(), m_task_queue.end());
+            m_task_queue.clear();
+            m_task_counter -= u32(temp.size());
+        }
 
         for (;;)
         {
-            if (m_thread_sleeping.load(std::memory_order_relaxed))
+            if (!m_task_counter.load(std::memory_order_relaxed))
                 break;
 
             // NOTE: we are wasting CPU here and we know it
             std::this_thread::sleep_for(std::chrono::microseconds(10));
         }
 
-        // ... and process it in the current thread
-        for (auto& task : temp)
+        if (enable_job_stealing)
         {
-            task();
+            // ... and process it in the current thread
+            for (auto& task : temp)
+            {
+                std::unique_lock<std::mutex> task_lock(m_task_mutex);
+                task();
+            }
         }
     }
 
