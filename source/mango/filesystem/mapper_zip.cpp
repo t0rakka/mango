@@ -12,7 +12,7 @@
 
 #include "../../external/miniz/miniz.h"
 
-#define ID ".zip mapper: "
+#define ID "[mapper.zip] "
 
 namespace
 {

@@ -17,7 +17,7 @@
 
 #include "../../external/unrar/rar.hpp"
 
-#define ID ".rar mapper: "
+#define ID "[mapper.rar] "
 
 namespace
 {

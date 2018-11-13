@@ -27,7 +27,7 @@ namespace
 	inline long get_pagesize()
 	{
 		// NOTE: could be _SC_PAGE_SIZE for some platforms according to Linux Programmer's Manual
-		static long x = sysconf(_SC_PAGESIZE);
+		static long x = ::sysconf(_SC_PAGESIZE);
 		return x;
 	}
 
@@ -54,9 +54,9 @@ namespace
             {
                 struct stat sb;
 
-                if (fstat(m_file, &sb) == -1)
+                if (::fstat(m_file, &sb) == -1)
                 {
-                    close(m_file);
+                    ::close(m_file);
                     m_file = -1;
 	                MANGO_EXCEPTION(ID"File cannot be read.");
                 }
@@ -113,7 +113,7 @@ namespace
 
             if (m_file != -1)
             {
-                close(m_file);
+                ::close(m_file);
             }
         }
     };
@@ -130,11 +130,11 @@ namespace
             const std::string testname = pathname + filename;
 
             struct stat s;
-            if (stat(testname.c_str(), &s) != -1)
+            if (::stat(testname.c_str(), &s) != -1)
             {
                 if ((s.st_mode & S_IFDIR) == 0)
                 {
-                    size_t size = static_cast<size_t>(s.st_size);
+                    size_t size = size_t(s.st_size);
                     index.emplace(filename, size, 0);
                 }
                 else
@@ -159,7 +159,7 @@ namespace
 
             struct stat s;
 
-            if (stat(filename.c_str(), &s) == 0)
+            if (::stat(filename.c_str(), &s) == 0)
             {
                 is = (s.st_mode & S_IFDIR) == 0;
             }
@@ -173,35 +173,35 @@ namespace
         {
             struct dirent** namelist = NULL;
 
-            const int n = scandir(pathname.c_str(), &namelist, [] (const struct dirent* e)
+            const int n = ::scandir(pathname.c_str(), &namelist, [] (const struct dirent* e)
             {
                 // filter out "." and ".."
-                if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, ".."))
+                if (!std::strcmp(e->d_name, ".") || !std::strcmp(e->d_name, ".."))
                     return 0;
                 return 1;
             }, 0);
             if (n < 0)
             {
                 // Unable to open directory.
-                free(namelist);
+                ::free(namelist);
                 return;
             }
 
             for (int i = 0; i < n; ++i)
             {
                 const std::string filename(namelist[i]->d_name);
-                free(namelist[i]);
+                ::free(namelist[i]);
                 emplace_helper(index, pathname, filename);
             }
 
-            free(namelist);
+            ::free(namelist);
         }
 
 #else
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            DIR* dirp = opendir(pathname.c_str());
+            DIR* dirp = ::opendir(pathname.c_str());
             if (!dirp)
             {
                 // Unable to open directory.
@@ -210,7 +210,7 @@ namespace
 
             dirent* dp;
 
-            while ((dp = readdir(dirp)))
+            while ((dp = ::readdir(dirp)))
             {
                 std::string filename(dp->d_name);
 
