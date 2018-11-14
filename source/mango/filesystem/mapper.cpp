@@ -224,8 +224,10 @@ namespace mango
     {
         const std::string extension = toLower(getExtension(filename));
 
-        for (auto &node : g_extensions) {
-            if (extension == node.extension) {
+        for (auto &node : g_extensions)
+        {
+            if (extension == node.extension)
+            {
                 return true;
             }
         }
