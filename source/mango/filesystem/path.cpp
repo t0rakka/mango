@@ -24,11 +24,10 @@ namespace mango
 
     Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
     {
+        m_pathname = "";
+
         // create mapper to raw memory
         m_mapper = getMemoryMapper(memory, extension, password);
-
-        // parse and create mappers
-        m_pathname = "";
         if (m_mapper)
         {
             m_mapper->getIndex(m_files, m_pathname);
