@@ -217,7 +217,6 @@ namespace
                 // skip "." and ".."
                 if (filename != "." && filename != "..")
                 {
-                    printf("# path: %s, file: %s\n", pathname.c_str(), filename.c_str());
                     emplace_helper(index, pathname, filename);
                 }
             }
