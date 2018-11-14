@@ -156,106 +156,97 @@ namespace
         bool        is_folder;     // if the last character of filename is "/", it is a folder
         Encryption  encryption;
 
-        DirFileHeader()
-        {
-        }
-
-		DirFileHeader(LittleEndianPointer& p)
+		bool read(LittleEndianPointer& p)
 		{
 			signature = p.read32();
-			if (status())
-			{
-    			versionUsed      = p.read16();
-	    		versionNeeded    = p.read16();
-		    	flags            = p.read16();
-			    compression      = p.read16();
-			    lastModTime      = p.read16();
-			    lastModDate      = p.read16();
-			    crc              = p.read32();
-			    compressedSize   = p.read32();
-			    uncompressedSize = p.read32();
-			    filenameLen      = p.read16();
-			    extraFieldLen    = p.read16();
-			    commentLen       = p.read16();
-			    diskStart        = p.read16();
-			    internal         = p.read16();
-			    external         = p.read32();
-			    localOffset      = p.read32();
+            if (signature != 0x02014b50)
+            {
+                return false;
+            }
 
-                // read filename
-                uint8* us = p;
-                const char* s = reinterpret_cast<const char*>(us);
-                p += filenameLen;
+            versionUsed      = p.read16();
+            versionNeeded    = p.read16();
+            flags            = p.read16();
+            compression      = p.read16();
+            lastModTime      = p.read16();
+            lastModDate      = p.read16();
+            crc              = p.read32();
+            compressedSize   = p.read32();
+            uncompressedSize = p.read32();
+            filenameLen      = p.read16();
+            extraFieldLen    = p.read16();
+            commentLen       = p.read16();
+            diskStart        = p.read16();
+            internal         = p.read16();
+            external         = p.read32();
+            localOffset      = p.read32();
 
-                if (s[filenameLen - 1] == '/')
+            // read filename
+            uint8* us = p;
+            const char* s = reinterpret_cast<const char*>(us);
+            p += filenameLen;
+
+            if (s[filenameLen - 1] == '/')
+            {
+                is_folder = true;
+            }
+            else
+            {
+                is_folder = false;
+            }
+
+            filename = std::string(s, filenameLen);
+            encryption = flags & 1 ? ENCRYPTION_CLASSIC : ENCRYPTION_NONE;
+
+            // read extra fields
+            uint8* ext = p;
+            uint8* end = p + extraFieldLen;
+            for ( ; ext < end;)
+            {
+                LittleEndianPointer e = ext;
+                uint16 magic = e.read16();
+                uint16 size = e.read16();
+                uint8* next = e + size;
+                switch (magic)
                 {
-                    is_folder = true;
-                }
-                else
-                {
-                    is_folder = false;
-                }
-
-                filename = std::string(s, filenameLen);
-                encryption = flags & 1 ? ENCRYPTION_CLASSIC : ENCRYPTION_NONE;
-
-                // read extra fields
-                uint8* ext = p;
-                uint8* end = p + extraFieldLen;
-                for ( ; ext < end;)
-                {
-                    LittleEndianPointer e = ext;
-                    uint16 magic = e.read16();
-                    uint16 size = e.read16();
-                    uint8* next = e + size;
-                    switch (magic)
+                    case 0x0001:
                     {
-                        case 0x0001:
-                        {
-                            // ZIP64 extended field
-                            if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
-                            if (compressedSize == 0xffffffff) compressedSize = e.read64();
-                            if (localOffset == 0xffffffff) localOffset = e.read64();
-                            if (diskStart == 0xffff) e += 4;
-                            break;
-                        }
-
-                        case 0x9901:
-                        {
-                            // AES header
-                            u16 version = e.read16();
-                            u16 magic = e.read16(); // must be 'AE' (0x41, 0x45)
-                            u8 mode = e.read8();
-                            compression = e.read8(); // override compression algorithm
-
-                            if (version < 1 || version > 2 || magic != 0x4541)
-                                MANGO_EXCEPTION(ID"Incorrect AES header.");
-
-                            // select encryption mode
-                            if (mode == 1) encryption = ENCRYPTION_AES128;
-                            else if (mode == 2) encryption = ENCRYPTION_AES192;
-                            else if (mode == 3) encryption = ENCRYPTION_AES256;
-                            else MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
-
-                            break;
-                        }
+                        // ZIP64 extended field
+                        if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
+                        if (compressedSize == 0xffffffff) compressedSize = e.read64();
+                        if (localOffset == 0xffffffff) localOffset = e.read64();
+                        if (diskStart == 0xffff) e += 4;
+                        break;
                     }
-                    ext = next;
+
+                    case 0x9901:
+                    {
+                        // AES header
+                        u16 version = e.read16();
+                        u16 magic = e.read16(); // must be 'AE' (0x41, 0x45)
+                        u8 mode = e.read8();
+                        compression = e.read8(); // override compression algorithm
+
+                        if (version < 1 || version > 2 || magic != 0x4541)
+                            MANGO_EXCEPTION(ID"Incorrect AES header.");
+
+                        // select encryption mode
+                        if (mode == 1) encryption = ENCRYPTION_AES128;
+                        else if (mode == 2) encryption = ENCRYPTION_AES192;
+                        else if (mode == 3) encryption = ENCRYPTION_AES256;
+                        else MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+
+                        break;
+                    }
                 }
+                ext = next;
+            }
 
-                p += extraFieldLen;
-                p += commentLen;
-			}
+            p += extraFieldLen;
+            p += commentLen;
+
+            return true;
 		}
-
-        ~DirFileHeader()
-        {
-        }
-
-        bool status() const
-        {
-            return signature == 0x02014b50;
-        }
 	};
 
 	struct DirEndRecord
@@ -549,51 +540,49 @@ namespace mango
                 {
                     const int numFiles = int(record.numEntriesTotal);
 
-                    // read file header for each file
+                    // read file headers
                     LittleEndianPointer p = parent.address + record.dirStartOffset;
+
+                    std::vector<DirFileHeader> headers;
 
                     for (int i = 0; i < numFiles; ++i)
                     {
-                        DirFileHeader header(p);
-                        if (header.status())
+                        DirFileHeader header;
+                        if (header.read(p))
+                        {
+                            headers.push_back(header);
+                        }
+                    }
+
+                    // find common prefix
+                    size_t maxPrefix = headers[0].filename.length();
+
+                    for (size_t i = 1; i < headers.size(); ++i)
+                    {
+                        size_t pos = 0;
+                        for( ; pos < maxPrefix && 
+                               pos < headers[i].filename.length() && 
+                               headers[0].filename[pos] == headers[i].filename[pos]; pos++)
+                        {
+                        }
+
+                        maxPrefix = pos;
+                    }
+
+                    std::string prefix = headers[0].filename.substr(0, maxPrefix);
+
+                    // store headers in a map
+                    for (auto& header : headers)
+                    {
+                        header.filename = removePrefix(header.filename, prefix);
+
+                        if (header.filename.length() > 0)
                         {
                             std::string folder = header.is_folder ?
                                 getPath(header.filename.substr(0, header.filename.length() - 1)) :
                                 getPath(header.filename);
 
-                            //printf("# %s <- %s \n", folder.c_str(), header.filename.c_str());
                             m_folders[folder].files[header.filename] = header;
-
-#if 0
-                            // generate folders for full path
-                            if (!folder.empty())
-                            {
-                                std::string base = "";
-                                size_t c = 0;
-                                size_t n = folder.find_first_of("/\\:", c);
-
-                                while (n != std::string::npos)
-                                {
-                                    std::string current = folder.substr(c, n - c + 1);
-
-                                    // base <- current
-                                    auto iPath = m_folders.find(base);
-                                    if (iPath == m_folders.end())
-                                    {
-                                        printf("[\"%s\"] <-- [\"%s\"]\n", base.c_str(), current.c_str());
-                                        DirFileHeader temp;
-                                        temp.filename = current;
-                                        temp.is_folder = true;
-
-                                        m_folders[base].files[current] = temp;
-                                    }
-
-                                    base = current;
-                                    c = n + 1;
-                                    n = folder.find_first_of("/\\:", c);
-                                }
-                            }
-#endif
                         }
                     }
                 }
