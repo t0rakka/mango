@@ -414,9 +414,10 @@ namespace mango
                 u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
                 u64 size = file.size;
 
+#if 0
                 printf("## direct mapped: %s (%" PRIu64 " bytes) block.offset: %" PRIu64 ", segment.offset: %d \n",
                        filename.c_str(), size, block.offset, segment.offset);
-
+#endif
                 if (block.offset + segment.offset + size > m_header.m_memory.size)
                 {
                     MANGO_EXCEPTION(ID"File \"%s\" has mapped region outside of parent memory.", filename.c_str());
@@ -436,8 +437,9 @@ namespace mango
             u64 bytes = file.size;
             u8* x = ptr;
 
+#if 0
             printf("## segmented: %s\n", filename.c_str());
-
+#endif
             for (auto &segment : file.segments)
             {
                 const Block& block = m_header.m_blocks[segment.block];
@@ -445,10 +447,11 @@ namespace mango
                 u32 size = segment.size;
                 bytes -= size;
 
+#if 0
                 printf("  ## size: %d, block.offset: %d, segment.offset: %d, segment.size: %d, method: %d, c: %d, u: %d\n",
                     (u32)size, (u32)block.offset, offset, size, block.method, 
                     (u32)block.compressed, (u32)block.uncompressed);
-
+#endif
                 if (block.method)
                 {
                     std::vector<u8> temp(block.uncompressed);
