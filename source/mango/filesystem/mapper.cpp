@@ -101,6 +101,11 @@ namespace mango
         return (flags & COMPRESSED) != 0;
     }
 
+    bool FileInfo::isEncrypted() const
+    {
+        return (flags & ENCRYPTED) != 0;
+    }
+
     // -----------------------------------------------------------------
     // FileIndex
     // -----------------------------------------------------------------

@@ -16,9 +16,10 @@ namespace mango
     {
         enum Flags
         {
-            DIRECTORY = 0x01,
-            CONTAINER = 0x02,
+            DIRECTORY  = 0x01,
+            CONTAINER  = 0x02,
             COMPRESSED = 0x04,
+            ENCRYPTED  = 0x08,
         };
 
         uint64 size;
@@ -32,6 +33,7 @@ namespace mango
         bool isDirectory() const;
         bool isContainer() const;
         bool isCompressed() const;
+        bool isEncrypted() const;
     };
 
     struct FileIndex

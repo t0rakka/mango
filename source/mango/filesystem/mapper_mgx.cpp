@@ -414,7 +414,13 @@ namespace mango
                 u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
                 u64 size = file.size;
 
-                printf("## direct mapped: %s \n", filename.c_str());
+                printf("## direct mapped: %s (%" PRIu64 " bytes) block.offset: %" PRIu64 ", segment.offset: %d \n",
+                       filename.c_str(), size, block.offset, segment.offset);
+
+                if (block.offset + segment.offset + size > m_header.m_memory.size)
+                {
+                    MANGO_EXCEPTION(ID"File \"%s\" has mapped region outside of parent memory.", filename.c_str());
+                }
 
                 // return reference to parent's memory
                 VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size);

@@ -232,6 +232,7 @@ namespace
         uint8   version;
         uint8   method;
         std::string filename;
+        bool    is_encrypted { false };
 
         Header(uint8* address)
         {
@@ -261,6 +262,7 @@ namespace
                     if (flags & MHD_ENCRYPTVER)
                     {
                         // encrypted
+                        is_encrypted = true;
                     }
                     break;
                 }
@@ -406,9 +408,10 @@ namespace mango
     public:
         std::string m_password;
         std::map<std::string, FileHeader> m_files;
+        bool is_encrypted { false };
 
         MapperRAR(Memory parent, const std::string& password)
-        : m_password(password)
+            : m_password(password)
         {
             uint8* start = parent.address;
             uint8* end = parent.address + parent.size;
@@ -455,6 +458,8 @@ namespace mango
                 uint8* h = p;
                 Header header(p);
                 p = h + header.size;
+
+                is_encrypted = header.is_encrypted;
 
                 switch (header.type)
                 {
@@ -593,7 +598,7 @@ namespace mango
         {
             mango::LittleEndianPointer p = start;
 
-            for (; p < end;)
+            for ( ; p < end;)
             {
                 uint32 crc = p.read32();
                 uint64 header_size = vint(p);
@@ -640,6 +645,7 @@ namespace mango
                         break;
                     case 4:
                         // Archive encryption header
+                        is_encrypted = true;
                         break;
                     case 5:
                         // End of archive header
@@ -682,10 +688,17 @@ namespace mango
                     if (n == std::string::npos)
                     {
                         uint32 flags = 0;
+
                         if (header.compressed())
                         {
                             flags |= FileInfo::COMPRESSED;
                         }
+
+                        if (is_encrypted)
+                        {
+                            flags |= FileInfo::ENCRYPTED;
+                        }
+
                         index.emplace(filename, header.unpacked_size, flags);
                     }
                     else

@@ -153,7 +153,7 @@ namespace
 		uint64	localOffset;       // relative offset of the local file header, ZIP64: 0xffffffff
 
         std::string filename;      // filename is stored after the header
-        bool        folder;        // if the last character of filename is "/", it is a folder
+        bool        is_folder;     // if the last character of filename is "/", it is a folder
         Encryption  encryption;
 
         DirFileHeader()
@@ -189,12 +189,11 @@ namespace
 
                 if (s[filenameLen - 1] == '/')
                 {
-                    --filenameLen; // remove trailing '/'
-                    folder = true;
+                    is_folder = true;
                 }
                 else
                 {
-                    folder = false;
+                    is_folder = false;
                 }
 
                 filename = std::string(s, filenameLen);
@@ -558,21 +557,41 @@ namespace mango
                         DirFileHeader header(p);
                         if (header.status())
                         {
-                            std::string folder = getPath(header.filename);
+                            std::string folder = header.is_folder ?
+                                getPath(header.filename.substr(0, header.filename.length() - 1)) :
+                                getPath(header.filename);
 
+                            //printf("# %s <- %s \n", folder.c_str(), header.filename.c_str());
                             m_folders[folder].files[header.filename] = header;
 
-#if 1
-                            // generate missing folder entries for zip files generated with -D option
+#if 0
+                            // generate folders for full path
                             if (!folder.empty())
                             {
-                                std::string path = folder.substr(0, folder.length() - 1); // remove trailing '/'
+                                std::string base = "";
+                                size_t c = 0;
+                                size_t n = folder.find_first_of("/\\:", c);
 
-                                DirFileHeader temp;
-                                temp.filename = path;
-                                temp.folder = true;
+                                while (n != std::string::npos)
+                                {
+                                    std::string current = folder.substr(c, n - c + 1);
 
-                                m_folders[path].files[header.filename] = header;
+                                    // base <- current
+                                    auto iPath = m_folders.find(base);
+                                    if (iPath == m_folders.end())
+                                    {
+                                        printf("[\"%s\"] <-- [\"%s\"]\n", base.c_str(), current.c_str());
+                                        DirFileHeader temp;
+                                        temp.filename = current;
+                                        temp.is_folder = true;
+
+                                        m_folders[base].files[current] = temp;
+                                    }
+
+                                    base = current;
+                                    c = n + 1;
+                                    n = folder.find_first_of("/\\:", c);
+                                }
                             }
 #endif
                         }
@@ -781,7 +800,7 @@ namespace mango
                 if (iFile != folder.files.end())
                 {
                     const DirFileHeader& file = iFile->second;
-                    return !file.folder;
+                    return !file.is_folder;
                 }
             }
 
@@ -805,7 +824,7 @@ namespace mango
                     u32 flags = 0;
                     u64 size = file.uncompressedSize;
 
-                    if (file.folder)
+                    if (file.is_folder)
                     {
                         flags |= FileInfo::DIRECTORY;
                         size = 0;
@@ -814,6 +833,11 @@ namespace mango
                     if (file.compression > 0)
                     {
                         flags |= FileInfo::COMPRESSED;
+                    }
+
+                    if (file.encryption != ENCRYPTION_NONE)
+                    {
+                        flags |= FileInfo::ENCRYPTED;
                     }
 
                     index.emplace(filename, size, flags);
