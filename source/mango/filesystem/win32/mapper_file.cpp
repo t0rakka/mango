@@ -7,11 +7,11 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-#define ID ""
-
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+
+#define ID "[mapper.file] "
 
 namespace
 {
@@ -91,13 +91,13 @@ namespace
 					}
 					else
 					{
-						MANGO_EXCEPTION(ID"Memory mapping failed.");
+						MANGO_EXCEPTION(ID"Memory \"%s\" mapping failed.", filename.c_str());
 					}
 				}
             }
             else
             {
-                MANGO_EXCEPTION(ID"File cannot be opened.");
+                MANGO_EXCEPTION(ID"File \"%s\" cannot be opened.", filename.c_str());
             }
         }
 

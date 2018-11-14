@@ -7,7 +7,7 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-#define ID ""
+#define ID "[mapper.file] "
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -58,7 +58,7 @@ namespace
                 {
                     ::close(m_file);
                     m_file = -1;
-	                MANGO_EXCEPTION(ID"File cannot be read.");
+	                MANGO_EXCEPTION(ID"File \"%s\" cannot be read.", filename.c_str());
                 }
                 else
                 {
@@ -217,6 +217,7 @@ namespace
                 // skip "." and ".."
                 if (filename != "." && filename != "..")
                 {
+                    printf("# path: %s, file: %s\n", pathname.c_str(), filename.c_str());
                     emplace_helper(index, pathname, filename);
                 }
             }
