@@ -19,7 +19,10 @@ namespace mango
         m_basepath = parse(temp, password);
         m_pathname = pathname;
         m_basepath = temp;
-        m_mapper->getIndex(m_files, m_basepath);
+        if (m_mapper)
+        {
+            m_mapper->getIndex(m_files, m_basepath);
+        }
     }
 
     Path::Path(const Path& path, const std::string& pathname, const std::string& password)
@@ -31,7 +34,10 @@ namespace mango
         std::string temp = path.m_basepath + pathname;
         m_basepath = parse(temp, password);
         m_pathname = path.m_pathname + pathname;
-        m_mapper->getIndex(m_files, m_basepath);
+        if (m_mapper)
+        {
+            m_mapper->getIndex(m_files, m_basepath);
+        }
     }
 
     Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
@@ -51,7 +57,10 @@ namespace mango
     void Path::updateIndex()
     {
         m_files.clear();
-        m_mapper->getIndex(m_files, m_basepath);
+        if (m_mapper)
+        {
+            m_mapper->getIndex(m_files, m_basepath);
+        }
     }
 
 } // namespace mango

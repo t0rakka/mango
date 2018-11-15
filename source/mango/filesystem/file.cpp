@@ -33,8 +33,11 @@ namespace mango
         m_filename = filename;
 
         // memory map the file
-        VirtualMemory* vmemory = m_mapper->mmap(m_filename);
-        m_memory = UniqueObject<VirtualMemory>(vmemory);
+        if (m_mapper)
+        {
+            VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+            m_memory = UniqueObject<VirtualMemory>(vmemory);
+        }
     }
 
     File::File(const Path& path, const std::string& filename)
@@ -48,8 +51,11 @@ namespace mango
         m_filename = parse(m_basepath, "");
 
         // memory map the file
-        VirtualMemory* vmemory = m_mapper->mmap(m_filename);
-        m_memory = UniqueObject<VirtualMemory>(vmemory);
+        if (m_mapper)
+        {
+            VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+            m_memory = UniqueObject<VirtualMemory>(vmemory);
+        }
     }
 
     File::File(const Memory& memory, const std::string& extension, const std::string& filename)
@@ -65,8 +71,11 @@ namespace mango
         m_filename = parse(m_pathname, "");
 
         // memory map the file
-        VirtualMemory* vmemory = m_mapper->mmap(m_filename);
-        m_memory = UniqueObject<VirtualMemory>(vmemory);
+        if (m_mapper)
+        {
+            VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+            m_memory = UniqueObject<VirtualMemory>(vmemory);
+        }
     }
 
     File::~File()
