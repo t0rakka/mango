@@ -149,12 +149,7 @@ namespace
             return is_compressed;
         }
 
-        bool isDirectMapped() const
-        {
-            return !isCompressed() && !isMultiSegmnet();
-        }
-
-        bool isMultiSegmnet() const
+        bool isMultiSegment() const
         {
             return segments.size() > 1;
         }
@@ -405,75 +400,93 @@ namespace mango
 
             const FileHeader& file = *ptrFile;
 
-            if (file.isDirectMapped())
+            // TODO: compute segment.size instead of storing it in .mgx container
+            // TODO: checksum
+            // TODO: encryption
+
+            if (!file.isMultiSegment())
             {
-                // file is encoded as a single, non-compressed block
                 const auto& segment = file.segments[0];
                 Block& block = m_header.m_blocks[segment.block];
 
-                u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
-                u64 size = file.size;
-
-#if 0
-                printf("## direct mapped: %s (%" PRIu64 " bytes) block.offset: %" PRIu64 ", segment.offset: %d \n",
-                       filename.c_str(), size, block.offset, segment.offset);
-#endif
-                if (block.offset + segment.offset + size > m_header.m_memory.size)
+                if (file.isCompressed())
                 {
-                    MANGO_EXCEPTION(ID"File \"%s\" has mapped region outside of parent memory.", filename.c_str());
-                }
+                    if (segment.size != block.uncompressed && !file.isMultiSegment())
+                    {
+                        // a small file stored in one block with other small files
+                        // cache the decompressed buffers
 
-                // return reference to parent's memory
-                VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size);
-                return vm;
-            }
-
-            // TODO: remove debug prints
-            // TODO: compute segment.size instead of storing it in .mgx container
-            // TODO: decompression cache for small-file blocks
-
-            u8* ptr = new u8[file.size];
-            std::memset(ptr, 0, file.size);
-            u64 bytes = file.size;
-            u8* x = ptr;
-
+                        // TODO: decompression cache for small-file blocks
 #if 0
-            printf("## segmented: %s\n", filename.c_str());
+                        // simulate almost-zero-cost (AZC) decompression
+                        u8* ptr = new u8[file.size];
+                        std::memset(ptr, 0, file.size);
+                        VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
+                        return vm;
 #endif
-            for (auto &segment : file.segments)
-            {
-                const Block& block = m_header.m_blocks[segment.block];
-                u32 offset = segment.offset;
-                u32 size = segment.size;
-                bytes -= size;
-
-#if 0
-                printf("  ## size: %d, block.offset: %d, segment.offset: %d, segment.size: %d, method: %d, c: %d, u: %d\n",
-                    (u32)size, (u32)block.offset, offset, size, block.method, 
-                    (u32)block.compressed, (u32)block.uncompressed);
-#endif
-                if (block.method)
-                {
-                    std::vector<u8> temp(block.uncompressed);
-                    Memory d(temp.data(), block.uncompressed);
-                    Memory s(m_header.m_memory.address + block.offset, block.compressed);
-
-                    Compressor compressor = getCompressor(Compressor::Method(block.method));
-                    compressor.decompress(d, s);
-
-                    std::memcpy(x, d.address + offset, size);
-                    x += size;
+                    }
                 }
                 else
                 {
-                    std::memcpy(x, m_header.m_memory.address + block.offset + offset, size);
-                    x += size;
+                    // The file is encoded as a single, non-compressed block, so
+                    // we can simply map it into parent's memory
+
+                    u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
+
+                    if (block.offset + segment.offset + file.size > m_header.m_memory.size)
+                    {
+                        MANGO_EXCEPTION(ID"File \"%s\" has mapped region outside of parent memory.", filename.c_str());
+                    }
+
+                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, file.size);
+                    return vm;
                 }
             }
 
+            // generic compression case
+
+            u8* ptr = new u8[file.size];
+            u8* x = ptr;
+
+            for (auto &segment : file.segments)
+            {
+                const Block& block = m_header.m_blocks[segment.block];
+
+                if (block.method)
+                {
 #if 0
-            printf("  ## bytes left: %d\n", (u32)bytes);
+                    // segment is full-block so we can decode directly w/o intermediate buffer
+                    if (block.uncompressed == segment.size && segment.offset == 0)
+                    {
+                        Memory d(x, block.uncompressed);
+                        Memory s(m_header.m_memory.address + block.offset, block.compressed);
+
+                        Compressor compressor = getCompressor(Compressor::Method(block.method));
+                        compressor.decompress(d, s);
+
+                        x += block.uncompressed;
+                    }
+                    else
 #endif
+                    {
+                        std::vector<u8> temp(block.uncompressed);
+                        Memory d(temp.data(), block.uncompressed);
+                        Memory s(m_header.m_memory.address + block.offset, block.compressed);
+
+                        Compressor compressor = getCompressor(Compressor::Method(block.method));
+                        compressor.decompress(d, s);
+
+                        std::memcpy(x, d.address + segment.offset, segment.size);
+                        x += segment.size;
+                    }
+                }
+                else
+                {
+                    std::memcpy(x, m_header.m_memory.address + block.offset + segment.offset, segment.size);
+                    x += segment.size;
+                }
+            }
+
             VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
             return vm;
         }
