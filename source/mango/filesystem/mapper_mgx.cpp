@@ -467,13 +467,13 @@ namespace mango
                 else
                 {
                     std::memcpy(x, m_header.m_memory.address + block.offset + offset, size);
-                    printf("%x %x \n", x[0], x[1]);
                     x += size;
                 }
             }
 
+#if 0
             printf("  ## bytes left: %d\n", (u32)bytes);
-
+#endif
             VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
             return vm;
         }
