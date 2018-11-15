@@ -570,6 +570,7 @@ namespace mango
                     }
 
                     std::string prefix = headers[0].filename.substr(0, maxPrefix);
+                    prefix = getPath(prefix);
 
                     // store headers in a map
                     for (auto& header : headers)
