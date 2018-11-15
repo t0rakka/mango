@@ -6,7 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-#define ID "File: "
+#define ID "[File] "
 
 namespace mango
 {
@@ -15,31 +15,41 @@ namespace mango
     // File
     // -----------------------------------------------------------------
 
-    File::File(const Path& path, const std::string& filename)
+    File::File(const std::string& s)
     {
-        // use parent path's mapper
+        // split s into pathname + filename
+        size_t n = s.find_last_of("/\\:");
+        std::string filename = s.substr(n + 1);
+        std::string filepath = s.substr(0, n + 1);
+
+        // create a temporary path
+        Path path(filepath);
+
+        // use mapper from path
         m_mapper = path;
         m_pathname = path.pathname();
+        m_basepath = "";
 
-        // parse and create mappers
-        m_filename = parse(m_pathname + filename, "");
+        m_filename = filename;
 
         // memory map the file
         VirtualMemory* vmemory = m_mapper->mmap(m_filename);
         m_memory = UniqueObject<VirtualMemory>(vmemory);
     }
 
-    File::File(const std::string& filename)
+    File::File(const Path& path, const std::string& filename)
     {
-		// create mapper to raw filesystem
-        m_mapper = getFileMapper();
+        // use mapper from path
+        m_mapper = path;
+        m_pathname = path.pathname();
+        m_basepath = filename;
 
         // parse and create mappers
-        m_filename = parse(filename, "");
+        m_filename = parse(m_basepath, "");
 
         // memory map the file
-        VirtualMemory* memory = m_mapper->mmap(m_filename);
-        m_memory = UniqueObject<VirtualMemory>(memory);
+        VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+        m_memory = UniqueObject<VirtualMemory>(vmemory);
     }
 
     File::File(const Memory& memory, const std::string& extension, const std::string& filename)
@@ -49,10 +59,10 @@ namespace mango
 
         // use temporary path's mapper
         m_mapper = path;
-        m_pathname = path.pathname();
 
         // parse and create mappers
-        m_filename = parse(filename, "");
+        m_pathname = filename;
+        m_filename = parse(m_pathname, "");
 
         // memory map the file
         VirtualMemory* vmemory = m_mapper->mmap(m_filename);

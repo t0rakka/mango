@@ -14,24 +14,12 @@ namespace mango
 
     Path::Path(const std::string& pathname, const std::string& password)
     {
-		// create mapper to raw filesystem
-        m_mapper = getFileMapper();
-
 		// parse and create mappers
-        m_pathname = parse(pathname, password);
-        m_mapper->getIndex(m_files, m_pathname);
-    }
-
-    Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
-    {
-        m_pathname = "";
-
-        // create mapper to raw memory
-        m_mapper = getMemoryMapper(memory, extension, password);
-        if (m_mapper)
-        {
-            m_mapper->getIndex(m_files, m_pathname);
-        }
+        std::string temp = pathname;
+        m_basepath = parse(temp, password);
+        m_pathname = pathname;
+        m_basepath = temp;
+        m_mapper->getIndex(m_files, m_basepath);
     }
 
     Path::Path(const Path& path, const std::string& pathname, const std::string& password)
@@ -40,8 +28,20 @@ namespace mango
         m_mapper = path.m_mapper;
 
 		// parse and create mappers
-        m_pathname = parse(path.m_pathname + pathname, password);
-        m_mapper->getIndex(m_files, m_pathname);
+        std::string temp = path.m_basepath + pathname;
+        m_basepath = parse(temp, password);
+        m_pathname = path.m_pathname + pathname;
+        m_mapper->getIndex(m_files, m_basepath);
+    }
+
+    Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
+    {
+        // create mapper to raw memory
+        m_mapper = createMemoryMapper(memory, extension, password);
+        if (m_mapper)
+        {
+            m_mapper->getIndex(m_files, m_basepath);
+        }
     }
 
     Path::~Path()
@@ -51,12 +51,7 @@ namespace mango
     void Path::updateIndex()
     {
         m_files.clear();
-        m_mapper->getIndex(m_files, m_pathname);
-    }
-
-    const std::string& Path::pathname() const
-    {
-        return m_pathname;
+        m_mapper->getIndex(m_files, m_basepath);
     }
 
 } // namespace mango

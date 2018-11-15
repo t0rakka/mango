@@ -125,13 +125,17 @@ namespace
     class FileMapper : public AbstractMapper
     {
     protected:
-        void emplace_helper(FileIndex& index, const std::string& pathname, const std::string& filename)
+        std::string m_basepath;
+
+        void emplace_helper(FileIndex& index, const std::string& pathname, std::string filename)
         {
             const std::string testname = pathname + filename;
 
             struct stat s;
             if (::stat(testname.c_str(), &s) != -1)
             {
+                filename = removePrefix(filename, m_basepath);
+
                 if ((s.st_mode & S_IFDIR) == 0)
                 {
                     size_t size = size_t(s.st_size);
@@ -145,7 +149,8 @@ namespace
         }
 
     public:
-        FileMapper()
+        FileMapper(const std::string& basepath)
+            : m_basepath(basepath)
         {
         }
 
@@ -156,10 +161,11 @@ namespace
         bool isFile(const std::string& filename) const override
         {
             bool is = false;
+            std::string testname = m_basepath + filename;
 
             struct stat s;
 
-            if (::stat(filename.c_str(), &s) == 0)
+            if (::stat(testname.c_str(), &s) == 0)
             {
                 is = (s.st_mode & S_IFDIR) == 0;
             }
@@ -172,8 +178,9 @@ namespace
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
             struct dirent** namelist = NULL;
+            std::string fullname = m_basepath + pathname;
 
-            const int n = ::scandir(pathname.c_str(), &namelist, [] (const struct dirent* e)
+            const int n = ::scandir(fullname.c_str(), &namelist, [] (const struct dirent* e)
             {
                 // filter out "." and ".."
                 if (!std::strcmp(e->d_name, ".") || !std::strcmp(e->d_name, ".."))
@@ -191,7 +198,7 @@ namespace
             {
                 const std::string filename(namelist[i]->d_name);
                 ::free(namelist[i]);
-                emplace_helper(index, pathname, filename);
+                emplace_helper(index, fullname, filename);
             }
 
             ::free(namelist);
@@ -201,7 +208,8 @@ namespace
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            DIR* dirp = ::opendir(pathname.c_str());
+            std::string fullname = m_basepath + pathname;
+            DIR* dirp = ::opendir(fullname.c_str());
             if (!dirp)
             {
                 // Unable to open directory.
@@ -217,7 +225,7 @@ namespace
                 // skip "." and ".."
                 if (filename != "." && filename != "..")
                 {
-                    emplace_helper(index, pathname, filename);
+                    emplace_helper(index, fullname, filename);
                 }
             }
 
@@ -228,7 +236,7 @@ namespace
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            VirtualMemory* memory = new FileMemory(filename, 0, 0);
+            VirtualMemory* memory = new FileMemory(m_basepath + filename, 0, 0);
             return memory;
         }
     };
@@ -242,10 +250,11 @@ namespace mango
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    AbstractMapper* Mapper::getFileMapper() const
+    AbstractMapper* Mapper::createFileMapper(const std::string& basepath)
     {
-        static FileMapper s_fileMapper;
-        return &s_fileMapper;
+        AbstractMapper* mapper = new FileMapper(basepath);
+        m_mappers.emplace_back(mapper);
+        return mapper;
     }
 
 } // namespace mango

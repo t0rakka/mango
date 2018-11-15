@@ -102,19 +102,23 @@ namespace mango
     class Mapper : protected NonCopyable
     {
     protected:
-        AbstractMapper* m_mapper;
-        VirtualMemory* m_parent_memory;
+        AbstractMapper* m_mapper { nullptr };
+        VirtualMemory* m_parent_memory { nullptr };
         std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
+        std::string m_basepath;
         std::string m_pathname;
 
-        std::string parse(const std::string& pathname, const std::string& password);
-        AbstractMapper* create(AbstractMapper* parent, std::string& filename, const std::string& password);
-        AbstractMapper* getMemoryMapper(Memory memory, const std::string& extension, const std::string& password) const;
-        AbstractMapper* getFileMapper() const;
+        std::string parse(std::string& pathname, const std::string& password);
+        AbstractMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
+        AbstractMapper* createMemoryMapper(Memory memory, const std::string& extension, const std::string& password);
+        AbstractMapper* createFileMapper(const std::string& basepath);
 
     public:
         Mapper();
         ~Mapper();
+
+        const std::string& basepath() const;
+        const std::string& pathname() const;
 
         operator AbstractMapper* () const;
         static bool isCustomMapper(const std::string& filename);

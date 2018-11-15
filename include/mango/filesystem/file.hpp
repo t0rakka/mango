@@ -24,8 +24,8 @@ namespace mango
         Memory getMemory() const;
 
     public:
-        File(const Path& path, const std::string& filename);
         File(const std::string& filename);
+        File(const Path& path, const std::string& filename);
         File(const Memory& memory, const std::string& extension, const std::string& filename);
         ~File();
 

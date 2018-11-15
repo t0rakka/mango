@@ -126,8 +126,12 @@ namespace
 
     class FileMapper : public AbstractMapper
     {
+    protected:
+        std::string m_basepath;
+
     public:
-        FileMapper()
+        FileMapper(const std::string& basepath)
+            : m_basepath(basepath)
         {
         }
 
@@ -141,7 +145,7 @@ namespace
 
             struct _stati64 s;
 
-            if (_wstat64(u16_fromBytes(filename).c_str(), &s) == 0)
+            if (_wstat64(u16_fromBytes(m_basepath + filename).c_str(), &s) == 0)
             {
                 is = (s.st_mode & _S_IFDIR) == 0;
             }
@@ -151,7 +155,7 @@ namespace
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            std::wstring filespec = u16_fromBytes(pathname + "*");
+            std::wstring filespec = u16_fromBytes(m_basepath + pathname + "*");
 
             _wfinddatai64_t cfile;
 
@@ -163,6 +167,7 @@ namespace
                 for (;;)
                 {
                     std::string filename = u16_toBytes(cfile.name);
+                    filename = removePrefix(filename, m_basepath);
 
                     // skip "." and ".."
                     if (filename != "." && filename != "..")
@@ -171,7 +176,7 @@ namespace
 
                         if (isfile)
                         {
-                            size_t filesize = static_cast<size_t>(cfile.size);
+                            size_t filesize = size_t(cfile.size);
                             index.emplace(filename, filesize, 0);
                         }
                         else
@@ -190,7 +195,7 @@ namespace
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            VirtualMemory* memory = new FileMemory(filename, 0, 0);
+            VirtualMemory* memory = new FileMemory(m_basepath + filename, 0, 0);
             return memory;
         }
     };
@@ -204,10 +209,11 @@ namespace mango
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    AbstractMapper* Mapper::getFileMapper() const
+    AbstractMapper* Mapper::createFileMapper(const std::string& basepath)
     {
-        static FileMapper s_fileMapper;
-        return &s_fileMapper;
+        AbstractMapper* mapper = new FileMapper(basepath);
+        m_mappers.emplace_back(mapper);
+        return mapper;
     }
 
 } // namespace mango

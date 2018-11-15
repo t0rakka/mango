@@ -118,7 +118,7 @@ namespace mango
         if (isFile && Mapper::isCustomMapper(name))
         {
             // file is a container; add it into the index again as such
-            files.emplace_back(name + "/", 0, FileInfo::DIRECTORY | FileInfo::CONTAINER);
+            files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
         }
     }
 
@@ -127,10 +127,6 @@ namespace mango
     // -----------------------------------------------------------------
 
     Mapper::Mapper()
-		: m_mapper(nullptr)
-        , m_parent_memory(nullptr)
-        , m_mappers()
-        , m_pathname()
     {
     }
 
@@ -139,19 +135,14 @@ namespace mango
 		delete m_parent_memory;
     }
 
-    std::string Mapper::parse(const std::string& pathname, const std::string& password)
+    std::string Mapper::parse(std::string& pathname, const std::string& password)
     {
         std::string filename = pathname;
 
         for ( ; !filename.empty(); )
         {
-            AbstractMapper* custom_mapper = create(m_mapper, filename, password);
-            if (custom_mapper)
-            {
-                m_mappers.emplace_back(custom_mapper);
-                m_mapper = custom_mapper;
-            }
-            else
+            AbstractMapper* custom_mapper = createCustomMapper(pathname, filename, password);
+            if (!custom_mapper)
             {
                 break;
             }
@@ -160,7 +151,7 @@ namespace mango
         return filename;
     }
 
-    AbstractMapper* Mapper::create(AbstractMapper* parent, std::string& filename, const std::string& password)
+    AbstractMapper* Mapper::createCustomMapper(std::string& pathname, std::string& filename, const std::string& password)
     {
         std::string f = toLower(filename);
 
@@ -173,25 +164,44 @@ namespace mango
                 n += extension.decorated_extension.length();
 
                 // resolve container filename (example: "foo/bar/data.zip")
-                std::string container_filename = filename.substr(0, n - 1);
+                std::string container = filename.substr(0, n - 1);
+                std::string postfix = filename.substr(n, std::string::npos);
 
                 AbstractMapper* custom_mapper = nullptr;
 
-                if (parent->isFile(container_filename))
+                if (!m_mapper)
                 {
-                    m_parent_memory = parent->mmap(container_filename);
+                    size_t n = container.find_last_of("/\\:");
+                    std::string head = container.substr(0, n + 1);
+                    container = container.substr(n + 1, std::string::npos);
+                    m_mapper = createFileMapper(head);
+                }
+
+                if (m_mapper->isFile(container))
+                {
+                    m_parent_memory = m_mapper->mmap(container);
                     custom_mapper = extension.create(*m_parent_memory, password);
-                    filename = filename.substr(n, std::string::npos);
+                    m_mappers.emplace_back(custom_mapper);
+                    m_mapper = custom_mapper;
+
+                    filename = postfix;
+                    pathname = postfix;
                 }
 
                 return custom_mapper;
             }
         }
 
+        if (!m_mapper)
+        {
+            m_mapper = createFileMapper(pathname);
+            pathname = "";
+        }
+
         return nullptr;
     }
 
-    AbstractMapper* Mapper::getMemoryMapper(Memory memory, const std::string& extension, const std::string& password) const
+    AbstractMapper* Mapper::createMemoryMapper(Memory memory, const std::string& extension, const std::string& password)
     {
         std::string f = toLower(extension);
 
@@ -208,11 +218,22 @@ namespace mango
             {
                 // found a container interface; let's create it
                 AbstractMapper* custom_mapper = extension.create(memory, password);
+                m_mappers.emplace_back(custom_mapper);
                 return custom_mapper;
             }
         }
 
         return nullptr;
+    }
+
+    const std::string& Mapper::basepath() const
+    {
+        return m_basepath;
+    }
+
+    const std::string& Mapper::pathname() const
+    {
+        return m_pathname;
     }
 
     Mapper::operator AbstractMapper* () const

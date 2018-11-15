@@ -19,11 +19,10 @@ namespace mango
 
     public:
         Path(const std::string& pathname, const std::string& password = "");
-        Path(const Memory& memory, const std::string& extension, const std::string& password = "");
         Path(const Path& path, const std::string& filename, const std::string& password = "");
+        Path(const Memory& memory, const std::string& extension, const std::string& password = "");
         ~Path();
 
-        const std::string& pathname() const;
         void updateIndex();
 
         auto begin() const -> decltype(m_files.begin())
