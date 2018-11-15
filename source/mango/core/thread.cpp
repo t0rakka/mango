@@ -148,7 +148,7 @@ namespace mango
 
     ThreadPool& ThreadPool::getInstance()
     {
-        static ThreadPool instance(std::max(std::thread::hardware_concurrency() - 1, 1U));
+        static ThreadPool instance(std::max(std::thread::hardware_concurrency() - 0, 1U));
         return instance;
     }
 
