@@ -443,6 +443,8 @@ namespace mango
             u8* ptr = new u8[file.size];
             u8* x = ptr;
 
+            ConcurrentQueue q("mgx.decompessor", Priority::HIGH);
+
             for (auto &segment : file.segments)
             {
                 const Block& block = m_header.m_blocks[segment.block];
@@ -452,18 +454,20 @@ namespace mango
                     Compressor compressor = getCompressor(Compressor::Method(block.method));
                     Memory src(m_header.m_memory.address + block.offset, block.compressed);
 
-                    if (block.uncompressed == segment.size && segment.offset == 0)
-                    {
-                        // segment is full-block so we can decode directly w/o intermediate buffer
-                        Memory dest(x, block.uncompressed);
-                        compressor.decompress(dest, src);
-                    }
-                    else
-                    {
-                        Buffer dest(block.uncompressed);
-                        compressor.decompress(dest, src);
-                        std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
-                    }
+                    q.enqueue([=, &block, &segment] {
+                        if (block.uncompressed == segment.size && segment.offset == 0)
+                        {
+                            // segment is full-block so we can decode directly w/o intermediate buffer
+                            Memory dest(x, block.uncompressed);
+                            compressor.decompress(dest, src);
+                        }
+                        else
+                        {
+                            Buffer dest(block.uncompressed);
+                            compressor.decompress(dest, src);
+                            std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
+                        }
+                    });
 
                     x += segment.size;
                 }
@@ -473,6 +477,8 @@ namespace mango
                     x += segment.size;
                 }
             }
+
+            q.wait();
 
             VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
             return vm;
