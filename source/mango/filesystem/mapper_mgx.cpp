@@ -3,13 +3,8 @@
     Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
-#include <mango/core/pointer.hpp>
-#include <mango/core/string.hpp>
-#include <mango/core/compress.hpp>
-#include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
-#include <mango/filesystem/mapper.hpp>
-#include <mango/filesystem/path.hpp>
+#include <mango/core/core.hpp>
+#include <mango/filesystem/filesystem.hpp>
 #include <mango/image/fourcc.hpp>
 
 #define ID "[mapper.mgx] "
@@ -454,31 +449,23 @@ namespace mango
 
                 if (block.method)
                 {
-#if 0
-                    // segment is full-block so we can decode directly w/o intermediate buffer
+                    Compressor compressor = getCompressor(Compressor::Method(block.method));
+                    Memory src(m_header.m_memory.address + block.offset, block.compressed);
+
                     if (block.uncompressed == segment.size && segment.offset == 0)
                     {
-                        Memory d(x, block.uncompressed);
-                        Memory s(m_header.m_memory.address + block.offset, block.compressed);
-
-                        Compressor compressor = getCompressor(Compressor::Method(block.method));
-                        compressor.decompress(d, s);
-
-                        x += block.uncompressed;
+                        // segment is full-block so we can decode directly w/o intermediate buffer
+                        Memory dest(x, block.uncompressed);
+                        compressor.decompress(dest, src);
                     }
                     else
-#endif
                     {
-                        std::vector<u8> temp(block.uncompressed);
-                        Memory d(temp.data(), block.uncompressed);
-                        Memory s(m_header.m_memory.address + block.offset, block.compressed);
-
-                        Compressor compressor = getCompressor(Compressor::Method(block.method));
-                        compressor.decompress(d, s);
-
-                        std::memcpy(x, d.address + segment.offset, segment.size);
-                        x += segment.size;
+                        Buffer dest(block.uncompressed);
+                        compressor.decompress(dest, src);
+                        std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
                     }
+
+                    x += segment.size;
                 }
                 else
                 {
