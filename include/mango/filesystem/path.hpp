@@ -23,8 +23,6 @@ namespace mango
         Path(const Memory& memory, const std::string& extension, const std::string& password = "");
         ~Path();
 
-        void updateIndex();
-
         auto begin() const -> decltype(m_files.begin())
         {
             return m_files.begin();

@@ -117,7 +117,6 @@ namespace mango
         Mapper();
         ~Mapper();
 
-        const std::string& basepath() const;
         const std::string& pathname() const;
 
         operator AbstractMapper* () const;

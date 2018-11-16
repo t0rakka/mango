@@ -54,13 +54,4 @@ namespace mango
     {
     }
 
-    void Path::updateIndex()
-    {
-        m_files.clear();
-        if (m_mapper)
-        {
-            m_mapper->getIndex(m_files, m_basepath);
-        }
-    }
-
 } // namespace mango
