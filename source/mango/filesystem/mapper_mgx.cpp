@@ -136,6 +136,7 @@ namespace
         };
 
         u64 size;
+        u32 checksum;
         bool is_compressed;
         std::vector<Segment> segments;
 
@@ -245,6 +246,7 @@ namespace
                 p += length;
 
                 file.size = p.read64();
+                file.checksum = p.read32();
                 file.is_compressed = false;
 
                 u32 num_segment = p.read32();
