@@ -226,6 +226,11 @@ namespace mango
         return nullptr;
     }
 
+    const std::string& Mapper::basepath() const
+    {
+        return m_basepath;
+    }
+
     const std::string& Mapper::pathname() const
     {
         return m_pathname;

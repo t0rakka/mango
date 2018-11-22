@@ -23,37 +23,34 @@ namespace mango
         std::string filepath = s.substr(0, n + 1);
 
         // create a temporary path
-        Path path(filepath);
+        Path temp(filepath);
 
-        // use mapper from path
-        m_mapper = path;
-        m_pathname = path.pathname();
-        m_basepath = "";
+        m_filename = temp.basepath() + filename;
 
-        m_filename = filename;
-
-        // memory map the file
-        if (m_mapper)
+        AbstractMapper* mapper = temp;
+        if (mapper)
         {
-            VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+            VirtualMemory* vmemory = mapper->mmap(m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
 
-    File::File(const Path& path, const std::string& filename)
+    File::File(const Path& path, const std::string& s)
     {
-        // use mapper from path
-        m_mapper = path;
-        m_pathname = path.pathname();
-        m_basepath = filename;
+        // split s into pathname + filename
+        size_t n = s.find_last_of("/\\:");
+        std::string filename = s.substr(n + 1);
+        std::string filepath = s.substr(0, n + 1);
 
-        // parse and create mappers
-        m_filename = parse(m_basepath, "");
+        // create a temporary path
+        Path temp(path, filepath);
 
-        // memory map the file
-        if (m_mapper)
+        m_filename = temp.basepath() + filename;
+
+        AbstractMapper* mapper = temp;
+        if (mapper)
         {
-            VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+            VirtualMemory* vmemory = mapper->mmap(m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
