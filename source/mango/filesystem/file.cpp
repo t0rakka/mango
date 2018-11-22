@@ -25,13 +25,13 @@ namespace mango
         // create a temporary path
         Path temp(filepath);
 
-        m_filename = temp.basepath() + filename;
+        m_filename = filename;
         m_pathname = temp.pathname();
 
         AbstractMapper* mapper = temp;
         if (mapper)
         {
-            VirtualMemory* vmemory = mapper->mmap(m_filename);
+            VirtualMemory* vmemory = mapper->mmap(temp.basepath() + m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
@@ -46,13 +46,13 @@ namespace mango
         // create a temporary path
         Path temp(path, filepath);
 
-        m_filename = temp.basepath() + filename;
+        m_filename = filename;
         m_pathname = temp.pathname();
 
         AbstractMapper* mapper = temp;
         if (mapper)
         {
-            VirtualMemory* vmemory = mapper->mmap(m_filename);
+            VirtualMemory* vmemory = mapper->mmap(temp.basepath() + m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
