@@ -26,6 +26,7 @@ namespace mango
         Path temp(filepath);
 
         m_filename = temp.basepath() + filename;
+        m_pathname = temp.pathname();
 
         AbstractMapper* mapper = temp;
         if (mapper)
@@ -46,6 +47,7 @@ namespace mango
         Path temp(path, filepath);
 
         m_filename = temp.basepath() + filename;
+        m_pathname = temp.pathname();
 
         AbstractMapper* mapper = temp;
         if (mapper)
