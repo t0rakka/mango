@@ -847,12 +847,15 @@ namespace mango
                 const Folder& folder = iPath->second;
 
                 auto iFile = folder.files.find(filename);
-                if (iFile == folder.files.end())
+                if (iFile != folder.files.end())
                 {
-                    MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                    ptrFile = &iFile->second;
                 }
+            }
 
-                ptrFile = &iFile->second;
+            if (!ptrFile)
+            {
+                MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
             const DirFileHeader& file = *ptrFile;

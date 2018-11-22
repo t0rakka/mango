@@ -387,12 +387,31 @@ namespace mango
                 const Folder& folder = iPath->second;
 
                 auto iFile = folder.files.find(filename);
-                if (iFile == folder.files.end())
+                if (iFile != folder.files.end())
                 {
-                    MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                    ptrFile = &iFile->second;
                 }
+#if 0
+                else
+                {
+                    printf("files lookup failed with: %s\n", filename.c_str());
+                    for (auto f : folder.files)
+                    {
+                        printf("  > %s\n", f.first.c_str());
+                    }
+                }
+#endif
+            }
+#if 0
+            else
+            {
+                printf("m_folders lookup failed with: %s\n", pathname.c_str());
+            }
+#endif
 
-                ptrFile = &iFile->second;
+            if (!ptrFile)
+            {
+                MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
             const FileHeader& file = *ptrFile;

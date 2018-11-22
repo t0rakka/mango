@@ -19,6 +19,13 @@ namespace mango
         m_basepath = parse(temp, password);
         m_pathname = pathname;
         m_basepath = temp;
+
+#if 0
+        printf("# m_basepath: %s\n", m_basepath.c_str());
+        printf("# m_pathname: %s\n", m_pathname.c_str());
+        printf("\n");
+#endif
+
         if (m_mapper)
         {
             m_mapper->getIndex(m_files, m_basepath);
@@ -34,6 +41,13 @@ namespace mango
         std::string temp = path.m_basepath + pathname;
         m_basepath = parse(temp, password);
         m_pathname = path.m_pathname + pathname;
+
+#if 0
+        printf("# m_basepath: %s\n", m_basepath.c_str());
+        printf("# m_pathname: %s\n", m_pathname.c_str());
+        printf("\n");
+#endif
+
         if (m_mapper)
         {
             m_mapper->getIndex(m_files, m_basepath);
