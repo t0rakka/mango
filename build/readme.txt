@@ -72,6 +72,20 @@ Then use the resulting library files in your cool/awesome Android projects.
 
 ------------------------------------------------------------------------------------------------
 
+Troubleshooting!
+
+Error:
+"In file included from /root/temp/mango/source/mango/image/image_ktx.cpp:9:0:
+/root/temp/mango/build/../include/mango/opengl/opengl.hpp:80:23: fatal error: GL/gl.h: No such file or directory
+     #include <GL/gl.h>"
+
+Solution:
+Install OpenGL headers. On Linux distributions you get these with "mesa":
+
+apt-get install mesa-common-dev
+
+------------------------------------------------------------------------------------------------
+
 Apologies for poor quality build scripts and instructions. Typically you configure the library to be part of your build system
 just once and there are so many ways organizations and individuals do these things it's super duper hard to please everyone so
 our main focus was pleasing ourselves foremost and fix problems as they are reported. Have a nice day! :)
