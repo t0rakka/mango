@@ -49,6 +49,7 @@ namespace nocompress {
 
     size_t compress(Memory dest, Memory source, int level)
     {
+        MANGO_UNREFERENCED_PARAMETER(level);
         std::memcpy(dest.address, source.address, source.size);
         return source.size;
     }
