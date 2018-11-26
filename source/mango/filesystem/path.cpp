@@ -15,9 +15,9 @@ namespace mango
     Path::Path(const std::string& pathname, const std::string& password)
     {
 		// parse and create mappers
-        std::string temp = pathname;
+        std::string temp = pathname.empty() ? "./" : pathname;
+        m_pathname = temp;
         m_basepath = parse(temp, password);
-        m_pathname = pathname;
         m_basepath = temp;
 
 #if 0
