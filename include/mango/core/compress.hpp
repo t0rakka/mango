@@ -79,6 +79,13 @@ namespace mango
     // Level 10: maximum compression
     // Other levels are implementation defined
 
+    namespace nocompress
+    {
+        size_t bound(size_t size);
+        size_t compress(Memory dest, Memory source, int level = 6);
+        void decompress(Memory dest, Memory source);
+    }
+
     namespace miniz
     {
         size_t bound(size_t size);
@@ -149,5 +156,38 @@ namespace mango
         size_t compress(Memory dest, Memory source, int level = 6);
         void decompress(Memory dest, Memory source);
     }
+
+    // -----------------------------------------------------------------------
+    // Compressor
+    // -----------------------------------------------------------------------
+
+    // Optional API to give compressors a name; the compression functions
+    // can be used as-is but this allows to enumerate them or ask them by name.
+
+    struct Compressor
+    {
+        enum Method
+        {
+            NONE = 0,
+            MINIZ,
+            BZIP2,
+            LZ4,
+            LZO,
+            ZSTD,
+            LZFSE,
+            LZMA,
+            LZMA2,
+            PPMD8,
+        } method;
+        std::string name;
+
+        size_t (*bound)(size_t size);
+        size_t (*compress)(Memory dest, Memory source, int level);
+        void (*decompress)(Memory dest, Memory source);
+    };
+
+    std::vector<Compressor> getCompressors();
+    Compressor getCompressor(Compressor::Method method);
+    Compressor getCompressor(const std::string& name);
 
 } // namespace mango

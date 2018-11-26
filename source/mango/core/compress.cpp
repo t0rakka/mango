@@ -37,6 +37,30 @@
 namespace mango {
 
 // ----------------------------------------------------------------------------
+// nocompress
+// ----------------------------------------------------------------------------
+
+namespace nocompress {
+
+    size_t bound(size_t size)
+    {
+        return size;
+    }
+
+    size_t compress(Memory dest, Memory source, int level)
+    {
+        std::memcpy(dest.address, source.address, source.size);
+        return source.size;
+    }
+
+    void decompress(Memory dest, Memory source)
+    {
+        std::memcpy(dest.address, source.address, source.size);
+    }
+
+} // namespace nocompress
+
+// ----------------------------------------------------------------------------
 // miniz
 // ----------------------------------------------------------------------------
 
@@ -914,4 +938,49 @@ namespace ppmd8
     }
 
 } // namespace ppmd
+
+    const std::vector<Compressor> g_compressors =
+    {
+        { Compressor::NONE,  "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
+        { Compressor::MINIZ, "miniz", miniz::bound, miniz::compress, miniz::decompress },
+        { Compressor::BZIP2, "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
+        { Compressor::LZ4,   "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
+        { Compressor::LZO,   "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },
+        { Compressor::ZSTD,  "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
+        { Compressor::LZFSE, "lzfse", lzfse::bound, lzfse::compress, lzfse::decompress },
+        { Compressor::LZMA,  "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
+        { Compressor::LZMA2, "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
+        { Compressor::PPMD8, "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
+    };
+
+    std::vector<Compressor> getCompressors()
+    {
+        return g_compressors;
+    }
+
+    Compressor getCompressor(Compressor::Method method)
+    {
+        return g_compressors[method];
+    }
+
+    Compressor getCompressor(const std::string& name)
+    {
+        Compressor compressor;
+
+        auto i = std::find_if(g_compressors.begin(), g_compressors.end(),[&] (const Compressor& compressor)
+        {
+            return name == compressor.name;
+        });
+
+        if (i != g_compressors.end())
+        {
+            compressor = *i;
+        }
+        else
+        {
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor (%s).", name.c_str());
+        }
+        return compressor;
+    }
+
 } // namespace mango
