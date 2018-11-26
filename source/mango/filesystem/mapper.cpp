@@ -56,6 +56,7 @@ namespace mango
         extensions.push_back(MapperExtension("zipx", createMapperZIP));
 
         extensions.push_back(MapperExtension("mgx", createMapperMGX));
+        extensions.push_back(MapperExtension("snitch", createMapperMGX));
 
 #ifdef MANGO_ENABLE_LICENSE_GPL
         extensions.push_back(MapperExtension("rar", createMapperRAR));
