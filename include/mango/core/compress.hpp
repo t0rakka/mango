@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include <vector>
 #include "configure.hpp"
 #include "memory.hpp"
 #include "object.hpp"
