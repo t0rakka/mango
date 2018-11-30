@@ -1243,6 +1243,10 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 }
                 int value = (data >> offset) & mask;
                 *d++ = value * scale;
+                if (m_transparent_enable)
+                {
+                    *d++ = value == m_transparent_sample[0] ? 0 : 0xff;
+                }
                 offset -= bits;
             }
         }
