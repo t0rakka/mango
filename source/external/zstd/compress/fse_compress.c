@@ -321,19 +321,6 @@ size_t FSE_writeNCount (void* buffer, size_t bufferSize,
 /*-**************************************************************
 *  FSE Compression Code
 ****************************************************************/
-/*! FSE_sizeof_CTable() :
-    FSE_CTable is a variable size structure which contains :
-    `U16 tableLog;`
-    `U16 maxSymbolValue;`
-    `U16 nextStateNumber[1 << tableLog];`                         // This size is variable
-    `FSE_symbolCompressionTransform symbolTT[maxSymbolValue+1];`  // This size is variable
-Allocation is manual (C standard does not support variable-size structures).
-*/
-size_t FSE_sizeof_CTable (unsigned maxSymbolValue, unsigned tableLog)
-{
-    if (tableLog > FSE_MAX_TABLELOG) return ERROR(tableLog_tooLarge);
-    return FSE_CTABLE_SIZE_U32 (tableLog, maxSymbolValue) * sizeof(U32);
-}
 
 FSE_CTable* FSE_createCTable (unsigned maxSymbolValue, unsigned tableLog)
 {
@@ -685,7 +672,7 @@ size_t FSE_compress_wksp (void* dst, size_t dstSize, const void* src, size_t src
     if (!tableLog) tableLog = FSE_DEFAULT_TABLELOG;
 
     /* Scan input and build symbol stats */
-    {   CHECK_V_F(maxCount, HIST_count_wksp(count, &maxSymbolValue, src, srcSize, (unsigned*)scratchBuffer) );
+    {   CHECK_V_F(maxCount, HIST_count_wksp(count, &maxSymbolValue, src, srcSize, scratchBuffer, scratchBufferSize) );
         if (maxCount == srcSize) return 1;   /* only a single symbol in src : rle */
         if (maxCount == 1) return 0;         /* each symbol present maximum once => not compressible */
         if (maxCount < (srcSize >> 7)) return 0;   /* Heuristic : not compressible enough */
