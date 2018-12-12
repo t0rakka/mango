@@ -849,6 +849,15 @@
     <ClInclude Include="..\..\source\external\lzma\7zSha256.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\decompress\zstd_ddict.h">
+      <Filter>external\zstd\decompress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_block.h">
+      <Filter>external\zstd\decompress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_internal.h">
+      <Filter>external\zstd\decompress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1348,6 +1357,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\7zSha256.c">
       <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_ddict.c">
+      <Filter>external\zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress_block.c">
+      <Filter>external\zstd\decompress</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
