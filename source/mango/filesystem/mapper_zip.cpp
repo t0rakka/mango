@@ -14,6 +14,22 @@
 
 #define ID "[mapper.zip] "
 
+/*
+https://courses.cs.ut.ee/MTAT.07.022/2015_fall/uploads/Main/dmitri-report-f15-16.pdf
+
+1] PKWARE Inc. APPNOTE.TXT – .ZIP File Format Specification, version 6.3.4
+https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+
+[2] PKWARE Inc. .ZIP Application Note
+https://www.pkware.com/support/zip-app-note/
+
+[3] PKWARE Inc. APPNOTE.TXT, version 1.0
+https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-1.0.txt
+
+4] WinZip. AES Encryption Information: Encryption Specification AE-1 and AE-2
+http://www.winzip.com/aes_info.htm
+*/
+
 namespace
 {
     using namespace mango;
