@@ -68,7 +68,7 @@ namespace mango {
     {
         reserve(size);
         m_memory.size = size;
-        m_offset = size;
+        m_offset = std::min(m_offset, size);
     }
 
     u8* Buffer::data() const
@@ -130,7 +130,8 @@ namespace mango {
         size_t required = m_offset + size;
         if (required > m_capacity)
         {
-            reserve((required * 3) / 2);
+            // grow 1.4x the required capacity
+            reserve((required * 7) / 5);
         }
 
         std::memcpy(m_memory.address + m_offset, data, size);
