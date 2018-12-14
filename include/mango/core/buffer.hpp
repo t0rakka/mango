@@ -26,9 +26,11 @@ namespace mango
         Buffer(Memory memory);
         ~Buffer();
 
+        void reserve(size_t size);
         void resize(size_t size);
 
         // memory
+        uint8* data();
         operator Memory () const;
 		operator uint8* ();
 

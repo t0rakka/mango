@@ -36,10 +36,20 @@ namespace mango {
     {
     }
 
+    void Buffer::reserve(size_t size)
+    {
+        m_buffer.reserve(size);
+    }
+
     void Buffer::resize(size_t size)
     {
         m_buffer.resize(size);
         m_offset = size;
+    }
+
+    uint8* Buffer::data()
+    {
+		return &m_buffer[0];
     }
 
     Buffer::operator Memory () const
