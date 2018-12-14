@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
@@ -10,70 +10,93 @@
 namespace mango {
 
     Buffer::Buffer()
-        : m_offset(0)
+        : m_memory(nullptr, 0)
+        , m_capacity(0)
+        , m_offset(0)
     {
     }
 
     Buffer::Buffer(size_t size)
-        : m_buffer(size)
+        : m_memory(new u8[size], size)
+        , m_capacity(size)
         , m_offset(0)
     {
     }
 
-    Buffer::Buffer(const uint8* address, size_t size)
-        : m_buffer(address, address + size)
+    Buffer::Buffer(const u8* address, size_t size)
+        : m_memory(new u8[size], size)
+        , m_capacity(size)
         , m_offset(0)
     {
+        std::memcpy(m_memory.address, address, size);
     }
 
     Buffer::Buffer(Memory memory)
-        : m_buffer(memory.address, memory.address + memory.size)
+        : m_memory(new u8[memory.size], memory.size)
+        , m_capacity(memory.size)
         , m_offset(0)
     {
+        std::memcpy(m_memory.address, memory.address, memory.size);
     }
 
     Buffer::~Buffer()
     {
+        delete[] m_memory.address;
+    }
+
+    size_t Buffer::capacity() const
+    {
+        return m_capacity;        
     }
 
     void Buffer::reserve(size_t size)
     {
-        m_buffer.reserve(size);
+        if (size > m_capacity)
+        {
+            u8* storage = new u8[size];
+            if (m_memory.address)
+            {
+                std::memcpy(storage, m_memory.address, m_memory.size);
+                delete[] m_memory.address;
+            }
+            m_memory.address = storage;
+            m_capacity = size;
+        }
     }
 
     void Buffer::resize(size_t size)
     {
-        m_buffer.resize(size);
+        reserve(size);
+        m_memory.size = size;
         m_offset = size;
     }
 
-    uint8* Buffer::data()
+    u8* Buffer::data() const
     {
-		return &m_buffer[0];
+        return m_memory.address;
     }
 
     Buffer::operator Memory () const
     {
-        uint8 *address = const_cast<uint8 *>(m_buffer.data());
-        return Memory(address, m_buffer.size());
+        return m_memory;
     }
 
-	Buffer::operator uint8* ()
+	Buffer::operator u8* () const
 	{
-		return &m_buffer[0];
+        return m_memory.address;
 	}
 
-    uint64 Buffer::size() const
+    u64 Buffer::size() const
     {
-        return m_buffer.size();
+        return m_memory.size;
     }
 
-    uint64 Buffer::offset() const
+    u64 Buffer::offset() const
     {
         return m_offset;
     }
 
-    void Buffer::seek(uint64 distance, SeekMode mode)
+    void Buffer::seek(u64 distance, SeekMode mode)
     {
         switch (mode)
         {
@@ -86,41 +109,33 @@ namespace mango {
                 break;
 
             case END:
-                m_offset = size_t(m_buffer.size() - distance);
+                m_offset = size_t(m_memory.size - distance);
                 break;
         }
     }
 
     void Buffer::read(void* dest, size_t size)
     {
-        const size_t left = m_buffer.size() - m_offset;
-        if (left < size) {
-            size = left;
+        const size_t left = m_memory.size - m_offset;
+        if (left < size)
+        {
             MANGO_EXCEPTION(ID"Reading past end of buffer.");
         }
-        std::memcpy(dest, &m_buffer[m_offset], size);
+        std::memcpy(dest, m_memory.address + m_offset, size);
         m_offset += size;
     }
 
     void Buffer::write(const void* data, size_t size)
     {
-        const uint8 *source = reinterpret_cast<const uint8 *>(data);
-        const int64 left = m_buffer.size() - m_offset;
-        const int64 right = size - left;
-
-        if (left > 0) {
-            // write into existing array
-            size = std::min(size, size_t(left));
-            std::memcpy(&m_buffer[m_offset], source, size);
-            source += size;
-            m_offset += size;
+        size_t required = m_offset + size;
+        if (required > m_capacity)
+        {
+            reserve((required * 3) / 2);
         }
 
-        if (right > 0) {
-            // append at end of existing array
-            m_buffer.insert(m_buffer.end(), source, source + right);
-            m_offset += size_t(right);
-        }
+        std::memcpy(m_memory.address + m_offset, data, size);
+        m_offset += size;
+        m_memory.size = std::max(m_memory.size, m_offset);
     }
 
 } // namespace mango

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -16,28 +16,30 @@ namespace mango
     class Buffer : public Stream
     {
     private:
-        std::vector<uint8> m_buffer;
+        Memory m_memory;
+        size_t m_capacity;
         size_t m_offset;
 
     public:
         Buffer();
         Buffer(size_t size);
-        Buffer(const uint8* address, size_t size);
+        Buffer(const u8* address, size_t size);
         Buffer(Memory memory);
         ~Buffer();
 
+        size_t capacity() const;
         void reserve(size_t size);
         void resize(size_t size);
 
         // memory
-        uint8* data();
+        u8* data() const;
         operator Memory () const;
-		operator uint8* ();
+		operator u8* () const;
 
         // stream
-        uint64 size() const;
-        uint64 offset() const;
-        void seek(uint64 distance, SeekMode mode);
+        u64 size() const;
+        u64 offset() const;
+        void seek(u64 distance, SeekMode mode);
         void read(void* dest, size_t size);
         void write(const void* data, size_t size);
     };
