@@ -81,7 +81,7 @@ namespace
 
                     if (m_size > 0)
                     {
-                        m_address = ::mmap(nullptr, m_size, PROT_READ, MAP_PRIVATE, m_file, page_offset);
+                        m_address = ::mmap(nullptr, m_size, PROT_READ, MAP_FILE | MAP_SHARED, m_file, page_offset);
 
                         if (m_address == MAP_FAILED)
                         {
