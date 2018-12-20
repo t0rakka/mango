@@ -24,9 +24,14 @@ namespace filesystem {
         std::map<std::string, Folder> folders;
 
     public:
-        T* file(const std::string& filename) const
+        void insert(const std::string& folder, const std::string& filename, const T& file)
         {
-            T* result = nullptr;
+            folders[folder].files[filename] = file;
+        }
+
+        const T* file(const std::string& filename) const
+        {
+            const T* result = nullptr;
 
             std::string pathname = getPath(filename);
             auto iPath = folders.find(pathname);
@@ -43,9 +48,9 @@ namespace filesystem {
             return result;
         }
 
-        Folder* folder(const std::string& pathname) const
+        const Folder* folder(const std::string& pathname) const
         {
-            Folder* result = nullptr;
+            const Folder* result = nullptr;
 
             auto iPath = folders.find(pathname);
             if (iPath != folders.end())

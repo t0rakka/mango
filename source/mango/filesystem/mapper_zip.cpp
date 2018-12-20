@@ -2,13 +2,13 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <map>
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/compress.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
+#include "indexer.hpp"
 
 #include "../../external/miniz/miniz.h"
 
@@ -33,6 +33,8 @@ http://www.winzip.com/aes_info.htm
 namespace
 {
     using namespace mango;
+
+    using mango::filesystem::Indexer;
 
     enum { DCKEYSIZE = 12 };
 
@@ -502,11 +504,6 @@ namespace
 		return zstream.total_out;
     }
 
-    struct Folder
-    {
-        std::map<std::string, DirFileHeader> files;
-    };
-
 } // namespace
 
 namespace mango
@@ -543,7 +540,7 @@ namespace mango
     public:
         Memory m_parent_memory;
         std::string m_password;
-        std::map<std::string, Folder> m_folders;
+        Indexer<DirFileHeader> m_folders;
 
         MapperZIP(Memory parent, const std::string& password)
             : m_parent_memory(parent)
@@ -599,7 +596,7 @@ namespace mango
                                 getPath(header.filename.substr(0, header.filename.length() - 1)) :
                                 getPath(header.filename);
 
-                            m_folders[folder].files[header.filename] = header;
+                            m_folders.insert(folder, header.filename, header);
                         }
                     }
                 }
@@ -797,30 +794,20 @@ namespace mango
 
         bool isFile(const std::string& filename) const override
         {
-            std::string pn = getPath(filename);
-            auto iPath = m_folders.find(pn);
-            if (iPath != m_folders.end())
+            const DirFileHeader* ptrFile = m_folders.file(filename);
+            if (ptrFile)
             {
-                const Folder& folder = iPath->second;
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    const DirFileHeader& file = iFile->second;
-                    return !file.is_folder;
-                }
+                return !ptrFile->is_folder;
             }
-
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            auto iPath = m_folders.find(pathname);
-            if (iPath != m_folders.end())
+            const Indexer<DirFileHeader>::Folder* ptrFolder = m_folders.folder(pathname);
+            if (ptrFolder)
             {
-                const Folder& folder = iPath->second;
-
-                for (auto i : folder.files)
+                for (auto i : ptrFolder->files)
                 {
                     const DirFileHeader& file = i.second;
                     std::string filename = i.first;
@@ -849,26 +836,12 @@ namespace mango
                     index.emplace(filename, size, flags);
                 }
             }
+
         }
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const DirFileHeader* ptrFile = nullptr;
-
-            std::string pathname = getPath(filename);
-
-            auto iPath = m_folders.find(pathname);
-            if (iPath != m_folders.end())
-            {
-                const Folder& folder = iPath->second;
-
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    ptrFile = &iFile->second;
-                }
-            }
-
+            const DirFileHeader* ptrFile = m_folders.file(filename);
             if (!ptrFile)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
