@@ -6,6 +6,7 @@
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/image/fourcc.hpp>
+#include "indexer.hpp"
 
 #define ID "[mapper.mgx] "
 
