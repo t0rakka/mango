@@ -44,4 +44,6 @@
 # -------------------------------------------
 
 *.vscode
-build/cmake
+CMakeFiles
+CMakeCache.txt
+*.cmake
