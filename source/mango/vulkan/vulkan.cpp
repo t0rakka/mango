@@ -55,7 +55,7 @@ namespace
 		vkGetDeviceProcAddr = (PFN_vkGetDeviceProcAddr) library.vkGetInstanceProcAddr(instance, "vkGetDeviceProcAddr");
 		if (!vkGetDeviceProcAddr)
 		{
-			MANGO_EXCEPTION("vkGetDeviceProcAddr not found.");
+			MANGO_EXCEPTION("[Vulkan] vkGetDeviceProcAddr not found.");
 		}
 	}
 
@@ -78,13 +78,13 @@ namespace vulkan {
 	// -----------------------------------------------------------------------
 
 	Library::Library()
-	: m_library(MANGO_VULKAN_LIBRARY)
+		: m_library(MANGO_VULKAN_LIBRARY)
 	{
 		// initialize exported function
 		vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr) m_library.address("vkGetInstanceProcAddr");
 		if (!vkGetInstanceProcAddr)
 		{
-			MANGO_EXCEPTION("vkGetInstanceProcAddr not found.");
+			MANGO_EXCEPTION("[Vukan] vkGetInstanceProcAddr not found.");
 		}
 
 #define VULKAN_LIBRARY_FUNC(func) \
@@ -822,19 +822,20 @@ namespace vulkan {
 	{
 		if (result != VK_SUCCESS)
 		{
-			std::string error(function);
-			error += " -> ";
-			error += getResultString(result);
+			std::string error = makeString("[Vulkan] %s -> %s",
+				function.c_str(),
+				getResultString(result));
+			const char* str = error.c_str();
 
 			if (result < 0)
 			{
 				// error
-				MANGO_EXCEPTION(error.c_str());
+				MANGO_EXCEPTION(str);
 			}
 			else
 			{
 				// information
-				printf("%s\n", error.c_str());
+				printf("%s\n", str);
 			}
 		}
 	}

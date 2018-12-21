@@ -145,7 +145,7 @@ namespace opengl {
         printf("Feature: %s --> %s (%d)\n", name, isMask == is ? "OK" : "FAIL", is);
         if (isMask != is)
         {
-            MANGO_EXCEPTION("ExtensionMask check failed.");
+            MANGO_EXCEPTION("[OpenGL] ExtensionMask check failed.");
         }
     }
 #endif

@@ -163,13 +163,13 @@ namespace filesystem {
         int notify = inotify_init();
         if (notify < 0)
         {
-            MANGO_EXCEPTION("inotify_init() failed.");
+            MANGO_EXCEPTION("[FileObserver] inotify_init() failed.");
         }
 
         int watch = inotify_add_watch(notify, pathname.c_str(), IN_ALL_EVENTS);
         if (watch < 0)
         {
-            MANGO_EXCEPTION("inotify_init() failed.");
+            MANGO_EXCEPTION("[FileObserver] inotify_init() failed.");
         }
 
         m_state = new FileObserverState(this, notify, watch);

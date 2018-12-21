@@ -83,7 +83,7 @@ namespace miniz {
         int status = mz_compress2(dest, &dest_size, source, source_size, level);
         if (status != MZ_OK)
         {
-            MANGO_EXCEPTION("miniz: compression failed.");
+            MANGO_EXCEPTION("[miniz] compression failed.");
         }
 
         return dest_size;
@@ -101,16 +101,16 @@ namespace miniz {
             switch (status)
             {
                 case MZ_MEM_ERROR:
-                    msg = "miniz: not enough memory.";
+                    msg = "[miniz] not enough memory.";
                     break;
                 case MZ_BUF_ERROR:
-                    msg = "miniz: not enough room in the output buffer.";
+                    msg = "[miniz] not enough room in the output buffer.";
                     break;
                 case MZ_DATA_ERROR:
-                    msg = "miniz: corrupted input data.";
+                    msg = "[miniz] corrupted input data.";
                     break;
                 default:
-                    msg = "miniz: undefined error.";
+                    msg = "[miniz] undefined error.";
                     break;
             }
 
@@ -159,7 +159,7 @@ namespace lz4 {
 
 	    if (written <= 0 || written > dest.size)
         {
-			MANGO_EXCEPTION("lz4: compression failed.");
+			MANGO_EXCEPTION("[lz4] compression failed.");
 		}
 
         return written;
@@ -170,7 +170,7 @@ namespace lz4 {
         int status = LZ4_decompress_fast(source, dest, int(dest.size));
         if (status < 0)
         {
-            MANGO_EXCEPTION("lz4: decompression failed.");
+            MANGO_EXCEPTION("[lz4] decompression failed.");
         }
     }
 
@@ -328,7 +328,7 @@ namespace lzo {
         aligned_free(workmem);
         if (x != LZO_E_OK)
         {
-            MANGO_EXCEPTION("lzo: compression failed.");
+            MANGO_EXCEPTION("[lzo] compression failed.");
         }
 
         return static_cast<size_t>(dst_len);
@@ -345,7 +345,7 @@ namespace lzo {
             NULL);
         if (x != LZO_E_OK)
         {
-            MANGO_EXCEPTION("lzo: decompression failed.");
+            MANGO_EXCEPTION("[lzo] decompression failed.");
         }
     }
 
@@ -376,7 +376,7 @@ namespace zstd {
                                        source.address, source.size, level);
         if (ZSTD_isError(x))
         {
-            MANGO_EXCEPTION("ZSTD: %s", ZSTD_getErrorName(x));
+            MANGO_EXCEPTION("[zstd] %s", ZSTD_getErrorName(x));
         }
 
         return x;
@@ -388,7 +388,7 @@ namespace zstd {
                                    source.address, source.size);
         if (ZSTD_isError(x))
         {
-            MANGO_EXCEPTION("ZSTD: %s", ZSTD_getErrorName(x));
+            MANGO_EXCEPTION("[zstd] %s", ZSTD_getErrorName(x));
         }
     }
 
@@ -529,7 +529,7 @@ namespace bzip2 {
         int x = BZ2_bzCompressInit(&strm, blockSize100k, verbosity, workFactor);
         if (x != BZ_OK)
         {
-            MANGO_EXCEPTION("bzip2: compression failed.");
+            MANGO_EXCEPTION("[bzip2] compression failed.");
         }
 
         unsigned int destLength = static_cast<unsigned int>(dest.size);
@@ -543,12 +543,12 @@ namespace bzip2 {
         if (x == BZ_FINISH_OK)
         {
             BZ2_bzCompressEnd(&strm);
-            MANGO_EXCEPTION("bzip2: compression failed.");
+            MANGO_EXCEPTION("[bzip2] compression failed.");
         }
         else if (x != BZ_STREAM_END)
         {
             BZ2_bzCompressEnd(&strm);
-            MANGO_EXCEPTION("bzip2: compression failed.");
+            MANGO_EXCEPTION("[bzip2] compression failed.");
         }
 
         destLength -= strm.avail_out;
@@ -568,7 +568,7 @@ namespace bzip2 {
         int x = BZ2_bzDecompressInit(&strm, 0, 0);
         if (x != BZ_OK)
         {
-            MANGO_EXCEPTION("bzip2: decompression failed.");
+            MANGO_EXCEPTION("[bzip2] decompression failed.");
         }
 
         strm.next_in = source;
@@ -580,12 +580,12 @@ namespace bzip2 {
         if (x == BZ_OK)
         {
             BZ2_bzDecompressEnd(&strm);
-            MANGO_EXCEPTION("bzip2: decompression failed.");
+            MANGO_EXCEPTION("[bzip2] decompression failed.");
         }
         else if (x != BZ_STREAM_END)
         {
             BZ2_bzDecompressEnd(&strm);
-            MANGO_EXCEPTION("bzip2: decompression failed.");
+            MANGO_EXCEPTION("[bzip2] decompression failed.");
         }
 
         BZ2_bzDecompressEnd(&strm);
@@ -692,7 +692,7 @@ namespace lzma
         const char* error = get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("LZMA: %s", error);
+            MANGO_EXCEPTION("[lzma] %s", error);
         }
 
         size_t bytes_written = dest.address + dest_length - start;
@@ -716,7 +716,7 @@ namespace lzma
         const char* error = get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("LZMA: %s", error);
+            MANGO_EXCEPTION("[lzma] %s", error);
         }
     }
 
@@ -769,7 +769,7 @@ namespace lzma2
         const char* error = lzma::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("LZMA2: %s", error);
+            MANGO_EXCEPTION("[lzma2] %s", error);
         }
 
         size_t bytes_written = dest.address + outBufSize - start;
@@ -793,7 +793,7 @@ namespace lzma2
         const char* error = lzma::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("LZMA2: %s", error);
+            MANGO_EXCEPTION("[lzma2] %s", error);
         }
     }
 
@@ -934,7 +934,7 @@ namespace ppmd8
 
         if (!Ppmd8_RangeDec_IsFinishedOK(&ppmd))
         {
-            MANGO_EXCEPTION("PPMd: decoding error.");
+            MANGO_EXCEPTION("[PPMd] decoding error.");
         }
     }
 
