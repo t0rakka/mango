@@ -8,7 +8,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.PKM: "
+#define ID "[ImageDecoder.PKM] "
 
 namespace
 {

@@ -13,7 +13,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-#define ID "FileStream: "
+#define ID "[FileStream] "
 
 namespace mango {
 namespace filesystem {

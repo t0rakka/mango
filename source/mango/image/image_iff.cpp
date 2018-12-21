@@ -7,7 +7,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.IFF: "
+#define ID "[ImageDecoder.IFF] "
 
 namespace
 {

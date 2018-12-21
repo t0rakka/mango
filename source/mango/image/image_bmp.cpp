@@ -7,7 +7,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.BMP: "
+#define ID "[ImageDecoder.BMP] "
 
 namespace
 {

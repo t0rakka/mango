@@ -6,7 +6,7 @@
 #include <mango/image/image.hpp>
 #include "../jpeg/jpeg.hpp"
 
-#define ID "ImageDecoder.JPG: "
+#define ID "[ImageDecoder.JPG] "
 
 namespace
 {

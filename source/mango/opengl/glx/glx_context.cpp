@@ -7,7 +7,7 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../gui/xlib/xlib_handle.hpp"
 
-#define ID ""
+#define ID "[GLX Context] "
 
 namespace
 {

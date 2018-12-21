@@ -7,7 +7,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.PVR: "
+#define ID "[ImageDecoder.PVR] "
 
 // TODO: add support for pvr header v2
 

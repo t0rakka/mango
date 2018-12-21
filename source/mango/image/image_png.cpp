@@ -9,7 +9,7 @@
 #include "../../external/miniz/miniz.h"
 #undef crc32 // fix miniz pollution
 
-#define ID "ImageDecoder.PNG: "
+#define ID "[ImageDecoder.PNG] "
 #define FILTER_BYTE 1
 //#define DECODE_WITH_MINIZ
 //#define PNG_ENABLE_PRINT

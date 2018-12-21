@@ -13,7 +13,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.C64: "
+#define ID "[ImageDecoder.C64] "
 
 namespace
 {

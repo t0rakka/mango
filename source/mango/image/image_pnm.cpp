@@ -10,7 +10,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.PNM: "
+#define ID "[ImageDecoder.PNM] "
 
 namespace
 {

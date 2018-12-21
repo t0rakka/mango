@@ -8,7 +8,7 @@
 #include <mango/image/image.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#define ID "ImageDecoder.KTX: "
+#define ID "[ImageDecoder.KTX] "
 
 namespace
 {

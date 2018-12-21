@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define ID "[mapper.file] "
+#define ID "[FileMemory] "
 
 namespace
 {

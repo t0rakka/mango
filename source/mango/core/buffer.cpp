@@ -5,7 +5,7 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
 
-#define ID "Buffer: "
+#define ID "[Buffer] "
 
 namespace mango {
 

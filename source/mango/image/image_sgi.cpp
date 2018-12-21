@@ -9,7 +9,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.RGB: "
+#define ID "[ImageDecoder.RGB] "
 
 namespace
 {
