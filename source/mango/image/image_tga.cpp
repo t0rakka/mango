@@ -461,8 +461,8 @@ namespace mango
 
     void registerImageDecoderTGA()
     {
-        registerImageDecoder(createInterface, "tga");
-        registerImageEncoder(imageEncode, "tga");
+        registerImageDecoder(createInterface, ".tga");
+        registerImageEncoder(imageEncode, ".tga");
     }
 
 } // namespace mango

@@ -506,8 +506,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // VirtualMemoryZIP
@@ -862,4 +862,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

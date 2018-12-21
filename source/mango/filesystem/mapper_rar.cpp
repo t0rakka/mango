@@ -399,8 +399,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // MapperRAR
@@ -766,6 +766,7 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango
 
 #endif // MANGO_ENABLE_LICENSE_GPL

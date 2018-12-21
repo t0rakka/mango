@@ -16,6 +16,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::filesystem;
 
     // -----------------------------------------------------------------
     // FileMemory
@@ -202,8 +203,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // Mapper::createFileMapper()
@@ -216,4 +217,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

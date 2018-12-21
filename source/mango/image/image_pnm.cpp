@@ -292,10 +292,10 @@ namespace mango
 
     void registerImageDecoderPNM()
     {
-        registerImageDecoder(createInterface, "pbm");
-        registerImageDecoder(createInterface, "pgm");
-        registerImageDecoder(createInterface, "ppm");
-        registerImageDecoder(createInterface, "pam");
+        registerImageDecoder(createInterface, ".pbm");
+        registerImageDecoder(createInterface, ".pgm");
+        registerImageDecoder(createInterface, ".ppm");
+        registerImageDecoder(createInterface, ".pam");
     }
 
 } // namespace mango

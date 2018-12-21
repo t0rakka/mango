@@ -8,8 +8,8 @@
 
 #define ID "FileStream: "
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // FileHandle
@@ -169,4 +169,5 @@ namespace mango
 		m_handle->write(data, size);
     }
 
+} // namespace filesystem
 } // namespace mango

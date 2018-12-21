@@ -483,7 +483,7 @@ namespace mango
 
     void registerImageDecoderPCX()
     {
-        registerImageDecoder(createInterface, "pcx");
+        registerImageDecoder(createInterface, ".pcx");
     }
 
 } // namespace mango

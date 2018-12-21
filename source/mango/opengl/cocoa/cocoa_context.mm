@@ -505,19 +505,19 @@ using mango::opengl::Context;
 #endif
         int numberOfFiles = (int) [files count];
 
-        FileIndex dropped;
-        
+        filesystem::FileIndex dropped;
+
         for (int i = 0; i < numberOfFiles; ++i)
         {
             NSString *path = [files objectAtIndex:i];
 
             BOOL isDirectory;
             [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
-            
+
             std::string s = [path UTF8String];
             if (isDirectory)
             {
-                dropped.emplace(s + "/", 0, mango::FileInfo::DIRECTORY);
+                dropped.emplace(s + "/", 0, mango::filesystem::FileInfo::DIRECTORY);
             }
             else
             {
@@ -816,7 +816,7 @@ namespace mango
         MANGO_UNREFERENCED_PARAMETER(count);
     }
 
-    void Window::onDropFiles(const FileIndex& index)
+    void Window::onDropFiles(const filesystem::FileIndex& index)
     {
         MANGO_UNREFERENCED_PARAMETER(index);
     }

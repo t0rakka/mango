@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <mango/filesystem/path.hpp>
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // Path
@@ -68,4 +68,44 @@ namespace mango
     {
     }
 
+    // -----------------------------------------------------------------
+    // filename manipulation functions
+    // -----------------------------------------------------------------
+
+    std::string getPath(const std::string& filename)
+    {
+        size_t n = filename.find_last_of("/\\:");
+        std::string s;
+        if (n != std::string::npos)
+            s = filename.substr(0, n + 1);
+        return s;
+    }
+
+    std::string removePath(const std::string& filename)
+    {
+        size_t n = filename.find_last_of("/\\:");
+        std::string s;
+        if (n != std::string::npos)
+            s = filename.substr(n + 1);
+        else
+            s = filename;
+        return s;
+    }
+
+    std::string getExtension(const std::string& filename)
+    {
+        size_t n = filename.find_last_of('.');
+        std::string s;
+        if (n != std::string::npos)
+            s = filename.substr(n);
+        return s;
+    }
+
+    std::string removeExtension(const std::string& filename)
+    {
+        size_t n = filename.find_last_of('.');
+        return filename.substr(0, n);
+    }
+
+} // namespace filesystem
 } // namespace mango

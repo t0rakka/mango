@@ -90,12 +90,12 @@ namespace mango
 
     void registerImageDecoderJPG()
     {
-        registerImageDecoder(createInterface, "jpg");
-        registerImageDecoder(createInterface, "jpeg");
-        registerImageDecoder(createInterface, "jfif");
-        registerImageDecoder(createInterface, "mpo");
-        registerImageEncoder(imageEncode, "jpg");
-        registerImageEncoder(imageEncode, "jpeg");
+        registerImageDecoder(createInterface, ".jpg");
+        registerImageDecoder(createInterface, ".jpeg");
+        registerImageDecoder(createInterface, ".jfif");
+        registerImageDecoder(createInterface, ".mpo");
+        registerImageEncoder(imageEncode, ".jpg");
+        registerImageEncoder(imageEncode, ".jpeg");
     }
 
 } // namespace mango

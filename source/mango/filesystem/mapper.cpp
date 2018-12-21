@@ -8,8 +8,8 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // extension registry
@@ -32,7 +32,7 @@ namespace mango
         MapperExtension(const std::string& extension, CreateMapperFunc func)
             : extension(extension)
         {
-            decorated_extension = std::string(".") + extension + "/";
+            decorated_extension = extension + "/";
             createMapperFunc = func;
         }
 
@@ -47,24 +47,20 @@ namespace mango
         }
     };
 
-    static std::vector<MapperExtension> g_extensions = []
+    static std::vector<MapperExtension> g_extensions =
     {
-        std::vector<MapperExtension> extensions;
+        MapperExtension(".zip", createMapperZIP),
+        MapperExtension(".cbz", createMapperZIP),
+        MapperExtension(".zipx", createMapperZIP),
 
-        extensions.push_back(MapperExtension("zip", createMapperZIP));
-        extensions.push_back(MapperExtension("cbz", createMapperZIP));
-        extensions.push_back(MapperExtension("zipx", createMapperZIP));
-
-        extensions.push_back(MapperExtension("mgx", createMapperMGX));
-        extensions.push_back(MapperExtension("snitch", createMapperMGX));
+        MapperExtension(".mgx", createMapperMGX),
+        MapperExtension(".snitch", createMapperMGX),
 
 #ifdef MANGO_ENABLE_LICENSE_GPL
-        extensions.push_back(MapperExtension("rar", createMapperRAR));
-        extensions.push_back(MapperExtension("cbr", createMapperRAR));
+        MapperExtension(".rar", createMapperRAR),
+        MapperExtension(".cbr", createMapperRAR),
 #endif
-
-        return extensions;
-    } ();
+    };
 
     // -----------------------------------------------------------------
     // FileInfo
@@ -257,4 +253,5 @@ namespace mango
         return false;
     }
 
+} // namespace filesystem
 } // namespace mango

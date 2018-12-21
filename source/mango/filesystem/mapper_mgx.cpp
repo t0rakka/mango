@@ -12,6 +12,7 @@
 namespace
 {
     using namespace mango;
+    namespace fs = mango::filesystem;
 
     using mango::filesystem::Indexer;
 
@@ -162,8 +163,8 @@ namespace
                 }
 
                 std::string folder = file.isFolder() ?
-                    getPath(filename.substr(0, length - 1)) :
-                    getPath(filename);
+                    fs::getPath(filename.substr(0, length - 1)) :
+                    fs::getPath(filename);
 
                 m_folders.insert(folder, filename, file);
             }
@@ -178,8 +179,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // VirtualMemoryMGX
@@ -369,4 +370,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

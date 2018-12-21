@@ -255,10 +255,10 @@ namespace mango
 
     void registerImageDecoderSGI()
     {
-        registerImageDecoder(createInterface, "rgb");
-        registerImageDecoder(createInterface, "rgba");
-        registerImageDecoder(createInterface, "bw");
-        registerImageDecoder(createInterface, "sgi");
+        registerImageDecoder(createInterface, ".rgb");
+        registerImageDecoder(createInterface, ".rgba");
+        registerImageDecoder(createInterface, ".bw");
+        registerImageDecoder(createInterface, ".sgi");
     }
 
 } // namespace mango

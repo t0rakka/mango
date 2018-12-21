@@ -385,7 +385,7 @@ namespace mango
 
     void registerImageDecoderKTX()
     {
-        registerImageDecoder(createInterface, "ktx");
+        registerImageDecoder(createInterface, ".ktx");
     }
 
 } // namespace mango

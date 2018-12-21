@@ -176,7 +176,7 @@ namespace mango
 
     void registerImageDecoderASTC()
     {
-        registerImageDecoder(createInterface, "astc");
+        registerImageDecoder(createInterface, ".astc");
     }
 
 } // namespace mango

@@ -1069,10 +1069,10 @@ namespace mango
 
     void registerImageDecoderBMP()
     {
-        registerImageDecoder(createInterface, "bmp");
-        registerImageDecoder(createInterface, "ico");
-        registerImageDecoder(createInterface, "cur");
-        registerImageEncoder(imageEncode, "bmp");
+        registerImageDecoder(createInterface, ".bmp");
+        registerImageDecoder(createInterface, ".ico");
+        registerImageDecoder(createInterface, ".cur");
+        registerImageEncoder(imageEncode, ".bmp");
     }
 
 } // namespace mango

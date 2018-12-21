@@ -9,8 +9,8 @@
 #include "../core/configure.hpp"
 #include "mapper.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     class Path : public Mapper
     {
@@ -49,4 +49,11 @@ namespace mango
         }
     };
 
+    // filename manipulation functions (example: "foo/bar/readme.txt")
+    std::string getPath(const std::string& filename);           // "foo/bar/"
+    std::string removePath(const std::string& filename);        // "readme.txt"
+    std::string getExtension(const std::string& filename);      // ".txt"
+    std::string removeExtension(const std::string& filename);   // "foo/bar/readme"
+
+} // namespace filesystem
 } // namespace mango

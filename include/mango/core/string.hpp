@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -32,13 +32,6 @@ namespace mango
     std::vector<std::string> split(const std::string& s, char delimiter);
     std::vector<std::string> split(const std::string& s, const char* delimiter);
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
-    std::string makeString(const std::string& s);
     std::string makeString(const char* format, ...);
-
-    // filename manipulation (example: "foo/bar/readme.txt")
-    std::string getPath(const std::string& filename);           // "foo/bar/"
-    std::string removePath(const std::string& filename);        // "readme.txt"
-    std::string getExtension(const std::string& filename);      // "txt" (dot is removed!)
-    std::string removeExtension(const std::string& filename);   // "foo/bar/readme"
 
 } // namespace mango

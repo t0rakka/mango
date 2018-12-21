@@ -69,18 +69,8 @@ namespace mango
 
         std::string getLowerCaseExtension(const std::string& filename) const
         {
-            std::string extension = getExtension(filename);
-
-            if (extension.empty())
-            {
-                extension = toLower(filename);
-            }
-            else
-            {
-                extension = toLower(extension);
-            }
-
-            return extension;
+            std::string extension = filesystem::getExtension(filename);
+            return toLower(extension.empty() ? filename : extension);
         }
 
         void registerImageDecoder(ImageDecoder::CreateFunc func, const std::string& extension)

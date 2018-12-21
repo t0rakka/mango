@@ -201,8 +201,8 @@ namespace
 
     Surface load_surface(const std::string& filename, const Format* format)
     {
-        const std::string extension = getExtension(filename);
-        File file(filename);
+        const std::string extension = filesystem::getExtension(filename);
+        filesystem::File file(filename);
         Surface surface = load_surface(file, extension, format);
         return surface;
     }
@@ -240,8 +240,8 @@ namespace
 
     Surface load_palette_surface(const std::string& filename, Palette& palette)
     {
-        const std::string extension = getExtension(filename);
-        File file(filename);
+        const std::string extension = filesystem::getExtension(filename);
+        filesystem::File file(filename);
         Surface surface = load_palette_surface(file, extension, palette);
         return surface;
     }
@@ -297,7 +297,7 @@ namespace mango
         ImageEncoder encoder(filename);
         if (encoder.isEncoder())
         {
-            FileStream file(filename, Stream::WRITE);
+            filesystem::FileStream file(filename, Stream::WRITE);
             encoder.encode(file, *this, quality);
         }
     }

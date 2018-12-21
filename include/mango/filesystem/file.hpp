@@ -12,8 +12,8 @@
 #include "mapper.hpp"
 #include "path.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     class File : public Mapper
     {
@@ -56,4 +56,5 @@ namespace mango
         void write(const void* data, size_t size);
     };
 
+} // namespace filesystem
 } // namespace mango

@@ -2024,8 +2024,8 @@ namespace mango
 
     void registerImageDecoderPNG()
     {
-        registerImageDecoder(createInterface, "png");
-        registerImageEncoder(imageEncode, "png");
+        registerImageDecoder(createInterface, ".png");
+        registerImageEncoder(imageEncode, ".png");
     }
 
 } // namespace mango

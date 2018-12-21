@@ -9,8 +9,8 @@
 #include "../core/configure.hpp"
 #include "../core/memory.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     struct FileInfo
     {
@@ -124,4 +124,5 @@ namespace mango
         static bool isCustomMapper(const std::string& filename);
     };
 
+} // namespace filesystem
 } // namespace mango

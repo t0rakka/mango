@@ -2519,116 +2519,116 @@ namespace mango
     void registerImageDecoderC64()
     {
         // Advanced Art Studio
-        registerImageDecoder(createInterfaceMPIC, "mpic"); // TODO: test
+        registerImageDecoder(createInterfaceMPIC, ".mpic"); // TODO: test
 
         // AFLI-editor v2.0
-        registerImageDecoder(createInterfaceAFL, "afl");
-        registerImageDecoder(createInterfaceAFL, "afli");
+        registerImageDecoder(createInterfaceAFL, ".afl");
+        registerImageDecoder(createInterfaceAFL, ".afli");
 
         // Amica Paint
-        registerImageDecoder(createInterfaceAMI, "ami");
+        registerImageDecoder(createInterfaceAMI, ".ami");
 
         // Art Studio
-        registerImageDecoder(createInterfaceART, "art");
-        registerImageDecoder(createInterfaceART, "ocp"); // TODO: check the format_size
+        registerImageDecoder(createInterfaceART, ".art");
+        registerImageDecoder(createInterfaceART, ".ocp"); // TODO: check the format_size
 
         // Artist 64
-        registerImageDecoder(createInterfaceA64, "a64");
+        registerImageDecoder(createInterfaceA64, ".a64");
 
         // Blazing Paddles
-        registerImageDecoder(createInterfaceBLP, "blp");
-        registerImageDecoder(createInterfaceBLP, "bpi");
-        registerImageDecoder(createInterfaceBLP, "pi");
+        registerImageDecoder(createInterfaceBLP, ".blp");
+        registerImageDecoder(createInterfaceBLP, ".bpi");
+        registerImageDecoder(createInterfaceBLP, ".pi");
 
         // CDU-Paint
-        registerImageDecoder(createInterfaceCDU, "cdu");
+        registerImageDecoder(createInterfaceCDU, ".cdu");
 
         // Dolphin Ed
-        registerImageDecoder(createInterfaceDOL, "dol");
+        registerImageDecoder(createInterfaceDOL, ".dol");
 
         // Doodle
-        registerImageDecoder(createInterfaceDD, "dd");
-        registerImageDecoder(createInterfaceDD, "ddl");
+        registerImageDecoder(createInterfaceDD, ".dd");
+        registerImageDecoder(createInterfaceDD, ".ddl");
         //registerImageDecoder(createInterfaceDD, "jj"); // TODO: support compression
 
         // Drazlace
-        registerImageDecoder(createInterfaceDRL, "drl");
-        registerImageDecoder(createInterfaceDRL, "dlp");
+        registerImageDecoder(createInterfaceDRL, ".drl");
+        registerImageDecoder(createInterfaceDRL, ".dlp");
 
         // Drazpaint
-        registerImageDecoder(createInterfaceDRZ, "drz");
-        registerImageDecoder(createInterfaceDRZ, "dp64");
-        registerImageDecoder(createInterfaceDRZ, "drp");
-        registerImageDecoder(createInterfaceDRZ, "dp");
+        registerImageDecoder(createInterfaceDRZ, ".drz");
+        registerImageDecoder(createInterfaceDRZ, ".dp64");
+        registerImageDecoder(createInterfaceDRZ, ".drp");
+        registerImageDecoder(createInterfaceDRZ, ".dp");
 
         // ECI Graphic Editor v1.0
-        registerImageDecoder(createInterfaceECI, "eci");
+        registerImageDecoder(createInterfaceECI, ".eci");
 
         // Face Painter
-        registerImageDecoder(createInterfaceFPT, "fpt");
-        registerImageDecoder(createInterfaceFPT, "fcp");
+        registerImageDecoder(createInterfaceFPT, ".fpt");
+        registerImageDecoder(createInterfaceFPT, ".fcp");
 
         // FLI Designer 1.1 & 2.0 (FBI Crew)
-        registerImageDecoder(createInterfaceFD2, "fd2");
+        registerImageDecoder(createInterfaceFD2, ".fd2");
 
         // FLI-Profi
-        registerImageDecoder(createInterfaceFPR, "fpr");
+        registerImageDecoder(createInterfaceFPR, ".fpr");
 
         // Funpaint 2
-        registerImageDecoder(createInterfaceFUN, "fun");
-        registerImageDecoder(createInterfaceFUN, "fp2");
+        registerImageDecoder(createInterfaceFUN, ".fun");
+        registerImageDecoder(createInterfaceFUN, ".fp2");
 
         // Gunpaint
-        registerImageDecoder(createInterfaceGUN, "gun");
-        registerImageDecoder(createInterfaceGUN, "ifl");
+        registerImageDecoder(createInterfaceGUN, ".gun");
+        registerImageDecoder(createInterfaceGUN, ".ifl");
 
         // HCB-Editor v0.05
-        registerImageDecoder(createInterfaceHCB, "hcb");
+        registerImageDecoder(createInterfaceHCB, ".hcb");
 
         // Hires FLI Designer
-        registerImageDecoder(createInterfaceHFC, "hfc");
+        registerImageDecoder(createInterfaceHFC, ".hfc");
 
         // Hires Manager
-        registerImageDecoder(createInterfaceHIM, "him");
+        registerImageDecoder(createInterfaceHIM, ".him");
 
         // Koala Painter II
-        registerImageDecoder(createInterfaceKOA, "koa");
-        registerImageDecoder(createInterfaceKOA, "kla");
+        registerImageDecoder(createInterfaceKOA, ".koa");
+        registerImageDecoder(createInterfaceKOA, ".kla");
 
         // Paint Magic
         registerImageDecoder(createInterfacePMG, "pmg");
 
         // Pixel Perfect
-        registerImageDecoder(createInterfacePP, "pp");
-        registerImageDecoder(createInterfacePP, "ppp");
+        registerImageDecoder(createInterfacePP, ".pp");
+        registerImageDecoder(createInterfacePP, ".ppp");
 
         // Run paint
-        registerImageDecoder(createInterfaceRPM, "rpm");
+        registerImageDecoder(createInterfaceRPM, ".rpm");
 
         // Saracen Paint
-        registerImageDecoder(createInterfaceSAR, "sar");
+        registerImageDecoder(createInterfaceSAR, ".sar");
 
         // SHF-Editor v1.0
-        registerImageDecoder(createInterfaceSHF, "unp");
-        registerImageDecoder(createInterfaceSHF, "shfli");
+        registerImageDecoder(createInterfaceSHF, ".unp");
+        registerImageDecoder(createInterfaceSHF, ".shfli");
 
         // SHF-XL v1.0
-        registerImageDecoder(createInterfaceSHFXL, "shx"); // TODO: support compression
-        registerImageDecoder(createInterfaceSHFXL, "shfxl");
+        registerImageDecoder(createInterfaceSHFXL, ".shx"); // TODO: support compression
+        registerImageDecoder(createInterfaceSHFXL, ".shfxl");
 
         // True Paint
-        registerImageDecoder(createInterfaceMCI, "mci");
-        registerImageDecoder(createInterfaceMCI, "mcp");
+        registerImageDecoder(createInterfaceMCI, ".mci");
+        registerImageDecoder(createInterfaceMCI, ".mcp");
 
         // UFLI-Editor v1.0 & v2.0
-        registerImageDecoder(createInterfaceUFLI, "ufup");
-        registerImageDecoder(createInterfaceUFLI, "ufli");
+        registerImageDecoder(createInterfaceUFLI, ".ufup");
+        registerImageDecoder(createInterfaceUFLI, ".ufli");
 
         // UIFLI Editor v1.0
-        registerImageDecoder(createInterfaceUIFLI, "uifli");
+        registerImageDecoder(createInterfaceUIFLI, ".uifli");
 
         // Vidcom 64
-        registerImageDecoder(createInterfaceVID, "vid");
+        registerImageDecoder(createInterfaceVID, ".vid");
     }
 
 } // namespace mango

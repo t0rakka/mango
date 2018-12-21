@@ -509,7 +509,7 @@ namespace mango
 
     void registerImageDecoderGIF()
     {
-        registerImageDecoder(createInterface, "gif");
+        registerImageDecoder(createInterface, ".gif");
     }
 
 } // namespace mango
