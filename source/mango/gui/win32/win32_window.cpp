@@ -482,7 +482,7 @@ namespace
 		{
 			const int count = ::DragQueryFileW((HDROP)wparam, 0xffffffff, NULL, 0);
 
-			FileIndex dropped;
+			filesystem::FileIndex dropped;
 
 			for (int index = 0; index < count; ++index)
 			{
@@ -605,7 +605,7 @@ namespace mango
     Window::Window(int width, int height)
     {
         m_handle = new WindowHandle(width, height);
-	
+
 		// register listener window
 		LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
 		::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
@@ -779,7 +779,7 @@ namespace mango
         MANGO_UNREFERENCED_PARAMETER(count);
     }
 
-    void Window::onDropFiles(const FileIndex& index)
+    void Window::onDropFiles(const filesystem::FileIndex& index)
     {
         MANGO_UNREFERENCED_PARAMETER(index);
     }
