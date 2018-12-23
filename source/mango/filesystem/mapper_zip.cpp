@@ -117,7 +117,7 @@ namespace
                 // read extra fields
                 uint8* ext = p;
                 uint8* end = p + extraFieldLen;
-                for (; ext < end;)
+                for ( ; ext < end;)
                 {
                     LittleEndianPointer e = ext;
                     uint16 magic = e.read16();
@@ -128,8 +128,14 @@ namespace
                         case 0x0001:
                         {
                             // ZIP64 extended field
-                            if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
-                            if (compressedSize == 0xffffffff) compressedSize = e.read64();
+                            if (uncompressedSize == 0xffffffff)
+                            {
+                                uncompressedSize = e.read64();
+                            }
+                            if (compressedSize == 0xffffffff)
+                            {
+                                compressedSize = e.read64();
+                            }
                             break;
                         }
 
@@ -230,10 +236,22 @@ namespace
                     case 0x0001:
                     {
                         // ZIP64 extended field
-                        if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
-                        if (compressedSize == 0xffffffff) compressedSize = e.read64();
-                        if (localOffset == 0xffffffff) localOffset = e.read64();
-                        if (diskStart == 0xffff) e += 4;
+                        if (uncompressedSize == 0xffffffff)
+                        {
+                            uncompressedSize = e.read64();
+                        }
+                        if (compressedSize == 0xffffffff)
+                        {
+                            compressedSize = e.read64();
+                        }
+                        if (localOffset == 0xffffffff)
+                        {
+                            localOffset = e.read64();
+                        }
+                        if (diskStart == 0xffff)
+                        {
+                            e += 4;
+                        }
                         break;
                     }
 
@@ -246,13 +264,25 @@ namespace
                         compression = e.read8(); // override compression algorithm
 
                         if (version < 1 || version > 2 || magic != 0x4541)
+                        {
                             MANGO_EXCEPTION(ID"Incorrect AES header.");
+                        }
 
                         // select encryption mode
-                        if (mode == 1) encryption = ENCRYPTION_AES128;
-                        else if (mode == 2) encryption = ENCRYPTION_AES192;
-                        else if (mode == 3) encryption = ENCRYPTION_AES256;
-                        else MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+                        switch (mode)
+                        {
+                            case 1:
+                                encryption = ENCRYPTION_AES128;
+                                break;
+                            case 2:
+                                encryption = ENCRYPTION_AES192;
+                                break;
+                            case 3:
+                                encryption = ENCRYPTION_AES256;
+                                break;
+                            default:
+                                MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+                        }
 
                         break;
                     }
@@ -289,7 +319,7 @@ namespace
 
             end -= 22; // header size is 22 bytes
 
-            for (; end >= start; --end)
+            for ( ; end >= start; --end)
 			{
                 LittleEndianPointer p = end;
 
