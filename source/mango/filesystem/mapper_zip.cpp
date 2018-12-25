@@ -866,7 +866,6 @@ namespace filesystem {
                     index.emplace(filename, size, flags);
                 }
             }
-
         }
 
         VirtualMemory* mmap(const std::string& filename) override
