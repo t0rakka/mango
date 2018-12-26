@@ -24,12 +24,14 @@ namespace mango
         }
 
         Rectangle(float x, float y, float width, float height)
-            : position(x, y), size(width, height)
+            : position(x, y)
+            , size(width, height)
         {
         }
 
-        Rectangle(const float2& _position, const float2& _size)
-            : position(_position), size(_size)
+        Rectangle(const float2& position, const float2& size)
+            : position(position)
+            , size(size)
         {
         }
 
@@ -54,13 +56,14 @@ namespace mango
         {
         }
 
-        Plane(const float3& _normal, float _dist)
-            : normal(_normal), dist(_dist)
+        Plane(const float3& normal, float dist)
+            : normal(normal)
+            , dist(dist)
         {
         }
 
-        Plane(const float3& _normal, const float3& point)
-            : normal(_normal)
+        Plane(const float3& normal, const float3& point)
+            : normal(normal)
         {
             dist = dot(normal, point);
         }
@@ -72,7 +75,8 @@ namespace mango
         }
 
         Plane(float x, float y, float z, float w)
-            : normal(x, y, z), dist(w)
+            : normal(x, y, z)
+            , dist(w)
         {
         }
 
@@ -144,8 +148,9 @@ namespace mango
         {
         }
 
-        Sphere(const float3& _center, float _radius)
-        : center(_center), radius(_radius)
+        Sphere(const float3& center, float radius)
+            : center(center)
+            , radius(radius)
         {
         }
 
@@ -171,8 +176,10 @@ namespace mango
         {
         }
 
-        Cone(const float3& _origin, const float3& _target, float _angle)
-            : origin(_origin), target(_target), angle(_angle)
+        Cone(const float3& origin, const float3& target, float angle)
+            : origin(origin)
+            , target(target)
+            , angle(angle)
         {
         }
 
@@ -272,12 +279,14 @@ namespace mango
         }
 
         Ray(const float3& point0, const float3& point1)
-            : origin(point0), direction(point1 - point0)
+            : origin(point0)
+            , direction(point1 - point0)
         {
         }
 
         Ray(const Line& line)
-            : origin(line.position[0]), direction(line.direction())
+            : origin(line.position[0])
+            , direction(line.direction())
         {
         }
 
