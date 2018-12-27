@@ -275,6 +275,7 @@
 		A66F158721C15CB400E1C8AA /* zstd_decompress_block.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */; };
 		A66F158821C15CB400E1C8AA /* zstd_decompress_block.c in Sources */ = {isa = PBXBuildFile; fileRef = A66F158321C15CB400E1C8AA /* zstd_decompress_block.c */; };
 		A66F158921C15CB400E1C8AA /* zstd_ddict.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158421C15CB400E1C8AA /* zstd_ddict.h */; };
+		A66F158B21D4C81800E1C8AA /* indexer.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A66F158A21D4C81800E1C8AA /* indexer.hpp */; };
 		A672D9122026633600947D7E /* bc_aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9102026633600947D7E /* bc_aes.cpp */; };
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
@@ -558,6 +559,7 @@
 		A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_decompress_block.h; path = external/zstd/decompress/zstd_decompress_block.h; sourceTree = "<group>"; };
 		A66F158321C15CB400E1C8AA /* zstd_decompress_block.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_decompress_block.c; path = external/zstd/decompress/zstd_decompress_block.c; sourceTree = "<group>"; };
 		A66F158421C15CB400E1C8AA /* zstd_ddict.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_ddict.h; path = external/zstd/decompress/zstd_ddict.h; sourceTree = "<group>"; };
+		A66F158A21D4C81800E1C8AA /* indexer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = indexer.hpp; path = filesystem/indexer.hpp; sourceTree = "<group>"; };
 		A672D9102026633600947D7E /* bc_aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bc_aes.cpp; path = external/aes/bc_aes.cpp; sourceTree = "<group>"; };
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
@@ -626,6 +628,7 @@
 		A005599D1C93326000A6D963 /* filesystem */ = {
 			isa = PBXGroup;
 			children = (
+				A66F158A21D4C81800E1C8AA /* indexer.hpp */,
 				A0F21ED71CA062EA0084302D /* file_observer.cpp */,
 				A0F21ED81CA062EA0084302D /* file_stream.cpp */,
 				A0F21ED91CA062EA0084302D /* mapper_file.cpp */,
@@ -1216,6 +1219,7 @@
 				A66F158721C15CB400E1C8AA /* zstd_decompress_block.h in Headers */,
 				A63DD75E1E706EB200D4D499 /* unpack.hpp in Headers */,
 				A642438021852AEF0044B763 /* CpuArch.h in Headers */,
+				A66F158B21D4C81800E1C8AA /* indexer.hpp in Headers */,
 				A642438921852AEF0044B763 /* XzCrc64.h in Headers */,
 				A645DD56214154F400EC714B /* xxhash.h in Headers */,
 				A642437421852AEF0044B763 /* 7zTypes.h in Headers */,
