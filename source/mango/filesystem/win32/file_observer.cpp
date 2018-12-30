@@ -9,8 +9,8 @@
 
 #include <thread>
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     enum
     {
@@ -250,5 +250,5 @@ namespace mango
         }
     }
 
+} // namespace filesystem
 } // namespace mango
-

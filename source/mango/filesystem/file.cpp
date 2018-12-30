@@ -8,8 +8,8 @@
 
 #define ID "[File] "
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // File
@@ -111,4 +111,5 @@ namespace mango
         return m_memory ? *m_memory : Memory(nullptr, 0);
     }
 
+} // namespace filesystem
 } // namespace mango

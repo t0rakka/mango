@@ -34,7 +34,7 @@ namespace
         T* end;
 
         StringBuilder(std::basic_string<T>& str)
-        : s(str), ptr(buffer), end(buffer + SIZE)
+            : s(str), ptr(buffer), end(buffer + SIZE)
         {
         }
 
@@ -504,58 +504,17 @@ namespace mango
         return splitTemplate(s, delimiter);
     }
 
-    std::string makeString(const std::string& s)
-    {
-        return s;
-    }
-
     std::string makeString(const char* format, ...)
     {
-        char buffer[256];
+        constexpr size_t max_length = 512;
+        char buffer[max_length];
+
         va_list args;
         va_start(args, format);
-        std::vsnprintf(buffer, 256, format, args);
+        std::vsnprintf(buffer, max_length, format, args);
         va_end(args);
+
         return buffer;
-    }
-
-    // -----------------------------------------------------------------
-    // filename manipulation
-    // -----------------------------------------------------------------
-
-    std::string getPath(const std::string& filename)
-    {
-        size_t n = filename.find_last_of("/\\:");
-        std::string s;
-        if (n != std::string::npos)
-            s = filename.substr(0, n + 1);
-        return s;
-    }
-
-    std::string removePath(const std::string& filename)
-    {
-        size_t n = filename.find_last_of("/\\:");
-        std::string s;
-        if (n != std::string::npos)
-            s = filename.substr(n + 1);
-        else
-            s = filename;
-        return s;
-    }
-
-    std::string getExtension(const std::string& filename)
-    {
-        size_t n = filename.find_last_of('.');
-        std::string s;
-        if (n != std::string::npos)
-            s = filename.substr(n + 1);
-        return s;
-    }
-
-    std::string removeExtension(const std::string& filename)
-    {
-        size_t n = filename.find_last_of('.');
-        return filename.substr(0, n);
     }
 
 } // namespace mango

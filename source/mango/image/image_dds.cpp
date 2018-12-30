@@ -6,7 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.DDS: "
+#define ID "[ImageDecoder.DDS] "
 
 //#define DEBUG_DDS
 
@@ -944,7 +944,7 @@ namespace mango
 
     void registerImageDecoderDDS()
     {
-        registerImageDecoder(createInterface, "dds");
+        registerImageDecoder(createInterface, ".dds");
     }
 
 } // namespace mango

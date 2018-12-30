@@ -7,7 +7,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.IFF: "
+#define ID "[ImageDecoder.IFF] "
 
 namespace
 {
@@ -531,12 +531,12 @@ namespace mango
 
     void registerImageDecoderIFF()
     {
-        registerImageDecoder(createInterface, "iff");
-        registerImageDecoder(createInterface, "lbm");
-        registerImageDecoder(createInterface, "ham");
-        registerImageDecoder(createInterface, "ham8");
-        registerImageDecoder(createInterface, "ilbm");
-        registerImageDecoder(createInterface, "ehb");
+        registerImageDecoder(createInterface, ".iff");
+        registerImageDecoder(createInterface, ".lbm");
+        registerImageDecoder(createInterface, ".ham");
+        registerImageDecoder(createInterface, ".ham8");
+        registerImageDecoder(createInterface, ".ilbm");
+        registerImageDecoder(createInterface, ".ehb");
     }
 
 } // namespace mango

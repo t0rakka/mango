@@ -7,7 +7,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.TGA: "
+#define ID "[ImageDecoder.TGA] "
 
 namespace
 {
@@ -461,8 +461,8 @@ namespace mango
 
     void registerImageDecoderTGA()
     {
-        registerImageDecoder(createInterface, "tga");
-        registerImageEncoder(imageEncode, "tga");
+        registerImageDecoder(createInterface, ".tga");
+        registerImageEncoder(imageEncode, ".tga");
     }
 
 } // namespace mango

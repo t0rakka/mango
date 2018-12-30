@@ -19,6 +19,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::filesystem;
 
     // -----------------------------------------------------------------
 	// get_pagesize()
@@ -164,7 +165,6 @@ namespace
             std::string testname = m_basepath + filename;
 
             struct stat s;
-
             if (::stat(testname.c_str(), &s) == 0)
             {
                 is = (s.st_mode & S_IFDIR) == 0;
@@ -229,7 +229,7 @@ namespace
                 }
             }
 
-            closedir(dirp);
+            ::closedir(dirp);
         }
 
 #endif
@@ -243,8 +243,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // Mapper::createFileMapper()
@@ -257,4 +257,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

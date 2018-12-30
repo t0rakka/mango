@@ -11,11 +11,12 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define ID "[mapper.file] "
+#define ID "[FileMemory] "
 
 namespace
 {
     using namespace mango;
+    using namespace mango::filesystem;
 
     // -----------------------------------------------------------------
     // FileMemory
@@ -202,8 +203,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // Mapper::createFileMapper()
@@ -216,4 +217,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

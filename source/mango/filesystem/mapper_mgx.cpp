@@ -2,16 +2,19 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <map>
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/image/fourcc.hpp>
+#include "indexer.hpp"
 
 #define ID "[mapper.mgx] "
 
 namespace
 {
     using namespace mango;
+    namespace fs = mango::filesystem;
+
+    using mango::filesystem::Indexer;
 
     constexpr u64 mgx_header_size = 24;
 
@@ -53,15 +56,10 @@ namespace
         }
     };
 
-    struct Folder
-    {
-        std::map<std::string, FileHeader> files;
-    };
-
     struct HeaderMGX
     {
         Memory m_memory;
-        std::map<std::string, Folder> m_folders;
+        Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
 
         HeaderMGX(Memory memory)
@@ -165,10 +163,10 @@ namespace
                 }
 
                 std::string folder = file.isFolder() ?
-                    getPath(filename.substr(0, length - 1)) :
-                    getPath(filename);
+                    fs::getPath(filename.substr(0, length - 1)) :
+                    fs::getPath(filename);
 
-                m_folders[folder].files[filename] = file;
+                m_folders.insert(folder, filename, file);
             }
 
             u32 magic3 = p.read32();
@@ -181,8 +179,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // VirtualMemoryMGX
@@ -225,30 +223,20 @@ namespace mango
 
         bool isFile(const std::string& filename) const override
         {
-            std::string pn = getPath(filename);
-            auto iPath = m_header.m_folders.find(pn);
-            if (iPath != m_header.m_folders.end())
+            const FileHeader* ptrFile = m_header.m_folders.file(filename);
+            if (ptrFile)
             {
-                const Folder& folder = iPath->second;
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    const FileHeader& file = iFile->second;
-                    return !file.isFolder();
-                }
+                return !ptrFile->isFolder();
             }
-
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            auto iPath = m_header.m_folders.find(pathname);
-            if (iPath != m_header.m_folders.end())
+            const Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.folder(pathname);
+            if (ptrFolder)
             {
-                const Folder& folder = iPath->second;
-
-                for (auto i : folder.files)
+                for (auto i : ptrFolder->files)
                 {
                     const FileHeader& file = i.second;
                     std::string filename = i.first;
@@ -274,38 +262,7 @@ namespace mango
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const FileHeader* ptrFile = nullptr;
-
-            std::string pathname = getPath(filename);
-
-            auto iPath = m_header.m_folders.find(pathname);
-            if (iPath != m_header.m_folders.end())
-            {
-                const Folder& folder = iPath->second;
-
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    ptrFile = &iFile->second;
-                }
-#if 0
-                else
-                {
-                    printf("files lookup failed with: %s\n", filename.c_str());
-                    for (auto f : folder.files)
-                    {
-                        printf("  > %s\n", f.first.c_str());
-                    }
-                }
-#endif
-            }
-#if 0
-            else
-            {
-                printf("m_folders lookup failed with: %s\n", pathname.c_str());
-            }
-#endif
-
+            const FileHeader* ptrFile = m_header.m_folders.file(filename);
             if (!ptrFile)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
@@ -413,4 +370,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

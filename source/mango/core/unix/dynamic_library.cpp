@@ -14,8 +14,7 @@ namespace mango
         m_handle = ::dlopen(filename.c_str(), RTLD_NOW);
         if (!m_handle)
         {
-            const char* error = ::dlerror();
-            MANGO_EXCEPTION(error);
+            MANGO_EXCEPTION("[DynamicLibrary] %s", ::dlerror());
         }
     }
 

@@ -7,7 +7,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.BMP: "
+#define ID "[ImageDecoder.BMP] "
 
 namespace
 {
@@ -1069,10 +1069,10 @@ namespace mango
 
     void registerImageDecoderBMP()
     {
-        registerImageDecoder(createInterface, "bmp");
-        registerImageDecoder(createInterface, "ico");
-        registerImageDecoder(createInterface, "cur");
-        registerImageEncoder(imageEncode, "bmp");
+        registerImageDecoder(createInterface, ".bmp");
+        registerImageDecoder(createInterface, ".ico");
+        registerImageDecoder(createInterface, ".cur");
+        registerImageEncoder(imageEncode, ".bmp");
     }
 
 } // namespace mango

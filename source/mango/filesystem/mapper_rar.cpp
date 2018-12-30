@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     RAR decompression code: Alexander L. Roshal / unRAR library.
@@ -12,6 +12,7 @@
 #include <mango/core/pointer.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
+#include "indexer.hpp"
 
 #ifdef MANGO_ENABLE_LICENSE_GPL
 
@@ -27,6 +28,7 @@ namespace
 
     using mango::Memory;
     using mango::VirtualMemory;
+    using mango::filesystem::Indexer;
 
     typedef unsigned char uint8;
     typedef unsigned short uint16;
@@ -353,6 +355,7 @@ namespace
         uint8   version;
         uint8   method;
         bool    is_rar5;
+        std::string filename;
 
         bool folder;
         uint8* data;
@@ -366,7 +369,7 @@ namespace
             return method != 0x30;
         }
 
-        VirtualMemory* mmap()
+        VirtualMemory* mmap() const
         {
             VirtualMemory* memory;
 
@@ -396,8 +399,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // MapperRAR
@@ -407,7 +410,8 @@ namespace mango
     {
     public:
         std::string m_password;
-        std::map<std::string, FileHeader> m_files;
+        std::vector<FileHeader> m_files;
+        Indexer<FileHeader> m_folders;
         bool is_encrypted { false };
 
         MapperRAR(Memory parent, const std::string& password)
@@ -447,6 +451,39 @@ namespace mango
             {
                 MANGO_EXCEPTION(ID"Incorrect signature.");
             }
+
+            // find common prefix
+            size_t maxPrefix = m_files[0].filename.length();
+
+            for (size_t i = 1; i < m_files.size(); ++i)
+            {
+                size_t pos = 0;
+                for( ; pos < maxPrefix && 
+                        pos < m_files[i].filename.length() && 
+                        m_files[0].filename[pos] == m_files[i].filename[pos]; pos++)
+                {
+                }
+
+                maxPrefix = pos;
+            }
+
+            std::string prefix = m_files[0].filename.substr(0, maxPrefix);
+            prefix = getPath(prefix);
+
+            // store headers in a map
+            for (auto& header : m_files)
+            {
+                header.filename = removePrefix(header.filename, prefix);
+
+                if (header.filename.length() > 0)
+                {
+                    std::string folder = header.folder ?
+                        getPath(header.filename.substr(0, header.filename.length() - 1)) :
+                        getPath(header.filename);
+
+                    m_folders.insert(folder, header.filename, header);
+                }
+            }
         }
 
         void parse_rar4(uint8* start, uint8* end)
@@ -480,8 +517,8 @@ namespace mango
                             file.folder = (dict_flags == 7);
                             file.data = p;
 
-                            // store file
-                            m_files[header.filename] = file;
+                            file.filename = header.filename;
+                            m_files.push_back(file);
                         }
                         else
                         {
@@ -591,7 +628,8 @@ namespace mango
             file.folder = is_directory;
             file.data = compressed_data.address;
 
-            m_files[filename] = file;
+            file.filename = filename;
+            m_files.push_back(file);
         }
 
         void parse_rar5(uint8* start, uint8* end)
@@ -658,69 +696,62 @@ namespace mango
 
         bool isFile(const std::string& filename) const override
         {
-            auto i = m_files.find(filename);
-
-            if (i != m_files.end())
+            const FileHeader* ptrFile = m_folders.file(filename);
+            if (ptrFile)
             {
-                return !i->second.folder;
+                return !ptrFile->folder;
             }
-
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            for (auto i : m_files)
+            printf("getIndex: %s\n", pathname.c_str());
+
+            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.folder(pathname);
+            if (ptrFolder)
             {
-                FileHeader& header = i.second;
-                std::string filename = i.first;
-
-                if (header.folder)
+                for (auto i : ptrFolder->files)
                 {
-                    filename += "/";
-                }
+                    const FileHeader& file = i.second;
+                    std::string filename = i.first;
 
-                if (isPrefix(filename, pathname))
-                {
                     filename = filename.substr(pathname.length());
-                    size_t n = filename.find_first_of("/");
 
-                    if (n == std::string::npos)
+                    u32 flags = 0;
+                    u64 size = file.unpacked_size;
+
+                    if (file.folder)
                     {
-                        uint32 flags = 0;
-
-                        if (header.compressed())
-                        {
-                            flags |= FileInfo::COMPRESSED;
-                        }
-
-                        if (is_encrypted)
-                        {
-                            flags |= FileInfo::ENCRYPTED;
-                        }
-
-                        index.emplace(filename, header.unpacked_size, flags);
+                        flags |= FileInfo::DIRECTORY;
+                        size = 0;
+                        filename += "/";
                     }
-                    else
+
+                    if (file.compressed())
                     {
-                        if (n == filename.length() - 1)
-                        {
-                            index.emplace(filename, 0, FileInfo::DIRECTORY);
-                        }
+                        flags |= FileInfo::COMPRESSED;
                     }
+
+                    if (is_encrypted)
+                    {
+                        flags |= FileInfo::ENCRYPTED;
+                    }
+
+                    index.emplace(filename, size, flags);
                 }
             }
         }
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            auto i = m_files.find(filename);
-            if (i == m_files.end())
+            const FileHeader* ptrFile = m_folders.file(filename);
+            if (!ptrFile)
             {
-                MANGO_EXCEPTION(ID"File not found.");
+                MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
-            FileHeader& header = i->second;
+            const FileHeader& header = *ptrFile;
             return header.mmap();
         }
     };
@@ -735,6 +766,7 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango
 
 #endif // MANGO_ENABLE_LICENSE_GPL

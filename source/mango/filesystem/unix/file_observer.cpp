@@ -20,8 +20,8 @@
 #include <unistd.h>
 #include <limits.h>
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     enum
     {
@@ -163,13 +163,13 @@ namespace mango
         int notify = inotify_init();
         if (notify < 0)
         {
-            MANGO_EXCEPTION("inotify_init() failed.");
+            MANGO_EXCEPTION("[FileObserver] inotify_init() failed.");
         }
 
         int watch = inotify_add_watch(notify, pathname.c_str(), IN_ALL_EVENTS);
         if (watch < 0)
         {
-            MANGO_EXCEPTION("inotify_init() failed.");
+            MANGO_EXCEPTION("[FileObserver] inotify_init() failed.");
         }
 
         m_state = new FileObserverState(this, notify, watch);
@@ -184,6 +184,7 @@ namespace mango
         }
     }
 
+} // namespace filesystem
 } // namespace mango
 
 #elif defined(MANGO_PLATFORM_BSD) || defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS)
@@ -199,8 +200,8 @@ namespace mango
 #include <sys/event.h>
 #include <unistd.h>
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     struct FileObserverState
     {
@@ -286,6 +287,7 @@ namespace mango
         }
     }
 
+} // namespace filesystem
 } // namespace mango
 
 #else
@@ -296,8 +298,8 @@ namespace mango
 // 
 // -----------------------------------------------------------------
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     FileObserver::FileObserver()
     : m_state(NULL)
@@ -317,6 +319,7 @@ namespace mango
     {
     }
 
+} // namespace filesystem
 } // namespace mango
 
 #endif

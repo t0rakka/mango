@@ -8,7 +8,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.PKM: "
+#define ID "[ImageDecoder.PKM] "
 
 namespace
 {
@@ -193,8 +193,8 @@ namespace mango
 
     void registerImageDecoderPKM()
     {
-        registerImageDecoder(createInterface, "pkm");
-        registerImageEncoder(imageEncode, "pkm");
+        registerImageDecoder(createInterface, ".pkm");
+        registerImageEncoder(imageEncode, ".pkm");
     }
 
 } // namespace mango

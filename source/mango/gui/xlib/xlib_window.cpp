@@ -14,6 +14,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::filesystem;
 
 #define TR(a, b) case a: code = b; break
 

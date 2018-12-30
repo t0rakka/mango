@@ -6,7 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.ASTC: "
+#define ID "[ImageDecoder.ASTC] "
 
 namespace
 {
@@ -176,7 +176,7 @@ namespace mango
 
     void registerImageDecoderASTC()
     {
-        registerImageDecoder(createInterface, "astc");
+        registerImageDecoder(createInterface, ".astc");
     }
 
 } // namespace mango

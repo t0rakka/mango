@@ -636,7 +636,7 @@ namespace mango
         MANGO_UNREFERENCED_PARAMETER(count);
     }
 
-    void Window::onDropFiles(const FileIndex& index)
+    void Window::onDropFiles(const filesystem::FileIndex& index)
     {
         MANGO_UNREFERENCED_PARAMETER(index);
     }

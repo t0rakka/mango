@@ -7,7 +7,7 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../gui/win32/win32_handle.hpp"
 
-#define ID "Context: "
+#define ID "[WGL Context] "
 
 namespace
 {

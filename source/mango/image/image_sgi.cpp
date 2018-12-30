@@ -9,7 +9,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.RGB: "
+#define ID "[ImageDecoder.RGB] "
 
 namespace
 {
@@ -255,10 +255,10 @@ namespace mango
 
     void registerImageDecoderSGI()
     {
-        registerImageDecoder(createInterface, "rgb");
-        registerImageDecoder(createInterface, "rgba");
-        registerImageDecoder(createInterface, "bw");
-        registerImageDecoder(createInterface, "sgi");
+        registerImageDecoder(createInterface, ".rgb");
+        registerImageDecoder(createInterface, ".rgba");
+        registerImageDecoder(createInterface, ".bw");
+        registerImageDecoder(createInterface, ".sgi");
     }
 
 } // namespace mango

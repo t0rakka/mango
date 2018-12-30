@@ -858,6 +858,9 @@
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_internal.h">
       <Filter>external\zstd\decompress</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\mango\filesystem\indexer.hpp">
+      <Filter>mango\source\filesystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">

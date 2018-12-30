@@ -8,7 +8,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.PCX: "
+#define ID "[ImageDecoder.PCX] "
 
 namespace
 {
@@ -483,7 +483,7 @@ namespace mango
 
     void registerImageDecoderPCX()
     {
-        registerImageDecoder(createInterface, "pcx");
+        registerImageDecoder(createInterface, ".pcx");
     }
 
 } // namespace mango

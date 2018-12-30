@@ -2,13 +2,13 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <map>
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/compress.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
+#include "indexer.hpp"
 
 #include "../../external/miniz/miniz.h"
 
@@ -33,6 +33,8 @@ http://www.winzip.com/aes_info.htm
 namespace
 {
     using namespace mango;
+
+    using mango::filesystem::Indexer;
 
     enum { DCKEYSIZE = 12 };
 
@@ -115,7 +117,7 @@ namespace
                 // read extra fields
                 uint8* ext = p;
                 uint8* end = p + extraFieldLen;
-                for (; ext < end;)
+                for ( ; ext < end;)
                 {
                     LittleEndianPointer e = ext;
                     uint16 magic = e.read16();
@@ -126,8 +128,14 @@ namespace
                         case 0x0001:
                         {
                             // ZIP64 extended field
-                            if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
-                            if (compressedSize == 0xffffffff) compressedSize = e.read64();
+                            if (uncompressedSize == 0xffffffff)
+                            {
+                                uncompressedSize = e.read64();
+                            }
+                            if (compressedSize == 0xffffffff)
+                            {
+                                compressedSize = e.read64();
+                            }
                             break;
                         }
 
@@ -228,10 +236,22 @@ namespace
                     case 0x0001:
                     {
                         // ZIP64 extended field
-                        if (uncompressedSize == 0xffffffff) uncompressedSize = e.read64();
-                        if (compressedSize == 0xffffffff) compressedSize = e.read64();
-                        if (localOffset == 0xffffffff) localOffset = e.read64();
-                        if (diskStart == 0xffff) e += 4;
+                        if (uncompressedSize == 0xffffffff)
+                        {
+                            uncompressedSize = e.read64();
+                        }
+                        if (compressedSize == 0xffffffff)
+                        {
+                            compressedSize = e.read64();
+                        }
+                        if (localOffset == 0xffffffff)
+                        {
+                            localOffset = e.read64();
+                        }
+                        if (diskStart == 0xffff)
+                        {
+                            e += 4;
+                        }
                         break;
                     }
 
@@ -244,13 +264,25 @@ namespace
                         compression = e.read8(); // override compression algorithm
 
                         if (version < 1 || version > 2 || magic != 0x4541)
+                        {
                             MANGO_EXCEPTION(ID"Incorrect AES header.");
+                        }
 
                         // select encryption mode
-                        if (mode == 1) encryption = ENCRYPTION_AES128;
-                        else if (mode == 2) encryption = ENCRYPTION_AES192;
-                        else if (mode == 3) encryption = ENCRYPTION_AES256;
-                        else MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+                        switch (mode)
+                        {
+                            case 1:
+                                encryption = ENCRYPTION_AES128;
+                                break;
+                            case 2:
+                                encryption = ENCRYPTION_AES192;
+                                break;
+                            case 3:
+                                encryption = ENCRYPTION_AES256;
+                                break;
+                            default:
+                                MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+                        }
 
                         break;
                     }
@@ -287,7 +319,7 @@ namespace
 
             end -= 22; // header size is 22 bytes
 
-            for (; end >= start; --end)
+            for ( ; end >= start; --end)
 			{
                 LittleEndianPointer p = end;
 
@@ -502,15 +534,10 @@ namespace
 		return zstream.total_out;
     }
 
-    struct Folder
-    {
-        std::map<std::string, DirFileHeader> files;
-    };
-
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // VirtualMemoryZIP
@@ -543,7 +570,7 @@ namespace mango
     public:
         Memory m_parent_memory;
         std::string m_password;
-        std::map<std::string, Folder> m_folders;
+        Indexer<DirFileHeader> m_folders;
 
         MapperZIP(Memory parent, const std::string& password)
             : m_parent_memory(parent)
@@ -599,7 +626,7 @@ namespace mango
                                 getPath(header.filename.substr(0, header.filename.length() - 1)) :
                                 getPath(header.filename);
 
-                            m_folders[folder].files[header.filename] = header;
+                            m_folders.insert(folder, header.filename, header);
                         }
                     }
                 }
@@ -797,30 +824,20 @@ namespace mango
 
         bool isFile(const std::string& filename) const override
         {
-            std::string pn = getPath(filename);
-            auto iPath = m_folders.find(pn);
-            if (iPath != m_folders.end())
+            const DirFileHeader* ptrFile = m_folders.file(filename);
+            if (ptrFile)
             {
-                const Folder& folder = iPath->second;
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    const DirFileHeader& file = iFile->second;
-                    return !file.is_folder;
-                }
+                return !ptrFile->is_folder;
             }
-
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            auto iPath = m_folders.find(pathname);
-            if (iPath != m_folders.end())
+            const Indexer<DirFileHeader>::Folder* ptrFolder = m_folders.folder(pathname);
+            if (ptrFolder)
             {
-                const Folder& folder = iPath->second;
-
-                for (auto i : folder.files)
+                for (auto i : ptrFolder->files)
                 {
                     const DirFileHeader& file = i.second;
                     std::string filename = i.first;
@@ -853,22 +870,7 @@ namespace mango
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const DirFileHeader* ptrFile = nullptr;
-
-            std::string pathname = getPath(filename);
-
-            auto iPath = m_folders.find(pathname);
-            if (iPath != m_folders.end())
-            {
-                const Folder& folder = iPath->second;
-
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    ptrFile = &iFile->second;
-                }
-            }
-
+            const DirFileHeader* ptrFile = m_folders.file(filename);
             if (!ptrFile)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
@@ -889,4 +891,5 @@ namespace mango
         return mapper;
     }
 
+} // namespace filesystem
 } // namespace mango

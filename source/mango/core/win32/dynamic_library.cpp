@@ -16,7 +16,7 @@ namespace mango
         ::SetErrorMode(mode);
         if (!m_handle)
         {
-            MANGO_EXCEPTION("LoadLibrary failed.");
+            MANGO_EXCEPTION("[DynamicLibrary] WIN32 LoadLibrary() failed.");
         }
     }
 

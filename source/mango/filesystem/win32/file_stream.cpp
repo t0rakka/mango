@@ -6,10 +6,10 @@
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-#define ID "FileStream: "
+#define ID "[FileStream] "
 
-namespace mango
-{
+namespace mango {
+namespace filesystem {
 
     // -----------------------------------------------------------------
     // FileHandle
@@ -169,4 +169,5 @@ namespace mango
 		m_handle->write(data, size);
     }
 
+} // namespace filesystem
 } // namespace mango

@@ -12,7 +12,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoder.ATARI: "
+#define ID "[ImageDecoder.ATARI] "
 
 namespace
 {
@@ -1026,24 +1026,24 @@ namespace mango
     void registerImageDecoderATARI()
     {
         // Degas/Degas Elite
-        registerImageDecoder(createInterfaceDEGAS, "pi1");
-        registerImageDecoder(createInterfaceDEGAS, "pi2");
-        registerImageDecoder(createInterfaceDEGAS, "pi3");
-        registerImageDecoder(createInterfaceDEGAS, "pc1");
-        registerImageDecoder(createInterfaceDEGAS, "pc2");
-        registerImageDecoder(createInterfaceDEGAS, "pc3");
+        registerImageDecoder(createInterfaceDEGAS, ".pi1");
+        registerImageDecoder(createInterfaceDEGAS, ".pi2");
+        registerImageDecoder(createInterfaceDEGAS, ".pi3");
+        registerImageDecoder(createInterfaceDEGAS, ".pc1");
+        registerImageDecoder(createInterfaceDEGAS, ".pc2");
+        registerImageDecoder(createInterfaceDEGAS, ".pc3");
 
         // NEOchrome
-        registerImageDecoder(createInterfaceNEO, "neo");
+        registerImageDecoder(createInterfaceNEO, ".neo");
 
         // Spectrum 512
-        registerImageDecoder(createInterfaceSPU, "spu");
-        registerImageDecoder(createInterfaceSPU, "spc");
+        registerImageDecoder(createInterfaceSPU, ".spu");
+        registerImageDecoder(createInterfaceSPU, ".spc");
 
         // Crack Art
-        registerImageDecoder(createInterfaceCA, "ca1");
-        registerImageDecoder(createInterfaceCA, "ca2");
-        registerImageDecoder(createInterfaceCA, "ca3");
+        registerImageDecoder(createInterfaceCA, ".ca1");
+        registerImageDecoder(createInterfaceCA, ".ca2");
+        registerImageDecoder(createInterfaceCA, ".ca3");
     }
 
 } // namespace mango

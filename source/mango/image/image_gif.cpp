@@ -10,7 +10,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "ImageDecoderGIF: "
+#define ID "[ImageDecoderGIF] "
 
 namespace
 {
@@ -509,7 +509,7 @@ namespace mango
 
     void registerImageDecoderGIF()
     {
-        registerImageDecoder(createInterface, "gif");
+        registerImageDecoder(createInterface, ".gif");
     }
 
 } // namespace mango

@@ -162,7 +162,7 @@ namespace mango
         virtual void onKeyRelease(Keycode code);
         virtual void onMouseMove(int x, int y);
         virtual void onMouseClick(int x, int y, MouseButton button, int count);
-        virtual void onDropFiles(const FileIndex& index);
+        virtual void onDropFiles(const filesystem::FileIndex& index);
         virtual void onClose();
         virtual void onShow();
         virtual void onHide();

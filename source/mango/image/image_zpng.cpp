@@ -6,7 +6,7 @@
 #include <mango/image/image.hpp>
 #include "../../external/zpng/zpng.h"
 
-#define ID "ImageDecoder.ZPNG: "
+#define ID "[ImageDecoder.ZPNG] "
 
 namespace
 {
@@ -183,8 +183,8 @@ namespace mango
 
     void registerImageDecoderZPNG()
     {
-        registerImageDecoder(createInterface, "zpng");
-        registerImageEncoder(imageEncode, "zpng");
+        registerImageDecoder(createInterface, ".zpng");
+        registerImageEncoder(imageEncode, ".zpng");
     }
 
 } // namespace mango
