@@ -16,19 +16,19 @@ namespace mango {
     {
     }
 
-    Buffer::Buffer(size_t size)
-        : m_memory(new u8[size], size)
-        , m_capacity(size)
+    Buffer::Buffer(size_t bytes)
+        : m_memory(new u8[bytes], bytes)
+        , m_capacity(bytes)
         , m_offset(0)
     {
     }
 
-    Buffer::Buffer(const u8* address, size_t size)
-        : m_memory(new u8[size], size)
-        , m_capacity(size)
+    Buffer::Buffer(const u8* address, size_t bytes)
+        : m_memory(new u8[bytes], bytes)
+        , m_capacity(bytes)
         , m_offset(0)
     {
-        std::memcpy(m_memory.address, address, size);
+        std::memcpy(m_memory.address, address, bytes);
     }
 
     Buffer::Buffer(Memory memory)
@@ -49,26 +49,26 @@ namespace mango {
         return m_capacity;        
     }
 
-    void Buffer::reserve(size_t size)
+    void Buffer::reserve(size_t bytes)
     {
-        if (size > m_capacity)
+        if (bytes > m_capacity)
         {
-            u8* storage = new u8[size];
+            u8* storage = new u8[bytes];
             if (m_memory.address)
             {
                 std::memcpy(storage, m_memory.address, m_memory.size);
                 delete[] m_memory.address;
             }
             m_memory.address = storage;
-            m_capacity = size;
+            m_capacity = bytes;
         }
     }
 
-    void Buffer::resize(size_t size)
+    void Buffer::resize(size_t bytes)
     {
-        reserve(size);
-        m_memory.size = size;
-        m_offset = std::min(m_offset, size);
+        reserve(bytes);
+        m_memory.size = bytes;
+        m_offset = std::min(m_offset, bytes);
     }
 
     u8* Buffer::data() const
@@ -114,28 +114,29 @@ namespace mango {
         }
     }
 
-    void Buffer::read(void* dest, size_t size)
+    void Buffer::read(void* dest, size_t bytes)
     {
         const size_t left = m_memory.size - m_offset;
-        if (left < size)
+        if (left < bytes)
         {
             MANGO_EXCEPTION(ID"Reading past end of buffer.");
         }
-        std::memcpy(dest, m_memory.address + m_offset, size);
-        m_offset += size;
+
+        std::memcpy(dest, m_memory.address + m_offset, bytes);
+        m_offset += bytes;
     }
 
-    void Buffer::write(const void* data, size_t size)
+    void Buffer::write(const void* data, size_t bytes)
     {
-        size_t required = m_offset + size;
+        size_t required = m_offset + bytes;
         if (required > m_capacity)
         {
             // grow 1.4x the required capacity
             reserve((required * 7) / 5);
         }
 
-        std::memcpy(m_memory.address + m_offset, data, size);
-        m_offset += size;
+        std::memcpy(m_memory.address + m_offset, data, bytes);
+        m_offset += bytes;
         m_memory.size = std::max(m_memory.size, m_offset);
     }
 

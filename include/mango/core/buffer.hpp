@@ -22,14 +22,14 @@ namespace mango
 
     public:
         Buffer();
-        Buffer(size_t size);
-        Buffer(const u8* address, size_t size);
+        Buffer(size_t bytes);
+        Buffer(const u8* address, size_t bytes);
         Buffer(Memory memory);
         ~Buffer();
 
         size_t capacity() const;
-        void reserve(size_t size);
-        void resize(size_t size);
+        void reserve(size_t bytes);
+        void resize(size_t bytes);
 
         // memory
         u8* data() const;
@@ -40,8 +40,8 @@ namespace mango
         u64 size() const;
         u64 offset() const;
         void seek(u64 distance, SeekMode mode);
-        void read(void* dest, size_t size);
-        void write(const void* data, size_t size);
+        void read(void* dest, size_t bytes);
+        void write(const void* data, size_t bytes);
     };
 
 } // namespace mango
