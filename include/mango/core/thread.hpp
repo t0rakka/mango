@@ -20,7 +20,7 @@ namespace mango
 {
 
     // TODO: use lock-free MPMC queue for free objects and only lock
-    //       when running out of objects im the queue
+    //       when running out of objects in the queue
     template <typename T>
     class ObjectCache
     {
@@ -52,16 +52,20 @@ namespace mango
             SpinLockGuard guard(m_lock);
             if (!m_stack_size)
             {
+                // reallocate stack
+                delete[] m_stack;
+                m_stack_capacity += m_block_size;
+                m_stack = new T*[m_stack_capacity];
+
+                // allocate more objects
                 T* block = new T[m_block_size];
                 m_blocks.push_back(block);
 
-                m_stack_capacity += m_block_size;
-
-                delete[] m_stack;
-                m_stack = new T*[m_stack_capacity];
-
+                // put the allocated objects in the stack
                 for (int i = 0; i < m_block_size; ++i)
+                {
                     m_stack[i] = block + i;
+                }
 
                 m_stack_size = m_block_size;
             }
