@@ -452,36 +452,17 @@ namespace filesystem {
                 MANGO_EXCEPTION(ID"Incorrect signature.");
             }
 
-            // find common prefix
-            size_t maxPrefix = m_files[0].filename.length();
-
-            for (size_t i = 1; i < m_files.size(); ++i)
-            {
-                size_t pos = 0;
-                for( ; pos < maxPrefix && 
-                        pos < m_files[i].filename.length() && 
-                        m_files[0].filename[pos] == m_files[i].filename[pos]; pos++)
-                {
-                }
-
-                maxPrefix = pos;
-            }
-
-            std::string prefix = m_files[0].filename.substr(0, maxPrefix);
-            prefix = getPath(prefix);
-
-            // store headers in a map
             for (auto& header : m_files)
             {
-                header.filename = removePrefix(header.filename, prefix);
-
-                if (header.filename.length() > 0)
+                std::string filename = header.filename;
+                while (!filename.empty())
                 {
-                    std::string folder = header.folder ?
-                        getPath(header.filename.substr(0, header.filename.length() - 1)) :
-                        getPath(header.filename);
+                    std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
+                    header.filename = filename;
                     m_folders.insert(folder, header.filename, header);
+                    header.folder = true;
+                    filename = folder;
                 }
             }
         }
@@ -518,6 +499,10 @@ namespace filesystem {
                             file.data = p;
 
                             file.filename = header.filename;
+                            if (file.folder)
+                            {
+                                file.filename += "/";
+                            }
                             m_files.push_back(file);
                         }
                         else
@@ -629,6 +614,11 @@ namespace filesystem {
             file.data = compressed_data.address;
 
             file.filename = filename;
+            if (file.folder)
+            {
+                file.filename += "/";
+            }
+
             m_files.push_back(file);
         }
 
@@ -696,10 +686,10 @@ namespace filesystem {
 
         bool isFile(const std::string& filename) const override
         {
-            const FileHeader* ptrFile = m_folders.file(filename);
-            if (ptrFile)
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (ptrHeader)
             {
-                return !ptrFile->folder;
+                return !ptrHeader->folder;
             }
             return false;
         }
@@ -708,27 +698,24 @@ namespace filesystem {
         {
             printf("getIndex: %s\n", pathname.c_str());
 
-            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.folder(pathname);
+            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (auto i : ptrFolder->files)
+                for (const auto& header : ptrFolder->headers)
                 {
-                    const FileHeader& file = i.second;
-                    std::string filename = i.first;
-
+                    std::string filename = header.filename;
                     filename = filename.substr(pathname.length());
 
                     u32 flags = 0;
-                    u64 size = file.unpacked_size;
+                    u64 size = header.unpacked_size;
 
-                    if (file.folder)
+                    if (header.folder)
                     {
                         flags |= FileInfo::DIRECTORY;
                         size = 0;
-                        filename += "/";
                     }
 
-                    if (file.compressed())
+                    if (header.compressed())
                     {
                         flags |= FileInfo::COMPRESSED;
                     }
@@ -745,13 +732,13 @@ namespace filesystem {
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const FileHeader* ptrFile = m_folders.file(filename);
-            if (!ptrFile)
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (!ptrHeader)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
-            const FileHeader& header = *ptrFile;
+            const FileHeader& header = *ptrHeader;
             return header.mmap();
         }
     };

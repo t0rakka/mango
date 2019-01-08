@@ -39,6 +39,7 @@ namespace
         u32 checksum;
         bool is_compressed;
         std::vector<Segment> segments;
+        std::string filename;
 
         bool isCompressed() const
         {
@@ -166,6 +167,7 @@ namespace
                     fs::getPath(filename.substr(0, length - 1)) :
                     fs::getPath(filename);
 
+                file.filename = filename;
                 m_folders.insert(folder, filename, file);
             }
 
@@ -223,23 +225,22 @@ namespace filesystem {
 
         bool isFile(const std::string& filename) const override
         {
-            const FileHeader* ptrFile = m_header.m_folders.file(filename);
-            if (ptrFile)
+            const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
+            if (ptrHeader)
             {
-                return !ptrFile->isFolder();
+                return !ptrHeader->isFolder();
             }
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.folder(pathname);
+            const Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (auto i : ptrFolder->files)
+                for (const auto& file : ptrFolder->headers)
                 {
-                    const FileHeader& file = i.second;
-                    std::string filename = i.first;
+                    std::string filename = file.filename;
 
                     filename = filename.substr(pathname.length());
 
@@ -262,13 +263,13 @@ namespace filesystem {
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const FileHeader* ptrFile = m_header.m_folders.file(filename);
-            if (!ptrFile)
+            const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
+            if (!ptrHeader)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
-            const FileHeader& file = *ptrFile;
+            const FileHeader& file = *ptrHeader;
 
             // TODO: compute segment.size instead of storing it in .mgx container
             // TODO: checksum
