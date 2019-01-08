@@ -824,41 +824,39 @@ namespace filesystem {
 
         bool isFile(const std::string& filename) const override
         {
-            const DirFileHeader* ptrFile = m_folders.file(filename);
-            if (ptrFile)
+            const DirFileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (ptrHeader)
             {
-                return !ptrFile->is_folder;
+                return !ptrHeader->is_folder;
             }
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const Indexer<DirFileHeader>::Folder* ptrFolder = m_folders.folder(pathname);
+            const Indexer<DirFileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (auto i : ptrFolder->files)
+                for (const auto& header : ptrFolder->headers)
                 {
-                    const DirFileHeader& file = i.second;
-                    std::string filename = i.first;
-
+                    std::string filename = header.filename;
                     filename = filename.substr(pathname.length());
 
                     u32 flags = 0;
-                    u64 size = file.uncompressedSize;
+                    u64 size = header.uncompressedSize;
 
-                    if (file.is_folder)
+                    if (header.is_folder)
                     {
                         flags |= FileInfo::DIRECTORY;
                         size = 0;
                     }
 
-                    if (file.compression > 0)
+                    if (header.compression > 0)
                     {
                         flags |= FileInfo::COMPRESSED;
                     }
 
-                    if (file.encryption != ENCRYPTION_NONE)
+                    if (header.encryption != ENCRYPTION_NONE)
                     {
                         flags |= FileInfo::ENCRYPTED;
                     }
@@ -870,14 +868,14 @@ namespace filesystem {
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const DirFileHeader* ptrFile = m_folders.file(filename);
-            if (!ptrFile)
+            const DirFileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (!ptrHeader)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
-            const DirFileHeader& file = *ptrFile;
-            return mmap(file, m_parent_memory.address, m_password);
+            const DirFileHeader& header = *ptrHeader;
+            return mmap(header, m_parent_memory.address, m_password);
         }
     };
 

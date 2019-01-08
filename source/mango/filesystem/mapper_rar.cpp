@@ -696,10 +696,10 @@ namespace filesystem {
 
         bool isFile(const std::string& filename) const override
         {
-            const FileHeader* ptrFile = m_folders.file(filename);
-            if (ptrFile)
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (ptrHeader)
             {
-                return !ptrFile->folder;
+                return !ptrHeader->folder;
             }
             return false;
         }
@@ -708,27 +708,25 @@ namespace filesystem {
         {
             printf("getIndex: %s\n", pathname.c_str());
 
-            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.folder(pathname);
+            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (auto i : ptrFolder->files)
+                for (const auto& header : ptrFolder->headers)
                 {
-                    const FileHeader& file = i.second;
-                    std::string filename = i.first;
-
+                    std::string filename = header.filename;
                     filename = filename.substr(pathname.length());
 
                     u32 flags = 0;
-                    u64 size = file.unpacked_size;
+                    u64 size = header.unpacked_size;
 
-                    if (file.folder)
+                    if (header.folder)
                     {
                         flags |= FileInfo::DIRECTORY;
                         size = 0;
                         filename += "/";
                     }
 
-                    if (file.compressed())
+                    if (header.compressed())
                     {
                         flags |= FileInfo::COMPRESSED;
                     }
@@ -745,13 +743,13 @@ namespace filesystem {
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const FileHeader* ptrFile = m_folders.file(filename);
-            if (!ptrFile)
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (!ptrHeader)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
-            const FileHeader& header = *ptrFile;
+            const FileHeader& header = *ptrHeader;
             return header.mmap();
         }
     };

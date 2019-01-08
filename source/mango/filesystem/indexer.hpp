@@ -11,51 +11,53 @@
 namespace mango {
 namespace filesystem {
 
-    template <typename T>
+    template <typename Header>
     class Indexer
     {
     public:
         struct Folder
         {
-            std::map<std::string, T> files;
+            std::map<std::string, int> index;
+            std::vector<Header> headers;
         };
 
     protected:
         std::map<std::string, Folder> folders;
 
     public:
-        void insert(const std::string& folder, const std::string& filename, const T& file)
+        void insert(const std::string& folder, const std::string& filename, const Header& header)
         {
-            folders[folder].files[filename] = file;
+            Folder& f = folders[folder];
+            f.index[filename] = int(f.headers.size());
+            f.headers.push_back(header);
         }
 
-        const T* file(const std::string& filename) const
+        const Folder* getFolder(const std::string& pathname) const
         {
-            const T* result = nullptr;
+            const Folder* result = nullptr; // default: not found
 
-            std::string pathname = getPath(filename);
-            auto iPath = folders.find(pathname);
-            if (iPath != folders.end())
+            auto i = folders.find(pathname);
+            if (i != folders.end())
             {
-                const Folder& folder = iPath->second;
-                auto iFile = folder.files.find(filename);
-                if (iFile != folder.files.end())
-                {
-                    result = &iFile->second;
-                }
+                result = &i->second;
             }
 
             return result;
         }
 
-        const Folder* folder(const std::string& pathname) const
+        const Header* getHeader(const std::string& filename) const
         {
-            const Folder* result = nullptr;
+            const Header* result = nullptr; // default: not found
 
-            auto iPath = folders.find(pathname);
-            if (iPath != folders.end())
+            std::string pathname = getPath(filename);
+            const Folder* folder = getFolder(pathname);
+            if (folder)
             {
-                result = &iPath->second;
+                auto i = folder->index.find(filename);
+                if (i != folder->index.end())
+                {
+                    result = &folder->headers[i->second];
+                }
             }
 
             return result;
