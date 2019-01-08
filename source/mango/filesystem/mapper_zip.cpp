@@ -586,47 +586,21 @@ namespace filesystem {
                     // read file headers
                     LittleEndianPointer p = parent.address + record.dirStartOffset;
 
-                    std::vector<DirFileHeader> headers;
-
                     for (int i = 0; i < numFiles; ++i)
                     {
                         DirFileHeader header;
                         if (header.read(p))
                         {
-                            headers.push_back(header);
-                        }
-                    }
+                            std::string filename = header.filename;
+                            while (!filename.empty())
+                            {
+                                std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
-                    // find common prefix
-                    size_t maxPrefix = headers[0].filename.length();
-
-                    for (size_t i = 1; i < headers.size(); ++i)
-                    {
-                        size_t pos = 0;
-                        for( ; pos < maxPrefix && 
-                               pos < headers[i].filename.length() && 
-                               headers[0].filename[pos] == headers[i].filename[pos]; pos++)
-                        {
-                        }
-
-                        maxPrefix = pos;
-                    }
-
-                    std::string prefix = headers[0].filename.substr(0, maxPrefix);
-                    prefix = getPath(prefix);
-
-                    // store headers in a map
-                    for (auto& header : headers)
-                    {
-                        header.filename = removePrefix(header.filename, prefix);
-
-                        if (header.filename.length() > 0)
-                        {
-                            std::string folder = header.is_folder ?
-                                getPath(header.filename.substr(0, header.filename.length() - 1)) :
-                                getPath(header.filename);
-
-                            m_folders.insert(folder, header.filename, header);
+                                header.filename = filename;
+                                m_folders.insert(folder, header.filename, header);
+                                header.is_folder = true;
+                                filename = folder;
+                            }
                         }
                     }
                 }

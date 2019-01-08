@@ -33,6 +33,9 @@ namespace filesystem {
     public:
         void insert(const std::string& folder, const std::string& filename, const Header& header)
         {
+            if (getHeader(filename))
+                return;
+
             Folder& f = folders[folder];
 
             HeaderIndex h;

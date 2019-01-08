@@ -452,36 +452,17 @@ namespace filesystem {
                 MANGO_EXCEPTION(ID"Incorrect signature.");
             }
 
-            // find common prefix
-            size_t maxPrefix = m_files[0].filename.length();
-
-            for (size_t i = 1; i < m_files.size(); ++i)
-            {
-                size_t pos = 0;
-                for( ; pos < maxPrefix && 
-                        pos < m_files[i].filename.length() && 
-                        m_files[0].filename[pos] == m_files[i].filename[pos]; pos++)
-                {
-                }
-
-                maxPrefix = pos;
-            }
-
-            std::string prefix = m_files[0].filename.substr(0, maxPrefix);
-            prefix = getPath(prefix);
-
-            // store headers in a map
             for (auto& header : m_files)
             {
-                header.filename = removePrefix(header.filename, prefix);
-
-                if (header.filename.length() > 0)
+                std::string filename = header.filename;
+                while (!filename.empty())
                 {
-                    std::string folder = header.folder ?
-                        getPath(header.filename.substr(0, header.filename.length() - 1)) :
-                        getPath(header.filename);
+                    std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
+                    header.filename = filename;
                     m_folders.insert(folder, header.filename, header);
+                    header.folder = true;
+                    filename = folder;
                 }
             }
         }
@@ -518,6 +499,10 @@ namespace filesystem {
                             file.data = p;
 
                             file.filename = header.filename;
+                            if (file.folder)
+                            {
+                                file.filename += "/";
+                            }
                             m_files.push_back(file);
                         }
                         else
@@ -629,6 +614,11 @@ namespace filesystem {
             file.data = compressed_data.address;
 
             file.filename = filename;
+            if (file.folder)
+            {
+                file.filename += "/";
+            }
+
             m_files.push_back(file);
         }
 
@@ -723,7 +713,6 @@ namespace filesystem {
                     {
                         flags |= FileInfo::DIRECTORY;
                         size = 0;
-                        filename += "/";
                     }
 
                     if (header.compressed())
