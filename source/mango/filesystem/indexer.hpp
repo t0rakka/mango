@@ -21,29 +21,29 @@ namespace filesystem {
         };
 
     protected:
-        struct HeaderIndex
+        struct File
         {
             Folder* folder;
             int index;
         };
 
         std::map<std::string, Folder> folders;
-        std::map<std::string, HeaderIndex> indices;
+        std::map<std::string, File> files;
 
     public:
-        void insert(const std::string& folder, const std::string& filename, const Header& header)
+        void insert(const std::string& foldername, const std::string& filename, const Header& header)
         {
             if (getHeader(filename))
                 return;
 
-            Folder& f = folders[folder];
+            Folder& folder = folders[foldername];
 
-            HeaderIndex h;
-            h.folder = &f;
-            h.index = int(f.headers.size());
+            File file;
+            file.folder = &folder;
+            file.index = int(folder.headers.size());
+            folder.headers.push_back(header);
 
-            indices[filename] = h;
-            f.headers.push_back(header);
+            files[filename] = file;
         }
 
         const Folder* getFolder(const std::string& pathname) const
@@ -63,11 +63,11 @@ namespace filesystem {
         {
             const Header* result = nullptr; // default: not found
 
-            auto i = indices.find(filename);
-            if (i != indices.end())
+            auto i = files.find(filename);
+            if (i != files.end())
             {
-                const HeaderIndex& h = i->second;
-                result = &h.folder->headers[h.index];
+                const File& file = i->second;
+                result = &file.folder->headers[file.index];
             }
 
             return result;
