@@ -5,8 +5,8 @@
 #pragma once
 
 #include <string>
+#include <set>
 #include <map>
-#include <mango/core/string.hpp>
 
 namespace mango {
 namespace filesystem {
@@ -17,33 +17,21 @@ namespace filesystem {
     public:
         struct Folder
         {
-            std::vector<Header> headers;
+            std::set<Header *> headers;
         };
 
     protected:
-        struct File
-        {
-            Folder* folder;
-            int index;
-        };
-
         std::map<std::string, Folder> folders;
-        std::map<std::string, File> files;
+        std::map<std::string, Header> headers;
 
     public:
         void insert(const std::string& foldername, const std::string& filename, const Header& header)
         {
-            if (getHeader(filename))
-                return;
+            Header* ptr = &headers[filename];
+            *ptr = header;
 
             Folder& folder = folders[foldername];
-
-            File file;
-            file.folder = &folder;
-            file.index = int(folder.headers.size());
-            folder.headers.push_back(header);
-
-            files[filename] = file;
+            folder.headers.emplace(ptr);
         }
 
         const Folder* getFolder(const std::string& pathname) const
@@ -63,11 +51,10 @@ namespace filesystem {
         {
             const Header* result = nullptr; // default: not found
 
-            auto i = files.find(filename);
-            if (i != files.end())
+            auto i = headers.find(filename);
+            if (i != headers.end())
             {
-                const File& file = i->second;
-                result = &file.folder->headers[file.index];
+                result = &i->second;
             }
 
             return result;

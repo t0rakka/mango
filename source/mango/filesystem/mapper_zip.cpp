@@ -156,7 +156,7 @@ namespace
         }
 	};
 
-	struct DirFileHeader
+	struct FileHeader
 	{
 		uint32	signature;         // 0x02014b50
 		uint16	versionUsed;       //
@@ -570,7 +570,7 @@ namespace filesystem {
     public:
         Memory m_parent_memory;
         std::string m_password;
-        Indexer<DirFileHeader> m_folders;
+        Indexer<FileHeader> m_folders;
 
         MapperZIP(Memory parent, const std::string& password)
             : m_parent_memory(parent)
@@ -588,7 +588,7 @@ namespace filesystem {
 
                     for (int i = 0; i < numFiles; ++i)
                     {
-                        DirFileHeader header;
+                        FileHeader header;
                         if (header.read(p))
                         {
                             std::string filename = header.filename;
@@ -596,8 +596,8 @@ namespace filesystem {
                             {
                                 std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
-                                header.filename = filename;
-                                m_folders.insert(folder, header.filename, header);
+                                header.filename = filename.substr(folder.length());
+                                m_folders.insert(folder, filename, header);
                                 header.is_folder = true;
                                 filename = folder;
                             }
@@ -611,7 +611,7 @@ namespace filesystem {
         {
         }
 
-        VirtualMemory* mmap(const DirFileHeader& header, uint8* start, const std::string& password)
+        VirtualMemory* mmap(const FileHeader& header, uint8* start, const std::string& password)
         {
             LittleEndianPointer p = start + header.localOffset;
 
@@ -798,7 +798,7 @@ namespace filesystem {
 
         bool isFile(const std::string& filename) const override
         {
-            const DirFileHeader* ptrHeader = m_folders.getHeader(filename);
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (ptrHeader)
             {
                 return !ptrHeader->is_folder;
@@ -808,13 +808,12 @@ namespace filesystem {
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const Indexer<DirFileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
+            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (const auto& header : ptrFolder->headers)
+                for (auto i : ptrFolder->headers)
                 {
-                    std::string filename = header.filename;
-                    filename = filename.substr(pathname.length());
+                    const FileHeader& header = *i;
 
                     u32 flags = 0;
                     u64 size = header.uncompressedSize;
@@ -835,20 +834,20 @@ namespace filesystem {
                         flags |= FileInfo::ENCRYPTED;
                     }
 
-                    index.emplace(filename, size, flags);
+                    index.emplace(header.filename, size, flags);
                 }
             }
         }
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            const DirFileHeader* ptrHeader = m_folders.getHeader(filename);
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
                 MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
             }
 
-            const DirFileHeader& header = *ptrHeader;
+            const FileHeader& header = *ptrHeader;
             return mmap(header, m_parent_memory.address, m_password);
         }
     };

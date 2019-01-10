@@ -134,16 +134,16 @@ namespace
             u32 num_files = p.read32();
             for (u32 i = 0; i < num_files; ++i)
             {
-                FileHeader file;
+                FileHeader header;
 
                 u32 length = p.read32();
                 const u8* ptr = p;
                 std::string filename(reinterpret_cast<const char *>(ptr), length);
                 p += length;
 
-                file.size = p.read64();
-                file.checksum = p.read32();
-                file.is_compressed = false;
+                header.size = p.read64();
+                header.checksum = p.read32();
+                header.is_compressed = false;
 
                 u32 num_segment = p.read32();
                 for (u32 j = 0; j < num_segment; ++j)
@@ -151,7 +151,7 @@ namespace
                     u32 block_idx = p.read32();
                     u32 offset = p.read32();
                     u32 size = p.read32();
-                    file.segments.push_back({block_idx, offset, size});
+                    header.segments.push_back({block_idx, offset, size});
 
                     // inspect block
                     Block& block = m_blocks[block_idx];
@@ -159,16 +159,16 @@ namespace
                     {
                         // if ANY of the blocks in the file segments is compressed
                         // the whole file is considered compressed (= cannot be mapped directly)
-                        file.is_compressed = true;
+                        header.is_compressed = true;
                     }
                 }
 
-                std::string folder = file.isFolder() ?
+                std::string folder = header.isFolder() ?
                     fs::getPath(filename.substr(0, length - 1)) :
                     fs::getPath(filename);
 
-                file.filename = filename;
-                m_folders.insert(folder, filename, file);
+                header.filename = filename.substr(folder.length());
+                m_folders.insert(folder, filename, header);
             }
 
             u32 magic3 = p.read32();
@@ -238,25 +238,23 @@ namespace filesystem {
             const Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (const auto& file : ptrFolder->headers)
+                for (auto i : ptrFolder->headers)
                 {
-                    std::string filename = file.filename;
-
-                    filename = filename.substr(pathname.length());
+                    const FileHeader& header = *i;
 
                     u32 flags = 0;
 
-                    if (file.isFolder())
+                    if (header.isFolder())
                     {
                         flags |= FileInfo::DIRECTORY;
                     }
 
-                    if (file.isCompressed())
+                    if (header.isCompressed())
                     {
                         flags |= FileInfo::COMPRESSED;
                     }
 
-                    index.emplace(filename, file.size, flags);
+                    index.emplace(header.filename, header.size, flags);
                 }
             }
         }

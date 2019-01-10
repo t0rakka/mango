@@ -459,8 +459,8 @@ namespace filesystem {
                 {
                     std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
-                    header.filename = filename;
-                    m_folders.insert(folder, header.filename, header);
+                    header.filename = filename.substr(folder.length());
+                    m_folders.insert(folder, filename, header);
                     header.folder = true;
                     filename = folder;
                 }
@@ -696,15 +696,12 @@ namespace filesystem {
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            printf("getIndex: %s\n", pathname.c_str());
-
             const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
-                for (const auto& header : ptrFolder->headers)
+                for (auto i : ptrFolder->headers)
                 {
-                    std::string filename = header.filename;
-                    filename = filename.substr(pathname.length());
+                    const FileHeader& header = *i;
 
                     u32 flags = 0;
                     u64 size = header.unpacked_size;
@@ -725,7 +722,7 @@ namespace filesystem {
                         flags |= FileInfo::ENCRYPTED;
                     }
 
-                    index.emplace(filename, size, flags);
+                    index.emplace(header.filename, size, flags);
                 }
             }
         }
