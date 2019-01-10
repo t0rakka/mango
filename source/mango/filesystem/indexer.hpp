@@ -29,9 +29,7 @@ namespace filesystem {
         {
             Header* ptr = &headers[filename];
             *ptr = header;
-
-            Folder& folder = folders[foldername];
-            folder.headers.emplace(ptr);
+            folders[foldername].headers.emplace(ptr);
         }
 
         const Folder* getFolder(const std::string& pathname) const
