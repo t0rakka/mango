@@ -51,6 +51,7 @@ namespace filesystem {
     {
         MapperExtension(".zip", createMapperZIP),
         MapperExtension(".cbz", createMapperZIP),
+        MapperExtension(".apk", createMapperZIP),
         MapperExtension(".zipx", createMapperZIP),
 
         MapperExtension(".mgx", createMapperMGX),
