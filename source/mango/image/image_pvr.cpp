@@ -10,7 +10,8 @@
 //#define ENABLE_PVR_DEBUG
 #define ID "[ImageDecoder.PVR] "
 
-// TODO: add support for pvr header v2
+// http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.Legacy.pdf
+// http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.pdf
 
 namespace
 {
@@ -195,27 +196,280 @@ namespace
         int m_surfaces;
         int m_faces;
         int m_mipmaps;
-        int m_dataOffset;
+        int m_data_offset;
         TextureCompressionInfo m_info;
 
         void read(Memory memory)
         {
+            LittleEndianPointer p = memory.address;
+
+            u32 magic = p.read32();
+            switch (magic)
+            {
+                case 44:
+                case 52:
+                    // version 1 and 2
+                    parse_legacy(memory);
+                    break;
+                case 0x03525650:
+                    // version 3, same endianess
+                    parse_version3(memory, false);
+                    break;
+                case 0x50565203:
+                    // version 3, different endianess
+                    parse_version3(memory, true);
+                    break;
+                default:
+                    MANGO_EXCEPTION(ID"Incorrect format version: 0x%x", magic);
+                    break;
+            }
+        }
+
+        void parse_legacy(Memory memory)
+        {
+            LittleEndianPointer p = memory.address;
+
+            u32 header_size = p.read32();
+            m_height = p.read32();
+            m_width = p.read32();
+            m_mipmaps = p.read32() + 1;
+
+            u32 flags = p.read32();
+            u8 fmt = flags & 0xff;
+
+#if 0
+            0x00000100  MIP-Maps are present 
+            0x00000200  Data is twiddled     
+            0x00000400  Contains normal data 
+            0x00000800  Has a border         
+            0x00001000  Is a cube map (Every 6 surfaces make up one cube map) 
+            0x00002000  MIP-Maps have debug colouring    
+            0x00004000  Is a volume (3D) texture (numSurfaces is interpreted as a depth value)  
+            0x00008000  Alpha channel data is present (PVRTC only) 
+#endif
+
+#ifdef ENABLE_PVR_DEBUG
+            printf("flags: 0x%x\n", flags);
+            printf("format: 0x%x\n", fmt);
+#endif
+
+            // compressed block default values
+            TextureCompression compression = TextureCompression::NONE;
+
+            Format format;
+
+            // NOTE: these has NOT been tested
+
+            switch (fmt)
+            {
+                case 0x00: // ARGB 4444
+                    format = Format(16, Format::UNORM, Format::ARGB, 4, 4, 4, 4);
+                    break;
+                case 0x01: // ARGB 1555
+                    format = Format(16, Format::UNORM, Format::ARGB, 1, 5, 5, 5);
+                    break;
+                case 0x02: // RGB 565
+                    format = Format(16, Format::UNORM, Format::RGB, 5, 6, 5, 0);
+                    break;
+                case 0x03: // RGB 555
+                    format = Format(16, Format::UNORM, Format::RGB, 5, 5, 5, 0);
+                    break;
+                case 0x04: // RGB 888
+                    format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
+                    break;
+                case 0x05: // ARGB 8888
+                    format = Format(32, Format::UNORM, Format::ARGB, 8, 8, 8, 8);
+                    break;
+                case 0x06: // ARGB 8332
+                    format = Format(16, Format::UNORM, Format::ARGB, 8, 3, 3, 2);
+                    break;
+                case 0x07: // I 8
+                    format = Format(8, 0xff, 0);
+                    break;
+                case 0x08: // AI 88
+                    format = Format(16, 0x00ff, 0xff00);
+                    break;
+                case 0x09: // 1BPP
+                    // TODO
+                    break;
+                case 0x0A: // (V,Y1,U,Y0)
+                    // TODO
+                    break;
+                case 0x0B: // (Y1,V,Y0,U)
+                    // TODO
+                    break;
+                case 0x0C: // PVRTC2
+                    compression = TextureCompression::PVRTC_RGBA_2BPP;
+                    break;
+                case 0x0D: // PVRTC4
+                    compression = TextureCompression::PVRTC_RGBA_4BPP;
+                    break;
+                case 0x10: // ARGB 4444
+                    format = Format(16, Format::UNORM, Format::ARGB, 4, 4, 4, 4);
+                    break;
+                case 0x11: // ARGB 1555
+                    format = Format(16, Format::UNORM, Format::ARGB, 1, 5, 5, 5);
+                    break;
+                case 0x12: // ARGB 8888
+                    format = Format(32, Format::UNORM, Format::ARGB, 8, 8, 8, 8);
+                    break;
+                case 0x13: // RGB 565
+                    format = Format(16, Format::UNORM, Format::RGB, 5, 6, 5, 0);
+                    break;
+                case 0x14: // RGB 555
+                    format = Format(16, Format::UNORM, Format::RGB, 5, 5, 5, 0);
+                    break;
+                case 0x15: // RGB 888
+                    format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
+                    break;
+                case 0x16: // I 8
+                    format = Format(8, 0xff, 0);
+                    break;
+                case 0x17: // AI 88
+                    format = Format(16, 0x00ff, 0xff00);
+                    break;
+                case 0x18: // PVRTC2
+                    compression = TextureCompression::PVRTC_RGBA_2BPP;
+                    break;
+                case 0x19: // PVRTC4
+                    compression = TextureCompression::PVRTC_RGBA_4BPP;
+                    break;
+                case 0x1A: // BGRA 8888
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    break;
+                case 0x20: // DXT1
+                    compression = TextureCompression::DXT1;
+                    break;
+                case 0x21: // DXT2
+                    compression = TextureCompression::DXT1;
+                    break;
+                case 0x22: // DXT3
+                    compression = TextureCompression::DXT3;
+                    break;
+                case 0x23: // DXT4
+                    compression = TextureCompression::DXT3;
+                    break;
+                case 0x24: // DXT5
+                    compression = TextureCompression::DXT5;
+                    break;
+                case 0x25: // RGB 332
+                    format = Format(8, Format::UNORM, Format::RGB, 3, 3, 2, 0);
+                    break;
+                case 0x26: // AL 44
+                    format = Format(8, 0x0f, 0xf0);
+                    break;
+                case 0x27: // LVU 655
+                    // TODO
+                    break;
+                case 0x28: // XLVU 8888
+                    // TODO
+                    break;
+                case 0x29: // QWVU 8888
+                    // TODO
+                    break;
+                case 0x2A: // ABGR 2101010
+                    format = Format(32, Format::UNORM, Format::ABGR, 2, 10, 10, 10);
+                    break;
+                case 0x2B: // ARGB 2101010
+                    format = Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10);
+                    break;
+                case 0x2C: // AWVU 2101010
+                    // TODO
+                    break;
+                case 0x2D: // GR 1616
+                    // TODO
+                    break;
+                case 0x2E: // VU 1616
+                    // TODO
+                    break;
+                case 0x2F: // ABGR 16161616
+                    // TODO
+                    break;
+                case 0x30: // R 16F
+                    format = Format(16, Format::FP16, Format::R, 16, 0, 0, 0);
+                    break;
+                case 0x31: // GR 1616F
+                    format = Format(32, Format::FP16, Format::RG, 16, 16, 0, 0);
+                    break;
+                case 0x32: // ABGR 16161616F
+                    format = Format(64, Format::FP16, Format::RGBA, 16, 16, 16, 16);
+                    break;
+                case 0x33: // R 32F
+                    format = Format(32, Format::FP32, Format::R, 32, 0, 0, 0);
+                    break;
+                case 0x34: // GR 3232F
+                    format = Format(64, Format::FP32, Format::RG, 32, 32, 0, 0);
+                    break;
+                case 0x35: // ABGR 32323232F
+                    format = Format(128, Format::FP32, Format::RGBA, 32, 32, 32, 32);
+                    break;
+                case 0x36: // ETC
+                    compression = TextureCompression::ETC1_RGB;
+                    break;
+                case 0x40: // A 8
+                    format = Format(8, Format::UNORM, Format::A, 8, 0, 0, 0);
+                    break;
+                case 0x41: // VU 88
+                    // TODO
+                    break;
+                case 0x42: // L16
+                    format = Format(16, 0xffff, 0);
+                    break;
+                case 0x43: // L8
+                    format = Format(8, 0xff, 0);
+                    break;
+                case 0x44: // AL 88
+                    format = Format(16, 0x00ff, 0xff00);
+                    break;
+                case 0x45: // UYVY
+                    // TODO
+                    break;
+                case 0x46: // YUY2
+                    // TODO
+                    break;
+            }
+
+            u32 surface_size = p.read32();
+            u32 bits_per_pixel = p.read32();
+
+            MANGO_UNREFERENCED_PARAMETER(surface_size);
+            MANGO_UNREFERENCED_PARAMETER(bits_per_pixel);
+
+            u32 mask[4];
+            mask[0] = p.read32();
+            mask[1] = p.read32();
+            mask[2] = p.read32();
+            mask[3] = p.read32();
+
+            if (header_size == 52)
+            {
+                u32 identifier = p.read32();
+                u32 number_of_surfaces = p.read32();
+
+                MANGO_UNREFERENCED_PARAMETER(number_of_surfaces);
+
+                if (identifier != 0x21525650)
+                {
+                    MANGO_EXCEPTION(ID"Incorrect format identifier: 0x%x", identifier);
+                }
+            }
+
+            m_depth = 1;
+            m_surfaces = 1;
+            m_faces = 1;
+            m_data_offset = header_size;
+
+            m_info = TextureCompressionInfo(compression);
+            m_info.format = format;
+        }
+
+        void parse_version3(Memory memory, bool swap_header)
+        {
             pvr_header3_t pvr;
-
             std::memcpy(&pvr, memory.address, sizeof(pvr));
-
-            if (pvr.version == 0x03525650)
+            if (swap_header)
             {
-                // same endian
-            }
-            else if (pvr.version == 0x50565203)
-            {
-                // different endian
                 pvr.byteswap_header();
-            }
-            else
-            {
-                MANGO_EXCEPTION(ID"Incorrect header version: 0x%x", pvr.version);
             }
 
             if (pvr.flags & 0x02)
@@ -239,7 +493,7 @@ namespace
             if (pvr.pixelformat & 0xffffffff00000000)
             {
                 m_info.format = eightcc_to_format(pvr.pixelformat);
-#if ENABLE_PVR_DEBUG
+#ifdef ENABLE_PVR_DEBUG
                 printf("eightcc format: %d (%d,%d,%d,%d)\n", m_info.format.bits,
                     m_info.format.size[0],
                     m_info.format.size[1],
@@ -252,7 +506,7 @@ namespace
                 const int formatIndex = int(pvr.pixelformat);
                 if (formatIndex < formatTableSize)
                 {
-#if ENABLE_PVR_DEBUG
+#ifdef ENABLE_PVR_DEBUG
                     printf("pvr.pixelformat: %d \n", formatIndex);
 #endif
                     // TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
@@ -301,12 +555,12 @@ namespace
                     MANGO_EXCEPTION(ID"Incorrect colorspace: %d", pvr.colorspace);
             }
 
-            m_dataOffset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
+            m_data_offset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
         }
 
         Memory getMemory(Memory memory, int level, int depth, uint32 face) const
         {
-            uint8* p = memory.address + m_dataOffset;
+            uint8* p = memory.address + m_data_offset;
 
             Memory data;
 
