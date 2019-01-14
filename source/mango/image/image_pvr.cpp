@@ -7,50 +7,59 @@
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
+//#define ENABLE_PVR_DEBUG
 #define ID "[ImageDecoder.PVR] "
 
 // TODO: add support for pvr header v2
 
 namespace
 {
-
     using namespace mango;
 
     // ----------------------------------------------------------------------------
     // EightCC
     // ----------------------------------------------------------------------------
 
-    Format eightcc_to_format(uint64 eightcc)
+    Format eightcc_to_format(u64 eightcc)
     {
-        char* p = reinterpret_cast<char*>(&eightcc);
-
-        int order[4];
-        PackedColor size;
-        PackedColor offset;
-
-        for (int i = 0; i < 4; ++i)
+        const u8 cc_order[4] =
         {
-            int index;
-            switch (p[3 - i])
-            {
-                default:
-                case 'r': index = 0; break;
-                case 'g': index = 1; break;
-                case 'b': index = 2; break;
-                case 'a': index = 3; break;
-            }
+            u8(eightcc >>  0),
+            u8(eightcc >>  8),
+            u8(eightcc >> 16),
+            u8(eightcc >> 24),
+        };
 
-            order[i] = index;
-            size[index] = p[7 - i];
-        }
+        const u8 cc_size[4] =
+        {
+            u8(eightcc >> 32),
+            u8(eightcc >> 40),
+            u8(eightcc >> 48),
+            u8(eightcc >> 56),
+        };
 
+        PackedColor size = 0;
+        PackedColor offset = 0;
         int bits = 0;
 
         for (int i = 0; i < 4; ++i)
         {
-            int component = order[i];
-            offset[component] = uint8(bits);
-            bits += size[component];
+            int index;
+            switch (cc_order[i])
+            {
+                case 'r': index = 0; break;
+                case 'g': index = 1; break;
+                case 'b': index = 2; break;
+                case 'a': index = 3; break;
+                default: index = -1; break;
+            }
+
+            if (index >= 0)
+            {
+                offset[index] = bits;
+                size[index] = cc_size[i];
+                bits += cc_size[i];
+            }
         }
 
         bits = round_to_next(bits, 8) * 8;
@@ -206,7 +215,7 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Incorrect header version.");
+                MANGO_EXCEPTION(ID"Incorrect header version: 0x%x", pvr.version);
             }
 
             if (pvr.flags & 0x02)
@@ -224,19 +233,30 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Incorrect channeltype.");
+                MANGO_EXCEPTION(ID"Incorrect channeltype: %d", int(pvr.channeltype));
             }
 
             if (pvr.pixelformat & 0xffffffff00000000)
             {
                 m_info.format = eightcc_to_format(pvr.pixelformat);
+#if ENABLE_PVR_DEBUG
+                printf("eightcc format: %d (%d,%d,%d,%d)\n", m_info.format.bits,
+                    m_info.format.size[0],
+                    m_info.format.size[1],
+                    m_info.format.size[2],
+                    m_info.format.size[3]);
+#endif
             }
             else
             {
-                if (int(pvr.pixelformat) < formatTableSize)
+                const int formatIndex = int(pvr.pixelformat);
+                if (formatIndex < formatTableSize)
                 {
+#if ENABLE_PVR_DEBUG
+                    printf("pvr.pixelformat: %d \n", formatIndex);
+#endif
                     // TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
-                    TextureCompression compression = formatTable[pvr.pixelformat];
+                    TextureCompression compression = formatTable[formatIndex];
 
                     TextureCompressionInfo info(compression);
 
@@ -248,7 +268,7 @@ namespace
                 }
                 else
                 {
-                    MANGO_EXCEPTION(ID"Incorrect pixelformat.");
+                    MANGO_EXCEPTION(ID"Incorrect pixelformat: %d", formatIndex);
                 }
             }
 
@@ -266,7 +286,7 @@ namespace
 
             if (m_faces != 1 && m_faces != 6)
             {
-                MANGO_EXCEPTION(ID"Incorrect number of faces.");
+                MANGO_EXCEPTION(ID"Incorrect number of faces: %d", m_faces);
             }
 
             switch (pvr.colorspace)
@@ -278,7 +298,7 @@ namespace
                     // NOTE: sRGB
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect colorspace.");
+                    MANGO_EXCEPTION(ID"Incorrect colorspace: %d", pvr.colorspace);
             }
 
             m_dataOffset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
@@ -329,22 +349,22 @@ namespace
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
-    
+
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
         HeaderPVR m_header;
-        
+
         Interface(Memory memory)
             : m_memory(memory)
         {
             m_header.read(memory);
         }
-        
+
         ~Interface()
         {
         }
-        
+
         ImageHeader header() override
         {
             ImageHeader header;
@@ -377,7 +397,7 @@ namespace
 
             if (m_header.m_info.compression == TextureCompression::NONE)
             {
-                int stride = width * m_header.m_info.bytes; // .pvr parser stores bytesPerPixel in block information
+                int stride = width * m_header.m_info.format.bytes();
                 Surface source(width, height, m_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
             }
