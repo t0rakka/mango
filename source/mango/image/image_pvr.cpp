@@ -255,10 +255,9 @@ namespace
 
             // compressed block default values
             TextureCompression compression = TextureCompression::NONE;
-
             Format format;
 
-            // NOTE: these has NOT been tested
+            // NOTE: these have NOT been tested
 
             switch (fmt)
             {
