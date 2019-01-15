@@ -440,6 +440,7 @@ namespace
             mask[1] = p.read32();
             mask[2] = p.read32();
             mask[3] = p.read32();
+            MANGO_UNREFERENCED_PARAMETER(mask);
 
             if (header_size == 52)
             {
