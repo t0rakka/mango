@@ -37,7 +37,9 @@ namespace filesystem {
         std::thread m_thread;
 
         FileObserverState(FileObserver* observer, int notify, int watch)
-        : m_observer(observer), m_notify(notify), m_watch(watch)
+            : m_observer(observer)
+            , m_notify(notify)
+            , m_watch(watch)
         {
             // launch inotify handler in it's own thread
             m_thread = std::thread([] (FileObserver* observer, int notify, int watch)
@@ -147,7 +149,7 @@ namespace filesystem {
     // -----------------------------------------------------------------
 
 	FileObserver::FileObserver()
-    : m_state(NULL)
+        : m_state(nullptr)
 	{
 	}
 
@@ -180,7 +182,7 @@ namespace filesystem {
         if (m_state)
         {
             delete m_state;
-            m_state = NULL;
+            m_state = nullptr;
         }
     }
 
@@ -190,7 +192,7 @@ namespace filesystem {
 #elif defined(MANGO_PLATFORM_BSD) || defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS)
 
 // -----------------------------------------------------------------
-// FileObserver: BSD, OS X and iOS implementation
+// FileObserver: BSD, macOS and iOS implementation
 // Uses BSD/MACH Kernel kqueue interface
 // 
 // -----------------------------------------------------------------
@@ -209,7 +211,7 @@ namespace filesystem {
         std::thread m_thread;
 
         FileObserverState(const std::string& pathname, FileObserver* observer)
-        : m_kqueue(0)
+            : m_kqueue(0)
         {
             m_kqueue = kqueue();
             int dirfd = open(pathname.c_str(), O_RDONLY);
@@ -263,7 +265,7 @@ namespace filesystem {
     // -----------------------------------------------------------------
 
     FileObserver::FileObserver()
-    : m_state(NULL)
+        : m_state(nullptr)
     {
     }
 
@@ -283,7 +285,7 @@ namespace filesystem {
         if (m_state)
         {
             delete m_state;
-            m_state = NULL;
+            m_state = nullptr;
         }
     }
 
@@ -302,7 +304,7 @@ namespace mango {
 namespace filesystem {
 
     FileObserver::FileObserver()
-    : m_state(NULL)
+        : m_state(nullptr)
     {
     }
 

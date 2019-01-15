@@ -101,7 +101,7 @@ namespace filesystem {
         }
 
         FileObserverState(FileObserver* observer, const std::string& u8pathname)
-        : m_started(false)
+            : m_started(false)
         {
             m_directory[0] = INVALID_HANDLE_VALUE;
             m_directory[1] = INVALID_HANDLE_VALUE;
@@ -226,7 +226,7 @@ namespace filesystem {
     // -----------------------------------------------------------------
 
 	FileObserver::FileObserver()
-    : m_state(NULL)
+        : m_state(nullptr)
 	{
 	}
 
@@ -246,7 +246,7 @@ namespace filesystem {
         if (m_state)
         {
             delete m_state;
-            m_state = NULL;
+            m_state = nullptr;
         }
     }
 
