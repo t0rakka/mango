@@ -4,6 +4,7 @@
 */
 #include <mango/core/aes.hpp>
 #include <mango/core/cpuinfo.hpp>
+#include <mango/core/exception.hpp>
 #include "../../external/aes/bc_aes.h"
 
 namespace
@@ -474,6 +475,11 @@ AES::~AES()
 
 void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
 {
+    if (length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
+
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
@@ -491,6 +497,11 @@ void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
 
 void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
 {
+    if (length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
+
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
@@ -508,6 +519,11 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
 
 void AES::cbc_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
+    if (length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
+
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
@@ -522,6 +538,11 @@ void AES::cbc_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 
 void AES::cbc_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
+    if (length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
+
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
@@ -536,20 +557,33 @@ void AES::cbc_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
 
 void AES::ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
+    if (length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
     aes_encrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
 }
 
 void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
+    if (length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
     aes_decrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
 }
 
 void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
 {
     aes_u32 cipher_length = aes_u32(output.size);
+    if (cipher_length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
+
     aes_encrypt_ccm(input.address, aes_u32(input.size),
-                    associated.address, uint16(associated.size),
-                    nonce.address, uint16(nonce.size),
+                    associated.address, u16(associated.size),
+                    nonce.address, u16(nonce.size),
                     output.address, &cipher_length, mac_length,
                     m_schedule->w, m_bits);
 }
@@ -557,10 +591,15 @@ void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory non
 void AES::ccm_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
 {
     aes_u32 plaintext_length = aes_u32(output.size);
+    if (plaintext_length & 15)
+    {
+        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+    }
+
     int mac_authorized = 0;
     aes_decrypt_ccm(input.address, aes_u32(input.size),
-                    associated.address, uint16(associated.size),
-                    nonce.address, uint16(nonce.size),
+                    associated.address, u16(associated.size),
+                    nonce.address, u16(nonce.size),
                     output.address, &plaintext_length,
                     mac_length, &mac_authorized,
                     m_schedule->w, m_bits);
