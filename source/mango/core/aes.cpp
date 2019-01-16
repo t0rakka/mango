@@ -455,6 +455,18 @@ AES::AES(const u8* key, int bits)
     : m_schedule(new KeyScheduleAES())
     , m_bits(bits)
 {
+    // check key length
+    switch (bits)
+    {
+        case 128:
+        case 192:
+        case 256:
+            break;
+        default:
+            MANGO_EXCEPTION("[AES] Incorrect encryption key length: %d", bits);
+            break;
+    }
+
 #if defined(MANGO_ENABLE_AES)
     m_schedule->aes_supported = (getCPUFlags() & CPU_AES) != 0;
     if (m_schedule->aes_supported)
