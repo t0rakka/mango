@@ -45,17 +45,25 @@ namespace mango
         AES(const u8* key, int bits);
         ~AES();
 
+        // block encryption - requires input to be multiple of AES block size (128 bits)
+
+        void ecb_block_encrypt(u8* output, const u8* input, size_t length);
+        void ecb_block_decrypt(u8* output, const u8* input, size_t length);
+
+        void cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
+        void cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
+
+        void ctr_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
+        void ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
+
+        void ccm_block_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length);
+        void ccm_block_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length);
+    
+        // aribtrary size buffer encryption
+        // input can be any size but last block is automatically zero padded
+    
         void ecb_encrypt(u8* output, const u8* input, size_t length);
         void ecb_decrypt(u8* output, const u8* input, size_t length);
-
-        void cbc_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
-        void cbc_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
-
-        void ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
-        void ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
-
-        void ccm_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length);
-        void ccm_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length);
     };
 
 } // namespace mango

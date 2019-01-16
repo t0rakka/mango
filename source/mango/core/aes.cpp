@@ -473,7 +473,7 @@ AES::~AES()
     delete m_schedule;
 }
 
-void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
+void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
 {
     if (length & 15)
     {
@@ -495,7 +495,7 @@ void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
     }
 }
 
-void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
+void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
 {
     if (length & 15)
     {
@@ -517,7 +517,7 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
     }
 }
 
-void AES::cbc_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
+void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
     if (length & 15)
     {
@@ -536,7 +536,7 @@ void AES::cbc_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
     }
 }
 
-void AES::cbc_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
+void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
     if (length & 15)
     {
@@ -555,7 +555,7 @@ void AES::cbc_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
     }
 }
 
-void AES::ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
+void AES::ctr_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
     if (length & 15)
     {
@@ -564,7 +564,7 @@ void AES::ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
     aes_encrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
 }
 
-void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
+void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
     if (length & 15)
     {
@@ -573,7 +573,7 @@ void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
     aes_decrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
 }
 
-void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
+void AES::ccm_block_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
 {
     aes_u32 cipher_length = aes_u32(output.size);
     if (cipher_length & 15)
@@ -588,7 +588,7 @@ void AES::ccm_encrypt(Memory output, Memory input, Memory associated, Memory non
                     m_schedule->w, m_bits);
 }
 
-void AES::ccm_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
+void AES::ccm_block_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
 {
     aes_u32 plaintext_length = aes_u32(output.size);
     if (plaintext_length & 15)
@@ -603,6 +603,32 @@ void AES::ccm_decrypt(Memory output, Memory input, Memory associated, Memory non
                     output.address, &plaintext_length,
                     mac_length, &mac_authorized,
                     m_schedule->w, m_bits);
+}
+
+void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
+{
+    const size_t blocks = length / 16;
+    const size_t left = length % 16;
+    ecb_block_encrypt(output, input, blocks * 16);
+    if (left)
+    {
+        u8 temp[16] = { 0 };
+        std::memcpy(temp, input + blocks * 16, left);
+        ecb_block_encrypt(output + blocks * 16, temp, 16);
+    }
+}
+
+void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
+{
+    const size_t blocks = length / 16;
+    const size_t left = length % 16;
+    ecb_block_decrypt(output, input, blocks * 16);
+    if (left)
+    {
+        u8 temp[16] = { 0 };
+        std::memcpy(temp, input + blocks * 16, left);
+        ecb_block_decrypt(output + blocks * 16, temp, 16);
+    }
 }
 
 } // namespace mango
