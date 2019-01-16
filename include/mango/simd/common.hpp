@@ -285,19 +285,21 @@ namespace simd {
         return mul(a, s);
     }
 
-    static inline float32x4 square(float32x4 a)
+    static inline float square(float32x4 a)
     {
         return dot4(a, a);
     }
 
-    static inline float32x4 length(float32x4 a)
+    static inline float length(float32x4 a)
     {
-        return sqrt(dot4(a, a));
+        return float(std::sqrt(dot4(a, a)));
     }
 
     static inline float32x4 normalize(float32x4 a)
     {
-        return mul(a, rsqrt(dot4(a, a)));
+        float s = square(a);
+        float32x4 v = float32x4_set1(s);
+        return mul(a, rsqrt(v));
     }
 
     // ------------------------------------------------------------------
@@ -394,19 +396,21 @@ namespace simd {
         return mul(a, s);
     }
 
-    static inline float64x2 square(float64x2 a)
+    static inline double square(float64x2 a)
     {
         return dot2(a, a);
     }
 
-    static inline float64x2 length(float64x2 a)
+    static inline double length(float64x2 a)
     {
-        return sqrt(dot2(a, a));
+        return std::sqrt(dot2(a, a));
     }
 
     static inline float64x2 normalize(float64x2 a)
     {
-        return mul(a, rsqrt(dot2(a, a)));
+        double s = square(a);
+        float64x2 v = float64x2_set1(s);
+        return mul(a, rsqrt(v));
     }
 
     // ------------------------------------------------------------------
@@ -501,19 +505,21 @@ namespace simd {
         return mul(a, s);
     }
 
-    static inline float64x4 square(float64x4 a)
+    static inline double square(float64x4 a)
     {
         return dot4(a, a);
     }
 
-    static inline float64x4 length(float64x4 a)
+    static inline double length(float64x4 a)
     {
-        return sqrt(dot4(a, a));
+        return std::sqrt(dot4(a, a));
     }
 
     static inline float64x4 normalize(float64x4 a)
     {
-        return mul(a, rsqrt(dot4(a, a)));
+        double s = square(a);
+        float64x4 v = float64x4_set1(s);
+        return mul(a, rsqrt(v));
     }
 
     // ------------------------------------------------------------------

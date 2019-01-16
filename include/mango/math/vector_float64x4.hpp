@@ -551,12 +551,12 @@ namespace mango
         return simd::abs(a);
     }
 
-    static inline float64x4 square(float64x4 a)
+    static inline double square(float64x4 a)
     {
         return simd::square(a);
     }
 
-    static inline float64x4 length(float64x4 a)
+    static inline double length(float64x4 a)
     {
         return simd::length(a);
     }
@@ -631,7 +631,7 @@ namespace mango
         return simd::max(a, b);
     }
 
-    static inline float64x4 dot(float64x4 a, float64x4 b)
+    static inline double dot(float64x4 a, float64x4 b)
     {
         return simd::dot4(a, b);
     }

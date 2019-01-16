@@ -212,11 +212,12 @@ namespace simd {
         return __msa_fsqrt_d(a);
     }
 
-    static inline float64x2 dot2(float64x2 a, float64x2 b)
+    static inline double dot2(float64x2 a, float64x2 b)
     {
         float64x2 xy = __msa_fmul_d(a, b);
         float64x2 yx = shuffle<1, 0>(xy);
-        return __msa_fadd_d(xy, yx);
+        float64x2 s = __msa_fadd_d(xy, yx);
+        return get_component<0>(s);
     }
 
     // compare

@@ -12,9 +12,32 @@
     Abstract:
 
     The Short Vector Math code presented in this header was originally a straightforward
-    template N-dimensional vector implementation. The low-level SIMD abstraction is a
-    result of merging a separate SIMD library and this causes a chasm where the scalar
-    and SIMD vector classes have diverged.
+    template N-dimensional vector implementation. Eventually, over time this code merged
+    with a low level SIMD abstraction library which is invoked for compatible vector types.
+
+    The "correct" way to utilize SIMD is to work with as wide vectors as possible and not
+    wrap vec3, vec4, etc. This code does wrap these types anyway but gives a convenient
+    building block to go extra-wide. Because the front-end is all templates, we can write this:
+
+    using float3 = Vector<float32x8, 3>;
+
+    Now the float3 is a three-component vector of 256 bit SIMD vectors.
+
+    float3 a, b;
+    auto s = dot(a, b);
+
+    The object s is a vector of scalars; we executed eight dot products in parallel when
+    the hardware has support for 256 bit wide vector registers! It is a rather neat trick
+    we pulled with this layered approach to writing vector code.
+
+    It is also possible to write "scalar" code using the vector register as scalar type with
+    above arrangement:
+
+    auto s = a.x * b.x + a.y * b.y + a.z * b.z;
+
+    This is equivalent to calling the dot product function above; we just wrote the code
+    manually. All vector code can be written as-if it were scalar code. Of course, the
+    data layout is different so always keep that in mind. Have fun!
 
 */
 

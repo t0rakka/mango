@@ -229,10 +229,12 @@ namespace simd {
         return vec_sqrt(a.data);
     }
 
-    static inline float64x2 dot2(float64x2 a, float64x2 b)
+    static inline double dot2(float64x2 a, float64x2 b)
     {
-        auto s = vec_mul(a.data, b.data);
-        return vec_add(s, (float64x2::vector) shuffle<1, 0>(s, s));
+        float64x2 s = vec_mul(a.data, b.data);
+        float x = get_component<0>(s);
+        float y = get_component<1>(s);
+        return x + y;
     }
 
     // compare

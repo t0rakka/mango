@@ -249,10 +249,9 @@ namespace simd {
         return fast_sqrt(a);
     }
 
-    static inline float64x2 dot2(float64x2 a, float64x2 b)
+    static inline double dot2(float64x2 a, float64x2 b)
     {
-        const double s = a[0] * b[0] + a[1] * b[1];
-        return float64x2_set1(s);
+        return a[0] * b[0] + a[1] * b[1];
     }
 
     // compare

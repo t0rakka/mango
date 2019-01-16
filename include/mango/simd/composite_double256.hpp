@@ -391,13 +391,11 @@ namespace simd {
         return result;
     }
 
-    static inline float64x4 dot4(float64x4 a, float64x4 b)
+    static inline double dot4(float64x4 a, float64x4 b)
     {
-        const float64x2 s = add(dot2(a.lo, b.lo), dot2(a.hi, b.hi));
-        float64x4 result;
-        result.lo = s;
-        result.hi = s;
-        return result;
+        double low = dot2(a.lo, b.lo);
+        double high = dot2(a.hi, b.hi);
+        return low + high;
     }
 
     // compare

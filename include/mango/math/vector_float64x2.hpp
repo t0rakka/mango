@@ -181,6 +181,21 @@ namespace mango
         return simd::abs(a);
     }
 
+    static inline double square(float64x2 a)
+    {
+        return simd::square(a);
+    }
+
+    static inline double length(float64x2 a)
+    {
+        return simd::length(a);
+    }
+
+    static inline float64x2 normalize(float64x2 a)
+    {
+        return simd::normalize(a);
+    }
+
     static inline float64x2 sqrt(float64x2 a)
     {
         return simd::sqrt(a);
@@ -221,7 +236,7 @@ namespace mango
         return simd::fract(a);
     }
 
-    static inline float64x2 dot(float64x2 a, float64x2 b)
+    static inline double dot(float64x2 a, float64x2 b)
     {
         return simd::dot2(a, b);
     }

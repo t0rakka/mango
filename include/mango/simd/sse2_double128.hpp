@@ -246,11 +246,12 @@ namespace simd {
         return _mm_sqrt_pd(a);
     }
 
-    static inline float64x2 dot2(float64x2 a, float64x2 b)
+    static inline double dot2(float64x2 a, float64x2 b)
     {
-        const __m128d xy = _mm_mul_pd(a, b);
-        const __m128d yx = _mm_shuffle_pd(xy, xy, 0x01);
-        return _mm_add_pd(xy, yx);
+        __m128d xy = _mm_mul_pd(a, b);
+        __m128d yx = _mm_shuffle_pd(xy, xy, 0x01);
+        float64x2 s = _mm_add_pd(xy, yx);
+        return get_component<0>(s);
     }
 
     // compare

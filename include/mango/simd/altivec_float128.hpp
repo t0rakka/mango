@@ -275,20 +275,21 @@ namespace simd {
         return vec_sqrt(a.data);
     }
 
-    static inline float32x4 dot3(float32x4 a, float32x4 b)
+    static inline float dot3(float32x4 a, float32x4 b)
     {
-        float32x4 s = vec_mul(a.data, b.data);
-        return vec_add((float32x4::vector) shuffle<0, 0, 0, 0>(s),
-               vec_add((float32x4::vector) shuffle<1, 1, 1, 1>(s), 
-                       (float32x4::vector) shuffle<2, 2, 2, 2>(s)));
+        float32x4 prod = vec_mul(a.data, b.data);
+        float32x4 s = vec_add((float32x4::vector) shuffle<0, 0, 0, 0>(prod),
+                      vec_add((float32x4::vector) shuffle<1, 1, 1, 1>(prod), 
+                              (float32x4::vector) shuffle<2, 2, 2, 2>(prod)));
+        return get_component<0>(s);
     }
 
-    static inline float32x4 dot4(float32x4 a, float32x4 b)
+    static inline float dot4(float32x4 a, float32x4 b)
     {
-        auto s = vec_mul(a.data, b.data);
+        float32x4 s = vec_mul(a.data, b.data);
         s = vec_add(s, (float32x4::vector) shuffle<2, 3, 0, 1>(s));
         s = vec_add(s, (float32x4::vector) shuffle<1, 0, 3, 2>(s));
-        return s;
+        return get_component<0>(s);
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)

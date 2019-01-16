@@ -277,14 +277,16 @@ namespace simd {
         return _mm_sqrt_ps(a);
     }
 
-    static inline float32x4 dot3(float32x4 a, float32x4 b)
+    static inline float dot3(float32x4 a, float32x4 b)
     {
-        return _mm_dp_ps(a, b, 0x7f);
+        float32x4 s = _mm_dp_ps(a, b, 0x7f);
+        return get_component<0>(s);
     }
 
-    static inline float32x4 dot4(float32x4 a, float32x4 b)
+    static inline float dot4(float32x4 a, float32x4 b)
     {
-        return _mm_dp_ps(a, b, 0xff);
+        float32x4 s = _mm_dp_ps(a, b, 0xff);
+        return get_component<0>(s);
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)

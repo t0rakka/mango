@@ -379,32 +379,34 @@ namespace simd {
         return _mm_sqrt_ps(a);
     }
 
-    static inline float32x4 dot3(float32x4 a, float32x4 b)
+    static inline float dot3(float32x4 a, float32x4 b)
     {
+        float32x4 s;
 #if defined(MANGO_ENABLE_SSE4_1)
-        return _mm_dp_ps(a, b, 0x7f);
+        s = _mm_dp_ps(a, b, 0x7f);
 #else
-        float32x4 s = _mm_mul_ps(a, b);
-        return _mm_add_ps(shuffle<0, 0, 0, 0>(s),
-               _mm_add_ps(shuffle<1, 1, 1, 1>(s), shuffle<2, 2, 2, 2>(s)));
+        s = _mm_mul_ps(a, b);
+        s = _mm_add_ps(shuffle<0, 0, 0, 0>(s),
+            _mm_add_ps(shuffle<1, 1, 1, 1>(s), shuffle<2, 2, 2, 2>(s)));
 #endif
+        return get_component<0>(s);
     }
 
-    static inline float32x4 dot4(float32x4 a, float32x4 b)
+    static inline float dot4(float32x4 a, float32x4 b)
     {
+        float32x4 s;
 #if defined(MANGO_ENABLE_SSE4_1)
-        return _mm_dp_ps(a, b, 0xff);
+        s = _mm_dp_ps(a, b, 0xff);
 #elif defined(MANGO_ENABLE_SSE3)
-        float32x4 s = _mm_mul_ps(a, b);
+        s = _mm_mul_ps(a, b);
         s = _mm_hadd_ps(s, s);
         s = _mm_hadd_ps(s, s);
-        return s;
 #else
-        float32x4 s = _mm_mul_ps(a, b);
+        s = _mm_mul_ps(a, b);
         s = _mm_add_ps(s, shuffle<2, 3, 0, 1>(s));
         s = _mm_add_ps(s, shuffle<1, 0, 3, 2>(s));
-        return s;
 #endif
+        return get_component<0>(s);
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)

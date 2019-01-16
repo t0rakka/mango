@@ -334,16 +334,14 @@ namespace simd {
         return fast_sqrt(a);
     }
 
-    static inline float32x4 dot3(float32x4 a, float32x4 b)
+    static inline float dot3(float32x4 a, float32x4 b)
     {
-        const float s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-        return float32x4_set1(s);
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     }
 
-    static inline float32x4 dot4(float32x4 a, float32x4 b)
+    static inline float dot4(float32x4 a, float32x4 b)
     {
-        const float s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
-        return float32x4_set1(s);
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)

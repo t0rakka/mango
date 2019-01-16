@@ -310,12 +310,13 @@ namespace simd {
         return _mm256_sqrt_pd(a);
     }
 
-    static inline float64x4 dot4(float64x4 a, float64x4 b)
+    static inline double dot4(float64x4 a, float64x4 b)
     {
-        const __m256d s = _mm256_mul_pd(a, b);
-        const __m256d zwxy = _mm256_permute2f128_pd(s, s, 0x01);
-        const __m256d n = _mm256_hadd_pd(s, zwxy);
-        return _mm256_hadd_pd(n, n);
+        const __m256d prod = _mm256_mul_pd(a, b);
+        const __m256d zwxy = _mm256_permute2f128_pd(prod, prod, 0x01);
+        const __m256d n = _mm256_hadd_pd(prod, zwxy);
+        float64x4 s = _mm256_hadd_pd(n, n);
+        return get_component<0>(s);
     }
 
     // compare

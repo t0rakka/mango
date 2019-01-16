@@ -249,19 +249,20 @@ namespace simd {
         return __msa_fsqrt_w(a);
     }
 
-    static inline float32x4 dot3(float32x4 a, float32x4 b)
+    static inline float dot3(float32x4 a, float32x4 b)
     {
         float32x4 s = mul(a, b);
-        return add(shuffle<0, 0, 0, 0>(s),
-               add(shuffle<1, 1, 1, 1>(s), shuffle<2, 2, 2, 2>(s)));
+        s = add(shuffle<0, 0, 0, 0>(s),
+            add(shuffle<1, 1, 1, 1>(s), shuffle<2, 2, 2, 2>(s)));
+        return get_component<0>(float32x4(s));
     }
 
-    static inline float32x4 dot4(float32x4 a, float32x4 b)
+    static inline float dot4(float32x4 a, float32x4 b)
     {
         float32x4 s = mul(a, b);
         s = add(s, shuffle<2, 3, 0, 1>(s));
         s = add(s, shuffle<1, 0, 3, 2>(s));
-        return s;
+        return get_component<0>(s);
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)

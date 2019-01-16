@@ -417,20 +417,23 @@ namespace simd {
 
 #endif
 
-    static inline float32x4 dot3(float32x4 a, float32x4 b)
+    static inline float dot3(float32x4 a, float32x4 b)
     {
-        const float32x4 s = vmulq_f32(a, b);
-        const float32x2_t xy = vget_low_f32(s);
-        const float32x2_t zw = vget_high_f32(s);
-        return vdupq_lane_f32(vadd_f32(vpadd_f32(xy, xy), zw), 0);
+        const float32x4_t prod = vmulq_f32(a, b);
+        const float32x2_t xy = vget_low_f32(prod);
+        const float32x2_t zw = vget_high_f32(prod);
+        const float32x2_t s = vadd_f32(vpadd_f32(xy, xy), zw);
+        return vget_lane_f32(s, 0);
     }
 
-    static inline float32x4 dot4(float32x4 a, float32x4 b)
+    static inline float dot4(float32x4 a, float32x4 b)
     {
-        float32x4 m = vmulq_f32(a, b);
-        float32x2_t s = vpadd_f32(vget_low_f32(m), vget_high_f32(m));
+        const float32x4_t prod = vmulq_f32(a, b);
+        const float32x2_t xy = vget_low_f32(prod);
+        const float32x2_t zw = vget_high_f32(prod);
+        float32x2_t s = vpadd_f32(xy, zw);
         s = vpadd_f32(s, s);
-        return vdupq_lane_f32(s, 0);
+        return vget_lane_f32(s, 0);
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)
