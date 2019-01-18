@@ -270,6 +270,11 @@
 		A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8A21415B3F00EC714B /* miniz_tinfl.h */; };
 		A645DD9021415B3F00EC714B /* miniz_common.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8B21415B3F00EC714B /* miniz_common.h */; };
 		A645DD9421419C7F00EC714B /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD9321419C7F00EC714B /* hash.cpp */; };
+		A650BE8321F21C180066B9B5 /* CustomWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE7E21F21C180066B9B5 /* CustomWindow.h */; };
+		A650BE8421F21C180066B9B5 /* CustomWindow.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE7F21F21C180066B9B5 /* CustomWindow.mm */; };
+		A650BE8521F21C180066B9B5 /* cocoa_window.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8021F21C180066B9B5 /* cocoa_window.mm */; };
+		A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */; };
+		A650BE8721F21C180066B9B5 /* CustomOpenGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */; };
 		A66F158521C15CB400E1C8AA /* zstd_decompress_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158021C15CB400E1C8AA /* zstd_decompress_internal.h */; };
 		A66F158621C15CB400E1C8AA /* zstd_ddict.c in Sources */ = {isa = PBXBuildFile; fileRef = A66F158121C15CB400E1C8AA /* zstd_ddict.c */; };
 		A66F158721C15CB400E1C8AA /* zstd_decompress_block.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */; };
@@ -554,6 +559,11 @@
 		A645DD8A21415B3F00EC714B /* miniz_tinfl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_tinfl.h; path = external/miniz/miniz_tinfl.h; sourceTree = "<group>"; };
 		A645DD8B21415B3F00EC714B /* miniz_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_common.h; path = external/miniz/miniz_common.h; sourceTree = "<group>"; };
 		A645DD9321419C7F00EC714B /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
+		A650BE7E21F21C180066B9B5 /* CustomWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CustomWindow.h; path = opengl/cocoa/CustomWindow.h; sourceTree = "<group>"; };
+		A650BE7F21F21C180066B9B5 /* CustomWindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = CustomWindow.mm; path = opengl/cocoa/CustomWindow.mm; sourceTree = "<group>"; };
+		A650BE8021F21C180066B9B5 /* cocoa_window.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_window.mm; path = opengl/cocoa/cocoa_window.mm; sourceTree = "<group>"; };
+		A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CustomOpenGLView.h; path = opengl/cocoa/CustomOpenGLView.h; sourceTree = "<group>"; };
+		A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = CustomOpenGLView.mm; path = opengl/cocoa/CustomOpenGLView.mm; sourceTree = "<group>"; };
 		A66F158021C15CB400E1C8AA /* zstd_decompress_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_decompress_internal.h; path = external/zstd/decompress/zstd_decompress_internal.h; sourceTree = "<group>"; };
 		A66F158121C15CB400E1C8AA /* zstd_ddict.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_ddict.c; path = external/zstd/decompress/zstd_ddict.c; sourceTree = "<group>"; };
 		A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_decompress_block.h; path = external/zstd/decompress/zstd_decompress_block.h; sourceTree = "<group>"; };
@@ -681,6 +691,11 @@
 			children = (
 				A00559D61C9332C600A6D963 /* opengl.cpp */,
 				A0F21ED51CA05EE90084302D /* cocoa_context.mm */,
+				A650BE8021F21C180066B9B5 /* cocoa_window.mm */,
+				A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */,
+				A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */,
+				A650BE7E21F21C180066B9B5 /* CustomWindow.h */,
+				A650BE7F21F21C180066B9B5 /* CustomWindow.mm */,
 			);
 			name = opengl;
 			sourceTree = "<group>";
@@ -1174,12 +1189,14 @@
 				A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */,
 				A645DD8E21415B3F00EC714B /* miniz_tdef.h in Headers */,
 				A642439521852AEF0044B763 /* LzHash.h in Headers */,
+				A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */,
 				A642436921852AEF0044B763 /* 7zAlloc.h in Headers */,
 				A645DD4D214154F400EC714B /* bitstream.h in Headers */,
 				A645DD59214154F400EC714B /* zstd_errors.h in Headers */,
 				A642437521852AEF0044B763 /* XzEnc.h in Headers */,
 				A645DD762141551200EC714B /* zstd_lazy.h in Headers */,
 				A63DD7791E706EF100D4D499 /* lzvn_decode_base.h in Headers */,
+				A650BE8321F21C180066B9B5 /* CustomWindow.h in Headers */,
 				A642437E21852AEF0044B763 /* HuffEnc.h in Headers */,
 				A645DD712141551200EC714B /* zstd_ldm.h in Headers */,
 				A64243B22185E70B0044B763 /* 7zSha1.h in Headers */,
@@ -1340,6 +1357,7 @@
 				A642439221852AEF0044B763 /* AesOpt.c in Sources */,
 				A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */,
 				A00559D41C93329A00A6D963 /* surface.cpp in Sources */,
+				A650BE8521F21C180066B9B5 /* cocoa_window.mm in Sources */,
 				A642437921852AEF0044B763 /* Lzma2Dec.c in Sources */,
 				A63DD7A61E706F8800D4D499 /* BC6HBC7.cpp in Sources */,
 				A645DD4E214154F400EC714B /* threading.c in Sources */,
@@ -1406,6 +1424,7 @@
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
 				A642437321852AEF0044B763 /* Xz.c in Sources */,
 				A64243AF2185E70B0044B763 /* 7zSha256.c in Sources */,
+				A650BE8421F21C180066B9B5 /* CustomWindow.mm in Sources */,
 				A63DD7581E706EB200D4D499 /* rijndael.cpp in Sources */,
 				A645DD50214154F400EC714B /* fse_decompress.c in Sources */,
 				A00559A41C93327800A6D963 /* file.cpp in Sources */,
@@ -1455,6 +1474,7 @@
 				A66F158821C15CB400E1C8AA /* zstd_decompress_block.c in Sources */,
 				A645DD49214154F400EC714B /* xxhash.c in Sources */,
 				A642438D21852AEF0044B763 /* BraIA64.c in Sources */,
+				A650BE8721F21C180066B9B5 /* CustomOpenGLView.mm in Sources */,
 				A0F21EDC1CA062EA0084302D /* mapper_file.cpp in Sources */,
 				A690037C2008FF790080E5FA /* sha2.cpp in Sources */,
 				A63DD7541E706EB200D4D499 /* rarvm.cpp in Sources */,
