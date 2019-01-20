@@ -69,6 +69,7 @@ namespace mango
 
         std::string getLowerCaseExtension(const std::string& filename) const
         {
+            // strip the filename away and make the extension (.ext) lower-case only
             std::string extension = filesystem::getExtension(filename);
             return toLower(extension.empty() ? filename : extension);
         }
@@ -83,11 +84,9 @@ namespace mango
             m_encoders[toLower(extension)] = func;
         }
 
-        ImageDecoder::CreateFunc getImageDecoder(const std::string& filename) const
+        ImageDecoder::CreateFunc getImageDecoder(const std::string& extension) const
         {
-            std::string extension = getLowerCaseExtension(filename);
-
-            auto i = m_decoders.find(extension);
+            auto i = m_decoders.find(getLowerCaseExtension(extension));
             if (i != m_decoders.end())
             {
                 return i->second;
@@ -96,11 +95,9 @@ namespace mango
             return nullptr;
         }
 
-        ImageEncoder::CreateFunc getImageEncoder(const std::string& filename) const
+        ImageEncoder::CreateFunc getImageEncoder(const std::string& extension) const
         {
-            std::string extension = getLowerCaseExtension(filename);
-
-            auto i = m_encoders.find(extension);
+            auto i = m_encoders.find(getLowerCaseExtension(extension));
             if (i != m_encoders.end())
             {
                 return i->second;
