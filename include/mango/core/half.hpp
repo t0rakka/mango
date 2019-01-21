@@ -36,17 +36,19 @@ namespace mango
         }
 
         explicit Double(uint64 sign, uint64 exponent, uint64 mantissa)
-        : mantissa(mantissa), exponent(exponent), sign(sign)
+            : mantissa(mantissa)
+            , exponent(exponent)
+            , sign(sign)
         {
         }
 
         explicit Double(uint64 bits)
-        : u(bits)
+            : u(bits)
         {
         }
 
         Double(double s)
-        : f(s)
+            : f(s)
         {
         }
 
@@ -90,17 +92,19 @@ namespace mango
         }
 
         explicit Float(uint32 sign, uint32 exponent, uint32 mantissa)
-        : mantissa(mantissa), exponent(exponent), sign(sign)
+            : mantissa(mantissa)
+            , exponent(exponent)
+            , sign(sign)
         {
         }
 
         explicit Float(uint32 bits)
-        : u(bits)
+            : u(bits)
         {
         }
 
         Float(float s)
-        : f(s)
+            : f(s)
         {
         }
 
@@ -215,12 +219,14 @@ namespace mango
         }
 
         explicit Half(uint16 sign, uint16 exponent, uint16 mantissa)
-        : mantissa(mantissa), exponent(exponent), sign(sign)
+            : mantissa(mantissa)
+            , exponent(exponent)
+            , sign(sign)
         {
         }
 
         explicit Half(uint16 bits)
-        : u(bits)
+            : u(bits)
         {
         }
 

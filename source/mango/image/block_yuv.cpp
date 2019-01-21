@@ -32,12 +32,15 @@ namespace
         }
 
         explicit RGB9E5(uint32 exponent, uint32 red, uint32 green, uint32 blue)
-        : Red(red), Green(green), Blue(blue), Exponent(exponent)
+            : Red(red)
+            , Green(green)
+            , Blue(blue)
+            , Exponent(exponent)
         {
         }
 
         explicit RGB9E5(uint32 bits)
-        : u(bits)
+            : u(bits)
         {
         }
 
