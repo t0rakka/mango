@@ -575,7 +575,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         // tRNS
         bool m_transparent_enable = false;
         uint16 m_transparent_sample[3];
-        BGRA m_transparent_color;
+        ColorBGRA m_transparent_color;
 
         // cHRM
         Chromaticity m_chromaticity;
@@ -804,7 +804,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         m_palette.size = size / 3;
         for (uint32 i = 0; i < m_palette.size; ++i)
         {
-            m_palette[i] = BGRA(p[0], p[1], p[2], 0xff);
+            m_palette[i] = ColorBGRA(p[0], p[1], p[2], 0xff);
             p += 3;
         }
     }
@@ -834,9 +834,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             m_transparent_sample[0] = p.read16();
             m_transparent_sample[1] = p.read16();
             m_transparent_sample[2] = p.read16();
-            m_transparent_color = BGRA(m_transparent_sample[0] & 0xff,
-                                       m_transparent_sample[1] & 0xff,
-                                       m_transparent_sample[2] & 0xff, 0xff);
+            m_transparent_color = ColorBGRA(m_transparent_sample[0] & 0xff,
+                                            m_transparent_sample[1] & 0xff,
+                                            m_transparent_sample[2] & 0xff, 0xff);
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
@@ -1300,7 +1300,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
                 for (int x = 0; x < width; ++x)
                 {
-                    BGRA color(src[0], src[1], src[2], 0xff);
+                    ColorBGRA color(src[0], src[1], src[2], 0xff);
                     if (color == m_transparent_color)
                     {
                         color.a = 0;
@@ -1320,7 +1320,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
                 for (int x = 0; x < width; ++x)
                 {
-                    *d++ = BGRA(src[0], src[1], src[2], 0xff);
+                    *d++ = ColorBGRA(src[0], src[1], src[2], 0xff);
                     src += 3;
                 }
             }
@@ -1450,7 +1450,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
             for (int x = 0; x < width; ++x)
             {
-                *d++ = BGRA(src[0], src[1], src[2], src[3]);
+                *d++ = ColorBGRA(src[0], src[1], src[2], src[3]);
                 src += 4;
             }
         }

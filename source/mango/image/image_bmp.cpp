@@ -582,7 +582,7 @@ namespace
         for (int y = 0; y < height; ++y)
         {
             uint8* s = indices.address<uint8>(0, y);
-            BGRA* d = temp.address<BGRA>(0, y);
+            ColorBGRA* d = temp.address<ColorBGRA>(0, y);
             for (int x = 0; x < width; ++x)
             {
                 d[x] = palette[s[x]];
@@ -606,7 +606,7 @@ namespace
             const uint8* p = header.palette;
             for (uint32 i = 0; i < palette.size; ++i)
             {
-                palette[i] = BGRA(p[2], p[1], p[0], 0xff);
+                palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
                 p += header.paletteComponents;
             }
         }

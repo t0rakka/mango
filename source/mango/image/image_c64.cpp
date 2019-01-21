@@ -23,7 +23,7 @@ namespace
     // Commodore 64 utilities
     // ------------------------------------------------------------
 
-    const BGRA c64_palette[16] =
+    const ColorBGRA c64_palette[16] =
     { 
         0xFF000000,
         0xFFFFFFFF,
@@ -59,7 +59,7 @@ namespace
     {
         for (int y = 0; y < height; ++y)
         {
-            BGRA* scan = s.address<BGRA>(0, y);
+            ColorBGRA* scan = s.address<ColorBGRA>(0, y);
 
             for (int x = 0; x < width; ++x)
             {
@@ -231,7 +231,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            BGRA* image = s.address<BGRA>(0, y);
+            ColorBGRA* image = s.address<ColorBGRA>(0, y);
 
             for (int x = 0; x < width; ++x)
             {
@@ -375,7 +375,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            BGRA* image = s.address<BGRA>(0, y);
+            ColorBGRA* image = s.address<ColorBGRA>(0, y);
 
             for (int x = 0; x < width; ++x)
             {
@@ -2385,7 +2385,7 @@ namespace
 
             for (int y = 0; y < m_header.height; ++y)
             {
-                BGRA* image = s.address<BGRA>(0, y);
+                ColorBGRA* image = s.address<ColorBGRA>(0, y);
 
                 for (int x = 0; x < m_header.width; ++x)
                 {

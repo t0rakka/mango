@@ -310,7 +310,7 @@ namespace
             	uint32 r = image_desc.palette[i * 3 + 0];
             	uint32 g = image_desc.palette[i * 3 + 1];
             	uint32 b = image_desc.palette[i * 3 + 2];
-            	palette[i] = BGRA(r, g, b, 0xff);
+            	palette[i] = ColorBGRA(r, g, b, 0xff);
 			}
 		}
 		else
@@ -323,7 +323,7 @@ namespace
             	uint32 r = desc.palette[i * 3 + 0];
             	uint32 g = desc.palette[i * 3 + 1];
             	uint32 b = desc.palette[i * 3 + 2];
-            	palette[i] = BGRA(r, g, b, 0xff);
+            	palette[i] = ColorBGRA(r, g, b, 0xff);
 			}
 		}
 

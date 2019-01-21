@@ -67,9 +67,9 @@ namespace
     // ST helper functions
     // ------------------------------------------------------------
 
-    BGRA convert_atari_color(u16 atari_color)
+    ColorBGRA convert_atari_color(u16 atari_color)
     {
-        BGRA color;
+        ColorBGRA color;
 
         color.b = ((atari_color & 0x7  ) << 5) | ((atari_color & 0x8  ) << 1) | ((atari_color & 0x7  ) << 1) | ((atari_color & 0x8  ) >> 3);
         color.g = ((atari_color & 0x70 ) << 1) | ((atari_color & 0x80 ) >> 3) | ((atari_color & 0x70 ) >> 3) | ((atari_color & 0x80 ) >> 7);
@@ -83,7 +83,7 @@ namespace
     {
         for (int y = 0; y < height; ++y)
         {
-            BGRA* scan = s.address<BGRA>(0, y);
+            ColorBGRA* scan = s.address<ColorBGRA>(0, y);
             const u8* src = image + y * width;
 
             for (int x = 0; x < width; ++x)
@@ -541,7 +541,7 @@ namespace
             BigEndianPointer p = data;
 
             std::vector<u8> bitmap(width * height, 0);
-            std::vector<BGRA> palette(16 * 3 * (height - 1), BGRA(0, 0, 0, 0xff));
+            std::vector<ColorBGRA> palette(16 * 3 * (height - 1), ColorBGRA(0, 0, 0, 0xff));
 
             int num_words = 16000;
             int words_per_scan = 20;
@@ -648,7 +648,7 @@ namespace
             // Resolve palette
             for (int y = 1; y < height; ++y)
             {
-                BGRA* image = s.address<BGRA>(0, y);
+                ColorBGRA* image = s.address<ColorBGRA>(0, y);
 
                 for (int x = 0; x < width; ++x)
                 {

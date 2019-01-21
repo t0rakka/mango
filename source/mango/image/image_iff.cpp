@@ -173,7 +173,7 @@ namespace
 
     void expand_palette(uint8* dest, const uint8* src, int xsize, int ysize, const Palette& palette)
     {
-        BGRA* image = reinterpret_cast<BGRA*>(dest);
+        ColorBGRA* image = reinterpret_cast<ColorBGRA*>(dest);
         int count = xsize * ysize;
 
         for (int i = 0; i < count; ++i)
@@ -392,7 +392,7 @@ namespace
                         palette.size = size / 3;
                         for (uint32 i = 0; i < palette.size; ++i)
                         {
-                            palette[i] = BGRA(p[0], p[1], p[2], 0xff);
+                            palette[i] = ColorBGRA(p[0], p[1], p[2], 0xff);
                             p += 3;
                         }
                         break;

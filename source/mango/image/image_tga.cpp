@@ -301,7 +301,7 @@ namespace
                             r = (r * 255) / 31;
                             g = (g * 255) / 31;
                             b = (b * 255) / 31;
-                            palette[i] = BGRA(r, g, b, 0xff);
+                            palette[i] = ColorBGRA(r, g, b, 0xff);
                             p += 2;
                         }
                     }
@@ -309,7 +309,7 @@ namespace
                     {
                         for (uint32 i = 0; i < palette.size; ++i)
                         {
-                            palette[i] = BGRA(p[2], p[1], p[0], 0xff);
+                            palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
                             p += 3;
                         }
                     }
@@ -378,7 +378,7 @@ namespace
                         Bitmap bitmap(width, height, FORMAT_B8G8R8A8);
                         for (int y = 0; y < height; ++y)
                         {
-                            BGRA* d = bitmap.address<BGRA>(0, y);
+                            ColorBGRA* d = bitmap.address<ColorBGRA>(0, y);
                             uint8* s = data + y * width;
                             for (int x = 0; x < width; ++x)
                             {

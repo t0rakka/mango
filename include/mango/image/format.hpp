@@ -112,18 +112,18 @@ namespace mango
 
         uint32 bits;
         Type type;
-        PackedColor size;
-        PackedColor offset;
+        ColorRGBA size;
+        ColorRGBA offset;
 
         constexpr Format()
             : bits(0)
             , type(NONE)
-            , size(PackedColor())
-            , offset(PackedColor())
+            , size(ColorRGBA())
+            , offset(ColorRGBA())
         {
         }
 
-        constexpr Format(int bits, Type type, const PackedColor& size, const PackedColor& offset)
+        constexpr Format(int bits, Type type, const ColorRGBA& size, const ColorRGBA& offset)
             : bits(bits)
             , type(type)
             , size(size)
@@ -191,11 +191,11 @@ namespace mango
     #define FORMAT_L8A8                 Format(16, 0x00ff, 0xff00)
     #define FORMAT_L4A4                 Format(8, 0x0f, 0xf0)
     #define FORMAT_L16                  Format(16, 0xffff, 0)
-    #define FORMAT_L16A16               Format(32, Format::UNORM, PackedColor(16, 16, 16, 16), PackedColor(0, 0, 0, 16))
+    #define FORMAT_L16A16               Format(32, Format::UNORM, ColorRGBA(16, 16, 16, 16), ColorRGBA(0, 0, 0, 16))
 
     // FLOAT / HALF luminance
-    #define FORMAT_L16F                 Format(16, Format::FP16, PackedColor(16, 16, 16, 0), PackedColor(0, 0, 0, 0))
-    #define FORMAT_L32F                 Format(32, Format::FP32, PackedColor(32, 32, 32, 0), PackedColor(0, 0, 0, 0))
+    #define FORMAT_L16F                 Format(16, Format::FP16, ColorRGBA(16, 16, 16, 0), ColorRGBA(0, 0, 0, 0))
+    #define FORMAT_L32F                 Format(32, Format::FP32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0))
 
     // ----------------------------------------------------------------------------
     // OpenGL packed formats

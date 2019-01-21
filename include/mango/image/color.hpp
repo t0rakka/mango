@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,114 +10,108 @@
 namespace mango
 {
 
-    struct PackedColor
+    constexpr u32 makeBGRA(u32 red, u32 green, u32 blue, u32 alpha) noexcept
     {
-        uint8 component[4];
+        return (alpha << 24) | (red << 16) | (green << 8) | blue;
+    }
 
-        constexpr PackedColor()
+    constexpr u32 makeRGBA(u32 red, u32 green, u32 blue, u32 alpha) noexcept
+    {
+        return (alpha << 24) | (blue << 16) | (green << 8) | red;
+    }
+
+    struct ColorBGRA
+    {
+        union
+        {
+            u8 component[4];
+            u8 b, g, r, a;
+        };
+
+        constexpr ColorBGRA()
             : component { 0, 0, 0, 0 }
         {
         }
 
-        constexpr PackedColor(uint8 r, uint8 g, uint8 b, uint8 a)
-        : component { r, g, b, a }
+        ColorBGRA(u8 red, u8 green, u8 blue, u8 alpha)
         {
+            ustore32le(this, makeBGRA(red, green, blue, alpha));
         }
 
-        PackedColor(uint32 color)
+        ColorBGRA(u32 value)
         {
-            ustore32le(component, color);
+            ustore32le(this, value);
         }
 
-        operator uint32 () const
+        operator u32 () const
         {
-            return uload32le(component);
+            return uload32le(this);
         }
 
-        uint8& operator [] (int index)
+        u8& operator [] (int index)
         {
             return component[index];
         }
 
-        uint8 operator [] (int index) const
+        u8 operator [] (int index) const
+        {
+            return component[index];
+        }
+    };
+
+    struct ColorRGBA
+    {
+        union
+        {
+            u8 component[4];
+            u8 r, g, b, a;
+        };
+
+        constexpr ColorRGBA()
+            : component { 0, 0, 0, 0 }
+        {
+        }
+
+        ColorRGBA(u8 red, u8 green, u8 blue, u8 alpha)
+        {
+            ustore32le(this, makeRGBA(red, green, blue, alpha));
+        }
+
+        ColorRGBA(u32 value)
+        {
+            ustore32le(this, value);
+        }
+
+        operator u32 () const
+        {
+            return uload32le(this);
+        }
+
+        u8& operator [] (int index)
         {
             return component[index];
         }
 
-        bool operator == (const PackedColor& color)
+        u8 operator [] (int index) const
         {
-            return !std::memcmp(component, color.component, sizeof(PackedColor));
-        }
-    };
-
-    struct BGRA
-    {
-        uint8 b, g, r, a;
-
-        BGRA() = default;
-
-        BGRA(uint8 r, uint8 g, uint8 b, uint8 a)
-            : b(b), g(g), r(r), a(a)
-        {
-        }
-
-        BGRA(uint32 value)
-        {
-            ustore32le(&b, value);
-        }
-
-        operator uint32 () const
-        {
-            return uload32le(&b);
-        }
-    };
-
-    struct RGBA
-    {
-        uint8 r, g, b, a;
-
-        RGBA() = default;
-
-        RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
-            : r(r), g(g), b(b), a(a)
-        {
-        }
-
-        RGBA(uint32 value)
-        {
-            ustore32le(&r, value);
-        }
-
-        operator uint32 () const
-        {
-            return uload32le(&r);
+            return component[index];
         }
     };
 
     struct Palette
     {
-        uint32 size { 0 };
-        BGRA color[256];
+        u32 size { 0 };
+        ColorBGRA color[256];
 
-        BGRA& operator [] (int index)
+        ColorBGRA& operator [] (int index)
         {
             return color[index];
         }
 
-        BGRA operator [] (int index) const
+        ColorBGRA operator [] (int index) const
         {
             return color[index];
         }
     };
-
-    constexpr uint32 makeBGRA(uint32 r, uint32 g, uint32 b, uint32 a) noexcept
-    {
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    constexpr uint32 makeRGBA(uint32 r, uint32 g, uint32 b, uint32 a) noexcept
-    {
-        return (a << 24) | (b << 16) | (g << 8) | r;
-    }
 
 } // namespace mango

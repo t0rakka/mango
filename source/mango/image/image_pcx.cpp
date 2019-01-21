@@ -360,7 +360,7 @@ namespace
                             const uint8* pal = m_header.ColorMap;
                             for (uint32 i = 0; i < palette.size; ++i)
                             {
-                                palette[i] = BGRA(pal[0], pal[1], pal[2], 0xff);
+                                palette[i] = ColorBGRA(pal[0], pal[1], pal[2], 0xff);
                                 pal += 3;
                             }
 
@@ -419,7 +419,7 @@ namespace
                                 const uint8* pal = m_memory.address + m_memory.size - 768;
                                 for (uint32 i = 0; i < palette.size; ++i)
                                 {
-                                    palette[i] = BGRA(pal[0], pal[1], pal[2], 0xff);
+                                    palette[i] = ColorBGRA(pal[0], pal[1], pal[2], 0xff);
                                     pal += 3;
                                 }
 
