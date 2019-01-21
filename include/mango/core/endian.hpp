@@ -17,32 +17,32 @@ namespace mango
 
 #ifdef MANGO_UNALIGNED_MEMORY
 
-    static inline u16 uload16(const u8* p)
+    static inline u16 uload16(const void* p)
     {
         return *reinterpret_cast<const u16 *>(p);
     }
 
-    static inline u32 uload32(const u8* p)
+    static inline u32 uload32(const void* p)
     {
         return *reinterpret_cast<const u32 *>(p);
     }
 
-    static inline u64 uload64(const u8* p)
+    static inline u64 uload64(const void* p)
     {
         return *reinterpret_cast<const u64 *>(p);
     }
 
-    static inline void ustore16(u8* p, u16 value)
+    static inline void ustore16(void* p, u16 value)
     {
         reinterpret_cast<u16 *>(p)[0] = value;
     }
 
-    static inline void ustore32(u8* p, u32 value)
+    static inline void ustore32(void* p, u32 value)
     {
         reinterpret_cast<u32 *>(p)[0] = value;
     }
 
-    static inline void ustore64(u8* p, u64 value)
+    static inline void ustore64(void* p, u64 value)
     {
         std::memcpy(p, &value, sizeof(u64));
     }
@@ -51,38 +51,38 @@ namespace mango
 
     // Platform does not support unaligned load/store
 
-    static inline u16 uload16(const u8* p)
+    static inline u16 uload16(const void* p)
     {
         u16 value;
         std::memcpy(&value, p, sizeof(u16));
         return value;
     }
 
-    static inline u32 uload32(const u8* p)
+    static inline u32 uload32(const void* p)
     {
         u32 value;
         std::memcpy(&value, p, sizeof(u32));
         return value;
     }
 
-    static inline u64 uload64(const u8* p)
+    static inline u64 uload64(const void* p)
     {
         u64 value;
         std::memcpy(&value, p, sizeof(u64));
         return value;
     }
 
-    static inline void ustore16(u8* p, u16 value)
+    static inline void ustore16(void* p, u16 value)
     {
         std::memcpy(p, &value, sizeof(u16));
     }
 
-    static inline void ustore32(u8* p, u32 value)
+    static inline void ustore32(void* p, u32 value)
     {
         std::memcpy(p, &value, sizeof(u32));
     }
 
-    static inline void ustore64(u8* p, u64 value)
+    static inline void ustore64(void* p, u64 value)
     {
         std::memcpy(p, &value, sizeof(u64));
     }
@@ -95,124 +95,124 @@ namespace mango
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    static inline u16 uload16le(const u8* p)
+    static inline u16 uload16le(const void* p)
     {
         return uload16(p);
     }
 
-    static inline u32 uload32le(const u8* p)
+    static inline u32 uload32le(const void* p)
     {
         return uload32(p);
     }
 
-    static inline u64 uload64le(const u8* p)
+    static inline u64 uload64le(const void* p)
     {
         return uload64(p);
     }
 
-    static inline u16 uload16be(const u8* p)
+    static inline u16 uload16be(const void* p)
     {
         return byteswap(uload16(p));
     }
 
-    static inline u32 uload32be(const u8* p)
+    static inline u32 uload32be(const void* p)
     {
         return byteswap(uload32(p));
     }
 
-    static inline u64 uload64be(const u8* p)
+    static inline u64 uload64be(const void* p)
     {
         return byteswap(uload64(p));
     }
 
-    static inline void ustore16le(u8* p, u16 value)
+    static inline void ustore16le(void* p, u16 value)
     {
         ustore16(p, value);
     }
 
-    static inline void ustore32le(u8* p, u32 value)
+    static inline void ustore32le(void* p, u32 value)
     {
         ustore32(p, value);
     }
 
-    static inline void ustore64le(u8* p, u64 value)
+    static inline void ustore64le(void* p, u64 value)
     {
         ustore64(p, value);
     }
 
-    static inline void ustore16be(u8* p, u16 value)
+    static inline void ustore16be(void* p, u16 value)
     {
         ustore16(p, byteswap(value));
     }
 
-    static inline void ustore32be(u8* p, u32 value)
+    static inline void ustore32be(void* p, u32 value)
     {
         ustore32(p, byteswap(value));
     }
 
-    static inline void ustore64be(u8* p, u64 value)
+    static inline void ustore64be(void* p, u64 value)
     {
         ustore64(p, byteswap(value));
     }
 
 #else
 
-    static inline u16 uload16le(const u8* p)
+    static inline u16 uload16le(const void* p)
     {
         return byteswap(uload16(p));
     }
 
-    static inline u32 uload32le(const u8* p)
+    static inline u32 uload32le(const void* p)
     {
         return byteswap(uload32(p));
     }
 
-    static inline u64 uload64le(const u8* p)
+    static inline u64 uload64le(const void* p)
     {
         return byteswap(uload64(p));
     }
 
-    static inline u16 uload16be(const u8* p)
+    static inline u16 uload16be(const void* p)
     {
         return uload16(p);
     }
 
-    static inline u32 uload32be(const u8* p)
+    static inline u32 uload32be(const void* p)
     {
         return uload32(p);
     }
 
-    static inline u64 uload64be(const u8* p)
+    static inline u64 uload64be(const void* p)
     {
         return uload64(p);
     }
 
-    static inline void ustore16le(u8* p, u16 value)
+    static inline void ustore16le(void* p, u16 value)
     {
         ustore16(p, byteswap(value));
     }
 
-    static inline void ustore32le(u8* p, u32 value)
+    static inline void ustore32le(void* p, u32 value)
     {
         ustore32(p, byteswap(value));
     }
 
-    static inline void ustore64le(u8* p, u64 value)
+    static inline void ustore64le(void* p, u64 value)
     {
         ustore64(p, byteswap(value));
     }
 
-    static inline void ustore16be(u8* p, u16 value)
+    static inline void ustore16be(void* p, u16 value)
     {
         ustore16(p, value);
     }
 
-    static inline void ustore32be(u8* p, u32 value)
+    static inline void ustore32be(void* p, u32 value)
     {
         ustore32(p, value);
     }
 
-    static inline void ustore64be(u8* p, u64 value)
+    static inline void ustore64be(void* p, u64 value)
     {
         ustore64(p, value);
     }
