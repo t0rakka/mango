@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,6 +10,20 @@
 
 namespace mango
 {
+
+    // --------------------------------------------------------------
+    // u32 builders
+    // --------------------------------------------------------------
+
+    constexpr u32 make32le(char c0, char c1, char c2, char c3)
+    {
+        return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
+    }
+
+    constexpr u32 make32be(char c0, char c1, char c2, char c3)
+    {
+        return (c0 << 24) | (c1 << 16) | (c2 << 8) | c3;
+    }
 
     // --------------------------------------------------------------
     // unaligned load/store

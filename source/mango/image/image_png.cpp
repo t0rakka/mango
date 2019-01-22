@@ -650,7 +650,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         // read first chunk; it must be IHDR
         const uint32 size = p.read32();
         const uint32 id = p.read32();
-        if (id != makeReverseFourCC('I', 'H', 'D', 'R'))
+        if (id != make32be('I', 'H', 'D', 'R'))
         {
             setError("Incorrect file; the IHDR chunk must come first.");
             return;
@@ -719,7 +719,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             const uint32 id = p.read32();
             switch (id)
             {
-                case makeReverseFourCC('t', 'R', 'N', 'S'):
+                case make32be('t', 'R', 'N', 'S'):
                     m_transparent_enable = true;
                     break;
             }
@@ -985,47 +985,47 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
             switch (id)
             {
-                case makeReverseFourCC('I', 'H', 'D', 'R'):
+                case make32be('I', 'H', 'D', 'R'):
                     setError("File can only have one IHDR chunk.");
                     break;
 
-                case makeReverseFourCC('P', 'L', 'T', 'E'):
+                case make32be('P', 'L', 'T', 'E'):
                     read_PLTE(p, size);
                     break;
 
-                case makeReverseFourCC('t', 'R', 'N', 'S'):
+                case make32be('t', 'R', 'N', 'S'):
                     read_tRNS(p, size);
                     break;
 
-                case makeReverseFourCC('g', 'A', 'M', 'A'):
+                case make32be('g', 'A', 'M', 'A'):
                     read_gAMA(p, size);
                     break;
 
-                case makeReverseFourCC('s', 'B', 'I', 'T'):
+                case make32be('s', 'B', 'I', 'T'):
                     read_sBIT(p, size);
                     break;
 
-                case makeReverseFourCC('s', 'R', 'G', 'B'):
+                case make32be('s', 'R', 'G', 'B'):
                     read_sRGB(p, size);
                     break;
 
-                case makeReverseFourCC('c', 'H', 'R', 'M'):
+                case make32be('c', 'H', 'R', 'M'):
                     read_cHRM(p, size);
                     break;
 
-                case makeReverseFourCC('I', 'D', 'A', 'T'):
+                case make32be('I', 'D', 'A', 'T'):
                     read_IDAT(p, size);
                     break;
 
-                case makeReverseFourCC('p', 'H', 'Y', 's'):
-                case makeReverseFourCC('b', 'K', 'G', 'D'):
-                case makeReverseFourCC('z', 'T', 'X', 't'):
-                case makeReverseFourCC('t', 'E', 'X', 't'):
-                case makeReverseFourCC('t', 'I', 'M', 'E'):
+                case make32be('p', 'H', 'Y', 's'):
+                case make32be('b', 'K', 'G', 'D'):
+                case make32be('z', 'T', 'X', 't'):
+                case make32be('t', 'E', 'X', 't'):
+                case make32be('t', 'I', 'M', 'E'):
                     // NOTE: ignoring these chunks
                     break;
 
-                case makeReverseFourCC('I', 'E', 'N', 'D'):
+                case make32be('I', 'E', 'N', 'D'):
                     // terminate parsing (required for files with junk after the IEND marker)
                     p = m_end; 
                     break;
@@ -1791,7 +1791,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         Buffer buffer;
         BigEndianStream s(buffer);
 
-        s.write32(makeReverseFourCC('I', 'H', 'D', 'R'));
+        s.write32(make32be('I', 'H', 'D', 'R'));
 
         s.write32(surface.width);
         s.write32(surface.height);
@@ -1816,7 +1816,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         Buffer buffer(4 + z.avail_out);
 
         BigEndianStream s(buffer);
-        s.write32(makeReverseFourCC('I', 'D', 'A', 'T'));
+        s.write32(make32be('I', 'D', 'A', 'T'));
 
         z.next_out = buffer + 4;
 
