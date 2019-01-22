@@ -57,12 +57,18 @@ IF(WIN32)
     FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
                      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
                      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp")
+    FILE(GLOB FRAMEBUFFER "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
+                          "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/*.cpp"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/win32/*.cpp")
 ELSEIF(APPLE)
     FILE(GLOB FILESYSTEM_PLATFORM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/unix/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
     FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
                      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
                      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm")
+    FILE(GLOB FRAMEBUFFER "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
+                          "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/*.cpp"
+                          )
 ELSE()
     FILE(GLOB FILESYSTEM_PLATFORM "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/unix/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
@@ -71,6 +77,9 @@ ELSE()
     FILE(GLOB OPENGL "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
                      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
                      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp")
+    FILE(GLOB FRAMEBUFFER "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
+                          "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/*.cpp"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/xlib/*.cpp")
 ENDIF()
 FILE(GLOB IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
 FILE(GLOB JPEG "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
@@ -85,6 +94,7 @@ SOURCE_GROUP("math" FILES ${MATH})
 SOURCE_GROUP("gui" FILES ${GUI})
 SOURCE_GROUP("opengl" FILES ${OPENGL})
 SOURCE_GROUP("vulkan" FILES ${VULKAN})
+SOURCE_GROUP("framebuffer" FILES ${FRAMEBUFFER})
 
 FILE(GLOB LZMA "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.c")
 FILE(GLOB AES "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.cpp")
@@ -129,8 +139,14 @@ ADD_LIBRARY(mango-vulkan
     ${VULKAN}
     )
 
+ADD_LIBRARY(mango-framebuffer
+    ${GUI}
+    ${FRAMEBUFFER}
+    )
+
 target_link_libraries(mango-opengl PUBLIC mango)
 target_link_libraries(mango-vulkan PUBLIC mango)
+target_link_libraries(mango-framebuffer PUBLIC mango)
 
 # add "-lpthreads" linker option when platform has support
 find_package(Threads)
@@ -235,7 +251,9 @@ endif ()
 TARGET_INCLUDE_DIRECTORIES(mango PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>)
 
-INSTALL(TARGETS mango mango-opengl mango-vulkan LIBRARY DESTINATION "lib" ARCHIVE DESTINATION "lib"
+INSTALL(TARGETS mango mango-opengl mango-vulkan mango-framebuffer
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin")
 
 INSTALL(
