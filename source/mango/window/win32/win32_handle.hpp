@@ -15,7 +15,7 @@ namespace mango
         HICON icon { NULL };
 		bool looping { false };
 
-		WindowHandle(int width, int height);
+		WindowHandle(int width, int height, u32 flags);
 		~WindowHandle();
     };
 

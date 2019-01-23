@@ -539,7 +539,7 @@ namespace mango
 	// WindowHandle
 	// -----------------------------------------------------------------------
 
-	WindowHandle::WindowHandle(int width, int height)
+	WindowHandle::WindowHandle(int width, int height, u32 flags)
 	{
 		HINSTANCE hinstance = ::GetModuleHandle(NULL);
 
@@ -562,6 +562,10 @@ namespace mango
 
 		// configuration
 		DWORD mask = WS_OVERLAPPEDWINDOW;
+        if (flags & Window::DISABLE_RESIZE)
+        {
+            mask &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+        }
 		int x = 80;
 		int y = 60;
 
@@ -603,13 +607,11 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        m_handle = new WindowHandle(width, height);
+        m_handle = new WindowHandle(width, height, flags);
 
 		// register listener window
 		LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
 		::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
-
-		MANGO_UNREFERENCED_PARAMETER(flags);
 	}
 
     Window::~Window()
