@@ -72,7 +72,7 @@ namespace opengl {
     // -----------------------------------------------------------------------
 
     Context::Context(int width, int height, const ContextAttribute* contextAttribute, Context* shared)
-	: Window(width, height)
+	    : Window(width, height)
     {
         m_context = new ContextHandle();
 
@@ -196,7 +196,7 @@ namespace opengl {
         XVisualInfo* vi = glXGetVisualFromFBConfig(m_handle->display, bestFbc);
 
         // create window
-        if (!m_handle->createWindow(vi, width, height, "OpenGL"))
+        if (!m_handle->createWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
         {
             deleteContext(m_handle, m_context);
             m_context = NULL;

@@ -542,13 +542,13 @@ namespace mango
         }
     }
 
-    bool WindowHandle::createWindow(XVisualInfo* vi, int width, int height, const char* title)
+    bool WindowHandle::createWindow(int screen, int depth, Visual* visual, int width, int height, const char* title)
     {
         if (!display)
             return false;
 
-        ::Window root = RootWindow(display, vi->screen);
-        colormap = XCreateColormap(display, root, vi->visual, AllocNone);
+        ::Window root = RootWindow(display, screen);
+        colormap = XCreateColormap(display, root, visual, AllocNone);
 
         XSetWindowAttributes wa;
 
@@ -564,8 +564,8 @@ namespace mango
                                StructureNotifyMask;
 
         window = XCreateWindow(display, root,
-            0, 0, width, height, 0, vi->depth, InputOutput,
-            vi->visual, CWBorderPixel | CWColormap | CWEventMask, &wa);
+            0, 0, width, height, 0, depth, InputOutput,
+            visual, CWBorderPixel | CWColormap | CWEventMask, &wa);
         if (!window)
             return false;
 
