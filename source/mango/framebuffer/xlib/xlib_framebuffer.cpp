@@ -72,7 +72,7 @@ namespace framebuffer {
 	// -------------------------------------------------------------------
 
     Framebuffer::Framebuffer(int width, int height)
-        : Window(width, height)
+        : Window(width, height, Window::DISABLE_RESIZE)
     {
         ::Display* display = m_handle->display;
         int screen = DefaultScreen(display);

@@ -506,7 +506,8 @@ namespace mango
     // WindowHandle
     // -----------------------------------------------------------------------
 
-    WindowHandle::WindowHandle(int width, int height)
+    WindowHandle::WindowHandle(int width, int height, u32 flags)
+        : flags(flags)
     {
         display = XOpenDisplay(NULL);
         if (!display)
@@ -569,6 +570,23 @@ namespace mango
         if (!window)
             return false;
 
+        if (flags & Window::DISABLE_RESIZE)
+        {
+            XSizeHints hints;
+
+            hints.flags = PPosition | PMinSize | PMaxSize;
+            hints.x = 0;
+            hints.y = 0;
+            hints.min_width = width;
+            hints.max_width = width;
+            hints.min_height = height;
+            hints.max_height = height;
+  	        XSetWMNormalHints(display, window, &hints);
+            XClearWindow(display, window);
+            XMapRaised(display, window);
+            XFlush(display);
+        }
+
         // window close event atoms
         atom_protocols = XInternAtom(display, "WM_PROTOCOLS", False);
         atom_delete = XInternAtom(display, "WM_DELETE_WINDOW", False);
@@ -608,9 +626,9 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height)
+    Window::Window(int width, int height, u32 flags)
     {
-		m_handle = new WindowHandle(width, height);
+		m_handle = new WindowHandle(width, height, flags);
     }
 
     Window::~Window()

@@ -12,7 +12,7 @@ namespace framebuffer {
     // -------------------------------------------------------------------
 
     Framebuffer::Framebuffer(int width, int height)
-        : Window(width, height)
+        : Window(width, height, Window::DISABLE_RESIZE)
     {
         // TODO
         (void) width;

@@ -45,12 +45,13 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height)
+    Window::Window(int width, int height, u32 flags)
     {
         // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT
         //       use the window constructor for anything else except creating the internal state (m_handle).
         MANGO_UNREFERENCED_PARAMETER(width);
         MANGO_UNREFERENCED_PARAMETER(height);
+		MANGO_UNREFERENCED_PARAMETER(flags);
 
         m_handle = new WindowHandle();
     }

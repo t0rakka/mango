@@ -601,13 +601,15 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height)
+    Window::Window(int width, int height, u32 flags)
     {
         m_handle = new WindowHandle(width, height);
 
 		// register listener window
 		LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
 		::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
+
+		MANGO_UNREFERENCED_PARAMETER(flags);
 	}
 
     Window::~Window()

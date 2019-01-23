@@ -90,7 +90,7 @@ namespace framebuffer {
 	// -------------------------------------------------------------------
 
     Framebuffer::Framebuffer(int width, int height)
-        : Window(width, height)
+        : Window(width, height, Window::DISABLE_RESIZE)
     {
         HWND hwnd = *this;
         m_context = new FramebufferContext(hwnd, width, height);

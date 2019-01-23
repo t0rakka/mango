@@ -100,7 +100,7 @@ namespace opengl {
     // -----------------------------------------------------------------------
 
     Context::Context(int width, int height, const ContextAttribute* contextAttribute, Context* shared)
-	: Window(width, height)
+		: Window(width, height)
     {
 		m_context = new ContextHandle();
 

@@ -134,7 +134,12 @@ namespace mango
        	struct WindowHandle* m_handle;
 
     public:
-        Window(int width, int height);
+        enum : u32
+        {
+            DISABLE_RESIZE  = 0x00000001,
+        };
+
+        Window(int width, int height, u32 flags = 0);
         virtual ~Window();
 
         void setWindowSize(int width, int height);
