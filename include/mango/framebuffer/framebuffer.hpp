@@ -16,7 +16,7 @@ namespace framebuffer {
     class Framebuffer : public Window
     {
     protected:
-        struct FramebufferHandle* m_handle;
+        struct FramebufferContext* m_context;
 
     public:
         Framebuffer(int width, int height);
