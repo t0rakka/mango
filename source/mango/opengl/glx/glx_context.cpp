@@ -5,7 +5,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
-#include "../../gui/xlib/xlib_handle.hpp"
+#include "../../window/xlib/xlib_handle.hpp"
 
 #define ID "[GLX Context] "
 

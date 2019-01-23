@@ -5,7 +5,6 @@
 #include <string>
 #include <sstream>
 #include <mango/core/string.hpp>
-#include <mango/gui/window.hpp>
 #include "win32_handle.hpp"
 
 namespace

@@ -3,7 +3,7 @@
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/framebuffer/framebuffer.hpp>
-#include "../../gui/win32/win32_handle.hpp"
+#include "../../window/win32/win32_handle.hpp"
 
 namespace mango {
 namespace framebuffer {

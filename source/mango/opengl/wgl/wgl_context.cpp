@@ -5,7 +5,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
-#include "../../gui/win32/win32_handle.hpp"
+#include "../../window/win32/win32_handle.hpp"
 
 #define ID "[WGL Context] "
 

@@ -4,6 +4,8 @@
 */
 #pragma once
 
+#include <mango/window/window.hpp>
+
 namespace mango
 {
 

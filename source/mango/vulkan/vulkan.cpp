@@ -9,27 +9,27 @@
 
 
 #ifdef VK_KHR_xlib_surface
-#include "../gui/xlib/xlib_handle.hpp"
+#include "../window/xlib/xlib_handle.hpp"
 #endif
 
 #ifdef VK_KHR_xcb_surface
-#include "../gui/xcb/xcb_handle.hpp"
+#include "../window/xcb/xcb_handle.hpp"
 #endif
 
 #ifdef VK_KHR_wayland_surface
-#include "../gui/wayland/wayland_handle.hpp"
+#include "../window/wayland/wayland_handle.hpp"
 #endif
 
 #ifdef VK_KHR_mir_surface
-#include "../gui/mir/mir_handle.hpp"
+#include "../window/mir/mir_handle.hpp"
 #endif
 
 #ifdef VK_KHR_android_surface
-#include "../gui/android/android_handle.hpp"
+#include "../window/android/android_handle.hpp"
 #endif
 
 #ifdef VK_KHR_win32_surface
-#include "../gui/win32/win32_handle.hpp"
+#include "../window/win32/win32_handle.hpp"
 #endif
 
 
