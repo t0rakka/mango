@@ -84,4 +84,11 @@ void LoadSecurityDlls()
   #endif
 }
 
+#else
+
+// empty stub to satisfy linker on non-windows platforms
+void LoadSecurityDlls()
+{
+}
+
 #endif
