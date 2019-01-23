@@ -347,11 +347,11 @@ namespace mango
     // Matrix inversion performance
     // CPU: 2.9 GHz Intel Core i9 (compiled for AVX)
     //
-    // transpose:        500,000,000 / s
-    // inverse:           59,000,000 / s
-    // inverseTranspose:  67,000,000 / s
-    // inverseTRS:        91,000,000 / s
-    // inverseTR:        200,000,000 / s
+    // transpose:        500,000,000 / sec  ( 6 clocks)
+    // inverseTR:        200,000,000 / sec  (15 clocks)
+    // inverseTRS:        91,000,000 / sec  (32 clocks)
+    // inverseTranspose:  67,000,000 / sec  (44 clocks)
+    // inverse:           59,000,000 / sec  (50 clocks)
 
     static inline float4x4 transpose(const float4x4& m)
     {
