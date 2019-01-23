@@ -288,11 +288,76 @@ namespace mango
         return float4x4(a * det, b * det, c * det, d * det);
     }
 
+    /*
+        inveseTRS and inverseTR are based on work by Eric Zhang:
+        https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
+    */
+
+    // Optimized transformation matrix inversion:
+    //     - last column is [0 0 0 1]
+    //     - matrix may contain: translation, rotation and scaling
+
+    static inline float4x4 inverseTRS(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    {
+        float4x4 r;
+
+        // 3x3 transpose
+        float32x4 t0 = simd::shuffle<0, 1, 0, 1>(m0, m1);
+        float32x4 t1 = simd::shuffle<2, 3, 2, 3>(m0, m1);
+        r[0] = simd::shuffle<0, 2, 0, 3>(t0, m2);
+        r[1] = simd::shuffle<1, 3, 1, 3>(t0, m2);
+        r[2] = simd::shuffle<0, 2, 2, 3>(t1, m2);
+
+        // 3x3 de-scale
+        float32x4 det = 1.0f / (r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
+        r[0] = r[0] * det;
+        r[1] = r[1] * det;
+        r[2] = r[2] * det;
+
+        // last row
+        float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
+        r[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
+
+        return r;
+    }
+
+    // Optimized transformation matrix inversion:
+    //     - last column is [0 0 0 1]
+    //     - matrix may contain: translation and rotation
+    //     - no scaling (scale must be 1.0)
+
+    static inline float4x4 inverseTR(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    {
+        float4x4 r;
+
+        // 3x3 transpose
+        float32x4 t0 = simd::shuffle<0, 1, 0, 1>(m0, m1);
+        float32x4 t1 = simd::shuffle<2, 3, 2, 3>(m0, m1);
+        r[0] = simd::shuffle<0, 2, 0, 3>(t0, m2);
+        r[1] = simd::shuffle<1, 3, 1, 3>(t0, m2);
+        r[2] = simd::shuffle<0, 2, 2, 3>(t1, m2);
+
+        // last row
+        float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
+        r[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
+
+        return r;
+    }
+
+    // Matrix inversion performance
+    // CPU: 2.9 GHz Intel Core i9 (compiled for AVX)
+    //
+    // transpose:        500,000,000 / s
+    // inverse:           59,000,000 / s
+    // inverseTranspose:  67,000,000 / s
+    // inverseTRS:        91,000,000 / s
+    // inverseTR:        200,000,000 / s
+
     static inline float4x4 transpose(const float4x4& m)
     {
         return transpose(m[0], m[1], m[2], m[3]);
     }
-    
+
     static inline float4x4 inverse(const float4x4& m)
     {
         return inverse(m[0], m[1], m[2], m[3]);
@@ -301,6 +366,16 @@ namespace mango
     static inline float4x4 inverseTranspose(const float4x4& m)
     {
         return inverseTranspose(m[0], m[1], m[2], m[3]);
+    }
+
+    static inline float4x4 inverseTRS(const float4x4& m)
+    {
+        return inverseTRS(m[0], m[1], m[2], m[3]);
+    }
+
+    static inline float4x4 inverseTR(const float4x4& m)
+    {
+        return inverseTR(m[0], m[1], m[2], m[3]);
     }
 
     float4x4 normalize(const float4x4& m);
