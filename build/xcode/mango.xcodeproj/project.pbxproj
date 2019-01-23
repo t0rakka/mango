@@ -49,9 +49,7 @@
 		A00559D71C9332C600A6D963 /* opengl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A00559D61C9332C600A6D963 /* opengl.cpp */; };
 		A00559DA1C93337C00A6D963 /* core in Headers */ = {isa = PBXBuildFile; fileRef = A00559D91C93337C00A6D963 /* core */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559DE1C9333F100A6D963 /* filesystem in Headers */ = {isa = PBXBuildFile; fileRef = A00559DD1C9333F100A6D963 /* filesystem */; settings = {ATTRIBUTES = (Public, ); }; };
-		A00559E01C9333FE00A6D963 /* gui in Headers */ = {isa = PBXBuildFile; fileRef = A00559DF1C9333FE00A6D963 /* gui */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559E21C93340600A6D963 /* image in Headers */ = {isa = PBXBuildFile; fileRef = A00559E11C93340600A6D963 /* image */; settings = {ATTRIBUTES = (Public, ); }; };
-		A00559E41C9335E100A6D963 /* vulkan in Headers */ = {isa = PBXBuildFile; fileRef = A00559E31C9335E100A6D963 /* vulkan */; settings = {ATTRIBUTES = (Public, ); }; };
 		A0B1452419198C1300912118 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1452319198C1300912118 /* AppKit.framework */; };
 		A0B1452619198C1D00912118 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1452519198C1D00912118 /* OpenGL.framework */; };
 		A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */; };
@@ -270,11 +268,15 @@
 		A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8A21415B3F00EC714B /* miniz_tinfl.h */; };
 		A645DD9021415B3F00EC714B /* miniz_common.h in Headers */ = {isa = PBXBuildFile; fileRef = A645DD8B21415B3F00EC714B /* miniz_common.h */; };
 		A645DD9421419C7F00EC714B /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD9321419C7F00EC714B /* hash.cpp */; };
-		A650BE8321F21C180066B9B5 /* CustomWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE7E21F21C180066B9B5 /* CustomWindow.h */; };
-		A650BE8421F21C180066B9B5 /* CustomWindow.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE7F21F21C180066B9B5 /* CustomWindow.mm */; };
-		A650BE8521F21C180066B9B5 /* cocoa_window.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8021F21C180066B9B5 /* cocoa_window.mm */; };
 		A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */; };
 		A650BE8721F21C180066B9B5 /* CustomOpenGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */; };
+		A650BE8B21F8B3730066B9B5 /* framebuffer in Resources */ = {isa = PBXBuildFile; fileRef = A650BE8A21F8B3730066B9B5 /* framebuffer */; };
+		A650BE8E21F8B79E0066B9B5 /* cocoa_framebuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8D21F8B79E0066B9B5 /* cocoa_framebuffer.mm */; };
+		A650BE9021F8BB990066B9B5 /* window in Resources */ = {isa = PBXBuildFile; fileRef = A650BE8F21F8BB990066B9B5 /* window */; };
+		A650BE9421F8D4290066B9B5 /* cocoa_window.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE9221F8D4290066B9B5 /* cocoa_window.mm */; };
+		A650BE9521F8D4290066B9B5 /* cocoa_window.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE9321F8D4290066B9B5 /* cocoa_window.h */; };
+		A650BE9621F8D4B40066B9B5 /* window in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8F21F8BB990066B9B5 /* window */; settings = {ATTRIBUTES = (Public, ); }; };
+		A650BE9721F8D4B40066B9B5 /* framebuffer in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8A21F8B3730066B9B5 /* framebuffer */; settings = {ATTRIBUTES = (Public, ); }; };
 		A66F158521C15CB400E1C8AA /* zstd_decompress_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158021C15CB400E1C8AA /* zstd_decompress_internal.h */; };
 		A66F158621C15CB400E1C8AA /* zstd_ddict.c in Sources */ = {isa = PBXBuildFile; fileRef = A66F158121C15CB400E1C8AA /* zstd_ddict.c */; };
 		A66F158721C15CB400E1C8AA /* zstd_decompress_block.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */; };
@@ -336,9 +338,7 @@
 		A00559D61C9332C600A6D963 /* opengl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opengl.cpp; path = opengl/opengl.cpp; sourceTree = "<group>"; };
 		A00559D91C93337C00A6D963 /* core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core; path = mango/core; sourceTree = "<group>"; };
 		A00559DD1C9333F100A6D963 /* filesystem */ = {isa = PBXFileReference; lastKnownFileType = folder; name = filesystem; path = mango/filesystem; sourceTree = "<group>"; };
-		A00559DF1C9333FE00A6D963 /* gui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = gui; path = mango/gui; sourceTree = "<group>"; };
 		A00559E11C93340600A6D963 /* image */ = {isa = PBXFileReference; lastKnownFileType = folder; name = image; path = mango/image; sourceTree = "<group>"; };
-		A00559E31C9335E100A6D963 /* vulkan */ = {isa = PBXFileReference; lastKnownFileType = folder; name = vulkan; path = mango/vulkan; sourceTree = "<group>"; };
 		A0B1452319198C1300912118 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		A0B1452519198C1D00912118 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dynamic_library.cpp; path = core/unix/dynamic_library.cpp; sourceTree = "<group>"; };
@@ -559,11 +559,13 @@
 		A645DD8A21415B3F00EC714B /* miniz_tinfl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_tinfl.h; path = external/miniz/miniz_tinfl.h; sourceTree = "<group>"; };
 		A645DD8B21415B3F00EC714B /* miniz_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miniz_common.h; path = external/miniz/miniz_common.h; sourceTree = "<group>"; };
 		A645DD9321419C7F00EC714B /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
-		A650BE7E21F21C180066B9B5 /* CustomWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CustomWindow.h; path = opengl/cocoa/CustomWindow.h; sourceTree = "<group>"; };
-		A650BE7F21F21C180066B9B5 /* CustomWindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = CustomWindow.mm; path = opengl/cocoa/CustomWindow.mm; sourceTree = "<group>"; };
-		A650BE8021F21C180066B9B5 /* cocoa_window.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_window.mm; path = opengl/cocoa/cocoa_window.mm; sourceTree = "<group>"; };
 		A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CustomOpenGLView.h; path = opengl/cocoa/CustomOpenGLView.h; sourceTree = "<group>"; };
 		A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = CustomOpenGLView.mm; path = opengl/cocoa/CustomOpenGLView.mm; sourceTree = "<group>"; };
+		A650BE8A21F8B3730066B9B5 /* framebuffer */ = {isa = PBXFileReference; lastKnownFileType = folder; name = framebuffer; path = mango/framebuffer; sourceTree = "<group>"; };
+		A650BE8D21F8B79E0066B9B5 /* cocoa_framebuffer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_framebuffer.mm; path = framebuffer/cocoa/cocoa_framebuffer.mm; sourceTree = "<group>"; };
+		A650BE8F21F8BB990066B9B5 /* window */ = {isa = PBXFileReference; lastKnownFileType = folder; name = window; path = mango/window; sourceTree = "<group>"; };
+		A650BE9221F8D4290066B9B5 /* cocoa_window.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_window.mm; path = window/cocoa/cocoa_window.mm; sourceTree = "<group>"; };
+		A650BE9321F8D4290066B9B5 /* cocoa_window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cocoa_window.h; path = window/cocoa/cocoa_window.h; sourceTree = "<group>"; };
 		A66F158021C15CB400E1C8AA /* zstd_decompress_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_decompress_internal.h; path = external/zstd/decompress/zstd_decompress_internal.h; sourceTree = "<group>"; };
 		A66F158121C15CB400E1C8AA /* zstd_ddict.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_ddict.c; path = external/zstd/decompress/zstd_ddict.c; sourceTree = "<group>"; };
 		A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_decompress_block.h; path = external/zstd/decompress/zstd_decompress_block.h; sourceTree = "<group>"; };
@@ -599,10 +601,10 @@
 		A003D2AD192B9865009FED25 /* mango */ = {
 			isa = PBXGroup;
 			children = (
-				A00559E31C9335E100A6D963 /* vulkan */,
+				A650BE8F21F8BB990066B9B5 /* window */,
+				A650BE8A21F8B3730066B9B5 /* framebuffer */,
 				A00559D91C93337C00A6D963 /* core */,
 				A00559E11C93340600A6D963 /* image */,
-				A00559DF1C9333FE00A6D963 /* gui */,
 				A00559DD1C9333F100A6D963 /* filesystem */,
 				A0FF42CC1BBEDC630036141B /* simd */,
 				A003D306192B9998009FED25 /* math */,
@@ -691,11 +693,8 @@
 			children = (
 				A00559D61C9332C600A6D963 /* opengl.cpp */,
 				A0F21ED51CA05EE90084302D /* cocoa_context.mm */,
-				A650BE8021F21C180066B9B5 /* cocoa_window.mm */,
 				A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */,
 				A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */,
-				A650BE7E21F21C180066B9B5 /* CustomWindow.h */,
-				A650BE7F21F21C180066B9B5 /* CustomWindow.mm */,
 			);
 			name = opengl;
 			sourceTree = "<group>";
@@ -713,6 +712,8 @@
 		A08710A415B9E95F0033B09C /* mango */ = {
 			isa = PBXGroup;
 			children = (
+				A650BE9121F8D4130066B9B5 /* window */,
+				A650BE8C21F8B7730066B9B5 /* framebuffer */,
 				A005598A1C93323D00A6D963 /* core */,
 				A005599D1C93326000A6D963 /* filesystem */,
 				A00559AA1C93328800A6D963 /* image */,
@@ -1035,6 +1036,23 @@
 			name = lzma;
 			sourceTree = "<group>";
 		};
+		A650BE8C21F8B7730066B9B5 /* framebuffer */ = {
+			isa = PBXGroup;
+			children = (
+				A650BE8D21F8B79E0066B9B5 /* cocoa_framebuffer.mm */,
+			);
+			name = framebuffer;
+			sourceTree = "<group>";
+		};
+		A650BE9121F8D4130066B9B5 /* window */ = {
+			isa = PBXGroup;
+			children = (
+				A650BE9321F8D4290066B9B5 /* cocoa_window.h */,
+				A650BE9221F8D4290066B9B5 /* cocoa_window.mm */,
+			);
+			name = window;
+			sourceTree = "<group>";
+		};
 		A672D90F2026632700947D7E /* aes */ = {
 			isa = PBXGroup;
 			children = (
@@ -1138,6 +1156,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A650BE9621F8D4B40066B9B5 /* window in Headers */,
+				A650BE9721F8D4B40066B9B5 /* framebuffer in Headers */,
 				A645DD8621415A7200EC714B /* miniz.h in Headers */,
 				A63DD74D1E706EB200D4D499 /* crc.hpp in Headers */,
 				A63DD78F1E706F3400D4D499 /* bzlib_private.h in Headers */,
@@ -1174,9 +1194,9 @@
 				A63DD7971E706F5400D4D499 /* lzoconf.h in Headers */,
 				A63DD7551E706EB200D4D499 /* rarvm.hpp in Headers */,
 				A63DD7AF1E706FA000D4D499 /* astc.hpp in Headers */,
+				A650BE9521F8D4290066B9B5 /* cocoa_window.h in Headers */,
 				A642439121852AEF0044B763 /* Bra.h in Headers */,
 				A63DD7711E706EF100D4D499 /* lzfse_encode_tables.h in Headers */,
-				A00559E01C9333FE00A6D963 /* gui in Headers */,
 				A00559DA1C93337C00A6D963 /* core in Headers */,
 				A645DD52214154F400EC714B /* debug.h in Headers */,
 				A645DD46214154F400EC714B /* threading.h in Headers */,
@@ -1184,7 +1204,6 @@
 				A642437821852AEF0044B763 /* Bcj2.h in Headers */,
 				A0FF42CE1BBEDC9D0036141B /* simd in Headers */,
 				A63DD7751E706EF100D4D499 /* lzfse_internal.h in Headers */,
-				A00559E41C9335E100A6D963 /* vulkan in Headers */,
 				A003D308192B9998009FED25 /* math in Headers */,
 				A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */,
 				A645DD8E21415B3F00EC714B /* miniz_tdef.h in Headers */,
@@ -1196,7 +1215,6 @@
 				A642437521852AEF0044B763 /* XzEnc.h in Headers */,
 				A645DD762141551200EC714B /* zstd_lazy.h in Headers */,
 				A63DD7791E706EF100D4D499 /* lzvn_decode_base.h in Headers */,
-				A650BE8321F21C180066B9B5 /* CustomWindow.h in Headers */,
 				A642437E21852AEF0044B763 /* HuffEnc.h in Headers */,
 				A645DD712141551200EC714B /* zstd_ldm.h in Headers */,
 				A64243B22185E70B0044B763 /* 7zSha1.h in Headers */,
@@ -1304,6 +1322,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A650BE9021F8BB990066B9B5 /* window in Resources */,
+				A650BE8B21F8B3730066B9B5 /* framebuffer in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1357,7 +1377,6 @@
 				A642439221852AEF0044B763 /* AesOpt.c in Sources */,
 				A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */,
 				A00559D41C93329A00A6D963 /* surface.cpp in Sources */,
-				A650BE8521F21C180066B9B5 /* cocoa_window.mm in Sources */,
 				A642437921852AEF0044B763 /* Lzma2Dec.c in Sources */,
 				A63DD7A61E706F8800D4D499 /* BC6HBC7.cpp in Sources */,
 				A645DD4E214154F400EC714B /* threading.c in Sources */,
@@ -1424,7 +1443,6 @@
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
 				A642437321852AEF0044B763 /* Xz.c in Sources */,
 				A64243AF2185E70B0044B763 /* 7zSha256.c in Sources */,
-				A650BE8421F21C180066B9B5 /* CustomWindow.mm in Sources */,
 				A63DD7581E706EB200D4D499 /* rijndael.cpp in Sources */,
 				A645DD50214154F400EC714B /* fse_decompress.c in Sources */,
 				A00559A41C93327800A6D963 /* file.cpp in Sources */,
@@ -1435,6 +1453,7 @@
 				A0F21ED61CA05EE90084302D /* cocoa_context.mm in Sources */,
 				A63DD78B1E706F3400D4D499 /* bz_crctable.c in Sources */,
 				A642435A21852AEF0044B763 /* XzEnc.c in Sources */,
+				A650BE8E21F8B79E0066B9B5 /* cocoa_framebuffer.mm in Sources */,
 				A642438321852AEF0044B763 /* LzmaLib.c in Sources */,
 				A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */,
 				A0F241D419D5E30D00218F92 /* simd.cpp in Sources */,
@@ -1447,6 +1466,7 @@
 				A63DD78E1E706F3400D4D499 /* bz_randtable.c in Sources */,
 				A642435921852AEF0044B763 /* Lzma86Dec.c in Sources */,
 				A00559951C93324E00A6D963 /* compress.cpp in Sources */,
+				A650BE9421F8D4290066B9B5 /* cocoa_window.mm in Sources */,
 				A0F21EDB1CA062EA0084302D /* file_stream.cpp in Sources */,
 				A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */,
 				A00559D31C93329A00A6D963 /* image.cpp in Sources */,

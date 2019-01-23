@@ -1,11 +1,42 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <mango/core/string.hpp>
-#include <mango/opengl/opengl.hpp>
+#include "cocoa_window.h"
 
-#include "CustomOpenGLView.h"
+// -----------------------------------------------------------------------
+// CustomNSWindow
+// -----------------------------------------------------------------------
+
+@implementation CustomNSWindow
+
+@synthesize window;
+
+- (BOOL)canBecomeKeyWindow
+{
+    return YES;
+}
+
+- (BOOL)canBecomeMainWindow
+{
+    return YES;
+}
+
+- (void)createMenu
+{
+    id menubar = [[NSMenu new] autorelease];
+    id appMenuItem = [[NSMenuItem new] autorelease];
+    [menubar addItem:appMenuItem];
+    [NSApp setMainMenu:menubar];
+    id appMenu = [[NSMenu new] autorelease];
+    id appName = [[NSProcessInfo processInfo] processName];
+    id quitTitle = [@"Quit " stringByAppendingString:appName];
+    id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
+    [appMenu addItem:quitMenuItem];
+    [appMenuItem setSubmenu:appMenu];
+}
+
+@end
 
 namespace mango
 {
@@ -99,19 +130,18 @@ namespace mango
         uint32 state = m_handle->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
         return state != 0;
     }
-    
+
     void Window::enterEventLoop()
     {
-#if 1
         m_handle->looping = true;
-        
+
         while (m_handle->looping)
         {
             NSEvent* event = [NSApp nextEventMatchingMask: NSEventMaskAny
                               untilDate: nil
                               inMode: NSDefaultRunLoopMode
                               dequeue: YES];
-            
+
             if (event)
             {
                 //if ([event type] == NSKeyUp && ([event modifierFlags] & NSCommandKeyMask))
@@ -124,18 +154,11 @@ namespace mango
                 onIdle();
             }
         }
-#else
-        [NSApp run];
-#endif
     }
     
     void Window::breakEventLoop()
     {
-#if 1
         m_handle->looping = false;
-#else
-        [NSApp stop:nil];
-#endif
     }
 
     void Window::onIdle()

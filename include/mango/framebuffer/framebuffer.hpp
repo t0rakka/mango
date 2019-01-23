@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "../gui/window.hpp"
+#include "../window/window.hpp"
 
 namespace mango {
 namespace framebuffer {

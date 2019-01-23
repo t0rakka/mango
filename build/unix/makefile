@@ -98,12 +98,12 @@ SOURCE_DIRS_FRAMEBUFFER = mango/framebuffer
 
 ifeq (Linux, $(OS))
 
-  SOURCE_DIRS_OPENGL += mango/gui/xlib
+  SOURCE_DIRS_OPENGL += mango/window/xlib
   SOURCE_DIRS_OPENGL += mango/opengl/glx
 
-  SOURCE_DIRS_VULKAN += mango/gui/xcb
+  SOURCE_DIRS_VULKAN += mango/window/xcb
 
-  SOURCE_DIRS_FRAMEBUFFER += mango/gui/xlib
+  SOURCE_DIRS_FRAMEBUFFER += mango/window/xlib
   SOURCE_DIRS_FRAMEBUFFER += mango/framebuffer/xlib
 
   LIBRARY_MANGO  = lib$(LIBNAME_MANGO).so
@@ -238,6 +238,10 @@ endif
 ifeq (Darwin, $(OS))
 
   SOURCE_DIRS_OPENGL += mango/opengl/cocoa
+  SOURCE_DIRS_OPENGL += mango/window/cocoa
+
+  SOURCE_DIRS_FRAMEBUFFER += mango/window/cocoa
+  SOURCE_DIRS_FRAMEBUFFER += mango/framebuffer/cocoa
 
   # hack to create /usr/local (Xcode requires them and they don't exist by default)
   LOCAL    = mkdir -p /usr/local/lib ; mkdir -p /usr/local/include
@@ -245,7 +249,7 @@ ifeq (Darwin, $(OS))
   LIBRARY_MANGO  = lib$(LIBNAME_MANGO).dylib
   LIBRARY_OPENGL = lib$(LIBNAME_OPENGL).dylib
   LIBRARY_VULKAN =
-  LIBRARY_FRAMEBUFFER =
+  LIBRARY_FRAMEBUFFER = lib$(LIBNAME_FRAMEBUFFER).dylib
   PLATFORM = x86-64
   CC  = clang $(OPTIONS) $(OPTIONS_X86) $(CC_STD) -mmacosx-version-min=10.13
   CPP = clang++ $(OPTIONS) $(OPTIONS_X86) $(CPP_STD) -mmacosx-version-min=10.13 $(STD) -stdlib=libc++

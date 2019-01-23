@@ -8,7 +8,7 @@
 #include <string>
 #include "../core/configure.hpp"
 #include "../image/compression.hpp"
-#include "../gui/window.hpp"
+#include "../window/window.hpp"
 
 // -----------------------------------------------------------------------
 // OpenGL API
