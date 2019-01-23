@@ -54,8 +54,7 @@
     <ClInclude Include="..\..\include\mango\filesystem\filesystem.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\mapper.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\path.hpp" />
-    <ClInclude Include="..\..\include\mango\gui\gui.hpp" />
-    <ClInclude Include="..\..\include\mango\gui\window.hpp" />
+    <ClInclude Include="..\..\include\mango\framebuffer\framebuffer.hpp" />
     <ClInclude Include="..\..\include\mango\image\blitter.hpp" />
     <ClInclude Include="..\..\include\mango\image\color.hpp" />
     <ClInclude Include="..\..\include\mango\image\compression.hpp" />
@@ -167,6 +166,7 @@
     <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h" />
     <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h" />
     <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp" />
+    <ClInclude Include="..\..\include\mango\window\window.hpp" />
     <ClInclude Include="..\..\source\external\aes\bc_aes.h" />
     <ClInclude Include="..\..\source\external\bc\BC.h" />
     <ClInclude Include="..\..\source\external\bzip2\bzlib.h" />
@@ -267,8 +267,8 @@
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_internal.h" />
     <ClInclude Include="..\..\source\external\zstd\zstd.h" />
     <ClInclude Include="..\..\source\mango\filesystem\indexer.hpp" />
-    <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp" />
     <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp" />
+    <ClInclude Include="..\..\source\mango\window\win32\win32_handle.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\external\aes\bc_aes.cpp" />
@@ -399,7 +399,7 @@
     <ClCompile Include="..\..\source\mango\filesystem\win32\file_observer.cpp" />
     <ClCompile Include="..\..\source\mango\filesystem\win32\file_stream.cpp" />
     <ClCompile Include="..\..\source\mango\filesystem\win32\mapper_file.cpp" />
-    <ClCompile Include="..\..\source\mango\gui\win32\win32_window.cpp" />
+    <ClCompile Include="..\..\source\mango\framebuffer\win32\d3d9_framebuffer.cpp" />
     <ClCompile Include="..\..\source\mango\image\blitter.cpp" />
     <ClCompile Include="..\..\source\mango\image\block.cpp" />
     <ClCompile Include="..\..\source\mango\image\block_dxt.cpp" />
@@ -439,6 +439,7 @@
     <ClCompile Include="..\..\source\mango\opengl\opengl.cpp" />
     <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp" />
     <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp" />
+    <ClCompile Include="..\..\source\mango\window\win32\win32_window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

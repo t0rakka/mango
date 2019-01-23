@@ -16,9 +16,6 @@
     <Filter Include="mango\include\filesystem">
       <UniqueIdentifier>{d177d148-c4bf-4011-9dd6-88e2b4fa77b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mango\include\gui">
-      <UniqueIdentifier>{03289ea8-6c66-49f9-99c3-048eb8fa9207}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mango\include\image">
       <UniqueIdentifier>{538ee593-f6ec-48d1-8bed-4cdb7b8c8d11}</UniqueIdentifier>
     </Filter>
@@ -33,9 +30,6 @@
     </Filter>
     <Filter Include="mango\source\filesystem">
       <UniqueIdentifier>{12f116b7-8b6f-46e4-b0d4-209912dcc1ef}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mango\source\gui">
-      <UniqueIdentifier>{7b52ba28-516e-445f-bce7-425099093522}</UniqueIdentifier>
     </Filter>
     <Filter Include="mango\source\image">
       <UniqueIdentifier>{245b0878-3dd0-4329-b598-395644e8bf44}</UniqueIdentifier>
@@ -72,9 +66,6 @@
     </Filter>
     <Filter Include="mango\source\filesystem\win32">
       <UniqueIdentifier>{565f3974-8acb-48b0-a298-880f12b21b66}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mango\source\gui\win32">
-      <UniqueIdentifier>{135c30ff-fef9-46f0-a8a3-1d0def4b9b95}</UniqueIdentifier>
     </Filter>
     <Filter Include="mango\source\opengl\wgl">
       <UniqueIdentifier>{e35d4449-988f-405a-adc3-bbedb6587644}</UniqueIdentifier>
@@ -132,6 +123,18 @@
     </Filter>
     <Filter Include="external\lzma">
       <UniqueIdentifier>{0b1e07e0-fa5b-4ef1-b1d2-ef4a4a95971f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\window">
+      <UniqueIdentifier>{08102424-242e-42b1-8a80-b9b28ae66311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\window">
+      <UniqueIdentifier>{d47b8b9e-b8d4-4762-b837-d9bb62e89206}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\framebuffer">
+      <UniqueIdentifier>{7e14948f-7c60-4571-b053-78da3ada3f4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\framebuffer">
+      <UniqueIdentifier>{d6b05542-c0d1-4b84-bde5-2e4dfab4a5d8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -210,12 +213,6 @@
     <ClInclude Include="..\..\include\mango\filesystem\path.hpp">
       <Filter>mango\include\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\gui\window.hpp">
-      <Filter>mango\include\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\gui\gui.hpp">
-      <Filter>mango\include\gui</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mango\image\surface.hpp">
       <Filter>mango\include\image</Filter>
     </ClInclude>
@@ -284,9 +281,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp">
       <Filter>mango\include\vulkan\func</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\mango\gui\win32\win32_handle.hpp">
-      <Filter>mango\source\gui\win32</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\external\unrar\array.hpp">
       <Filter>external\unrar</Filter>
@@ -861,6 +855,15 @@
     <ClInclude Include="..\..\source\mango\filesystem\indexer.hpp">
       <Filter>mango\source\filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\mango\window\win32\win32_handle.hpp">
+      <Filter>mango\source\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\window\window.hpp">
+      <Filter>mango\include\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\framebuffer\framebuffer.hpp">
+      <Filter>mango\include\framebuffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -931,9 +934,6 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\filesystem\win32\mapper_file.cpp">
       <Filter>mango\source\filesystem\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\gui\win32\win32_window.cpp">
-      <Filter>mango\source\gui\win32</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\mango\image\surface.cpp">
       <Filter>mango\source\image</Filter>
@@ -1366,6 +1366,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress_block.c">
       <Filter>external\zstd\decompress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\window\win32\win32_window.cpp">
+      <Filter>mango\source\window</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\framebuffer\win32\d3d9_framebuffer.cpp">
+      <Filter>mango\source\framebuffer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
