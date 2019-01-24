@@ -93,11 +93,6 @@ namespace framebuffer {
         m_context->unlock();
     }
 
-    bool Framebuffer::locked() const
-    {
-        return m_context->locked();
-    }
-
     void Framebuffer::present()
     {
         m_context->present();
