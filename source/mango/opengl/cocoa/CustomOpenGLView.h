@@ -28,4 +28,5 @@ namespace opengl {
 - (void)dispatchResize:(NSRect)frame;
 - (id)initWithFrame:(NSRect)frame andCustomWindow:(mango::opengl::Context *)theContext;
 - (void)trackContentView:(NSWindow *)window;
+
 @end

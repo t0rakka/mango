@@ -10,6 +10,10 @@
 namespace mango {
 namespace framebuffer {
 
+	// -------------------------------------------------------------------
+	// FramebufferContext
+	// -------------------------------------------------------------------
+
     struct FramebufferContext
     {
         IDirect3D9* d3d;
