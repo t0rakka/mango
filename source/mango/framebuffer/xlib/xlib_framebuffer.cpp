@@ -17,7 +17,6 @@ namespace framebuffer {
         int width;
         int height;
         Bitmap buffer;
-        bool is_locked;
 
         GC gc;
         XImage* image;
@@ -27,7 +26,6 @@ namespace framebuffer {
             , width(width)
             , height(height)
             , buffer(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8))
-            , is_locked(false)
         {
             gc = DefaultGC(handle.display, screen);
             image = XCreateImage(handle.display, CopyFromParent, depth, ZPixmap, 0, NULL, width, height, 32, width * 4);
@@ -45,18 +43,11 @@ namespace framebuffer {
 
         Surface lock()
         {
-            is_locked = true;
             return buffer;
         }
 
         void unlock()
         {
-            is_locked = false;
-        }
-
-        bool locked() const
-        {
-            return is_locked;
         }
 
         void present()

@@ -591,12 +591,6 @@ namespace framebuffer {
         {
         }
 
-        bool locked() const
-        {
-            // TODO
-            return false;
-        }
-
         void present()
         {
             int width = bitmap.width;
@@ -704,11 +698,6 @@ namespace framebuffer {
     void Framebuffer::unlock()
     {
         m_context->unlock();
-    }
-
-    bool Framebuffer::locked() const
-    {
-        return m_context->locked();
     }
 
     void Framebuffer::present()

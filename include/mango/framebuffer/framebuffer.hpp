@@ -24,8 +24,6 @@ namespace framebuffer {
 
         Surface lock();
         void unlock();
-        bool locked() const;
-
         void present();
     };
 
