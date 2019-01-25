@@ -582,6 +582,24 @@ namespace framebuffer {
         {
         }
 
+#if 0
+        void convertBufferToRGBA()
+        {
+            int count = bitmap.width * bitmap.height;
+            u32* image = bitmap.address<u32>();
+
+            for (int i = 0; i < count; ++i)
+            {
+                // swap RED and BLUE
+                u32 color = image[i];
+                color = (color & 0xff00ff00)
+                     | ((color & 0x00ff0000) >> 16)
+                     | ((color & 0x000000ff) << 16);
+                image[i] = color;
+            }
+        }
+#endif
+
         Surface lock()
         {
             return bitmap;
@@ -615,6 +633,19 @@ namespace framebuffer {
     Framebuffer::Framebuffer(int width, int height)
         : Window(width, height, Window::DISABLE_RESIZE)
     {
+        // app setup
+
+        [NSApplication sharedApplication];
+        
+        ProcessSerialNumber psn = { 0, kCurrentProcess };
+        TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+        [[NSApplication sharedApplication] activateIgnoringOtherApps: YES];
+        
+        [NSEvent setMouseCoalescingEnabled:NO];
+        [NSApp finishLaunching];
+
+        // create window
+
         unsigned int styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
             NSWindowStyleMaskMiniaturizable;// | NSWindowStyleMaskResizable;
 
@@ -654,8 +685,6 @@ namespace framebuffer {
 
         // Create menu
         [m_handle->window createMenu];
-
-        // ... context initialization was here ...
 
         m_context->view = [m_context->view retain];
         m_context->image_view = [[NSImageView alloc] initWithFrame:[m_handle->window frame]];
