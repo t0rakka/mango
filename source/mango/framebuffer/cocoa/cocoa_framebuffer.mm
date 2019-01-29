@@ -574,7 +574,7 @@ namespace framebuffer {
         u32 modifiers;
 
         FramebufferContext(int width, int height)
-            : bitmap(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
+            : bitmap(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8))
         {
         }
 
@@ -582,7 +582,6 @@ namespace framebuffer {
         {
         }
 
-#if 0
         void convertBufferToRGBA()
         {
             int count = bitmap.width * bitmap.height;
@@ -595,10 +594,10 @@ namespace framebuffer {
                 color = (color & 0xff00ff00)
                      | ((color & 0x00ff0000) >> 16)
                      | ((color & 0x000000ff) << 16);
+                color |= 0xff000000; // force alpha to 1.0 (compositor has alpha blending enabled)
                 image[i] = color;
             }
         }
-#endif
 
         Surface lock()
         {
@@ -611,12 +610,23 @@ namespace framebuffer {
 
         void present()
         {
+            convertBufferToRGBA();
+
             int width = bitmap.width;
             int height = bitmap.height;
             int stride = bitmap.stride;
             u8* data = bitmap.address<u8>();
 
-            NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&data pixelsWide:width pixelsHigh:height bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSCalibratedRGBColorSpace bytesPerRow:stride bitsPerPixel:32];
+            NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc]
+                        initWithBitmapDataPlanes:&data
+                        pixelsWide:width
+                        pixelsHigh:height
+                        bitsPerSample:8 samplesPerPixel:4
+                        hasAlpha:YES
+                        isPlanar:NO
+                        colorSpaceName:NSCalibratedRGBColorSpace
+                        bytesPerRow:stride
+                        bitsPerPixel:32];
             NSImage *image = [[NSImage alloc] init];
             [image addRepresentation:imageRep];
             [image_view setImage:image];
@@ -646,8 +656,10 @@ namespace framebuffer {
 
         // create window
 
-        unsigned int styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-            NSWindowStyleMaskMiniaturizable;// | NSWindowStyleMaskResizable;
+        unsigned int styleMask = NSWindowStyleMaskTitled
+                               | NSWindowStyleMaskClosable
+                               | NSWindowStyleMaskMiniaturizable;
+                            // | NSWindowStyleMaskResizable;
 
         NSRect frame = NSMakeRect(0, 0, width, height);
 
@@ -680,8 +692,8 @@ namespace framebuffer {
             return;
         }
 
-        [m_handle->window setMinSize:NSMakeSize(width, height)];
-        [m_handle->window setMaxSize:NSMakeSize(width, height)];
+        //[m_handle->window setMinSize:NSMakeSize(width, height)];
+        //[m_handle->window setMaxSize:NSMakeSize(width, height)];
 
         // Create menu
         [m_handle->window createMenu];
@@ -691,6 +703,8 @@ namespace framebuffer {
 
         [m_handle->window setContentView:m_context->image_view];
         [m_context->image_view addSubview:m_context->view];
+        
+        [m_context->view setFrameOrigin: NSMakePoint(0,-20000)];
 
         if ([m_handle->window respondsToSelector:@selector(setRestorable:)])
         {
