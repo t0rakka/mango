@@ -26,10 +26,7 @@ namespace mango
         union
         {
             u8 component[4];
-            PackedValue<u8, 4, 0> b;
-            PackedValue<u8, 4, 1> g;
-            PackedValue<u8, 4, 2> r;
-            PackedValue<u8, 4, 3> a;
+            struct { u8 b, g, r, a; };
         };
 
         constexpr ColorBGRA()
@@ -38,7 +35,7 @@ namespace mango
         }
 
         ColorBGRA(u8 red, u8 green, u8 blue, u8 alpha)
-            : component {blue, green, red, alpha}
+            : component { blue, green, red, alpha }
         {
         }
 
@@ -68,10 +65,7 @@ namespace mango
         union
         {
             u8 component[4];
-            PackedValue<u8, 4, 0> r;
-            PackedValue<u8, 4, 1> g;
-            PackedValue<u8, 4, 2> b;
-            PackedValue<u8, 4, 3> a;
+            struct { u8 r, g, b, a; };
         };
 
         constexpr ColorRGBA()
@@ -80,7 +74,7 @@ namespace mango
         }
 
         ColorRGBA(u8 red, u8 green, u8 blue, u8 alpha)
-            : component {red, green, blue, alpha}
+            : component { red, green, blue, alpha }
         {
         }
 
