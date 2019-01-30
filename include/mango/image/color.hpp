@@ -21,22 +21,19 @@ namespace mango
         return (alpha << 24) | (blue << 16) | (green << 8) | red;
     }
 
-    struct ColorBGRA
+    union ColorBGRA
     {
-        union
-        {
-            u8 component[4];
-            struct { u8 b, g, r, a; };
-        };
+        u8 component[4];
+        struct { u8 b, g, r, a; };
 
-        constexpr ColorBGRA()
-            : component { 0, 0, 0, 0 }
+        ColorBGRA()
         {
+            ustore32le(this, 0);
         }
 
         ColorBGRA(u8 red, u8 green, u8 blue, u8 alpha)
-            : component { blue, green, red, alpha }
         {
+            ustore32le(this, makeBGRA(red, green, blue, alpha));
         }
 
         ColorBGRA(u32 value)
@@ -60,22 +57,19 @@ namespace mango
         }
     };
 
-    struct ColorRGBA
+    union ColorRGBA
     {
-        union
-        {
-            u8 component[4];
-            struct { u8 r, g, b, a; };
-        };
+        u8 component[4];
+        struct { u8 r, g, b, a; };
 
-        constexpr ColorRGBA()
-            : component { 0, 0, 0, 0 }
+        ColorRGBA()
         {
+            ustore32le(this, 0);
         }
 
         ColorRGBA(u8 red, u8 green, u8 blue, u8 alpha)
-            : component { red, green, blue, alpha }
         {
+            ustore32le(this, makeRGBA(red, green, blue, alpha));
         }
 
         ColorRGBA(u32 value)

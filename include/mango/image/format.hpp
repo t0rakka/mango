@@ -115,15 +115,15 @@ namespace mango
         ColorRGBA size;
         ColorRGBA offset;
 
-        constexpr Format()
+        Format()
             : bits(0)
             , type(NONE)
-            , size(ColorRGBA())
-            , offset(ColorRGBA())
+            , size(0)
+            , offset(0)
         {
         }
 
-        constexpr Format(int bits, Type type, const ColorRGBA& size, const ColorRGBA& offset)
+        Format(int bits, Type type, const ColorRGBA& size, const ColorRGBA& offset)
             : bits(bits)
             , type(type)
             , size(size)
