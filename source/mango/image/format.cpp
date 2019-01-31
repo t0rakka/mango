@@ -13,38 +13,38 @@ namespace mango
     // Format
     // ----------------------------------------------------------------------------
 
-    Format::Format(int bits, uint32 luminanceMask, uint32 alphaMask)
+    Format::Format(int bits, u32 luminanceMask, u32 alphaMask)
         : bits(bits)
         , type(UNORM)
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 32);
 
-        size[0] = uint8(u32_count_bits(luminanceMask));
-        size[1] = uint8(u32_count_bits(luminanceMask));
-        size[2] = uint8(u32_count_bits(luminanceMask));
-        size[3] = uint8(u32_count_bits(alphaMask));
-        offset[0] = uint8(u32_index_of_lsb(luminanceMask));
-        offset[1] = uint8(u32_index_of_lsb(luminanceMask));
-        offset[2] = uint8(u32_index_of_lsb(luminanceMask));
-        offset[3] = uint8(u32_index_of_lsb(alphaMask));
+        size[0] = u8(u32_count_bits(luminanceMask));
+        size[1] = u8(u32_count_bits(luminanceMask));
+        size[2] = u8(u32_count_bits(luminanceMask));
+        size[3] = u8(u32_count_bits(alphaMask));
+        offset[0] = u8(u32_index_of_lsb(luminanceMask));
+        offset[1] = u8(u32_index_of_lsb(luminanceMask));
+        offset[2] = u8(u32_index_of_lsb(luminanceMask));
+        offset[3] = u8(u32_index_of_lsb(alphaMask));
     }
 
-    Format::Format(int bits, uint32 redMask, uint32 greenMask, uint32 blueMask, uint32 alphaMask)
+    Format::Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask)
         : bits(bits)
         , type(UNORM)
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 32);
 
-        size[0] = uint8(u32_count_bits(redMask));
-        size[1] = uint8(u32_count_bits(greenMask));
-        size[2] = uint8(u32_count_bits(blueMask));
-        size[3] = uint8(u32_count_bits(alphaMask));
-        offset[0] = uint8(u32_index_of_lsb(redMask));
-        offset[1] = uint8(u32_index_of_lsb(greenMask));
-        offset[2] = uint8(u32_index_of_lsb(blueMask));
-        offset[3] = uint8(u32_index_of_lsb(alphaMask));
+        size[0] = u8(u32_count_bits(redMask));
+        size[1] = u8(u32_count_bits(greenMask));
+        size[2] = u8(u32_count_bits(blueMask));
+        size[3] = u8(u32_count_bits(alphaMask));
+        offset[0] = u8(u32_index_of_lsb(redMask));
+        offset[1] = u8(u32_index_of_lsb(greenMask));
+        offset[2] = u8(u32_index_of_lsb(blueMask));
+        offset[3] = u8(u32_index_of_lsb(alphaMask));
     }
 
     Format::Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3)
@@ -61,16 +61,16 @@ namespace mango
 		const int c3 = (order >> 6) & 3;
 
 		// compute component offset
-        offset[c0] = uint8(0);
-        offset[c1] = uint8(s0);
-        offset[c2] = uint8(s0 + s1);
-        offset[c3] = uint8(s0 + s1 + s2);
+        offset[c0] = u8(0);
+        offset[c1] = u8(s0);
+        offset[c2] = u8(s0 + s1);
+        offset[c3] = u8(s0 + s1 + s2);
 
 		// compute component size
-        size[c0] = uint8(s0);
-        size[c1] = uint8(s1);
-        size[c2] = uint8(s2);
-        size[c3] = uint8(s3);
+        size[c0] = u8(s0);
+        size[c1] = u8(s1);
+        size[c2] = u8(s2);
+        size[c3] = u8(s3);
     }
 
     const Format& Format::operator = (const Format& format)
@@ -104,7 +104,7 @@ namespace mango
 
 	int Format::float_bits() const
 	{
-		uint32 f_bits = 0;
+		u32 f_bits = 0;
 
 		switch (type)
 		{
@@ -133,19 +133,18 @@ namespace mango
     bool Format::luminance() const
     {
         // check if red, green and blue channels are identical
-        uint32 mask0 = mask(0);
-        uint32 mask1 = mask(1);
-        uint32 mask2 = mask(2);
+        u32 mask0 = mask(0);
+        u32 mask1 = mask(1);
+        u32 mask2 = mask(2);
         return (mask0 != 0) && (mask0 == mask1) && (mask0 == mask2);
     }
 
-    uint32 Format::mask(int component) const
+    u32 Format::mask(int component) const
     {
-        uint32 mask = uint32((1UL << size[component]) - 1) << offset[component];
-        return mask;
+        return u32((1u << size[component]) - 1) << offset[component];
     }
 
-    uint32 Format::pack(float red, float green, float blue, float alpha) const
+    u32 Format::pack(float red, float green, float blue, float alpha) const
     {
         const float scale[] =
         {
@@ -155,15 +154,15 @@ namespace mango
             clamp(alpha, 0.0f, 1.0f)
         };
 
-        uint32 color = 0;
+        u32 color = 0;
 
         switch (type)
         {
             case UNORM:
                 for (int i = 0; i < 4; ++i)
                 {
-					const uint32 mask = (1 << size[i]) - 1;
-                    uint32 component = uint32(mask * scale[i] + 0.5f) << offset[i];
+					const u32 mask = (1 << size[i]) - 1;
+                    u32 component = u32(mask * scale[i] + 0.5f) << offset[i];
                     color |= component;
                 }
                 break;
