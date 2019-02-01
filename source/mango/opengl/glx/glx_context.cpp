@@ -254,17 +254,17 @@ namespace opengl {
 
             if (m_context->context)
             {
-                printf("Created GL 3.0 context\n");
+                //printf("Created GL 3.0 context\n");
             }
             else
             {
-                printf("Failed to create GL 3.0 context ... using old-style GLX context\n");
+                //printf("Failed to create GL 3.0 context ... using old-style GLX context\n");
                 m_context->context = glXCreateContextAttribsARB(m_handle->display, bestFbc, 0, True, NULL);
             }
         }
         else
         {
-            printf("glXCreateContextAttribsARB() not found ... using old-style GLX context\n");
+            //printf("glXCreateContextAttribsARB() not found ... using old-style GLX context\n");
             m_context->context = glXCreateNewContext(m_handle->display, bestFbc, GLX_RGBA_TYPE, 0, True);
         }
 
