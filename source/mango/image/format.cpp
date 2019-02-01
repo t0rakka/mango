@@ -102,41 +102,19 @@ namespace mango
         return bits >> 3;
     }
 
-	int Format::float_bits() const
-	{
-		u32 f_bits = 0;
-
-		switch (type)
-		{
-			case FP16:
-				f_bits = 16;
-				break;
-			case FP32:
-				f_bits = 32;
-				break;
-			case FP64:
-				f_bits = 64;
-				break;
-            default:
-                break;
-		}
-
-		return f_bits;
-	}
-
     bool Format::alpha() const
     {
         // check alpha channel size
-        return size[3] > 0;
+        return size[ALPHA] > 0;
     }
 
     bool Format::luminance() const
     {
         // check if red, green and blue channels are identical
-        u32 mask0 = mask(0);
-        u32 mask1 = mask(1);
-        u32 mask2 = mask(2);
-        return (mask0 != 0) && (mask0 == mask1) && (mask0 == mask2);
+        u32 red   = mask(RED);
+        u32 green = mask(GREEN);
+        u32 blue  = mask(BLUE);
+        return (red != 0) && (red == green) && (red == blue);
     }
 
     u32 Format::mask(int component) const
@@ -148,9 +126,9 @@ namespace mango
     {
         const float scale[] =
         {
-            clamp(red, 0.0f, 1.0f),
+            clamp(red,   0.0f, 1.0f),
             clamp(green, 0.0f, 1.0f),
-            clamp(blue, 0.0f, 1.0f),
+            clamp(blue,  0.0f, 1.0f),
             clamp(alpha, 0.0f, 1.0f)
         };
 

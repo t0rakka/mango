@@ -144,7 +144,6 @@ namespace mango
         bool operator < (const Format& format) const;
 
         int bytes() const;
-        int float_bits() const;
         bool alpha() const;
         bool luminance() const;
         u32 mask(int component) const;
