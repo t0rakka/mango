@@ -167,12 +167,14 @@ namespace mango
         }
 
         explicit Vector(ScalarType x, ScalarType y)
-            : x(x), y(y)
+            : x(x)
+            , y(y)
         {
         }
 
         Vector(const Vector& v)
-            : x(v.x), y(v.y)
+            : x(v.x)
+            , y(v.y)
         {
         }
 
@@ -226,22 +228,30 @@ namespace mango
         }
 
         explicit Vector(ScalarType s)
-            : x(s), y(s), z(s)
+            : x(s)
+            , y(s)
+            , z(s)
         {
         }
 
         explicit Vector(ScalarType x, ScalarType y, ScalarType z)
-            : x(x), y(y), z(z)
+            : x(x)
+            , y(y)
+            , z(z)
         {
         }
 
         explicit Vector(const Vector<ScalarType, 2>& v, ScalarType s)
-            : x(v.x), y(v.y), z(s)
+            : x(v.x)
+            , y(v.y)
+            , z(s)
         {
         }
 
         Vector(const Vector& v)
-            : x(v.x), y(v.y), z(v.z)
+            : x(v.x)
+            , y(v.y)
+            , z(v.z)
         {
         }
 
@@ -297,27 +307,42 @@ namespace mango
         }
 
         explicit Vector(ScalarType s)
-            : x(s), y(s), z(s), w(s)
+            : x(s)
+            , y(s)
+            , z(s)
+            , w(s)
         {
         }
 
         explicit Vector(ScalarType x, ScalarType y, ScalarType z, ScalarType w)
-            : x(x), y(y), z(z), w(w)
+            : x(x)
+            , y(y)
+            , z(z)
+            , w(w)
         {
         }
 
         explicit Vector(const Vector<ScalarType, 2>& v0, const Vector<ScalarType, 2>& v1)
-            : x(v0.x), y(v0.y), z(v1.x), w(v1.y)
+            : x(v0.x)
+            , y(v0.y)
+            , z(v1.x)
+            , w(v1.y)
         {
         }
 
         explicit Vector(const Vector<ScalarType, 3>& v, ScalarType s)
-            : x(v.x), y(v.y), z(v.z), w(s)
+            : x(v.x)
+            , y(v.y)
+            , z(v.z)
+            , w(s)
         {
         }
 
         Vector(const Vector& v)
-            : x(v.x), y(v.y), z(v.z), w(v.w)
+            : x(v.x)
+            , y(v.y)
+            , z(v.z)
+            , w(v.w)
         {
         }
 
