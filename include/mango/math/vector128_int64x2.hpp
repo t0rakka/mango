@@ -43,6 +43,11 @@ namespace mango
             return component[index].data;
         }
 
+        const ScalarType* data() const
+        {
+            return reinterpret_cast<const ScalarType *>(component);
+        }
+
         explicit Vector() {}
         ~Vector() {}
 

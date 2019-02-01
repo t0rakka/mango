@@ -88,6 +88,11 @@ namespace mango
             return component[index];
         }
 
+        const ScalarType* data() const
+        {
+            return component;
+        }
+
         explicit Vector()
         {
         }
@@ -157,6 +162,11 @@ namespace mango
             return component[index];
         }
 
+        const ScalarType* data() const
+        {
+            return component;
+        }
+
         explicit Vector()
         {
         }
@@ -221,6 +231,11 @@ namespace mango
         {
             assert(index < VectorSize);
             return component[index];
+        }
+
+        const ScalarType* data() const
+        {
+            return component;
         }
 
         explicit Vector()
@@ -300,6 +315,11 @@ namespace mango
         {
             assert(index < VectorSize);
             return component[index];
+        }
+
+        const ScalarType* data() const
+        {
+            return component;
         }
 
         explicit Vector()
