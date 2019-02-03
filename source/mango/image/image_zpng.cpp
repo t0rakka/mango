@@ -19,9 +19,9 @@ namespace
 
     struct zpng_header
     {
-        uint16le magic;
-        uint16le width;
-        uint16le height;
+        u16le magic;
+        u16le width;
+        u16le height;
         u8 channels;
         u8 bytes_per_channel;
     };

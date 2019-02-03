@@ -309,7 +309,7 @@ namespace {
 
     inline u32 u64_crc32(u32 crc, const u8* ptr)
     {
-        u64 data = *reinterpret_cast<const uint64le *>(ptr);
+        u64 data = *reinterpret_cast<const u64le *>(ptr);
         data = data ^ u64(crc);
         crc = g_crc32_table[((data>>56) & 0xff) + 0x000] ^
               g_crc32_table[((data>>48) & 0xff) + 0x100] ^
@@ -328,7 +328,7 @@ namespace {
 
     inline u32 u64_crc32(u32 crc, const u8* ptr)
     {
-        const uint32le* p = reinterpret_cast<const uint32le *>(ptr);
+        const u32le* p = reinterpret_cast<const u32le *>(ptr);
 #ifdef MANGO_LITTLE_ENDIAN
         u32 one = p[0] ^ crc;
         u32 two = p[1];
@@ -635,7 +635,7 @@ namespace {
 
     inline u32 u64_crc32c(u32 crc, const u8* ptr)
     {
-        u64 data = *reinterpret_cast<const uint64le *>(ptr);
+        u64 data = *reinterpret_cast<const u64le *>(ptr);
         data = data ^ u64(crc);
         crc = g_crc32c_table[((data>>56) & 0xff) + 0x000] ^
               g_crc32c_table[((data>>48) & 0xff) + 0x100] ^
@@ -654,7 +654,7 @@ namespace {
 
     inline u32 u64_crc32c(u32 crc, const u8* ptr)
     {
-        const uint32le* p = reinterpret_cast<const uint32le *>(ptr);
+        const u32le* p = reinterpret_cast<const u32le *>(ptr);
 #ifdef MANGO_LITTLE_ENDIAN
         u32 one = p[0] ^ crc;
         u32 two = p[1];

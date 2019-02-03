@@ -209,7 +209,7 @@ namespace
 			}
             else
             {
-                const uint16be* buffer = reinterpret_cast<const uint16be *>(data);
+                const u16be* buffer = reinterpret_cast<const u16be *>(data);
 
                 if (bitplanes == 1)
                 {

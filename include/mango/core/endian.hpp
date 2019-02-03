@@ -222,8 +222,8 @@ namespace mango
     /* Code example:
     struct Foo
     {
-        uint32be a;
-        uint32be b;
+        u32be a;
+        u32be b;
     };
 
     void bar(const char *ptr)
@@ -233,8 +233,8 @@ namespace mango
         const Foo *foo = reinterpret_cast<const Foo *>(ptr);
 
         // The endian conversion is done when we read from the variables
-        uint32 a = foo->a;
-        uint32 b = foo->b;
+        u32 a = foo->a;
+        u32 b = foo->b;
     }
 
     */
@@ -300,44 +300,48 @@ namespace mango
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    using int16le = detail::TypeCopy<s16>;
-    using int32le = detail::TypeCopy<s32>;
-    using int64le = detail::TypeCopy<s64>;
-    using uint16le = detail::TypeCopy<u16>;
-    using uint32le = detail::TypeCopy<u32>;
-    using uint64le = detail::TypeCopy<u64>;
+    using s16le = detail::TypeCopy<s16>;
+    using s32le = detail::TypeCopy<s32>;
+    using s64le = detail::TypeCopy<s64>;
+    using u16le = detail::TypeCopy<u16>;
+    using u32le = detail::TypeCopy<u32>;
+    using u64le = detail::TypeCopy<u64>;
+
     using float16le = detail::TypeCopy<float16>;
     using float32le = detail::TypeCopy<float32>;
     using float64le = detail::TypeCopy<float64>;
 
-    using int16be = detail::TypeSwap<s16>;
-    using int32be = detail::TypeSwap<s32>;
-    using int64be = detail::TypeSwap<s64>;
-    using uint16be = detail::TypeSwap<u16>;
-    using uint32be = detail::TypeSwap<u32>;
-    using uint64be = detail::TypeSwap<u64>;
+    using s16be = detail::TypeSwap<s16>;
+    using s32be = detail::TypeSwap<s32>;
+    using s64be = detail::TypeSwap<s64>;
+    using u16be = detail::TypeSwap<u16>;
+    using u32be = detail::TypeSwap<u32>;
+    using u64be = detail::TypeSwap<u64>;
+
     using float16be = detail::TypeSwap<float16>;
     using float32be = detail::TypeSwap<float32>;
     using float64be = detail::TypeSwap<float64>;
 
 #else
 
-    using int16le = detail::TypeSwap<s16>;
-    using int32le = detail::TypeSwap<s32>;
-    using int64le = detail::TypeSwap<s64>;
-    using uint16le = detail::TypeSwap<u16>;
-    using uint32le = detail::TypeSwap<u32>;
-    using uint64le = detail::TypeSwap<u64>;
+    using s16le = detail::TypeSwap<s16>;
+    using s32le = detail::TypeSwap<s32>;
+    using s64le = detail::TypeSwap<s64>;
+    using u16le = detail::TypeSwap<u16>;
+    using u32le = detail::TypeSwap<u32>;
+    using u64le = detail::TypeSwap<u64>;
+
     using float16le = detail::TypeSwap<float16>;
     using float32le = detail::TypeSwap<float32>;
     using float64le = detail::TypeSwap<float64>;
 
-    using int16be = detail::TypeCopy<s16>;
-    using int32be = detail::TypeCopy<s32>;
-    using int64be = detail::TypeCopy<s64>;
-    using uint16be = detail::TypeCopy<u16>;
-    using uint32be = detail::TypeCopy<u32>;
-    using uint64be = detail::TypeCopy<u64>;
+    using s16be = detail::TypeCopy<s16>;
+    using s32be = detail::TypeCopy<s32>;
+    using s64be = detail::TypeCopy<s64>;
+    using u16be = detail::TypeCopy<u16>;
+    using u32be = detail::TypeCopy<u32>;
+    using u64be = detail::TypeCopy<u64>;
+
     using float16be = detail::TypeCopy<float16>;
     using float32be = detail::TypeCopy<float32>;
     using float64be = detail::TypeCopy<float64>;
