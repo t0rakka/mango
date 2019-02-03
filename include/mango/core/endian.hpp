@@ -29,42 +29,6 @@ namespace mango
     // unaligned load/store
     // --------------------------------------------------------------
 
-#ifdef MANGO_UNALIGNED_MEMORY
-
-    static inline u16 uload16(const void* p)
-    {
-        return *reinterpret_cast<const u16 *>(p);
-    }
-
-    static inline u32 uload32(const void* p)
-    {
-        return *reinterpret_cast<const u32 *>(p);
-    }
-
-    static inline u64 uload64(const void* p)
-    {
-        return *reinterpret_cast<const u64 *>(p);
-    }
-
-    static inline void ustore16(void* p, u16 value)
-    {
-        reinterpret_cast<u16 *>(p)[0] = value;
-    }
-
-    static inline void ustore32(void* p, u32 value)
-    {
-        reinterpret_cast<u32 *>(p)[0] = value;
-    }
-
-    static inline void ustore64(void* p, u64 value)
-    {
-        std::memcpy(p, &value, sizeof(u64));
-    }
-
-#else
-
-    // Platform does not support unaligned load/store
-
     static inline u16 uload16(const void* p)
     {
         u16 value;
@@ -101,13 +65,13 @@ namespace mango
         std::memcpy(p, &value, sizeof(u64));
     }
 
-#endif
-
     // --------------------------------------------------------------
 	// endian load/store
     // --------------------------------------------------------------
 
 #ifdef MANGO_LITTLE_ENDIAN
+
+    // load
 
     static inline u16 uload16le(const void* p)
     {
@@ -138,6 +102,8 @@ namespace mango
     {
         return byteswap(uload64(p));
     }
+
+    // store
 
     static inline void ustore16le(void* p, u16 value)
     {
@@ -171,6 +137,8 @@ namespace mango
 
 #else
 
+    // load
+
     static inline u16 uload16le(const void* p)
     {
         return byteswap(uload16(p));
@@ -200,6 +168,8 @@ namespace mango
     {
         return uload64(p);
     }
+
+    // store
 
     static inline void ustore16le(void* p, u16 value)
     {

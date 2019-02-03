@@ -28,14 +28,9 @@ namespace mango
         info << "Bits: 32, ";
 #endif
 #ifdef MANGO_LITTLE_ENDIAN
-        info << "Endian: LITTLE, ";
+        info << "Endian: LITTLE ";
 #else
-        info << "Endian: BIG, ";
-#endif
-#ifdef MANGO_UNALIGNED_MEMORY
-        info << "Memory: UNALIGNED ";
-#else
-        info << "Memory: ALIGNED ";
+        info << "Endian: BIG ";
 #endif
         info << std::endl;
 

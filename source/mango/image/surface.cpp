@@ -21,7 +21,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename T>
-    inline uint8* u8_fill(uint8* dest, int count, T value)
+    inline u8* u8_fill(u8* dest, int count, T value)
     {
         T* p = reinterpret_cast<T*>(dest);
         for (int i = 0; i < count; ++i)
@@ -32,10 +32,10 @@ namespace
     }
 
 	template <typename T, typename E>
-	void fill_aligned(uint8* dest, T value, E expanded_value, int count)
+	void fill_aligned(u8* dest, T value, E expanded_value, int count)
 	{
 		// compute padding required for alignment
-		const ptrdiff_t address = dest - reinterpret_cast<uint8*>(0);
+		const ptrdiff_t address = dest - reinterpret_cast<u8*>(0);
         const ptrdiff_t mask = sizeof(E) - 1;
 		const int padding_in_bytes = int(-address & mask);
 
@@ -58,31 +58,31 @@ namespace
     // clear
     // ----------------------------------------------------------------------------
 
-    void clear_uint8_scan(uint8* dest, int count, uint32 color)
+    void clear_u8_scan(u8* dest, int count, u32 color)
     {
-        const uint8 value = static_cast<uint8>(color);
+        const u8 value = static_cast<u8>(color);
 		std::memset(dest, value, count);
     }
 
-    void clear_uint16_scan(uint8* dest, int count, uint32 color)
+    void clear_u16_scan(u8* dest, int count, u32 color)
     {
 #if defined(MANGO_ENABLE_SIMD)
 		if (count >= 32)
 		{
 			// 128 bit fill
-			uint16 value16 = static_cast<uint16>(color);
-			uint32 value32 = (color << 16) | color;
+			u16 value16 = static_cast<u16>(color);
+			u32 value32 = (color << 16) | color;
 			simd::uint32x4 value128 = simd::uint32x4_set1(value32);
 			fill_aligned(dest, value16, value128, count);
 		}
 #else
 		if (count >= 16)
 		{
-			uint16 value16 = static_cast<uint16>(color);
-			uint32 value32 = (color << 16) | color;
+			u16 value16 = static_cast<u16>(color);
+			u32 value32 = (color << 16) | color;
 #ifdef MANGO_CPU_64BIT
 			// 64 bit fill
-			uint64 value64 = (uint64(value32) << 32) | value32;
+			u64 value64 = (u64(value32) << 32) | value32;
 			fill_aligned(dest, value16, value64, count);
 #else
 			// 32 bit fill
@@ -93,18 +93,18 @@ namespace
 		else
 		{
 			// 16 bit fill
-			uint16 value16 = static_cast<uint16>(color);
+			u16 value16 = static_cast<u16>(color);
             u8_fill(dest, count, value16);
 		}
     }
 
-    void clear_uint24_scan(uint8* dest, int count, uint32 color)
+    void clear_u24_scan(u8* dest, int count, u32 color)
     {
-        uint24 value24 = color;
+        u24 value24 = color;
         u8_fill(dest, count, value24);
     }
 
-    void clear_uint32_scan(uint8* dest, int count, uint32 color)
+    void clear_u32_scan(u8* dest, int count, u32 color)
     {
 #if defined(MANGO_ENABLE_SIMD)
 		if (count >= 16)
@@ -120,7 +120,7 @@ namespace
 		if (count >= 8)
 		{
 			// 64 bit fill
-			uint64 value64 = (uint64(color) << 32) | color;
+			u64 value64 = (u64(color) << 32) | color;
 			fill_aligned(dest, color, value64, count);
 		}
 		else
@@ -134,7 +134,7 @@ namespace
     }
 
     template <typename FloatType>
-    void clear_float_scan(uint8* dest, int count, const FloatType* color, const int size)
+    void clear_float_scan(u8* dest, int count, const FloatType* color, const int size)
     {
         FloatType* d = reinterpret_cast<FloatType*>(dest);
         for (int i = 0; i < count; ++i)
@@ -160,7 +160,7 @@ namespace
 
         for (int i = 0; i < 4; ++i)
         {
-            uint32 mask = format.mask(i);
+            u32 mask = format.mask(i);
             if (mask)
             {
                 int index = clamp(u32_index_of_lsb(mask), 0, 3);
@@ -190,7 +190,7 @@ namespace
             surface.height = header.height;
             surface.format = format ? *format : header.format;
             surface.stride = surface.width * surface.format.bytes();
-            surface.image  = new uint8[surface.height * surface.stride];
+            surface.image  = new u8[surface.height * surface.stride];
 
             // decode
             decoder.decode(surface, nullptr, 0, 0, 0);
@@ -223,7 +223,7 @@ namespace
                 surface.height = header.height;
                 surface.format = Format(8, 0xff, 0);
                 surface.stride = surface.width;
-                surface.image  = new uint8[surface.height * surface.stride];
+                surface.image  = new u8[surface.height * surface.stride];
 
                 // decode
                 decoder.decode(surface, &palette, 0, 0, 0);
@@ -263,7 +263,7 @@ namespace mango
     {
     }
 
-    Surface::Surface(int width, int height, const Format& format, int stride, uint8* image)
+    Surface::Surface(int width, int height, const Format& format, int stride, u8* image)
         : width(width)
         , height(height)
         , stride(stride)
@@ -285,7 +285,7 @@ namespace mango
         // compute resulting surface
         width  = std::max(0, x1 - x0);
         height = std::max(0, y1 - y0);
-        image  = source.address<uint8>(x0, y0);
+        image  = source.address<u8>(x0, y0);
     }
 
     Surface::~Surface()
@@ -308,19 +308,19 @@ namespace mango
         {
             case Format::UNORM:
             {
-                void (*func)(uint8 *, int, uint32) = nullptr;
+                void (*func)(u8 *, int, u32) = nullptr;
 
                 switch (format.bits)
                 {
-                    case 8: func = clear_uint8_scan; break;
-                    case 16: func = clear_uint16_scan; break;
-                    case 24: func = clear_uint24_scan; break;
-                    case 32: func = clear_uint32_scan; break;
+                    case 8: func = clear_u8_scan; break;
+                    case 16: func = clear_u16_scan; break;
+                    case 24: func = clear_u24_scan; break;
+                    case 32: func = clear_u32_scan; break;
                 }
 
                 if (func)
                 {
-                    uint32 color = format.pack(red, green, blue, alpha);
+                    u32 color = format.pack(red, green, blue, alpha);
 
 #if 1
                     // super simple multi-threaded buffer clearing
@@ -465,13 +465,13 @@ namespace mango
         const int bytes_per_pixel = format.bytes();
         const int half_width = width / 2;
 
-        uint8* left = image;
-        uint8* right = image + (width - 1) * bytes_per_pixel;
+        u8* left = image;
+        u8* right = image + (width - 1) * bytes_per_pixel;
 
         for (int y = 0; y < height; ++y)
         {
-            uint8* a = left;
-            uint8* b = right;
+            u8* a = left;
+            u8* b = right;
 
             for (int x = 0; x < half_width; ++x)
             {
@@ -501,8 +501,8 @@ namespace mango
         const int bytes_per_scan = width * bytes_per_pixel;
         const int half_height = height / 2;
 
-        uint8* top = image;
-        uint8* bottom = image + (height - 1) * stride;
+        u8* top = image;
+        u8* bottom = image + (height - 1) * stride;
 
         for (int y = 0; y < half_height; ++y)
         {
@@ -522,14 +522,14 @@ namespace mango
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int _width, int _height, const Format& _format, int _stride, uint8* _image)
+    Bitmap::Bitmap(int _width, int _height, const Format& _format, int _stride, u8* _image)
         : Surface(_width, _height, _format, _stride, _image)
     {
         if (!stride)
             stride = width * format.bytes();
 
         if (!image)
-            image = new uint8[stride * height];
+            image = new u8[stride * height];
     }
 
     Bitmap::Bitmap(Memory memory, const std::string& extension)

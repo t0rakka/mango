@@ -172,19 +172,11 @@
 
     // Intel C/C++ Compiler
     #define MANGO_COMPILER_INTEL
-	#define MANGO_PACKED(STRUCT) \
-		__pragma( pack(push, 1) ) \
-		STRUCT \
-		__pragma( pack(pop) )
 
 #elif defined(_MSC_VER)
 
     // Microsoft Visual C++
     #define MANGO_COMPILER_MICROSOFT
-	#define MANGO_PACKED(STRUCT) \
-		__pragma( pack(push, 1) ) \
-		STRUCT \
-		__pragma( pack(pop) )
 
 	// noexcept specifier support was added in Visual Studio 2015
 	#if _MSC_VER < 1900
@@ -226,13 +218,11 @@
 
     // LLVM / Clang
     #define MANGO_COMPILER_CLANG
-    #define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
 
 #elif defined(__GNUC__)
 
     // GNU C/C++ Compiler
     #define MANGO_COMPILER_GCC
-    #define MANGO_PACKED(STRUCT) STRUCT __attribute__((__packed__))
 
     #if __GNUC__ >= 6
         #pragma GCC diagnostic ignored "-Wignored-attributes"
@@ -241,17 +231,14 @@
 #elif defined(__MWERKS__)
 
     // Metrowerks CodeWarrior
-    #define MANGO_PACKED(STRUCT) STRUCT
 
 #elif defined(__COMO__)
 
     // Comeau C++
-    #define MANGO_PACKED(STRUCT) STRUCT
 
 #else
 
     // generic
-    #define MANGO_PACKED(STRUCT) STRUCT
 
 #endif
 
@@ -265,7 +252,6 @@
     #define MANGO_CPU_INTEL
     #define MANGO_CPU_64BIT
     #define MANGO_LITTLE_ENDIAN
-    #define MANGO_UNALIGNED_MEMORY
     #define MANGO_CPU_NAME "x86_64"
 
 #elif defined(_M_IX86) || defined(__i386__)
@@ -273,7 +259,6 @@
     // 32 bit Intel
     #define MANGO_CPU_INTEL
     #define MANGO_LITTLE_ENDIAN
-    #define MANGO_UNALIGNED_MEMORY
     #define MANGO_CPU_NAME "x86"
 
 #elif defined(__ia64__) || defined(__itanium__) || defined(_M_IA64)
@@ -292,20 +277,12 @@
     #define MANGO_LITTLE_ENDIAN /* bi-endian; depends on OS */
     #define MANGO_CPU_NAME "ARM64"
 
-    #if defined(__ARM_FEATURE_UNALIGNED)
-        #define MANGO_UNALIGNED_MEMORY
-    #endif
-
 #elif defined(__arm__)
 
     // 32 bit ARM
     #define MANGO_CPU_ARM
     #define MANGO_LITTLE_ENDIAN /* bi-endian; depends on OS */
     #define MANGO_CPU_NAME "ARM"
-
-    #if defined(__ARM_FEATURE_UNALIGNED)
-        #define MANGO_UNALIGNED_MEMORY
-    #endif
 
 #elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) || defined(__powerpc64le__) || defined(__ppc64le__) || defined(__PPC64LE__)
 
