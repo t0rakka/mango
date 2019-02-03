@@ -10,10 +10,10 @@ namespace mango
 {
 
     template <>
-    struct Vector<int8, 64>
+    struct Vector<s8, 64>
     {
         using VectorType = simd::int8x64;
-        using ScalarType = int8;
+        using ScalarType = s8;
         enum { VectorSize = 64 };
 
         union
@@ -42,7 +42,7 @@ namespace mango
         explicit Vector() {}
         ~Vector() {}
 
-        Vector(int8 s)
+        Vector(s8 s)
             : m(simd::int8x64_set1(s))
         {
         }
@@ -58,7 +58,7 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (int8 s)
+        Vector& operator = (s8 s)
         {
             m = simd::int8x64_set1(s);
             return *this;

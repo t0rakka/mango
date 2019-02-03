@@ -12,7 +12,7 @@
 namespace mango
 {
 
-    void decode_block_astc(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
+    void decode_block_astc(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
 } // namespace mango
 

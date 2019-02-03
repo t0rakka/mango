@@ -10,23 +10,23 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint64, 2>
+    struct Vector<u64, 2>
     {
         using VectorType = simd::uint64x2;
-        using ScalarType = uint64;
+        using ScalarType = u64;
         enum { VectorSize = 2 };
 
         union
         {
             simd::uint64x2 m;
 
-            ScalarAccessor<uint64, simd::uint64x2, 0> x;
-            ScalarAccessor<uint64, simd::uint64x2, 1> y;
+            ScalarAccessor<u64, simd::uint64x2, 0> x;
+            ScalarAccessor<u64, simd::uint64x2, 1> y;
 
-            ShuffleAccessor2<uint64, simd::uint64x2, 0, 0> xx;
-            ShuffleAccessor2<uint64, simd::uint64x2, 0, 1> xy;
-            ShuffleAccessor2<uint64, simd::uint64x2, 1, 0> yx;
-            ShuffleAccessor2<uint64, simd::uint64x2, 1, 1> yy;
+            ShuffleAccessor2<u64, simd::uint64x2, 0, 0> xx;
+            ShuffleAccessor2<u64, simd::uint64x2, 0, 1> xy;
+            ShuffleAccessor2<u64, simd::uint64x2, 1, 0> yx;
+            ShuffleAccessor2<u64, simd::uint64x2, 1, 1> yy;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -51,12 +51,12 @@ namespace mango
         explicit Vector() {}
         ~Vector() {}
 
-        Vector(uint64 s)
+        Vector(u64 s)
             : m(simd::uint64x2_set1(s))
         {
         }
 
-        explicit Vector(uint64 x, uint64 y)
+        explicit Vector(u64 x, u64 y)
             : m(simd::uint64x2_set2(x, y))
         {
         }
@@ -67,13 +67,13 @@ namespace mango
         }
 
         template <int X, int Y>
-        Vector(const ShuffleAccessor2<uint64, simd::uint64x2, X, Y>& p)
+        Vector(const ShuffleAccessor2<u64, simd::uint64x2, X, Y>& p)
         {
             m = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const ShuffleAccessor2<uint64, simd::uint64x2, X, Y>& p)
+        Vector& operator = (const ShuffleAccessor2<u64, simd::uint64x2, X, Y>& p)
         {
             m = p;
             return *this;
@@ -85,7 +85,7 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (uint64 s)
+        Vector& operator = (u64 s)
         {
             m = simd::uint64x2_set1(s);
             return *this;
@@ -104,69 +104,69 @@ namespace mango
 #endif
     };
 
-    static inline const Vector<uint64, 2> operator + (Vector<uint64, 2> v)
+    static inline const Vector<u64, 2> operator + (Vector<u64, 2> v)
     {
         return v;
     }
 
-    static inline Vector<uint64, 2> operator - (Vector<uint64, 2> v)
+    static inline Vector<u64, 2> operator - (Vector<u64, 2> v)
     {
         return simd::sub(simd::uint64x2_zero(), v);
     }
 
-    static inline Vector<uint64, 2>& operator += (Vector<uint64, 2>& a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2>& operator += (Vector<u64, 2>& a, Vector<u64, 2> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<uint64, 2>& operator -= (Vector<uint64, 2>& a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2>& operator -= (Vector<u64, 2>& a, Vector<u64, 2> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<uint64, 2> operator + (Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> operator + (Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<uint64, 2> operator - (Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> operator - (Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<uint64, 2> nand(Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> nand(Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline Vector<uint64, 2> operator & (Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> operator & (Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline Vector<uint64, 2> operator | (Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> operator | (Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline Vector<uint64, 2> operator ^ (Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> operator ^ (Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline Vector<uint64, 2> select(mask64x2 mask, Vector<uint64, 2> a, Vector<uint64, 2> b)
+    static inline Vector<u64, 2> select(mask64x2 mask, Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::select(mask, a, b);
     }
 
-    static inline Vector<uint64, 2> operator << (Vector<uint64, 2> a, int b)
+    static inline Vector<u64, 2> operator << (Vector<u64, 2> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<uint64, 2> operator >> (Vector<uint64, 2> a, int b)
+    static inline Vector<u64, 2> operator >> (Vector<u64, 2> a, int b)
     {
         return simd::srl(a, b);
     }

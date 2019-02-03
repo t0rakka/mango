@@ -10,10 +10,10 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint8, 32>
+    struct Vector<u8, 32>
     {
         using VectorType = simd::uint8x32;
-        using ScalarType = uint8;
+        using ScalarType = u8;
         enum { VectorSize = 32 };
 
         union
@@ -42,7 +42,7 @@ namespace mango
         explicit Vector() {}
         ~Vector() {}
 
-        Vector(uint8 s)
+        Vector(u8 s)
             : m(simd::uint8x32_set1(s))
         {
         }
@@ -58,7 +58,7 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (uint8 s)
+        Vector& operator = (u8 s)
         {
             m = simd::uint8x32_set1(s);
             return *this;
@@ -77,94 +77,94 @@ namespace mango
 #endif
     };
 
-    static inline const Vector<uint8, 32> operator + (Vector<uint8, 32> v)
+    static inline const Vector<u8, 32> operator + (Vector<u8, 32> v)
     {
         return v;
     }
 
-    static inline Vector<uint8, 32> operator - (Vector<uint8, 32> v)
+    static inline Vector<u8, 32> operator - (Vector<u8, 32> v)
     {
         return simd::sub(simd::uint8x32_zero(), v);
     }
 
-    static inline Vector<uint8, 32>& operator += (Vector<uint8, 32>& a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32>& operator += (Vector<u8, 32>& a, Vector<u8, 32> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<uint8, 32>& operator -= (Vector<uint8, 32>& a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32>& operator -= (Vector<u8, 32>& a, Vector<u8, 32> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<uint8, 32> operator + (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> operator + (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<uint8, 32> operator - (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> operator - (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<uint8, 32> nand(Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> nand(Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline Vector<uint8, 32> operator & (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> operator & (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline Vector<uint8, 32> operator | (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> operator | (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline Vector<uint8, 32> operator ^ (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> operator ^ (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline Vector<uint8, 32> adds(Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> adds(Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::adds(a, b);
     }
 
-    static inline Vector<uint8, 32> subs(Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> subs(Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::subs(a, b);
     }
 
-    static inline Vector<uint8, 32> min(Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> min(Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::min(a, b);
     }
 
-    static inline Vector<uint8, 32> max(Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> max(Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::max(a, b);
     }
 
-    static inline mask8x32 operator > (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline mask8x32 operator > (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask8x32 operator < (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline mask8x32 operator < (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::compare_gt(b, a);
     }
 
-    static inline mask8x32 operator == (Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline mask8x32 operator == (Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline Vector<uint8, 32> select(mask8x32 mask, Vector<uint8, 32> a, Vector<uint8, 32> b)
+    static inline Vector<u8, 32> select(mask8x32 mask, Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::select(mask, a, b);
     }

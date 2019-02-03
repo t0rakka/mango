@@ -92,10 +92,10 @@ namespace
         const u32 ui32WordHeight = 4;
 
         //Convert to int 32.
-        Pixel128S hP = { (int32)color[0].red, (int32)color[0].green, (int32)color[0].blue, (int32)color[0].alpha };
-        Pixel128S hQ = { (int32)color[1].red, (int32)color[1].green, (int32)color[1].blue, (int32)color[1].alpha };
-        Pixel128S hR = { (int32)color[2].red, (int32)color[2].green, (int32)color[2].blue, (int32)color[2].alpha };
-        Pixel128S hS = { (int32)color[3].red, (int32)color[3].green, (int32)color[3].blue, (int32)color[3].alpha };
+        Pixel128S hP = { (s32)color[0].red, (s32)color[0].green, (s32)color[0].blue, (s32)color[0].alpha };
+        Pixel128S hQ = { (s32)color[1].red, (s32)color[1].green, (s32)color[1].blue, (s32)color[1].alpha };
+        Pixel128S hR = { (s32)color[2].red, (s32)color[2].green, (s32)color[2].blue, (s32)color[2].alpha };
+        Pixel128S hS = { (s32)color[3].red, (s32)color[3].green, (s32)color[3].blue, (s32)color[3].alpha };
 
         //Get vectors.
         Pixel128S QminusP = {hQ.red - hP.red, hQ.green - hP.green, hQ.blue - hP.blue, hQ.alpha - hP.alpha};
@@ -121,10 +121,10 @@ namespace
 
                 for (unsigned int y = 0; y < ui32WordHeight; y++)
                 {
-                    pPixel[y * ui32WordWidth + x].red   = (int32)((result.red   >> 7) + (result.red   >> 2));
-                    pPixel[y * ui32WordWidth + x].green = (int32)((result.green >> 7) + (result.green >> 2));
-                    pPixel[y * ui32WordWidth + x].blue  = (int32)((result.blue  >> 7) + (result.blue  >> 2));
-                    pPixel[y * ui32WordWidth + x].alpha = (int32)((result.alpha >> 5) + (result.alpha >> 1));
+                    pPixel[y * ui32WordWidth + x].red   = (s32)((result.red   >> 7) + (result.red   >> 2));
+                    pPixel[y * ui32WordWidth + x].green = (s32)((result.green >> 7) + (result.green >> 2));
+                    pPixel[y * ui32WordWidth + x].blue  = (s32)((result.blue  >> 7) + (result.blue  >> 2));
+                    pPixel[y * ui32WordWidth + x].alpha = (s32)((result.alpha >> 5) + (result.alpha >> 1));
 
                     result.red   += dY.red;
                     result.green += dY.green;
@@ -153,10 +153,10 @@ namespace
 
                 for (unsigned int x = 0; x < ui32WordWidth; x++)
                 {
-                    pPixel[x * ui32WordWidth + y].red   = (int32)((result.red   >> 6) + (result.red   >> 1));
-                    pPixel[x * ui32WordWidth + y].green = (int32)((result.green >> 6) + (result.green >> 1));
-                    pPixel[x * ui32WordWidth + y].blue  = (int32)((result.blue  >> 6) + (result.blue  >> 1));
-                    pPixel[x * ui32WordWidth + y].alpha = (int32)((result.alpha >> 4) + (result.alpha));
+                    pPixel[x * ui32WordWidth + y].red   = (s32)((result.red   >> 6) + (result.red   >> 1));
+                    pPixel[x * ui32WordWidth + y].green = (s32)((result.green >> 6) + (result.green >> 1));
+                    pPixel[x * ui32WordWidth + y].blue  = (s32)((result.blue  >> 6) + (result.blue  >> 1));
+                    pPixel[x * ui32WordWidth + y].alpha = (s32)((result.alpha >> 4) + (result.alpha));
 
                     result.red   += dY.red;
                     result.green += dY.green;
@@ -247,7 +247,7 @@ namespace
         }
     }
 
-    static int32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 ui8Bpp)
+    static s32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 ui8Bpp)
     {
         int value = i32ModulationValues[yPos][xPos];
         if (ui8Bpp == 2)
@@ -320,7 +320,7 @@ namespace
 
             for (unsigned int x = 0; x < ui32WordWidth; x++)
             {
-                int32 mod = getModulationValues(i32ModulationValues, x + ui32WordWidth / 2, y + ui32WordHeight / 2, ui8Bpp);
+                s32 mod = getModulationValues(i32ModulationValues, x + ui32WordWidth / 2, y + ui32WordHeight / 2, ui8Bpp);
                 mod &= 0xf;
 
                 Pixel128S result;

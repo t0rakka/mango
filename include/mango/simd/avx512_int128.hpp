@@ -71,14 +71,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    static inline uint8x16 set_component(uint8x16 a, u8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_insert_epi8(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x16 a)
+    static inline u8 get_component(uint8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_extract_epi8(a, Index);
@@ -89,24 +89,24 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline uint8x16 uint8x16_set1(uint8 s)
+    static inline uint8x16 uint8x16_set1(u8 s)
     {
         return _mm_set1_epi8(s);
     }
 
     static inline uint8x16 uint8x16_set16(
-        uint8 s0, uint8 s1, uint8 s2, uint8 s3, uint8 s4, uint8 s5, uint8 s6, uint8 s7,
-        uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
+        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
+        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
         return _mm_setr_epi8(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    static inline uint8x16 uint8x16_load_low(const u8* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    static inline void uint8x16_store_low(u8* dest, uint8x16 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }

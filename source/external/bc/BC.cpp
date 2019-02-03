@@ -63,7 +63,7 @@ inline static uint16_t Encode565(const HDRColorA *pColor)
 
 //-------------------------------------------------------------------------------------
 static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
-                        const HDRColorA *pPoints, size_t cSteps, uint32 flags)
+                        const HDRColorA *pPoints, size_t cSteps, u32 flags)
 {
     static const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
     static const float pC3[] = { 2.0f/2.0f, 1.0f/2.0f, 0.0f/2.0f };
@@ -318,7 +318,7 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 
 //-------------------------------------------------------------------------------------
 
-static inline float32x4 XMLoadU565(uint16 data)
+static inline float32x4 XMLoadU565(u16 data)
 {
     static const float32x4 scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
     int32x4 c = int32x4(data) & int32x4(0x1f << 11, 0x3f << 5, 0x1f, 0);
@@ -327,7 +327,7 @@ static inline float32x4 XMLoadU565(uint16 data)
     return v * scale;
 }
 
-static inline void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, bool isbc1)
+static inline void DecodeBC1(u8* pColor, int stride, const D3DX_BC1 *pBC, bool isbc1)
 {
     assert( pColor && pBC );
     static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
@@ -364,7 +364,7 @@ static inline void DecodeBC1(uint8* pColor, int stride, const D3DX_BC1 *pBC, boo
 //-------------------------------------------------------------------------------------
 
 static void EncodeBC1(D3DX_BC1 *pBC, const HDRColorA *pColor,
-                      bool bColorKey, float alphaRef, uint32 flags)
+                      bool bColorKey, float alphaRef, u32 flags)
 {
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
@@ -711,7 +711,7 @@ static void EncodeSolidBC1(D3DX_BC1 *pBC, const HDRColorA *pColor)
 // BC1 Compression
 //-------------------------------------------------------------------------------------
 
-static void D3DXEncodeBC1(uint8_t *pBC, const float32x4 *pColor, float alphaRef, uint32 flags)
+static void D3DXEncodeBC1(uint8_t *pBC, const float32x4 *pColor, float alphaRef, u32 flags)
 {
     assert( pBC && pColor );
 
@@ -774,7 +774,7 @@ static void D3DXEncodeBC1(uint8_t *pBC, const float32x4 *pColor, float alphaRef,
 // BC2 Compression
 //-------------------------------------------------------------------------------------
 
-static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
+static void D3DXDecodeBC2(u8 *output, int stride, const uint8_t *pBC)
 {
     assert( output && pBC );
     static_assert( sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes" );
@@ -785,7 +785,7 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
     DecodeBC1(output, stride, &pBC2->bc1, false);
 
     // 4-bit alpha part
-    uint32 dw = pBC2->bitmap[0];
+    u32 dw = pBC2->bitmap[0];
 	const float s = 1.0f / 15.0f;
 	float32x4* pColor;
 
@@ -816,7 +816,7 @@ static void D3DXDecodeBC2(uint8 *output, int stride, const uint8_t *pBC)
     }
 }
 
-static void D3DXEncodeBC2(uint8_t *pBC, const float32x4 *pColor, uint32 flags)
+static void D3DXEncodeBC2(uint8_t *pBC, const float32x4 *pColor, u32 flags)
 {
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes" );
@@ -890,7 +890,7 @@ static void D3DXEncodeBC2(uint8_t *pBC, const float32x4 *pColor, uint32 flags)
 // BC3 Compression
 //-------------------------------------------------------------------------------------
 
-static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
+static void D3DXDecodeBC3(u8 *output, int stride, const uint8_t *pBC)
 {
     assert( output && pBC );
     static_assert( sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes" );
@@ -924,7 +924,7 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
 
 	float32x4 *pColor = reinterpret_cast<float32x4*>(output);
 
-    uint32 dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
+    u32 dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
 
 	pColor = reinterpret_cast<float32x4*>(output + stride * 0);
     for(size_t i = 0; i < 4; ++i, dw >>= 3) {
@@ -949,7 +949,7 @@ static void D3DXDecodeBC3(uint8 *output, int stride, const uint8_t *pBC)
     }
 }
 
-static void D3DXEncodeBC3(uint8_t *pBC, const float32x4 *pColor, uint32 flags)
+static void D3DXEncodeBC3(uint8_t *pBC, const float32x4 *pColor, u32 flags)
 {
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes" );
@@ -1159,11 +1159,11 @@ namespace
     // NOTE: calls to this routine can be reduced when the DX encoder supports stride.
     // TODO: support rgba8888 input in the encoder to completely eliminate this.
 
-    void convert_block(float4* temp, const uint8* input, int stride)
+    void convert_block(float4* temp, const u8* input, int stride)
     {
         for (int y = 0; y < 4; ++y)
         {
-            const uint32* image = reinterpret_cast<const uint32*>(input + y * stride);
+            const u32* image = reinterpret_cast<const u32*>(input + y * stride);
             for (int x = 0; x < 4; ++x)
             {
                 const int32x4 v = simd::unpack(image[x]);
@@ -1177,26 +1177,26 @@ namespace
 namespace mango
 {
 
-    void decode_block_bc1(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         const DirectX::D3DX_BC1* data = reinterpret_cast<const DirectX::D3DX_BC1*>(input);
         DirectX::DecodeBC1(output, stride, data, true);
     }
 
-    void decode_block_bc2(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         DirectX::D3DXDecodeBC2(output, stride, input);
     }
 
-    void decode_block_bc3(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         DirectX::D3DXDecodeBC3(output, stride, input);
     }
 
-    void encode_block_bc1(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void encode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         float4 temp[16];
@@ -1204,7 +1204,7 @@ namespace mango
         DirectX::D3DXEncodeBC1(output, temp, 0.0f, DirectX::BC_FLAGS_NONE);
     }
 
-    void encode_block_bc1a(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void encode_block_bc1a(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         float4 temp[16];
@@ -1212,7 +1212,7 @@ namespace mango
         DirectX::D3DXEncodeBC1(output, temp, 1.0f, DirectX::BC_FLAGS_NONE);
     }
 
-    void encode_block_bc2(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void encode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         float4 temp[16];
@@ -1220,7 +1220,7 @@ namespace mango
         DirectX::D3DXEncodeBC2(output, temp, DirectX::BC_FLAGS_NONE);
     }
 
-    void encode_block_bc3(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void encode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         float4 temp[16];

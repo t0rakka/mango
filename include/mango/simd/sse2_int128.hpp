@@ -80,12 +80,12 @@ namespace simd {
 
 #if defined(MANGO_CPU_64BIT)
 
-    static inline __m128i simd128_cvtsi64_si128(int64 a)
+    static inline __m128i simd128_cvtsi64_si128(s64 a)
     {
         return _mm_cvtsi64_si128(a);
     }
 
-    static inline int64 simd128_cvtsi128_si64(__m128i a)
+    static inline s64 simd128_cvtsi128_si64(__m128i a)
     {
         return _mm_cvtsi128_si64(a);
     }
@@ -113,14 +113,14 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <unsigned int Index>
-    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    static inline uint8x16 set_component(uint8x16 a, u8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_insert_epi8(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x16 a)
+    static inline u8 get_component(uint8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_extract_epi8(a, Index);
@@ -129,7 +129,7 @@ namespace simd {
 #else
 
     template <unsigned int Index>
-    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    static inline uint8x16 set_component(uint8x16 a, u8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         uint32 temp = _mm_extract_epi16(a, Index / 2);
@@ -141,7 +141,7 @@ namespace simd {
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x16 a)
+    static inline u8 get_component(uint8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_extract_epi16(a, Index / 2) >> ((Index & 1) * 8);
@@ -154,24 +154,24 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline uint8x16 uint8x16_set1(uint8 s)
+    static inline uint8x16 uint8x16_set1(u8 s)
     {
         return _mm_set1_epi8(s);
     }
 
     static inline uint8x16 uint8x16_set16(
-        uint8 s0, uint8 s1, uint8 s2, uint8 s3, uint8 s4, uint8 s5, uint8 s6, uint8 s7,
-        uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
+        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
+        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
         return _mm_setr_epi8(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    static inline uint8x16 uint8x16_load_low(const u8* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    static inline void uint8x16_store_low(u8* dest, uint8x16 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }
@@ -324,14 +324,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x8 set_component(uint16x8 a, uint16 s)
+    static inline uint16x8 set_component(uint16x8 a, u16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm_insert_epi16(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline uint16 get_component(uint16x8 a)
+    static inline u16 get_component(uint16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm_extract_epi16(a, Index);
@@ -342,22 +342,22 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline uint16x8 uint16x8_set1(uint16 s)
+    static inline uint16x8 uint16x8_set1(u16 s)
     {
         return _mm_set1_epi16(s);
     }
 
-    static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
+    static inline uint16x8 uint16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return _mm_setr_epi16(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    static inline uint16x8 uint16x8_load_low(const u16* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    static inline void uint16x8_store_low(u16* dest, uint16x8 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }
@@ -569,7 +569,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline uint32x4 shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -588,14 +588,14 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <unsigned int Index>
-    static inline uint32x4 set_component(uint32x4 a, uint32 s)
+    static inline uint32x4 set_component(uint32x4 a, u32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x4 a)
+    static inline u32 get_component(uint32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
@@ -604,59 +604,59 @@ namespace simd {
 #else
 
     template <int Index>
-    static inline uint32x4 set_component(uint32x4 a, uint32 s);
+    static inline uint32x4 set_component(uint32x4 a, u32 s);
 
     template <>
-    inline uint32x4 set_component<0>(uint32x4 a, uint32 x)
+    inline uint32x4 set_component<0>(uint32x4 a, u32 x)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
         return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
-    inline uint32x4 set_component<1>(uint32x4 a, uint32 y)
+    inline uint32x4 set_component<1>(uint32x4 a, u32 y)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
         return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
-    inline uint32x4 set_component<2>(uint32x4 a, uint32 z)
+    inline uint32x4 set_component<2>(uint32x4 a, u32 z)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
         return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
-    inline uint32x4 set_component<3>(uint32x4 a, uint32 w)
+    inline uint32x4 set_component<3>(uint32x4 a, u32 w)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
         return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
     template <int Index>
-    static inline uint32 get_component(uint32x4 a);
+    static inline u32 get_component(uint32x4 a);
 
     template <>
-    inline uint32 get_component<0>(uint32x4 a)
+    inline u32 get_component<0>(uint32x4 a)
     {
         return _mm_cvtsi128_si32(a);
     }
 
     template <>
-    inline uint32 get_component<1>(uint32x4 a)
+    inline u32 get_component<1>(uint32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0x55));
     }
 
     template <>
-    inline uint32 get_component<2>(uint32x4 a)
+    inline u32 get_component<2>(uint32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xaa));
     }
 
     template <>
-    inline uint32 get_component<3>(uint32x4 a)
+    inline u32 get_component<3>(uint32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xff));
     }
@@ -668,32 +668,32 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline uint32x4 uint32x4_set1(uint32 s)
+    static inline uint32x4 uint32x4_set1(u32 s)
     {
         return _mm_set1_epi32(s);
     }
 
-    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    static inline uint32x4 uint32x4_set4(u32 x, u32 y, u32 z, u32 w)
     {
         return _mm_setr_epi32(x, y, z, w);
     }
 
-    static inline uint32x4 uint32x4_uload(const uint32* source)
+    static inline uint32x4 uint32x4_uload(const u32* source)
     {
         return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
     }
 
-    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    static inline void uint32x4_ustore(u32* dest, uint32x4 a)
     {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
-    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    static inline uint32x4 uint32x4_load_low(const u32* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    static inline void uint32x4_store_low(u32* dest, uint32x4 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }
@@ -981,14 +981,14 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <unsigned int Index>
-    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    static inline uint64x2 set_component(uint64x2 a, u64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return _mm_insert_epi64(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x2 a)
+    static inline u64 get_component(uint64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return _mm_extract_epi64(a, Index);
@@ -997,7 +997,7 @@ namespace simd {
 #else
 
     template <unsigned int Index>
-    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    static inline uint64x2 set_component(uint64x2 a, u64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         const __m128i temp = simd128_cvtsi64_si128(s);
@@ -1006,7 +1006,7 @@ namespace simd {
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x2 a)
+    static inline u64 get_component(uint64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         const __m128i temp = _mm_shuffle_epi32(a, 0x44 + Index * 0xaa);
@@ -1020,12 +1020,12 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline uint64x2 uint64x2_set1(uint64 s)
+    static inline uint64x2 uint64x2_set1(u64 s)
     {
         return _mm_set1_epi64x(s);
     }
 
-    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    static inline uint64x2 uint64x2_set2(u64 x, u64 y)
     {
         return _mm_set_epi64x(y, x);
     }
@@ -1113,14 +1113,14 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <unsigned int Index>
-    static inline int8x16 set_component(int8x16 a, int8 s)
+    static inline int8x16 set_component(int8x16 a, s8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_insert_epi8(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x16 a)
+    static inline s8 get_component(int8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_extract_epi8(a, Index);
@@ -1129,10 +1129,10 @@ namespace simd {
 #else
 
     template <unsigned int Index>
-    static inline int8x16 set_component(int8x16 a, int8 s)
+    static inline int8x16 set_component(int8x16 a, s8 s)
     {
         static_assert(Index < 16, "Index out of range.");
-        uint32 temp = _mm_extract_epi16(a, Index / 2);
+        u32 temp = _mm_extract_epi16(a, Index / 2);
         if (Index & 1)
             temp = (temp & 0x00ff) | uint32(s) << 8;
         else
@@ -1141,7 +1141,7 @@ namespace simd {
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x16 a)
+    static inline s8 get_component(int8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm_extract_epi16(a, Index / 2) >> ((Index & 1) * 8);
@@ -1154,24 +1154,24 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline int8x16 int8x16_set1(int8 s)
+    static inline int8x16 int8x16_set1(s8 s)
     {
         return _mm_set1_epi8(s);
     }
 
     static inline int8x16 int8x16_set16(
-        int8 s0, int8 s1, int8 s2, int8 s3, int8 s4, int8 s5, int8 s6, int8 s7,
-        int8 s8, int8 s9, int8 s10, int8 s11, int8 s12, int8 s13, int8 s14, int8 s15)
+        s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
+        s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
-        return _mm_setr_epi8(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
+        return _mm_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
     }
 
-    static inline int8x16 int8x16_load_low(const int8* source)
+    static inline int8x16 int8x16_load_low(const s8* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    static inline void int8x16_store_low(s8* dest, int8x16 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }
@@ -1354,14 +1354,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int16x8 set_component(int16x8 a, int16 s)
+    static inline int16x8 set_component(int16x8 a, s16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm_insert_epi16(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline int16 get_component(int16x8 a)
+    static inline s16 get_component(int16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm_extract_epi16(a, Index);
@@ -1372,22 +1372,22 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline int16x8 int16x8_set1(int16 s)
+    static inline int16x8 int16x8_set1(s16 s)
     {
         return _mm_set1_epi16(s);
     }
 
-    static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
+    static inline int16x8 int16x8_set8(s16 v0, s16 v1, s16 v2, s16 v3, s16 v4, s16 v5, s16 v6, s16 v7)
     {
-        return _mm_setr_epi16(s0, s1, s2, s3, s4, s5, s6, s7);
+        return _mm_setr_epi16(v0, v1, v2, v3, v4, v5, v6, v7);
     }
 
-    static inline int16x8 int16x8_load_low(const int16* source)
+    static inline int16x8 int16x8_load_low(const s16* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    static inline void int16x8_store_low(s16* dest, int16x8 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }
@@ -1597,7 +1597,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline int32x4 shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -1616,14 +1616,14 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <unsigned int Index>
-    static inline int32x4 set_component(int32x4 a, int32 s)
+    static inline int32x4 set_component(int32x4 a, s32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline int32 get_component(int32x4 a)
+    static inline s32 get_component(int32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
@@ -1632,59 +1632,59 @@ namespace simd {
 #else
 
     template <int Index>
-    static inline int32x4 set_component(int32x4 a, int32 s);
+    static inline int32x4 set_component(int32x4 a, s32 s);
 
     template <>
-    inline int32x4 set_component<0>(int32x4 a, int32 x)
+    inline int32x4 set_component<0>(int32x4 a, s32 x)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(x), a);
         return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 3, 0));
     }
 
     template <>
-    inline int32x4 set_component<1>(int32x4 a, int32 y)
+    inline int32x4 set_component<1>(int32x4 a, s32 y)
     {
         const __m128i b = _mm_unpacklo_epi32(_mm_set1_epi32(y), a);
         return simd128_shuffle_epi32(b, a, _MM_SHUFFLE(3, 2, 0, 1));
     }
 
     template <>
-    inline int32x4 set_component<2>(int32x4 a, int32 z)
+    inline int32x4 set_component<2>(int32x4 a, s32 z)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(z), a);
         return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(3, 0, 1, 0));
     }
 
     template <>
-    inline int32x4 set_component<3>(int32x4 a, int32 w)
+    inline int32x4 set_component<3>(int32x4 a, s32 w)
     {
         const __m128i b = _mm_unpackhi_epi32(_mm_set1_epi32(w), a);
         return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
     template <int Index>
-    static inline int32 get_component(int32x4 a);
+    static inline s32 get_component(int32x4 a);
 
     template <>
-    inline int32 get_component<0>(int32x4 a)
+    inline s32 get_component<0>(int32x4 a)
     {
         return _mm_cvtsi128_si32(a);
     }
 
     template <>
-    inline int32 get_component<1>(int32x4 a)
+    inline s32 get_component<1>(int32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0x55));
     }
 
     template <>
-    inline int32 get_component<2>(int32x4 a)
+    inline s32 get_component<2>(int32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xaa));
     }
 
     template <>
-    inline int32 get_component<3>(int32x4 a)
+    inline s32 get_component<3>(int32x4 a)
     {
         return _mm_cvtsi128_si32(_mm_shuffle_epi32(a, 0xff));
     }
@@ -1716,12 +1716,12 @@ namespace simd {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
-    static inline int32x4 int32x4_load_low(const int32* source)
+    static inline int32x4 int32x4_load_low(const s32* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
     }
 
-    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    static inline void int32x4_store_low(s32* dest, int32x4 a)
     {
         _mm_storel_epi64(reinterpret_cast<__m128i *>(dest), a);
     }
@@ -1996,7 +1996,7 @@ namespace simd {
 
 #endif
 
-    static inline uint32 pack(int32x4 s)
+    static inline u32 pack(int32x4 s)
     {
         __m128i s16 = _mm_packs_epi32(s, s);
         __m128i s8 = _mm_packus_epi16(s16, s16);
@@ -2015,7 +2015,7 @@ namespace simd {
         return _mm_max_epi32(a, b);
     }
 
-    static inline int32x4 unpack(uint32 s)
+    static inline int32x4 unpack(u32 s)
     {
         const __m128i i = _mm_cvtsi32_si128(s);
         return _mm_cvtepu8_epi32(i);
@@ -2035,7 +2035,7 @@ namespace simd {
         return _mm_select_si128(mask, a, b);
     }
 
-    static inline int32x4 unpack(uint32 s)
+    static inline int32x4 unpack(u32 s)
     {
         const __m128i zero = _mm_setzero_si128();
         const __m128i i = _mm_cvtsi32_si128(s);
@@ -2051,14 +2051,14 @@ namespace simd {
 #if defined(MANGO_ENABLE_SSE4_1)
 
     template <unsigned int Index>
-    static inline int64x2 set_component(int64x2 a, int64 s)
+    static inline int64x2 set_component(int64x2 a, s64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return _mm_insert_epi64(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x2 a)
+    static inline s64 get_component(int64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return _mm_extract_epi64(a, Index);
@@ -2067,7 +2067,7 @@ namespace simd {
 #else
 
     template <unsigned int Index>
-    static inline int64x2 set_component(int64x2 a, int64 s)
+    static inline int64x2 set_component(int64x2 a, s64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         const __m128i temp = simd128_cvtsi64_si128(s);
@@ -2076,7 +2076,7 @@ namespace simd {
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x2 a)
+    static inline s64 get_component(int64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         const __m128i temp = _mm_shuffle_epi32(a, 0x44 + Index * 0xaa);
@@ -2090,12 +2090,12 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline int64x2 int64x2_set1(int64 s)
+    static inline int64x2 int64x2_set1(s64 s)
     {
         return _mm_set1_epi64x(s);
     }
 
-    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    static inline int64x2 int64x2_set2(s64 x, s64 y)
     {
         return _mm_set_epi64x(y, x);
     }
@@ -2195,7 +2195,7 @@ namespace simd {
         return _mm_xor_si128(a, b);
     }
 
-    static inline uint32 get_mask(mask8x16 a)
+    static inline u32 get_mask(mask8x16 a)
     {
         return _mm_movemask_epi8(a);
     }
@@ -2255,7 +2255,7 @@ namespace simd {
         return _mm_xor_si128(a, b);
     }
 
-    static inline uint32 get_mask(mask16x8 a)
+    static inline u32 get_mask(mask16x8 a)
     {
         __m128i temp = _mm_packus_epi16(a, _mm_setzero_si128());
         return _mm_movemask_epi8(temp);
@@ -2316,7 +2316,7 @@ namespace simd {
         return _mm_xor_si128(a, b);
     }
 
-    static inline uint32 get_mask(mask32x4 a)
+    static inline u32 get_mask(mask32x4 a)
     {
         return _mm_movemask_ps(_mm_castsi128_ps(a));
     }
@@ -2376,7 +2376,7 @@ namespace simd {
         return _mm_xor_si128(a, b);
     }
 
-    static inline uint32 get_mask(mask64x2 a)
+    static inline u32 get_mask(mask64x2 a)
     {
         return _mm_movemask_pd(_mm_castsi128_pd(a));
     }

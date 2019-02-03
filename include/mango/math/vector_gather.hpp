@@ -21,22 +21,22 @@ namespace mango
         return simd::gather2(address, offset);
     }
 
-    static inline uint32x4 gather4(const uint32* address, int32x4 offset)
+    static inline uint32x4 gather4(const u32* address, int32x4 offset)
     {
         return simd::gather4(address, offset);
     }
 
-    static inline int32x4 gather4(const int32* address, int32x4 offset)
+    static inline int32x4 gather4(const s32* address, int32x4 offset)
     {
         return simd::gather4(address, offset);
     }
 
-    static inline uint64x2 gather2(const uint64* address, int32x4 offset)
+    static inline uint64x2 gather2(const u64* address, int32x4 offset)
     {
         return simd::gather2(address, offset);
     }
 
-    static inline int64x2 gather2(const int64* address, int32x4 offset)
+    static inline int64x2 gather2(const s64* address, int32x4 offset)
     {
         return simd::gather2(address, offset);
     }
@@ -53,22 +53,22 @@ namespace mango
         return simd::gather4(address, offset);
     }
 
-    static inline uint32x8 gather8(const uint32* address, int32x8 offset)
+    static inline uint32x8 gather8(const u32* address, int32x8 offset)
     {
         return simd::gather8(address, offset);
     }
 
-    static inline int32x8 gather8(const int32* address, int32x8 offset)
+    static inline int32x8 gather8(const s32* address, int32x8 offset)
     {
         return simd::gather8(address, offset);
     }
 
-    static inline uint64x4 gather4(const uint64* address, int32x4 offset)
+    static inline uint64x4 gather4(const u64* address, int32x4 offset)
     {
         return simd::gather4(address, offset);
     }
 
-    static inline int64x4 gather4(const int64* address, int32x4 offset)
+    static inline int64x4 gather4(const s64* address, int32x4 offset)
     {
         return simd::gather4(address, offset);
     }
@@ -85,22 +85,22 @@ namespace mango
         return simd::gather8(address, offset);
     }
 
-    static inline uint32x16 gather16(const uint32* address, int32x16 offset)
+    static inline uint32x16 gather16(const u32* address, int32x16 offset)
     {
         return simd::gather16(address, offset);
     }
 
-    static inline int32x16 gather16(const int32* address, int32x16 offset)
+    static inline int32x16 gather16(const s32* address, int32x16 offset)
     {
         return simd::gather16(address, offset);
     }
 
-    static inline uint64x8 gather8(const uint64* address, int32x8 offset)
+    static inline uint64x8 gather8(const u64* address, int32x8 offset)
     {
         return simd::gather8(address, offset);
     }
 
-    static inline int64x8 gather8(const int64* address, int32x8 offset)
+    static inline int64x8 gather8(const s64* address, int32x8 offset)
     {
         return simd::gather8(address, offset);
     }
@@ -117,22 +117,22 @@ namespace mango
         return simd::gather2(address, offset, value, mask);
     }
 
-    static inline uint32x4 gather4(const uint32* address, int32x4 offset, uint32x4 value, mask32x4 mask)
+    static inline uint32x4 gather4(const u32* address, int32x4 offset, uint32x4 value, mask32x4 mask)
     {
         return simd::gather4(address, offset, value, mask);
     }
 
-    static inline int32x4 gather4(const int32* address, int32x4 offset, int32x4 value, mask32x4 mask)
+    static inline int32x4 gather4(const s32* address, int32x4 offset, int32x4 value, mask32x4 mask)
     {
         return simd::gather4(address, offset, value, mask);
     }
 
-    static inline uint64x2 gather2(const uint64* address, int32x4 offset, uint64x2 value, mask64x2 mask)
+    static inline uint64x2 gather2(const u64* address, int32x4 offset, uint64x2 value, mask64x2 mask)
     {
         return simd::gather2(address, offset, value, mask);
     }
 
-    static inline int64x2 gather2(const int64* address, int32x4 offset, int64x2 value, mask64x2 mask)
+    static inline int64x2 gather2(const s64* address, int32x4 offset, int64x2 value, mask64x2 mask)
     {
         return simd::gather2(address, offset, value, mask);
     }
@@ -149,22 +149,22 @@ namespace mango
         return simd::gather4(address, offset, value, mask);
     }
 
-    static inline uint32x8 gather8(const uint32* address, int32x8 offset, uint32x8 value, mask32x8 mask)
+    static inline uint32x8 gather8(const u32* address, int32x8 offset, uint32x8 value, mask32x8 mask)
     {
         return simd::gather8(address, offset, value, mask);
     }
 
-    static inline int32x8 gather8(const int32* address, int32x8 offset, int32x8 value, mask32x8 mask)
+    static inline int32x8 gather8(const s32* address, int32x8 offset, int32x8 value, mask32x8 mask)
     {
         return simd::gather8(address, offset, value, mask);
     }
 
-    static inline uint64x4 gather4(const uint64* address, int32x4 offset, uint64x4 value, mask64x4 mask)
+    static inline uint64x4 gather4(const u64* address, int32x4 offset, uint64x4 value, mask64x4 mask)
     {
         return simd::gather4(address, offset, value, mask);
     }
 
-    static inline int64x4 gather4(const int64* address, int32x4 offset, int64x4 value, mask64x4 mask)
+    static inline int64x4 gather4(const s64* address, int32x4 offset, int64x4 value, mask64x4 mask)
     {
         return simd::gather4(address, offset, value, mask);
     }
@@ -181,22 +181,22 @@ namespace mango
         return simd::gather8(address, offset, value, mask);
     }
 
-    static inline uint32x16 gather16(const uint32* address, int32x16 offset, uint32x16 value, mask32x16 mask)
+    static inline uint32x16 gather16(const u32* address, int32x16 offset, uint32x16 value, mask32x16 mask)
     {
         return simd::gather16(address, offset, value, mask);
     }
 
-    static inline int32x16 gather16(const int32* address, int32x16 offset, int32x16 value, mask32x16 mask)
+    static inline int32x16 gather16(const s32* address, int32x16 offset, int32x16 value, mask32x16 mask)
     {
         return simd::gather16(address, offset, value, mask);
     }
 
-    static inline uint64x8 gather8(const uint64* address, int32x8 offset, uint64x8 value, mask64x8 mask)
+    static inline uint64x8 gather8(const u64* address, int32x8 offset, uint64x8 value, mask64x8 mask)
     {
         return simd::gather8(address, offset, value, mask);
     }
 
-    static inline int64x8 gather8(const int64* address, int32x8 offset, int64x8 value, mask64x8 mask)
+    static inline int64x8 gather8(const s64* address, int32x8 offset, int64x8 value, mask64x8 mask)
     {
         return simd::gather8(address, offset, value, mask);
     }

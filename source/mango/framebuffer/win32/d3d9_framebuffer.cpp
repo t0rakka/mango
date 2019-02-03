@@ -65,7 +65,7 @@ namespace framebuffer {
             buffer->LockRect(&locked, NULL, 0);
 
             Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            return Surface(width, height, format, locked.Pitch, reinterpret_cast<uint8 *>(locked.pBits));
+            return Surface(width, height, format, locked.Pitch, reinterpret_cast<u8 *>(locked.pBits));
         }
 
         void unlock()

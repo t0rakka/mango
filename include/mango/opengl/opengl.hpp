@@ -105,13 +105,13 @@ namespace opengl {
 
     struct ContextAttribute
     {
-        uint32 red      = 8;
-        uint32 green    = 8;
-        uint32 blue     = 8;
-        uint32 alpha    = 8;
-        uint32 depth    = 24;
-        uint32 stencil  = 8;
-        uint32 samples  = 1;
+        u32 red      = 8;
+        u32 green    = 8;
+        u32 blue     = 8;
+        u32 alpha    = 8;
+        u32 depth    = 24;
+        u32 stencil  = 8;
+        u32 samples  = 1;
     };
 
 	// -------------------------------------------------------------------
@@ -147,7 +147,7 @@ namespace opengl {
 
     struct glExtensionMask
     {
-#define GL_EXTENSION(Name) uint32 Name : 1;
+#define GL_EXTENSION(Name) u32 Name : 1;
 #include "func/glext.hpp"
 #undef GL_EXTENSION
     };
@@ -160,18 +160,18 @@ namespace opengl {
 
     struct coreExtensionMask
     {
-#define CORE_EXTENSION(Version, Name) uint32 Name : 1;
+#define CORE_EXTENSION(Version, Name) u32 Name : 1;
 #include "func/glcorearb.hpp"
 #undef CORE_EXTENSION
 
         // custom extension flags
-        uint32 texture_compression_dxt1 : 1;
-        uint32 texture_compression_dxt3 : 1;
-        uint32 texture_compression_dxt5 : 1;
-        uint32 texture_compression_etc2 : 1;
-        uint32 texture_compression_eac : 1;
-        uint32 texture_compression_latc : 1;
-        uint32 texture_compression_atc : 1;
+        u32 texture_compression_dxt1 : 1;
+        u32 texture_compression_dxt3 : 1;
+        u32 texture_compression_dxt5 : 1;
+        u32 texture_compression_etc2 : 1;
+        u32 texture_compression_eac : 1;
+        u32 texture_compression_latc : 1;
+        u32 texture_compression_atc : 1;
     };
 
     extern coreExtensionMask core;
@@ -184,7 +184,7 @@ namespace opengl {
 
     struct wglExtensionMask
     {
-#define WGL_EXTENSION(Name) uint32 Name : 1;
+#define WGL_EXTENSION(Name) u32 Name : 1;
 #include "func/wglext.hpp"
 #undef WGL_EXTENSION
     };
@@ -201,7 +201,7 @@ namespace opengl {
 
     struct glxExtensionMask
     {
-#define GLX_EXTENSION(Name) uint32 Name : 1;
+#define GLX_EXTENSION(Name) u32 Name : 1;
 #include "func/glxext.hpp"
 #undef GLX_EXTENSION
     };

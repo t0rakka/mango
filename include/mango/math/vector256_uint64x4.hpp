@@ -10,20 +10,20 @@ namespace mango
 {
 
     template <>
-    struct Vector<uint64, 4>
+    struct Vector<u64, 4>
     {
         using VectorType = simd::uint64x4;
-        using ScalarType = uint64;
+        using ScalarType = u64;
         enum { VectorSize = 4 };
 
         union
         {
             simd::uint64x4 m;
 
-            ScalarAccessor<uint64, simd::uint64x4, 0> x;
-            ScalarAccessor<uint64, simd::uint64x4, 1> y;
-            ScalarAccessor<uint64, simd::uint64x4, 2> z;
-            ScalarAccessor<uint64, simd::uint64x4, 3> w;
+            ScalarAccessor<u64, simd::uint64x4, 0> x;
+            ScalarAccessor<u64, simd::uint64x4, 1> y;
+            ScalarAccessor<u64, simd::uint64x4, 2> z;
+            ScalarAccessor<u64, simd::uint64x4, 3> w;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -48,12 +48,12 @@ namespace mango
         explicit Vector() {}
         ~Vector() {}
 
-        Vector(uint64 s)
+        Vector(u64 s)
             : m(simd::uint64x4_set1(s))
         {
         }
 
-        explicit Vector(uint64 x, uint64 y, uint64 z, uint64 w)
+        explicit Vector(u64 x, u64 y, u64 z, u64 w)
             : m(simd::uint64x4_set4(x, y, z, w))
         {
         }
@@ -69,7 +69,7 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (uint64 s)
+        Vector& operator = (u64 s)
         {
             m = simd::uint64x4_set1(s);
             return *this;
@@ -88,69 +88,69 @@ namespace mango
 #endif
     };
 
-    static inline const Vector<uint64, 4> operator + (Vector<uint64, 4> v)
+    static inline const Vector<u64, 4> operator + (Vector<u64, 4> v)
     {
         return v;
     }
 
-    static inline Vector<uint64, 4> operator - (Vector<uint64, 4> v)
+    static inline Vector<u64, 4> operator - (Vector<u64, 4> v)
     {
         return simd::sub(simd::uint64x4_zero(), v);
     }
 
-    static inline Vector<uint64, 4>& operator += (Vector<uint64, 4>& a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4>& operator += (Vector<u64, 4>& a, Vector<u64, 4> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline Vector<uint64, 4>& operator -= (Vector<uint64, 4>& a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4>& operator -= (Vector<u64, 4>& a, Vector<u64, 4> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline Vector<uint64, 4> operator + (Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> operator + (Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::add(a, b);
     }
 
-    static inline Vector<uint64, 4> operator - (Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> operator - (Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline Vector<uint64, 4> nand(Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> nand(Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline Vector<uint64, 4> operator & (Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> operator & (Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline Vector<uint64, 4> operator | (Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> operator | (Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline Vector<uint64, 4> operator ^ (Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> operator ^ (Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline Vector<uint64, 4> select(mask64x4 mask, Vector<uint64, 4> a, Vector<uint64, 4> b)
+    static inline Vector<u64, 4> select(mask64x4 mask, Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::select(mask, a, b);
     }
 
-    static inline Vector<uint64, 4> operator << (Vector<uint64, 4> a, int b)
+    static inline Vector<u64, 4> operator << (Vector<u64, 4> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<uint64, 4> operator >> (Vector<uint64, 4> a, int b)
+    static inline Vector<u64, 4> operator >> (Vector<u64, 4> a, int b)
     {
         return simd::srl(a, b);
     }

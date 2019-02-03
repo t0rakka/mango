@@ -15,7 +15,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline float64x4 shuffle(float64x4 v)
     {
         const float64x2 v0 = x & 2 ? v.hi : v.lo;

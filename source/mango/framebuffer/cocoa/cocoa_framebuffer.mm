@@ -540,7 +540,7 @@ namespace
             }
             else
             {
-                uint64 size = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize];
+                u64 size = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize];
                 dropped.emplace(s, size, 0);
             }
         }

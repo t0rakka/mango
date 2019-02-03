@@ -33,11 +33,11 @@ namespace mango
 
     struct sRGB
     {
-        uint32 color;
+        u32 color;
 
         sRGB() = default;
 
-        sRGB(uint32 srgb)
+        sRGB(u32 srgb)
             : color(srgb)
         {
         }
@@ -55,13 +55,13 @@ namespace mango
             return *this;
         }
 
-        sRGB& operator = (uint32 srgb)
+        sRGB& operator = (u32 srgb)
         {
             color = srgb;
             return *this;
         }
 
-        operator uint32 () const
+        operator u32 () const
         {
             return color;
         }

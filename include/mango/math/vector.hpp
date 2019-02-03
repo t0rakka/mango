@@ -1356,34 +1356,34 @@ namespace mango
     // ------------------------------------------------------------------
 
     // 128 bit integer vectors
-    using int8x16  = Vector<int8, 16>;
-    using int16x8  = Vector<int16, 8>;
-    using int32x4  = Vector<int32, 4>;
-    using int64x2  = Vector<int64, 2>;
-    using uint8x16 = Vector<uint8, 16>;
-    using uint16x8 = Vector<uint16, 8>;
-    using uint32x4 = Vector<uint32, 4>;
-    using uint64x2 = Vector<uint64, 2>;
+    using int8x16  = Vector<s8, 16>;
+    using int16x8  = Vector<s16, 8>;
+    using int32x4  = Vector<s32, 4>;
+    using int64x2  = Vector<s64, 2>;
+    using uint8x16 = Vector<u8, 16>;
+    using uint16x8 = Vector<u16, 8>;
+    using uint32x4 = Vector<u32, 4>;
+    using uint64x2 = Vector<u64, 2>;
 
     // 256 bit integer vectors
-    using int8x32   = Vector<int8, 32>;
-    using int16x16  = Vector<int16, 16>;
-    using int32x8   = Vector<int32, 8>;
-    using int64x4   = Vector<int64, 4>;
-    using uint8x32  = Vector<uint8, 32>;
-    using uint16x16 = Vector<uint16, 16>;
-    using uint32x8  = Vector<uint32, 8>;
-    using uint64x4  = Vector<uint64, 4>;
+    using int8x32   = Vector<s8, 32>;
+    using int16x16  = Vector<s16, 16>;
+    using int32x8   = Vector<s32, 8>;
+    using int64x4   = Vector<s64, 4>;
+    using uint8x32  = Vector<u8, 32>;
+    using uint16x16 = Vector<u16, 16>;
+    using uint32x8  = Vector<u32, 8>;
+    using uint64x4  = Vector<u64, 4>;
 
     // 512 bit integer vectors
-    using int8x64   = Vector<int8, 64>;
-    using int16x32  = Vector<int16, 32>;
-    using int32x16  = Vector<int32, 16>;
-    using int64x8   = Vector<int64, 8>;
-    using uint8x64  = Vector<uint8, 64>;
-    using uint16x32 = Vector<uint16, 32>;
-    using uint32x16 = Vector<uint32, 16>;
-    using uint64x8  = Vector<uint64, 8>;
+    using int8x64   = Vector<s8, 64>;
+    using int16x32  = Vector<s16, 32>;
+    using int32x16  = Vector<s32, 16>;
+    using int64x8   = Vector<s64, 8>;
+    using uint8x64  = Vector<u8, 64>;
+    using uint16x32 = Vector<u16, 32>;
+    using uint32x16 = Vector<u32, 16>;
+    using uint64x8  = Vector<u64, 8>;
 
     // float vectors
     using float16x4  = Vector<float16, 4>;
@@ -1416,12 +1416,12 @@ namespace mango
     using mask64x8   = simd::mask64x8;
 
     // OpenCL vectors
-    using int2    = Vector<int32, 2>;
-    using int3    = Vector<int32, 3>;
-    using int4    = Vector<int32, 4>;
-    using uint2   = Vector<uint32, 2>;
-    using uint3   = Vector<uint32, 3>;
-    using uint4   = Vector<uint32, 4>;
+    using int2    = Vector<s32, 2>;
+    using int3    = Vector<s32, 3>;
+    using int4    = Vector<s32, 4>;
+    using uint2   = Vector<u32, 2>;
+    using uint3   = Vector<u32, 3>;
+    using uint4   = Vector<u32, 4>;
     using half4   = Vector<float16, 4>;
     using float2  = Vector<float, 2>;
     using float3  = Vector<float, 3>;
@@ -1435,62 +1435,62 @@ namespace mango
     // maskToInt()
     // ------------------------------------------------------------------
 
-    static inline uint32 maskToInt(mask8x16 mask)
+    static inline u32 maskToInt(mask8x16 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask16x8 mask)
+    static inline u32 maskToInt(mask16x8 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask32x4 mask)
+    static inline u32 maskToInt(mask32x4 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask64x2 mask)
+    static inline u32 maskToInt(mask64x2 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask8x32 mask)
+    static inline u32 maskToInt(mask8x32 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask16x16 mask)
+    static inline u32 maskToInt(mask16x16 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask32x8 mask)
+    static inline u32 maskToInt(mask32x8 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask64x4 mask)
+    static inline u32 maskToInt(mask64x4 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint64 maskToInt(mask8x64 mask)
+    static inline u64 maskToInt(mask8x64 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask16x32 mask)
+    static inline u32 maskToInt(mask16x32 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask32x16 mask)
+    static inline u32 maskToInt(mask32x16 mask)
     {
         return simd::get_mask(mask);
     }
 
-    static inline uint32 maskToInt(mask64x8 mask)
+    static inline u32 maskToInt(mask64x8 mask)
     {
         return simd::get_mask(mask);
     }

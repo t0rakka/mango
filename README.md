@@ -124,8 +124,8 @@ The decoder can be up to three times the speed of jpeglib-turbo on "best conditi
 ##### Blitter
 The pixelformat conversion code, "the blitter" used to be JIT-compiled using a realtime x86 assembler called realtime but this functionality has been deprecated for this public github release and replaced with generic template based implementation. The reason is that ARM has gained importance in the past decade dramatically and x86-only code just don't cut it anymore. This means the blitter is not as cool and super as it used to be but it still gets the job done. The blitter is based on a very simple principle: scaling bit-masks:
 
-    uint32 src = 0x000000ff; // unorm component's source bitmask
-    uint32 dst = 0x00ffff00; // we want to convert to this mask
+    u32 src = 0x000000ff; // unorm component's source bitmask
+    u32 dst = 0x00ffff00; // we want to convert to this mask
     double scale = double(dst) / src; // double because fp32 can only handle 24 bits of unorm w/o precision loss
 
 It's magic, but multiplying any value in the src format by this scale will yield the correct normalized value in the dst format. The largest cost here is the conversion between integer and floating-point but it can be handled efficiently. Our SIMD implementation is using AoS layout so each pixel is individually processed. This approach is very wasteful and round-trip to floating-point format increases processing overhead. The work for improved blitter is on-going and it is built around two cornerstone principles: 

@@ -140,18 +140,18 @@ namespace
 
     const pvr_type_t typeTable[] =
     {
-        { 1, 0, 1, 1 }, // uint8 normalized
-        { 1, 1, 1, 1 }, // int8 normalized
-        { 1, 0, 1, 0 }, // uint8
-        { 1, 1, 1, 0 }, // int8
-        { 2, 0, 1, 1 }, // uint16 normalized
-        { 2, 1, 1, 1 }, // int16 normalized
-        { 2, 0, 1, 0 }, // uint16
-        { 2, 1, 1, 0 }, // int16
-        { 4, 0, 1, 1 }, // uint32 normalized
-        { 4, 1, 1, 1 }, // int32 normalized
-        { 4, 0, 1, 0 }, // uint32
-        { 4, 1, 1, 0 }, // int32
+        { 1, 0, 1, 1 }, // u8 normalized
+        { 1, 1, 1, 1 }, // s8 normalized
+        { 1, 0, 1, 0 }, // u8
+        { 1, 1, 1, 0 }, // s8
+        { 2, 0, 1, 1 }, // u16 normalized
+        { 2, 1, 1, 1 }, // s16 normalized
+        { 2, 0, 1, 0 }, // u16
+        { 2, 1, 1, 0 }, // s16
+        { 4, 0, 1, 1 }, // u32 normalized
+        { 4, 1, 1, 1 }, // s32 normalized
+        { 4, 0, 1, 0 }, // u32
+        { 4, 1, 1, 0 }, // s32
         { 4, 1, 0, 0 }  // float32
     };
 

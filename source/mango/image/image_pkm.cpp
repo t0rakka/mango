@@ -33,7 +33,7 @@ namespace
         TextureCompression compression;
 
         // compression type
-        int16 type;
+        s16 type;
 
         void read(BigEndianPointer& p)
         {

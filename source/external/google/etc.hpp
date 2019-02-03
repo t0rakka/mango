@@ -12,11 +12,11 @@
 namespace mango
 {
 
-    void decode_block_etc1     (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_etc2     (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_etc2_eac (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_eac_r11  (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_eac_rg11 (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
+    void decode_block_etc1     (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_etc2     (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_etc2_eac (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_eac_r11  (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_eac_rg11 (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
 } // namespace mango
 

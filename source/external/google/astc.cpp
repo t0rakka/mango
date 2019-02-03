@@ -45,39 +45,39 @@ namespace
         return a/b + ((a%b) ? 1 : 0);
     }
     
-    inline uint32 getBit (uint32 src, int ndx)
+    inline u32 getBit (u32 src, int ndx)
     {
         return (src >> ndx) & 1;
     }
     
-    inline uint32 getBits (uint32 src, int low, int high)
+    inline u32 getBits (u32 src, int low, int high)
     {
         const int numBits = (high-low) + 1;
         return (src >> low) & ((1u<<numBits)-1);
     }
     
-    inline bool isBitSet (uint32 src, int ndx)
+    inline bool isBitSet (u32 src, int ndx)
     {
         return getBit(src, ndx) != 0;
     }
     
-    inline uint32 reverseBits (uint32 src, int numBits)
+    inline u32 reverseBits (u32 src, int numBits)
     {
-        uint32 result = 0;
+        u32 result = 0;
         for (int i = 0; i < numBits; i++)
             result |= ((src >> i) & 1) << (numBits-1-i);
         return result;
     }
     
-    inline uint32 bitReplicationScale (uint32 src, int numSrcBits, int numDstBits)
+    inline u32 bitReplicationScale (u32 src, int numSrcBits, int numDstBits)
     {
-        uint32 dst = 0;
+        u32 dst = 0;
         for (int shift = numDstBits-numSrcBits; shift > -numSrcBits; shift -= numSrcBits)
             dst |= shift >= 0 ? src << shift : src >> -shift;
         return dst;
     }
     
-    inline int32 signExtend (int32 src, int numSrcBits)
+    inline s32 signExtend (s32 src, int numSrcBits)
     {
         const bool negative = (src & (1 << (numSrcBits-1))) != 0;
         return src | (negative ? ~((1 << numSrcBits) - 1) : 0);
@@ -92,7 +92,7 @@ namespace
     class Block128
     {
     private:
-        typedef uint64 Word;
+        typedef u64 Word;
         
         enum
         {
@@ -102,7 +102,7 @@ namespace
         };
         
     public:
-        Block128 (const uint8* src)
+        Block128 (const u8* src)
         {
             for (int wordNdx = 0; wordNdx < NUM_WORDS; wordNdx++)
             {
@@ -112,12 +112,12 @@ namespace
             }
         }
         
-        uint32 getBit (int ndx) const
+        u32 getBit (int ndx) const
         {
             return (m_words[ndx / WORD_BITS] >> (ndx % WORD_BITS)) & 1;
         }
         
-        uint32 getBits (int low, int high) const
+        u32 getBits (int low, int high) const
         {
             if (high-low+1 == 0)
                 return 0;
@@ -127,13 +127,13 @@ namespace
             
             if (word0Ndx == word1Ndx)
             {
-                uint64 temp = (m_words[word0Ndx] & ((((Word)1 << high%WORD_BITS << 1) - 1))) >> ((Word)low % WORD_BITS);
-                return uint32(temp);
+                u64 temp = (m_words[word0Ndx] & ((((Word)1 << high%WORD_BITS << 1) - 1))) >> ((Word)low % WORD_BITS);
+                return u32(temp);
             }
             else
             {
-                return (uint32)(m_words[word0Ndx] >> (low%WORD_BITS)) |
-                       (uint32)((m_words[word1Ndx] & (((Word)1 << high%WORD_BITS << 1) - 1)) << (high-low - high%WORD_BITS));
+                return (u32)(m_words[word0Ndx] >> (low%WORD_BITS)) |
+                       (u32)((m_words[word1Ndx] & (((Word)1 << high%WORD_BITS << 1) - 1)) << (high-low - high%WORD_BITS));
             }
         }
         
@@ -163,7 +163,7 @@ namespace
         }
         
         // Get the next num bits. Bits at positions greater than or equal to m_length are zeros.
-        uint32 getNext (int num)
+        u32 getNext (int num)
         {
             if (num == 0 || m_ndx >= m_length)
                 return 0;
@@ -219,9 +219,9 @@ namespace
     
     struct ISEDecodedResult
     {
-        uint32 m;
-        uint32 tq; //!< Trit or quint value, depending on ISE mode.
-        uint32 v;
+        u32 m;
+        u32 tq; //!< Trit or quint value, depending on ISE mode.
+        u32 v;
     };
     
     // Data from an ASTC block's "block mode" part (i.e. bits [0,10]).
@@ -260,10 +260,10 @@ namespace
     
     struct TexelWeightPair
     {
-        uint32 w[2];
+        u32 w[2];
     };
     
-    ASTCBlockMode getASTCBlockMode (uint32 blockModeData)
+    ASTCBlockMode getASTCBlockMode (u32 blockModeData)
     {
         ASTCBlockMode blockMode;
         blockMode.isError = true; // \note Set to false later, if not error.
@@ -275,14 +275,14 @@ namespace
             if ((getBits(blockModeData, 0, 1) == 0 && getBits(blockModeData, 6, 8) == 7) || getBits(blockModeData, 0, 3) == 0)
                 return blockMode; // Invalid ("reserved").
             
-            uint32 r = (uint32)-1; // \note Set in the following branches.
+            u32 r = (u32)-1; // \note Set in the following branches.
             
             if (getBits(blockModeData, 0, 1) == 0)
             {
-                const uint32 r0	= getBit(blockModeData, 4);
-                const uint32 r1	= getBit(blockModeData, 2);
-                const uint32 r2	= getBit(blockModeData, 3);
-                const uint32 i78	= getBits(blockModeData, 7, 8);
+                const u32 r0	= getBit(blockModeData, 4);
+                const u32 r1	= getBit(blockModeData, 2);
+                const u32 r2	= getBit(blockModeData, 3);
+                const u32 i78	= getBits(blockModeData, 7, 8);
                 
                 r = (r2 << 2) | (r1 << 1) | (r0 << 0);
                 
@@ -294,7 +294,7 @@ namespace
                 }
                 else
                 {
-                    const uint32 a = getBits(blockModeData, 5, 6);
+                    const u32 a = getBits(blockModeData, 5, 6);
                     switch (i78)
                     {
                         case 0:	 blockMode.weightGridWidth = 12;	blockMode.weightGridHeight = a + 2;									break;
@@ -306,24 +306,24 @@ namespace
             }
             else
             {
-                const uint32 r0	= getBit(blockModeData, 4);
-                const uint32 r1	= getBit(blockModeData, 0);
-                const uint32 r2	= getBit(blockModeData, 1);
-                const uint32 i23	= getBits(blockModeData, 2, 3);
-                const uint32 a	= getBits(blockModeData, 5, 6);
+                const u32 r0	= getBit(blockModeData, 4);
+                const u32 r1	= getBit(blockModeData, 0);
+                const u32 r2	= getBit(blockModeData, 1);
+                const u32 i23	= getBits(blockModeData, 2, 3);
+                const u32 a	= getBits(blockModeData, 5, 6);
                 
                 r = (r2 << 2) | (r1 << 1) | (r0 << 0);
                 
                 if (i23 == 3)
                 {
-                    const uint32	b	= getBit(blockModeData, 7);
+                    const u32	b	= getBit(blockModeData, 7);
                     const bool		i8	= isBitSet(blockModeData, 8);
                     blockMode.weightGridWidth	= i8 ? b+2 : a+2;
                     blockMode.weightGridHeight	= i8 ? a+2 : b+6;
                 }
                 else
                 {
-                    const uint32 b = getBits(blockModeData, 7, 8);
+                    const u32 b = getBits(blockModeData, 7, 8);
                     
                     switch (i23)
                     {
@@ -382,7 +382,7 @@ namespace
     {
         if (isSRGB)
         {
-            uint8* const dstU = (uint8*)dst;
+            u8* const dstU = (u8*)dst;
             
             for (int i = 0; i < blockWidth*blockHeight; i++)
             {
@@ -408,10 +408,10 @@ namespace
     
     void decodeVoidExtentBlock (void* dst, const Block128& blockData, int blockWidth, int blockHeight, bool isSRGB, bool isLDRMode)
     {
-        const uint32	minSExtent			= blockData.getBits(12, 24);
-        const uint32	maxSExtent			= blockData.getBits(25, 37);
-        const uint32	minTExtent			= blockData.getBits(38, 50);
-        const uint32	maxTExtent			= blockData.getBits(51, 63);
+        const u32	minSExtent			= blockData.getBits(12, 24);
+        const u32	maxSExtent			= blockData.getBits(25, 37);
+        const u32	minTExtent			= blockData.getBits(38, 50);
+        const u32	maxTExtent			= blockData.getBits(51, 63);
         const bool		allExtentsAllOnes	= minSExtent == 0x1fff && maxSExtent == 0x1fff && minTExtent == 0x1fff && maxTExtent == 0x1fff;
         const bool		isHDRBlock			= blockData.isBitSet(9);
         
@@ -421,7 +421,7 @@ namespace
             return;
         }
         
-        const uint32 rgba[4] =
+        const u32 rgba[4] =
         {
             blockData.getBits(64,  79),
             blockData.getBits(80,  95),
@@ -431,7 +431,7 @@ namespace
         
         if (isSRGB)
         {
-            uint8* const dstU = (uint8*)dst;
+            u8* const dstU = (u8*)dst;
             for (int i = 0; i < blockWidth*blockHeight; i++)
                 for (int c = 0; c < 4; c++)
                 {
@@ -473,7 +473,7 @@ namespace
         return;
     }
     
-    void decodeColorEndpointModes (uint32* endpointModesDst, const Block128& blockData, int numPartitions, int extraCemBitsStart)
+    void decodeColorEndpointModes (u32* endpointModesDst, const Block128& blockData, int numPartitions, int extraCemBitsStart)
     {
         if (numPartitions == 1)
         {
@@ -481,11 +481,11 @@ namespace
         }
         else
         {
-            const uint32 highLevelSelector = blockData.getBits(23, 24);
+            const u32 highLevelSelector = blockData.getBits(23, 24);
             
             if (highLevelSelector == 0)
             {
-                const uint32 mode = blockData.getBits(25, 28);
+                const u32 mode = blockData.getBits(25, 28);
                 for (int i = 0; i < numPartitions; i++)
                     endpointModesDst[i] = mode;
             }
@@ -493,11 +493,11 @@ namespace
             {
                 for (int partNdx = 0; partNdx < numPartitions; partNdx++)
                 {
-                    const uint32 cemClass		= highLevelSelector - (blockData.isBitSet(25 + partNdx) ? 0 : 1);
-                    const uint32 lowBit0Ndx	= numPartitions + 2*partNdx;
-                    const uint32 lowBit1Ndx	= numPartitions + 2*partNdx + 1;
-                    const uint32 lowBit0		= blockData.getBit(lowBit0Ndx < 4 ? 25+lowBit0Ndx : extraCemBitsStart+lowBit0Ndx-4);
-                    const uint32 lowBit1		= blockData.getBit(lowBit1Ndx < 4 ? 25+lowBit1Ndx : extraCemBitsStart+lowBit1Ndx-4);
+                    const u32 cemClass		= highLevelSelector - (blockData.isBitSet(25 + partNdx) ? 0 : 1);
+                    const u32 lowBit0Ndx	= numPartitions + 2*partNdx;
+                    const u32 lowBit1Ndx	= numPartitions + 2*partNdx + 1;
+                    const u32 lowBit0		= blockData.getBit(lowBit0Ndx < 4 ? 25+lowBit0Ndx : extraCemBitsStart+lowBit0Ndx-4);
+                    const u32 lowBit1		= blockData.getBit(lowBit1Ndx < 4 ? 25+lowBit1Ndx : extraCemBitsStart+lowBit1Ndx-4);
                     
                     endpointModesDst[partNdx] = (cemClass << 2) | (lowBit1 << 1) | lowBit0;
                 }
@@ -505,12 +505,12 @@ namespace
         }
     }
     
-    inline int computeNumColorEndpointValues (uint32 endpointMode)
+    inline int computeNumColorEndpointValues (u32 endpointMode)
     {
         return (endpointMode/4 + 1) * 2;
     }
     
-    int computeNumColorEndpointValues (const uint32* endpointModes, int numPartitions)
+    int computeNumColorEndpointValues (const u32* endpointModes, int numPartitions)
     {
         int result = 0;
         for (int i = 0; i < numPartitions; i++)
@@ -520,18 +520,18 @@ namespace
     
     void decodeISETritBlock (ISEDecodedResult* dst, int numValues, BitAccessStream& data, int numBits)
     {
-        uint32 m[5];
+        u32 m[5];
         
         m[0]		= data.getNext(numBits);
-        uint32 T01	= data.getNext(2);
+        u32 T01	= data.getNext(2);
         m[1]		= data.getNext(numBits);
-        uint32 T23	= data.getNext(2);
+        u32 T23	= data.getNext(2);
         m[2]		= data.getNext(numBits);
-        uint32 T4	= data.getNext(1);
+        u32 T4	= data.getNext(1);
         m[3]		= data.getNext(numBits);
-        uint32 T56	= data.getNext(2);
+        u32 T56	= data.getNext(2);
         m[4]		= data.getNext(numBits);
-        uint32 T7	= data.getNext(1);
+        u32 T7	= data.getNext(1);
         
         switch (numValues)
         {
@@ -545,9 +545,9 @@ namespace
                 break;
         }
         
-        const uint32 T = (T7 << 7) | (T56 << 5) | (T4 << 4) | (T23 << 2) | (T01 << 0);
+        const u32 T = (T7 << 7) | (T56 << 5) | (T4 << 4) | (T23 << 2) | (T01 << 0);
         
-        static const uint32 tritsFromT[256][5] =
+        static const u32 tritsFromT[256][5] =
         {
             { 0,0,0,0,0 }, { 1,0,0,0,0 }, { 2,0,0,0,0 }, { 0,0,2,0,0 }, { 0,1,0,0,0 }, { 1,1,0,0,0 }, { 2,1,0,0,0 }, { 1,0,2,0,0 }, { 0,2,0,0,0 }, { 1,2,0,0,0 }, { 2,2,0,0,0 }, { 2,0,2,0,0 }, { 0,2,2,0,0 }, { 1,2,2,0,0 }, { 2,2,2,0,0 }, { 2,0,2,0,0 },
             { 0,0,1,0,0 }, { 1,0,1,0,0 }, { 2,0,1,0,0 }, { 0,1,2,0,0 }, { 0,1,1,0,0 }, { 1,1,1,0,0 }, { 2,1,1,0,0 }, { 1,1,2,0,0 }, { 0,2,1,0,0 }, { 1,2,1,0,0 }, { 2,2,1,0,0 }, { 2,1,2,0,0 }, { 0,0,0,2,2 }, { 1,0,0,2,2 }, { 2,0,0,2,2 }, { 0,0,2,2,2 },
@@ -567,7 +567,7 @@ namespace
             { 0,0,1,1,2 }, { 1,0,1,1,2 }, { 2,0,1,1,2 }, { 0,1,2,1,2 }, { 0,1,1,1,2 }, { 1,1,1,1,2 }, { 2,1,1,1,2 }, { 1,1,2,1,2 }, { 0,2,1,1,2 }, { 1,2,1,1,2 }, { 2,2,1,1,2 }, { 2,1,2,1,2 }, { 0,2,2,2,2 }, { 1,2,2,2,2 }, { 2,2,2,2,2 }, { 2,1,2,2,2 }
         };
         
-        const uint32 (& trits)[5] = tritsFromT[T];
+        const u32 (& trits)[5] = tritsFromT[T];
         
         for (int i = 0; i < numValues; i++)
         {
@@ -579,14 +579,14 @@ namespace
     
     void decodeISEQuintBlock (ISEDecodedResult* dst, int numValues, BitAccessStream& data, int numBits)
     {
-        uint32 m[3];
+        u32 m[3];
 
         m[0]		= data.getNext(numBits);
-        uint32 Q012	= data.getNext(3);
+        u32 Q012	= data.getNext(3);
         m[1]		= data.getNext(numBits);
-        uint32 Q34	= data.getNext(2);
+        u32 Q34	= data.getNext(2);
         m[2]		= data.getNext(numBits);
-        uint32 Q56	= data.getNext(2);
+        u32 Q56	= data.getNext(2);
 
         switch (numValues)
         {
@@ -598,9 +598,9 @@ namespace
                 break;
         }
         
-        const uint32 Q = (Q56 << 5) | (Q34 << 3) | (Q012 << 0);
+        const u32 Q = (Q56 << 5) | (Q34 << 3) | (Q012 << 0);
         
-        static const uint32 quintsFromQ[256][3] =
+        static const u32 quintsFromQ[256][3] =
         {
             { 0,0,0 }, { 1,0,0 }, { 2,0,0 }, { 3,0,0 }, { 4,0,0 }, { 0,4,0 }, { 4,4,0 }, { 4,4,4 }, { 0,1,0 }, { 1,1,0 }, { 2,1,0 }, { 3,1,0 }, { 4,1,0 }, { 1,4,0 }, { 4,4,1 }, { 4,4,4 },
             { 0,2,0 }, { 1,2,0 }, { 2,2,0 }, { 3,2,0 }, { 4,2,0 }, { 2,4,0 }, { 4,4,2 }, { 4,4,4 }, { 0,3,0 }, { 1,3,0 }, { 2,3,0 }, { 3,3,0 }, { 4,3,0 }, { 3,4,0 }, { 4,4,3 }, { 4,4,4 },
@@ -612,7 +612,7 @@ namespace
             { 0,2,3 }, { 1,2,3 }, { 2,2,3 }, { 3,2,3 }, { 4,2,3 }, { 2,4,3 }, { 0,2,4 }, { 1,2,4 }, { 0,3,3 }, { 1,3,3 }, { 2,3,3 }, { 3,3,3 }, { 4,3,3 }, { 3,4,3 }, { 0,3,4 }, { 1,3,4 }
         };
         
-        const uint32 (& quints)[3] = quintsFromQ[Q];
+        const u32 (& quints)[3] = quintsFromQ[Q];
         
         for (int i = 0; i < numValues; i++)
         {
@@ -692,25 +692,25 @@ namespace
         }
     }
     
-    void unquantizeColorEndpoints (uint32* dst, const ISEDecodedResult* iseResults, int numEndpoints, const ISEParams& iseParams)
+    void unquantizeColorEndpoints (u32* dst, const ISEDecodedResult* iseResults, int numEndpoints, const ISEParams& iseParams)
     {
         if (iseParams.mode == ISEMODE_TRIT || iseParams.mode == ISEMODE_QUINT)
         {
             const int rangeCase				= iseParams.numBits*2 - (iseParams.mode == ISEMODE_TRIT ? 2 : 1);
-            static const uint32	Ca[11]	= { 204, 113, 93, 54, 44, 26, 22, 13, 11, 6, 5 };
-            const uint32			C		= Ca[rangeCase];
+            static const u32	Ca[11]	= { 204, 113, 93, 54, 44, 26, 22, 13, 11, 6, 5 };
+            const u32			C		= Ca[rangeCase];
             
             for (int endpointNdx = 0; endpointNdx < numEndpoints; endpointNdx++)
             {
-                const uint32 a = getBit(iseResults[endpointNdx].m, 0);
-                const uint32 b = getBit(iseResults[endpointNdx].m, 1);
-                const uint32 c = getBit(iseResults[endpointNdx].m, 2);
-                const uint32 d = getBit(iseResults[endpointNdx].m, 3);
-                const uint32 e = getBit(iseResults[endpointNdx].m, 4);
-                const uint32 f = getBit(iseResults[endpointNdx].m, 5);
+                const u32 a = getBit(iseResults[endpointNdx].m, 0);
+                const u32 b = getBit(iseResults[endpointNdx].m, 1);
+                const u32 c = getBit(iseResults[endpointNdx].m, 2);
+                const u32 d = getBit(iseResults[endpointNdx].m, 3);
+                const u32 e = getBit(iseResults[endpointNdx].m, 4);
+                const u32 f = getBit(iseResults[endpointNdx].m, 5);
                 
-                const uint32 A = a == 0 ? 0 : (1<<9)-1;
-                const uint32 B = rangeCase == 0	? 0
+                const u32 A = a == 0 ? 0 : (1<<9)-1;
+                const u32 B = rangeCase == 0	? 0
                 : rangeCase == 1	? 0
                 : rangeCase == 2	? (b << 8) |									(b << 4) |				(b << 2) |	(b << 1)
                 : rangeCase == 3	? (b << 8) |												(b << 3) |	(b << 2)
@@ -721,7 +721,7 @@ namespace
                 : rangeCase == 8	? (e << 8) | (d << 7) | (c << 6) | (b << 5) |										(e << 1) |	(d << 0)
                 : rangeCase == 9	? (e << 8) | (d << 7) | (c << 6) | (b << 5) |													(e << 0)
                 : rangeCase == 10	? (f << 8) | (e << 7) | (d << 6) | (c << 5) |	(b << 4) |										(f << 0)
-                : (uint32)-1;
+                : (u32)-1;
                 
                 dst[endpointNdx] = (((iseResults[endpointNdx].tq*C + B) ^ A) >> 2) | (A & 0x80);
             }
@@ -733,7 +733,7 @@ namespace
         }
     }
     
-    inline void bitTransferSigned (int32& a, int32& b)
+    inline void bitTransferSigned (s32& a, s32& b)
     {
         b >>= 1;
         b |= a & 0x80;
@@ -755,7 +755,7 @@ namespace
         return int4((r+b)>>1, (g+b)>>1, b, a);
     }
     
-    inline bool isColorEndpointModeHDR (uint32 mode)
+    inline bool isColorEndpointModeHDR (u32 mode)
     {
         return mode == 2	||
         mode == 3	||
@@ -765,38 +765,38 @@ namespace
         mode == 15;
     }
     
-    void decodeHDREndpointMode7 (uint4& e0, uint4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3)
+    void decodeHDREndpointMode7 (uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3)
     {
-        const uint32 m10		= getBit(v1, 7) | (getBit(v2, 7) << 1);
-        const uint32 m23		= getBits(v0, 6, 7);
-        const uint32 majComp	= m10 != 3	? m10
+        const u32 m10		= getBit(v1, 7) | (getBit(v2, 7) << 1);
+        const u32 m23		= getBits(v0, 6, 7);
+        const u32 majComp	= m10 != 3	? m10
         : m23 != 3	? m23
         :			  0;
-        const uint32 mode		= m10 != 3	? m23
+        const u32 mode		= m10 != 3	? m23
         : m23 != 3	? 4
         :			  5;
         
-        int32			red		= (int32)getBits(v0, 0, 5);
-        int32			green	= (int32)getBits(v1, 0, 4);
-        int32			blue	= (int32)getBits(v2, 0, 4);
-        int32			scale	= (int32)getBits(v3, 0, 4);
+        s32			red		= (s32)getBits(v0, 0, 5);
+        s32			green	= (s32)getBits(v1, 0, 4);
+        s32			blue	= (s32)getBits(v2, 0, 4);
+        s32			scale	= (s32)getBits(v3, 0, 4);
         
         {
 #define SHOR(DST_VAR, SHIFT, BIT_VAR) (DST_VAR) |= (BIT_VAR) << (SHIFT)
 #define ASSIGN_X_BITS(V0,S0, V1,S1, V2,S2, V3,S3, V4,S4, V5,S5, V6,S6) { SHOR(V0,S0,x0); SHOR(V1,S1,x1); SHOR(V2,S2,x2); SHOR(V3,S3,x3); SHOR(V4,S4,x4); SHOR(V5,S5,x5); SHOR(V6,S6,x6); }
             
-            const uint32	x0	= getBit(v1, 6);
-            const uint32	x1	= getBit(v1, 5);
-            const uint32	x2	= getBit(v2, 6);
-            const uint32	x3	= getBit(v2, 5);
-            const uint32	x4	= getBit(v3, 7);
-            const uint32	x5	= getBit(v3, 6);
-            const uint32	x6	= getBit(v3, 5);
+            const u32	x0	= getBit(v1, 6);
+            const u32	x1	= getBit(v1, 5);
+            const u32	x2	= getBit(v2, 6);
+            const u32	x3	= getBit(v2, 5);
+            const u32	x4	= getBit(v3, 7);
+            const u32	x5	= getBit(v3, 6);
+            const u32	x6	= getBit(v3, 5);
             
-            int32&		R	= red;
-            int32&		G	= green;
-            int32&		B	= blue;
-            int32&		S	= scale;
+            s32&		R	= red;
+            s32&		G	= green;
+            s32&		B	= blue;
+            s32&		S	= scale;
             
             switch (mode)
             {
@@ -840,9 +840,9 @@ namespace
         e1 = clamp(e1, limit0, limit1);
     }
     
-    void decodeHDREndpointMode11 (uint4& e0, uint4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5)
+    void decodeHDREndpointMode11 (uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5)
     {
-        const uint32 major = (getBit(v5, 7) << 1) | getBit(v4, 7);
+        const u32 major = (getBit(v5, 7) << 1) | getBit(v4, 7);
         
         if (major == 3)
         {
@@ -851,25 +851,25 @@ namespace
         }
         else
         {
-            const uint32 mode = (getBit(v3, 7) << 2) | (getBit(v2, 7) << 1) | getBit(v1, 7);
+            const u32 mode = (getBit(v3, 7) << 2) | (getBit(v2, 7) << 1) | getBit(v1, 7);
 
-            int32 a  = (int32)((getBit(v1, 6) << 8) | v0);
-            int32 c  = (int32)(getBits(v1, 0, 5));
-            int32 b0 = (int32)(getBits(v2, 0, 5));
-            int32 b1 = (int32)(getBits(v3, 0, 5));
-            int32 d0 = (int32)(getBits(v4, 0, 4));
-            int32 d1 = (int32)(getBits(v5, 0, 4));
+            s32 a  = (s32)((getBit(v1, 6) << 8) | v0);
+            s32 c  = (s32)(getBits(v1, 0, 5));
+            s32 b0 = (s32)(getBits(v2, 0, 5));
+            s32 b1 = (s32)(getBits(v3, 0, 5));
+            s32 d0 = (s32)(getBits(v4, 0, 4));
+            s32 d1 = (s32)(getBits(v5, 0, 4));
 
             {
 #define SHOR(DST_VAR, SHIFT, BIT_VAR) (DST_VAR) |= (BIT_VAR) << (SHIFT)
 #define ASSIGN_X_BITS(V0,S0, V1,S1, V2,S2, V3,S3, V4,S4, V5,S5) { SHOR(V0,S0,x0); SHOR(V1,S1,x1); SHOR(V2,S2,x2); SHOR(V3,S3,x3); SHOR(V4,S4,x4); SHOR(V5,S5,x5); }
                 
-                const uint32 x0 = getBit(v2, 6);
-                const uint32 x1 = getBit(v3, 6);
-                const uint32 x2 = getBit(v4, 6);
-                const uint32 x3 = getBit(v5, 6);
-                const uint32 x4 = getBit(v4, 5);
-                const uint32 x5 = getBit(v5, 5);
+                const u32 x0 = getBit(v2, 6);
+                const u32 x1 = getBit(v3, 6);
+                const u32 x2 = getBit(v4, 6);
+                const u32 x3 = getBit(v5, 6);
+                const u32 x4 = getBit(v4, 5);
+                const u32 x5 = getBit(v5, 5);
                 
                 switch (mode)
                 {
@@ -920,13 +920,13 @@ namespace
         }
     }
 
-    void decodeHDREndpointMode15(uint4& e0, uint4& e1, uint32 v0, uint32 v1, uint32 v2, uint32 v3, uint32 v4, uint32 v5, uint32 v6In, uint32 v7In)
+    void decodeHDREndpointMode15(uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5, u32 v6In, u32 v7In)
     {
         decodeHDREndpointMode11(e0, e1, v0, v1, v2, v3, v4, v5);
 
-        const uint32	mode	= (getBit(v7In, 7) << 1) | getBit(v6In, 7);
-        int32			v6		= (int32)getBits(v6In, 0, 6);
-        int32			v7		= (int32)getBits(v7In, 0, 6);
+        const u32	mode	= (getBit(v7In, 7) << 1) | getBit(v6In, 7);
+        s32			v6		= (s32)getBits(v6In, 0, 6);
+        s32			v7		= (s32)getBits(v7In, 0, 6);
 
         if (mode == 3)
         {
@@ -949,14 +949,14 @@ namespace
         }
     }
     
-    void decodeColorEndpoints (ColorEndpointPair* dst, const uint32* unquantizedEndpoints, const uint32* endpointModes, int numPartitions)
+    void decodeColorEndpoints (ColorEndpointPair* dst, const u32* unquantizedEndpoints, const u32* endpointModes, int numPartitions)
     {
         int unquantizedNdx = 0;
         
         for (int partitionNdx = 0; partitionNdx < numPartitions; partitionNdx++)
         {
-            const uint32		endpointMode	= endpointModes[partitionNdx];
-            const uint32*		v				= &unquantizedEndpoints[unquantizedNdx];
+            const u32		endpointMode	= endpointModes[partitionNdx];
+            const u32*		v				= &unquantizedEndpoints[unquantizedNdx];
             uint4&				e0				= dst[partitionNdx].e0;
             uint4&				e1				= dst[partitionNdx].e1;
 
@@ -971,8 +971,8 @@ namespace
                     
                 case 1:
                 {
-                    const uint32 L0 = (v[0] >> 2) | (getBits(v[1], 6, 7) << 6);
-                    const uint32 L1 = std::min(0xffu, L0 + getBits(v[1], 0, 5));
+                    const u32 L0 = (v[0] >> 2) | (getBits(v[1], 6, 7) << 6);
+                    const u32 L1 = std::min(0xffu, L0 + getBits(v[1], 0, 5));
                     e0 = uint4(L0, L0, L0, 0xff);
                     e1 = uint4(L1, L1, L1, 0xff);
                     break;
@@ -980,9 +980,9 @@ namespace
                     
                 case 2:
                 {
-                    const uint32 v1Gr		= v[1] >= v[0];
-                    const uint32 y0		= v1Gr ? v[0]<<4 : (v[1]<<4) + 8;
-                    const uint32 y1		= v1Gr ? v[1]<<4 : (v[0]<<4) - 8;
+                    const u32 v1Gr		= v[1] >= v[0];
+                    const u32 y0		= v1Gr ? v[0]<<4 : (v[1]<<4) + 8;
+                    const u32 y1		= v1Gr ? v[1]<<4 : (v[0]<<4) - 8;
                     
                     e0 = uint4(y0, y0, y0, 0x780);
                     e1 = uint4(y1, y1, y1, 0x780);
@@ -992,11 +992,11 @@ namespace
                 case 3:
                 {
                     const bool		m	= isBitSet(v[0], 7);
-                    const uint32	y0	= m ? (getBits(v[1], 5, 7) << 9) | (getBits(v[0], 0, 6) << 2)
+                    const u32	y0	= m ? (getBits(v[1], 5, 7) << 9) | (getBits(v[0], 0, 6) << 2)
                     : (getBits(v[1], 4, 7) << 8) | (getBits(v[0], 0, 6) << 1);
-                    const uint32	d	= m ? getBits(v[1], 0, 4) << 2
+                    const u32	d	= m ? getBits(v[1], 0, 4) << 2
                     : getBits(v[1], 0, 3) << 1;
-                    const uint32	y1	= std::min(0xfffu, y0+d);
+                    const u32	y1	= std::min(0xfffu, y0+d);
                     
                     e0 = uint4(y0, y0, y0, 0x780);
                     e1 = uint4(y1, y1, y1, 0x780);
@@ -1010,10 +1010,10 @@ namespace
                     
                 case 5:
                 {
-                    int32 v0 = (int32)v[0];
-                    int32 v1 = (int32)v[1];
-                    int32 v2 = (int32)v[2];
-                    int32 v3 = (int32)v[3];
+                    s32 v0 = (s32)v[0];
+                    s32 v1 = (s32)v[1];
+                    s32 v2 = (s32)v[2];
+                    s32 v3 = (s32)v[3];
                     bitTransferSigned(v1, v0);
                     bitTransferSigned(v3, v2);
                     
@@ -1048,12 +1048,12 @@ namespace
 
                 case 9:
                 {
-                    int32 v0 = (int32)v[0];
-                    int32 v1 = (int32)v[1];
-                    int32 v2 = (int32)v[2];
-                    int32 v3 = (int32)v[3];
-                    int32 v4 = (int32)v[4];
-                    int32 v5 = (int32)v[5];
+                    s32 v0 = (s32)v[0];
+                    s32 v1 = (s32)v[1];
+                    s32 v2 = (s32)v[2];
+                    s32 v3 = (s32)v[3];
+                    s32 v4 = (s32)v[4];
+                    s32 v5 = (s32)v[5];
                     bitTransferSigned(v1, v0);
                     bitTransferSigned(v3, v2);
                     bitTransferSigned(v5, v4);
@@ -1095,14 +1095,14 @@ namespace
                     
                 case 13:
                 {
-                    int32 v0 = (int32)v[0];
-                    int32 v1 = (int32)v[1];
-                    int32 v2 = (int32)v[2];
-                    int32 v3 = (int32)v[3];
-                    int32 v4 = (int32)v[4];
-                    int32 v5 = (int32)v[5];
-                    int32 v6 = (int32)v[6];
-                    int32 v7 = (int32)v[7];
+                    s32 v0 = (s32)v[0];
+                    s32 v1 = (s32)v[1];
+                    s32 v2 = (s32)v[2];
+                    s32 v3 = (s32)v[3];
+                    s32 v4 = (s32)v[4];
+                    s32 v5 = (s32)v[5];
+                    s32 v6 = (s32)v[6];
+                    s32 v7 = (s32)v[7];
                     bitTransferSigned(v1, v0);
                     bitTransferSigned(v3, v2);
                     bitTransferSigned(v5, v4);
@@ -1138,7 +1138,7 @@ namespace
         }
     }
     
-    void computeColorEndpoints (ColorEndpointPair* dst, const Block128& blockData, const uint32* endpointModes, int numPartitions, int numColorEndpointValues, const ISEParams& iseParams, int numBitsAvailable)
+    void computeColorEndpoints (ColorEndpointPair* dst, const Block128& blockData, const u32* endpointModes, int numPartitions, int numColorEndpointValues, const ISEParams& iseParams, int numBitsAvailable)
     {
         const int			colorEndpointDataStart = numPartitions == 1 ? 17 : 29;
         ISEDecodedResult	colorEndpointData[18];
@@ -1149,13 +1149,13 @@ namespace
         }
         
         {
-            uint32 unquantizedEndpoints[18];
+            u32 unquantizedEndpoints[18];
             unquantizeColorEndpoints(&unquantizedEndpoints[0], &colorEndpointData[0], numColorEndpointValues, iseParams);
             decodeColorEndpoints(dst, &unquantizedEndpoints[0], &endpointModes[0], numPartitions);
         }
     }
     
-    void unquantizeWeights (uint32* dst, const ISEDecodedResult* weightGrid, const ASTCBlockMode& blockMode)
+    void unquantizeWeights (u32* dst, const ISEDecodedResult* weightGrid, const ASTCBlockMode& blockMode)
     {
         const int			numWeights	= computeNumWeights(blockMode);
         const ISEParams&	iseParams	= blockMode.weightISEParams;
@@ -1166,9 +1166,9 @@ namespace
             
             if (rangeCase == 0 || rangeCase == 1)
             {
-                static const uint32 map0[3]	= { 0, 32, 63 };
-                static const uint32 map1[5]	= { 0, 16, 32, 47, 63 };
-                const uint32* const map		= rangeCase == 0 ? &map0[0] : &map1[0];
+                static const u32 map0[3]	= { 0, 32, 63 };
+                static const u32 map1[5]	= { 0, 16, 32, 47, 63 };
+                const u32* const map		= rangeCase == 0 ? &map0[0] : &map1[0];
                 for (int i = 0; i < numWeights; i++)
                 {
                     dst[i] = map[weightGrid[i].v];
@@ -1176,22 +1176,22 @@ namespace
             }
             else
             {
-                static const uint32	Ca[5]	= { 50, 28, 23, 13, 11 };
-                const uint32			C		= Ca[rangeCase-2];
+                static const u32	Ca[5]	= { 50, 28, 23, 13, 11 };
+                const u32			C		= Ca[rangeCase-2];
                 
                 for (int weightNdx = 0; weightNdx < numWeights; weightNdx++)
                 {
-                    const uint32 a = getBit(weightGrid[weightNdx].m, 0);
-                    const uint32 b = getBit(weightGrid[weightNdx].m, 1);
-                    const uint32 c = getBit(weightGrid[weightNdx].m, 2);
+                    const u32 a = getBit(weightGrid[weightNdx].m, 0);
+                    const u32 b = getBit(weightGrid[weightNdx].m, 1);
+                    const u32 c = getBit(weightGrid[weightNdx].m, 2);
                     
-                    const uint32 A = a == 0 ? 0 : (1<<7)-1;
-                    const uint32 B = rangeCase == 2 ? 0
+                    const u32 A = a == 0 ? 0 : (1<<7)-1;
+                    const u32 B = rangeCase == 2 ? 0
                     : rangeCase == 3 ? 0
                     : rangeCase == 4 ? (b << 6) |					(b << 2) |				(b << 0)
                     : rangeCase == 5 ? (b << 6) |								(b << 1)
                     : rangeCase == 6 ? (c << 6) | (b << 5) |					(c << 1) |	(b << 0)
-                    : (uint32)-1;
+                    : (u32)-1;
                     
                     dst[weightNdx] = (((weightGrid[weightNdx].tq*C + B) ^ A) >> 2) | (A & 0x20);
                 }
@@ -1207,34 +1207,34 @@ namespace
             dst[weightNdx] += dst[weightNdx] > 32 ? 1 : 0;
     }
     
-    void interpolateWeights (TexelWeightPair* dst, const uint32* unquantizedWeights, int blockWidth, int blockHeight, const ASTCBlockMode& blockMode)
+    void interpolateWeights (TexelWeightPair* dst, const u32* unquantizedWeights, int blockWidth, int blockHeight, const ASTCBlockMode& blockMode)
     {
         const int		numWeightsPerTexel	= blockMode.isDualPlane ? 2 : 1;
-        const uint32	scaleX				= (1024 + blockWidth/2) / (blockWidth-1);
-        const uint32	scaleY				= (1024 + blockHeight/2) / (blockHeight-1);
+        const u32	scaleX				= (1024 + blockWidth/2) / (blockWidth-1);
+        const u32	scaleY				= (1024 + blockHeight/2) / (blockHeight-1);
         
         for (int texelY = 0; texelY < blockHeight; texelY++)
         {
             for (int texelX = 0; texelX < blockWidth; texelX++)
             {
-                const uint32 gX	= (scaleX*texelX*(blockMode.weightGridWidth-1) + 32) >> 6;
-                const uint32 gY	= (scaleY*texelY*(blockMode.weightGridHeight-1) + 32) >> 6;
-                const uint32 jX	= gX >> 4;
-                const uint32 jY	= gY >> 4;
-                const uint32 fX	= gX & 0xf;
-                const uint32 fY	= gY & 0xf;
-                const uint32 w11	= (fX*fY + 8) >> 4;
-                const uint32 w10	= fY - w11;
-                const uint32 w01	= fX - w11;
-                const uint32 w00	= 16 - fX - fY + w11;
-                const uint32 v0	= jY*blockMode.weightGridWidth + jX;
+                const u32 gX	= (scaleX*texelX*(blockMode.weightGridWidth-1) + 32) >> 6;
+                const u32 gY	= (scaleY*texelY*(blockMode.weightGridHeight-1) + 32) >> 6;
+                const u32 jX	= gX >> 4;
+                const u32 jY	= gY >> 4;
+                const u32 fX	= gX & 0xf;
+                const u32 fY	= gY & 0xf;
+                const u32 w11	= (fX*fY + 8) >> 4;
+                const u32 w10	= fY - w11;
+                const u32 w01	= fX - w11;
+                const u32 w00	= 16 - fX - fY + w11;
+                const u32 v0	= jY*blockMode.weightGridWidth + jX;
                 
                 for (int texelWeightNdx = 0; texelWeightNdx < numWeightsPerTexel; texelWeightNdx++)
                 {
-                    const uint32 p00	= unquantizedWeights[(v0)									* numWeightsPerTexel + texelWeightNdx];
-                    const uint32 p01	= unquantizedWeights[(v0 + 1)								* numWeightsPerTexel + texelWeightNdx];
-                    const uint32 p10	= unquantizedWeights[(v0 + blockMode.weightGridWidth)		* numWeightsPerTexel + texelWeightNdx];
-                    const uint32 p11	= unquantizedWeights[(v0 + blockMode.weightGridWidth + 1)	* numWeightsPerTexel + texelWeightNdx];
+                    const u32 p00	= unquantizedWeights[(v0)									* numWeightsPerTexel + texelWeightNdx];
+                    const u32 p01	= unquantizedWeights[(v0 + 1)								* numWeightsPerTexel + texelWeightNdx];
+                    const u32 p10	= unquantizedWeights[(v0 + blockMode.weightGridWidth)		* numWeightsPerTexel + texelWeightNdx];
+                    const u32 p11	= unquantizedWeights[(v0 + blockMode.weightGridWidth + 1)	* numWeightsPerTexel + texelWeightNdx];
                     
                     dst[texelY*blockWidth + texelX].w[texelWeightNdx] = (p00*w00 + p01*w01 + p10*w10 + p11*w11 + 8) >> 4;
                 }
@@ -1252,40 +1252,40 @@ namespace
         }
         
         {
-            uint32 unquantizedWeights[64];
+            u32 unquantizedWeights[64];
             unquantizeWeights(&unquantizedWeights[0], &weightGrid[0], blockMode);
             interpolateWeights(dst, &unquantizedWeights[0], blockWidth, blockHeight, blockMode);
         }
     }
     
-    inline uint32 hash52 (uint32 v)
+    inline u32 hash52 (u32 v)
     {
-        uint32 p = v;
+        u32 p = v;
         p ^= p >> 15;	p -= p << 17;	p += p << 7;	p += p << 4;
         p ^= p >>  5;	p += p << 16;	p ^= p >> 7;	p ^= p >> 3;
         p ^= p <<  6;	p ^= p >> 17;
         return p;
     }
     
-    int computeTexelPartition (uint32 seedIn, uint32 xIn, uint32 yIn, uint32 zIn, int numPartitions, bool smallBlock)
+    int computeTexelPartition (u32 seedIn, u32 xIn, u32 yIn, u32 zIn, int numPartitions, bool smallBlock)
     {
-        const uint32	x		= smallBlock ? xIn << 1 : xIn;
-        const uint32	y		= smallBlock ? yIn << 1 : yIn;
-        const uint32	z		= smallBlock ? zIn << 1 : zIn;
-        const uint32	seed	= seedIn + 1024*(numPartitions-1);
-        const uint32	rnum	= hash52(seed);
-        uint8			seed1	=  rnum							& 0xf;
-        uint8			seed2	= (rnum >>  4)					& 0xf;
-        uint8			seed3	= (rnum >>  8)					& 0xf;
-        uint8			seed4	= (rnum >> 12)					& 0xf;
-        uint8			seed5	= (rnum >> 16)					& 0xf;
-        uint8			seed6	= (rnum >> 20)					& 0xf;
-        uint8			seed7	= (rnum >> 24)					& 0xf;
-        uint8			seed8	= (rnum >> 28)					& 0xf;
-        uint8			seed9	= (rnum >> 18)					& 0xf;
-        uint8			seed10	= (rnum >> 22)					& 0xf;
-        uint8			seed11	= (rnum >> 26)					& 0xf;
-        uint8			seed12	= ((rnum >> 30) | (rnum << 2))	& 0xf;
+        const u32	x		= smallBlock ? xIn << 1 : xIn;
+        const u32	y		= smallBlock ? yIn << 1 : yIn;
+        const u32	z		= smallBlock ? zIn << 1 : zIn;
+        const u32	seed	= seedIn + 1024*(numPartitions-1);
+        const u32	rnum	= hash52(seed);
+        u8			seed1	=  rnum							& 0xf;
+        u8			seed2	= (rnum >>  4)					& 0xf;
+        u8			seed3	= (rnum >>  8)					& 0xf;
+        u8			seed4	= (rnum >> 12)					& 0xf;
+        u8			seed5	= (rnum >> 16)					& 0xf;
+        u8			seed6	= (rnum >> 20)					& 0xf;
+        u8			seed7	= (rnum >> 24)					& 0xf;
+        u8			seed8	= (rnum >> 28)					& 0xf;
+        u8			seed9	= (rnum >> 18)					& 0xf;
+        u8			seed10	= (rnum >> 22)					& 0xf;
+        u8			seed11	= (rnum >> 26)					& 0xf;
+        u8			seed12	= ((rnum >> 30) | (rnum << 2))	& 0xf;
         
         seed1 *= seed1;		seed5 *= seed5;		seed9  *= seed9;
         seed2 *= seed2;		seed6 *= seed6;		seed10 *= seed10;
@@ -1313,8 +1313,8 @@ namespace
         :								  3;
     }
     
-    void setTexelColors (void* dst, ColorEndpointPair* colorEndpoints, TexelWeightPair* texelWeights, int ccs, uint32 partitionIndexSeed,
-                                int numPartitions, int blockWidth, int blockHeight, bool isSRGB, bool isLDRMode, const uint32* colorEndpointModes)
+    void setTexelColors (void* dst, ColorEndpointPair* colorEndpoints, TexelWeightPair* texelWeights, int ccs, u32 partitionIndexSeed,
+                                int numPartitions, int blockWidth, int blockHeight, bool isSRGB, bool isLDRMode, const u32* colorEndpointModes)
     {
         const bool	smallBlock = blockWidth*blockHeight < 31;
         bool		isHDREndpoint[4];
@@ -1335,10 +1335,10 @@ namespace
                 {
                     if (isSRGB)
                     {
-                        ((uint8*)dst)[texelNdx*4 + 0] = 0xff;
-                        ((uint8*)dst)[texelNdx*4 + 1] = 0;
-                        ((uint8*)dst)[texelNdx*4 + 2] = 0xff;
-                        ((uint8*)dst)[texelNdx*4 + 3] = 0xff;
+                        ((u8*)dst)[texelNdx*4 + 0] = 0xff;
+                        ((u8*)dst)[texelNdx*4 + 1] = 0;
+                        ((u8*)dst)[texelNdx*4 + 2] = 0xff;
+                        ((u8*)dst)[texelNdx*4 + 3] = 0xff;
                     }
                     else
                     {
@@ -1354,30 +1354,30 @@ namespace
                     {
                         if (!isHDREndpoint[colorEndpointNdx] || (channelNdx == 3 && colorEndpointModes[colorEndpointNdx] == 14)) // \note Alpha for mode 14 is treated the same as LDR.
                         {
-                            const uint32 c0	= (e0[channelNdx] << 8) | (isSRGB ? 0x80 : e0[channelNdx]);
-                            const uint32 c1	= (e1[channelNdx] << 8) | (isSRGB ? 0x80 : e1[channelNdx]);
-                            const uint32 w	= weight.w[ccs == channelNdx ? 1 : 0];
-                            const uint32 c	= (c0*(64-w) + c1*w + 32) / 64;
+                            const u32 c0	= (e0[channelNdx] << 8) | (isSRGB ? 0x80 : e0[channelNdx]);
+                            const u32 c1	= (e1[channelNdx] << 8) | (isSRGB ? 0x80 : e1[channelNdx]);
+                            const u32 w	= weight.w[ccs == channelNdx ? 1 : 0];
+                            const u32 c	= (c0*(64-w) + c1*w + 32) / 64;
                             
                             if (isSRGB)
-                                ((uint8*)dst)[texelNdx*4 + channelNdx] = (c & 0xff00) >> 8;
+                                ((u8*)dst)[texelNdx*4 + channelNdx] = (c & 0xff00) >> 8;
                             else
                                 ((float*)dst)[texelNdx*4 + channelNdx] = c == 65535 ? 1.0f : (float)c / 65536.0f;
                         }
                         else
                         {
-                            const uint32		c0	= e0[channelNdx] << 4;
-                            const uint32		c1	= e1[channelNdx] << 4;
-                            const uint32		w	= weight.w[ccs == channelNdx ? 1 : 0];
-                            const uint32		c	= (c0*(64-w) + c1*w + 32) / 64;
-                            const uint32		e	= getBits(c, 11, 15);
-                            const uint32		m	= getBits(c, 0, 10);
-                            const uint32		mt	= m < 512		? 3*m
+                            const u32		c0	= e0[channelNdx] << 4;
+                            const u32		c1	= e1[channelNdx] << 4;
+                            const u32		w	= weight.w[ccs == channelNdx ? 1 : 0];
+                            const u32		c	= (c0*(64-w) + c1*w + 32) / 64;
+                            const u32		e	= getBits(c, 11, 15);
+                            const u32		m	= getBits(c, 0, 10);
+                            const u32		mt	= m < 512		? 3*m
                             : m >= 1536		? 5*m - 2048
                             :				  4*m - 512;
 
                             Half cf;
-                            cf.u = uint16((e << 10) + (mt >> 3));
+                            cf.u = u16((e << 10) + (mt >> 3));
                             if (isFloat16InfOrNan(cf))
                                 cf.u = 0x7bff;
 
@@ -1442,7 +1442,7 @@ namespace
                                                                              : 0);
         // Decode color endpoint modes.
         
-        uint32 colorEndpointModes[4];
+        u32 colorEndpointModes[4];
         decodeColorEndpointModes(&colorEndpointModes[0], blockData, numPartitions, extraCemBitsStart);
         
         const int numColorEndpointValues = computeNumColorEndpointValues(colorEndpointModes, numPartitions);
@@ -1468,8 +1468,8 @@ namespace
         
         // Set texel colors.
         
-        const int		ccs						= blockMode.isDualPlane ? (int)blockData.getBits(extraCemBitsStart-2, extraCemBitsStart-1) : -1;
-        const uint32	partitionIndexSeed		= numPartitions > 1 ? blockData.getBits(13, 22) : (uint32)-1;
+        const int		ccs					= blockMode.isDualPlane ? (int)blockData.getBits(extraCemBitsStart-2, extraCemBitsStart-1) : -1;
+        const u32	partitionIndexSeed		= numPartitions > 1 ? blockData.getBits(13, 22) : (u32)-1;
         
         setTexelColors(dst, &colorEndpoints[0], &texelWeights[0], ccs, partitionIndexSeed, numPartitions, blockWidth, blockHeight, isSRGB, isLDR, &colorEndpointModes[0]);
     }
@@ -1479,11 +1479,11 @@ namespace
 namespace mango
 {
 
-    void decode_block_astc(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_astc(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         union
         {
-            uint8 sRGB[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
+            u8 sRGB[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
             float linear[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
         } decompressedBuffer;
 
@@ -1501,8 +1501,8 @@ namespace mango
 
             for (int y = 0; y < blockHeight; ++y)
             {
-                uint8* dest = output + y * stride;
-                uint8* src = decompressedBuffer.sRGB + y * blockWidth * 4;
+                u8* dest = output + y * stride;
+                u8* src = decompressedBuffer.sRGB + y * blockWidth * 4;
 
                 for (int x = 0; x < blockWidth; ++x)
                 {
@@ -1524,7 +1524,7 @@ namespace mango
             // convert to unorm8
             for (int y = 0; y < blockHeight; ++y)
             {
-                uint8* dest = output + y * stride;
+                u8* dest = output + y * stride;
                 float* src = decompressedBuffer.linear + y * blockWidth * 4;
 
                 for (int x = 0; x < blockWidth; ++x)

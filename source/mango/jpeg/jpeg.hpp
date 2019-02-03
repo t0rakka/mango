@@ -64,7 +64,7 @@ namespace jpeg
 	using mango::Stream;
     using mango::ThreadPool;
 
-    using BlockType = mango::int16;
+    using BlockType = mango::s16;
 
 #ifdef MANGO_CPU_64BIT
 

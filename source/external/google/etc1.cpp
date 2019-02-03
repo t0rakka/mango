@@ -388,7 +388,7 @@ static void writeBigEndian(etc1_byte* pOut, etc1_uint32 d) {
 namespace mango
 {
 
-    void encode_block_etc1(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void encode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
 

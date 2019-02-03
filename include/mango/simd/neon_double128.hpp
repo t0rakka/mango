@@ -13,14 +13,14 @@ namespace simd {
     // float64x2
     // -----------------------------------------------------------------
 
-    template <uint32 x, uint32 y>
+    template <u32 x, u32 y>
     static inline float64x2 shuffle(float64x2 v)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         return {{ v.data[x], v.data[y] }};
     }
 
-    template <uint32 x, uint32 y>
+    template <u32 x, u32 y>
     static inline float64x2 shuffle(float64x2 a, float64x2 b)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");

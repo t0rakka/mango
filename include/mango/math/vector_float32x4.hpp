@@ -465,13 +465,13 @@ namespace mango
         }
 #endif
 
-        uint32 pack() const
+        u32 pack() const
         {
             const simd::int32x4 temp = simd::convert<simd::int32x4>(m);
             return simd::pack(temp);
         }
 
-        void unpack(uint32 a)
+        void unpack(u32 a)
         {
             const simd::int32x4 temp = simd::unpack(a);
             m = simd::convert<simd::float32x4>(temp);

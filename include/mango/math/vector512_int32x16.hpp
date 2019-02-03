@@ -10,10 +10,10 @@ namespace mango
 {
 
     template <>
-    struct Vector<int32, 16>
+    struct Vector<s32, 16>
     {
         using VectorType = simd::int32x16;
-        using ScalarType = int32;
+        using ScalarType = s32;
         enum { VectorSize = 16 };
 
         union
@@ -42,14 +42,14 @@ namespace mango
         explicit Vector() {}
         ~Vector() {}
 
-        Vector(int32 s)
+        Vector(s32 s)
             : m(simd::int32x16_set1(s))
         {
         }
 
-        Vector(int32 s0, int32 s1, int32 s2, int32 s3, int32 s4, int32 s5, int32 s6, int32 s7, int s8,
-            int s9, int s10, int s11, int s12, int s13, int s14, int s15)
-            : m(simd::int32x16_set16(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15))
+        Vector(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
+            s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
+            : m(simd::int32x16_set16(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15))
         {
         }
 
@@ -64,7 +64,7 @@ namespace mango
             return *this;
         }
 
-        Vector& operator = (int32 s)
+        Vector& operator = (s32 s)
         {
             m = simd::int32x16_set1(s);
             return *this;

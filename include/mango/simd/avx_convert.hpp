@@ -729,10 +729,10 @@ namespace detail {
     template <>
     inline int64x4 convert<int64x4>(float64x4 v)
     {
-        int64 x = int64(get_component<0>(v));
-        int64 y = int64(get_component<1>(v));
-        int64 z = int64(get_component<2>(v));
-        int64 w = int64(get_component<3>(v));
+        s64 x = s64(get_component<0>(v));
+        s64 y = s64(get_component<1>(v));
+        s64 z = s64(get_component<2>(v));
+        s64 w = s64(get_component<3>(v));
         return int64x4_set4(x, y, z, w);
     }
 
