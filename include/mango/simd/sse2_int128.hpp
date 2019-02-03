@@ -92,15 +92,15 @@ namespace simd {
 
 #else
 
-    static inline __m128i simd128_cvtsi64_si128(int64 a)
+    static inline __m128i simd128_cvtsi64_si128(s64 a)
     {
         return _mm_set_epi64x(0, a);
     }
 
-    static inline int64 simd128_cvtsi128_si64(__m128i a)
+    static inline s64 simd128_cvtsi128_si64(__m128i a)
     {
-        uint64 value = _mm_cvtsi128_si32(a);
-        value |= uint64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
+        u64 value = _mm_cvtsi128_si32(a);
+        value |= u64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
         return value;
     }
 
@@ -132,11 +132,11 @@ namespace simd {
     static inline uint8x16 set_component(uint8x16 a, u8 s)
     {
         static_assert(Index < 16, "Index out of range.");
-        uint32 temp = _mm_extract_epi16(a, Index / 2);
+        u32 temp = _mm_extract_epi16(a, Index / 2);
         if (Index & 1)
-            temp = (temp & 0x00ff) | uint32(s) << 8;
+            temp = (temp & 0x00ff) | u32(s) << 8;
         else
-            temp = (temp & 0xff00) | uint32(s);
+            temp = (temp & 0xff00) | u32(s);
         return _mm_insert_epi16(a, temp, Index / 2);
     }
 
@@ -1134,9 +1134,9 @@ namespace simd {
         static_assert(Index < 16, "Index out of range.");
         u32 temp = _mm_extract_epi16(a, Index / 2);
         if (Index & 1)
-            temp = (temp & 0x00ff) | uint32(s) << 8;
+            temp = (temp & 0x00ff) | u32(s) << 8;
         else
-            temp = (temp & 0xff00) | uint32(s);
+            temp = (temp & 0xff00) | u32(s);
         return _mm_insert_epi16(a, temp, Index / 2);
     }
 

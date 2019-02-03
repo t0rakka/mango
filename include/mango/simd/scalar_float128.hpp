@@ -15,14 +15,14 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     inline float32x4 shuffle(float32x4 a, float32x4 b)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         return {{ a[x], a[y], b[z], b[w] }};
     }
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -359,60 +359,60 @@ namespace simd {
     static inline mask32x4 compare_neq(float32x4 a, float32x4 b)
     {
         mask32x4 v = 0;
-        v.mask |= uint32(a[0] != b[0]) << 0;
-        v.mask |= uint32(a[1] != b[1]) << 1;
-        v.mask |= uint32(a[2] != b[2]) << 2;
-        v.mask |= uint32(a[3] != b[3]) << 3;
+        v.mask |= u32(a[0] != b[0]) << 0;
+        v.mask |= u32(a[1] != b[1]) << 1;
+        v.mask |= u32(a[2] != b[2]) << 2;
+        v.mask |= u32(a[3] != b[3]) << 3;
         return v;
     }
 
     static inline mask32x4 compare_eq(float32x4 a, float32x4 b)
     {
         mask32x4 v = 0;
-        v.mask |= uint32(a[0] == b[0]) << 0;
-        v.mask |= uint32(a[1] == b[1]) << 1;
-        v.mask |= uint32(a[2] == b[2]) << 2;
-        v.mask |= uint32(a[3] == b[3]) << 3;
+        v.mask |= u32(a[0] == b[0]) << 0;
+        v.mask |= u32(a[1] == b[1]) << 1;
+        v.mask |= u32(a[2] == b[2]) << 2;
+        v.mask |= u32(a[3] == b[3]) << 3;
         return v;
     }
 
     static inline mask32x4 compare_lt(float32x4 a, float32x4 b)
     {
         mask32x4 v = 0;
-        v.mask |= uint32(a[0] < b[0]) << 0;
-        v.mask |= uint32(a[1] < b[1]) << 1;
-        v.mask |= uint32(a[2] < b[2]) << 2;
-        v.mask |= uint32(a[3] < b[3]) << 3;
+        v.mask |= u32(a[0] < b[0]) << 0;
+        v.mask |= u32(a[1] < b[1]) << 1;
+        v.mask |= u32(a[2] < b[2]) << 2;
+        v.mask |= u32(a[3] < b[3]) << 3;
         return v;
     }
 
     static inline mask32x4 compare_le(float32x4 a, float32x4 b)
     {
         mask32x4 v = 0;
-        v.mask |= uint32(a[0] <= b[0]) << 0;
-        v.mask |= uint32(a[1] <= b[1]) << 1;
-        v.mask |= uint32(a[2] <= b[2]) << 2;
-        v.mask |= uint32(a[3] <= b[3]) << 3;
+        v.mask |= u32(a[0] <= b[0]) << 0;
+        v.mask |= u32(a[1] <= b[1]) << 1;
+        v.mask |= u32(a[2] <= b[2]) << 2;
+        v.mask |= u32(a[3] <= b[3]) << 3;
         return v;
     }
 
     static inline mask32x4 compare_gt(float32x4 a, float32x4 b)
     {
         mask32x4 v = 0;
-        v.mask |= uint32(a[0] > b[0]) << 0;
-        v.mask |= uint32(a[1] > b[1]) << 1;
-        v.mask |= uint32(a[2] > b[2]) << 2;
-        v.mask |= uint32(a[3] > b[3]) << 3;
+        v.mask |= u32(a[0] > b[0]) << 0;
+        v.mask |= u32(a[1] > b[1]) << 1;
+        v.mask |= u32(a[2] > b[2]) << 2;
+        v.mask |= u32(a[3] > b[3]) << 3;
         return v;
     }
 
     static inline mask32x4 compare_ge(float32x4 a, float32x4 b)
     {
         mask32x4 v = 0;
-        v.mask |= uint32(a[0] >= b[0]) << 0;
-        v.mask |= uint32(a[1] >= b[1]) << 1;
-        v.mask |= uint32(a[2] >= b[2]) << 2;
-        v.mask |= uint32(a[3] >= b[3]) << 3;
+        v.mask |= u32(a[0] >= b[0]) << 0;
+        v.mask |= u32(a[1] >= b[1]) << 1;
+        v.mask |= u32(a[2] >= b[2]) << 2;
+        v.mask |= u32(a[3] >= b[3]) << 3;
         return v;
     }
 

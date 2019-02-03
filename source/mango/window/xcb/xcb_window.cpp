@@ -87,9 +87,10 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height)
+    Window::Window(int width, int height, u32 flags)
     {
 		m_handle = new WindowHandle(width, height);
+        MANGO_UNREFERENCED_PARAMETER(flags); // TODO
     }
 
     Window::~Window()

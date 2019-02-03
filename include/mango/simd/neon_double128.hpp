@@ -258,48 +258,48 @@ namespace simd {
 
     static inline mask64x2 compare_neq(float64x2 a, float64x2 b)
     {
-        uint64 x = a.data[0] != b.data[0] ? ~0 : 0;
-        uint64 y = a.data[1] != b.data[1] ? ~0 : 0;
+        u64 x = a.data[0] != b.data[0] ? ~0 : 0;
+        u64 y = a.data[1] != b.data[1] ? ~0 : 0;
         uint64x2_t mask = { x, y };
         return mask;
     }
 
     static inline mask64x2 compare_eq(float64x2 a, float64x2 b)
     {
-        uint64 x = a.data[0] == b.data[0] ? ~0 : 0;
-        uint64 y = a.data[1] == b.data[1] ? ~0 : 0;
+        u64 x = a.data[0] == b.data[0] ? ~0 : 0;
+        u64 y = a.data[1] == b.data[1] ? ~0 : 0;
         uint64x2_t mask = { x, y };
         return mask;
     }
 
     static inline mask64x2 compare_lt(float64x2 a, float64x2 b)
     {
-        uint64 x = a.data[0] < b.data[0] ? ~0 : 0;
-        uint64 y = a.data[1] < b.data[1] ? ~0 : 0;
+        u64 x = a.data[0] < b.data[0] ? ~0 : 0;
+        u64 y = a.data[1] < b.data[1] ? ~0 : 0;
         uint64x2_t mask = { x, y };
         return mask;
     }
 
     static inline mask64x2 compare_le(float64x2 a, float64x2 b)
     {
-        uint64 x = a.data[0] <= b.data[0] ? ~0 : 0;
-        uint64 y = a.data[1] <= b.data[1] ? ~0 : 0;
+        u64 x = a.data[0] <= b.data[0] ? ~0 : 0;
+        u64 y = a.data[1] <= b.data[1] ? ~0 : 0;
         uint64x2_t mask = { x, y };
         return mask;
     }
 
     static inline mask64x2 compare_gt(float64x2 a, float64x2 b)
     {
-        uint64 x = a.data[0] > b.data[0] ? ~0 : 0;
-        uint64 y = a.data[1] > b.data[1] ? ~0 : 0;
+        u64 x = a.data[0] > b.data[0] ? ~0 : 0;
+        u64 y = a.data[1] > b.data[1] ? ~0 : 0;
         uint64x2_t mask = { x, y };
         return mask;
     }
 
     static inline mask64x2 compare_ge(float64x2 a, float64x2 b)
     {
-        uint64 x = a.data[0] >= b.data[0] ? ~0 : 0;
-        uint64 y = a.data[1] >= b.data[1] ? ~0 : 0;
+        u64 x = a.data[0] >= b.data[0] ? ~0 : 0;
+        u64 y = a.data[1] >= b.data[1] ? ~0 : 0;
         uint64x2_t mask = { x, y };
         return mask;
     }

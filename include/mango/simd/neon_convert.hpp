@@ -649,10 +649,10 @@ namespace detail {
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
     {
-        uint32 x = f64_to_u32(d.lo.data[0]);
-        uint32 y = f64_to_u32(d.lo.data[1]);
-        uint32 z = f64_to_u32(d.hi.data[0]);
-        uint32 w = f64_to_u32(d.hi.data[1]);
+        u32 x = f64_to_u32(d.lo.data[0]);
+        u32 y = f64_to_u32(d.lo.data[1]);
+        u32 z = f64_to_u32(d.hi.data[0]);
+        u32 w = f64_to_u32(d.hi.data[1]);
         return uint32x4_set4(x, y, z, w);
     }
 
@@ -679,10 +679,10 @@ namespace detail {
     template <>
     inline int64x4 convert<int64x4>(float64x4 v)
     {
-        int64 x = int64(get_component<0>(v));
-        int64 y = int64(get_component<1>(v));
-        int64 z = int64(get_component<2>(v));
-        int64 w = int64(get_component<3>(v));
+        s64 x = s64(get_component<0>(v));
+        s64 y = s64(get_component<1>(v));
+        s64 z = s64(get_component<2>(v));
+        s64 w = s64(get_component<3>(v));
         return int64x4_set4(x, y, z, w);
     }
 

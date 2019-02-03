@@ -278,24 +278,24 @@ namespace simd {
     static inline float dot3(float32x4 a, float32x4 b)
     {
         float32x4 prod = vec_mul(a.data, b.data);
-        float32x4 s = vec_add((float32x4::vector) shuffle<0, 0, 0, 0>(prod),
-                      vec_add((float32x4::vector) shuffle<1, 1, 1, 1>(prod), 
-                              (float32x4::vector) shuffle<2, 2, 2, 2>(prod)));
+        float32x4 s = vec_add(shuffle<0, 0, 0, 0>(prod).data,
+                      vec_add(shuffle<1, 1, 1, 1>(prod).data, 
+                              shuffle<2, 2, 2, 2>(prod).data));
         return get_component<0>(s);
     }
 
     static inline float dot4(float32x4 a, float32x4 b)
     {
         float32x4 s = vec_mul(a.data, b.data);
-        s = vec_add(s, (float32x4::vector) shuffle<2, 3, 0, 1>(s));
-        s = vec_add(s, (float32x4::vector) shuffle<1, 0, 3, 2>(s));
+        s = vec_add(s.data, shuffle<2, 3, 0, 1>(s).data);
+        s = vec_add(s.data, shuffle<1, 0, 3, 2>(s).data);
         return get_component<0>(s);
     }
 
     static inline float32x4 cross3(float32x4 a, float32x4 b)
     {
-        float32x4 c = vec_sub(vec_mul(a.data, (float32x4::vector) shuffle<1, 2, 0, 3>(b)),
-                              vec_mul(b.data, (float32x4::vector) shuffle<1, 2, 0, 3>(a)));
+        float32x4 c = vec_sub(vec_mul(a.data, shuffle<1, 2, 0, 3>(b).data),
+                              vec_mul(b.data, shuffle<1, 2, 0, 3>(a).data));
         return shuffle<1, 2, 0, 3>(c);
     }
 

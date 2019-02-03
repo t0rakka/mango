@@ -29,7 +29,7 @@ namespace simd {
 
     static inline uint8x16 uint8x16_zero()
     {
-        return vec_splats(uint8(0));
+        return vec_splats(u8(0));
     }
 
     static inline uint8x16 uint8x16_set1(u8 s)
@@ -38,10 +38,10 @@ namespace simd {
     }
 
     static inline uint8x16 uint8x16_set16(
-        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
-        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
+        u8 v0, u8 v1, u8 v2, u8 v3, u8 v4, u8 v5, u8 v6, u8 v7,
+        u8 v8, u8 v9, u8 v10, u8 v11, u8 v12, u8 v13, u8 v14, u8 v15)
     {
-        return (uint8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
+        return (uint8x16::vector) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
     static inline uint8x16 uint8x16_load_low(const u8* source)
@@ -176,14 +176,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x8 set_component(uint16x8 a, uint16 s)
+    static inline uint16x8 set_component(uint16x8 a, u16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline uint16 get_component(uint16x8 a)
+    static inline u16 get_component(uint16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -191,20 +191,20 @@ namespace simd {
 
     static inline uint16x8 uint16x8_zero()
     {
-        return vec_splats(uint16(0));
+        return vec_splats(u16(0));
     }
 
-    static inline uint16x8 uint16x8_set1(uint16 s)
+    static inline uint16x8 uint16x8_set1(u16 s)
     {
         return vec_splats(s);
     }
 
-    static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
+    static inline uint16x8 uint16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return (uint16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    static inline uint16x8 uint16x8_load_low(const u16* source)
     {
         auto s0 = source[0];
         auto s1 = source[1];
@@ -213,7 +213,7 @@ namespace simd {
         return (uint16x8::vector) { s0, s1, s2, s3, 0, 0, 0, 0 };
     }
 
-    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    static inline void uint16x8_store_low(u16* dest, uint16x8 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -327,36 +327,36 @@ namespace simd {
     template <int Count>
     static inline uint16x8 slli(uint16x8 a)
     {
-        return vec_sl(a.data, vec_splats(uint16(Count)));
+        return vec_sl(a.data, vec_splats(u16(Count)));
     }
 
     template <int Count>
     static inline uint16x8 srli(uint16x8 a)
     {
-        return vec_sr(a.data, vec_splats(uint16(Count)));
+        return vec_sr(a.data, vec_splats(u16(Count)));
     }
 
     template <int Count>
     static inline uint16x8 srai(uint16x8 a)
     {
-        return vec_sra(a.data, vec_splats(uint16(Count)));
+        return vec_sra(a.data, vec_splats(u16(Count)));
     }
 
     // shift by scalar
 
     static inline uint16x8 sll(uint16x8 a, int count)
     {
-        return vec_sl(a.data, vec_splats(uint16(count)));
+        return vec_sl(a.data, vec_splats(u16(count)));
     }
 
     static inline uint16x8 srl(uint16x8 a, int count)
     {
-        return vec_sr(a.data, vec_splats(uint16(count)));
+        return vec_sr(a.data, vec_splats(u16(count)));
     }
 
     static inline uint16x8 sra(uint16x8 a, int count)
     {
-        return vec_sra(a.data, vec_splats(uint16(count)));
+        return vec_sra(a.data, vec_splats(u16(count)));
     }
 
     static inline uint16x8 min(uint16x8 a, uint16x8 b)
@@ -381,7 +381,7 @@ namespace simd {
     (select * 16 + n * 4 + 2), \
     (select * 16 + n * 4 + 3)
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline uint32x4 shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -401,14 +401,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline uint32x4 set_component(uint32x4 a, uint32 s)
+    static inline uint32x4 set_component(uint32x4 a, u32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x4 a)
+    static inline u32 get_component(uint32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -416,25 +416,25 @@ namespace simd {
 
     static inline uint32x4 uint32x4_zero()
     {
-        return vec_splats(uint32(0));
+        return vec_splats(u32(0));
     }
 
-    static inline uint32x4 uint32x4_set1(uint32 s)
+    static inline uint32x4 uint32x4_set1(u32 s)
     {
         return vec_splats(s);
     }
 
-    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    static inline uint32x4 uint32x4_set4(u32 x, u32 y, u32 z, u32 w)
     {
         return (uint32x4::vector) { x, y, z, w };
     }
 
-    static inline uint32x4 uint32x4_uload(const uint32* s)
+    static inline uint32x4 uint32x4_uload(const u32* s)
     {
         return (uint32x4::vector) { s[0], s[1], s[2], s[3] };
     }
 
-    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    static inline void uint32x4_ustore(u32* dest, uint32x4 a)
     {
         dest[0] = vec_extract(a.data, 0);
         dest[1] = vec_extract(a.data, 1);
@@ -442,14 +442,14 @@ namespace simd {
         dest[3] = vec_extract(a.data, 3);
     }
 
-    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    static inline uint32x4 uint32x4_load_low(const u32* source)
     {
         auto s0 = source[0];
         auto s1 = source[1];
         return (uint32x4::vector) { s0, s1, 0, 0 };
     }
 
-    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    static inline void uint32x4_store_low(u32* dest, uint32x4 a)
     {
         dest[0] = vec_extract(a.data, 0);
         dest[1] = vec_extract(a.data, 1);
@@ -566,36 +566,36 @@ namespace simd {
     template <int Count>
     static inline uint32x4 slli(uint32x4 a)
     {
-        return vec_sl(a.data, vec_splats(uint32(Count)));
+        return vec_sl(a.data, vec_splats(u32(Count)));
     }
 
     template <int Count>
     static inline uint32x4 srli(uint32x4 a)
     {
-        return vec_sr(a.data, vec_splats(uint32(Count)));
+        return vec_sr(a.data, vec_splats(u32(Count)));
     }
 
     template <int Count>
     static inline uint32x4 srai(uint32x4 a)
     {
-        return vec_sra(a.data, vec_splats(uint32(Count)));
+        return vec_sra(a.data, vec_splats(u32(Count)));
     }
 
     // shift by scalar
 
     static inline uint32x4 sll(uint32x4 a, int count)
     {
-        return vec_sl(a.data, vec_splats(uint32(count)));
+        return vec_sl(a.data, vec_splats(u32(count)));
     }
 
     static inline uint32x4 srl(uint32x4 a, int count)
     {
-        return vec_sr(a.data, vec_splats(uint32(count)));
+        return vec_sr(a.data, vec_splats(u32(count)));
     }
 
     static inline uint32x4 sra(uint32x4 a, int count)
     {
-        return vec_sra(a.data, vec_splats(uint32(count)));
+        return vec_sra(a.data, vec_splats(u32(count)));
     }
 
     // shift by vector
@@ -630,14 +630,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    static inline uint64x2 set_component(uint64x2 a, u64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x2 a)
+    static inline u64 get_component(uint64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -645,15 +645,15 @@ namespace simd {
 
     static inline uint64x2 uint64x2_zero()
     {
-        return vec_splats(uint64(0));
+        return vec_splats(u64(0));
     }
 
-    static inline uint64x2 uint64x2_set1(uint64 s)
+    static inline uint64x2 uint64x2_set1(u64 s)
     {
         return vec_splats(s);
     }
 
-    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    static inline uint64x2 uint64x2_set2(u64 x, u64 y)
     {
         return (uint64x2::vector) { x, y };
     }
@@ -747,14 +747,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int8x16 set_component(int8x16 a, int8 s)
+    static inline int8x16 set_component(int8x16 a, s8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x16 a)
+    static inline s8 get_component(int8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -762,22 +762,22 @@ namespace simd {
 
     static inline int8x16 int8x16_zero()
     {
-        return vec_splats(int8(0));
+        return vec_splats(s8(0));
     }
 
-    static inline int8x16 int8x16_set1(int8 s)
+    static inline int8x16 int8x16_set1(s8 s)
     {
         return vec_splats(s);
     }
 
     static inline int8x16 int8x16_set16(
-        int8 s0, int8 s1, int8 s2, int8 s3, int8 s4, int8 s5, int8 s6, int8 s7,
-        int8 s8, int8 s9, int8 s10, int8 s11, int8 s12, int8 s13, int8 s14, int8 s15)
+        s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
+        s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
-        return (int8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
+        return (int8x16::vector) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
-    static inline int8x16 int8x16_load_low(const int8* source)
+    static inline int8x16 int8x16_load_low(const s8* source)
     {
         auto s0 = source[0];
         auto s1 = source[1];
@@ -790,7 +790,7 @@ namespace simd {
         return (int8x16::vector) { s0, s1, s2, s3, s4, s5, s6, s7, 0, 0, 0, 0, 0, 0, 0, 0 };
     }
 
-    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    static inline void int8x16_store_low(s8* dest, int8x16 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -919,14 +919,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int16x8 set_component(int16x8 a, int16 s)
+    static inline int16x8 set_component(int16x8 a, s16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline int16 get_component(int16x8 a)
+    static inline s16 get_component(int16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -934,20 +934,20 @@ namespace simd {
 
     static inline int16x8 int16x8_zero()
     {
-        return vec_splats(int16(0));
+        return vec_splats(s16(0));
     }
 
-    static inline int16x8 int16x8_set1(int16 s)
+    static inline int16x8 int16x8_set1(s16 s)
     {
         return vec_splats(s);
     }
 
-    static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
+    static inline int16x8 int16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return (int16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline int16x8 int16x8_load_low(const int16* source)
+    static inline int16x8 int16x8_load_low(const s16* source)
     {
         auto s0 = source[0];
         auto s1 = source[1];
@@ -956,7 +956,7 @@ namespace simd {
         return (int16x8::vector) { s0, s1, s2, s3, 0, 0, 0, 0 };
     }
 
-    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    static inline void int16x8_store_low(s16* dest, int16x8 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -1080,36 +1080,36 @@ namespace simd {
     template <int Count>
     static inline int16x8 slli(int16x8 a)
     {
-        return vec_sl(a.data, vec_splats(uint16(Count)));
+        return vec_sl(a.data, vec_splats(u16(Count)));
     }
 
     template <int Count>
     static inline int16x8 srli(int16x8 a)
     {
-        return vec_sr(a.data, vec_splats(uint16(Count)));
+        return vec_sr(a.data, vec_splats(u16(Count)));
     }
 
     template <int Count>
     static inline int16x8 srai(int16x8 a)
     {
-        return vec_sra(a.data, vec_splats(uint16(Count)));
+        return vec_sra(a.data, vec_splats(u16(Count)));
     }
 
     // shift by scalar
 
     static inline int16x8 sll(int16x8 a, int count)
     {
-        return vec_sl(a.data, vec_splats(uint16(count)));
+        return vec_sl(a.data, vec_splats(u16(count)));
     }
 
     static inline int16x8 srl(int16x8 a, int count)
     {
-        return vec_sr(a.data, vec_splats(uint16(count)));
+        return vec_sr(a.data, vec_splats(u16(count)));
     }
 
     static inline int16x8 sra(int16x8 a, int count)
     {
-        return vec_sra(a.data, vec_splats(uint16(count)));
+        return vec_sra(a.data, vec_splats(u16(count)));
     }
 
     static inline int16x8 min(int16x8 a, int16x8 b)
@@ -1134,7 +1134,7 @@ namespace simd {
     (select * 16 + n * 4 + 2), \
     (select * 16 + n * 4 + 3)
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline int32x4 shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -1154,14 +1154,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline int32x4 set_component(int32x4 a, int32 s)
+    static inline int32x4 set_component(int32x4 a, s32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline int32 get_component(int32x4 a)
+    static inline s32 get_component(int32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -1169,25 +1169,25 @@ namespace simd {
 
     static inline int32x4 int32x4_zero()
     {
-        return vec_splats(int32(0));
+        return vec_splats(s32(0));
     }
 
-    static inline int32x4 int32x4_set1(int s)
+    static inline int32x4 int32x4_set1(s32 s)
     {
         return vec_splats(s);
     }
 
-    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
+    static inline int32x4 int32x4_set4(s32 x, s32 y, s32 z, s32 w)
     {
         return (int32x4::vector) { x, y, z, w };
     }
 
-    static inline int32x4 int32x4_uload(const int* s)
+    static inline int32x4 int32x4_uload(const s32* s)
     {
         return (int32x4::vector) { s[0], s[1], s[2], s[3] };
     }
 
-    static inline void int32x4_ustore(int* dest, int32x4 a)
+    static inline void int32x4_ustore(s32* dest, int32x4 a)
     {
         dest[0] = vec_extract(a.data, 0);
         dest[1] = vec_extract(a.data, 1);
@@ -1195,14 +1195,14 @@ namespace simd {
         dest[3] = vec_extract(a.data, 3);
     }
 
-    static inline int32x4 int32x4_load_low(const int32* source)
+    static inline int32x4 int32x4_load_low(const s32* source)
     {
         auto s0 = source[0];
         auto s1 = source[1];
         return (int32x4::vector) { s0, s1, 0, 0 };
     }
 
-    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    static inline void int32x4_store_low(s32* dest, int32x4 a)
     {
         dest[0] = vec_extract(a.data, 0);
         dest[1] = vec_extract(a.data, 1);
@@ -1329,36 +1329,36 @@ namespace simd {
     template <int Count>
     static inline int32x4 slli(int32x4 a)
     {
-        return vec_sl(a.data, vec_splats(uint32(Count)));
+        return vec_sl(a.data, vec_splats(u32(Count)));
     }
 
     template <int Count>
     static inline int32x4 srli(int32x4 a)
     {
-        return vec_sr(a.data, vec_splats(uint32(Count)));
+        return vec_sr(a.data, vec_splats(u32(Count)));
     }
 
     template <int Count>
     static inline int32x4 srai(int32x4 a)
     {
-        return vec_sra(a.data, vec_splats(uint32(Count)));
+        return vec_sra(a.data, vec_splats(u32(Count)));
     }
 
     // shift by scalar
 
     static inline int32x4 sll(int32x4 a, int count)
     {
-        return vec_sl(a.data, vec_splats(uint32(count)));
+        return vec_sl(a.data, vec_splats(u32(count)));
     }
 
     static inline int32x4 srl(int32x4 a, int count)
     {
-        return vec_sr(a.data, vec_splats(uint32(count)));
+        return vec_sr(a.data, vec_splats(u32(count)));
     }
 
     static inline int32x4 sra(int32x4 a, int count)
     {
-        return vec_sra(a.data, vec_splats(uint32(count)));
+        return vec_sra(a.data, vec_splats(u32(count)));
     }
 
     // shift by vector
@@ -1378,7 +1378,7 @@ namespace simd {
         return vec_sra(a.data, count.data);
     }
 
-    static inline uint32 pack(int32x4 s)
+    static inline u32 pack(int32x4 s)
     {
         int32x4 v = vec_sl(s.data, (uint32x4::vector) { 0, 8, 16, 24 });
         v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
@@ -1396,7 +1396,7 @@ namespace simd {
         return vec_max(a.data, b.data);
     }
 
-    static inline int32x4 unpack(uint32 s)
+    static inline int32x4 unpack(u32 s)
     {
         uint32x4 v = vec_splats(s);
         v = vec_and(v.data, (uint32x4::vector) { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 });
@@ -1408,14 +1408,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int64x2 set_component(int64x2 a, int64 s)
+    static inline int64x2 set_component(int64x2 a, s64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x2 a)
+    static inline s64 get_component(int64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -1423,15 +1423,15 @@ namespace simd {
 
     static inline int64x2 int64x2_zero()
     {
-        return vec_splats(int64(0));
+        return vec_splats(s64(0));
     }
 
-    static inline int64x2 int64x2_set1(int64 s)
+    static inline int64x2 int64x2_set1(s64 s)
     {
         return vec_splats(s);
     }
 
-    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    static inline int64x2 int64x2_set2(s64 x, s64 y)
     {
         return (int64x2::vector) { x, y };
     }
@@ -1539,7 +1539,7 @@ namespace simd {
         return vec_xor(a.data, b.data);
     }
 
-    static inline uint32 get_mask(mask8x16 a)
+    static inline u32 get_mask(mask8x16 a)
     {
         const uint32x4::vector zero = uint32x4_zero();
         uint8x16::vector masked = vec_and(a.data, (uint8x16::vector) { 1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128 });
@@ -1581,7 +1581,7 @@ namespace simd {
         return vec_xor(a.data, b.data);
     }
 
-    static inline uint32 get_mask(mask16x8 a)
+    static inline u32 get_mask(mask16x8 a)
     {
         const int32x4::vector zero = int32x4_zero();
         int16x8::vector masked = (int16x8::vector) vec_and(a.data, (int16x8::vector) { 1, 2, 4, 8, 16, 32, 64, 128 });
@@ -1623,7 +1623,7 @@ namespace simd {
         return vec_xor(a.data, b.data);
     }
 
-    static inline uint32 get_mask(mask32x4 a)
+    static inline u32 get_mask(mask32x4 a)
     {
         const int32x4::vector zero = int32x4_zero();
         int32x4::vector masked = (int32x4::vector) vec_and(a.data, (int32x4::vector) { 1, 2, 4, 8 });
@@ -1664,11 +1664,11 @@ namespace simd {
         return (mask64x2::vector) vec_xor((uint64x2::vector)a.data, (uint64x2::vector)b.data);
     }
 
-    static inline uint32 get_mask(mask64x2 a)
+    static inline u32 get_mask(mask64x2 a)
     {
         uint64x2 temp = (uint64x2::vector) a.data;
-        uint32 x = uint32(get_component<0>(temp)) & 1;
-        uint32 y = uint32(get_component<1>(temp)) & 2;
+        u32 x = u32(get_component<0>(temp)) & 1;
+        u32 y = u32(get_component<1>(temp)) & 2;
         return x | y;
     }
 

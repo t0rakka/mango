@@ -28,14 +28,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint8x32 set_component(uint8x32 a, uint8 b)
+    static inline uint8x32 set_component(uint8x32 a, u8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         return _mm256_insert_epi8(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x32 a)
+    static inline u8 get_component(uint8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return _mm256_extract_epi8(a, Index);
@@ -46,7 +46,7 @@ namespace simd {
         return _mm256_setzero_si256();
     }
 
-    static inline uint8x32 uint8x32_set1(uint8 s)
+    static inline uint8x32 uint8x32_set1(u8 s)
     {
         return _mm256_set1_epi8(s);
     }
@@ -142,14 +142,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x16 set_component(uint16x16 a, uint16 b)
+    static inline uint16x16 set_component(uint16x16 a, u16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm256_insert_epi16(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline uint16 get_component(uint16x16 a)
+    static inline u16 get_component(uint16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm256_extract_epi16(a, Index);
@@ -160,7 +160,7 @@ namespace simd {
         return _mm256_setzero_si256();
     }
 
-    static inline uint16x16 uint16x16_set1(uint16 s)
+    static inline uint16x16 uint16x16_set1(u16 s)
     {
         return _mm256_set1_epi16(s);
     }
@@ -298,14 +298,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint32x8 set_component(uint32x8 a, uint32 b)
+    static inline uint32x8 set_component(uint32x8 a, u32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm256_insert_epi32(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x8 a)
+    static inline u32 get_component(uint32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm256_extract_epi32(a, Index);
@@ -316,22 +316,22 @@ namespace simd {
         return _mm256_setzero_si256();
     }
 
-    static inline uint32x8 uint32x8_set1(uint32 s)
+    static inline uint32x8 uint32x8_set1(u32 s)
     {
         return _mm256_set1_epi32(s);
     }
 
-    static inline uint32x8 uint32x8_set8(uint32 s0, uint32 s1, uint32 s2, uint32 s3, uint32 s4, uint32 s5, uint32 s6, uint32 s7)
+    static inline uint32x8 uint32x8_set8(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
     {
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline uint32x8 uint32x8_uload(const uint32* source)
+    static inline uint32x8 uint32x8_uload(const u32* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void uint32x8_ustore(uint32* dest, uint32x8 a)
+    static inline void uint32x8_ustore(u32* dest, uint32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -488,14 +488,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint64x4 set_component(uint64x4 a, uint64 b)
+    static inline uint64x4 set_component(uint64x4 a, u64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm256_insert_epi64(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x4 a)
+    static inline u64 get_component(uint64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm256_extract_epi64(a, Index);
@@ -506,12 +506,12 @@ namespace simd {
         return _mm256_setzero_si256();
     }
 
-    static inline uint64x4 uint64x4_set1(uint64 s)
+    static inline uint64x4 uint64x4_set1(u64 s)
     {
         return _mm256_set1_epi64x(s);
     }
 
-    static inline uint64x4 uint64x4_set4(uint64 x, uint64 y, uint64 z, uint64 w)
+    static inline uint64x4 uint64x4_set4(u64 x, u64 y, u64 z, u64 w)
     {
         return _mm256_setr_epi64x(x, y, z, w);
     }
@@ -1220,9 +1220,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask8x32 a)
+    static inline u32 get_mask(mask8x32 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask8x32 a)
@@ -1263,9 +1263,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask16x16 a)
+    static inline u32 get_mask(mask16x16 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask16x16 a)
@@ -1306,7 +1306,7 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask32x8 a)
+    static inline u32 get_mask(mask32x8 a)
     {
         return uint32(a);
     }
@@ -1349,7 +1349,7 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask64x4 a)
+    static inline u32 get_mask(mask64x4 a)
     {
         return uint32(a);
     }

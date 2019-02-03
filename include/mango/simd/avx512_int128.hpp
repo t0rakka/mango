@@ -40,27 +40,27 @@ namespace simd {
 
 #if defined(__x86_64__)
 
-    static inline __m128i simd128_cvtsi64_si128(int64 a)
+    static inline __m128i simd128_cvtsi64_si128(s64 a)
     {
         return _mm_cvtsi64_si128(a);
     }
 
-    static inline int64 simd128_cvtsi128_si64(__m128i a)
+    static inline s64 simd128_cvtsi128_si64(__m128i a)
     {
         return _mm_cvtsi128_si64(a);
     }
 
 #else
 
-    static inline __m128i simd128_cvtsi64_si128(int64 a)
+    static inline __m128i simd128_cvtsi64_si128(s64 a)
     {
         return _mm_set_epi64x(0, a);
     }
 
-    static inline int64 simd128_cvtsi128_si64(__m128i a)
+    static inline s64 simd128_cvtsi128_si64(__m128i a)
     {
-        uint64 value = _mm_cvtsi128_si32(a);
-        value |= uint64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
+        u64 value = _mm_cvtsi128_si32(a);
+        value |= u64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
         return value;
     }
 
@@ -414,7 +414,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline uint32x4 shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -431,14 +431,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline uint32x4 set_component(uint32x4 a, uint32 s)
+    static inline uint32x4 set_component(uint32x4 a, u32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_insert_epi32(a, s, Index);
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x4 a)
+    static inline u32 get_component(uint32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_extract_epi32(a, Index);
@@ -449,12 +449,12 @@ namespace simd {
         return _mm_setzero_si128();
     }
 
-    static inline uint32x4 uint32x4_set1(uint32 s)
+    static inline uint32x4 uint32x4_set1(u32 s)
     {
         return _mm_set1_epi32(s);
     }
 
-    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    static inline uint32x4 uint32x4_set4(u32 x, u32 y, u32 z, u32 w)
     {
         return _mm_setr_epi32(x, y, z, w);
     }
@@ -1123,7 +1123,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline int32x4 shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -1361,7 +1361,7 @@ namespace simd {
         return _mm_srav_epi32(a, count);
     }
 
-    static inline uint32 pack(int32x4 s)
+    static inline u32 pack(int32x4 s)
     {
         __m128i s16 = _mm_packs_epi32(s, s);
         __m128i s8 = _mm_packus_epi16(s16, s16);
@@ -1378,7 +1378,7 @@ namespace simd {
         return _mm_max_epi32(a, b);
     }
 
-    static inline int32x4 unpack(uint32 s)
+    static inline int32x4 unpack(u32 s)
     {
         const __m128i i = _mm_cvtsi32_si128(s);
         return _mm_cvtepu8_epi32(i);
@@ -1516,9 +1516,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask8x16 a)
+    static inline u32 get_mask(mask8x16 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask8x16 a)
@@ -1559,9 +1559,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask16x8 a)
+    static inline u32 get_mask(mask16x8 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask16x8 a)
@@ -1602,9 +1602,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask32x4 a)
+    static inline u32 get_mask(mask32x4 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask32x4 a)
@@ -1645,9 +1645,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask64x2 a)
+    static inline u32 get_mask(mask64x2 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask64x2 a)

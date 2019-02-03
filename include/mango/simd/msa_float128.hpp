@@ -15,7 +15,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline float32x4 shuffle(float32x4 a, float32x4 b)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -23,7 +23,7 @@ namespace simd {
         return (v4f32) __msa_vshf_w(control, (v4i32) a, (v4i32) b);
     }
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -44,7 +44,7 @@ namespace simd {
     static inline float32x4 set_component(float32x4 a, float s)
     {
         static_assert(Index < 4, "Index out of range.");
-        int32 temp;
+        s32 temp;
         std::memcpy(&temp, &s, 4);
         return (v4f32) __msa_insert_w((v4i32) a, Index, temp);
     }
@@ -53,7 +53,7 @@ namespace simd {
     static inline float get_component(float32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
-        uint32 temp = __msa_copy_u_w((v4u32) a, Index);
+        u32 temp = __msa_copy_u_w((v4u32) a, Index);
         float s;
         std::memcpy(&s, &temp, 4);
         return s;

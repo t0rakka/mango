@@ -14,14 +14,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    static inline uint8x16 set_component(uint8x16 a, u8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return (v16u8) __msa_insert_b((v16i8) a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x16 a)
+    static inline u8 get_component(uint8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return __msa_copy_u_b(a, Index);
@@ -32,14 +32,14 @@ namespace simd {
         return (v16u8) __msa_fill_b(0);
     }
 
-    static inline uint8x16 uint8x16_set1(uint8 s)
+    static inline uint8x16 uint8x16_set1(u8 s)
     {
         return (v16u8) __msa_fill_b(s);
     }
 
     static inline uint8x16 uint8x16_set16(
-        uint8 s0, uint8 s1, uint8 s2, uint8 s3, uint8 s4, uint8 s5, uint8 s6, uint8 s7,
-        uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
+        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
+        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
         return (v16u8) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
     }
@@ -49,7 +49,7 @@ namespace simd {
         return (v2u64) { uload64(source), 0 };
     }
 
-    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    static inline void uint8x16_store_low(u8* dest, uint8x16 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -166,14 +166,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x8 set_component(uint16x8 a, uint16 s)
+    static inline uint16x8 set_component(uint16x8 a, u16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return (v8u16) __msa_insert_h((v8i16) a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline uint16 get_component(uint16x8 a)
+    static inline u16 get_component(uint16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return __msa_copy_u_h(a, Index);
@@ -184,22 +184,22 @@ namespace simd {
         return (v8u16) __msa_fill_h(0);
     }
 
-    static inline uint16x8 uint16x8_set1(uint16 s)
+    static inline uint16x8 uint16x8_set1(u16 s)
     {
         return (v8u16) __msa_fill_h(s);
     }
 
-    static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
+    static inline uint16x8 uint16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return (v8u16) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    static inline uint16x8 uint16x8_load_low(const u16* source)
     {
         return (v8u16) { source[0], source[1], source[2], source[3], 0, 0, 0, 0 };
     }
 
-    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    static inline void uint16x8_store_low(u16* dest, uint16x8 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -359,7 +359,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline uint32x4 shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -377,14 +377,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline uint32x4 set_component(uint32x4 a, uint32 s)
+    static inline uint32x4 set_component(uint32x4 a, u32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return (v4u32) __msa_insert_w((v4i32) a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x4 a)
+    static inline u32 get_component(uint32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return __msa_copy_u_w(a, Index);
@@ -395,32 +395,32 @@ namespace simd {
         return (v4u32) __msa_fill_w(0);
     }
 
-    static inline uint32x4 uint32x4_set1(uint32 s)
+    static inline uint32x4 uint32x4_set1(u32 s)
     {
         return (v4u32) __msa_fill_w(s);
     }
 
-    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    static inline uint32x4 uint32x4_set4(u32 x, u32 y, u32 z, u32 w)
     {
         return (v4u32) { x, y, z, w };
     }
 
-    static inline uint32x4 uint32x4_uload(const uint32* source)
+    static inline uint32x4 uint32x4_uload(const u32* source)
     {
         return reinterpret_cast<const v4u32 *>(source)[0];
     }
 
-    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    static inline void uint32x4_ustore(u32* dest, uint32x4 a)
     {
         reinterpret_cast<v4u32 *>(dest)[0] = a;
     }
 
-    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    static inline uint32x4 uint32x4_load_low(const u32* source)
     {
         return (v4u32) { source[0], source[1], 0, 0 };
     }
 
-    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    static inline void uint32x4_store_low(u32* dest, uint32x4 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -596,14 +596,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    static inline uint64x2 set_component(uint64x2 a, u64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return (v2u64) __msa_insert_d((v2i64) a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x2 a)
+    static inline u64 get_component(uint64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return __msa_copy_u_d(a, Index);
@@ -614,12 +614,12 @@ namespace simd {
         return (v2u64) __msa_fill_d(0);
     }
 
-    static inline uint64x2 uint64x2_set1(uint64 s)
+    static inline uint64x2 uint64x2_set1(u64 s)
     {
         return (v2u64) __msa_fill_d(s);
     }
 
-    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    static inline uint64x2 uint64x2_set2(u64 x, u64 y)
     {
         return (v2u64) { x, y };
     }
@@ -705,14 +705,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int8x16 set_component(int8x16 a, int8 s)
+    static inline int8x16 set_component(int8x16 a, s8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return __msa_insert_b(a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x16 a)
+    static inline s8 get_component(int8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return __msa_copy_s_b(a, Index);
@@ -723,24 +723,24 @@ namespace simd {
         return __msa_fill_b(0);
     }
 
-    static inline int8x16 int8x16_set1(int8 s)
+    static inline int8x16 int8x16_set1(s8 s)
     {
         return __msa_fill_b(s);
     }
 
     static inline int8x16 int8x16_set16(
-        int8 s0, int8 s1, int8 s2, int8 s3, int8 s4, int8 s5, int8 s6, int8 s7,
-        int8 s8, int8 s9, int8 s10, int8 s11, int8 s12, int8 s13, int8 s14, int8 s15)
+        s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
+        s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
-        return (v16i8) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
+        return (v16i8) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
-    static inline int8x16 int8x16_load_low(const int8* source)
+    static inline int8x16 int8x16_load_low(const s8* source)
     {
         return (v2i64) { uload64(source), 0 };
     }
 
-    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    static inline void int8x16_store_low(s8* dest, int8x16 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -868,14 +868,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int16x8 set_component(int16x8 a, int16 s)
+    static inline int16x8 set_component(int16x8 a, s16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return __msa_insert_h(a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline int16 get_component(int16x8 a)
+    static inline s16 get_component(int16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return __msa_copy_s_h(a, Index);
@@ -886,22 +886,22 @@ namespace simd {
         return __msa_fill_h(0);
     }
 
-    static inline int16x8 int16x8_set1(int16 s)
+    static inline int16x8 int16x8_set1(s16 s)
     {
         return __msa_fill_h(s);
     }
 
-    static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
+    static inline int16x8 int16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return (v8i16) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline int16x8 int16x8_load_low(const int16* source)
+    static inline int16x8 int16x8_load_low(const s16* source)
     {
         return (v8i16) { source[0], source[1], source[2], source[3], 0, 0, 0, 0 };
     }
 
-    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    static inline void int16x8_store_low(s16* dest, int16x8 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -1072,7 +1072,7 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline int32x4 shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
@@ -1090,14 +1090,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline int32x4 set_component(int32x4 a, int32 s)
+    static inline int32x4 set_component(int32x4 a, s32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return __msa_insert_w(a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline int32 get_component(int32x4 a)
+    static inline s32 get_component(int32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return __msa_copy_s_w(a, Index);
@@ -1108,32 +1108,32 @@ namespace simd {
         return __msa_fill_w(0);
     }
 
-    static inline int32x4 int32x4_set1(int s)
+    static inline int32x4 int32x4_set1(s32 s)
     {
         return __msa_fill_w(s);
     }
 
-    static inline int32x4 int32x4_set4(int x, int y, int z, int w)
+    static inline int32x4 int32x4_set4(s32 x, s32 y, s32 z, s32 w)
     {
         return (v4i32) { x, y, z, w };
     }
 
-    static inline int32x4 int32x4_uload(const int* source)
+    static inline int32x4 int32x4_uload(const s32* source)
     {
         return reinterpret_cast<const v4i32 *>(source)[0];
     }
 
-    static inline void int32x4_ustore(int* dest, int32x4 a)
+    static inline void int32x4_ustore(s32* dest, int32x4 a)
     {
         reinterpret_cast<v4i32 *>(dest)[0] = a;
     }
 
-    static inline int32x4 int32x4_load_low(const int32* source)
+    static inline int32x4 int32x4_load_low(const s32* source)
     {
         return (v4i32) { source[0], source[1], 0, 0 };
     }
 
-    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    static inline void int32x4_store_low(s32* dest, int32x4 a)
     {
         std::memcpy(dest, &a, 8);
     }
@@ -1305,12 +1305,12 @@ namespace simd {
         return __msa_sra_w(a, (v4i32)count);
     }
 
-    static inline uint32 pack(int32x4 s)
+    static inline u32 pack(int32x4 s)
     {
-        uint32 x = __msa_copy_s_w(s, 0);
-        uint32 y = __msa_copy_s_w(s, 1);
-        uint32 z = __msa_copy_s_w(s, 2);
-        uint32 w = __msa_copy_s_w(s, 3);
+        u32 x = __msa_copy_s_w(s, 0);
+        u32 y = __msa_copy_s_w(s, 1);
+        u32 z = __msa_copy_s_w(s, 2);
+        u32 w = __msa_copy_s_w(s, 3);
         return (w << 24) | (z << 16) | (y << 8) | x;
     }
 
@@ -1324,12 +1324,12 @@ namespace simd {
         return __msa_max_s_w(a, b);
     }
 
-    static inline int32x4 unpack(uint32 s)
+    static inline int32x4 unpack(u32 s)
     {
-        int x = (s >> 0) & 0xff;
-        int y = (s >> 8) & 0xff;
-        int z = (s >> 16) & 0xff;
-        int w = (s >> 24) & 0xff;
+        s32 x = (s >> 0) & 0xff;
+        s32 y = (s >> 8) & 0xff;
+        s32 z = (s >> 16) & 0xff;
+        s32 w = (s >> 24) & 0xff;
         return int32x4_set4(x, y, z, w);
     }
 
@@ -1338,14 +1338,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int64x2 set_component(int64x2 a, int64 s)
+    static inline int64x2 set_component(int64x2 a, s64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return __msa_insert_d(a, Index, s);
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x2 a)
+    static inline s64 get_component(int64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return __msa_copy_s_d(a, Index);
@@ -1356,12 +1356,12 @@ namespace simd {
         return __msa_fill_d(0);
     }
 
-    static inline int64x2 int64x2_set1(int64 s)
+    static inline int64x2 int64x2_set1(s64 s)
     {
         return __msa_fill_d(s);
     }
 
-    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    static inline int64x2 int64x2_set2(s64 x, s64 y)
     {
         return (v2i64) { x, y };
     }
@@ -1461,12 +1461,12 @@ namespace simd {
         return (v16u8) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
-    static inline uint32 get_mask(mask8x16 a)
+    static inline u32 get_mask(mask8x16 a)
     {
-        uint32 x = __msa_copy_u_w(a, 0) & 0x01800180;
-        uint32 y = __msa_copy_u_w(a, 1) & 0x01800180;
-        uint32 z = __msa_copy_u_w(a, 2) & 0x01800180;
-        uint32 w = __msa_copy_u_w(a, 3) & 0x01800180;
+        u32 x = __msa_copy_u_w(a, 0) & 0x01800180;
+        u32 y = __msa_copy_u_w(a, 1) & 0x01800180;
+        u32 z = __msa_copy_u_w(a, 2) & 0x01800180;
+        u32 w = __msa_copy_u_w(a, 3) & 0x01800180;
         x = (x >> 21) | (x >> 7);
         y = (y >> 17) | (y >> 3);
         z = (z >> 13) | (z << 1);
@@ -1508,12 +1508,12 @@ namespace simd {
         return (v8u16) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
-    static inline uint32 get_mask(mask16x8 a)
+    static inline u32 get_mask(mask16x8 a)
     {
-        uint32 x = __msa_copy_u_w(a, 0) & 0x00018000;
-        uint32 y = __msa_copy_u_w(a, 1) & 0x00018000;
-        uint32 z = __msa_copy_u_w(a, 2) & 0x00018000;
-        uint32 w = __msa_copy_u_w(a, 3) & 0x00018000;
+        u32 x = __msa_copy_u_w(a, 0) & 0x00018000;
+        u32 y = __msa_copy_u_w(a, 1) & 0x00018000;
+        u32 z = __msa_copy_u_w(a, 2) & 0x00018000;
+        u32 w = __msa_copy_u_w(a, 3) & 0x00018000;
         return (w >> 9) | (z >> 11) | (y >> 13) | (x >> 15);
     }
 
@@ -1551,12 +1551,12 @@ namespace simd {
         return (v4u32) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
-    static inline uint32 get_mask(mask32x4 a)
+    static inline u32 get_mask(mask32x4 a)
     {
-        uint32 x = __msa_copy_u_w(a, 0) & 1;
-        uint32 y = __msa_copy_u_w(a, 1) & 2;
-        uint32 z = __msa_copy_u_w(a, 2) & 4;
-        uint32 w = __msa_copy_u_w(a, 3) & 8;
+        u32 x = __msa_copy_u_w(a, 0) & 1;
+        u32 y = __msa_copy_u_w(a, 1) & 2;
+        u32 z = __msa_copy_u_w(a, 2) & 4;
+        u32 w = __msa_copy_u_w(a, 3) & 8;
         return w | z | y | x;
     }
 
@@ -1594,10 +1594,10 @@ namespace simd {
         return (v2u64) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
-    static inline uint32 get_mask(mask64x2 a)
+    static inline u32 get_mask(mask64x2 a)
     {
-        uint32 x = __msa_copy_u_d(a, 0) & 1;
-        uint32 y = __msa_copy_u_d(a, 1) & 2;
+        u32 x = __msa_copy_u_d(a, 0) & 1;
+        u32 y = __msa_copy_u_d(a, 1) & 2;
         return y | x;
     }
 

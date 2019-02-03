@@ -567,10 +567,10 @@ namespace detail {
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
     {
-        int32 x = int32(get_component<0>(s) + 0.5);
-        int32 y = int32(get_component<1>(s) + 0.5);
-        int32 z = int32(get_component<2>(s) + 0.5);
-        int32 w = int32(get_component<3>(s) + 0.5);
+        s32 x = s32(get_component<0>(s) + 0.5);
+        s32 y = s32(get_component<1>(s) + 0.5);
+        s32 z = s32(get_component<2>(s) + 0.5);
+        s32 w = s32(get_component<3>(s) + 0.5);
         return int32x4_set4(x, y, z, w);
     }
 
@@ -597,20 +597,20 @@ namespace detail {
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 v)
     {
-        uint32 x = uint32(get_component<0>(v) + 0.5);
-        uint32 y = uint32(get_component<1>(v) + 0.5);
-        uint32 z = uint32(get_component<2>(v) + 0.5);
-        uint32 w = uint32(get_component<3>(v) + 0.5);
+        u32 x = u32(get_component<0>(v) + 0.5);
+        u32 y = u32(get_component<1>(v) + 0.5);
+        u32 z = u32(get_component<2>(v) + 0.5);
+        u32 w = u32(get_component<3>(v) + 0.5);
         return uint32x4_set4(x, y, z, w);
     }
 
     template <>
     inline int32x4 truncate<int32x4>(float64x4 v)
     {
-        int32 x = int32(get_component<0>(v));
-        int32 y = int32(get_component<1>(v));
-        int32 z = int32(get_component<2>(v));
-        int32 w = int32(get_component<3>(v));
+        s32 x = s32(get_component<0>(v));
+        s32 y = s32(get_component<1>(v));
+        s32 z = s32(get_component<2>(v));
+        s32 w = s32(get_component<3>(v));
         return int32x4_set4(x, y, z, w);
     }
 
@@ -627,10 +627,10 @@ namespace detail {
     template <>
     inline int64x4 convert<int64x4>(float64x4 v)
     {
-        int64 x = int64(get_component<0>(v) + 0.5);
-        int64 y = int64(get_component<1>(v) + 0.5);
-        int64 z = int64(get_component<2>(v) + 0.5);
-        int64 w = int64(get_component<3>(v) + 0.5);
+        s64 x = s64(get_component<0>(v) + 0.5);
+        s64 y = s64(get_component<1>(v) + 0.5);
+        s64 z = s64(get_component<2>(v) + 0.5);
+        s64 w = s64(get_component<3>(v) + 0.5);
         return int64x4_set4(x, y, z, w);
     }
 

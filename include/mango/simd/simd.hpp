@@ -182,38 +182,38 @@ namespace simd {
     using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
+    using int8x16    = hardware_vector<s8, 16, __m128i>;
+    using int16x8    = hardware_vector<s16, 8, __m128i>;
+    using int32x4    = hardware_vector<s32, 4, __m128i>;
+    using int64x2    = hardware_vector<s64, 2, __m128i>;
+    using uint8x16   = hardware_vector<u8, 16, __m128i>;
+    using uint16x8   = hardware_vector<u16, 8, __m128i>;
+    using uint32x4   = hardware_vector<u32, 4, __m128i>;
     using uint64x2   = hardware_vector<uint64, 2, __m128i>;
     using float32x4  = hardware_vector<float, 4, __m128>;
     using float64x2  = hardware_vector<double, 2, __m128d>;
 
     // 256 bit vector
-    using int8x32    = hardware_vector<int8, 32, __m256i>;
-    using int16x16   = hardware_vector<int16, 16, __m256i>;
-    using int32x8    = hardware_vector<int32, 8, __m256i>;
-    using int64x4    = hardware_vector<int64, 4, __m256i>;
-    using uint8x32   = hardware_vector<uint8, 32, __m256i>;
-    using uint16x16  = hardware_vector<uint16, 16, __m256i>;
-    using uint32x8   = hardware_vector<uint32, 8, __m256i>;
-    using uint64x4   = hardware_vector<uint64, 4, __m256i>;
+    using int8x32    = hardware_vector<s8, 32, __m256i>;
+    using int16x16   = hardware_vector<s16, 16, __m256i>;
+    using int32x8    = hardware_vector<s32, 8, __m256i>;
+    using int64x4    = hardware_vector<s64, 4, __m256i>;
+    using uint8x32   = hardware_vector<u8, 32, __m256i>;
+    using uint16x16  = hardware_vector<u16, 16, __m256i>;
+    using uint32x8   = hardware_vector<u32, 8, __m256i>;
+    using uint64x4   = hardware_vector<u64, 4, __m256i>;
     using float32x8  = hardware_vector<float, 8, __m256>;
     using float64x4  = hardware_vector<double, 4, __m256d>;
 
     // 512 bit vector
-    using int8x64    = hardware_vector<int8, 64, __m512i>;
-    using int16x32   = hardware_vector<int16, 32, __m512i>;
-    using int32x16   = hardware_vector<int32, 16, __m512i>;
-    using int64x8    = hardware_vector<int64, 8, __m512i>;
-    using uint8x64   = hardware_vector<uint8, 64, __m512i>;
-    using uint16x32  = hardware_vector<uint16, 32, __m512i>;
-    using uint32x16  = hardware_vector<uint32, 16, __m512i>;
-    using uint64x8   = hardware_vector<uint64, 8, __m512i>;
+    using int8x64    = hardware_vector<s8, 64, __m512i>;
+    using int16x32   = hardware_vector<s16, 32, __m512i>;
+    using int32x16   = hardware_vector<s32, 16, __m512i>;
+    using int64x8    = hardware_vector<s64, 8, __m512i>;
+    using uint8x64   = hardware_vector<u8, 64, __m512i>;
+    using uint16x32  = hardware_vector<u16, 32, __m512i>;
+    using uint32x16  = hardware_vector<u32, 16, __m512i>;
+    using uint64x8   = hardware_vector<u64, 8, __m512i>;
     using float32x16 = hardware_vector<float, 16, __m512>;
     using float64x8  = hardware_vector<double, 8, __m512d>;
 
@@ -357,14 +357,14 @@ namespace simd {
     using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
+    using int8x16    = hardware_vector<s8, 16, __m128i>;
+    using int16x8    = hardware_vector<s16, 8, __m128i>;
+    using int32x4    = hardware_vector<s32, 4, __m128i>;
+    using int64x2    = hardware_vector<s64, 2, __m128i>;
+    using uint8x16   = hardware_vector<u8, 16, __m128i>;
+    using uint16x8   = hardware_vector<u16, 8, __m128i>;
+    using uint32x4   = hardware_vector<u32, 4, __m128i>;
+    using uint64x2   = hardware_vector<u64, 2, __m128i>;
     using float32x4  = hardware_vector<float, 4, __m128>;
     using float64x2  = hardware_vector<double, 2, __m128d>;
 
@@ -443,14 +443,14 @@ namespace simd {
     using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using int8x16    = hardware_vector<int8, 16, __m128i>;
-    using int16x8    = hardware_vector<int16, 8, __m128i>;
-    using int32x4    = hardware_vector<int32, 4, __m128i>;
-    using int64x2    = hardware_vector<int64, 2, __m128i>;
-    using uint8x16   = hardware_vector<uint8, 16, __m128i>;
-    using uint16x8   = hardware_vector<uint16, 8, __m128i>;
-    using uint32x4   = hardware_vector<uint32, 4, __m128i>;
-    using uint64x2   = hardware_vector<uint64, 2, __m128i>;
+    using int8x16    = hardware_vector<s8, 16, __m128i>;
+    using int16x8    = hardware_vector<s16, 8, __m128i>;
+    using int32x4    = hardware_vector<s32, 4, __m128i>;
+    using int64x2    = hardware_vector<s64, 2, __m128i>;
+    using uint8x16   = hardware_vector<u8, 16, __m128i>;
+    using uint16x8   = hardware_vector<u16, 8, __m128i>;
+    using uint32x4   = hardware_vector<u32, 4, __m128i>;
+    using uint64x2   = hardware_vector<u64, 2, __m128i>;
     using float32x4  = hardware_vector<float, 4, __m128>;
     using float64x2  = hardware_vector<double, 2, __m128d>;
 
@@ -542,14 +542,14 @@ namespace simd {
 #endif
 
     // 128 bit vector
-    using int8x16    = hardware_vector<int8, 16, int8x16_t>;
-    using int16x8    = hardware_vector<int16, 8, int16x8_t>;
-    using int32x4    = hardware_vector<int32, 4, int32x4_t>;
-    using int64x2    = hardware_vector<int64, 2, int64x2_t>;
-    using uint8x16   = hardware_vector<uint8, 16, uint8x16_t>;
-    using uint16x8   = hardware_vector<uint16, 8, uint16x8_t>;
-    using uint32x4   = hardware_vector<uint32, 4, uint32x4_t>;
-    using uint64x2   = hardware_vector<uint64, 2, uint64x2_t>;
+    using int8x16    = hardware_vector<s8, 16, int8x16_t>;
+    using int16x8    = hardware_vector<s16, 8, int16x8_t>;
+    using int32x4    = hardware_vector<s32, 4, int32x4_t>;
+    using int64x2    = hardware_vector<s64, 2, int64x2_t>;
+    using uint8x16   = hardware_vector<u8, 16, uint8x16_t>;
+    using uint16x8   = hardware_vector<u16, 8, uint16x8_t>;
+    using uint32x4   = hardware_vector<u32, 4, uint32x4_t>;
+    using uint64x2   = hardware_vector<u64, 2, uint64x2_t>;
     using float32x4  = hardware_vector<float, 4, float32x4_t>;
     using float64x2  = hardware_vector<double, 2, float64x2_t>;
 
@@ -630,14 +630,14 @@ namespace simd {
     using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using int8x16    = hardware_vector<int8, 16, __vector signed char>;
-    using int16x8    = hardware_vector<int16, 8, __vector signed short>;
-    using int32x4    = hardware_vector<int32, 4, __vector signed int>;
-    using int64x2    = hardware_vector<int64, 2, __vector signed long long>;
-    using uint8x16   = hardware_vector<uint8, 16, __vector unsigned char>;
-    using uint16x8   = hardware_vector<uint16, 8, __vector unsigned short>;
-    using uint32x4   = hardware_vector<uint32, 4, __vector unsigned int>;
-    using uint64x2   = hardware_vector<uint64, 2, __vector unsigned long long>;
+    using int8x16    = hardware_vector<s8, 16, __vector signed char>;
+    using int16x8    = hardware_vector<s16, 8, __vector signed short>;
+    using int32x4    = hardware_vector<s32, 4, __vector signed int>;
+    using int64x2    = hardware_vector<s64, 2, __vector signed long long>;
+    using uint8x16   = hardware_vector<u8, 16, __vector unsigned char>;
+    using uint16x8   = hardware_vector<u16, 8, __vector unsigned short>;
+    using uint32x4   = hardware_vector<u32, 4, __vector unsigned int>;
+    using uint64x2   = hardware_vector<u64, 2, __vector unsigned long long>;
     using float32x4  = hardware_vector<float, 4, __vector float>;
     using float64x2  = hardware_vector<double, 2, __vector double>;
 
@@ -724,14 +724,14 @@ namespace simd {
     using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using int8x16    = hardware_vector<int8, 16, v16i8>;
-    using int16x8    = hardware_vector<int16, 8, v8i16>;
-    using int32x4    = hardware_vector<int32, 4, v4i32>;
-    using int64x2    = hardware_vector<int64, 2, v2i64>;
-    using uint8x16   = hardware_vector<uint8, 16, v16u8>;
-    using uint16x8   = hardware_vector<uint16, 8, v8u16>;
-    using uint32x4   = hardware_vector<uint32, 4, v4u32>;
-    using uint64x2   = hardware_vector<uint64, 2, v2u64>;
+    using int8x16    = hardware_vector<s8, 16, v16i8>;
+    using int16x8    = hardware_vector<s16, 8, v8i16>;
+    using int32x4    = hardware_vector<s32, 4, v4i32>;
+    using int64x2    = hardware_vector<s64, 2, v2i64>;
+    using uint8x16   = hardware_vector<u8, 16, v16u8>;
+    using uint16x8   = hardware_vector<u16, 8, v8u16>;
+    using uint32x4   = hardware_vector<u32, 4, v4u32>;
+    using uint64x2   = hardware_vector<u64, 2, v2u64>;
     using float32x4  = hardware_vector<float, 4, v4f32>;
     using float64x2  = hardware_vector<double, 2, v2f64>;
 
@@ -805,14 +805,14 @@ namespace simd {
     using float16x4  = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using int8x16    = scalar_vector<int8, 16>;
-    using int16x8    = scalar_vector<int16, 8>;
-    using int32x4    = scalar_vector<int32, 4>;
-    using int64x2    = scalar_vector<int64, 2>;
-    using uint8x16   = scalar_vector<uint8, 16>;
-    using uint16x8   = scalar_vector<uint16, 8>;
-    using uint32x4   = scalar_vector<uint32, 4>;
-    using uint64x2   = scalar_vector<uint64, 2>;
+    using int8x16    = scalar_vector<s8, 16>;
+    using int16x8    = scalar_vector<s16, 8>;
+    using int32x4    = scalar_vector<s32, 4>;
+    using int64x2    = scalar_vector<s64, 2>;
+    using uint8x16   = scalar_vector<u8, 16>;
+    using uint16x8   = scalar_vector<u16, 8>;
+    using uint32x4   = scalar_vector<u32, 4>;
+    using uint64x2   = scalar_vector<u64, 2>;
     using float32x4  = scalar_vector<float, 4>;
     using float64x2  = scalar_vector<double, 2>;
 

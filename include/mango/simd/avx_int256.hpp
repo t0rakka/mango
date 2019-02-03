@@ -85,7 +85,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint8x32 set_component(uint8x32 a, uint8 b)
+    static inline uint8x32 set_component(uint8x32 a, u8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         SET_COMPONENT(a, b, 15, Index);
@@ -93,7 +93,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x32 a)
+    static inline u8 get_component(uint8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return GET_COMPONENT(a, 15, Index);
@@ -107,7 +107,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint8x32 uint8x32_set1(uint8 s)
+    static inline uint8x32 uint8x32_set1(u8 s)
     {
         uint8x32 result;
         result.lo = uint8x16_set1(s);
@@ -251,7 +251,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x16 set_component(uint16x16 a, uint16 b)
+    static inline uint16x16 set_component(uint16x16 a, u16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         SET_COMPONENT(a, b, 7, Index);
@@ -259,7 +259,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline uint16 get_component(uint16x16 a)
+    static inline u16 get_component(uint16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return GET_COMPONENT(a, 7, Index);
@@ -273,7 +273,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint16x16 uint16x16_set1(uint16 s)
+    static inline uint16x16 uint16x16_set1(u16 s)
     {
         uint16x16 result;
         result.lo = uint16x8_set1(s);
@@ -480,7 +480,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint32x8 set_component(uint32x8 a, uint32 b)
+    static inline uint32x8 set_component(uint32x8 a, u32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         SET_COMPONENT(a, b, 3, Index);
@@ -488,7 +488,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x8 a)
+    static inline u32 get_component(uint32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return GET_COMPONENT(a, 3, Index);
@@ -502,7 +502,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint32x8 uint32x8_set1(uint32 s)
+    static inline uint32x8 uint32x8_set1(u32 s)
     {
         uint32x8 result;
         result.lo = uint32x4_set1(s);
@@ -510,7 +510,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint32x8 uint32x8_set8(uint32 s0, uint32 s1, uint32 s2, uint32 s3, uint32 s4, uint32 s5, uint32 s6, uint32 s7)
+    static inline uint32x8 uint32x8_set8(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
     {
         uint32x8 result;
         result.lo = uint32x4_set4(s0, s1, s2, s3);
@@ -518,7 +518,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint32x8 uint32x8_uload(const uint32* source)
+    static inline uint32x8 uint32x8_uload(const u32* source)
     {
         uint32x8 result;
         result.lo = uint32x4_uload(source + 0);
@@ -526,7 +526,7 @@ namespace detail {
         return result;
     }
 
-    static inline void uint32x8_ustore(uint32* dest, uint32x8 a)
+    static inline void uint32x8_ustore(u32* dest, uint32x8 a)
     {
         uint32x4_ustore(dest + 0, a.lo);
         uint32x4_ustore(dest + 4, a.hi);
@@ -757,7 +757,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint64x4 set_component(uint64x4 a, uint64 b)
+    static inline uint64x4 set_component(uint64x4 a, u64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         SET_COMPONENT(a, b, 1, Index);
@@ -765,7 +765,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x4 a)
+    static inline u64 get_component(uint64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return GET_COMPONENT(a, 1, Index);
@@ -779,7 +779,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint64x4 uint64x4_set1(uint64 s)
+    static inline uint64x4 uint64x4_set1(u64 s)
     {
         uint64x4 result;
         result.lo = uint64x2_set1(s);
@@ -787,7 +787,7 @@ namespace detail {
         return result;
     }
 
-    static inline uint64x4 uint64x4_set4(uint64 x, uint64 y, uint64 z, uint64 w)
+    static inline uint64x4 uint64x4_set4(u64 x, u64 y, u64 z, u64 w)
     {
         uint64x4 result;
         result.lo = uint64x2_set2(x, y);
@@ -917,7 +917,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int8x32 set_component(int8x32 a, int8 b)
+    static inline int8x32 set_component(int8x32 a, s8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         SET_COMPONENT(a, b, 15, Index);
@@ -925,7 +925,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x32 a)
+    static inline s8 get_component(int8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return GET_COMPONENT(a, 15, Index);
@@ -939,7 +939,7 @@ namespace detail {
         return result;
     }
 
-    static inline int8x32 int8x32_set1(int8 s)
+    static inline int8x32 int8x32_set1(s8 s)
     {
         int8x32 result;
         result.lo = int8x16_set1(s);
@@ -1097,7 +1097,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int16x16 set_component(int16x16 a, int16 b)
+    static inline int16x16 set_component(int16x16 a, s16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         SET_COMPONENT(a, b, 7, Index);
@@ -1105,7 +1105,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline int16 get_component(int16x16 a)
+    static inline s16 get_component(int16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return GET_COMPONENT(a, 7, Index);
@@ -1119,7 +1119,7 @@ namespace detail {
         return result;
     }
 
-    static inline int16x16 int16x16_set1(int16 s)
+    static inline int16x16 int16x16_set1(s16 s)
     {
         int16x16 result;
         result.lo = int16x8_set1(s);
@@ -1342,7 +1342,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int32x8 set_component(int32x8 a, int32 b)
+    static inline int32x8 set_component(int32x8 a, s32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         SET_COMPONENT(a, b, 3, Index);
@@ -1350,7 +1350,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline int32 get_component(int32x8 a)
+    static inline s32 get_component(int32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return GET_COMPONENT(a, 3, Index);
@@ -1364,7 +1364,7 @@ namespace detail {
         return result;
     }
 
-    static inline int32x8 int32x8_set1(int32 s)
+    static inline int32x8 int32x8_set1(s32 s)
     {
         int32x8 result;
         result.lo = int32x4_set1(s);
@@ -1372,7 +1372,7 @@ namespace detail {
         return result;
     }
 
-    static inline int32x8 int32x8_set8(int32 s0, int32 s1, int32 s2, int32 s3, int32 s4, int32 s5, int32 s6, int32 s7)
+    static inline int32x8 int32x8_set8(s32 s0, s32 s1, s32 s2, s32 s3, s32 s4, s32 s5, s32 s6, s32 s7)
     {
         int32x8 result;
         result.lo = int32x4_set4(s0, s1, s2, s3);
@@ -1380,7 +1380,7 @@ namespace detail {
         return result;
     }
 
-    static inline int32x8 int32x8_uload(const int32* source)
+    static inline int32x8 int32x8_uload(const s32* source)
     {
         int32x8 result;
         result.lo = int32x4_uload(source + 0);
@@ -1388,7 +1388,7 @@ namespace detail {
         return result;
     }
 
-    static inline void int32x8_ustore(int32* dest, int32x8 a)
+    static inline void int32x8_ustore(s32* dest, int32x8 a)
     {
         int32x4_ustore(dest + 0, a.lo);
         int32x4_ustore(dest + 4, a.hi);
@@ -1635,7 +1635,7 @@ namespace detail {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int64x4 set_component(int64x4 a, int64 b)
+    static inline int64x4 set_component(int64x4 a, s64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         SET_COMPONENT(a, b, 1, Index);
@@ -1643,7 +1643,7 @@ namespace detail {
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x4 a)
+    static inline s64 get_component(int64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return GET_COMPONENT(a, 1, Index);
@@ -1657,7 +1657,7 @@ namespace detail {
         return result;
     }
 
-    static inline int64x4 int64x4_set1(int64 s)
+    static inline int64x4 int64x4_set1(s64 s)
     {
         int64x4 result;
         result.lo = int64x2_set1(s);
@@ -1665,7 +1665,7 @@ namespace detail {
         return result;
     }
 
-    static inline int64x4 int64x4_set4(int64 x, int64 y, int64 z, int64 w)
+    static inline int64x4 int64x4_set4(s64 x, s64 y, s64 z, s64 w)
     {
         int64x4 result;
         result.lo = int64x2_set2(x, y);
@@ -1809,7 +1809,7 @@ namespace detail {
         return _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(a), _mm256_castsi256_ps(b)));
     }
 
-    static inline uint32 get_mask(mask8x32 a)
+    static inline u32 get_mask(mask8x32 a)
     {
         return _mm256_movemask_ps(_mm256_castsi256_ps(a));
     }
@@ -1848,9 +1848,9 @@ namespace detail {
         return _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(a), _mm256_castsi256_ps(b)));
     }
 
-    static inline uint32 get_mask(mask16x16 a)
+    static inline u32 get_mask(mask16x16 a)
     {
-        uint32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 8);
+        u32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 8);
         return mask;
     }
 
@@ -1888,9 +1888,9 @@ namespace detail {
         return _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(a), _mm256_castsi256_ps(b)));
     }
 
-    static inline uint32 get_mask(mask32x8 a)
+    static inline u32 get_mask(mask32x8 a)
     {
-        uint32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 4);
+        u32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 4);
         return mask;
     }
 
@@ -1928,9 +1928,9 @@ namespace detail {
         return _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(a), _mm256_castsi256_ps(b)));
     }
 
-    static inline uint32 get_mask(mask64x4 a)
+    static inline u32 get_mask(mask64x4 a)
     {
-        uint32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 2);
+        u32 mask = get_mask(detail::get_low(a)) | (get_mask(detail::get_high(a)) << 2);
         return mask;
     }
 

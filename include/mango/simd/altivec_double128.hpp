@@ -13,7 +13,7 @@ namespace simd {
     // float64x2
     // -----------------------------------------------------------------
 
-    template <uint32 X, uint32 Y>
+    template <u32 X, u32 Y>
     static inline float64x2 shuffle(float64x2 v)
     {
         static_assert(X < 2 && Y < 2, "Index out of range.");
@@ -24,7 +24,7 @@ namespace simd {
             y + 0, y + 1, y + 2, y + 3, y + 4, y + 5, y + 6, y + 7 });
     }
 
-    template <uint32 X, uint32 Y>
+    template <u32 X, u32 Y>
     static inline float64x2 shuffle(float64x2 a, float64x2 b)
     {
         static_assert(X < 2 && Y < 2, "Index out of range.");

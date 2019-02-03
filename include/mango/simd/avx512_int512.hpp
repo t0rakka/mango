@@ -27,7 +27,7 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline uint8x64 uint8x64_set1(uint8 s)
+    static inline uint8x64 uint8x64_set1(u8 s)
     {
         return _mm512_set1_epi8(s);
     }
@@ -127,7 +127,7 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline uint16x32 uint16x32_set1(uint16 s)
+    static inline uint16x32 uint16x32_set1(u16 s)
     {
         return _mm512_set1_epi16(s);
     }
@@ -269,23 +269,23 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline uint32x16 uint32x16_set1(uint32 s)
+    static inline uint32x16 uint32x16_set1(u32 s)
     {
         return _mm512_set1_epi32(s);
     }
 
-    static inline uint32x16 uint32x16_set16(uint32 s0, uint32 s1, uint32 s2, uint32 s3, uint32 s4, uint32 s5, uint32 s6, uint32 s7,
-        uint32 s8, uint32 s9, uint32 s10, uint32 s11, uint32 s12, uint32 s13, uint32 s14, uint32 s15)
+    static inline uint32x16 uint32x16_set16(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7,
+        u32 s8, u32 s9, u32 s10, u32 s11, u32 s12, u32 s13, u32 s14, u32 s15)
     {
         return _mm512_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline uint32x16 uint32x16_uload(const uint32* source)
+    static inline uint32x16 uint32x16_uload(const u32* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void uint32x16_ustore(uint32* dest, uint32x16 a)
+    static inline void uint32x16_ustore(u32* dest, uint32x16 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -432,12 +432,12 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline uint64x8 uint64x8_set1(uint64 s)
+    static inline uint64x8 uint64x8_set1(u64 s)
     {
         return _mm512_set1_epi64(s);
     }
 
-    static inline uint64x8 uint64x8_set8(uint64 s0, uint64 s1, uint64 s2, uint64 s3, uint64 s4, uint64 s5, uint64 s6, uint64 s7)
+    static inline uint64x8 uint64x8_set8(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
     {
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }
@@ -527,7 +527,7 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline int8x64 int8x64_set1(int8 s)
+    static inline int8x64 int8x64_set1(s8 s)
     {
         return _mm512_set1_epi8(s);
     }
@@ -637,7 +637,7 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline int16x32 int16x32_set1(int16 s)
+    static inline int16x32 int16x32_set1(s16 s)
     {
         return _mm512_set1_epi16(s);
     }
@@ -789,23 +789,23 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline int32x16 int32x16_set1(int32 s)
+    static inline int32x16 int32x16_set1(s32 s)
     {
         return _mm512_set1_epi32(s);
     }
 
-    static inline int32x16 int32x16_set16(int32 s0, int32 s1, int32 s2, int32 s3, int32 s4, int32 s5, int32 s6, int32 s7,
-        int32 s8, int32 s9, int32 s10, int32 s11, int32 s12, int32 s13, int32 s14, int32 s15)
+    static inline int32x16 int32x16_set16(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
+        s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
     {
-        return _mm512_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
+        return _mm512_setr_epi32(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
     }
 
-    static inline int32x16 int32x16_uload(const int32* source)
+    static inline int32x16 int32x16_uload(const s32* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void int32x16_ustore(int32* dest, int32x16 a)
+    static inline void int32x16_ustore(s32* dest, int32x16 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -962,12 +962,12 @@ namespace simd {
         return _mm512_setzero_si512();
     }
 
-    static inline int64x8 int64x8_set1(int64 s)
+    static inline int64x8 int64x8_set1(s64 s)
     {
         return _mm512_set1_epi64(s);
     }
 
-    static inline int64x8 int64x8_set8(int64 s0, int64 s1, int64 s2, int64 s3, int64 s4, int64 s5, int64 s6, int64 s7)
+    static inline int64x8 int64x8_set8(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
     {
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }
@@ -1071,9 +1071,9 @@ namespace simd {
 
 #endif
 
-    static inline uint64 get_mask(mask8x64 a)
+    static inline u64 get_mask(mask8x64 a)
     {
-        return uint64(a);
+        return u64(a);
     }
 
     static inline bool none_of(mask8x64 a)
@@ -1114,9 +1114,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask16x32 a)
+    static inline u32 get_mask(mask16x32 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask16x32 a)
@@ -1157,9 +1157,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask32x16 a)
+    static inline u32 get_mask(mask32x16 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask32x16 a)
@@ -1200,9 +1200,9 @@ namespace simd {
 
 #endif
 
-    static inline uint32 get_mask(mask64x8 a)
+    static inline u32 get_mask(mask64x8 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask64x8 a)

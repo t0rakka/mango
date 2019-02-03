@@ -571,10 +571,10 @@ namespace detail {
     template <>
     inline int32x4 convert<int32x4>(float64x4 s)
     {
-        int x = int(get_component<0>(s));
-        int y = int(get_component<1>(s));
-        int z = int(get_component<2>(s));
-        int w = int(get_component<3>(s));
+        s32 x = s32(get_component<0>(s));
+        s32 y = s32(get_component<1>(s));
+        s32 z = s32(get_component<2>(s));
+        s32 w = s32(get_component<3>(s));
         return int32x4_set4(x, y, z, w);
     }
 
@@ -601,10 +601,10 @@ namespace detail {
     template <>
     inline uint32x4 convert<uint32x4>(float64x4 d)
     {
-        uint32 x = uint32(get_component<0>(d));
-        uint32 y = uint32(get_component<1>(d));
-        uint32 z = uint32(get_component<2>(d));
-        uint32 w = uint32(get_component<3>(d));
+        u32 x = u32(get_component<0>(d));
+        u32 y = u32(get_component<1>(d));
+        u32 z = u32(get_component<2>(d));
+        u32 w = u32(get_component<3>(d));
         return uint32x4_set4(x, y, z, w);
     }
 
@@ -613,10 +613,10 @@ namespace detail {
     {
         int64x2 lo = __msa_ftrunc_s_d(s.lo);
         int64x2 hi = __msa_ftrunc_s_d(s.hi);
-        int x = int(get_component<0>(lo));
-        int y = int(get_component<1>(lo));
-        int z = int(get_component<0>(hi));
-        int w = int(get_component<1>(hi));
+        s32 x = s32(get_component<0>(lo));
+        s32 y = s32(get_component<1>(lo));
+        s32 z = s32(get_component<0>(hi));
+        s32 w = s32(get_component<1>(hi));
         return int32x4_set4(x, y, z, w);
     }
 

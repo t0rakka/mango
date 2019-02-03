@@ -13,14 +13,14 @@ namespace simd {
     // float64x2
     // -----------------------------------------------------------------
 
-    template <uint32 x, uint32 y>
+    template <u32 x, u32 y>
     static inline float64x2 shuffle(float64x2 v)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         return {{ v[x], v[y] }};
     }
 
-    template <uint32 x, uint32 y>
+    template <u32 x, u32 y>
     static inline float64x2 shuffle(float64x2 a, float64x2 b)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
@@ -259,48 +259,48 @@ namespace simd {
     static inline mask64x2 compare_neq(float64x2 a, float64x2 b)
     {
         mask64x2 v = 0;
-        v.mask |= uint32(a[0] != b[0]) << 0;
-        v.mask |= uint32(a[1] != b[1]) << 1;
+        v.mask |= u32(a[0] != b[0]) << 0;
+        v.mask |= u32(a[1] != b[1]) << 1;
         return v;
     }
 
     static inline mask64x2 compare_eq(float64x2 a, float64x2 b)
     {
         mask64x2 v = 0;
-        v.mask |= uint32(a[0] == b[0]) << 0;
-        v.mask |= uint32(a[1] == b[1]) << 1;
+        v.mask |= u32(a[0] == b[0]) << 0;
+        v.mask |= u32(a[1] == b[1]) << 1;
         return v;
     }
 
     static inline mask64x2 compare_lt(float64x2 a, float64x2 b)
     {
         mask64x2 v = 0;
-        v.mask |= uint32(a[0] < b[0]) << 0;
-        v.mask |= uint32(a[1] < b[1]) << 1;
+        v.mask |= u32(a[0] < b[0]) << 0;
+        v.mask |= u32(a[1] < b[1]) << 1;
         return v;
     }
 
     static inline mask64x2 compare_le(float64x2 a, float64x2 b)
     {
         mask64x2 v = 0;
-        v.mask |= uint32(a[0] <= b[0]) << 0;
-        v.mask |= uint32(a[1] <= b[1]) << 1;
+        v.mask |= u32(a[0] <= b[0]) << 0;
+        v.mask |= u32(a[1] <= b[1]) << 1;
         return v;
     }
 
     static inline mask64x2 compare_gt(float64x2 a, float64x2 b)
     {
         mask64x2 v = 0;
-        v.mask |= uint32(a[0] > b[0]) << 0;
-        v.mask |= uint32(a[1] > b[1]) << 1;
+        v.mask |= u32(a[0] > b[0]) << 0;
+        v.mask |= u32(a[1] > b[1]) << 1;
         return v;
     }
 
     static inline mask64x2 compare_ge(float64x2 a, float64x2 b)
     {
         mask64x2 v = 0;
-        v.mask |= uint32(a[0] >= b[0]) << 0;
-        v.mask |= uint32(a[1] >= b[1]) << 1;
+        v.mask |= u32(a[0] >= b[0]) << 0;
+        v.mask |= u32(a[1] >= b[1]) << 1;
         return v;
     }
 

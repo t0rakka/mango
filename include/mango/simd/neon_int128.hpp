@@ -14,14 +14,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint8x16 set_component(uint8x16 a, uint8 s)
+    static inline uint8x16 set_component(uint8x16 a, u8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return vsetq_lane_u8(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline uint8 get_component(uint8x16 a)
+    static inline u8 get_component(uint8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return vgetq_lane_u8(a, Index);
@@ -32,27 +32,27 @@ namespace simd {
         return vdupq_n_u8(0);
     }
 
-    static inline uint8x16 uint8x16_set1(uint8 s)
+    static inline uint8x16 uint8x16_set1(u8 s)
     {
         return vdupq_n_u8(s);
     }
 
     static inline uint8x16 uint8x16_set16(
-        uint8 s0, uint8 s1, uint8 s2, uint8 s3, uint8 s4, uint8 s5, uint8 s6, uint8 s7,
-        uint8 s8, uint8 s9, uint8 s10, uint8 s11, uint8 s12, uint8 s13, uint8 s14, uint8 s15)
+        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
+        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
         uint8x16_t temp = { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
         return temp;
     }
 
-    static inline uint8x16 uint8x16_load_low(const uint8* source)
+    static inline uint8x16 uint8x16_load_low(const u8* source)
     {
         const uint8x8_t low = vld1_u8(source);
         const uint8x8_t high = vdup_n_u8(0);
         return vcombine_u8(low, high);
     }
 
-    static inline void uint8x16_store_low(uint8* dest, uint8x16 a)
+    static inline void uint8x16_store_low(u8* dest, uint8x16 a)
     {
         vst1_u8(dest, vget_low_u8(a));
     }
@@ -170,14 +170,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x8 set_component(uint16x8 a, uint16 s)
+    static inline uint16x8 set_component(uint16x8 a, u16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return vsetq_lane_u16(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline uint16 get_component(uint16x8 a)
+    static inline u16 get_component(uint16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return vgetq_lane_u16(a, Index);
@@ -188,25 +188,25 @@ namespace simd {
         return vdupq_n_u16(0);
     }
 
-    static inline uint16x8 uint16x8_set1(uint16 s)
+    static inline uint16x8 uint16x8_set1(u16 s)
     {
         return vdupq_n_u16(s);
     }
 
-    static inline uint16x8 uint16x8_set8(uint16 s0, uint16 s1, uint16 s2, uint16 s3, uint16 s4, uint16 s5, uint16 s6, uint16 s7)
+    static inline uint16x8 uint16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         uint16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
     }
 
-    static inline uint16x8 uint16x8_load_low(const uint16* source)
+    static inline uint16x8 uint16x8_load_low(const u16* source)
     {
         const uint16x4_t low = vld1_u16(source);
         const uint16x4_t high = vdup_n_u16(0);
         return vcombine_u16(low, high);
     }
 
-    static inline void uint16x8_store_low(uint16* dest, uint16x8 a)
+    static inline void uint16x8_store_low(u16* dest, uint16x8 a)
     {
         vst1_u16(dest, vget_low_u16(a));
     }
@@ -369,12 +369,12 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline uint32x4 shuffle(uint32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         // TODO: optimize
-        const uint32 *temp = reinterpret_cast<const uint32 *>(&v);
+        const u32 *temp = reinterpret_cast<const u32 *>(&v);
         return (uint32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
 
@@ -388,14 +388,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline uint32x4 set_component(uint32x4 a, uint32 s)
+    static inline uint32x4 set_component(uint32x4 a, u32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vsetq_lane_u32(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline uint32 get_component(uint32x4 a)
+    static inline u32 get_component(uint32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vgetq_lane_u32(a, Index);
@@ -406,24 +406,24 @@ namespace simd {
         return vdupq_n_u32(0);
     }
 
-    static inline uint32x4 uint32x4_set1(uint32 s)
+    static inline uint32x4 uint32x4_set1(u32 s)
     {
         return vdupq_n_u32(s);
     }
 
-    static inline uint32x4 uint32x4_set4(uint32 x, uint32 y, uint32 z, uint32 w)
+    static inline uint32x4 uint32x4_set4(u32 x, u32 y, u32 z, u32 w)
     {
         uint32x4_t temp = { x, y, z, w };
         return temp;
     }
 
-    static inline uint32x4 uint32x4_uload(const uint32* source)
+    static inline uint32x4 uint32x4_uload(const u32* source)
     {
         uint32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline void uint32x4_ustore(uint32* dest, uint32x4 a)
+    static inline void uint32x4_ustore(u32* dest, uint32x4 a)
     {
         dest[0] = vgetq_lane_u32(a, 0);
         dest[1] = vgetq_lane_u32(a, 1);
@@ -431,14 +431,14 @@ namespace simd {
         dest[3] = vgetq_lane_u32(a, 3);
     }
 
-    static inline uint32x4 uint32x4_load_low(const uint32* source)
+    static inline uint32x4 uint32x4_load_low(const u32* source)
     {
         const uint32x2_t low = vld1_u32(source);
         const uint32x2_t high = vdup_n_u32(0);
         return vcombine_u32(low, high);
     }
 
-    static inline void uint32x4_store_low(uint32* dest, uint32x4 a)
+    static inline void uint32x4_store_low(u32* dest, uint32x4 a)
     {
         vst1_u32(dest, vget_low_u32(a));
     }
@@ -619,14 +619,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint64x2 set_component(uint64x2 a, uint64 s)
+    static inline uint64x2 set_component(uint64x2 a, u64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return vsetq_lane_u64(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline uint64 get_component(uint64x2 a)
+    static inline u64 get_component(uint64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return vgetq_lane_u64(a, Index);
@@ -637,12 +637,12 @@ namespace simd {
         return vdupq_n_u64(0);
     }
 
-    static inline uint64x2 uint64x2_set1(uint64 s)
+    static inline uint64x2 uint64x2_set1(u64 s)
     {
         return vdupq_n_u64(s);
     }
 
-    static inline uint64x2 uint64x2_set2(uint64 x, uint64 y)
+    static inline uint64x2 uint64x2_set2(u64 x, u64 y)
     {
         uint64x2_t temp = { x, y };
         return temp;
@@ -729,14 +729,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int8x16 set_component(int8x16 a, int8 s)
+    static inline int8x16 set_component(int8x16 a, s8 s)
     {
         static_assert(Index < 16, "Index out of range.");
         return vsetq_lane_s8(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x16 a)
+    static inline s8 get_component(int8x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return vgetq_lane_s8(a, Index);
@@ -747,27 +747,27 @@ namespace simd {
         return vdupq_n_s8(0);
     }
 
-    static inline int8x16 int8x16_set1(int8 s)
+    static inline int8x16 int8x16_set1(s8 s)
     {
         return vdupq_n_s8(s);
     }
 
     static inline int8x16 int8x16_set16(
-        int8 s0, int8 s1, int8 s2, int8 s3, int8 s4, int8 s5, int8 s6, int8 s7,
-        int8 s8, int8 s9, int8 s10, int8 s11, int8 s12, int8 s13, int8 s14, int8 s15)
+        s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
+        s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
-        int8x16_t temp = { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
+        int8x16_t temp = { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
         return temp;
     }
 
-    static inline int8x16 int8x16_load_low(const int8* source)
+    static inline int8x16 int8x16_load_low(const s8* source)
     {
         const int8x8_t low = vld1_s8(source);
         const int8x8_t high = vdup_n_s8(0);
         return vcombine_s8(low, high);
     }
 
-    static inline void int8x16_store_low(int8* dest, int8x16 a)
+    static inline void int8x16_store_low(s8* dest, int8x16 a)
     {
         vst1_s8(dest, vget_low_s8(a));
     }
@@ -895,14 +895,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int16x8 set_component(int16x8 a, int16 s)
+    static inline int16x8 set_component(int16x8 a, s16 s)
     {
         static_assert(Index < 8, "Index out of range.");
         return vsetq_lane_s16(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline int16 get_component(int16x8 a)
+    static inline s16 get_component(int16x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return vgetq_lane_s16(a, Index);
@@ -913,25 +913,25 @@ namespace simd {
         return vdupq_n_s16(0);
     }
 
-    static inline int16x8 int16x8_set1(int16 s)
+    static inline int16x8 int16x8_set1(s16 s)
     {
         return vdupq_n_s16(s);
     }
 
-    static inline int16x8 int16x8_set8(int16 s0, int16 s1, int16 s2, int16 s3, int16 s4, int16 s5, int16 s6, int16 s7)
+    static inline int16x8 int16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         int16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
     }
 
-    static inline int16x8 int16x8_load_low(const int16* source)
+    static inline int16x8 int16x8_load_low(const s16* source)
     {
         const int16x4_t low = vld1_s16(source);
         const int16x4_t high = vdup_n_s16(0);
         return vcombine_s16(low, high);
     }
 
-    static inline void int16x8_store_low(int16* dest, int16x8 a)
+    static inline void int16x8_store_low(s16* dest, int16x8 a)
     {
         vst1_s16(dest, vget_low_s16(a));
     }
@@ -1106,12 +1106,12 @@ namespace simd {
 
     // shuffle
 
-    template <uint32 x, uint32 y, uint32 z, uint32 w>
+    template <u32 x, u32 y, u32 z, u32 w>
     static inline int32x4 shuffle(int32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
         // TODO: optimize
-        const int32* temp = reinterpret_cast<const int32 *>(&v);
+        const s32* temp = reinterpret_cast<const s32 *>(&v);
         return (int32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
 
@@ -1125,14 +1125,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline int32x4 set_component(int32x4 a, int32 s)
+    static inline int32x4 set_component(int32x4 a, s32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vsetq_lane_s32(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline int32 get_component(int32x4 a)
+    static inline s32 get_component(int32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vgetq_lane_s32(a, Index);
@@ -1170,14 +1170,14 @@ namespace simd {
         dest[3] = vgetq_lane_s32(a, 3);
     }
 
-    static inline int32x4 int32x4_load_low(const int32* source)
+    static inline int32x4 int32x4_load_low(const s32* source)
     {
         const int32x2_t low = vld1_s32(source);
         const int32x2_t high = vdup_n_s32(0);
         return vcombine_s32(low, high);
     }
 
-    static inline void int32x4_store_low(int32* dest, int32x4 a)
+    static inline void int32x4_store_low(s32* dest, int32x4 a)
     {
         vst1_s32(dest, vget_low_s32(a));
     }
@@ -1365,7 +1365,7 @@ namespace simd {
         return vmaxq_s32(a, b);
     }
 
-    static inline uint32 pack(int32x4 s)
+    static inline u32 pack(int32x4 s)
     {
         const uint16x4_t a = vqmovun_s32(s);
         const uint16x8_t b = vcombine_u16(a, a);
@@ -1374,7 +1374,7 @@ namespace simd {
         return vget_lane_u32(d, 0);
     }
 
-    static inline int32x4 unpack(uint32 s)
+    static inline int32x4 unpack(u32 s)
     {
         const uint8x8_t a = vreinterpret_u8_u32(vdup_n_u32(s));
         const uint16x4_t b = vget_low_u16(vmovl_u8(a));
@@ -1386,14 +1386,14 @@ namespace simd {
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int64x2 set_component(int64x2 a, int64 s)
+    static inline int64x2 set_component(int64x2 a, s64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return vsetq_lane_s64(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x2 a)
+    static inline s64 get_component(int64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return vgetq_lane_s64(a, Index);
@@ -1404,12 +1404,12 @@ namespace simd {
         return vdupq_n_s64(0);
     }
 
-    static inline int64x2 int64x2_set1(int64 s)
+    static inline int64x2 int64x2_set1(s64 s)
     {
         return vdupq_n_s64(s);
     }
 
-    static inline int64x2 int64x2_set2(int64 x, int64 y)
+    static inline int64x2 int64x2_set2(s64 x, s64 y)
     {
         int64x2_t temp = { x, y };
         return temp;
@@ -1514,10 +1514,10 @@ namespace simd {
         return veorq_u8(a, b);
     }
 
-    static inline uint32 get_mask(mask8x16 a)
+    static inline u32 get_mask(mask8x16 a)
     {
         // TODO: optimize
-        uint32 mask = 0;
+        u32 mask = 0;
         mask |= vgetq_lane_u8(a, 0x0) & 0x0001;
         mask |= vgetq_lane_u8(a, 0x1) & 0x0002;
         mask |= vgetq_lane_u8(a, 0x2) & 0x0004;
@@ -1594,10 +1594,10 @@ namespace simd {
         return veorq_u16(a, b);
     }
 
-    static inline uint32 get_mask(mask16x8 a)
+    static inline u32 get_mask(mask16x8 a)
     {
         // TODO: optimize
-        uint32 mask = 0;
+        u32 mask = 0;
         mask |= vgetq_lane_u16(a, 0x0) & 0x01;
         mask |= vgetq_lane_u16(a, 0x1) & 0x02;
         mask |= vgetq_lane_u16(a, 0x2) & 0x04;
@@ -1666,7 +1666,7 @@ namespace simd {
         return veorq_u32(a, b);
     }
 
-    static inline uint32 get_mask(mask32x4 a)
+    static inline u32 get_mask(mask32x4 a)
     {
         const uint32x4_t mask = { 1, 2, 4, 8 };
         const uint32x4_t masked = vandq_u32(a, mask);
@@ -1736,10 +1736,10 @@ namespace simd {
         return veorq_u64(a, b);
     }
 
-    static inline uint32 get_mask(mask64x2 a)
+    static inline u32 get_mask(mask64x2 a)
     {
-        uint32 x = uint32(vgetq_lane_u64(a, 0)) & 1;
-        uint32 y = uint32(vgetq_lane_u64(a, 1)) & 2;
+        u32 x = u32(vgetq_lane_u64(a, 0)) & 1;
+        u32 y = u32(vgetq_lane_u64(a, 1)) & 2;
         return x | y;
     }
 
