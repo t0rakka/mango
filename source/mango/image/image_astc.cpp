@@ -70,16 +70,16 @@ namespace
         int depth;
         TextureCompression compression;
 
-        uint32 read24(LittleEndianPointer& p) const
+        u32 read24(LittleEndianPointer& p) const
         {
-            uint32 value = (p[2] << 16) | (p[1] << 8) | p[0];
+            u32 value = (p[2] << 16) | (p[1] << 8) | p[0];
             p += 3;
             return value;
         }
 
         void read(LittleEndianPointer& p)
         {
-            uint32 magic = p.read32();
+            u32 magic = p.read32();
             if (magic != 0x5ca1ab13)
             {
                 MANGO_EXCEPTION(ID"Incorrect header.");

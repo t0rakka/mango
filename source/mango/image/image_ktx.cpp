@@ -164,24 +164,24 @@ glBaseInternalFormat:
 
     struct HeaderKTX
     {
-		uint8 identifier[12];
-		uint32 endianness;
-		uint32 glType;
-		uint32 glTypeSize;
-		uint32 glFormat;
-		uint32 glInternalFormat;
-		uint32 glBaseInternalFormat;
-		uint32 pixelWidth;
-		uint32 pixelHeight;
-		uint32 pixelDepth;
-		uint32 numberOfArrayElements;
-		uint32 numberOfFaces;
-		uint32 numberOfMipmapLevels;
-		uint32 bytesOfKeyValueData;
+		u8 identifier[12];
+		u32 endianness;
+		u32 glType;
+		u32 glTypeSize;
+		u32 glFormat;
+		u32 glInternalFormat;
+		u32 glBaseInternalFormat;
+		u32 pixelWidth;
+		u32 pixelHeight;
+		u32 pixelDepth;
+		u32 numberOfArrayElements;
+		u32 numberOfFaces;
+		u32 numberOfMipmapLevels;
+		u32 bytesOfKeyValueData;
 
 		HeaderKTX(Memory memory)
 		{
-			const uint8 ktxIdentifier[] =
+			const u8 ktxIdentifier[] =
 			{
 				0xab, 0x4b, 0x54, 0x58, 0x20, 0x31,
                 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a
@@ -235,9 +235,9 @@ glBaseInternalFormat:
 		{
 		}
 
-        uint32 read32(const uint8* p) const
+        u32 read32(const u8* p) const
         {
-            uint32 value = uload32(p);
+            u32 value = uload32(p);
             if (endianness != 0x04030201)
             {
                 value = byteswap(value);
@@ -275,7 +275,7 @@ glBaseInternalFormat:
 
 		Memory getMemory(Memory memory, int level, int depth, int face) const
 		{
-			uint8* address = memory.address;
+			u8* address = memory.address;
 			address += sizeof(HeaderKTX) + bytesOfKeyValueData;
 
             const int maxLevel = int(numberOfMipmapLevels);

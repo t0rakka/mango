@@ -121,7 +121,7 @@ namespace opengl {
 			attrib = *contextAttribute;
 		}
 
-		uint32 colorBits = attrib.red + attrib.green + attrib.blue + attrib.alpha;
+		u32 colorBits = attrib.red + attrib.green + attrib.blue + attrib.alpha;
 
 		// Configure pixel format
 		PIXELFORMATDESCRIPTOR pfd;

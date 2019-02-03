@@ -30,16 +30,18 @@ namespace
     using mango::VirtualMemory;
     using mango::filesystem::Indexer;
 
-    typedef unsigned char uint8;
-    typedef unsigned short uint16;
+    using mango::u8;
+    using mango::u16;
+    using mango::u32;
+    using mango::u64;
 
     class VirtualMemoryRAR : public mango::VirtualMemory
     {
     protected:
-        uint8* m_delete_address;
+        u8* m_delete_address;
 
     public:
-        VirtualMemoryRAR(uint8* address, uint8* delete_address, size_t size)
+        VirtualMemoryRAR(u8* address, u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
             m_memory = Memory(address, size);
@@ -51,7 +53,7 @@ namespace
         }
     };
     
-    bool decompress(uint8* output, uint8* input, uint64 unpacked_size, uint64 packed_size, uint8 version)
+    bool decompress(u8* output, u8* input, u64 unpacked_size, u64 packed_size, u8 version)
     {
         ComprDataIO subDataIO;
         subDataIO.Init();
@@ -79,13 +81,13 @@ namespace
     // RAR unicode filename conversion code
     // -----------------------------------------------------------------
 
-    void decodeUnicode(const uint8* name, const uint8* encName, int encSize, wchar_t* unicodeName, int maxDecSize)
+    void decodeUnicode(const u8* name, const u8* encName, int encSize, wchar_t* unicodeName, int maxDecSize)
     {
         int encPos = 0;
         int decPos = 0;
         int flagBits = 0;
-        uint8 flags = 0;
-        uint8 highByte = encName[encPos++];
+        u8 flags = 0;
+        u8 highByte = encName[encPos++];
 
         while (encPos < encSize && decPos < maxDecSize)
         {
@@ -112,7 +114,7 @@ namespace
                     int length = encName[encPos++];
                     if (length & 0x80)
                     {
-                        uint8 correction = encName[encPos++];
+                        u8 correction = encName[encPos++];
                         for (length = (length & 0x7f) + 2; length > 0 && decPos < maxDecSize; length--, decPos++)
                         {
                             unicodeName[decPos] = static_cast<wchar_t>(((name[decPos] + correction) & 0xff) + (highByte << 8));
@@ -159,7 +161,7 @@ namespace
         if (length <= filename_size)
         {
             wchar_t temp[1024];
-            const uint8* u = reinterpret_cast<const uint8*>(buffer);
+            const u8* u = reinterpret_cast<const u8*>(buffer);
             decodeUnicode(u, u + length, filename_size - length, temp, 1024);
             s = mango::u16_toBytes(temp);
         }
@@ -222,21 +224,21 @@ namespace
     struct Header
     {
         // common
-        uint16  crc;
-        uint8   type;
-        uint16  flags;
-        uint16  size;
+        u16  crc;
+        u8   type;
+        u16  flags;
+        u16  size;
 
         // type: FILE_HEAD
-        uint64  packed_size;
-        uint64  unpacked_size;
-        uint32  file_crc;
-        uint8   version;
-        uint8   method;
+        u64  packed_size;
+        u64  unpacked_size;
+        u32  file_crc;
+        u8   version;
+        u8   method;
         std::string filename;
         bool    is_encrypted { false };
 
-        Header(uint8* address)
+        Header(u8* address)
         {
             mango::LittleEndianPointer p = address;
 
@@ -284,13 +286,13 @@ namespace
                     if (flags & LHD_LARGE)
                     {
                         // 64 bit files
-                        uint64 packed_high = p.read32();
-                        uint64 unpacked_high = p.read32();
+                        u64 packed_high = p.read32();
+                        u64 unpacked_high = p.read32();
                         packed_size |= (packed_high << 32);
                         unpacked_size |= (unpacked_high << 32);
                     }
 
-                    const uint8* us = p;
+                    const u8* us = p;
                     const char* s = reinterpret_cast<const char*>(us);
                     p += filename_size;
 
@@ -349,16 +351,16 @@ namespace
 
     struct FileHeader
     {
-        uint64  packed_size;
-        uint64  unpacked_size;
-        uint32  crc;
-        uint8   version;
-        uint8   method;
+        u64  packed_size;
+        u64  unpacked_size;
+        u32  crc;
+        u8   version;
+        u8   method;
         bool    is_rar5;
         std::string filename;
 
         bool folder;
-        uint8* data;
+        u8* data;
 
         bool compressed() const
         {
@@ -381,7 +383,7 @@ namespace
             else
             {
                 size_t size = size_t(unpacked_size);
-                uint8* buffer = new uint8[size];
+                u8* buffer = new u8[size];
 
                 bool status = decompress(buffer, data, unpacked_size, packed_size, version);
                 if (!status)
@@ -417,8 +419,8 @@ namespace filesystem {
         MapperRAR(Memory parent, const std::string& password)
             : m_password(password)
         {
-            uint8* start = parent.address;
-            uint8* end = parent.address + parent.size;
+            u8* start = parent.address;
+            u8* end = parent.address + parent.size;
 
             if (start)
             {
@@ -430,12 +432,12 @@ namespace filesystem {
         {
         }
 
-        void parse(uint8* start, uint8* end)
+        void parse(u8* start, u8* end)
         {
-            uint8* p = start;
+            u8* p = start;
 
-            const uint8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
-            const uint8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
+            const u8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
+            const u8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
 
             if (!std::memcmp(p, rar4_signature, 7))
             {
@@ -467,13 +469,13 @@ namespace filesystem {
             }
         }
 
-        void parse_rar4(uint8* start, uint8* end)
+        void parse_rar4(u8* start, u8* end)
         {
-            uint8* p = start;
+            u8* p = start;
 
             for (; p < end;)
             {
-                uint8* h = p;
+                u8* h = p;
                 Header header(p);
                 p = h + header.size;
 
@@ -525,13 +527,13 @@ namespace filesystem {
             }
         }
 
-        uint64 vint(mango::LittleEndianPointer& p)
+        u64 vint(mango::LittleEndianPointer& p)
         {
-            uint64 value = 0;
+            u64 value = 0;
             int shift = 0;
             for (int i = 0; i < 10; ++i)
             {
-                uint8 sample = *p++;
+                u8 sample = *p++;
                 value |= ((sample & 0x7f) << shift);
                 shift += 7;
                 if ((sample & 0x80) != 0x80)
@@ -542,12 +544,12 @@ namespace filesystem {
 
         void parse_rar5_file_header(mango::LittleEndianPointer p, Memory compressed_data)
         {
-            uint64 flags = vint(p);
-            uint64 unpacked_size = vint(p);
-            uint64 attributes = vint(p);
+            u64 flags = vint(p);
+            u64 unpacked_size = vint(p);
+            u64 attributes = vint(p);
 
-            uint32 mtime = 0;
-            uint32 crc = 0;
+            u32 mtime = 0;
+            u32 crc = 0;
 
             if (flags & 2)
             {
@@ -559,9 +561,9 @@ namespace filesystem {
                 crc = p.read32();
             }
 
-            uint64 compression = vint(p);
-            uint64 host_os = vint(p);
-            uint64 length = vint(p);
+            u64 compression = vint(p);
+            u64 host_os = vint(p);
+            u64 length = vint(p);
 
             MANGO_UNREFERENCED_PARAMETER(attributes);
             MANGO_UNREFERENCED_PARAMETER(mtime);
@@ -570,10 +572,10 @@ namespace filesystem {
             bool is_directory = (flags & 1) != 0;
 
             // compression
-            uint32 algorithm = compression & 0x3f; // 0
+            u32 algorithm = compression & 0x3f; // 0
             bool is_solid = (compression & 0x40) != 0;
-            uint32 method = (compression & 0x380) >> 7; // 0..5
-            //uint32 min_dict_size = (compression & 0x3c00) >> 10;
+            u32 method = (compression & 0x380) >> 7; // 0..5
+            //u32 min_dict_size = (compression & 0x3c00) >> 10;
 
             if (flags & 8)
             {
@@ -594,7 +596,7 @@ namespace filesystem {
             }
 
             // read filename
-            uint8* ptr = p;
+            u8* ptr = p;
             const char* s = reinterpret_cast<const char *>(ptr);
             std::string filename(s, int(length));
 
@@ -622,21 +624,21 @@ namespace filesystem {
             m_files.push_back(file);
         }
 
-        void parse_rar5(uint8* start, uint8* end)
+        void parse_rar5(u8* start, u8* end)
         {
             mango::LittleEndianPointer p = start;
 
             for ( ; p < end;)
             {
-                uint32 crc = p.read32();
-                uint64 header_size = vint(p);
-                uint8* base = p;
+                u32 crc = p.read32();
+                u64 header_size = vint(p);
+                u8* base = p;
 
-                uint32 type = uint32(vint(p));
-                uint32 flags = uint32(vint(p));
+                u32 type = u32(vint(p));
+                u32 flags = u32(vint(p));
 
-                uint64 extra_size = 0;
-                uint64 data_size = 0;
+                u64 extra_size = 0;
+                u64 data_size = 0;
 
                 if (flags & 1)
                 {

@@ -11,7 +11,7 @@ namespace mango
 
     DynamicLibrary::DynamicLibrary(const std::string& filename)
     {
-        uint32 mode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+        u32 mode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
         m_handle = ::LoadLibraryW(u16_fromBytes(filename).c_str());
         ::SetErrorMode(mode);
         if (!m_handle)

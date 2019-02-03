@@ -22,27 +22,27 @@ namespace mango
             BIAS = 1023
         };
 
-        uint64 u;
+        u64 u;
         double f;
         struct
         {
-            uint64 mantissa : MANTISSA;
-            uint64 exponent : EXPONENT;
-            uint64 sign : SIGN;
+            u64 mantissa : MANTISSA;
+            u64 exponent : EXPONENT;
+            u64 sign : SIGN;
         };
 
         Double()
         {
         }
 
-        explicit Double(uint64 sign, uint64 exponent, uint64 mantissa)
+        explicit Double(u64 sign, u64 exponent, u64 mantissa)
             : mantissa(mantissa)
             , exponent(exponent)
             , sign(sign)
         {
         }
 
-        explicit Double(uint64 bits)
+        explicit Double(u64 bits)
             : u(bits)
         {
         }
@@ -78,27 +78,27 @@ namespace mango
             BIAS = 127
         };
 
-        uint32 u;
+        u32 u;
         float f;
         struct
         {
-            uint32 mantissa : MANTISSA;
-            uint32 exponent : EXPONENT;
-            uint32 sign : SIGN;
+            u32 mantissa : MANTISSA;
+            u32 exponent : EXPONENT;
+            u32 sign : SIGN;
         };
 
         Float()
         {
         }
 
-        explicit Float(uint32 sign, uint32 exponent, uint32 mantissa)
+        explicit Float(u32 sign, u32 exponent, u32 mantissa)
             : mantissa(mantissa)
             , exponent(exponent)
             , sign(sign)
         {
         }
 
-        explicit Float(uint32 bits)
+        explicit Float(u32 bits)
             : u(bits)
         {
         }
@@ -125,12 +125,12 @@ namespace mango
     };
 
     template <int SIGN, int EXPONENT, int MANTISSA>
-    uint32 packFloat(const Float& value)
+    u32 packFloat(const Float& value)
     {
         const Float infty(0, (1 << EXPONENT) - 1, 0);
         const Float magic(0, (1 << (EXPONENT - 1)) - 1, 0);
 
-        uint32 result = 0;
+        u32 result = 0;
 
         Float temp(value);
         temp.sign = 0;
@@ -162,8 +162,8 @@ namespace mango
         return result;
     }
 
-    template <uint32 SIGN, uint32 EXPONENT, uint32 MANTISSA>
-    Float unpackFloat(uint32 sign, uint32 exponent, uint32 mantissa)
+    template <u32 SIGN, u32 EXPONENT, u32 MANTISSA>
+    Float unpackFloat(u32 sign, u32 exponent, u32 mantissa)
     {
         const int bias = (1 << (EXPONENT - 1)) - 1;
         const Float magic(0, Float::BIAS - 1, 0);
@@ -206,26 +206,26 @@ namespace mango
             BIAS = 15
         };
 
-        uint16 u;
+        u16 u;
         struct
         {
-            uint16 mantissa : MANTISSA;
-            uint16 exponent : EXPONENT;
-            uint16 sign : SIGN;
+            u16 mantissa : MANTISSA;
+            u16 exponent : EXPONENT;
+            u16 sign : SIGN;
         };
 
         Half()
         {
         }
 
-        explicit Half(uint16 sign, uint16 exponent, uint16 mantissa)
+        explicit Half(u16 sign, u16 exponent, u16 mantissa)
             : mantissa(mantissa)
             , exponent(exponent)
             , sign(sign)
         {
         }
 
-        explicit Half(uint16 bits)
+        explicit Half(u16 bits)
             : u(bits)
         {
         }
@@ -241,7 +241,7 @@ namespace mango
 
         Half& operator = (float s)
         {
-            u = uint16(packFloat<SIGN, EXPONENT, MANTISSA>(s));
+            u = u16(packFloat<SIGN, EXPONENT, MANTISSA>(s));
             return *this;
         }
 
@@ -264,18 +264,18 @@ namespace mango
         return float(h);
     }
 
-    static inline double u32_to_f64(uint32 i)
+    static inline double u32_to_f64(u32 i)
     {
         const double bias = (1ll << 52) * 1.5;
-        Double x(uint64(0x4338000000000000UL | i));
+        Double x(u64(0x4338000000000000UL | i));
         return x.f - bias;
     }
 
-    static inline uint32 f64_to_u32(double d)
+    static inline u32 f64_to_u32(double d)
     {
         const double bias = (1ll << 52) * 1.5;
         Double x = d + bias;
-        return uint32(x.u);
+        return u32(x.u);
     }
 
     // floating-point types

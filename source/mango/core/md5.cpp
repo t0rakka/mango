@@ -19,12 +19,12 @@ namespace {
 #define ROUND2(a, b, c, d, k, s, t)  ROUND_TAIL(a, b, b ^ c ^ d        , k, s, t);
 #define ROUND3(a, b, c, d, k, s, t)  ROUND_TAIL(a, b, c ^ (b | ~d)     , k, s, t);
 
-    void md5_update(uint32 state[4], const uint32 block[16])
+    void md5_update(u32 state[4], const u32 block[16])
     {
-        uint32 a = state[0];
-        uint32 b = state[1];
-        uint32 c = state[2];
-        uint32 d = state[3];
+        u32 a = state[0];
+        u32 b = state[1];
+        u32 c = state[2];
+        u32 d = state[3];
         ROUND0(a, b, c, d,  0,  7, 0xD76AA478);
         ROUND0(d, a, b, c,  1, 12, 0xE8C7B756);
         ROUND0(c, d, a, b,  2, 17, 0x242070DB);
@@ -104,24 +104,24 @@ namespace {
 
 namespace mango {
 
-    void md5(uint32 hash[4], Memory memory)
+    void md5(u32 hash[4], Memory memory)
     {
         hash[0] = 0x67452301;
         hash[1] = 0xEFCDAB89;
         hash[2] = 0x98BADCFE;
         hash[3] = 0x10325476;
 
-        const uint32 size = uint32(memory.size);
-        uint32 i = 0;
+        const u32 size = u32(memory.size);
+        u32 i = 0;
         for ( ; size - i >= 64; i += 64)
         {
-            md5_update(hash, reinterpret_cast<const uint32 *>(memory.address + i));
+            md5_update(hash, reinterpret_cast<const u32 *>(memory.address + i));
         }
 
-        uint32 block[16];
-        uint8* byteBlock = reinterpret_cast<uint8 *>(block);
+        u32 block[16];
+        u8* byteBlock = reinterpret_cast<u8 *>(block);
 
-        uint32 remain = size - i;
+        u32 remain = size - i;
         memcpy(byteBlock, memory.address + i, remain);
 
         byteBlock[remain++] = 0x80;

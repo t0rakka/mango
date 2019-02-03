@@ -556,7 +556,7 @@ namespace jpeg
                 int lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
                 for (int ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--)
                 {
-                    lookupSize[lookbits] = uint8(l);
+                    lookupSize[lookbits] = u8(l);
                     lookupValue[lookbits] = value[p];
                     lookbits++;
                 }

@@ -18,20 +18,20 @@ namespace
             BIAS = 15
         };
 
-        uint32 u;
+        u32 u;
         struct
         {
-            uint32 Red : MANTISSA;
-            uint32 Green : MANTISSA;
-            uint32 Blue : MANTISSA;
-            uint32 Exponent : EXPONENT;
+            u32 Red : MANTISSA;
+            u32 Green : MANTISSA;
+            u32 Blue : MANTISSA;
+            u32 Exponent : EXPONENT;
         };
 
         RGB9E5()
         {
         }
 
-        explicit RGB9E5(uint32 exponent, uint32 red, uint32 green, uint32 blue)
+        explicit RGB9E5(u32 exponent, u32 red, u32 green, u32 blue)
             : Red(red)
             , Green(green)
             , Blue(blue)
@@ -39,7 +39,7 @@ namespace
         {
         }
 
-        explicit RGB9E5(uint32 bits)
+        explicit RGB9E5(u32 bits)
             : u(bits)
         {
         }
@@ -49,7 +49,7 @@ namespace
         }
     };
 
-    inline uint32 pack_yrgb(int y, int r, int g, int b)
+    inline u32 pack_yrgb(int y, int r, int g, int b)
     {
         r = byteclamp((y + r) >> 8);
         g = byteclamp((y + g) >> 8);
@@ -62,7 +62,7 @@ namespace
 namespace mango
 {
 
-    void decode_block_uyvy(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_uyvy(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
@@ -76,12 +76,12 @@ namespace mango
         int g = u * -100 + v * -208;
         int b = u * 516;
 
-        uint32* dest = reinterpret_cast<uint32*>(output);
+        u32* dest = reinterpret_cast<u32*>(output);
         dest[0] = pack_yrgb(y0, r, g, b);
         dest[1] = pack_yrgb(y1, r, g, b);
     }
 
-    void decode_block_yuy2(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_yuy2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
@@ -95,12 +95,12 @@ namespace mango
         int g = u * -100 + v * -208;
         int b = u * 516;
 
-        uint32* dest = reinterpret_cast<uint32*>(output);
+        u32* dest = reinterpret_cast<u32*>(output);
         dest[0] = pack_yrgb(y0, r, g, b);
         dest[1] = pack_yrgb(y1, r, g, b);
     }
 
-    void decode_block_grgb8(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_grgb8(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
@@ -116,7 +116,7 @@ namespace mango
         output[7] = 0xff;
     }
 
-    void decode_block_rgbg8(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_rgbg8(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
@@ -132,12 +132,12 @@ namespace mango
         output[7] = 0xff;
     }
 
-    void decode_block_rgb9e5(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_rgb9e5(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
 
-        uint32 data = uload32le(input);
+        u32 data = uload32le(input);
         RGB9E5 sample(data);
 
         const int exponent = sample.Exponent - (RGB9E5::BIAS + RGB9E5::MANTISSA);
@@ -151,32 +151,32 @@ namespace mango
     }
 
     /*
-    void encode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void encode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         const float* source = reinterpret_cast<const float*>(input);
-        uint32* dest = reinterpret_cast<uint32*>(output);
+        u32* dest = reinterpret_cast<u32*>(output);
 
-        const uint32 red   = packFloat<0, 5, 6>(source[0]);
-        const uint32 green = packFloat<0, 5, 6>(source[1]);
-        const uint32 blue  = packFloat<0, 5, 5>(source[2]);
+        const u32 red   = packFloat<0, 5, 6>(source[0]);
+        const u32 green = packFloat<0, 5, 6>(source[1]);
+        const u32 blue  = packFloat<0, 5, 5>(source[2]);
         dest[0] = (blue << 22) | (green << 11) | red;
     }
     */
 
-    void decode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
 
-        uint32 data = uload32le(input);
+        u32 data = uload32le(input);
 
         // extract components
-        const uint32 red_mantissa = (data >> 0) & 0x3f;
-        const uint32 red_exponent = (data >> 6) & 0x1f;
-        const uint32 green_mantissa = (data >> 11) & 0x3f;
-        const uint32 green_exponent = (data >> 17) & 0x1f;
-        const uint32 blue_mantissa = (data >> 22) & 0x1f;
-        const uint32 blue_exponent = (data >> 27) & 0x1f;
+        const u32 red_mantissa = (data >> 0) & 0x3f;
+        const u32 red_exponent = (data >> 6) & 0x1f;
+        const u32 green_mantissa = (data >> 11) & 0x3f;
+        const u32 green_exponent = (data >> 17) & 0x1f;
+        const u32 blue_mantissa = (data >> 22) & 0x1f;
+        const u32 blue_exponent = (data >> 27) & 0x1f;
 
         float* dest = reinterpret_cast<float*>(output);
         dest[0] = unpackFloat<0, 5, 6>(0, red_exponent, red_mantissa);
@@ -185,20 +185,20 @@ namespace mango
         dest[3] = 1.0f;
     }
 
-    void decode_block_r10f_g11f_b11f(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride)
+    void decode_block_r10f_g11f_b11f(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED_PARAMETER(info);
         MANGO_UNREFERENCED_PARAMETER(stride);
 
-        uint32 data = uload32le(input);
+        u32 data = uload32le(input);
 
         // extract components
-        const uint32 red_mantissa = (data >> 0) & 0x1f;
-        const uint32 red_exponent = (data >> 5) & 0x1f;
-        const uint32 green_mantissa = (data >> 10) & 0x3f;
-        const uint32 green_exponent = (data >> 16) & 0x1f;
-        const uint32 blue_mantissa = (data >> 21) & 0x3f;
-        const uint32 blue_exponent = (data >> 27) & 0x1f;
+        const u32 red_mantissa = (data >> 0) & 0x1f;
+        const u32 red_exponent = (data >> 5) & 0x1f;
+        const u32 green_mantissa = (data >> 10) & 0x3f;
+        const u32 green_exponent = (data >> 16) & 0x1f;
+        const u32 blue_mantissa = (data >> 21) & 0x3f;
+        const u32 blue_exponent = (data >> 27) & 0x1f;
 
         float* dest = reinterpret_cast<float*>(output);
         dest[0] = unpackFloat<0, 5, 5>(0, red_exponent, red_mantissa);

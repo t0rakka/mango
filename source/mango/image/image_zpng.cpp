@@ -22,8 +22,8 @@ namespace
         uint16le magic;
         uint16le width;
         uint16le height;
-        uint8 channels;
-        uint8 bytes_per_channel;
+        u8 channels;
+        u8 bytes_per_channel;
     };
 
     Format resolve_format(int channels, int bytes_per_channel)

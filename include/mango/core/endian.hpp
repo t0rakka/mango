@@ -300,44 +300,44 @@ namespace mango
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    using int16le = detail::TypeCopy<int16>;
-    using int32le = detail::TypeCopy<int32>;
-    using int64le = detail::TypeCopy<int64>;
-    using uint16le = detail::TypeCopy<uint16>;
-    using uint32le = detail::TypeCopy<uint32>;
-    using uint64le = detail::TypeCopy<uint64>;
+    using int16le = detail::TypeCopy<s16>;
+    using int32le = detail::TypeCopy<s32>;
+    using int64le = detail::TypeCopy<s64>;
+    using uint16le = detail::TypeCopy<u16>;
+    using uint32le = detail::TypeCopy<u32>;
+    using uint64le = detail::TypeCopy<u64>;
     using float16le = detail::TypeCopy<float16>;
     using float32le = detail::TypeCopy<float32>;
     using float64le = detail::TypeCopy<float64>;
 
-    using int16be = detail::TypeSwap<int16>;
-    using int32be = detail::TypeSwap<int32>;
-    using int64be = detail::TypeSwap<int64>;
-    using uint16be = detail::TypeSwap<uint16>;
-    using uint32be = detail::TypeSwap<uint32>;
-    using uint64be = detail::TypeSwap<uint64>;
+    using int16be = detail::TypeSwap<s16>;
+    using int32be = detail::TypeSwap<s32>;
+    using int64be = detail::TypeSwap<s64>;
+    using uint16be = detail::TypeSwap<u16>;
+    using uint32be = detail::TypeSwap<u32>;
+    using uint64be = detail::TypeSwap<u64>;
     using float16be = detail::TypeSwap<float16>;
     using float32be = detail::TypeSwap<float32>;
     using float64be = detail::TypeSwap<float64>;
 
 #else
 
-    using int16le = detail::TypeSwap<int16>;
-    using int32le = detail::TypeSwap<int32>;
-    using int64le = detail::TypeSwap<int64>;
-    using uint16le = detail::TypeSwap<uint16>;
-    using uint32le = detail::TypeSwap<uint32>;
-    using uint64le = detail::TypeSwap<uint64>;
+    using int16le = detail::TypeSwap<s16>;
+    using int32le = detail::TypeSwap<s32>;
+    using int64le = detail::TypeSwap<s64>;
+    using uint16le = detail::TypeSwap<u16>;
+    using uint32le = detail::TypeSwap<u32>;
+    using uint64le = detail::TypeSwap<u64>;
     using float16le = detail::TypeSwap<float16>;
     using float32le = detail::TypeSwap<float32>;
     using float64le = detail::TypeSwap<float64>;
 
-    using int16be = detail::TypeCopy<int16>;
-    using int32be = detail::TypeCopy<int32>;
-    using int64be = detail::TypeCopy<int64>;
-    using uint16be = detail::TypeCopy<uint16>;
-    using uint32be = detail::TypeCopy<uint32>;
-    using uint64be = detail::TypeCopy<uint64>;
+    using int16be = detail::TypeCopy<s16>;
+    using int32be = detail::TypeCopy<s32>;
+    using int64be = detail::TypeCopy<s64>;
+    using uint16be = detail::TypeCopy<u16>;
+    using uint32be = detail::TypeCopy<u32>;
+    using uint64be = detail::TypeCopy<u64>;
     using float16be = detail::TypeCopy<float16>;
     using float32be = detail::TypeCopy<float32>;
     using float64be = detail::TypeCopy<float64>;

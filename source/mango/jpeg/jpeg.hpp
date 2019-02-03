@@ -54,10 +54,10 @@ namespace jpeg
     // typedefs
     // ----------------------------------------------------------------------------
 
-    using mango::uint8;
-    using mango::uint16;
-    using mango::uint32;
-    using mango::uint64;
+    using mango::u8;
+    using mango::u16;
+    using mango::u32;
+    using mango::u64;
     using mango::Memory;
     using mango::Format;
     using mango::Surface;
@@ -68,12 +68,12 @@ namespace jpeg
 
 #ifdef MANGO_CPU_64BIT
 
-    using DataType = uint64;
+    using DataType = u64;
     #define JPEG_REGISTER_SIZE 64
 
 #else
 
-    using DataType = uint32;
+    using DataType = u32;
     #define JPEG_REGISTER_SIZE 32
 
 #endif
@@ -99,7 +99,7 @@ namespace jpeg
 
     struct QuantTable
     {
-        uint16* table;  // Quantization table
+        u16* table;  // Quantization table
         int     bits;   // Quantization table precision (8 or 16 bits)
     };
 
@@ -107,8 +107,8 @@ namespace jpeg
 
     struct HuffTable
     {
-        uint8   size[17];
-        uint8   value[256];
+        u8   size[17];
+        u8   value[256];
 
         int     maxcode[18];
         int     valoffset[18+1];
@@ -121,14 +121,14 @@ namespace jpeg
 
     struct HuffTable
     {
-        uint8       size[17];
-        uint8       value[256];
+        u8       size[17];
+        u8       value[256];
 
         // acceleration tables
         DataType    maxcode[18];
-        uint8*      valueAddress[19];
-        uint8       lookupSize[JPEG_HUFF_LOOKUP_SIZE];
-        uint8       lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+        u8*      valueAddress[19];
+        u8       lookupSize[JPEG_HUFF_LOOKUP_SIZE];
+        u8       lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
         void configure();
     };
@@ -137,9 +137,9 @@ namespace jpeg
 
     struct jpegBuffer
     {
-        uint8* ptr;
-        uint8* end;
-        uint8* nextFF;
+        u8* ptr;
+        u8* end;
+        u8* nextFF;
 
         DataType data;
         int remain;
@@ -208,20 +208,20 @@ namespace jpeg
 
     struct Arithmetic
     {
-        uint32 c;
-        uint32 a;
+        u32 c;
+        u32 a;
         int ct;
 
         int last_dc_value[JPEG_MAX_COMPS_IN_SCAN]; // Last DC coef for each component
         int dc_context[JPEG_MAX_COMPS_IN_SCAN]; // Context index for DC conditioning
 
-        uint8 dc_L[JPEG_NUM_ARITH_TBLS]; // L values for DC arith-coding tables
-        uint8 dc_U[JPEG_NUM_ARITH_TBLS]; // U values for DC arith-coding tables
-        uint8 ac_K[JPEG_NUM_ARITH_TBLS]; // K values for AC arith-coding tables
+        u8 dc_L[JPEG_NUM_ARITH_TBLS]; // L values for DC arith-coding tables
+        u8 dc_U[JPEG_NUM_ARITH_TBLS]; // U values for DC arith-coding tables
+        u8 ac_K[JPEG_NUM_ARITH_TBLS]; // K values for AC arith-coding tables
 
-        uint8 dc_stats[JPEG_NUM_ARITH_TBLS][JPEG_DC_STAT_BINS];
-        uint8 ac_stats[JPEG_NUM_ARITH_TBLS][JPEG_AC_STAT_BINS];
-        uint8 fixed_bin[4]; // Statistics bin for coding with fixed probability 0.5
+        u8 dc_stats[JPEG_NUM_ARITH_TBLS][JPEG_DC_STAT_BINS];
+        u8 ac_stats[JPEG_NUM_ARITH_TBLS][JPEG_AC_STAT_BINS];
+        u8 fixed_bin[4]; // Statistics bin for coding with fixed probability 0.5
 
         Arithmetic();
         ~Arithmetic();
@@ -279,7 +279,7 @@ namespace jpeg
 
     struct Block
     {
-        uint16* qt;
+        u16* qt;
     };
 
     struct ProcessState
@@ -291,17 +291,17 @@ namespace jpeg
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
 
-	    void (*idct)(uint8* dest, const BlockType* data, const uint16* qt);
-        void (*process)(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*clipped)(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+	    void (*idct)(u8* dest, const BlockType* data, const u16* qt);
+        void (*process)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*clipped)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
-        void (*process_Y          )(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr      )(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_CMYK       )(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_8x8  )(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_8x16 )(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_16x8 )(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_16x16)(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_Y          )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr      )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_CMYK       )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_8x8  )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_8x16 )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_16x8 )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_16x16)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     };
 
     // ----------------------------------------------------------------------------
@@ -314,7 +314,7 @@ namespace jpeg
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
         HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
-        AlignedVector<uint16> quantTableVector;
+        AlignedVector<u16> quantTableVector;
         BlockType* blockVector;
 
         std::vector< Frame > frames;
@@ -351,26 +351,26 @@ namespace jpeg
 
         bool isJPEG(Memory memory) const;
 
-        uint8* stepMarker(uint8* p) const;
-        uint8* seekMarker(uint8* p, uint8* end) const;
+        u8* stepMarker(u8* p) const;
+        u8* seekMarker(u8* p, u8* end) const;
 
         void processSOI();
         void processEOI();
-        void processCOM(uint8* p);
-        void processTEM(uint8* p);
-        void processRES(uint8* p);
-        void processJPG(uint8* p);
-        void processJPG(uint8* p, uint16 marker);
-        void processAPP(uint8* p, uint16 marker);
-        void processSOF(uint8* p, uint16 marker);
-        uint8* processSOS(uint8* p, uint8* end);
-        void processDQT(uint8* p);
-        void processDNL(uint8* p);
-        void processDRI(uint8* p);
-        void processDHT(uint8* p);
-        void processDAC(uint8* p);
-        void processDHP(uint8* p);
-        void processEXP(uint8* p);
+        void processCOM(u8* p);
+        void processTEM(u8* p);
+        void processRES(u8* p);
+        void processJPG(u8* p);
+        void processJPG(u8* p, u16 marker);
+        void processAPP(u8* p, u16 marker);
+        void processSOF(u8* p, u16 marker);
+        u8* processSOS(u8* p, u8* end);
+        void processDQT(u8* p);
+        void processDNL(u8* p);
+        void processDRI(u8* p);
+        void processDHT(u8* p);
+        void processDAC(u8* p);
+        void processDHP(u8* p);
+        void processEXP(u8* p);
 
         void parse(Memory memory, bool decode);
 
@@ -403,7 +403,7 @@ namespace jpeg
     // functions
     // ----------------------------------------------------------------------------
 
-    typedef void (*ProcessFunc)(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    typedef void (*ProcessFunc)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
     void huff_decode_mcu_lossless   (BlockType* output, DecodeState* state);
     void huff_decode_mcu            (BlockType* output, DecodeState* state);
@@ -421,25 +421,25 @@ namespace jpeg
     void arith_decode_ac_refine     (BlockType* output, DecodeState* state);
 #endif
 
-    void idct                       (uint8* dest, const BlockType* data, const uint16* qt);
-    void process_Y                  (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr              (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_CMYK               (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x8          (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16         (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8         (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16        (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void idct                       (u8* dest, const BlockType* data, const u16* qt);
+    void process_Y                  (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr              (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_CMYK               (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x8          (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16         (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8         (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16        (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 
 #if defined(JPEG_ENABLE_SIMD)
-    void idct_simd                  (uint8* dest, const BlockType* data, const uint16* qt);
+    void idct_simd                  (u8* dest, const BlockType* data, const u16* qt);
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
-    void idct_sse2                  (uint8* dest, const BlockType* data, const uint16* qt);
-    void process_YCbCr_8x8_sse2     (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16_sse2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8_sse2    (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16_sse2   (uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void idct_sse2                  (u8* dest, const BlockType* data, const u16* qt);
+    void process_YCbCr_8x8_sse2     (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16_sse2    (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8_sse2    (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16_sse2   (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 #endif
 
 	void EncodeImage(Stream& stream, const Surface& surface, float quality);

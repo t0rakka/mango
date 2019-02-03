@@ -629,7 +629,7 @@ namespace
                 {
                     for (int j = 0; j < 16 * 3; ++j)
                     {
-                        uint16 palette_color = p.read16();
+                        u16 palette_color = p.read16();
                         int index = (i * 16 * 3) + j;
 
                         if (p > end)
@@ -652,7 +652,7 @@ namespace
 
                 for (int x = 0; x < width; ++x)
                 {
-                    uint8 palette_index = bitmap[y * width + x];
+                    u8 palette_index = bitmap[y * width + x];
                     palette_index = find_spectrum_palette_index(x, palette_index);
 
                     int index = (y - 1) * 16 * 3 + palette_index;
@@ -937,9 +937,9 @@ namespace
 
             if (compressed)
             {
-                const uint8 escape_char = p.read8();
-                const uint8 initial_value = p.read8();
-                const uint16 offset = p.read16() & 0x7fff;
+                const u8 escape_char = p.read8();
+                const u8 initial_value = p.read8();
+                const u16 offset = p.read16() & 0x7fff;
 
                 temp = std::vector<u8>(32000, initial_value);
 			    ca_decompress(temp.data(), p, 32000, escape_char, offset);

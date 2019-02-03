@@ -44,7 +44,7 @@ namespace
 		void* m_address;
 
     public:
-        FileMemory(const std::string& filename, uint64 _offset, uint64 _size)
+        FileMemory(const std::string& filename, u64 _offset, u64 _size)
             : m_file(-1)
             , m_size(0)
             , m_address(nullptr)
@@ -90,7 +90,7 @@ namespace
                         }
 
                         m_memory.size = m_size;
-                        m_memory.address = reinterpret_cast<uint8*>(m_address) + (file_offset - page_offset);
+                        m_memory.address = reinterpret_cast<u8*>(m_address) + (file_offset - page_offset);
                     }
                     else
                     {

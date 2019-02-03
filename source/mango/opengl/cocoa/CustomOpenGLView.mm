@@ -8,7 +8,7 @@ namespace
 {
     using namespace mango;
 
-    Keycode computeKeyCode(uint32 code)
+    Keycode computeKeyCode(u32 code)
     {
         static const Keycode table[] =
         {
@@ -161,9 +161,9 @@ namespace
         return table[code];
     }
 
-    uint32 computeKeyMask(NSUInteger flags)
+    u32 computeKeyMask(NSUInteger flags)
     {
-        uint32 mask = 0;
+        u32 mask = 0;
         if (flags & NSEventModifierFlagControl)    mask |= KEYMASK_CTRL;
         if (flags & NSEventModifierFlagShift)      mask |= KEYMASK_SHIFT;
         if (flags & NSEventModifierFlagCommand)    mask |= KEYMASK_SUPER;
@@ -269,7 +269,7 @@ namespace
 {
     if (event.isARepeat != YES)
     {
-        uint32 mask = computeKeyMask(event.modifierFlags);
+        u32 mask = computeKeyMask(event.modifierFlags);
         Keycode code = computeKeyCode(event.keyCode);
         context->onKeyPress(code, mask);
 
@@ -292,7 +292,7 @@ namespace
     /*
     NSUInteger newModifiers = [event modifierFlags] & NSDeviceIndependentModifierFlagsMask;
     bool press = (newModifiers > window->modifiers);
-    window->modifiers = (uint32)newModifiers;
+    window->modifiers = (u32)newModifiers;
 
     if (press)
     {
@@ -454,7 +454,7 @@ namespace
             }
             else
             {
-                uint64 size = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize];
+                u64 size = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize];
                 dropped.emplace(s, size, 0);
             }
         }

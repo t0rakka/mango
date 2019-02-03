@@ -84,17 +84,17 @@ namespace
 
     struct LocalFileHeader
     {
-        uint32  signature;         // 0x04034b50 ("PK..")
-        uint16  versionNeeded;     // version needed to extract
-        uint16  flags;             //
-        uint16  compression;       // compression method
-        uint16  lastModTime;       // last mod file time
-        uint16  lastModDate;       // last mod file date
-        uint32  crc;               //
-        uint64  compressedSize;    //
-        uint64  uncompressedSize;  //
-        uint16  filenameLen;       // length of the filename field following this structure
-        uint16  extraFieldLen;     // length of the extra field following the filename field
+        u32  signature;         // 0x04034b50 ("PK..")
+        u16  versionNeeded;     // version needed to extract
+        u16  flags;             //
+        u16  compression;       // compression method
+        u16  lastModTime;       // last mod file time
+        u16  lastModDate;       // last mod file date
+        u32  crc;               //
+        u64  compressedSize;    //
+        u64  uncompressedSize;  //
+        u16  filenameLen;       // length of the filename field following this structure
+        u16  extraFieldLen;     // length of the extra field following the filename field
 
         LocalFileHeader(LittleEndianPointer p)
         {
@@ -115,14 +115,14 @@ namespace
                 p += filenameLen;
 
                 // read extra fields
-                uint8* ext = p;
-                uint8* end = p + extraFieldLen;
+                u8* ext = p;
+                u8* end = p + extraFieldLen;
                 for ( ; ext < end;)
                 {
                     LittleEndianPointer e = ext;
-                    uint16 magic = e.read16();
-                    uint16 size = e.read16();
-                    uint8* next = e + size;
+                    u16 magic = e.read16();
+                    u16 size = e.read16();
+                    u8* next = e + size;
                     switch (magic)
                     {
                         case 0x0001:
@@ -158,23 +158,23 @@ namespace
 
 	struct FileHeader
 	{
-		uint32	signature;         // 0x02014b50
-		uint16	versionUsed;       //
-		uint16	versionNeeded;     //
-		uint16	flags;             //
-		uint16	compression;       // compression method
-		uint16	lastModTime;       //
-		uint16	lastModDate;       //
-		uint32	crc;               //
-		uint64	compressedSize;    // ZIP64: 0xffffffff
-		uint64	uncompressedSize;  // ZIP64: 0xffffffff
-		uint16	filenameLen;       // length of the filename field following this structure
-		uint16	extraFieldLen;     // length of the extra field following the filename field
-		uint16	commentLen;        // length of the file comment field following the extra field
-		uint16	diskStart;         // the number of the disk on which this file begins, ZIP64: 0xffff
-		uint16	internal;          // internal file attributes
-		uint32	external;          // external file attributes
-		uint64	localOffset;       // relative offset of the local file header, ZIP64: 0xffffffff
+		u32	signature;         // 0x02014b50
+		u16	versionUsed;       //
+		u16	versionNeeded;     //
+		u16	flags;             //
+		u16	compression;       // compression method
+		u16	lastModTime;       //
+		u16	lastModDate;       //
+		u32	crc;               //
+		u64	compressedSize;    // ZIP64: 0xffffffff
+		u64	uncompressedSize;  // ZIP64: 0xffffffff
+		u16	filenameLen;       // length of the filename field following this structure
+		u16	extraFieldLen;     // length of the extra field following the filename field
+		u16	commentLen;        // length of the file comment field following the extra field
+		u16	diskStart;         // the number of the disk on which this file begins, ZIP64: 0xffff
+		u16	internal;          // internal file attributes
+		u32	external;          // external file attributes
+		u64	localOffset;       // relative offset of the local file header, ZIP64: 0xffffffff
 
         std::string filename;      // filename is stored after the header
         bool        is_folder;     // if the last character of filename is "/", it is a folder
@@ -206,7 +206,7 @@ namespace
             localOffset      = p.read32();
 
             // read filename
-            uint8* us = p;
+            u8* us = p;
             const char* s = reinterpret_cast<const char*>(us);
             p += filenameLen;
 
@@ -223,14 +223,14 @@ namespace
             encryption = flags & 1 ? ENCRYPTION_CLASSIC : ENCRYPTION_NONE;
 
             // read extra fields
-            uint8* ext = p;
-            uint8* end = p + extraFieldLen;
+            u8* ext = p;
+            u8* end = p + extraFieldLen;
             for ( ; ext < end;)
             {
                 LittleEndianPointer e = ext;
-                uint16 magic = e.read16();
-                uint16 size = e.read16();
-                uint8* next = e + size;
+                u16 magic = e.read16();
+                u16 size = e.read16();
+                u8* next = e + size;
                 switch (magic)
                 {
                     case 0x0001:
@@ -299,14 +299,14 @@ namespace
 
 	struct DirEndRecord
 	{
-		uint32	signature;         // 0x06054b50
-		uint16	thisDisk;          // number of this disk
-		uint16	dirStartDisk;      // number of the disk containing the start of the central directory
-		uint64	numEntriesOnDisk;  // # of entries in the central directory on this disk
-		uint64	numEntriesTotal;   // total # of entries in the central directory
-		uint64	dirSize;           // size of the central directory
-		uint64	dirStartOffset;    // offset of the start of central directory on the disk
-		uint16	commentLen;        // zip file comment length
+		u32	signature;         // 0x06054b50
+		u16	thisDisk;          // number of this disk
+		u16	dirStartDisk;      // number of the disk containing the start of the central directory
+		u64	numEntriesOnDisk;  // # of entries in the central directory on this disk
+		u64	numEntriesTotal;   // total # of entries in the central directory
+		u64	dirSize;           // size of the central directory
+		u64	dirStartOffset;    // offset of the start of central directory on the disk
+		u16	commentLen;        // zip file comment length
 
 		DirEndRecord(Memory memory)
 		{
@@ -314,8 +314,8 @@ namespace
 
 			// find central directory end record signature
 			// by scanning backwards from the end of the file
-            uint8* start = memory.address;
-            uint8* end = memory.address + memory.size;
+            u8* start = memory.address;
+            u8* end = memory.address + memory.size;
 
             end -= 22; // header size is 22 bytes
 
@@ -344,12 +344,12 @@ namespace
                     if (dirStartOffset == 0xffffffff)
                     {
                         p = end - 20;
-                        uint32 magic = p.read32();
+                        u32 magic = p.read32();
                         if (magic == 0x07064b50)
                         {
                             // ZIP64 detected
                             p += 4;
-                            uint64 offset = p.read64();
+                            u64 offset = p.read64();
 
                             p = start + offset;
                             magic = p.read32();
@@ -384,44 +384,44 @@ namespace
     // zip functions
     // --------------------------------------------------------------------
 
-    inline uint32 zip_crc32(uint32 crc, uint8 v)
+    inline u32 zip_crc32(u32 crc, u8 v)
     {
-        static const uint32 crc_table[] =
+        static const u32 crc_table[] =
         {
             0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
             0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c, 0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
         };
 
-        uint32 x = crc;
+        u32 x = crc;
         x = (x >> 4) ^ crc_table[(x & 0xf) ^ (v & 0xf)];
         x = (x >> 4) ^ crc_table[(x & 0xf) ^ (v >> 4)];
         return x;
 	}
 
-	inline uint8 zip_decrypt_value(uint32* keys)
+	inline u8 zip_decrypt_value(u32* keys)
 	{
-		uint32 temp = (keys[2] & 0xffff) | 2;
+		u32 temp = (keys[2] & 0xffff) | 2;
 		return u8(((temp * (temp ^ 1)) >> 8) & 0xff);
 	}
 
-	inline void zip_update(uint32* keys, uint8 v)
+	inline void zip_update(u32* keys, u8 v)
 	{
 		keys[0] = zip_crc32(keys[0], v);
 		keys[1] = 1 + (keys[1] + (keys[0] & 0xff)) * 134775813L;
 		keys[2] = zip_crc32(keys[2], u8(keys[1] >> 24));
 	}
 
-	void zip_decrypt_buffer(uint8* out, const uint8* in, uint64 size, uint32* keys)
+	void zip_decrypt_buffer(u8* out, const u8* in, u64 size, u32* keys)
 	{
-		for (uint64 i = 0; i < size; ++i)
+		for (u64 i = 0; i < size; ++i)
 		{
-			uint8 v = in[i] ^ zip_decrypt_value(keys);
+			u8 v = in[i] ^ zip_decrypt_value(keys);
 			zip_update(keys, v);
 			out[i] = v;
 		}
 	}
 
-	void zip_init_keys(uint32* keys, const char* password)
+	void zip_init_keys(u32* keys, const char* password)
 	{
 		keys[0] = 305419896L;
 		keys[1] = 591751049L;
@@ -433,7 +433,7 @@ namespace
 		}
 	}
 
-	bool zip_decrypt(uint8* out, const uint8* in, uint64 size, const uint8* dcheader, int version, uint32 crc, const std::string& password)
+	bool zip_decrypt(u8* out, const u8* in, u64 size, const u8* dcheader, int version, u32 crc, const std::string& password)
 	{
 		if (password.empty())
 		{
@@ -442,17 +442,17 @@ namespace
 		}
 
 		// decryption keys
-		uint32 keys[3];
+		u32 keys[3];
 		zip_init_keys(keys, password.c_str());
 
 		// decrypt the 12 byte encryption header
-		uint8 keyfile[DCKEYSIZE];
+		u8 keyfile[DCKEYSIZE];
 		zip_decrypt_buffer(keyfile, dcheader, DCKEYSIZE, keys);
 
 		// check that password is correct one
 		if (version < 20)
 		{
-			uint16* p = reinterpret_cast<uint16*>(&keyfile[10]);
+			u16* p = reinterpret_cast<u16*>(&keyfile[10]);
 			if (*p != (crc >> 16))
 			{
 				// incorrect password
@@ -488,7 +488,7 @@ namespace
 		return true;
 	}
 
-	uint64 zip_decompress(uint8* compressed, uint8* uncompressed, uint64 compressedLen, uint64 uncompressedLen)
+	u64 zip_decompress(u8* compressed, u8* uncompressed, u64 compressedLen, u64 uncompressedLen)
 	{
 		z_stream zstream;
 		std::memset(&zstream, 0, sizeof(zstream));
@@ -546,10 +546,10 @@ namespace filesystem {
     class VirtualMemoryZIP : public mango::VirtualMemory
     {
     protected:
-        uint8* m_delete_address;
+        u8* m_delete_address;
 
     public:
-        VirtualMemoryZIP(uint8* address, uint8* delete_address, size_t size)
+        VirtualMemoryZIP(u8* address, u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
             m_memory = Memory(address, size);
@@ -611,7 +611,7 @@ namespace filesystem {
         {
         }
 
-        VirtualMemory* mmap(const FileHeader& header, uint8* start, const std::string& password)
+        VirtualMemory* mmap(const FileHeader& header, u8* start, const std::string& password)
         {
             LittleEndianPointer p = start + header.localOffset;
 
@@ -621,12 +621,12 @@ namespace filesystem {
                 MANGO_EXCEPTION(ID"Invalid local header.");
             }
 
-            uint64 offset = header.localOffset + 30 + localHeader.filenameLen + localHeader.extraFieldLen;
+            u64 offset = header.localOffset + 30 + localHeader.filenameLen + localHeader.extraFieldLen;
 
-            uint8* address = start + offset;
-            uint64 size = 0;
+            u8* address = start + offset;
+            u64 size = 0;
 
-            uint8* buffer = nullptr; // remember allocated memory
+            u8* buffer = nullptr; // remember allocated memory
 
             //printf("[ZIP] compression: %d, encryption: %d \n", header.compression, header.encryption);
 
@@ -638,12 +638,12 @@ namespace filesystem {
                 case ENCRYPTION_CLASSIC:
                 {
                     // decryption header
-                    uint8* dcheader = address;
+                    u8* dcheader = address;
                     address += DCKEYSIZE;
 
                     // NOTE: decryption capability reduced on 32 bit platforms
                     const size_t compressed_size = size_t(header.compressedSize);
-                    buffer = new uint8[compressed_size];
+                    buffer = new u8[compressed_size];
 
                     bool status = zip_decrypt(buffer, address, header.compressedSize, dcheader,
                                             header.versionUsed & 0xff, header.crc, password);
@@ -694,9 +694,9 @@ namespace filesystem {
                 case COMPRESSION_DEFLATE:
                 {
                     const size_t uncompressed_size = size_t(header.uncompressedSize);
-                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+                    u8* uncompressed_buffer = new u8[uncompressed_size];
 
-                    uint64 outsize = zip_decompress(address, uncompressed_buffer, header.compressedSize, header.uncompressedSize);
+                    u64 outsize = zip_decompress(address, uncompressed_buffer, header.compressedSize, header.uncompressedSize);
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -717,7 +717,7 @@ namespace filesystem {
                 case COMPRESSION_LZMA:
                 {
                     const size_t uncompressed_size = size_t(header.uncompressedSize);
-                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+                    u8* uncompressed_buffer = new u8[uncompressed_size];
 
                     // parse LZMA compression header
                     p = address;
@@ -745,7 +745,7 @@ namespace filesystem {
                 case COMPRESSION_PPMD:
                 {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
-                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+                    u8* uncompressed_buffer = new u8[uncompressed_size];
 
                     ppmd8::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
 
@@ -761,7 +761,7 @@ namespace filesystem {
                 case COMPRESSION_BZIP2:
                 {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
-                    uint8* uncompressed_buffer = new uint8[uncompressed_size];
+                    u8* uncompressed_buffer = new u8[uncompressed_size];
 
                     bzip2::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
 

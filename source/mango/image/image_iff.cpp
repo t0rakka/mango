@@ -17,14 +17,14 @@ namespace
 	// iff
 	// ------------------------------------------------------------
 
-	void unpackBits(uint8* buffer, const uint8* input, int scansize, int insize)
+	void unpackBits(u8* buffer, const u8* input, int scansize, int insize)
 	{
-		uint8* buffer_end = buffer + scansize;
-		const uint8* input_end = input + insize;
+		u8* buffer_end = buffer + scansize;
+		const u8* input_end = input + insize;
 
 		for (; buffer < buffer_end && input < input_end;)
 		{
-			uint8 v = *input++;
+			u8 v = *input++;
 
 			if (v > 128)
 			{
@@ -47,7 +47,7 @@ namespace
 		}
 	}
 
-	void p2c_raw(uint8* image, const uint8* temp, int xsize, int ysize, int nplanes, int mask)
+	void p2c_raw(u8* image, const u8* temp, int xsize, int ysize, int nplanes, int mask)
 	{
 		const int bpp = (nplanes + 7) >> 3;
 		const int scansize = xsize * bpp;
@@ -62,8 +62,8 @@ namespace
 			{
 				const int shift = ((x ^ 7) & 7);
 
-				const uint8* src = temp + x / 8;
-				uint8* dest = image + x * bpp;
+				const u8* src = temp + x / 8;
+				u8* dest = image + x * bpp;
 
 				for (int n = 0; n < nplanes; ++n)
 				{
@@ -77,7 +77,7 @@ namespace
 		}
 	}
 
-	void p2c_ham(uint8* dest, const uint8* workptr, int width, int height, int nplanes, const Palette& palette)
+	void p2c_ham(u8* dest, const u8* workptr, int width, int height, int nplanes, const Palette& palette)
 	{
 		bool hamcode2b = (nplanes == 6 || nplanes == 8);
 		int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
@@ -87,20 +87,20 @@ namespace
 
 		for (int y = 0; y < height; ++y)
 		{
-			uint32 r = palette[0].r;
-			uint32 g = palette[0].g;
-			uint32 b = palette[0].b;
+			u32 r = palette[0].r;
+			u32 g = palette[0].g;
+			u32 b = palette[0].b;
 
-			uint32 bitmask = 0x80;
-			const uint8* workptr2 = workptr;
+			u32 bitmask = 0x80;
+			const u8* workptr2 = workptr;
 
 			for (int x = 0; x < width; ++x)
 			{
-				const uint8* workptr3 = workptr2;
+				const u8* workptr3 = workptr2;
 
 				// read value
-				uint32 v = 0;
-				uint32 colorbit = 1;
+				u32 v = 0;
+				u32 colorbit = 1;
 
 				for (int plane = 2; plane < nplanes; ++plane)
 				{
@@ -113,7 +113,7 @@ namespace
 				}
 
 				// read hamcode
-				uint32 hamcode = 0;
+				u32 hamcode = 0;
 
 				if (*workptr3 & bitmask)
 				{
@@ -152,9 +152,9 @@ namespace
                         break;
 				}
 
-                dest[0] = uint8(b);
-                dest[1] = uint8(g);
-                dest[2] = uint8(r);
+                dest[0] = u8(b);
+                dest[1] = u8(g);
+                dest[2] = u8(r);
                 dest[3] = 0xff;
                 dest += 4;
 
@@ -171,7 +171,7 @@ namespace
 		}
 	}
 
-    void expand_palette(uint8* dest, const uint8* src, int xsize, int ysize, const Palette& palette)
+    void expand_palette(u8* dest, const u8* src, int xsize, int ysize, const Palette& palette)
     {
         ColorBGRA* image = reinterpret_cast<ColorBGRA*>(dest);
         int count = xsize * ysize;
@@ -182,12 +182,12 @@ namespace
         }
     }
 
-    bool read_signature(uint8*& data)
+    bool read_signature(u8*& data)
     {
         BigEndianPointer p = data;
 
-		uint32 v0 = p.read32(); p += 4;
-		uint32 v1 = p.read32();
+		u32 v0 = p.read32(); p += 4;
+		u32 v1 = p.read32();
         data = p;
 
 		if (v0 != make32be('F','O','R','M'))
@@ -252,14 +252,14 @@ namespace
 
         ImageHeader header() override
         {
-            uint8* data = m_memory.address;
-            uint8* end = m_memory.address + m_memory.size - 12;
+            u8* data = m_memory.address;
+            u8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
             MANGO_UNREFERENCED_PARAMETER(is_pbm);
 
             bool ham = false;
-            uint8 nplanes = 0;
+            u8 nplanes = 0;
 
             ImageHeader header;
 
@@ -278,8 +278,8 @@ namespace
                 // chunk header
                 BigEndianPointer p = data;
 
-                uint32 id = p.read32();
-                uint32 size = p.read32();
+                u32 id = p.read32();
+                u32 size = p.read32();
 
                 // next chunk
                 data = p + size + (size & 1);
@@ -298,7 +298,7 @@ namespace
 
                     case make32be('C','A','M','G'):
                     {
-                        uint32 v = p.read32();
+                        u32 v = p.read32();
                         ham = (v & 0x0800) != 0;
                         break;
                     }
@@ -321,15 +321,15 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            uint8* data = m_memory.address;
-            uint8* end = m_memory.address + m_memory.size - 12;
+            u8* data = m_memory.address;
+            u8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
 
             Palette palette;
 
-            uint8* buffer_allocated = nullptr;
-            uint8* buffer = nullptr;
+            u8* buffer_allocated = nullptr;
+            u8* buffer = nullptr;
 
             bool ham = false;
             bool ehb = false;
@@ -354,8 +354,8 @@ namespace
                 // chunk header
                 BigEndianPointer p = data;
 
-                uint32 id = p.read32();
-                uint32 size = p.read32();
+                u32 id = p.read32();
+                u32 size = p.read32();
 
                 // next chunk
                 data = p + size + (size & 1);
@@ -390,7 +390,7 @@ namespace
                     case make32be('C','M','A','P'):
                     {
                         palette.size = size / 3;
-                        for (uint32 i = 0; i < palette.size; ++i)
+                        for (u32 i = 0; i < palette.size; ++i)
                         {
                             palette[i] = ColorBGRA(p[0], p[1], p[2], 0xff);
                             p += 3;
@@ -400,7 +400,7 @@ namespace
 
                     case make32be('C','A','M','G'):
                     {
-                        uint32 v = p.read32();
+                        u32 v = p.read32();
                         ham = (v & 0x0800) != 0;
                         ehb = (v & 0x0080) != 0;
                         break;
@@ -412,7 +412,7 @@ namespace
                         {
                             int scansize = ((xsize + 15) & ~15) / 8 * (nplanes + (mask == 1));
                             int bytes = scansize * ysize;
-                            buffer_allocated = new uint8[bytes];
+                            buffer_allocated = new u8[bytes];
 
                             unpackBits(buffer_allocated, p, bytes, size);
                             buffer = buffer_allocated;

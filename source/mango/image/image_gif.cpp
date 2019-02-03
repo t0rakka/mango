@@ -29,14 +29,14 @@ namespace
 
 	struct gif_logical_screen_descriptor
 	{
-		uint16	width = 0;
-		uint16	height = 0;
-		uint8	packed = 0;
-		uint8	background = 0;
-		uint8   aspect = 0;
-		uint8* palette = nullptr;
+		u16	width = 0;
+		u16	height = 0;
+		u8	packed = 0;
+		u8	background = 0;
+		u8   aspect = 0;
+		u8* palette = nullptr;
 
-        void read(uint8*& data, uint8* end)
+        void read(u8*& data, u8* end)
 		{
 			LittleEndianPointer p = data;
 
@@ -66,14 +66,14 @@ namespace
 
 	struct gif_image_descriptor
 	{
-		uint16	left = 0;
-		uint16	top = 0;
-		uint16	width = 0;
-		uint16	height = 0;
-		uint8	field = 0;
-		uint8* palette = nullptr;
+		u16	left = 0;
+		u16	top = 0;
+		u16	width = 0;
+		u16	height = 0;
+		u8	field = 0;
+		u8* palette = nullptr;
 
-        void read(uint8*& data, uint8* end)
+        void read(u8*& data, u8* end)
 		{
             LittleEndianPointer p = data;
 
@@ -100,18 +100,18 @@ namespace
 		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	uint8* readBits(uint8*& data, int width, int height)
+	u8* readBits(u8*& data, int width, int height)
 	{
-        uint8* p = data;
+        u8* p = data;
 
 		// initialize gif data stream decoder
 		const int samples = width * height;
-		uint8* q_buffer = new uint8[samples];
-		uint8* q_buffer_end = q_buffer + samples;
+		u8* q_buffer = new u8[samples];
+		u8* q_buffer_end = q_buffer + samples;
 
 		const int MaxStackSize = 4096;
 
-		uint8 data_size = *p++;
+		u8 data_size = *p++;
 
 		int clear = 1 << data_size;
 		int end_of_information = clear + 1;
@@ -121,27 +121,27 @@ namespace
 		int code_mask = (1 << code_size) - 1;
 		int old_code = -1;
 
-		uint16 prefix[MaxStackSize];
-		uint8 suffix[MaxStackSize];
+		u16 prefix[MaxStackSize];
+		u8 suffix[MaxStackSize];
 
-		uint8 pixel_stack[MaxStackSize + 1];
-		uint8* top_stack = pixel_stack;
+		u8 pixel_stack[MaxStackSize + 1];
+		u8* top_stack = pixel_stack;
 
 		for (int code = 0; code < clear; ++code)
 		{
 			prefix[code] = 0;
-			suffix[code] = uint8(code);
+			suffix[code] = u8(code);
 		}
 
 		// decode gif pixel stream
 		int bits = 0;
 		int count = 0;
-		uint32 datum = 0;
-		uint8 first = 0;
-		uint8* q = q_buffer;
+		u32 datum = 0;
+		u8 first = 0;
+		u8* q = q_buffer;
 
-		uint8 packet[256];
-		uint8* c = NULL;
+		u8 packet[256];
+		u8* c = NULL;
 
 		while (q < q_buffer_end)
 		{
@@ -153,7 +153,7 @@ namespace
 					if (!count)
 					{
 						// read a new data block
-						uint8 block_size = *p++;
+						u8 block_size = *p++;
 						count = block_size;
 
 						if (count > 0)
@@ -200,7 +200,7 @@ namespace
 				{
 					*top_stack++ = suffix[code];
 					old_code = code;
-					first = uint8(code);
+					first = u8(code);
 					continue;
 				}
 
@@ -227,7 +227,7 @@ namespace
 				}
 
 				*top_stack++ = first;
-				prefix[available] = uint16(old_code);
+				prefix[available] = u16(old_code);
 				suffix[available] = first;
 				++available;
 
@@ -245,7 +245,7 @@ namespace
 		}
 
 		// read the terminator
-		uint8 terminator = *p++;
+		u8 terminator = *p++;
 
         data = p;
 
@@ -259,7 +259,7 @@ namespace
 		return q_buffer;
 	}
 
-	void deinterlace(uint8* dest, uint8* buffer, int width, int height)
+	void deinterlace(u8* dest, u8* buffer, int width, int height)
 	{
 		static const int interlace_rate[] = { 8, 8, 4, 2 };
 		static const int interlace_start[] = { 0, 4, 2, 1 };
@@ -271,7 +271,7 @@ namespace
 
 			while (j < height)
 			{
-				uint8* d = dest + j * width;
+				u8* d = dest + j * width;
 				std::memcpy(d, buffer, width);
 				buffer += width;
 				j += rate;
@@ -279,11 +279,11 @@ namespace
 		}
 	}
 
-    void blit_palette(Surface& surface, const uint8* bits, const Palette& palette, int width, int height)
+    void blit_palette(Surface& surface, const u8* bits, const Palette& palette, int width, int height)
     {
         for (int y = 0; y < height; ++y)
         {
-            uint32* dest = surface.address<uint32>(0, y);
+            u32* dest = surface.address<u32>(0, y);
             for (int x = 0; x < width; ++x)
             {
                 dest[x] = palette[bits[x]];
@@ -292,7 +292,7 @@ namespace
         }
     }
 
-    void read_image(uint8*& data, uint8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
+    void read_image(u8*& data, u8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
         image_desc.read(data, end);
@@ -305,11 +305,11 @@ namespace
 			// local palette
 			palette.size = image_desc.color_table_size();
 
-			for (uint32 i = 0; i < palette.size; ++i)
+			for (u32 i = 0; i < palette.size; ++i)
 			{
-            	uint32 r = image_desc.palette[i * 3 + 0];
-            	uint32 g = image_desc.palette[i * 3 + 1];
-            	uint32 b = image_desc.palette[i * 3 + 2];
+            	u32 r = image_desc.palette[i * 3 + 0];
+            	u32 g = image_desc.palette[i * 3 + 1];
+            	u32 b = image_desc.palette[i * 3 + 2];
             	palette[i] = ColorBGRA(r, g, b, 0xff);
 			}
 		}
@@ -318,11 +318,11 @@ namespace
 			// global palette
 			palette.size = desc.color_table_size();
 
-			for (uint32 i = 0; i < palette.size; ++i)
+			for (u32 i = 0; i < palette.size; ++i)
 			{
-            	uint32 r = desc.palette[i * 3 + 0];
-            	uint32 g = desc.palette[i * 3 + 1];
-            	uint32 b = desc.palette[i * 3 + 2];
+            	u32 r = desc.palette[i * 3 + 0];
+            	u32 g = desc.palette[i * 3 + 1];
+            	u32 b = desc.palette[i * 3 + 2];
             	palette[i] = ColorBGRA(r, g, b, 0xff);
 			}
 		}
@@ -334,12 +334,12 @@ namespace
         int height = image_desc.height;
 
 		// decode gif bit stream
-		uint8* bits = readBits(data, width, height);
+		u8* bits = readBits(data, width, height);
 
         // deinterlace
 		if (image_desc.interlaced())
 		{
-            uint8* temp = new uint8[width * height];
+            u8* temp = new u8[width * height];
 			deinterlace(temp, bits, width, height);
             delete[] bits;
             bits = temp;
@@ -350,7 +350,7 @@ namespace
 		if (ptr_palette && dimensions && surface.format.bits == 8)
 		{
 			*ptr_palette = palette;
-			uint8* dest = surface.address<uint8>(0,0);
+			u8* dest = surface.address<u8>(0,0);
 			std::memcpy(dest, bits, width * height);
 		}
 		else
@@ -376,15 +376,15 @@ namespace
 		delete[] bits;
     }
 
-	void read_extension(uint8*& data)
+	void read_extension(u8*& data)
 	{
-        uint8* p = data;
+        u8* p = data;
 
 		++p;
 
 		for (;;)
 		{
-			uint8 size = *p++;
+			u8 size = *p++;
 			p += size;
 			if (!size) break;
 		}
@@ -392,7 +392,7 @@ namespace
         data = p;
 	}
 
-    void read_magic(uint8*& data, uint8* end)
+    void read_magic(u8*& data, u8* end)
     {
 		if (data + 6 >= end)
 		{
@@ -408,11 +408,11 @@ namespace
 		}
     }
 
-    void read_chunks(uint8* data, uint8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
+    void read_chunks(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
     {
         while (data < end)
 		{
-			uint8 chunkID = *data++;
+			u8 chunkID = *data++;
 
 			switch (chunkID)
 			{
@@ -458,8 +458,8 @@ namespace
 
         ImageHeader header() override
         {
-            uint8* data = m_memory.address;
-			uint8* end = data + m_memory.size;
+            u8* data = m_memory.address;
+			u8* end = data + m_memory.size;
 
 			read_magic(data, end);
 
@@ -486,8 +486,8 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            uint8* data = m_memory.address;
-            uint8* end = data + m_memory.size;
+            u8* data = m_memory.address;
+            u8* end = data + m_memory.size;
 
             read_magic(data, end);
             gif_logical_screen_descriptor screen_desc;

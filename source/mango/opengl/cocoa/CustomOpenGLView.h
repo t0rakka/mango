@@ -15,7 +15,7 @@ namespace opengl {
         id delegate;
         id view;
         id ctx = nil;
-        uint32 modifiers;
+        u32 modifiers;
     };
 
 } // namespace opengl

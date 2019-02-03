@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,7 +10,7 @@
 namespace mango
 {
 
-    uint32 crc32(uint32 crc, Memory memory);
-    uint32 crc32c(uint32 crc, Memory memory);
+    u32 crc32(uint32 crc, Memory memory);
+    u32 crc32c(uint32 crc, Memory memory);
 
 } // namespace mango

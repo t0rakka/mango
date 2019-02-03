@@ -61,31 +61,31 @@ namespace
     };
     const int g_format_table_size = sizeof(g_format_table) / sizeof(g_format_table[0]);
 
-    const uint16 luminance_dc_code_table [] =
+    const u16 luminance_dc_code_table [] =
     {
         0x0000, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006,
         0x000E, 0x001E, 0x003E, 0x007E, 0x00FE, 0x01FE
     };
 
-    const uint16 luminance_dc_size_table [] =
+    const u16 luminance_dc_size_table [] =
     {
         0x0002, 0x0003, 0x0003, 0x0003, 0x0003, 0x0003,
         0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009
     };
 
-    const uint16 chrominance_dc_code_table [] =
+    const u16 chrominance_dc_code_table [] =
     {
         0x0000, 0x0001, 0x0002, 0x0006, 0x000E, 0x001E,
         0x003E, 0x007E, 0x00FE, 0x01FE, 0x03FE, 0x07FE
     };
 
-    const uint16 chrominance_dc_size_table [] =
+    const u16 chrominance_dc_size_table [] =
     {
         0x0002, 0x0002, 0x0002, 0x0003, 0x0004, 0x0005,
         0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B
     };
 
-    const uint16 luminance_ac_code_table [] =
+    const u16 luminance_ac_code_table [] =
     {
         0x000A,
         0x0000, 0x0001, 0x0004, 0x000B, 0x001A, 0x0078, 0x00F8, 0x03F6, 0xFF82, 0xFF83,
@@ -107,7 +107,7 @@ namespace
         0x07F9
     };
 
-    const uint16 luminance_ac_size_table [] =
+    const u16 luminance_ac_size_table [] =
     {
         0x0004,
         0x0002, 0x0002, 0x0003, 0x0004, 0x0005, 0x0007, 0x0008, 0x000A, 0x0010, 0x0010,
@@ -129,7 +129,7 @@ namespace
         0x000B
     };
 
-    const uint16 chrominance_ac_code_table [] =
+    const u16 chrominance_ac_code_table [] =
     {
         0x0000,
         0x0001, 0x0004, 0x000A, 0x0018, 0x0019, 0x0038, 0x0078, 0x01F4, 0x03F6, 0x0FF4,
@@ -151,7 +151,7 @@ namespace
         0x03FA
     };
 
-    const uint16 chrominance_ac_size_table [] =
+    const u16 chrominance_ac_size_table [] =
     {
         0x0002,
         0x0002, 0x0003, 0x0004, 0x0005, 0x0005, 0x0006, 0x0007, 0x0009, 0x000A, 0x000C,
@@ -173,7 +173,7 @@ namespace
         0x000A
     };
 
-    const uint8 bit_size [] =
+    const u8 bit_size [] =
     {
         0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -193,7 +193,7 @@ namespace
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
     };
 
-    const uint8 marker_data [] =
+    const u8 marker_data [] =
     {
         0xFF, 0xC4, 0x00, 0x1F, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
         0xFF, 0xC4, 0x00, 0xB5, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06,
@@ -211,7 +211,7 @@ namespace
 		0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
     };
 
-    const uint8 zigzag_table [] =
+    const u8 zigzag_table [] =
     {
         0,  1,   5,  6, 14, 15, 27, 28,
         2,  4,   7, 13, 16, 26, 29, 42,
@@ -223,7 +223,7 @@ namespace
         35, 36, 48, 49, 57, 58, 62, 63
     };
 
-    const uint8 luminance_quant_table [] =
+    const u8 luminance_quant_table [] =
     {
         16, 11, 10, 16,  24,  40,  51,  61,
         12, 12, 14, 19,  26,  58,  60,  55,
@@ -235,7 +235,7 @@ namespace
         72, 92, 95, 98, 112, 100, 103,  99
     };
 
-    const uint8 chrominance_quant_table [] =
+    const u8 chrominance_quant_table [] =
     {
         17, 18, 24, 47, 99, 99, 99, 99,
         18, 21, 26, 66, 99, 99, 99, 99,
@@ -250,7 +250,7 @@ namespace
     struct jpeg_chan
     {
         int         component;
-        uint16*     qtable;
+        u16*     qtable;
     };
 
     struct jpeg_encode
@@ -266,22 +266,22 @@ namespace
         int         length_minus_width;
         int         mcu_width_size;
 
-        uint8       Lqt [BLOCK_SIZE];
-        uint8       Cqt [BLOCK_SIZE];
-        uint16      ILqt [BLOCK_SIZE];
-        uint16      ICqt [BLOCK_SIZE];
+        u8       Lqt [BLOCK_SIZE];
+        u8       Cqt [BLOCK_SIZE];
+        u16      ILqt [BLOCK_SIZE];
+        u16      ICqt [BLOCK_SIZE];
 
         // MCU configuration
         jpeg_chan   channel[3];
         int         channel_count;
 
-        void (*read_format) (jpeg_encode* jp, BlockType *block, uint8* input, int rows, int cols, int incr);
+        void (*read_format) (jpeg_encode* jp, BlockType *block, u8* input, int rows, int cols, int incr);
 
-        jpeg_encode(jpegSampleFormat format, uint32 width, uint32 height, uint32 stride, uint32 quality);
+        jpeg_encode(jpegSampleFormat format, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
 
-        void init_quantization_tables(uint32 quality);
-        void write_markers(BigEndianStream& p, uint32 format, uint32 width, uint32 height);
+        void init_quantization_tables(u32 quality);
+        void write_markers(BigEndianStream& p, u32 format, u32 width, u32 height);
     };
 
     struct HuffmanEncoder
@@ -291,9 +291,9 @@ namespace
         int     ldc3;
 
 #if defined(MANGO_CPU_64BIT)
-        uint64  lcode;
+        u64  lcode;
 #else
-        uint32  lcode;
+        u32  lcode;
 #endif
         int     bitindex;
 
@@ -314,14 +314,14 @@ namespace
         {
             // JPEG bitstream uses 0xff as a marker, followed by ID byte
             // If the ID byte is zero ("stuff") that means the preceding 0xff is a literal value
-            if ((*output++ = uint8(code >> 24)) == 0xff) *output++ = 0; // write stuff byte
-            if ((*output++ = uint8(code >> 16)) == 0xff) *output++ = 0;
-            if ((*output++ = uint8(code >>  8)) == 0xff) *output++ = 0;
-            if ((*output++ = uint8(code >>  0)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0; // write stuff byte
+            if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
             return output;
         }
 
-        uint8* putbits(uint8* output, uint32 data, int numbits)
+        u8* putbits(u8* output, u32 data, int numbits)
         {
             constexpr int regbits = sizeof(lcode) * 8;
 
@@ -372,11 +372,11 @@ namespace
                 lcode <<= (regbits - bitindex);
 
                 int count = (bitindex + 7) >> 3;
-                uint8* ptr = reinterpret_cast<uint8 *>(&lcode) + (sizeof(lcode) - 1);
+                u8* ptr = reinterpret_cast<u8 *>(&lcode) + (sizeof(lcode) - 1);
 
                 for (int i = 0; i < count; ++i)
                 {
-                    uint8 v = *ptr--;
+                    u8 v = *ptr--;
                     *p++ = v;
                     if (v == 0xff)
                     {
@@ -391,10 +391,10 @@ namespace
 
         u8* encode(u8* p, int component, BlockType* temp)
         {
-            const uint16* DcCodeTable;
-            const uint16* DcSizeTable;
-            const uint16* AcCodeTable;
-            const uint16* AcSizeTable;
+            const u16* DcCodeTable;
+            const u16* DcSizeTable;
+            const u16* AcCodeTable;
+            const u16* AcSizeTable;
 
             int Coeff = *temp++;
             int LastDc;
@@ -439,12 +439,12 @@ namespace
                 DataSize++;
             }
 
-            uint16 HuffCode = DcCodeTable [DataSize];
-            uint16 HuffSize = DcSizeTable [DataSize];
+            u16 HuffCode = DcCodeTable [DataSize];
+            u16 HuffSize = DcSizeTable [DataSize];
 
             Coeff &= (1 << DataSize) - 1;
 
-            uint32 data = (HuffCode << DataSize) | Coeff;
+            u32 data = (HuffCode << DataSize) | Coeff;
             int numbits = HuffSize + DataSize;
             p = putbits(p, data, numbits);
 
@@ -499,14 +499,14 @@ namespace
         }
     };
 
-    void fdct(BlockType* dest, BlockType* data, const uint16* quant_table)
+    void fdct(BlockType* dest, BlockType* data, const u16* quant_table)
     {
-        const uint16 c1 = 1420;  // cos  PI/16 * root(2)
-        const uint16 c2 = 1338;  // cos  PI/8  * root(2)
-        const uint16 c3 = 1204;  // cos 3PI/16 * root(2)
-        const uint16 c5 = 805;   // cos 5PI/16 * root(2)
-        const uint16 c6 = 554;   // cos 3PI/8  * root(2)
-        const uint16 c7 = 283;   // cos 7PI/16 * root(2)
+        const u16 c1 = 1420;  // cos  PI/16 * root(2)
+        const u16 c2 = 1338;  // cos  PI/8  * root(2)
+        const u16 c3 = 1204;  // cos 3PI/16 * root(2)
+        const u16 c5 = 805;   // cos 5PI/16 * root(2)
+        const u16 c6 = 554;   // cos 3PI/8  * root(2)
+        const u16 c7 = 283;   // cos 7PI/16 * root(2)
 
         for (int i = 0; i < 8; ++i)
         {
@@ -572,7 +572,7 @@ namespace
     // read_xxx_format
     // ----------------------------------------------------------------------------
 
-    void read_400_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_400_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -602,7 +602,7 @@ namespace
         }
     }
 
-    void read_bgr888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_bgr888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -646,7 +646,7 @@ namespace
         }
     }
 
-    void read_rgb888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_rgb888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -690,7 +690,7 @@ namespace
         }
     }
 
-    void read_bgra8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_bgra8888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -734,7 +734,7 @@ namespace
         }
     }
 
-    void read_rgba8888_format(jpeg_encode* jp, BlockType* block, uint8* input, int rows, int cols, int incr)
+    void read_rgba8888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -782,7 +782,7 @@ namespace
     // jpeg_encode methods
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(jpegSampleFormat format, uint32 width, uint32 height, uint32 stride, uint32 quality)
+    jpeg_encode::jpeg_encode(jpegSampleFormat format, u32 width, u32 height, u32 stride, u32 quality)
     {
         int bytes_per_pixel = 0;
 
@@ -851,14 +851,14 @@ namespace
     {
     }
 
-    void jpeg_encode::init_quantization_tables(uint32 quality)
+    void jpeg_encode::init_quantization_tables(u32 quality)
     {
         quality = std::min(quality, 1024u) * 16;
 
         for (int i = 0; i < 64; ++i)
         {
-            uint16 index = zigzag_table [i];
-            uint32 value;
+            u16 index = zigzag_table [i];
+            u32 value;
 
             // luminance quantization table * quality factor
             value = luminance_quant_table [i] * quality;
@@ -869,8 +869,8 @@ namespace
             else if (value > 255)
                 value = 255;
 
-            Lqt [index] = (uint8) value;
-            ILqt [i] = static_cast<uint16>(0x8000 / value);
+            Lqt [index] = (u8) value;
+            ILqt [i] = static_cast<u16>(0x8000 / value);
 
             // chrominance quantization table * quality factor
             value = chrominance_quant_table [i] * quality;
@@ -881,12 +881,12 @@ namespace
             else if (value > 255)
                 value = 255;
 
-            Cqt [index] = (uint8) value;
-            ICqt [i] = static_cast<uint16>(0x8000 / value);
+            Cqt [index] = (u8) value;
+            ICqt [i] = static_cast<u16>(0x8000 / value);
         }
     }
 
-    void jpeg_encode::write_markers(BigEndianStream& p, uint32 format, uint32 width, uint32 height)
+    void jpeg_encode::write_markers(BigEndianStream& p, u32 format, u32 width, u32 height)
     {
         // Start of image marker
         p.write16(0xffd8);
@@ -910,7 +910,7 @@ namespace
         // Start of frame marker
         p.write16(0xffc0);
 
-        uint8 number_of_components = 0;
+        u8 number_of_components = 0;
 
         switch (format)
         {
@@ -926,15 +926,15 @@ namespace
                 break;
         }
 
-        uint16 header_length = 8 + 3 * number_of_components;
+        u16 header_length = 8 + 3 * number_of_components;
 
         p.write16(header_length); // frame header length
         p.write8(8); // precision
-        p.write16(static_cast<uint16>(height)); // image height
-        p.write16(static_cast<uint16>(width)); // image width
+        p.write16(static_cast<u16>(height)); // image height
+        p.write16(static_cast<u16>(width)); // image width
         p.write8(number_of_components); // Nf
 
-        const uint8 nfdata[] =
+        const u8 nfdata[] =
         {
             0x01, 0x11, 0x00, // component 1
             0x00, 0x00, 0x00, // padding
@@ -958,7 +958,7 @@ namespace
         p.write16(6 + number_of_components * 2); // header length
         p.write8(number_of_components); // Ns
 
-        const uint8 nsdata[] =
+        const u8 nsdata[] =
         {
             0x01, 0x00,
             0x02, 0x11,
@@ -1098,7 +1098,7 @@ namespace jpeg
     {
         // configure quality
         quality = clamp(1.0f - quality, 0.0f, 1.0f);
-        const uint32 iq = uint32(quality * 1024);
+        const u32 iq = u32(quality * 1024);
 
         // set default format
         Format sourceFormat = FORMAT_R8G8B8A8;

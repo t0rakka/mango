@@ -91,12 +91,12 @@ namespace filesystem {
         return getMemory();
     }
 
-	File::operator const uint8* () const
+	File::operator const u8* () const
 	{
         return getMemory().address;
 	}
 
-    const uint8* File::data() const
+    const u8* File::data() const
     {
         return getMemory().address;
     }

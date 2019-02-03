@@ -142,7 +142,7 @@ namespace opengl {
     glExtensionMask glext;
 
 #ifdef ENABLE_CONTEXT_VALIDATE
-    static void check(uint32 mask, bool is, const char* name)
+    static void check(u32 mask, bool is, const char* name)
     {
         bool isMask = mask != 0;
         printf("Feature: %s --> %s (%d)\n", name, isMask == is ? "OK" : "FAIL", is);
@@ -163,7 +163,7 @@ namespace opengl {
         };
         static const int size = sizeof(names) / sizeof(names[0]);
 
-        uint32* mask = reinterpret_cast<uint32*>(&glext);
+        u32* mask = reinterpret_cast<u32*>(&glext);
         std::memset(mask, 0, sizeof(glext));
 
         for (int i = 0; i < size; ++i)
@@ -194,7 +194,7 @@ namespace opengl {
         };
         static const int size = sizeof(versions) / sizeof(versions[0]);
 
-        uint32* mask = reinterpret_cast<uint32*>(&core);
+        u32* mask = reinterpret_cast<u32*>(&core);
         std::memset(mask, 0, sizeof(core));
 
         for (int i = 0; i < size; ++i)
@@ -219,7 +219,7 @@ namespace opengl {
         };
         static const int size = sizeof(names) / sizeof(names[0]);
 
-        uint32* mask = reinterpret_cast<uint32*>(&wglext);
+        u32* mask = reinterpret_cast<u32*>(&wglext);
         std::memset(mask, 0, sizeof(wglext));
 
         for (int i = 0; i < size; ++i)
@@ -245,7 +245,7 @@ namespace opengl {
         };
         static const int size = sizeof(names) / sizeof(names[0]);
 
-        uint32* mask = reinterpret_cast<uint32*>(&glxext);
+        u32* mask = reinterpret_cast<u32*>(&glxext);
         std::memset(mask, 0, sizeof(glxext));
 
         for (int i = 0; i < size; ++i)

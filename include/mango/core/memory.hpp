@@ -19,13 +19,13 @@ namespace mango
 
     struct Memory
     {
-        uint8* address;
+        u8* address;
         size_t size;
 
         Memory();
-        Memory(uint8* address, size_t size);
+        Memory(u8* address, size_t size);
 
-        operator uint8* () const;
+        operator u8* () const;
         operator char* () const;
 
         Memory slice(size_t offset, size_t size = 0) const;
@@ -35,11 +35,11 @@ namespace mango
     {
     private:
         Memory m_memory;
-        std::shared_ptr<uint8> m_ptr;
+        std::shared_ptr<u8> m_ptr;
 
     public:
         SharedMemory(size_t size);
-        SharedMemory(uint8* address, size_t size);
+        SharedMemory(u8* address, size_t size);
 
         operator Memory () const
         {

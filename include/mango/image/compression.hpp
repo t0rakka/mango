@@ -11,14 +11,14 @@
 namespace mango
 {
 
-    constexpr uint32 makeTextureCompression(uint32 format, uint32 index, uint32 flags) noexcept
+    constexpr u32 makeTextureCompression(u32 format, u32 index, u32 flags) noexcept
     {
         return flags | (index << 8) | format;
     }
 
     struct TextureCompressionInfo
     {
-        enum CompressionFormat : uint32
+        enum CompressionFormat : u32
         {
             ATC         = 1, 
             AMD_3DC     = 2,
@@ -36,7 +36,7 @@ namespace mango
             PACKED      = 14,
         };
 
-        enum CompressionFlags : uint32
+        enum CompressionFlags : u32
         {
             PVR      = 0x00010000, // Imagination PVR compressed texture
             BC       = 0x00020000, // DirectX Block Compression
@@ -49,7 +49,7 @@ namespace mango
             SRGB     = 0x80000000  // sRGB colorspace
         };
 
-        enum class TextureCompression : uint32
+        enum class TextureCompression : u32
         {
             NONE                          = makeTextureCompression(0, 0, 0),
 
@@ -201,8 +201,8 @@ namespace mango
             BC7_UNORM_SRGB                = BPTC_SRGB_ALPHA_UNORM
         };
 
-        typedef void (*DecodeFunc)(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-        typedef void (*EncodeFunc)(const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
+        typedef void (*DecodeFunc)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+        typedef void (*EncodeFunc)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
         int width; // block width
         int height; // block height
@@ -221,13 +221,13 @@ namespace mango
 
         CompressionFormat getCompressionFormat() const
         {
-            const uint32 formatValue = uint32(compression) & 0x000000ff;
+            const u32 formatValue = u32(compression) & 0x000000ff;
             return CompressionFormat(formatValue);
         }
 
-        uint32 getCompressionFlags() const
+        u32 getCompressionFlags() const
         {
-            return uint32(compression) & 0xffff0000;
+            return u32(compression) & 0xffff0000;
         }
     };
 
@@ -237,20 +237,20 @@ namespace mango
 
     namespace opengl
     {
-        TextureCompression getTextureCompression(uint32 format);
-        uint32 getTextureFormat(TextureCompression compression);
+        TextureCompression getTextureCompression(u32 format);
+        u32 getTextureFormat(TextureCompression compression);
     }
 
     namespace vulkan
     {
-        TextureCompression getTextureCompression(uint32 format);
-        uint32 getTextureFormat(TextureCompression compression);
+        TextureCompression getTextureCompression(u32 format);
+        u32 getTextureFormat(TextureCompression compression);
     }
 
     namespace directx
     {
-        TextureCompression getTextureCompression(uint32 format);
-        uint32 getTextureFormat(TextureCompression compression);
+        TextureCompression getTextureCompression(u32 format);
+        u32 getTextureFormat(TextureCompression compression);
     }
 
 } // namespace mango

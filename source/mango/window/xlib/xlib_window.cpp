@@ -218,9 +218,9 @@ namespace
 
 #undef TR
 
-    uint32 translateKeyMask(int state)
+    u32 translateKeyMask(int state)
     {
-        uint32 mask = 0;
+        u32 mask = 0;
         if (state & ControlMask) mask |= KEYMASK_CTRL;
         if (state & ShiftMask  ) mask |= KEYMASK_SHIFT;
         if (state & Mod4Mask   ) mask |= KEYMASK_SUPER;
@@ -441,7 +441,7 @@ namespace
                                 if ((s.st_mode & S_IFDIR) == 0)
                                 {
                                     // file
-                                    uint64 filesize = uint64(s.st_size);
+                                    u64 filesize = u64(s.st_size);
                                     dropped.emplace(filename, filesize, 0);
                                 }
                                 else
@@ -689,8 +689,8 @@ namespace mango
 
         for (int y = 0; y < height; ++y)
         {
-            uint8* alpha = bitmap.image + y * bitmap.stride + 3;
-            uint8* dest = alphaMask.image + y * stride;
+            u8* alpha = bitmap.image + y * bitmap.stride + 3;
+            u8* dest = alphaMask.image + y * stride;
 
             for (int x = 0; x < width; ++x)
             {
@@ -847,7 +847,7 @@ namespace mango
 
                     case KeyPress:
                     {
-                        uint32 mask = translateKeyMask(e.xkey.state);
+                        u32 mask = translateKeyMask(e.xkey.state);
                         onKeyPress(translateEventToKeycode(&e), mask);
                         break;
                     }
@@ -1084,7 +1084,7 @@ namespace mango
     {
     }
 
-    void Window::onKeyPress(Keycode code, uint32 mask)
+    void Window::onKeyPress(Keycode code, u32 mask)
     {
         MANGO_UNREFERENCED_PARAMETER(code);
         MANGO_UNREFERENCED_PARAMETER(mask);

@@ -163,7 +163,7 @@ namespace mango
         virtual void onResize(int width, int height);
         virtual void onMinimize();
         virtual void onMaximize();
-        virtual void onKeyPress(Keycode code, uint32 mask);
+        virtual void onKeyPress(Keycode code, u32 mask);
         virtual void onKeyRelease(Keycode code);
         virtual void onMouseMove(int x, int y);
         virtual void onMouseClick(int x, int y, MouseButton button, int count);

@@ -128,7 +128,7 @@ namespace mango
     bool Window::isKeyPressed(Keycode code) const
     {
         const int keyIndex = int(code);
-        uint32 state = m_handle->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
+        u32 state = m_handle->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
         return state != 0;
     }
 
@@ -184,7 +184,7 @@ namespace mango
     {
     }
 
-    void Window::onKeyPress(Keycode code, uint32 mask)
+    void Window::onKeyPress(Keycode code, u32 mask)
     {
         MANGO_UNREFERENCED_PARAMETER(code);
         MANGO_UNREFERENCED_PARAMETER(mask);

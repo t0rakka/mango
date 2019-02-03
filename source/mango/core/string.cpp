@@ -9,8 +9,8 @@
 
 namespace
 {
-    using mango::uint8;
-    using mango::uint32;
+    using mango::u8;
+    using mango::u32;
 
     /*
         WARNING!
@@ -87,9 +87,9 @@ namespace
         UTF8_REJECT = 12
     };
 
-    inline uint32 utf8_decode(uint32& state, uint32& code, uint32 byte)
+    inline u32 utf8_decode(u32& state, u32& code, u32 byte)
     {
-        static const uint8 utf8d[] = {
+        static const u8 utf8d[] = {
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
@@ -106,16 +106,16 @@ namespace
             1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
         };
 
-        const uint32 type = utf8d[byte];
+        const u32 type = utf8d[byte];
 
         code = (state != UTF8_ACCEPT) ? (byte & 0x3fu) | (code << 6) : (0xff >> type) & (byte);
         state = utf8d[256 + state * 16 + type];
         return state;
     }
 
-    inline char* utf8_encode(char* ptr, uint32 code)
+    inline char* utf8_encode(char* ptr, u32 code)
     {
-        const uint32 mask = 0x3f;
+        const u32 mask = 0x3f;
 
         if (code < 0x80)
         {
@@ -157,10 +157,10 @@ namespace mango
 
     bool is_utf8(const std::string& source)
     {
-        uint32 code = 0;
-        uint32 state = 0;
+        u32 code = 0;
+        u32 state = 0;
 
-        for (uint8 c : source)
+        for (u8 c : source)
             utf8_decode(state, code, c);
 
         return state == UTF8_ACCEPT;
@@ -171,10 +171,10 @@ namespace mango
         std::u32string s;
         StringBuilder<char32_t, 256, 1> sb(s);
 
-        uint32 state = 0;
-        uint32 code = 0;
+        u32 state = 0;
+        u32 code = 0;
 
-        for (uint8 c : source)
+        for (u8 c : source)
         {
             if (!utf8_decode(state, code, c))
             {
@@ -221,10 +221,10 @@ namespace mango
         std::u16string s;
         StringBuilder<char16_t, 256, 2> sb(s);
 
-        uint32 state = 0;
-        uint32 code = 0;
+        u32 state = 0;
+        u32 code = 0;
 
-        for (uint8 c : source)
+        for (u8 c : source)
         {
             if (!utf8_decode(state, code, c))
             {
@@ -258,12 +258,12 @@ namespace mango
 
         for (size_t i = 0; i < length; ++i)
         {
-            uint32 code = source[i];
+            u32 code = source[i];
 
             // decode surrogate pair
             if ((code - 0xd800) < 0x400)
             {
-                const uint32 low = source[++i];
+                const u32 low = source[++i];
 
                 if ((low - 0xdc00) < 0x400)
                 {
@@ -306,8 +306,8 @@ namespace mango
 
         for (size_t i = 0; i < length; ++i)
         {
-            const uint32 mask = 0x3f;
-            const uint32 code = source[i];
+            const u32 mask = 0x3f;
+            const u32 code = source[i];
 
             sb.ensure();
 
@@ -331,7 +331,7 @@ namespace mango
 
         while (*src)
         {
-            uint32 c = *src++;
+            u32 c = *src++;
 
             if (c < 0x80)
             {
@@ -368,10 +368,10 @@ namespace mango
         std::wstring s;
         StringBuilder<wchar_t, 256, 1> sb(s);
 
-        uint32 state = 0;
-        uint32 code = 0;
+        u32 state = 0;
+        u32 code = 0;
 
-        for (uint8 c : source)
+        for (u8 c : source)
         {
             if (!utf8_decode(state, code, c))
             {
@@ -391,8 +391,8 @@ namespace mango
 
         while (*src)
         {
-            uint32 c = static_cast<uint8>(*src++);
-            uint32 d;
+            u32 c = static_cast<u8>(*src++);
+            u32 d;
 
             if (c < 0x80)
             {

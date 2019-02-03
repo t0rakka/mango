@@ -185,7 +185,7 @@ namespace jpeg
     {
         data = 0;
         remain = 0;
-        nextFF = reinterpret_cast<uint8*>(std::memchr(ptr, 0xff, end - ptr));
+        nextFF = reinterpret_cast<u8*>(std::memchr(ptr, 0xff, end - ptr));
     }
 
     DataType jpegBuffer::bytes(int n)
@@ -244,7 +244,7 @@ namespace jpeg
         restartInterval = 0;
         restartCounter = 0;
 
-        uint64 cpuFlags = getCPUFlags();
+        u64 cpuFlags = getCPUFlags();
 
 #if defined(JPEG_ENABLE_SIMD) && !defined(JPEG_ENABLE_NEON)
         decodeState.zigzagTable = g_zigzag_table_variant;
@@ -304,10 +304,10 @@ namespace jpeg
 
 #if 0
         // Scan for EOI marker
-        const uint8* p = memory.address + memory.size - 2;
+        const u8* p = memory.address + memory.size - 2;
         for (int i = 0; i < 32; ++i, --p)
         {
-            uint16 marker = uload16be(p);
+            u16 marker = uload16be(p);
             if (marker == MARKER_EOI)
                 return true;
         }
@@ -320,18 +320,18 @@ namespace jpeg
 #endif
     }
 
-    uint8* Parser::stepMarker(uint8* p) const
+    u8* Parser::stepMarker(u8* p) const
     {
-        uint16 size = uload16be(p);
+        u16 size = uload16be(p);
         p += size;
         p += (p[1] == 0xff); // HACK: some really ancient jpeg encoders encode markers sometimes as
                              // (0xff, 0xff, ID) ; this will skip to the "correct" 0xff (the second one)
         return p;
     }
 
-    uint8* Parser::seekMarker(uint8* start, uint8* end) const
+    u8* Parser::seekMarker(u8* start, u8* end) const
     {
-        uint8* p = start;
+        u8* p = start;
         --end; // marker is two bytes: don't look at last byte
 
         while (p < end)
@@ -362,19 +362,19 @@ namespace jpeg
         jpegPrint("[ EOI ]\n");
     }
 
-    void Parser::processCOM(uint8* p)
+    void Parser::processCOM(u8* p)
     {
         jpegPrint("[ COM ]\n");
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processTEM(uint8* p)
+    void Parser::processTEM(u8* p)
     {
         jpegPrint("[ TEM ]\n");
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processRES(uint8* p)
+    void Parser::processRES(u8* p)
     {
         jpegPrint("[ RES ]\n");
 
@@ -382,7 +382,7 @@ namespace jpeg
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processJPG(uint8* p)
+    void Parser::processJPG(u8* p)
     {
         jpegPrint("[ JPG ]\n");
 
@@ -390,7 +390,7 @@ namespace jpeg
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processJPG(uint8* p, uint16 marker)
+    void Parser::processJPG(u8* p, u16 marker)
     {
         jpegPrint("[ JPG%d ]\n", int(marker - MARKER_JPG0));
 
@@ -399,7 +399,7 @@ namespace jpeg
         MANGO_UNREFERENCED_PARAMETER(marker);
     }
 
-    void Parser::processAPP(uint8* p, uint16 marker)
+    void Parser::processAPP(u8* p, u16 marker)
     {
         jpegPrint("[ APP%d ]\n", int(marker - MARKER_APP0));
 
@@ -410,8 +410,8 @@ namespace jpeg
         {
             case MARKER_APP0:
             {
-                const uint8 magicJFIF[] = { 0x4a, 0x46, 0x49, 0x46, 0 }; // 'JFIF', 0
-                const uint8 magicJFXX[] = { 0x4a, 0x46, 0x58, 0x58, 0 }; // 'JFXX', 0
+                const u8 magicJFIF[] = { 0x4a, 0x46, 0x49, 0x46, 0 }; // 'JFIF', 0
+                const u8 magicJFXX[] = { 0x4a, 0x46, 0x58, 0x58, 0 }; // 'JFXX', 0
 
                 if (!std::memcmp(p, magicJFIF, 5) || !std::memcmp(p, magicJFXX, 5))
                 {
@@ -453,8 +453,8 @@ namespace jpeg
 
             case MARKER_APP1:
             {
-                const uint8 magicExif0[] = { 0x45, 0x78, 0x69, 0x66, 0, 0 }; // 'Exif', 0, 0
-                const uint8 magicExif255[] = { 0x45, 0x78, 0x69, 0x66, 0, 0xff }; // 'Exif', 0, 0xff
+                const u8 magicExif0[] = { 0x45, 0x78, 0x69, 0x66, 0, 0 }; // 'Exif', 0, 0
+                const u8 magicExif255[] = { 0x45, 0x78, 0x69, 0x66, 0, 0xff }; // 'Exif', 0, 0xff
 
                 if (!std::memcmp(p, magicExif0, 6) || !std::memcmp(p, magicExif255, 6))
                 {
@@ -471,7 +471,7 @@ namespace jpeg
 
             case MARKER_APP2:
             {
-                const uint8 magicICC[] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
+                const u8 magicICC[] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
 
                 if (!std::memcmp(p, magicICC, 12))
                 {
@@ -486,8 +486,8 @@ namespace jpeg
 
             case MARKER_APP3:
             {
-                const uint8 magicMETA[] = { 0x4d, 0x45, 0x54, 0x41, 0, 0 }; // 'META', 0, 0
-                const uint8 magicMeta[] = { 0x4d, 0x65, 0x74, 0x61, 0, 0 }; // 'Meta', 0, 0
+                const u8 magicMETA[] = { 0x4d, 0x45, 0x54, 0x41, 0, 0 }; // 'META', 0, 0
+                const u8 magicMeta[] = { 0x4d, 0x65, 0x74, 0x61, 0, 0 }; // 'Meta', 0, 0
 
                 if (!std::memcmp(p, magicMETA, 6) || !std::memcmp(p, magicMeta, 6))
                 {
@@ -502,7 +502,7 @@ namespace jpeg
         }
     }
 
-    void Parser::processSOF(uint8* p, uint16 marker)
+    void Parser::processSOF(u8* p, u16 marker)
     {
         jpegPrint("[ SOF%d ]\n", int(marker - MARKER_SOF0));
 
@@ -511,11 +511,11 @@ namespace jpeg
         is_lossless = false;
         is_differential = false;
 
-        uint16 length = uload16be(p + 0);
+        u16 length = uload16be(p + 0);
         precision = p[2];
         ysize = uload16be(p + 3);
         xsize = uload16be(p + 5);
-        uint8 comps = p[7];
+        u8 comps = p[7];
         p += 8;
 
         jpegPrint("  Image: %d x %d x %d\n", xsize, ysize, precision);
@@ -585,7 +585,7 @@ namespace jpeg
             Frame& frame = processState.frame[i];
 
             frame.compid = p[0];
-            uint8 x = p[1];
+            u8 x = p[1];
             frame.Hsf = (x >> 4) & 0xf;
             frame.Vsf = (x >> 0) & 0xf;
             frame.Tq = p[2];
@@ -707,11 +707,11 @@ namespace jpeg
         MANGO_UNREFERENCED_PARAMETER(length);
     }
 
-    uint8* Parser::processSOS(uint8* p, uint8* end)
+    u8* Parser::processSOS(u8* p, u8* end)
     {
         jpegPrint("[ SOS ]\n");
 
-        uint16 length = uload16be(p);
+        u16 length = uload16be(p);
         decodeState.comps_in_scan = p[2]; // Ns
         p += 3;
 
@@ -722,8 +722,8 @@ namespace jpeg
 
         for (int i = 0; i < decodeState.comps_in_scan; ++i)
         {
-            uint8 cs = p[0]; // Scan component selector
-            uint8 x = p[1];
+            u8 cs = p[0]; // Scan component selector
+            u8 x = p[1];
             p += 2;
             int dc = (x >> 4) & 0xf; // DC entropy coding table destination selector
             int ac = (x >> 0) & 0xf; // AC entropy coding table destination selector
@@ -778,7 +778,7 @@ namespace jpeg
         int Ss = p[0];
         int Se = p[1];
 
-        uint8 x = p[2];
+        u8 x = p[2];
         int Al = (x >> 0) & 0xf;
         int Ah = (x >> 4) & 0xf;
         p += 3;
@@ -909,19 +909,19 @@ namespace jpeg
         return p;
     }
 
-    void Parser::processDQT(uint8* p)
+    void Parser::processDQT(u8* p)
     {
         jpegPrint("[ DQT ]\n");
 
-        uint16 Lq = uload16be(p); // Quantization table definition length
+        u16 Lq = uload16be(p); // Quantization table definition length
         p += 2;
         Lq -= 2;
 
         for (; Lq > 0;)
         {
-            uint8 x = *p++;
-            uint8 Pq = (x >> 4) & 0xf; // Quantization table element precision (0 = 8 bits, 1 = 16 bits)
-            uint8 Tq = (x >> 0) & 0xf; // Quantization table destination identifier (0..3)
+            u8 x = *p++;
+            u8 Pq = (x >> 4) & 0xf; // Quantization table element precision (0 = 8 bits, 1 = 16 bits)
+            u8 Tq = (x >> 0) & 0xf; // Quantization table destination identifier (0..3)
 
             const int bits = (Pq + 1) * 8;
             jpegPrint("  Quantization table #%i element precision: %i bits\n", Tq, bits);
@@ -961,7 +961,7 @@ namespace jpeg
         }
     }
 
-    void Parser::processDHT(uint8* p)
+    void Parser::processDHT(u8* p)
     {
         jpegPrint("[ DHT ]\n");
 
@@ -971,9 +971,9 @@ namespace jpeg
 
         for (; Lh > 0;)
         {
-            uint8 x = *p++;
-            uint8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table.
-            uint8 Th = (x >> 0) & 0xf; // Huffman table identifier
+            u8 x = *p++;
+            u8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table.
+            u8 Th = (x >> 0) & 0xf; // Huffman table identifier
 
             if (Tc >= 2 || Th >= JPEG_MAX_COMPS_IN_SCAN)
             {
@@ -990,7 +990,7 @@ namespace jpeg
 
             for (int i = 1; i <= 16; ++i)
             {
-                uint8 L = *p++; // Number of Huffman codes of length i bits
+                u8 L = *p++; // Number of Huffman codes of length i bits
                 table.size[i] = L;
                 count += L;
                 jpegPrint("%i ", L);
@@ -1009,11 +1009,11 @@ namespace jpeg
         }
     }
 
-    void Parser::processDAC(uint8* p)
+    void Parser::processDAC(u8* p)
     {
         jpegPrint("[ DAC ]\n");
 
-        uint16 La = uload16be(p); // Arithmetic coding conditioning definition length
+        u16 La = uload16be(p); // Arithmetic coding conditioning definition length
         p += 2;
 
         int n = (La - 2) / 2;
@@ -1022,10 +1022,10 @@ namespace jpeg
 
         for (int i = 0; i < n; ++i)
         {
-            uint8 x = p[0];
-            uint8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table
-            uint8 Tb = (x >> 0) & 0xf; // Arithmetic coding conditioning table destination identifier
-            uint8 Cs = p[1]; // Conditioning table value
+            u8 x = p[0];
+            u8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table
+            u8 Tb = (x >> 0) & 0xf; // Arithmetic coding conditioning table destination identifier
+            u8 Cs = p[1]; // Conditioning table value
             p += 2;
 
             switch (Tc)
@@ -1046,17 +1046,17 @@ namespace jpeg
         }
     }
 
-    void Parser::processDNL(uint8* p)
+    void Parser::processDNL(u8* p)
     {
         jpegPrint("[ DNL ]\n");
 
-        uint16 Ld = uload16be(p + 0); // Define number of lines segment length
-        uint16 NL = uload16be(p + 2); // Number of lines
+        u16 Ld = uload16be(p + 0); // Define number of lines segment length
+        u16 NL = uload16be(p + 2); // Number of lines
         MANGO_UNREFERENCED_PARAMETER(NL); // TODO: ysize = NL
         MANGO_UNREFERENCED_PARAMETER(Ld);
     }
 
-    void Parser::processDRI(uint8* p)
+    void Parser::processDRI(u8* p)
     {
         jpegPrint("[ DRI ]\n");
 
@@ -1070,7 +1070,7 @@ namespace jpeg
         jpegPrint("  Restart interval: %i\n", restartInterval);
     }
 
-    void Parser::processDHP(uint8* p)
+    void Parser::processDHP(u8* p)
     {
         jpegPrint("[ DHP ]\n");
 
@@ -1078,14 +1078,14 @@ namespace jpeg
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processEXP(uint8* p)
+    void Parser::processEXP(u8* p)
     {
         jpegPrint("[ EXP ]\n");
 
-        uint16 Le = uload16be(p); // Expand reference components segment length
-        uint8 x = p[2];
-        uint8 Eh = (x >> 4) & 0xf; // Expand horizontally
-        uint8 Ev = (x >> 0) & 0xf; // Expand vertically
+        u16 Le = uload16be(p); // Expand reference components segment length
+        u8 x = p[2];
+        u8 Eh = (x >> 4) & 0xf; // Expand horizontally
+        u8 Ev = (x >> 0) & 0xf; // Expand vertically
 
         // Unsupported marker
         MANGO_UNREFERENCED_PARAMETER(Le);
@@ -1095,17 +1095,17 @@ namespace jpeg
 
     void Parser::parse(Memory memory, bool decode)
     {
-        uint8* end = memory.address + memory.size;
-        uint8* p = memory.address;
+        u8* end = memory.address + memory.size;
+        u8* p = memory.address;
 
         Timer timer;
 
         for (; p < end;)
         {
-            uint16 marker = uload16be(p);
+            u16 marker = uload16be(p);
             p += 2;
 
-            uint64 time0 = timer.us();
+            u64 time0 = timer.us();
 
             switch (marker)
             {
@@ -1257,7 +1257,7 @@ namespace jpeg
                     break;
             }
 
-            uint64 time1 = timer.us();
+            u64 time1 = timer.us();
             jpegPrint("  Time: %d us\n\n", int(time1 - time0));
 
             MANGO_UNREFERENCED_PARAMETER(time0);
@@ -1265,7 +1265,7 @@ namespace jpeg
         }
     }
 
-    inline bool isRestartMarker(const uint8* p)
+    inline bool isRestartMarker(const u8* p)
     {
         // TODO: clean up this hack
         bool is = false;
@@ -1459,7 +1459,7 @@ namespace jpeg
                 if (components == 1)
                 {
                     int s = byteclamp(data[0] + 128);
-                    uint8* image = m_surface->address<uint8>(x, y);
+                    u8* image = m_surface->address<u8>(x, y);
                     image[0] = s;
                 }
                 else
@@ -1467,7 +1467,7 @@ namespace jpeg
                     int r = byteclamp(data[0] + 128);
                     int g = byteclamp(data[1] + 128);
                     int b = byteclamp(data[2] + 128);
-                    uint32* image = m_surface->address<uint32>(x, y);
+                    u32* image = m_surface->address<u32>(x, y);
                     image[0] = makeBGRA(r, g, b, 255);
                 }
             }
@@ -1496,13 +1496,13 @@ namespace jpeg
         const int stride = m_surface->stride;
         const int xstride = m_surface->format.bytes() * xblock;
         const int ystride = stride * yblock;
-        uint8* image = m_surface->address<uint8>(0, 0);
+        u8* image = m_surface->address<u8>(0, 0);
 
         BlockType data[640];
 
         for (int y = 0; y < ymcu; ++y)
         {
-            uint8* dest = image;
+            u8* dest = image;
 
             ProcessFunc process = processState.process;
             int width = xblock;
@@ -1538,7 +1538,7 @@ namespace jpeg
         const int stride = m_surface->stride;
         const int xstride = m_surface->format.bytes() * xblock;
         const int ystride = stride * yblock;
-        uint8* image = m_surface->address<uint8>(0, 0);
+        u8* image = m_surface->address<u8>(0, 0);
 
         ConcurrentQueue queue("jpeg.sequential", Priority::HIGH);
 
@@ -1572,7 +1572,7 @@ namespace jpeg
                 queue.enqueue([=] {
                     for (int y = y0; y < y1; ++y)
                     {
-                        uint8* dest = image + y * ystride;
+                        u8* dest = image + y * ystride;
                         BlockType* source = data + y * xmcu * mcu_data_size;
 
                         ProcessFunc process = processState.process;
@@ -1603,7 +1603,7 @@ namespace jpeg
         }
         else
         {
-            uint8* p = decodeState.buffer.ptr;
+            u8* p = decodeState.buffer.ptr;
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
@@ -1624,7 +1624,7 @@ namespace jpeg
                         int x = n % xmcu;
                         int y = n / xmcu;
 
-                        uint8* dest = image + y * ystride + x * xstride;
+                        u8* dest = image + y * ystride + x * xstride;
 
                         ProcessFunc process = processState.process;
                         int width = xblock;
@@ -1743,14 +1743,14 @@ namespace jpeg
         const int stride = m_surface->stride;
         const int xstride = m_surface->format.bytes() * xblock;
         const int ystride = stride * yblock;
-        uint8* image = m_surface->address<uint8>(0, 0);
+        u8* image = m_surface->address<u8>(0, 0);
 
         const int mcu_data_size = blocks_in_mcu * 64;
         BlockType* data = blockVector;
 
         for (int y = 0; y < ymcu; ++y)
         {
-            uint8* dest = image + y * ystride;
+            u8* dest = image + y * ystride;
 
             ProcessFunc process = processState.process;
             int width = xblock;
@@ -1782,7 +1782,7 @@ namespace jpeg
         const int stride = m_surface->stride;
         const int xstride = m_surface->format.bytes() * xblock;
         const int ystride = stride * yblock;
-        uint8* image = m_surface->address<uint8>(0, 0);
+        u8* image = m_surface->address<u8>(0, 0);
 
         const int mcu_data_size = blocks_in_mcu * 64;
         BlockType* data = blockVector;
@@ -1804,7 +1804,7 @@ namespace jpeg
             queue.enqueue([=] {
                 for (int y = y0; y < y1; ++y)
                 {
-                    uint8* dest = image + y * ystride;
+                    u8* dest = image + y * ystride;
                     BlockType* source = data + y * xmcu * mcu_data_size;
 
                     ProcessFunc process = processState.process;

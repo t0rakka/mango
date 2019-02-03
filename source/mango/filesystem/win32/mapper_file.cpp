@@ -30,7 +30,7 @@ namespace
         HANDLE  m_map;
 
     public:
-        FileMemory(const std::string& filename, uint64 _offset, uint64 _size)
+        FileMemory(const std::string& filename, u64 _offset, u64 _size)
             : m_address(nullptr)
             , m_file(INVALID_HANDLE_VALUE)
             , m_map(nullptr)
@@ -66,7 +66,7 @@ namespace
 						DWORD offsetLow = 0;
 						SIZE_T bytes = 0;
 
-						uint64 page_offset = 0;
+						u64 page_offset = 0;
 						if (_offset > 0)
 						{
 							SYSTEM_INFO info;
@@ -88,7 +88,7 @@ namespace
 						LPVOID address_ = MapViewOfFile(m_map, FILE_MAP_READ, offsetHigh, offsetLow, bytes);
 
 						m_address = address_;
-						m_memory.address = reinterpret_cast<uint8*>(address_) + (_offset - page_offset);
+						m_memory.address = reinterpret_cast<u8*>(address_) + (_offset - page_offset);
 					}
 					else
 					{

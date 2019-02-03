@@ -74,7 +74,7 @@ namespace filesystem {
                         if (event->len)
                         {
                             std::string filename = event->name;
-                            uint32 flags = 0;
+                            u32 flags = 0;
 
                             if (event->mask & IN_ISDIR)
                             {

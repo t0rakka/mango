@@ -34,7 +34,7 @@ namespace mango
 #endif
         info << std::endl;
 
-        uint64 flags = getCPUFlags();
+        u64 flags = getCPUFlags();
 
         info << "Detected CPU Features: ";
         if (!flags) info << "N/A";

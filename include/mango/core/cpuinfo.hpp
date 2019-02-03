@@ -13,7 +13,7 @@ namespace mango
 	// getCPUFlags()
 	// ----------------------------------------------------------------------------
 
-    enum : uint64
+    enum : u64
     {
         // Intel
         CPU_MMX        = 0x0000000000000001,
@@ -60,6 +60,6 @@ namespace mango
         CPU_ARM_CRC32  = 0x0010000000000000
     };
 
-	uint64 getCPUFlags();
+	u64 getCPUFlags();
 
 } // namespace mango

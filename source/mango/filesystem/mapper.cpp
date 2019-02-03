@@ -73,7 +73,7 @@ namespace filesystem {
     {
     }
 
-    FileInfo::FileInfo(const std::string& name, uint64 size, uint32 flags)
+    FileInfo::FileInfo(const std::string& name, u64 size, u32 flags)
         : size(size)
         , flags(flags)
         , name(name)
@@ -108,7 +108,7 @@ namespace filesystem {
     // FileIndex
     // -----------------------------------------------------------------
 
-    void FileIndex::emplace(const std::string &name, uint64 size, uint32 flags)
+    void FileIndex::emplace(const std::string &name, u64 size, u32 flags)
     {
         files.emplace_back(name, size, flags);
 

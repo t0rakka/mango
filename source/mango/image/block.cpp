@@ -17,21 +17,21 @@
 namespace mango
 {
 
-    void decode_block_dxt1           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride); // BC1
-    void decode_block_dxt3           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride); // BC2
-    void decode_block_dxt5           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride); // BC3
-    void decode_block_3dc_x          (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride); // BC4U
-    void decode_block_3dc_xy         (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride); // BC5U
-    void decode_block_uyvy           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_yuy2           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_grgb8          (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_rgbg8          (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_rgb9e5         (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_r11f_g11f_b10f (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_r10f_g11f_b11f (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
-    void decode_block_pvrtc          (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
+    void decode_block_dxt1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC1
+    void decode_block_dxt3           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC2
+    void decode_block_dxt5           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC3
+    void decode_block_3dc_x          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC4U
+    void decode_block_3dc_xy         (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC5U
+    void decode_block_uyvy           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_yuy2           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_grgb8          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_rgbg8          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_rgb9e5         (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_r11f_g11f_b10f (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_r10f_g11f_b11f (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_pvrtc          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
-    void encode_block_etc1           (const TextureCompressionInfo& info, uint8* output, const uint8* input, int stride);
+    void encode_block_etc1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
 } // namespace mango
 
@@ -191,9 +191,9 @@ namespace
 
     struct CompressInfo
     {
-        uint32 format_opengl;
-        uint32 format_vulkan;
-		uint32 format_dxgi;
+        u32 format_opengl;
+        u32 format_vulkan;
+		u32 format_dxgi;
         TextureCompression compression;
         const char* name;
     };
@@ -309,11 +309,11 @@ namespace
         const int blockImageStride = block.height * surface.stride;
 
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
-        const uint8* data = memory.address;
+        const u8* data = memory.address;
 
         for (int y = 0; y < ysize; ++y)
         {
-            uint8* image = surface.image;
+            u8* image = surface.image;
             int stride = surface.stride;
 
             if (origin)
@@ -342,7 +342,7 @@ namespace
         BlitRect rect;
 
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
-        const uint8* data = memory.address;
+        const u8* data = memory.address;
 
         rect.destStride = origin ? -surface.stride : surface.stride;
         rect.srcStride = block.width * block.format.bytes();
@@ -398,7 +398,7 @@ namespace mango
 
 	namespace opengl
 	{
-		TextureCompression getTextureCompression(uint32 format)
+		TextureCompression getTextureCompression(u32 format)
 		{
 			for (auto& node : g_compressionInfoTable)
 			{
@@ -409,7 +409,7 @@ namespace mango
 			return TextureCompression::NONE;
 		}
 
-		uint32 getTextureFormat(TextureCompression compression)
+		u32 getTextureFormat(TextureCompression compression)
 		{
 			for (auto& node : g_compressionInfoTable)
 			{
@@ -423,7 +423,7 @@ namespace mango
 
 	namespace vulkan
 	{
-		TextureCompression getTextureCompression(uint32 format)
+		TextureCompression getTextureCompression(u32 format)
 		{
 			for (auto& node : g_compressionInfoTable)
 			{
@@ -434,7 +434,7 @@ namespace mango
 			return TextureCompression::NONE;
 		}
 
-		uint32 getTextureFormat(TextureCompression compression)
+		u32 getTextureFormat(TextureCompression compression)
 		{
 			for (auto& node : g_compressionInfoTable)
 			{
@@ -448,7 +448,7 @@ namespace mango
 
 	namespace directx
 	{
-		TextureCompression getTextureCompression(uint32 format)
+		TextureCompression getTextureCompression(u32 format)
 		{
 			for (auto& node : g_compressionInfoTable)
 			{
@@ -459,7 +459,7 @@ namespace mango
 			return TextureCompression::NONE;
 		}
 
-		uint32 getTextureFormat(TextureCompression compression)
+		u32 getTextureFormat(TextureCompression compression)
 		{
 			for (auto& node : g_compressionInfoTable)
 			{
@@ -537,7 +537,7 @@ namespace mango
 
         ConcurrentQueue queue;
 
-        uint8* address = memory.address;
+        u8* address = memory.address;
 
         const int xblocks = round_to_next(surface.width, width);
         const int yblocks = round_to_next(surface.height, height);
@@ -547,14 +547,14 @@ namespace mango
             queue.enqueue([this, y, xblocks, &surface, address]
             {
                 Bitmap temp(width, height, format);
-                uint8* data = address + y * xblocks * bytes;
+                u8* data = address + y * xblocks * bytes;
 
                 for (int x = 0; x < xblocks; ++x)
                 {
                     Surface source(surface, x * width, y * height, width, height);
                     temp.blit(0, 0, source);
 
-                    uint8* image = temp.address<uint8>();
+                    u8* image = temp.address<u8>();
                     encode(*this, data, image, temp.stride);
                     data += bytes;
                 }

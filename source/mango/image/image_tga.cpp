@@ -29,18 +29,18 @@ namespace
 
     struct HeaderTGA
     {
-        uint8   idfield_length;
-        uint8   colormap_type;
-        uint8   data_type;
-        uint16  colormap_origin;
-        uint16  colormap_length;
-        uint8   colormap_bits;
-        uint16  image_origin_x;
-        uint16  image_origin_y;
-        uint16  image_width;
-        uint16  image_height;
-        uint8   pixel_size;
-        uint8   descriptor;
+        u8   idfield_length;
+        u8   colormap_type;
+        u8   data_type;
+        u16  colormap_origin;
+        u16  colormap_length;
+        u8   colormap_bits;
+        u16  image_origin_x;
+        u16  image_origin_y;
+        u16  image_width;
+        u16  image_height;
+        u8   pixel_size;
+        u8   descriptor;
 
         void read(LittleEndianPointer& p)
         {
@@ -172,17 +172,17 @@ namespace
 	// tga code
 	// ------------------------------------------------------------
 
-    void decompressRLE(uint8* temp, uint8* p, int width, int height, int bpp)
+    void decompressRLE(u8* temp, u8* p, int width, int height, int bpp)
     {
         int x = 0;
         int y = 0;
-        uint8* buffer = temp;
+        u8* buffer = temp;
 
         for (; y < height;)
         {
-            uint8 sample = *p++;
+            u8 sample = *p++;
             int count = (sample & 0x7f) + 1;
-            const uint8* color = p;
+            const u8* color = p;
 
             if (sample & 0x80)
             {
@@ -237,7 +237,7 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderTGA m_header;
-        uint8* m_pointer;
+        u8* m_pointer;
 
         Interface(Memory memory)
         {
@@ -288,16 +288,16 @@ namespace
                 case TYPE_RLE_PALETTE:
                 {
                     // read palette
-                    palette.size = uint32(m_header.colormap_length);
+                    palette.size = u32(m_header.colormap_length);
 
                     if (m_header.colormap_bits == 16)
                     {
-                        for (uint32 i = 0; i < palette.size; ++i)
+                        for (u32 i = 0; i < palette.size; ++i)
                         {
-                            uint16 color = uload16le(p);
-                            uint32 r = (color >> 0) & 0x1f;
-                            uint32 g = (color >> 5) & 0x1f;
-                            uint32 b = (color >> 10) & 0x1f;
+                            u16 color = uload16le(p);
+                            u32 r = (color >> 0) & 0x1f;
+                            u32 g = (color >> 5) & 0x1f;
+                            u32 b = (color >> 10) & 0x1f;
                             r = (r * 255) / 31;
                             g = (g * 255) / 31;
                             b = (b * 255) / 31;
@@ -307,7 +307,7 @@ namespace
                     }
                     else if (m_header.colormap_bits == 24)
                     {
-                        for (uint32 i = 0; i < palette.size; ++i)
+                        for (u32 i = 0; i < palette.size; ++i)
                         {
                             palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
                             p += 3;
@@ -344,12 +344,12 @@ namespace
                 dest.stride = -surface.stride;
             }
 
-            uint8* temp = nullptr;
-            uint8* data = p;
+            u8* temp = nullptr;
+            u8* data = p;
 
             if (m_header.isRLE())
             {
-                temp = new uint8[width * height * bpp];
+                temp = new u8[width * height * bpp];
                 decompressRLE(temp, p, width, height, bpp);
                 data = temp;
             }
@@ -379,7 +379,7 @@ namespace
                         for (int y = 0; y < height; ++y)
                         {
                             ColorBGRA* d = bitmap.address<ColorBGRA>(0, y);
-                            uint8* s = data + y * width;
+                            u8* s = data + y * width;
                             for (int x = 0; x < width; ++x)
                             {
                                 d[x] = palette[s[x]];
@@ -426,9 +426,9 @@ namespace
         header.colormap_bits    = 0;
         header.image_origin_x   = 0;
         header.image_origin_y   = 0;
-        header.image_width      = static_cast<uint16>(width);
-        header.image_height     = static_cast<uint16>(height);
-        header.pixel_size       = static_cast<uint8>(format.bits);
+        header.image_width      = static_cast<u16>(width);
+        header.image_height     = static_cast<u16>(height);
+        header.pixel_size       = static_cast<u8>(format.bits);
         header.descriptor       = 0x20 | (isalpha ? 8 : 0);
 
         // write header
@@ -443,7 +443,7 @@ namespace
         }
         else
         {
-            uint8* image = surface.image;
+            u8* image = surface.image;
             const int bytesPerLine = width * format.bytes();
 
             for (int y = 0; y < height; ++y)

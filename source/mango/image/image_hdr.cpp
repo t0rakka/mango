@@ -19,16 +19,16 @@ namespace
     // tokenizer
     // ------------------------------------------------------------
 
-	std::string readline(const uint8*& buffer, const uint8* end)
+	std::string readline(const u8*& buffer, const u8* end)
 	{
-		const uint8* p = buffer;
+		const u8* p = buffer;
 
 		int endsize = 1;
 
 		// scan for endline
 		for (; buffer < end;)
 		{
-			uint8 v = *p++;
+			u8 v = *p++;
 
 			// Unix ("\n")
 			if (v == '\n')
@@ -117,7 +117,7 @@ namespace
     // decoder
     // ------------------------------------------------------------
 
-	void write_rgbe(float* buffer, uint8 r, uint8 g, uint8 b, uint8 e)
+	void write_rgbe(float* buffer, u8 r, u8 g, u8 b, u8 e)
 	{
 		float v = e ? std::ldexp(1.0f, e - 136) : 0;
 		buffer[0] = r * v;
@@ -140,7 +140,7 @@ namespace
 		bool yflip;
 		float exposure;
 
-		void parse(const uint8*& buffer, const uint8* end)
+		void parse(const u8*& buffer, const u8* end)
 		{
 			format   = rad_unsupported;
 			width    = 0;
@@ -231,7 +231,7 @@ namespace
 		}
 	};
 
-    void hdr_decode(Surface& surface, const uint8* data)
+    void hdr_decode(Surface& surface, const u8* data)
     {
         Buffer buffer(surface.width * 4);
 
@@ -248,11 +248,11 @@ namespace
 			}
 
 			data += 4;
-			uint8* p = buffer;
+			u8* p = buffer;
 
 			for (int i = 0; i < 4; ++i)
 			{
-				uint8* end = buffer + (i + 1) * surface.width;
+				u8* end = buffer + (i + 1) * surface.width;
 
 				while (p < end)
 				{
@@ -278,7 +278,7 @@ namespace
 							MANGO_EXCEPTION(ID"Incorrect rle_rgbe stream (rle count).");
 						}
 
-						*p++ = static_cast<uint8>(value);
+						*p++ = static_cast<u8>(value);
 
 						if (--count > 0)
 						{
@@ -294,10 +294,10 @@ namespace
 
 			for (int x = 0; x < surface.width; ++x)
 			{
-				uint8 r = buffer[x + surface.width * 0];
-				uint8 g = buffer[x + surface.width * 1];
-				uint8 b = buffer[x + surface.width * 2];
-				uint8 e = buffer[x + surface.width * 3];
+				u8 r = buffer[x + surface.width * 0];
+				u8 g = buffer[x + surface.width * 1];
+				u8 b = buffer[x + surface.width * 2];
+				u8 e = buffer[x + surface.width * 3];
 				write_rgbe(image, r, g, b, e);
 				image += 4;
 			}
@@ -311,12 +311,12 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         radheader m_header;
-        const uint8* m_data;
+        const u8* m_data;
 
         Interface(Memory memory)
         {
-            const uint8* data = memory.address;
-            const uint8* end = memory.address + memory.size;
+            const u8* data = memory.address;
+            const u8* end = memory.address + memory.size;
             m_header.parse(data, end);
             m_data = data;
         }

@@ -51,7 +51,7 @@ namespace jpeg
     // Generic C++ implementation
     // ------------------------------------------------------------------------------------------------
 
-    void idct(uint8* dest, const BlockType* data, const uint16* qt)
+    void idct(u8* dest, const BlockType* data, const u16* qt)
     {
         int temp[64];
         int* v;
@@ -169,7 +169,7 @@ namespace jpeg
         return simd::narrow(d0.m, d1.m);
     }
 
-    void idct_simd(uint8* dest, const BlockType* data, const uint16* qt)
+    void idct_simd(u8* dest, const BlockType* data, const u16* qt)
     {
         float32x4 temp[16];
         float32x4* v = temp;
@@ -364,7 +364,7 @@ namespace jpeg
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    void idct_sse2(uint8* dest, const BlockType* src, const uint16* qt)
+    void idct_sse2(u8* dest, const BlockType* src, const u16* qt)
     {
         const __m128i* data = reinterpret_cast<const __m128i *>(src);
         const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);

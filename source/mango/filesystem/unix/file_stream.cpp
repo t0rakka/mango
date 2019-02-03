@@ -43,7 +43,7 @@ namespace filesystem {
             return m_filename;
         }
 
-        uint64 size() const
+        u64 size() const
 		{
             struct stat sb;
             int fd = ::fileno(m_file);
@@ -52,12 +52,12 @@ namespace filesystem {
             return sb.st_size;
 		}
 
-		uint64 offset() const
+		u64 offset() const
 		{
 	        return ftello(m_file);
 		}
 
-		void seek(uint64 distance, int method)
+		void seek(u64 distance, int method)
 		{
 	        fseeko(m_file, distance, method);
 		}
@@ -112,17 +112,17 @@ namespace filesystem {
         return m_handle->filename();
     }
 
-    uint64 FileStream::size() const
+    u64 FileStream::size() const
     {
 		return m_handle->size();
     }
 
-    uint64 FileStream::offset() const
+    u64 FileStream::offset() const
     {
 		return m_handle->offset();
     }
 
-    void FileStream::seek(uint64 distance, SeekMode mode)
+    void FileStream::seek(u64 distance, SeekMode mode)
     {
         int method;
 

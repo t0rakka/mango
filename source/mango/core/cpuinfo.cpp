@@ -1,13 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/core/cpuinfo.hpp>
 
 namespace
 {
-
     using namespace mango;
 
 #if defined(MANGO_CPU_INTEL)
@@ -50,9 +49,9 @@ namespace
 	// getCPUFlagsInternal()
 	// ----------------------------------------------------------------------------
 
-    uint64 getCPUFlagsInternal()
+    u64 getCPUFlagsInternal()
     {
-        uint64 flags = 0;
+        u64 flags = 0;
 
 		int cpuInfo[4] = { 0, 0, 0, 0 };
 
@@ -142,9 +141,9 @@ namespace
 
 #include <cpu-features.h>
 
-    uint64 getCPUFlagsInternal()
+    u64 getCPUFlagsInternal()
     {
-        uint64 flags = 0;
+        u64 flags = 0;
 
         if (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM)
         {
@@ -207,7 +206,7 @@ namespace
 
 #else
 
-    uint64 getCPUFlagsInternal()
+    u64 getCPUFlagsInternal()
     {
         return 0; // unsupported platform
     }
@@ -219,9 +218,9 @@ namespace
 namespace mango
 {
 
-    uint64 getCPUFlags()
+    u64 getCPUFlags()
     {
-        static uint64 flags = getCPUFlagsInternal();
+        static u64 flags = getCPUFlagsInternal(); // cache the value
         return flags;
     }
 

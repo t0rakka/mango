@@ -13,7 +13,7 @@ namespace mango
         // window state
         id     window;
         bool   looping;
-        uint32 keystate[4] = { 0, 0, 0, 0 };
+        u32 keystate[4] = { 0, 0, 0, 0 };
     };
 
 } // namespace mango

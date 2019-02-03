@@ -34,9 +34,9 @@ namespace
 
     struct FileHeader
     {
-        uint16 magic;
-        uint32 filesize;
-        uint32 offset;
+        u16 magic;
+        u32 filesize;
+        u32 offset;
 
         FileHeader(Memory memory)
         {
@@ -51,7 +51,7 @@ namespace
     struct Header
     {
         // HeaderSize
-        uint32 headerSize;
+        u32 headerSize;
 
         // WinBitmapHeader1
         int width;
@@ -66,43 +66,43 @@ namespace
         int importantColorCount;
 
         // WinBitmapHeader2
-        uint32 redMask;
-        uint32 greenMask;
-        uint32 blueMask;
+        u32 redMask;
+        u32 greenMask;
+        u32 blueMask;
 
         // WinBitmapHeader3
-        uint32 alphaMask;
+        u32 alphaMask;
 
         // WinBitmapHeader4
-        uint32 csType;
-        uint32 endpoints[9];
-        uint32 gammaRed;
-        uint32 gammaGreen;
-        uint32 gammaBlue;
+        u32 csType;
+        u32 endpoints[9];
+        u32 gammaRed;
+        u32 gammaGreen;
+        u32 gammaBlue;
 
         // WinBitmapHeader5
-        uint32 intent;
-        uint32 profileData;
-        uint32 profileSize;
-        uint32 reserved3;
+        u32 intent;
+        u32 profileData;
+        u32 profileSize;
+        u32 reserved3;
 
         // OS2BitmapHeader1
         /*
-        uint16 width;
-        uint16 height;
-        uint16 numPlanes;
-        uint16 bitsPerPixel;
+        u16 width;
+        u16 height;
+        u16 numPlanes;
+        u16 bitsPerPixel;
         */
 
         // OS2BitmapHeader2
-        uint16 units;
-        uint16 reserved;
-        uint16 recording;
-        uint16 rendering;
-        uint32 size1;
-        uint32 size2;
-        uint32 colorEncoding;
-        uint32 identifier;
+        u16 units;
+        u16 reserved;
+        u16 recording;
+        u16 rendering;
+        u32 size1;
+        u32 size2;
+        u32 colorEncoding;
+        u32 identifier;
 
         Header()
         {
@@ -225,7 +225,7 @@ namespace
     {
         Format format;
         int paletteComponents;
-        const uint8* palette;
+        const u8* palette;
         bool yflip;
 
         BitmapHeader(Memory memory, bool isIcon)
@@ -345,7 +345,7 @@ namespace
                 // no palette
                 palette = nullptr;
 
-                uint32 colorMask = redMask | greenMask | blueMask;
+                u32 colorMask = redMask | greenMask | blueMask;
                 if (colorMask)
                 {
                     // WinBitmapHeader2 or later store the component masks
@@ -383,7 +383,7 @@ namespace
     // .bmp decoder
     // ------------------------------------------------------------
 
-    void readRLE4(Surface& surface, const BitmapHeader& header, int stride, const uint8* data)
+    void readRLE4(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
         MANGO_UNREFERENCED_PARAMETER(stride);
 
@@ -393,15 +393,15 @@ namespace
 
         while (y < header.height)
         {
-            uint8* image = surface.address<uint8>(0, y);
+            u8* image = surface.address<u8>(0, y);
 
             if (x >= header.width)
             {
                 x = 0;
             }
 
-            uint8 n = data[offset + 0];
-            uint8 c = data[offset + 1];
+            u8 n = data[offset + 0];
+            u8 c = data[offset + 1];
             offset += 2;
 
             if (n > 0)
@@ -448,14 +448,14 @@ namespace
 
                         while (count-- > 0)
                         {
-                            uint8 s = data[offset++];
+                            u8 s = data[offset++];
                             image[x++] = s >> 4;
                             image[x++] = s & 0xf;
                         }
 
                         if (c & 1)
                         {
-                            uint8 s = data[offset++];
+                            u8 s = data[offset++];
                             image[x++] = s >> 4;
                         }
 
@@ -468,7 +468,7 @@ namespace
         }
     }
 
-    void readRLE8(Surface& surface, const BitmapHeader& header, int stride, const uint8* data)
+    void readRLE8(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
         MANGO_UNREFERENCED_PARAMETER(stride);
 
@@ -477,15 +477,15 @@ namespace
 
         while (y < header.height)
         {
-            uint8* image = surface.address<uint8>(0, y);
+            u8* image = surface.address<u8>(0, y);
 
             if (x >= header.width)
             {
                 x = 0;
             }
 
-            uint8 n = data[0];
-            uint8 c = data[1];
+            u8 n = data[0];
+            u8 c = data[1];
             data += 2;
 
             if (n > 0)
@@ -538,17 +538,17 @@ namespace
         }
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, uint8* data)
+    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, u8* data)
     {
         const int bits = header.bitsPerPixel;
-        const uint32 mask = (1 << bits) - 1;
+        const u32 mask = (1 << bits) - 1;
 
         for (int y = 0; y < header.height; ++y)
         {
             BigEndianPointer p(data + y * stride);
-            uint8* dest = surface.address<uint8>(0, y);
+            u8* dest = surface.address<u8>(0, y);
 
-            uint32 value = 0;
+            u32 value = 0;
             int left = 0;
 
             for (int x = 0; x < header.width; ++x)
@@ -565,9 +565,9 @@ namespace
         }
     }
 
-    void readRGB(Surface surface, const BitmapHeader& header, int stride, uint8* data)
+    void readRGB(Surface surface, const BitmapHeader& header, int stride, u8* data)
     {
-        uint8* image = data;
+        u8* image = data;
         Surface source(header.width, header.height, header.format, stride, image);
         surface.blit(0, 0, source);
     }
@@ -581,7 +581,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            uint8* s = indices.address<uint8>(0, y);
+            u8* s = indices.address<u8>(0, y);
             ColorBGRA* d = temp.address<ColorBGRA>(0, y);
             for (int x = 0; x < width; ++x)
             {
@@ -603,8 +603,8 @@ namespace
             palette.size = header.importantColorCount;
 
             // read palette
-            const uint8* p = header.palette;
-            for (uint32 i = 0; i < palette.size; ++i)
+            const u8* p = header.palette;
+            for (u32 i = 0; i < palette.size; ++i)
             {
                 palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
                 p += header.paletteComponents;
@@ -612,7 +612,7 @@ namespace
         }
 
         const int stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
-        uint8* data = memory.address + offset;
+        u8* data = memory.address + offset;
 
         Surface mirror = surface;
 
@@ -753,7 +753,7 @@ namespace
     {
         LittleEndianPointer p = memory.address;
 
-        uint32 magic = p.read32();
+        u32 magic = p.read32();
         int size = p.read16();
 
         switch (magic)
@@ -769,7 +769,7 @@ namespace
                 break;
         }
 
-        uint32 bestScore = 0;
+        u32 bestScore = 0;
         int bestOffset = 0;
         int bestSize = 0;
         int bestColors = 0;
@@ -817,7 +817,7 @@ namespace
 
             //printf("  + icon: %d x %d, bits: %d, colors: %d\n", width, height, bpp, colors);
 
-            uint32 score = width * height * (bpp + 4) * (bpp + 4);
+            u32 score = width * height * (bpp + 4) * (bpp + 4);
             if (score > bestScore)
             {
                 bestScore = score;
@@ -835,7 +835,7 @@ namespace
         header.HeaderSize(pa);
         header.WinBitmapHeader1(pa);
 
-        uint32 headersize = header.headerSize & 0xffff;
+        u32 headersize = header.headerSize & 0xffff;
 
         int palettesize = std::max(int(header.paletteSize), bestColors);
 
@@ -1027,8 +1027,8 @@ namespace
         int dataoffset = magicsize + headersize;
 
         int stride = width * format.bytes();
-        uint32 imagesize = height * stride;
-        uint32 filesize = dataoffset + imagesize;
+        u32 imagesize = height * stride;
+        u32 filesize = dataoffset + imagesize;
 
         LittleEndianStream s(stream);
 
@@ -1057,7 +1057,7 @@ namespace
 
         for (int y = 0; y < temp.height; ++y)
         {
-            uint8* buffer = temp.image + (temp.height - y - 1) * stride;
+            u8* buffer = temp.image + (temp.height - y - 1) * stride;
             s.write(buffer, stride);
         }
     }

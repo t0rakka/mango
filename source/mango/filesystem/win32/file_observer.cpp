@@ -18,14 +18,14 @@ namespace filesystem {
         BUFFER_BYTES = sizeof(DWORD) * BUFFER_SIZE
     };
 
-    static void processNotify(FileObserver* observer, BYTE* buffer, DWORD bytes, uint32 flags0)
+    static void processNotify(FileObserver* observer, BYTE* buffer, DWORD bytes, u32 flags0)
     {
         for (; buffer;)
         {
             FILE_NOTIFY_INFORMATION* notify = (FILE_NOTIFY_INFORMATION*)(buffer);
             buffer = notify->NextEntryOffset ? buffer + notify->NextEntryOffset : NULL;
 
-            uint32 flags = 0;
+            u32 flags = 0;
 
             switch (notify->Action)
             {
@@ -145,7 +145,7 @@ namespace filesystem {
                     FILE_NOTIFY_CHANGE_DIR_NAME
                 };
 
-                const uint32 flags[] =
+                const u32 flags[] =
                 {
                     FileObserver::FILE,
                     FileObserver::DIRECTORY

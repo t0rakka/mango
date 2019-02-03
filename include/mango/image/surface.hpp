@@ -24,16 +24,16 @@ namespace mango
         int     height;
         int     stride;
         Format  format;
-        uint8*  image;
+        u8*     image;
 
-        Surface(int width, int height, const Format& format, int stride, uint8* image);
+        Surface(int width, int height, const Format& format, int stride, u8* image);
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
 
         template <typename SampleType>
         SampleType* address(int x = 0, int y = 0) const
         {
-            uint8* sample = image + y * stride + x * format.bytes();
+            u8* sample = image + y * stride + x * format.bytes();
             return reinterpret_cast<SampleType*>(sample);
         }
 
@@ -47,7 +47,7 @@ namespace mango
     class Bitmap : private NonCopyable, public Surface
     {
     public:
-        Bitmap(int width, int height, const Format& format, int stride = 0, uint8* image = nullptr);
+        Bitmap(int width, int height, const Format& format, int stride = 0, u8* image = nullptr);
         Bitmap(Memory memory, const std::string& extension);
         Bitmap(Memory memory, const std::string& extension, const Format& format);
         Bitmap(const std::string& filename);

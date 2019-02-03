@@ -22,7 +22,7 @@ namespace
         jpeg::Parser m_parser;
 
         Interface(Memory memory)
-        : m_parser(memory)
+            : m_parser(memory)
         {
         }
 

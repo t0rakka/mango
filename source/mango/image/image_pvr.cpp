@@ -159,18 +159,18 @@ namespace
 
     struct pvr_header3_t
     {
-        uint32 version;
-        uint32 flags;
-        uint64 pixelformat;
-        uint32 colorspace;
-        uint32 channeltype;
-        uint32 height;
-        uint32 width;
-        uint32 depth;
-        uint32 numsurfaces;
-        uint32 numfaces;
-        uint32 mipmapcount;
-        uint32 metadatasize;
+        u32 version;
+        u32 flags;
+        u64 pixelformat;
+        u32 colorspace;
+        u32 channeltype;
+        u32 height;
+        u32 width;
+        u32 depth;
+        u32 numsurfaces;
+        u32 numfaces;
+        u32 mipmapcount;
+        u32 metadatasize;
 
         void byteswap_header()
         {
@@ -558,9 +558,9 @@ namespace
             m_data_offset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
         }
 
-        Memory getMemory(Memory memory, int level, int depth, uint32 face) const
+        Memory getMemory(Memory memory, int level, int depth, u32 face) const
         {
-            uint8* p = memory.address + m_data_offset;
+            u8* p = memory.address + m_data_offset;
 
             Memory data;
 

@@ -33,7 +33,7 @@ namespace {
     A = vsha1su1q_u32(A, D);           \
     B = vsha1su0q_u32(B, C, D);
 
-    void arm_sha1_update(uint32 state[5], const uint8* block, int count)
+    void arm_sha1_update(u32 state[5], const u8* block, int count)
     {
         // set K0..K3 constants
         uint32x4_t k0 = vdupq_n_u32(0x5A827999);
@@ -173,7 +173,7 @@ namespace {
     *
     *******************************************************************************/
 
-    void intel_sha1_update(uint32 *digest, const uint8 *data, int num_blks)
+    void intel_sha1_update(u32 *digest, const u8 *data, int num_blks)
     {
         __m128i abcd, e0, e1;
         __m128i abcd_save, e_save;
@@ -370,15 +370,15 @@ namespace {
     // ----------------------------------------------------------------------------------------
 
 #define SHW(index) \
-    uint32 x = (w[(index -  3) & 15] ^ \
-                w[(index -  8) & 15] ^ \
-                w[(index - 14) & 15] ^ \
-                w[(index - 16) & 15]); \
+    u32 x = (w[(index -  3) & 15] ^ \
+             w[(index -  8) & 15] ^ \
+             w[(index - 14) & 15] ^ \
+             w[(index - 16) & 15]); \
     x = (x << 1) | (x >> 31); \
     w[index & 15] = x;
 
 #define PASS0(a, b, c, d, e, index) { \
-    uint32 x = uload32be(block + index * 4); \
+    u32 x = uload32be(block + index * 4); \
     w[index] = x; \
     e = ((a << 5) | (a >> 27)) + ((b & c) | ((~b) & d)) + e + 0x5A827999 + x; } \
     b = (b << 30) | (b >> 2)
@@ -403,17 +403,17 @@ namespace {
     e = ((a << 5) | (a >> 27)) + (b ^ c ^ d) + e + 0xCA62C1D6 + x; } \
     b = (b << 30) | (b >> 2)
 
-    void generic_sha1_update(uint32 state[5], const uint8* block, int count)
+    void generic_sha1_update(u32 state[5], const u8* block, int count)
     {
         for (int i = 0; i < count; ++i)
         {
-            uint32 a = state[0];
-            uint32 b = state[1];
-            uint32 c = state[2];
-            uint32 d = state[3];
-            uint32 e = state[4];
+            u32 a = state[0];
+            u32 b = state[1];
+            u32 c = state[2];
+            u32 d = state[3];
+            u32 e = state[4];
 
-            uint32 w[16];
+            u32 w[16];
 
             PASS0(a, b, c, d, e, 0);
             PASS0(e, a, b, c, d, 1);
@@ -512,7 +512,7 @@ namespace {
 
 namespace mango {
 
-    void sha1(uint32 hash[5], Memory memory)
+    void sha1(u32 hash[5], Memory memory)
     {
         hash[0] = 0x67452301;
         hash[1] = 0xEFCDAB89;
@@ -533,16 +533,16 @@ namespace mango {
         }
 #endif
 
-        const uint32 len = uint32(memory.size);
-        const uint8* message = memory.address;
+        const u32 len = u32(memory.size);
+        const u8* message = memory.address;
 
         int block_count = len / 64;
         transform(hash, message, block_count);
         message += block_count * 64;
-        uint32 i = block_count * 64;
+        u32 i = block_count * 64;
 
-        uint8 block[64];
-        uint32 rem = len - i;
+        u8 block[64];
+        u32 rem = len - i;
         memcpy(block, message + i, rem);
 
         block[rem++] = 0x80;

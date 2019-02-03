@@ -9,7 +9,7 @@
 namespace mango
 {
 
-    enum : uint32
+    enum : u32
     {
         FOURCC_NONE       = make32le(0, 0, 0, 0),
         FOURCC_DXT1       = make32le('D', 'X', 'T', '1'),

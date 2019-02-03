@@ -33,7 +33,7 @@ namespace
 
     using namespace jpeg;
 
-    const uint32 jpeg_aritab[] =
+    const u32 jpeg_aritab[] =
     {
         0x5a1d0181, 0x2586020e, 0x11140310, 0x080b0412, 0x03d80514, 0x01da0617,
         0x00e50719, 0x006f081c, 0x0036091e, 0x001a0a21, 0x000d0b23, 0x00060c09,
@@ -56,13 +56,13 @@ namespace
         0x55976d6e, 0x504f6b6f, 0x5a106fee, 0x55226d70, 0x59eb6ff0, 0x5a1d7171
     };
 
-    inline uint8 get_byte(jpegBuffer& buffer)
+    inline u8 get_byte(jpegBuffer& buffer)
     {
         // guard against corrupted bit-streams
         if (buffer.ptr >= buffer.end)
             return 0;
 
-        uint8 value = *buffer.ptr++;
+        u8 value = *buffer.ptr++;
         if (value == 0xff)
         {
             // skip stuff byte (0x00)
@@ -72,7 +72,7 @@ namespace
         return value;
     }
 
-    int arith_decode(Arithmetic& e, jpegBuffer& buffer, uint8* st)
+    int arith_decode(Arithmetic& e, jpegBuffer& buffer, u8* st)
     {
         while (e.a < 0x8000L)
         {
@@ -90,12 +90,12 @@ namespace
         // Qe values and probability estimation state machine
         int sv = *st;
         
-        uint32 qe = jpeg_aritab[sv & 0x7F];
-        uint8 nextLPS = qe & 0xFF; qe >>= 8;
-        uint8 nextMPS = qe & 0xFF; qe >>= 8;
+        u32 qe = jpeg_aritab[sv & 0x7F];
+        u8 nextLPS = qe & 0xFF; qe >>= 8;
+        u8 nextMPS = qe & 0xFF; qe >>= 8;
         
         // Decode & estimation procedures per sections D.2.4 & D.2.5
-        uint32 temp = e.a - qe;
+        u32 temp = e.a - qe;
         e.a = temp;
         temp <<= e.ct;
         
@@ -157,7 +157,7 @@ namespace jpeg
 
             // DC
             int tbl = block->index.dc;
-            uint8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
+            u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
             if (arith_decode(arithmetic, buffer, st) == 0)
             {
@@ -232,7 +232,7 @@ namespace jpeg
 
             // DC
             int tbl = block->index.dc;
-            uint8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
+            u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
             if (arith_decode(arithmetic, buffer, st) == 0)
             {
@@ -290,8 +290,8 @@ namespace jpeg
 
             // AC
             tbl = block->index.ac;
-            uint8* ac_stats = arithmetic.ac_stats[tbl];
-            uint8 ac_K = arithmetic.ac_K[tbl];
+            u8* ac_stats = arithmetic.ac_stats[tbl];
+            u8 ac_K = arithmetic.ac_K[tbl];
 
             for (int k = 1; k <= end; k++)
             {
@@ -360,7 +360,7 @@ namespace jpeg
             std::memset(dest, 0, 64 * sizeof(BlockType));
 
             int tbl = block->index.dc;
-            uint8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
+            u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
             int sign;
             int v, m;
@@ -424,7 +424,7 @@ namespace jpeg
     {
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
-        uint8* st = arithmetic.fixed_bin;
+        u8* st = arithmetic.fixed_bin;
 
         for (int j = 0; j < state->blocks; ++j)
         {
@@ -447,13 +447,13 @@ namespace jpeg
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
 
-        uint8* ac_stats = arithmetic.ac_stats[state->block[0].index.ac];
-        uint8 ac_K = arithmetic.ac_K[state->block[0].index.ac];
+        u8* ac_stats = arithmetic.ac_stats[state->block[0].index.ac];
+        u8 ac_K = arithmetic.ac_K[state->block[0].index.ac];
         
         // Figure F.20: Decode_AC_coefficients
         for (int k = start; k <= end; k++)
         {
-            uint8* st = ac_stats + 3 * (k - 1);
+            u8* st = ac_stats + 3 * (k - 1);
             
             if (arith_decode(arithmetic, buffer, st))
                 break; // EOB flag
@@ -513,7 +513,7 @@ namespace jpeg
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
 
-        uint8* ac_stats = arithmetic.ac_stats[state->block[0].index.ac];
+        u8* ac_stats = arithmetic.ac_stats[state->block[0].index.ac];
 
         int p1 = 1 << state->successiveLow; //  1 in the bit position being coded
         int m1 = (-1) << state->successiveLow; // -1 in the bit position being coded
@@ -529,7 +529,7 @@ namespace jpeg
 
         for (int k = start; k <= end; k++)
         {
-            uint8* st = ac_stats + 3 * (k - 1);
+            u8* st = ac_stats + 3 * (k - 1);
 
             if (k > kex)
             {
@@ -589,8 +589,8 @@ namespace jpeg
 
     void Arithmetic::restart(jpegBuffer& buffer)
     {
-        uint8 v0 = get_byte(buffer);
-        uint8 v1 = get_byte(buffer);
+        u8 v0 = get_byte(buffer);
+        u8 v1 = get_byte(buffer);
 
         c = (v0 << 8) | v1;
         a = 0x10000;

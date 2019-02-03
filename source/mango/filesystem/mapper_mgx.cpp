@@ -191,10 +191,10 @@ namespace filesystem {
     class VirtualMemoryMGX : public mango::VirtualMemory
     {
     protected:
-        uint8* m_delete_address;
+        u8* m_delete_address;
 
     public:
-        VirtualMemoryMGX(uint8* address, uint8* delete_address, size_t size)
+        VirtualMemoryMGX(u8* address, u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
             m_memory = Memory(address, size);

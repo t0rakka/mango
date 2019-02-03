@@ -41,7 +41,7 @@ namespace filesystem {
         // 2: Extended Notifications:
         //    Flags will indicate what happened and the filename will indicate the affected file.
         //    Currently only Linux and Windows platforms are able to generate extended notifications.
-        virtual void onEvent(uint32 flags, const std::string& filename) = 0;
+        virtual void onEvent(u32 flags, const std::string& filename) = 0;
     };
 
 } // namespace filesystem

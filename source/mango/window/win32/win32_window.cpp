@@ -218,9 +218,9 @@ namespace
 		return code;
 	}
 
-	uint32 computeKeyMask()
+	u32 computeKeyMask()
 	{
-		uint32 mask = 0;
+		u32 mask = 0;
 		if (GetKeyState(VK_CONTROL) & 0x8000) mask |= KEYMASK_CTRL;
 		if (GetKeyState(VK_SHIFT) & 0x8000) mask |= KEYMASK_SHIFT;
 		if (GetKeyState(VK_LWIN) & 0x8000) mask |= KEYMASK_SUPER;
@@ -242,7 +242,7 @@ namespace
 		return dwAttrib & FILE_ATTRIBUTE_DIRECTORY;
 	}
 
-	uint64 getFileSize(LPCWSTR name)
+	u64 getFileSize(LPCWSTR name)
 	{
 		LARGE_INTEGER nLargeInteger = { 0 };
 		HANDLE hFile = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
@@ -253,7 +253,7 @@ namespace
 			(void)bSuccess;
 		}
 
-		return uint64(nLargeInteger.QuadPart);
+		return u64(nLargeInteger.QuadPart);
 	}
 
 	// -----------------------------------------------------------------------
@@ -350,7 +350,7 @@ namespace
 			else
 			{
 				Keycode code = virtualToEnum(wparam, lparam);
-				uint32 mask = computeKeyMask();
+				u32 mask = computeKeyMask();
 				window->onKeyPress(code, mask);
 			}
 			return 0;
@@ -496,7 +496,7 @@ namespace
 					}
 					else
 					{
-						uint64 filesize = getFileSize(filename);
+						u64 filesize = getFileSize(filename);
 						dropped.emplace(s, filesize, 0);
 					}
 				}
@@ -757,7 +757,7 @@ namespace mango
     {
     }
 
-    void Window::onKeyPress(Keycode code, uint32 mask)
+    void Window::onKeyPress(Keycode code, u32 mask)
     {
         MANGO_UNREFERENCED_PARAMETER(code);
         MANGO_UNREFERENCED_PARAMETER(mask);

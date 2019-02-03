@@ -56,9 +56,9 @@ namespace jpeg
 // Generic C++ implementation
 // ----------------------------------------------------------------------------
 
-void process_Y(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_Y(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64];
+    u8 result[64];
     state->idct(result, data, state->block[0].qt); // Y
 
     for (int y = 0; y < height; ++y)
@@ -68,9 +68,9 @@ void process_Y(uint8* dest, int stride, const BlockType* data, ProcessState* sta
     }
 }
 
-void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
 
     for (int i = 0; i < state->blocks; ++i)
     {
@@ -91,8 +91,8 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
     int cr_xshift = state->frame[2].Hsf;
     int cr_yshift = state->frame[2].Vsf;
 
-    uint8* cb_data = result + cb_offset;
-    uint8* cr_data = result + cr_offset;
+    u8* cb_data = result + cb_offset;
+    u8* cr_data = result + cr_offset;
 
     // process MCU
     for (int yb = 0; yb < ysize; ++yb)
@@ -102,10 +102,10 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
 
         for (int xb = 0; xb < xsize; ++xb)
         {
-            uint8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(uint32);
-            uint8* y_block = result + (yb * xsize + xb) * 64;
-            uint8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
-            uint8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u32);
+            u8* y_block = result + (yb * xsize + xb) * 64;
+            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
 
             // horizontal clipping limit for current block
             const int xmax = std::min(8, width - xb * 8);
@@ -113,16 +113,16 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
             // process 8x8 block
             for (int y = 0; y < ymax; ++y)
             {
-                uint32* d = reinterpret_cast<uint32*>(dest_block);
+                u32* d = reinterpret_cast<u32*>(dest_block);
 
-                uint8* cb_scan = cb_block + (y >> cb_yshift) * 8;
-                uint8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
 
                 for (int x = 0; x < xmax; ++x)
                 {
-                    uint8 Y = y_block[x];
-                    uint8 cb = cb_scan[x >> cb_xshift];
-                    uint8 cr = cr_scan[x >> cr_xshift];
+                    u8 Y = y_block[x];
+                    u8 cb = cb_scan[x >> cb_xshift];
+                    u8 cr = cr_scan[x >> cr_xshift];
                     COMPUTE_CBCR(cb, cr);
                     d[x] = PACK_BGRA(Y);
                 }
@@ -133,9 +133,9 @@ void process_YCbCr(uint8* dest, int stride, const BlockType* data, ProcessState*
     }
 }
 
-void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_CMYK(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
 
     for (int i = 0; i < state->blocks; ++i)
     {
@@ -160,9 +160,9 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
     int ck_xshift = state->frame[3].Hsf;
     int ck_yshift = state->frame[3].Vsf;
 
-    uint8* cb_data = result + cb_offset;
-    uint8* cr_data = result + cr_offset;
-    uint8* ck_data = result + ck_offset;
+    u8* cb_data = result + cb_offset;
+    u8* cr_data = result + cr_offset;
+    u8* ck_data = result + ck_offset;
 
     // process MCU
     for (int yb = 0; yb < ysize; ++yb)
@@ -172,11 +172,11 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
 
         for (int xb = 0; xb < xsize; ++xb)
         {
-            uint8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(uint32);
-            uint8* y_block = result + (yb * xsize + xb) * 64;
-            uint8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
-            uint8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
-            uint8* ck_block = ck_data + yb * (8 >> ck_yshift) * 8 + xb * (8 >> ck_xshift);
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u32);
+            u8* y_block = result + (yb * xsize + xb) * 64;
+            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+            u8* ck_block = ck_data + yb * (8 >> ck_yshift) * 8 + xb * (8 >> ck_xshift);
 
             // horizontal clipping limit for current block
             const int xmax = std::min(8, width - xb * 8);
@@ -184,18 +184,18 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
             // process 8x8 block
             for (int y = 0; y < ymax; ++y)
             {
-                uint32* d = reinterpret_cast<uint32*>(dest_block);
+                u32* d = reinterpret_cast<u32*>(dest_block);
 
-                uint8* cb_scan = cb_block + (y >> cb_yshift) * 8;
-                uint8* cr_scan = cr_block + (y >> cr_yshift) * 8;
-                uint8* ck_scan = ck_block + (y >> ck_yshift) * 8;
+                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+                u8* ck_scan = ck_block + (y >> ck_yshift) * 8;
 
                 for (int x = 0; x < xmax; ++x)
                 {
-                    uint8 Y = y_block[x];
-                    uint8 cb = cb_scan[x >> cb_xshift];
-                    uint8 cr = cr_scan[x >> cr_xshift];
-                    uint8 ck = ck_scan[x >> ck_xshift];
+                    u8 Y = y_block[x];
+                    u8 cb = cb_scan[x >> cb_xshift];
+                    u8 cr = cr_scan[x >> cr_xshift];
+                    u8 ck = ck_scan[x >> ck_xshift];
                     COMPUTE_CBCR(cb, cr);
                     COMPUTE_CMYK(Y, ck);
                     d[x] = PACK_BGRA(0);
@@ -207,21 +207,21 @@ void process_CMYK(uint8* dest, int stride, const BlockType* data, ProcessState* 
     }
 }
 
-void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_8x8(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64 * 3];
+    u8 result[64 * 3];
 
     state->idct(result + 64 * 0, data + 64 * 0, state->block[0].qt); // Y
     state->idct(result + 64 * 1, data + 64 * 1, state->block[1].qt); // Cb
     state->idct(result + 64 * 2, data + 64 * 2, state->block[2].qt); // Cr
 
     // color conversion
-    const uint8* src = result;
+    const u8* src = result;
 
     for (int y = 0; y < 8; ++y)
     {
-        const uint8* s = src + y * 8;
-        uint32* d = reinterpret_cast<uint32*>(dest);
+        const u8* s = src + y * 8;
+        u32* d = reinterpret_cast<u32*>(dest);
 
         for (int x = 0; x < 8; ++x)
         {
@@ -238,9 +238,9 @@ void process_YCbCr_8x8(uint8* dest, int stride, const BlockType* data, ProcessSt
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_8x16(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64 * 4];
+    u8 result[64 * 4];
 
     state->idct(result +   0, data +   0, state->block[0].qt); // Y0
     state->idct(result +  64, data +  64, state->block[1].qt); // Y1
@@ -250,10 +250,10 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
-        uint32* d0 = reinterpret_cast<uint32*>(dest);
-        uint32* d1 = reinterpret_cast<uint32*>(dest + stride);
-        const uint8* s = result + y * 16;
-        const uint8* c = result + y * 8 + 128;
+        u32* d0 = reinterpret_cast<u32*>(dest);
+        u32* d1 = reinterpret_cast<u32*>(dest + stride);
+        const u8* s = result + y * 16;
+        const u8* c = result + y * 8 + 128;
 
         for (int x = 0; x < 8; ++x)
         {
@@ -271,9 +271,9 @@ void process_YCbCr_8x16(uint8* dest, int stride, const BlockType* data, ProcessS
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_16x8(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64 * 4];
+    u8 result[64 * 4];
 
     state->idct(result +   0, data +   0, state->block[0].qt); // Y0
     state->idct(result +  64, data +  64, state->block[1].qt); // Y1
@@ -283,9 +283,9 @@ void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessS
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
-        uint32* d = reinterpret_cast<uint32*>(dest);
-        uint8* s = result + y * 8;
-        uint8* c = result + y * 8 + 128;
+        u32* d = reinterpret_cast<u32*>(dest);
+        u8* s = result + y * 8;
+        u8* c = result + y * 8 + 128;
 
         for (int x = 0; x < 4; ++x)
         {
@@ -312,9 +312,9 @@ void process_YCbCr_16x8(uint8* dest, int stride, const BlockType* data, ProcessS
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
 {
-    uint8 result[64 * 6];
+    u8 result[64 * 6];
 
     state->idct(result +   0, data +   0, state->block[0].qt); // Y0
     state->idct(result + 128, data +  64, state->block[1].qt); // Y1
@@ -326,10 +326,10 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
     // color conversion
     for (int y = 0; y < 8; ++y)
     {
-        uint32* d0 = reinterpret_cast<uint32*>(dest);
-        uint32* d1 = reinterpret_cast<uint32*>(dest + stride);
-        const uint8* s = result + y * 16;
-        const uint8* c = result + y * 8 + 256;
+        u32* d0 = reinterpret_cast<u32*>(dest);
+        u32* d1 = reinterpret_cast<u32*>(dest + stride);
+        const u8* s = result + y * 16;
+        const u8* c = result + y * 8 + 256;
 
         for (int x = 0; x < 4; ++x)
         {
@@ -382,7 +382,7 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
 #define JPEG_CONST_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
 
     static inline
-    void convert_ycbcr_8x1_sse2(uint8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
+    void convert_ycbcr_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
     {
         __m128i zero = _mm_setzero_si128();
 
@@ -434,9 +434,9 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 16), bgra1);
     }
 
-    void process_YCbCr_8x8_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_8x8_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
-        uint8 result[64 * 3];
+        u8 result[64 * 3];
 
         state->idct(result +   0, data +   0, state->block[0].qt); // Y
         state->idct(result +  64, data +  64, state->block[1].qt); // Cb
@@ -478,9 +478,9 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         MANGO_UNREFERENCED_PARAMETER(height);
     }
     
-    void process_YCbCr_8x16_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_8x16_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
-        uint8 result[64 * 4];
+        u8 result[64 * 4];
 
         state->idct(result +   0, data +   0, state->block[0].qt); // Y0
         state->idct(result +  64, data +  64, state->block[1].qt); // Y1
@@ -530,9 +530,9 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         MANGO_UNREFERENCED_PARAMETER(height);
     }
     
-    void process_YCbCr_16x8_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_16x8_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
-        uint8 result[64 * 4];
+        u8 result[64 * 4];
 
         state->idct(result +   0, data +   0, state->block[0].qt); // Y0
         state->idct(result +  64, data +  64, state->block[1].qt); // Y1
@@ -598,9 +598,9 @@ void process_YCbCr_16x16(uint8* dest, int stride, const BlockType* data, Process
         MANGO_UNREFERENCED_PARAMETER(height);
     }
     
-    void process_YCbCr_16x16_sse2(uint8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_16x16_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
-        uint8 result[64 * 6];
+        u8 result[64 * 6];
 
         state->idct(result +   0, data +   0, state->block[0].qt); // Y0
         state->idct(result + 128, data +  64, state->block[1].qt); // Y1

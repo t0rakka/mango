@@ -162,17 +162,17 @@ namespace
         CanonLenseName              = 0x0095
     };
 
-    uint16 parse16(const uint8* p, bool littleEndian)
+    u16 parse16(const u8* p, bool littleEndian)
     {
         return littleEndian ? uload16le(p) : uload16be(p);
     }
 
-    uint32 parse32(const uint8* p, bool littleEndian)
+    u32 parse32(const u8* p, bool littleEndian)
     {
         return littleEndian ? uload32le(p) : uload32be(p);
     }
 
-    std::string parseAscii(const uint8* start, uint32 data, int components)
+    std::string parseAscii(const u8* start, u32 data, int components)
     {
         const char* s;
 
@@ -191,27 +191,27 @@ namespace
         return value;
     }
 
-    float parseRational(const uint8* p, bool littleEndian)
+    float parseRational(const u8* p, bool littleEndian)
     {
-        uint32 a = parse32(p + 0, littleEndian);
-        uint32 b = parse32(p + 4, littleEndian);
+        u32 a = parse32(p + 0, littleEndian);
+        u32 b = parse32(p + 4, littleEndian);
         return b ? float(a) / float(b) : 0;
     }
 
     struct Entry
     {
-        uint16 tag;
-        uint16 format;
-        uint32 length;
-        uint32 data;
+        u16 tag;
+        u16 format;
+        u32 length;
+        u32 data;
 
-        uint8 valueByte;
-        uint16 valueShort;
-        uint32 valueLong;
+        u8 valueByte;
+        u16 valueShort;
+        u32 valueLong;
         std::string valueAscii;
         float valueRational;
 
-        Entry(const uint8* p, const uint8* start, bool littleEndian)
+        Entry(const u8* p, const u8* start, bool littleEndian)
         {
             tag    = parse16(p + 0, littleEndian);
             format = parse16(p + 2, littleEndian);
@@ -248,7 +248,7 @@ namespace
             }
         }
 
-        void getByte(uint8& value) const
+        void getByte(u8& value) const
         {
             if (format == EXIF_BYTE)
             {
@@ -264,7 +264,7 @@ namespace
             }
         }
         
-        void getShort(uint16& value) const
+        void getShort(u16& value) const
         {
             if (format == EXIF_SHORT)
             {
@@ -272,7 +272,7 @@ namespace
             }
         }
         
-        void getLong(uint32& value) const
+        void getLong(u32& value) const
         {
             if (format == EXIF_LONG)
             {
@@ -410,7 +410,7 @@ namespace
 
 #define EXIF(name, type) name: entry.get##type(exif.name); break
 
-    void parseGPS(Exif& exif, const uint8* p, const uint8* start, bool littleEndian)
+    void parseGPS(Exif& exif, const u8* p, const u8* start, bool littleEndian)
     {
         MANGO_UNREFERENCED_PARAMETER(exif);
 
@@ -426,35 +426,35 @@ namespace
                     break;
 #if 0 // TODO
                     // GPS
-                    uint8		GPSVersionID[4];
-                    std::string	GPSLatitudeRef;
-                    float		GPSLatitude[3];
-                    std::string	GPSLongitudeRef;
-                    float		GPSLongitude[3];
-                    uint8		GPSAltitudeRef;
-                    float		GPSAltitude;
-                    float		GPSTimeStamp[3];
-                    std::string	GPSSatellites;
-                    std::string	GPSStatus;
-                    std::string	GPSMeasureMode;
-                    float		GPSDOP;
-                    std::string	GPSSpeedRef;
-                    float		GPSSpeed;
-                    std::string	GPSTrackRef;
-                    float		GPSTrack;
-                    std::string	GPSImgDirectionRef;
-                    float		GPSImgDirection;
-                    std::string	GPSMapDatum;
-                    std::string	GPSDestLatitudeRef;
-                    float		GPSDestLatitude[3];
-                    std::string	GPSDestLongitudeRef;
-                    float		GPSDestLongitude[3];
-                    std::string	GPSDestBearingRef;
-                    float		GPSDestBearing;
-                    std::string	GPSDestDistanceRef;
-                    float		GPSDestDistance;
-                    std::string	GPSDateStamp;
-                    uint16		GPSDifferential;
+                    u8		     GPSVersionID[4];
+                    std::string	 GPSLatitudeRef;
+                    float		 GPSLatitude[3];
+                    std::string	 GPSLongitudeRef;
+                    float		 GPSLongitude[3];
+                    u8		     GPSAltitudeRef;
+                    float		 GPSAltitude;
+                    float		 GPSTimeStamp[3];
+                    std::string	 GPSSatellites;
+                    std::string	 GPSStatus;
+                    std::string	 GPSMeasureMode;
+                    float		 GPSDOP;
+                    std::string	 GPSSpeedRef;
+                    float		 GPSSpeed;
+                    std::string	 GPSTrackRef;
+                    float		 GPSTrack;
+                    std::string	 GPSImgDirectionRef;
+                    float		 GPSImgDirection;
+                    std::string	 GPSMapDatum;
+                    std::string	 GPSDestLatitudeRef;
+                    float		 GPSDestLatitude[3];
+                    std::string	 GPSDestLongitudeRef;
+                    float		 GPSDestLongitude[3];
+                    std::string	 GPSDestBearingRef;
+                    float		 GPSDestBearing;
+                    std::string	 GPSDestDistanceRef;
+                    float		 GPSDestDistance;
+                    std::string	 GPSDateStamp;
+                    u16		     GPSDifferential;
 #endif
                 default:
                     //printf("gps tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length); // TODO: debug
@@ -465,7 +465,7 @@ namespace
         }
     }
 
-    void parseMakerNote(Exif& exif, const uint8* p, const uint8* start, bool littleEndian)
+    void parseMakerNote(Exif& exif, const u8* p, const u8* start, bool littleEndian)
     {
         // support MakerNote only for "Canon" manufacturer for now
         //if (exif.Make != "Canon")
@@ -503,7 +503,7 @@ namespace
         }
     }
 
-    void parseIFD(Exif& exif, const uint8* p, const uint8* start, bool littleEndian)
+    void parseIFD(Exif& exif, const u8* p, const u8* start, bool littleEndian)
     {
         int count = parse16(p, littleEndian);
         p += 2;
@@ -611,9 +611,9 @@ namespace
 #if 0
                 case ShutterSpeedValue:
                 {
-                    const uint8* p = base + offset;
-                    uint32 v0 = read32(p, endian);
-                    uint32 v1 = read32(p, endian);
+                    const u8* p = base + offset;
+                    u32 v0 = read32(p, endian);
+                    u32 v1 = read32(p, endian);
                     double s = double(v0) / double(v1);
                     float f = float(1.0 / pow(2.0, s));
                     //printf(" (%f sec) ", f);
@@ -622,9 +622,9 @@ namespace
                     
                 case ExposureTime:
                 {
-                    const uint8* p = base + offset;
-                    uint32 v0 = read32(p, endian);
-                    uint32 v1 = read32(p, endian);
+                    const u8* p = base + offset;
+                    u32 v0 = read32(p, endian);
+                    u32 v1 = read32(p, endian);
                     //printf(" (%i/%i sec) ", v0, v1);
                     break;
                 }
@@ -681,14 +681,14 @@ namespace mango
     {
         initExif(*this);
 
-        const uint8* start = memory.address;
-        const uint8* end = start + memory.size;
+        const u8* start = memory.address;
+        const u8* end = start + memory.size;
 
-        const uint8* p = start;
+        const u8* p = start;
         if (p > end - 8)
             return; // ERROR: out of bytes
 
-        uint16 endian = parse16(p + 0, true);
+        u16 endian = parse16(p + 0, true);
 
         bool littleEndian;
         switch (endian)
@@ -703,7 +703,7 @@ namespace mango
                 return; // ERROR: incorrect endian
         }
 
-        uint16 magic = parse16(p + 2, littleEndian);
+        u16 magic = parse16(p + 2, littleEndian);
         switch (magic)
         {
             case 0x002a:
@@ -717,7 +717,7 @@ namespace mango
                 return;
         }
 
-        uint32 offset = parse32(p + 4, littleEndian);
+        u32 offset = parse32(p + 4, littleEndian);
         p += offset;
         if (p > end)
             return; // ERROR: out of bytes

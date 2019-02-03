@@ -28,19 +28,19 @@ namespace mango
             return duration.count();
         }
 
-        uint64 ms() const
+        u64 ms() const
         {
             // time age in milliseconds
             return std::chrono::duration_cast<std::chrono::milliseconds>(now() - m_start).count();
         }
 
-        uint64 us() const
+        u64 us() const
         {
             // timer age in microseconds
             return std::chrono::duration_cast<std::chrono::microseconds>(now() - m_start).count();
         }
 
-        uint64 ns() const
+        u64 ns() const
         {
             // timer age in nanoseconds
             return std::chrono::duration_cast<std::chrono::nanoseconds>(now() - m_start).count();
@@ -58,13 +58,13 @@ namespace mango
 
     struct LocalTime
     {
-        uint16  year;	// [....]
-        uint16  month;	// [1, 12]
-        uint16  day;	// [1, 31]
-        uint16  wday;   // [0, 6]
-        uint16  hour;	// [0, 23]
-        uint16  minute; // [0, 59]
-        uint16  second; // [0, 60]
+        u16  year;	 // [....]
+        u16  month;	 // [1, 12]
+        u16  day;	 // [1, 31]
+        u16  wday;   // [0, 6]
+        u16  hour;	 // [0, 23]
+        u16  minute; // [0, 59]
+        u16  second; // [0, 60]
     };
 
     LocalTime getLocalTime();

@@ -21,24 +21,24 @@ namespace
 
     struct HeaderPCX
     {
-        uint8       Manufacturer;
-        uint8       Version;
-        uint8       Encoding;
-        uint8       BitsPerPixel;
-        uint16      Xmin;
-        uint16      Ymin;
-        uint16      Xmax;
-        uint16      Ymax;
-        uint16      HDpi;
-        uint16      VDpi;
-        uint8       ColorMap[48];
-        uint8       Reserved;
-        uint8       NPlanes;
-        uint16      BytesPerLine;
-        uint16      PaletteInfo;
-        uint16      HscreenSize;
-        uint16      VscreenSize;
-        uint8       Padding[54];
+        u8       Manufacturer;
+        u8       Version;
+        u8       Encoding;
+        u8       BitsPerPixel;
+        u16      Xmin;
+        u16      Ymin;
+        u16      Xmax;
+        u16      Ymax;
+        u16      HDpi;
+        u16      VDpi;
+        u8       ColorMap[48];
+        u8       Reserved;
+        u8       NPlanes;
+        u16      BytesPerLine;
+        u16      PaletteInfo;
+        u16      HscreenSize;
+        u16      VscreenSize;
+        u8       Padding[54];
 
         HeaderPCX(Memory memory)
         {
@@ -159,13 +159,13 @@ namespace
     // scanline decoders
     // ------------------------------------------------------------
 
-    void scanRLE(uint8* dest, int bytes, const uint8* p)
+    void scanRLE(u8* dest, int bytes, const u8* p)
     {
-        uint8* end = dest + bytes;
+        u8* end = dest + bytes;
 
         while (dest < end)
         {
-            uint8 sample = *p++;
+            u8 sample = *p++;
             if (sample < 0xc0)
             {
                 *dest++ = sample;
@@ -180,12 +180,12 @@ namespace
         }
     }
 
-    void decode4(const Surface& s, uint8* buffer, int scansize)
+    void decode4(const Surface& s, u8* buffer, int scansize)
     {
         const int width = s.width;
         const int height = s.height;
         const int stride = s.stride;
-        uint8* image = s.image;
+        u8* image = s.image;
 
         const int sn = scansize / 4;
 
@@ -193,8 +193,8 @@ namespace
         {
             for (int x = 0; x < width; ++x)
             {
-                const uint8* src = buffer + (x >> 3);
-                const uint8 mask = 0x80 >> (x & 7);
+                const u8* src = buffer + (x >> 3);
+                const u8 mask = 0x80 >> (x & 7);
                 int index = 0;
                 if (src[sn * 0] & mask) index |= 1;
                 if (src[sn * 1] & mask) index |= 2;
@@ -208,12 +208,12 @@ namespace
         }
     }
 
-    void decode8(const Surface& s, uint8* buffer, int scansize)
+    void decode8(const Surface& s, u8* buffer, int scansize)
     {
         const int width = s.width;
         const int height = s.height;
         const int stride = s.stride;
-        uint8* image = s.image;
+        u8* image = s.image;
 
         for (int y = 0; y < height; ++y)
         {
@@ -223,19 +223,19 @@ namespace
         }
     }
 
-    void decode24(const Surface& s, uint8* buffer, int scansize)
+    void decode24(const Surface& s, u8* buffer, int scansize)
     {
         const int width = s.width;
         const int height = s.height;
         const int stride = s.stride;
-        uint8* image = s.image;
+        u8* image = s.image;
 
         const int sn = scansize / 3;
 
         for (int y = 0; y < height; ++y)
         {
-            const uint8* src = buffer;
-            uint8* dest = image;
+            const u8* src = buffer;
+            u8* dest = image;
 
             for (int x = 0; x < width; ++x)
             {
@@ -252,19 +252,19 @@ namespace
         }
     }
 
-    void decode32(const Surface& s, uint8* buffer, int scansize)
+    void decode32(const Surface& s, u8* buffer, int scansize)
     {
         const int width = s.width;
         const int height = s.height;
         const int stride = s.stride;
-        uint8* image = s.image;
+        u8* image = s.image;
 
         const int sn = scansize / 4;
 
         for (int y = 0; y < height; ++y)
         {
-            const uint8* src = buffer;
-            uint8* dest = image;
+            const u8* src = buffer;
+            u8* dest = image;
 
             for (int x = 0; x < width; ++x)
             {
@@ -357,8 +357,8 @@ namespace
                             palette.size = 16;
 
                             // read palette
-                            const uint8* pal = m_header.ColorMap;
-                            for (uint32 i = 0; i < palette.size; ++i)
+                            const u8* pal = m_header.ColorMap;
+                            for (u32 i = 0; i < palette.size; ++i)
                             {
                                 palette[i] = ColorBGRA(pal[0], pal[1], pal[2], 0xff);
                                 pal += 3;
@@ -376,8 +376,8 @@ namespace
 
                                 for (int y = 0; y < height; ++y)
                                 {
-                                    uint32* d = temp.address<uint32>(0, y);
-                                    uint8* s = indices.address<uint8>(0, y);
+                                    u32* d = temp.address<u32>(0, y);
+                                    u8* s = indices.address<u8>(0, y);
                                     for (int x = 0; x < width; ++x)
                                     {
                                         d[x] = palette[s[x]];
@@ -416,8 +416,8 @@ namespace
                                 palette.size = 256;
 
                                 // read palette
-                                const uint8* pal = m_memory.address + m_memory.size - 768;
-                                for (uint32 i = 0; i < palette.size; ++i)
+                                const u8* pal = m_memory.address + m_memory.size - 768;
+                                for (u32 i = 0; i < palette.size; ++i)
                                 {
                                     palette[i] = ColorBGRA(pal[0], pal[1], pal[2], 0xff);
                                     pal += 3;
@@ -435,8 +435,8 @@ namespace
 
                                     for (int y = 0; y < height; ++y)
                                     {
-                                        uint32* d = temp.address<uint32>(0, y);
-                                        uint8* s = indices.address<uint8>(0, y);
+                                        u32* d = temp.address<u32>(0, y);
+                                        u8* s = indices.address<u8>(0, y);
                                         for (int x = 0; x < width; ++x)
                                         {
                                             d[x] = palette[s[x]];

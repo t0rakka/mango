@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/crc32.hpp>
 #include <mango/core/exception.hpp>
@@ -30,7 +30,7 @@ namespace {
 
     // Original implementaiton of Intel slice-by-8 by Stephan Brumme. Adapted for MANGO in June 2016.
 
-    constexpr uint32 g_crc32_table[] =
+    constexpr u32 g_crc32_table[] =
     {
         0x00000000,0x77073096,0xee0e612c,0x990951ba,0x076dc419,0x706af48f,0xe963a535,0x9e6495a3,
         0x0edb8832,0x79dcb8a4,0xe0d5e91e,0x97d2d988,0x09b64c2b,0x7eb17cbd,0xe7b82d07,0x90bf1d91,
@@ -297,7 +297,7 @@ namespace {
         0x2c8e0fff,0xe0240f61,0x6eab0882,0xa201081c,0xa8c40105,0x646e019b,0xeae10678,0x264b06e6,
     };
 
-    inline uint32 u8_crc32(uint32 crc, uint8 data)
+    inline u32 u8_crc32(u32 crc, u8 data)
     {
         crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
         return crc;
@@ -307,10 +307,10 @@ namespace {
 
     // 64 bit crc32 (generic)
 
-    inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
+    inline u32 u64_crc32(u32 crc, const u8* ptr)
     {
-        uint64 data = *reinterpret_cast<const uint64le *>(ptr);
-        data = data ^ uint64(crc);
+        u64 data = *reinterpret_cast<const uint64le *>(ptr);
+        data = data ^ u64(crc);
         crc = g_crc32_table[((data>>56) & 0xff) + 0x000] ^
               g_crc32_table[((data>>48) & 0xff) + 0x100] ^
               g_crc32_table[((data>>40) & 0xff) + 0x200] ^
@@ -326,15 +326,15 @@ namespace {
 
     // 32 bit crc32 (generic)
 
-    inline uint32 u64_crc32(uint32 crc, const uint8* ptr)
+    inline u32 u64_crc32(u32 crc, const u8* ptr)
     {
         const uint32le* p = reinterpret_cast<const uint32le *>(ptr);
 #ifdef MANGO_LITTLE_ENDIAN
-        uint32 one = p[0] ^ crc;
-        uint32 two = p[1];
+        u32 one = p[0] ^ crc;
+        u32 two = p[1];
 #else
-        uint32 one = p[1] ^ crc;
-        uint32 two = p[0];
+        u32 one = p[1] ^ crc;
+        u32 two = p[0];
 #endif
         crc = g_crc32_table[((two>>24) & 0xff) + 0x000] ^
               g_crc32_table[((two>>16) & 0xff) + 0x100] ^
@@ -352,7 +352,7 @@ namespace {
 
 #if !defined(MANGO_HARDWARE_CRC32C)
     
-    constexpr uint32 g_crc32c_table[] =
+    constexpr u32 g_crc32c_table[] =
     {
         0x00000000,0xf26b8303,0xe13b70f7,0x1350f3f4,0xc79a971f,0x35f1141c,0x26a1e7e8,0xd4ca64eb,
         0x8ad958cf,0x78b2dbcc,0x6be22838,0x9989ab3b,0x4d43cfd0,0xbf284cd3,0xac78bf27,0x5e133c24,
@@ -623,7 +623,7 @@ namespace {
     // for different polynomial. The code is a macro spaghetti enough already so we just repeat the
     // code here to keep things simple.
 
-    inline uint32 u8_crc32c(uint32 crc, uint8 data)
+    inline u32 u8_crc32c(u32 crc, u8 data)
     {
         crc = (crc >> 8) ^ g_crc32c_table[(crc & 0xff) ^ data];
         return crc;
@@ -633,10 +633,10 @@ namespace {
 
     // 64 bit crc32c (generic)
 
-    inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
+    inline u32 u64_crc32c(u32 crc, const u8* ptr)
     {
-        uint64 data = *reinterpret_cast<const uint64le *>(ptr);
-        data = data ^ uint64(crc);
+        u64 data = *reinterpret_cast<const uint64le *>(ptr);
+        data = data ^ u64(crc);
         crc = g_crc32c_table[((data>>56) & 0xff) + 0x000] ^
               g_crc32c_table[((data>>48) & 0xff) + 0x100] ^
               g_crc32c_table[((data>>40) & 0xff) + 0x200] ^
@@ -652,15 +652,15 @@ namespace {
 
     // 32 bit crc32c (generic)
 
-    inline uint32 u64_crc32c(uint32 crc, const uint8* ptr)
+    inline u32 u64_crc32c(u32 crc, const u8* ptr)
     {
         const uint32le* p = reinterpret_cast<const uint32le *>(ptr);
 #ifdef MANGO_LITTLE_ENDIAN
-        uint32 one = p[0] ^ crc;
-        uint32 two = p[1];
+        u32 one = p[0] ^ crc;
+        u32 two = p[1];
 #else
-        uint32 one = p[1] ^ crc;
-        uint32 two = p[0];
+        u32 one = p[1] ^ crc;
+        u32 two = p[0];
 #endif
         crc = g_crc32c_table[((two>>24) & 0xff) + 0x000] ^
               g_crc32c_table[((two>>16) & 0xff) + 0x100] ^
@@ -678,7 +678,7 @@ namespace {
 
 #if defined(MANGO_ENABLE_SSE4_2)
 
-    inline uint32 u8_crc32c(uint32 crc, uint8 data)
+    inline u32 u8_crc32c(u32 crc, u8 data)
     {
         return _mm_crc32_u8(crc, data);
     }
@@ -687,9 +687,9 @@ namespace {
 
     // 64 bit crc32c (SSE4.2)
 
-    inline uint32 u64_crc32c(uint32 crc, const uint8* data)
+    inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        return uint32(_mm_crc32_u64(crc, *reinterpret_cast<const uint64 *>(data)));
+        return u32(_mm_crc32_u64(crc, *reinterpret_cast<const u64 *>(data)));
     }
 
 #else
@@ -697,10 +697,10 @@ namespace {
     // 32 bit crc32c (SSE4.2)
     // (_mm_crc32_u64 is not available in 32 bit x86)
 
-    inline uint32 u64_crc32c(uint32 crc, const uint8* data)
+    inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        crc = _mm_crc32_u32(crc, *reinterpret_cast<const uint32 *>(data + 0));
-        crc = _mm_crc32_u32(crc, *reinterpret_cast<const uint32 *>(data + 4));
+        crc = _mm_crc32_u32(crc, *reinterpret_cast<const u32 *>(data + 0));
+        crc = _mm_crc32_u32(crc, *reinterpret_cast<const u32 *>(data + 4));
         return crc;
     }
 
@@ -708,24 +708,24 @@ namespace {
 
 #elif defined(__ARM_FEATURE_CRC32)
 
-    inline uint32 u8_crc32(uint32 crc, uint8 data)
+    inline u32 u8_crc32(u32 crc, u8 data)
     {
         return __crc32b(crc, data);
     }
 
-    inline uint32 u64_crc32(uint32 crc, const uint8* data)
+    inline u32 u64_crc32(u32 crc, const u8* data)
     {
-        return __crc32d(crc, *reinterpret_cast<const uint64 *>(data));
+        return __crc32d(crc, *reinterpret_cast<const u64 *>(data));
     }
 
-    inline uint32 u8_crc32c(uint32 crc, uint8 data)
+    inline u32 u8_crc32c(u32 crc, u8 data)
     {
         return __crc32cb(crc, data);
     }
 
-    inline uint32 u64_crc32c(uint32 crc, const uint8* data)
+    inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        return __crc32cd(crc, *reinterpret_cast<const uint64 *>(data));
+        return __crc32cd(crc, *reinterpret_cast<const u64 *>(data));
     }
 
 #endif

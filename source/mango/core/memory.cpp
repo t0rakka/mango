@@ -18,13 +18,13 @@ namespace mango {
     {
     }
 
-    Memory::Memory(uint8* address, size_t size)
+    Memory::Memory(u8* address, size_t size)
         : address(address)
         , size(size)
     {
     }
 
-    Memory::operator uint8* () const
+    Memory::operator u8* () const
     {
         return address;
     }
@@ -49,14 +49,14 @@ namespace mango {
 
     SharedMemory::SharedMemory(size_t size)
     {
-        uint8 *address = new uint8[size];
+        u8 *address = new u8[size];
         m_memory = Memory(address, size);
-        m_ptr = std::shared_ptr<uint8>(address, std::default_delete<uint8[]>());
+        m_ptr = std::shared_ptr<u8>(address, std::default_delete<u8[]>());
     }
 
-    SharedMemory::SharedMemory(uint8* address, size_t size)
+    SharedMemory::SharedMemory(u8* address, size_t size)
         : m_memory(address, size)
-        , m_ptr(address, std::default_delete<uint8[]>())
+        , m_ptr(address, std::default_delete<u8[]>())
     {
     }
 
@@ -68,7 +68,7 @@ namespace mango {
 
     void* aligned_malloc(size_t size, size_t alignment)
     {
-        assert(u32_is_power_of_two(uint32(alignment)));
+        assert(u32_is_power_of_two(u32(alignment)));
         return _aligned_malloc(size, alignment);
     }
 
@@ -81,7 +81,7 @@ namespace mango {
 
     void* aligned_malloc(size_t size, size_t alignment)
     {
-        assert(u32_is_power_of_two(uint32(alignment)));
+        assert(u32_is_power_of_two(u32(alignment)));
         return memalign(alignment, size);
     }
 
@@ -96,7 +96,7 @@ namespace mango {
 
     void* aligned_malloc(size_t size, size_t alignment)
     {
-        assert(u32_is_power_of_two(uint32(alignment)));
+        assert(u32_is_power_of_two(u32(alignment)));
 
         const size_t mask = alignment - 1;
         void* block = std::malloc(size + mask + sizeof(void*));

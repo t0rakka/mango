@@ -176,7 +176,7 @@ namespace
 
     struct FormatDXGI
     {
-        uint32 fourcc;
+        u32 fourcc;
         Format format;
         bool srgb; // NOTE: this is not used anywhere yet
         const char* name;
@@ -306,13 +306,13 @@ namespace
 
     struct HeaderDX10
     {
-        uint32 dxgiFormat;
-        uint32 resourceDimension;
-        uint32 miscFlag;
-        uint32 arraySize;
-        uint32 reserved;
+        u32 dxgiFormat;
+        u32 resourceDimension;
+        u32 miscFlag;
+        u32 arraySize;
+        u32 reserved;
 
-        uint8* read(LittleEndianPointer p)
+        u8* read(LittleEndianPointer p)
         {
             dxgiFormat = p.read32();
             resourceDimension = p.read32();
@@ -323,7 +323,7 @@ namespace
         }
     };
 
-    TextureCompression fourcc_to_compression(uint32 fourcc)
+    TextureCompression fourcc_to_compression(u32 fourcc)
     {
         TextureCompression compression = TextureCompression::NONE;
 
@@ -431,14 +431,14 @@ namespace
 
     struct FormatDDS
     {
-        uint32 size;
-        uint32 flags;
-        uint32 fourCC;
-        uint32 rgbBitCount;
-        uint32 rBitMask;
-        uint32 gBitMask;
-        uint32 bBitMask;
-        uint32 aBitMask;
+        u32 size;
+        u32 flags;
+        u32 fourCC;
+        u32 rgbBitCount;
+        u32 rBitMask;
+        u32 gBitMask;
+        u32 bBitMask;
+        u32 aBitMask;
 
         Format format;
         TextureCompression compression;
@@ -539,7 +539,7 @@ namespace
             }
         }
 
-        uint8* read(LittleEndianPointer p)
+        u8* read(LittleEndianPointer p)
         {
             size = p.read32();
             if (size != 32)
@@ -569,7 +569,7 @@ namespace
             }
             else
             {
-                const uint32 alphaMask = flags & DDPF_ALPHAPIXELS ? aBitMask : 0;
+                const u32 alphaMask = flags & DDPF_ALPHAPIXELS ? aBitMask : 0;
 
                 compression = TextureCompression::NONE;
 
@@ -605,26 +605,26 @@ namespace
 
 	struct HeaderDDS
 	{
-        uint32 size;
-        uint32 flags;
-        uint32 height;
-        uint32 width;
-        uint32 pitchOrLinearSize;
-        uint32 depth;
-        uint32 mipMapCount;
+        u32 size;
+        u32 flags;
+        u32 height;
+        u32 width;
+        u32 pitchOrLinearSize;
+        u32 depth;
+        u32 mipMapCount;
         FormatDDS pixelFormat;
-        uint32 caps;
-        uint32 caps2;
-        uint32 caps3;
-        uint32 caps4;
+        u32 caps;
+        u32 caps2;
+        u32 caps3;
+        u32 caps4;
 
         TextureCompressionInfo info;
 
-        uint8* data;
+        u8* data;
 
-        uint8* read(LittleEndianPointer p)
+        u8* read(LittleEndianPointer p)
         {
-            uint32 magic = p.read32();
+            u32 magic = p.read32();
             if (magic != FOURCC_DDS)
             {
                 MANGO_EXCEPTION(ID"Incorrect header.");
@@ -677,7 +677,7 @@ namespace
             printf("DXGI format: %d\n", header.dxgiFormat);
 #endif
 
-            if (header.dxgiFormat >= uint32(g_dxgi_table_size))
+            if (header.dxgiFormat >= u32(g_dxgi_table_size))
             {
                 MANGO_EXCEPTION(ID"DXGI index out of range.");
             }
@@ -794,7 +794,7 @@ namespace
 
             if (caps2 & DDSCAPS2_CUBEMAP)
             {
-                uint32 mask = (caps2 & DDSCAPS2_CUBEMAP_ALLFACES) >> 10;
+                u32 mask = (caps2 & DDSCAPS2_CUBEMAP_ALLFACES) >> 10;
                 value = u32_count_bits(mask);
             }
 
@@ -839,7 +839,7 @@ namespace
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
 
-            uint8* image = data;
+            u8* image = data;
             Memory selected;
 
             for (int iFace = 0; iFace < maxFace; ++iFace)
@@ -922,7 +922,7 @@ namespace
             }
             else
             {
-                uint8* image = imageMemory.address;
+                u8* image = imageMemory.address;
                 Format format = m_header.getFormat();
                 int width = std::max(1, m_header.getWidth() >> level);
                 int height = std::max(1, m_header.getHeight() >> level);

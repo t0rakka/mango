@@ -13,8 +13,8 @@ namespace mango
 
     struct BlitRect
     {
-        uint8* destImage;
-        uint8* srcImage;
+        u8* destImage;
+        u8* srcImage;
         int destStride;
         int srcStride;
         int width;
@@ -29,23 +29,23 @@ namespace mango
 
         struct Component
         {
-            uint32 srcMask;
-            uint32 destMask;
+            u32 srcMask;
+            u32 destMask;
             float scale;
             float bias;
             float constant; // TODO: configure
             int offset; // TODO: configure
 
-            uint32 computePack(uint32 s) const
+            u32 computePack(u32 s) const
             {
-                return uint32((s & srcMask) * scale + bias) & destMask;
+                return u32((s & srcMask) * scale + bias) & destMask;
             }
         } component[4];
 
         int components;
         int sampleSize;
-        uint32 initMask;
-        uint32 copyMask;
+        u32 initMask;
+        u32 copyMask;
 
 #ifdef MANGO_ENABLE_SSE2
         __m128 sseScale;
@@ -54,7 +54,7 @@ namespace mango
         __m128i sseShiftMask;
 #endif
 
-        typedef void (*FastFunc)(uint8 *, const uint8 *, int);
+        typedef void (*FastFunc)(u8 *, const u8 *, int);
         typedef void (*ConvertFunc)(const Blitter& blitter, const BlitRect& rect);
 
         FastFunc custom;

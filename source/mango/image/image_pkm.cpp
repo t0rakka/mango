@@ -21,12 +21,12 @@ namespace
     struct HeaderPKM
     {
         // ETC1 compression uses 4x4 blocks
-        uint16 extended_width;
-        uint16 extended_height;
+        u16 extended_width;
+        u16 extended_height;
 
         // original image size
-        uint16 original_width;
-        uint16 original_height;
+        u16 original_width;
+        u16 original_height;
 
         // preferred decode format
         Format format;
@@ -37,7 +37,7 @@ namespace
 
         void read(BigEndianPointer& p)
         {
-            uint32 magic = p.read32();
+            u32 magic = p.read32();
             if (magic != make32be('P', 'K', 'M', ' '))
             {
                 MANGO_EXCEPTION(ID"Incorrect header.");
@@ -157,7 +157,7 @@ namespace
         BigEndianStream s(stream);
 
         // write magic
-        const uint8 magic[] = { 'P', 'K', 'M', ' ', '1', '0' };
+        const u8 magic[] = { 'P', 'K', 'M', ' ', '1', '0' };
         stream.write(magic, 6);
 
         // write header

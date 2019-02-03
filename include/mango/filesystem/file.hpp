@@ -33,8 +33,8 @@ namespace filesystem {
 
         // memory
         operator Memory () const;
-        operator const uint8* () const;
-        const uint8* data() const;
+        operator const u8* () const;
+        const u8* data() const;
         size_t size() const;
     };
 
@@ -49,9 +49,9 @@ namespace filesystem {
 
         const std::string& filename() const;
 
-        uint64 size() const;
-        uint64 offset() const;
-        void seek(uint64 distance, SeekMode mode);
+        u64 size() const;
+        u64 offset() const;
+        void seek(u64 distance, SeekMode mode);
         void read(void* dest, size_t size);
         void write(const void* data, size_t size);
     };

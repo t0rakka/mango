@@ -22,7 +22,7 @@ namespace {
     /*   Based on code from ARM, and by Johannes Schneiders, Skip */
     /*   Hovsmith and Barry O'Rourke for the mbedTLS project.     */
 
-    void arm_sha2_update(uint32* state, const uint8* data, int count)
+    void arm_sha2_update(u32* state, const u8* data, int count)
     {
         static const uint32_t K[] =
         {
@@ -257,7 +257,7 @@ namespace {
     *
     *******************************************************************************/
 
-    void intel_sha2_transform(uint32 digest[8], const uint8* data, int block_count)
+    void intel_sha2_transform(u32 digest[8], const u8* data, int block_count)
     {
         __m128i state0, state1;
         __m128i msg;
@@ -477,14 +477,14 @@ namespace {
     // Generic C++ SHA-256
     // ----------------------------------------------------------------------------------------
 
-    constexpr uint32 rotateRight(uint32 value, int count)
+    constexpr u32 rotateRight(u32 value, int count)
     {
         return (value >> count) | (value << (32 - count));
     }
 
-    void generic_sha2_transform(uint32 state[8], const uint8* data, int block_count)
+    void generic_sha2_transform(u32 state[8], const u8* data, int block_count)
     {
-        static const uint32 k[] =
+        static const u32 k[] =
         {
             0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
             0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -498,27 +498,27 @@ namespace {
 
         while (block_count > 0)
         {
-            uint32 a = state[0];
-            uint32 b = state[1];
-            uint32 c = state[2];
-            uint32 d = state[3];
-            uint32 e = state[4];
-            uint32 f = state[5];
-            uint32 g = state[6];
-            uint32 h = state[7];
+            u32 a = state[0];
+            u32 b = state[1];
+            u32 c = state[2];
+            u32 d = state[3];
+            u32 e = state[4];
+            u32 f = state[5];
+            u32 g = state[6];
+            u32 h = state[7];
 
-            uint32 w[64];
+            u32 w[64];
 
             for (int i = 0; i < 16; ++i)
             {
                 w[i] = uload32be(data + i * 4);
 
-                uint32 s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
-                uint32 ch = (e & f) ^ ((~e) & g);
-                uint32 x = h + s1 + ch + k[i] + w[i];
-                uint32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
-                uint32 maj = (a & b) ^ (a & c) ^ (b & c);
-                uint32 y = s0 + maj;
+                u32 s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+                u32 ch = (e & f) ^ ((~e) & g);
+                u32 x = h + s1 + ch + k[i] + w[i];
+                u32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+                u32 maj = (a & b) ^ (a & c) ^ (b & c);
+                u32 y = s0 + maj;
                 
                 h = g;
                 g = f;
@@ -532,16 +532,16 @@ namespace {
 
             for (int i = 16; i < 64; ++i)
             {
-                uint32 t0 = rotateRight(w[i - 15], 7) ^ rotateRight(w[i - 15], 18) ^ (w[i - 15] >> 3);
-                uint32 t1 = rotateRight(w[i - 2], 17) ^ rotateRight(w[i - 2], 19) ^ (w[i - 2] >> 10);
+                u32 t0 = rotateRight(w[i - 15], 7) ^ rotateRight(w[i - 15], 18) ^ (w[i - 15] >> 3);
+                u32 t1 = rotateRight(w[i - 2], 17) ^ rotateRight(w[i - 2], 19) ^ (w[i - 2] >> 10);
                 w[i] = w[i - 16] + t0 + w[i - 7] + t1;
 
-                uint32 s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
-                uint32 ch = (e & f) ^ ((~e) & g);
-                uint32 x = h + s1 + ch + k[i] + w[i];
-                uint32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
-                uint32 maj = (a & b) ^ (a & c) ^ (b & c);
-                uint32 y = s0 + maj;
+                u32 s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+                u32 ch = (e & f) ^ ((~e) & g);
+                u32 x = h + s1 + ch + k[i] + w[i];
+                u32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+                u32 maj = (a & b) ^ (a & c) ^ (b & c);
+                u32 y = s0 + maj;
                 
                 h = g;
                 g = f;
@@ -571,7 +571,7 @@ namespace {
 
 namespace mango {
 
-    void sha2(uint32 hash[8], Memory memory)
+    void sha2(u32 hash[8], Memory memory)
     {
         hash[0] = 0x6a09e667;
         hash[1] = 0xbb67ae85;
@@ -595,15 +595,15 @@ namespace mango {
         }
 #endif
 
-        uint32 size = uint32(memory.size);
-        const uint8* data = memory.address;
+        u32 size = u32(memory.size);
+        const u8* data = memory.address;
 
         const int block_count = size / 64;
         transform(hash, data, block_count);
         data += block_count * 64;
         size -= block_count * 64;
         
-        uint8 buffer[64];
+        u8 buffer[64];
         std::memcpy(buffer, data, size);
         std::memset(buffer + size, 0, 64 - size);
         buffer[size] = 0x80;

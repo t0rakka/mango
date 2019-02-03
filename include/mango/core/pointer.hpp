@@ -16,7 +16,7 @@ namespace mango {
     class Pointer
     {
     protected:
-        uint8* p;
+        u8* p;
 
     public:
         explicit Pointer(const Pointer& pointer)
@@ -24,7 +24,7 @@ namespace mango {
         {
         }
 
-        explicit Pointer(uint8* address)
+        explicit Pointer(u8* address)
             : p(address)
         {
         }
@@ -32,7 +32,7 @@ namespace mango {
         Pointer() = default;
         ~Pointer() = default;
 
-        const Pointer& operator = (uint8* address)
+        const Pointer& operator = (u8* address)
         {
             p = address;
             return *this;
@@ -44,43 +44,43 @@ namespace mango {
             return reinterpret_cast<T*>(p);
         }
 
-        operator uint8* () const
+        operator u8* () const
         {
             return p;
         }
 
-        uint8& operator * () const
+        u8& operator * () const
         {
             return *p;
         }
 
-        uint8* operator ++ ()
+        u8* operator ++ ()
         {
             return ++p;
         }
 
-        uint8* operator ++ (int)
+        u8* operator ++ (int)
         {
             return p++;
         }
 
-        uint8* operator -- ()
+        u8* operator -- ()
         {
             return --p;
         }
 
-        uint8* operator -- (int)
+        u8* operator -- (int)
         {
             return p--;
         }
 
-        uint8* operator += (size_t count)
+        u8* operator += (size_t count)
         {
             p += count;
             return p;
         }
 
-        uint8* operator -= (size_t count)
+        u8* operator -= (size_t count)
         {
             p -= count;
             return p;
@@ -89,7 +89,7 @@ namespace mango {
 
     static inline ptrdiff_t operator - (const Pointer& a, const Pointer& b)
     {
-        return static_cast<const uint8 *>(a) - static_cast<const uint8 *>(b);
+        return static_cast<const u8 *>(a) - static_cast<const u8 *>(b);
     }
 
     // --------------------------------------------------------------
@@ -102,41 +102,41 @@ namespace mango {
         using Pointer::p;
 
     public:
-        LittleEndianPointer(uint8* address)
+        LittleEndianPointer(u8* address)
             : Pointer(address)
         {
         }
 
         // read methods
 
-        void read(uint8* dest, size_t count)
+        void read(u8* dest, size_t count)
         {
             std::memcpy(dest, p, count);
             p += count;
         }
 
-        uint8 read8()
+        u8 read8()
         {
             return *p++;
         }
 
-        uint16 read16()
+        u16 read16()
         {
-            uint16 value = uload16le(p);
+            u16 value = uload16le(p);
             p += 2;
             return value;
         }
 
-        uint32 read32()
+        u32 read32()
         {
-            uint32 value = uload32le(p);
+            u32 value = uload32le(p);
             p += 4;
             return value;
         }
 
-        uint64 read64()
+        u64 read64()
         {
-            uint64 value = uload64le(p);
+            u64 value = uload64le(p);
             p += 8;
             return value;
         }
@@ -167,30 +167,30 @@ namespace mango {
 
         // write methods
 
-        void write(const uint8* source, size_t count)
+        void write(const u8* source, size_t count)
         {
             std::memcpy(p, source, count);
             p += count;
         }
 
-        void write8(uint8 value)
+        void write8(u8 value)
         {
             *p++ = value;
         }
 
-        void write16(uint16 value)
+        void write16(u16 value)
         {
             ustore16le(p, value);
             p += 2;
         }
 
-        void write32(uint32 value)
+        void write32(u32 value)
         {
             ustore32le(p, value);
             p += 4;
         }
 
-        void write64(uint64 value)
+        void write64(u64 value)
         {
             ustore64le(p, value);
             p += 8;
@@ -225,41 +225,41 @@ namespace mango {
         using Pointer::p;
 
     public:
-        BigEndianPointer(uint8* address)
+        BigEndianPointer(u8* address)
             : Pointer(address)
         {
         }
 
         // read methods
 
-        void read(uint8* dest, size_t count)
+        void read(u8* dest, size_t count)
         {
             std::memcpy(dest, p, count);
             p += count;
         }
 
-        uint8 read8()
+        u8 read8()
         {
             return *p++;
         }
 
-        uint16 read16()
+        u16 read16()
         {
-            uint16 value = uload16be(p);
+            u16 value = uload16be(p);
             p += 2;
             return value;
         }
 
-        uint32 read32()
+        u32 read32()
         {
-            uint32 value = uload32be(p);
+            u32 value = uload32be(p);
             p += 4;
             return value;
         }
 
-        uint64 read64()
+        u64 read64()
         {
-            uint64 value = uload64be(p);
+            u64 value = uload64be(p);
             p += 8;
             return value;
         }
@@ -290,30 +290,30 @@ namespace mango {
 
         // write methods
 
-        void write(const uint8* source, size_t count)
+        void write(const u8* source, size_t count)
         {
             std::memcpy(p, source, count);
             p += count;
         }
 
-        void write8(uint8 value)
+        void write8(u8 value)
         {
             *p++ = value;
         }
 
-        void write16(uint16 value)
+        void write16(u16 value)
         {
             ustore16be(p, value);
             p += 2;
         }
 
-        void write32(uint32 value)
+        void write32(u32 value)
         {
             ustore32be(p, value);
             p += 4;
         }
 
-        void write64(uint64 value)
+        void write64(u64 value)
         {
             ustore64be(p, value);
             p += 8;

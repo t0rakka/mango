@@ -479,7 +479,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
     // PaethPredictor()
     // ------------------------------------------------------------
 
-    inline uint8 PaethPredictor(uint8 a, uint8 b, uint8 c)
+    inline u8 PaethPredictor(u8 a, u8 b, u8 c)
     {
         const int x = b - c;
         const int y = a - c;
@@ -509,12 +509,12 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         int w;
         int h;
 
-        AdamInterleave(uint32 pass, uint32 width, uint32 height)
+        AdamInterleave(u32 pass, u32 width, u32 height)
         {
             assert(pass >=0 && pass < 7);
 
-            const uint32 orig = 0x01020400 >> (pass * 4);
-            const uint32 spc = 0x01122333 >> (pass * 4);
+            const u32 orig = 0x01020400 >> (pass * 4);
+            const u32 spc = 0x01122333 >> (pass * 4);
 
             xorig = (orig >> 4) & 15;
             yorig = (orig >> 0) & 15;
@@ -551,8 +551,8 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
     protected:
         Memory m_memory;
 
-        uint8* m_pointer = nullptr;
-        uint8* m_end = nullptr;
+        u8* m_pointer = nullptr;
+        u8* m_end = nullptr;
         const char* m_error = nullptr;
 
         Buffer m_compressed;
@@ -574,7 +574,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
         // tRNS
         bool m_transparent_enable = false;
-        uint16 m_transparent_sample[3];
+        u16 m_transparent_sample[3];
         ColorBGRA m_transparent_color;
 
         // cHRM
@@ -584,40 +584,40 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         float m_gamma = 0.0f;
 
         // sBIT
-        uint8 m_scale_bits[4];
+        u8 m_scale_bits[4];
 
         // sRGB
-        uint8 m_srgb_render_intent = -1;
+        u8 m_srgb_render_intent = -1;
 
         void setError(const char* error);
 
-        void read_IHDR(BigEndianPointer p, uint32 size);
-        void read_IDAT(BigEndianPointer p, uint32 size);
-        void read_PLTE(BigEndianPointer p, uint32 size);
-        void read_tRNS(BigEndianPointer p, uint32 size);
-        void read_cHRM(BigEndianPointer p, uint32 size);
-        void read_gAMA(BigEndianPointer p, uint32 size);
-        void read_sBIT(BigEndianPointer p, uint32 size);
-        void read_sRGB(BigEndianPointer p, uint32 size);
+        void read_IHDR(BigEndianPointer p, u32 size);
+        void read_IDAT(BigEndianPointer p, u32 size);
+        void read_PLTE(BigEndianPointer p, u32 size);
+        void read_tRNS(BigEndianPointer p, u32 size);
+        void read_cHRM(BigEndianPointer p, u32 size);
+        void read_gAMA(BigEndianPointer p, u32 size);
+        void read_sBIT(BigEndianPointer p, u32 size);
+        void read_sRGB(BigEndianPointer p, u32 size);
 
         void parse();
-        void filter(uint8* buffer, int bytes, int height);
-        void deinterlace1to4(uint8* output, int stride, uint8* buffer);
-        void deinterlace8to16(uint8* output, int stride, uint8* buffer);
+        void filter(u8* buffer, int bytes, int height);
+        void deinterlace1to4(u8* output, int stride, u8* buffer);
+        void deinterlace8to16(u8* output, int stride, u8* buffer);
 
-        void process_i1to4   (uint8* dest, int stride, const uint8* src);
-        void process_i8      (uint8* dest, int stride, const uint8* src);
-        void process_rgb8    (uint8* dest, int stride, const uint8* src);
-        void process_pal1to4 (uint8* dest, int stride, const uint8* src, Palette* palette);
-        void process_pal8    (uint8* dest, int stride, const uint8* src, Palette* palette);
-        void process_ia8     (uint8* dest, int stride, const uint8* src);
-        void process_rgba8   (uint8* dest, int stride, const uint8* src);
-        void process_i16     (uint8* dest, int stride, const uint8* src);
-        void process_rgb16   (uint8* dest, int stride, const uint8* src);
-        void process_ia16    (uint8* dest, int stride, const uint8* src);
-        void process_rgba16  (uint8* dest, int stride, const uint8* src);
+        void process_i1to4   (u8* dest, int stride, const u8* src);
+        void process_i8      (u8* dest, int stride, const u8* src);
+        void process_rgb8    (u8* dest, int stride, const u8* src);
+        void process_pal1to4 (u8* dest, int stride, const u8* src, Palette* palette);
+        void process_pal8    (u8* dest, int stride, const u8* src, Palette* palette);
+        void process_ia8     (u8* dest, int stride, const u8* src);
+        void process_rgba8   (u8* dest, int stride, const u8* src);
+        void process_i16     (u8* dest, int stride, const u8* src);
+        void process_rgb16   (u8* dest, int stride, const u8* src);
+        void process_ia16    (u8* dest, int stride, const u8* src);
+        void process_rgba16  (u8* dest, int stride, const u8* src);
 
-        void process(uint8* image, int stride, uint8* src, Palette* palette);
+        void process(u8* image, int stride, u8* src, Palette* palette);
 
     public:
         ParserPNG(Memory memory);
@@ -640,7 +640,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         BigEndianPointer p = memory.address;
 
         // read header magic
-        const uint64 magic = p.read64();
+        const u64 magic = p.read64();
         if (magic != 0x89504e470d0a1a0a)
         {
             setError("Incorrect header magic.");
@@ -648,8 +648,8 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
 
         // read first chunk; it must be IHDR
-        const uint32 size = p.read32();
-        const uint32 id = p.read32();
+        const u32 size = p.read32();
+        const u32 id = p.read32();
         if (id != make32be('I', 'H', 'D', 'R'))
         {
             setError("Incorrect file; the IHDR chunk must come first.");
@@ -658,7 +658,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
         read_IHDR(p, size);
         p += size; // skip chunk data
-        p += sizeof(uint32); // skip crc
+        p += sizeof(u32); // skip crc
 
         // keep track of parsing position
         m_pointer = p;
@@ -681,7 +681,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         return m_error;
     }
 
-    void ParserPNG::read_IHDR(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_IHDR(BigEndianPointer p, u32 size)
     {
         print("[\"IHDR\"] %d bytes\n", size);
 
@@ -715,8 +715,8 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         p += 4; // skip crc
         for (; p < m_end - 8;)
         {
-            const uint32 size = p.read32();
-            const uint32 id = p.read32();
+            const u32 size = p.read32();
+            const u32 id = p.read32();
             switch (id)
             {
                 case make32be('t', 'R', 'N', 'S'):
@@ -782,12 +782,12 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         print("  Interlace:   %d\n", m_interlace);
     }
 
-    void ParserPNG::read_IDAT(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_IDAT(BigEndianPointer p, u32 size)
     {
         m_compressed.write(p, size);
     }
 
-    void ParserPNG::read_PLTE(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_PLTE(BigEndianPointer p, u32 size)
     {
         if (size % 3)
         {
@@ -802,14 +802,14 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
 
         m_palette.size = size / 3;
-        for (uint32 i = 0; i < m_palette.size; ++i)
+        for (u32 i = 0; i < m_palette.size; ++i)
         {
             m_palette[i] = ColorBGRA(p[0], p[1], p[2], 0xff);
             p += 3;
         }
     }
 
-    void ParserPNG::read_tRNS(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_tRNS(BigEndianPointer p, u32 size)
     {
         if (m_color_type == COLOR_TYPE_I)
         {
@@ -840,13 +840,13 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
-            if (m_palette.size < uint32(size))
+            if (m_palette.size < u32(size))
             {
                 setError("Incorrect alpha palette size.");
                 return;
             }
 
-            for (uint32 i = 0; i < size; ++i)
+            for (u32 i = 0; i < size; ++i)
             {
                 m_palette[i].a = p[i];
             }
@@ -857,7 +857,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::read_cHRM(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_cHRM(BigEndianPointer p, u32 size)
     {
         if (size != 32)
         {
@@ -876,7 +876,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         m_chromaticity.blue.y  = p.read32() / scale;
     }
 
-    void ParserPNG::read_gAMA(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_gAMA(BigEndianPointer p, u32 size)
     {
         if (size != 4)
         {
@@ -887,7 +887,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         m_gamma = p.read32() / 100000.0f;
     }
 
-    void ParserPNG::read_sBIT(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_sBIT(BigEndianPointer p, u32 size)
     {
         if (size > 4)
         {
@@ -895,13 +895,13 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             return;
         }
 
-        for (uint32 i = 0; i < size; ++i)
+        for (u32 i = 0; i < size; ++i)
         {
             m_scale_bits[i] = p[i];
         }
     }
 
-    void ParserPNG::read_sRGB(BigEndianPointer p, uint32 size)
+    void ParserPNG::read_sRGB(BigEndianPointer p, u32 size)
     {
         if (size != 1)
         {
@@ -971,8 +971,8 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
         for (; p < m_end - 8;)
         {
-            const uint32 size = p.read32();
-            const uint32 id = p.read32();
+            const u32 size = p.read32();
+            const u32 id = p.read32();
 
             print("[\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
 
@@ -1046,24 +1046,24 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::filter(uint8* buffer, int bytes, int height)
+    void ParserPNG::filter(u8* buffer, int bytes, int height)
     {
         // zero scanline
         std::vector<u8> zeros(bytes, 0);
-        const uint8* p = zeros.data();
+        const u8* p = zeros.data();
 
-        uint8 prev[16];
+        u8 prev[16];
 
         const int size = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
         if (size > 8)
             return;
 
-        uint8* s = buffer;
+        u8* s = buffer;
 
         for (int y = 0; y < height; ++y)
         {
             int method = *s++;
-            uint8* buf = s;
+            u8* buf = s;
 
             switch (method)
             {
@@ -1076,7 +1076,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                     {
                         for (int i = 0; i < size; ++i)
                         {
-                            const uint8 value = buf[i] + prev[i];
+                            const u8 value = buf[i] + prev[i];
                             prev[i] = value;
                             buf[i] = value;
                         }
@@ -1087,7 +1087,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 case 2:
                     for (int x = 0; x < bytes; ++x)
                     {
-                        const uint8 value = buf[x] + p[x];
+                        const u8 value = buf[x] + p[x];
                         buf[x] = value;
                     }
                     break;
@@ -1098,7 +1098,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                     {
                         for (int i = 0; i < size; ++i)
                         {
-                            const uint8 value = buf[i] + ((prev[i] + p[i]) >> 1);
+                            const u8 value = buf[i] + ((prev[i] + p[i]) >> 1);
                             prev[i] = value;
                             buf[i] = value;
                         }
@@ -1113,10 +1113,10 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                     {
                         for (int i = 0; i < size; ++i)
                         {
-                            uint8 A = prev[i + 0];
-                            uint8 C = prev[i + 8];
-                            uint8 B = p[i];
-                            uint8 value = buf[i] + PaethPredictor(A, B, C);
+                            u8 A = prev[i + 0];
+                            u8 C = prev[i + 8];
+                            u8 B = p[i];
+                            u8 value = buf[i] + PaethPredictor(A, B, C);
                             buf[i] = value;
                             prev[i + 0] = value;
                             prev[i + 8] = B;
@@ -1132,9 +1132,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::deinterlace1to4(uint8* output, int stride, uint8* buffer)
+    void ParserPNG::deinterlace1to4(u8* output, int stride, u8* buffer)
     {
-        uint8* p = buffer;
+        u8* p = buffer;
 
         const int samples = 8 / m_bit_depth;
         const int mask = samples - 1;
@@ -1155,13 +1155,13 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 for (int y = 0; y < adam.h; ++y)
                 {
                     const int yoffset = (y << adam.yspc) + adam.yorig;
-                    uint8* dest = output + yoffset * stride + FILTER_BYTE;
-                    uint8* src = p + y * bw + FILTER_BYTE;
+                    u8* dest = output + yoffset * stride + FILTER_BYTE;
+                    u8* src = p + y * bw + FILTER_BYTE;
 
                     for (int x = 0; x < adam.w; ++x)
                     {
                         const int xoffset = (x << adam.xspc) + adam.xorig;
-                        uint8 v = src[x >> shift];
+                        u8 v = src[x >> shift];
                         int a = (mask - (x & mask)) << valueShift;
                         int b = (mask - (xoffset & mask)) << valueShift;
                         v = ((v >> a) & valueMask) << b;
@@ -1175,9 +1175,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::deinterlace8to16(uint8* output, int stride, uint8* buffer)
+    void ParserPNG::deinterlace8to16(u8* output, int stride, u8* buffer)
     {
-        uint8* p = buffer;
+        u8* p = buffer;
         const int size = m_bytes_per_line / m_width;
 
         for (int pass = 0; pass < 7; ++pass)
@@ -1195,8 +1195,8 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 for (int y = 0; y < adam.h; ++y)
                 {
                     const int yoffset = (y << adam.yspc) + adam.yorig;
-                    uint8* dest = output + yoffset * stride + FILTER_BYTE;
-                    uint8* src = p + y * ps + FILTER_BYTE;
+                    u8* dest = output + yoffset * stride + FILTER_BYTE;
+                    u8* src = p + y * ps + FILTER_BYTE;
 
                     dest += adam.xorig * size;
                     const int xmax = (adam.w * size) << adam.xspc;
@@ -1215,7 +1215,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_i1to4(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_i1to4(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
@@ -1223,15 +1223,15 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
         const int maxValue = (1 << bits) - 1;
         const int scale = (255 / maxValue) * 0x010101;
-        const uint32 mask = (1 << bits) - 1;
+        const u32 mask = (1 << bits) - 1;
 
         for (int y = 0; y < height; ++y)
         {
-            uint8* d = dest;
+            u8* d = dest;
             dest += stride;
             ++src; // skip filter byte
 
-            uint32 data = 0;
+            u32 data = 0;
             int offset = -1;
 
             for (int x = 0; x < width; ++x)
@@ -1252,7 +1252,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_i8(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_i8(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
@@ -1261,13 +1261,13 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint16* d = reinterpret_cast<uint16*>(dest);
+                u16* d = reinterpret_cast<u16*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
                 for (int x = 0; x < width; ++x)
                 {
-                    const uint16 alpha = m_transparent_sample[0] == src[x] ? 0 : 0xff00;
+                    const u16 alpha = m_transparent_sample[0] == src[x] ? 0 : 0xff00;
                     d[x] = alpha | src[x];
                 }
                 src += width;
@@ -1285,7 +1285,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_rgb8(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_rgb8(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
@@ -1294,7 +1294,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint32* d = reinterpret_cast<uint32*>(dest);
+                u32* d = reinterpret_cast<u32*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
@@ -1314,7 +1314,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint32* d = reinterpret_cast<uint32*>(dest);
+                u32* d = reinterpret_cast<u32*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
@@ -1327,13 +1327,13 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_pal1to4(uint8* dest, int stride, const uint8* src, Palette* ptr_palette)
+    void ParserPNG::process_pal1to4(u8* dest, int stride, const u8* src, Palette* ptr_palette)
     {
         const int width = m_width;
         const int height = m_height;
         const int bits = m_bit_depth;
 
-        const uint32 mask = (1 << bits) - 1;
+        const u32 mask = (1 << bits) - 1;
 
         if (ptr_palette)
         {
@@ -1341,11 +1341,11 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
             for (int y = 0; y < height; ++y)
             {
-                uint8* d = reinterpret_cast<uint8*>(dest);
+                u8* d = reinterpret_cast<u8*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
-                uint32 data = 0;
+                u32 data = 0;
                 int offset = -1;
 
                 for (int x = 0; x < width; ++x)
@@ -1364,11 +1364,11 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint32* d = reinterpret_cast<uint32*>(dest);
+                u32* d = reinterpret_cast<u32*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
-                uint32 data = 0;
+                u32 data = 0;
                 int offset = -1;
 
                 for (int x = 0; x < width; ++x)
@@ -1385,7 +1385,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_pal8(uint8* dest, int stride, const uint8* src, Palette* ptr_palette)
+    void ParserPNG::process_pal8(u8* dest, int stride, const u8* src, Palette* ptr_palette)
     {
         const int width = m_width;
         const int height = m_height;
@@ -1406,7 +1406,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint32* d = reinterpret_cast<uint32*>(dest);
+                u32* d = reinterpret_cast<u32*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
@@ -1418,14 +1418,14 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_ia8(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_ia8(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
 
         for (int y = 0; y < height; ++y)
         {
-            uint16* d = reinterpret_cast<uint16*>(dest);
+            u16* d = reinterpret_cast<u16*>(dest);
             dest += stride;
             ++src; // skip filter byte
 
@@ -1437,14 +1437,14 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_rgba8(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_rgba8(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
 
         for (int y = 0; y < height; ++y)
         {
-            uint32* d = reinterpret_cast<uint32*>(dest);
+            u32* d = reinterpret_cast<u32*>(dest);
             dest += stride;
             ++src; // skip filter byte
 
@@ -1456,7 +1456,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_i16(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_i16(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
@@ -1465,14 +1465,14 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint16* d = reinterpret_cast<uint16*>(dest);
+                u16* d = reinterpret_cast<u16*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
                 for (int x = 0; x < width; ++x)
                 {
-                    uint16 gray = (src[0] << 8) | src[1];
-                    uint16 alpha = m_transparent_sample[0] == src[0] ? 0 : 0xffff;
+                    u16 gray = (src[0] << 8) | src[1];
+                    u16 alpha = m_transparent_sample[0] == src[0] ? 0 : 0xffff;
                     d[0] = gray;
                     d[1] = alpha;
                     d += 2;
@@ -1484,7 +1484,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint16* d = reinterpret_cast<uint16*>(dest);
+                u16* d = reinterpret_cast<u16*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
@@ -1497,7 +1497,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_rgb16(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_rgb16(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
@@ -1506,16 +1506,16 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint16* d = reinterpret_cast<uint16*>(dest);
+                u16* d = reinterpret_cast<u16*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
                 for (int x = 0; x < width; ++x)
                 {
-                    uint16 red   = (src[0] << 8) | src[1];
-                    uint16 green = (src[2] << 8) | src[3];
-                    uint16 blue  = (src[4] << 8) | src[5];
-                    uint16 alpha = 0xffff;
+                    u16 red   = (src[0] << 8) | src[1];
+                    u16 green = (src[2] << 8) | src[3];
+                    u16 blue  = (src[4] << 8) | src[5];
+                    u16 alpha = 0xffff;
                     if (m_transparent_sample[0] == red &&
                         m_transparent_sample[1] == green &&
                         m_transparent_sample[1] == blue) alpha = 0;
@@ -1532,16 +1532,16 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         {
             for (int y = 0; y < height; ++y)
             {
-                uint16* d = reinterpret_cast<uint16*>(dest);
+                u16* d = reinterpret_cast<u16*>(dest);
                 dest += stride;
                 ++src; // skip filter byte
 
                 for (int x = 0; x < width; ++x)
                 {
-                    uint16 red   = (src[0] << 8) | src[1];
-                    uint16 green = (src[2] << 8) | src[3];
-                    uint16 blue  = (src[4] << 8) | src[5];
-                    uint16 alpha = 0xffff;
+                    u16 red   = (src[0] << 8) | src[1];
+                    u16 green = (src[2] << 8) | src[3];
+                    u16 blue  = (src[4] << 8) | src[5];
+                    u16 alpha = 0xffff;
                     d[0] = red;
                     d[1] = green;
                     d[2] = blue;
@@ -1553,21 +1553,21 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_ia16(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_ia16(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
 
         for (int y = 0; y < height; ++y)
         {
-            uint16* d = reinterpret_cast<uint16*>(dest);
+            u16* d = reinterpret_cast<u16*>(dest);
             dest += stride;
             ++src; // skip filter byte
 
             for (int x = 0; x < width; ++x)
             {
-                uint16 gray  = (src[0] << 8) | src[1];
-                uint16 alpha = (src[2] << 8) | src[3];
+                u16 gray  = (src[0] << 8) | src[1];
+                u16 alpha = (src[2] << 8) | src[3];
                 d[0] = gray;
                 d[1] = alpha;
                 d += 2;
@@ -1576,23 +1576,23 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process_rgba16(uint8* dest, int stride, const uint8* src)
+    void ParserPNG::process_rgba16(u8* dest, int stride, const u8* src)
     {
         const int width = m_width;
         const int height = m_height;
 
         for (int y = 0; y < height; ++y)
         {
-            uint16* d = reinterpret_cast<uint16*>(dest);
+            u16* d = reinterpret_cast<u16*>(dest);
             dest += stride;
             ++src; // skip filter byte
 
             for (int x = 0; x < width; ++x)
             {
-                uint16 red   = (src[0] << 8) | src[1];
-                uint16 green = (src[2] << 8) | src[3];
-                uint16 blue  = (src[4] << 8) | src[5];
-                uint16 alpha = (src[6] << 8) | src[7];
+                u16 red   = (src[0] << 8) | src[1];
+                u16 green = (src[2] << 8) | src[3];
+                u16 blue  = (src[4] << 8) | src[5];
+                u16 alpha = (src[6] << 8) | src[7];
                 d[0] = blue;
                 d[1] = green;
                 d[2] = red;
@@ -1603,7 +1603,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         }
     }
 
-    void ParserPNG::process(uint8* image, int stride, uint8* buffer, Palette* ptr_palette)
+    void ParserPNG::process(u8* image, int stride, u8* buffer, Palette* ptr_palette)
     {
         u8* temp = nullptr;
 
@@ -1712,7 +1712,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 #ifdef DECODE_WITH_MINIZ
             // allocate output buffer
             print("  buffer bytes: %d\n", buffer_size);
-            uint8* buffer = new uint8[buffer_size];
+            u8* buffer = new u8[buffer_size];
             if (!buffer)
             {
                 setError("Memory allocation failed.");
@@ -1778,15 +1778,15 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
     {
         BigEndianStream s(stream);
 
-        const uint32 chunk_size = static_cast<uint32>(memory.size - 4);
-        const uint32 chunk_crc = crc32(0, memory);
+        const u32 chunk_size = static_cast<u32>(memory.size - 4);
+        const u32 chunk_crc = crc32(0, memory);
 
         s.write32(chunk_size);
         s.write(memory);
         s.write32(chunk_crc);
     }
 
-    void write_IHDR(Stream& stream, const Surface& surface, uint8 color_bits, ColorType color_type)
+    void write_IHDR(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
         Buffer buffer;
         BigEndianStream s(buffer);
@@ -1825,14 +1825,14 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             bool last_scan = (y == surface.height - 1);
 
             // compress filler byte
-            uint8 zero = 0;
+            u8 zero = 0;
             z.avail_in = 1;
             z.next_in = &zero;
             deflate(&z, Z_NO_FLUSH);
 
             // compress scanline
             z.avail_in = bytesPerLine;
-            z.next_in = surface.address<uint8>(0, y);
+            z.next_in = surface.address<u8>(0, y);
             deflate(&z, last_scan ? Z_FINISH : Z_NO_FLUSH);
         }
 
@@ -1845,9 +1845,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         writeChunk(stream, Memory(buffer, compressed_size));
     }
 
-    void writePNG(Stream& stream, const Surface& surface, uint8 color_bits, ColorType color_type)
+    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
-        static const uint8 magic[] =
+        static const u8 magic[] =
         {
             0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
         };
@@ -1950,7 +1950,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         MANGO_UNREFERENCED_PARAMETER(quality);
 
         // defaults
-        uint8 color_bits = 8;
+        u8 color_bits = 8;
         ColorType color_type = COLOR_TYPE_RGBA;
         Format format;
 

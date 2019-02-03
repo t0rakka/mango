@@ -32,9 +32,9 @@ namespace mango
         Stream() = default;
         virtual ~Stream() = default;
 
-        virtual uint64 size() const = 0;
-        virtual uint64 offset() const = 0;
-        virtual void seek(uint64 distance, SeekMode mode) = 0;
+        virtual u64 size() const = 0;
+        virtual u64 offset() const = 0;
+        virtual void seek(u64 distance, SeekMode mode) = 0;
         virtual void read(void* dest, size_t size) = 0;
         virtual void write(const void* data, size_t size) = 0;
 
@@ -62,17 +62,17 @@ namespace mango
             {
             }
 
-            uint64 size() const
+            u64 size() const
             {
                 return s.size();
             }
 
-            uint64 offset() const
+            u64 offset() const
             {
                 return s.offset();
             }
 
-            void seek(uint64 distance, Stream::SeekMode mode)
+            void seek(u64 distance, Stream::SeekMode mode)
             {
                 s.seek(distance, mode);
             }
@@ -82,31 +82,31 @@ namespace mango
                 s.read(dest, size);
             }
 
-            uint8 read8()
+            u8 read8()
             {
-                uint8 value;
-                s.read(&value, sizeof(uint8));
+                u8 value;
+                s.read(&value, sizeof(u8));
                 return value;
             }
 
-            uint16 read16()
+            u16 read16()
             {
-                uint16 value;
-                s.read(&value, sizeof(uint16));
+                u16 value;
+                s.read(&value, sizeof(u16));
                 return value;
             }
 
-            uint32 read32()
+            u32 read32()
             {
-                uint32 value;
-                s.read(&value, sizeof(uint32));
+                u32 value;
+                s.read(&value, sizeof(u32));
                 return value;
             }
 
-            uint64 read64()
+            u64 read64()
             {
-                uint64 value;
-                s.read(&value, sizeof(uint64));
+                u64 value;
+                s.read(&value, sizeof(u64));
                 return value;
             }
 
@@ -141,25 +141,25 @@ namespace mango
                 s.write(memory);
             }
 
-            void write8(uint8 value)
+            void write8(u8 value)
             {
-                s.write(&value, sizeof(uint8));
+                s.write(&value, sizeof(u8));
 
             }
 
-            void write16(uint16 value)
+            void write16(u16 value)
             {
-                s.write(&value, sizeof(uint16));
+                s.write(&value, sizeof(u16));
             }
 
-            void write32(uint32 value)
+            void write32(u32 value)
             {
-                s.write(&value, sizeof(uint32));
+                s.write(&value, sizeof(u32));
             }
 
-            void write64(uint64 value)
+            void write64(u64 value)
             {
-                s.write(&value, sizeof(uint64));
+                s.write(&value, sizeof(u64));
             }
 
             void write16f(Half value)
@@ -193,17 +193,17 @@ namespace mango
             {
             }
 
-            uint64 size() const
+            u64 size() const
             {
                 return s.size();
             }
 
-            uint64 offset() const
+            u64 offset() const
             {
                 return s.offset();
             }
 
-            void seek(uint64 distance, Stream::SeekMode mode)
+            void seek(u64 distance, Stream::SeekMode mode)
             {
                 s.seek(distance, mode);
             }
@@ -213,33 +213,33 @@ namespace mango
                 s.read(dest, size);
             }
 
-            uint8 read8()
+            u8 read8()
             {
-                uint8 value;
-                s.read(&value, sizeof(uint8));
+                u8 value;
+                s.read(&value, sizeof(u8));
                 return value;
             }
 
-            uint16 read16()
+            u16 read16()
             {
-                uint16 value;
-                s.read(&value, sizeof(uint16));
+                u16 value;
+                s.read(&value, sizeof(u16));
                 value = byteswap(value);
                 return value;
             }
 
-            uint32 read32()
+            u32 read32()
             {
-                uint32 value;
-                s.read(&value, sizeof(uint32));
+                u32 value;
+                s.read(&value, sizeof(u32));
                 value = byteswap(value);
                 return value;
             }
 
-            uint64 read64()
+            u64 read64()
             {
-                uint64 value;
-                s.read(&value, sizeof(uint64));
+                u64 value;
+                s.read(&value, sizeof(u64));
                 value = byteswap(value);
                 return value;
             }
@@ -275,24 +275,24 @@ namespace mango
                 s.write(memory);
             }
 
-            void write8(uint8 value)
+            void write8(u8 value)
             {
                 s.write(&value, 1);
             }
 
-            void write16(uint16 value)
+            void write16(u16 value)
             {
                 value = byteswap(value);
                 s.write(&value, 2);
             }
 
-            void write32(uint32 value)
+            void write32(u32 value)
             {
                 value = byteswap(value);
                 s.write(&value, 4);
             }
 
-            void write64(uint64 value)
+            void write64(u64 value)
             {
                 value = byteswap(value);
                 s.write(&value, 8);

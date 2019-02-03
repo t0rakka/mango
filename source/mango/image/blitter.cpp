@@ -99,7 +99,7 @@ namespace
     //
     struct MaskProcessor
     {
-        uint32 m_mask[4];
+        u32 m_mask[4];
         double m_scale[4];
         double m_inv_scale[4];
         double m_alpha;
@@ -124,7 +124,7 @@ namespace
             m_alpha = m_mask[3] ? 0.0 : 1.0;
         }
 
-        float64x4 unpack(uint32 sample) const
+        float64x4 unpack(u32 sample) const
         {
             double x = u32_to_f64(sample & m_mask[0]) * m_inv_scale[0];
             double y = u32_to_f64(sample & m_mask[1]) * m_inv_scale[1];
@@ -134,9 +134,9 @@ namespace
             return float64x4(x, y, z, w);
         }
 
-        uint32 pack(const float64x4& value) const
+        u32 pack(const float64x4& value) const
         {
-            uint32 s = 0;
+            u32 s = 0;
             s |= f64_to_u32(value[0] * m_scale[0]) & m_mask[0];
             s |= f64_to_u32(value[1] * m_scale[1]) & m_mask[1];
             s |= f64_to_u32(value[2] * m_scale[2]) & m_mask[2];
@@ -224,8 +224,8 @@ namespace
 
 #define BITS_FP16 40  /* (32 + 8), half is at index 4    */
 #define BITS_FP32 48  /* (32 + 16), float is at index 5  */
-#define BITS_UI16  56 /* (32 + 24), uint16 is at index 6 */
-#define BITS_UI32  64 /* (32 + 32), uint32 is at index 7 */
+#define BITS_UI16  56 /* (32 + 24), u16 is at index 6 */
+#define BITS_UI32  64 /* (32 + 32), u32 is at index 7 */
 #define MAKE_MODEMASK(destBits, sourceBits) \
     ((((destBits - 8) / 8) * 8) + ((sourceBits - 8) / 8))
 
@@ -259,19 +259,19 @@ namespace
     }
 
     template <typename FloatType>
-    inline uint32 floatToByte(FloatType sample)
+    inline u32 floatToByte(FloatType sample)
     {
         float v = float(sample);
         v = clamp(v, 0.0f, 1.0f);
-        return uint32(v * 255.0f + 0.5f);
+        return u32(v * 255.0f + 0.5f);
     }
 
-    inline uint32 packFloat(uint32 mask, float v)
+    inline u32 packFloat(u32 mask, float v)
     {
         v = clamp(v, 0.0f, 1.0f);
-        const uint32 lsb = mask ^ (mask - 1);
+        const u32 lsb = mask ^ (mask - 1);
         const float bias = lsb * 0.5f; // The rounding bias should be precomputed
-        return uint32(v * mask + bias) & mask;
+        return u32(v * mask + bias) & mask;
     }
 
     // ----------------------------------------------------------------------------
@@ -305,8 +305,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_unorm_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        uint8* source = rect.srcImage;
-        uint8* dest = rect.destImage;
+        u8* source = rect.srcImage;
+        u8* dest = rect.destImage;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -315,8 +315,8 @@ namespace
 
             for (int x = 0; x < rect.width; ++x)
             {
-                uint32 s = src[x];
-                uint32 v = blitter.initMask | (s & blitter.copyMask);
+                u32 s = src[x];
+                u32 v = blitter.initMask | (s & blitter.copyMask);
                 switch (blitter.components)
                 {
                     case 4: v |= blitter.component[3].computePack(s);
@@ -337,13 +337,13 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_fp_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        uint8* source = rect.srcImage;
-        uint8* dest = rect.destImage;
+        u8* source = rect.srcImage;
+        u8* dest = rect.destImage;
 
         const Format& sf = blitter.srcFormat;
         const Format& df = blitter.destFormat;
 
-        uint32 mask[4];
+        u32 mask[4];
         int offset[4];
         int components = 0;
 
@@ -358,7 +358,7 @@ namespace
         }
 
         // default alpha is 1.0 (if destination does not have alpha the mask is 0)
-        uint32 alphaMask = df.mask(3);
+        u32 alphaMask = df.mask(3);
 
         // if source format has alpha channel use computed alpha instead of the default
         if (sf.alpha())
@@ -371,7 +371,7 @@ namespace
 
             for (int x = 0; x < rect.width; ++x)
             {
-                uint32 v = alphaMask;
+                u32 v = alphaMask;
 
                 switch (components)
                 {
@@ -397,8 +397,8 @@ namespace
     {
         MANGO_UNREFERENCED_PARAMETER(blitter);
 
-        uint8* source = rect.srcImage;
-        uint8* dest = rect.destImage;
+        u8* source = rect.srcImage;
+        u8* dest = rect.destImage;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -422,8 +422,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_fp_fp_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        uint8* source = rect.srcImage;
-        uint8* dest = rect.destImage;
+        u8* source = rect.srcImage;
+        u8* dest = rect.destImage;
 
         SourceType constant[4];
         const SourceType* input[4];
@@ -484,38 +484,38 @@ namespace
 
         switch (modeMask)
         {
-            case MAKE_MODEMASK( 8,  8): func = convert_template_unorm_unorm_fpu<uint8, uint8>; break;
-            case MAKE_MODEMASK( 8, 16): func = convert_template_unorm_unorm_fpu<uint8, uint16>; break;
-            case MAKE_MODEMASK( 8, 24): func = convert_template_unorm_unorm_fpu<uint8, u24>; break;
-            case MAKE_MODEMASK( 8, 32): func = convert_template_unorm_unorm_fpu<uint8, uint32>; break;
-            case MAKE_MODEMASK(16,  8): func = convert_template_unorm_unorm_fpu<uint16, uint8>; break;
-            case MAKE_MODEMASK(16, 16): func = convert_template_unorm_unorm_fpu<uint16, uint16>; break;
-            case MAKE_MODEMASK(16, 24): func = convert_template_unorm_unorm_fpu<uint16, u24>; break;
-            case MAKE_MODEMASK(16, 32): func = convert_template_unorm_unorm_fpu<uint16, uint32>; break;
-            case MAKE_MODEMASK(24,  8): func = convert_template_unorm_unorm_fpu<u24, uint8>; break;
-            case MAKE_MODEMASK(24, 16): func = convert_template_unorm_unorm_fpu<u24, uint16>; break;
+            case MAKE_MODEMASK( 8,  8): func = convert_template_unorm_unorm_fpu<u8, u8>; break;
+            case MAKE_MODEMASK( 8, 16): func = convert_template_unorm_unorm_fpu<u8, u16>; break;
+            case MAKE_MODEMASK( 8, 24): func = convert_template_unorm_unorm_fpu<u8, u24>; break;
+            case MAKE_MODEMASK( 8, 32): func = convert_template_unorm_unorm_fpu<u8, u32>; break;
+            case MAKE_MODEMASK(16,  8): func = convert_template_unorm_unorm_fpu<u16, u8>; break;
+            case MAKE_MODEMASK(16, 16): func = convert_template_unorm_unorm_fpu<u16, u16>; break;
+            case MAKE_MODEMASK(16, 24): func = convert_template_unorm_unorm_fpu<u16, u24>; break;
+            case MAKE_MODEMASK(16, 32): func = convert_template_unorm_unorm_fpu<u16, u32>; break;
+            case MAKE_MODEMASK(24,  8): func = convert_template_unorm_unorm_fpu<u24, u8>; break;
+            case MAKE_MODEMASK(24, 16): func = convert_template_unorm_unorm_fpu<u24, u16>; break;
             case MAKE_MODEMASK(24, 24): func = convert_template_unorm_unorm_fpu<u24, u24>; break;
-            case MAKE_MODEMASK(24, 32): func = convert_template_unorm_unorm_fpu<u24, uint32>; break;
-            case MAKE_MODEMASK(32,  8): func = convert_template_unorm_unorm_fpu<uint32, uint8>; break;
-            case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm_fpu<uint32, uint16>; break;
-            case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm_fpu<uint32, u24>; break;
-            case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm_fpu<uint32, uint32>; break;
-            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp_fpu<uint8, float16>; break;
-            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp_fpu<uint16, float16>; break;
+            case MAKE_MODEMASK(24, 32): func = convert_template_unorm_unorm_fpu<u24, u32>; break;
+            case MAKE_MODEMASK(32,  8): func = convert_template_unorm_unorm_fpu<u32, u8>; break;
+            case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm_fpu<u32, u16>; break;
+            case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm_fpu<u32, u24>; break;
+            case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm_fpu<u32, u32>; break;
+            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp_fpu<u8, float16>; break;
+            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp_fpu<u16, float16>; break;
             case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp_fpu<u24, float16>; break;
-            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp_fpu<uint32, float16>; break;
-            case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp_fpu<uint8, float>; break;
-            case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp_fpu<uint16, float>; break;
+            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp_fpu<u32, float16>; break;
+            case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp_fpu<u8, float>; break;
+            case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp_fpu<u16, float>; break;
             case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp_fpu<u24, float>; break;
-            case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp_fpu<uint32, float>; break;
-            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm_fpu<float16, uint8>; break;
-            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm_fpu<float16, uint16>; break;
+            case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp_fpu<u32, float>; break;
+            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm_fpu<float16, u8>; break;
+            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm_fpu<float16, u16>; break;
             case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm_fpu<float16, u24>; break;
-            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm_fpu<float16, uint32>; break;
-            case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm_fpu<float, uint8>; break;
-            case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm_fpu<float, uint16>; break;
+            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm_fpu<float16, u32>; break;
+            case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm_fpu<float, u8>; break;
+            case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm_fpu<float, u16>; break;
             case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm_fpu<float, u24>; break;
-            case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm_fpu<float, uint32>; break;
+            case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm_fpu<float, u32>; break;
             case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp_fpu<float16, float16>; break;
             case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp_fpu<float16, float>; break;
             case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp_fpu<float, float16>; break;
@@ -529,8 +529,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_sse2(const Blitter& blitter, const BlitRect& rect)
     {
-        uint8* source = rect.srcImage;
-        uint8* dest = rect.destImage;
+        u8* source = rect.srcImage;
+        u8* dest = rect.destImage;
 
         __m128 scale = blitter.sseScale;
         __m128i src_mask = blitter.sseSrcMask;
@@ -544,7 +544,7 @@ namespace
 
             for (int x = 0; x < rect.width; ++x)
             {
-                uint32 s = src[x];
+                u32 s = src[x];
                 __m128i r = _mm_set1_epi32(s);
                 __m128 m = _mm_cvtepi32_ps(_mm_and_si128(r, src_mask));
                 r = _mm_cvtps_epi32(_mm_mul_ps(m, scale));
@@ -552,7 +552,7 @@ namespace
                 r = _mm_add_epi32(r, _mm_and_si128(r, shift_mask));
                 r = _mm_or_si128(_mm_shuffle_epi32(r, 0x44), _mm_shuffle_epi32(r, 0xee));
                 r = _mm_or_si128(_mm_shuffle_epi32(r, 0x00), _mm_shuffle_epi32(r, 0x55));
-                uint32 v = blitter.initMask | _mm_cvtsi128_si32(r);
+                u32 v = blitter.initMask | _mm_cvtsi128_si32(r);
                 dst[x] = DestType(v);
             }
 
@@ -567,22 +567,22 @@ namespace
 
         switch (modeMask)
         {
-            case MAKE_MODEMASK( 8,  8): func = convert_template_sse2<uint8, uint8>; break;
-            case MAKE_MODEMASK( 8, 16): func = convert_template_sse2<uint8, uint16>; break;
-            case MAKE_MODEMASK( 8, 24): func = convert_template_sse2<uint8, u24>; break;
-            case MAKE_MODEMASK( 8, 32): func = convert_template_sse2<uint8, uint32>; break;
-            case MAKE_MODEMASK(16,  8): func = convert_template_sse2<uint16, uint8>; break;
-            case MAKE_MODEMASK(16, 16): func = convert_template_sse2<uint16, uint16>; break;
-            case MAKE_MODEMASK(16, 24): func = convert_template_sse2<uint16, u24>; break;
-            case MAKE_MODEMASK(16, 32): func = convert_template_sse2<uint16, uint32>; break;
-            case MAKE_MODEMASK(24,  8): func = convert_template_sse2<u24, uint8>; break;
-            case MAKE_MODEMASK(24, 16): func = convert_template_sse2<u24, uint16>; break;
+            case MAKE_MODEMASK( 8,  8): func = convert_template_sse2<u8, u8>; break;
+            case MAKE_MODEMASK( 8, 16): func = convert_template_sse2<u8, u16>; break;
+            case MAKE_MODEMASK( 8, 24): func = convert_template_sse2<u8, u24>; break;
+            case MAKE_MODEMASK( 8, 32): func = convert_template_sse2<u8, u32>; break;
+            case MAKE_MODEMASK(16,  8): func = convert_template_sse2<u16, u8>; break;
+            case MAKE_MODEMASK(16, 16): func = convert_template_sse2<u16, u16>; break;
+            case MAKE_MODEMASK(16, 24): func = convert_template_sse2<u16, u24>; break;
+            case MAKE_MODEMASK(16, 32): func = convert_template_sse2<u16, u32>; break;
+            case MAKE_MODEMASK(24,  8): func = convert_template_sse2<u24, u8>; break;
+            case MAKE_MODEMASK(24, 16): func = convert_template_sse2<u24, u16>; break;
             case MAKE_MODEMASK(24, 24): func = convert_template_sse2<u24, u24>; break;
-            case MAKE_MODEMASK(24, 32): func = convert_template_sse2<u24, uint32>; break;
-            case MAKE_MODEMASK(32,  8): func = convert_template_sse2<uint32, uint8>; break;
-            case MAKE_MODEMASK(32, 16): func = convert_template_sse2<uint32, uint16>; break;
-            case MAKE_MODEMASK(32, 24): func = convert_template_sse2<uint32, u24>; break;
-            case MAKE_MODEMASK(32, 32): func = convert_template_sse2<uint32, uint32>; break;
+            case MAKE_MODEMASK(24, 32): func = convert_template_sse2<u24, u32>; break;
+            case MAKE_MODEMASK(32,  8): func = convert_template_sse2<u32, u8>; break;
+            case MAKE_MODEMASK(32, 16): func = convert_template_sse2<u32, u16>; break;
+            case MAKE_MODEMASK(32, 24): func = convert_template_sse2<u32, u24>; break;
+            case MAKE_MODEMASK(32, 32): func = convert_template_sse2<u32, u32>; break;
         }
 
         return func;
@@ -591,8 +591,8 @@ namespace
 
     void convert_custom(const Blitter& blitter, const BlitRect& rect)
     {
-        uint8* src = rect.srcImage;
-        uint8* dest = rect.destImage;
+        u8* src = rect.srcImage;
+        u8* dest = rect.destImage;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -611,67 +611,67 @@ namespace
     DEST* d = reinterpret_cast<DEST*>(dest);
 
     template <int bytes>
-    void blit_memcpy(uint8* dest, const uint8* src, int count)
+    void blit_memcpy(u8* dest, const u8* src, int count)
     {
         std::memcpy(dest, src, count * bytes);
     }
 
-    void blit_bgra8888_from_bgrx8888(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_bgrx8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint32);
+        INIT_POINTERS(u32, u32);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
+            u32 v = s[x];
             d[x] = v | 0xff000000;
         }
     }
 
-    void blit_bgra8888_to_and_from_rgba8888(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_to_and_from_rgba8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint32);
+        INIT_POINTERS(u32, u32);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
+            u32 v = s[x];
             d[x] = (v & 0xff00ff00) | (((v << 16) | (v >> 16)) & 0x00ff00ff);
         }
     }
 
-    void blit_bgra8888_from_bgra4444(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_bgra4444(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
-            uint32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) | ((v & 0x00f0) << 8) | ((v & 0x000f) << 4);
+            u32 v = s[x];
+            u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) | ((v & 0x00f0) << 8) | ((v & 0x000f) << 4);
             d[x] = u | (u >> 4);
         }
     }
 
-    void blit_bgra8888_from_bgra5551(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_bgra5551(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
-            uint32 u = v & 0x8000 ? 0xff000000 : 0;
+            u32 v = s[x];
+            u32 u = v & 0x8000 ? 0xff000000 : 0;
             u |= ((v & 0x7c00) << 9) | ((v & 0x03e0) << 6) | ((v & 0x001f) << 3);
             d[x] = u | ((u & 0x00e0e0e0) >> 5);
         }
     }
 
-    void blit_bgra8888_from_bgr888(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_bgr888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, u24);
+        INIT_POINTERS(u32, u24);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
+            u32 v = s[x];
             d[x] = 0xff000000 | v;
         }
     }
 
-    void blit_rgba8888_from_bgr888(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_bgr888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint8, uint8);
+        INIT_POINTERS(u8, u8);
         for (int x = 0; x < count; ++x)
         {
             d[0] = s[2];
@@ -683,30 +683,30 @@ namespace
         }
     }
 
-    void blit_bgra8888_from_bgr565(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_bgr565(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
-            uint32 u = ((v & 0xf800) << 8) | ((v & 0x07e0) << 5) | ((v & 0x001f) << 3);
+            u32 v = s[x];
+            u32 u = ((v & 0xf800) << 8) | ((v & 0x07e0) << 5) | ((v & 0x001f) << 3);
             u |= ((v & 0xe000) << 3) | ((v & 0x0600) >> 1) | ((v & 0x001c) >> 2);
             d[x] = 0xff000000 | u;
         }
     }
 
-    void blit_bgr888_from_bgra8888(uint8* dest, const uint8* src, int count)
+    void blit_bgr888_from_bgra8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(u24, uint32);
+        INIT_POINTERS(u24, u32);
         for (int x = 0; x < count; ++x)
         {
             d[x] = s[x];
         }
     }
 
-    void blit_rgb888_from_bgra8888(uint8* dest, const uint8* src, int count)
+    void blit_rgb888_from_bgra8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint8, uint8);
+        INIT_POINTERS(u8, u8);
         for (int x = 0; x < count; ++x)
         {
             d[0] = s[2];
@@ -717,9 +717,9 @@ namespace
         }
     }
 
-    void blit_bgr888_to_and_from_rgb888(uint8* dest, const uint8* src, int count)
+    void blit_bgr888_to_and_from_rgb888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint8, uint8);
+        INIT_POINTERS(u8, u8);
         for (int x = 0; x < count; ++x)
         {
             d[0] = s[2];
@@ -730,158 +730,158 @@ namespace
         }
     }
 
-    void blit_bgr565_from_bgra8888(uint8* dest, const uint8* src, int count)
+    void blit_bgr565_from_bgra8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint16, uint32);
+        INIT_POINTERS(u16, u32);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
-            uint32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
-            d[x] = static_cast<uint16>(u);
+            u32 v = s[x];
+            u32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
+            d[x] = static_cast<u16>(u);
         }
     }
 
-    void blit_bgra5551_from_bgra8888(uint8* dest, const uint8* src, int count)
+    void blit_bgra5551_from_bgra8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint16, uint32);
+        INIT_POINTERS(u16, u32);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
-            uint32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) | ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
-            d[x] = static_cast<uint16>(u);
+            u32 v = s[x];
+            u32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) | ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
+            d[x] = static_cast<u16>(u);
         }
     }
 
-    void blit_bgra4444_from_bgra8888(uint8* dest, const uint8* src, int count)
+    void blit_bgra4444_from_bgra8888(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint16, uint32);
+        INIT_POINTERS(u16, u32);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
-            uint32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) | ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
-            d[x] = static_cast<uint16>(u);
+            u32 v = s[x];
+            u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) | ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
+            d[x] = static_cast<u16>(u);
         }
     }
 
-    void blit_yyy888_from_y8(uint8* dest, const uint8* src, int count)
+    void blit_yyy888_from_y8(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(u24, uint8);
+        INIT_POINTERS(u24, u8);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
+            u32 v = s[x];
             d[x] = static_cast<u24>(v * 65793);
         }
     }
 
-    void blit_yyya8888_from_y8(uint8* dest, const uint8* src, int count)
+    void blit_yyya8888_from_y8(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint8);
+        INIT_POINTERS(u32, u8);
         for (int x = 0; x < count; ++x)
         {
-            uint32 v = s[x];
+            u32 v = s[x];
             d[x] = 0xff000000 | v * 65793;
         }
     }
 
-    void blit_rgba8888_from_y16ui(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_y16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 i = s[x] >> 8;
+            const u32 i = s[x] >> 8;
             d[x] = 0xff000000 | i * 0x010101;
         }
     }
 
-    void blit_bgra8888_from_y16ui(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_y16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 i = s[x] >> 8;
+            const u32 i = s[x] >> 8;
             d[x] = 0xff000000 | i * 0x010101;
         }
     }
 
-    void blit_rgba8888_from_ya16ui(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_ya16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint32);
+        INIT_POINTERS(u32, u32);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 a = s[x] & 0xff000000;
-            const uint32 i = (s[x] & 0x0000ff00) >> 8;
+            const u32 a = s[x] & 0xff000000;
+            const u32 i = (s[x] & 0x0000ff00) >> 8;
             d[x] = a | i * 0x010101;
         }
     }
 
-    void blit_bgra8888_from_ya16ui(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_ya16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint32);
+        INIT_POINTERS(u32, u32);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 a = s[x] & 0xff000000;
-            const uint32 i = (s[x] & 0x0000ff00) >> 8;
+            const u32 a = s[x] & 0xff000000;
+            const u32 i = (s[x] & 0x0000ff00) >> 8;
             d[x] = a | i * 0x010101;
         }
     }
 
-    void blit_rgba8888_from_rgb16ui(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_rgb16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 r = s[0];
-            const uint32 g = s[1] & 0x0000ff00;
-            const uint32 b = s[2] & 0x0000ff00;
+            const u32 r = s[0];
+            const u32 g = s[1] & 0x0000ff00;
+            const u32 b = s[2] & 0x0000ff00;
             d[x] = 0xff000000 | (b << 8) | g | (r >> 8);
             s += 3;
         }
     }
 
-    void blit_bgra8888_from_rgb16ui(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_rgb16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 r = s[0] & 0x0000ff00;
-            const uint32 g = s[1] & 0x0000ff00;
-            const uint32 b = s[2];
+            const u32 r = s[0] & 0x0000ff00;
+            const u32 g = s[1] & 0x0000ff00;
+            const u32 b = s[2];
             d[x] = 0xff000000 | (r << 8) | g | (b >> 8);
             s += 3;
         }
     }
 
-    void blit_rgba8888_from_rgba16ui(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_rgba16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 r = s[0];
-            const uint32 g = s[1] & 0x0000ff00;
-            const uint32 b = s[2] & 0x0000ff00;
-            const uint32 a = s[3] & 0x0000ff00;
+            const u32 r = s[0];
+            const u32 g = s[1] & 0x0000ff00;
+            const u32 b = s[2] & 0x0000ff00;
+            const u32 a = s[3] & 0x0000ff00;
             d[x] = (a << 16) | (b << 8) | g | (r >> 8);
             s += 4;
         }
     }
 
-    void blit_bgra8888_from_rgba16ui(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_rgba16ui(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, uint16);
+        INIT_POINTERS(u32, u16);
         for (int x = 0; x < count; ++x)
         {
-            const uint32 r = s[0] & 0x0000ff00;
-            const uint32 g = s[1] & 0x0000ff00;
-            const uint32 b = s[2];
-            const uint32 a = s[3] & 0x0000ff00;
+            const u32 r = s[0] & 0x0000ff00;
+            const u32 g = s[1] & 0x0000ff00;
+            const u32 b = s[2];
+            const u32 a = s[3] & 0x0000ff00;
             d[x] = (a << 16) | (r << 8) | g | (b >> 8);
             s += 4;
         }
     }
 
-    void blit_rgba8888_from_rgba16f(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_rgba16f(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, float16x4);
+        INIT_POINTERS(u32, float16x4);
         for (int x = 0; x < count; ++x)
         {
             float32x4 f = convert<float32x4>(s[x]);
@@ -892,9 +892,9 @@ namespace
         }
     }
 
-    void blit_bgra8888_from_rgba16f(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_rgba16f(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, float16x4);
+        INIT_POINTERS(u32, float16x4);
         for (int x = 0; x < count; ++x)
         {
             float32x4 f = convert<float32x4>(s[x]);
@@ -906,9 +906,9 @@ namespace
         }
     }
 
-    void blit_rgba8888_from_rgba32f(uint8* dest, const uint8* src, int count)
+    void blit_rgba8888_from_rgba32f(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, float32x4);
+        INIT_POINTERS(u32, float32x4);
         for (int x = 0; x < count; ++x)
         {
             float32x4 f = s[x];
@@ -919,9 +919,9 @@ namespace
         }
     }
 
-    void blit_bgra8888_from_rgba32f(uint8* dest, const uint8* src, int count)
+    void blit_bgra8888_from_rgba32f(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(uint32, float32x4);
+        INIT_POINTERS(u32, float32x4);
         for (int x = 0; x < count; ++x)
         {
             float32x4 f = s[x];
@@ -933,7 +933,7 @@ namespace
         }
     }
 
-    void blit_rgba16f_from_rgba32f(uint8* dest, const uint8* src, int count)
+    void blit_rgba16f_from_rgba32f(u8* dest, const u8* src, int count)
     {
         INIT_POINTERS(float16x4, float32x4);
         for (int x = 0; x < count; ++x)
@@ -942,7 +942,7 @@ namespace
         }
     }
 
-    void blit_rgba32f_from_rgba16f(uint8* dest, const uint8* src, int count)
+    void blit_rgba32f_from_rgba16f(u8* dest, const u8* src, int count)
     {
         INIT_POINTERS(float32x4, float16x4);
         for (int x = 0; x < count; ++x)
@@ -960,7 +960,7 @@ namespace
     {
         Format dest;
         Format source;
-        uint32 requireCpuFeature;
+        u32 requireCpuFeature;
         Blitter::FastFunc func;
     }
     const g_custom_func_table[] =
@@ -1011,7 +1011,7 @@ namespace
     FastConversionMap g_custom_func_map = [] {
         FastConversionMap map;
 
-        uint64 cpuFlags = getCPUFlags();
+        u64 cpuFlags = getCPUFlags();
 
         const int table_size = sizeof(g_custom_func_table) / sizeof(g_custom_func_table[0]);
 
@@ -1086,13 +1086,13 @@ namespace mango
 
         sampleSize = 0; // TODO
 
-        uint64 cpuFlags = getCPUFlags();
+        u64 cpuFlags = getCPUFlags();
         bool sse2 = (cpuFlags & CPU_SSE2) != 0;
 
         for (int i = 0; i < 4; ++i)
         {
-            uint32 src_mask = source.mask(i);
-            uint32 dest_mask = dest.mask(i);
+            u32 src_mask = source.mask(i);
+            u32 dest_mask = dest.mask(i);
 
             if (dest_mask)
             {
@@ -1101,7 +1101,7 @@ namespace mango
                     if (src_mask)
                     {
                         // isolate least significant bit of mask; this is used for correct rounding
-                        const uint32 lsb = dest_mask ^ (dest_mask - 1);
+                        const u32 lsb = dest_mask ^ (dest_mask - 1);
 
                         // source and destination are different: add channel to component array
                         component[components].srcMask = src_mask;
@@ -1162,9 +1162,9 @@ namespace mango
 
                 initMask = 0;
 
-                uint32 shift_mask[4] = { 0, 0, 0, 0 };
-                uint32 dest_mask[4];
-                uint32 src_mask[4];
+                u32 shift_mask[4] = { 0, 0, 0, 0 };
+                u32 dest_mask[4];
+                u32 src_mask[4];
                 float scale[4];
 
                 for (int i = 0; i < 4; ++i)

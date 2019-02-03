@@ -38,58 +38,58 @@ namespace
 
     constexpr u32 PUNCHTHROUGH_ALPHA = 0x10;
 
-    static Pixel32 getColorA(uint32 u32ColorData)
+    static Pixel32 getColorA(u32 u32ColorData)
     {
         Pixel32 color;
 
         if ((u32ColorData & 0x8000) != 0)
         {
             // Opaque Color Mode - RGB 554
-            color.red   = (uint8)((u32ColorData & 0x7c00) >> 10); // 5->5 bits
-            color.green = (uint8)((u32ColorData & 0x3e0)  >> 5); // 5->5 bits
-            color.blue  = (uint8)(u32ColorData  & 0x1e) | ((u32ColorData & 0x1e) >> 4); // 4->5 bits
-            color.alpha = (uint8)0xf;// 0->4 bits
+            color.red   = (u8)((u32ColorData & 0x7c00) >> 10); // 5->5 bits
+            color.green = (u8)((u32ColorData & 0x3e0)  >> 5); // 5->5 bits
+            color.blue  = (u8)(u32ColorData  & 0x1e) | ((u32ColorData & 0x1e) >> 4); // 4->5 bits
+            color.alpha = (u8)0xf;// 0->4 bits
         }
         else
         {
             // Transparent Color Mode - ARGB 3443
-            color.red   = (uint8)((u32ColorData & 0xf00)  >> 7) | ((u32ColorData & 0xf00) >> 11); // 4->5 bits
-            color.green = (uint8)((u32ColorData & 0xf0)   >> 3) | ((u32ColorData & 0xf0)  >> 7); // 4->5 bits
-            color.blue  = (uint8)((u32ColorData & 0xe)    << 1) | ((u32ColorData & 0xe)   >> 2); // 3->5 bits
-            color.alpha = (uint8)((u32ColorData & 0x7000) >> 11);// 3->4 bits - note 0 at right
+            color.red   = (u8)((u32ColorData & 0xf00)  >> 7) | ((u32ColorData & 0xf00) >> 11); // 4->5 bits
+            color.green = (u8)((u32ColorData & 0xf0)   >> 3) | ((u32ColorData & 0xf0)  >> 7); // 4->5 bits
+            color.blue  = (u8)((u32ColorData & 0xe)    << 1) | ((u32ColorData & 0xe)   >> 2); // 3->5 bits
+            color.alpha = (u8)((u32ColorData & 0x7000) >> 11);// 3->4 bits - note 0 at right
         }
         
         return color;
     }
 
-    static Pixel32 getColorB(uint32 u32ColorData)
+    static Pixel32 getColorB(u32 u32ColorData)
     {
         Pixel32 color;
 
         if (u32ColorData & 0x80000000)
         {
             // Opaque Color Mode - RGB 555
-            color.red   = (uint8)((u32ColorData & 0x7c000000) >> 26); // 5->5 bits
-            color.green = (uint8)((u32ColorData & 0x3e00000)  >> 21); // 5->5 bits
-            color.blue  = (uint8)((u32ColorData & 0x1f0000)   >> 16); // 5->5 bits
-            color.alpha = (uint8)0xf;// 0 bits
+            color.red   = (u8)((u32ColorData & 0x7c000000) >> 26); // 5->5 bits
+            color.green = (u8)((u32ColorData & 0x3e00000)  >> 21); // 5->5 bits
+            color.blue  = (u8)((u32ColorData & 0x1f0000)   >> 16); // 5->5 bits
+            color.alpha = (u8)0xf;// 0 bits
         }
         else
         {
             // Transparent Color Mode - ARGB 3444
-            color.red   = (uint8)(((u32ColorData & 0xf000000)  >> 23) | ((u32ColorData & 0xf000000) >> 27)); // 4->5 bits
-            color.green = (uint8)(((u32ColorData & 0xf00000)   >> 19) | ((u32ColorData & 0xf00000)  >> 23)); // 4->5 bits
-            color.blue  = (uint8)(((u32ColorData & 0xf0000)    >> 15) | ((u32ColorData & 0xf0000)   >> 19)); // 4->5 bits
-            color.alpha = (uint8)((u32ColorData & 0x70000000) >> 27);// 3->4 bits - note 0 at right
+            color.red   = (u8)(((u32ColorData & 0xf000000)  >> 23) | ((u32ColorData & 0xf000000) >> 27)); // 4->5 bits
+            color.green = (u8)(((u32ColorData & 0xf00000)   >> 19) | ((u32ColorData & 0xf00000)  >> 23)); // 4->5 bits
+            color.blue  = (u8)(((u32ColorData & 0xf0000)    >> 15) | ((u32ColorData & 0xf0000)   >> 19)); // 4->5 bits
+            color.alpha = (u8)((u32ColorData & 0x70000000) >> 27);// 3->4 bits - note 0 at right
         }
 
         return color;
     }
 
-    static void interpolateColors(Pixel32 color[4], Pixel128S* pPixel, uint8 ui8Bpp)
+    static void interpolateColors(Pixel32 color[4], Pixel128S* pPixel, u8 ui8Bpp)
     {
-        const uint32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
-        const uint32 ui32WordHeight = 4;
+        const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
+        const u32 ui32WordHeight = 4;
 
         //Convert to int 32.
         Pixel128S hP = { (int32)color[0].red, (int32)color[0].green, (int32)color[0].blue, (int32)color[0].alpha };
@@ -177,12 +177,12 @@ namespace
         }
     }
 
-    static void unpackModulations(const PVRTCWord& word, int offsetX, int offsetY, uint8 i32ModulationValues[8][16], uint8 ui8Bpp)
+    static void unpackModulations(const PVRTCWord& word, int offsetX, int offsetY, u8 i32ModulationValues[8][16], u8 ui8Bpp)
     {
-        uint32 WordModMode = word.u32ColorData & 0x1;
-        uint32 ModulationBits = word.u32ModulationData;
+        u32 WordModMode = word.u32ColorData & 0x1;
+        u32 ModulationBits = word.u32ModulationData;
 
-        const uint8 modulation_table[] =
+        const u8 modulation_table[] =
         {
             0, 3, 5, 8,
             0, 4, 4 | PUNCHTHROUGH_ALPHA, 8
@@ -207,7 +207,7 @@ namespace
 
                 for (int y = 0; y < 4; y++)
                 {
-                    uint8* dest = &i32ModulationValues[y + offsetY][0 + offsetX];
+                    u8* dest = &i32ModulationValues[y + offsetY][0 + offsetX];
                     const int s = y & 1;
                     for (int x = 0; x < 4; x++)
                     {
@@ -223,7 +223,7 @@ namespace
                 // else if direct encoded 2bit mode - i.e. 1 mode bit per pixel
                 for (int y = 0; y < 4; y++)
                 {
-                    uint8* dest = &i32ModulationValues[y + offsetY][0 + offsetX];
+                    u8* dest = &i32ModulationValues[y + offsetY][0 + offsetX];
                     for (int x = 0; x < 8; x++)
                     {
                         dest[x] = (ModulationBits & 1) * 8;
@@ -234,10 +234,10 @@ namespace
         }
         else
         {
-            const uint8* table = modulation_table + WordModMode * 4;
+            const u8* table = modulation_table + WordModMode * 4;
             for (int y = 0; y < 4; y++)
             {
-                uint8* dest = &i32ModulationValues[y + offsetY][0 + offsetX];
+                u8* dest = &i32ModulationValues[y + offsetY][0 + offsetX];
                 for (int x = 0; x < 4; x++)
                 {
                     dest[x] = table[ModulationBits & 3];
@@ -247,7 +247,7 @@ namespace
         }
     }
 
-    static int32 getModulationValues(uint8 i32ModulationValues[8][16], uint32 xPos, uint32 yPos, uint8 ui8Bpp)
+    static int32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 ui8Bpp)
     {
         int value = i32ModulationValues[yPos][xPos];
         if (ui8Bpp == 2)
@@ -295,15 +295,15 @@ namespace
         return a + ((b - a) * mod) / 8;
     }
 
-    static void pvrtcGetDecompressedPixels(uint8 i32ModulationValues[8][16],
+    static void pvrtcGetDecompressedPixels(u8 i32ModulationValues[8][16],
                                            Pixel128S upscaledColorA[32],
                                            Pixel128S upscaledColorB[32],
-                                           uint8* pColorData, int stride,
+                                           u8* pColorData, int stride,
                                            int xoffset, int yoffset, int width, int height,
-                                           uint8 ui8Bpp)
+                                           u8 ui8Bpp)
     {
-        const uint32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
-        const uint32 ui32WordHeight = 4;
+        const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
+        const u32 ui32WordHeight = 4;
         
         xoffset = xoffset * ui32WordWidth - ui32WordWidth / 2;
         yoffset = yoffset * ui32WordHeight - ui32WordHeight / 2;
@@ -330,10 +330,10 @@ namespace
                 result.alpha = mod & PUNCHTHROUGH_ALPHA ? 0 : lerp(colorA[x].alpha, colorB[x].alpha, mod);
 
                 const int offset = (xoffset + x) & xmask;
-                dest[offset].red   = (uint8)result.red;
-                dest[offset].green = (uint8)result.green;
-                dest[offset].blue  = (uint8)result.blue;
-                dest[offset].alpha = (uint8)result.alpha;
+                dest[offset].red   = (u8)result.red;
+                dest[offset].green = (u8)result.green;
+                dest[offset].blue  = (u8)result.blue;
+                dest[offset].alpha = (u8)result.alpha;
             }
         }
     }
@@ -344,10 +344,10 @@ namespace
         return word & (numWords - 1); // numWords must be power of two
     }
 
-    static void moveModulationValues(uint8 i32ModulationValues[8][16], uint32 ui32WordWidth, uint8 ui8bpp)
+    static void moveModulationValues(u8 i32ModulationValues[8][16], u32 ui32WordWidth, u8 ui8bpp)
     {
-        uint32* d = (uint32*) &i32ModulationValues[0][0];
-        uint32* s = (uint32*) &i32ModulationValues[0][ui32WordWidth];
+        u32* d = (u32*) &i32ModulationValues[0][0];
+        u32* s = (u32*) &i32ModulationValues[0][ui32WordWidth];
         for (int i = 0; i < 8; ++i)
         {
             d[0] = s[0];
@@ -358,15 +358,15 @@ namespace
         }
     }
 
-    static void pvrtcDecompress(const uint8* pCompressedData,
-                               uint8* pDecompressedData,
+    static void pvrtcDecompress(const u8* pCompressedData,
+                               u8* pDecompressedData,
                                int stride,
-                               uint32 ui32Width,
-                               uint32 ui32Height,
-                               uint8 ui8Bpp)
+                               u32 ui32Width,
+                               u32 ui32Height,
+                               u8 ui8Bpp)
     {
-        const uint32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
-        const uint32 ui32WordHeight = 4;
+        const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
+        const u32 ui32WordHeight = 4;
 
         PVRTCWord* pWordMembers = (PVRTCWord*)pCompressedData;
 
@@ -387,7 +387,7 @@ namespace
             PVRTCWord* R = pWordMembers + u32_interleave_bits(y1, x0);
             PVRTCWord* S = pWordMembers + u32_interleave_bits(y1, x1);
 
-            uint8 i32ModulationValues[8][16];
+            u8 i32ModulationValues[8][16];
 
             unpackModulations(*P, 0, 0,                          i32ModulationValues, ui8Bpp);
             unpackModulations(*Q, ui32WordWidth, 0,              i32ModulationValues, ui8Bpp);
@@ -449,7 +449,7 @@ namespace
 namespace mango
 {
 
-    void decode_block_pvrtc(const TextureCompressionInfo& info, uint8* out, const uint8* in, int stride)
+    void decode_block_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
         bool is2bpp = false;
 

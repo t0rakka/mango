@@ -22,12 +22,12 @@ namespace filesystem {
             ENCRYPTED  = 0x08,
         };
 
-        uint64 size;
-        uint32 flags;
+        u64 size;
+        u32 flags;
         std::string name;
 
         FileInfo();
-        FileInfo(const std::string& name, uint64 size, uint32 flags = 0);
+        FileInfo(const std::string& name, u64 size, u32 flags = 0);
         ~FileInfo();
 
         bool isDirectory() const;
@@ -40,7 +40,7 @@ namespace filesystem {
     {
         std::vector<FileInfo> files;
 
-        void emplace(const std::string &name, uint64 size, uint32 flags);
+        void emplace(const std::string &name, u64 size, u32 flags);
 
         size_t size() const
         {
