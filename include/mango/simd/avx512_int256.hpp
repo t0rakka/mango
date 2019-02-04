@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -24,224 +24,224 @@ namespace simd {
     }
 
     // -----------------------------------------------------------------
-    // uint8x32
+    // u8x32
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint8x32 set_component(uint8x32 a, u8 b)
+    static inline u8x32 set_component(u8x32 a, u8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         return _mm256_insert_epi8(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline u8 get_component(uint8x32 a)
+    static inline u8 get_component(u8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return _mm256_extract_epi8(a, Index);
     }
 
-    static inline uint8x32 uint8x32_zero()
+    static inline u8x32 u8x32_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline uint8x32 uint8x32_set1(u8 s)
+    static inline u8x32 u8x32_set1(u8 s)
     {
         return _mm256_set1_epi8(s);
     }
 
-    static inline uint8x32 unpacklo(uint8x32 a, uint8x32 b)
+    static inline u8x32 unpacklo(u8x32 a, u8x32 b)
     {
         return _mm256_unpacklo_epi8(a, b);
     }
 
-    static inline uint8x32 unpackhi(uint8x32 a, uint8x32 b)
+    static inline u8x32 unpackhi(u8x32 a, u8x32 b)
     {
         return _mm256_unpackhi_epi8(a, b);
     }
 
-    static inline uint8x32 add(uint8x32 a, uint8x32 b)
+    static inline u8x32 add(u8x32 a, u8x32 b)
     {
         return _mm256_add_epi8(a, b);
     }
 
-    static inline uint8x32 sub(uint8x32 a, uint8x32 b)
+    static inline u8x32 sub(u8x32 a, u8x32 b)
     {
         return _mm256_sub_epi8(a, b);
     }
 
     // saturated
 
-    static inline uint8x32 adds(uint8x32 a, uint8x32 b)
+    static inline u8x32 adds(u8x32 a, u8x32 b)
     {
         return _mm256_adds_epu8(a, b);
     }
 
-    static inline uint8x32 subs(uint8x32 a, uint8x32 b)
+    static inline u8x32 subs(u8x32 a, u8x32 b)
     {
         return _mm256_subs_epu8(a, b);
     }
 
     // bitwise
 
-    static inline uint8x32 bitwise_nand(uint8x32 a, uint8x32 b)
+    static inline u8x32 bitwise_nand(u8x32 a, u8x32 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline uint8x32 bitwise_and(uint8x32 a, uint8x32 b)
+    static inline u8x32 bitwise_and(u8x32 a, u8x32 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline uint8x32 bitwise_or(uint8x32 a, uint8x32 b)
+    static inline u8x32 bitwise_or(u8x32 a, u8x32 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline uint8x32 bitwise_xor(uint8x32 a, uint8x32 b)
+    static inline u8x32 bitwise_xor(u8x32 a, u8x32 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline uint8x32 bitwise_not(uint8x32 a)
+    static inline u8x32 bitwise_not(u8x32 a)
     {
         return _mm256_not_si256(a);
     }
 
     // compare
 
-    static inline mask8x32 compare_eq(uint8x32 a, uint8x32 b)
+    static inline mask8x32 compare_eq(u8x32 a, u8x32 b)
     {
         return _mm256_cmp_epu8_mask(a, b, _MM_CMPINT_EQ);
     }
 
-    static inline mask8x32 compare_gt(uint8x32 a, uint8x32 b)
+    static inline mask8x32 compare_gt(u8x32 a, u8x32 b)
     {
         return _mm256_cmp_epu8_mask(b, a, _MM_CMPINT_LT);
     }
 
-    static inline uint8x32 select(mask8x32 mask, uint8x32 a, uint8x32 b)
+    static inline u8x32 select(mask8x32 mask, u8x32 a, u8x32 b)
     {
         return _mm256_mask_blend_epi8(mask, b, a);
     }
 
-    static inline uint8x32 min(uint8x32 a, uint8x32 b)
+    static inline u8x32 min(u8x32 a, u8x32 b)
     {
         return _mm256_min_epu8(a, b);
     }
 
-    static inline uint8x32 max(uint8x32 a, uint8x32 b)
+    static inline u8x32 max(u8x32 a, u8x32 b)
     {
         return _mm256_max_epu8(a, b);
     }
 
     // -----------------------------------------------------------------
-    // uint16x16
+    // u16x16
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint16x16 set_component(uint16x16 a, u16 b)
+    static inline u16x16 set_component(u16x16 a, u16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm256_insert_epi16(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline u16 get_component(uint16x16 a)
+    static inline u16 get_component(u16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm256_extract_epi16(a, Index);
     }
 
-    static inline uint16x16 uint16x16_zero()
+    static inline u16x16 u16x16_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline uint16x16 uint16x16_set1(u16 s)
+    static inline u16x16 u16x16_set1(u16 s)
     {
         return _mm256_set1_epi16(s);
     }
 
-    static inline uint16x16 unpacklo(uint16x16 a, uint16x16 b)
+    static inline u16x16 unpacklo(u16x16 a, u16x16 b)
     {
         return _mm256_unpacklo_epi16(a, b);
     }
 
-    static inline uint16x16 unpackhi(uint16x16 a, uint16x16 b)
+    static inline u16x16 unpackhi(u16x16 a, u16x16 b)
     {
         return _mm256_unpackhi_epi16(a, b);
     }
 
-    static inline uint16x16 add(uint16x16 a, uint16x16 b)
+    static inline u16x16 add(u16x16 a, u16x16 b)
     {
         return _mm256_add_epi16(a, b);
     }
 
-    static inline uint16x16 sub(uint16x16 a, uint16x16 b)
+    static inline u16x16 sub(u16x16 a, u16x16 b)
     {
         return _mm256_sub_epi16(a, b);
     }
 
-    static inline uint16x16 mullo(uint16x16 a, uint16x16 b)
+    static inline u16x16 mullo(u16x16 a, u16x16 b)
     {
         return _mm256_mullo_epi16(a, b);
     }
 
     // saturated
 
-    static inline uint16x16 adds(uint16x16 a, uint16x16 b)
+    static inline u16x16 adds(u16x16 a, u16x16 b)
     {
         return _mm256_adds_epu16(a, b);
     }
 
-    static inline uint16x16 subs(uint16x16 a, uint16x16 b)
+    static inline u16x16 subs(u16x16 a, u16x16 b)
     {
         return _mm256_subs_epu16(a, b);
     }
 
     // bitwise
 
-    static inline uint16x16 bitwise_nand(uint16x16 a, uint16x16 b)
+    static inline u16x16 bitwise_nand(u16x16 a, u16x16 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline uint16x16 bitwise_and(uint16x16 a, uint16x16 b)
+    static inline u16x16 bitwise_and(u16x16 a, u16x16 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline uint16x16 bitwise_or(uint16x16 a, uint16x16 b)
+    static inline u16x16 bitwise_or(u16x16 a, u16x16 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline uint16x16 bitwise_xor(uint16x16 a, uint16x16 b)
+    static inline u16x16 bitwise_xor(u16x16 a, u16x16 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline uint16x16 bitwise_not(uint16x16 a)
+    static inline u16x16 bitwise_not(u16x16 a)
     {
         return _mm256_not_si256(a);
     }
 
     // compare
 
-    static inline mask16x16 compare_eq(uint16x16 a, uint16x16 b)
+    static inline mask16x16 compare_eq(u16x16 a, u16x16 b)
     {
         return _mm256_cmp_epu16_mask(a, b, _MM_CMPINT_EQ);
     }
 
-    static inline mask16x16 compare_gt(uint16x16 a, uint16x16 b)
+    static inline mask16x16 compare_gt(u16x16 a, u16x16 b)
     {
         return _mm256_cmp_epu16_mask(b, a, _MM_CMPINT_LT);
     }
 
-    static inline uint16x16 select(mask16x16 mask, uint16x16 a, uint16x16 b)
+    static inline u16x16 select(mask16x16 mask, u16x16 a, u16x16 b)
     {
         return _mm256_mask_blend_epi16(mask, b, a);
     }
@@ -249,127 +249,127 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline uint16x16 slli(uint16x16 a)
+    static inline u16x16 slli(u16x16 a)
     {
         return _mm256_slli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline uint16x16 srli(uint16x16 a)
+    static inline u16x16 srli(u16x16 a)
     {
         return _mm256_srli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline uint16x16 srai(uint16x16 a)
+    static inline u16x16 srai(u16x16 a)
     {
         return _mm256_srai_epi16(a, Count);
     }
 
     // shift by scalar
 
-    static inline uint16x16 sll(uint16x16 a, int count)
+    static inline u16x16 sll(u16x16 a, int count)
     {
         return _mm256_sll_epi16(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline uint16x16 srl(uint16x16 a, int count)
+    static inline u16x16 srl(u16x16 a, int count)
     {
         return _mm256_srl_epi16(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline uint16x16 sra(uint16x16 a, int count)
+    static inline u16x16 sra(u16x16 a, int count)
     {
         return _mm256_sra_epi16(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline uint16x16 min(uint16x16 a, uint16x16 b)
+    static inline u16x16 min(u16x16 a, u16x16 b)
     {
         return _mm256_min_epu16(a, b);
     }
 
-    static inline uint16x16 max(uint16x16 a, uint16x16 b)
+    static inline u16x16 max(u16x16 a, u16x16 b)
     {
         return _mm256_max_epu16(a, b);
     }
 
     // -----------------------------------------------------------------
-    // uint32x8
+    // u32x8
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint32x8 set_component(uint32x8 a, u32 b)
+    static inline u32x8 set_component(u32x8 a, u32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm256_insert_epi32(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline u32 get_component(uint32x8 a)
+    static inline u32 get_component(u32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm256_extract_epi32(a, Index);
     }
 
-    static inline uint32x8 uint32x8_zero()
+    static inline u32x8 u32x8_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline uint32x8 uint32x8_set1(u32 s)
+    static inline u32x8 u32x8_set1(u32 s)
     {
         return _mm256_set1_epi32(s);
     }
 
-    static inline uint32x8 uint32x8_set8(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
+    static inline u32x8 u32x8_set8(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
     {
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline uint32x8 uint32x8_uload(const u32* source)
+    static inline u32x8 u32x8_uload(const u32* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void uint32x8_ustore(u32* dest, uint32x8 a)
+    static inline void u32x8_ustore(u32* dest, u32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
-    static inline uint32x8 unpacklo(uint32x8 a, uint32x8 b)
+    static inline u32x8 unpacklo(u32x8 a, u32x8 b)
     {
         return _mm256_unpacklo_epi32(a, b);
     }
 
-    static inline uint32x8 unpackhi(uint32x8 a, uint32x8 b)
+    static inline u32x8 unpackhi(u32x8 a, u32x8 b)
     {
         return _mm256_unpackhi_epi32(a, b);
     }
 
-    static inline uint32x8 add(uint32x8 a, uint32x8 b)
+    static inline u32x8 add(u32x8 a, u32x8 b)
     {
         return _mm256_add_epi32(a, b);
     }
 
-    static inline uint32x8 sub(uint32x8 a, uint32x8 b)
+    static inline u32x8 sub(u32x8 a, u32x8 b)
     {
         return _mm256_sub_epi32(a, b);
     }
 
-    static inline uint32x8 mullo(uint32x8 a, uint32x8 b)
+    static inline u32x8 mullo(u32x8 a, u32x8 b)
     {
         return _mm256_mullo_epi32(a, b);
     }
 
     // saturated
 
-    static inline uint32x8 adds(uint32x8 a, uint32x8 b)
+    static inline u32x8 adds(u32x8 a, u32x8 b)
     {
   	    const __m256i temp = _mm256_add_epi32(a, b);
   	    return _mm256_or_si256(temp, _mm256_cmpgt_epi32(a, temp));
     }
 
-    static inline uint32x8 subs(uint32x8 a, uint32x8 b)
+    static inline u32x8 subs(u32x8 a, u32x8 b)
     {
   	    const __m256i temp = _mm256_sub_epi32(a, b);
   	    return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
@@ -377,44 +377,44 @@ namespace simd {
 
     // bitwise
 
-    static inline uint32x8 bitwise_nand(uint32x8 a, uint32x8 b)
+    static inline u32x8 bitwise_nand(u32x8 a, u32x8 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline uint32x8 bitwise_and(uint32x8 a, uint32x8 b)
+    static inline u32x8 bitwise_and(u32x8 a, u32x8 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline uint32x8 bitwise_or(uint32x8 a, uint32x8 b)
+    static inline u32x8 bitwise_or(u32x8 a, u32x8 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline uint32x8 bitwise_xor(uint32x8 a, uint32x8 b)
+    static inline u32x8 bitwise_xor(u32x8 a, u32x8 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline uint32x8 bitwise_not(uint32x8 a)
+    static inline u32x8 bitwise_not(u32x8 a)
     {
         return _mm256_not_si256(a);
     }
 
     // compare
 
-    static inline mask32x8 compare_eq(uint32x8 a, uint32x8 b)
+    static inline mask32x8 compare_eq(u32x8 a, u32x8 b)
     {
         return _mm256_cmp_epu32_mask(a, b, _MM_CMPINT_EQ);
     }
 
-    static inline mask32x8 compare_gt(uint32x8 a, uint32x8 b)
+    static inline mask32x8 compare_gt(u32x8 a, u32x8 b)
     {
         return _mm256_cmp_epu32_mask(b, a, _MM_CMPINT_LT);
     }
 
-    static inline uint32x8 select(mask32x8 mask, uint32x8 a, uint32x8 b)
+    static inline u32x8 select(mask32x8 mask, u32x8 a, u32x8 b)
     {
         return _mm256_mask_blend_epi32(mask, b, a);
     }
@@ -422,146 +422,146 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline uint32x8 slli(uint32x8 a)
+    static inline u32x8 slli(u32x8 a)
     {
         return _mm256_slli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline uint32x8 srli(uint32x8 a)
+    static inline u32x8 srli(u32x8 a)
     {
         return _mm256_srli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline uint32x8 srai(uint32x8 a)
+    static inline u32x8 srai(u32x8 a)
     {
         return _mm256_srai_epi32(a, Count);
     }
 
     // shift by scalar
 
-    static inline uint32x8 sll(uint32x8 a, int count)
+    static inline u32x8 sll(u32x8 a, int count)
     {
         return _mm256_sll_epi32(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline uint32x8 srl(uint32x8 a, int count)
+    static inline u32x8 srl(u32x8 a, int count)
     {
         return _mm256_srl_epi32(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline uint32x8 sra(uint32x8 a, int count)
+    static inline u32x8 sra(u32x8 a, int count)
     {
         return _mm256_sra_epi32(a, _mm_cvtsi32_si128(count));
     }
 
     // shift by vector
 
-    static inline uint32x8 sll(uint32x8 a, uint32x8 count)
+    static inline u32x8 sll(u32x8 a, u32x8 count)
     {
         return _mm256_sllv_epi32(a, count);
     }
 
-    static inline uint32x8 srl(uint32x8 a, uint32x8 count)
+    static inline u32x8 srl(u32x8 a, u32x8 count)
     {
         return _mm256_srlv_epi32(a, count);
     }
 
-    static inline uint32x8 sra(uint32x8 a, uint32x8 count)
+    static inline u32x8 sra(u32x8 a, u32x8 count)
     {
         return _mm256_srav_epi32(a, count);
     }
 
-    static inline uint32x8 min(uint32x8 a, uint32x8 b)
+    static inline u32x8 min(u32x8 a, u32x8 b)
     {
         return _mm256_min_epu32(a, b);
     }
 
-    static inline uint32x8 max(uint32x8 a, uint32x8 b)
+    static inline u32x8 max(u32x8 a, u32x8 b)
     {
         return _mm256_max_epu32(a, b);
     }
 
     // -----------------------------------------------------------------
-    // uint64x4
+    // u64x4
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline uint64x4 set_component(uint64x4 a, u64 b)
+    static inline u64x4 set_component(u64x4 a, u64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm256_insert_epi64(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline u64 get_component(uint64x4 a)
+    static inline u64 get_component(u64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm256_extract_epi64(a, Index);
     }
 
-    static inline uint64x4 uint64x4_zero()
+    static inline u64x4 u64x4_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline uint64x4 uint64x4_set1(u64 s)
+    static inline u64x4 u64x4_set1(u64 s)
     {
         return _mm256_set1_epi64x(s);
     }
 
-    static inline uint64x4 uint64x4_set4(u64 x, u64 y, u64 z, u64 w)
+    static inline u64x4 u64x4_set4(u64 x, u64 y, u64 z, u64 w)
     {
         return _mm256_setr_epi64x(x, y, z, w);
     }
 
-    static inline uint64x4 unpacklo(uint64x4 a, uint64x4 b)
+    static inline u64x4 unpacklo(u64x4 a, u64x4 b)
     {
         return _mm256_unpacklo_epi64(a, b);
     }
 
-    static inline uint64x4 unpackhi(uint64x4 a, uint64x4 b)
+    static inline u64x4 unpackhi(u64x4 a, u64x4 b)
     {
         return _mm256_unpackhi_epi64(a, b);
     }
 
-    static inline uint64x4 add(uint64x4 a, uint64x4 b)
+    static inline u64x4 add(u64x4 a, u64x4 b)
     {
         return _mm256_add_epi64(a, b);
     }
 
-    static inline uint64x4 sub(uint64x4 a, uint64x4 b)
+    static inline u64x4 sub(u64x4 a, u64x4 b)
     {
         return _mm256_sub_epi64(a, b);
     }
 
-    static inline uint64x4 bitwise_nand(uint64x4 a, uint64x4 b)
+    static inline u64x4 bitwise_nand(u64x4 a, u64x4 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline uint64x4 bitwise_and(uint64x4 a, uint64x4 b)
+    static inline u64x4 bitwise_and(u64x4 a, u64x4 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline uint64x4 bitwise_or(uint64x4 a, uint64x4 b)
+    static inline u64x4 bitwise_or(u64x4 a, u64x4 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline uint64x4 bitwise_xor(uint64x4 a, uint64x4 b)
+    static inline u64x4 bitwise_xor(u64x4 a, u64x4 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline uint64x4 bitwise_not(uint64x4 a)
+    static inline u64x4 bitwise_not(u64x4 a)
     {
         return _mm256_not_si256(a);
     }
 
-    static inline uint64x4 select(mask64x4 mask, uint64x4 a, uint64x4 b)
+    static inline u64x4 select(mask64x4 mask, u64x4 a, u64x4 b)
     {
         return _mm256_mask_blend_epi64(mask, b, a);
     }
@@ -569,268 +569,268 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline uint64x4 slli(uint64x4 a)
+    static inline u64x4 slli(u64x4 a)
     {
         return _mm256_slli_epi64(a, Count);
     }
 
     template <int Count>
-    static inline uint64x4 srli(uint64x4 a)
+    static inline u64x4 srli(u64x4 a)
     {
         return _mm256_srli_epi64(a, Count);
     }
 
     // shift by scalar
 
-    static inline uint64x4 sll(uint64x4 a, int count)
+    static inline u64x4 sll(u64x4 a, int count)
     {
         return _mm256_sll_epi64(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline uint64x4 srl(uint64x4 a, int count)
+    static inline u64x4 srl(u64x4 a, int count)
     {
         return _mm256_srl_epi64(a, _mm_cvtsi32_si128(count));
     }
 
     // -----------------------------------------------------------------
-    // int8x32
+    // s8x32
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int8x32 set_component(int8x32 a, int8 b)
+    static inline s8x32 set_component(s8x32 a, s8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         return _mm256_insert_epi8(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline int8 get_component(int8x32 a)
+    static inline s8 get_component(s8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return _mm256_extract_epi8(a, Index);
     }
 
-    static inline int8x32 int8x32_zero()
+    static inline s8x32 s8x32_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline int8x32 int8x32_set1(int8 s)
+    static inline s8x32 s8x32_set1(s8 s)
     {
         return _mm256_set1_epi8(s);
     }
 
-    static inline int8x32 unpacklo(int8x32 a, int8x32 b)
+    static inline s8x32 unpacklo(s8x32 a, s8x32 b)
     {
         return _mm256_unpacklo_epi8(a, b);
     }
 
-    static inline int8x32 unpackhi(int8x32 a, int8x32 b)
+    static inline s8x32 unpackhi(s8x32 a, s8x32 b)
     {
         return _mm256_unpackhi_epi8(a, b);
     }
 
-    static inline int8x32 add(int8x32 a, int8x32 b)
+    static inline s8x32 add(s8x32 a, s8x32 b)
     {
         return _mm256_add_epi8(a, b);
     }
 
-    static inline int8x32 sub(int8x32 a, int8x32 b)
+    static inline s8x32 sub(s8x32 a, s8x32 b)
     {
         return _mm256_sub_epi8(a, b);
     }
 
     // saturated
 
-    static inline int8x32 adds(int8x32 a, int8x32 b)
+    static inline s8x32 adds(s8x32 a, s8x32 b)
     {
         return _mm256_adds_epi8(a, b);
     }
 
-    static inline int8x32 subs(int8x32 a, int8x32 b)
+    static inline s8x32 subs(s8x32 a, s8x32 b)
     {
         return _mm256_subs_epi8(a, b);
     }
 
-    static inline int8x32 abs(int8x32 a)
+    static inline s8x32 abs(s8x32 a)
     {
         return _mm256_abs_epi8(a);
     }
 
-    static inline int8x32 neg(int8x32 a)
+    static inline s8x32 neg(s8x32 a)
     {
         return _mm256_sub_epi8(_mm256_setzero_si256(), a);
     }
 
     // bitwise
 
-    static inline int8x32 bitwise_nand(int8x32 a, int8x32 b)
+    static inline s8x32 bitwise_nand(s8x32 a, s8x32 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline int8x32 bitwise_and(int8x32 a, int8x32 b)
+    static inline s8x32 bitwise_and(s8x32 a, s8x32 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline int8x32 bitwise_or(int8x32 a, int8x32 b)
+    static inline s8x32 bitwise_or(s8x32 a, s8x32 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline int8x32 bitwise_xor(int8x32 a, int8x32 b)
+    static inline s8x32 bitwise_xor(s8x32 a, s8x32 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline int8x32 bitwise_not(int8x32 a)
+    static inline s8x32 bitwise_not(s8x32 a)
     {
         return _mm256_not_si256(a);
     }
 
     // compare
 
-    static inline mask8x32 compare_eq(int8x32 a, int8x32 b)
+    static inline mask8x32 compare_eq(s8x32 a, s8x32 b)
     {
         return _mm256_cmp_epi8_mask(a, b, _MM_CMPINT_EQ);
     }
 
-    static inline mask8x32 compare_gt(int8x32 a, int8x32 b)
+    static inline mask8x32 compare_gt(s8x32 a, s8x32 b)
     {
         return _mm256_cmp_epi8_mask(b, a, _MM_CMPINT_LT);
     }
 
-    static inline int8x32 select(mask8x32 mask, int8x32 a, int8x32 b)
+    static inline s8x32 select(mask8x32 mask, s8x32 a, s8x32 b)
     {
         return _mm256_mask_blend_epi8(mask, b, a);
     }
 
-    static inline int8x32 min(int8x32 a, int8x32 b)
+    static inline s8x32 min(s8x32 a, s8x32 b)
     {
         return _mm256_min_epi8(a, b);
     }
 
-    static inline int8x32 max(int8x32 a, int8x32 b)
+    static inline s8x32 max(s8x32 a, s8x32 b)
     {
         return _mm256_max_epi8(a, b);
     }
 
     // -----------------------------------------------------------------
-    // int16x16
+    // s16x16
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int16x16 set_component(int16x16 a, int16 b)
+    static inline s16x16 set_component(s16x16 a, s16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm256_insert_epi16(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline int16 get_component(int16x16 a)
+    static inline s16 get_component(s16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return _mm256_extract_epi16(a, Index);
     }
 
-    static inline int16x16 int16x16_zero()
+    static inline s16x16 s16x16_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline int16x16 int16x16_set1(int16 s)
+    static inline s16x16 s16x16_set1(s16 s)
     {
         return _mm256_set1_epi16(s);
     }
 
-    static inline int16x16 unpacklo(int16x16 a, int16x16 b)
+    static inline s16x16 unpacklo(s16x16 a, s16x16 b)
     {
         return _mm256_unpacklo_epi16(a, b);
     }
 
-    static inline int16x16 unpackhi(int16x16 a, int16x16 b)
+    static inline s16x16 unpackhi(s16x16 a, s16x16 b)
     {
         return _mm256_unpackhi_epi16(a, b);
     }
 
-    static inline int16x16 add(int16x16 a, int16x16 b)
+    static inline s16x16 add(s16x16 a, s16x16 b)
     {
         return _mm256_add_epi16(a, b);
     }
 
-    static inline int16x16 sub(int16x16 a, int16x16 b)
+    static inline s16x16 sub(s16x16 a, s16x16 b)
     {
         return _mm256_sub_epi16(a, b);
     }
 
-    static inline int16x16 mullo(int16x16 a, int16x16 b)
+    static inline s16x16 mullo(s16x16 a, s16x16 b)
     {
         return _mm256_mullo_epi16(a, b);
     }
 
     // saturated
 
-    static inline int16x16 adds(int16x16 a, int16x16 b)
+    static inline s16x16 adds(s16x16 a, s16x16 b)
     {
         return _mm256_adds_epi16(a, b);
     }
 
-    static inline int16x16 subs(int16x16 a, int16x16 b)
+    static inline s16x16 subs(s16x16 a, s16x16 b)
     {
         return _mm256_subs_epi16(a, b);
     }
 
-    static inline int16x16 abs(int16x16 a)
+    static inline s16x16 abs(s16x16 a)
     {
         return _mm256_abs_epi16(a);
     }
 
-    static inline int16x16 neg(int16x16 a)
+    static inline s16x16 neg(s16x16 a)
     {
         return _mm256_sub_epi16(_mm256_setzero_si256(), a);
     }
 
     // bitwise
 
-    static inline int16x16 bitwise_nand(int16x16 a, int16x16 b)
+    static inline s16x16 bitwise_nand(s16x16 a, s16x16 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline int16x16 bitwise_and(int16x16 a, int16x16 b)
+    static inline s16x16 bitwise_and(s16x16 a, s16x16 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline int16x16 bitwise_or(int16x16 a, int16x16 b)
+    static inline s16x16 bitwise_or(s16x16 a, s16x16 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline int16x16 bitwise_xor(int16x16 a, int16x16 b)
+    static inline s16x16 bitwise_xor(s16x16 a, s16x16 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline int16x16 bitwise_not(int16x16 a)
+    static inline s16x16 bitwise_not(s16x16 a)
     {
         return _mm256_not_si256(a);
     }
 
     // compare
 
-    static inline mask16x16 compare_eq(int16x16 a, int16x16 b)
+    static inline mask16x16 compare_eq(s16x16 a, s16x16 b)
     {
         return _mm256_cmp_epi16_mask(a, b, _MM_CMPINT_EQ);
     }
 
-    static inline mask16x16 compare_gt(int16x16 a, int16x16 b)
+    static inline mask16x16 compare_gt(s16x16 a, s16x16 b)
     {
         return _mm256_cmp_epi16_mask(b, a, _MM_CMPINT_LT);
     }
 
-    static inline int16x16 select(mask16x16 mask, int16x16 a, int16x16 b)
+    static inline s16x16 select(mask16x16 mask, s16x16 a, s16x16 b)
     {
         return _mm256_mask_blend_epi16(mask, b, a);
     }
@@ -838,131 +838,131 @@ namespace simd {
     // shift by scalar
 
     template <int Count>
-    static inline int16x16 slli(int16x16 a)
+    static inline s16x16 slli(s16x16 a)
     {
         return _mm256_slli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline int16x16 srli(int16x16 a)
+    static inline s16x16 srli(s16x16 a)
     {
         return _mm256_srli_epi16(a, Count);
     }
 
     template <int Count>
-    static inline int16x16 srai(int16x16 a)
+    static inline s16x16 srai(s16x16 a)
     {
         return _mm256_srai_epi16(a, Count);
     }
 
     // shift by scalar
 
-    static inline int16x16 sll(int16x16 a, int count)
+    static inline s16x16 sll(s16x16 a, int count)
     {
         return _mm256_sll_epi16(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline int16x16 srl(int16x16 a, int count)
+    static inline s16x16 srl(s16x16 a, int count)
     {
         return _mm256_srl_epi16(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline int16x16 sra(int16x16 a, int count)
+    static inline s16x16 sra(s16x16 a, int count)
     {
         return _mm256_sra_epi16(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline int16x16 min(int16x16 a, int16x16 b)
+    static inline s16x16 min(s16x16 a, s16x16 b)
     {
         return _mm256_min_epi16(a, b);
     }
 
-    static inline int16x16 max(int16x16 a, int16x16 b)
+    static inline s16x16 max(s16x16 a, s16x16 b)
     {
         return _mm256_max_epi16(a, b);
     }
 
     // -----------------------------------------------------------------
-    // int32x8
+    // s32x8
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int32x8 set_component(int32x8 a, int32 b)
+    static inline s32x8 set_component(s32x8 a, s32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm256_insert_epi32(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline int32 get_component(int32x8 a)
+    static inline s32 get_component(s32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return _mm256_extract_epi32(a, Index);
     }
 
-    static inline int32x8 int32x8_zero()
+    static inline s32x8 s32x8_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline int32x8 int32x8_set1(int32 s)
+    static inline s32x8 s32x8_set1(s32 s)
     {
         return _mm256_set1_epi32(s);
     }
 
-    static inline int32x8 int32x8_set8(int32 s0, int32 s1, int32 s2, int32 s3, int32 s4, int32 s5, int32 s6, int32 s7)
+    static inline s32x8 s32x8_set8(s32 s0, s32 s1, s32 s2, s32 s3, s32 s4, s32 s5, s32 s6, s32 s7)
     {
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline int32x8 int32x8_uload(const int32* source)
+    static inline s32x8 s32x8_uload(const s32* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void int32x8_ustore(int32* dest, int32x8 a)
+    static inline void s32x8_ustore(s32* dest, s32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
-    static inline int32x8 unpacklo(int32x8 a, int32x8 b)
+    static inline s32x8 unpacklo(s32x8 a, s32x8 b)
     {
         return _mm256_unpacklo_epi32(a, b);
     }
 
-    static inline int32x8 unpackhi(int32x8 a, int32x8 b)
+    static inline s32x8 unpackhi(s32x8 a, s32x8 b)
     {
         return _mm256_unpackhi_epi32(a, b);
     }
 
-    static inline int32x8 abs(int32x8 a)
+    static inline s32x8 abs(s32x8 a)
     {
         return _mm256_abs_epi32(a);
     }
 
-    static inline int32x8 neg(int32x8 a)
+    static inline s32x8 neg(s32x8 a)
     {
         return _mm256_sub_epi32(_mm256_setzero_si256(), a);
     }
 
-    static inline int32x8 add(int32x8 a, int32x8 b)
+    static inline s32x8 add(s32x8 a, s32x8 b)
     {
         return _mm256_add_epi32(a, b);
     }
 
-    static inline int32x8 sub(int32x8 a, int32x8 b)
+    static inline s32x8 sub(s32x8 a, s32x8 b)
     {
         return _mm256_sub_epi32(a, b);
     }
 
-    static inline int32x8 mullo(int32x8 a, int32x8 b)
+    static inline s32x8 mullo(s32x8 a, s32x8 b)
     {
         return _mm256_mullo_epi32(a, b);
     }
 
     // saturated
 
-    static inline int32x8 adds(int32x8 a, int32x8 b)
+    static inline s32x8 adds(s32x8 a, s32x8 b)
     {
         const __m256i v = _mm256_add_epi32(a, b);
         a = _mm256_srai_epi32(a, 31);
@@ -972,7 +972,7 @@ namespace simd {
         return _mm256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), v, a);
     }
 
-    static inline int32x8 subs(int32x8 a, int32x8 b)
+    static inline s32x8 subs(s32x8 a, s32x8 b)
     {
         const __m256i v = _mm256_sub_epi32(a, b);
         a = _mm256_srai_epi32(a, 31);
@@ -982,44 +982,44 @@ namespace simd {
 
     // bitwise
 
-    static inline int32x8 bitwise_nand(int32x8 a, int32x8 b)
+    static inline s32x8 bitwise_nand(s32x8 a, s32x8 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline int32x8 bitwise_and(int32x8 a, int32x8 b)
+    static inline s32x8 bitwise_and(s32x8 a, s32x8 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline int32x8 bitwise_or(int32x8 a, int32x8 b)
+    static inline s32x8 bitwise_or(s32x8 a, s32x8 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline int32x8 bitwise_xor(int32x8 a, int32x8 b)
+    static inline s32x8 bitwise_xor(s32x8 a, s32x8 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline int32x8 bitwise_not(int32x8 a)
+    static inline s32x8 bitwise_not(s32x8 a)
     {
         return _mm256_not_si256(a);
     }
 
     // compare
 
-    static inline mask32x8 compare_eq(int32x8 a, int32x8 b)
+    static inline mask32x8 compare_eq(s32x8 a, s32x8 b)
     {
-        return _mm256_cmp_epi32_mask(a, b, _MM_CMPINT_EQ);
+        return _mm256_cmp_epi32_mask(a, b, _MM_CMPs_EQ);
     }
 
-    static inline mask32x8 compare_gt(int32x8 a, int32x8 b)
+    static inline mask32x8 compare_gt(s32x8 a, s32x8 b)
     {
         return _mm256_cmp_epi32_mask(b, a, _MM_CMPINT_LT);
     }
 
-    static inline int32x8 select(mask32x8 mask, int32x8 a, int32x8 b)
+    static inline s32x8 select(mask32x8 mask, s32x8 a, s32x8 b)
     {
         return _mm256_mask_blend_epi32(mask, b, a);
     }
@@ -1027,146 +1027,146 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline int32x8 slli(int32x8 a)
+    static inline s32x8 slli(s32x8 a)
     {
         return _mm256_slli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline int32x8 srli(int32x8 a)
+    static inline s32x8 srli(s32x8 a)
     {
         return _mm256_srli_epi32(a, Count);
     }
 
     template <int Count>
-    static inline int32x8 srai(int32x8 a)
+    static inline s32x8 srai(s32x8 a)
     {
         return _mm256_srai_epi32(a, Count);
     }
 
     // shift by scalar
 
-    static inline int32x8 sll(int32x8 a, int count)
+    static inline s32x8 sll(s32x8 a, int count)
     {
         return _mm256_sll_epi32(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline int32x8 srl(int32x8 a, int count)
+    static inline s32x8 srl(s32x8 a, int count)
     {
         return _mm256_srl_epi32(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline int32x8 sra(int32x8 a, int count)
+    static inline s32x8 sra(s32x8 a, int count)
     {
         return _mm256_sra_epi32(a, _mm_cvtsi32_si128(count));
     }
 
     // shift by vector
 
-    static inline int32x8 sll(int32x8 a, uint32x8 count)
+    static inline s32x8 sll(s32x8 a, u32x8 count)
     {
         return _mm256_sllv_epi32(a, count);
     }
 
-    static inline int32x8 srl(int32x8 a, uint32x8 count)
+    static inline s32x8 srl(s32x8 a, u32x8 count)
     {
         return _mm256_srlv_epi32(a, count);
     }
 
-    static inline int32x8 sra(int32x8 a, uint32x8 count)
+    static inline s32x8 sra(s32x8 a, u32x8 count)
     {
         return _mm256_srav_epi32(a, count);
     }
 
-    static inline int32x8 min(int32x8 a, int32x8 b)
+    static inline s32x8 min(s32x8 a, s32x8 b)
     {
         return _mm256_min_epi32(a, b);
     }
 
-    static inline int32x8 max(int32x8 a, int32x8 b)
+    static inline s32x8 max(s32x8 a, s32x8 b)
     {
         return _mm256_max_epi32(a, b);
     }
 
     // -----------------------------------------------------------------
-    // int64x4
+    // s64x4
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline int64x4 set_component(int64x4 a, int64 b)
+    static inline s64x4 set_component(s64x4 a, s64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm256_insert_epi64(a, b, Index);
     }
 
     template <unsigned int Index>
-    static inline int64 get_component(int64x4 a)
+    static inline s64 get_component(s64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm256_extract_epi64(a, Index);
     }
 
-    static inline int64x4 int64x4_zero()
+    static inline s64x4 s64x4_zero()
     {
         return _mm256_setzero_si256();
     }
 
-    static inline int64x4 int64x4_set1(int64 s)
+    static inline s64x4 s64x4_set1(s64 s)
     {
         return _mm256_set1_epi64x(s);
     }
 
-    static inline int64x4 int64x4_set4(int64 x, int64 y, int64 z, int64 w)
+    static inline s64x4 s64x4_set4(s64 x, s64 y, s64 z, s64 w)
     {
         return _mm256_setr_epi64x(x, y, z, w);
     }
 
-    static inline int64x4 unpacklo(int64x4 a, int64x4 b)
+    static inline s64x4 unpacklo(s64x4 a, s64x4 b)
     {
         return _mm256_unpacklo_epi64(a, b);
     }
 
-    static inline int64x4 unpackhi(int64x4 a, int64x4 b)
+    static inline s64x4 unpackhi(s64x4 a, s64x4 b)
     {
         return _mm256_unpackhi_epi64(a, b);
     }
 
-    static inline int64x4 add(int64x4 a, int64x4 b)
+    static inline s64x4 add(s64x4 a, s64x4 b)
     {
         return _mm256_add_epi64(a, b);
     }
 
-    static inline int64x4 sub(int64x4 a, int64x4 b)
+    static inline s64x4 sub(s64x4 a, s64x4 b)
     {
         return _mm256_sub_epi64(a, b);
     }
 
-    static inline int64x4 bitwise_nand(int64x4 a, int64x4 b)
+    static inline s64x4 bitwise_nand(s64x4 a, s64x4 b)
     {
         return _mm256_andnot_si256(a, b);
     }
 
-    static inline int64x4 bitwise_and(int64x4 a, int64x4 b)
+    static inline s64x4 bitwise_and(s64x4 a, s64x4 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline int64x4 bitwise_or(int64x4 a, int64x4 b)
+    static inline s64x4 bitwise_or(s64x4 a, s64x4 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline int64x4 bitwise_xor(int64x4 a, int64x4 b)
+    static inline s64x4 bitwise_xor(s64x4 a, s64x4 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline int64x4 bitwise_not(int64x4 a)
+    static inline s64x4 bitwise_not(s64x4 a)
     {
         return _mm256_not_si256(a);
     }
 
-    static inline int64x4 select(mask64x4 mask, int64x4 a, int64x4 b)
+    static inline s64x4 select(mask64x4 mask, s64x4 a, s64x4 b)
     {
         return _mm256_mask_blend_epi64(mask, b, a);
     }
@@ -1174,25 +1174,25 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline int64x4 slli(int64x4 a)
+    static inline s64x4 slli(s64x4 a)
     {
         return _mm256_slli_epi64(a, Count);
     }
 
     template <int Count>
-    static inline int64x4 srli(int64x4 a)
+    static inline s64x4 srli(s64x4 a)
     {
         return _mm256_srli_epi64(a, Count);
     }
 
     // shift by scalar
 
-    static inline int64x4 sll(int64x4 a, int count)
+    static inline s64x4 sll(s64x4 a, int count)
     {
         return _mm256_sll_epi64(a, _mm_cvtsi32_si128(count));
     }
 
-    static inline int64x4 srl(int64x4 a, int count)
+    static inline s64x4 srl(s64x4 a, int count)
     {
         return _mm256_srl_epi64(a, _mm_cvtsi32_si128(count));
     }
@@ -1308,7 +1308,7 @@ namespace simd {
 
     static inline u32 get_mask(mask32x8 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask32x8 a)
@@ -1351,7 +1351,7 @@ namespace simd {
 
     static inline u32 get_mask(mask64x4 a)
     {
-        return uint32(a);
+        return u32(a);
     }
 
     static inline bool none_of(mask64x4 a)

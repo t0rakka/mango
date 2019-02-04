@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,21 +12,21 @@ namespace mango
     template <>
     struct Vector<s64, 2>
     {
-        using VectorType = simd::int64x2;
+        using VectorType = simd::s64x2;
         using ScalarType = s64;
         enum { VectorSize = 2 };
 
         union
         {
-            simd::int64x2 m;
+            simd::s64x2 m;
 
-            ScalarAccessor<s64, simd::int64x2, 0> x;
-            ScalarAccessor<s64, simd::int64x2, 1> y;
+            ScalarAccessor<s64, simd::s64x2, 0> x;
+            ScalarAccessor<s64, simd::s64x2, 1> y;
 
-            ShuffleAccessor2<s64, simd::int64x2, 0, 0> xx;
-            ShuffleAccessor2<s64, simd::int64x2, 0, 1> xy;
-            ShuffleAccessor2<s64, simd::int64x2, 1, 0> yx;
-            ShuffleAccessor2<s64, simd::int64x2, 1, 1> yy;
+            ShuffleAccessor2<s64, simd::s64x2, 0, 0> xx;
+            ShuffleAccessor2<s64, simd::s64x2, 0, 1> xy;
+            ShuffleAccessor2<s64, simd::s64x2, 1, 0> yx;
+            ShuffleAccessor2<s64, simd::s64x2, 1, 1> yy;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -52,34 +52,34 @@ namespace mango
         ~Vector() {}
 
         Vector(s64 s)
-            : m(simd::int64x2_set1(s))
+            : m(simd::s64x2_set1(s))
         {
         }
 
         explicit Vector(s64 x, s64 y)
-            : m(simd::int64x2_set2(x, y))
+            : m(simd::s64x2_set2(x, y))
         {
         }
 
-        Vector(simd::int64x2 v)
+        Vector(simd::s64x2 v)
             : m(v)
         {
         }
 
         template <int X, int Y>
-        Vector(const ShuffleAccessor2<s64, simd::int64x2, X, Y>& p)
+        Vector(const ShuffleAccessor2<s64, simd::s64x2, X, Y>& p)
         {
             m = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const ShuffleAccessor2<s64, simd::int64x2, X, Y>& p)
+        Vector& operator = (const ShuffleAccessor2<s64, simd::s64x2, X, Y>& p)
         {
             m = p;
             return *this;
         }
 
-        Vector& operator = (simd::int64x2 v)
+        Vector& operator = (simd::s64x2 v)
         {
             m = v;
             return *this;
@@ -87,17 +87,17 @@ namespace mango
 
         Vector& operator = (s64 s)
         {
-            m = simd::int64x2_set1(s);
+            m = simd::s64x2_set1(s);
             return *this;
         }
 
-        operator simd::int64x2 () const
+        operator simd::s64x2 () const
         {
             return m;
         }
 
 #ifdef int128_is_hardware_vector
-        operator simd::int64x2::vector () const
+        operator simd::s64x2::vector () const
         {
             return m.data;
         }
@@ -111,7 +111,7 @@ namespace mango
 
     static inline Vector<s64, 2> operator - (Vector<s64, 2> v)
     {
-        return simd::sub(simd::int64x2_zero(), v);
+        return simd::sub(simd::s64x2_zero(), v);
     }
 
     static inline Vector<s64, 2>& operator += (Vector<s64, 2>& a, Vector<s64, 2> b)

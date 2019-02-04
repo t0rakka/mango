@@ -114,7 +114,7 @@ namespace mango
         return a - b;
     }
 
-    void float4x4::identity()
+    void float4x4::setIdentity()
     {
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, 1.0f);
@@ -444,6 +444,11 @@ namespace mango
     }
 
     namespace matrix {
+
+    float4x4 identity()
+    {
+        return float4x4(1.0f);
+    }
 
     float4x4 translate(float x, float y, float z)
     {

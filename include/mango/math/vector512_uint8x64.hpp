@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,7 +12,7 @@ namespace mango
     template <>
     struct Vector<u8, 64>
     {
-        using VectorType = simd::uint8x64;
+        using VectorType = simd::u8x64;
         using ScalarType = u8;
         enum { VectorSize = 64 };
 
@@ -43,16 +43,16 @@ namespace mango
         ~Vector() {}
 
         Vector(u8 s)
-            : m(simd::uint8x64_set1(s))
+            : m(simd::u8x64_set1(s))
         {
         }
 
-        Vector(simd::uint8x64 v)
+        Vector(simd::u8x64 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::uint8x64 v)
+        Vector& operator = (simd::u8x64 v)
         {
             m = v;
             return *this;
@@ -60,17 +60,17 @@ namespace mango
 
         Vector& operator = (u8 s)
         {
-            m = simd::uint8x64_set1(s);
+            m = simd::u8x64_set1(s);
             return *this;
         }
 
-        operator simd::uint8x64 () const
+        operator simd::u8x64 () const
         {
             return m;
         }
 
 #ifdef int512_is_hardware_vector
-        operator simd::uint8x64::vector () const
+        operator simd::u8x64::vector () const
         {
             return m.data;
         }
@@ -84,7 +84,7 @@ namespace mango
 
     static inline Vector<u8, 64> operator - (Vector<u8, 64> v)
     {
-        return simd::sub(simd::uint8x64_zero(), v);
+        return simd::sub(simd::u8x64_zero(), v);
     }
 
     static inline Vector<u8, 64>& operator += (Vector<u8, 64>& a, Vector<u8, 64> b)

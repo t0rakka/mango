@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2010 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -13,13 +13,13 @@ namespace mango
     template <>
     struct Vector<float16, 4>
     {
-        using VectorType = simd::float16x4;
+        using VectorType = simd::f16x4;
         using ScalarType = float16;
         enum { VectorSize = 4 };
 
         union
         {
-            simd::float16x4 m;
+            simd::f16x4 m;
             DeAggregate<ScalarType> component[VectorSize];
         };
 
@@ -44,33 +44,33 @@ namespace mango
         ~Vector() {}
 
         explicit Vector(const Vector<float, 4>& v)
-            : m(simd::convert<simd::float16x4>(v.m))
+            : m(simd::convert<simd::f16x4>(v.m))
         {
         }
 
-        Vector(simd::float32x4 v)
-            : m(simd::convert<simd::float16x4>(v))
+        Vector(simd::f32x4 v)
+            : m(simd::convert<simd::f16x4>(v))
         {
         }
 
-        Vector(simd::float16x4 v)
+        Vector(simd::f16x4 v)
             : m(v)
         {
         }
 
         Vector& operator = (const Vector<float, 4>& v)
         {
-            m = simd::convert<simd::float16x4>(v.m);
+            m = simd::convert<simd::f16x4>(v.m);
             return *this;
         }
 
-        Vector& operator = (simd::float32x4 v)
+        Vector& operator = (simd::f32x4 v)
         {
-            m = simd::convert<simd::float16x4>(v);
+            m = simd::convert<simd::f16x4>(v);
             return *this;
         }
 
-        Vector& operator = (simd::float16x4 v)
+        Vector& operator = (simd::f16x4 v)
         {
             m = v;
             return *this;
@@ -84,15 +84,15 @@ namespace mango
 
         operator Vector<float, 4> () const
         {
-            return Vector<float, 4>(simd::convert<simd::float32x4>(m));
+            return Vector<float, 4>(simd::convert<simd::f32x4>(m));
         }
 
-        operator const simd::float16x4& () const
+        operator const simd::f16x4& () const
         {
             return m;
         }
 
-        operator simd::float16x4& ()
+        operator simd::f16x4& ()
         {
             return m;
         }

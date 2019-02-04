@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,7 +12,7 @@ namespace mango
     template <>
     struct Vector<s16, 8>
     {
-        using VectorType = simd::int16x8;
+        using VectorType = simd::s16x8;
         using ScalarType = s16;
         enum { VectorSize = 8 };
 
@@ -43,21 +43,21 @@ namespace mango
         ~Vector() {}
 
         Vector(s16 s)
-            : m(simd::int16x8_set1(s))
+            : m(simd::s16x8_set1(s))
         {
         }
 
         Vector(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
-            : m(simd::int16x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::s16x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
-        Vector(simd::int16x8 v)
+        Vector(simd::s16x8 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::int16x8 v)
+        Vector& operator = (simd::s16x8 v)
         {
             m = v;
             return *this;
@@ -65,17 +65,17 @@ namespace mango
 
         Vector& operator = (s16 s)
         {
-            m = simd::int16x8_set1(s);
+            m = simd::s16x8_set1(s);
             return *this;
         }
 
-        operator simd::int16x8 () const
+        operator simd::s16x8 () const
         {
             return m;
         }
 
 #ifdef int128_is_hardware_vector
-        operator simd::int16x8::vector () const
+        operator simd::s16x8::vector () const
         {
             return m.data;
         }
@@ -85,12 +85,12 @@ namespace mango
     template <>
     inline Vector<s16, 8> load_low<s16, 8>(const s16 *source)
     {
-        return simd::int16x8_load_low(source);
+        return simd::s16x8_load_low(source);
     }
 
     static inline void store_low(s16 *dest, Vector<s16, 8> v)
     {
-        simd::int16x8_store_low(dest, v);
+        simd::s16x8_store_low(dest, v);
     }
 
     static inline const Vector<s16, 8> operator + (Vector<s16, 8> v)
@@ -100,7 +100,7 @@ namespace mango
 
     static inline Vector<s16, 8> operator - (Vector<s16, 8> v)
     {
-        return simd::sub(simd::int16x8_zero(), v);
+        return simd::sub(simd::s16x8_zero(), v);
     }
 
     static inline Vector<s16, 8>& operator += (Vector<s16, 8>& a, Vector<s16, 8> b)

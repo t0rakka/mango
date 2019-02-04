@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -17,15 +17,15 @@ namespace mango
     template <>
     struct Vector<float, 8>
     {
-        using VectorType = simd::float32x8;
+        using VectorType = simd::f32x8;
         using ScalarType = float;
         enum { VectorSize = 8 };
 
         union
         {
-            simd::float32x8 m;
-            LowAccessor<Vector<float, 4>, simd::float32x8> low;
-            HighAccessor<Vector<float, 4>, simd::float32x8> high;
+            simd::f32x8 m;
+            LowAccessor<Vector<float, 4>, simd::f32x8> low;
+            HighAccessor<Vector<float, 4>, simd::f32x8> high;
             DeAggregate<ScalarType> component[VectorSize];
         };
 
@@ -50,12 +50,12 @@ namespace mango
         ~Vector() {}
 
         Vector(float s)
-            : m(simd::float32x8_set1(s))
+            : m(simd::f32x8_set1(s))
         {
         }
 
         explicit Vector(float s0, float s1, float s2, float s3, float s4, float s5, float s6, float s7)
-            : m(simd::float32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::f32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
@@ -64,12 +64,12 @@ namespace mango
         {
         }
 
-        Vector(simd::float32x8 v)
+        Vector(simd::f32x8 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::float32x8 v)
+        Vector& operator = (simd::f32x8 v)
         {
             m = v;
             return *this;
@@ -77,17 +77,17 @@ namespace mango
 
         Vector& operator = (float s)
         {
-            m = simd::float32x8_set1(s);
+            m = simd::f32x8_set1(s);
             return *this;
         }
 
-        operator simd::float32x8 () const
+        operator simd::f32x8 () const
         {
             return m;
         }
 
 #ifdef float256_is_hardware_vector
-        operator simd::float32x8::vector () const
+        operator simd::f32x8::vector () const
         {
             return m.data;
         }

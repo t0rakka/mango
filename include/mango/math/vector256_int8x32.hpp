@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,7 +12,7 @@ namespace mango
     template <>
     struct Vector<s8, 32>
     {
-        using VectorType = simd::int8x32;
+        using VectorType = simd::s8x32;
         using ScalarType = s8;
         enum { VectorSize = 32 };
 
@@ -43,16 +43,16 @@ namespace mango
         ~Vector() {}
 
         Vector(s8 s)
-            : m(simd::int8x32_set1(s))
+            : m(simd::s8x32_set1(s))
         {
         }
 
-        Vector(simd::int8x32 v)
+        Vector(simd::s8x32 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::int8x32 v)
+        Vector& operator = (simd::s8x32 v)
         {
             m = v;
             return *this;
@@ -60,17 +60,17 @@ namespace mango
 
         Vector& operator = (s8 s)
         {
-            m = simd::int8x32_set1(s);
+            m = simd::s8x32_set1(s);
             return *this;
         }
 
-        operator simd::int8x32 () const
+        operator simd::s8x32 () const
         {
             return m;
         }
 
 #ifdef int256_is_hardware_vector
-        operator simd::int8x32::vector () const
+        operator simd::s8x32::vector () const
         {
             return m.data;
         }
@@ -84,7 +84,7 @@ namespace mango
 
     static inline Vector<s8, 32> operator - (Vector<s8, 32> v)
     {
-        return simd::sub(simd::int8x32_zero(), v);
+        return simd::sub(simd::s8x32_zero(), v);
     }
 
     static inline Vector<s8, 32>& operator += (Vector<s8, 32>& a, Vector<s8, 32> b)

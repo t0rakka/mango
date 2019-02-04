@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,18 +12,18 @@ namespace mango
     template <>
     struct Vector<u64, 4>
     {
-        using VectorType = simd::uint64x4;
+        using VectorType = simd::u64x4;
         using ScalarType = u64;
         enum { VectorSize = 4 };
 
         union
         {
-            simd::uint64x4 m;
+            simd::u64x4 m;
 
-            ScalarAccessor<u64, simd::uint64x4, 0> x;
-            ScalarAccessor<u64, simd::uint64x4, 1> y;
-            ScalarAccessor<u64, simd::uint64x4, 2> z;
-            ScalarAccessor<u64, simd::uint64x4, 3> w;
+            ScalarAccessor<u64, simd::u64x4, 0> x;
+            ScalarAccessor<u64, simd::u64x4, 1> y;
+            ScalarAccessor<u64, simd::u64x4, 2> z;
+            ScalarAccessor<u64, simd::u64x4, 3> w;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -49,21 +49,21 @@ namespace mango
         ~Vector() {}
 
         Vector(u64 s)
-            : m(simd::uint64x4_set1(s))
+            : m(simd::u64x4_set1(s))
         {
         }
 
         explicit Vector(u64 x, u64 y, u64 z, u64 w)
-            : m(simd::uint64x4_set4(x, y, z, w))
+            : m(simd::u64x4_set4(x, y, z, w))
         {
         }
 
-        Vector(simd::uint64x4 v)
+        Vector(simd::u64x4 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::uint64x4 v)
+        Vector& operator = (simd::u64x4 v)
         {
             m = v;
             return *this;
@@ -71,17 +71,17 @@ namespace mango
 
         Vector& operator = (u64 s)
         {
-            m = simd::uint64x4_set1(s);
+            m = simd::u64x4_set1(s);
             return *this;
         }
 
-        operator simd::uint64x4 () const
+        operator simd::u64x4 () const
         {
             return m;
         }
 
 #ifdef int256_is_hardware_vector
-        operator simd::uint64x4::vector () const
+        operator simd::u64x4::vector () const
         {
             return m.data;
         }
@@ -95,7 +95,7 @@ namespace mango
 
     static inline Vector<u64, 4> operator - (Vector<u64, 4> v)
     {
-        return simd::sub(simd::uint64x4_zero(), v);
+        return simd::sub(simd::u64x4_zero(), v);
     }
 
     static inline Vector<u64, 4>& operator += (Vector<u64, 4>& a, Vector<u64, 4> b)

@@ -62,9 +62,9 @@ namespace mango
         {
         }
 
-        explicit Matrix(float s)
+        explicit Matrix(float scale)
         {
-            *this = s;
+            *this = scale;
         }
 
         explicit Matrix(const float* v)
@@ -72,12 +72,12 @@ namespace mango
             *this = v;
         }
 
-        Matrix(const Matrix& other)
+        Matrix(const Matrix& v)
         {
-            m[0] = other.m[0];
-            m[1] = other.m[1];
-            m[2] = other.m[2];
-            m[3] = other.m[3];
+            m[0] = v.m[0];
+            m[1] = v.m[1];
+            m[2] = v.m[2];
+            m[3] = v.m[3];
         }
         
         explicit Matrix(
@@ -92,28 +92,33 @@ namespace mango
             m[3] = v3;
         }
 
-        Matrix(const AngleAxis& a)
+        Matrix(const Quaternion& rotation)
         {
-            *this = a;
+            *this = rotation;
+        }
+
+        Matrix(const AngleAxis& rotation)
+        {
+            *this = rotation;
         }
 
         ~Matrix()
         {
         }
 
-        const Matrix& operator = (const Matrix& other)
+        const Matrix& operator = (const Matrix& v)
         {
-            m[0] = other.m[0];
-            m[1] = other.m[1];
-            m[2] = other.m[2];
-            m[3] = other.m[3];
+            m[0] = v.m[0];
+            m[1] = v.m[1];
+            m[2] = v.m[2];
+            m[3] = v.m[3];
             return *this;
         }
 
-        const Matrix& operator = (float s);
+        const Matrix& operator = (float scale);
         const Matrix& operator = (const float* v);
-        const Matrix& operator = (const Quaternion& q);
-        const Matrix& operator = (const AngleAxis& a);
+        const Matrix& operator = (const Quaternion& rotation);
+        const Matrix& operator = (const AngleAxis& rotation);
 
         operator float32x4* ()
         {
@@ -128,10 +133,8 @@ namespace mango
         bool isAffine() const;
         float determinant() const;
 
-        // set identity
-        void identity();
-
-        // modify current matrix
+        // modify the current matrix
+        void setIdentity();
         void translate(float xtrans, float ytrans, float ztrans);
         void translate(const float3& trans);
         void scale(float scale);
@@ -384,6 +387,7 @@ namespace mango
     float4x4 adjoint(const float4x4& m);
 
     namespace matrix {
+        float4x4 identity();
         float4x4 translate(float xtrans, float ytrans, float ztrans);
         float4x4 translate(const float3& trans);
         float4x4 scale(float scale);
@@ -395,21 +399,23 @@ namespace mango
         float4x4 rotateZ(float angle);
         float4x4 rotateXYZ(float xangle, float yangle, float zangle);
         float4x4 lookat(const float3& target, const float3& viewer, const float3& up);
-    } // namespace matrix
+    } // namespace
 
     namespace opengl {
+        // right-handed
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
         float4x4 oblique(const float4x4& proj, const float4& nearclip);
-    } // namespace opengl
+    } // namespace
 
     namespace vulkan {
+        // right-handed
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
         float4x4 oblique(const float4x4& proj, const float4& nearclip);
-    } // namespace vulkan
+    } // namespace
 
     namespace directx {
         // left-handed
@@ -417,6 +423,6 @@ namespace mango
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
         float4x4 oblique(const float4x4& proj, const float4& nearclip);
-    } // namespace directx
+    } // namespace
 
 } // namespace mango

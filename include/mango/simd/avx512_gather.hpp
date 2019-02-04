@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -11,192 +11,192 @@ namespace simd {
 
     // 128 bit gather
 
-    static inline float32x4 gather4(const float* address, int32x4 offset)
+    static inline f32x4 gather4(const float* address, s32x4 offset)
     {
         return _mm_i32gather_ps(reinterpret_cast<const float*>(address), offset, 4);
     }
 
-    static inline float64x2 gather2(const double* address, int32x4 offset)
+    static inline f64x2 gather2(const double* address, s32x4 offset)
     {
         return _mm_i32gather_pd(reinterpret_cast<const double*>(address), offset, 8);
     }
 
-    static inline uint32x4 gather4(const u32* address, int32x4 offset)
+    static inline u32x4 gather4(const u32* address, s32x4 offset)
     {
         return _mm_i32gather_epi32(reinterpret_cast<const int*>(address), offset, 4);
     }
 
-    static inline int32x4 gather4(const s32* address, int32x4 offset)
+    static inline s32x4 gather4(const s32* address, s32x4 offset)
     {
         return _mm_i32gather_epi32(reinterpret_cast<const int*>(address), offset, 4);
     }
 
-    static inline uint64x2 gather2(const u64* address, int32x4 offset)
+    static inline u64x2 gather2(const u64* address, s32x4 offset)
     {
         return _mm_i32gather_epi64(reinterpret_cast<const long long*>(address), offset, 8);
     }
 
-    static inline int64x2 gather2(const s64* address, int32x4 offset)
+    static inline s64x2 gather2(const s64* address, s32x4 offset)
     {
         return _mm_i32gather_epi64(reinterpret_cast<const long long*>(address), offset, 8);
     }
 
     // 256 bit gather
 
-    static inline float32x8 gather8(const float* address, int32x8 offset)
+    static inline f32x8 gather8(const float* address, s32x8 offset)
     {
         return _mm256_i32gather_ps(reinterpret_cast<const float*>(address), offset, 4);
     }
 
-    static inline float64x4 gather4(const double* address, int32x4 offset)
+    static inline f64x4 gather4(const double* address, s32x4 offset)
     {
         return _mm256_i32gather_pd(reinterpret_cast<const double*>(address), offset, 8);
     }
 
-    static inline uint32x8 gather8(const u32* address, int32x8 offset)
+    static inline u32x8 gather8(const u32* address, s32x8 offset)
     {
         return _mm256_i32gather_epi32(reinterpret_cast<const int*>(address), offset, 4);
     }
 
-    static inline int32x8 gather8(const s32* address, int32x8 offset)
+    static inline s32x8 gather8(const s32* address, s32x8 offset)
     {
         return _mm256_i32gather_epi32(reinterpret_cast<const int*>(address), offset, 4);
     }
 
-    static inline uint64x4 gather4(const u64* address, int32x4 offset)
+    static inline u64x4 gather4(const u64* address, s32x4 offset)
     {
         return _mm256_i32gather_epi64(reinterpret_cast<const long long*>(address), offset, 8);
     }
 
-    static inline int64x4 gather4(const s64* address, int32x4 offset)
+    static inline s64x4 gather4(const s64* address, s32x4 offset)
     {
         return _mm256_i32gather_epi64(reinterpret_cast<const long long*>(address), offset, 8);
     }
 
     // 512 bit gather
 
-    static inline float32x16 gather16(const float* address, int32x16 offset)
+    static inline f32x16 gather16(const float* address, s32x16 offset)
     {
         return _mm512_i32gather_ps(offset, reinterpret_cast<const void *>(address), 4);
     }
 
-    static inline float64x8 gather8(const double* address, int32x8 offset)
+    static inline f64x8 gather8(const double* address, s32x8 offset)
     {
         return _mm512_i32gather_pd(offset, reinterpret_cast<const void *>(address), 8);
     }
 
-    static inline uint32x16 gather16(const u32* address, int32x16 offset)
+    static inline u32x16 gather16(const u32* address, s32x16 offset)
     {
         return _mm512_i32gather_epi32(offset, reinterpret_cast<const void *>(address), 4);
     }
 
-    static inline int32x16 gather16(const s32* address, int32x16 offset)
+    static inline s32x16 gather16(const s32* address, s32x16 offset)
     {
         return _mm512_i32gather_epi32(offset, reinterpret_cast<const void *>(address), 4);
     }
 
-    static inline uint64x8 gather8(const u64* address, int32x8 offset)
+    static inline u64x8 gather8(const u64* address, s32x8 offset)
     {
         return _mm512_i32gather_epi64(offset, reinterpret_cast<const void *>(address), 8);
     }
 
-    static inline int64x8 gather8(const s64* address, int32x8 offset)
+    static inline s64x8 gather8(const s64* address, s32x8 offset)
     {
         return _mm512_i32gather_epi64(offset, reinterpret_cast<const void *>(address), 8);
     }
 
     // 128 bit masked gather
 
-    static inline float32x4 gather4(const float* address, int32x4 offset, float32x4 value, mask32x4 mask)
+    static inline f32x4 gather4(const float* address, s32x4 offset, f32x4 value, mask32x4 mask)
     {
         return _mm_mmask_i32gather_ps(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline float64x2 gather2(const double* address, int32x4 offset, float64x2 value, mask64x2 mask)
+    static inline f64x2 gather2(const double* address, s32x4 offset, f64x2 value, mask64x2 mask)
     {
         return _mm_mmask_i32gather_pd(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline uint32x4 gather4(const u32* address, int32x4 offset, uint32x4 value, mask32x4 mask)
+    static inline u32x4 gather4(const u32* address, s32x4 offset, u32x4 value, mask32x4 mask)
     {
         return _mm_mmask_i32gather_epi32(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline int32x4 gather4(const s32* address, int32x4 offset, int32x4 value, mask32x4 mask)
+    static inline s32x4 gather4(const s32* address, s32x4 offset, s32x4 value, mask32x4 mask)
     {
         return _mm_mmask_i32gather_epi32(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline uint64x2 gather2(const u64* address, int32x4 offset, uint64x2 value, mask64x2 mask)
+    static inline u64x2 gather2(const u64* address, s32x4 offset, u64x2 value, mask64x2 mask)
     {
         return _mm_mmask_i32gather_epi64(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline int64x2 gather2(const s64* address, int32x4 offset, int64x2 value, mask64x2 mask)
+    static inline s64x2 gather2(const s64* address, s32x4 offset, s64x2 value, mask64x2 mask)
     {
         return _mm_mmask_i32gather_epi64(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
     // 256 bit masked gather
 
-    static inline float32x8 gather8(const float* address, int32x8 offset, float32x8 value, mask32x8 mask)
+    static inline f32x8 gather8(const float* address, s32x8 offset, f32x8 value, mask32x8 mask)
     {
         return _mm256_mmask_i32gather_ps(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline float64x4 gather4(const double* address, int32x4 offset, float64x4 value, mask64x4 mask)
+    static inline f64x4 gather4(const double* address, s32x4 offset, f64x4 value, mask64x4 mask)
     {
         return _mm256_mmask_i32gather_pd(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline uint32x8 gather8(const u32* address, int32x8 offset, uint32x8 value, mask32x8 mask)
+    static inline u32x8 gather8(const u32* address, s32x8 offset, u32x8 value, mask32x8 mask)
     {
         return _mm256_mmask_i32gather_epi32(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline int32x8 gather8(const s32* address, int32x8 offset, int32x8 value, mask32x8 mask)
+    static inline s32x8 gather8(const s32* address, s32x8 offset, s32x8 value, mask32x8 mask)
     {
         return _mm256_mmask_i32gather_epi32(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline uint64x4 gather4(const u64* address, int32x4 offset, uint64x4 value, mask64x4 mask)
+    static inline u64x4 gather4(const u64* address, s32x4 offset, u64x4 value, mask64x4 mask)
     {
         return _mm256_mmask_i32gather_epi64(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
-    static inline int64x4 gather4(const s64* address, int32x4 offset, int64x4 value, mask64x4 mask)
+    static inline s64x4 gather4(const s64* address, s32x4 offset, s64x4 value, mask64x4 mask)
     {
         return _mm256_mmask_i32gather_epi64(value, mask, offset, reinterpret_cast<const void*>(address), 4);
     }
 
     // 512 bit masked gather
 
-    static inline float32x16 gather16(const float* address, int32x16 offset, float32x16 value, mask32x16 mask)
+    static inline f32x16 gather16(const float* address, s32x16 offset, f32x16 value, mask32x16 mask)
     {
         return _mm512_mask_i32gather_ps(value, mask, offset, reinterpret_cast<const void *>(address), 4);
     }
 
-    static inline float64x8 gather8(const double* address, int32x8 offset, float64x8 value, mask64x8 mask)
+    static inline f64x8 gather8(const double* address, s32x8 offset, f64x8 value, mask64x8 mask)
     {
         return _mm512_mask_i32gather_pd(value, mask, offset, reinterpret_cast<const void *>(address), 8);
     }
 
-    static inline uint32x16 gather16(const u32* address, int32x16 offset, uint32x16 value, mask32x16 mask)
+    static inline u32x16 gather16(const u32* address, s32x16 offset, u32x16 value, mask32x16 mask)
     {
         return _mm512_mask_i32gather_epi32(value, mask, offset, reinterpret_cast<const void *>(address), 4);
     }
 
-    static inline int32x16 gather16(const s32* address, int32x16 offset, int32x16 value, mask32x16 mask)
+    static inline s32x16 gather16(const s32* address, s32x16 offset, s32x16 value, mask32x16 mask)
     {
         return _mm512_mask_i32gather_epi32(value, mask, offset, reinterpret_cast<const void *>(address), 4);
     }
 
-    static inline uint64x8 gather8(const u64* address, int32x8 offset, uint64x8 value, mask64x8 mask)
+    static inline u64x8 gather8(const u64* address, s32x8 offset, u64x8 value, mask64x8 mask)
     {
         return _mm512_mask_i32gather_epi64(value, mask, offset, reinterpret_cast<const void *>(address), 8);
     }
 
-    static inline int64x8 gather8(const s64* address, int32x8 offset, int64x8 value, mask64x8 mask)
+    static inline s64x8 gather8(const s64* address, s32x8 offset, s64x8 value, mask64x8 mask)
     {
         return _mm512_mask_i32gather_epi64(value, mask, offset, reinterpret_cast<const void *>(address), 8);
     }

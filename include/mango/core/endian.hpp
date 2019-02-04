@@ -306,10 +306,9 @@ namespace mango
     using u16le = detail::TypeCopy<u16>;
     using u32le = detail::TypeCopy<u32>;
     using u64le = detail::TypeCopy<u64>;
-
-    using float16le = detail::TypeCopy<float16>;
-    using float32le = detail::TypeCopy<float32>;
-    using float64le = detail::TypeCopy<float64>;
+    using f16le = detail::TypeCopy<float16>;
+    using f32le = detail::TypeCopy<float32>;
+    using f64le = detail::TypeCopy<float64>;
 
     using s16be = detail::TypeSwap<s16>;
     using s32be = detail::TypeSwap<s32>;
@@ -317,10 +316,9 @@ namespace mango
     using u16be = detail::TypeSwap<u16>;
     using u32be = detail::TypeSwap<u32>;
     using u64be = detail::TypeSwap<u64>;
-
-    using float16be = detail::TypeSwap<float16>;
-    using float32be = detail::TypeSwap<float32>;
-    using float64be = detail::TypeSwap<float64>;
+    using f16be = detail::TypeSwap<float16>;
+    using f32be = detail::TypeSwap<float32>;
+    using f64be = detail::TypeSwap<float64>;
 
 #else
 
@@ -330,10 +328,9 @@ namespace mango
     using u16le = detail::TypeSwap<u16>;
     using u32le = detail::TypeSwap<u32>;
     using u64le = detail::TypeSwap<u64>;
-
-    using float16le = detail::TypeSwap<float16>;
-    using float32le = detail::TypeSwap<float32>;
-    using float64le = detail::TypeSwap<float64>;
+    using f16le = detail::TypeSwap<float16>;
+    using f32le = detail::TypeSwap<float32>;
+    using f64le = detail::TypeSwap<float64>;
 
     using s16be = detail::TypeCopy<s16>;
     using s32be = detail::TypeCopy<s32>;
@@ -341,10 +338,9 @@ namespace mango
     using u16be = detail::TypeCopy<u16>;
     using u32be = detail::TypeCopy<u32>;
     using u64be = detail::TypeCopy<u64>;
-
-    using float16be = detail::TypeCopy<float16>;
-    using float32be = detail::TypeCopy<float32>;
-    using float64be = detail::TypeCopy<float64>;
+    using f16be = detail::TypeCopy<float16>;
+    using f32be = detail::TypeCopy<float32>;
+    using f64be = detail::TypeCopy<float64>;
 
 #endif
     

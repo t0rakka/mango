@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,7 +12,7 @@ namespace mango
     template <>
     struct Vector<s32, 16>
     {
-        using VectorType = simd::int32x16;
+        using VectorType = simd::s32x16;
         using ScalarType = s32;
         enum { VectorSize = 16 };
 
@@ -43,22 +43,22 @@ namespace mango
         ~Vector() {}
 
         Vector(s32 s)
-            : m(simd::int32x16_set1(s))
+            : m(simd::s32x16_set1(s))
         {
         }
 
         Vector(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
             s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
-            : m(simd::int32x16_set16(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15))
+            : m(simd::s32x16_set16(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15))
         {
         }
 
-        Vector(simd::int32x16 v)
+        Vector(simd::s32x16 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::int32x16 v)
+        Vector& operator = (simd::s32x16 v)
         {
             m = v;
             return *this;
@@ -66,17 +66,17 @@ namespace mango
 
         Vector& operator = (s32 s)
         {
-            m = simd::int32x16_set1(s);
+            m = simd::s32x16_set1(s);
             return *this;
         }
 
-        operator simd::int32x16 () const
+        operator simd::s32x16 () const
         {
             return m;
         }
 
 #ifdef int512_is_hardware_vector
-        operator simd::int32x16::vector () const
+        operator simd::s32x16::vector () const
         {
             return m.data;
         }
@@ -90,7 +90,7 @@ namespace mango
 
     static inline Vector<s32, 16> operator - (Vector<s32, 16> v)
     {
-        return simd::sub(simd::int32x16_zero(), v);
+        return simd::sub(simd::s32x16_zero(), v);
     }
 
     static inline Vector<s32, 16>& operator += (Vector<s32, 16>& a, Vector<s32, 16> b)
