@@ -38,7 +38,7 @@ namespace simd {
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 #if 1
-        f32x4_t result;
+        float32x4_t result;
 	    result = vmovq_n_f32(vgetq_lane_f32(a, x));
 	    result = vsetq_lane_f32(vgetq_lane_f32(a, y), result, 1);
 	    result = vsetq_lane_f32(vgetq_lane_f32(b, z), result, 2);
@@ -46,7 +46,7 @@ namespace simd {
         return result;
 #else
         // warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
-        return (f32x4_t) { a.data[x], a.data[y], b.data[z], b.data[w] };
+        return (float32x4_t) { a.data[x], a.data[y], b.data[z], b.data[w] };
 #endif
     }
 
@@ -55,10 +55,10 @@ namespace simd {
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 #if __GNUC__ >= 5
-        return (f32x4_t) __builtin_shuffle(v.data, (uint32x4_t) {x, y, z, w});
+        return (float32x4_t) __builtin_shuffle(v.data, (uint32x4_t) {x, y, z, w});
 #else
-        f32x4_t temp = v;
-        return (f32x4_t) { temp[x], temp[y], temp[z], temp[w] };
+        float32x4_t temp = v;
+        return (float32x4_t) { temp[x], temp[y], temp[z], temp[w] };
 #endif
     }
 
@@ -98,7 +98,7 @@ namespace simd {
     inline f32x4 shuffle<0, 0, 0, 0>(f32x4 v)
     {
         // .xxxx
-        const f32x2_t xy = vget_low_f32(v);
+        const float32x2_t xy = vget_low_f32(v);
         return vdupq_lane_f32(xy, 0);
     }
 
@@ -106,7 +106,7 @@ namespace simd {
     inline f32x4 shuffle<1, 1, 1, 1>(f32x4 v)
     {
         // .yyyy
-        const f32x2_t xy = vget_low_f32(v);
+        const float32x2_t xy = vget_low_f32(v);
         return vdupq_lane_f32(xy, 1);
     }
 
@@ -114,7 +114,7 @@ namespace simd {
     inline f32x4 shuffle<2, 2, 2, 2>(f32x4 v)
     {
         // .zzzz
-        const f32x2_t zw = vget_high_f32(v);
+        const float32x2_t zw = vget_high_f32(v);
         return vdupq_lane_f32(zw, 0);
     }
 
@@ -122,7 +122,7 @@ namespace simd {
     inline f32x4 shuffle<3, 3, 3, 3>(f32x4 v)
     {
         // .wwww
-        const f32x2_t zw = vget_high_f32(v);
+        const float32x2_t zw = vget_high_f32(v);
         return vdupq_lane_f32(zw, 1);
     }
 
@@ -175,13 +175,13 @@ namespace simd {
 
     static inline f32x4 f32x4_set4(float x, float y, float z, float w)
     {
-        f32x4_t temp = { x, y, z, w };
+        float32x4_t temp = { x, y, z, w };
         return temp;
     }
 
     static inline f32x4 f32x4_uload(const float* source)
     {
-        f32x4_t temp = { source[0], source[1], source[2], source[3] };
+        float32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
@@ -205,13 +205,13 @@ namespace simd {
 
     static inline f32x4 unpackhi(f32x4 a, f32x4 b)
     {
-        f32x4x2_t v = vzipq_f32(a, b);
+        float32x4x2_t v = vzipq_f32(a, b);
         return v.val[1];
     }
 
     static inline f32x4 unpacklo(f32x4 a, f32x4 b)
     {
-        f32x4x2_t v = vzipq_f32(a, b);
+        float32x4x2_t v = vzipq_f32(a, b);
         return v.val[0];
     }
 
@@ -254,14 +254,14 @@ namespace simd {
 
     static inline f32x4 hmin(f32x4 a)
     {
-        f32x2_t s = vpmin_f32(vget_low_f32(a), vget_high_f32(a));
+        float32x2_t s = vpmin_f32(vget_low_f32(a), vget_high_f32(a));
         s = vpmin_f32(s, s);
         return vcombine_f32(s, s);
     }
 
     static inline f32x4 hmax(f32x4 a)
     {
-        f32x2_t s = vpmax_f32(vget_low_f32(a), vget_high_f32(a));
+        float32x2_t s = vpmax_f32(vget_low_f32(a), vget_high_f32(a));
         s = vpmax_f32(s, s);
         return vcombine_f32(s, s);
     }
@@ -419,19 +419,19 @@ namespace simd {
 
     static inline float dot3(f32x4 a, f32x4 b)
     {
-        const f32x4_t prod = vmulq_f32(a, b);
-        const f32x2_t xy = vget_low_f32(prod);
-        const f32x2_t zw = vget_high_f32(prod);
-        const f32x2_t s = vadd_f32(vpadd_f32(xy, xy), zw);
+        const float32x4_t prod = vmulq_f32(a, b);
+        const float32x2_t xy = vget_low_f32(prod);
+        const float32x2_t zw = vget_high_f32(prod);
+        const float32x2_t s = vadd_f32(vpadd_f32(xy, xy), zw);
         return vget_lane_f32(s, 0);
     }
 
     static inline float dot4(f32x4 a, f32x4 b)
     {
-        const f32x4_t prod = vmulq_f32(a, b);
-        const f32x2_t xy = vget_low_f32(prod);
-        const f32x2_t zw = vget_high_f32(prod);
-        f32x2_t s = vpadd_f32(xy, zw);
+        const float32x4_t prod = vmulq_f32(a, b);
+        const float32x2_t xy = vget_low_f32(prod);
+        const float32x2_t zw = vget_high_f32(prod);
+        float32x2_t s = vpadd_f32(xy, zw);
         s = vpadd_f32(s, s);
         return vget_lane_f32(s, 0);
     }
@@ -508,8 +508,8 @@ namespace simd {
 
     static inline f32x4 round(f32x4 s)
     {
-        f32x4_t magic = vdupq_n_f32(12582912.0f); // 1.5 * (1 << 23)
-        f32x4_t result = vsubq_f32(vaddq_f32(s, magic), magic);
+        float32x4_t magic = vdupq_n_f32(12582912.0f); // 1.5 * (1 << 23)
+        float32x4_t result = vsubq_f32(vaddq_f32(s, magic), magic);
         uint32x4_t mask = vcleq_f32(vabsq_f32(s), vreinterpretq_f32_u32(vdupq_n_u32(0x4b000000)));
         return vbslq_f32(mask, result, s);
     }
@@ -517,7 +517,7 @@ namespace simd {
     static inline f32x4 trunc(f32x4 s)
     {
         int32x4_t truncated = vcvtq_s32_f32(s);
-        f32x4_t result = vcvtq_f32_s32(truncated);
+        float32x4_t result = vcvtq_f32_s32(truncated);
         uint32x4_t mask = vcleq_f32(vabsq_f32(s), vreinterpretq_f32_u32(vdupq_n_u32(0x4b000000)));
         return vbslq_f32(mask, result, s);
     }
