@@ -417,30 +417,30 @@ namespace detail {
 #endif
 
     // -----------------------------------------------------------------
-    // float32
+    // f32
     // -----------------------------------------------------------------
 
-    static inline float32x4 get_low(float32x8 a)
+    static inline f32x4 get_low(f32x8 a)
     {
         return _mm256_extractf128_ps(a, 0);
     }
 
-    static inline float32x4 get_high(float32x8 a)
+    static inline f32x4 get_high(f32x8 a)
     {
         return _mm256_extractf128_ps(a, 1);
     }
 
-    static inline float32x8 set_low(float32x8 a, float32x4 low)
+    static inline f32x8 set_low(f32x8 a, f32x4 low)
     {
         return _mm256_insertf128_ps(a, low, 0);
     }
 
-    static inline float32x8 set_high(float32x8 a, float32x4 high)
+    static inline f32x8 set_high(f32x8 a, f32x4 high)
     {
         return _mm256_insertf128_ps(a, high, 1);
     }
 
-    static inline float32x8 combine(float32x4 a, float32x4 b)
+    static inline f32x8 combine(f32x4 a, f32x4 b)
     {
         return _mm256_setr_m128(a, b);
     }
@@ -448,7 +448,7 @@ namespace detail {
     // 128 bit convert
 
     template <>
-    inline float32x4 convert<float32x4>(u32x4 s)
+    inline f32x4 convert<f32x4>(u32x4 s)
     {
         const __m128i mask = _mm_set1_epi32(0x0000ffff);
         const __m128i onep39 = _mm_set1_epi32(0x53000000);
@@ -460,13 +460,13 @@ namespace detail {
     }
 
     template <>
-    inline float32x4 convert<float32x4>(s32x4 s)
+    inline f32x4 convert<f32x4>(s32x4 s)
     {
         return _mm_cvtepi32_ps(s);
     }
 
     template <>
-    inline u32x4 convert<u32x4>(float32x4 s)
+    inline u32x4 convert<u32x4>(f32x4 s)
     {
 	    __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
 	    __m128 x1 = _mm_cmple_ps(x2, s);
@@ -475,13 +475,13 @@ namespace detail {
     }
 
     template <>
-    inline s32x4 convert<s32x4>(float32x4 s)
+    inline s32x4 convert<s32x4>(f32x4 s)
     {
         return _mm_cvtps_epi32(s);
     }
 
     template <>
-    inline s32x4 truncate<s32x4>(float32x4 s)
+    inline s32x4 truncate<s32x4>(f32x4 s)
     {
         return _mm_cvttps_epi32(s);
     }
@@ -491,19 +491,19 @@ namespace detail {
 #if defined(MANGO_ENABLE_AVX2)
 
     template <>
-    inline s32x8 convert<s32x8>(float32x8 s)
+    inline s32x8 convert<s32x8>(f32x8 s)
     {
         return _mm256_cvtps_epi32(s);
     }
 
     template <>
-    inline float32x8 convert<float32x8>(s32x8 s)
+    inline f32x8 convert<f32x8>(s32x8 s)
     {
         return _mm256_cvtepi32_ps(s);
     }
 
     template <>
-    inline u32x8 convert<u32x8>(float32x8 s)
+    inline u32x8 convert<u32x8>(f32x8 s)
     {
 	    __m256 x2 = _mm256_castsi256_ps(_mm256_set1_epi32(0x4f000000));
 	    __m256 x1 = _mm256_cmp_ps(x2, s, _CMP_LE_OS);
@@ -512,7 +512,7 @@ namespace detail {
     }
 
     template <>
-    inline float32x8 convert<float32x8>(u32x8 s)
+    inline f32x8 convert<f32x8>(u32x8 s)
     {
         const __m256i mask = _mm256_set1_epi32(0x0000ffff);
         const __m256i onep39 = _mm256_set1_epi32(0x53000000);
@@ -524,7 +524,7 @@ namespace detail {
     }
 
     template <>
-    inline s32x8 truncate<s32x8>(float32x8 s)
+    inline s32x8 truncate<s32x8>(f32x8 s)
     {
         return _mm256_cvttps_epi32(s);
     }
@@ -532,7 +532,7 @@ namespace detail {
 #else
 
     template <>
-    inline s32x8 convert<s32x8>(float32x8 s)
+    inline s32x8 convert<s32x8>(f32x8 s)
     {
         __m256i temp = _mm256_cvtps_epi32(s);
         s32x8 result;
@@ -542,33 +542,33 @@ namespace detail {
     }
 
     template <>
-    inline float32x8 convert<float32x8>(s32x8 s)
+    inline f32x8 convert<f32x8>(s32x8 s)
     {
         __m256i temp = _mm256_setr_m128i(s.lo, s.hi);
         return _mm256_cvtepi32_ps(temp);
     }
 
     template <>
-    inline u32x8 convert<u32x8>(float32x8 s)
+    inline u32x8 convert<u32x8>(f32x8 s)
     {
         u32x8 result;
-        float32x4 lo = _mm256_extractf128_ps(s, 0);
-        float32x4 hi = _mm256_extractf128_ps(s, 1);
+        f32x4 lo = _mm256_extractf128_ps(s, 0);
+        f32x4 hi = _mm256_extractf128_ps(s, 1);
         result.lo = convert<u32x4>(lo);
         result.hi = convert<u32x4>(hi);
         return result;
     }
 
     template <>
-    inline float32x8 convert<float32x8>(u32x8 s)
+    inline f32x8 convert<f32x8>(u32x8 s)
     {
-        __m128 lo = convert<float32x4>(s.lo);
-        __m128 hi = convert<float32x4>(s.hi);
+        __m128 lo = convert<f32x4>(s.lo);
+        __m128 hi = convert<f32x4>(s.hi);
         return _mm256_setr_m128(lo, hi);
     }
 
     template <>
-    inline s32x8 truncate<s32x8>(float32x8 s)
+    inline s32x8 truncate<s32x8>(f32x8 s)
     {
         __m256i temp = _mm256_cvttps_epi32(s);
         s32x8 result;
@@ -582,7 +582,7 @@ namespace detail {
     // 512 bit convert
 
     template <>
-    inline s32x16 convert<s32x16>(float32x16 s)
+    inline s32x16 convert<s32x16>(f32x16 s)
     {
         s32x16 result;
         result.lo = convert<s32x8>(s.lo);
@@ -591,16 +591,16 @@ namespace detail {
     }
 
     template <>
-    inline float32x16 convert<float32x16>(s32x16 s)
+    inline f32x16 convert<f32x16>(s32x16 s)
     {
-        float32x16 result;
-        result.lo = convert<float32x8>(s.lo);
-        result.hi = convert<float32x8>(s.hi);
+        f32x16 result;
+        result.lo = convert<f32x8>(s.lo);
+        result.hi = convert<f32x8>(s.hi);
         return result;
     }
 
     template <>
-    inline u32x16 convert<u32x16>(float32x16 s)
+    inline u32x16 convert<u32x16>(f32x16 s)
     {
         u32x16 result;
         result.lo = convert<u32x8>(s.lo);
@@ -609,16 +609,16 @@ namespace detail {
     }
 
     template <>
-    inline float32x16 convert<float32x16>(u32x16 s)
+    inline f32x16 convert<f32x16>(u32x16 s)
     {
-        float32x16 result;
-        result.lo = convert<float32x8>(s.lo);
-        result.hi = convert<float32x8>(s.hi);
+        f32x16 result;
+        result.lo = convert<f32x8>(s.lo);
+        result.hi = convert<f32x8>(s.hi);
         return result;
     }
 
     template <>
-    inline s32x16 truncate<s32x16>(float32x16 s)
+    inline s32x16 truncate<s32x16>(f32x16 s)
     {
         s32x16 result;
         result.lo = truncate<s32x8>(s.lo);
@@ -627,30 +627,30 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
-    // float64
+    // f64
     // -----------------------------------------------------------------
 
-    static inline float64x2 get_low(float64x4 a)
+    static inline f64x2 get_low(f64x4 a)
     {
         return _mm256_extractf128_pd(a, 0);
     }
 
-    static inline float64x2 get_high(float64x4 a)
+    static inline f64x2 get_high(f64x4 a)
     {
         return _mm256_extractf128_pd(a, 1);
     }
 
-    static inline float64x4 set_low(float64x4 a, float64x2 low)
+    static inline f64x4 set_low(f64x4 a, f64x2 low)
     {
         return _mm256_insertf128_pd(a, low, 0);
     }
 
-    static inline float64x4 set_high(float64x4 a, float64x2 high)
+    static inline f64x4 set_high(f64x4 a, f64x2 high)
     {
         return _mm256_insertf128_pd(a, high, 1);
     }
 
-    static inline float64x4 combine(float64x2 a, float64x2 b)
+    static inline f64x4 combine(f64x2 a, f64x2 b)
     {
         return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
     }
@@ -658,13 +658,13 @@ namespace detail {
     // 256 <- 128
 
     template <>
-    inline float64x4 convert<float64x4>(s32x4 s)
+    inline f64x4 convert<f64x4>(s32x4 s)
     {
         return _mm256_cvtepi32_pd(s);
     }
 
     template <>
-    inline float64x4 convert<float64x4>(float32x4 s)
+    inline f64x4 convert<f64x4>(f32x4 s)
     {
         return _mm256_cvtps_pd(s);
     }
@@ -672,13 +672,13 @@ namespace detail {
     // 128 <- 256
 
     template <>
-    inline s32x4 convert<s32x4>(float64x4 s)
+    inline s32x4 convert<s32x4>(f64x4 s)
     {
         return _mm256_cvtpd_epi32(s);
     }
 
     template <>
-    inline float32x4 convert<float32x4>(float64x4 s)
+    inline f32x4 convert<f32x4>(f64x4 s)
     {
         return _mm256_cvtpd_ps(s);
     }
@@ -686,7 +686,7 @@ namespace detail {
     // 256 <- 128
 
     template <>
-    inline float64x4 convert<float64x4>(u32x4 ui)
+    inline f64x4 convert<f64x4>(u32x4 ui)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m256i xyzw = _mm256_cvtepu32_epi64(ui);
@@ -699,7 +699,7 @@ namespace detail {
     // 128 <- 256
 
     template <>
-    inline u32x4 convert<u32x4>(float64x4 d)
+    inline u32x4 convert<u32x4>(f64x4 d)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
         const __m256d v = _mm256_add_pd(d, bias);
@@ -709,7 +709,7 @@ namespace detail {
         return _mm_castps_si128(xyzw);
     }
 
-    static inline s32x4 s32x4_truncate(float64x4 s)
+    static inline s32x4 s32x4_truncate(f64x4 s)
     {
         return _mm256_cvttpd_epi32(s);
     }
@@ -717,17 +717,17 @@ namespace detail {
     // 256 <- 256
 
     template <>
-    inline float64x4 convert<float64x4>(s64x4 v)
+    inline f64x4 convert<f64x4>(s64x4 v)
     {
         double x = double(get_component<0>(v));
         double y = double(get_component<1>(v));
         double z = double(get_component<2>(v));
         double w = double(get_component<3>(v));
-        return float64x4_set4(x, y, z, w);
+        return f64x4_set4(x, y, z, w);
     }
 
     template <>
-    inline s64x4 convert<s64x4>(float64x4 v)
+    inline s64x4 convert<s64x4>(f64x4 v)
     {
         s64 x = s64(get_component<0>(v));
         s64 y = s64(get_component<1>(v));
@@ -737,22 +737,22 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
-    // float16
+    // f16
     // -----------------------------------------------------------------
 
 #ifdef MANGO_ENABLE_F16C
 
     template <>
-    inline float32x4 convert<float32x4>(float16x4 h)
+    inline f32x4 convert<f32x4>(f16x4 h)
     {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         return _mm_cvtph_ps(_mm_loadl_epi64(p));
     }
 
     template <>
-    inline float16x4 convert<float16x4>(float32x4 f)
+    inline f16x4 convert<f16x4>(f32x4 f)
     {
-        float16x4 h;
+        f16x4 h;
         __m128i* p = reinterpret_cast<__m128i *>(&h);
         _mm_storel_epi64(p, _mm_cvtps_ph(f, 0));
         return h;
@@ -761,7 +761,7 @@ namespace detail {
 #else
 
     template <>
-    inline float32x4 convert<float32x4>(float16x4 h)
+    inline f32x4 convert<f32x4>(f16x4 h)
     {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         const s32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
@@ -778,7 +778,7 @@ namespace detail {
         const s32x4 magic = s32x4_set1(0x3f000000);
         s32x4 b;
         b = add(magic, mantissa);
-        b = reinterpret<s32x4>(sub(reinterpret<float32x4>(b), reinterpret<float32x4>(magic)));
+        b = reinterpret<s32x4>(sub(reinterpret<f32x4>(b), reinterpret<f32x4>(magic)));
 
         // Numeric Value
         s32x4 c = add(s32x4_set1(0x38000000), slli(no_sign, 13));
@@ -796,13 +796,13 @@ namespace detail {
         // Sign
         result = bitwise_or(result, slli(sign, 16));
 
-        return reinterpret<float32x4>(result);
+        return reinterpret<f32x4>(result);
     }
 
     template <>
-    inline float16x4 convert<float16x4>(float32x4 f)
+    inline f16x4 convert<f16x4>(f32x4 f)
     {
-        const float32x4 magic = float32x4_set1(Float(0, 15, 0).f);
+        const f32x4 magic = f32x4_set1(Float(0, 15, 0).f);
         const s32x4 vinf = s32x4_set1(31 << 23);
 
         const s32x4 u = reinterpret<s32x4>(f);
@@ -818,7 +818,7 @@ namespace detail {
         const s32x4 v0 = bitwise_or(s32x4_set1(0x7c00), mantissa);
 
         s32x4 v1 = bitwise_and(u, s32x4_set1(0x7ffff000));
-        v1 = reinterpret<s32x4>(mul(reinterpret<float32x4>(v1), magic));
+        v1 = reinterpret<s32x4>(mul(reinterpret<f32x4>(v1), magic));
         v1 = add(v1, s32x4_set1(0x1000));
 
         v1 = _mm_min_epi32(v1, vinf);
@@ -828,7 +828,7 @@ namespace detail {
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
 
-        float16x4 h;
+        f16x4 h;
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&h), v);
         return h;
     }

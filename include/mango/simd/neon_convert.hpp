@@ -61,12 +61,12 @@ namespace detail {
 		{
 		}
 
-		reinterpret_vector(float32x4 v)
+		reinterpret_vector(f32x4 v)
             : data(vreinterpretq_u32_f32(v))
 		{
 		}
 
-		reinterpret_vector(float64x2 v)
+		reinterpret_vector(f64x2 v)
 		{
             std::memcpy(&data, &v, 16);
 		}
@@ -111,14 +111,14 @@ namespace detail {
 			return vreinterpretq_u64_u32(data);
 		}
 
-		operator float32x4 ()
+		operator f32x4 ()
 		{
 			return vreinterpretq_f32_u32(data);
 		}
 
-		operator float64x2 ()
+		operator f64x2 ()
 		{
-            float64x2 temp;
+            f64x2 temp;
             std::memcpy(&temp, &data, 16);
             return temp;
 		}
@@ -139,7 +139,7 @@ namespace detail {
 	    {
 	    }
 
-		reinterpret_vector(float64x4 v)
+		reinterpret_vector(f64x4 v)
 		{
             std::memcpy(this, &v, 32);
 		}
@@ -150,9 +150,9 @@ namespace detail {
             return composite_vector<T>(lo, hi);
 		}
 
-		operator float64x4 ()
+		operator f64x4 ()
 		{
-            float64x4 temp;
+            f64x4 temp;
             std::memcpy(&temp, this, 32);
             return temp;
 		}
@@ -173,7 +173,7 @@ namespace detail {
 	    {
 	    }
 
-		reinterpret_vector(float64x8 v)
+		reinterpret_vector(f64x8 v)
 		{
             std::memcpy(this, &v, 64);
 		}
@@ -184,9 +184,9 @@ namespace detail {
             return composite_vector<T>(lo, hi);
 		}
 
-		operator float64x8 ()
+		operator f64x8 ()
 		{
-            float64x8 temp;
+            f64x8 temp;
             std::memcpy(&temp, this, 64);
             return temp;
 		}
@@ -384,34 +384,34 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
-    // float32
+    // f32
     // -----------------------------------------------------------------
 
-    static inline float32x4 get_low(float32x8 a)
+    static inline f32x4 get_low(f32x8 a)
     {
         return a.lo;
     }
 
-    static inline float32x4 get_high(float32x8 a)
+    static inline f32x4 get_high(f32x8 a)
     {
         return a.hi;
     }
 
-    static inline float32x8 set_low(float32x8 a, float32x4 low)
+    static inline f32x8 set_low(f32x8 a, f32x4 low)
     {
         a.lo = low;
         return a;
     }
 
-    static inline float32x8 set_high(float32x8 a, float32x4 high)
+    static inline f32x8 set_high(f32x8 a, f32x4 high)
     {
         a.hi = high;
         return a;
     }
 
-    static inline float32x8 combine(float32x4 a, float32x4 b)
+    static inline f32x8 combine(f32x4 a, f32x4 b)
     {
-        float32x8 result;
+        f32x8 result;
         result.lo = a;
         result.hi = b;
         return result;
@@ -420,13 +420,13 @@ namespace detail {
     // 128 bit convert
 
     template <>
-    inline float32x4 convert<float32x4>(u32x4 s)
+    inline f32x4 convert<f32x4>(u32x4 s)
     {
         return vcvtq_f32_u32(s);
     }
 
     template <>
-    inline float32x4 convert<float32x4>(s32x4 s)
+    inline f32x4 convert<f32x4>(s32x4 s)
     {
         return vcvtq_f32_s32(s);
     }
@@ -434,13 +434,13 @@ namespace detail {
 #if __ARM_ARCH >= 8 //&& !defined(MANGO_COMPILER_CLANG)
 
     template <>
-    inline u32x4 convert<u32x4>(float32x4 s)
+    inline u32x4 convert<u32x4>(f32x4 s)
     {
         return vcvtnq_u32_f32(s);
     }
 
     template <>
-    inline s32x4 convert<s32x4>(float32x4 s)
+    inline s32x4 convert<s32x4>(f32x4 s)
     {
         return vcvtnq_s32_f32(s);
     }
@@ -448,13 +448,13 @@ namespace detail {
 #else
 
     template <>
-    inline u32x4 convert<u32x4>(float32x4 s)
+    inline u32x4 convert<u32x4>(f32x4 s)
     {
         return vcvtq_u32_f32(round(s));
     }
 
     template <>
-    inline s32x4 convert<s32x4>(float32x4 s)
+    inline s32x4 convert<s32x4>(f32x4 s)
     {
         return vcvtq_s32_f32(round(s));
     }
@@ -462,7 +462,7 @@ namespace detail {
 #endif
 
     template <>
-    inline s32x4 truncate<s32x4>(float32x4 s)
+    inline s32x4 truncate<s32x4>(f32x4 s)
     {
         return vcvtq_s32_f32(s);
     }
@@ -470,7 +470,7 @@ namespace detail {
     // 256 bit convert
 
     template <>
-    inline s32x8 convert<s32x8>(float32x8 s)
+    inline s32x8 convert<s32x8>(f32x8 s)
     {
         s32x8 result;
         result.lo = convert<s32x4>(s.lo);
@@ -479,16 +479,16 @@ namespace detail {
     }
 
     template <>
-    inline float32x8 convert<float32x8>(s32x8 s)
+    inline f32x8 convert<f32x8>(s32x8 s)
     {
-        float32x8 result;
-        result.lo = convert<float32x4>(s.lo);
-        result.hi = convert<float32x4>(s.hi);
+        f32x8 result;
+        result.lo = convert<f32x4>(s.lo);
+        result.hi = convert<f32x4>(s.hi);
         return result;
     }
 
     template <>
-    inline u32x8 convert<u32x8>(float32x8 s)
+    inline u32x8 convert<u32x8>(f32x8 s)
     {
         u32x8 result;
         result.lo = convert<u32x4>(s.lo);
@@ -497,16 +497,16 @@ namespace detail {
     }
 
     template <>
-    inline float32x8 convert<float32x8>(u32x8 s)
+    inline f32x8 convert<f32x8>(u32x8 s)
     {
-        float32x8 result;
-        result.lo = convert<float32x4>(s.lo);
-        result.hi = convert<float32x4>(s.hi);
+        f32x8 result;
+        result.lo = convert<f32x4>(s.lo);
+        result.hi = convert<f32x4>(s.hi);
         return result;
     }
 
     template <>
-    inline s32x8 truncate<s32x8>(float32x8 s)
+    inline s32x8 truncate<s32x8>(f32x8 s)
     {
         s32x8 result;
         result.lo = truncate<s32x4>(s.lo);
@@ -517,7 +517,7 @@ namespace detail {
     // 512 bit convert
 
     template <>
-    inline s32x16 convert<s32x16>(float32x16 s)
+    inline s32x16 convert<s32x16>(f32x16 s)
     {
         s32x16 result;
         result.lo = convert<s32x8>(s.lo);
@@ -526,16 +526,16 @@ namespace detail {
     }
 
     template <>
-    inline float32x16 convert<float32x16>(s32x16 s)
+    inline f32x16 convert<f32x16>(s32x16 s)
     {
-        float32x16 result;
-        result.lo = convert<float32x8>(s.lo);
-        result.hi = convert<float32x8>(s.hi);
+        f32x16 result;
+        result.lo = convert<f32x8>(s.lo);
+        result.hi = convert<f32x8>(s.hi);
         return result;
     }
 
     template <>
-    inline u32x16 convert<u32x16>(float32x16 s)
+    inline u32x16 convert<u32x16>(f32x16 s)
     {
         u32x16 result;
         result.lo = convert<u32x8>(s.lo);
@@ -544,16 +544,16 @@ namespace detail {
     }
 
     template <>
-    inline float32x16 convert<float32x16>(u32x16 s)
+    inline f32x16 convert<f32x16>(u32x16 s)
     {
-        float32x16 result;
-        result.lo = convert<float32x8>(s.lo);
-        result.hi = convert<float32x8>(s.hi);
+        f32x16 result;
+        result.lo = convert<f32x8>(s.lo);
+        result.hi = convert<f32x8>(s.hi);
         return result;
     }
 
     template <>
-    inline s32x16 truncate<s32x16>(float32x16 s)
+    inline s32x16 truncate<s32x16>(f32x16 s)
     {
         s32x16 result;
         result.lo = truncate<s32x8>(s.lo);
@@ -562,62 +562,62 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
-    // float64
+    // f64
     // -----------------------------------------------------------------
 
-    static inline float64x2 get_low(float64x4 a)
+    static inline f64x2 get_low(f64x4 a)
     {
         return a.lo;
     }
 
-    static inline float64x2 get_high(float64x4 a)
+    static inline f64x2 get_high(f64x4 a)
     {
         return a.hi;
     }
 
-    static inline float64x4 set_low(float64x4 a, float64x2 low)
+    static inline f64x4 set_low(f64x4 a, f64x2 low)
     {
         a.lo = low;
         return a;
     }
 
-    static inline float64x4 set_high(float64x4 a, float64x2 high)
+    static inline f64x4 set_high(f64x4 a, f64x2 high)
     {
         a.hi = high;
         return a;
     }
 
-    static inline float64x4 combine(float64x2 a, float64x2 b)
+    static inline f64x4 combine(f64x2 a, f64x2 b)
     {
         double x = a.data[0];
         double y = a.data[1];
         double z = b.data[0];
         double w = b.data[1];
-        return float64x4_set4(x, y, z, w);
+        return f64x4_set4(x, y, z, w);
     }
 
     template <>
-    inline float64x4 convert<float64x4>(s32x4 s)
+    inline f64x4 convert<f64x4>(s32x4 s)
     {
         double x = double(get_x(s));
         double y = double(get_y(s));
         double z = double(get_z(s));
         double w = double(get_w(s));
-        return float64x4_set4(x, y, z, w);
+        return f64x4_set4(x, y, z, w);
     }
 
     template <>
-    inline float64x4 convert<float64x4>(float32x4 s)
+    inline f64x4 convert<f64x4>(f32x4 s)
     {
         double x = double(get_x(s));
         double y = double(get_y(s));
         double z = double(get_z(s));
         double w = double(get_w(s));
-        return float64x4_set4(x, y, z, w);
+        return f64x4_set4(x, y, z, w);
     }
 
     template <>
-    inline s32x4 convert<s32x4>(float64x4 s)
+    inline s32x4 convert<s32x4>(f64x4 s)
     {
         s32 x = s32(s.lo.data[0] + 0.5);
         s32 y = s32(s.lo.data[1] + 0.5);
@@ -627,27 +627,27 @@ namespace detail {
     }
 
     template <>
-    inline float32x4 convert<float32x4>(float64x4 s)
+    inline f32x4 convert<f32x4>(f64x4 s)
     {
         float x = float(s.lo.data[0]);
         float y = float(s.lo.data[1]);
         float z = float(s.hi.data[0]);
         float w = float(s.hi.data[1]);
-        return float32x4_set4(x, y, z, w);
+        return f32x4_set4(x, y, z, w);
     }
 
     template <>
-    inline float64x4 convert<float64x4>(u32x4 s)
+    inline f64x4 convert<f64x4>(u32x4 s)
     {
         double x = u32_to_f64(get_x(s));
         double y = u32_to_f64(get_y(s));
         double z = u32_to_f64(get_z(s));
         double w = u32_to_f64(get_w(s));
-        return float64x4_set4(x, y, z, w);
+        return f64x4_set4(x, y, z, w);
     }
 
     template <>
-    inline u32x4 convert<u32x4>(float64x4 d)
+    inline u32x4 convert<u32x4>(f64x4 d)
     {
         u32 x = f64_to_u32(d.lo.data[0]);
         u32 y = f64_to_u32(d.lo.data[1]);
@@ -657,7 +657,7 @@ namespace detail {
     }
 
     template <>
-    inline s32x4 truncate<s32x4>(float64x4 s)
+    inline s32x4 truncate<s32x4>(f64x4 s)
     {
         s32 x = s32(s.lo.data[0]);
         s32 y = s32(s.lo.data[1]);
@@ -667,17 +667,17 @@ namespace detail {
     }
 
     template <>
-    inline float64x4 convert<float64x4>(s64x4 v)
+    inline f64x4 convert<f64x4>(s64x4 v)
     {
         double x = double(get_component<0>(v));
         double y = double(get_component<1>(v));
         double z = double(get_component<2>(v));
         double w = double(get_component<3>(v));
-        return float64x4_set4(x, y, z, w);
+        return f64x4_set4(x, y, z, w);
     }
 
     template <>
-    inline s64x4 convert<s64x4>(float64x4 v)
+    inline s64x4 convert<s64x4>(f64x4 v)
     {
         s64 x = s64(get_component<0>(v));
         s64 y = s64(get_component<1>(v));
@@ -687,19 +687,19 @@ namespace detail {
     }
 
     // -----------------------------------------------------------------
-    // float16
+    // f16
     // -----------------------------------------------------------------
 
 #ifdef MANGO_ENABLE_FP16
 
     template <>
-    inline float32x4 convert<float32x4>(float16x4 s)
+    inline f32x4 convert<f32x4>(f16x4 s)
     {
         return vcvt_f32_f16(s);
     }
 
     template <>
-    inline float16x4 convert<float16x4>(float32x4 s)
+    inline f16x4 convert<f16x4>(f32x4 s)
     {
         return vcvt_f16_f32(s);
     }
@@ -707,19 +707,19 @@ namespace detail {
 #else
 
     template <>
-    inline float32x4 convert<float32x4>(float16x4 s)
+    inline f32x4 convert<f32x4>(f16x4 s)
     {
         float x = s[0];
         float y = s[1];
         float z = s[2];
         float w = s[3];
-        return float32x4_set4(x, y, z, w);
+        return f32x4_set4(x, y, z, w);
     }
 
     template <>
-    inline float16x4 convert<float16x4>(float32x4 s)
+    inline f16x4 convert<f16x4>(f32x4 s)
     {
-        float16x4 v;
+        f16x4 v;
         v[0] = get_x(s);
         v[1] = get_y(s);
         v[2] = get_z(s);

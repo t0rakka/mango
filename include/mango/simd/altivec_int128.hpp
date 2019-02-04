@@ -477,8 +477,8 @@ namespace simd {
 
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
-        float32x4 af = vec_ctf(a.data, 0);
-        float32x4 bf = vec_ctf(b.data, 0);
+        f32x4 af = vec_ctf(a.data, 0);
+        f32x4 bf = vec_ctf(b.data, 0);
         return vec_ctu(vec_mul(af.data, bf.data), 0);
     }
 
@@ -1240,8 +1240,8 @@ namespace simd {
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
-        float32x4 af = vec_ctf(a.data, 0);
-        float32x4 bf = vec_ctf(b.data, 0);
+        f32x4 af = vec_ctf(a.data, 0);
+        f32x4 bf = vec_ctf(b.data, 0);
         return vec_cts(vec_mul(af.data, bf.data), 0);
     }
 

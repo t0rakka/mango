@@ -2779,10 +2779,10 @@ namespace
         for (int y = 0; y < 4; ++y)
         {
             const float* image = reinterpret_cast<const float *>(input + y * stride);
-            output[0] = simd::float32x4_uload(image + 0);
-            output[1] = simd::float32x4_uload(image + 4);
-            output[2] = simd::float32x4_uload(image + 8);
-            output[3] = simd::float32x4_uload(image + 12);
+            output[0] = simd::f32x4_uload(image + 0);
+            output[1] = simd::f32x4_uload(image + 4);
+            output[2] = simd::f32x4_uload(image + 8);
+            output[3] = simd::f32x4_uload(image + 12);
             output += 4;
         }
     }

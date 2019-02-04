@@ -179,7 +179,7 @@ namespace simd {
     #define float512_is_hardware_vector
 
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -190,8 +190,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using f32x4   = hardware_vector<float, 4, __m128>;
+    using f64x2   = hardware_vector<double, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = hardware_vector<s8, 32, __m256i>;
@@ -202,8 +202,8 @@ namespace simd {
     using u16x16  = hardware_vector<u16, 16, __m256i>;
     using u32x8   = hardware_vector<u32, 8, __m256i>;
     using u64x4   = hardware_vector<u64, 4, __m256i>;
-    using float32x8  = hardware_vector<float, 8, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d>;
+    using f32x8   = hardware_vector<float, 8, __m256>;
+    using f64x4   = hardware_vector<double, 4, __m256d>;
 
     // 512 bit vector
     using s8x64   = hardware_vector<s8, 64, __m512i>;
@@ -214,26 +214,26 @@ namespace simd {
     using u16x32  = hardware_vector<u16, 32, __m512i>;
     using u32x16  = hardware_vector<u32, 16, __m512i>;
     using u64x8   = hardware_vector<u64, 8, __m512i>;
-    using float32x16 = hardware_vector<float, 16, __m512>;
-    using float64x8  = hardware_vector<double, 8, __m512d>;
+    using f32x16  = hardware_vector<float, 16, __m512>;
+    using f64x8   = hardware_vector<double, 8, __m512d>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, __mmask16>;
-    using mask16x8   = hardware_mask<16, 8, __mmask8>;
-    using mask32x4   = hardware_mask<32, 4, __mmask8>;
-    using mask64x2   = hardware_mask<64, 2, __mmask8>;
+    using mask8x16  = hardware_mask<8, 16, __mmask16>;
+    using mask16x8  = hardware_mask<16, 8, __mmask8>;
+    using mask32x4  = hardware_mask<32, 4, __mmask8>;
+    using mask64x2  = hardware_mask<64, 2, __mmask8>;
 
     // 256 bit vector mask
-    using mask8x32   = hardware_mask<8, 32, __mmask32>;
-    using mask16x16  = hardware_mask<16, 16, __mmask16>;
-    using mask32x8   = hardware_mask<32, 8, __mmask8>;
-    using mask64x4   = hardware_mask<64, 4, __mmask8>;
+    using mask8x32  = hardware_mask<8, 32, __mmask32>;
+    using mask16x16 = hardware_mask<16, 16, __mmask16>;
+    using mask32x8  = hardware_mask<32, 8, __mmask8>;
+    using mask64x4  = hardware_mask<64, 4, __mmask8>;
 
     // 512 bit vector mask
-    using mask8x64   = hardware_mask<8, 64, __mmask64>;
-    using mask16x32  = hardware_mask<16, 32, __mmask32>;
-    using mask32x16  = hardware_mask<32, 16, __mmask16>;
-    using mask64x8   = hardware_mask<64, 8, __mmask8>;
+    using mask8x64  = hardware_mask<8, 64, __mmask64>;
+    using mask16x32 = hardware_mask<16, 32, __mmask32>;
+    using mask32x16 = hardware_mask<32, 16, __mmask16>;
+    using mask64x8  = hardware_mask<64, 8, __mmask8>;
 
 } // namespace simd
 } // namespace mango
@@ -267,7 +267,7 @@ namespace simd {
     #define float256_is_hardware_vector
 
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -278,8 +278,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using f32x4   = hardware_vector<float, 4, __m128>;
+    using f64x2   = hardware_vector<double, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = hardware_vector<s8, 32, __m256i>;
@@ -290,8 +290,8 @@ namespace simd {
     using u16x16  = hardware_vector<u16, 16, __m256i>;
     using u32x8   = hardware_vector<u32, 8, __m256i>;
     using u64x4   = hardware_vector<u64, 4, __m256i>;
-    using float32x8  = hardware_vector<float, 8, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d>;
+    using f32x8   = hardware_vector<float, 8, __m256>;
+    using f64x4   = hardware_vector<double, 4, __m256d>;
 
     // 512 bit vector
     using s8x64   = composite_vector<s8x32>;
@@ -302,26 +302,26 @@ namespace simd {
     using u16x32  = composite_vector<u16x16>;
     using u32x16  = composite_vector<u32x8>;
     using u64x8   = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, __m128i>;
-    using mask16x8   = hardware_mask<16, 8, __m128i>;
-    using mask32x4   = hardware_mask<32, 4, __m128i>;
-    using mask64x2   = hardware_mask<64, 2, __m128i>;
+    using mask8x16  = hardware_mask<8, 16, __m128i>;
+    using mask16x8  = hardware_mask<16, 8, __m128i>;
+    using mask32x4  = hardware_mask<32, 4, __m128i>;
+    using mask64x2  = hardware_mask<64, 2, __m128i>;
 
     // 256 bit vector mask
-    using mask8x32   = hardware_mask<8, 32, __m256i>;
-    using mask16x16  = hardware_mask<16, 16, __m256i>;
-    using mask32x8   = hardware_mask<32, 8, __m256i>;
-    using mask64x4   = hardware_mask<64, 4, __m256i>;
+    using mask8x32  = hardware_mask<8, 32, __m256i>;
+    using mask16x16 = hardware_mask<16, 16, __m256i>;
+    using mask32x8  = hardware_mask<32, 8, __m256i>;
+    using mask64x4  = hardware_mask<64, 4, __m256i>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
 
 } // namespace simd
 } // namespace mango
@@ -354,7 +354,7 @@ namespace simd {
     #define float256_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -365,8 +365,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using f32x4   = hardware_vector<float, 4, __m128>;
+    using f64x2   = hardware_vector<double, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;
@@ -377,8 +377,8 @@ namespace simd {
     using u16x16  = composite_vector<u16x8>;
     using u32x8   = composite_vector<u32x4>;
     using u64x4   = composite_vector<u64x2>;
-    using float32x8  = hardware_vector<float, 8, __m256>;
-    using float64x4  = hardware_vector<double, 4, __m256d>;
+    using f32x8   = hardware_vector<float, 8, __m256>;
+    using f64x4   = hardware_vector<double, 4, __m256d>;
 
     // 512 bit vector
     using s8x64   = composite_vector<s8x32>;
@@ -389,26 +389,26 @@ namespace simd {
     using u16x32  = composite_vector<u16x16>;
     using u32x16  = composite_vector<u32x8>;
     using u64x8   = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, __m128i>;
-    using mask16x8   = hardware_mask<16, 8, __m128i>;
-    using mask32x4   = hardware_mask<32, 4, __m128i>;
-    using mask64x2   = hardware_mask<64, 2, __m128i>;
+    using mask8x16  = hardware_mask<8, 16, __m128i>;
+    using mask16x8  = hardware_mask<16, 8, __m128i>;
+    using mask32x4  = hardware_mask<32, 4, __m128i>;
+    using mask64x2  = hardware_mask<64, 2, __m128i>;
 
     // 256 bit vector mask
-    using mask8x32   = hardware_mask<8, 32, __m256i>;
-    using mask16x16  = hardware_mask<16, 16, __m256i>;
-    using mask32x8   = hardware_mask<32, 8, __m256i>;
-    using mask64x4   = hardware_mask<64, 4, __m256i>;
+    using mask8x32  = hardware_mask<8, 32, __m256i>;
+    using mask16x16 = hardware_mask<16, 16, __m256i>;
+    using mask32x8  = hardware_mask<32, 8, __m256i>;
+    using mask64x4  = hardware_mask<64, 4, __m256i>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
 
 } // namespace simd
 } // namespace mango
@@ -440,31 +440,31 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using s8x16    = hardware_vector<s8, 16, __m128i>;
-    using s16x8    = hardware_vector<s16, 8, __m128i>;
-    using s32x4    = hardware_vector<s32, 4, __m128i>;
-    using s64x2    = hardware_vector<s64, 2, __m128i>;
-    using u8x16    = hardware_vector<u8, 16, __m128i>;
-    using u16x8    = hardware_vector<u16, 8, __m128i>;
-    using u32x4    = hardware_vector<u32, 4, __m128i>;
-    using u64x2    = hardware_vector<u64, 2, __m128i>;
-    using float32x4  = hardware_vector<float, 4, __m128>;
-    using float64x2  = hardware_vector<double, 2, __m128d>;
+    using s8x16   = hardware_vector<s8, 16, __m128i>;
+    using s16x8   = hardware_vector<s16, 8, __m128i>;
+    using s32x4   = hardware_vector<s32, 4, __m128i>;
+    using s64x2   = hardware_vector<s64, 2, __m128i>;
+    using u8x16   = hardware_vector<u8, 16, __m128i>;
+    using u16x8   = hardware_vector<u16, 8, __m128i>;
+    using u32x4   = hardware_vector<u32, 4, __m128i>;
+    using u64x2   = hardware_vector<u64, 2, __m128i>;
+    using f32x4   = hardware_vector<float, 4, __m128>;
+    using f64x2   = hardware_vector<double, 2, __m128d>;
 
     // 256 bit vector
-    using s8x32    = composite_vector<s8x16>;
-    using s16x16   = composite_vector<s16x8>;
-    using s32x8    = composite_vector<s32x4>;
-    using s64x4    = composite_vector<s64x2>;
-    using u8x32    = composite_vector<u8x16>;
-    using u16x16   = composite_vector<u16x8>;
-    using u32x8    = composite_vector<u32x4>;
-    using u64x4    = composite_vector<u64x2>;
-    using float32x8  = composite_vector<float32x4>;
-    using float64x4  = composite_vector<float64x2>;
+    using s8x32   = composite_vector<s8x16>;
+    using s16x16  = composite_vector<s16x8>;
+    using s32x8   = composite_vector<s32x4>;
+    using s64x4   = composite_vector<s64x2>;
+    using u8x32   = composite_vector<u8x16>;
+    using u16x16  = composite_vector<u16x8>;
+    using u32x8   = composite_vector<u32x4>;
+    using u64x4   = composite_vector<u64x2>;
+    using f32x8   = composite_vector<f32x4>;
+    using f64x4   = composite_vector<f64x2>;
 
     // 512 bit vector
     using s8x64    = composite_vector<s8x32>;
@@ -475,26 +475,26 @@ namespace simd {
     using u16x32   = composite_vector<u16x16>;
     using u32x16   = composite_vector<u32x8>;
     using u64x8    = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using f32x16   = composite_vector<f32x8>;
+    using f64x8    = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, __m128i>;
-    using mask16x8   = hardware_mask<16, 8, __m128i>;
-    using mask32x4   = hardware_mask<32, 4, __m128i>;
-    using mask64x2   = hardware_mask<64, 2, __m128i>;
+    using mask8x16  = hardware_mask<8, 16, __m128i>;
+    using mask16x8  = hardware_mask<16, 8, __m128i>;
+    using mask32x4  = hardware_mask<32, 4, __m128i>;
+    using mask64x2  = hardware_mask<64, 2, __m128i>;
 
     // 256 bit vector mask
-    using mask8x32   = composite_mask<mask8x16>;
-    using mask16x16  = composite_mask<mask16x8>;
-    using mask32x8   = composite_mask<mask32x4>;
-    using mask64x4   = composite_mask<mask64x2>;
+    using mask8x32  = composite_mask<mask8x16>;
+    using mask16x16 = composite_mask<mask16x8>;
+    using mask32x8  = composite_mask<mask32x4>;
+    using mask64x4  = composite_mask<mask64x2>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
 
 } // namespace simd
 } // namespace mango
@@ -536,64 +536,64 @@ namespace simd {
 
     // 64 bit vector
 #ifdef MANGO_ENABLE_FP16
-    using float16x4  = hardware_vector<float16, 4, float16x4_t>;
+    using f16x4   = hardware_vector<float16, 4, float16x4_t>;
 #else
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 #endif
 
     // 128 bit vector
-    using s8x16    = hardware_vector<s8, 16, int8x16_t>;
-    using s16x8    = hardware_vector<s16, 8, int16x8_t>;
-    using s32x4    = hardware_vector<s32, 4, int32x4_t>;
-    using s64x2    = hardware_vector<s64, 2, int64x2_t>;
-    using u8x16    = hardware_vector<u8, 16, uint8x16_t>;
-    using u16x8    = hardware_vector<u16, 8, uint16x8_t>;
-    using u32x4    = hardware_vector<u32, 4, uint32x4_t>;
-    using u64x2    = hardware_vector<u64, 2, uint64x2_t>;
-    using float32x4  = hardware_vector<float, 4, float32x4_t>;
-    using float64x2  = hardware_vector<double, 2, float64x2_t>;
+    using s8x16   = hardware_vector<s8, 16, int8x16_t>;
+    using s16x8   = hardware_vector<s16, 8, int16x8_t>;
+    using s32x4   = hardware_vector<s32, 4, int32x4_t>;
+    using s64x2   = hardware_vector<s64, 2, int64x2_t>;
+    using u8x16   = hardware_vector<u8, 16, uint8x16_t>;
+    using u16x8   = hardware_vector<u16, 8, uint16x8_t>;
+    using u32x4   = hardware_vector<u32, 4, uint32x4_t>;
+    using u64x2   = hardware_vector<u64, 2, uint64x2_t>;
+    using f32x4   = hardware_vector<float, 4, float32x4_t>;
+    using f64x2   = hardware_vector<double, 2, float64x2_t>;
 
     // 256 bit vector
-    using s8x32    = composite_vector<s8x16>;
-    using s16x16   = composite_vector<s16x8>;
-    using s32x8    = composite_vector<s32x4>;
-    using s64x4    = composite_vector<s64x2>;
-    using u8x32    = composite_vector<u8x16>;
-    using u16x16   = composite_vector<u16x8>;
-    using u32x8    = composite_vector<u32x4>;
-    using u64x4    = composite_vector<u64x2>;
-    using float32x8  = composite_vector<float32x4>;
-    using float64x4  = composite_vector<float64x2>;
+    using s8x32   = composite_vector<s8x16>;
+    using s16x16  = composite_vector<s16x8>;
+    using s32x8   = composite_vector<s32x4>;
+    using s64x4   = composite_vector<s64x2>;
+    using u8x32   = composite_vector<u8x16>;
+    using u16x16  = composite_vector<u16x8>;
+    using u32x8   = composite_vector<u32x4>;
+    using u64x4   = composite_vector<u64x2>;
+    using f32x8   = composite_vector<f32x4>;
+    using f64x4   = composite_vector<f64x2>;
 
     // 512 bit vector
-    using s8x64    = composite_vector<s8x32>;
-    using s16x32   = composite_vector<s16x16>;
-    using s32x16   = composite_vector<s32x8>;
-    using s64x8    = composite_vector<s64x4>;
-    using u8x64    = composite_vector<u8x32>;
-    using u16x32   = composite_vector<u16x16>;
-    using u32x16   = composite_vector<u32x8>;
-    using u64x8    = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using s8x64   = composite_vector<s8x32>;
+    using s16x32  = composite_vector<s16x16>;
+    using s32x16  = composite_vector<s32x8>;
+    using s64x8   = composite_vector<s64x4>;
+    using u8x64   = composite_vector<u8x32>;
+    using u16x32  = composite_vector<u16x16>;
+    using u32x16  = composite_vector<u32x8>;
+    using u64x8   = composite_vector<u64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, uint8x16_t>;
-    using mask16x8   = hardware_mask<16, 8, uint16x8_t>;
-    using mask32x4   = hardware_mask<32, 4, uint32x4_t>;
-    using mask64x2   = hardware_mask<64, 2, uint64x2_t>;
+    using mask8x16  = hardware_mask<8, 16, uint8x16_t>;
+    using mask16x8  = hardware_mask<16, 8, uint16x8_t>;
+    using mask32x4  = hardware_mask<32, 4, uint32x4_t>;
+    using mask64x2  = hardware_mask<64, 2, uint64x2_t>;
 
     // 256 bit vector mask
-    using mask8x32   = composite_mask<mask8x16>;
-    using mask16x16  = composite_mask<mask16x8>;
-    using mask32x8   = composite_mask<mask32x4>;
-    using mask64x4   = composite_mask<mask64x2>;
+    using mask8x32  = composite_mask<mask8x16>;
+    using mask16x16 = composite_mask<mask16x8>;
+    using mask32x8  = composite_mask<mask32x4>;
+    using mask64x4  = composite_mask<mask64x2>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
 
 } // namespace simd
 } // namespace mango
@@ -627,61 +627,61 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using s8x16      = hardware_vector<s8, 16, __vector signed char>;
-    using s16x8      = hardware_vector<s16, 8, __vector signed short>;
-    using s32x4      = hardware_vector<s32, 4, __vector signed int>;
-    using s64x2      = hardware_vector<s64, 2, __vector signed long long>;
-    using u8x16      = hardware_vector<u8, 16, __vector unsigned char>;
-    using u16x8      = hardware_vector<u16, 8, __vector unsigned short>;
-    using u32x4      = hardware_vector<u32, 4, __vector unsigned int>;
-    using u64x2      = hardware_vector<u64, 2, __vector unsigned long long>;
-    using float32x4  = hardware_vector<float, 4, __vector float>;
-    using float64x2  = hardware_vector<double, 2, __vector double>;
+    using s8x16   = hardware_vector<s8, 16, __vector signed char>;
+    using s16x8   = hardware_vector<s16, 8, __vector signed short>;
+    using s32x4   = hardware_vector<s32, 4, __vector signed int>;
+    using s64x2   = hardware_vector<s64, 2, __vector signed long long>;
+    using u8x16   = hardware_vector<u8, 16, __vector unsigned char>;
+    using u16x8   = hardware_vector<u16, 8, __vector unsigned short>;
+    using u32x4   = hardware_vector<u32, 4, __vector unsigned int>;
+    using u64x2   = hardware_vector<u64, 2, __vector unsigned long long>;
+    using f32x4   = hardware_vector<float, 4, __vector float>;
+    using f64x2   = hardware_vector<double, 2, __vector double>;
 
     // 256 bit vector
-    using s8x32      = composite_vector<s8x16>;
-    using s16x16     = composite_vector<s16x8>;
-    using s32x8      = composite_vector<s32x4>;
-    using s64x4      = composite_vector<s64x2>;
-    using u8x32      = composite_vector<u8x16>;
-    using u16x16     = composite_vector<u16x8>;
-    using u32x8      = composite_vector<u32x4>;
-    using u64x4      = composite_vector<u64x2>;
-    using float32x8  = composite_vector<float32x4>;
-    using float64x4  = composite_vector<float64x2>;
+    using s8x32   = composite_vector<s8x16>;
+    using s16x16  = composite_vector<s16x8>;
+    using s32x8   = composite_vector<s32x4>;
+    using s64x4   = composite_vector<s64x2>;
+    using u8x32   = composite_vector<u8x16>;
+    using u16x16  = composite_vector<u16x8>;
+    using u32x8   = composite_vector<u32x4>;
+    using u64x4   = composite_vector<u64x2>;
+    using f32x8   = composite_vector<f32x4>;
+    using f64x4   = composite_vector<f64x2>;
 
     // 512 bit vector
-    using s8x64      = composite_vector<s8x32>;
-    using s16x32     = composite_vector<s16x16>;
-    using s32x16     = composite_vector<s32x8>;
-    using s64x8      = composite_vector<s64x4>;
-    using u8x64      = composite_vector<u8x32>;
-    using u16x32     = composite_vector<u16x16>;
-    using u32x16     = composite_vector<u32x8>;
-    using u64x8      = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using s8x64   = composite_vector<s8x32>;
+    using s16x32  = composite_vector<s16x16>;
+    using s32x16  = composite_vector<s32x8>;
+    using s64x8   = composite_vector<s64x4>;
+    using u8x64   = composite_vector<u8x32>;
+    using u16x32  = composite_vector<u16x16>;
+    using u32x16  = composite_vector<u32x8>;
+    using u64x8   = composite_vector<u64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, __vector bool char>;
-    using mask16x8   = hardware_mask<16, 8, __vector bool short>;
-    using mask32x4   = hardware_mask<32, 4, __vector bool int>;
-    using mask64x2   = hardware_mask<64, 2, __vector bool long long>;
+    using mask8x16  = hardware_mask<8, 16, __vector bool char>;
+    using mask16x8  = hardware_mask<16, 8, __vector bool short>;
+    using mask32x4  = hardware_mask<32, 4, __vector bool int>;
+    using mask64x2  = hardware_mask<64, 2, __vector bool long long>;
 
     // 256 bit vector mask
-    using mask8x32   = composite_mask<mask8x16>;
-    using mask16x16  = composite_mask<mask16x8>;
-    using mask32x8   = composite_mask<mask32x4>;
-    using mask64x4   = composite_mask<mask64x2>;
+    using mask8x32  = composite_mask<mask8x16>;
+    using mask16x16 = composite_mask<mask16x8>;
+    using mask32x8  = composite_mask<mask32x4>;
+    using mask64x4  = composite_mask<mask64x2>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
 
 } // namespace simd
 } // namespace mango
@@ -721,61 +721,61 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using s8x16      = hardware_vector<s8, 16, v16i8>;
-    using s16x8      = hardware_vector<s16, 8, v8i16>;
-    using s32x4      = hardware_vector<s32, 4, v4i32>;
-    using s64x2      = hardware_vector<s64, 2, v2i64>;
-    using u8x16      = hardware_vector<u8, 16, v16u8>;
-    using u16x8      = hardware_vector<u16, 8, v8u16>;
-    using u32x4      = hardware_vector<u32, 4, v4u32>;
-    using u64x2      = hardware_vector<u64, 2, v2u64>;
-    using float32x4  = hardware_vector<float, 4, v4f32>;
-    using float64x2  = hardware_vector<double, 2, v2f64>;
+    using s8x16   = hardware_vector<s8, 16, v16i8>;
+    using s16x8   = hardware_vector<s16, 8, v8i16>;
+    using s32x4   = hardware_vector<s32, 4, v4i32>;
+    using s64x2   = hardware_vector<s64, 2, v2i64>;
+    using u8x16   = hardware_vector<u8, 16, v16u8>;
+    using u16x8   = hardware_vector<u16, 8, v8u16>;
+    using u32x4   = hardware_vector<u32, 4, v4u32>;
+    using u64x2   = hardware_vector<u64, 2, v2u64>;
+    using f32x4   = hardware_vector<float, 4, v4f32>;
+    using f64x2   = hardware_vector<double, 2, v2f64>;
 
     // 256 bit vector
-    using s8x32      = composite_vector<s8x16>;
-    using s16x16     = composite_vector<s16x8>;
-    using s32x8      = composite_vector<s32x4>;
-    using s64x4      = composite_vector<s64x2>;
-    using u8x32      = composite_vector<u8x16>;
-    using u16x16     = composite_vector<u16x8>;
-    using u32x8      = composite_vector<u32x4>;
-    using u64x4      = composite_vector<u64x2>;
-    using float32x8  = composite_vector<float32x4>;
-    using float64x4  = composite_vector<float64x2>;
+    using s8x32   = composite_vector<s8x16>;
+    using s16x16  = composite_vector<s16x8>;
+    using s32x8   = composite_vector<s32x4>;
+    using s64x4   = composite_vector<s64x2>;
+    using u8x32   = composite_vector<u8x16>;
+    using u16x16  = composite_vector<u16x8>;
+    using u32x8   = composite_vector<u32x4>;
+    using u64x4   = composite_vector<u64x2>;
+    using f32x8   = composite_vector<f32x4>;
+    using f64x4   = composite_vector<f64x2>;
 
     // 512 bit vector
-    using s8x64    = composite_vector<s8x32>;
-    using s16x32   = composite_vector<s16x16>;
-    using s32x16   = composite_vector<s32x8>;
-    using s64x8    = composite_vector<s64x4>;
-    using u8x64    = composite_vector<u8x32>;
-    using u16x32   = composite_vector<u16x16>;
-    using u32x16   = composite_vector<u32x8>;
-    using u64x8    = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using s8x64   = composite_vector<s8x32>;
+    using s16x32  = composite_vector<s16x16>;
+    using s32x16  = composite_vector<s32x8>;
+    using s64x8   = composite_vector<s64x4>;
+    using u8x64   = composite_vector<u8x32>;
+    using u16x32  = composite_vector<u16x16>;
+    using u32x16  = composite_vector<u32x8>;
+    using u64x8   = composite_vector<u64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = hardware_mask<8, 16, v16u8>;
-    using mask16x8   = hardware_mask<16, 8, v8u16>;
-    using mask32x4   = hardware_mask<32, 4, v4u32>;
-    using mask64x2   = hardware_mask<64, 2, v2u64>;
+    using mask8x16  = hardware_mask<8, 16, v16u8>;
+    using mask16x8  = hardware_mask<16, 8, v8u16>;
+    using mask32x4  = hardware_mask<32, 4, v4u32>;
+    using mask64x2  = hardware_mask<64, 2, v2u64>;
 
     // 256 bit vector mask
-    using mask8x32   = composite_mask<mask8x16>;
-    using mask16x16  = composite_mask<mask16x8>;
-    using mask32x8   = composite_mask<mask32x4>;
-    using mask64x4   = composite_mask<mask64x2>;
+    using mask8x32  = composite_mask<mask8x16>;
+    using mask16x16 = composite_mask<mask16x8>;
+    using mask32x8  = composite_mask<mask32x4>;
+    using mask64x4  = composite_mask<mask64x2>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
     
 } // namespace simd
 } // namespace mango
@@ -802,61 +802,61 @@ namespace simd {
     // --------------------------------------------------------------
 
     // 64 bit vector
-    using float16x4  = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<float16, 4>;
 
     // 128 bit vector
-    using s8x16      = scalar_vector<s8, 16>;
-    using s16x8      = scalar_vector<s16, 8>;
-    using s32x4      = scalar_vector<s32, 4>;
-    using s64x2      = scalar_vector<s64, 2>;
-    using u8x16      = scalar_vector<u8, 16>;
-    using u16x8      = scalar_vector<u16, 8>;
-    using u32x4      = scalar_vector<u32, 4>;
-    using u64x2      = scalar_vector<u64, 2>;
-    using float32x4  = scalar_vector<float, 4>;
-    using float64x2  = scalar_vector<double, 2>;
+    using s8x16   = scalar_vector<s8, 16>;
+    using s16x8   = scalar_vector<s16, 8>;
+    using s32x4   = scalar_vector<s32, 4>;
+    using s64x2   = scalar_vector<s64, 2>;
+    using u8x16   = scalar_vector<u8, 16>;
+    using u16x8   = scalar_vector<u16, 8>;
+    using u32x4   = scalar_vector<u32, 4>;
+    using u64x2   = scalar_vector<u64, 2>;
+    using f32x4   = scalar_vector<float, 4>;
+    using f64x2   = scalar_vector<double, 2>;
 
     // 256 bit vector
-    using s8x32      = composite_vector<s8x16>;
-    using s16x16     = composite_vector<s16x8>;
-    using s32x8      = composite_vector<s32x4>;
-    using s64x4      = composite_vector<s64x2>;
-    using u8x32      = composite_vector<u8x16>;
-    using u16x16     = composite_vector<u16x8>;
-    using u32x8      = composite_vector<u32x4>;
-    using u64x4      = composite_vector<u64x2>;
-    using float32x8  = composite_vector<float32x4>;
-    using float64x4  = composite_vector<float64x2>;
+    using s8x32   = composite_vector<s8x16>;
+    using s16x16  = composite_vector<s16x8>;
+    using s32x8   = composite_vector<s32x4>;
+    using s64x4   = composite_vector<s64x2>;
+    using u8x32   = composite_vector<u8x16>;
+    using u16x16  = composite_vector<u16x8>;
+    using u32x8   = composite_vector<u32x4>;
+    using u64x4   = composite_vector<u64x2>;
+    using f32x8   = composite_vector<f32x4>;
+    using f64x4   = composite_vector<f64x2>;
 
     // 512 bit vector
-    using s8x64      = composite_vector<s8x32>;
-    using s16x32     = composite_vector<s16x16>;
-    using s32x16     = composite_vector<s32x8>;
-    using s64x8      = composite_vector<s64x4>;
-    using u8x64      = composite_vector<u8x32>;
-    using u16x32     = composite_vector<u16x16>;
-    using u32x16     = composite_vector<u32x8>;
-    using u64x8      = composite_vector<u64x4>;
-    using float32x16 = composite_vector<float32x8>;
-    using float64x8  = composite_vector<float64x4>;
+    using s8x64   = composite_vector<s8x32>;
+    using s16x32  = composite_vector<s16x16>;
+    using s32x16  = composite_vector<s32x8>;
+    using s64x8   = composite_vector<s64x4>;
+    using u8x64   = composite_vector<u8x32>;
+    using u16x32  = composite_vector<u16x16>;
+    using u32x16  = composite_vector<u32x8>;
+    using u64x8   = composite_vector<u64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
 
     // 128 bit vector mask
-    using mask8x16   = scalar_mask<8, 16>;
-    using mask16x8   = scalar_mask<16, 8>;
-    using mask32x4   = scalar_mask<32, 4>;
-    using mask64x2   = scalar_mask<64, 2>;
+    using mask8x16  = scalar_mask<8, 16>;
+    using mask16x8  = scalar_mask<16, 8>;
+    using mask32x4  = scalar_mask<32, 4>;
+    using mask64x2  = scalar_mask<64, 2>;
 
     // 256 bit vector mask
-    using mask8x32   = composite_mask<mask8x16>;
-    using mask16x16  = composite_mask<mask16x8>;
-    using mask32x8   = composite_mask<mask32x4>;
-    using mask64x4   = composite_mask<mask64x2>;
+    using mask8x32  = composite_mask<mask8x16>;
+    using mask16x16 = composite_mask<mask16x8>;
+    using mask32x8  = composite_mask<mask32x4>;
+    using mask64x4  = composite_mask<mask64x2>;
 
     // 512 bit vector mask
-    using mask8x64   = composite_mask<mask8x32>;
-    using mask16x32  = composite_mask<mask16x16>;
-    using mask32x16  = composite_mask<mask32x8>;
-    using mask64x8   = composite_mask<mask64x4>;
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
 
 } // namespace simd
 } // namespace mango

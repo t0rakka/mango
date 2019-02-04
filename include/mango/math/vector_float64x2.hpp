@@ -16,21 +16,21 @@ namespace mango
     template <>
     struct Vector<double, 2>
     {
-        using VectorType = simd::float64x2;
+        using VectorType = simd::f64x2;
         using ScalarType = double;
         enum { VectorSize = 2 };
 
         union
         {
-            simd::float64x2 m;
+            simd::f64x2 m;
 
-            ScalarAccessor<double, simd::float64x2, 0> x;
-            ScalarAccessor<double, simd::float64x2, 1> y;
+            ScalarAccessor<double, simd::f64x2, 0> x;
+            ScalarAccessor<double, simd::f64x2, 1> y;
 
-            ShuffleAccessor2<double, simd::float64x2, 0, 0> xx;
-            ShuffleAccessor2<double, simd::float64x2, 0, 1> xy;
-            ShuffleAccessor2<double, simd::float64x2, 1, 0> yx;
-            ShuffleAccessor2<double, simd::float64x2, 1, 1> yy;
+            ShuffleAccessor2<double, simd::f64x2, 0, 0> xx;
+            ShuffleAccessor2<double, simd::f64x2, 0, 1> xy;
+            ShuffleAccessor2<double, simd::f64x2, 1, 0> yx;
+            ShuffleAccessor2<double, simd::f64x2, 1, 1> yy;
 
             DeAggregate<ScalarType> component[VectorSize];
         };
@@ -56,34 +56,34 @@ namespace mango
         ~Vector() {}
 
         Vector(double s)
-            : m(simd::float64x2_set1(s))
+            : m(simd::f64x2_set1(s))
         {
         }
 
         explicit Vector(double x, double y)
-            : m(simd::float64x2_set2(x, y))
+            : m(simd::f64x2_set2(x, y))
         {
         }
 
-        Vector(simd::float64x2 v)
+        Vector(simd::f64x2 v)
             : m(v)
         {
         }
 
         template <int X, int Y>
-        Vector(const ShuffleAccessor2<double, simd::float64x2, X, Y>& p)
+        Vector(const ShuffleAccessor2<double, simd::f64x2, X, Y>& p)
         {
             m = p;
         }
 
         template <int X, int Y>
-        Vector& operator = (const ShuffleAccessor2<double, simd::float64x2, X, Y>& p)
+        Vector& operator = (const ShuffleAccessor2<double, simd::f64x2, X, Y>& p)
         {
             m = p;
             return *this;
         }
 
-        Vector& operator = (simd::float64x2 v)
+        Vector& operator = (simd::f64x2 v)
         {
             m = v;
             return *this;
@@ -91,17 +91,17 @@ namespace mango
 
         Vector& operator = (double s)
         {
-            m = simd::float64x2_set1(s);
+            m = simd::f64x2_set1(s);
             return *this;
         }
 
-        operator simd::float64x2 () const
+        operator simd::f64x2 () const
         {
             return m;
         }
 
 #ifdef float128_is_hardware_vector
-        operator simd::float64x2::vector () const
+        operator simd::f64x2::vector () const
         {
             return m.data;
         }
