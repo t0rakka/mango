@@ -12,7 +12,7 @@ namespace mango
     template <>
     struct Vector<u16, 32>
     {
-        using VectorType = simd::uint16x32;
+        using VectorType = simd::u16x32;
         using ScalarType = u16;
         enum { VectorSize = 32 };
 
@@ -43,16 +43,16 @@ namespace mango
         ~Vector() {}
 
         Vector(u16 s)
-            : m(simd::uint16x32_set1(s))
+            : m(simd::u16x32_set1(s))
         {
         }
 
-        Vector(simd::uint16x32 v)
+        Vector(simd::u16x32 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::uint16x32 v)
+        Vector& operator = (simd::u16x32 v)
         {
             m = v;
             return *this;
@@ -60,17 +60,17 @@ namespace mango
 
         Vector& operator = (u16 s)
         {
-            m = simd::uint16x32_set1(s);
+            m = simd::u16x32_set1(s);
             return *this;
         }
 
-        operator simd::uint16x32 () const
+        operator simd::u16x32 () const
         {
             return m;
         }
 
 #ifdef int512_is_hardware_vector
-        operator simd::uint16x32::vector () const
+        operator simd::u16x32::vector () const
         {
             return m.data;
         }
@@ -84,7 +84,7 @@ namespace mango
 
     static inline Vector<u16, 32> operator - (Vector<u16, 32> v)
     {
-        return simd::sub(simd::uint16x32_zero(), v);
+        return simd::sub(simd::u16x32_zero(), v);
     }
 
     static inline Vector<u16, 32>& operator += (Vector<u16, 32>& a, Vector<u16, 32> b)

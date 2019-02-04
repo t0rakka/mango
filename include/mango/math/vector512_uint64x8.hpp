@@ -12,7 +12,7 @@ namespace mango
     template <>
     struct Vector<u64, 8>
     {
-        using VectorType = simd::uint64x8;
+        using VectorType = simd::u64x8;
         using ScalarType = u64;
         enum { VectorSize = 8 };
 
@@ -43,21 +43,21 @@ namespace mango
         ~Vector() {}
 
         Vector(u64 s)
-            : m(simd::uint64x8_set1(s))
+            : m(simd::u64x8_set1(s))
         {
         }
 
         explicit Vector(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
-            : m(simd::uint64x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::u64x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
-        Vector(simd::uint64x8 v)
+        Vector(simd::u64x8 v)
             : m(v)
         {
         }
 
-        Vector& operator = (simd::uint64x8 v)
+        Vector& operator = (simd::u64x8 v)
         {
             m = v;
             return *this;
@@ -65,17 +65,17 @@ namespace mango
 
         Vector& operator = (u64 s)
         {
-            m = simd::uint64x8_set1(s);
+            m = simd::u64x8_set1(s);
             return *this;
         }
 
-        operator simd::uint64x8 () const
+        operator simd::u64x8 () const
         {
             return m;
         }
 
 #ifdef int512_is_hardware_vector
-        operator simd::uint64x8::vector () const
+        operator simd::u64x8::vector () const
         {
             return m.data;
         }
@@ -89,7 +89,7 @@ namespace mango
 
     static inline Vector<u64, 8> operator - (Vector<u64, 8> v)
     {
-        return simd::sub(simd::uint64x8_zero(), v);
+        return simd::sub(simd::u64x8_zero(), v);
     }
 
     static inline Vector<u64, 8>& operator += (Vector<u64, 8>& a, Vector<u64, 8> b)

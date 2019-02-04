@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -467,13 +467,13 @@ namespace mango
 
         u32 pack() const
         {
-            const simd::int32x4 temp = simd::convert<simd::int32x4>(m);
+            const simd::s32x4 temp = simd::convert<simd::s32x4>(m);
             return simd::pack(temp);
         }
 
         void unpack(u32 a)
         {
-            const simd::int32x4 temp = simd::unpack(a);
+            const simd::s32x4 temp = simd::unpack(a);
             m = simd::convert<simd::float32x4>(temp);
         }
     };

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -19,7 +19,7 @@ namespace simd {
         static_assert(X < 2 && Y < 2, "Index out of range.");
         constexpr u8 x = X * 8;
         constexpr u8 y = Y * 8;
-        return vec_perm(v.data, v.data, (uint8x16::vector) { 
+        return vec_perm(v.data, v.data, (u8x16::vector) { 
             x + 0, x + 1, x + 2, x + 3, x + 4, x + 5, x + 6, x + 7, 
             y + 0, y + 1, y + 2, y + 3, y + 4, y + 5, y + 6, y + 7 });
     }
@@ -30,7 +30,7 @@ namespace simd {
         static_assert(X < 2 && Y < 2, "Index out of range.");
         constexpr u8 x = X * 8;
         constexpr u8 y = Y * 8 + 16;
-        return vec_perm(a.data, b.data, (uint8x16::vector) { 
+        return vec_perm(a.data, b.data, (u8x16::vector) { 
             x + 0, x + 1, x + 2, x + 3, x + 4, x + 5, x + 6, x + 7, 
             y + 0, y + 1, y + 2, y + 3, y + 4, y + 5, y + 6, y + 7 });
     }

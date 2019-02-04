@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,187 +10,187 @@ namespace mango {
 namespace simd {
 
     // ------------------------------------------------------------------
-    // uint8x16
+    // u8x16
     // ------------------------------------------------------------------
 
-    static inline uint8x16 clamp(uint8x16 v, uint8x16 vmin, uint8x16 vmax)
+    static inline u8x16 clamp(u8x16 v, u8x16 vmin, u8x16 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
     // ------------------------------------------------------------------
-    // uint16x8
+    // u16x8
     // ------------------------------------------------------------------
 
-    static inline uint16x8 clamp(uint16x8 v, uint16x8 vmin, uint16x8 vmax)
+    static inline u16x8 clamp(u16x8 v, u16x8 vmin, u16x8 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
     // ------------------------------------------------------------------
-    // uint32x4
+    // u32x4
     // ------------------------------------------------------------------
 
-    static inline uint32x4 set_x(uint32x4 a, u32 x)
+    static inline u32x4 set_x(u32x4 a, u32 x)
     {
         return set_component<0>(a, x);
     }
 
-    static inline uint32x4 set_y(uint32x4 a, u32 y)
+    static inline u32x4 set_y(u32x4 a, u32 y)
     {
         return set_component<1>(a, y);
     }
 
-    static inline uint32x4 set_z(uint32x4 a, u32 z)
+    static inline u32x4 set_z(u32x4 a, u32 z)
     {
         return set_component<2>(a, z);
     }
 
-    static inline uint32x4 set_w(uint32x4 a, u32 w)
+    static inline u32x4 set_w(u32x4 a, u32 w)
     {
         return set_component<3>(a, w);
     }
 
-    static inline u32 get_x(uint32x4 a)
+    static inline u32 get_x(u32x4 a)
     {
         return get_component<0>(a);
     }
 
-    static inline u32 get_y(uint32x4 a)
+    static inline u32 get_y(u32x4 a)
     {
         return get_component<1>(a);
     }
 
-    static inline u32 get_z(uint32x4 a)
+    static inline u32 get_z(u32x4 a)
     {
         return get_component<2>(a);
     }
 
-    static inline u32 get_w(uint32x4 a)
+    static inline u32 get_w(u32x4 a)
     {
         return get_component<3>(a);
     }
 
-    static inline uint32x4 splat_x(uint32x4 a)
+    static inline u32x4 splat_x(u32x4 a)
     {
         return shuffle<0, 0, 0, 0>(a);
     }
 
-    static inline uint32x4 splat_y(uint32x4 a)
+    static inline u32x4 splat_y(u32x4 a)
     {
         return shuffle<1, 1, 1, 1>(a);
     }
 
-    static inline uint32x4 splat_z(uint32x4 a)
+    static inline u32x4 splat_z(u32x4 a)
     {
         return shuffle<2, 2, 2, 2>(a);
     }
 
-    static inline uint32x4 splat_w(uint32x4 a)
+    static inline u32x4 splat_w(u32x4 a)
     {
         return shuffle<3, 3, 3, 3>(a);
     }
 
-    static inline uint32x4 clamp(uint32x4 v, uint32x4 vmin, uint32x4 vmax)
+    static inline u32x4 clamp(u32x4 v, u32x4 vmin, u32x4 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline uint32x4 clamp(uint32x4 v, u32 vmin, u32 vmax)
+    static inline u32x4 clamp(u32x4 v, u32 vmin, u32 vmax)
     {
-        return min(uint32x4_set1(vmax), max(uint32x4_set1(vmin), v));
+        return min(u32x4_set1(vmax), max(u32x4_set1(vmin), v));
     }
 
     // ------------------------------------------------------------------
-    // int8x16
+    // s8x16
     // ------------------------------------------------------------------
 
-    static inline int8x16 clamp(int8x16 v, int8x16 vmin, int8x16 vmax)
-    {
-        return min(vmax, max(vmin, v));
-    }
-
-    // ------------------------------------------------------------------
-    // int16x8
-    // ------------------------------------------------------------------
-
-    static inline int16x8 clamp(int16x8 v, int16x8 vmin, int16x8 vmax)
+    static inline s8x16 clamp(s8x16 v, s8x16 vmin, s8x16 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
     // ------------------------------------------------------------------
-    // int32x4
+    // s16x8
     // ------------------------------------------------------------------
 
-    static inline int32x4 set_x(int32x4 a, s32 x)
+    static inline s16x8 clamp(s16x8 v, s16x8 vmin, s16x8 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
+    // s32x4
+    // ------------------------------------------------------------------
+
+    static inline s32x4 set_x(s32x4 a, s32 x)
     {
         return set_component<0>(a, x);
     }
 
-    static inline int32x4 set_y(int32x4 a, s32 y)
+    static inline s32x4 set_y(s32x4 a, s32 y)
     {
         return set_component<1>(a, y);
     }
 
-    static inline int32x4 set_z(int32x4 a, s32 z)
+    static inline s32x4 set_z(s32x4 a, s32 z)
     {
         return set_component<2>(a, z);
     }
 
-    static inline int32x4 set_w(int32x4 a, s32 w)
+    static inline s32x4 set_w(s32x4 a, s32 w)
     {
         return set_component<3>(a, w);
     }
 
-    static inline s32 get_x(int32x4 a)
+    static inline s32 get_x(s32x4 a)
     {
         return get_component<0>(a);
     }
 
-    static inline s32 get_y(int32x4 a)
+    static inline s32 get_y(s32x4 a)
     {
         return get_component<1>(a);
     }
 
-    static inline s32 get_z(int32x4 a)
+    static inline s32 get_z(s32x4 a)
     {
         return get_component<2>(a);
     }
 
-    static inline s32 get_w(int32x4 a)
+    static inline s32 get_w(s32x4 a)
     {
         return get_component<3>(a);
     }
 
-    static inline int32x4 splat_x(int32x4 a)
+    static inline s32x4 splat_x(s32x4 a)
     {
         return shuffle<0, 0, 0, 0>(a);
     }
 
-    static inline int32x4 splat_y(int32x4 a)
+    static inline s32x4 splat_y(s32x4 a)
     {
         return shuffle<1, 1, 1, 1>(a);
     }
 
-    static inline int32x4 splat_z(int32x4 a)
+    static inline s32x4 splat_z(s32x4 a)
     {
         return shuffle<2, 2, 2, 2>(a);
     }
 
-    static inline int32x4 splat_w(int32x4 a)
+    static inline s32x4 splat_w(s32x4 a)
     {
         return shuffle<3, 3, 3, 3>(a);
     }
 
-    static inline int32x4 clamp(int32x4 v, int32x4 vmin, int32x4 vmax)
+    static inline s32x4 clamp(s32x4 v, s32x4 vmin, s32x4 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline int32x4 clamp(int32x4 v, int vmin, int vmax)
+    static inline s32x4 clamp(s32x4 v, s32 vmin, s32 vmax)
     {
-        return min(int32x4_set1(vmax), max(int32x4_set1(vmin), v));
+        return min(s32x4_set1(vmax), max(s32x4_set1(vmin), v));
     }
 
     // ------------------------------------------------------------------

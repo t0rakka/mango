@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -25,7 +25,7 @@ namespace simd {
     static inline float32x4 shuffle(float32x4 a, float32x4 b)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        const uint8x16::vector mask = { VEC_SH4(x, 0), VEC_SH4(y, 0), VEC_SH4(z, 1), VEC_SH4(w, 1) };
+        const u8x16::vector mask = { VEC_SH4(x, 0), VEC_SH4(y, 0), VEC_SH4(z, 1), VEC_SH4(w, 1) };
         return vec_perm(a.data, b.data, mask);
     }
 
@@ -33,7 +33,7 @@ namespace simd {
     static inline float32x4 shuffle(float32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        const uint8x16::vector mask = { VEC_SH4(x, 0), VEC_SH4(y, 0), VEC_SH4(z, 0), VEC_SH4(w, 0) };
+        const u8x16::vector mask = { VEC_SH4(x, 0), VEC_SH4(y, 0), VEC_SH4(z, 0), VEC_SH4(w, 0) };
         return vec_perm(v.data, v.data, mask);
     }
 

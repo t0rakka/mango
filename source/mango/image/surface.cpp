@@ -72,7 +72,7 @@ namespace
 			// 128 bit fill
 			u16 value16 = static_cast<u16>(color);
 			u32 value32 = (color << 16) | color;
-			simd::uint32x4 value128 = simd::uint32x4_set1(value32);
+			simd::u32x4 value128 = simd::u32x4_set1(value32);
 			fill_aligned(dest, value16, value128, count);
 		}
 #else
@@ -110,7 +110,7 @@ namespace
 		if (count >= 16)
 		{
 			// 128 bit fill
-			simd::uint32x4 value128 = simd::uint32x4_set1(color);
+			simd::u32x4 value128 = simd::u32x4_set1(color);
 			fill_aligned(dest, color, value128, count);
 		}
 		else

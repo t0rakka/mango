@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,52 +10,52 @@ namespace mango {
 namespace simd {
 
     // -----------------------------------------------------------------
-    // uint8x64
+    // u8x64
     // -----------------------------------------------------------------
 
-    static inline uint8x64 uint8x64_zero()
+    static inline u8x64 u8x64_zero()
     {
-        uint8x64 result;
-        result.lo = uint8x32_zero();
-        result.hi = uint8x32_zero();
+        u8x64 result;
+        result.lo = u8x32_zero();
+        result.hi = u8x32_zero();
         return result;
     }
 
-    static inline uint8x64 uint8x64_set1(u8 s)
+    static inline u8x64 u8x64_set1(u8 s)
     {
-        uint8x64 result;
-        result.lo = uint8x32_set1(s);
-        result.hi = uint8x32_set1(s);
+        u8x64 result;
+        result.lo = u8x32_set1(s);
+        result.hi = u8x32_set1(s);
         return result;
     }
 
-    static inline uint8x64 unpacklo(uint8x64 a, uint8x64 b)
+    static inline u8x64 unpacklo(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 unpackhi(uint8x64 a, uint8x64 b)
+    static inline u8x64 unpackhi(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 add(uint8x64 a, uint8x64 b)
+    static inline u8x64 add(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 sub(uint8x64 a, uint8x64 b)
+    static inline u8x64 sub(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
@@ -63,17 +63,17 @@ namespace simd {
 
     // saturated
 
-    static inline uint8x64 adds(uint8x64 a, uint8x64 b)
+    static inline u8x64 adds(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = adds(a.lo, b.lo);
         result.hi = adds(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 subs(uint8x64 a, uint8x64 b)
+    static inline u8x64 subs(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
         return result;
@@ -81,41 +81,41 @@ namespace simd {
 
     // bitwise
 
-    static inline uint8x64 bitwise_nand(uint8x64 a, uint8x64 b)
+    static inline u8x64 bitwise_nand(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 bitwise_and(uint8x64 a, uint8x64 b)
+    static inline u8x64 bitwise_and(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 bitwise_or(uint8x64 a, uint8x64 b)
+    static inline u8x64 bitwise_or(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 bitwise_xor(uint8x64 a, uint8x64 b)
+    static inline u8x64 bitwise_xor(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 bitwise_not(uint8x64 a)
+    static inline u8x64 bitwise_not(u8x64 a)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
@@ -123,7 +123,7 @@ namespace simd {
 
     // compare
 
-    static inline mask8x64 compare_eq(uint8x64 a, uint8x64 b)
+    static inline mask8x64 compare_eq(u8x64 a, u8x64 b)
     {
         mask8x64 result;
         result.lo = compare_eq(a.lo, b.lo);
@@ -131,7 +131,7 @@ namespace simd {
         return result;
     }
 
-    static inline mask8x64 compare_gt(uint8x64 a, uint8x64 b)
+    static inline mask8x64 compare_gt(u8x64 a, u8x64 b)
     {
         mask8x64 result;
         result.lo = compare_gt(a.lo, b.lo);
@@ -139,85 +139,85 @@ namespace simd {
         return result;
     }
 
-    static inline uint8x64 select(mask8x64 mask, uint8x64 a, uint8x64 b)
+    static inline u8x64 select(mask8x64 mask, u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 min(uint8x64 a, uint8x64 b)
+    static inline u8x64 min(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = min(a.lo, b.lo);
         result.hi = min(a.hi, b.hi);
         return result;
     }
 
-    static inline uint8x64 max(uint8x64 a, uint8x64 b)
+    static inline u8x64 max(u8x64 a, u8x64 b)
     {
-        uint8x64 result;
+        u8x64 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // uint16x32
+    // u16x32
     // -----------------------------------------------------------------
 
-    static inline uint16x32 uint16x32_zero()
+    static inline u16x32 u16x32_zero()
     {
-        uint16x32 result;
-        result.lo = uint16x16_zero();
-        result.hi = uint16x16_zero();
+        u16x32 result;
+        result.lo = u16x16_zero();
+        result.hi = u16x16_zero();
         return result;
     }
 
-    static inline uint16x32 uint16x32_set1(u16 s)
+    static inline u16x32 u16x32_set1(u16 s)
     {
-        uint16x32 result;
-        result.lo = uint16x16_set1(s);
-        result.hi = uint16x16_set1(s);
+        u16x32 result;
+        result.lo = u16x16_set1(s);
+        result.hi = u16x16_set1(s);
         return result;
     }
 
-    static inline uint16x32 unpacklo(uint16x32 a, uint16x32 b)
+    static inline u16x32 unpacklo(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 unpackhi(uint16x32 a, uint16x32 b)
+    static inline u16x32 unpackhi(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 add(uint16x32 a, uint16x32 b)
+    static inline u16x32 add(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 sub(uint16x32 a, uint16x32 b)
+    static inline u16x32 sub(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 mullo(uint16x32 a, uint16x32 b)
+    static inline u16x32 mullo(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
         return result;
@@ -225,17 +225,17 @@ namespace simd {
 
     // saturated
 
-    static inline uint16x32 adds(uint16x32 a, uint16x32 b)
+    static inline u16x32 adds(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = adds(a.lo, b.lo);
         result.hi = adds(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 subs(uint16x32 a, uint16x32 b)
+    static inline u16x32 subs(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
         return result;
@@ -243,41 +243,41 @@ namespace simd {
 
     // bitwise
 
-    static inline uint16x32 bitwise_nand(uint16x32 a, uint16x32 b)
+    static inline u16x32 bitwise_nand(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 bitwise_and(uint16x32 a, uint16x32 b)
+    static inline u16x32 bitwise_and(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 bitwise_or(uint16x32 a, uint16x32 b)
+    static inline u16x32 bitwise_or(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 bitwise_xor(uint16x32 a, uint16x32 b)
+    static inline u16x32 bitwise_xor(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 bitwise_not(uint16x32 a)
+    static inline u16x32 bitwise_not(u16x32 a)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
@@ -285,7 +285,7 @@ namespace simd {
 
     // compare
 
-    static inline mask16x32 compare_eq(uint16x32 a, uint16x32 b)
+    static inline mask16x32 compare_eq(u16x32 a, u16x32 b)
     {
         mask16x32 result;
         result.lo = compare_eq(a.lo, b.lo);
@@ -293,7 +293,7 @@ namespace simd {
         return result;
     }
 
-    static inline mask16x32 compare_gt(uint16x32 a, uint16x32 b)
+    static inline mask16x32 compare_gt(u16x32 a, u16x32 b)
     {
         mask16x32 result;
         result.lo = compare_gt(a.lo, b.lo);
@@ -301,9 +301,9 @@ namespace simd {
         return result;
     }
 
-    static inline uint16x32 select(mask16x32 mask, uint16x32 a, uint16x32 b)
+    static inline u16x32 select(mask16x32 mask, u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
@@ -312,27 +312,27 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline uint16x32 slli(uint16x32 a)
+    static inline u16x32 slli(u16x32 a)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = slli<Count>(a.lo);
         result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint16x32 srli(uint16x32 a)
+    static inline u16x32 srli(u16x32 a)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = srli<Count>(a.lo);
         result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint16x32 srai(uint16x32 a)
+    static inline u16x32 srai(u16x32 a)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = srai<Count>(a.lo);
         result.hi = srai<Count>(a.hi);
         return result;
@@ -340,124 +340,124 @@ namespace simd {
 
     // shift by scalar
 
-    static inline uint16x32 sll(uint16x32 a, int count)
+    static inline u16x32 sll(u16x32 a, int count)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = sll(a.lo, count);
         result.hi = sll(a.hi, count);
         return result;
     }
 
-    static inline uint16x32 srl(uint16x32 a, int count)
+    static inline u16x32 srl(u16x32 a, int count)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
         return result;
     }
 
-    static inline uint16x32 sra(uint16x32 a, int count)
+    static inline u16x32 sra(u16x32 a, int count)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = sra(a.lo, count);
         result.hi = sra(a.hi, count);
         return result;
     }
 
-    static inline uint16x32 min(uint16x32 a, uint16x32 b)
+    static inline u16x32 min(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = min(a.lo, b.lo);
         result.hi = min(a.hi, b.hi);
         return result;
     }
 
-    static inline uint16x32 max(uint16x32 a, uint16x32 b)
+    static inline u16x32 max(u16x32 a, u16x32 b)
     {
-        uint16x32 result;
+        u16x32 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // uint32x16
+    // u32x16
     // -----------------------------------------------------------------
 
-    static inline uint32x16 uint32x16_zero()
+    static inline u32x16 u32x16_zero()
     {
-        uint32x16 result;
-        result.lo = uint32x8_zero();
-        result.hi = uint32x8_zero();
+        u32x16 result;
+        result.lo = u32x8_zero();
+        result.hi = u32x8_zero();
         return result;
     }
 
-    static inline uint32x16 uint32x16_set1(u32 s)
+    static inline u32x16 u32x16_set1(u32 s)
     {
-        uint32x16 result;
-        result.lo = uint32x8_set1(s);
-        result.hi = uint32x8_set1(s);
+        u32x16 result;
+        result.lo = u32x8_set1(s);
+        result.hi = u32x8_set1(s);
         return result;
     }
 
-    static inline uint32x16 uint32x16_set16(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7,
+    static inline u32x16 u32x16_set16(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7,
         u32 s8, u32 s9, u32 s10, u32 s11, u32 s12, u32 s13, u32 s14, u32 s15)
     {
-        uint32x16 result;
-        result.lo = uint32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7);
-        result.hi = uint32x8_set8(s8, s9, s10, s11, s12, s13, s14, s15);
+        u32x16 result;
+        result.lo = u32x8_set8(s0, s1, s2, s3, s4, s5, s6, s7);
+        result.hi = u32x8_set8(s8, s9, s10, s11, s12, s13, s14, s15);
         return result;
     }
 
-    static inline uint32x16 uint32x16_uload(const u32* source)
+    static inline u32x16 u32x16_uload(const u32* source)
     {
-        uint32x16 result;
-        result.lo = uint32x8_uload(source + 0);
-        result.hi = uint32x8_uload(source + 8);
+        u32x16 result;
+        result.lo = u32x8_uload(source + 0);
+        result.hi = u32x8_uload(source + 8);
         return result;
     }
 
-    static inline void uint32x16_ustore(u32* dest, uint32x16 a)
+    static inline void u32x16_ustore(u32* dest, u32x16 a)
     {
-        uint32x8_ustore(dest + 0, a.lo);
-        uint32x8_ustore(dest + 8, a.hi);
+        u32x8_ustore(dest + 0, a.lo);
+        u32x8_ustore(dest + 8, a.hi);
     }
 
-    static inline uint32x16 unpacklo(uint32x16 a, uint32x16 b)
+    static inline u32x16 unpacklo(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 unpackhi(uint32x16 a, uint32x16 b)
+    static inline u32x16 unpackhi(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 add(uint32x16 a, uint32x16 b)
+    static inline u32x16 add(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 sub(uint32x16 a, uint32x16 b)
+    static inline u32x16 sub(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 mullo(uint32x16 a, uint32x16 b)
+    static inline u32x16 mullo(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
         return result;
@@ -465,41 +465,41 @@ namespace simd {
 
     // bitwise
 
-    static inline uint32x16 bitwise_nand(uint32x16 a, uint32x16 b)
+    static inline u32x16 bitwise_nand(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 bitwise_and(uint32x16 a, uint32x16 b)
+    static inline u32x16 bitwise_and(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 bitwise_or(uint32x16 a, uint32x16 b)
+    static inline u32x16 bitwise_or(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 bitwise_xor(uint32x16 a, uint32x16 b)
+    static inline u32x16 bitwise_xor(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 bitwise_not(uint32x16 a)
+    static inline u32x16 bitwise_not(u32x16 a)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
@@ -507,7 +507,7 @@ namespace simd {
 
     // compare
 
-    static inline mask32x16 compare_eq(uint32x16 a, uint32x16 b)
+    static inline mask32x16 compare_eq(u32x16 a, u32x16 b)
     {
         mask32x16 result;
         result.lo = compare_eq(a.lo, b.lo);
@@ -515,7 +515,7 @@ namespace simd {
         return result;
     }
 
-    static inline mask32x16 compare_gt(uint32x16 a, uint32x16 b)
+    static inline mask32x16 compare_gt(u32x16 a, u32x16 b)
     {
         mask32x16 result;
         result.lo = compare_gt(a.lo, b.lo);
@@ -523,9 +523,9 @@ namespace simd {
         return result;
     }
 
-    static inline uint32x16 select(mask32x16 mask, uint32x16 a, uint32x16 b)
+    static inline u32x16 select(mask32x16 mask, u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
@@ -534,27 +534,27 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline uint32x16 slli(uint32x16 a)
+    static inline u32x16 slli(u32x16 a)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = slli<Count>(a.lo);
         result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint32x16 srli(uint32x16 a)
+    static inline u32x16 srli(u32x16 a)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = srli<Count>(a.lo);
         result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint32x16 srai(uint32x16 a)
+    static inline u32x16 srai(u32x16 a)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = srai<Count>(a.lo);
         result.hi = srai<Count>(a.hi);
         return result;
@@ -562,25 +562,25 @@ namespace simd {
 
     // shift by scalar
 
-    static inline uint32x16 sll(uint32x16 a, int count)
+    static inline u32x16 sll(u32x16 a, int count)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = sll(a.lo, count);
         result.hi = sll(a.hi, count);
         return result;
     }
 
-    static inline uint32x16 srl(uint32x16 a, int count)
+    static inline u32x16 srl(u32x16 a, int count)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
         return result;
     }
 
-    static inline uint32x16 sra(uint32x16 a, int count)
+    static inline u32x16 sra(u32x16 a, int count)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = sra(a.lo, count);
         result.hi = sra(a.hi, count);
         return result;
@@ -588,146 +588,146 @@ namespace simd {
 
     // shift by vector
 
-    static inline uint32x16 sll(uint32x16 a, uint32x16 count)
+    static inline u32x16 sll(u32x16 a, u32x16 count)
     {
         a.lo = sll(a.lo, count.lo);
         a.hi = sll(a.hi, count.hi);
         return a;
     }
 
-    static inline uint32x16 srl(uint32x16 a, uint32x16 count)
+    static inline u32x16 srl(u32x16 a, u32x16 count)
     {
         a.lo = srl(a.lo, count.lo);
         a.hi = srl(a.hi, count.hi);
         return a;
     }
 
-    static inline uint32x16 sra(uint32x16 a, uint32x16 count)
+    static inline u32x16 sra(u32x16 a, u32x16 count)
     {
         a.lo = sra(a.lo, count.lo);
         a.hi = sra(a.hi, count.hi);
         return a;
     }
 
-    static inline uint32x16 min(uint32x16 a, uint32x16 b)
+    static inline u32x16 min(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = min(a.lo, b.lo);
         result.hi = min(a.hi, b.hi);
         return result;
     }
 
-    static inline uint32x16 max(uint32x16 a, uint32x16 b)
+    static inline u32x16 max(u32x16 a, u32x16 b)
     {
-        uint32x16 result;
+        u32x16 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // uint64x8
+    // u64x8
     // -----------------------------------------------------------------
 
-    static inline uint64x8 uint64x8_zero()
+    static inline u64x8 u64x8_zero()
     {
-        uint64x8 result;
-        result.lo = uint64x4_zero();
-        result.hi = uint64x4_zero();
+        u64x8 result;
+        result.lo = u64x4_zero();
+        result.hi = u64x4_zero();
         return result;
     }
 
-    static inline uint64x8 uint64x8_set1(u64 s)
+    static inline u64x8 u64x8_set1(u64 s)
     {
-        uint64x8 result;
-        result.lo = uint64x4_set1(s);
-        result.hi = uint64x4_set1(s);
+        u64x8 result;
+        result.lo = u64x4_set1(s);
+        result.hi = u64x4_set1(s);
         return result;
     }
 
-    static inline uint64x8 uint64x8_set8(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
+    static inline u64x8 u64x8_set8(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
     {
-        uint64x8 result;
-        result.lo = uint64x4_set4(s0, s1, s2, s3);
-        result.hi = uint64x4_set4(s4, s5, s6, s7);
+        u64x8 result;
+        result.lo = u64x4_set4(s0, s1, s2, s3);
+        result.hi = u64x4_set4(s4, s5, s6, s7);
         return result;
     }
 
-    static inline uint64x8 unpacklo(uint64x8 a, uint64x8 b)
+    static inline u64x8 unpacklo(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 unpackhi(uint64x8 a, uint64x8 b)
+    static inline u64x8 unpackhi(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 add(uint64x8 a, uint64x8 b)
+    static inline u64x8 add(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 sub(uint64x8 a, uint64x8 b)
+    static inline u64x8 sub(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 bitwise_nand(uint64x8 a, uint64x8 b)
+    static inline u64x8 bitwise_nand(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 bitwise_and(uint64x8 a, uint64x8 b)
+    static inline u64x8 bitwise_and(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 bitwise_or(uint64x8 a, uint64x8 b)
+    static inline u64x8 bitwise_or(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 bitwise_xor(uint64x8 a, uint64x8 b)
+    static inline u64x8 bitwise_xor(u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline uint64x8 bitwise_not(uint64x8 a)
+    static inline u64x8 bitwise_not(u64x8 a)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
     }
 
-    static inline uint64x8 select(mask64x8 mask, uint64x8 a, uint64x8 b)
+    static inline u64x8 select(mask64x8 mask, u64x8 a, u64x8 b)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
@@ -736,18 +736,18 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline uint64x8 slli(uint64x8 a)
+    static inline u64x8 slli(u64x8 a)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = slli<Count>(a.lo);
         result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline uint64x8 srli(uint64x8 a)
+    static inline u64x8 srli(u64x8 a)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = srli<Count>(a.lo);
         result.hi = srli<Count>(a.hi);
         return result;
@@ -755,69 +755,69 @@ namespace simd {
 
     // shift by scalar
 
-    static inline uint64x8 sll(uint64x8 a, int count)
+    static inline u64x8 sll(u64x8 a, int count)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = sll(a.lo, count);
         result.hi = sll(a.hi, count);
         return result;
     }
 
-    static inline uint64x8 srl(uint64x8 a, int count)
+    static inline u64x8 srl(u64x8 a, int count)
     {
-        uint64x8 result;
+        u64x8 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // int8x64
+    // s8x64
     // -----------------------------------------------------------------
 
-    static inline int8x64 int8x64_zero()
+    static inline s8x64 s8x64_zero()
     {
-        int8x64 result;
-        result.lo = int8x32_zero();
-        result.hi = int8x32_zero();
+        s8x64 result;
+        result.lo = s8x32_zero();
+        result.hi = s8x32_zero();
         return result;
     }
 
-    static inline int8x64 int8x64_set1(s8 s)
+    static inline s8x64 s8x64_set1(s8 s)
     {
-        int8x64 result;
-        result.lo = int8x32_set1(s);
-        result.hi = int8x32_set1(s);
+        s8x64 result;
+        result.lo = s8x32_set1(s);
+        result.hi = s8x32_set1(s);
         return result;
     }
 
-    static inline int8x64 unpacklo(int8x64 a, int8x64 b)
+    static inline s8x64 unpacklo(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 unpackhi(int8x64 a, int8x64 b)
+    static inline s8x64 unpackhi(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 add(int8x64 a, int8x64 b)
+    static inline s8x64 add(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 sub(int8x64 a, int8x64 b)
+    static inline s8x64 sub(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
@@ -825,33 +825,33 @@ namespace simd {
 
     // saturated
 
-    static inline int8x64 adds(int8x64 a, int8x64 b)
+    static inline s8x64 adds(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = adds(a.lo, b.lo);
         result.hi = adds(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 subs(int8x64 a, int8x64 b)
+    static inline s8x64 subs(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 abs(int8x64 a)
+    static inline s8x64 abs(s8x64 a)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = abs(a.lo);
         result.hi = abs(a.hi);
         return result;
     }
 
-    static inline int8x64 neg(int8x64 a)
+    static inline s8x64 neg(s8x64 a)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = neg(a.lo);
         result.hi = neg(a.hi);
         return result;
@@ -859,41 +859,41 @@ namespace simd {
 
     // bitwise
 
-    static inline int8x64 bitwise_nand(int8x64 a, int8x64 b)
+    static inline s8x64 bitwise_nand(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 bitwise_and(int8x64 a, int8x64 b)
+    static inline s8x64 bitwise_and(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 bitwise_or(int8x64 a, int8x64 b)
+    static inline s8x64 bitwise_or(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 bitwise_xor(int8x64 a, int8x64 b)
+    static inline s8x64 bitwise_xor(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 bitwise_not(int8x64 a)
+    static inline s8x64 bitwise_not(s8x64 a)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
@@ -901,7 +901,7 @@ namespace simd {
 
     // compare
 
-    static inline mask8x64 compare_eq(int8x64 a, int8x64 b)
+    static inline mask8x64 compare_eq(s8x64 a, s8x64 b)
     {
         mask8x64 result;
         result.lo = compare_eq(a.lo, b.lo);
@@ -909,7 +909,7 @@ namespace simd {
         return result;
     }
 
-    static inline mask8x64 compare_gt(int8x64 a, int8x64 b)
+    static inline mask8x64 compare_gt(s8x64 a, s8x64 b)
     {
         mask8x64 result;
         result.lo = compare_gt(a.lo, b.lo);
@@ -917,85 +917,85 @@ namespace simd {
         return result;
     }
 
-    static inline int8x64 select(mask8x64 mask, int8x64 a, int8x64 b)
+    static inline s8x64 select(mask8x64 mask, s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 min(int8x64 a, int8x64 b)
+    static inline s8x64 min(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = min(a.lo, b.lo);
         result.hi = min(a.hi, b.hi);
         return result;
     }
 
-    static inline int8x64 max(int8x64 a, int8x64 b)
+    static inline s8x64 max(s8x64 a, s8x64 b)
     {
-        int8x64 result;
+        s8x64 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // int16x32
+    // s16x32
     // -----------------------------------------------------------------
 
-    static inline int16x32 int16x32_zero()
+    static inline s16x32 s16x32_zero()
     {
-        int16x32 result;
-        result.lo = int16x16_zero();
-        result.hi = int16x16_zero();
+        s16x32 result;
+        result.lo = s16x16_zero();
+        result.hi = s16x16_zero();
         return result;
     }
 
-    static inline int16x32 int16x32_set1(s16 s)
+    static inline s16x32 s16x32_set1(s16 s)
     {
-        int16x32 result;
-        result.lo = int16x16_set1(s);
-        result.hi = int16x16_set1(s);
+        s16x32 result;
+        result.lo = s16x16_set1(s);
+        result.hi = s16x16_set1(s);
         return result;
     }
 
-    static inline int16x32 unpacklo(int16x32 a, int16x32 b)
+    static inline s16x32 unpacklo(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 unpackhi(int16x32 a, int16x32 b)
+    static inline s16x32 unpackhi(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 add(int16x32 a, int16x32 b)
+    static inline s16x32 add(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 sub(int16x32 a, int16x32 b)
+    static inline s16x32 sub(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 mullo(int16x32 a, int16x32 b)
+    static inline s16x32 mullo(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
         return result;
@@ -1003,33 +1003,33 @@ namespace simd {
 
     // saturated
 
-    static inline int16x32 adds(int16x32 a, int16x32 b)
+    static inline s16x32 adds(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = adds(a.lo, b.lo);
         result.hi = adds(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 subs(int16x32 a, int16x32 b)
+    static inline s16x32 subs(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 abs(int16x32 a)
+    static inline s16x32 abs(s16x32 a)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = abs(a.lo);
         result.hi = abs(a.hi);
         return result;
     }
 
-    static inline int16x32 neg(int16x32 a)
+    static inline s16x32 neg(s16x32 a)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = neg(a.lo);
         result.hi = neg(a.hi);
         return result;
@@ -1037,41 +1037,41 @@ namespace simd {
 
     // bitwise
 
-    static inline int16x32 bitwise_nand(int16x32 a, int16x32 b)
+    static inline s16x32 bitwise_nand(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 bitwise_and(int16x32 a, int16x32 b)
+    static inline s16x32 bitwise_and(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 bitwise_or(int16x32 a, int16x32 b)
+    static inline s16x32 bitwise_or(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 bitwise_xor(int16x32 a, int16x32 b)
+    static inline s16x32 bitwise_xor(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 bitwise_not(int16x32 a)
+    static inline s16x32 bitwise_not(s16x32 a)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
@@ -1079,7 +1079,7 @@ namespace simd {
 
     // compare
 
-    static inline mask16x32 compare_eq(int16x32 a, int16x32 b)
+    static inline mask16x32 compare_eq(s16x32 a, s16x32 b)
     {
         mask16x32 result;
         result.lo = compare_eq(a.lo, b.lo);
@@ -1087,7 +1087,7 @@ namespace simd {
         return result;
     }
 
-    static inline mask16x32 compare_gt(int16x32 a, int16x32 b)
+    static inline mask16x32 compare_gt(s16x32 a, s16x32 b)
     {
         mask16x32 result;
         result.lo = compare_gt(a.lo, b.lo);
@@ -1095,9 +1095,9 @@ namespace simd {
         return result;
     }
 
-    static inline int16x32 select(mask16x32 mask, int16x32 a, int16x32 b)
+    static inline s16x32 select(mask16x32 mask, s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
@@ -1106,27 +1106,27 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline int16x32 slli(int16x32 a)
+    static inline s16x32 slli(s16x32 a)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = slli<Count>(a.lo);
         result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int16x32 srli(int16x32 a)
+    static inline s16x32 srli(s16x32 a)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = srli<Count>(a.lo);
         result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int16x32 srai(int16x32 a)
+    static inline s16x32 srai(s16x32 a)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = srai<Count>(a.lo);
         result.hi = srai<Count>(a.hi);
         return result;
@@ -1134,140 +1134,140 @@ namespace simd {
 
     // shift by scalar
 
-    static inline int16x32 sll(int16x32 a, int count)
+    static inline s16x32 sll(s16x32 a, int count)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = sll(a.lo, count);
         result.hi = sll(a.hi, count);
         return result;
     }
 
-    static inline int16x32 srl(int16x32 a, int count)
+    static inline s16x32 srl(s16x32 a, int count)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
         return result;
     }
 
-    static inline int16x32 sra(int16x32 a, int count)
+    static inline s16x32 sra(s16x32 a, int count)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = sra(a.lo, count);
         result.hi = sra(a.hi, count);
         return result;
     }
 
-    static inline int16x32 min(int16x32 a, int16x32 b)
+    static inline s16x32 min(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = min(a.lo, b.lo);
         result.hi = min(a.hi, b.hi);
         return result;
     }
 
-    static inline int16x32 max(int16x32 a, int16x32 b)
+    static inline s16x32 max(s16x32 a, s16x32 b)
     {
-        int16x32 result;
+        s16x32 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // int32x16
+    // s32x16
     // -----------------------------------------------------------------
 
-    static inline int32x16 int32x16_zero()
+    static inline s32x16 s32x16_zero()
     {
-        int32x16 result;
-        result.lo = int32x8_zero();
-        result.hi = int32x8_zero();
+        s32x16 result;
+        result.lo = s32x8_zero();
+        result.hi = s32x8_zero();
         return result;
     }
 
-    static inline int32x16 int32x16_set1(s32 s)
+    static inline s32x16 s32x16_set1(s32 s)
     {
-        int32x16 result;
-        result.lo = int32x8_set1(s);
-        result.hi = int32x8_set1(s);
+        s32x16 result;
+        result.lo = s32x8_set1(s);
+        result.hi = s32x8_set1(s);
         return result;
     }
 
-    static inline int32x16 int32x16_set16(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
+    static inline s32x16 s32x16_set16(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
         s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
     {
-        int32x16 result;
-        result.lo = int32x8_set8(v0, v1, v2, v3, v4, v5, v6, v7);
-        result.hi = int32x8_set8(v8, v9, v10, v11, v12, v13, v14, v15);
+        s32x16 result;
+        result.lo = s32x8_set8(v0, v1, v2, v3, v4, v5, v6, v7);
+        result.hi = s32x8_set8(v8, v9, v10, v11, v12, v13, v14, v15);
         return result;
     }
 
-    static inline int32x16 int32x16_uload(const s32* source)
+    static inline s32x16 s32x16_uload(const s32* source)
     {
-        int32x16 result;
-        result.lo = int32x8_uload(source + 0);
-        result.hi = int32x8_uload(source + 8);
+        s32x16 result;
+        result.lo = s32x8_uload(source + 0);
+        result.hi = s32x8_uload(source + 8);
         return result;
     }
 
-    static inline void int32x16_ustore(s32* dest, int32x16 a)
+    static inline void s32x16_ustore(s32* dest, s32x16 a)
     {
-        int32x8_ustore(dest + 0, a.lo);
-        int32x8_ustore(dest + 8, a.hi);
+        s32x8_ustore(dest + 0, a.lo);
+        s32x8_ustore(dest + 8, a.hi);
     }
 
-    static inline int32x16 unpacklo(int32x16 a, int32x16 b)
+    static inline s32x16 unpacklo(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 unpackhi(int32x16 a, int32x16 b)
+    static inline s32x16 unpackhi(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 abs(int32x16 a)
+    static inline s32x16 abs(s32x16 a)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = abs(a.lo);
         result.hi = abs(a.hi);
         return result;
     }
 
-    static inline int32x16 neg(int32x16 a)
+    static inline s32x16 neg(s32x16 a)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = neg(a.lo);
         result.hi = neg(a.hi);
         return result;
     }
 
-    static inline int32x16 add(int32x16 a, int32x16 b)
+    static inline s32x16 add(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 sub(int32x16 a, int32x16 b)
+    static inline s32x16 sub(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 mullo(int32x16 a, int32x16 b)
+    static inline s32x16 mullo(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
         return result;
@@ -1275,41 +1275,41 @@ namespace simd {
 
     // bitwise
 
-    static inline int32x16 bitwise_nand(int32x16 a, int32x16 b)
+    static inline s32x16 bitwise_nand(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 bitwise_and(int32x16 a, int32x16 b)
+    static inline s32x16 bitwise_and(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 bitwise_or(int32x16 a, int32x16 b)
+    static inline s32x16 bitwise_or(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 bitwise_xor(int32x16 a, int32x16 b)
+    static inline s32x16 bitwise_xor(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 bitwise_not(int32x16 a)
+    static inline s32x16 bitwise_not(s32x16 a)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
@@ -1317,7 +1317,7 @@ namespace simd {
 
     // compare
 
-    static inline mask32x16 compare_eq(int32x16 a, int32x16 b)
+    static inline mask32x16 compare_eq(s32x16 a, s32x16 b)
     {
         mask32x16 result;
         result.lo = compare_eq(a.lo, b.lo);
@@ -1325,7 +1325,7 @@ namespace simd {
         return result;
     }
 
-    static inline mask32x16 compare_gt(int32x16 a, int32x16 b)
+    static inline mask32x16 compare_gt(s32x16 a, s32x16 b)
     {
         mask32x16 result;
         result.lo = compare_gt(a.lo, b.lo);
@@ -1333,9 +1333,9 @@ namespace simd {
         return result;
     }
 
-    static inline int32x16 select(mask32x16 mask, int32x16 a, int32x16 b)
+    static inline s32x16 select(mask32x16 mask, s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
@@ -1344,27 +1344,27 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline int32x16 slli(int32x16 a)
+    static inline s32x16 slli(s32x16 a)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = slli<Count>(a.lo);
         result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int32x16 srli(int32x16 a)
+    static inline s32x16 srli(s32x16 a)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = srli<Count>(a.lo);
         result.hi = srli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int32x16 srai(int32x16 a)
+    static inline s32x16 srai(s32x16 a)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = srai<Count>(a.lo);
         result.hi = srai<Count>(a.hi);
         return result;
@@ -1372,25 +1372,25 @@ namespace simd {
 
     // shify by scalar
 
-    static inline int32x16 sll(int32x16 a, int count)
+    static inline s32x16 sll(s32x16 a, int count)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = sll(a.lo, count);
         result.hi = sll(a.hi, count);
         return result;
     }
 
-    static inline int32x16 srl(int32x16 a, int count)
+    static inline s32x16 srl(s32x16 a, int count)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
         return result;
     }
 
-    static inline int32x16 sra(int32x16 a, int count)
+    static inline s32x16 sra(s32x16 a, int count)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = sra(a.lo, count);
         result.hi = sra(a.hi, count);
         return result;
@@ -1398,146 +1398,146 @@ namespace simd {
 
     // shift by vector
 
-    static inline int32x16 sll(int32x16 a, uint32x16 count)
+    static inline s32x16 sll(s32x16 a, u32x16 count)
     {
         a.lo = sll(a.lo, count.lo);
         a.hi = sll(a.hi, count.hi);
         return a;
     }
 
-    static inline int32x16 srl(int32x16 a, uint32x16 count)
+    static inline s32x16 srl(s32x16 a, u32x16 count)
     {
         a.lo = srl(a.lo, count.lo);
         a.hi = srl(a.hi, count.hi);
         return a;
     }
 
-    static inline int32x16 sra(int32x16 a, uint32x16 count)
+    static inline s32x16 sra(s32x16 a, u32x16 count)
     {
         a.lo = sra(a.lo, count.lo);
         a.hi = sra(a.hi, count.hi);
         return a;
     }
 
-    static inline int32x16 min(int32x16 a, int32x16 b)
+    static inline s32x16 min(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = min(a.lo, b.lo);
         result.hi = min(a.hi, b.hi);
         return result;
     }
 
-    static inline int32x16 max(int32x16 a, int32x16 b)
+    static inline s32x16 max(s32x16 a, s32x16 b)
     {
-        int32x16 result;
+        s32x16 result;
         result.lo = max(a.lo, b.lo);
         result.hi = max(a.hi, b.hi);
         return result;
     }
 
     // -----------------------------------------------------------------
-    // int64x8
+    // s64x8
     // -----------------------------------------------------------------
 
-    static inline int64x8 int64x8_zero()
+    static inline s64x8 s64x8_zero()
     {
-        int64x8 result;
-        result.lo = int64x4_zero();
-        result.hi = int64x4_zero();
+        s64x8 result;
+        result.lo = s64x4_zero();
+        result.hi = s64x4_zero();
         return result;
     }
 
-    static inline int64x8 int64x8_set1(s64 s)
+    static inline s64x8 s64x8_set1(s64 s)
     {
-        int64x8 result;
-        result.lo = int64x4_set1(s);
-        result.hi = int64x4_set1(s);
+        s64x8 result;
+        result.lo = s64x4_set1(s);
+        result.hi = s64x4_set1(s);
         return result;
     }
 
-    static inline int64x8 int64x8_set8(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
+    static inline s64x8 s64x8_set8(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
     {
-        int64x8 result;
-        result.lo = int64x4_set4(s0, s1, s2, s3);
-        result.hi = int64x4_set4(s4, s5, s6, s7);
+        s64x8 result;
+        result.lo = s64x4_set4(s0, s1, s2, s3);
+        result.hi = s64x4_set4(s4, s5, s6, s7);
         return result;
     }
 
-    static inline int64x8 unpacklo(int64x8 a, int64x8 b)
+    static inline s64x8 unpacklo(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = unpacklo(a.lo, b.lo);
         result.hi = unpacklo(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 unpackhi(int64x8 a, int64x8 b)
+    static inline s64x8 unpackhi(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = unpackhi(a.lo, b.lo);
         result.hi = unpackhi(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 add(int64x8 a, int64x8 b)
+    static inline s64x8 add(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = add(a.lo, b.lo);
         result.hi = add(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 sub(int64x8 a, int64x8 b)
+    static inline s64x8 sub(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 bitwise_nand(int64x8 a, int64x8 b)
+    static inline s64x8 bitwise_nand(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = bitwise_nand(a.lo, b.lo);
         result.hi = bitwise_nand(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 bitwise_and(int64x8 a, int64x8 b)
+    static inline s64x8 bitwise_and(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = bitwise_and(a.lo, b.lo);
         result.hi = bitwise_and(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 bitwise_or(int64x8 a, int64x8 b)
+    static inline s64x8 bitwise_or(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = bitwise_or(a.lo, b.lo);
         result.hi = bitwise_or(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 bitwise_xor(int64x8 a, int64x8 b)
+    static inline s64x8 bitwise_xor(s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = bitwise_xor(a.lo, b.lo);
         result.hi = bitwise_xor(a.hi, b.hi);
         return result;
     }
 
-    static inline int64x8 bitwise_not(int64x8 a)
+    static inline s64x8 bitwise_not(s64x8 a)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
     }
 
-    static inline int64x8 select(mask64x8 mask, int64x8 a, int64x8 b)
+    static inline s64x8 select(mask64x8 mask, s64x8 a, s64x8 b)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = select(mask.lo, a.lo, b.lo);
         result.hi = select(mask.hi, a.hi, b.hi);
         return result;
@@ -1546,18 +1546,18 @@ namespace simd {
     // shift by constant
 
     template <int Count>
-    static inline int64x8 slli(int64x8 a)
+    static inline s64x8 slli(s64x8 a)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = slli<Count>(a.lo);
         result.hi = slli<Count>(a.hi);
         return result;
     }
 
     template <int Count>
-    static inline int64x8 srli(int64x8 a)
+    static inline s64x8 srli(s64x8 a)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = srli<Count>(a.lo);
         result.hi = srli<Count>(a.hi);
         return result;
@@ -1565,17 +1565,17 @@ namespace simd {
 
     // shift by scalar
 
-    static inline int64x8 sll(int64x8 a, int count)
+    static inline s64x8 sll(s64x8 a, int count)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = sll(a.lo, count);
         result.hi = sll(a.hi, count);
         return result;
     }
 
-    static inline int64x8 srl(int64x8 a, int count)
+    static inline s64x8 srl(s64x8 a, int count)
     {
-        int64x8 result;
+        s64x8 result;
         result.lo = srl(a.lo, count);
         result.hi = srl(a.hi, count);
         return result;

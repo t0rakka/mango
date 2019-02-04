@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -135,45 +135,45 @@ namespace detail {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline uint16x8 extend16x8(uint8x16 s)
+    static inline u16x8 extend16x8(u8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
     }
 
-    static inline uint32x4 extend32x4(uint8x16 s)
+    static inline u32x4 extend32x4(u8x16 s)
     {
         return _mm_cvtepu8_epi32(s);
     }
 
-    static inline uint32x4 extend32x4(uint16x8 s)
+    static inline u32x4 extend32x4(u16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
     }
 
 #else
 
-    static inline uint16x8 extend16x8(uint8x16 s)
+    static inline u16x8 extend16x8(u8x16 s)
     {
         return _mm_unpacklo_epi8(s, _mm_setzero_si128());
     }
 
-    static inline uint32x4 extend32x4(uint8x16 s)
+    static inline u32x4 extend32x4(u8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
         return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
     }
 
-    static inline uint32x4 extend32x4(uint16x8 s)
+    static inline u32x4 extend32x4(u16x8 s)
     {
         return _mm_unpacklo_epi16(s, _mm_setzero_si128());
     }
 
 #endif
 
-    static inline uint32x8 extend32x8(uint16x8 s)
+    static inline u32x8 extend32x8(u16x8 s)
     {
-        uint16x8 s_high = _mm_unpackhi_epi64(s, s);
-        uint32x8 v;
+        u16x8 s_high = _mm_unpackhi_epi64(s, s);
+        u32x8 v;
         v.lo = extend32x4(s);
         v.hi = extend32x4(s_high);
         return v;
@@ -185,36 +185,36 @@ namespace detail {
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline int16x8 extend16x8(int8x16 s)
+    static inline s16x8 extend16x8(s8x16 s)
     {
         return _mm_cvtepi8_epi16(s);
     }
 
-    static inline int32x4 extend32x4(int8x16 s)
+    static inline s32x4 extend32x4(s8x16 s)
     {
         return _mm_cvtepi8_epi32(s);
     }
 
-    static inline int32x4 extend32x4(int16x8 s)
+    static inline s32x4 extend32x4(s16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
     }
 
 #else
 
-    static inline int16x8 extend16x8(int8x16 s)
+    static inline s16x8 extend16x8(s8x16 s)
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi8(s, sign);
     }
 
-    static inline int32x4 extend32x4(int8x16 s)
+    static inline s32x4 extend32x4(s8x16 s)
     {
         const __m128i temp = _mm_unpacklo_epi8(s, _mm_cmpgt_epi8(_mm_setzero_si128(), s));
         return _mm_unpacklo_epi16(temp, _mm_cmpgt_epi16(_mm_setzero_si128(), temp));
     }
 
-    static inline int32x4 extend32x4(int16x8 s)
+    static inline s32x4 extend32x4(s16x8 s)
     {
         const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi16(s, sign);
@@ -222,10 +222,10 @@ namespace detail {
 
 #endif
 
-    static inline int32x8 extend32x8(int16x8 s)
+    static inline s32x8 extend32x8(s16x8 s)
     {
-        int16x8 s_high = _mm_unpackhi_epi64(s, s);
-        int32x8 v;
+        s16x8 s_high = _mm_unpackhi_epi64(s, s);
+        s32x8 v;
         v.lo = extend32x4(s);
         v.hi = extend32x4(s_high);
         return v;
@@ -235,89 +235,89 @@ namespace detail {
     // narrow
     // -----------------------------------------------------------------
 
-    static inline uint8x16 narrow(uint16x8 a, uint16x8 b)
+    static inline u8x16 narrow(u16x8 a, u16x8 b)
     {
         return _mm_packus_epi16(a, b);
     }
 
-    static inline uint16x8 narrow(uint32x4 a, uint32x4 b)
+    static inline u16x8 narrow(u32x4 a, u32x4 b)
     {
         return simd128_packus_epi32(a, b);
     }
 
-    static inline int8x16 narrow(int16x8 a, int16x8 b)
+    static inline s8x16 narrow(s16x8 a, s16x8 b)
     {
         return _mm_packs_epi16(a, b);
     }
 
-    static inline int16x8 narrow(int32x4 a, int32x4 b)
+    static inline s16x8 narrow(s32x4 a, s32x4 b)
     {
         return _mm_packs_epi32(a, b);
     }
 
     // -----------------------------------------------------------------
-    // uint32
+    // u32
     // -----------------------------------------------------------------
 
-    static inline uint32x4 get_low(uint32x8 a)
+    static inline u32x4 get_low(u32x8 a)
     {
         return a.lo;
     }
 
-    static inline uint32x4 get_high(uint32x8 a)
+    static inline u32x4 get_high(u32x8 a)
     {
         return a.hi;
     }
 
-    static inline uint32x8 set_low(uint32x8 a, uint32x4 low)
+    static inline u32x8 set_low(u32x8 a, u32x4 low)
     {
         a.lo = low;
         return a;
     }
 
-    static inline uint32x8 set_high(uint32x8 a, uint32x4 high)
+    static inline u32x8 set_high(u32x8 a, u32x4 high)
     {
         a.hi = high;
         return a;
     }
 
-    static inline uint32x8 combine(uint32x4 a, uint32x4 b)
+    static inline u32x8 combine(u32x4 a, u32x4 b)
     {
-        uint32x8 v;
+        u32x8 v;
         v.lo = a;
         v.hi = b;
         return v;
     }
 
     // -----------------------------------------------------------------
-    // int32
+    // s32
     // -----------------------------------------------------------------
 
-    static inline int32x4 get_low(int32x8 a)
+    static inline s32x4 get_low(s32x8 a)
     {
         return a.lo;
     }
 
-    static inline int32x4 get_high(int32x8 a)
+    static inline s32x4 get_high(s32x8 a)
     {
         return a.hi;
     }
 
-    static inline int32x8 set_low(int32x8 a, int32x4 low)
+    static inline s32x8 set_low(s32x8 a, s32x4 low)
     {
         a.lo = low;
         return a;
     }
 
-    static inline int32x8 set_high(int32x8 a, int32x4 high)
+    static inline s32x8 set_high(s32x8 a, s32x4 high)
     {
         a.hi = high;
         return a;
     }
 
-    static inline int32x8 combine(int32x4 a, int32x4 b)
+    static inline s32x8 combine(s32x4 a, s32x4 b)
     {
-        int32x8 v;
+        s32x8 v;
         v.lo = a;
         v.hi = b;
         return v;
@@ -360,7 +360,7 @@ namespace detail {
     // 128 bit convert
 
     template <>
-    inline float32x4 convert<float32x4>(uint32x4 s)
+    inline float32x4 convert<float32x4>(u32x4 s)
     {
         // conversion could be done by subtracting 0x80000000 from the value before signed conversion and
         // adding float(0x80000000) to the result after conversion but this would reduce precision on the LSBs.
@@ -374,13 +374,13 @@ namespace detail {
     }
 
     template <>
-    inline float32x4 convert<float32x4>(int32x4 s)
+    inline float32x4 convert<float32x4>(s32x4 s)
     {
         return _mm_cvtepi32_ps(s);
     }
 
     template <>
-    inline uint32x4 convert<uint32x4>(float32x4 s)
+    inline u32x4 convert<u32x4>(float32x4 s)
     {
         // conversion could be done by subtracting float(0x80000000) from the value before signed conversion and
         // adding 0x80000000 to the result after conversion but this would reduce precision on the LSBs.
@@ -391,13 +391,13 @@ namespace detail {
     }
 
     template <>
-    inline int32x4 convert<int32x4>(float32x4 s)
+    inline s32x4 convert<s32x4>(float32x4 s)
     {
         return _mm_cvtps_epi32(s);
     }
 
     template <>
-    inline int32x4 truncate<int32x4>(float32x4 s)
+    inline s32x4 truncate<s32x4>(float32x4 s)
     {
         return _mm_cvttps_epi32(s);
     }
@@ -405,16 +405,16 @@ namespace detail {
     // 256 bit convert
 
     template <>
-    inline int32x8 convert<int32x8>(float32x8 s)
+    inline s32x8 convert<s32x8>(float32x8 s)
     {
-        int32x8 result;
-        result.lo = convert<int32x4>(s.lo);
-        result.hi = convert<int32x4>(s.hi);
+        s32x8 result;
+        result.lo = convert<s32x4>(s.lo);
+        result.hi = convert<s32x4>(s.hi);
         return result;
     }
 
     template <>
-    inline float32x8 convert<float32x8>(int32x8 s)
+    inline float32x8 convert<float32x8>(s32x8 s)
     {
         float32x8 result;
         result.lo = convert<float32x4>(s.lo);
@@ -423,16 +423,16 @@ namespace detail {
     }
 
     template <>
-    inline uint32x8 convert<uint32x8>(float32x8 s)
+    inline u32x8 convert<u32x8>(float32x8 s)
     {
-        uint32x8 result;
-        result.lo = convert<uint32x4>(s.lo);
-        result.hi = convert<uint32x4>(s.hi);
+        u32x8 result;
+        result.lo = convert<u32x4>(s.lo);
+        result.hi = convert<u32x4>(s.hi);
         return result;
     }
 
     template <>
-    inline float32x8 convert<float32x8>(uint32x8 s)
+    inline float32x8 convert<float32x8>(u32x8 s)
     {
         float32x8 result;
         result.lo = convert<float32x4>(s.lo);
@@ -441,27 +441,27 @@ namespace detail {
     }
 
     template <>
-    inline int32x8 truncate<int32x8>(float32x8 s)
+    inline s32x8 truncate<s32x8>(float32x8 s)
     {
-        int32x8 result;
-        result.lo = truncate<int32x4>(s.lo);
-        result.hi = truncate<int32x4>(s.hi);
+        s32x8 result;
+        result.lo = truncate<s32x4>(s.lo);
+        result.hi = truncate<s32x4>(s.hi);
         return result;
     }
 
     // 512 bit convert
 
     template <>
-    inline int32x16 convert<int32x16>(float32x16 s)
+    inline s32x16 convert<s32x16>(float32x16 s)
     {
-        int32x16 result;
-        result.lo = convert<int32x8>(s.lo);
-        result.hi = convert<int32x8>(s.hi);
+        s32x16 result;
+        result.lo = convert<s32x8>(s.lo);
+        result.hi = convert<s32x8>(s.hi);
         return result;
     }
 
     template <>
-    inline float32x16 convert<float32x16>(int32x16 s)
+    inline float32x16 convert<float32x16>(s32x16 s)
     {
         float32x16 result;
         result.lo = convert<float32x8>(s.lo);
@@ -470,16 +470,16 @@ namespace detail {
     }
 
     template <>
-    inline uint32x16 convert<uint32x16>(float32x16 s)
+    inline u32x16 convert<u32x16>(float32x16 s)
     {
-        uint32x16 result;
-        result.lo = convert<uint32x8>(s.lo);
-        result.hi = convert<uint32x8>(s.hi);
+        u32x16 result;
+        result.lo = convert<u32x8>(s.lo);
+        result.hi = convert<u32x8>(s.hi);
         return result;
     }
 
     template <>
-    inline float32x16 convert<float32x16>(uint32x16 s)
+    inline float32x16 convert<float32x16>(u32x16 s)
     {
         float32x16 result;
         result.lo = convert<float32x8>(s.lo);
@@ -488,11 +488,11 @@ namespace detail {
     }
 
     template <>
-    inline int32x16 truncate<int32x16>(float32x16 s)
+    inline s32x16 truncate<s32x16>(float32x16 s)
     {
-        int32x16 result;
-        result.lo = truncate<int32x8>(s.lo);
-        result.hi = truncate<int32x8>(s.hi);
+        s32x16 result;
+        result.lo = truncate<s32x8>(s.lo);
+        result.hi = truncate<s32x8>(s.hi);
         return result;
     }
 
@@ -531,7 +531,7 @@ namespace detail {
     }
 
     template <>
-    inline float64x4 convert<float64x4>(int32x4 s)
+    inline float64x4 convert<float64x4>(s32x4 s)
     {
         float64x4 result;
         result.lo = _mm_cvtepi32_pd(s);
@@ -549,7 +549,7 @@ namespace detail {
     }
 
     template <>
-    inline int32x4 convert<int32x4>(float64x4 s)
+    inline s32x4 convert<s32x4>(float64x4 s)
     {
         __m128i xy = _mm_cvtpd_epi32(s.lo);
         __m128i zw = _mm_cvtpd_epi32(s.hi);
@@ -566,7 +566,7 @@ namespace detail {
     }
 
     template <>
-    inline float64x4 convert<float64x4>(uint32x4 ui)
+    inline float64x4 convert<float64x4>(u32x4 ui)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
         const __m128i mask = _mm_set1_epi32(0x43380000);
@@ -579,7 +579,7 @@ namespace detail {
     }
 
     template <>
-    inline uint32x4 convert<uint32x4>(float64x4 d)
+    inline u32x4 convert<u32x4>(float64x4 d)
     {
         const __m128d bias = _mm_set1_pd((1ll << 52) * 1.5);
         __m128 xy = _mm_castpd_ps(_mm_add_pd(d.lo, bias));
@@ -589,7 +589,7 @@ namespace detail {
     }
 
     template <>
-    inline int32x4 truncate<int32x4>(float64x4 s)
+    inline s32x4 truncate<s32x4>(float64x4 s)
     {
         __m128i xy = _mm_cvttpd_epi32(s.lo);
         __m128i zw = _mm_cvttpd_epi32(s.hi);
@@ -598,7 +598,7 @@ namespace detail {
     }
 
     template <>
-    inline float64x4 convert<float64x4>(int64x4 v)
+    inline float64x4 convert<float64x4>(s64x4 v)
     {
         double x = double(get_component<0>(v));
         double y = double(get_component<1>(v));
@@ -608,13 +608,13 @@ namespace detail {
     }
 
     template <>
-    inline int64x4 convert<int64x4>(float64x4 v)
+    inline s64x4 convert<s64x4>(float64x4 v)
     {
         s64 x = s64(get_component<0>(v));
         s64 y = s64(get_component<1>(v));
         s64 z = s64(get_component<2>(v));
         s64 w = s64(get_component<3>(v));
-        return int64x4_set4(x, y, z, w);
+        return s64x4_set4(x, y, z, w);
     }
 
     // -----------------------------------------------------------------
@@ -645,33 +645,33 @@ namespace detail {
     inline float32x4 convert<float32x4>(float16x4 h)
     {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
-        const int32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
+        const s32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
 
-        int32x4 no_sign  = bitwise_and(u, int32x4_set1(0x7fff));
-        int32x4 sign     = bitwise_and(u, int32x4_set1(0x8000));
-        int32x4 exponent = bitwise_and(u, int32x4_set1(0x7c00));
-        int32x4 mantissa = bitwise_and(u, int32x4_set1(0x03ff));
+        s32x4 no_sign  = bitwise_and(u, s32x4_set1(0x7fff));
+        s32x4 sign     = bitwise_and(u, s32x4_set1(0x8000));
+        s32x4 exponent = bitwise_and(u, s32x4_set1(0x7c00));
+        s32x4 mantissa = bitwise_and(u, s32x4_set1(0x03ff));
 
         // NaN or Inf
-        int32x4 a = bitwise_or(int32x4_set1(0x7f800000), slli(mantissa, 13));
+        s32x4 a = bitwise_or(s32x4_set1(0x7f800000), slli(mantissa, 13));
 
         // Zero or Denormal
-        const int32x4 magic = int32x4_set1(0x3f000000);
-        int32x4 b;
+        const s32x4 magic = s32x4_set1(0x3f000000);
+        s32x4 b;
         b = add(magic, mantissa);
-        b = reinterpret<int32x4>(sub(reinterpret<float32x4>(b), reinterpret<float32x4>(magic)));
+        b = reinterpret<s32x4>(sub(reinterpret<float32x4>(b), reinterpret<float32x4>(magic)));
 
         // Numeric Value
-        int32x4 c = add(int32x4_set1(0x38000000), slli(no_sign, 13));
+        s32x4 c = add(s32x4_set1(0x38000000), slli(no_sign, 13));
 
         // Select a, b, or c based on exponent
         mask32x4 mask;
-        int32x4 result;
+        s32x4 result;
 
-        mask = compare_eq(exponent, int32x4_zero());
+        mask = compare_eq(exponent, s32x4_zero());
         result = select(mask, b, c);
 
-        mask = compare_eq(exponent, int32x4_set1(0x7c00));
+        mask = compare_eq(exponent, s32x4_set1(0x7c00));
         result = select(mask, a, result);
 
         // Sign
@@ -684,36 +684,36 @@ namespace detail {
     inline float16x4 convert<float16x4>(float32x4 f)
     {
         const float32x4 magic = float32x4_set1(Float(0, 15, 0).f);
-        const int32x4 vinf = int32x4_set1(31 << 23);
+        const s32x4 vinf = s32x4_set1(31 << 23);
 
-        const int32x4 u = reinterpret<int32x4>(f);
-        const int32x4 sign = srli(bitwise_and(u, int32x4_set1(0x80000000)), 16);
+        const s32x4 u = reinterpret<s32x4>(f);
+        const s32x4 sign = srli(bitwise_and(u, s32x4_set1(0x80000000)), 16);
 
-        const int32x4 vexponent = int32x4_set1(0x7f800000);
+        const s32x4 vexponent = s32x4_set1(0x7f800000);
 
         // Inf / NaN
         const mask32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
-        int32x4 mantissa = bitwise_and(u, int32x4_set1(0x007fffff));
-        mask32x4 x0 = compare_eq(mantissa, int32x4_zero());
-        mantissa = select(x0, int32x4_zero(), srai(mantissa, 13));
-        const int32x4 v0 = bitwise_or(int32x4_set1(0x7c00), mantissa);
+        s32x4 mantissa = bitwise_and(u, s32x4_set1(0x007fffff));
+        mask32x4 x0 = compare_eq(mantissa, s32x4_zero());
+        mantissa = select(x0, s32x4_zero(), srai(mantissa, 13));
+        const s32x4 v0 = bitwise_or(s32x4_set1(0x7c00), mantissa);
 
-        int32x4 v1 = bitwise_and(u, int32x4_set1(0x7ffff000));
-        v1 = reinterpret<int32x4>(mul(reinterpret<float32x4>(v1), magic));
-        v1 = add(v1, int32x4_set1(0x1000));
+        s32x4 v1 = bitwise_and(u, s32x4_set1(0x7ffff000));
+        v1 = reinterpret<s32x4>(mul(reinterpret<float32x4>(v1), magic));
+        v1 = add(v1, s32x4_set1(0x1000));
 
 #if defined(MANGO_ENABLE_SSE4_1)
         v1 = _mm_min_epi32(v1, vinf);
         v1 = srai(v1, 13);
 
-        int32x4 v = select(s0, v0, v1);
+        s32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
 #else
         v1 = select(compare_gt(v1, vinf), vinf, v1);
         v1 = srai(v1, 13);
 
-        int32x4 v = select(s0, v0, v1);
+        s32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
         v = _mm_slli_epi32 (v, 16);
         v = _mm_srai_epi32 (v, 16);
