@@ -39,7 +39,7 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f32x4 set_component(f32x4 a, float s)
+    static inline f32x4 set_component(f32x4 a, f32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         a[Index] = s;
@@ -47,7 +47,7 @@ namespace simd {
     }
 
     template <unsigned int Index>
-    static inline float get_component(f32x4 a)
+    static inline f32 get_component(f32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return a[Index];
@@ -58,22 +58,22 @@ namespace simd {
         return {{ 0.0f, 0.0f, 0.0f, 0.0f }};
     }
 
-    static inline f32x4 f32x4_set1(float s)
+    static inline f32x4 f32x4_set1(f32 s)
     {
         return {{ s, s, s, s }};
     }
 
-    static inline f32x4 f32x4_set4(float x, float y, float z, float w)
+    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
     {
         return {{ x, y, z, w }};
     }
 
-    static inline f32x4 f32x4_uload(const float* source)
+    static inline f32x4 f32x4_uload(const f32* source)
     {
         return f32x4_set4(source[0], source[1], source[2], source[3]);
     }
 
-    static inline void f32x4_ustore(float* dest, f32x4 a)
+    static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
         dest[0] = a[0];
         dest[1] = a[1];
@@ -170,17 +170,17 @@ namespace simd {
 
     static inline f32x4 hmin(f32x4 a)
     {
-        float l = std::min(a[0], a[1]);
-        float h = std::min(a[2], a[3]);
-        float s = std::min(l, h);
+        f32 l = std::min(a[0], a[1]);
+        f32 h = std::min(a[2], a[3]);
+        f32 s = std::min(l, h);
         return f32x4_set1(s);
     }
 
     static inline f32x4 hmax(f32x4 a)
     {
-        float l = std::max(a[0], a[1]);
-        float h = std::max(a[2], a[3]);
-        float s = std::max(l, h);
+        f32 l = std::max(a[0], a[1]);
+        f32 h = std::max(a[2], a[3]);
+        f32 s = std::max(l, h);
         return f32x4_set1(s);
     }
 
@@ -249,7 +249,7 @@ namespace simd {
         return v;
     }
 
-    static inline f32x4 div(f32x4 a, float b)
+    static inline f32x4 div(f32x4 a, f32 b)
     {
         f32x4 v;
         v[0] = a[0] / b;
@@ -302,20 +302,20 @@ namespace simd {
     static inline f32x4 fast_rsqrt(f32x4 a)
     {
         f32x4 v;
-        v[0] = 1.0f / float(std::sqrt(a[0]));
-        v[1] = 1.0f / float(std::sqrt(a[1]));
-        v[2] = 1.0f / float(std::sqrt(a[2]));
-        v[3] = 1.0f / float(std::sqrt(a[3]));
+        v[0] = 1.0f / f32(std::sqrt(a[0]));
+        v[1] = 1.0f / f32(std::sqrt(a[1]));
+        v[2] = 1.0f / f32(std::sqrt(a[2]));
+        v[3] = 1.0f / f32(std::sqrt(a[3]));
         return v;
     }
 
     static inline f32x4 fast_sqrt(f32x4 a)
     {
         f32x4 v;
-        v[0] = float(std::sqrt(a[0]));
-        v[1] = float(std::sqrt(a[1]));
-        v[2] = float(std::sqrt(a[2]));
-        v[3] = float(std::sqrt(a[3]));
+        v[0] = f32(std::sqrt(a[0]));
+        v[1] = f32(std::sqrt(a[1]));
+        v[2] = f32(std::sqrt(a[2]));
+        v[3] = f32(std::sqrt(a[3]));
         return v;
     }
 
@@ -334,12 +334,12 @@ namespace simd {
         return fast_sqrt(a);
     }
 
-    static inline float dot3(f32x4 a, f32x4 b)
+    static inline f32 dot3(f32x4 a, f32x4 b)
     {
         return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     }
 
-    static inline float dot4(f32x4 a, f32x4 b)
+    static inline f32 dot4(f32x4 a, f32x4 b)
     {
         return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
     }

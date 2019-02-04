@@ -18,22 +18,22 @@ namespace simd {
         return _mm256_setzero_ps();
     }
 
-    static inline f32x8 f32x8_set1(float s)
+    static inline f32x8 f32x8_set1(f32 s)
     {
         return _mm256_set1_ps(s);
     }
 
-    static inline f32x8 f32x8_set8(float s0, float s1, float s2, float s3, float s4, float s5, float s6, float s7)
+    static inline f32x8 f32x8_set8(f32 s0, f32 s1, f32 s2, f32 s3, f32 s4, f32 s5, f32 s6, f32 s7)
     {
         return _mm256_setr_ps(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline f32x8 f32x8_uload(const float* source)
+    static inline f32x8 f32x8_uload(const f32* source)
     {
         return _mm256_loadu_ps(source);
     }
 
-    static inline void f32x8_ustore(float* dest, f32x8 a)
+    static inline void f32x8_ustore(f32* dest, f32x8 a)
     {
         _mm256_storeu_ps(dest, a);
     }
@@ -124,7 +124,7 @@ namespace simd {
         return _mm256_div_ps(a, b);
     }
 
-    static inline f32x8 div(f32x8 a, float b)
+    static inline f32x8 div(f32x8 a, f32 b)
     {
         return _mm256_div_ps(a, _mm256_set1_ps(b));
     }

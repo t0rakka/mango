@@ -32,7 +32,7 @@ namespace simd {
     // indexed access
 
     template <int Index>
-    static inline f64x2 set_component(f64x2 a, double s)
+    static inline f64x2 set_component(f64x2 a, f64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         s64 temp;
@@ -41,11 +41,11 @@ namespace simd {
     }
 
     template <int Index>
-    static inline double get_component(f64x2 a)
+    static inline f64 get_component(f64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         u64 temp = __msa_copy_u_d((v2u64) a, Index);
-        double s;
+        f64 s;
         std::memcpy(&s, &temp, 8);
         return s;
     }
@@ -55,22 +55,22 @@ namespace simd {
         return (v2f64) { 0.0, 0.0 };
     }
 
-    static inline f64x2 f64x2_set1(double s)
+    static inline f64x2 f64x2_set1(f64 s)
     {
         return (v2f64) { s, s };
     }
 
-    static inline f64x2 f64x2_set2(double x, double y)
+    static inline f64x2 f64x2_set2(f64 x, f64 y)
     {
         return (v2f64) { x, y };
     }
 
-    static inline f64x2 f64x2_uload(const double* source)
+    static inline f64x2 f64x2_uload(const f64* source)
     {
         return reinterpret_cast<const v2f64 *>(source)[0];
     }
 
-    static inline void f64x2_ustore(double* dest, f64x2 a)
+    static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
         reinterpret_cast<v2f64 *>(dest)[0] = a;
     }
@@ -161,7 +161,7 @@ namespace simd {
         return __msa_fdiv_d(a, b);
     }
 
-    static inline f64x2 div(f64x2 a, double b)
+    static inline f64x2 div(f64x2 a, f64 b)
     {
         return __msa_fdiv_d(a, f64x2_set1(b));
     }
@@ -212,7 +212,7 @@ namespace simd {
         return __msa_fsqrt_d(a);
     }
 
-    static inline double dot2(f64x2 a, f64x2 b)
+    static inline f64 dot2(f64x2 a, f64x2 b)
     {
         f64x2 xy = __msa_fmul_d(a, b);
         f64x2 yx = shuffle<1, 0>(xy);

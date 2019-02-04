@@ -179,7 +179,7 @@ namespace simd {
     #define float512_is_hardware_vector
 
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -190,8 +190,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using f32x4   = hardware_vector<float32, 4, __m128>;
-    using f64x2   = hardware_vector<float64, 2, __m128d>;
+    using f32x4   = hardware_vector<f32, 4, __m128>;
+    using f64x2   = hardware_vector<f64, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = hardware_vector<s8, 32, __m256i>;
@@ -202,8 +202,8 @@ namespace simd {
     using u16x16  = hardware_vector<u16, 16, __m256i>;
     using u32x8   = hardware_vector<u32, 8, __m256i>;
     using u64x4   = hardware_vector<u64, 4, __m256i>;
-    using f32x8   = hardware_vector<float32, 8, __m256>;
-    using f64x4   = hardware_vector<float64, 4, __m256d>;
+    using f32x8   = hardware_vector<f32, 8, __m256>;
+    using f64x4   = hardware_vector<f64, 4, __m256d>;
 
     // 512 bit vector
     using s8x64   = hardware_vector<s8, 64, __m512i>;
@@ -214,8 +214,8 @@ namespace simd {
     using u16x32  = hardware_vector<u16, 32, __m512i>;
     using u32x16  = hardware_vector<u32, 16, __m512i>;
     using u64x8   = hardware_vector<u64, 8, __m512i>;
-    using f32x16  = hardware_vector<float32, 16, __m512>;
-    using f64x8   = hardware_vector<float64, 8, __m512d>;
+    using f32x16  = hardware_vector<f32, 16, __m512>;
+    using f64x8   = hardware_vector<f64, 8, __m512d>;
 
     // 128 bit vector mask
     using mask8x16  = hardware_mask<8, 16, __mmask16>;
@@ -267,7 +267,7 @@ namespace simd {
     #define float256_is_hardware_vector
 
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -278,8 +278,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using f32x4   = hardware_vector<float32, 4, __m128>;
-    using f64x2   = hardware_vector<float64, 2, __m128d>;
+    using f32x4   = hardware_vector<f32, 4, __m128>;
+    using f64x2   = hardware_vector<f64, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = hardware_vector<s8, 32, __m256i>;
@@ -290,8 +290,8 @@ namespace simd {
     using u16x16  = hardware_vector<u16, 16, __m256i>;
     using u32x8   = hardware_vector<u32, 8, __m256i>;
     using u64x4   = hardware_vector<u64, 4, __m256i>;
-    using f32x8   = hardware_vector<float32, 8, __m256>;
-    using f64x4   = hardware_vector<float64, 4, __m256d>;
+    using f32x8   = hardware_vector<f32, 8, __m256>;
+    using f64x4   = hardware_vector<f64, 4, __m256d>;
 
     // 512 bit vector
     using s8x64   = composite_vector<s8x32>;
@@ -354,7 +354,7 @@ namespace simd {
     #define float256_is_hardware_vector
     
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -365,8 +365,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using f32x4   = hardware_vector<float32, 4, __m128>;
-    using f64x2   = hardware_vector<float64, 2, __m128d>;
+    using f32x4   = hardware_vector<f32, 4, __m128>;
+    using f64x2   = hardware_vector<f64, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;
@@ -377,8 +377,8 @@ namespace simd {
     using u16x16  = composite_vector<u16x8>;
     using u32x8   = composite_vector<u32x4>;
     using u64x4   = composite_vector<u64x2>;
-    using f32x8   = hardware_vector<float32, 8, __m256>;
-    using f64x4   = hardware_vector<float64, 4, __m256d>;
+    using f32x8   = hardware_vector<f32, 8, __m256>;
+    using f64x4   = hardware_vector<f64, 4, __m256d>;
 
     // 512 bit vector
     using s8x64   = composite_vector<s8x32>;
@@ -440,7 +440,7 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -451,8 +451,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __m128i>;
     using u32x4   = hardware_vector<u32, 4, __m128i>;
     using u64x2   = hardware_vector<u64, 2, __m128i>;
-    using f32x4   = hardware_vector<float32, 4, __m128>;
-    using f64x2   = hardware_vector<float64, 2, __m128d>;
+    using f32x4   = hardware_vector<f32, 4, __m128>;
+    using f64x2   = hardware_vector<f64, 2, __m128d>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;
@@ -527,18 +527,18 @@ namespace simd {
 
     struct float64x2_t
     {
-        double data[2];
+        f64 data[2];
         float64x2_t() = default;
-        float64x2_t(double x, double y) { data[0] = x; data[1] = y; }
-        double & operator [] (int index) { return data[index]; }
-        const double & operator [] (int index) const { return data[index]; }
+        float64x2_t(f64 x, f64 y) { data[0] = x; data[1] = y; }
+        f64 & operator [] (int index) { return data[index]; }
+        const f64 & operator [] (int index) const { return data[index]; }
     };
 
     // 64 bit vector
 #ifdef MANGO_ENABLE_FP16
-    using f16x4   = hardware_vector<float16, 4, float16x4_t>;
+    using f16x4   = hardware_vector<f16, 4, float16x4_t>;
 #else
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 #endif
 
     // 128 bit vector
@@ -550,8 +550,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, uint16x8_t>;
     using u32x4   = hardware_vector<u32, 4, uint32x4_t>;
     using u64x2   = hardware_vector<u64, 2, uint64x2_t>;
-    using f32x4   = hardware_vector<float32, 4, float32x4_t>;
-    using f64x2   = hardware_vector<float64, 2, float64x2_t>;
+    using f32x4   = hardware_vector<f32, 4, float32x4_t>;
+    using f64x2   = hardware_vector<f64, 2, float64x2_t>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;
@@ -627,7 +627,7 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __vector signed char>;
@@ -638,8 +638,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, __vector unsigned short>;
     using u32x4   = hardware_vector<u32, 4, __vector unsigned int>;
     using u64x2   = hardware_vector<u64, 2, __vector unsigned long long>;
-    using f32x4   = hardware_vector<float32, 4, __vector float>;
-    using f64x2   = hardware_vector<float64, 2, __vector double>;
+    using f32x4   = hardware_vector<f32, 4, __vector float>;
+    using f64x2   = hardware_vector<f64, 2, __vector double>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;
@@ -721,7 +721,7 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, v16i8>;
@@ -732,8 +732,8 @@ namespace simd {
     using u16x8   = hardware_vector<u16, 8, v8u16>;
     using u32x4   = hardware_vector<u32, 4, v4u32>;
     using u64x2   = hardware_vector<u64, 2, v2u64>;
-    using f32x4   = hardware_vector<float32, 4, v4f32>;
-    using f64x2   = hardware_vector<float64, 2, v2f64>;
+    using f32x4   = hardware_vector<f32, 4, v4f32>;
+    using f64x2   = hardware_vector<f64, 2, v2f64>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;
@@ -802,7 +802,7 @@ namespace simd {
     // --------------------------------------------------------------
 
     // 64 bit vector
-    using f16x4   = scalar_vector<float16, 4>;
+    using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
     using s8x16   = scalar_vector<s8, 16>;
@@ -813,8 +813,8 @@ namespace simd {
     using u16x8   = scalar_vector<u16, 8>;
     using u32x4   = scalar_vector<u32, 4>;
     using u64x2   = scalar_vector<u64, 2>;
-    using f32x4   = scalar_vector<float32, 4>;
-    using f64x2   = scalar_vector<float64, 2>;
+    using f32x4   = scalar_vector<f32, 4>;
+    using f64x2   = scalar_vector<f64, 2>;
 
     // 256 bit vector
     using s8x32   = composite_vector<s8x16>;

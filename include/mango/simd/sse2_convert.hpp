@@ -600,10 +600,10 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(s64x4 v)
     {
-        double x = double(get_component<0>(v));
-        double y = double(get_component<1>(v));
-        double z = double(get_component<2>(v));
-        double w = double(get_component<3>(v));
+        f64 x = f64(get_component<0>(v));
+        f64 y = f64(get_component<1>(v));
+        f64 z = f64(get_component<2>(v));
+        f64 w = f64(get_component<3>(v));
         return f64x4_set4(x, y, z, w);
     }
 

@@ -59,14 +59,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f64x2 set_component(f64x2 a, double s)
+    static inline f64x2 set_component(f64x2 a, f64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <int Index>
-    static inline double get_component(f64x2 a)
+    static inline f64 get_component(f64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -77,22 +77,22 @@ namespace simd {
         return vec_splats(0.0);
     }
 
-    static inline f64x2 f64x2_set1(double s)
+    static inline f64x2 f64x2_set1(f64 s)
     {
         return vec_splats(s);
     }
 
-    static inline f64x2 f64x2_set2(double x, double y)
+    static inline f64x2 f64x2_set2(f64 x, f64 y)
     {
         return (f64x2::vector) { x, y };
     }
 
-    static inline f64x2 f64x2_uload(const double* s)
+    static inline f64x2 f64x2_uload(const f64* s)
     {
         return vec_xl(0, s);
     }
 
-    static inline void f64x2_ustore(double* dest, f64x2 a)
+    static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
         vec_xst(a.data, 0, dest);
     }
@@ -184,7 +184,7 @@ namespace simd {
         return vec_div(a.data, b.data);
     }
 
-    static inline f64x2 div(f64x2 a, double b)
+    static inline f64x2 div(f64x2 a, f64 b)
     {
         return vec_div(a.data, vec_splats(b));
     }
@@ -229,11 +229,11 @@ namespace simd {
         return vec_sqrt(a.data);
     }
 
-    static inline double dot2(f64x2 a, f64x2 b)
+    static inline f64 dot2(f64x2 a, f64x2 b)
     {
         f64x2 s = vec_mul(a.data, b.data);
-        double x = get_component<0>(s);
-        double y = get_component<1>(s);
+        f64 x = get_component<0>(s);
+        f64 y = get_component<1>(s);
         return x + y;
     }
 

@@ -589,30 +589,30 @@ namespace detail {
 
     static inline f64x4 combine(f64x2 a, f64x2 b)
     {
-        double x = a.data[0];
-        double y = a.data[1];
-        double z = b.data[0];
-        double w = b.data[1];
+        f64 x = a.data[0];
+        f64 y = a.data[1];
+        f64 z = b.data[0];
+        f64 w = b.data[1];
         return f64x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(s32x4 s)
     {
-        double x = double(get_x(s));
-        double y = double(get_y(s));
-        double z = double(get_z(s));
-        double w = double(get_w(s));
+        f64 x = f64(get_x(s));
+        f64 y = f64(get_y(s));
+        f64 z = f64(get_z(s));
+        f64 w = f64(get_w(s));
         return f64x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(f32x4 s)
     {
-        double x = double(get_x(s));
-        double y = double(get_y(s));
-        double z = double(get_z(s));
-        double w = double(get_w(s));
+        f64 x = f64(get_x(s));
+        f64 y = f64(get_y(s));
+        f64 z = f64(get_z(s));
+        f64 w = f64(get_w(s));
         return f64x4_set4(x, y, z, w);
     }
 
@@ -629,20 +629,20 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(f64x4 s)
     {
-        float x = float(s.lo.data[0]);
-        float y = float(s.lo.data[1]);
-        float z = float(s.hi.data[0]);
-        float w = float(s.hi.data[1]);
+        f32 x = f32(s.lo.data[0]);
+        f32 y = f32(s.lo.data[1]);
+        f32 z = f32(s.hi.data[0]);
+        f32 w = f32(s.hi.data[1]);
         return f32x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(u32x4 s)
     {
-        double x = u32_to_f64(get_x(s));
-        double y = u32_to_f64(get_y(s));
-        double z = u32_to_f64(get_z(s));
-        double w = u32_to_f64(get_w(s));
+        f64 x = u32_to_f64(get_x(s));
+        f64 y = u32_to_f64(get_y(s));
+        f64 z = u32_to_f64(get_z(s));
+        f64 w = u32_to_f64(get_w(s));
         return f64x4_set4(x, y, z, w);
     }
 
@@ -669,10 +669,10 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(s64x4 v)
     {
-        double x = double(get_component<0>(v));
-        double y = double(get_component<1>(v));
-        double z = double(get_component<2>(v));
-        double w = double(get_component<3>(v));
+        f64 x = f64(get_component<0>(v));
+        f64 y = f64(get_component<1>(v));
+        f64 z = f64(get_component<2>(v));
+        f64 w = f64(get_component<3>(v));
         return f64x4_set4(x, y, z, w);
     }
 
@@ -709,10 +709,10 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
     {
-        float x = s[0];
-        float y = s[1];
-        float z = s[2];
-        float w = s[3];
+        f32 x = s[0];
+        f32 y = s[1];
+        f32 z = s[2];
+        f32 w = s[3];
         return f32x4_set4(x, y, z, w);
     }
 

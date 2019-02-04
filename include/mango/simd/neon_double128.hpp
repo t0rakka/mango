@@ -30,7 +30,7 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f64x2 set_component(f64x2 a, double s)
+    static inline f64x2 set_component(f64x2 a, f64 s)
     {
         static_assert(Index < 2, "Index out of range.");
         a.data[Index] = s;
@@ -38,7 +38,7 @@ namespace simd {
     }
 
     template <unsigned int Index>
-    static inline double get_component(f64x2 a)
+    static inline f64 get_component(f64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return a.data[Index];
@@ -49,22 +49,22 @@ namespace simd {
         return {{ 0.0, 0.0 }};
     }
 
-    static inline f64x2 f64x2_set1(double s)
+    static inline f64x2 f64x2_set1(f64 s)
     {
         return {{ s, s }};
     }
 
-    static inline f64x2 f64x2_set2(double x, double y)
+    static inline f64x2 f64x2_set2(f64 x, f64 y)
     {
         return {{ x, y }};
     }
 
-    static inline f64x2 f64x2_uload(const double* source)
+    static inline f64x2 f64x2_uload(const f64* source)
     {
         return f64x2_set2(source[0], source[1]);
     }
 
-    static inline void f64x2_ustore(double* dest, f64x2 a)
+    static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
         dest[0] = a.data[0];
         dest[1] = a.data[1];
@@ -186,7 +186,7 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 div(f64x2 a, double b)
+    static inline f64x2 div(f64x2 a, f64 b)
     {
         f64x2 v;
         v.data[0] = a.data[0] / b;
@@ -249,7 +249,7 @@ namespace simd {
         return fast_sqrt(a);
     }
 
-    static inline double dot2(f64x2 a, f64x2 b)
+    static inline f64 dot2(f64x2 a, f64x2 b)
     {
         return a.data[0] * b.data[0] + a.data[1] * b.data[1];
     }

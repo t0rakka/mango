@@ -83,7 +83,7 @@ namespace simd {
     // set component
 
     template <int Index>
-    static inline f64x4 set_component(f64x4 a, double s)
+    static inline f64x4 set_component(f64x4 a, f64 s)
     {
         static_assert(Index < 4, "Index out of range.");
         switch (Index)
@@ -99,10 +99,10 @@ namespace simd {
     // get component
 
     template <int Index>
-    static inline double get_component(f64x4 a)
+    static inline f64 get_component(f64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
-        double s = 0.0;
+        f64 s = 0.0;
         switch (Index)
         {
             case 0: s = get_component<0>(a.lo); break;
@@ -121,7 +121,7 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 f64x4_set1(double s)
+    static inline f64x4 f64x4_set1(f64 s)
     {
         f64x4 result;
         result.lo = f64x2_set1(s);
@@ -129,7 +129,7 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 f64x4_set4(double x, double y, double z, double w)
+    static inline f64x4 f64x4_set4(f64 x, f64 y, f64 z, f64 w)
     {
         f64x4 result;
         result.lo = f64x2_set2(x, y);
@@ -137,7 +137,7 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 f64x4_uload(const double* source)
+    static inline f64x4 f64x4_uload(const f64* source)
     {
         f64x4 result;
         result.lo = f64x2_uload(source + 0);
@@ -145,7 +145,7 @@ namespace simd {
         return result;
     }
 
-    static inline void f64x4_ustore(double* dest, f64x4 a)
+    static inline void f64x4_ustore(f64* dest, f64x4 a)
     {
         f64x2_ustore(dest + 0, a.lo);
         f64x2_ustore(dest + 2, a.hi);
@@ -319,7 +319,7 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 div(f64x4 a, double b)
+    static inline f64x4 div(f64x4 a, f64 b)
     {
         f64x4 result;
         result.lo = div(a.lo, b);
@@ -391,10 +391,10 @@ namespace simd {
         return result;
     }
 
-    static inline double dot4(f64x4 a, f64x4 b)
+    static inline f64 dot4(f64x4 a, f64x4 b)
     {
-        double low = dot2(a.lo, b.lo);
-        double high = dot2(a.hi, b.hi);
+        f64 low = dot2(a.lo, b.lo);
+        f64 high = dot2(a.hi, b.hi);
         return low + high;
     }
 

@@ -77,14 +77,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f32x4 set_component(f32x4 a, float s)
+    static inline f32x4 set_component(f32x4 a, f32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vec_insert(s, a.data, Index);
     }
 
     template <int Index>
-    static inline float get_component(f32x4 a)
+    static inline f32 get_component(f32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vec_extract(a.data, Index);
@@ -95,22 +95,22 @@ namespace simd {
         return vec_splats(0.0f);
     }
 
-    static inline f32x4 f32x4_set1(float s)
+    static inline f32x4 f32x4_set1(f32 s)
     {
         return vec_splats(s);
     }
 
-    static inline f32x4 f32x4_set4(float x, float y, float z, float w)
+    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
     {
         return (f32x4::vector) { x, y, z, w };
     }
 
-    static inline f32x4 f32x4_uload(const float* s)
+    static inline f32x4 f32x4_uload(const f32* s)
     {
         return vec_xl(0, s);
     }
 
-    static inline void f32x4_ustore(float* dest, f32x4 a)
+    static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
         vec_xst(a.data, 0, dest);
     }
@@ -224,7 +224,7 @@ namespace simd {
         return vec_div(a.data, b.data);
     }
 
-    static inline f32x4 div(f32x4 a, float b)
+    static inline f32x4 div(f32x4 a, f32 b)
     {
         return vec_div(a.data, vec_splats(b));
     }
@@ -275,7 +275,7 @@ namespace simd {
         return vec_sqrt(a.data);
     }
 
-    static inline float dot3(f32x4 a, f32x4 b)
+    static inline f32 dot3(f32x4 a, f32x4 b)
     {
         f32x4 prod = vec_mul(a.data, b.data);
         f32x4 s = vec_add(shuffle<0, 0, 0, 0>(prod).data,
@@ -284,7 +284,7 @@ namespace simd {
         return get_component<0>(s);
     }
 
-    static inline float dot4(f32x4 a, f32x4 b)
+    static inline f32 dot4(f32x4 a, f32x4 b)
     {
         f32x4 s = vec_mul(a.data, b.data);
         s = vec_add(s.data, shuffle<2, 3, 0, 1>(s).data);

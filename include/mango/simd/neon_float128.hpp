@@ -150,14 +150,14 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f32x4 set_component(f32x4 a, float s)
+    static inline f32x4 set_component(f32x4 a, f32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vsetq_lane_f32(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline float get_component(f32x4 a)
+    static inline f32 get_component(f32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vgetq_lane_f32(a, Index);
@@ -168,24 +168,24 @@ namespace simd {
         return vdupq_n_f32(0.0f);
     }
 
-    static inline f32x4 f32x4_set1(float s)
+    static inline f32x4 f32x4_set1(f32 s)
     {
         return vdupq_n_f32(s);
     }
 
-    static inline f32x4 f32x4_set4(float x, float y, float z, float w)
+    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
     {
         float32x4_t temp = { x, y, z, w };
         return temp;
     }
 
-    static inline f32x4 f32x4_uload(const float* source)
+    static inline f32x4 f32x4_uload(const f32* source)
     {
         float32x4_t temp = { source[0], source[1], source[2], source[3] };
         return temp;
     }
 
-    static inline void f32x4_ustore(float* dest, f32x4 a)
+    static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
         dest[0] = vgetq_lane_f32(a, 0);
         dest[1] = vgetq_lane_f32(a, 1);
@@ -307,7 +307,7 @@ namespace simd {
         return vdivq_f32(a, b);
     }
 
-    static inline f32x4 div(f32x4 a, float b)
+    static inline f32x4 div(f32x4 a, f32 b)
     {
         f32x4 s = vdupq_n_f32(b);
         return vdivq_f32(a, s);
@@ -323,7 +323,7 @@ namespace simd {
         return vmulq_f32(a, n);
     }
 
-    static inline f32x4 div(f32x4 a, float b)
+    static inline f32x4 div(f32x4 a, f32 b)
     {
         f32x4 s = vdupq_n_f32(b);
         f32x4 n = vrecpeq_f32(s);
@@ -417,7 +417,7 @@ namespace simd {
 
 #endif
 
-    static inline float dot3(f32x4 a, f32x4 b)
+    static inline f32 dot3(f32x4 a, f32x4 b)
     {
         const float32x4_t prod = vmulq_f32(a, b);
         const float32x2_t xy = vget_low_f32(prod);
@@ -426,7 +426,7 @@ namespace simd {
         return vget_lane_f32(s, 0);
     }
 
-    static inline float dot4(f32x4 a, f32x4 b)
+    static inline f32 dot4(f32x4 a, f32x4 b)
     {
         const float32x4_t prod = vmulq_f32(a, b);
         const float32x2_t xy = vget_low_f32(prod);

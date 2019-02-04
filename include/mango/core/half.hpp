@@ -279,9 +279,13 @@ namespace mango
     }
 
     // floating-point types
-
+#if 1
     using float16 = Half;
     using float32 = float;
     using float64 = double;
+#endif
+    using f16 = Half;
+    using f32 = float;
+    using f64 = double;
 
 } // namespace mango

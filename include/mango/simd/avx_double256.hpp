@@ -95,10 +95,10 @@ namespace simd {
     // set component
 
     template <int Index>
-    static inline f64x4 set_component(f64x4 a, double s);
+    static inline f64x4 set_component(f64x4 a, f64 s);
 
     template <>
-    inline f64x4 set_component<0>(f64x4 a, double x)
+    inline f64x4 set_component<0>(f64x4 a, f64 x)
     {
         __m128d xy = _mm256_extractf128_pd(a, 0);
         xy = _mm_move_sd(xy, _mm_set1_pd(x));
@@ -106,7 +106,7 @@ namespace simd {
     }
 
     template <>
-    inline f64x4 set_component<1>(f64x4 a, double y)
+    inline f64x4 set_component<1>(f64x4 a, f64 y)
     {
         __m128d xy = _mm256_extractf128_pd(a, 0);
         xy = _mm_move_sd(_mm_set1_pd(y), xy);
@@ -114,7 +114,7 @@ namespace simd {
     }
 
     template <>
-    inline f64x4 set_component<2>(f64x4 a, double z)
+    inline f64x4 set_component<2>(f64x4 a, f64 z)
     {
         __m128d zw = _mm256_extractf128_pd(a, 1);
         zw = _mm_move_sd(zw, _mm_set1_pd(z));
@@ -122,7 +122,7 @@ namespace simd {
     }
 
     template <>
-    inline f64x4 set_component<3>(f64x4 a, double w)
+    inline f64x4 set_component<3>(f64x4 a, f64 w)
     {
         __m128d zw = _mm256_extractf128_pd(a, 1);
         zw = _mm_move_sd(_mm_set1_pd(w), zw);
@@ -132,17 +132,17 @@ namespace simd {
     // get component
 
     template <int Index>
-    static inline double get_component(f64x4 a);
+    static inline f64 get_component(f64x4 a);
 
     template <>
-    inline double get_component<0>(f64x4 a)
+    inline f64 get_component<0>(f64x4 a)
     {
         const __m128d xy = _mm256_extractf128_pd(a, 0);
         return _mm_cvtsd_f64(xy);
     }
 
     template <>
-    inline double get_component<1>(f64x4 a)
+    inline f64 get_component<1>(f64x4 a)
     {
         const __m128d xy = _mm256_extractf128_pd(a, 0);
         const __m128d yy = _mm_unpackhi_pd(xy, xy);
@@ -150,14 +150,14 @@ namespace simd {
     }
 
     template <>
-    inline double get_component<2>(f64x4 a)
+    inline f64 get_component<2>(f64x4 a)
     {
         const __m128d zw = _mm256_extractf128_pd(a, 1);
         return _mm_cvtsd_f64(zw);
     }
 
     template <>
-    inline double get_component<3>(f64x4 a)
+    inline f64 get_component<3>(f64x4 a)
     {
         const __m128d zw = _mm256_extractf128_pd(a, 1);
         const __m128d ww = _mm_unpackhi_pd(zw, zw);
@@ -169,22 +169,22 @@ namespace simd {
         return _mm256_setzero_pd();
     }
 
-    static inline f64x4 f64x4_set1(double s)
+    static inline f64x4 f64x4_set1(f64 s)
     {
         return _mm256_set1_pd(s);
     }
 
-    static inline f64x4 f64x4_set4(double x, double y, double z, double w)
+    static inline f64x4 f64x4_set4(f64 x, f64 y, f64 z, f64 w)
     {
         return _mm256_setr_pd(x, y, z, w);
     }
 
-    static inline f64x4 f64x4_uload(const double* source)
+    static inline f64x4 f64x4_uload(const f64* source)
     {
         return _mm256_loadu_pd(source);
     }
 
-    static inline void f64x4_ustore(double* dest, f64x4 a)
+    static inline void f64x4_ustore(f64* dest, f64x4 a)
     {
         _mm256_storeu_pd(dest, a);
     }
@@ -297,7 +297,7 @@ namespace simd {
         return _mm256_div_pd(a, b);
     }
 
-    static inline f64x4 div(f64x4 a, double b)
+    static inline f64x4 div(f64x4 a, f64 b)
     {
         return _mm256_div_pd(a, _mm256_set1_pd(b));
     }
@@ -374,7 +374,7 @@ namespace simd {
         return _mm256_sqrt_pd(a);
     }
 
-    static inline double dot4(f64x4 a, f64x4 b)
+    static inline f64 dot4(f64x4 a, f64x4 b)
     {
         const __m256d prod = _mm256_mul_pd(a, b);
         const __m256d zwxy = _mm256_permute2f128_pd(prod, prod, 0x01);

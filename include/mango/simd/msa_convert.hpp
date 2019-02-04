@@ -551,20 +551,20 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(s32x4 s)
     {
-        double x = double(get_component<0>(s));
-        double y = double(get_component<1>(s));
-        double z = double(get_component<2>(s));
-        double w = double(get_component<3>(s));
+        f64 x = f64(get_component<0>(s));
+        f64 y = f64(get_component<1>(s));
+        f64 z = f64(get_component<2>(s));
+        f64 w = f64(get_component<3>(s));
         return f64x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(f32x4 s)
     {
-        double x = double(get_component<0>(s));
-        double y = double(get_component<1>(s));
-        double z = double(get_component<2>(s));
-        double w = double(get_component<3>(s));
+        f64 x = f64(get_component<0>(s));
+        f64 y = f64(get_component<1>(s));
+        f64 z = f64(get_component<2>(s));
+        f64 w = f64(get_component<3>(s));
         return f64x4_set4(x, y, z, w);
     }
 
@@ -581,20 +581,20 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(f64x4 s)
     {
-        float x = float(get_component<0>(s));
-        float y = float(get_component<1>(s));
-        float z = float(get_component<2>(s));
-        float w = float(get_component<3>(s));
+        f32 x = f32(get_component<0>(s));
+        f32 y = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
         return f32x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(u32x4 ui)
     {
-        double x = double(get_component<0>(ui));
-        double y = double(get_component<1>(ui));
-        double z = double(get_component<2>(ui));
-        double w = double(get_component<3>(ui));
+        f64 x = f64(get_component<0>(ui));
+        f64 y = f64(get_component<1>(ui));
+        f64 z = f64(get_component<2>(ui));
+        f64 w = f64(get_component<3>(ui));
         return f64x4_set4(x, y, z, w);
     }
 
@@ -647,10 +647,10 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
     {
-        float x = s[0];
-        float y = s[1];
-        float z = s[2];
-        float w = s[3];
+        f32 x = s[0];
+        f32 y = s[1];
+        f32 z = s[2];
+        f32 w = s[3];
         return f32x4_set4(x, y, z, w);
     }
 

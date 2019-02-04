@@ -41,7 +41,7 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f32x4 set_component(f32x4 a, float s)
+    static inline f32x4 set_component(f32x4 a, f32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         s32 temp;
@@ -50,11 +50,11 @@ namespace simd {
     }
 
     template <int Index>
-    static inline float get_component(f32x4 a)
+    static inline f32 get_component(f32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         u32 temp = __msa_copy_u_w((v4u32) a, Index);
-        float s;
+        f32 s;
         std::memcpy(&s, &temp, 4);
         return s;
     }
@@ -64,22 +64,22 @@ namespace simd {
         return (v4f32) { 0.0f, 0.0f, 0.0f, 0.0f };
     }
 
-    static inline f32x4 f32x4_set1(float s)
+    static inline f32x4 f32x4_set1(f32 s)
     {
         return (v4f32) { s, s, s, s };
     }
 
-    static inline f32x4 f32x4_set4(float x, float y, float z, float w)
+    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
     {
         return (v4f32) { x, y, z, w };
     }
 
-    static inline f32x4 f32x4_uload(const float* source)
+    static inline f32x4 f32x4_uload(const f32* source)
     {
         return reinterpret_cast<const v4f32 *>(source)[0];
     }
 
-    static inline void f32x4_ustore(float* dest, f32x4 a)
+    static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
         reinterpret_cast<v4f32 *>(dest)[0] = a;
     }
@@ -192,7 +192,7 @@ namespace simd {
         return __msa_fdiv_w(a, b);
     }
 
-    static inline f32x4 div(f32x4 a, float b)
+    static inline f32x4 div(f32x4 a, f32 b)
     {
         return __msa_fdiv_w(a, f32x4_set1(b));
     }
@@ -249,7 +249,7 @@ namespace simd {
         return __msa_fsqrt_w(a);
     }
 
-    static inline float dot3(f32x4 a, f32x4 b)
+    static inline f32 dot3(f32x4 a, f32x4 b)
     {
         f32x4 s = mul(a, b);
         s = add(shuffle<0, 0, 0, 0>(s),
@@ -257,7 +257,7 @@ namespace simd {
         return get_component<0>(f32x4(s));
     }
 
-    static inline float dot4(f32x4 a, f32x4 b)
+    static inline f32 dot4(f32x4 a, f32x4 b)
     {
         f32x4 s = mul(a, b);
         s = add(s, shuffle<2, 3, 0, 1>(s));

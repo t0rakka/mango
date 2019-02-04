@@ -18,22 +18,22 @@ namespace simd {
         return _mm512_setzero_pd();
     }
 
-    static inline f64x8 f64x8_set1(double s)
+    static inline f64x8 f64x8_set1(f64 s)
     {
         return _mm512_set1_pd(s);
     }
 
-    static inline f64x8 f64x8_set8(double s0, double s1, double s2, double s3, double s4, double s5, double s6, double s7)
+    static inline f64x8 f64x8_set8(f64 s0, f64 s1, f64 s2, f64 s3, f64 s4, f64 s5, f64 s6, f64 s7)
     {
         return _mm512_setr_pd(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline f64x8 f64x8_uload(const double* source)
+    static inline f64x8 f64x8_uload(const f64* source)
     {
         return _mm512_loadu_pd(source);
     }
 
-    static inline void f64x8_ustore(double* dest, f64x8 a)
+    static inline void f64x8_ustore(f64* dest, f64x8 a)
     {
         _mm512_storeu_pd(dest, a);
     }
@@ -126,7 +126,7 @@ namespace simd {
         return _mm512_div_pd(a, b);
     }
 
-    static inline f64x8 div(f64x8 a, double b)
+    static inline f64x8 div(f64x8 a, f64 b)
     {
         return _mm512_div_pd(a, _mm512_set1_pd(b));
     }

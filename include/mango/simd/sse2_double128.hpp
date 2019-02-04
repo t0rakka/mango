@@ -30,16 +30,16 @@ namespace simd {
     // set component
 
     template <int Index>
-    static inline f64x2 set_component(f64x2 a, double s);
+    static inline f64x2 set_component(f64x2 a, f64 s);
 
     template <>
-    inline f64x2 set_component<0>(f64x2 a, double x)
+    inline f64x2 set_component<0>(f64x2 a, f64 x)
     {
         return _mm_move_sd(a, _mm_set1_pd(x));
     }
 
     template <>
-    inline f64x2 set_component<1>(f64x2 a, double y)
+    inline f64x2 set_component<1>(f64x2 a, f64 y)
     {
         return _mm_move_sd(_mm_set1_pd(y), a);
     }
@@ -47,16 +47,16 @@ namespace simd {
     // get component
 
     template <int Index>
-    static inline double get_component(f64x2 a);
+    static inline f64 get_component(f64x2 a);
 
     template <>
-    inline double get_component<0>(f64x2 a)
+    inline f64 get_component<0>(f64x2 a)
     {
         return _mm_cvtsd_f64(a);
     }
 
     template <>
-    inline double get_component<1>(f64x2 a)
+    inline f64 get_component<1>(f64x2 a)
     {
         const __m128d yy = _mm_unpackhi_pd(a, a);
         return _mm_cvtsd_f64(yy);
@@ -67,22 +67,22 @@ namespace simd {
         return _mm_setzero_pd();
     }
 
-    static inline f64x2 f64x2_set1(double s)
+    static inline f64x2 f64x2_set1(f64 s)
     {
         return _mm_set1_pd(s);
     }
 
-    static inline f64x2 f64x2_set2(double x, double y)
+    static inline f64x2 f64x2_set2(f64 x, f64 y)
     {
         return _mm_setr_pd(x, y);
     }
 
-    static inline f64x2 f64x2_uload(const double* source)
+    static inline f64x2 f64x2_uload(const f64* source)
     {
         return _mm_loadu_pd(source);
     }
 
-    static inline void f64x2_ustore(double* dest, f64x2 a)
+    static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
         _mm_storeu_pd(dest, a);
     }
@@ -173,7 +173,7 @@ namespace simd {
         return _mm_div_pd(a, b);
     }
 
-    static inline f64x2 div(f64x2 a, double b)
+    static inline f64x2 div(f64x2 a, f64 b)
     {
         return _mm_div_pd(a, _mm_set1_pd(b));
     }
@@ -246,7 +246,7 @@ namespace simd {
         return _mm_sqrt_pd(a);
     }
 
-    static inline double dot2(f64x2 a, f64x2 b)
+    static inline f64 dot2(f64x2 a, f64x2 b)
     {
         __m128d xy = _mm_mul_pd(a, b);
         __m128d yx = _mm_shuffle_pd(xy, xy, 0x01);

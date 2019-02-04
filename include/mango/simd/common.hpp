@@ -197,42 +197,42 @@ namespace simd {
     // f32x4
     // ------------------------------------------------------------------
 
-    static inline f32x4 set_x(f32x4 a, float x)
+    static inline f32x4 set_x(f32x4 a, f32 x)
     {
         return set_component<0>(a, x);
     }
 
-    static inline f32x4 set_y(f32x4 a, float y)
+    static inline f32x4 set_y(f32x4 a, f32 y)
     {
         return set_component<1>(a, y);
     }
 
-    static inline f32x4 set_z(f32x4 a, float z)
+    static inline f32x4 set_z(f32x4 a, f32 z)
     {
         return set_component<2>(a, z);
     }
 
-    static inline f32x4 set_w(f32x4 a, float w)
+    static inline f32x4 set_w(f32x4 a, f32 w)
     {
         return set_component<3>(a, w);
     }
 
-    static inline float get_x(f32x4 a)
+    static inline f32 get_x(f32x4 a)
     {
         return get_component<0>(a);
     }
 
-    static inline float get_y(f32x4 a)
+    static inline f32 get_y(f32x4 a)
     {
         return get_component<1>(a);
     }
 
-    static inline float get_z(f32x4 a)
+    static inline f32 get_z(f32x4 a)
     {
         return get_component<2>(a);
     }
 
-    static inline float get_w(f32x4 a)
+    static inline f32 get_w(f32x4 a)
     {
         return get_component<3>(a);
     }
@@ -262,7 +262,7 @@ namespace simd {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f32x4 clamp(f32x4 v, float vmin, float vmax)
+    static inline f32x4 clamp(f32x4 v, f32 vmin, f32 vmax)
     {
         return min(f32x4_set1(vmax), max(f32x4_set1(vmin), v));
     }
@@ -285,19 +285,19 @@ namespace simd {
         return mul(a, s);
     }
 
-    static inline float square(f32x4 a)
+    static inline f32 square(f32x4 a)
     {
         return dot4(a, a);
     }
 
-    static inline float length(f32x4 a)
+    static inline f32 length(f32x4 a)
     {
-        return float(std::sqrt(dot4(a, a)));
+        return f32(std::sqrt(dot4(a, a)));
     }
 
     static inline f32x4 normalize(f32x4 a)
     {
-        float s = square(a);
+        f32 s = square(a);
         f32x4 v = f32x4_set1(s);
         return mul(a, rsqrt(v));
     }
@@ -311,7 +311,7 @@ namespace simd {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f32x8 clamp(f32x8 v, float vmin, float vmax)
+    static inline f32x8 clamp(f32x8 v, f32 vmin, f32 vmax)
     {
         return min(f32x8_set1(vmax), max(f32x8_set1(vmin), v));
     }
@@ -338,22 +338,22 @@ namespace simd {
     // f64x2
     // ------------------------------------------------------------------
 
-    static inline f64x2 set_x(f64x2 a, double x)
+    static inline f64x2 set_x(f64x2 a, f64 x)
     {
         return set_component<0>(a, x);
     }
 
-    static inline f64x2 set_y(f64x2 a, double y)
+    static inline f64x2 set_y(f64x2 a, f64 y)
     {
         return set_component<1>(a, y);
     }
 
-    static inline double get_x(f64x2 a)
+    static inline f64 get_x(f64x2 a)
     {
         return get_component<0>(a);
     }
 
-    static inline double get_y(f64x2 a)
+    static inline f64 get_y(f64x2 a)
     {
         return get_component<1>(a);
     }
@@ -373,7 +373,7 @@ namespace simd {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f64x2 clamp(f64x2 v, double vmin, double vmax)
+    static inline f64x2 clamp(f64x2 v, f64 vmin, f64 vmax)
     {
         return min(f64x2_set1(vmax), max(f64x2_set1(vmin), v));
     }
@@ -396,19 +396,19 @@ namespace simd {
         return mul(a, s);
     }
 
-    static inline double square(f64x2 a)
+    static inline f64 square(f64x2 a)
     {
         return dot2(a, a);
     }
 
-    static inline double length(f64x2 a)
+    static inline f64 length(f64x2 a)
     {
         return std::sqrt(dot2(a, a));
     }
 
     static inline f64x2 normalize(f64x2 a)
     {
-        double s = square(a);
+        f64 s = square(a);
         f64x2 v = f64x2_set1(s);
         return mul(a, rsqrt(v));
     }
@@ -417,42 +417,42 @@ namespace simd {
     // f64x4
     // ------------------------------------------------------------------
 
-    static inline f64x4 set_x(f64x4 a, double x)
+    static inline f64x4 set_x(f64x4 a, f64 x)
     {
         return set_component<0>(a, x);
     }
 
-    static inline f64x4 set_y(f64x4 a, double y)
+    static inline f64x4 set_y(f64x4 a, f64 y)
     {
         return set_component<1>(a, y);
     }
 
-    static inline f64x4 set_z(f64x4 a, double z)
+    static inline f64x4 set_z(f64x4 a, f64 z)
     {
         return set_component<2>(a, z);
     }
 
-    static inline f64x4 set_w(f64x4 a, double w)
+    static inline f64x4 set_w(f64x4 a, f64 w)
     {
         return set_component<3>(a, w);
     }
 
-    static inline double get_x(f64x4 a)
+    static inline f64 get_x(f64x4 a)
     {
         return get_component<0>(a);
     }
 
-    static inline double get_y(f64x4 a)
+    static inline f64 get_y(f64x4 a)
     {
         return get_component<1>(a);
     }
 
-    static inline double get_z(f64x4 a)
+    static inline f64 get_z(f64x4 a)
     {
         return get_component<2>(a);
     }
 
-    static inline double get_w(f64x4 a)
+    static inline f64 get_w(f64x4 a)
     {
         return get_component<3>(a);
     }
@@ -482,7 +482,7 @@ namespace simd {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f64x4 clamp(f64x4 v, double vmin, double vmax)
+    static inline f64x4 clamp(f64x4 v, f64 vmin, f64 vmax)
     {
         return min(f64x4_set1(vmax), max(f64x4_set1(vmin), v));
     }
@@ -505,19 +505,19 @@ namespace simd {
         return mul(a, s);
     }
 
-    static inline double square(f64x4 a)
+    static inline f64 square(f64x4 a)
     {
         return dot4(a, a);
     }
 
-    static inline double length(f64x4 a)
+    static inline f64 length(f64x4 a)
     {
         return std::sqrt(dot4(a, a));
     }
 
     static inline f64x4 normalize(f64x4 a)
     {
-        double s = square(a);
+        f64 s = square(a);
         f64x4 v = f64x4_set1(s);
         return mul(a, rsqrt(v));
     }

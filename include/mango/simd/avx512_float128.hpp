@@ -39,35 +39,35 @@ namespace simd {
     // indexed access
 
     template <unsigned int Index>
-    static inline f32x4 set_component(f32x4 a, float s)
+    static inline f32x4 set_component(f32x4 a, f32 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return _mm_insert_ps(a, _mm_set_ss(s), Index * 0x10);
     }
 
     template <int Index>
-    static inline float get_component(f32x4 a);
+    static inline f32 get_component(f32x4 a);
 
     template <>
-    inline float get_component<0>(f32x4 a)
+    inline f32 get_component<0>(f32x4 a)
     {
         return _mm_cvtss_f32(a);
     }
 
     template <>
-    inline float get_component<1>(f32x4 a)
+    inline f32 get_component<1>(f32x4 a)
     {
         return _mm_cvtss_f32(shuffle<1, 1, 1, 1>(a));
     }
 
     template <>
-    inline float get_component<2>(f32x4 a)
+    inline f32 get_component<2>(f32x4 a)
     {
         return _mm_cvtss_f32(shuffle<2, 2, 2, 2>(a));
     }
 
     template <>
-    inline float get_component<3>(f32x4 a)
+    inline f32 get_component<3>(f32x4 a)
     {
         return _mm_cvtss_f32(shuffle<3, 3, 3, 3>(a));
     }
@@ -77,22 +77,22 @@ namespace simd {
         return _mm_setzero_ps();
     }
 
-    static inline f32x4 f32x4_set1(float s)
+    static inline f32x4 f32x4_set1(f32 s)
     {
         return _mm_set1_ps(s);
     }
 
-    static inline f32x4 f32x4_set4(float x, float y, float z, float w)
+    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
     {
         return _mm_setr_ps(x, y, z, w);
     }
 
-    static inline f32x4 f32x4_uload(const float* source)
+    static inline f32x4 f32x4_uload(const f32* source)
     {
         return _mm_loadu_ps(source);
     }
 
-    static inline void f32x4_ustore(float* dest, f32x4 a)
+    static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
         _mm_storeu_ps(dest, a);
     }
@@ -205,7 +205,7 @@ namespace simd {
         return _mm_div_ps(a, b);
     }
 
-    static inline f32x4 div(f32x4 a, float b)
+    static inline f32x4 div(f32x4 a, f32 b)
     {
         return _mm_div_ps(a, _mm_set1_ps(b));
     }
@@ -277,13 +277,13 @@ namespace simd {
         return _mm_sqrt_ps(a);
     }
 
-    static inline float dot3(f32x4 a, f32x4 b)
+    static inline f32 dot3(f32x4 a, f32x4 b)
     {
         f32x4 s = _mm_dp_ps(a, b, 0x7f);
         return get_component<0>(s);
     }
 
-    static inline float dot4(f32x4 a, f32x4 b)
+    static inline f32 dot4(f32x4 a, f32x4 b)
     {
         f32x4 s = _mm_dp_ps(a, b, 0xff);
         return get_component<0>(s);

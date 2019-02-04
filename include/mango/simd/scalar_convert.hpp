@@ -294,10 +294,10 @@ namespace simd {
     inline f32x4 convert<f32x4>(u32x4 s)
     {
         f32x4 v;
-        v[0] = float(s[0]);
-        v[1] = float(s[1]);
-        v[2] = float(s[2]);
-        v[3] = float(s[3]);
+        v[0] = f32(s[0]);
+        v[1] = f32(s[1]);
+        v[2] = f32(s[2]);
+        v[3] = f32(s[3]);
         return v;
     }
 
@@ -305,10 +305,10 @@ namespace simd {
     inline f32x4 convert<f32x4>(s32x4 s)
     {
         f32x4 v;
-        v[0] = float(s[0]);
-        v[1] = float(s[1]);
-        v[2] = float(s[2]);
-        v[3] = float(s[3]);
+        v[0] = f32(s[0]);
+        v[1] = f32(s[1]);
+        v[2] = f32(s[2]);
+        v[3] = f32(s[3]);
         return v;
     }
 
@@ -477,10 +477,10 @@ namespace simd {
     inline f64x4 convert<f64x4>(s32x4 s)
     {
         f64x4 v;
-        v.lo[0] = double(s[0]);
-        v.lo[1] = double(s[1]);
-        v.hi[0] = double(s[2]);
-        v.hi[1] = double(s[3]);
+        v.lo[0] = f64(s[0]);
+        v.lo[1] = f64(s[1]);
+        v.hi[0] = f64(s[2]);
+        v.hi[1] = f64(s[3]);
         return v;
     }
 
@@ -488,10 +488,10 @@ namespace simd {
     inline f64x4 convert<f64x4>(f32x4 s)
     {
         f64x4 v;
-        v.lo[0] = double(s[0]);
-        v.lo[1] = double(s[1]);
-        v.hi[0] = double(s[2]);
-        v.hi[1] = double(s[3]);
+        v.lo[0] = f64(s[0]);
+        v.lo[1] = f64(s[1]);
+        v.hi[0] = f64(s[2]);
+        v.hi[1] = f64(s[3]);
         return v;
     }
 
@@ -508,10 +508,10 @@ namespace simd {
     template <>
     inline f32x4 convert<f32x4>(f64x4 s)
     {
-        float x = float(s.lo[0]);
-        float y = float(s.lo[1]);
-        float z = float(s.hi[0]);
-        float w = float(s.hi[1]);
+        f32 x = f32(s.lo[0]);
+        f32 y = f32(s.lo[1]);
+        f32 z = f32(s.hi[0]);
+        f32 w = f32(s.hi[1]);
         return f32x4_set4(x, y, z, w);
     }
 
@@ -549,10 +549,10 @@ namespace simd {
     template <>
     inline f64x4 convert<f64x4>(s64x4 v)
     {
-        double x = double(get_component<0>(v));
-        double y = double(get_component<1>(v));
-        double z = double(get_component<2>(v));
-        double w = double(get_component<3>(v));
+        f64 x = f64(get_component<0>(v));
+        f64 y = f64(get_component<1>(v));
+        f64 z = f64(get_component<2>(v));
+        f64 w = f64(get_component<3>(v));
         return f64x4_set4(x, y, z, w);
     }
 
