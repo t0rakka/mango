@@ -1387,15 +1387,15 @@ namespace mango
 
     // float vectors
     using float16x4  = Vector<float16, 4>;
-    using float32x2  = Vector<float, 2>;
-    using float32x3  = Vector<float, 3>;
-    using float32x4  = Vector<float, 4>;
-    using float32x8  = Vector<float, 8>;
-    using float32x16 = Vector<float, 16>;
-    using float64x2  = Vector<double, 2>;
-    using float64x3  = Vector<double, 3>;
-    using float64x4  = Vector<double, 4>;
-    using float64x8  = Vector<double, 8>;
+    using float32x2  = Vector<float32, 2>;
+    using float32x3  = Vector<float32, 3>;
+    using float32x4  = Vector<float32, 4>;
+    using float32x8  = Vector<float32, 8>;
+    using float32x16 = Vector<float32, 16>;
+    using float64x2  = Vector<float64, 2>;
+    using float64x3  = Vector<float64, 3>;
+    using float64x4  = Vector<float64, 4>;
+    using float64x8  = Vector<float64, 8>;
 
     // 128 bit vector masks
     using mask8x16   = simd::mask8x16;
@@ -1423,13 +1423,13 @@ namespace mango
     using uint3   = Vector<u32, 3>;
     using uint4   = Vector<u32, 4>;
     using half4   = Vector<float16, 4>;
-    using float2  = Vector<float, 2>;
-    using float3  = Vector<float, 3>;
-    using float4  = Vector<float, 4>;
-    using float8  = Vector<float, 8>;
-    using double2 = Vector<double, 2>;
-    using double3 = Vector<double, 3>;
-    using double4 = Vector<double, 4>;
+    using float2  = Vector<float32, 2>;
+    using float3  = Vector<float32, 3>;
+    using float4  = Vector<float32, 4>;
+    using float8  = Vector<float32, 8>;
+    using double2 = Vector<float64, 2>;
+    using double3 = Vector<float64, 3>;
+    using double4 = Vector<float64, 4>;
 
     // ------------------------------------------------------------------
     // maskToInt()
