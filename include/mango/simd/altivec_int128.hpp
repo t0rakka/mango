@@ -1097,17 +1097,17 @@ namespace simd {
 
     // shift by scalar
 
-    static inline s16x8 sll(s16x8 a, s count)
+    static inline s16x8 sll(s16x8 a, int count)
     {
         return vec_sl(a.data, vec_splats(u16(count)));
     }
 
-    static inline s16x8 srl(s16x8 a, s count)
+    static inline s16x8 srl(s16x8 a, int count)
     {
         return vec_sr(a.data, vec_splats(u16(count)));
     }
 
-    static inline s16x8 sra(s16x8 a, s count)
+    static inline s16x8 sra(s16x8 a, int count)
     {
         return vec_sra(a.data, vec_splats(u16(count)));
     }
