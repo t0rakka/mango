@@ -83,104 +83,104 @@ namespace mango
 #endif
     };
 
-    static inline const int32x16 operator + (int32x16 v)
+    static inline const Vector<s32, 16> operator + (Vector<s32, 16> v)
     {
         return v;
     }
 
-    static inline int32x16 operator - (int32x16 v)
+    static inline Vector<s32, 16> operator - (Vector<s32, 16> v)
     {
         return simd::sub(simd::int32x16_zero(), v);
     }
 
-    static inline int32x16& operator += (int32x16& a, int32x16 b)
+    static inline Vector<s32, 16>& operator += (Vector<s32, 16>& a, Vector<s32, 16> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline int32x16& operator -= (int32x16& a, int32x16 b)
+    static inline Vector<s32, 16>& operator -= (Vector<s32, 16>& a, Vector<s32, 16> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline int32x16 operator + (int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> operator + (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::add(a, b);
     }
 
-    static inline int32x16 operator - (int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> operator - (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline int32x16 nand(int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> nand(Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline int32x16 operator & (int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> operator & (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline int32x16 operator | (int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> operator | (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline int32x16 operator ^ (int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> operator ^ (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline int32x16 min(int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> min(Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::min(a, b);
     }
 
-    static inline int32x16 max(int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> max(Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::max(a, b);
     }
 
-    static inline mask32x16 operator > (int32x16 a, int32x16 b)
+    static inline mask32x16 operator > (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask32x16 operator < (int32x16 a, int32x16 b)
+    static inline mask32x16 operator < (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::compare_gt(b, a);
     }
 
-    static inline mask32x16 operator == (int32x16 a, int32x16 b)
+    static inline mask32x16 operator == (Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline int32x16 select(mask32x16 mask, int32x16 a, int32x16 b)
+    static inline Vector<s32, 16> select(mask32x16 mask, Vector<s32, 16> a, Vector<s32, 16> b)
     {
         return simd::select(mask, a, b);
     }
 
-    static inline int32x16 operator << (int32x16 a, int b)
+    static inline Vector<s32, 16> operator << (Vector<s32, 16> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline int32x16 operator >> (int32x16 a, int b)
+    static inline Vector<s32, 16> operator >> (Vector<s32, 16> a, int b)
     {
         return simd::sra(a, b);
     }
 
-    static inline int32x16 operator << (int32x16 a, uint32x16 b)
+    static inline Vector<s32, 16> operator << (Vector<s32, 16> a, Vector<u32, 16> b)
     {
         return simd::sll(a, b);
     }
 
-    static inline int32x16 operator >> (int32x16 a, uint32x16 b)
+    static inline Vector<s32, 16> operator >> (Vector<s32, 16> a, Vector<u32, 16> b)
     {
         return simd::sra(a, b);
     }

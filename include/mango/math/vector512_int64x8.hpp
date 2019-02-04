@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -82,64 +82,64 @@ namespace mango
 #endif
     };
 
-    static inline const int64x8 operator + (int64x8 v)
+    static inline const Vector<s64, 8> operator + (Vector<s64, 8> v)
     {
         return v;
     }
 
-    static inline int64x8 operator - (int64x8 v)
+    static inline Vector<s64, 8> operator - (Vector<s64, 8> v)
     {
         return simd::sub(simd::int64x8_zero(), v);
     }
 
-    static inline int64x8& operator += (int64x8& a, int64x8 b)
+    static inline Vector<s64, 8>& operator += (Vector<s64, 8>& a, Vector<s64, 8> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline int64x8& operator -= (int64x8& a, int64x8 b)
+    static inline Vector<s64, 8>& operator -= (Vector<s64, 8>& a, Vector<s64, 8> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline int64x8 operator + (int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> operator + (Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::add(a, b);
     }
 
-    static inline int64x8 operator - (int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> operator - (Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline int64x8 nand(int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> nand(Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline int64x8 operator & (int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> operator & (Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline int64x8 operator | (int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> operator | (Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline int64x8 operator ^ (int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> operator ^ (Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline int64x8 select(mask64x8 mask, int64x8 a, int64x8 b)
+    static inline Vector<s64, 8> select(mask64x8 mask, Vector<s64, 8> a, Vector<s64, 8> b)
     {
         return simd::select(mask, a, b);
     }
 
-    static inline int64x8 operator << (int64x8 a, int b)
+    static inline Vector<s64, 8> operator << (Vector<s64, 8> a, int b)
     {
         return simd::sll(a, b);
     }

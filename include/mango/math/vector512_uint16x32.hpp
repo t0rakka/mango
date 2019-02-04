@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -77,104 +77,104 @@ namespace mango
 #endif
     };
 
-    static inline const uint16x32 operator + (uint16x32 v)
+    static inline const Vector<u16, 32> operator + (Vector<u16, 32> v)
     {
         return v;
     }
 
-    static inline uint16x32 operator - (uint16x32 v)
+    static inline Vector<u16, 32> operator - (Vector<u16, 32> v)
     {
         return simd::sub(simd::uint16x32_zero(), v);
     }
 
-    static inline uint16x32& operator += (uint16x32& a, uint16x32 b)
+    static inline Vector<u16, 32>& operator += (Vector<u16, 32>& a, Vector<u16, 32> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline uint16x32& operator -= (uint16x32& a, uint16x32 b)
+    static inline Vector<u16, 32>& operator -= (Vector<u16, 32>& a, Vector<u16, 32> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline uint16x32 operator + (uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> operator + (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::add(a, b);
     }
 
-    static inline uint16x32 operator - (uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> operator - (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline uint16x32 nand(uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> nand(Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline uint16x32 operator & (uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> operator & (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline uint16x32 operator | (uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> operator | (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline uint16x32 operator ^ (uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> operator ^ (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline uint16x32 adds(uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> adds(Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::adds(a, b);
     }
 
-    static inline uint16x32 subs(uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> subs(Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::subs(a, b);
     }
 
-    static inline uint16x32 min(uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> min(Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::min(a, b);
     }
 
-    static inline uint16x32 max(uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> max(Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::max(a, b);
     }
 
-    static inline mask16x32 operator > (uint16x32 a, uint16x32 b)
+    static inline mask16x32 operator > (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask16x32 operator < (uint16x32 a, uint16x32 b)
+    static inline mask16x32 operator < (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::compare_gt(b, a);
     }
 
-    static inline mask16x32 operator == (uint16x32 a, uint16x32 b)
+    static inline mask16x32 operator == (Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline uint16x32 select(mask16x32 mask, uint16x32 a, uint16x32 b)
+    static inline Vector<u16, 32> select(mask16x32 mask, Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::select(mask, a, b);
     }
 
-    static inline uint16x32 operator << (uint16x32 a, int b)
+    static inline Vector<u16, 32> operator << (Vector<u16, 32> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline uint16x32 operator >> (uint16x32 a, int b)
+    static inline Vector<u16, 32> operator >> (Vector<u16, 32> a, int b)
     {
         return simd::srl(a, b);
     }

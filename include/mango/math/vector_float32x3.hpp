@@ -183,17 +183,17 @@ namespace mango
     // operators
     // ------------------------------------------------------------------
 
-    static inline const float32x3& operator + (const float32x3& v)
+    static inline const Vector<float, 3>& operator + (const Vector<float, 3>& v)
     {
         return v;
     }
 
-    static inline float32x3 operator - (const float32x3& v)
+    static inline Vector<float, 3> operator - (const Vector<float, 3>& v)
     {
-        return float32x3(-v.x, -v.y, -v.z);
+        return Vector<float, 3>(-v.x, -v.y, -v.z);
     }
 
-    static inline float32x3& operator += (float32x3& a, const float32x3& b)
+    static inline Vector<float, 3>& operator += (Vector<float, 3>& a, const Vector<float, 3>& b)
     {
         a.x += b.x;
         a.y += b.y;
@@ -201,7 +201,7 @@ namespace mango
         return a;
     }
 
-    static inline float32x3& operator -= (float32x3& a, const float32x3& b)
+    static inline Vector<float, 3>& operator -= (Vector<float, 3>& a, const Vector<float, 3>& b)
     {
         a.x -= b.x;
         a.y -= b.y;
@@ -209,7 +209,7 @@ namespace mango
         return a;
     }
 
-    static inline float32x3& operator *= (float32x3& a, const float32x3& b)
+    static inline Vector<float, 3>& operator *= (Vector<float, 3>& a, const Vector<float, 3>& b)
     {
         a.x *= b.x;
         a.y *= b.y;
@@ -217,7 +217,7 @@ namespace mango
         return a;
     }
 
-    static inline float32x3& operator *= (float32x3& a, float b)
+    static inline Vector<float, 3>& operator *= (Vector<float, 3>& a, float b)
     {
         a.x *= b;
         a.y *= b;
@@ -225,7 +225,7 @@ namespace mango
         return a;
     }
 
-    static inline float32x3& operator /= (float32x3& a, const float32x3& b)
+    static inline Vector<float, 3>& operator /= (Vector<float, 3>& a, const Vector<float, 3>& b)
     {
         a.x /= b.x;
         a.y /= b.y;
@@ -233,7 +233,7 @@ namespace mango
         return a;
     }
 
-    static inline float32x3& operator /= (float32x3& a, float b)
+    static inline Vector<float, 3>& operator /= (Vector<float, 3>& a, float b)
     {
         b = 1.0f / b;
         a.x *= b;
@@ -242,138 +242,138 @@ namespace mango
         return a;
     }
 
-    static inline float32x3 operator + (float32x3 a, float32x3 b)
+    static inline Vector<float, 3> operator + (Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = a.x + b.x;
         float y = a.y + b.y;
         float z = a.z + b.z;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 operator - (float32x3 a, float32x3 b)
+    static inline Vector<float, 3> operator - (Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = a.x - b.x;
         float y = a.y - b.y;
         float z = a.z - b.z;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 operator * (float32x3 a, float32x3 b)
+    static inline Vector<float, 3> operator * (Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = a.x * b.x;
         float y = a.y * b.y;
         float z = a.z * b.z;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 operator / (float32x3 a, float32x3 b)
+    static inline Vector<float, 3> operator / (Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = a.x / b.x;
         float y = a.y / b.y;
         float z = a.z / b.z;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 operator / (float32x3 a, float b)
+    static inline Vector<float, 3> operator / (Vector<float, 3> a, float b)
     {
         float s = 1.0f / b;
         float x = a.x * s;
         float y = a.y * s;
         float z = a.z * s;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
 
-    static inline float32x3 abs(float32x3 a)
+    static inline Vector<float, 3> abs(Vector<float, 3> a)
     {
         float x = std::abs(a.x);
         float y = std::abs(a.y);
         float z = std::abs(a.z);
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float square(float32x3 a)
+    static inline float square(Vector<float, 3> a)
     {
         return a.x * a.x + a.y * a.y + a.z * a.z;
     }
 
-    static inline float length(float32x3 a)
+    static inline float length(Vector<float, 3> a)
     {
         return std::sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
     }
 
-    static inline float32x3 normalize(float32x3 a)
+    static inline Vector<float, 3> normalize(Vector<float, 3> a)
     {
         float s = 1.0f / length(a);
         return a * s;
     }
 
-    static inline float32x3 min(float32x3 a, float32x3 b)
+    static inline Vector<float, 3> min(Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = std::min(a.x, b.x);
         float y = std::min(a.y, b.y);
         float z = std::min(a.z, b.z);
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 max(float32x3 a, float32x3 b)
+    static inline Vector<float, 3> max(Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = std::max(a.x, b.x);
         float y = std::max(a.y, b.y);
         float z = std::max(a.z, b.z);
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float dot(float32x3 a, float32x3 b)
+    static inline float dot(Vector<float, 3> a, Vector<float, 3> b)
     {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
-    static inline float32x3 cross(float32x3 a, float32x3 b)
+    static inline Vector<float, 3> cross(Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = a.y * b.z - a.z * b.y;
         float y = a.z * b.x - a.x * b.z;
         float z = a.x * b.y - a.y * b.x;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 clamp(const float32x3& a, const float32x3& a_min, const float32x3& a_max)
+    static inline Vector<float, 3> clamp(const Vector<float, 3>& a, const Vector<float, 3>& a_min, const Vector<float, 3>& a_max)
     {
         const float x = std::max(a_min.x, std::min(a_max.x, a.x));
         const float y = std::max(a_min.y, std::min(a_max.y, a.y));
         const float z = std::max(a_min.z, std::min(a_max.z, a.z));
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 lerp(const float32x3& a, const float32x3& b, float factor)
+    static inline Vector<float, 3> lerp(const Vector<float, 3>& a, const Vector<float, 3>& b, float factor)
     {
         const float x = a.x + (b.x - a.x) * factor;
         const float y = a.y + (b.y - a.y) * factor;
         const float z = a.z + (b.z - a.z) * factor;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 lerp(const float32x3& a, const float32x3& b, const float32x3& factor)
+    static inline Vector<float, 3> lerp(const Vector<float, 3>& a, const Vector<float, 3>& b, const Vector<float, 3>& factor)
     {
         const float x = a.x + (b.x - a.x) * factor.x;
         const float y = a.y + (b.y - a.y) * factor.y;
         const float z = a.z + (b.z - a.z) * factor.z;
-        return float32x3(x, y, z);
+        return Vector<float, 3>(x, y, z);
     }
 
-    static inline float32x3 hmin(const float32x3& v)
+    static inline Vector<float, 3> hmin(const Vector<float, 3>& v)
     {
         const float s = std::min(std::min(v.x, v.y), v.z);
-        return float32x3(s);
+        return Vector<float, 3>(s);
     }
 
-    static inline float32x3 hmax(const float32x3& v)
+    static inline Vector<float, 3> hmax(const Vector<float, 3>& v)
     {
         const float s = std::max(std::max(v.x, v.y), v.z);
-        return float32x3(s);
+        return Vector<float, 3>(s);
     }
 
 } // namespace mango

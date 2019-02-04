@@ -77,94 +77,94 @@ namespace mango
 #endif
     };
 
-    static inline const uint8x64 operator + (uint8x64 v)
+    static inline const Vector<u8, 64> operator + (Vector<u8, 64> v)
     {
         return v;
     }
 
-    static inline uint8x64 operator - (uint8x64 v)
+    static inline Vector<u8, 64> operator - (Vector<u8, 64> v)
     {
         return simd::sub(simd::uint8x64_zero(), v);
     }
 
-    static inline uint8x64& operator += (uint8x64& a, uint8x64 b)
+    static inline Vector<u8, 64>& operator += (Vector<u8, 64>& a, Vector<u8, 64> b)
     {
         a = simd::add(a, b);
         return a;
     }
 
-    static inline uint8x64& operator -= (uint8x64& a, uint8x64 b)
+    static inline Vector<u8, 64>& operator -= (Vector<u8, 64>& a, Vector<u8, 64> b)
     {
         a = simd::sub(a, b);
         return a;
     }
 
-    static inline uint8x64 operator + (uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> operator + (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::add(a, b);
     }
 
-    static inline uint8x64 operator - (uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> operator - (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::sub(a, b);
     }
 
-    static inline uint8x64 nand(uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> nand(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::bitwise_nand(a, b);
     }
 
-    static inline uint8x64 operator & (uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> operator & (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::bitwise_and(a, b);
     }
 
-    static inline uint8x64 operator | (uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> operator | (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::bitwise_or(a, b);
     }
 
-    static inline uint8x64 operator ^ (uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> operator ^ (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::bitwise_xor(a, b);
     }
 
-    static inline uint8x64 adds(uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> adds(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::adds(a, b);
     }
 
-    static inline uint8x64 subs(uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> subs(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::subs(a, b);
     }
 
-    static inline uint8x64 min(uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> min(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::min(a, b);
     }
 
-    static inline uint8x64 max(uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> max(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::max(a, b);
     }
 
-    static inline mask8x64 operator > (uint8x64 a, uint8x64 b)
+    static inline mask8x64 operator > (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::compare_gt(a, b);
     }
 
-    static inline mask8x64 operator < (uint8x64 a, uint8x64 b)
+    static inline mask8x64 operator < (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::compare_gt(b, a);
     }
 
-    static inline mask8x64 operator == (uint8x64 a, uint8x64 b)
+    static inline mask8x64 operator == (Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::compare_eq(a, b);
     }
 
-    static inline uint8x64 select(mask8x64 mask, uint8x64 a, uint8x64 b)
+    static inline Vector<u8, 64> select(mask8x64 mask, Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::select(mask, a, b);
     }

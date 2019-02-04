@@ -1321,11 +1321,11 @@ namespace mango
         template <int A, int B, int C, int D>
         ShuffleAccessor4& operator = (const ShuffleAccessor4<ScalarType, VectorType, A, B, C, D>& v)
         {
-            constexpr uint32 mask = (D << 6) | (C << 4) | (B << 2) | A;
-            constexpr uint32 s0 = (mask >> (X * 2)) & 3;
-            constexpr uint32 s1 = (mask >> (Y * 2)) & 3;
-            constexpr uint32 s2 = (mask >> (Z * 2)) & 3;
-            constexpr uint32 s3 = (mask >> (W * 2)) & 3;
+            constexpr u32 mask = (D << 6) | (C << 4) | (B << 2) | A;
+            constexpr u32 s0 = (mask >> (X * 2)) & 3;
+            constexpr u32 s1 = (mask >> (Y * 2)) & 3;
+            constexpr u32 s2 = (mask >> (Z * 2)) & 3;
+            constexpr u32 s3 = (mask >> (W * 2)) & 3;
             m = simd::shuffle<s0, s1, s2, s3>(v.m);
             return *this;
         }
