@@ -142,9 +142,9 @@ namespace mango
     }
 
     template <typename T>
-    static inline T clamp(T value, T min, T max)
+    static inline T clamp(T value, T low, T high)
     {
-        return std::min(max, std::max(min, value));
+        return std::min(high, std::max(low, value));
     }
 
     static inline constexpr u32 byteclamp(s32 v)
