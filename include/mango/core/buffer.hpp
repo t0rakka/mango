@@ -4,8 +4,7 @@
 */
 #pragma once
 
-#include <vector>
-#include <string>
+#include <cstddef>
 #include "configure.hpp"
 #include "memory.hpp"
 #include "stream.hpp"

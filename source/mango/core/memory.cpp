@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cassert>
 #include <mango/core/bits.hpp>
@@ -37,7 +37,8 @@ namespace mango {
     Memory Memory::slice(size_t slice_offset, size_t slice_size) const
     {
         Memory memory(address + slice_offset, size - slice_offset);
-        if (slice_size) {
+        if (slice_size)
+        {
             memory.size = std::min(memory.size, slice_size);
         }
         return memory;
@@ -102,11 +103,13 @@ namespace mango {
         void* block = std::malloc(size + mask + sizeof(void*));
         char* aligned = reinterpret_cast<char*>(block) + sizeof(void*);
 
-        if (block) {
+        if (block)
+        {
             aligned += alignment - (reinterpret_cast<ptrdiff_t>(aligned) & mask);
             reinterpret_cast<void**>(aligned)[-1] = block;
         }
-        else {
+        else
+        {
             aligned = nullptr;
         }
 
@@ -115,7 +118,8 @@ namespace mango {
 
     void aligned_free(void* aligned)
     {
-        if (aligned) {
+        if (aligned)
+        {
             void* block = reinterpret_cast<void**>(aligned)[-1];
             std::free(block);
         }
