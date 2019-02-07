@@ -274,6 +274,10 @@ namespace mango
 		if (not_parallel)
 		{
 			t0 = ndot / vdot;
+#if 0
+            if (t0 < 0.0f || t0 > 1.0f)
+                not_parallel = false;
+#endif
 		}
 
 		return not_parallel;
@@ -440,10 +444,8 @@ namespace mango
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
 
-        const float3* vertex = triangle.position;
-
-        float3 edge1 = vertex[1] - vertex[2];
-        float3 edge2 = vertex[0] - vertex[2];
+        float3 edge1 = triangle.position[1] - triangle.position[2];
+        float3 edge2 = triangle.position[0] - triangle.position[2];
 
         float3 pvec = cross(ray.direction, edge2);
         float det = dot(edge1, pvec);
@@ -454,7 +456,7 @@ namespace mango
 
         det = 1.0f / det;
 
-        float3 tvec = ray.origin - vertex[2];
+        float3 tvec = ray.origin - triangle.position[2];
         v = dot(tvec, pvec) * det;
         if (v < 0.0f || v > 1.0f)
             return false;
@@ -474,10 +476,8 @@ namespace mango
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
 
-        const float3* vertex = triangle.position;
-
-        float3 edge1 = vertex[1] - vertex[2];
-        float3 edge2 = vertex[0] - vertex[2];
+        float3 edge1 = triangle.position[1] - triangle.position2];
+        float3 edge2 = triangle.position[0] - triangle.position[2];
 
         float3 pvec = cross(ray.direction, edge2);
         float det = dot(edge1, pvec);
@@ -486,7 +486,7 @@ namespace mango
         if (det < epsilon)
             return false;
 
-        float3 tvec = ray.origin - vertex[2];
+        float3 tvec = ray.origin - triangle.position[2];
         v = dot(tvec, pvec);
         if (v < 0.0f || v > det)
             return false;
