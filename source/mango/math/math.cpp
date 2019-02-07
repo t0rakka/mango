@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <limits>
@@ -11,10 +11,11 @@
 #include <mango/core/bits.hpp>
 #include <mango/math/math.hpp>
 
-namespace {
+namespace
+{
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();
-    constexpr float pi = 3.14159265358979323846264338327f; 
+    constexpr float pi = float(mango::math::pi);
 
 } // namespace
 
@@ -64,7 +65,8 @@ namespace mango
     const float4x4& float4x4::operator = (const AngleAxis& a)
     {
         const float length2 = square(a.axis);
-        if (length2 < epsilon) {
+        if (length2 < epsilon)
+        {
             *this = 1.0f; // set identity
             return *this;
         }
@@ -881,22 +883,28 @@ namespace mango
         float t;
         Quaternion q;
 
-        if (m22 < 0) {
-            if (m00 > m11) {
+        if (m22 < 0)
+        {
+            if (m00 > m11)
+            {
                 t = 1.0f + m00 - m11 - m22;
                 q = Quaternion(t, m01 + m10, m20 + m02, m12 - m21);
             }
-            else {
+            else
+            {
                 t = 1.0f - m00 + m11 - m22;
                 q = Quaternion(m01 + m10, t, m12 + m21, m20 - m02);
             }
         }
-        else {
-            if (m00 < -m11) {
+        else
+        {
+            if (m00 < -m11)
+            {
                 t = 1.0f - m00 - m11 + m22;
                 q = Quaternion(m20 + m02, m12 + m21, t, m01 - m10);
             }
-            else {
+            else
+            {
                 t = 1.0f + m00 + m11 + m22;
                 q = Quaternion(m12 - m21, m20 - m02, m01 - m10, t);
             }
@@ -925,11 +933,13 @@ namespace mango
             int k = j + 1; if (k > 2) k = 0;
 
             float s = std::sqrt(m(i,i) - m(j,j) - m(k,k) + 1.0f);
-            if (s < epsilon) {
+            if (s < epsilon)
+            {
 				q.xyz = float3(0.0f, 0.0f, 0.0f);
                 q.w = 1.0f;
             }
-            else {
+            else
+            {
                 float* v = q;
                 v[i] = s * 0.5f;
                 s = 0.5f / s;
@@ -999,14 +1009,7 @@ namespace mango
     {
         float s = std::sqrt(square(q));
         const float c = std::cos(s);
-
-        if (s > epsilon * 100.0f) {
-            s = std::sin(s) / s;
-        }
-        else {
-            s = 1.0f;
-        }
-
+        s = (s > epsilon * 100.0f) ? s = std::sin(s) / s : 1.0f;
         return Quaternion(q.xyz * s, c);
     }
 
@@ -1014,21 +1017,15 @@ namespace mango
     {
         float s = square(q);
         const float c = std::cos(s * p);
-
-        if (s) {
-            s = std::sin(s * p) / s;
-        }
-        else {
-            s = 1.0f;
-        }
-
+        s = s ? std::sin(s * p) / s : 1.0f;
         return Quaternion(q.xyz * s, c);
     }
 
     Quaternion normalize(const Quaternion& q)
     {
         float s = norm(q);
-        if (s) {
+        if (s)
+        {
             s = 1.0f / std::sqrt(s);
         }
         return q * s;
@@ -1056,25 +1053,29 @@ namespace mango
     {
         const float cosom = dot(a, b);
 
-        if ((1.0f + cosom) > epsilon) {
+        if ((1.0f + cosom) > epsilon)
+        {
             float sp;
             float sq;
 
-            if ((1.0f - cosom) > epsilon) {
+            if ((1.0f - cosom) > epsilon)
+            {
                 const float omega = std::acos(cosom);
                 const float sinom = 1.0f / std::sin(omega);
 
                 sp = std::sin((1.0f - time) * omega) * sinom;
                 sq = std::sin(time * omega) * sinom;
             }
-            else {
+            else
+            {
                 sp = 1.0f - time;
                 sq = time;
             }
 
             return a * sp + b * sq;
         }
-        else {
+        else
+        {
             const float halfpi = pi * 0.5f;
             const float sp = std::sin((1.0f - time) * halfpi);
             const float sq = std::sin(time * halfpi);
@@ -1092,7 +1093,8 @@ namespace mango
         float bflip = 1.0f;
         float tcos = dot(a, b);
 
-        if (tcos < 0) {
+        if (tcos < 0)
+        {
             tcos = -tcos;
             bflip = -1;
         }
@@ -1100,16 +1102,17 @@ namespace mango
         float beta;
         float alpha;
 
-        if ((1.0f - tcos) < epsilon * 100.0f) {
+        if ((1.0f - tcos) < epsilon * 100.0f)
+        {
             // linear interpolate
             beta = 1.0f - time;
             alpha = time * bflip;
         }
-        else {
+        else
+        {
             const float theta = std::acos(tcos);
             const float phi   = theta + spin * pi;
             const float tsin  = std::sin(theta);
-
             beta  = std::sin(theta - time * phi) / tsin;
             alpha = std::sin(time * phi) / tsin * bflip;
         }
@@ -1131,25 +1134,15 @@ namespace mango
     float linear_to_srgb(float n)
     {
         float s = clamp(n, 0.0f, 1.0f);
-        if (s < 0.0031308f) {
-            s = 12.92f * s;
-        }
-        else {
-            s = 1.055f * std::pow(s, 0.41666f) - 0.055f;
-        }
+        s = (s < 0.0031308f) ? 12.92f * s
+            : 1.055f * std::pow(s, 0.41666f) - 0.055f;
         return s;
     }
 
     float srgb_to_linear(float s)
     {
-        float n;
-        if (s <= 0.04045f) {
-            n = s * (1.0f / 12.92f);
-        }
-        else {
-            n = std::pow(((s + 0.055f) * (1.0f / 1.055f)), 2.4f);
-        }
-        return n;
+        return (s <= 0.04045f) ? s * (1.0f / 12.92f) 
+            : std::pow(((s + 0.055f) * (1.0f / 1.055f)), 2.4f);
     }
 
     static inline float32x4 pow24(float32x4 v)
