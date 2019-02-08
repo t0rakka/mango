@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <cmath>
@@ -141,9 +141,7 @@ namespace mango
 
     float3 Triangle::normal() const
     {
-        const float3 a = position[1] - position[0];
-        const float3 b = position[2] - position[0];
-        const float3 n = cross(a, b);
+        const float3 n = cross(position[1] - position[0], position[2] - position[0]);
         return normalize(n);
     }
 
@@ -223,6 +221,26 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
+    // FastRay
+    // ------------------------------------------------------------------
+
+    FastRay::FastRay(const Ray& ray)
+    {
+        origin = ray.origin;
+        direction = ray.direction;
+
+        dotod = dot(origin, direction);
+        dotoo = dot(origin, origin);
+
+        for (int i = 0; i < 3; ++i)
+        {
+            float d = direction[i] ? direction[i] : 0.00001f;
+            invdir[i] = 1.0f / d;
+            sign[i] = invdir[i] < 0;
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Frustum
     // ------------------------------------------------------------------
 
@@ -262,24 +280,6 @@ namespace mango
     // Intersect
     // ------------------------------------------------------------------
 
-    bool Intersect::intersect(const Line& line, const Plane& plane)
-    {
-        const float ndot = plane.dist - dot(line.position[0], plane.normal);
-        const float vdot = dot(line.position[1] - line.position[0], plane.normal);
-
-		const bool not_parallel = vdot != 0.0f;
-		if (not_parallel)
-		{
-			t0 = ndot / vdot;
-#if 0
-            if (t0 < 0.0f || t0 > 1.0f)
-                not_parallel = false;
-#endif
-		}
-
-		return not_parallel;
-    }
-
     bool Intersect::intersect(const Ray& ray, const Plane& plane)
     {
         const float ndot = plane.dist - dot(ray.origin, plane.normal);
@@ -292,6 +292,24 @@ namespace mango
 
         t0 = ndot / vdot;
         return t0 > 0.0f;
+    }
+
+    bool Intersect::intersect(const Ray& ray, const Sphere& sphere)
+    {
+        const float3 dep = ray.origin - sphere.center;
+        const float b = dot(dep, ray.direction);
+        const float c = square(dep) - sphere.radius * sphere.radius;
+
+        // ray culling
+        if (c > 0.0f && b > 0.0f)
+            return false;
+
+        float d = b * b - c;
+        if (d < 0.0f)
+            return false;
+
+        t0 = -b - std::sqrt(d);
+        return true;
     }
 
     bool Intersect::intersect(const Ray& ray, const Triangle& triangle)
@@ -329,24 +347,6 @@ namespace mango
 		return true;
     }
 
-    bool Intersect::intersect(const Ray& ray, const Sphere& sphere)
-    {
-        const float3 dep = ray.origin - sphere.center;
-        const float b = dot(dep, ray.direction);
-        const float c = square(dep) - sphere.radius * sphere.radius;
-
-        // ray culling
-        if (c > 0.0f && b > 0.0f)
-            return false;
-
-        float d = b * b - c;
-        if (d < 0.0f)
-            return false;
-
-        t0 = -b - std::sqrt(d);
-        return true;
-    }
-
     // ------------------------------------------------------------------
     // IntersectRange
     // ------------------------------------------------------------------
@@ -371,31 +371,6 @@ namespace mango
 		t0 = tmin;
 		t1 = tmax;
         return tmax > std::max(tmin, 0.0f);
-    }
-
-    bool IntersectRange::intersect(const FastRay& ray, const Sphere& sphere)
-    {
-        float b = -2 * (ray.dotod - dot(sphere.center, ray.direction));
-        float c = ray.dotoo + dot(sphere.center, sphere.center) - 2.0f * dot(ray.origin, sphere.center) - sphere.radius * sphere.radius;
-
-        const float det = b * b - 4 * c;
-
-        // TODO: branchless version
-        if (det >= 0)
-        {
-            const float sd = float(std::sqrt(det));
-            t0 = (b + sd) * 0.5f;
-            t1 = (b - sd) * 0.5f;
-
-            if (t0 > t1)
-            {
-				std::swap(t0, t1);
-            }
-
-			return true;
-        }
-
-        return false;
     }
 
     bool IntersectRange::intersect(const FastRay& ray, const Box& box)
@@ -430,6 +405,31 @@ namespace mango
         return true;
     }
 
+    bool IntersectRange::intersect(const FastRay& ray, const Sphere& sphere)
+    {
+        float b = -2 * (ray.dotod - dot(sphere.center, ray.direction));
+        float c = ray.dotoo + dot(sphere.center, sphere.center) - 2.0f * dot(ray.origin, sphere.center) - sphere.radius * sphere.radius;
+
+        const float det = b * b - 4 * c;
+
+        // TODO: branchless version
+        if (det >= 0)
+        {
+            const float sd = float(std::sqrt(det));
+            t0 = (b + sd) * 0.5f;
+            t1 = (b - sd) * 0.5f;
+
+            if (t0 > t1)
+            {
+				std::swap(t0, t1);
+            }
+
+			return true;
+        }
+
+        return false;
+    }
+
     // ------------------------------------------------------------------
     // IntersectBarycentric
     // ------------------------------------------------------------------
@@ -439,8 +439,43 @@ namespace mango
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
 
-        float3 edge1 = triangle.position[1] - triangle.position[2];
-        float3 edge2 = triangle.position[0] - triangle.position[2];
+        float3 edge1 = triangle.position[1] - triangle.position[0];
+        float3 edge2 = triangle.position[2] - triangle.position[0];
+
+        float3 pvec = cross(ray.direction, edge2);
+        float det = dot(edge1, pvec);
+
+        const float epsilon = 0.000001f;
+        if (det < epsilon)
+            return false;
+
+        float3 tvec = ray.origin - triangle.position[0];
+        v = dot(tvec, pvec);
+        if (v < 0.0f || v > det)
+            return false;
+
+        float3 qvec = cross(tvec, edge1);
+        w = dot(ray.direction, qvec);
+        if (w < 0.0f || (v + w) > det)
+            return false;
+
+        det = 1.0f / det;
+
+        t0 = dot(edge2, qvec) * det;
+        w *= det;
+        v *= det;
+        u = 1.0f - w - v;
+
+        return true;
+    }
+
+    bool IntersectBarycentric::intersect_twosided(const Ray& ray, const Triangle& triangle)
+    {
+        // Based on article by Tomas Möller
+        // Fast, Minimum Storage Ray-Triangle Intersection
+
+        float3 edge1 = triangle.position[1] - triangle.position[0];
+        float3 edge2 = triangle.position[2] - triangle.position[0];
 
         float3 pvec = cross(ray.direction, edge2);
         float det = dot(edge1, pvec);
@@ -451,51 +486,18 @@ namespace mango
 
         det = 1.0f / det;
 
-        float3 tvec = ray.origin - triangle.position[2];
+        float3 tvec = ray.origin - triangle.position[0];
         v = dot(tvec, pvec) * det;
         if (v < 0.0f || v > 1.0f)
             return false;
 
         float3 qvec = cross(tvec, edge1);
-        u = dot(ray.direction, qvec) * det;
-        if (u < 0.0f || (v + u) > 1.0f)
+        w = dot(ray.direction, qvec) * det;
+        if (w < 0.0f || (v + w) > 1.0f)
             return false;
 
         t0 = dot(edge2, qvec) * det;
-
-        return true;
-    }
-
-    bool IntersectBarycentric::intersect_cull(const Ray& ray, const Triangle& triangle)
-    {
-        // Based on article by Tomas Möller
-        // Fast, Minimum Storage Ray-Triangle Intersection
-
-        float3 edge1 = triangle.position[1] - triangle.position[2];
-        float3 edge2 = triangle.position[0] - triangle.position[2];
-
-        float3 pvec = cross(ray.direction, edge2);
-        float det = dot(edge1, pvec);
-
-        const float epsilon = 0.000001f;
-        if (det < epsilon)
-            return false;
-
-        float3 tvec = ray.origin - triangle.position[2];
-        v = dot(tvec, pvec);
-        if (v < 0.0f || v > det)
-            return false;
-
-        float3 qvec = cross(tvec, edge1);
-        u = dot(ray.direction, qvec);
-        if (u < 0.0f || (v + u) > det)
-            return false;
-
-        det = 1.0f / det;
-
-        t0 = dot(edge2, qvec) * det;
-        u *= det;
-        v *= det;
+        u = 1.0f - w - v;
 
         return true;
     }

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -210,11 +210,6 @@ namespace mango
         {
         }
 
-        float3 direction() const
-        {
-            return position[1] - position[0];
-        }
-
         float3 closest(const float3& point) const;
         float distance(const float3& point) const;
     };
@@ -278,15 +273,9 @@ namespace mango
         {
         }
 
-        Ray(const float3& point0, const float3& point1)
-            : origin(point0)
-            , direction(point1 - point0)
-        {
-        }
-
-        Ray(const Line& line)
-            : origin(line.position[0])
-            , direction(line.direction())
+        Ray(const float3& origin, const float3& direction)
+            : origin(origin)
+            , direction(direction)
         {
         }
 
@@ -308,22 +297,7 @@ namespace mango
         float3 invdir;
         int3 sign;
 
-        FastRay(const Ray& ray)
-        {
-            origin = ray.origin;
-            direction = ray.direction;
-
-            dotod = dot(origin, direction);
-            dotoo = dot(origin, origin);
-
-            for (int i = 0; i < 3; ++i)
-            {
-                float d = direction[i] ? direction[i] : 0.00001f;
-                invdir[i] = 1.0f / d;
-                sign[i] = invdir[i] < 0;
-            }
-        }
-
+        FastRay(const Ray& ray);
         ~FastRay()
         {
         }
@@ -349,14 +323,23 @@ namespace mango
     // Intersect
     // ------------------------------------------------------------------
 
+    // NOTE: 
+    // The intersect functions are backface-culling and assume non-solid primitives
+    // so the intersections are at boundaries. The solidness can in most cases
+    // tested by inspecting the signs of the intersections (t0, t1).
+    // 
+    // TODO:
+    // struct SolidIntersect
+    // { ... };
+    //
+
     struct Intersect
     {
         float t0;
 
-	    bool intersect(const Line& line, const Plane& plane);
 	    bool intersect(const Ray& ray, const Plane& plane);
-	    bool intersect(const Ray& ray, const Triangle& triangle);
 	    bool intersect(const Ray& ray, const Sphere& sphere);
+	    bool intersect(const Ray& ray, const Triangle& triangle);
     };
 
     struct IntersectRange
@@ -365,22 +348,23 @@ namespace mango
         float t1;
 
 	    bool intersect(const Ray& ray, const Box& box);
-	    bool intersect(const FastRay& ray, const Sphere& sphere);
 	    bool intersect(const FastRay& ray, const Box& box);
+	    bool intersect(const FastRay& ray, const Sphere& sphere);
     };
 
     struct IntersectBarycentric
     {
         float t0;
-        float u, v;
+        float u, v, w;
 
         bool intersect(const Ray& ray, const Triangle& triangle);
-        bool intersect_cull(const Ray& ray, const Triangle& triangle);
+        bool intersect_twosided(const Ray& ray, const Triangle& triangle);
     };
 
     bool intersect(Rectangle& result, const Rectangle& rect0, const Rectangle& rect1);
     bool intersect(Ray& result, const Plane& plane0, const Plane& plane1);
     bool intersect(float3& result, const Plane& plane0, const Plane& plane1, const Plane& plane2);
+
     bool intersect(const Sphere& sphere, const Box& box);
     bool intersect(const Cone& cone, const Sphere& sphere);
 
