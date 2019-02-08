@@ -67,12 +67,9 @@ namespace mango
     float3 Box::vertex(int index) const
     {
         assert(index >= 0 && index < 8);
-        const int ix = (index >> 0) & 1;
-        const int iy = (index >> 1) & 1;
-        const int iz = (index >> 2) & 1;
-        float x = corner[ix].x;
-        float y = corner[iy].y;
-        float z = corner[iz].z;
+        float x = corner[(index >> 0) & 1].x;
+        float y = corner[(index >> 1) & 1].y;
+        float z = corner[(index >> 2) & 1].z;
         return float3(x, y, z);
     }
 
@@ -406,27 +403,25 @@ namespace mango
         // Implementation based on a paper by:
         // Amy Williams, Steve Barrus, R. Keith Morley and Peter Shirley
 
-        const float3* p = box.corner;
-
-        float tmin  = (p[0 + ray.sign.x].x - ray.origin.x) * ray.invdir.x;
-        const float tymax = (p[1 - ray.sign.y].y - ray.origin.y) * ray.invdir.y;
+        float tmin = (box.corner[0 + ray.sign.x].x - ray.origin.x) * ray.invdir.x;
+        const float tymax = (box.corner[1 - ray.sign.y].y - ray.origin.y) * ray.invdir.y;
         if (tmin > tymax)
             return false;
 
-        float tmax  = (p[1 - ray.sign.x].x - ray.origin.x) * ray.invdir.x;
-        const float tymin = (p[0 + ray.sign.y].y - ray.origin.y) * ray.invdir.y;
+        float tmax = (box.corner[1 - ray.sign.x].x - ray.origin.x) * ray.invdir.x;
+        const float tymin = (box.corner[0 + ray.sign.y].y - ray.origin.y) * ray.invdir.y;
         if (tmax < tymin)
             return false;
 
         tmax = std::min(tmax, tymax);
 
-        const float tzmin = (p[0 + ray.sign.z].z - ray.origin.z) * ray.invdir.z;
+        const float tzmin = (box.corner[0 + ray.sign.z].z - ray.origin.z) * ray.invdir.z;
         if (tmax > tzmin)
             return false;
 
         tmin = std::max(tmin, tymin);
 
-        const float tzmax = (p[1 - ray.sign.z].z - ray.origin.z) * ray.invdir.z;
+        const float tzmax = (box.corner[1 - ray.sign.z].z - ray.origin.z) * ray.invdir.z;
         if (tmin > tzmax)
             return false;
 
