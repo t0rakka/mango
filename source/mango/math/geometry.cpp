@@ -476,7 +476,7 @@ namespace mango
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
 
-        float3 edge1 = triangle.position[1] - triangle.position2];
+        float3 edge1 = triangle.position[1] - triangle.position[2];
         float3 edge2 = triangle.position[0] - triangle.position[2];
 
         float3 pvec = cross(ray.direction, edge2);
