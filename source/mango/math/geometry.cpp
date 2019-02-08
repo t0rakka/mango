@@ -357,18 +357,18 @@ namespace mango
     bool IntersectRange::intersect(const Ray& ray, const Box& box)
     {
         float id = 1.0f / ray.direction[0]; // This is cached in the FastRay version
-        float t1 = (box.corner[0][0] - ray.origin[0]) * id;
-        float t2 = (box.corner[1][0] - ray.origin[0]) * id;
-        float tmin = std::min(t1, t2);
-        float tmax = std::max(t1, t2);
+        float s1 = (box.corner[0][0] - ray.origin[0]) * id;
+        float s2 = (box.corner[1][0] - ray.origin[0]) * id;
+        float tmin = std::min(s1, s2);
+        float tmax = std::max(s1, s2);
 
         for (int i = 1; i < 3; ++i)
         {
             id = 1.0f / ray.direction[i];
-            t1 = (box.corner[0][i] - ray.origin[i]) * id;
-            t2 = (box.corner[1][i] - ray.origin[i]) * id;
-            tmin = std::max(tmin, std::min(std::min(t1, t2), tmax));
-            tmax = std::min(tmax, std::max(std::max(t1, t2), tmin));
+            s1 = (box.corner[0][i] - ray.origin[i]) * id;
+            s2 = (box.corner[1][i] - ray.origin[i]) * id;
+            tmin = std::max(tmin, std::min(std::min(s1, s2), tmax));
+            tmax = std::min(tmax, std::max(std::max(s1, s2), tmin));
         }
 
 		t0 = tmin;
