@@ -19,6 +19,8 @@ namespace simd {
 #define simd128_shuffle_epi64(a, b, mask) \
     _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), mask))
 
+namespace detail {
+
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static inline __m128i simd128_shuffle_x0z0(__m128i a)
@@ -68,12 +70,12 @@ namespace simd {
         return _mm_packs_epi32(a, b);
     }
 
-    static inline __m128i _mm_not_si128(__m128i a)
+    static inline __m128i simd128_not_si128(__m128i a)
     {
         return _mm_xor_si128(a, _mm_cmpeq_epi8(a, a));
     }
 
-    static inline __m128i _mm_select_si128(__m128i mask, __m128i a, __m128i b)
+    static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
     {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
@@ -105,6 +107,8 @@ namespace simd {
     }
 
 #endif
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // u8x16
@@ -232,7 +236,7 @@ namespace simd {
 
     static inline u8x16 bitwise_not(u8x16 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -284,7 +288,7 @@ namespace simd {
 
     static inline mask8x16 compare_neq(u8x16 a, u8x16 b)
     {
-        return _mm_not_si128(compare_eq(b, a));
+        return detail::simd128_not_si128(compare_eq(b, a));
     }
 
     static inline mask8x16 compare_lt(u8x16 a, u8x16 b)
@@ -294,19 +298,19 @@ namespace simd {
 
     static inline mask8x16 compare_le(u8x16 a, u8x16 b)
     {
-        return _mm_not_si128(compare_gt(a, b));
+        return detail::simd128_not_si128(compare_gt(a, b));
     }
 
     static inline mask8x16 compare_ge(u8x16 a, u8x16 b)
     {
-        return _mm_not_si128(compare_gt(b, a));
+        return detail::simd128_not_si128(compare_gt(b, a));
     }
 
 #endif
 
     static inline u8x16 select(mask8x16 mask, u8x16 a, u8x16 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     static inline u8x16 min(u8x16 a, u8x16 b)
@@ -423,7 +427,7 @@ namespace simd {
 
     static inline u16x8 bitwise_not(u16x8 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -475,7 +479,7 @@ namespace simd {
 
     static inline mask16x8 compare_neq(u16x8 a, u16x8 b)
     {
-        return _mm_not_si128(compare_eq(b, a));
+        return detail::simd128_not_si128(compare_eq(b, a));
     }
 
     static inline mask16x8 compare_lt(u16x8 a, u16x8 b)
@@ -485,19 +489,19 @@ namespace simd {
 
     static inline mask16x8 compare_le(u16x8 a, u16x8 b)
     {
-        return _mm_not_si128(compare_gt(a, b));
+        return detail::simd128_not_si128(compare_gt(a, b));
     }
 
     static inline mask16x8 compare_ge(u16x8 a, u16x8 b)
     {
-        return _mm_not_si128(compare_gt(b, a));
+        return detail::simd128_not_si128(compare_gt(b, a));
     }
 
 #endif
 
     static inline u16x8 select(mask16x8 mask, u16x8 a, u16x8 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     // shift by constant
@@ -553,12 +557,12 @@ namespace simd {
 
     static inline u16x8 min(u16x8 a, u16x8 b)
     {
-        return _mm_select_si128(compare_gt(a, b), b, a);
+        return detail::simd128_select_si128(compare_gt(a, b), b, a);
     }
 
     static inline u16x8 max(u16x8 a, u16x8 b)
     {
-        return _mm_select_si128(compare_gt(a, b), a, b);
+        return detail::simd128_select_si128(compare_gt(a, b), a, b);
     }
 
 #endif
@@ -729,7 +733,7 @@ namespace simd {
 
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
-        return simd128_mullo_epi32(a, b);
+        return detail::simd128_mullo_epi32(a, b);
     }
 
 #endif
@@ -772,7 +776,7 @@ namespace simd {
 
     static inline u32x4 bitwise_not(u32x4 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -824,7 +828,7 @@ namespace simd {
 
     static inline mask32x4 compare_neq(u32x4 a, u32x4 b)
     {
-        return _mm_not_si128(compare_eq(b, a));
+        return detail::simd128_not_si128(compare_eq(b, a));
     }
 
     static inline mask32x4 compare_lt(u32x4 a, u32x4 b)
@@ -834,19 +838,19 @@ namespace simd {
 
     static inline mask32x4 compare_le(u32x4 a, u32x4 b)
     {
-        return _mm_not_si128(compare_gt(a, b));
+        return detail::simd128_not_si128(compare_gt(a, b));
     }
 
     static inline mask32x4 compare_ge(u32x4 a, u32x4 b)
     {
-        return _mm_not_si128(compare_gt(b, a));
+        return detail::simd128_not_si128(compare_gt(b, a));
     }
 
 #endif
 
     static inline u32x4 select(mask32x4 mask, u32x4 a, u32x4 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     // shift by constant
@@ -909,7 +913,7 @@ namespace simd {
 
     static inline u32x4 sll(u32x4 a, u32x4 count)
     {
-        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count0 = detail::simd128_shuffle_x0z0(count);
         __m128i count1 = _mm_srli_epi64(count, 32);
         __m128i count2 = _mm_srli_si128(count0, 8);
         __m128i count3 = _mm_srli_si128(count, 12);
@@ -917,12 +921,12 @@ namespace simd {
         __m128i y = _mm_sll_epi32(a, count1);
         __m128i z = _mm_sll_epi32(a, count2);
         __m128i w = _mm_sll_epi32(a, count3);
-        return simd128_shuffle_4x4(x, y, z, w);
+        return detail::simd128_shuffle_4x4(x, y, z, w);
     }
 
     static inline u32x4 srl(u32x4 a, u32x4 count)
     {
-        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count0 = detail::simd128_shuffle_x0z0(count);
         __m128i count1 = _mm_srli_epi64(count, 32);
         __m128i count2 = _mm_srli_si128(count0, 8);
         __m128i count3 = _mm_srli_si128(count, 12);
@@ -930,12 +934,12 @@ namespace simd {
         __m128i y = _mm_srl_epi32(a, count1);
         __m128i z = _mm_srl_epi32(a, count2);
         __m128i w = _mm_srl_epi32(a, count3);
-        return simd128_shuffle_4x4(x, y, z, w);
+        return detail::simd128_shuffle_4x4(x, y, z, w);
     }
 
     static inline u32x4 sra(u32x4 a, u32x4 count)
     {
-        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count0 = detail::simd128_shuffle_x0z0(count);
         __m128i count1 = _mm_srli_epi64(count, 32);
         __m128i count2 = _mm_srli_si128(count0, 8);
         __m128i count3 = _mm_srli_si128(count, 12);
@@ -943,7 +947,7 @@ namespace simd {
         __m128i y = _mm_sra_epi32(a, count1);
         __m128i z = _mm_sra_epi32(a, count2);
         __m128i w = _mm_sra_epi32(a, count3);
-        return simd128_shuffle_4x4(x, y, z, w);
+        return detail::simd128_shuffle_4x4(x, y, z, w);
     }
 
 #endif
@@ -964,12 +968,12 @@ namespace simd {
 
     static inline u32x4 min(u32x4 a, u32x4 b)
     {
-        return _mm_select_si128(compare_gt(a, b), b, a);
+        return detail::simd128_select_si128(compare_gt(a, b), b, a);
     }
 
     static inline u32x4 max(u32x4 a, u32x4 b)
     {
-        return _mm_select_si128(compare_gt(a, b), a, b);
+        return detail::simd128_select_si128(compare_gt(a, b), a, b);
     }
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
@@ -1000,7 +1004,7 @@ namespace simd {
     static inline u64x2 set_component(u64x2 a, u64 s)
     {
         static_assert(Index < 2, "Index out of range.");
-        const __m128i temp = simd128_cvtsi64_si128(s);
+        const __m128i temp = detail::simd128_cvtsi64_si128(s);
         return Index ? simd128_shuffle_epi64(a, temp, 0x00)
                      : simd128_shuffle_epi64(temp, a, 0x02);
     }
@@ -1010,7 +1014,7 @@ namespace simd {
     {
         static_assert(Index < 2, "Index out of range.");
         const __m128i temp = _mm_shuffle_epi32(a, 0x44 + Index * 0xaa);
-        return simd128_cvtsi128_si64(temp);
+        return detail::simd128_cvtsi128_si64(temp);
     }
 
 #endif
@@ -1072,12 +1076,12 @@ namespace simd {
 
     static inline u64x2 bitwise_not(u64x2 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     // shift by constant
@@ -1247,7 +1251,7 @@ namespace simd {
 
     static inline s8x16 bitwise_not(s8x16 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -1298,7 +1302,7 @@ namespace simd {
 
     static inline mask8x16 compare_neq(s8x16 a, s8x16 b)
     {
-        return _mm_not_si128(compare_eq(b, a));
+        return detail::simd128_not_si128(compare_eq(b, a));
     }
 
     static inline mask8x16 compare_lt(s8x16 a, s8x16 b)
@@ -1308,19 +1312,19 @@ namespace simd {
 
     static inline mask8x16 compare_le(s8x16 a, s8x16 b)
     {
-        return _mm_not_si128(compare_gt(a, b));
+        return detail::simd128_not_si128(compare_gt(a, b));
     }
 
     static inline mask8x16 compare_ge(s8x16 a, s8x16 b)
     {
-        return _mm_not_si128(compare_gt(b, a));
+        return detail::simd128_not_si128(compare_gt(b, a));
     }
 
 #endif
 
     static inline s8x16 select(mask8x16 mask, s8x16 a, s8x16 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -1339,12 +1343,12 @@ namespace simd {
 
     static inline s8x16 min(s8x16 a, s8x16 b)
     {
-        return _mm_select_si128(_mm_cmpgt_epi8(a, b), b, a);
+        return detail::simd128_select_si128(_mm_cmpgt_epi8(a, b), b, a);
     }
 
     static inline s8x16 max(s8x16 a, s8x16 b)
     {
-        return _mm_select_si128(_mm_cmpgt_epi8(a, b), a, b);
+        return detail::simd128_select_si128(_mm_cmpgt_epi8(a, b), a, b);
     }
 
 #endif
@@ -1468,7 +1472,7 @@ namespace simd {
 
     static inline s16x8 bitwise_not(s16x8 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -1519,7 +1523,7 @@ namespace simd {
 
     static inline mask16x8 compare_neq(s16x8 a, s16x8 b)
     {
-        return _mm_not_si128(compare_eq(b, a));
+        return detail::simd128_not_si128(compare_eq(b, a));
     }
 
     static inline mask16x8 compare_lt(s16x8 a, s16x8 b)
@@ -1529,19 +1533,19 @@ namespace simd {
 
     static inline mask16x8 compare_le(s16x8 a, s16x8 b)
     {
-        return _mm_not_si128(compare_gt(a, b));
+        return detail::simd128_not_si128(compare_gt(a, b));
     }
 
     static inline mask16x8 compare_ge(s16x8 a, s16x8 b)
     {
-        return _mm_not_si128(compare_gt(b, a));
+        return detail::simd128_not_si128(compare_gt(b, a));
     }
 
 #endif
 
     static inline s16x8 select(mask16x8 mask, s16x8 a, s16x8 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     // shift by constant
@@ -1772,7 +1776,7 @@ namespace simd {
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
-        return simd128_mullo_epi32(a, b);
+        return detail::simd128_mullo_epi32(a, b);
     }
 
 #endif
@@ -1786,7 +1790,7 @@ namespace simd {
         __m128i temp = _mm_xor_si128(b, v);
         temp = _mm_xor_si128(temp, _mm_cmpeq_epi32(temp, temp));
         temp = _mm_or_si128(temp, _mm_xor_si128(a, b));
-        return _mm_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), v, a);
+        return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), v, a);
     }
 
     static inline s32x4 subs(s32x4 a, s32x4 b)
@@ -1794,7 +1798,7 @@ namespace simd {
         const __m128i v = _mm_sub_epi32(a, b);
         a = _mm_srai_epi32(a, 31);
         __m128i temp = _mm_and_si128(_mm_xor_si128(a, b), _mm_xor_si128(a, v));
-        return _mm_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
+        return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
     }
 
     // bitwise
@@ -1821,7 +1825,7 @@ namespace simd {
 
     static inline s32x4 bitwise_not(s32x4 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -1872,7 +1876,7 @@ namespace simd {
 
     static inline mask32x4 compare_neq(s32x4 a, s32x4 b)
     {
-        return _mm_not_si128(compare_eq(b, a));
+        return detail::simd128_not_si128(compare_eq(b, a));
     }
 
     static inline mask32x4 compare_lt(s32x4 a, s32x4 b)
@@ -1882,19 +1886,19 @@ namespace simd {
 
     static inline mask32x4 compare_le(s32x4 a, s32x4 b)
     {
-        return _mm_not_si128(compare_gt(a, b));
+        return detail::simd128_not_si128(compare_gt(a, b));
     }
 
     static inline mask32x4 compare_ge(s32x4 a, s32x4 b)
     {
-        return _mm_not_si128(compare_gt(b, a));
+        return detail::simd128_not_si128(compare_gt(b, a));
     }
 
 #endif
 
     static inline s32x4 select(mask32x4 mask, s32x4 a, s32x4 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     // shift by constant
@@ -1957,7 +1961,7 @@ namespace simd {
 
     static inline s32x4 sll(s32x4 a, u32x4 count)
     {
-        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count0 = detail::simd128_shuffle_x0z0(count);
         __m128i count1 = _mm_srli_epi64(count, 32);
         __m128i count2 = _mm_srli_si128(count0, 8);
         __m128i count3 = _mm_srli_si128(count, 12);
@@ -1965,12 +1969,12 @@ namespace simd {
         __m128i y = _mm_sll_epi32(a, count1);
         __m128i z = _mm_sll_epi32(a, count2);
         __m128i w = _mm_sll_epi32(a, count3);
-        return simd128_shuffle_4x4(x, y, z, w);
+        return detail::simd128_shuffle_4x4(x, y, z, w);
     }
 
     static inline s32x4 srl(s32x4 a, u32x4 count)
     {
-        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count0 = detail::simd128_shuffle_x0z0(count);
         __m128i count1 = _mm_srli_epi64(count, 32);
         __m128i count2 = _mm_srli_si128(count0, 8);
         __m128i count3 = _mm_srli_si128(count, 12);
@@ -1978,12 +1982,12 @@ namespace simd {
         __m128i y = _mm_srl_epi32(a, count1);
         __m128i z = _mm_srl_epi32(a, count2);
         __m128i w = _mm_srl_epi32(a, count3);
-        return simd128_shuffle_4x4(x, y, z, w);
+        return detail::simd128_shuffle_4x4(x, y, z, w);
     }
 
     static inline s32x4 sra(s32x4 a, u32x4 count)
     {
-        __m128i count0 = simd128_shuffle_x0z0(count);
+        __m128i count0 = detail::simd128_shuffle_x0z0(count);
         __m128i count1 = _mm_srli_epi64(count, 32);
         __m128i count2 = _mm_srli_si128(count0, 8);
         __m128i count3 = _mm_srli_si128(count, 12);
@@ -1991,7 +1995,7 @@ namespace simd {
         __m128i y = _mm_sra_epi32(a, count1);
         __m128i z = _mm_sra_epi32(a, count2);
         __m128i w = _mm_sra_epi32(a, count3);
-        return simd128_shuffle_4x4(x, y, z, w);
+        return detail::simd128_shuffle_4x4(x, y, z, w);
     }
 
 #endif
@@ -2026,13 +2030,13 @@ namespace simd {
     static inline s32x4 min(s32x4 a, s32x4 b)
     {
         const __m128i mask = _mm_cmpgt_epi32(a, b);
-        return _mm_select_si128(mask, b, a);
+        return detail::simd128_select_si128(mask, b, a);
     }
 
     static inline s32x4 max(s32x4 a, s32x4 b)
     {
         const __m128i mask = _mm_cmpgt_epi32(a, b);
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     static inline s32x4 unpack(u32 s)
@@ -2070,7 +2074,7 @@ namespace simd {
     static inline s64x2 set_component(s64x2 a, s64 s)
     {
         static_assert(Index < 2, "Index out of range.");
-        const __m128i temp = simd128_cvtsi64_si128(s);
+        const __m128i temp = detail::simd128_cvtsi64_si128(s);
         return Index ? simd128_shuffle_epi64(a, temp, 0x00)
                      : simd128_shuffle_epi64(temp, a, 0x02);
     }
@@ -2080,7 +2084,7 @@ namespace simd {
     {
         static_assert(Index < 2, "Index out of range.");
         const __m128i temp = _mm_shuffle_epi32(a, 0x44 + Index * 0xaa);
-        return simd128_cvtsi128_si64(temp);
+        return detail::simd128_cvtsi128_si64(temp);
     }
 
 #endif
@@ -2142,12 +2146,12 @@ namespace simd {
 
     static inline s64x2 bitwise_not(s64x2 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
-        return _mm_select_si128(mask, a, b);
+        return detail::simd128_select_si128(mask, a, b);
     }
 
     // shift by constant

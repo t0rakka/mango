@@ -13,15 +13,19 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
-    static inline __m256i _mm256_not_si256(__m256i a)
+namespace detail {
+
+    static inline __m256i simd256_not_si256(__m256i a)
     {
         return _mm256_xor_si256(a, _mm256_cmpeq_epi8(a, a));
     }
 
-    static inline __m256i _mm256_select_si256(__m256i mask, __m256i a, __m256i b)
+    static inline __m256i simd256_select_si256(__m256i mask, __m256i a, __m256i b)
     {
         return _mm256_or_si256(_mm256_and_si256(mask, a), _mm256_andnot_si256(mask, b));
     }
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // u8x32
@@ -107,7 +111,7 @@ namespace simd {
 
     static inline u8x32 bitwise_not(u8x32 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     // compare
@@ -125,7 +129,7 @@ namespace simd {
 
     static inline u8x32 select(mask8x32 mask, u8x32 a, u8x32 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     static inline u8x32 min(u8x32 a, u8x32 b)
@@ -227,7 +231,7 @@ namespace simd {
 
     static inline u16x16 bitwise_not(u16x16 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     // compare
@@ -245,7 +249,7 @@ namespace simd {
 
     static inline u16x16 select(mask16x16 mask, u16x16 a, u16x16 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     // shift by constant
@@ -401,7 +405,7 @@ namespace simd {
 
     static inline u32x8 bitwise_not(u32x8 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     // compare
@@ -419,7 +423,7 @@ namespace simd {
 
     static inline u32x8 select(mask32x8 mask, u32x8 a, u32x8 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     // shift by constant
@@ -561,12 +565,12 @@ namespace simd {
 
     static inline u64x4 bitwise_not(u64x4 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     static inline u64x4 select(mask64x4 mask, u64x4 a, u64x4 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     // shift by constant
@@ -689,7 +693,7 @@ namespace simd {
 
     static inline s8x32 bitwise_not(s8x32 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     // compare
@@ -706,7 +710,7 @@ namespace simd {
 
     static inline s8x32 select(mask8x32 mask, s8x32 a, s8x32 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     static inline s8x32 min(s8x32 a, s8x32 b)
@@ -818,7 +822,7 @@ namespace simd {
 
     static inline s16x16 bitwise_not(s16x16 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     // compare
@@ -835,7 +839,7 @@ namespace simd {
 
     static inline s16x16 select(mask16x16 mask, s16x16 a, s16x16 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     // shift by constant
@@ -972,7 +976,7 @@ namespace simd {
         __m256i temp = _mm256_xor_si256(b, v);
         temp = _mm256_xor_si256(temp, _mm256_cmpeq_epi32(temp, temp));
         temp = _mm256_or_si256(temp, _mm256_xor_si256(a, b));
-        return _mm256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), v, a);
+        return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), v, a);
     }
 
     static inline s32x8 subs(s32x8 a, s32x8 b)
@@ -980,7 +984,7 @@ namespace simd {
         const __m256i v = _mm256_sub_epi32(a, b);
         a = _mm256_srai_epi32(a, 31);
         __m256i temp = _mm256_and_si256(_mm256_xor_si256(a, b), _mm256_xor_si256(a, v));
-        return _mm256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), a, v);
+        return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), a, v);
     }
 
     // bitwise
@@ -1007,7 +1011,7 @@ namespace simd {
 
     static inline s32x8 bitwise_not(s32x8 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     // compare
@@ -1024,7 +1028,7 @@ namespace simd {
 
     static inline s32x8 select(mask32x8 mask, s32x8 a, s32x8 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     // shift by constant
@@ -1166,12 +1170,12 @@ namespace simd {
 
     static inline s64x4 bitwise_not(s64x4 a)
     {
-        return _mm256_not_si256(a);
+        return detail::simd256_not_si256(a);
     }
 
     static inline s64x4 select(mask64x4 mask, s64x4 a, s64x4 b)
     {
-        return _mm256_select_si256(mask, a, b);
+        return detail::simd256_select_si256(mask, a, b);
     }
 
     // shift by constant

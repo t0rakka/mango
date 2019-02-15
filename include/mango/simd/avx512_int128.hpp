@@ -19,6 +19,8 @@ namespace simd {
 #define simd128_shuffle_epi64(a, b, mask) \
     _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), mask))
 
+namespace detail {
+
     static inline __m128i simd128_packus_epi32(__m128i a, __m128i b)
     {
         a = _mm_slli_epi32(a, 16);
@@ -28,18 +30,19 @@ namespace simd {
         return _mm_packs_epi32(a, b);
     }
 
-    static inline __m128i _mm_not_si128(__m128i a)
+    static inline __m128i simd128_not_si128(__m128i a)
     {
         return _mm_xor_si128(a, _mm_cmpeq_epi8(a, a));
     }
 
-    static inline __m128i _mm_select_si128(__m128i mask, __m128i a, __m128i b)
+    static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
     {
         return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
 
 #if defined(__x86_64__)
 
+    /*
     static inline __m128i simd128_cvtsi64_si128(s64 a)
     {
         return _mm_cvtsi64_si128(a);
@@ -49,9 +52,11 @@ namespace simd {
     {
         return _mm_cvtsi128_si64(a);
     }
+    */
 
 #else
 
+    /*
     static inline __m128i simd128_cvtsi64_si128(s64 a)
     {
         return _mm_set_epi64x(0, a);
@@ -63,8 +68,11 @@ namespace simd {
         value |= u64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
         return value;
     }
+    */
 
 #endif
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // u8x16
@@ -167,7 +175,7 @@ namespace simd {
 
     static inline u8x16 bitwise_not(u8x16 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -321,7 +329,7 @@ namespace simd {
 
     static inline u16x8 bitwise_not(u16x8 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -542,7 +550,7 @@ namespace simd {
 
     static inline u32x4 bitwise_not(u32x4 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -721,7 +729,7 @@ namespace simd {
 
     static inline u64x2 bitwise_not(u64x2 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
@@ -866,7 +874,7 @@ namespace simd {
 
     static inline s8x16 bitwise_not(s8x16 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -1030,7 +1038,7 @@ namespace simd {
 
     static inline s16x8 bitwise_not(s16x8 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -1232,7 +1240,7 @@ namespace simd {
         __m128i temp = _mm_xor_si128(b, v);
         temp = _mm_xor_si128(temp, _mm_cmpeq_epi32(temp, temp));
         temp = _mm_or_si128(temp, _mm_xor_si128(a, b));
-        return _mm_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), v, a);
+        return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), v, a);
     }
 
     static inline s32x4 subs(s32x4 a, s32x4 b)
@@ -1240,7 +1248,7 @@ namespace simd {
         const __m128i v = _mm_sub_epi32(a, b);
         a = _mm_srai_epi32(a, 31);
         __m128i temp = _mm_and_si128(_mm_xor_si128(a, b), _mm_xor_si128(a, v));
-        return _mm_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
+        return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
     }
 
     // bitwise
@@ -1267,7 +1275,7 @@ namespace simd {
 
     static inline s32x4 bitwise_not(s32x4 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     // compare
@@ -1459,7 +1467,7 @@ namespace simd {
 
     static inline s64x2 bitwise_not(s64x2 a)
     {
-        return _mm_not_si128(a);
+        return detail::simd128_not_si128(a);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

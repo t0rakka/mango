@@ -13,6 +13,8 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
+namespace detail {
+
     template <typename ScalarType, int Size>
     static inline scalar_vector<ScalarType, Size>
     scalar_set(ScalarType value)
@@ -352,6 +354,8 @@ namespace simd {
         return v;
     }
 
+} // namespace detail
+
     // -----------------------------------------------------------------
     // u8x16
     // -----------------------------------------------------------------
@@ -373,12 +377,12 @@ namespace simd {
 
     static inline u8x16 u8x16_zero()
     {
-        return scalar_set<u8, 16>(0);
+        return detail::scalar_set<u8, 16>(0);
     }
 
     static inline u8x16 u8x16_set1(u8 s)
     {
-        return scalar_set<u8, 16>(s);
+        return detail::scalar_set<u8, 16>(s);
     }
 
     static inline u8x16 u8x16_set16(
@@ -409,108 +413,108 @@ namespace simd {
 
     static inline u8x16 unpacklo(u8x16 a, u8x16 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline u8x16 unpackhi(u8x16 a, u8x16 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline u8x16 add(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline u8x16 sub(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     // saturated
 
     static inline u8x16 adds(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_unsigned_adds, a, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_adds, a, b);
     }
 
     static inline u8x16 subs(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_unsigned_subs, a, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_subs, a, b);
     }
 
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline u8x16 bitwise_and(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline u8x16 bitwise_or(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline u8x16 bitwise_xor(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline u8x16 bitwise_not(u8x16 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     // compare
 
     static inline mask8x16 compare_eq(u8x16 a, u8x16 b)
     {
-        return scalar_compare_eq(a, b);
+        return detail::scalar_compare_eq(a, b);
     }
 
     static inline mask8x16 compare_gt(u8x16 a, u8x16 b)
     {
-        return scalar_compare_gt(a, b);
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline mask8x16 compare_neq(u8x16 a, u8x16 b)
     {
-        return scalar_compare_neq(a, b);
+        return detail::scalar_compare_neq(a, b);
     }
 
     static inline mask8x16 compare_lt(u8x16 a, u8x16 b)
     {
-        return scalar_compare_lt(a, b);
+        return detail::scalar_compare_lt(a, b);
     }
 
     static inline mask8x16 compare_le(u8x16 a, u8x16 b)
     {
-        return scalar_compare_le(a, b);
+        return detail::scalar_compare_le(a, b);
     }
 
     static inline mask8x16 compare_ge(u8x16 a, u8x16 b)
     {
-        return scalar_compare_ge(a, b);
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline u8x16 select(mask8x16 mask, u8x16 a, u8x16 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     static inline u8x16 min(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_min, a, b);
+        return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
     static inline u8x16 max(u8x16 a, u8x16 b)
     {
-        return scalar_unroll(scalar_max, a, b);
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -534,12 +538,12 @@ namespace simd {
 
     static inline u16x8 u16x8_zero()
     {
-        return scalar_set<u16, 8>(0);
+        return detail::scalar_set<u16, 8>(0);
     }
 
     static inline u16x8 u16x8_set1(u16 s)
     {
-        return scalar_set<u16, 8>(s);
+        return detail::scalar_set<u16, 8>(s);
     }
 
     static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
@@ -562,103 +566,103 @@ namespace simd {
 
     static inline u16x8 unpacklo(u16x8 a, u16x8 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline u16x8 unpackhi(u16x8 a, u16x8 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline u16x8 add(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline u16x8 sub(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     static inline u16x8 mullo(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_mullo, a, b);
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     // saturated
 
     static inline u16x8 adds(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_unsigned_adds, a, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_adds, a, b);
     }
 
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_unsigned_subs, a, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_subs, a, b);
     }
 
     // bitwise
 
     static inline u16x8 bitwise_nand(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline u16x8 bitwise_and(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline u16x8 bitwise_or(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline u16x8 bitwise_xor(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline u16x8 bitwise_not(u16x8 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     // compare
 
     static inline mask16x8 compare_eq(u16x8 a, u16x8 b)
     {
-        return scalar_compare_eq(a, b);
+        return detail::scalar_compare_eq(a, b);
     }
 
     static inline mask16x8 compare_gt(u16x8 a, u16x8 b)
     {
-        return scalar_compare_gt(a, b);
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline mask16x8 compare_neq(u16x8 a, u16x8 b)
     {
-        return scalar_compare_neq(a, b);
+        return detail::scalar_compare_neq(a, b);
     }
 
     static inline mask16x8 compare_lt(u16x8 a, u16x8 b)
     {
-        return scalar_compare_lt(a, b);
+        return detail::scalar_compare_lt(a, b);
     }
 
     static inline mask16x8 compare_le(u16x8 a, u16x8 b)
     {
-        return scalar_compare_le(a, b);
+        return detail::scalar_compare_le(a, b);
     }
 
     static inline mask16x8 compare_ge(u16x8 a, u16x8 b)
     {
-        return scalar_compare_ge(a, b);
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline u16x8 select(mask16x8 mask, u16x8 a, u16x8 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     // shift by constant
@@ -666,46 +670,46 @@ namespace simd {
     template <int Count>
     static inline u16x8 slli(u16x8 a)
     {
-        return scalar_shift_left<u16x8, u16, Count>(a);
+        return detail::scalar_shift_left<u16x8, u16, Count>(a);
     }
 
     template <int Count>
     static inline u16x8 srli(u16x8 a)
     {
-        return scalar_shift_right<u16x8, u16, Count>(a);
+        return detail::scalar_shift_right<u16x8, u16, Count>(a);
     }
 
     template <int Count>
     static inline u16x8 srai(u16x8 a)
     {
-        return scalar_shift_right<u16x8, s16, Count>(a);
+        return detail::scalar_shift_right<u16x8, s16, Count>(a);
     }
 
     // shift by scalar
 
     static inline u16x8 sll(u16x8 a, int count)
     {
-        return scalar_shift_left<u16x8, u16>(a, count);
+        return detail::scalar_shift_left<u16x8, u16>(a, count);
     }
 
     static inline u16x8 srl(u16x8 a, int count)
     {
-        return scalar_shift_right<u16x8, u16>(a, count);
+        return detail::scalar_shift_right<u16x8, u16>(a, count);
     }
 
     static inline u16x8 sra(u16x8 a, int count)
     {
-        return scalar_shift_right<u16x8, s16>(a, count);
+        return detail::scalar_shift_right<u16x8, s16>(a, count);
     }
 
     static inline u16x8 min(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_min, a, b);
+        return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
     static inline u16x8 max(u16x8 a, u16x8 b)
     {
-        return scalar_unroll(scalar_max, a, b);
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
     
     // -----------------------------------------------------------------
@@ -786,103 +790,103 @@ namespace simd {
 
     static inline u32x4 unpacklo(u32x4 a, u32x4 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline u32x4 unpackhi(u32x4 a, u32x4 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline u32x4 add(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline u32x4 sub(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_mullo, a, b);
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     // saturated
 
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_unsigned_adds, a, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_adds, a, b);
     }
 
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_unsigned_subs, a, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_subs, a, b);
     }
 
     // bitwise
 
     static inline u32x4 bitwise_nand(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline u32x4 bitwise_and(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline u32x4 bitwise_or(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline u32x4 bitwise_xor(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline u32x4 bitwise_not(u32x4 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     // compare
 
     static inline mask32x4 compare_eq(u32x4 a, u32x4 b)
     {
-        return scalar_compare_eq(a, b);
+        return detail::scalar_compare_eq(a, b);
     }
 
     static inline mask32x4 compare_gt(u32x4 a, u32x4 b)
     {
-        return scalar_compare_gt(a, b);
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline mask32x4 compare_neq(u32x4 a, u32x4 b)
     {
-        return scalar_compare_neq(a, b);
+        return detail::scalar_compare_neq(a, b);
     }
 
     static inline mask32x4 compare_lt(u32x4 a, u32x4 b)
     {
-        return scalar_compare_lt(a, b);
+        return detail::scalar_compare_lt(a, b);
     }
 
     static inline mask32x4 compare_le(u32x4 a, u32x4 b)
     {
-        return scalar_compare_le(a, b);
+        return detail::scalar_compare_le(a, b);
     }
 
     static inline mask32x4 compare_ge(u32x4 a, u32x4 b)
     {
-        return scalar_compare_ge(a, b);
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline u32x4 select(mask32x4 mask, u32x4 a, u32x4 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     // shift by constant
@@ -890,63 +894,63 @@ namespace simd {
     template <int Count>
     static inline u32x4 slli(u32x4 a)
     {
-        return scalar_shift_left<u32x4, u32, Count>(a);
+        return detail::scalar_shift_left<u32x4, u32, Count>(a);
     }
 
     template <int Count>
     static inline u32x4 srli(u32x4 a)
     {
-        return scalar_shift_right<u32x4, u32, Count>(a);
+        return detail::scalar_shift_right<u32x4, u32, Count>(a);
     }
 
     template <int Count>
     static inline u32x4 srai(u32x4 a)
     {
-        return scalar_shift_right<u32x4, s32, Count>(a);
+        return detail::scalar_shift_right<u32x4, s32, Count>(a);
     }
 
     // shift by scalar
 
     static inline u32x4 sll(u32x4 a, int count)
     {
-        return scalar_shift_left<u32x4, u32>(a, count);
+        return detail::scalar_shift_left<u32x4, u32>(a, count);
     }
 
     static inline u32x4 srl(u32x4 a, int count)
     {
-        return scalar_shift_right<u32x4, u32>(a, count);
+        return detail::scalar_shift_right<u32x4, u32>(a, count);
     }
 
     static inline u32x4 sra(u32x4 a, int count)
     {
-        return scalar_shift_right<u32x4, s32>(a, count);
+        return detail::scalar_shift_right<u32x4, s32>(a, count);
     }
 
     // shift by vector
 
     static inline u32x4 sll(u32x4 a, u32x4 count)
     {
-        return scalar_shift_left<u32x4, u32, u32x4>(a, count);
+        return detail::scalar_shift_left<u32x4, u32, u32x4>(a, count);
     }
 
     static inline u32x4 srl(u32x4 a, u32x4 count)
     {
-        return scalar_shift_right<u32x4, u32, u32x4>(a, count);
+        return detail::scalar_shift_right<u32x4, u32, u32x4>(a, count);
     }
 
     static inline u32x4 sra(u32x4 a, u32x4 count)
     {
-        return scalar_shift_right<u32x4, s32, u32x4>(a, count);
+        return detail::scalar_shift_right<u32x4, s32, u32x4>(a, count);
     }
 
     static inline u32x4 min(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_min, a, b);
+        return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
     static inline u32x4 max(u32x4 a, u32x4 b)
     {
-        return scalar_unroll(scalar_max, a, b);
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -970,12 +974,12 @@ namespace simd {
 
     static inline u64x2 u64x2_zero()
     {
-        return scalar_set<u64, 2>(0);
+        return detail::scalar_set<u64, 2>(0);
     }
 
     static inline u64x2 u64x2_set1(u64 s)
     {
-        return scalar_set<u64, 2>(s);
+        return detail::scalar_set<u64, 2>(s);
     }
 
     static inline u64x2 u64x2_set2(u64 x, u64 y)
@@ -985,52 +989,52 @@ namespace simd {
 
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline u64x2 unpackhi(u64x2 a, u64x2 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline u64x2 add(u64x2 a, u64x2 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline u64x2 sub(u64x2 a, u64x2 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline u64x2 bitwise_and(u64x2 a, u64x2 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline u64x2 bitwise_or(u64x2 a, u64x2 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline u64x2 bitwise_xor(u64x2 a, u64x2 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline u64x2 bitwise_not(u64x2 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     // shift by constant
@@ -1038,25 +1042,25 @@ namespace simd {
     template <int Count>
     static inline u64x2 slli(u64x2 a)
     {
-        return scalar_shift_left<u64x2, u64, Count>(a);
+        return detail::scalar_shift_left<u64x2, u64, Count>(a);
     }
 
     template <int Count>
     static inline u64x2 srli(u64x2 a)
     {
-        return scalar_shift_right<u64x2, u64, Count>(a);
+        return detail::scalar_shift_right<u64x2, u64, Count>(a);
     }
 
     // shift by scalar
 
     static inline u64x2 sll(u64x2 a, int count)
     {
-        return scalar_shift_left<u64x2, u64>(a, count);
+        return detail::scalar_shift_left<u64x2, u64>(a, count);
     }
 
     static inline u64x2 srl(u64x2 a, int count)
     {
-        return scalar_shift_right<u64x2, u64>(a, count);
+        return detail::scalar_shift_right<u64x2, u64>(a, count);
     }
 
     // -----------------------------------------------------------------
@@ -1080,12 +1084,12 @@ namespace simd {
 
     static inline s8x16 s8x16_zero()
     {
-        return scalar_set<s8, 16>(0);
+        return detail::scalar_set<s8, 16>(0);
     }
 
     static inline s8x16 s8x16_set1(s8 s)
     {
-        return scalar_set<s8, 16>(s);
+        return detail::scalar_set<s8, 16>(s);
     }
 
     static inline s8x16 s8x16_set16(
@@ -1116,118 +1120,118 @@ namespace simd {
 
     static inline s8x16 unpacklo(s8x16 a, s8x16 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline s8x16 unpackhi(s8x16 a, s8x16 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline s8x16 add(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline s8x16 sub(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     // saturated
 
     static inline s8x16 adds(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_signed_adds, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
     }
 
     static inline s8x16 subs(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_signed_subs, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
     {
-        return scalar_unroll(scalar_abs, a);
+        return detail::scalar_unroll(detail::scalar_abs, a);
     }
 
     static inline s8x16 neg(s8x16 a)
     {
-        return scalar_unroll(scalar_neg, a);
+        return detail::scalar_unroll(detail::scalar_neg, a);
     }
 
     // bitwise
 
     static inline s8x16 bitwise_nand(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline s8x16 bitwise_and(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline s8x16 bitwise_or(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline s8x16 bitwise_xor(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline s8x16 bitwise_not(s8x16 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     // compare
 
     static inline mask8x16 compare_eq(s8x16 a, s8x16 b)
     {
-        return scalar_compare_eq(a, b);
+        return detail::scalar_compare_eq(a, b);
     }
 
     static inline mask8x16 compare_gt(s8x16 a, s8x16 b)
     {
-        return scalar_compare_gt(a, b);
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline mask8x16 compare_neq(s8x16 a, s8x16 b)
     {
-        return scalar_compare_neq(a, b);
+        return detail::scalar_compare_neq(a, b);
     }
 
     static inline mask8x16 compare_lt(s8x16 a, s8x16 b)
     {
-        return scalar_compare_lt(a, b);
+        return detail::scalar_compare_lt(a, b);
     }
 
     static inline mask8x16 compare_le(s8x16 a, s8x16 b)
     {
-        return scalar_compare_le(a, b);
+        return detail::scalar_compare_le(a, b);
     }
 
     static inline mask8x16 compare_ge(s8x16 a, s8x16 b)
     {
-        return scalar_compare_ge(a, b);
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline s8x16 select(mask8x16 mask, s8x16 a, s8x16 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     static inline s8x16 min(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_min, a, b);
+        return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
     static inline s8x16 max(s8x16 a, s8x16 b)
     {
-        return scalar_unroll(scalar_max, a, b);
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1251,12 +1255,12 @@ namespace simd {
 
     static inline s16x8 s16x8_zero()
     {
-        return scalar_set<s16, 8>(0);
+        return detail::scalar_set<s16, 8>(0);
     }
 
     static inline s16x8 s16x8_set1(s16 s)
     {
-        return scalar_set<s16, 8>(s);
+        return detail::scalar_set<s16, 8>(s);
     }
 
     static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
@@ -1279,113 +1283,113 @@ namespace simd {
 
     static inline s16x8 unpacklo(s16x8 a, s16x8 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline s16x8 unpackhi(s16x8 a, s16x8 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline s16x8 add(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline s16x8 sub(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_mullo, a, b);
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     // saturated
 
     static inline s16x8 adds(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_signed_adds, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
     }
 
     static inline s16x8 subs(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_signed_subs, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
     }
 
     static inline s16x8 abs(s16x8 a)
     {
-        return scalar_unroll(scalar_abs, a);
+        return detail::scalar_unroll(detail::scalar_abs, a);
     }
 
     static inline s16x8 neg(s16x8 a)
     {
-        return scalar_unroll(scalar_neg, a);
+        return detail::scalar_unroll(detail::scalar_neg, a);
     }
 
     // bitwise
 
     static inline s16x8 bitwise_nand(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline s16x8 bitwise_and(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline s16x8 bitwise_or(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline s16x8 bitwise_xor(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline s16x8 bitwise_not(s16x8 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     // compare
 
     static inline mask16x8 compare_eq(s16x8 a, s16x8 b)
     {
-        return scalar_compare_eq(a, b);
+        return detail::scalar_compare_eq(a, b);
     }
 
     static inline mask16x8 compare_gt(s16x8 a, s16x8 b)
     {
-        return scalar_compare_gt(a, b);
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline mask16x8 compare_neq(s16x8 a, s16x8 b)
     {
-        return scalar_compare_neq(a, b);
+        return detail::scalar_compare_neq(a, b);
     }
 
     static inline mask16x8 compare_lt(s16x8 a, s16x8 b)
     {
-        return scalar_compare_lt(a, b);
+        return detail::scalar_compare_lt(a, b);
     }
 
     static inline mask16x8 compare_le(s16x8 a, s16x8 b)
     {
-        return scalar_compare_le(a, b);
+        return detail::scalar_compare_le(a, b);
     }
 
     static inline mask16x8 compare_ge(s16x8 a, s16x8 b)
     {
-        return scalar_compare_ge(a, b);
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline s16x8 select(mask16x8 mask, s16x8 a, s16x8 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     // shift by constant
@@ -1393,46 +1397,46 @@ namespace simd {
     template <int Count>
     static inline s16x8 slli(s16x8 a)
     {
-        return scalar_shift_left<s16x8, u16, Count>(a);
+        return detail::scalar_shift_left<s16x8, u16, Count>(a);
     }
 
     template <int Count>
     static inline s16x8 srli(s16x8 a)
     {
-        return scalar_shift_right<s16x8, u16, Count>(a);
+        return detail::scalar_shift_right<s16x8, u16, Count>(a);
     }
 
     template <int Count>
     static inline s16x8 srai(s16x8 a)
     {
-        return scalar_shift_right<s16x8, s16, Count>(a);
+        return detail::scalar_shift_right<s16x8, s16, Count>(a);
     }
 
     // shift by scalar
 
     static inline s16x8 sll(s16x8 a, int count)
     {
-        return scalar_shift_left<s16x8, u16>(a, count);
+        return detail::scalar_shift_left<s16x8, u16>(a, count);
     }
 
     static inline s16x8 srl(s16x8 a, int count)
     {
-        return scalar_shift_right<s16x8, u16>(a, count);
+        return detail::scalar_shift_right<s16x8, u16>(a, count);
     }
 
     static inline s16x8 sra(s16x8 a, int count)
     {
-        return scalar_shift_right<s16x8, s16>(a, count);
+        return detail::scalar_shift_right<s16x8, s16>(a, count);
     }
 
     static inline s16x8 min(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_min, a, b);
+        return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
     static inline s16x8 max(s16x8 a, s16x8 b)
     {
-        return scalar_unroll(scalar_max, a, b);
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1513,113 +1517,113 @@ namespace simd {
 
     static inline s32x4 unpacklo(s32x4 a, s32x4 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline s32x4 unpackhi(s32x4 a, s32x4 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline s32x4 abs(s32x4 a)
     {
-        return scalar_unroll(scalar_abs, a);
+        return detail::scalar_unroll(detail::scalar_abs, a);
     }
 
     static inline s32x4 neg(s32x4 a)
     {
-        return scalar_unroll(scalar_neg, a);
+        return detail::scalar_unroll(detail::scalar_neg, a);
     }
 
     static inline s32x4 add(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline s32x4 sub(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_mullo, a, b);
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     // saturated
 
     static inline s32x4 adds(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_signed_adds, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
     }
 
     static inline s32x4 subs(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_signed_subs, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
     }
 
     // bitwise
 
     static inline s32x4 bitwise_nand(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline s32x4 bitwise_and(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline s32x4 bitwise_or(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline s32x4 bitwise_xor(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline s32x4 bitwise_not(s32x4 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     // compare
 
     static inline mask32x4 compare_eq(s32x4 a, s32x4 b)
     {
-        return scalar_compare_eq(a, b);
+        return detail::scalar_compare_eq(a, b);
     }
 
     static inline mask32x4 compare_gt(s32x4 a, s32x4 b)
     {
-        return scalar_compare_gt(a, b);
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline mask32x4 compare_neq(s32x4 a, s32x4 b)
     {
-        return scalar_compare_neq(a, b);
+        return detail::scalar_compare_neq(a, b);
     }
 
     static inline mask32x4 compare_lt(s32x4 a, s32x4 b)
     {
-        return scalar_compare_lt(a, b);
+        return detail::scalar_compare_lt(a, b);
     }
 
     static inline mask32x4 compare_le(s32x4 a, s32x4 b)
     {
-        return scalar_compare_le(a, b);
+        return detail::scalar_compare_le(a, b);
     }
 
     static inline mask32x4 compare_ge(s32x4 a, s32x4 b)
     {
-        return scalar_compare_ge(a, b);
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline s32x4 select(mask32x4 mask, s32x4 a, s32x4 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     // shift by constant
@@ -1627,63 +1631,63 @@ namespace simd {
     template <int Count>
     static inline s32x4 slli(s32x4 a)
     {
-        return scalar_shift_left<s32x4, u32, Count>(a);
+        return detail::scalar_shift_left<s32x4, u32, Count>(a);
     }
 
     template <int Count>
     static inline s32x4 srli(s32x4 a)
     {
-        return scalar_shift_right<s32x4, u32, Count>(a);
+        return detail::scalar_shift_right<s32x4, u32, Count>(a);
     }
 
     template <int Count>
     static inline s32x4 srai(s32x4 a)
     {
-        return scalar_shift_right<s32x4, s32, Count>(a);
+        return detail::scalar_shift_right<s32x4, s32, Count>(a);
     }
 
     // shift by scalar
 
     static inline s32x4 sll(s32x4 a, int count)
     {
-        return scalar_shift_left<s32x4, u32>(a, count);
+        return detail::scalar_shift_left<s32x4, u32>(a, count);
     }
 
     static inline s32x4 srl(s32x4 a, int count)
     {
-        return scalar_shift_right<s32x4, u32>(a, count);
+        return detail::scalar_shift_right<s32x4, u32>(a, count);
     }
 
     static inline s32x4 sra(s32x4 a, int count)
     {
-        return scalar_shift_right<s32x4, s32>(a, count);
+        return detail::scalar_shift_right<s32x4, s32>(a, count);
     }
 
     // shift by vector
 
     static inline s32x4 sll(s32x4 a, u32x4 count)
     {
-        return scalar_shift_left<s32x4, u32, u32x4>(a, count);
+        return detail::scalar_shift_left<s32x4, u32, u32x4>(a, count);
     }
 
     static inline s32x4 srl(s32x4 a, u32x4 count)
     {
-        return scalar_shift_right<s32x4, u32, u32x4>(a, count);
+        return detail::scalar_shift_right<s32x4, u32, u32x4>(a, count);
     }
 
     static inline s32x4 sra(s32x4 a, u32x4 count)
     {
-        return scalar_shift_right<s32x4, s32, u32x4>(a, count);
+        return detail::scalar_shift_right<s32x4, s32, u32x4>(a, count);
     }
 
     static inline s32x4 min(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_min, a, b);
+        return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
     static inline s32x4 max(s32x4 a, s32x4 b)
     {
-        return scalar_unroll(scalar_max, a, b);
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
     static inline u32 pack(s32x4 s)
@@ -1726,12 +1730,12 @@ namespace simd {
 
     static inline s64x2 s64x2_zero()
     {
-        return scalar_set<s64, 2>(0);
+        return detail::scalar_set<s64, 2>(0);
     }
 
     static inline s64x2 s64x2_set1(s64 s)
     {
-        return scalar_set<s64, 2>(s);
+        return detail::scalar_set<s64, 2>(s);
     }
 
     static inline s64x2 s64x2_set2(s64 x, s64 y)
@@ -1741,52 +1745,52 @@ namespace simd {
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)
     {
-        return scalar_unpacklo(a, b);
+        return detail::scalar_unpacklo(a, b);
     }
 
     static inline s64x2 unpackhi(s64x2 a, s64x2 b)
     {
-        return scalar_unpackhi(a, b);
+        return detail::scalar_unpackhi(a, b);
     }
 
     static inline s64x2 add(s64x2 a, s64x2 b)
     {
-        return scalar_unroll(scalar_add, a, b);
+        return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
     static inline s64x2 sub(s64x2 a, s64x2 b)
     {
-        return scalar_unroll(scalar_sub, a, b);
+        return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
     static inline s64x2 bitwise_nand(s64x2 a, s64x2 b)
     {
-        return scalar_unroll(scalar_nand, a, b);
+        return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
     static inline s64x2 bitwise_and(s64x2 a, s64x2 b)
     {
-        return scalar_unroll(scalar_and, a, b);
+        return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
     static inline s64x2 bitwise_or(s64x2 a, s64x2 b)
     {
-        return scalar_unroll(scalar_or, a, b);
+        return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
     static inline s64x2 bitwise_xor(s64x2 a, s64x2 b)
     {
-        return scalar_unroll(scalar_xor, a, b);
+        return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
     static inline s64x2 bitwise_not(s64x2 a)
     {
-        return scalar_unroll(scalar_not, a);
+        return detail::scalar_unroll(detail::scalar_not, a);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
-        return scalar_select(mask, a, b);
+        return detail::scalar_select(mask, a, b);
     }
 
     // shift by constant
@@ -1794,25 +1798,25 @@ namespace simd {
     template <int Count>
     static inline s64x2 slli(s64x2 a)
     {
-        return scalar_shift_left<s64x2, u64, Count>(a);
+        return detail::scalar_shift_left<s64x2, u64, Count>(a);
     }
 
     template <int Count>
     static inline s64x2 srli(s64x2 a)
     {
-        return scalar_shift_right<s64x2, u64, Count>(a);
+        return detail::scalar_shift_right<s64x2, u64, Count>(a);
     }
 
     // shift by scalar
 
     static inline s64x2 sll(s64x2 a, int count)
     {
-        return scalar_shift_left<s64x2, u64>(a, count);
+        return detail::scalar_shift_left<s64x2, u64>(a, count);
     }
 
     static inline s64x2 srl(s64x2 a, int count)
     {
-        return scalar_shift_right<s64x2, u64>(a, count);
+        return detail::scalar_shift_right<s64x2, u64>(a, count);
     }
 
     // -----------------------------------------------------------------

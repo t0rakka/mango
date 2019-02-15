@@ -13,10 +13,14 @@ namespace simd {
     // helpers
     // -----------------------------------------------------------------
 
+namespace detail {
+
     static inline __m512i simd512_not(__m512i a)
     {
         return _mm512_xor_si512(a, _mm512_set1_epi32(0xffffffff));
     }
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // u8x64
@@ -88,7 +92,7 @@ namespace simd {
 
     static inline u8x64 bitwise_not(u8x64 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     // compare
@@ -193,7 +197,7 @@ namespace simd {
 
     static inline u16x32 bitwise_not(u16x32 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     // compare
@@ -339,7 +343,7 @@ namespace simd {
 
     static inline u32x16 bitwise_not(u32x16 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     // compare
@@ -484,7 +488,7 @@ namespace simd {
 
     static inline u64x8 bitwise_not(u64x8 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     static inline u64x8 select(mask64x8 mask, u64x8 a, u64x8 b)
@@ -598,7 +602,7 @@ namespace simd {
 
     static inline s8x64 bitwise_not(s8x64 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     // compare
@@ -713,7 +717,7 @@ namespace simd {
 
     static inline s16x32 bitwise_not(s16x32 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     // compare
@@ -869,7 +873,7 @@ namespace simd {
 
     static inline s32x16 bitwise_not(s32x16 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     // compare
@@ -1014,7 +1018,7 @@ namespace simd {
 
     static inline s64x8 bitwise_not(s64x8 a)
     {
-        return simd512_not(a);
+        return detail::simd512_not(a);
     }
 
     static inline s64x8 select(mask64x8 mask, s64x8 a, s64x8 b)
