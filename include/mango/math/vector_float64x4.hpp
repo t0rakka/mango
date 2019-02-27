@@ -681,6 +681,12 @@ namespace mango
         return simd::hmax(v);
     }
 
+    template <int x, int y, int z, int w>
+    static inline Vector<double, 4> shuffle(Vector<double, 4> v)
+    {
+        return simd::shuffle<x, y, z, w>(v);
+    }
+
     // ------------------------------------------------------------------
 	// bitwise operators
     // ------------------------------------------------------------------

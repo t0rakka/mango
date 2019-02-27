@@ -345,6 +345,12 @@ namespace mango
 #endif
     };
 
+    template <int x, int y, int z, int w>
+    static inline Vector<u32, 4> shuffle(Vector<u32, 4> v)
+    {
+        return simd::shuffle<x, y, z, w>(v);
+    }
+
     template <>
     inline Vector<u32, 4> load_low<u32, 4>(const u32 *source)
     {

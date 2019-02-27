@@ -305,11 +305,11 @@ namespace mango
         float4x4 r;
 
         // 3x3 transpose
-        float32x4 t0 = simd::shuffle<0, 1, 0, 1>(m0, m1);
-        float32x4 t1 = simd::shuffle<2, 3, 2, 3>(m0, m1);
-        r[0] = simd::shuffle<0, 2, 0, 3>(t0, m2);
-        r[1] = simd::shuffle<1, 3, 1, 3>(t0, m2);
-        r[2] = simd::shuffle<0, 2, 2, 3>(t1, m2);
+        float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
+        float32x4 t1 = shuffle<2, 3, 2, 3>(m0, m1);
+        r[0] = shuffle<0, 2, 0, 3>(t0, m2);
+        r[1] = shuffle<1, 3, 1, 3>(t0, m2);
+        r[2] = shuffle<0, 2, 2, 3>(t1, m2);
 
         // 3x3 de-scale
         float32x4 det = 1.0f / (r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
@@ -334,11 +334,11 @@ namespace mango
         float4x4 r;
 
         // 3x3 transpose
-        float32x4 t0 = simd::shuffle<0, 1, 0, 1>(m0, m1);
-        float32x4 t1 = simd::shuffle<2, 3, 2, 3>(m0, m1);
-        r[0] = simd::shuffle<0, 2, 0, 3>(t0, m2);
-        r[1] = simd::shuffle<1, 3, 1, 3>(t0, m2);
-        r[2] = simd::shuffle<0, 2, 2, 3>(t1, m2);
+        float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
+        float32x4 t1 = shuffle<2, 3, 2, 3>(m0, m1);
+        r[0] = shuffle<0, 2, 0, 3>(t0, m2);
+        r[1] = shuffle<1, 3, 1, 3>(t0, m2);
+        r[2] = shuffle<0, 2, 2, 3>(t1, m2);
 
         // last row
         float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
