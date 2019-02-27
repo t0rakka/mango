@@ -63,7 +63,7 @@ namespace
             }
         }
 
-        bits = round_to_next(bits, 8) * 8;
+        bits = round_multiple_up(bits, 8) * 8;
         return Format(bits, Format::UNORM, size, offset);
     }
 

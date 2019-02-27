@@ -817,14 +817,14 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                const int xblocks = round_to_next(xsize, info.width);
-                const int yblocks = round_to_next(ysize, info.height);
+                const int xblocks = round_multiple_up(xsize, info.width);
+                const int yblocks = round_multiple_up(ysize, info.height);
                 pitch = xblocks * info.bytes;
                 ysize = yblocks;
             }
             else
             {
-                const int bytesPerPixel = round_to_next(pixelFormat.format.bits, 8);
+                const int bytesPerPixel = round_multiple_up(pixelFormat.format.bits, 8);
                 pitch = xsize * bytesPerPixel;
             }
 

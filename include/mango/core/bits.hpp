@@ -159,14 +159,20 @@ namespace mango
         return remainder < 0 ? remainder + range : remainder;
     }
 
-    static inline int round_to_next(int v, int multiple)
+    static inline int round_multiple_down(int value, int multiple)
     {
-        return std::max(1, (v + (multiple - 1)) / multiple);
+        return value / multiple;
     }
 
-    static inline constexpr float snap(float value, float gridsize)
+    static inline int round_multiple_up(int value, int multiple)
     {
-        return gridsize ? std::floor(0.5f + value / gridsize) * gridsize : value;
+        value = (value + multiple - 1) / multiple;
+        return std::max(1, value);
+    }
+
+    static inline constexpr float snap(float value, float grid)
+    {
+        return grid ? std::floor(0.5f + value / grid) * grid : value;
     }
 
     // ----------------------------------------------------------------------------
