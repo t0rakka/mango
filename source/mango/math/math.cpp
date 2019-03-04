@@ -1009,7 +1009,7 @@ namespace mango
     {
         float s = std::sqrt(square(q));
         const float c = std::cos(s);
-        s = (s > epsilon * 100.0f) ? s = std::sin(s) / s : 1.0f;
+        s = (s > epsilon * 100.0f) ? std::sin(s) / s : 1.0f;
         return Quaternion(q.xyz * s, c);
     }
 
