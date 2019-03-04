@@ -163,28 +163,44 @@ namespace opengl {
             MANGO_EXCEPTION(ID"glXChooseFBConfig() failed.");
         }
 
-        printf("Found %d matching FB configs.\n", fbcount);
+        //printf("Found %d matching FB configs.\n", fbcount);
 
-        // Pick the FB config/visual with the most samples per pixel
-        int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
+        // Pick the FB config/visual with the samplest closest to attrib.samples
+        int best_fbc = 0;
+        int best_dist = 1024;
 
         for (int i = 0; i < fbcount; ++i)
         {
             XVisualInfo* vi = glXGetVisualFromFBConfig(m_handle->display, fbc[i]);
             if (vi)
             {
-                int samp_buf, samples;
-                glXGetFBConfigAttrib(m_handle->display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf);
-                glXGetFBConfigAttrib(m_handle->display, fbc[i], GLX_SAMPLES       , &samples );
+                int sample_buffers;
+                glXGetFBConfigAttrib(m_handle->display, fbc[i], GLX_SAMPLE_BUFFERS, &sample_buffers);
 
+                int samples;
+                glXGetFBConfigAttrib(m_handle->display, fbc[i], GLX_SAMPLES, &samples);
+
+#if 0
                 printf("  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d, SAMPLES = %d\n",
-                    i, (unsigned int)vi -> visualid, samp_buf, samples );
+                    i, (unsigned int)vi -> visualid, sample_buffers, samples);
+#endif
 
-                if ((best_fbc < 0) || (samp_buf && samples > best_num_samp))
-                    best_fbc = i, best_num_samp = samples;
+                if (!sample_buffers)
+                {
+                    samples = 1;
+                }
 
-                if ((worst_fbc < 0) || !samp_buf || (samples < worst_num_samp))
-                    worst_fbc = i, worst_num_samp = samples;
+                int dist = attrib.samples - samples;
+                if (dist < 0)
+                {
+                    dist = -dist;
+                }
+
+                if (dist < best_dist)
+                {
+                    best_dist = dist;
+                    best_fbc = i;
+                }
             }
 
             XFree(vi);
@@ -295,6 +311,14 @@ namespace opengl {
         // TODO: context version selection: 4.3, 3.2, etc.
         // TODO: initialize GLX extensions using GLEXT headers
         glXMakeCurrent(m_handle->display, m_handle->window, m_context->context);
+
+        const GLubyte* s0 = glGetString(GL_VENDOR);
+        const GLubyte* s1 = glGetString(GL_RENDERER);
+        const GLubyte* s2 = glGetString(GL_VERSION);
+
+        printf("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
+        printf("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
+        printf("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
