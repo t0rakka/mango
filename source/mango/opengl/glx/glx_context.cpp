@@ -165,7 +165,7 @@ namespace opengl {
 
         //printf("Found %d matching FB configs.\n", fbcount);
 
-        // Pick the FB config/visual with the samplest closest to attrib.samples
+        // Pick the FB config/visual with the samples closest to attrib.samples
         int best_fbc = 0;
         int best_dist = 1024;
 
