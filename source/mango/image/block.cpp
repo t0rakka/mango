@@ -344,29 +344,29 @@ namespace
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
         const u8* data = memory.address;
 
-        rect.destStride = origin ? -surface.stride : surface.stride;
-        rect.srcStride = block.width * block.format.bytes();
+        rect.dest.stride = origin ? -surface.stride : surface.stride;
+        rect.src.stride = block.width * block.format.bytes();
 
-        Buffer temp(block.height * rect.srcStride);
-        rect.srcImage = temp;
+        Buffer temp(block.height * rect.src.stride);
+        rect.src.address = temp;
 
         const int pixelSize = block.width * surface.format.bytes();
 
         for (int y = 0; y < surface.height; y += block.height)
         {
-            rect.destImage = surface.image + (origin ? surface.height - y - 1 : y) * surface.stride;
+            rect.dest.address = surface.image + (origin ? surface.height - y - 1 : y) * surface.stride;
             rect.height = std::min(y + block.height, surface.height) - y; // vertical clipping
 
             for (int x = 0; x < surface.width; x += block.width)
             {
-                block.decode(block, temp, data, rect.srcStride);
+                block.decode(block, temp, data, rect.src.stride);
 
                 rect.width = std::min(x + block.width, surface.width) - x; // horizontal clipping
 
                 // TODO: async conversion
                 blitter.convert(rect);
 
-                rect.destImage += pixelSize;
+                rect.dest.address += pixelSize;
                 data += block.bytes;
             }
         }

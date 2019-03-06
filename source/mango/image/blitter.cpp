@@ -305,8 +305,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_unorm_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.srcImage;
-        u8* dest = rect.destImage;
+        u8* source = rect.src.address;
+        u8* dest = rect.dest.address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -327,8 +327,8 @@ namespace
                 dst[x] = DestType(v);
             }
 
-            source += rect.srcStride;
-            dest += rect.destStride;
+            source += rect.src.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -337,8 +337,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_fp_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.srcImage;
-        u8* dest = rect.destImage;
+        u8* source = rect.src.address;
+        u8* dest = rect.dest.address;
 
         const Format& sf = blitter.srcFormat;
         const Format& df = blitter.destFormat;
@@ -385,8 +385,8 @@ namespace
                 dst[x] = DestType(v);
             }
 
-            source += rect.srcStride;
-            dest += rect.destStride;
+            source += rect.src.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -397,8 +397,8 @@ namespace
     {
         MANGO_UNREFERENCED_PARAMETER(blitter);
 
-        u8* source = rect.srcImage;
-        u8* dest = rect.destImage;
+        u8* source = rect.src.address;
+        u8* dest = rect.dest.address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -412,8 +412,8 @@ namespace
                 MANGO_UNREFERENCED_PARAMETER(dst);
             }
 
-            source += rect.srcStride;
-            dest += rect.destStride;
+            source += rect.src.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -422,8 +422,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_fp_fp_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.srcImage;
-        u8* dest = rect.destImage;
+        u8* source = rect.src.address;
+        u8* dest = rect.dest.address;
 
         SourceType constant[4];
         const SourceType* input[4];
@@ -473,8 +473,8 @@ namespace
                 dst += components;
             }
 
-            source += rect.srcStride;
-            dest += rect.destStride;
+            source += rect.src.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -529,8 +529,8 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_sse2(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.srcImage;
-        u8* dest = rect.destImage;
+        u8* source = rect.src.address;
+        u8* dest = rect.dest.address;
 
         __m128 scale = blitter.sseScale;
         __m128i src_mask = blitter.sseSrcMask;
@@ -556,8 +556,8 @@ namespace
                 dst[x] = DestType(v);
             }
 
-            source += rect.srcStride;
-            dest += rect.destStride;
+            source += rect.src.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -591,14 +591,14 @@ namespace
 
     void convert_custom(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* src = rect.srcImage;
-        u8* dest = rect.destImage;
+        u8* src = rect.src.address;
+        u8* dest = rect.dest.address;
 
         for (int y = 0; y < rect.height; ++y)
         {
             blitter.custom(dest, src, rect.width);
-            src += rect.srcStride;
-            dest += rect.destStride;
+            src += rect.src.stride;
+            dest += rect.dest.stride;
         }
     }
 

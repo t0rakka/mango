@@ -396,10 +396,10 @@ namespace mango
 
         BlitRect rect;
 
-        rect.srcImage = source.image;
-        rect.srcStride = source.stride;
-        rect.destImage = dest.image;
-        rect.destStride = dest.stride;
+        rect.src.address = source.image;
+        rect.src.stride = source.stride;
+        rect.dest.address = dest.image;
+        rect.dest.stride = dest.stride;
         rect.width = dest.width;
         rect.height = dest.height;
 
@@ -431,8 +431,8 @@ namespace mango
                 // execute on main thread
                 BlitRect temp = rect;
 
-                temp.destImage += ypos * rect.destStride;
-                temp.srcImage += ypos * rect.srcStride;
+                temp.dest.address += ypos * rect.dest.stride;
+                temp.src.address += ypos * rect.src.stride;
                 temp.height = ycount;
 
                 blitter.convert(temp);
@@ -443,8 +443,8 @@ namespace mango
                 {
                     BlitRect temp = rect;
 
-                    temp.destImage += ypos * rect.destStride;
-                    temp.srcImage += ypos * rect.srcStride;
+                    temp.dest.address += ypos * rect.dest.stride;
+                    temp.src.address += ypos * rect.src.stride;
                     temp.height = ycount;
 
                     blitter.convert(temp);
