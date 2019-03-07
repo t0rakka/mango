@@ -21,11 +21,11 @@ namespace mango
         Surface();
 
     public:
-        int     width;
-        int     height;
-        int     stride;
         Format  format;
         u8*     image;
+        int     stride;
+        int     width;
+        int     height;
 
         Surface(int width, int height, const Format& format, int stride, u8* image);
         Surface(const Surface& source, int x, int y, int width, int height);

@@ -256,36 +256,39 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Surface::Surface()
-        : width(0)
-        , height(0)
-        , stride(0)
+        : format()
         , image(nullptr)
+        , stride(0)
+        , width(0)
+        , height(0)
     {
     }
 
     Surface::Surface(int width, int height, const Format& format, int stride, u8* image)
-        : width(width)
-        , height(height)
-        , stride(stride)
-        , format(format)
+        : format(format)
         , image(image)
+        , stride(stride)
+        , width(width)
+        , height(height)
     {
     }
 
-    Surface::Surface(const Surface& source, int x, int y, int _width, int _height)
-        : stride(source.stride)
-        , format(source.format)
+    Surface::Surface(const Surface& source, int x, int y, int width, int height)
+        : format(source.format)
+        , stride(source.stride)
+        , width(width)
+        , height(height)
     {
         // clip rectangle to source surface
         const int x0 = std::max(0, x);
         const int y0 = std::max(0, y);
-        const int x1 = std::min(source.width, x + _width);
-        const int y1 = std::min(source.height, y + _height);
+        const int x1 = std::min(source.width, x + width);
+        const int y1 = std::min(source.height, y + height);
 
         // compute resulting surface
+        image  = source.address<u8>(x0, y0);
         width  = std::max(0, x1 - x0);
         height = std::max(0, y1 - y0);
-        image  = source.address<u8>(x0, y0);
     }
 
     Surface::~Surface()
@@ -522,14 +525,18 @@ namespace mango
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int _width, int _height, const Format& _format, int _stride, u8* _image)
-        : Surface(_width, _height, _format, _stride, _image)
+    Bitmap::Bitmap(int width, int height, const Format& format, int stride, u8* image)
+        : Surface(width, height, format, stride, image)
     {
         if (!stride)
+        {
             stride = width * format.bytes();
+        }
 
         if (!image)
+        {
             image = new u8[stride * height];
+        }
     }
 
     Bitmap::Bitmap(Memory memory, const std::string& extension)
@@ -576,11 +583,11 @@ namespace mango
     Bitmap& Bitmap::operator = (Bitmap&& bitmap)
     {
         // copy surface
+        format = bitmap.format;
+        image = bitmap.image;
+        stride = bitmap.stride;
         width = bitmap.width;
         height = bitmap.height;
-        format = bitmap.format;
-        stride = bitmap.stride;
-        image = bitmap.image;
 
         // move image ownership
         bitmap.image = nullptr;
