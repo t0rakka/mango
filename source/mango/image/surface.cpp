@@ -273,17 +273,15 @@ namespace mango
     {
     }
 
-    Surface::Surface(const Surface& source, int x, int y, int width, int height)
+    Surface::Surface(const Surface& source, int x, int y, int width_, int height_)
         : format(source.format)
         , stride(source.stride)
-        , width(width)
-        , height(height)
     {
         // clip rectangle to source surface
         const int x0 = std::max(0, x);
         const int y0 = std::max(0, y);
-        const int x1 = std::min(source.width, x + width);
-        const int y1 = std::min(source.height, y + height);
+        const int x1 = std::min(source.width, x + width_);
+        const int y1 = std::min(source.height, y + height_);
 
         // compute resulting surface
         image  = source.address<u8>(x0, y0);
@@ -525,8 +523,8 @@ namespace mango
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int width, int height, const Format& format, int stride, u8* image)
-        : Surface(width, height, format, stride, image)
+    Bitmap::Bitmap(int width_, int height_, const Format& format_, int stride_, u8* image_)
+        : Surface(width_, height_, format_, stride_, image_)
     {
         if (!stride)
         {
@@ -572,6 +570,7 @@ namespace mango
     Bitmap::Bitmap(Bitmap&& bitmap)
         : Surface(bitmap)
     {
+        // move image ownership
         bitmap.image = nullptr;
     }
 
