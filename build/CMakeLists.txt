@@ -5,7 +5,7 @@ PROJECT(mango CXX C)
 # compiler
 # ------------------------------------------------------------------------------
 
-message("-- Compiler is ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set(COMPILER_MSVC 1)
@@ -16,14 +16,14 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     set(COMPILER_GCC 1)
 else()
-    message("-- Compiler is not supported!")
+    message(STATUS "Compiler is not supported!")
 endif()
 
 # ------------------------------------------------------------------------------
 # processor
 # ------------------------------------------------------------------------------
 
-message("-- Processor is ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "Processor is ${CMAKE_SYSTEM_PROCESSOR}")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
     set(X86_64 1)
@@ -38,7 +38,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
     set(PPC 1)
 else()
-    message("-- Processor is not supported!")
+    message(STATUS "Processor is not supported!")
 endif()
 
 # ------------------------------------------------------------------------------
@@ -221,13 +221,13 @@ if (COMPILER_MSVC)
     endif ()
 
     if (ENABLE_AVX512)
-        message("-- SIMD: AVX-512 (2015)")
+        message(STATUS "SIMD: AVX-512 (2015)")
         target_compile_definitions(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
     elseif (ENABLE_AVX2)
-        message("-- SIMD: AVX2 (2013)")
+        message(STATUS "SIMD: AVX2 (2013)")
         target_compile_options(mango PUBLIC "/arch:AVX2")
     elseif (ENABLE_AVX)
-        message("-- SIMD: AVX (2008)")
+        message(STATUS "SIMD: AVX (2008)")
         target_compile_options(mango PUBLIC "/arch:AVX")
     endif ()
 else ()
@@ -256,21 +256,21 @@ else ()
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
-            message("-- SIMD: AVX-512 (2015)")
+            message(STATUS "SIMD: AVX-512 (2015)")
             target_compile_options(mango PUBLIC "-mavx512dq")
             target_compile_options(mango PUBLIC "-mavx512vl")
             target_compile_options(mango PUBLIC "-mavx512bw")
         elseif (ENABLE_AVX2)
-            message("-- SIMD: AVX2 (2013)")
+            message(STATUS "SIMD: AVX2 (2013)")
             target_compile_options(mango PUBLIC "-mavx2")
         elseif (ENABLE_AVX)
-            message("-- SIMD: AVX (2008)")
+            message(STATUS "SIMD: AVX (2008)")
             target_compile_options(mango PUBLIC "-mavx")
         elseif (ENABLE_SSE4)
-            message("-- SIMD: SSE4.2 (2006)")
+            message(STATUS "SIMD: SSE4.2 (2006)")
             target_compile_options(mango PUBLIC "-msse4")
         elseif (ENABLE_SSE2)
-            message("-- SIMD: SSE2 (2001)")
+            message(STATUS "SIMD: SSE2 (2001)")
             target_compile_options(mango PUBLIC "-msse2")
         endif ()
     endif ()
