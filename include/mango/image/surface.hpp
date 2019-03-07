@@ -8,6 +8,7 @@
 #include <string>
 #include "../core/configure.hpp"
 #include "../core/object.hpp"
+#include "../core/memory.hpp"
 #include "../filesystem/file.hpp"
 #include "format.hpp"
 

@@ -6,6 +6,7 @@
 
 #include <string>
 #include "../core/object.hpp"
+#include "../core/stream.hpp"
 #include "format.hpp"
 #include "compression.hpp"
 #include "header.hpp"
