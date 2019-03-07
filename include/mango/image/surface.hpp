@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -33,8 +33,8 @@ namespace mango
         template <typename SampleType>
         SampleType* address(int x = 0, int y = 0) const
         {
-            u8* sample = image + y * stride + x * format.bytes();
-            return reinterpret_cast<SampleType*>(sample);
+            SampleType* scan = reinterpret_cast<SampleType*>(image + y * stride);
+            return scan + x;
         }
 
         void save(const std::string& filename, float quality = 1.0f);
