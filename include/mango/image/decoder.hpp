@@ -45,6 +45,7 @@ namespace mango
 
     protected:
         ImageDecoderInterface* m_interface;
+        bool m_is_decoder;
     };
 
     void registerImageDecoder(ImageDecoder::CreateFunc func, const std::string& extension);

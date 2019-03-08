@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/string.hpp>
@@ -9,6 +9,56 @@
 
 namespace mango
 {
+
+    // ----------------------------------------------------------------------------
+    // UnsupportedImageDecoderInterface
+    // ----------------------------------------------------------------------------
+
+    struct UnsupportedImageDecoderInterface : ImageDecoderInterface
+    {
+        UnsupportedImageDecoderInterface(Memory memory)
+        {
+            MANGO_UNREFERENCED_PARAMETER(memory);
+        }
+
+        ~UnsupportedImageDecoderInterface()
+        {
+        }
+
+        ImageHeader header() override
+        {
+            printf("[WARNING] ImageDecoder::header() is not supported for this extension.");
+            return ImageHeader();
+        }
+
+        void decode(Surface& surface, Palette* palette, int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED_PARAMETER(surface);
+            MANGO_UNREFERENCED_PARAMETER(palette);
+            MANGO_UNREFERENCED_PARAMETER(level);
+            MANGO_UNREFERENCED_PARAMETER(depth);
+            MANGO_UNREFERENCED_PARAMETER(face);
+            printf("[WARNING] ImageDecoder::decode() is not supported for this extension.");
+        }
+    };
+
+    ImageDecoderInterface* createUnsupportedImageDecoderInterface(Memory memory)
+    {
+        ImageDecoderInterface* x = new UnsupportedImageDecoderInterface(memory);
+        return x;
+    }
+
+    // ----------------------------------------------------------------------------
+    // unsupportedImageEncoder
+    // ----------------------------------------------------------------------------
+
+    void unsupportedImageEncoder(Stream& output, const Surface& source, float quality)
+    {
+        MANGO_UNREFERENCED_PARAMETER(output);
+        MANGO_UNREFERENCED_PARAMETER(source);
+        MANGO_UNREFERENCED_PARAMETER(quality);
+        printf("[WARNING] ImageEncoder::encode() is not supported for this extension.");
+    }
 
     // ----------------------------------------------------------------------------
     // ImageServer
@@ -40,7 +90,6 @@ namespace mango
         std::map<std::string, ImageEncoder::CreateFunc> m_encoders;
 
     public:
-
         ImageServer()
         {
             registerImageDecoderTGA();
@@ -92,7 +141,7 @@ namespace mango
                 return i->second;
             }
 
-            return nullptr;
+            return createUnsupportedImageDecoderInterface;
         }
 
         ImageEncoder::CreateFunc getImageEncoder(const std::string& extension) const
@@ -103,16 +152,7 @@ namespace mango
                 return i->second;
             }
 
-            return nullptr;
-        }
-
-        ImageDecoderInterface* createImageDecoder(Memory memory, const std::string& filename)
-        {
-            ImageDecoderInterface* decoder = nullptr;
-            ImageDecoder::CreateFunc func = getImageDecoder(filename);
-            if (func)
-                decoder = func(memory);
-            return decoder;
+            return unsupportedImageEncoder;
         }
     } g_imageServer;
 
@@ -129,13 +169,13 @@ namespace mango
     bool isImageDecoder(const std::string& extension)
     {
         auto func = g_imageServer.getImageDecoder(extension);
-        return func != nullptr;
+        return func != createUnsupportedImageDecoderInterface;
     }
 
     bool isImageEncoder(const std::string& extension)
     {
         auto func = g_imageServer.getImageEncoder(extension);
-        return func != nullptr;
+        return func != unsupportedImageEncoder;
     }
 
     // ----------------------------------------------------------------------------
@@ -155,14 +195,15 @@ namespace mango
         return Memory();
     }
 
-
     // ----------------------------------------------------------------------------
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
     ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
     {
-        m_interface = g_imageServer.createImageDecoder(memory, filename);
+        ImageDecoder::CreateFunc func = g_imageServer.getImageDecoder(filename);
+        m_interface = func(memory);
+        m_is_decoder = func != createUnsupportedImageDecoderInterface;
     }
 
     ImageDecoder::~ImageDecoder()
@@ -172,30 +213,27 @@ namespace mango
 
     bool ImageDecoder::isDecoder() const
     {
-        return m_interface != nullptr;
+        return m_is_decoder;
     }
 
     ImageHeader ImageDecoder::header()
     {
-        return m_interface ? m_interface->header() : ImageHeader();
+        return m_interface->header();
     }
 
     Exif ImageDecoder::exif()
     {
-        return m_interface ? m_interface->exif() : Exif();
+        return m_interface->exif();
     }
 
     Memory ImageDecoder::memory(int level, int depth, int face)
     {
-        return m_interface ? m_interface->memory(level, depth, face) : Memory();
+        return m_interface->memory(level, depth, face);
     }
 
     void ImageDecoder::decode(Surface& dest, Palette* palette, int level, int depth, int face)
     {
-        if (m_interface)
-        {
-            m_interface->decode(dest, palette, level, depth, face);
-        }
+        m_interface->decode(dest, palette, level, depth, face);
     }
 
     // ----------------------------------------------------------------------------
@@ -213,15 +251,12 @@ namespace mango
 
     bool ImageEncoder::isEncoder() const
     {
-        return m_encode != nullptr;
+        return m_encode != unsupportedImageEncoder;
     }
 
     void ImageEncoder::encode(Stream& output, const Surface& source, float quality)
     {
-        if (m_encode)
-        {
-            m_encode(output, source,quality);
-        }
+        m_encode(output, source,quality);
     }
 
 } // namespace mango
