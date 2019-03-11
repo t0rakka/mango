@@ -650,7 +650,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         // read first chunk; it must be IHDR
         const u32 size = p.read32();
         const u32 id = p.read32();
-        if (id != make_u32be('I', 'H', 'D', 'R'))
+        if (id != make_u32rev('I', 'H', 'D', 'R'))
         {
             setError("Incorrect file; the IHDR chunk must come first.");
             return;
@@ -719,7 +719,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             const u32 id = p.read32();
             switch (id)
             {
-                case make_u32be('t', 'R', 'N', 'S'):
+                case make_u32rev('t', 'R', 'N', 'S'):
                     m_transparent_enable = true;
                     break;
             }
@@ -985,47 +985,47 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
             switch (id)
             {
-                case make_u32be('I', 'H', 'D', 'R'):
+                case make_u32rev('I', 'H', 'D', 'R'):
                     setError("File can only have one IHDR chunk.");
                     break;
 
-                case make_u32be('P', 'L', 'T', 'E'):
+                case make_u32rev('P', 'L', 'T', 'E'):
                     read_PLTE(p, size);
                     break;
 
-                case make_u32be('t', 'R', 'N', 'S'):
+                case make_u32rev('t', 'R', 'N', 'S'):
                     read_tRNS(p, size);
                     break;
 
-                case make_u32be('g', 'A', 'M', 'A'):
+                case make_u32rev('g', 'A', 'M', 'A'):
                     read_gAMA(p, size);
                     break;
 
-                case make_u32be('s', 'B', 'I', 'T'):
+                case make_u32rev('s', 'B', 'I', 'T'):
                     read_sBIT(p, size);
                     break;
 
-                case make_u32be('s', 'R', 'G', 'B'):
+                case make_u32rev('s', 'R', 'G', 'B'):
                     read_sRGB(p, size);
                     break;
 
-                case make_u32be('c', 'H', 'R', 'M'):
+                case make_u32rev('c', 'H', 'R', 'M'):
                     read_cHRM(p, size);
                     break;
 
-                case make_u32be('I', 'D', 'A', 'T'):
+                case make_u32rev('I', 'D', 'A', 'T'):
                     read_IDAT(p, size);
                     break;
 
-                case make_u32be('p', 'H', 'Y', 's'):
-                case make_u32be('b', 'K', 'G', 'D'):
-                case make_u32be('z', 'T', 'X', 't'):
-                case make_u32be('t', 'E', 'X', 't'):
-                case make_u32be('t', 'I', 'M', 'E'):
+                case make_u32rev('p', 'H', 'Y', 's'):
+                case make_u32rev('b', 'K', 'G', 'D'):
+                case make_u32rev('z', 'T', 'X', 't'):
+                case make_u32rev('t', 'E', 'X', 't'):
+                case make_u32rev('t', 'I', 'M', 'E'):
                     // NOTE: ignoring these chunks
                     break;
 
-                case make_u32be('I', 'E', 'N', 'D'):
+                case make_u32rev('I', 'E', 'N', 'D'):
                     // terminate parsing (required for files with junk after the IEND marker)
                     p = m_end; 
                     break;
@@ -1791,7 +1791,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         Buffer buffer;
         BigEndianStream s(buffer);
 
-        s.write32(make_u32be('I', 'H', 'D', 'R'));
+        s.write32(make_u32rev('I', 'H', 'D', 'R'));
 
         s.write32(surface.width);
         s.write32(surface.height);
@@ -1816,7 +1816,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         Buffer buffer(4 + z.avail_out);
 
         BigEndianStream s(buffer);
-        s.write32(make_u32be('I', 'D', 'A', 'T'));
+        s.write32(make_u32rev('I', 'D', 'A', 'T'));
 
         z.next_out = buffer + 4;
 
