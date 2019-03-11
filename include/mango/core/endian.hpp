@@ -12,15 +12,20 @@ namespace mango
 {
 
     // --------------------------------------------------------------
-    // u32 builders
+    // unsigned builders
     // --------------------------------------------------------------
 
-    constexpr u32 make32le(char c0, char c1, char c2, char c3)
+    constexpr u8 make_u8(u8 c0, u8 c1, u8 c2, u8 c3) noexcept
+    {
+        return (c3 << 6) | (c2 << 4) | (c1 << 2) | c0;
+    }
+
+    constexpr u32 make_u32le(char c0, char c1, char c2, char c3) noexcept
     {
         return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
     }
 
-    constexpr u32 make32be(char c0, char c1, char c2, char c3)
+    constexpr u32 make_u32be(char c0, char c1, char c2, char c3) noexcept
     {
         return (c0 << 24) | (c1 << 16) | (c2 << 8) | c3;
     }

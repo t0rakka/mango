@@ -73,7 +73,7 @@ namespace
 
             LittleEndianPointer p = memory.address;
             u32 magic0 = p.read32();
-            if (magic0 != make32le('m', 'g', 'x', '0'))
+            if (magic0 != make_u32le('m', 'g', 'x', '0'))
             {
                 MANGO_EXCEPTION(ID"Incorrect file identifier (%x)", magic0);
             }
@@ -82,7 +82,7 @@ namespace
             p = memory.address + header_offset;
 
             u32 magic3 = p.read32();
-            if (magic3 != make32le('m', 'g', 'x', '3'))
+            if (magic3 != make_u32le('m', 'g', 'x', '3'))
             {
                 MANGO_EXCEPTION(ID"Incorrect header identifier (%x)", magic3);
             }
@@ -100,7 +100,7 @@ namespace
         void read_blocks(LittleEndianPointer p)
         {
             u32 magic1 = p.read32();
-            if (magic1 != make32le('m', 'g', 'x', '1'))
+            if (magic1 != make_u32le('m', 'g', 'x', '1'))
             {
                 MANGO_EXCEPTION(ID"Incorrect block identifier (%x)", magic1);
             }
@@ -117,7 +117,7 @@ namespace
             }
 
             u32 magic2 = p.read32();
-            if (magic2 != make32le('m', 'g', 'x', '2'))
+            if (magic2 != make_u32le('m', 'g', 'x', '2'))
             {
                 MANGO_EXCEPTION(ID"Incorrect block terminator (%x)", magic2);
             }
@@ -126,7 +126,7 @@ namespace
         void read_files(LittleEndianPointer p)
         {
             u32 magic2 = p.read32();
-            if (magic2 != make32le('m', 'g', 'x', '2'))
+            if (magic2 != make_u32le('m', 'g', 'x', '2'))
             {
                 MANGO_EXCEPTION(ID"Incorrect block identifier (%x)", magic2);
             }
@@ -172,7 +172,7 @@ namespace
             }
 
             u32 magic3 = p.read32();
-            if (magic3 != make32le('m', 'g', 'x', '3'))
+            if (magic3 != make_u32le('m', 'g', 'x', '3'))
             {
                 MANGO_EXCEPTION(ID"Incorrect block terminator (%x)", magic3);
             }
