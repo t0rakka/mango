@@ -136,6 +136,21 @@
     <Filter Include="mango\source\framebuffer">
       <UniqueIdentifier>{d6b05542-c0d1-4b84-bde5-2e4dfab4a5d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mango\include\opengl\khronos\GL">
+      <UniqueIdentifier>{b2b0a627-4254-4606-95d9-6f6477d9ba73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl\khronos\GLES">
+      <UniqueIdentifier>{0649579e-ab99-44ca-935b-791128ccf87c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl\khronos\GLES2">
+      <UniqueIdentifier>{252ed358-cb08-4c78-8d1c-0cd4d79261ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl\khronos\GLES3">
+      <UniqueIdentifier>{7c4396d4-1507-4192-9584-afd429cb2391}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\opengl\khronos\KHR">
+      <UniqueIdentifier>{970c3bfb-142f-4f98-ad47-0a555af305a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -254,18 +269,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mango\opengl\func\wglext.hpp">
       <Filter>mango\include\opengl\func</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\opengl\khronos\wglext.h">
-      <Filter>mango\include\opengl\khronos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\opengl\khronos\glcorearb.h">
-      <Filter>mango\include\opengl\khronos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\opengl\khronos\glext.h">
-      <Filter>mango\include\opengl\khronos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\opengl\khronos\glxext.h">
-      <Filter>mango\include\opengl\khronos</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\mango\opengl\opengl.hpp">
       <Filter>mango\include\opengl</Filter>
@@ -863,6 +866,57 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mango\framebuffer\framebuffer.hpp">
       <Filter>mango\include\framebuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\KHR\khrplatform.h">
+      <Filter>mango\include\opengl\khronos\KHR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl3.h">
+      <Filter>mango\include\opengl\khronos\GLES3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl3platform.h">
+      <Filter>mango\include\opengl\khronos\GLES3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl31.h">
+      <Filter>mango\include\opengl\khronos\GLES3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl32.h">
+      <Filter>mango\include\opengl\khronos\GLES3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES2\gl2.h">
+      <Filter>mango\include\opengl\khronos\GLES2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES2\gl2ext.h">
+      <Filter>mango\include\opengl\khronos\GLES2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES2\gl2platform.h">
+      <Filter>mango\include\opengl\khronos\GLES2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\egl.h">
+      <Filter>mango\include\opengl\khronos\GLES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\gl.h">
+      <Filter>mango\include\opengl\khronos\GLES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\glext.h">
+      <Filter>mango\include\opengl\khronos\GLES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\glplatform.h">
+      <Filter>mango\include\opengl\khronos\GLES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\glcorearb.h">
+      <Filter>mango\include\opengl\khronos\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\glext.h">
+      <Filter>mango\include\opengl\khronos\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\glxext.h">
+      <Filter>mango\include\opengl\khronos\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\wgl.h">
+      <Filter>mango\include\opengl\khronos\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\wglext.h">
+      <Filter>mango\include\opengl\khronos\GL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
