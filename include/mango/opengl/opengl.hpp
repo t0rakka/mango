@@ -41,23 +41,6 @@
 
     #undef GLEXT_PROC
 
-#elif defined(MANGO_PLATFORM_UNIX)
-
-    // -----------------------------------------------------------------------
-    // GLX
-    // -----------------------------------------------------------------------
-
-    #define MANGO_CONTEXT_GLX
-
-    #ifdef MANGO_CORE_PROFILE
-        #define GL_GLEXT_PROTOTYPES
-        #include "khronos/GL/glcorearb.h"
-    #else
-        #include <GL/gl.h>
-    #endif
-
-    #include <GL/glx.h>
-
 #elif defined(MANGO_PLATFORM_OSX)
 
     // -----------------------------------------------------------------------
@@ -100,6 +83,23 @@
     #include <GLES3/gl3.h>
 
 	// TODO: EGL context
+
+#elif defined(MANGO_PLATFORM_UNIX)
+
+    // -----------------------------------------------------------------------
+    // GLX
+    // -----------------------------------------------------------------------
+
+    #define MANGO_CONTEXT_GLX
+
+    #ifdef MANGO_CORE_PROFILE
+        #define GL_GLEXT_PROTOTYPES
+        #include "khronos/GL/glcorearb.h"
+    #else
+        #include <GL/gl.h>
+    #endif
+
+    #include <GL/glx.h>
 
 #else
 
