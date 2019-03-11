@@ -47,7 +47,7 @@ namespace
 #include <mango/opengl/func/wglext.hpp>
 
 #ifdef MANGO_CORE_PROFILE
-    #include <mango/opengl/glcorearb.hpp>
+    #include <mango/opengl/func/glcorearb.hpp>
 #else
     #include <mango/opengl/func/glext.hpp>
 #endif

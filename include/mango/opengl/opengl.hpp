@@ -26,18 +26,18 @@
 
     #define GLEXT_PROC(proc, name) extern proc name
 
-    #ifdef MANGO_CORE_PROFILE
+#ifdef MANGO_CORE_PROFILE
         #include "khronos/GL/glcorearb.h"
-        #include "khronos/GL/wglext.h"
         #include "func/glcorearb.hpp"
-        #include "func/wglext.hpp"
     #else
         #include <GL/gl.h>
         #include "khronos/GL/glext.h"
-        #include "khronos/GL/wglext.h"
         #include "func/glext.hpp"
-        #include "func/wglext.hpp"
     #endif
+
+    #include "khronos/GL/wgl.h"
+    #include "khronos/GL/wglext.h"
+    #include "func/wglext.hpp"
 
     #undef GLEXT_PROC
 
