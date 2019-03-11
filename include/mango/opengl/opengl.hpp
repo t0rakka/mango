@@ -14,81 +14,92 @@
 // OpenGL API
 // -----------------------------------------------------------------------
 
+//#define MANGO_CORE_PROFILE
+
 #if defined(MANGO_PLATFORM_WINDOWS)
 
-    //#define MANGO_CORE_PROFILE
+    // -----------------------------------------------------------------------
+    // WGL
+    // -----------------------------------------------------------------------
+
+    #define MANGO_CONTEXT_WGL
+
     #define GLEXT_PROC(proc, name) extern proc name
 
     #ifdef MANGO_CORE_PROFILE
-        #include "khronos/glcorearb.h"
-        #include "khronos/wglext.h"
+        #include "khronos/GL/glcorearb.h"
+        #include "khronos/GL/wglext.h"
         #include "func/glcorearb.hpp"
         #include "func/wglext.hpp"
     #else
         #include <GL/gl.h>
-        #include "khronos/glext.h"
-        #include "khronos/wglext.h"
+        #include "khronos/GL/glext.h"
+        #include "khronos/GL/wglext.h"
         #include "func/glext.hpp"
         #include "func/wglext.hpp"
     #endif
 
     #undef GLEXT_PROC
 
-    #define MANGO_CONTEXT_WGL
+#elif defined(MANGO_PLATFORM_UNIX)
 
-#elif defined(MANGO_PLATFORM_IOS)
+    // -----------------------------------------------------------------------
+    // GLX
+    // -----------------------------------------------------------------------
 
-    //#include <OpenGLES/ES1/gl.h>
-    //#include <OpenGLES/ES1/glext.h>
+    #define MANGO_CONTEXT_GLX
 
-    #define MANGO_CONTEXT_EGL
-	// TODO: EGL context
+    #ifdef MANGO_CORE_PROFILE
+        #define GL_GLEXT_PROTOTYPES
+        #include "khronos/GL/glcorearb.h"
+    #else
+        #include <GL/gl.h>
+    #endif
+
+    #include <GL/glx.h>
 
 #elif defined(MANGO_PLATFORM_OSX)
 
+    // -----------------------------------------------------------------------
+    // Cocoa
+    // -----------------------------------------------------------------------
+
+    #define MANGO_CONTEXT_COCOA
+
     #define GL_SILENCE_DEPRECATION /* macOS 10.14 deprecated OpenGL API */
-
-    #define MANGO_CORE_PROFILE
-
-    #ifdef MANGO_CORE_PROFILE
-        #include "OpenGL/gl3.h"
-        #include "OpenGL/gl3ext.h"
-    #else
-        #include "OpenGL/gl.h"
-    #endif
+    #include "OpenGL/gl3.h"
+    #include "OpenGL/gl3ext.h"
 
     #define GL_GLEXT_PROTOTYPES
     #include "khronos/GL/glext.h"
 
-    #define MANGO_CONTEXT_COCOA
+#elif defined(MANGO_PLATFORM_IOS)
+
+    // -----------------------------------------------------------------------
+    // EGL
+    // -----------------------------------------------------------------------
+
+    #define MANGO_CONTEXT_EGL
+
+    //#include <OpenGLES/ES1/gl.h>
+    //#include <OpenGLES/ES1/glext.h>
+
+	// TODO: EGL context
 
 #elif defined(MANGO_PLATFORM_ANDROID)
+
+    // -----------------------------------------------------------------------
+    // EGL
+    // -----------------------------------------------------------------------
+
+    #define MANGO_CONTEXT_EGL
 
     //#include <GLES/gl.h>
     //#include <GLES/glext.h>
     //#include <GLES2/gl2.h>
     #include <GLES3/gl3.h>
 
-    #define MANGO_CONTEXT_EGL
 	// TODO: EGL context
-
-#elif defined(MANGO_PLATFORM_UNIX)
-
-    #define MANGO_CORE_PROFILE
-    #define GL_GLEXT_PROTOTYPES
-
-    #include <GL/gl.h>
-    #include <GL/glx.h>
-
-#if 0 // NOTE: use platform headers
-    #define GL_GLEXT_PROTOTYPES
-    #include "khronos/glext.h"
-
-    #define GLX_GLXEXT_PROTOTYPES
-    #include "khronos/glxext.h"
-#endif
-
-    #define MANGO_CONTEXT_GLX
 
 #else
 
