@@ -58,7 +58,7 @@
     #endif
 
     #define GL_GLEXT_PROTOTYPES
-    #include "khronos/glext.h"
+    #include "khronos/GL/glext.h"
 
     #define MANGO_CONTEXT_COCOA
 
