@@ -96,7 +96,9 @@
         #define GL_GLEXT_PROTOTYPES
         #include "khronos/GL/glcorearb.h"
     #else
+        #define GL_GLEXT_PROTOTYPES
         #include <GL/gl.h>
+        #include <GL/glext.h>
     #endif
 
     #include <GL/glx.h>
