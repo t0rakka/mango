@@ -284,7 +284,7 @@ namespace mango
         const int y1 = std::min(source.height, y + height_);
 
         // compute resulting surface
-        image  = source.address<u8>(x0, y0);
+        image  = source.address(x0, y0);
         width  = std::max(0, x1 - x0);
         height = std::max(0, y1 - y0);
     }

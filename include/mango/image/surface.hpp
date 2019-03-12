@@ -31,6 +31,12 @@ namespace mango
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
 
+        u8* address(int x = 0, int y = 0) const
+        {
+            u8* scan = image + y * stride;
+            return scan + x * format.bytes();
+        }
+
         template <typename SampleType>
         SampleType* address(int x = 0, int y = 0) const
         {
