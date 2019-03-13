@@ -33,9 +33,7 @@ namespace
         KTX_INT                           = 0x1404,
         KTX_UNSIGNED_INT                  = 0x1405,
         KTX_FLOAT                         = 0x1406,
-        KTX_DOUBLE                        = 0x140A,
         KTX_HALF_FLOAT                    = 0x140B,
-        KTX_FIXED                         = 0x140C,
 
         KTX_UNSIGNED_BYTE_3_3_2           = 0x8032,
         KTX_UNSIGNED_SHORT_4_4_4_4        = 0x8033,
@@ -50,8 +48,22 @@ namespace
         KTX_UNSIGNED_INT_8_8_8_8_REV      = 0x8367,
         KTX_UNSIGNED_INT_2_10_10_10_REV   = 0x8368,
 
+        KTX_RED                           = 0x1903,
         KTX_RG                            = 0x8227,
+        KTX_RGB                           = 0x1907,
+        KTX_RGBA                          = 0x1908,
+        KTX_BGR                           = 0x80E0,
+        KTX_BGRA                          = 0x80E1,
+        //KTX_ABGR_EXT                      = 0x8000,
+
+        KTX_RED_INTEGER                   = 0x8D94,
         KTX_RG_INTEGER                    = 0x8228,
+        KTX_RGB_INTEGER                   = 0x8D98,
+        KTX_RGBA_INTEGER                  = 0x8D99,
+        KTX_BGR_INTEGER                   = 0x8D9A,
+        KTX_BGRA_INTEGER                  = 0x8D9B,
+
+#if 0 // TODO
         KTX_R8                            = 0x8229,
         KTX_R16                           = 0x822A,
         KTX_RG8                           = 0x822B,
@@ -82,14 +94,6 @@ namespace
         KTX_RGB16_SNORM                   = 0x8F9A,
         KTX_RGBA16_SNORM                  = 0x8F9B,
 
-        KTX_RED                           = 0x1903,
-        KTX_GREEN                         = 0x1904,
-        KTX_BLUE                          = 0x1905,
-        KTX_ALPHA                         = 0x1906,
-
-        KTX_RGB                           = 0x1907,
-        KTX_RGBA                          = 0x1908,
-
         KTX_R3_G3_B2                      = 0x2A10,
         KTX_RGB4                          = 0x804F,
         KTX_RGB5                          = 0x8050,
@@ -104,9 +108,6 @@ namespace
         KTX_RGB10_A2                      = 0x8059,
         KTX_RGBA12                        = 0x805A,
         KTX_RGBA16                        = 0x805B,
-
-        KTX_BGR                           = 0x80E0,
-        KTX_BGRA                          = 0x80E1,
 
         KTX_SRGB                          = 0x8C40,
         KTX_SRGB8                         = 0x8C41,
@@ -137,18 +138,76 @@ namespace
         KTX_RGB16I                        = 0x8D89,
         KTX_RGBA8I                        = 0x8D8E,
         KTX_RGB8I                         = 0x8D8F,
-        KTX_RED_INTEGER                   = 0x8D94,
-        KTX_GREEN_INTEGER                 = 0x8D95,
-        KTX_BLUE_INTEGER                  = 0x8D96,
-        KTX_RGB_INTEGER                   = 0x8D98,
-        KTX_RGBA_INTEGER                  = 0x8D99,
-        KTX_BGR_INTEGER                   = 0x8D9A,
-        KTX_BGRA_INTEGER                  = 0x8D9B,
 
         KTX_INT_2_10_10_10_REV            = 0x8D9F,
         KTX_RGB565                        = 0x8D62,
+#endif
     };
 
+#if 0
+    
+    GL_UNSIGNED_INT_24_8
+    GL_UNSIGNED_INT_10F_11F_11F_REV
+    GL_UNSIGNED_INT_5_9_9_9_REV
+    
+glInternalFormat:
+    
+    RGB16
+    RGB16_SNORM
+    RGBA2
+    RGBA4
+    RGB5_A1
+    RGBA8
+    RGBA8_SNORM
+    RGB10_A2
+    RGB10_A2UI
+    RGBA12
+    RGBA16
+    RGBA16_SNORM
+    SRGB8
+    SRGB8_ALPHA8
+    
+    R16F
+    RG16F
+    RGB16F
+    RGBA16F
+    
+    R32F
+    RG32F
+    RGB32F
+    RGBA32F
+    
+    R11F_G11F_B10F
+    RGB9_E5
+    
+    R8I
+    R8UI
+    R16I
+    R16UI
+    R32I
+    R32UI
+    RG8I
+    RG8UI
+    RG16I
+    RG16UI
+    RG32I
+    RG32UI
+    RGB8I
+    RGB8UI
+    RGB16I
+    RGB16UI
+    RGB32I
+    RGB32UI
+    RGBA8I
+    RGBA8UI
+    RGBA16I
+    RGBA16UI
+    RGBA32I
+    RGBA32UI
+    
+#endif
+
+#if 0
     enum : u32
     {
         KTX_COMPRESSED_RGB                            = 0x84ED,
@@ -209,191 +268,197 @@ namespace
         KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT             = 0x83F2,
         KTX_COMPRESSED_RGBA_S3TC_DXT5_EXT             = 0x83F3,
     };
+#endif
 
-#if 0
-    bool resolve_format(u32 type, u32 format)
+    bool resolve_format(Format& format, u32 gltype, u32 glformat)
     {
-        switch (type)
+        Format::Type type = Format::NONE;
+        Format::Order order;
+        int components = 0;
+        bool valid = true;
+
+        switch (glformat)
         {
+            case KTX_RED:
+                type = Format::UNORM;
+                order = Format::R;
+                components = 1;
+                break;
+            case KTX_RG:
+                type = Format::UNORM;
+                order = Format::RG;
+                components = 2;
+                break;
+            case KTX_RGB:
+                type = Format::UNORM;
+                order = Format::RGB;
+                components = 3;
+                break;
+            case KTX_BGR:
+                type = Format::UNORM;
+                order = Format::BGR;
+                components = 3;
+                break;
+            case KTX_RGBA:
+                type = Format::UNORM;
+                order = Format::RGBA;
+                components = 4;
+                break;
+            case KTX_BGRA:
+                type = Format::UNORM;
+                order = Format::BGRA;
+                components = 4;
+                break;
+
+            case KTX_RED_INTEGER:
+                type = Format::UINT;
+                order = Format::R;
+                components = 1;
+                break;
+            case KTX_RG_INTEGER:
+                type = Format::UINT;
+                order = Format::RG;
+                components = 2;
+                break;
+            case KTX_RGB_INTEGER:
+                type = Format::UINT;
+                order = Format::RGB;
+                components = 3;
+                break;
+            case KTX_BGR_INTEGER:
+                type = Format::UINT;
+                order = Format::BGR;
+                components = 3;
+                break;
+            case KTX_RGBA_INTEGER:
+                type = Format::UINT;
+                order = Format::RGBA;
+                components = 4;
+                break;
+            case KTX_BGRA_INTEGER:
+                type = Format::UINT;
+                order = Format::BGRA;
+                components = 4;
+                break;
+
+            default:
+                valid = false;
+                break;
         }
 
-        /*
+        int size = 0;
 
-        // RED, RG, RGB, RGBA
-        GL_UNSIGNED_BYTE
-        GL_BYTE
-        GL_UNSIGNED_SHORT
-        GL_SHORT
-        GL_UNSIGNED_INT
-        GL_INT
-        GL_HALF_FLOAT
-        GL_FLOAT
+        switch (gltype)
+        {
+            case KTX_BYTE:
+                size = 8;
+                if (type == Format::UNORM) type = Format::SNORM;
+                if (type == Format::UINT) type = Format::SINT;
+                break;
+            case KTX_UNSIGNED_BYTE:
+                size = 8;
+                break;
+            case KTX_SHORT:
+                size = 16;
+                if (type == Format::UNORM) type = Format::SNORM;
+                if (type == Format::UINT) type = Format::SINT;
+                break;
+            case KTX_UNSIGNED_SHORT:
+                size = 16;
+                break;
+            case KTX_INT:
+                size = 32;
+                if (type == Format::UNORM) type = Format::SNORM;
+                if (type == Format::UINT) type = Format::SINT;
+                break;
+            case KTX_UNSIGNED_INT:
+                size = 32;
+                break;
+            case KTX_FLOAT:
+                size = 32;
+                type = Format::FP32;
+                break;
+            case KTX_HALF_FLOAT:
+                size = 16;
+                type = Format::FP16;
+                break;
 
-        // RGB
-        GL_UNSIGNED_BYTE_3_3_2
-        GL_UNSIGNED_BYTE_2_3_3_REV
-        GL_UNSIGNED_SHORT_5_6_5
-        GL_UNSIGNED_SHORT_5_6_5_REV
+            case KTX_UNSIGNED_BYTE_3_3_2:
+                format = Format(8,  Format::UNORM, Format::BGR, 2, 3, 3, 0);
+                return true;
+            case KTX_UNSIGNED_BYTE_2_3_3_REV:
+                format = Format(8,  Format::UNORM, Format::RGB, 3, 3, 2, 0);
+                return true;
+            case KTX_UNSIGNED_SHORT_5_6_5:
+                format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
+                return true;
+            case KTX_UNSIGNED_SHORT_5_6_5_REV:
+                format = Format(16, Format::UNORM, Format::RGB, 5, 6, 5, 0);
+                return true;
 
-        // RGBA, BGRA
-        GL_UNSIGNED_SHORT_4_4_4_4
-        GL_UNSIGNED_SHORT_4_4_4_4_REV
-        GL_UNSIGNED_SHORT_5_5_5_1
-        GL_UNSIGNED_SHORT_1_5_5_5_REV
-        GL_UNSIGNED_INT_8_8_8_8
-        GL_UNSIGNED_INT_8_8_8_8_REV
-        GL_UNSIGNED_INT_10_10_10_2
-        GL_UNSIGNED_INT_2_10_10_10_REV
+            case KTX_UNSIGNED_SHORT_4_4_4_4:
+                if (order == Format::RGBA)
+                    format = Format(16, Format::UNORM, Format::ABGR, 4, 4, 4, 4);
+                else
+                    format = Format(16, Format::UNORM, Format::ARGB, 4, 4, 4, 4);
+                return true;
+            case KTX_UNSIGNED_SHORT_4_4_4_4_REV:
+                if (order == Format::RGBA)
+                    format = Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4);
+                else
+                    format = Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
+                return true;
+            case KTX_UNSIGNED_SHORT_5_5_5_1:
+                if (order == Format::RGBA)
+                    format = Format(16, Format::UNORM, Format::ABGR, 1, 5, 5, 5);
+                else
+                    format = Format(16, Format::UNORM, Format::ARGB, 1, 5, 5, 5);
+                return true;
+            case KTX_UNSIGNED_SHORT_1_5_5_5_REV:
+                if (order == Format::RGBA)
+                    format = Format(16, Format::UNORM, Format::RGBA, 5, 5, 5, 1);
+                else
+                    format = Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1);
+                return true;
+            case KTX_UNSIGNED_INT_8_8_8_8:
+                if (order == Format::RGBA)
+                    format = Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8);
+                else
+                    format = Format(32, Format::UNORM, Format::ARGB, 8, 8, 8, 8);
+                return true;
+            case KTX_UNSIGNED_INT_8_8_8_8_REV:
+                if (order == Format::RGBA)
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                else
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                return true;
+            case KTX_UNSIGNED_INT_10_10_10_2:
+                if (order == Format::RGBA)
+                    format = Format(32, Format::UNORM, Format::ABGR, 2, 10, 10, 10);
+                else
+                    format = Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10);
+                return true;
+            case KTX_UNSIGNED_INT_2_10_10_10_REV:
+                if (order == Format::RGBA)
+                    format = Format(32, Format::UNORM, Format::RGBA, 10, 10, 10, 2);
+                else
+                    format = Format(32, Format::UNORM, Format::BGRA, 10, 10, 10, 2);
+                return true;
+        }
 
-        */
+        if (valid)
+        {
+            int bits = components * size;
+            int s[4] = { 0 };
+            for (int i = 0; i < components; ++i)
+            {
+                s[i] = size;
+            }
+            format = Format(bits, type, order, s[0], s[1], s[2], s[3]);
+        }
 
-        return false;
+        return valid;
     }
-#endif
-
-    /*
-    glInternalFormat: 1908        GL_RGBA
-    glFormat: 1908                GL_RGBA
-    glType: 1401                  GL_UNSIGNED_BYTE
-    */
-
-#if 0
-
-glType:
-    0 - compressed texture
-
-    GL_UNSIGNED_BYTE
-    GL_BYTE
-    GL_UNSIGNED_SHORT
-    GL_SHORT
-    GL_UNSIGNED_INT
-    GL_INT
-    GL_HALF_FLOAT
-    GL_FLOAT
-    GL_UNSIGNED_BYTE_3_3_2
-    GL_UNSIGNED_BYTE_2_3_3_REV
-    GL_UNSIGNED_SHORT_5_6_5
-    GL_UNSIGNED_SHORT_5_6_5_REV
-    GL_UNSIGNED_SHORT_4_4_4_4
-    GL_UNSIGNED_SHORT_4_4_4_4_REV
-    GL_UNSIGNED_SHORT_5_5_5_1
-    GL_UNSIGNED_SHORT_1_5_5_5_REV
-    GL_UNSIGNED_INT_8_8_8_8
-    GL_UNSIGNED_INT_8_8_8_8_REV
-    GL_UNSIGNED_INT_10_10_10_2
-    GL_UNSIGNED_INT_2_10_10_10_REV
-    GL_UNSIGNED_INT_24_8
-    GL_UNSIGNED_INT_10F_11F_11F_REV
-    GL_UNSIGNED_INT_5_9_9_9_REV
-    GL_FLOAT_32_UNSIGNED_INT_24_8_REV
-
-
-glTypeSize:
-    number of bytes to byteswap (1 - no endian conversion, 2 - 16 bits, 4 - 32 bits)
-
-
-glFormat:
-    0 - compressed texture
-
-    GL_STENCIL_INDEX
-    GL_DEPTH_COMPONENT
-    GL_DEPTH_STENCIL
-    GL_RED
-    GL_GREEN
-    GL_BLUE
-    GL_RG
-    GL_RGB
-    GL_RGBA
-    GL_BGR
-    GL_BGRA
-    GL_RED_INTEGER
-    GL_GREEN_INTEGER
-    GL_BLUE_INTEGER
-    GL_RG_INTEGER
-    GL_RGB_INTEGER
-    GL_RGBA_INTEGER
-    GL_BGR_INTEGER
-    GL_BGRA_INTEGER
-
-glInternalFormat:
-
-    uncompressed:
-
-    RGB16
-    RGB16_SNORM
-    RGBA2
-    RGBA4
-    RGB5_A1
-    RGBA8
-    RGBA8_SNORM
-    RGB10_A2
-    RGB10_A2UI
-    RGBA12
-    RGBA16
-    RGBA16_SNORM
-    SRGB8
-    SRGB8_ALPHA8
-
-    R16F
-    RG16F
-    RGB16F
-    RGBA16F
-
-    R32F
-    RG32F
-    RGB32F
-    RGBA32F
-
-    R11F_G11F_B10F
-    RGB9_E5
-
-    R8I
-    R8UI
-    R16I
-    R16UI
-    R32I
-    R32UI
-    RG8I
-    RG8UI
-    RG16I
-    RG16UI
-    RG32I
-    RG32UI
-    RGB8I
-    RGB8UI
-    RGB16I
-    RGB16UI
-    RGB32I
-    RGB32UI
-    RGBA8I
-    RGBA8UI
-    RGBA16I
-    RGBA16UI
-    RGBA32I
-    RGBA32UI
-
-    DEPTH_COMPONENT16
-    DEPTH_COMPONENT24
-    DEPTH_COMPONENT32
-    DEPTH_COMPONENT32F
-    DEPTH24_STENCIL8
-    DEPTH32F_STENCIL8
-    STENCIL_INDEX1
-    STENCIL_INDEX4
-    STENCIL_INDEX8
-    STENCIL_INDEX16
-
-glBaseInternalFormat:
-
-    DEPTH_COMPONENT
-    DEPTH_STENCIL
-    RED
-    RG
-    RGB
-    RGBA
-    STENCIL_INDEX
-
-#endif
 
     // ----------------------------------------------------------------------------
     // header
@@ -509,15 +574,8 @@ glBaseInternalFormat:
             }
             else
             {
-#if 0
-                // TODO: make this work w/o OpenGL
-                const opengl::InternalFormat* info = opengl::getInternalFormat(glInternalFormat);
-                if (info)
-                {
-                    format = info->format;
-                }
-                else
-#endif
+                bool valid = resolve_format(format, glType, glFormat);
+                if (!valid)
                 {
                     format = FORMAT_NONE;
                 }
