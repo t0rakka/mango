@@ -93,16 +93,16 @@ namespace mango {
     }
 
     // --------------------------------------------------------------
-    // LittleEndianPointer
+    // SameEndianPointer
     // --------------------------------------------------------------
 
-    class LittleEndianPointer : public Pointer
+    class SameEndianPointer : public Pointer
     {
     protected:
         using Pointer::p;
 
     public:
-        LittleEndianPointer(u8* address)
+        SameEndianPointer(u8* address)
             : Pointer(address)
         {
         }
@@ -122,21 +122,21 @@ namespace mango {
 
         u16 read16()
         {
-            u16 value = uload16le(p);
+            u16 value = uload16(p);
             p += 2;
             return value;
         }
 
         u32 read32()
         {
-            u32 value = uload32le(p);
+            u32 value = uload32(p);
             p += 4;
             return value;
         }
 
         u64 read64()
         {
-            u64 value = uload64le(p);
+            u64 value = uload64(p);
             p += 8;
             return value;
         }
@@ -144,7 +144,7 @@ namespace mango {
         float16 read16f()
         {
             Half value;
-            value.u = uload16le(p);
+            value.u = uload16(p);
             p += 2;
             return value;
         }
@@ -152,7 +152,7 @@ namespace mango {
         float read32f()
         {
             Float value;
-            value.u = uload32le(p);
+            value.u = uload32(p);
             p += 4;
             return value;
         }
@@ -160,7 +160,7 @@ namespace mango {
         double read64f()
         {
             Double value;
-            value.u = uload64le(p);
+            value.u = uload64(p);
             p += 8;
             return value;
         }
@@ -180,52 +180,52 @@ namespace mango {
 
         void write16(u16 value)
         {
-            ustore16le(p, value);
+            ustore16(p, value);
             p += 2;
         }
 
         void write32(u32 value)
         {
-            ustore32le(p, value);
+            ustore32(p, value);
             p += 4;
         }
 
         void write64(u64 value)
         {
-            ustore64le(p, value);
+            ustore64(p, value);
             p += 8;
         }
 
         void write16f(Half value)
         {
-            ustore16le(p, value.u);
+            ustore16(p, value.u);
             p += 2;
         }
 
         void write32f(Float value)
         {
-            ustore32le(p, value.u);
+            ustore32(p, value.u);
             p += 4;
         }
 
         void write64f(Double value)
         {
-            ustore64le(p, value.u);
+            ustore64(p, value.u);
             p += 8;
         }
     };
 
     // --------------------------------------------------------------
-    // BigEndianPointer
+    // SwapEndianPointer
     // --------------------------------------------------------------
 
-    class BigEndianPointer : public Pointer
+    class SwapEndianPointer : public Pointer
     {
     protected:
         using Pointer::p;
 
     public:
-        BigEndianPointer(u8* address)
+        SwapEndianPointer(u8* address)
             : Pointer(address)
         {
         }
@@ -245,21 +245,21 @@ namespace mango {
 
         u16 read16()
         {
-            u16 value = uload16be(p);
+            u16 value = uload16swap(p);
             p += 2;
             return value;
         }
 
         u32 read32()
         {
-            u32 value = uload32be(p);
+            u32 value = uload32swap(p);
             p += 4;
             return value;
         }
 
         u64 read64()
         {
-            u64 value = uload64be(p);
+            u64 value = uload64swap(p);
             p += 8;
             return value;
         }
@@ -267,7 +267,7 @@ namespace mango {
         float16 read16f()
         {
             Half value;
-            value.u = uload16be(p);
+            value.u = uload16swap(p);
             p += 2;
             return value;
         }
@@ -275,7 +275,7 @@ namespace mango {
         float read32f()
         {
             Float value;
-            value.u = uload32be(p);
+            value.u = uload32swap(p);
             p += 4;
             return value;
         }
@@ -283,7 +283,7 @@ namespace mango {
         double read64f()
         {
             Double value;
-            value.u = uload64be(p);
+            value.u = uload64swap(p);
             p += 8;
             return value;
         }
@@ -303,39 +303,55 @@ namespace mango {
 
         void write16(u16 value)
         {
-            ustore16be(p, value);
+            ustore16swap(p, value);
             p += 2;
         }
 
         void write32(u32 value)
         {
-            ustore32be(p, value);
+            ustore32swap(p, value);
             p += 4;
         }
 
         void write64(u64 value)
         {
-            ustore64be(p, value);
+            ustore64swap(p, value);
             p += 8;
         }
 
         void write16f(Half value)
         {
-            ustore16be(p, value.u);
+            ustore16swap(p, value.u);
             p += 2;
         }
 
         void write32f(Float value)
         {
-            ustore32be(p, value.u);
+            ustore32swap(p, value.u);
             p += 4;
         }
 
         void write64f(Double value)
         {
-            ustore64be(p, value.u);
+            ustore64swap(p, value.u);
             p += 8;
         }
     };
+
+    // --------------------------------------------------------------
+    // Little/BigEndianPointer
+    // --------------------------------------------------------------
+
+#ifdef MANGO_LITTLE_ENDIAN
+
+    using LittleEndianPointer = SameEndianPointer;
+    using BigEndianPointer = SwapEndianPointer;
+
+#else
+
+    using LittleEndianPointer = SwapEndianPointer;
+    using BigEndianPointer = SameEndianPointer;
+
+#endif
 
 } // namespace mango

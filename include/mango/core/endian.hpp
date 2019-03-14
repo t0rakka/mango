@@ -52,140 +52,74 @@ namespace mango
     }
 
     // --------------------------------------------------------------
+    // unaligned load/store + byteswap
+    // --------------------------------------------------------------
+
+    static inline u16 uload16swap(const void* p)
+    {
+        return byteswap(uload16(p));
+    }
+
+    static inline u32 uload32swap(const void* p)
+    {
+        return byteswap(uload32(p));
+    }
+
+    static inline u64 uload64swap(const void* p)
+    {
+        return byteswap(uload64(p));
+    }
+
+    static inline void ustore16swap(void* p, u16 value)
+    {
+        ustore16(p, byteswap(value));
+    }
+
+    static inline void ustore32swap(void* p, u32 value)
+    {
+        ustore32(p, byteswap(value));
+    }
+
+    static inline void ustore64swap(void* p, u64 value)
+    {
+        ustore64(p, byteswap(value));
+    }
+
+    // --------------------------------------------------------------
 	// endian load/store
     // --------------------------------------------------------------
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    // load
+    constexpr auto uload16le = uload16;
+    constexpr auto uload32le = uload32;
+    constexpr auto uload64le = uload64;
+    constexpr auto uload16be = uload16swap;
+    constexpr auto uload32be = uload32swap;
+    constexpr auto uload64be = uload64swap;
 
-    static inline u16 uload16le(const void* p)
-    {
-        return uload16(p);
-    }
-
-    static inline u32 uload32le(const void* p)
-    {
-        return uload32(p);
-    }
-
-    static inline u64 uload64le(const void* p)
-    {
-        return uload64(p);
-    }
-
-    static inline u16 uload16be(const void* p)
-    {
-        return byteswap(uload16(p));
-    }
-
-    static inline u32 uload32be(const void* p)
-    {
-        return byteswap(uload32(p));
-    }
-
-    static inline u64 uload64be(const void* p)
-    {
-        return byteswap(uload64(p));
-    }
-
-    // store
-
-    static inline void ustore16le(void* p, u16 value)
-    {
-        ustore16(p, value);
-    }
-
-    static inline void ustore32le(void* p, u32 value)
-    {
-        ustore32(p, value);
-    }
-
-    static inline void ustore64le(void* p, u64 value)
-    {
-        ustore64(p, value);
-    }
-
-    static inline void ustore16be(void* p, u16 value)
-    {
-        ustore16(p, byteswap(value));
-    }
-
-    static inline void ustore32be(void* p, u32 value)
-    {
-        ustore32(p, byteswap(value));
-    }
-
-    static inline void ustore64be(void* p, u64 value)
-    {
-        ustore64(p, byteswap(value));
-    }
+    constexpr auto ustore16le = ustore16;
+    constexpr auto ustore32le = ustore32;
+    constexpr auto ustore64le = ustore64;
+    constexpr auto ustore16be = ustore16swap;
+    constexpr auto ustore32be = ustore32swap;
+    constexpr auto ustore64be = ustore64swap;
 
 #else
 
-    // load
+    constexpr auto uload16le = uload16swap;
+    constexpr auto uload32le = uload32swap;
+    constexpr auto uload64le = uload64swap;
+    constexpr auto uload16be = uload16;
+    constexpr auto uload32be = uload32;
+    constexpr auto uload64be = uload64;
 
-    static inline u16 uload16le(const void* p)
-    {
-        return byteswap(uload16(p));
-    }
-
-    static inline u32 uload32le(const void* p)
-    {
-        return byteswap(uload32(p));
-    }
-
-    static inline u64 uload64le(const void* p)
-    {
-        return byteswap(uload64(p));
-    }
-
-    static inline u16 uload16be(const void* p)
-    {
-        return uload16(p);
-    }
-
-    static inline u32 uload32be(const void* p)
-    {
-        return uload32(p);
-    }
-
-    static inline u64 uload64be(const void* p)
-    {
-        return uload64(p);
-    }
-
-    // store
-
-    static inline void ustore16le(void* p, u16 value)
-    {
-        ustore16(p, byteswap(value));
-    }
-
-    static inline void ustore32le(void* p, u32 value)
-    {
-        ustore32(p, byteswap(value));
-    }
-
-    static inline void ustore64le(void* p, u64 value)
-    {
-        ustore64(p, byteswap(value));
-    }
-
-    static inline void ustore16be(void* p, u16 value)
-    {
-        ustore16(p, value);
-    }
-
-    static inline void ustore32be(void* p, u32 value)
-    {
-        ustore32(p, value);
-    }
-
-    static inline void ustore64be(void* p, u64 value)
-    {
-        ustore64(p, value);
-    }
+    constexpr auto ustore16le = ustore16swap;
+    constexpr auto ustore32le = ustore32swap;
+    constexpr auto ustore64le = ustore64swap;
+    constexpr auto ustore16be = ustore16;
+    constexpr auto ustore32be = ustore32;
+    constexpr auto ustore64be = ustore64;
 
 #endif
 
