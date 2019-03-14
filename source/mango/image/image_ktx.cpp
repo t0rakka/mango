@@ -466,7 +466,6 @@ glInternalFormat:
 
     struct HeaderKTX
     {
-		u8 identifier[12];
 		u32 endianness;
 		u32 glType;
 		u32 glTypeSize;
@@ -489,12 +488,15 @@ glInternalFormat:
                 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a
 			};
 
-			std::memcpy(this, memory.address, sizeof(HeaderKTX));
-
-			if (std::memcmp(ktxIdentifier, identifier, 12))
+			if (std::memcmp(ktxIdentifier, memory.address, sizeof(ktxIdentifier)))
 			{
                 MANGO_EXCEPTION(ID"Incorrect identifier.");
 			}
+
+            u8* ptr = memory.address + sizeof(ktxIdentifier);
+
+            endianness = make_u32(ptr[0], ptr[1], ptr[2], ptr[3]);
+            ptr += 4;
 
 			if (endianness != 0x04030201)
 			{
@@ -504,21 +506,41 @@ glInternalFormat:
 				}
 				else
 				{
-					// convert endianness
-					glType = byteswap(glType);
-					glTypeSize = byteswap(glTypeSize);
-					glFormat = byteswap(glFormat);
-					glInternalFormat = byteswap(glInternalFormat);
-					glBaseInternalFormat = byteswap(glBaseInternalFormat);
-					pixelWidth = byteswap(pixelWidth);
-					pixelHeight = byteswap(pixelHeight);
-					pixelDepth = byteswap(pixelDepth);
-					numberOfArrayElements = byteswap(numberOfArrayElements);
-					numberOfFaces = byteswap(numberOfFaces);
-					numberOfMipmapLevels = byteswap(numberOfMipmapLevels);
-					bytesOfKeyValueData = byteswap(bytesOfKeyValueData);
+					// different endianness
+                    SwapEndianPointer p = ptr;
+
+                    glType = p.read32();
+                    glTypeSize = p.read32();
+                    glFormat = p.read32();
+                    glInternalFormat = p.read32();
+                    glBaseInternalFormat = p.read32();
+                    pixelWidth = p.read32();
+                    pixelHeight = p.read32();
+                    pixelDepth = p.read32();
+                    numberOfArrayElements = p.read32();
+                    numberOfFaces = p.read32();
+                    numberOfMipmapLevels = p.read32();
+                    bytesOfKeyValueData = p.read32();
 				}
 			}
+            else
+            {
+                // same endianness
+                SameEndianPointer p = ptr;
+
+                glType = p.read32();
+                glTypeSize = p.read32();
+                glFormat = p.read32();
+                glInternalFormat = p.read32();
+                glBaseInternalFormat = p.read32();
+                pixelWidth = p.read32();
+                pixelHeight = p.read32();
+                pixelDepth = p.read32();
+                numberOfArrayElements = p.read32();
+                numberOfFaces = p.read32();
+                numberOfMipmapLevels = p.read32();
+                bytesOfKeyValueData = p.read32();
+            }
 
 #if 0
             printf("endianness: %x\n", endianness);
@@ -553,7 +575,7 @@ glInternalFormat:
 		{
 		}
 
-        u32 read32(const u8* p) const
+        u32 read32ktx(const u8* p) const
         {
             u32 value = uload32(p);
             if (endianness != 0x04030201)
@@ -598,7 +620,7 @@ glInternalFormat:
 
             for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
             {
-                const int imageSize = read32(address);
+                const int imageSize = read32ktx(address);
                 const int imageSizeRounded = (imageSize + 3) & ~3;
                 address += 4;
 
