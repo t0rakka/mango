@@ -214,7 +214,7 @@ namespace
     bool resolve_format(Format& format, TextureCompression& compression, u32 gltype, u32 glformat)
     {
         Format::Type type = Format::NONE;
-        Format::Order order;
+        Format::Order order = Format::RGBA;
         int components = 0;
         bool valid = true;
 
