@@ -48,7 +48,15 @@ namespace
         KTX_UNSIGNED_INT_8_8_8_8_REV      = 0x8367,
         KTX_UNSIGNED_INT_2_10_10_10_REV   = 0x8368,
 
+        KTX_R11F_G11F_B10F                = 0x8C3A,
+        KTX_UNSIGNED_INT_10F_11F_11F_REV  = 0x8C3B,
+        KTX_RGB9_E5                       = 0x8C3D,
+        KTX_UNSIGNED_INT_5_9_9_9_REV      = 0x8C3E,
+        KTX_INT_2_10_10_10_REV            = 0x8D9F,
+
         KTX_RED                           = 0x1903,
+        KTX_GREEN                         = 0x1904,
+        KTX_BLUE                          = 0x1905,
         KTX_RG                            = 0x8227,
         KTX_RGB                           = 0x1907,
         KTX_RGBA                          = 0x1908,
@@ -57,13 +65,15 @@ namespace
         //KTX_ABGR_EXT                      = 0x8000,
 
         KTX_RED_INTEGER                   = 0x8D94,
+        KTX_GREEN_INTEGER                 = 0x8D95,
+        KTX_BLUE_INTEGER                  = 0x8D96,
         KTX_RG_INTEGER                    = 0x8228,
         KTX_RGB_INTEGER                   = 0x8D98,
         KTX_RGBA_INTEGER                  = 0x8D99,
         KTX_BGR_INTEGER                   = 0x8D9A,
         KTX_BGRA_INTEGER                  = 0x8D9B,
 
-#if 0 // TODO
+#if 0 // sized internal format stuff; not needed here...
         KTX_R8                            = 0x8229,
         KTX_R16                           = 0x822A,
         KTX_RG8                           = 0x822B,
@@ -121,10 +131,6 @@ namespace
         KTX_RGB32F                        = 0x8815,
         KTX_RGBA16F                       = 0x881A,
         KTX_RGB16F                        = 0x881B,
-        KTX_R11F_G11F_B10F                = 0x8C3A,
-        KTX_UNSIGNED_INT_10F_11F_11F_REV  = 0x8C3B,
-        KTX_RGB9_E5                       = 0x8C3D,
-        KTX_UNSIGNED_INT_5_9_9_9_REV      = 0x8C3E,
 
         KTX_RGBA32UI                      = 0x8D70,
         KTX_RGB32UI                       = 0x8D71,
@@ -138,74 +144,9 @@ namespace
         KTX_RGB16I                        = 0x8D89,
         KTX_RGBA8I                        = 0x8D8E,
         KTX_RGB8I                         = 0x8D8F,
-
-        KTX_INT_2_10_10_10_REV            = 0x8D9F,
         KTX_RGB565                        = 0x8D62,
 #endif
     };
-
-#if 0
-    
-    GL_UNSIGNED_INT_24_8
-    GL_UNSIGNED_INT_10F_11F_11F_REV
-    GL_UNSIGNED_INT_5_9_9_9_REV
-    
-glInternalFormat:
-    
-    RGB16
-    RGB16_SNORM
-    RGBA2
-    RGBA4
-    RGB5_A1
-    RGBA8
-    RGBA8_SNORM
-    RGB10_A2
-    RGB10_A2UI
-    RGBA12
-    RGBA16
-    RGBA16_SNORM
-    SRGB8
-    SRGB8_ALPHA8
-    
-    R16F
-    RG16F
-    RGB16F
-    RGBA16F
-    
-    R32F
-    RG32F
-    RGB32F
-    RGBA32F
-    
-    R11F_G11F_B10F
-    RGB9_E5
-    
-    R8I
-    R8UI
-    R16I
-    R16UI
-    R32I
-    R32UI
-    RG8I
-    RG8UI
-    RG16I
-    RG16UI
-    RG32I
-    RG32UI
-    RGB8I
-    RGB8UI
-    RGB16I
-    RGB16UI
-    RGB32I
-    RGB32UI
-    RGBA8I
-    RGBA8UI
-    RGBA16I
-    RGBA16UI
-    RGBA32I
-    RGBA32UI
-    
-#endif
 
 #if 0
     enum : u32
@@ -270,7 +211,7 @@ glInternalFormat:
     };
 #endif
 
-    bool resolve_format(Format& format, u32 gltype, u32 glformat)
+    bool resolve_format(Format& format, TextureCompression& compression, u32 gltype, u32 glformat)
     {
         Format::Type type = Format::NONE;
         Format::Order order;
@@ -282,6 +223,16 @@ glInternalFormat:
             case KTX_RED:
                 type = Format::UNORM;
                 order = Format::R;
+                components = 1;
+                break;
+            case KTX_GREEN:
+                type = Format::UNORM;
+                order = Format::G;
+                components = 1;
+                break;
+            case KTX_BLUE:
+                type = Format::UNORM;
+                order = Format::B;
                 components = 1;
                 break;
             case KTX_RG:
@@ -313,6 +264,16 @@ glInternalFormat:
             case KTX_RED_INTEGER:
                 type = Format::UINT;
                 order = Format::R;
+                components = 1;
+                break;
+            case KTX_GREEN_INTEGER:
+                type = Format::UINT;
+                order = Format::G;
+                components = 1;
+                break;
+            case KTX_BLUE_INTEGER:
+                type = Format::UINT;
+                order = Format::B;
                 components = 1;
                 break;
             case KTX_RG_INTEGER:
@@ -443,6 +404,29 @@ glInternalFormat:
                     format = Format(32, Format::UNORM, Format::RGBA, 10, 10, 10, 2);
                 else
                     format = Format(32, Format::UNORM, Format::BGRA, 10, 10, 10, 2);
+                return true;
+
+            case KTX_R11F_G11F_B10F:
+                compression = TextureCompression::R11F_G11F_B10F;
+                return true;
+            case KTX_UNSIGNED_INT_10F_11F_11F_REV:
+                compression = TextureCompression::R10F_G11F_B11F;
+                return true;
+            case KTX_RGB9_E5:
+                compression = TextureCompression::RGB9_E5;
+                return true;
+            case KTX_UNSIGNED_INT_5_9_9_9_REV:
+                if (order == Format::RGBA)
+                    format = Format(16, Format::UNORM, Format::RGBA, 9, 9, 9, 5);
+                else
+                    format = Format(16, Format::UNORM, Format::BGRA, 9, 9, 9, 5);
+                return true;
+
+            case KTX_INT_2_10_10_10_REV:
+                if (order == Format::RGBA)
+                    format = Format(32, Format::SNORM, Format::RGBA, 10, 10, 10, 2);
+                else
+                    format = Format(32, Format::SNORM, Format::BGRA, 10, 10, 10, 2);
                 return true;
         }
 
@@ -596,7 +580,7 @@ glInternalFormat:
             }
             else
             {
-                bool valid = resolve_format(format, glType, glFormat);
+                bool valid = resolve_format(format, compression, glType, glFormat);
                 if (!valid)
                 {
                     format = FORMAT_NONE;
