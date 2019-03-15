@@ -194,10 +194,9 @@ namespace opengl {
 
         std::vector<NSOpenGLPixelFormatAttribute> attribs;
 
-#ifdef MANGO_CORE_PROFILE
         attribs.push_back(NSOpenGLPFAOpenGLProfile);
-        attribs.push_back(NSOpenGLProfileVersion3_2Core);
-#endif
+        attribs.push_back(NSOpenGLProfileVersion4_1Core);
+
         attribs.push_back(NSOpenGLPFAAccelerated);
         attribs.push_back(NSOpenGLPFADoubleBuffer);
         //attribs.push_back(NSOpenGLPFATripleBuffer);
