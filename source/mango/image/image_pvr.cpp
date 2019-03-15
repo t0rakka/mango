@@ -25,18 +25,18 @@ namespace
     {
         const u8 cc_order[4] =
         {
-            u8(eightcc >>  0),
-            u8(eightcc >>  8),
-            u8(eightcc >> 16),
             u8(eightcc >> 24),
+            u8(eightcc >> 16),
+            u8(eightcc >>  8),
+            u8(eightcc >>  0),
         };
 
         const u8 cc_size[4] =
         {
-            u8(eightcc >> 32),
-            u8(eightcc >> 40),
-            u8(eightcc >> 48),
             u8(eightcc >> 56),
+            u8(eightcc >> 48),
+            u8(eightcc >> 40),
+            u8(eightcc >> 32),
         };
 
         ColorRGBA size = 0;
@@ -62,7 +62,7 @@ namespace
                 bits += cc_size[i];
             }
         }
-
+        
         bits = round_multiple_up(bits, 8) * 8;
         return Format(bits, Format::UNORM, size, offset);
     }
