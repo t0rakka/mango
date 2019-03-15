@@ -527,7 +527,7 @@ namespace
 				}
 			}
 
-#if 1
+#if 0
             printf("endianness: %x\n", endianness);
             printf("glType: %x\n", glType);
             printf("glTypeSize: %x\n", glTypeSize);
