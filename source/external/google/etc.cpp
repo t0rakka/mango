@@ -44,24 +44,9 @@ namespace
         return (src >> low) & ((1 << numBits) - 1);
     }
 
-    inline u8 extend4To8 (int src)
+    constexpr u32 u32_extend(u32 value, int from, int to)
     {
-        return u8((src << 4) | src);
-    }
-
-    inline u8 extend5To8 (int src)
-    {
-        return u8((src << 3) | (src >> 2));
-    }
-
-    inline u8 extend6To8 (int src)
-    {
-        return u8((src << 2) | (src >> 4));
-    }
-
-    inline u8 extend7To8 (int src)
-    {
-        return u8((src << 1) | (src >> 6));
+        return (value << (to - from)) | (value >> (from * 2 - to));
     }
 
     inline int extendSigned3To8 (int src)
@@ -73,7 +58,7 @@ namespace
     inline u8 extend5Delta3To8 (int base5, int delta3)
     {
         const int t = base5 + extendSigned3To8(delta3);
-        return extend5To8(t);
+        return u32_extend(t, 5, 8);
     }
 
     inline u16 extend11To16 (u16 src)
@@ -113,12 +98,12 @@ namespace
         if (!diffBit)
         {
             // Individual mode.
-            baseR[0] = extend4To8(getBits(src, 60, 63));
-            baseR[1] = extend4To8(getBits(src, 56, 59));
-            baseG[0] = extend4To8(getBits(src, 52, 55));
-            baseG[1] = extend4To8(getBits(src, 48, 51));
-            baseB[0] = extend4To8(getBits(src, 44, 47));
-            baseB[1] = extend4To8(getBits(src, 40, 43));
+            baseR[0] = u32_extend(getBits(src, 60, 63), 4, 8);
+            baseR[1] = u32_extend(getBits(src, 56, 59), 4, 8);
+            baseG[0] = u32_extend(getBits(src, 52, 55), 4, 8);
+            baseG[1] = u32_extend(getBits(src, 48, 51), 4, 8);
+            baseB[0] = u32_extend(getBits(src, 44, 47), 4, 8);
+            baseB[1] = u32_extend(getBits(src, 40, 43), 4, 8);
         }
         else
         {
@@ -130,9 +115,9 @@ namespace
             int bB = getBits(src, 43, 47);
             int dB = getBits(src, 40, 42);
             
-            baseR[0] = extend5To8(bR);
-            baseG[0] = extend5To8(bG);
-            baseB[0] = extend5To8(bB);
+            baseR[0] = u32_extend(bR, 5, 8);
+            baseG[0] = u32_extend(bG, 5, 8);
+            baseB[0] = u32_extend(bB, 5, 8);
             baseR[1] = extend5Delta3To8(bR, dR);
             baseG[1] = extend5Delta3To8(bG, dG);
             baseB[1] = extend5Delta3To8(bB, dB);
@@ -225,22 +210,22 @@ namespace
             if (mode == MODE_INDIVIDUAL)
             {
                 // Individual mode, initial values.
-                baseR[0] = extend4To8(getBits(src, 60, 63));
-                baseR[1] = extend4To8(getBits(src, 56, 59));
-                baseG[0] = extend4To8(getBits(src, 52, 55));
-                baseG[1] = extend4To8(getBits(src, 48, 51));
-                baseB[0] = extend4To8(getBits(src, 44, 47));
-                baseB[1] = extend4To8(getBits(src, 40, 43));
+                baseR[0] = u32_extend(getBits(src, 60, 63), 4, 8);
+                baseR[1] = u32_extend(getBits(src, 56, 59), 4, 8);
+                baseG[0] = u32_extend(getBits(src, 52, 55), 4, 8);
+                baseG[1] = u32_extend(getBits(src, 48, 51), 4, 8);
+                baseB[0] = u32_extend(getBits(src, 44, 47), 4, 8);
+                baseB[1] = u32_extend(getBits(src, 40, 43), 4, 8);
             }
             else
             {
                 // Differential mode, initial values.
-                baseR[0] = extend5To8(selBR);
-                baseG[0] = extend5To8(selBG);
-                baseB[0] = extend5To8(selBB);
-                baseR[1] = extend5To8(selBR + selDR);
-                baseG[1] = extend5To8(selBG + selDG);
-                baseB[1] = extend5To8(selBB + selDB);
+                baseR[0] = u32_extend(selBR, 5, 8);
+                baseG[0] = u32_extend(selBG, 5, 8);
+                baseB[0] = u32_extend(selBB, 5, 8);
+                baseR[1] = u32_extend(selBR + selDR, 5, 8);
+                baseG[1] = u32_extend(selBG + selDG, 5, 8);
+                baseB[1] = u32_extend(selBB + selDB, 5, 8);
             }
             
             // Write final pixels for individual or differential mode.
@@ -307,12 +292,12 @@ namespace
                 const u32 distNdx	= (getBits(src, 34, 35) << 1) | getBit(src, 32);
                 const int dist		= distTable[distNdx];
                 
-                paintR[0] = extend4To8((R1a << 2) | R1b);
-                paintG[0] = extend4To8(G1);
-                paintB[0] = extend4To8(B1);
-                paintR[2] = extend4To8(R2);
-                paintG[2] = extend4To8(G2);
-                paintB[2] = extend4To8(B2);
+                paintR[0] = u32_extend((R1a << 2) | R1b, 4, 8);
+                paintG[0] = u32_extend(G1, 4, 8);
+                paintB[0] = u32_extend(B1, 4, 8);
+                paintR[2] = u32_extend(R2, 4, 8);
+                paintG[2] = u32_extend(G2, 4, 8);
+                paintB[2] = u32_extend(B2, 4, 8);
                 paintR[1] = (u8)byteclamp(paintR[2] + dist);
                 paintG[1] = (u8)byteclamp(paintG[2] + dist);
                 paintB[1] = (u8)byteclamp(paintB[2] + dist);
@@ -338,12 +323,12 @@ namespace
                 u32		distNdx;
                 int		dist;
                 
-                baseR[0]		= extend4To8(R1);
-                baseG[0]		= extend4To8((G1a << 1) | G1b);
-                baseB[0]		= extend4To8((B1a << 3) | B1b);
-                baseR[1]		= extend4To8(R2);
-                baseG[1]		= extend4To8(G2);
-                baseB[1]		= extend4To8(B2);
+                baseR[0]		= u32_extend(R1, 4, 8);
+                baseG[0]		= u32_extend((G1a << 1) | G1b, 4, 8);
+                baseB[0]		= u32_extend((B1a << 3) | B1b, 4, 8);
+                baseR[1]		= u32_extend(R2, 4, 8);
+                baseG[1]		= u32_extend(G2, 4, 8);
+                baseB[1]		= u32_extend(B2, 4, 8);
                 baseValue[0]	= (((u32)baseR[0]) << 16) | (((u32)baseG[0]) << 8) | baseB[0];
                 baseValue[1]	= (((u32)baseR[1]) << 16) | (((u32)baseG[1]) << 8) | baseB[1];
                 distNdx			= (getBit(src, 34) << 2) | (getBit(src, 32) << 1) | (u32)(baseValue[0] >= baseValue[1]);
@@ -367,12 +352,12 @@ namespace
             for (int y = 0; y < 4; ++y)
             {
                 u8* dest = output;
-                
+
                 for (int x = 0; x < 4; ++x)
                 {
                     const int   pixelNdx    = x * 4 + y;
                     const u32	paintNdx	= (getBit(src, 16+pixelNdx) << 1) | getBit(src, pixelNdx);
-                    
+
                     if (alphaMode && diffOpaqueBit == 0 && paintNdx == 2)
                     {
                         dest[0] = 0;
@@ -404,15 +389,15 @@ namespace
             const u8 BO3 = (u8)getBits(src, 39, 41);
             const u8 RH1 = (u8)getBits(src, 34, 38);
             const u8 RH2 = (u8)getBit(src, 32);
-            const u8 RO	= extend6To8(getBits(src, 57, 62));
-            const u8 GO	= extend7To8((GO1 << 6) | GO2);
-            const u8 BO	= extend6To8((BO1 << 5) | (BO2 << 3) | BO3);
-            const u8 RH	= extend6To8((RH1 << 1) | RH2);
-            const u8 GH	= extend7To8(getBits(src, 25, 31));
-            const u8 BH	= extend6To8(getBits(src, 19, 24));
-            const u8 RV	= extend6To8(getBits(src, 13, 18));
-            const u8 GV	= extend7To8(getBits(src, 6, 12));
-            const u8 BV	= extend6To8(getBits(src, 0, 5));
+            const u8 RO	= u32_extend(getBits(src, 57, 62), 6, 8);
+            const u8 GO	= u32_extend((GO1 << 6) | GO2, 7, 8);
+            const u8 BO	= u32_extend((BO1 << 5) | (BO2 << 3) | BO3, 6, 8);
+            const u8 RH	= u32_extend((RH1 << 1) | RH2, 6, 8);
+            const u8 GH	= u32_extend(getBits(src, 25, 31), 7, 8);
+            const u8 BH	= u32_extend(getBits(src, 19, 24), 6, 8);
+            const u8 RV	= u32_extend(getBits(src, 13, 18), 6, 8);
+            const u8 GV	= u32_extend(getBits(src, 6, 12), 7, 8);
+            const u8 BV	= u32_extend(getBits(src, 0, 5), 6, 8);
             
             // Write final pixels for planar mode.
             for (int y = 0; y < 4; ++y)
@@ -471,7 +456,7 @@ namespace
             {
                 const int pixelNdx    = x * 4 + y;
                 const int pixelBitNdx = 45 - 3 * pixelNdx;
-                const u32 modifierNdx = (getBit(src, pixelBitNdx + 2) << 2) | (getBit(src, pixelBitNdx + 1) << 1) | getBit(src, pixelBitNdx);
+                const u32 modifierNdx = getBits(src, pixelBitNdx, pixelBitNdx + 2);
                 const int modifier    = modifierTable[tableNdx][modifierNdx];
 
                 dest[3] = (u8)byteclamp(baseCodeword + multiplier * modifier);
@@ -523,10 +508,8 @@ namespace
                 {
                     const int pixelNdx    = x * 4 + y;
                     const int pixelBitNdx = 45 - 3 * pixelNdx;
-                    const u32 modifierNdx = (getBit(src, pixelBitNdx + 2) << 2) |
-                        (getBit(src, pixelBitNdx + 1) << 1) |
-                        getBit(src, pixelBitNdx);
-                    const int    modifier    = modifierTable[tableNdx][modifierNdx];
+                    const u32 modifierNdx = getBits(src, pixelBitNdx, pixelBitNdx + 2);
+                    const int modifier    = modifierTable[tableNdx][modifierNdx];
 
                     s16 sample;
                     if (multiplier != 0)
@@ -549,12 +532,10 @@ namespace
 
                 for (int x = 0; x < 4; ++x)
                 {
-                    const int    pixelNdx    = x * 4 + y;
-                    const int    pixelBitNdx = 45 - 3 * pixelNdx;
-                    const u32    modifierNdx = (getBit(src, pixelBitNdx + 2) << 2) |
-                                               (getBit(src, pixelBitNdx + 1) << 1) |
-                                                getBit(src, pixelBitNdx);
-                    const int    modifier    = modifierTable[tableNdx][modifierNdx];
+                    const int pixelNdx    = x * 4 + y;
+                    const int pixelBitNdx = 45 - 3 * pixelNdx;
+                    const u32 modifierNdx = getBits(src, pixelBitNdx, pixelBitNdx + 2);
+                    const int modifier    = modifierTable[tableNdx][modifierNdx];
 
                     u16 sample;
                     if (multiplier != 0)
