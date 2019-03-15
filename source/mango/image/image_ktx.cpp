@@ -450,6 +450,7 @@ namespace
 
     struct HeaderKTX
     {
+        u8 reserved_identifier[12];
 		u32 endianness;
 		u32 glType;
 		u32 glTypeSize;
@@ -482,7 +483,25 @@ namespace
             endianness = make_u32(ptr[0], ptr[1], ptr[2], ptr[3]);
             ptr += 4;
 
-			if (endianness != 0x04030201)
+			if (endianness == 0x04030201)
+            {
+                // same endianness
+                SameEndianPointer p = ptr;
+
+                glType = p.read32();
+                glTypeSize = p.read32();
+                glFormat = p.read32();
+                glInternalFormat = p.read32();
+                glBaseInternalFormat = p.read32();
+                pixelWidth = p.read32();
+                pixelHeight = p.read32();
+                pixelDepth = p.read32();
+                numberOfArrayElements = p.read32();
+                numberOfFaces = p.read32();
+                numberOfMipmapLevels = p.read32();
+                bytesOfKeyValueData = p.read32();
+            }
+            else
 			{
 				if (endianness != 0x01020304)
 				{
@@ -507,26 +526,8 @@ namespace
                     bytesOfKeyValueData = p.read32();
 				}
 			}
-            else
-            {
-                // same endianness
-                SameEndianPointer p = ptr;
 
-                glType = p.read32();
-                glTypeSize = p.read32();
-                glFormat = p.read32();
-                glInternalFormat = p.read32();
-                glBaseInternalFormat = p.read32();
-                pixelWidth = p.read32();
-                pixelHeight = p.read32();
-                pixelDepth = p.read32();
-                numberOfArrayElements = p.read32();
-                numberOfFaces = p.read32();
-                numberOfMipmapLevels = p.read32();
-                bytesOfKeyValueData = p.read32();
-            }
-
-#if 0
+#if 1
             printf("endianness: %x\n", endianness);
             printf("glType: %x\n", glType);
             printf("glTypeSize: %x\n", glTypeSize);
