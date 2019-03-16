@@ -195,8 +195,32 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
+    // 16 bits
+    // ----------------------------------------------------------------------------
+
+    constexpr u16 u16_extend(u16 value, int from, int to)
+    {
+        return (value << (to - from)) | (value >> (from * 2 - to));
+    }
+
+    constexpr s16 s16_extend(s16 value, int from, int to)
+    {
+        return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
+    }
+
+    // ----------------------------------------------------------------------------
     // 32 bits
     // ----------------------------------------------------------------------------
+
+    constexpr u32 u32_extend(u32 value, int from, int to)
+    {
+        return (value << (to - from)) | (value >> (from * 2 - to));
+    }
+
+    constexpr s32 s32_extend(s32 value, int from, int to)
+    {
+        return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
+    }
 
     static inline u32 u32_expand_msb(u32 value)
     {
@@ -494,6 +518,16 @@ namespace mango
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
+
+    constexpr u64 u64_extend(u64 value, int from, int to)
+    {
+        return (value << (to - from)) | (value >> (from * 2 - to));
+    }
+
+    constexpr s64 s64_extend(s64 value, int from, int to)
+    {
+        return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
+    }
 
     static inline u64 u64_expand_msb(u64 value)
     {

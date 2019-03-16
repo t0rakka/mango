@@ -25,6 +25,7 @@
 */
 
 #include "etc.hpp"
+#include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
@@ -33,45 +34,24 @@ namespace
 {
     using namespace mango;
 
-    inline u32 getBit (u64 src, int bit)
+    inline u32 getBits (u64 src, int offset, int count)
     {
-        return (src >> bit) & 1;
-    }
-
-    inline u32 getBits (u64 src, int low, int high)
-    {
-        const int numBits = (high - low) + 1;
-        return (src >> low) & ((1 << numBits) - 1);
-    }
-
-    constexpr u32 u32_extend(u32 value, int from, int to)
-    {
-        return (value << (to - from)) | (value >> (from * 2 - to));
-    }
-
-    inline int extendSigned3To8 (int src)
-    {
-        const bool isNeg = (src & (1<<2)) != 0;
-        return ((isNeg ? ~((1<<3)-1) : 0) | src);
+        //return (src >> offset) & ((1 << count) - 1);
+        return u32(u64_extract_bits(src, offset, count));
     }
 
     inline u8 extend5Delta3To8 (int base5, int delta3)
     {
-        const int t = base5 + extendSigned3To8(delta3);
+        const int t = base5 + s32_extend(delta3, 3, 8);
         return u32_extend(t, 5, 8);
-    }
-
-    inline u16 extend11To16 (u16 src)
-    {
-        return (src << 5) | (src >> 6);
     }
 
     inline s16 extend11To16WithSign (s16 src)
     {
         if (src < 0)
-            return -(s16)extend11To16(-src);
+            return -s16(u16_extend(-src, 11, 16));
         else
-            return (s16)extend11To16(src);
+            return s16(u16_extend(src, 11, 16));
     }
 
     inline int clamp32(int value, int vmin, int vmax)
@@ -88,9 +68,9 @@ namespace
 
     void decompress_block_etc1(u8* output, int stride, const u64 src)
     {
-        const int	flipBit		= getBit(src, 32);
-        const int	diffBit		= getBit(src, 33);
-        const u32	table[2]	= { getBits(src, 37, 39), getBits(src, 34, 36) };
+        const int	flipBit		= getBits(src, 32, 1);
+        const int	diffBit		= getBits(src, 33, 1);
+        const u32	table[2]	= { getBits(src, 37, 3), getBits(src, 34, 3) };
         int         baseR[2];
         int         baseG[2];
         int         baseB[2];
@@ -98,22 +78,22 @@ namespace
         if (!diffBit)
         {
             // Individual mode.
-            baseR[0] = u32_extend(getBits(src, 60, 63), 4, 8);
-            baseR[1] = u32_extend(getBits(src, 56, 59), 4, 8);
-            baseG[0] = u32_extend(getBits(src, 52, 55), 4, 8);
-            baseG[1] = u32_extend(getBits(src, 48, 51), 4, 8);
-            baseB[0] = u32_extend(getBits(src, 44, 47), 4, 8);
-            baseB[1] = u32_extend(getBits(src, 40, 43), 4, 8);
+            baseR[0] = u32_extend(getBits(src, 60, 4), 4, 8);
+            baseR[1] = u32_extend(getBits(src, 56, 4), 4, 8);
+            baseG[0] = u32_extend(getBits(src, 52, 4), 4, 8);
+            baseG[1] = u32_extend(getBits(src, 48, 4), 4, 8);
+            baseB[0] = u32_extend(getBits(src, 44, 4), 4, 8);
+            baseB[1] = u32_extend(getBits(src, 40, 4), 4, 8);
         }
         else
         {
             // Differential mode.
-            int bR = getBits(src, 59, 63);
-            int dR = getBits(src, 56, 58);
-            int bG = getBits(src, 51, 55);
-            int dG = getBits(src, 48, 50);
-            int bB = getBits(src, 43, 47);
-            int dB = getBits(src, 40, 42);
+            int bR = getBits(src, 59, 5);
+            int dR = getBits(src, 56, 3);
+            int bG = getBits(src, 51, 5);
+            int dG = getBits(src, 48, 3);
+            int bB = getBits(src, 43, 5);
+            int dB = getBits(src, 40, 3);
             
             baseR[0] = u32_extend(bR, 5, 8);
             baseG[0] = u32_extend(bG, 5, 8);
@@ -136,12 +116,12 @@ namespace
             
             for (int x = 0; x < 4; ++x)
             {
-                const int    pixelNdx    = x * 4 + y;
+                const int    pixelNdx   = x * 4 + y;
                 const int    subBlock	= (flipBit ? y : x) >> 1;
                 const u32    tableNdx	= table[subBlock];
-                const u32    modifierNdx	= getBit(src, pixelNdx);
-                const u32    modifierSgn = getBit(src, pixelNdx + 16);
-                const int    modifier	= modifierTable[modifierNdx][tableNdx] ^ (0 - modifierSgn);
+                const u32    modifierNdx = getBits(src, pixelNdx, 1);
+                const u32    modifierSgn = getBits(src, pixelNdx + 16, 1);
+                const int    modifier	 = modifierTable[modifierNdx][tableNdx] ^ (0 - modifierSgn);
                 
                 dest[0] = (u8)byteclamp(baseR[subBlock] + modifier);
                 dest[1] = (u8)byteclamp(baseG[subBlock] + modifier);
@@ -165,13 +145,13 @@ namespace
             MODE_PLANAR
         };
         
-        const int	diffOpaqueBit	= getBit(src, 33);
-        const s8	selBR			= (s8)getBits(src, 59, 63);	// 5 bits.
-        const s8	selBG			= (s8)getBits(src, 51, 55);
-        const s8	selBB			= (s8)getBits(src, 43, 47);
-        const s8	selDR           = (s8)extendSigned3To8(getBits(src, 56, 58)); // 3 bits.
-        const s8	selDG           = (s8)extendSigned3To8(getBits(src, 48, 50));
-        const s8	selDB           = (s8)extendSigned3To8(getBits(src, 40, 42));
+        const int	diffOpaqueBit	= getBits(src, 33, 1);
+        const s8	selBR			= (s8)getBits(src, 59, 5);
+        const s8	selBG			= (s8)getBits(src, 51, 5);
+        const s8	selBB			= (s8)getBits(src, 43, 5);
+        const s8	selDR           = (s8)s32_extend(getBits(src, 56, 3), 3, 8);
+        const s8	selDG           = (s8)s32_extend(getBits(src, 48, 3), 3, 8);
+        const s8	selDB           = (s8)s32_extend(getBits(src, 40, 3), 3, 8);
         Etc2Mode	mode;
         
         if (!alphaMode && diffOpaqueBit == 0)
@@ -201,8 +181,8 @@ namespace
                 { 47, 183, -47, -183 }
             };
             
-            const int	flipBit		= getBit(src, 32);
-            const u32	table[2]	= { getBits(src, 37, 39), getBits(src, 34, 36) };
+            const int	flipBit		= getBits(src, 32, 1);
+            const u32	table[2]	= { getBits(src, 37, 3), getBits(src, 34, 3) };
             u8		    baseR[2];
             u8		    baseG[2];
             u8		    baseB[2];
@@ -210,12 +190,12 @@ namespace
             if (mode == MODE_INDIVIDUAL)
             {
                 // Individual mode, initial values.
-                baseR[0] = u32_extend(getBits(src, 60, 63), 4, 8);
-                baseR[1] = u32_extend(getBits(src, 56, 59), 4, 8);
-                baseG[0] = u32_extend(getBits(src, 52, 55), 4, 8);
-                baseG[1] = u32_extend(getBits(src, 48, 51), 4, 8);
-                baseB[0] = u32_extend(getBits(src, 44, 47), 4, 8);
-                baseB[1] = u32_extend(getBits(src, 40, 43), 4, 8);
+                baseR[0] = u32_extend(getBits(src, 60, 4), 4, 8);
+                baseR[1] = u32_extend(getBits(src, 56, 4), 4, 8);
+                baseG[0] = u32_extend(getBits(src, 52, 4), 4, 8);
+                baseG[1] = u32_extend(getBits(src, 48, 4), 4, 8);
+                baseB[0] = u32_extend(getBits(src, 44, 4), 4, 8);
+                baseB[1] = u32_extend(getBits(src, 40, 4), 4, 8);
             }
             else
             {
@@ -238,7 +218,7 @@ namespace
                     const int   pixelNdx    = x * 4 + y;
                     const int   subBlock	= (flipBit ? y : x) >> 1;
                     const u32	tableNdx	= table[subBlock];
-                    const u32	modifierNdx	= (getBit(src, 16+pixelNdx) << 1) | getBit(src, pixelNdx);
+                    const u32	modifierNdx	= (getBits(src, 16+pixelNdx, 1) << 1) | getBits(src, pixelNdx, 1);
                     
                     // If doing PUNCHTHROUGH version (alphaMode), opaque bit may affect colors.
                     if (alphaMode && diffOpaqueBit == 0 && modifierNdx == 2)
@@ -282,14 +262,14 @@ namespace
             if (mode == MODE_T)
             {
                 // T mode, calculate paint values.
-                const u8  R1a		= (u8)getBits(src, 59, 60);
-                const u8  R1b		= (u8)getBits(src, 56, 57);
-                const u8  G1		= (u8)getBits(src, 52, 55);
-                const u8  B1		= (u8)getBits(src, 48, 51);
-                const u8  R2		= (u8)getBits(src, 44, 47);
-                const u8  G2		= (u8)getBits(src, 40, 43);
-                const u8  B2		= (u8)getBits(src, 36, 39);
-                const u32 distNdx	= (getBits(src, 34, 35) << 1) | getBit(src, 32);
+                const u8  R1a		= (u8)getBits(src, 59, 2);
+                const u8  R1b		= (u8)getBits(src, 56, 2);
+                const u8  G1		= (u8)getBits(src, 52, 4);
+                const u8  B1		= (u8)getBits(src, 48, 4);
+                const u8  R2		= (u8)getBits(src, 44, 4);
+                const u8  G2		= (u8)getBits(src, 40, 4);
+                const u8  B2		= (u8)getBits(src, 36, 4);
+                const u32 distNdx	= (getBits(src, 34, 2) << 1) | getBits(src, 32, 1);
                 const int dist		= distTable[distNdx];
                 
                 paintR[0] = u32_extend((R1a << 2) | R1b, 4, 8);
@@ -308,14 +288,14 @@ namespace
             else
             {
                 // H mode, calculate paint values.
-                const u8 R1		= (u8)getBits(src, 59, 62);
-                const u8 G1a	= (u8)getBits(src, 56, 58);
-                const u8 G1b	= (u8)getBit(src, 52);
-                const u8 B1a	= (u8)getBit(src, 51);
-                const u8 B1b	= (u8)getBits(src, 47, 49);
-                const u8 R2		= (u8)getBits(src, 43, 46);
-                const u8 G2		= (u8)getBits(src, 39, 42);
-                const u8 B2		= (u8)getBits(src, 35, 38);
+                const u8 R1		= (u8)getBits(src, 59, 4);
+                const u8 G1a	= (u8)getBits(src, 56, 3);
+                const u8 G1b	= (u8)getBits(src, 52, 1);
+                const u8 B1a	= (u8)getBits(src, 51, 1);
+                const u8 B1b	= (u8)getBits(src, 47, 3);
+                const u8 R2		= (u8)getBits(src, 43, 4);
+                const u8 G2		= (u8)getBits(src, 39, 4);
+                const u8 B2		= (u8)getBits(src, 35, 4);
                 u8		baseR[2];
                 u8		baseG[2];
                 u8		baseB[2];
@@ -331,7 +311,7 @@ namespace
                 baseB[1]		= u32_extend(B2, 4, 8);
                 baseValue[0]	= (((u32)baseR[0]) << 16) | (((u32)baseG[0]) << 8) | baseB[0];
                 baseValue[1]	= (((u32)baseR[1]) << 16) | (((u32)baseG[1]) << 8) | baseB[1];
-                distNdx			= (getBit(src, 34) << 2) | (getBit(src, 32) << 1) | (u32)(baseValue[0] >= baseValue[1]);
+                distNdx			= (getBits(src, 34, 1) << 2) | (getBits(src, 32, 1) << 1) | (u32)(baseValue[0] >= baseValue[1]);
                 dist			= distTable[distNdx];
                 
                 paintR[0]		= (u8)byteclamp(baseR[0] + dist);
@@ -356,7 +336,7 @@ namespace
                 for (int x = 0; x < 4; ++x)
                 {
                     const int   pixelNdx    = x * 4 + y;
-                    const u32	paintNdx	= (getBit(src, 16+pixelNdx) << 1) | getBit(src, pixelNdx);
+                    const u32	paintNdx	= (getBits(src, 16+pixelNdx, 1) << 1) | getBits(src, pixelNdx, 1);
 
                     if (alphaMode && diffOpaqueBit == 0 && paintNdx == 2)
                     {
@@ -382,23 +362,23 @@ namespace
         else
         {
             // Planar mode.
-            const u8 GO1 = (u8)getBit(src, 56);
-            const u8 GO2 = (u8)getBits(src, 49, 54);
-            const u8 BO1 = (u8)getBit(src, 48);
-            const u8 BO2 = (u8)getBits(src, 43, 44);
-            const u8 BO3 = (u8)getBits(src, 39, 41);
-            const u8 RH1 = (u8)getBits(src, 34, 38);
-            const u8 RH2 = (u8)getBit(src, 32);
-            const u8 RO	= u32_extend(getBits(src, 57, 62), 6, 8);
+            const u8 GO1 = (u8)getBits(src, 56, 1);
+            const u8 GO2 = (u8)getBits(src, 49, 6);
+            const u8 BO1 = (u8)getBits(src, 48, 1);
+            const u8 BO2 = (u8)getBits(src, 43, 2);
+            const u8 BO3 = (u8)getBits(src, 39, 3);
+            const u8 RH1 = (u8)getBits(src, 34, 5);
+            const u8 RH2 = (u8)getBits(src, 32, 1);
+            const u8 RO	= u32_extend(getBits(src, 57, 6), 6, 8);
             const u8 GO	= u32_extend((GO1 << 6) | GO2, 7, 8);
             const u8 BO	= u32_extend((BO1 << 5) | (BO2 << 3) | BO3, 6, 8);
             const u8 RH	= u32_extend((RH1 << 1) | RH2, 6, 8);
-            const u8 GH	= u32_extend(getBits(src, 25, 31), 7, 8);
-            const u8 BH	= u32_extend(getBits(src, 19, 24), 6, 8);
-            const u8 RV	= u32_extend(getBits(src, 13, 18), 6, 8);
-            const u8 GV	= u32_extend(getBits(src, 6, 12), 7, 8);
-            const u8 BV	= u32_extend(getBits(src, 0, 5), 6, 8);
-            
+            const u8 GH	= u32_extend(getBits(src, 25, 7), 7, 8);
+            const u8 BH	= u32_extend(getBits(src, 19, 6), 6, 8);
+            const u8 RV	= u32_extend(getBits(src, 13, 6), 6, 8);
+            const u8 GV	= u32_extend(getBits(src, 6, 7), 7, 8);
+            const u8 BV	= u32_extend(getBits(src, 0, 6), 6, 8);
+
             // Write final pixels for planar mode.
             for (int y = 0; y < 4; ++y)
             {
@@ -444,9 +424,9 @@ namespace
             {-3,  -5,  -7,  -9,  2,  4,  6,  8}
         };
 
-        const u8 baseCodeword	= (u8)getBits(src, 56, 63);
-        const u8 multiplier		= (u8)getBits(src, 52, 55);
-        const u32 tableNdx		= getBits(src, 48, 51);
+        const u8 baseCodeword	= (u8)getBits(src, 56, 8);
+        const u8 multiplier		= (u8)getBits(src, 52, 4);
+        const u32 tableNdx		= getBits(src, 48, 4);
 
         for (int y = 0; y < 4; ++y)
         {
@@ -456,7 +436,7 @@ namespace
             {
                 const int pixelNdx    = x * 4 + y;
                 const int pixelBitNdx = 45 - 3 * pixelNdx;
-                const u32 modifierNdx = getBits(src, pixelBitNdx, pixelBitNdx + 2);
+                const u32 modifierNdx = getBits(src, pixelBitNdx, 3);
                 const int modifier    = modifierTable[tableNdx][modifierNdx];
 
                 dest[3] = (u8)byteclamp(baseCodeword + multiplier * modifier);
@@ -489,9 +469,9 @@ namespace
             {-3,  -5,  -7,  -9,  2,  4,  6,  8}
         };
 
-        const s32 multiplier = (s32)getBits(src, 52, 55);
-        const s32 tableNdx	 = (s32)getBits(src, 48, 51);
-        s32 baseCodeword	 = (s32)getBits(src, 56, 63);
+        const s32 multiplier = (s32)getBits(src, 52, 4);
+        const s32 tableNdx	 = (s32)getBits(src, 48, 4);
+        s32 baseCodeword	 = (s32)getBits(src, 56, 8);
 
         if (signedMode)
         {
@@ -508,7 +488,7 @@ namespace
                 {
                     const int pixelNdx    = x * 4 + y;
                     const int pixelBitNdx = 45 - 3 * pixelNdx;
-                    const u32 modifierNdx = getBits(src, pixelBitNdx, pixelBitNdx + 2);
+                    const u32 modifierNdx = getBits(src, pixelBitNdx, 3);
                     const int modifier    = modifierTable[tableNdx][modifierNdx];
 
                     s16 sample;
@@ -534,7 +514,7 @@ namespace
                 {
                     const int pixelNdx    = x * 4 + y;
                     const int pixelBitNdx = 45 - 3 * pixelNdx;
-                    const u32 modifierNdx = getBits(src, pixelBitNdx, pixelBitNdx + 2);
+                    const u32 modifierNdx = getBits(src, pixelBitNdx, 3);
                     const int modifier    = modifierTable[tableNdx][modifierNdx];
 
                     u16 sample;
@@ -543,7 +523,7 @@ namespace
                     else
                         sample = (u16)clamp32(baseCodeword*8 + 4 + modifier, 0, 2047);
 
-                    dest[0] = extend11To16(sample);
+                    dest[0] = u16_extend(sample, 11, 16);
                     dest += xstride;
                 }
 
