@@ -166,10 +166,9 @@ namespace mango
         return std::min(high, std::max(low, value));
     }
 
-    static inline constexpr u32 byteclamp(s32 v)
+    static inline u32 byteclamp(s32 v)
     {
-        // clamp value to [0, 255] range
-        return v & 0xffffff00 ? u32(((~v) >> 31) & 0xff) : u32(v);
+        return clamp(v, 0, 255);
     }
 
     static inline int modulo(int value, int range)
