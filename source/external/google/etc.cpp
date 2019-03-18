@@ -57,13 +57,6 @@ namespace
             return s16(u16_extend(src, 11, 16));
     }
 
-    inline int clamp32(int value, int vmin, int vmax)
-    {
-        if (value < vmin) value = vmin;
-        else if (value > vmax) value = vmax;
-        return value;
-    }
-
     inline bool inRange(int value, int vmin, int vmax)
     {
         return value >= vmin && value <= vmax;
@@ -567,9 +560,9 @@ namespace
 
                     s16 sample;
                     if (multiplier != 0)
-                        sample = (s16)clamp32(baseCodeword*8 + multiplier*modifier*8, -1023, 1023);
+                        sample = s16(clamp(baseCodeword*8 + multiplier*modifier*8, -1023, 1023));
                     else
-                        sample = (s16)clamp32(baseCodeword*8 + modifier, -1023, 1023);
+                        sample = s16(clamp(baseCodeword*8 + modifier, -1023, 1023));
 
                     dest[0] = extend11To16WithSign(sample);
                     dest += xstride;
@@ -593,9 +586,9 @@ namespace
 
                     u16 sample;
                     if (multiplier != 0)
-                        sample = (u16)clamp32(baseCodeword*8 + 4 + multiplier*modifier*8, 0, 2047);
+                        sample = u16(clamp(baseCodeword*8 + 4 + multiplier*modifier*8, 0, 2047));
                     else
-                        sample = (u16)clamp32(baseCodeword*8 + 4 + modifier, 0, 2047);
+                        sample = u16(clamp(baseCodeword*8 + 4 + modifier, 0, 2047));
 
                     dest[0] = u16_extend(sample, 11, 16);
                     dest += xstride;
