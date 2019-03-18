@@ -525,7 +525,7 @@ namespace mango
 
     constexpr s64 s64_extend(s64 value, int from, int to)
     {
-        return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
+        return value | (value & (1ull << (from - 1)) ? ~((1ull << from) - 1) : 0);
     }
 
     static inline u64 u64_expand_msb(u64 value)
