@@ -6,7 +6,6 @@
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
-//#include <mango/opengl/opengl.hpp>
 
 #define ID "[ImageDecoder.KTX] "
 
