@@ -168,14 +168,14 @@ namespace
             MODE_PLANAR
         };
 
-        const int	diffOpaqueBit	= getBits(src, 33, 1);
-        const s8	selBR			= (s8)getBits(src, 59, 5);
-        const s8	selBG			= (s8)getBits(src, 51, 5);
-        const s8	selBB			= (s8)getBits(src, 43, 5);
-        const s8	selDR           = (s8)s32_extend(getBits(src, 56, 3), 3, 8);
-        const s8	selDG           = (s8)s32_extend(getBits(src, 48, 3), 3, 8);
-        const s8	selDB           = (s8)s32_extend(getBits(src, 40, 3), 3, 8);
-        Etc2Mode	mode;
+        const int diffOpaqueBit = getBits(src, 33, 1);
+        const int selBR         = getBits(src, 59, 5);
+        const int selBG         = getBits(src, 51, 5);
+        const int selBB         = getBits(src, 43, 5);
+        const int selDR         = s32_extend(getBits(src, 56, 3), 3, 8);
+        const int selDG         = s32_extend(getBits(src, 48, 3), 3, 8);
+        const int selDB         = s32_extend(getBits(src, 40, 3), 3, 8);
+        Etc2Mode  mode;
 
         if (!alphaMode && diffOpaqueBit == 0)
             mode = MODE_INDIVIDUAL;
@@ -302,9 +302,9 @@ namespace
                         else
                             modifier = modifierTable[tableNdx][modifierNdx];
 
-                        dest[0] = (u8)byteclamp(baseR[subBlock] + modifier);
-                        dest[1] = (u8)byteclamp(baseG[subBlock] + modifier);
-                        dest[2] = (u8)byteclamp(baseB[subBlock] + modifier);
+                        dest[0] = byteclamp(baseR[subBlock] + modifier);
+                        dest[1] = byteclamp(baseG[subBlock] + modifier);
+                        dest[2] = byteclamp(baseB[subBlock] + modifier);
                         dest[3] = 255;
                     }
 
@@ -392,13 +392,12 @@ namespace
                 paintB[3] = byteclamp(baseB[1] - dist);
             }
 
-#ifdef ETC_ENABLE_SIMD
-            const int32x4 paint[] =
+            const u32 paint[] =
             {
-                int32x4(paintR[0], paintG[0], paintB[0], 0xff),
-                int32x4(paintR[1], paintG[1], paintB[1], 0xff),
-                int32x4(paintR[2], paintG[2], paintB[2], 0xff),
-                int32x4(paintR[3], paintG[3], paintB[3], 0xff)
+                makeRGBA(paintR[0], paintG[0], paintB[0], 0xff),
+                makeRGBA(paintR[1], paintG[1], paintB[1], 0xff),
+                makeRGBA(paintR[2], paintG[2], paintB[2], 0xff),
+                makeRGBA(paintR[3], paintG[3], paintB[3], 0xff)
             };
 
             // Write final pixels for T or H mode.
@@ -418,42 +417,10 @@ namespace
                     }
                     else
                     {
-                        int32x4 c = paint[paintNdx];
-                        dest[x] = c.pack();
+                        dest[x] = paint[paintNdx];
                     }
                 }
             }
-#else
-            // Write final pixels for T or H mode.
-            for (int y = 0; y < 4; ++y)
-            {
-                u8* dest = output;
-                output += stride;
-
-                for (int x = 0; x < 4; ++x)
-                {
-                    const int pixelNdx = x * 4 + y;
-                    const u32 paintNdx = (getBits(src, 16+pixelNdx, 1) << 1) | getBits(src, pixelNdx, 1);
-
-                    if (alphaMode && diffOpaqueBit == 0 && paintNdx == 2)
-                    {
-                        dest[0] = 0;
-                        dest[1] = 0;
-                        dest[2] = 0;
-                        dest[3] = 0;
-                    }
-                    else
-                    {
-                        dest[0] = paintR[paintNdx];
-                        dest[1] = paintG[paintNdx];
-                        dest[2] = paintB[paintNdx];
-                        dest[3] = 255;
-                    }
-
-                    dest += 4;
-                }
-            }
-#endif
         }
         else
         {
@@ -495,8 +462,8 @@ namespace
                 for (int x = 0; x < 4; ++x)
                 {
                     int32x4 c = clamp((C >> 2), 0, 255);
-                    C += H;
                     dest[x] = c.pack();
+                    C += H;
                 }
             }
 #else
@@ -549,13 +516,14 @@ namespace
             {-3,  -5,  -7,  -9,  2,  4,  6,  8}
         };
 
-        const u8 baseCodeword = (u8)getBits(src, 56, 8);
-        const u8 multiplier   = (u8)getBits(src, 52, 4);
-        const u32 tableNdx    = getBits(src, 48, 4);
+        const int baseCodeword = getBits(src, 56, 8);
+        const int multiplier   = getBits(src, 52, 4);
+        const u32 tableNdx     = getBits(src, 48, 4);
 
         for (int y = 0; y < 4; ++y)
         {
             u8* dest = output;
+            output += stride;
 
             for (int x = 0; x < 4; ++x)
             {
@@ -567,8 +535,6 @@ namespace
                 dest[3] = byteclamp(baseCodeword + multiplier * modifier);
                 dest += 4;
             }
-
-            output += stride;
         }
     }
 
@@ -608,6 +574,7 @@ namespace
             for (int y = 0; y < 4; ++y)
             {
                 s16* dest = reinterpret_cast<s16*>(output);
+                output += ystride;
 
                 for (int x = 0; x < 4; ++x)
                 {
@@ -625,8 +592,6 @@ namespace
                     dest[0] = extend11To16WithSign(sample);
                     dest += xstride;
                 }
-
-                output += ystride;
             }
         }
         else
@@ -634,6 +599,7 @@ namespace
             for (int y = 0; y < 4; ++y)
             {
                 u16* dest = reinterpret_cast<u16*>(output);
+                output += ystride;
 
                 for (int x = 0; x < 4; ++x)
                 {
@@ -651,8 +617,6 @@ namespace
                     dest[0] = u16_extend(sample, 11, 16);
                     dest += xstride;
                 }
-
-                output += ystride;
             }
         }
     }
