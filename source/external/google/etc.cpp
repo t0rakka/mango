@@ -67,9 +67,9 @@ namespace
         const int  flipBit  = getBits(src, 32, 1);
         const int  diffBit  = getBits(src, 33, 1);
         const u32  table[2] = { getBits(src, 37, 3), getBits(src, 34, 3) };
-        int        baseR[2];
-        int        baseG[2];
-        int        baseB[2];
+        u32 baseR[2];
+        u32 baseG[2];
+        u32 baseB[2];
 
         if (!diffBit)
         {
