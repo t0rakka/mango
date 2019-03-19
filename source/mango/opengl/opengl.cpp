@@ -9,6 +9,7 @@
 //#define ENABLE_CONTEXT_VALIDATE
 
 /* TODO: (type, format) mapping to Format, example:
+
     glTexImage2D(..., GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, ...)
     { 0x8032, "UNSIGNED_BYTE_3_3_2" },
     { 0x8362, "UNSIGNED_BYTE_2_3_3_REV" },
