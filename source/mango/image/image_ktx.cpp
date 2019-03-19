@@ -527,12 +527,12 @@ namespace
 			}
 
 #if 0
-            printf("endianness: %x\n", endianness);
-            printf("glType: %x\n", glType);
-            printf("glTypeSize: %x\n", glTypeSize);
-            printf("glFormat: %x\n", glFormat);
-            printf("glInternalFormat: %x\n", glInternalFormat);
-            printf("glBaseInternalFormat: %x\n", glBaseInternalFormat);
+            printf("endianness: 0x%x\n", endianness);
+            printf("glType: 0x%x\n", glType);
+            printf("glTypeSize: 0x%x\n", glTypeSize);
+            printf("glFormat: 0x%x\n", glFormat);
+            printf("glInternalFormat: 0x%x\n", glInternalFormat);
+            printf("glBaseInternalFormat: 0x%x\n", glBaseInternalFormat);
             printf("pixelWidth: %d\n", pixelWidth);
             printf("pixelHeight: %d\n", pixelHeight);
             printf("pixelDepth: %d\n", pixelDepth);
@@ -683,6 +683,10 @@ namespace
                 int width = std::max(1U, m_header.pixelWidth >> level);
                 int height = std::max(1U, m_header.pixelHeight >> level);
                 int stride = width * format.bytes();
+
+                // KTX format stores data with GL_UNPACK_ALIGNMENT of 4
+                stride = (stride + 3) & ~3;
+
                 Surface source(width, height, format, stride, data.address);
                 dest.blit(0, 0, source);
             }
