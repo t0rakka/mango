@@ -64,12 +64,12 @@ namespace
 
     void decompress_block_etc1(u8* output, int stride, const u64 src)
     {
-        const int	flipBit  = getBits(src, 32, 1);
-        const int	diffBit	 = getBits(src, 33, 1);
-        const u32	table[2] = { getBits(src, 37, 3), getBits(src, 34, 3) };
-        int         baseR[2];
-        int         baseG[2];
-        int         baseB[2];
+        const int  flipBit  = getBits(src, 32, 1);
+        const int  diffBit  = getBits(src, 33, 1);
+        const u32  table[2] = { getBits(src, 37, 3), getBits(src, 34, 3) };
+        int        baseR[2];
+        int        baseG[2];
+        int        baseB[2];
 
         if (!diffBit)
         {
@@ -90,7 +90,7 @@ namespace
             int dG = getBits(src, 48, 3);
             int bB = getBits(src, 43, 5);
             int dB = getBits(src, 40, 3);
-            
+
             baseR[0] = u32_extend(bR, 5, 8);
             baseG[0] = u32_extend(bG, 5, 8);
             baseB[0] = u32_extend(bB, 5, 8);
@@ -98,18 +98,26 @@ namespace
             baseG[1] = extend5Delta3To8(bG, dG);
             baseB[1] = extend5Delta3To8(bB, dB);
         }
-        
+
         static const u8 modifierTable[2][8] =
         {
             { 2, 5, 9, 13, 18, 24, 33, 47 },
             { 8, 17, 29, 42, 60, 80, 106, 183 }
         };
-        
+
+#ifdef ETC_ENABLE_SIMD
+        const int32x4 base[] =
+        {
+            int32x4(baseR[0], baseG[0], baseB[0], 0xff),
+            int32x4(baseR[1], baseG[1], baseB[1], 0xff)
+        };
+
         // Write final pixels.
         for (int y = 0; y < 4; ++y)
         {
-            u8* dest = output;
-            
+            u32* dest = reinterpret_cast<u32*>(output);
+            output += stride;
+
             for (int x = 0; x < 4; ++x)
             {
                 const int pixelNdx    = x * 4 + y;
@@ -118,16 +126,35 @@ namespace
                 const u32 modifierNdx = getBits(src, pixelNdx, 1);
                 const u32 modifierSgn = getBits(src, pixelNdx + 16, 1);
                 const int modifier	  = modifierTable[modifierNdx][tableNdx] ^ (0 - modifierSgn);
-                
-                dest[0] = (u8)byteclamp(baseR[subBlock] + modifier);
-                dest[1] = (u8)byteclamp(baseG[subBlock] + modifier);
-                dest[2] = (u8)byteclamp(baseB[subBlock] + modifier);
+
+                int32x4 c = clamp(base[subBlock] + modifier, 0, 255);
+                dest[x] = c.pack();
+            }
+        }
+#else
+        // Write final pixels.
+        for (int y = 0; y < 4; ++y)
+        {
+            u8* dest = output;
+            output += stride;
+
+            for (int x = 0; x < 4; ++x)
+            {
+                const int pixelNdx    = x * 4 + y;
+                const int subBlock	  = (flipBit ? y : x) >> 1;
+                const u32 tableNdx	  = table[subBlock];
+                const u32 modifierNdx = getBits(src, pixelNdx, 1);
+                const u32 modifierSgn = getBits(src, pixelNdx + 16, 1);
+                const int modifier	  = modifierTable[modifierNdx][tableNdx] ^ (0 - modifierSgn);
+
+                dest[0] = byteclamp(baseR[subBlock] + modifier);
+                dest[1] = byteclamp(baseG[subBlock] + modifier);
+                dest[2] = byteclamp(baseB[subBlock] + modifier);
                 dest[3] = 255;
                 dest += 4;
             }
-            
-            output += stride;
         }
+#endif
     }
 
     void decompress_block_etc2(u8* output, int stride, const u64 src, bool alphaMode)
@@ -249,6 +276,7 @@ namespace
             for (int y = 0; y < 4; ++y)
             {
                 u8* dest = output;
+                output += stride;
 
                 for (int x = 0; x < 4; ++x)
                 {
@@ -282,8 +310,6 @@ namespace
 
                     dest += 4;
                 }
-
-                output += stride;
             }
 #endif
         }
@@ -299,15 +325,15 @@ namespace
             if (mode == MODE_T)
             {
                 // T mode, calculate paint values.
-                const u8  R1a		= (u8)getBits(src, 59, 2);
-                const u8  R1b		= (u8)getBits(src, 56, 2);
-                const u8  G1		= (u8)getBits(src, 52, 4);
-                const u8  B1		= (u8)getBits(src, 48, 4);
-                const u8  R2		= (u8)getBits(src, 44, 4);
-                const u8  G2		= (u8)getBits(src, 40, 4);
-                const u8  B2		= (u8)getBits(src, 36, 4);
-                const u32 distNdx	= (getBits(src, 34, 2) << 1) | getBits(src, 32, 1);
-                const int dist		= distTable[distNdx];
+                const u8  R1a     = getBits(src, 59, 2);
+                const u8  R1b     = getBits(src, 56, 2);
+                const u8  G1      = getBits(src, 52, 4);
+                const u8  B1      = getBits(src, 48, 4);
+                const u8  R2      = getBits(src, 44, 4);
+                const u8  G2      = getBits(src, 40, 4);
+                const u8  B2      = getBits(src, 36, 4);
+                const u32 distNdx = (getBits(src, 34, 2) << 1) | getBits(src, 32, 1);
+                const int dist    = distTable[distNdx];
 
                 paintR[0] = u32_extend((R1a << 2) | R1b, 4, 8);
                 paintG[0] = u32_extend(G1, 4, 8);
@@ -315,60 +341,94 @@ namespace
                 paintR[2] = u32_extend(R2, 4, 8);
                 paintG[2] = u32_extend(G2, 4, 8);
                 paintB[2] = u32_extend(B2, 4, 8);
-                paintR[1] = (u8)byteclamp(paintR[2] + dist);
-                paintG[1] = (u8)byteclamp(paintG[2] + dist);
-                paintB[1] = (u8)byteclamp(paintB[2] + dist);
-                paintR[3] = (u8)byteclamp(paintR[2] - dist);
-                paintG[3] = (u8)byteclamp(paintG[2] - dist);
-                paintB[3] = (u8)byteclamp(paintB[2] - dist);
+                paintR[1] = byteclamp(paintR[2] + dist);
+                paintG[1] = byteclamp(paintG[2] + dist);
+                paintB[1] = byteclamp(paintB[2] + dist);
+                paintR[3] = byteclamp(paintR[2] - dist);
+                paintG[3] = byteclamp(paintG[2] - dist);
+                paintB[3] = byteclamp(paintB[2] - dist);
             }
             else
             {
                 // H mode, calculate paint values.
-                const u8 R1		= (u8)getBits(src, 59, 4);
-                const u8 G1a	= (u8)getBits(src, 56, 3);
-                const u8 G1b	= (u8)getBits(src, 52, 1);
-                const u8 B1a	= (u8)getBits(src, 51, 1);
-                const u8 B1b	= (u8)getBits(src, 47, 3);
-                const u8 R2		= (u8)getBits(src, 43, 4);
-                const u8 G2		= (u8)getBits(src, 39, 4);
-                const u8 B2		= (u8)getBits(src, 35, 4);
-                u8		baseR[2];
-                u8		baseG[2];
-                u8		baseB[2];
-                u32		baseValue[2];
-                u32		distNdx;
-                int		dist;
+                const u8 R1	  = getBits(src, 59, 4);
+                const u8 G1a  = getBits(src, 56, 3);
+                const u8 G1b  = getBits(src, 52, 1);
+                const u8 B1a  = getBits(src, 51, 1);
+                const u8 B1b  = getBits(src, 47, 3);
+                const u8 R2	  = getBits(src, 43, 4);
+                const u8 G2	  = getBits(src, 39, 4);
+                const u8 B2	  = getBits(src, 35, 4);
 
-                baseR[0]		= u32_extend(R1, 4, 8);
-                baseG[0]		= u32_extend((G1a << 1) | G1b, 4, 8);
-                baseB[0]		= u32_extend((B1a << 3) | B1b, 4, 8);
-                baseR[1]		= u32_extend(R2, 4, 8);
-                baseG[1]		= u32_extend(G2, 4, 8);
-                baseB[1]		= u32_extend(B2, 4, 8);
-                baseValue[0]	= (((u32)baseR[0]) << 16) | (((u32)baseG[0]) << 8) | baseB[0];
-                baseValue[1]	= (((u32)baseR[1]) << 16) | (((u32)baseG[1]) << 8) | baseB[1];
-                distNdx			= (getBits(src, 34, 1) << 2) | (getBits(src, 32, 1) << 1) | (u32)(baseValue[0] >= baseValue[1]);
-                dist			= distTable[distNdx];
+                int baseR[2];
+                int	baseG[2];
+                int baseB[2];
+                u32 baseValue[2];
+                u32 distNdx;
+                int dist;
 
-                paintR[0]		= (u8)byteclamp(baseR[0] + dist);
-                paintG[0]		= (u8)byteclamp(baseG[0] + dist);
-                paintB[0]		= (u8)byteclamp(baseB[0] + dist);
-                paintR[1]		= (u8)byteclamp(baseR[0] - dist);
-                paintG[1]		= (u8)byteclamp(baseG[0] - dist);
-                paintB[1]		= (u8)byteclamp(baseB[0] - dist);
-                paintR[2]		= (u8)byteclamp(baseR[1] + dist);
-                paintG[2]		= (u8)byteclamp(baseG[1] + dist);
-                paintB[2]		= (u8)byteclamp(baseB[1] + dist);
-                paintR[3]		= (u8)byteclamp(baseR[1] - dist);
-                paintG[3]		= (u8)byteclamp(baseG[1] - dist);
-                paintB[3]		= (u8)byteclamp(baseB[1] - dist);
+                baseR[0]      = u32_extend(R1, 4, 8);
+                baseG[0]      = u32_extend((G1a << 1) | G1b, 4, 8);
+                baseB[0]      = u32_extend((B1a << 3) | B1b, 4, 8);
+                baseR[1]      = u32_extend(R2, 4, 8);
+                baseG[1]      = u32_extend(G2, 4, 8);
+                baseB[1]      = u32_extend(B2, 4, 8);
+                baseValue[0]  = ((baseR[0]) << 16) | ((baseG[0]) << 8) | baseB[0];
+                baseValue[1]  = ((baseR[1]) << 16) | ((baseG[1]) << 8) | baseB[1];
+                distNdx       = (getBits(src, 34, 1) << 2) | (getBits(src, 32, 1) << 1) | (baseValue[0] >= baseValue[1]);
+                dist          = distTable[distNdx];
+
+                paintR[0] = byteclamp(baseR[0] + dist);
+                paintG[0] = byteclamp(baseG[0] + dist);
+                paintB[0] = byteclamp(baseB[0] + dist);
+                paintR[1] = byteclamp(baseR[0] - dist);
+                paintG[1] = byteclamp(baseG[0] - dist);
+                paintB[1] = byteclamp(baseB[0] - dist);
+                paintR[2] = byteclamp(baseR[1] + dist);
+                paintG[2] = byteclamp(baseG[1] + dist);
+                paintB[2] = byteclamp(baseB[1] + dist);
+                paintR[3] = byteclamp(baseR[1] - dist);
+                paintG[3] = byteclamp(baseG[1] - dist);
+                paintB[3] = byteclamp(baseB[1] - dist);
             }
+
+#ifdef ETC_ENABLE_SIMD
+            const int32x4 paint[] =
+            {
+                int32x4(paintR[0], paintG[0], paintB[0], 0xff),
+                int32x4(paintR[1], paintG[1], paintB[1], 0xff),
+                int32x4(paintR[2], paintG[2], paintB[2], 0xff),
+                int32x4(paintR[3], paintG[3], paintB[3], 0xff)
+            };
 
             // Write final pixels for T or H mode.
             for (int y = 0; y < 4; ++y)
             {
+                u32* dest = reinterpret_cast<u32*>(output);
+                output += stride;
+
+                for (int x = 0; x < 4; ++x)
+                {
+                    const int pixelNdx = x * 4 + y;
+                    const u32 paintNdx = (getBits(src, 16+pixelNdx, 1) << 1) | getBits(src, pixelNdx, 1);
+
+                    if (alphaMode && diffOpaqueBit == 0 && paintNdx == 2)
+                    {
+                        dest[x] = 0;
+                    }
+                    else
+                    {
+                        int32x4 c = paint[paintNdx];
+                        dest[x] = c.pack();
+                    }
+                }
+            }
+#else
+            // Write final pixels for T or H mode.
+            for (int y = 0; y < 4; ++y)
+            {
                 u8* dest = output;
+                output += stride;
 
                 for (int x = 0; x < 4; ++x)
                 {
@@ -384,28 +444,27 @@ namespace
                     }
                     else
                     {
-                        dest[0] = (u8)byteclamp(paintR[paintNdx]);
-                        dest[1] = (u8)byteclamp(paintG[paintNdx]);
-                        dest[2] = (u8)byteclamp(paintB[paintNdx]);
+                        dest[0] = paintR[paintNdx];
+                        dest[1] = paintG[paintNdx];
+                        dest[2] = paintB[paintNdx];
                         dest[3] = 255;
                     }
 
                     dest += 4;
                 }
-
-                output += stride;
             }
+#endif
         }
         else
         {
             // Planar mode.
-            const u8 GO1 = (u8)getBits(src, 56, 1);
-            const u8 GO2 = (u8)getBits(src, 49, 6);
-            const u8 BO1 = (u8)getBits(src, 48, 1);
-            const u8 BO2 = (u8)getBits(src, 43, 2);
-            const u8 BO3 = (u8)getBits(src, 39, 3);
-            const u8 RH1 = (u8)getBits(src, 34, 5);
-            const u8 RH2 = (u8)getBits(src, 32, 1);
+            const u8 GO1 = getBits(src, 56, 1);
+            const u8 GO2 = getBits(src, 49, 6);
+            const u8 BO1 = getBits(src, 48, 1);
+            const u8 BO2 = getBits(src, 43, 2);
+            const u8 BO3 = getBits(src, 39, 3);
+            const u8 RH1 = getBits(src, 34, 5);
+            const u8 RH2 = getBits(src, 32, 1);
 
             const int RO = u32_extend(getBits(src, 57, 6), 6, 8);
             const int GO = u32_extend((GO1 << 6) | GO2, 7, 8);
@@ -445,6 +504,7 @@ namespace
             for (int y = 0; y < 4; ++y)
             {
                 u8* dest = output;
+                output += stride;
 
                 int R = y * RV + 4 * RO + 2;
                 int G = y * GV + 4 * GO + 2;
@@ -462,8 +522,6 @@ namespace
                     G += GH;
                     B += BH;
                 }
-
-                output += stride;
             }
 #endif
         }
@@ -506,7 +564,7 @@ namespace
                 const u32 modifierNdx = getBits(src, pixelBitNdx, 3);
                 const int modifier    = modifierTable[tableNdx][modifierNdx];
 
-                dest[3] = (u8)byteclamp(baseCodeword + multiplier * modifier);
+                dest[3] = byteclamp(baseCodeword + multiplier * modifier);
                 dest += 4;
             }
 
