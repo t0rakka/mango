@@ -560,9 +560,9 @@ namespace
             {-3,  -5,  -7,  -9,  2,  4,  6,  8}
         };
 
-        const s32 multiplier = (s32)getBits(src, 52, 4);
-        const s32 tableNdx	 = (s32)getBits(src, 48, 4);
-        s32 baseCodeword	 = (s32)getBits(src, 56, 8);
+        const s32 multiplier = s32(getBits(src, 52, 4));
+        const s32 tableNdx   = s32(getBits(src, 48, 4));
+        s32 baseCodeword     = s32(getBits(src, 56, 8));
 
         if (signedMode)
         {
