@@ -45,7 +45,7 @@ namespace
 
     inline u8 extend5Delta3To8 (int base5, int delta3)
     {
-        const int t = base5 + s32_extend(delta3, 3, 8);
+        const int t = base5 + s32_extend(delta3, 3);
         return u32_extend(t, 5, 8);
     }
 
@@ -172,9 +172,9 @@ namespace
         const int selBR         = getBits(src, 59, 5);
         const int selBG         = getBits(src, 51, 5);
         const int selBB         = getBits(src, 43, 5);
-        const int selDR         = s32_extend(getBits(src, 56, 3), 3, 8);
-        const int selDG         = s32_extend(getBits(src, 48, 3), 3, 8);
-        const int selDB         = s32_extend(getBits(src, 40, 3), 3, 8);
+        const int selDR         = s32_extend(getBits(src, 56, 3), 3);
+        const int selDG         = s32_extend(getBits(src, 48, 3), 3);
+        const int selDB         = s32_extend(getBits(src, 40, 3), 3);
         Etc2Mode  mode;
 
         if (!alphaMode && diffOpaqueBit == 0)

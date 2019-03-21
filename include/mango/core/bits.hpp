@@ -202,7 +202,7 @@ namespace mango
         return (value << (to - from)) | (value >> (from * 2 - to));
     }
 
-    constexpr s16 s16_extend(s16 value, int from, int to)
+    constexpr s16 s16_extend(s16 value, int from)
     {
         return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
     }
@@ -216,7 +216,7 @@ namespace mango
         return (value << (to - from)) | (value >> (from * 2 - to));
     }
 
-    constexpr s32 s32_extend(s32 value, int from, int to)
+    constexpr s32 s32_extend(s32 value, int from)
     {
         return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
     }
