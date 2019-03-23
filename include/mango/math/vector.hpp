@@ -1212,6 +1212,48 @@ namespace mango
         return a / ScalarType(b);
     }
 
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator < (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                     const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) < ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator > (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                     const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) > ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator <= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) <= ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator >= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) >= ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator == (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) == ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator != (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) != ScalarType(b);
+    }
+
     // ------------------------------------------------------------------
     // LowAccessor
     // ------------------------------------------------------------------
