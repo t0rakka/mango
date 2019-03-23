@@ -84,29 +84,31 @@ namespace mango
             ShuffleAccessor3<0, 2, 2> xzz;
             ShuffleAccessor3<1, 2, 2> yzz;
             ShuffleAccessor3<2, 2, 2> zzz;
-
-            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
+        }
+
+        ScalarType* data()
+        {
+            return reinterpret_cast<ScalarType *>(this);
         }
 
         const ScalarType* data() const
         {
-            return reinterpret_cast<const ScalarType *>(component);
+            return reinterpret_cast<const ScalarType *>(this);
         }
 
         explicit Vector() {}
-        ~Vector() {}
 
         Vector(float s)
         {

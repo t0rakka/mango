@@ -26,28 +26,31 @@ namespace mango
             simd::f32x8 m;
             LowAccessor<Vector<float, 4>, simd::f32x8> low;
             HighAccessor<Vector<float, 4>, simd::f32x8> high;
-            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
+        }
+
+        ScalarType* data()
+        {
+            return reinterpret_cast<ScalarType *>(this);
         }
 
         const ScalarType* data() const
         {
-            return reinterpret_cast<const ScalarType *>(component);
+            return reinterpret_cast<const ScalarType *>(this);
         }
 
         explicit Vector() {}
-        ~Vector() {}
 
         Vector(float s)
             : m(simd::f32x8_set1(s))

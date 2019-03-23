@@ -281,29 +281,31 @@ namespace mango
             ShuffleAccessor4<u32, simd::u32x4, 1, 3, 3, 3> ywww;
             ShuffleAccessor4<u32, simd::u32x4, 2, 3, 3, 3> zwww;
             ShuffleAccessor4<u32, simd::u32x4, 3, 3, 3, 3> wwww;
-
-            DeAggregate<ScalarType> component[VectorSize];
         };
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
+        }
+
+        ScalarType* data()
+        {
+            return reinterpret_cast<ScalarType *>(this);
         }
 
         const ScalarType* data() const
         {
-            return reinterpret_cast<const ScalarType *>(component);
+            return reinterpret_cast<const ScalarType *>(this);
         }
 
         explicit Vector() {}
-        ~Vector() {}
 
         Vector(u32 s)
             : m(simd::u32x4_set1(s))

@@ -16,31 +16,31 @@ namespace mango
         using ScalarType = u16;
         enum { VectorSize = 8 };
 
-        union
-        {
-            VectorType m;
-            DeAggregate<ScalarType> component[VectorSize];
-        };
+        VectorType m;
 
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return component[index].data;
+            return data()[index];
+        }
+
+        ScalarType* data()
+        {
+            return reinterpret_cast<ScalarType *>(this);
         }
 
         const ScalarType* data() const
         {
-            return reinterpret_cast<const ScalarType *>(component);
+            return reinterpret_cast<const ScalarType *>(this);
         }
 
         explicit Vector() {}
-        ~Vector() {}
 
         Vector(u16 s)
             : m(simd::u16x8_set1(s))
