@@ -61,6 +61,12 @@ namespace mango
         {
         }
 
+        Vector& operator = (const Vector& v)
+        {
+            m = v.m;
+            return *this;
+        }
+
         Vector& operator = (simd::f32x16 v)
         {
             m = v;

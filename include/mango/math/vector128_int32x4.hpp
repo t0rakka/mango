@@ -320,6 +320,12 @@ namespace mango
         {
         }
 
+        Vector& operator = (const Vector& v)
+        {
+            m = v.m;
+            return *this;
+        }
+
         Vector& operator = (simd::s32x4 v)
         {
             m = v;
