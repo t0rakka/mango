@@ -1091,6 +1091,12 @@ namespace mango
             return simd::get_component<Index>(m);
         }
 
+        template <int VectorSize>
+        operator Vector<ScalarType, VectorSize> () const
+        {
+            return Vector<ScalarType, VectorSize>(simd::get_component<Index>(m));
+        }
+
         ScalarAccessor& operator = (const ScalarAccessor& accessor)
         {
             m = simd::set_component<Index>(m, accessor);

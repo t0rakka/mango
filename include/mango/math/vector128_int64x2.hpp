@@ -79,6 +79,13 @@ namespace mango
             return *this;
         }
 
+        template <typename T, int I>
+        Vector& operator = (const ScalarAccessor<ScalarType, T, I>& accessor)
+        {
+            *this = ScalarType(accessor);
+            return *this;
+        }
+
         Vector& operator = (const Vector& v)
         {
             m = v.m;
