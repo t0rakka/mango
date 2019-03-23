@@ -161,6 +161,18 @@ namespace mango
     }
 
     template <typename T>
+    static inline T min(T a, T b)
+    {
+        return std::min(a, b);
+    }
+
+    template <typename T>
+    static inline T max(T a, T b)
+    {
+        return std::max(a, b);
+    }
+
+    template <typename T>
     static inline T clamp(T value, T low, T high)
     {
         return std::min(high, std::max(low, value));
