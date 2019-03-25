@@ -216,21 +216,21 @@ namespace mango
         float32x4 r2_wzyx = shuffle<2, 0, 0, 2>(r2z_r3z_r2w_r3w, r2y_r3y_r2x_r3x);
         float32x4 r3_wzyx = shuffle<3, 1, 1, 3>(r2z_r3z_r2w_r3w, r2y_r3y_r2x_r3x);
         float32x4 r0_xyzw = shuffle<2, 0, 0, 2>(r0y_r1y_r0x_r1x, r0z_r1z_r0w_r1w);
-        
+
         float32x4 inner12_23 = r1y_r2y_r1x_r2x * r2z_r3z_r2w_r3w - r1z_r2z_r1w_r2w * r2y_r3y_r2x_r3x;
         float32x4 inner02_13 = r0y_r1y_r0x_r1x * r2z_r3z_r2w_r3w - r0z_r1z_r0w_r1w * r2y_r3y_r2x_r3x;
         float32x4 inner30_01 = r3z_r0z_r3w_r0w * r0y_r1y_r0x_r1x - r3y_r0y_r3x_r0x * r0z_r1z_r0w_r1w;
-        
+
         float32x4 inner12 = shuffle<0, 2, 2, 0>(inner12_23, inner12_23);
         float32x4 inner23 = shuffle<1, 3, 3, 1>(inner12_23, inner12_23);
-        
+
         float32x4 inner02 = shuffle<0, 2, 2, 0>(inner02_13, inner02_13);
         float32x4 inner13 = shuffle<1, 3, 3, 1>(inner02_13, inner02_13);
-        
+
         float32x4 minors0 = r3_wzyx * inner12 - r2_wzyx * inner13 + r1_wzyx * inner23;
-        
+
         float32x4 denom = r0_xyzw * minors0;
-        
+
         denom += shuffle<1, 0, 3, 2>(denom, denom); // x+y        x+y            z+w            z+w
         denom -= shuffle<2, 2, 0, 0>(denom, denom); // x+y-z-w    x+y-z-w        z+w-x-y        z+w-x-y
 
