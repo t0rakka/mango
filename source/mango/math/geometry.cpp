@@ -10,6 +10,72 @@ namespace mango
 {
 
     // ------------------------------------------------------------------
+    // LineSegment
+    // ------------------------------------------------------------------
+
+    float3 LineSegment::closest(const float3& point) const
+    {
+        const float3 v = position[0] - position[1];
+        float time = dot(v, point - position[0]);
+        if (time <= 0)
+            return position[0];
+
+        const float sqrlen = square(v);
+        if (time >= sqrlen)
+            return position[1];
+
+        return position[0] + (v * (time / sqrlen));
+    }
+
+    float LineSegment::distance(const float3& point) const
+    {
+        const float3 v = position[1] - position[0];
+        const float3 u = point - position[0];
+
+        const float c1 = dot(u, v);
+        if (c1 <= 0)
+            return length(u);
+
+        const float c2 = dot(v, v);
+        if (c2 <= c1)
+            return length(point - position[1]);
+
+        return length(point - (position[0] + v * (c1 / c2)));
+    }
+
+    // ------------------------------------------------------------------
+    // Ray
+    // ------------------------------------------------------------------
+
+    float Ray::distance(const float3& point) const
+    {
+        const float3 u = point - origin;
+        const float c1 = dot(u, direction);
+        const float c2 = dot(direction, direction);
+
+        return length(point - (origin + direction * (c1 / c2)));
+    }
+
+    // ------------------------------------------------------------------
+    // FastRay
+    // ------------------------------------------------------------------
+
+    FastRay::FastRay(const Ray& ray)
+        : Ray(ray.origin, ray.direction)
+    {
+        dotod = dot(origin, direction);
+        dotoo = dot(origin, origin);
+
+        for (int i = 0; i < 3; ++i)
+        {
+            // division by zero is OK here; 
+            // all code that uses FastRay must correctly handle +inf and -inf
+            invdir[i] = 1.0f / direction[i];
+            sign[i] = invdir[i] < 0;
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Rectangle
     // ------------------------------------------------------------------
 
@@ -102,40 +168,6 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
-    // Line
-    // ------------------------------------------------------------------
-
-    float3 Line::closest(const float3& point) const
-    {
-        const float3 v = position[0] - position[1];
-        float time = dot(v, point - position[0]);
-        if (time <= 0)
-            return position[0];
-
-        const float sqrlen = square(v);
-        if (time >= sqrlen)
-            return position[1];
-
-        return position[0] + (v * (time / sqrlen));
-    }
-
-    float Line::distance(const float3& point) const
-    {
-        const float3 v = position[1] - position[0];
-        const float3 u = point - position[0];
-
-        const float c1 = dot(u, v);
-        if (c1 <= 0)
-            return length(u);
-
-        const float c2 = dot(v, v);
-        if (c2 <= c1)
-            return length(point - position[1]);
-
-        return length(point - (position[0] + v * (c1 / c2)));
-    }
-
-    // ------------------------------------------------------------------
     // Triangle
     // ------------------------------------------------------------------
 
@@ -208,39 +240,6 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
-    // Ray
-    // ------------------------------------------------------------------
-
-    float Ray::distance(const float3& point) const
-    {
-        const float3 u = point - origin;
-        const float c1 = dot(u, direction);
-        const float c2 = dot(direction, direction);
-
-        return length(point - (origin + direction * (c1 / c2)));
-    }
-
-    // ------------------------------------------------------------------
-    // FastRay
-    // ------------------------------------------------------------------
-
-    FastRay::FastRay(const Ray& ray)
-    {
-        origin = ray.origin;
-        direction = ray.direction;
-
-        dotod = dot(origin, direction);
-        dotoo = dot(origin, origin);
-
-        for (int i = 0; i < 3; ++i)
-        {
-            float d = direction[i] ? direction[i] : 0.00001f;
-            invdir[i] = 1.0f / d;
-            sign[i] = invdir[i] < 0;
-        }
-    }
-
-    // ------------------------------------------------------------------
     // Frustum
     // ------------------------------------------------------------------
 
@@ -283,15 +282,15 @@ namespace mango
     bool Intersect::intersect(const Ray& ray, const Plane& plane)
     {
         const float ndot = plane.dist - dot(ray.origin, plane.normal);
-        if (ndot > 0.0f)
+        if (ndot > 0)
             return false; // culled
 
         const float vdot = dot(ray.direction, plane.normal);
-        if (vdot == 0.0f)
+        if (vdot == 0)
             return false; // parallel
 
         t0 = ndot / vdot;
-        return t0 > 0.0f;
+        return t0 > 0;
     }
 
     bool Intersect::intersect(const Ray& ray, const Sphere& sphere)
@@ -300,16 +299,16 @@ namespace mango
         const float b = dot(dep, ray.direction);
         const float c = square(dep) - sphere.radius * sphere.radius;
 
-        // ray culling
-        if (c > 0.0f && b > 0.0f)
+        // culling
+        if (c > 0 && b > 0)
             return false;
 
         float d = b * b - c;
-        if (d < 0.0f)
+        if (d < 0)
             return false;
 
         t0 = -b - std::sqrt(d);
-        return true;
+        return t0 >= 0;
     }
 
     bool Intersect::intersect(const Ray& ray, const Triangle& triangle)
@@ -353,7 +352,7 @@ namespace mango
 
     bool IntersectRange::intersect(const Ray& ray, const Box& box)
     {
-        float id = 1.0f / ray.direction[0]; // This is cached in the FastRay version
+        float id = 1.0f / ray.direction[0];
         float s1 = (box.corner[0][0] - ray.origin[0]) * id;
         float s2 = (box.corner[1][0] - ray.origin[0]) * id;
         float tmin = std::min(s1, s2);
@@ -370,7 +369,7 @@ namespace mango
 
 		t0 = tmin;
 		t1 = tmax;
-        return tmax > std::max(tmin, 0.0f);
+        return t1 > std::max(t0, 0.0f);
     }
 
     bool IntersectRange::intersect(const FastRay& ray, const Box& box)
@@ -378,31 +377,36 @@ namespace mango
         // Implementation based on a paper by:
         // Amy Williams, Steve Barrus, R. Keith Morley and Peter Shirley
 
-        float tmin = (box.corner[0 + ray.sign.x].x - ray.origin.x) * ray.invdir.x;
-        const float tymax = (box.corner[1 - ray.sign.y].y - ray.origin.y) * ray.invdir.y;
-        if (tmin > tymax)
+        float tmin = (box.corner[0 + ray.sign[0]].x - ray.origin.x) * ray.invdir.x;
+        float ymax = (box.corner[1 - ray.sign[1]].y - ray.origin.y) * ray.invdir.y;
+        if (tmin > ymax)
             return false;
 
-        float tmax = (box.corner[1 - ray.sign.x].x - ray.origin.x) * ray.invdir.x;
-        const float tymin = (box.corner[0 + ray.sign.y].y - ray.origin.y) * ray.invdir.y;
-        if (tmax < tymin)
+        float tmax = (box.corner[1 - ray.sign[0]].x - ray.origin.x) * ray.invdir.x;
+        float ymin = (box.corner[0 + ray.sign[1]].y - ray.origin.y) * ray.invdir.y;
+        if (ymin > tmax)
             return false;
 
-        tmax = std::min(tmax, tymax);
+        if (ymin > tmin)
+            tmin = ymin;
+        if (ymax < tmax)
+            tmax = ymax;
 
-        const float tzmin = (box.corner[0 + ray.sign.z].z - ray.origin.z) * ray.invdir.z;
-        if (tmax > tzmin)
+        float zmin = (box.corner[0 + ray.sign[2]].z - ray.origin.z) * ray.invdir.z;
+        if (zmin > tmax)
+            return false;
+        float zmax = (box.corner[1 - ray.sign[2]].z - ray.origin.z) * ray.invdir.z;
+        if (tmin > zmax)
             return false;
 
-        tmin = std::max(tmin, tymin);
+        if (zmin > tmin)
+            tmin = zmin;
+        if (zmax < tmax)
+            tmax = zmax;
 
-        const float tzmax = (box.corner[1 - ray.sign.z].z - ray.origin.z) * ray.invdir.z;
-        if (tmin > tzmax)
-            return false;
-
-        t0 = std::max(tmin, tzmin);
-        t1 = std::min(tmax, tzmax);
-        return true;
+        t0 = std::max(tmin, zmin);
+        t1 = std::min(tmax, zmax);
+        return t1 > std::max(t0, 0.0f);
     }
 
     bool IntersectRange::intersect(const FastRay& ray, const Sphere& sphere)
@@ -424,10 +428,38 @@ namespace mango
 				std::swap(t0, t1);
             }
 
-			return true;
+            return t1 > std::max(t0, 0.0f);
         }
 
         return false;
+    }
+
+    // ------------------------------------------------------------------
+    // IntersectSolid
+    // ------------------------------------------------------------------
+
+    bool IntersectSolid::intersect(const Ray& ray, const Box& box)
+    {
+        IntersectRange is;
+        bool s = is.intersect(ray, box);
+        t0 = std::max(is.t0, 0.0f);
+        return s;
+    }
+
+    bool IntersectSolid::intersect(const FastRay& ray, const Box& box)
+    {
+        IntersectRange is;
+        bool s = is.intersect(ray, box);
+        t0 = std::max(is.t0, 0.0f);
+        return s;
+    }
+
+    bool IntersectSolid::intersect(const FastRay& ray, const Sphere& sphere)
+    {
+        IntersectRange is;
+        bool s = is.intersect(ray, sphere);
+        t0 = std::max(is.t0, 0.0f);
+        return s;
     }
 
     // ------------------------------------------------------------------
@@ -451,12 +483,12 @@ namespace mango
 
         float3 tvec = ray.origin - triangle.position[0];
         v = dot(tvec, pvec);
-        if (v < 0.0f || v > det)
+        if (v < 0 || v > det)
             return false;
 
         float3 qvec = cross(tvec, edge1);
         w = dot(ray.direction, qvec);
-        if (w < 0.0f || (v + w) > det)
+        if (w < 0 || (v + w) > det)
             return false;
 
         det = 1.0f / det;
@@ -469,7 +501,7 @@ namespace mango
         return true;
     }
 
-    bool IntersectBarycentric::intersect_twosided(const Ray& ray, const Triangle& triangle)
+    bool IntersectBarycentricTwosided::intersect(const Ray& ray, const Triangle& triangle)
     {
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
@@ -488,12 +520,12 @@ namespace mango
 
         float3 tvec = ray.origin - triangle.position[0];
         v = dot(tvec, pvec) * det;
-        if (v < 0.0f || v > 1.0f)
+        if (v < 0 || v > 1.0f)
             return false;
 
         float3 qvec = cross(tvec, edge1);
         w = dot(ray.direction, qvec) * det;
-        if (w < 0.0f || (v + w) > 1.0f)
+        if (w < 0 || (v + w) > 1.0f)
             return false;
 
         t0 = dot(edge2, qvec) * det;

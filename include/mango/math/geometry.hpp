@@ -11,6 +11,75 @@ namespace mango
 {
 
     // ------------------------------------------------------------------
+    // LineSegment
+    // ------------------------------------------------------------------
+
+    struct LineSegment
+    {
+        float3 position[2];
+
+        LineSegment()
+        {
+        }
+
+        LineSegment(const float3& position0, const float3& position1)
+        {
+            position[0] = position0;
+            position[1] = position1;
+        }
+
+        ~LineSegment()
+        {
+        }
+
+        float3 closest(const float3& point) const;
+        float distance(const float3& point) const;
+    };
+
+    // ------------------------------------------------------------------
+    // Ray
+    // ------------------------------------------------------------------
+
+    struct Ray
+    {
+        float3 origin;
+        float3 direction;
+
+        Ray()
+        {
+        }
+
+        Ray(const float3& origin, const float3& direction)
+            : origin(origin)
+            , direction(direction)
+        {
+        }
+
+        ~Ray()
+        {
+        }
+
+        float distance(const float3& point) const;
+    };
+
+    // ------------------------------------------------------------------
+    // FastRay
+    // ------------------------------------------------------------------
+
+    struct FastRay : Ray
+    {
+        float dotod;
+        float dotoo;
+        float3 invdir;
+        int3 sign;
+
+        FastRay(const Ray& ray);
+        ~FastRay()
+        {
+        }
+    };
+
+    // ------------------------------------------------------------------
     // Rectangle
     // ------------------------------------------------------------------
 
@@ -110,6 +179,12 @@ namespace mango
             corner[1] = float3(-s, -s, -s);
         }
 
+        Box(const float3& point, float size)
+        {
+            corner[0] = point - size * 0.5f;
+            corner[1] = point + size * 0.5f;
+        }
+
         Box(const float3& point0, const float3& point1)
         {
             corner[0] = min(point0, point1);
@@ -189,32 +264,6 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
-    // Line
-    // ------------------------------------------------------------------
-
-    struct Line
-    {
-        float3 position[2];
-
-        Line()
-        {
-        }
-
-        Line(const float3& position0, const float3& position1)
-        {
-            position[0] = position0;
-            position[1] = position1;
-        }
-
-        ~Line()
-        {
-        }
-
-        float3 closest(const float3& point) const;
-        float distance(const float3& point) const;
-    };
-
-    // ------------------------------------------------------------------
     // Triangle
     // ------------------------------------------------------------------
 
@@ -261,49 +310,6 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
-    // Ray
-    // ------------------------------------------------------------------
-
-    struct Ray
-    {
-        float3 origin;
-        float3 direction;
-
-        Ray()
-        {
-        }
-
-        Ray(const float3& origin, const float3& direction)
-            : origin(origin)
-            , direction(direction)
-        {
-        }
-
-        ~Ray()
-        {
-        }
-
-        float distance(const float3& point) const;
-    };
-
-    // ------------------------------------------------------------------
-    // FastRay
-    // ------------------------------------------------------------------
-
-    struct FastRay : Ray
-    {
-        float dotod;
-        float dotoo;
-        float3 invdir;
-        int3 sign;
-
-        FastRay(const Ray& ray);
-        ~FastRay()
-        {
-        }
-    };
-
-    // ------------------------------------------------------------------
     // Frustum
     // ------------------------------------------------------------------
 
@@ -323,15 +329,8 @@ namespace mango
     // Intersect
     // ------------------------------------------------------------------
 
-    // NOTE: 
-    // The intersect functions are backface-culling and assume non-solid primitives
-    // so the intersections are at boundaries. The solidness can in most cases
-    // tested by inspecting the signs of the intersections (t0, t1).
-    // 
-    // TODO:
-    // struct SolidIntersect
-    // { ... };
-    //
+    // Intersect implements non-solid, one-sided primitives so any intersection from
+    // the back of the primitive will be culled. Intersection behind the ray origin will be false.
 
     struct Intersect
     {
@@ -342,10 +341,25 @@ namespace mango
 	    bool intersect(const Ray& ray, const Triangle& triangle);
     };
 
+    // IntersectRange implements non-solid primitives and the intersections are at the boundaries.
+    // Negative sign of either intersection (t0, t1) means that intersection was behind the ray origin.
+    // If both intersections are behind the ray origin, the intersection result is false.
+
     struct IntersectRange
     {
         float t0;
         float t1;
+
+	    bool intersect(const Ray& ray, const Box& box);
+	    bool intersect(const FastRay& ray, const Box& box);
+	    bool intersect(const FastRay& ray, const Sphere& sphere);
+    };
+
+    // Intersection inside the primitive will intersect at ray origin
+
+    struct IntersectSolid
+    {
+        float t0;
 
 	    bool intersect(const Ray& ray, const Box& box);
 	    bool intersect(const FastRay& ray, const Box& box);
@@ -358,7 +372,14 @@ namespace mango
         float u, v, w;
 
         bool intersect(const Ray& ray, const Triangle& triangle);
-        bool intersect_twosided(const Ray& ray, const Triangle& triangle);
+    };
+
+    struct IntersectBarycentricTwosided
+    {
+        float t0;
+        float u, v, w;
+
+        bool intersect(const Ray& ray, const Triangle& triangle);
     };
 
     bool intersect(Rectangle& result, const Rectangle& rect0, const Rectangle& rect1);
