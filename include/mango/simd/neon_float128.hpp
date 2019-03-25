@@ -21,14 +21,14 @@ namespace simd {
     inline f32x4 shuffle(f32x4 a, f32x4 b)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return __builtin_shufflevector(a.data, b.data, x, y, z, w);
+        return __builtin_shufflevector(a.data, b.data, x, y, z + 4, w + 4);
     }
 
     template <u32 x, u32 y, u32 z, u32 w>
     inline f32x4 shuffle(f32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return __builtin_shufflevector(v.data, v.data, x, y, z, w);
+        return __builtin_shufflevector(v.data, v.data, x, y, z + 4, w + 4);
     }
 
 #else
