@@ -218,6 +218,7 @@ namespace
 
 - (void)prepareOpenGL
 {
+    [super prepareOpenGL];
     [self setWantsBestResolutionOpenGLSurface:YES];
 }
 
