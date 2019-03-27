@@ -1516,24 +1516,22 @@ namespace simd {
 
     static inline u32 get_mask(mask8x16 a)
     {
-        // TODO: optimize
-        u32 mask = 0;
-        mask |= vgetq_lane_u8(a, 0x0) & 0x01;
-        mask |= vgetq_lane_u8(a, 0x1) & 0x02;
-        mask |= vgetq_lane_u8(a, 0x2) & 0x04;
-        mask |= vgetq_lane_u8(a, 0x3) & 0x08;
-        mask |= vgetq_lane_u8(a, 0x4) & 0x10;
-        mask |= vgetq_lane_u8(a, 0x5) & 0x20;
-        mask |= vgetq_lane_u8(a, 0x6) & 0x40;
-        mask |= vgetq_lane_u8(a, 0x7) & 0x80;
-        mask |= ((vgetq_lane_u8(a, 0x8) & 0x01) << 8);
-        mask |= ((vgetq_lane_u8(a, 0x9) & 0x02) << 8);
-        mask |= ((vgetq_lane_u8(a, 0xa) & 0x04) << 8);
-        mask |= ((vgetq_lane_u8(a, 0xb) & 0x08) << 8);
-        mask |= ((vgetq_lane_u8(a, 0xc) & 0x10) << 8);
-        mask |= ((vgetq_lane_u8(a, 0xd) & 0x20) << 8);
-        mask |= ((vgetq_lane_u8(a, 0xe) & 0x40) << 8);
-        mask |= ((vgetq_lane_u8(a, 0xf) & 0x80) << 8);
+        const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
+
+        uint8x8_t lo = vget_low_u8(a);
+        lo = vand_u8(lo, weights);
+        lo = vpadd_u8(lo, lo);
+        lo = vpadd_u8(lo, lo);
+        lo = vpadd_u8(lo, lo);
+
+        uint8x8_t hi = vget_high_u8(a);
+        hi = vand_u8(hi, weights);
+        hi = vpadd_u8(hi, hi);
+        hi = vpadd_u8(hi, hi);
+        hi = vpadd_u8(hi, hi);
+
+        u32 mask = vget_lane_u8(lo, 0) |
+                  (vget_lane_u8(hi, 0) << 8);
         return mask;
     }
 
@@ -1596,16 +1594,12 @@ namespace simd {
 
     static inline u32 get_mask(mask16x8 a)
     {
-        // TODO: optimize
-        u32 mask = 0;
-        mask |= vgetq_lane_u16(a, 0x0) & 0x01;
-        mask |= vgetq_lane_u16(a, 0x1) & 0x02;
-        mask |= vgetq_lane_u16(a, 0x2) & 0x04;
-        mask |= vgetq_lane_u16(a, 0x3) & 0x08;
-        mask |= vgetq_lane_u16(a, 0x4) & 0x10;
-        mask |= vgetq_lane_u16(a, 0x5) & 0x20;
-        mask |= vgetq_lane_u16(a, 0x6) & 0x40;
-        mask |= vgetq_lane_u16(a, 0x7) & 0x80;
+        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
+        a = vandq_u16(a, weights);
+        a = vpaddq_u16(a, a);
+        a = vpaddq_u16(a, a);
+        a = vpaddq_u16(a, a);
+        u32 mask = vgetq_lane_u16(a, 0);
         return mask;
     }
 
@@ -1668,13 +1662,11 @@ namespace simd {
 
     static inline u32 get_mask(mask32x4 a)
     {
-        const uint32x4_t mask = { 1, 2, 4, 8 };
-        const uint32x4_t masked = vandq_u32(a, mask);
-        const uint32x2_t high = vget_high_u32(masked);
-        const uint32x2_t low = vget_low_u32(masked);
-        const uint32x2_t d0 = vorr_u32(high, low);
-        const uint32x2_t d1 = vpadd_u32(d0, d0);
-        return vget_lane_u32(d1, 0);
+        const uint32x4_t weights = { 1, 2, 4, 8 };
+        a = vandq_u32(a, weights);
+        a = vpaddq_u32(a, a);
+        a = vpaddq_u32(a, a);
+        return vgetq_lane_u32(a, 0);
     }
 
 #ifdef __aarch64__
@@ -1738,9 +1730,11 @@ namespace simd {
 
     static inline u32 get_mask(mask64x2 a)
     {
-        u32 x = u32(vgetq_lane_u64(a, 0)) & 1;
-        u32 y = u32(vgetq_lane_u64(a, 1)) & 2;
-        return x | y;
+        const uint64x2_t weights = { 1, 2 };
+        a = vandq_u64(a, weights);
+        a = vpaddq_u64(a, a);
+        u32 mask = u32(vgetq_lane_u64(a, 0));
+        return mask;
     }
 
 #ifdef __aarch64__
