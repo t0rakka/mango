@@ -252,6 +252,24 @@ namespace simd {
         return vmaxq_f32(a, b);
     }
 
+#ifdef __aarch64__
+
+    static inline f32x4 hmin(f32x4 a)
+    {
+        a = vpminq_f32(a, a);
+        a = vpminq_f32(a, a);
+        return a;
+    }
+
+    static inline f32x4 hmax(f32x4 a)
+    {
+        a = vpmaxq_f32(a, a);
+        a = vpmaxq_f32(a, a);
+        return a;
+    }
+
+#else
+
     static inline f32x4 hmin(f32x4 a)
     {
         float32x2_t s = vpmin_f32(vget_low_f32(a), vget_high_f32(a));
@@ -265,6 +283,8 @@ namespace simd {
         s = vpmax_f32(s, s);
         return vcombine_f32(s, s);
     }
+
+#endif
 
     static inline f32x4 abs(f32x4 a)
     {
@@ -313,6 +333,11 @@ namespace simd {
         return vdivq_f32(a, s);
     }
 
+    static inline f32x4 hadd(f32x4 a, f32x4 b)
+    {
+        return vpaddq_f32(a, b);
+    }
+
 #else
 
     static inline f32x4 div(f32x4 a, f32x4 b)
@@ -332,13 +357,13 @@ namespace simd {
         return vmulq_f32(a, n);
     }
 
-#endif
-
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
         return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)), 
 	                        vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
     }
+
+#endif
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
@@ -426,6 +451,18 @@ namespace simd {
         return vget_lane_f32(s, 0);
     }
 
+#ifdef __aarch64__
+
+    static inline f32 dot4(f32x4 a, f32x4 b)
+    {
+        const float32x4_t prod = vmulq_f32(a, b);
+        float32x4_t sum = vpaddq_f32(prod, prod);
+        sum = vpaddq_f32(sum, sum);
+        return vgetq_lane_f32(sum, 0);
+    }
+
+#else
+
     static inline f32 dot4(f32x4 a, f32x4 b)
     {
         const float32x4_t prod = vmulq_f32(a, b);
@@ -435,6 +472,8 @@ namespace simd {
         s = vpadd_f32(s, s);
         return vget_lane_f32(s, 0);
     }
+
+#endif
 
     static inline f32x4 cross3(f32x4 a, f32x4 b)
     {
