@@ -525,6 +525,8 @@ namespace simd {
     #define int128_is_hardware_vector
     #define float128_is_hardware_vector
 
+#ifndef __aarch64__
+
     struct float64x2_t
     {
         f64 data[2];
@@ -533,6 +535,8 @@ namespace simd {
         f64 & operator [] (int index) { return data[index]; }
         const f64 & operator [] (int index) const { return data[index]; }
     };
+
+#endif
 
     // 64 bit vector
 #ifdef MANGO_ENABLE_FP16

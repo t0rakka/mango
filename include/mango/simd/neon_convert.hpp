@@ -66,10 +66,21 @@ namespace detail {
 		{
 		}
 
+#ifdef __aarch64__
+
+		reinterpret_vector(f64x2 v)
+            : data(vreinterpretq_u64_f64(v))
+		{
+		}
+
+#else
+
 		reinterpret_vector(f64x2 v)
 		{
             std::memcpy(&data, &v, 16);
 		}
+
+#endif
 
 		operator s8x16 ()
 		{
@@ -116,6 +127,16 @@ namespace detail {
 			return vreinterpretq_f32_u32(data);
 		}
 
+#ifdef __aarch64__
+
+		operator f64x2 ()
+		{
+			return vreinterpretq_f64_u64(data);
+		}
+	};
+
+#else
+
 		operator f64x2 ()
 		{
             f64x2 temp;
@@ -123,6 +144,8 @@ namespace detail {
             return temp;
 		}
 	};
+
+#endif
 
 	template <>
 	struct reinterpret_vector<256>

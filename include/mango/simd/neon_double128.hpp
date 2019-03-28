@@ -13,6 +13,307 @@ namespace simd {
     // f64x2
     // -----------------------------------------------------------------
 
+#ifdef __aarch64__
+
+#ifdef MANGO_COMPILER_CLANG
+
+    template <u32 x, u32 y>
+    static inline f64x2 shuffle(f64x2 v)
+    {
+        static_assert(x < 2 && y < 2, "Index out of range.");
+        return __builtin_shufflevector(v.data, v.data, x, y + 2);
+    }
+
+    template <u32 x, u32 y>
+    static inline f64x2 shuffle(f64x2 a, f64x2 b)
+    {
+        static_assert(x < 2 && y < 2, "Index out of range.");
+        return __builtin_shufflevector(a.data, b.data, x, y + 2);
+    }
+
+#else
+
+    template <u32 x, u32 y>
+    static inline f64x2 shuffle(f64x2 v)
+    {
+        static_assert(x < 2 && y < 2, "Index out of range.");
+        float64x2_t result;
+	    result = vmovq_n_f64(vgetq_lane_f64(v, x));
+	    result = vsetq_lane_f64(vgetq_lane_f64(v, y), result, 1);
+        return result;
+    }
+
+    template <u32 x, u32 y>
+    static inline f64x2 shuffle(f64x2 a, f64x2 b)
+    {
+        static_assert(x < 2 && y < 2, "Index out of range.");
+        float64x2_t result;
+	    result = vmovq_n_f64(vgetq_lane_f64(a, x));
+	    result = vsetq_lane_f64(vgetq_lane_f64(b, y), result, 1);
+        return result;
+    }
+
+#endif
+
+    // indexed access
+
+    template <unsigned int Index>
+    static inline f64x2 set_component(f64x2 a, f64 s)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        return vsetq_lane_f64(s, a, Index);
+    }
+
+    template <unsigned int Index>
+    static inline f64 get_component(f64x2 a)
+    {
+        static_assert(Index < 2, "Index out of range.");
+        return vgetq_lane_f64(a, Index);
+    }
+
+    static inline f64x2 f64x2_zero()
+    {
+        return vdupq_n_f64(0.0);
+    }
+
+    static inline f64x2 f64x2_set1(f64 s)
+    {
+        return vdupq_n_f64(s);
+    }
+
+    static inline f64x2 f64x2_set2(f64 x, f64 y)
+    {
+        float64x2_t temp = { x, y };
+        return temp;
+    }
+
+    static inline f64x2 f64x2_uload(const f64* source)
+    {
+        float64x2_t temp = { source[0], source[1] };
+        return temp;
+    }
+
+    static inline void f64x2_ustore(f64* dest, f64x2 a)
+    {
+        dest[0] = vgetq_lane_f64(a, 0);
+        dest[1] = vgetq_lane_f64(a, 1);
+    }
+
+    static inline f64x2 unpackhi(f64x2 a, f64x2 b)
+    {
+        return vcombine_f64(vget_high_f64(a), vget_high_f64(b));
+    }
+
+    static inline f64x2 unpacklo(f64x2 a, f64x2 b)
+    {
+        return vcombine_f64(vget_low_f64(a), vget_low_f64(b));
+    }
+
+    // bitwise
+
+    static inline f64x2 bitwise_nand(f64x2 a, f64x2 b)
+    {
+        return vreinterpretq_f64_s64(vbicq_s64(vreinterpretq_s64_f64(a), vreinterpretq_s64_f64(b)));
+    }
+
+    static inline f64x2 bitwise_and(f64x2 a, f64x2 b)
+    {
+        return vreinterpretq_f64_s64(vandq_s64(vreinterpretq_s64_f64(a), vreinterpretq_s64_f64(b)));
+    }
+
+    static inline f64x2 bitwise_or(f64x2 a, f64x2 b)
+    {
+        return vreinterpretq_f64_s64(vorrq_s64(vreinterpretq_s64_f64(a), vreinterpretq_s64_f64(b)));
+    }
+
+    static inline f64x2 bitwise_xor(f64x2 a, f64x2 b)
+    {
+        return vreinterpretq_f64_s64(veorq_s64(vreinterpretq_s64_f64(a), vreinterpretq_s64_f64(b)));
+    }
+
+    static inline f64x2 bitwise_not(f64x2 a)
+    {
+        return vreinterpretq_f64_u64(veorq_u64(vreinterpretq_u64_f64(a), vceqq_f64(a, a)));
+    }
+
+    static inline f64x2 min(f64x2 a, f64x2 b)
+    {
+        return vminq_f64(a, b);
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b)
+    {
+        return vmaxq_f64(a, b);
+    }
+
+    static inline f64x2 abs(f64x2 a)
+    {
+        return vabsq_f64(a);
+    }
+
+    static inline f64x2 neg(f64x2 a)
+    {
+        return vnegq_f64(a);
+    }
+
+    static inline f64x2 sign(f64x2 a)
+    {
+        f64 x = vgetq_lane_f64(a, 0);
+        f64 y = vgetq_lane_f64(a, 1);
+        x = x < 0 ? -1.0 : (x > 0 ? 1.0 : 0.0);
+        y = y < 0 ? -1.0 : (y > 0 ? 1.0 : 0.0);
+        return f64x2_set2(x, y);
+    }
+    
+    static inline f64x2 add(f64x2 a, f64x2 b)
+    {
+        return vaddq_f64(a, b);
+    }
+
+    static inline f64x2 sub(f64x2 a, f64x2 b)
+    {
+        return vsubq_f64(a, b);
+    }
+
+    static inline f64x2 mul(f64x2 a, f64x2 b)
+    {
+        return vmulq_f64(a, b);
+    }
+
+    static inline f64x2 div(f64x2 a, f64x2 b)
+    {
+        return vdivq_f64(a, b);
+    }
+
+    static inline f64x2 div(f64x2 a, f64 b)
+    {
+        f64x2 s = vdupq_n_f64(b);
+        return vdivq_f64(a, s);
+    }
+
+    static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
+    {
+        return vmlaq_f64(a, b, c);
+    }
+
+    static inline f64x2 msub(f64x2 a, f64x2 b, f64x2 c)
+    {
+        return vmlsq_f64(a, b, c);
+    }
+
+    static inline f64x2 fast_rcp(f64x2 a)
+    {
+        f64x2 e = vrecpeq_f64(a);
+        e = vmulq_f64(vrecpsq_f64(a, e), e);
+        return e;
+    }
+
+    static inline f64x2 fast_rsqrt(f64x2 a)
+    {
+        f64x2 e = vrsqrteq_f64(a);
+        e = vmulq_f64(vrsqrtsq_f64(vmulq_f64(a, e), e), e);
+        return e;
+    }
+
+    static inline f64x2 fast_sqrt(f64x2 a)
+    {
+        return vsqrtq_f64(a);
+    }
+
+    static inline f64x2 rcp(f64x2 a)
+    {
+        f64x2 e = vrecpeq_f64(a);
+        e = vmulq_f64(vrecpsq_f64(a, e), e);
+        e = vmulq_f64(vrecpsq_f64(a, e), e);
+        return e;
+    }
+
+    static inline f64x2 rsqrt(f64x2 a)
+    {
+        f64x2 e = vrsqrteq_f64(a);
+        e = vmulq_f64(vrsqrtsq_f64(vmulq_f64(a, e), e), e);
+        e = vmulq_f64(vrsqrtsq_f64(vmulq_f64(a, e), e), e);
+        return e;
+    }
+
+    static inline f64x2 sqrt(f64x2 a)
+    {
+        return vsqrtq_f64(a);
+    }
+
+    static inline f64 dot2(f64x2 a, f64x2 b)
+    {
+        const float64x2_t prod = vmulq_f64(a, b);
+        float64x2_t sum = vpaddq_f64(prod, prod);
+        return vgetq_lane_f64(sum, 0);
+    }
+
+    // compare
+
+    static inline mask64x2 compare_neq(f64x2 a, f64x2 b)
+    {
+        return vreinterpretq_f64_u64(veorq_u64(vceqq_f64(a, b), vceqq_f64(a, a)));
+    }
+
+    static inline mask64x2 compare_eq(f64x2 a, f64x2 b)
+    {
+        return vceqq_f64(a, b);
+    }
+
+    static inline mask64x2 compare_lt(f64x2 a, f64x2 b)
+    {
+        return vcltq_f64(a, b);
+    }
+
+    static inline mask64x2 compare_le(f64x2 a, f64x2 b)
+    {
+        return vcleq_f64(a, b);
+    }
+
+    static inline mask64x2 compare_gt(f64x2 a, f64x2 b)
+    {
+        return vcgtq_f64(a, b);
+    }
+
+    static inline mask64x2 compare_ge(f64x2 a, f64x2 b)
+    {
+        return vcgeq_f64(a, b);
+    }
+
+    static inline f64x2 select(mask64x2 mask, f64x2 a, f64x2 b)
+    {
+        return vbslq_f64(mask, a, b);
+    }
+
+    // rounding
+
+    static inline f64x2 round(f64x2 s)
+    {
+        return vrndaq_f64(s);
+    }
+
+    static inline f64x2 trunc(f64x2 s)
+    {
+        return vrndq_f64(s);
+    }
+
+    static inline f64x2 floor(f64x2 s)
+    {
+        return vrndmq_f64(s);
+    }
+
+    static inline f64x2 ceil(f64x2 s)
+    {
+        return vrndpq_f64(s);
+    }
+
+    static inline f64x2 fract(f64x2 s)
+    {
+        return sub(s, floor(s));
+    }
+
+#else
+
     template <u32 x, u32 y>
     static inline f64x2 shuffle(f64x2 v)
     {
@@ -353,6 +654,8 @@ namespace simd {
         v.data[1] = s.data[1] - std::floor(s.data[1]);
         return v;
     }
+
+#endif
 
 } // namespace simd
 } // namespace mango
