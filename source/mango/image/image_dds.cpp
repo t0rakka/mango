@@ -652,6 +652,7 @@ namespace
 
 #ifdef DEBUG_DDS
             printf(".dds image: [%d x %d]\n", width, height);
+            printf("     depth: %d, mips: %d\n", depth, mipMapCount);
 #endif
 
             if (pixelFormat.flags & DDPF_FOURCC)

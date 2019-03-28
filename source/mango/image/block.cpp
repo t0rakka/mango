@@ -476,7 +476,13 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     TextureCompressionInfo::TextureCompressionInfo()
-    : width(1), height(1), bytes(0), format(FORMAT_NONE), decode(nullptr), encode(nullptr), compression(TextureCompression::NONE)
+        : width(1)
+        , height(1)
+        , bytes(0)
+        , format(FORMAT_NONE)
+        , decode(nullptr)
+        , encode(nullptr)
+        , compression(TextureCompression::NONE)
     {
     }
 
@@ -489,7 +495,13 @@ namespace mango
 
     TextureCompressionInfo::TextureCompressionInfo(int width, int height, int bytes, const Format& format,
                                                    DecodeFunc decode, EncodeFunc encode, TextureCompression compression)
-    : width(width), height(height), bytes(bytes), format(format), decode(decode), encode(encode), compression(compression)
+        : width(width)
+        , height(height)
+        , bytes(bytes)
+        , format(format)
+        , decode(decode)
+        , encode(encode)
+        , compression(compression)
     {
     }
 
