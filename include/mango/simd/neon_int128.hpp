@@ -1530,9 +1530,7 @@ namespace simd {
         hi = vpadd_u8(hi, hi);
         hi = vpadd_u8(hi, hi);
 
-        u32 mask = vget_lane_u8(lo, 0) |
-                  (vget_lane_u8(hi, 0) << 8);
-        return mask;
+        return vget_lane_u8(lo, 0) | (vget_lane_u8(hi, 0) << 8);
     }
 
 #ifdef __aarch64__
@@ -1554,21 +1552,22 @@ namespace simd {
 
 #else
 
-    // TODO: optimize
-
     static inline bool none_of(mask8x16 a)
     {
-        return get_mask(a) == 0;
+        uint8x8_t b = vpadd_u8(vget_low_u8(a), vget_high_u8(a));
+        return vget_lane_u8(vpmax_u8(b, b), 0) == 0;
     }
 
     static inline bool any_of(mask8x16 a)
     {
-        return get_mask(a) != 0;
+        uint8x8_t b = vpadd_u8(vget_low_u8(a), vget_high_u8(a));
+        return vget_lane_u8(vpmax_u8(b, b), 0) != 0;
     }
 
     static inline bool all_of(mask8x16 a)
     {
-        return get_mask(a) == 0xffff;
+        uint8x8_t b = vpadd_u8(vget_low_u8(a), vget_high_u8(a));
+        return vget_lane_u8(vpmin_u8(b, b), 0) != 0;
     }
 
 #endif
@@ -1592,6 +1591,8 @@ namespace simd {
         return veorq_u16(a, b);
     }
 
+#ifdef __aarch64__
+
     static inline u32 get_mask(mask16x8 a)
     {
         const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
@@ -1599,11 +1600,8 @@ namespace simd {
         a = vpaddq_u16(a, a);
         a = vpaddq_u16(a, a);
         a = vpaddq_u16(a, a);
-        u32 mask = vgetq_lane_u16(a, 0);
-        return mask;
+        return vgetq_lane_u16(a, 0);;
     }
-
-#ifdef __aarch64__
 
     static inline bool none_of(mask16x8 a)
     {
@@ -1622,21 +1620,32 @@ namespace simd {
 
 #else
 
-    // TODO: optimize
+    static inline u32 get_mask(mask16x8 a)
+    {
+        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
+        a = vandq_u16(a, weights);
+        uint16x4_t b = vpadd_u16(vget_low_u16(a), vget_high_u16(a));
+        b = vpadd_u16(b, b);
+        b = vpadd_u16(b, b);
+        return vget_lane_u16(b, 0);
+    }
 
     static inline bool none_of(mask16x8 a)
     {
-        return get_mask(a) == 0;
+        uint16x4_t b = vpadd_u16(vget_low_u16(a), vget_high_u16(a));
+        return vget_lane_u16(vpmax_u16(b, b), 0) == 0;
     }
 
     static inline bool any_of(mask16x8 a)
     {
-        return get_mask(a) != 0;
+        uint16x4_t b = vpadd_u16(vget_low_u16(a), vget_high_u16(a));
+        return vget_lane_u16(vpmax_u16(b, b), 0) != 0;
     }
 
     static inline bool all_of(mask16x8 a)
     {
-        return get_mask(a) == 0xff;
+        uint16x4_t b = vpadd_u16(vget_low_u16(a), vget_high_u16(a));
+        return vget_lane_u16(vpmin_u16(b, b), 0) != 0;
     }
 
 #endif
@@ -1660,6 +1669,8 @@ namespace simd {
         return veorq_u32(a, b);
     }
 
+#ifdef __aarch64__
+
     static inline u32 get_mask(mask32x4 a)
     {
         const uint32x4_t weights = { 1, 2, 4, 8 };
@@ -1668,8 +1679,6 @@ namespace simd {
         a = vpaddq_u32(a, a);
         return vgetq_lane_u32(a, 0);
     }
-
-#ifdef __aarch64__
 
     static inline bool none_of(mask32x4 a)
     {
@@ -1688,23 +1697,31 @@ namespace simd {
 
 #else
 
+    static inline u32 get_mask(mask32x4 a)
+    {
+        const uint32x4_t weights = { 1, 2, 4, 8 };
+        a = vandq_u32(a, weights);
+        uint32x2_t b = vpadd_u32(vget_low_u32(a), vget_high_u32(a));
+        b = vpadd_u32(b, b);
+        return vget_lane_u32(b, 0);
+    }
+
     static inline bool none_of(mask32x4 a)
     {
-        uint32x2_t temp = vorr_u32(vget_low_u32(a), vget_high_u32(a));
-        return vget_lane_u32(vpmax_u32(temp, temp), 0) == 0;
+        uint32x2_t b = vorr_u32(vget_low_u32(a), vget_high_u32(a));
+        return vget_lane_u32(vpmax_u32(b, b), 0) == 0;
     }
 
     static inline bool any_of(mask32x4 a)
     {
-        uint32x2_t temp = vorr_u32(vget_low_u32(a), vget_high_u32(a));
-        return vget_lane_u32(vpmax_u32(temp, temp), 0) != 0;
+        uint32x2_t b = vorr_u32(vget_low_u32(a), vget_high_u32(a));
+        return vget_lane_u32(vpmax_u32(b, b), 0) != 0;
     }
 
     static inline bool all_of(mask32x4 a)
     {
-        uint32x2_t temp = vand_u32(vget_low_u32(a), vget_high_u32(a));
-        uint32_t mask = vget_lane_u32(temp, 0) & vget_lane_u32(temp, 1);
-        return mask != 0;
+        uint32x2_t b = vand_u32(vget_low_u32(a), vget_high_u32(a));
+        return vget_lane_u32(vpmin_u32(b, b), 0) != 0;
     }
 
 #endif
@@ -1728,55 +1745,49 @@ namespace simd {
         return veorq_u64(a, b);
     }
 
+#ifdef __aarch64__
+
     static inline u32 get_mask(mask64x2 a)
     {
         const uint64x2_t weights = { 1, 2 };
         a = vandq_u64(a, weights);
         a = vpaddq_u64(a, a);
-        u32 mask = u32(vgetq_lane_u64(a, 0));
-        return mask;
-    }
-
-#ifdef __aarch64__
-
-    static inline bool none_of(mask64x2 a)
-    {
-        const uint64x2_t ones = vandq_u64(a, vdupq_n_u64(1));
-        return vaddvq_u64(ones) == 0;
-    }
-
-    static inline bool any_of(mask64x2 a)
-    {
-        const uint64x2_t ones = vandq_u64(a, vdupq_n_u64(1));
-        return vaddvq_u64(ones) != 0;
-    }
-
-    static inline bool all_of(mask64x2 a)
-    {
-        const uint64x2_t ones = vandq_u64(a, vdupq_n_u64(1));
-        return vaddvq_u64(ones) == 2;
+        return u32(vgetq_lane_u64(a, 0));
     }
 
 #else
 
-    // TODO: optimize
+    static inline u32 get_mask(mask64x2 a)
+    {
+        const uint32x2_t weights = { 1, 2 };
+        uint32x2_t b = vmovn_u64(a);
+        b = vand_u32(b, weights);
+        b = vpadd_u32(b, b);
+        return vget_lane_u32(b, 0);
+    }
+
+#endif
 
     static inline bool none_of(mask64x2 a)
     {
-        return get_mask(a) == 0;
+        uint32x2_t b = vmovn_u64(a);
+        b = vpmax_u32(b, b);
+        return vget_lane_u32(b, 0) == 0;
     }
 
     static inline bool any_of(mask64x2 a)
     {
-        return get_mask(a) != 0;
+        uint32x2_t b = vmovn_u64(a);
+        b = vpmax_u32(b, b);
+        return vget_lane_u32(b, 0) != 0;
     }
 
     static inline bool all_of(mask64x2 a)
     {
-        return get_mask(a) == 0x3;
+        uint32x2_t b = vmovn_u64(a);
+        b = vpmin_u32(b, b);
+        return vget_lane_u32(b, 0) != 0;
     }
-
-#endif
 
 } // namespace simd
 } // namespace mango
