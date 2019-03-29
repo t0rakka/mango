@@ -19,6 +19,7 @@ namespace filesystem {
     {
     protected:
         std::string m_filename;
+        std::unique_ptr<Path> m_path;
         std::unique_ptr<VirtualMemory> m_memory;
 
         Memory getMemory() const;

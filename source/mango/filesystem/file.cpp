@@ -23,15 +23,15 @@ namespace filesystem {
         std::string filepath = s.substr(0, n + 1);
 
         // create a temporary path
-        Path temp(filepath);
+        m_path.reset(new Path(filepath));
 
         m_filename = filename;
-        m_pathname = temp.pathname();
+        m_pathname = m_path->pathname();
 
-        AbstractMapper* mapper = temp;
+        AbstractMapper* mapper = *m_path;
         if (mapper)
         {
-            VirtualMemory* vmemory = mapper->mmap(temp.basepath() + m_filename);
+            VirtualMemory* vmemory = mapper->mmap(m_path->basepath() + m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
@@ -44,15 +44,15 @@ namespace filesystem {
         std::string filepath = s.substr(0, n + 1);
 
         // create a temporary path
-        Path temp(path, filepath);
+        m_path.reset(new Path(path, filepath));
 
         m_filename = filename;
-        m_pathname = temp.pathname();
+        m_pathname = m_path->pathname();
 
-        AbstractMapper* mapper = temp;
+        AbstractMapper* mapper = *m_path;
         if (mapper)
         {
-            VirtualMemory* vmemory = mapper->mmap(temp.basepath() + m_filename);
+            VirtualMemory* vmemory = mapper->mmap(m_path->basepath() + m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
@@ -60,10 +60,10 @@ namespace filesystem {
     File::File(const Memory& memory, const std::string& extension, const std::string& filename)
     {
         std::string password;
-        Path path(memory, extension, password);
 
-        // use temporary path's mapper
-        m_mapper = path;
+        // create a temporary path
+        m_path.reset(new Path(memory, extension, password));
+        m_mapper = *m_path;
 
         // parse and create mappers
         m_pathname = filename;
