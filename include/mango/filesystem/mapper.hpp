@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -102,7 +102,10 @@ namespace filesystem {
     class Mapper : protected NonCopyable
     {
     protected:
+        friend class File;
+
         AbstractMapper* m_mapper { nullptr };
+        std::shared_ptr<Mapper> m_parent_mapper;
         VirtualMemory* m_parent_memory { nullptr };
         std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
         std::string m_basepath;
@@ -114,7 +117,9 @@ namespace filesystem {
         AbstractMapper* createFileMapper(const std::string& basepath);
 
     public:
-        Mapper();
+        Mapper(const std::string& pathname, const std::string& password);
+        Mapper(std::shared_ptr<Mapper> mapper, const std::string& filename, const std::string& password);
+        Mapper(const Memory& memory, const std::string& extension, const std::string& password);
         ~Mapper();
 
         const std::string& basepath() const;

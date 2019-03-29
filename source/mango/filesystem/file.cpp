@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -22,16 +22,21 @@ namespace filesystem {
         std::string filename = s.substr(n + 1);
         std::string filepath = s.substr(0, n + 1);
 
-        // create a temporary path
+        m_filename = filename;
+
+        // create a internal path
         m_path.reset(new Path(filepath));
 
-        m_filename = filename;
-        m_pathname = m_path->pathname();
+        Mapper* path_mapper = m_path->m_mapper.get();
+        if (!path_mapper)
+        {
+            MANGO_EXCEPTION(ID"Mapper interface missing.");
+        }
 
-        AbstractMapper* mapper = *m_path;
+        AbstractMapper* mapper = *path_mapper;
         if (mapper)
         {
-            VirtualMemory* vmemory = mapper->mmap(m_path->basepath() + m_filename);
+            VirtualMemory* vmemory = mapper->mmap(path_mapper->basepath() + m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
@@ -43,16 +48,21 @@ namespace filesystem {
         std::string filename = s.substr(n + 1);
         std::string filepath = s.substr(0, n + 1);
 
-        // create a temporary path
+        m_filename = filename;
+
+        // create a internal path
         m_path.reset(new Path(path, filepath));
 
-        m_filename = filename;
-        m_pathname = m_path->pathname();
+        Mapper* path_mapper = m_path->m_mapper.get();
+        if (!path_mapper)
+        {
+            MANGO_EXCEPTION(ID"Mapper interface missing.");
+        }
 
-        AbstractMapper* mapper = *m_path;
+        AbstractMapper* mapper = *path_mapper;
         if (mapper)
         {
-            VirtualMemory* vmemory = mapper->mmap(m_path->basepath() + m_filename);
+            VirtualMemory* vmemory = mapper->mmap(path_mapper->basepath() + m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
@@ -61,18 +71,24 @@ namespace filesystem {
     {
         std::string password;
 
-        // create a temporary path
+        // create a internal path
         m_path.reset(new Path(memory, extension, password));
-        m_mapper = *m_path;
+
+        Mapper* path_mapper = m_path->m_mapper.get();
+        if (!path_mapper)
+        {
+            MANGO_EXCEPTION(ID"Mapper interface missing.");
+        }
 
         // parse and create mappers
-        m_pathname = filename;
-        m_filename = parse(m_pathname, "");
+        std::string temp_filename = filename;
+        m_filename = path_mapper->parse(temp_filename, "");
 
         // memory map the file
-        if (m_mapper)
+        AbstractMapper* mapper = *path_mapper;
+        if (mapper)
         {
-            VirtualMemory* vmemory = m_mapper->mmap(m_filename);
+            VirtualMemory* vmemory = mapper->mmap(m_filename);
             m_memory = UniqueObject<VirtualMemory>(vmemory);
         }
     }
@@ -84,6 +100,11 @@ namespace filesystem {
     const std::string& File::filename() const
     {
         return m_filename;
+    }
+
+    const std::string& File::pathname() const
+    {
+        return m_path->m_mapper->pathname();
     }
 
     File::operator Memory () const

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,9 +12,12 @@
 namespace mango {
 namespace filesystem {
 
-    class Path : public Mapper
+    class Path : protected NonCopyable
     {
     protected:
+        friend class File;
+
+        std::shared_ptr<Mapper> m_mapper;
         FileIndex m_files;
 
     public:
@@ -22,6 +25,11 @@ namespace filesystem {
         Path(const Path& path, const std::string& filename, const std::string& password = "");
         Path(const Memory& memory, const std::string& extension, const std::string& password = "");
         ~Path();
+
+        const std::string& pathname() const
+        {
+            return m_mapper->pathname();
+        }
 
         auto begin() const -> decltype(m_files.begin())
         {
