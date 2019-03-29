@@ -688,10 +688,21 @@ namespace simd {
         return veorq_u64(a, b);
     }
 
+#ifdef __aarch64__
+
+    static inline u64x2 bitwise_not(u64x2 a)
+    {
+        return veorq_u64(a, vceqq_u64(a, a));
+    }
+
+#else
+
     static inline u64x2 bitwise_not(u64x2 a)
     {
         return veorq_u64(a, vdupq_n_u64(0xffffffffffffffffull));
     }
+
+#endif
 
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
@@ -1455,10 +1466,21 @@ namespace simd {
         return veorq_s64(a, b);
     }
 
+#ifdef __aarch64__
+
+    static inline s64x2 bitwise_not(s64x2 a)
+    {
+        return veorq_s64(a, vreinterpretq_s64_u64(vceqq_s64(a, a)));
+    }
+
+#else
+
     static inline s64x2 bitwise_not(s64x2 a)
     {
         return veorq_s64(a, vdupq_n_s64(0xffffffffffffffffull));
     }
+
+#endif
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
