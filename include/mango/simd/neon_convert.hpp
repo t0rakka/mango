@@ -133,7 +133,6 @@ namespace detail {
 		{
 			return vreinterpretq_f64_u64(data);
 		}
-	};
 
 #else
 
@@ -143,9 +142,10 @@ namespace detail {
             std::memcpy(&temp, &data, 16);
             return temp;
 		}
-	};
 
 #endif
+
+	};
 
 	template <>
 	struct reinterpret_vector<256>
