@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -124,8 +124,43 @@ namespace filesystem {
     // Mapper
     // -----------------------------------------------------------------
 
-    Mapper::Mapper()
+    Mapper::Mapper(const std::string& pathname, const std::string& password)
     {
+		// parse and create mappers
+        std::string temp = pathname.empty() ? "./" : pathname;
+        m_pathname = temp;
+        m_basepath = parse(temp, password);
+        m_basepath = temp;
+
+#if 0
+        printf("# m_basepath: %s\n", m_basepath.c_str());
+        printf("# m_pathname: %s\n", m_pathname.c_str());
+        printf("\n");
+#endif
+    }
+
+    Mapper::Mapper(std::shared_ptr<Mapper> mapper, const std::string& pathname, const std::string& password)
+    {
+        // use parent's mapper
+        m_parent_mapper = mapper;
+        m_mapper = *mapper;
+
+		// parse and create mappers
+        std::string temp = mapper->m_basepath + pathname;
+        m_basepath = parse(temp, password);
+        m_pathname = mapper->m_pathname + pathname;
+
+#if 0
+        printf("# m_basepath: %s\n", m_basepath.c_str());
+        printf("# m_pathname: %s\n", m_pathname.c_str());
+        printf("\n");
+#endif
+    }
+
+    Mapper::Mapper(const Memory& memory, const std::string& extension, const std::string& password)
+    {
+        // create mapper to raw memory
+        m_mapper = createMemoryMapper(memory, extension, password);
     }
 
     Mapper::~Mapper()

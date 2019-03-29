@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -15,7 +15,7 @@
 namespace mango {
 namespace filesystem {
 
-    class File : public Mapper
+    class File : protected NonCopyable
     {
     protected:
         std::string m_filename;
@@ -31,6 +31,7 @@ namespace filesystem {
         ~File();
 
         const std::string& filename() const;
+        const std::string& pathname() const;
 
         // memory
         operator Memory () const;
