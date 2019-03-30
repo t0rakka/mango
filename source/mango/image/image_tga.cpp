@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -67,7 +67,7 @@ namespace
                 case TYPE_RLE_BW:
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Invalid data type.");
+                    MANGO_EXCEPTION(ID"Invalid data type (%d).", data_type);
             }
 
             switch (pixel_size)
@@ -78,20 +78,25 @@ namespace
                 case 32:
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Invalid pixel size.");
+                    MANGO_EXCEPTION(ID"Invalid pixel size (%d).", pixel_size);
             }
 
             if (colormap_type > 1)
             {
-                MANGO_EXCEPTION(ID"Invalid colormap type.");
+                MANGO_EXCEPTION(ID"Invalid colormap type (%d).", colormap_type);
             }
 
             if (data_type == TYPE_RAW_PALETTE || data_type == TYPE_RLE_PALETTE)
             {
                 // palette
-                if ((colormap_bits != 16 && colormap_bits != 24) || colormap_length > 256)
+                if (colormap_length > 256)
                 {
-                    MANGO_EXCEPTION(ID"Invalid colormap size.");
+                    MANGO_EXCEPTION(ID"Invalid colormap length.", colormap_length);
+                }
+
+                if (colormap_bits != 16 && colormap_bits != 24)
+                {
+                    MANGO_EXCEPTION(ID"Invalid colormap size.", colormap_bits);
                 }
             }
 
