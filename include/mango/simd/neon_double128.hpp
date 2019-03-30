@@ -252,7 +252,7 @@ namespace simd {
 
     static inline mask64x2 compare_neq(f64x2 a, f64x2 b)
     {
-        return vreinterpretq_f64_u64(veorq_u64(vceqq_f64(a, b), vceqq_f64(a, a)));
+        return veorq_u64(vceqq_f64(a, b), vceqq_f64(a, a));
     }
 
     static inline mask64x2 compare_eq(f64x2 a, f64x2 b)
