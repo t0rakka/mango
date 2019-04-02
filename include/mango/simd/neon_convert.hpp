@@ -620,9 +620,8 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(s32x4 s)
     {
-        float32x4_t f = vcvtq_f32_s32(s);
-        float64x2_t lo = vcvt_f64_f32(vget_low_f32(f));
-        float64x2_t hi = vcvt_f64_f32(vget_high_f32(f));
+        float64x2_t lo = vcvtq_f64_s64(vmovl_s32(vget_low_s32(s)));
+        float64x2_t hi = vcvtq_f64_s64(vmovl_s32(vget_high_s32(s)));
         return { lo, hi };
     }
 
@@ -653,9 +652,9 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(u32x4 s)
     {
-        uint64x2_t lo = vmovl_u32(vget_low_u32(s));
-        uint64x2_t hi = vmovl_u32(vget_high_u32(s));
-        return { vcvtq_f64_u64(lo), vcvtq_f64_u64(hi) };
+        float64x2_t lo = vcvtq_f64_u64(vmovl_u32(vget_low_u32(s)));
+        float64x2_t hi = vcvtq_f64_u64(vmovl_u32(vget_high_u32(s)));
+        return { lo, hi };
     }
 
     template <>
