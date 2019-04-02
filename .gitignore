@@ -38,6 +38,7 @@
 *.ipch
 *.opendb
 *.user
+*.FileListAbsolute.txt
 
 # -------------------------------------------
 # Others
