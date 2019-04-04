@@ -251,6 +251,13 @@ namespace jpeg
         processState.idct = idct_simd;
 #endif
 
+#if defined(JPEG_ENABLE_NEON)
+        // NEON is built-in; no runtime check in this version
+        {
+            //processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
+        }
+#endif
+
 #if defined(JPEG_ENABLE_SSE2)
         if (cpuFlags & CPU_SSE2)
         {
@@ -275,7 +282,7 @@ namespace jpeg
         icc_memory = Memory(nullptr, 0);
         scan_memory = Memory(nullptr, 0);
 
-        m_surface = NULL;
+        m_surface = nullptr;
 
         header.width = 0;
         header.height = 0;

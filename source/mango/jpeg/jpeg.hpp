@@ -434,6 +434,10 @@ namespace jpeg
     void idct_simd                  (u8* dest, const BlockType* data, const u16* qt);
 #endif
 
+#if defined(JPEG_ENABLE_NEON)
+    void process_YCbCr_8x8_neon     (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+#endif
+
 #if defined(JPEG_ENABLE_SSE2)
     void idct_sse2                  (u8* dest, const BlockType* data, const u16* qt);
     void process_YCbCr_8x8_sse2     (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
