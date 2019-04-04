@@ -703,7 +703,7 @@ namespace filesystem {
             {
                 for (auto i : ptrFolder->headers)
                 {
-                    const FileHeader& header = *i;
+                    const FileHeader& header = *i.second;
 
                     u32 flags = 0;
                     u64 size = header.unpacked_size;

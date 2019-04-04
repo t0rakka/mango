@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
-#include <set>
 #include <map>
 
 namespace mango {
@@ -17,7 +16,7 @@ namespace filesystem {
     public:
         struct Folder
         {
-            std::set<Header *> headers;
+            std::map<std::string, Header *> headers;
         };
 
     protected:
@@ -29,7 +28,7 @@ namespace filesystem {
         {
             Header* ptr = &headers[filename];
             *ptr = header;
-            folders[foldername].headers.emplace(ptr);
+            folders[foldername].headers.emplace(filename, ptr);
         }
 
         const Folder* getFolder(const std::string& pathname) const
