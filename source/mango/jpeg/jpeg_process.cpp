@@ -366,6 +366,10 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
 
 #if defined(JPEG_ENABLE_NEON)
 
+    // ------------------------------------------------------------------------------------------------
+    // NEON implementation
+    // ------------------------------------------------------------------------------------------------
+
     constexpr s16 JPEG_PREC = 12;
     constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
@@ -388,31 +392,26 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         for (int y = 0; y < 8; ++y)
         {
             uint8x8_t u_yy = vld1_u8(ptr + 0);
-            uint8x8_t u_cr = vld1_u8(ptr + 64);
-            uint8x8_t u_cb = vld1_u8(ptr + 128);
+            uint8x8_t u_cb = vld1_u8(ptr + 64);
+            uint8x8_t u_cr = vld1_u8(ptr + 128);
             ptr += 8;
 
             int16x8_t yy = vreinterpretq_s16_u16(vshll_n_u8(u_yy, 4));
-#if 1
-            int16x8_t cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
             int16x8_t cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
-#else
-            int16x8_t cr = vreinterpretq_s16_u16(vshll_n_u8(vsub_u8(u_cr, tosigned), 7));
-            int16x8_t cb = vreinterpretq_s16_u16(vshll_n_u8(vsub_u8(u_cb, tosigned), 7));
-#endif
+            int16x8_t cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
 
-            int16x8_t cr0 = vqdmulhq_s16(cr, s0);
             int16x8_t cb0 = vqdmulhq_s16(cb, s2);
-            int16x8_t cr1 = vqdmulhq_s16(cr, s1);
+            int16x8_t cr0 = vqdmulhq_s16(cr, s0);
             int16x8_t cb1 = vqdmulhq_s16(cb, s3);
+            int16x8_t cr1 = vqdmulhq_s16(cr, s1);
             int16x8_t r = vaddq_s16(yy, cr0);
             int16x8_t g = vaddq_s16(vaddq_s16(yy, cb0), cr1);
             int16x8_t b = vaddq_s16(yy, cb1);
 
             uint8x8x4_t packed;
-            packed.val[0] = vqrshrun_n_s16(r, 4);
+            packed.val[0] = vqrshrun_n_s16(b, 4);
             packed.val[1] = vqrshrun_n_s16(g, 4);
-            packed.val[2] = vqrshrun_n_s16(b, 4);
+            packed.val[2] = vqrshrun_n_s16(r, 4);
             packed.val[3] = vdup_n_u8(255);
 
             vst4_u8(dest, packed);

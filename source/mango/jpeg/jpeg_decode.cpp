@@ -257,7 +257,7 @@ namespace jpeg
             decodeState.zigzagTable = g_zigzag_table_standard;
             processState.idct = idct_neon;
 
-            //processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
+            processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
         }
 #endif
 
