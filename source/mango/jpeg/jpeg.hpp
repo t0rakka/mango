@@ -435,6 +435,7 @@ namespace jpeg
 #endif
 
 #if defined(JPEG_ENABLE_NEON)
+    void idct_neon                  (u8* dest, const BlockType* data, const u16* qt);
     void process_YCbCr_8x8_neon     (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
 #endif
 

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -13,7 +13,7 @@ namespace jpeg
 
     using namespace mango;
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(JPEG_ENABLE_SSE2) || defined(JPEG_ENABLE_NEON)
 
     // The zigzag table is in 'natural' order ; each entry indicates
     // where the sample is located at in the original 8x8 block.
@@ -254,6 +254,9 @@ namespace jpeg
 #if defined(JPEG_ENABLE_NEON)
         // NEON is built-in; no runtime check in this version
         {
+            decodeState.zigzagTable = g_zigzag_table_standard;
+            processState.idct = idct_neon;
+
             //processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
         }
 #endif

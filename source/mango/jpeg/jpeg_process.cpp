@@ -367,7 +367,6 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
 #if defined(JPEG_ENABLE_NEON)
 
     constexpr s16 JPEG_PREC = 12;
-    constexpr s16 JPEG_SCALE(int x) { return x << JPEG_PREC; }
     constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
     void process_YCbCr_8x8_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
@@ -394,8 +393,13 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
             ptr += 8;
 
             int16x8_t yy = vreinterpretq_s16_u16(vshll_n_u8(u_yy, 4));
+#if 1
             int16x8_t cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
             int16x8_t cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
+#else
+            int16x8_t cr = vreinterpretq_s16_u16(vshll_n_u8(vsub_u8(u_cr, tosigned), 7));
+            int16x8_t cb = vreinterpretq_s16_u16(vshll_n_u8(vsub_u8(u_cb, tosigned), 7));
+#endif
 
             int16x8_t cr0 = vqdmulhq_s16(cr, s0);
             int16x8_t cb0 = vqdmulhq_s16(cb, s2);
