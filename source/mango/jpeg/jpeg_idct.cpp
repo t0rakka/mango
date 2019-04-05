@@ -8,6 +8,7 @@ namespace
 {
 
     using namespace mango;
+    using namespace jpeg;
 
     struct IDCT
     {
@@ -42,21 +43,13 @@ namespace
         }
     };
 
-} // namespace
-
-namespace jpeg
-{
-
-    // ------------------------------------------------------------------------------------------------
-    // Generic C++ implementation
-    // ------------------------------------------------------------------------------------------------
-
+    template <int PRECISION>
     void idct(u8* dest, const BlockType* data, const u16* qt)
     {
         int temp[64];
         int* v;
 
-        const int16_t *s = data;
+        const s16* s = data;
 
         v = temp;
 
@@ -109,27 +102,47 @@ namespace jpeg
         }
 
         v = temp;
+        const int shift = PRECISION + 9;
 
         for (int i = 0; i < 8; ++i)
         {
             IDCT idct;
             idct.compute(v[0], v[8], v[16], v[24], v[32], v[40], v[48], v[56]);
             ++v;
-            const int bias = 0x10000 + (128 << 17);
+            const int bias = 0x10000 + (128 << shift);
             idct.x0 += bias;
             idct.x1 += bias;
             idct.x2 += bias;
             idct.x3 += bias;
-            dest[0] = byteclamp((idct.x0 + idct.y3) >> 17);
-            dest[1] = byteclamp((idct.x1 + idct.y2) >> 17);
-            dest[2] = byteclamp((idct.x2 + idct.y1) >> 17);
-            dest[3] = byteclamp((idct.x3 + idct.y0) >> 17);
-            dest[4] = byteclamp((idct.x3 - idct.y0) >> 17);
-            dest[5] = byteclamp((idct.x2 - idct.y1) >> 17);
-            dest[6] = byteclamp((idct.x1 - idct.y2) >> 17);
-            dest[7] = byteclamp((idct.x0 - idct.y3) >> 17);
+            dest[0] = byteclamp((idct.x0 + idct.y3) >> shift);
+            dest[1] = byteclamp((idct.x1 + idct.y2) >> shift);
+            dest[2] = byteclamp((idct.x2 + idct.y1) >> shift);
+            dest[3] = byteclamp((idct.x3 + idct.y0) >> shift);
+            dest[4] = byteclamp((idct.x3 - idct.y0) >> shift);
+            dest[5] = byteclamp((idct.x2 - idct.y1) >> shift);
+            dest[6] = byteclamp((idct.x1 - idct.y2) >> shift);
+            dest[7] = byteclamp((idct.x0 - idct.y3) >> shift);
             dest += 8;
         }
+    }
+
+} // namespace
+
+namespace jpeg
+{
+
+    // ------------------------------------------------------------------------------------------------
+    // Generic C++ implementation
+    // ------------------------------------------------------------------------------------------------
+
+    void idct8(u8* dest, const BlockType* data, const u16* qt)
+    {
+        idct<8>(dest, data, qt);
+    }
+
+    void idct12(u8* dest, const BlockType* data, const u16* qt)
+    {
+        idct<12>(dest, data, qt);
     }
 
 #if defined(JPEG_ENABLE_SIMD)

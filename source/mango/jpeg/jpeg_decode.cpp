@@ -231,7 +231,7 @@ namespace jpeg
     {
         // configure default implementation
         decodeState.zigzagTable = g_zigzag_table_variant;
-        processState.idct = idct;
+        processState.idct = idct8;
 
         processState.process_Y           = process_Y;
         processState.process_YCbCr       = process_YCbCr;
@@ -296,6 +296,17 @@ namespace jpeg
         if (isJPEG(memory))
         {
             parse(memory, false);
+        }
+
+        if (precision == 12)
+        {
+            // Force 12 bit idct
+            //
+            // NOTE:
+            // This will round down to 8 bit precision until we have a 12 bit capable color conversion
+            // The most likely implementation is to decode into 16 bit float "HDR" render target 
+            decodeState.zigzagTable = g_zigzag_table_variant;
+            processState.idct = idct12;
         }
     }
 

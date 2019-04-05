@@ -421,7 +421,8 @@ namespace jpeg
     void arith_decode_ac_refine     (BlockType* output, DecodeState* state);
 #endif
 
-    void idct                       (u8* dest, const BlockType* data, const u16* qt);
+    void idct8                      (u8* dest, const BlockType* data, const u16* qt);
+    void idct12                     (u8* dest, const BlockType* data, const u16* qt);
     void process_Y                  (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_YCbCr              (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
     void process_CMYK               (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
