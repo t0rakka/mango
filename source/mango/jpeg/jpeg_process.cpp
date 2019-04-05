@@ -407,14 +407,11 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
         const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
 
-        const u8* ptr = result;
-
         for (int y = 0; y < 8; ++y)
         {
-            uint8x8_t u_y  = vld1_u8(ptr + 0);
-            uint8x8_t u_cb = vld1_u8(ptr + 64);
-            uint8x8_t u_cr = vld1_u8(ptr + 128);
-            ptr += 8;
+            uint8x8_t u_y  = vld1_u8(result + y * 8 + 0);
+            uint8x8_t u_cb = vld1_u8(result + y * 8 + 64);
+            uint8x8_t u_cr = vld1_u8(result + y * 8 + 128);
 
             int16x8_t s_y = vreinterpretq_s16_u16(vshll_n_u8(u_y, 4));
             int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
@@ -443,7 +440,6 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
         const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
 
-        // TODO: optimize - can load 16 samples with a single load and process low/high parts
         for (int y = 0; y < 8; ++y)
         {
             uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
@@ -482,7 +478,6 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
         const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
 
-        // TODO: optimize - can load 16 samples with a single load and process low/high parts
         for (int y = 0; y < 8; ++y)
         {
             uint8x8_t u_y0 = vld1_u8(result + y * 8 + 0);
@@ -524,7 +519,6 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
         const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
 
-        // TODO: optimize - can load 16 samples with a single load and process low/high parts
         for (int y = 0; y < 8; ++y)
         {
             uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
