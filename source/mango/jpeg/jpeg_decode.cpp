@@ -258,6 +258,9 @@ namespace jpeg
             processState.idct = idct_neon;
 
             processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
+            processState.process_YCbCr_8x16  = process_YCbCr_8x16_neon;
+            processState.process_YCbCr_16x8  = process_YCbCr_16x8_neon;
+            processState.process_YCbCr_16x16 = process_YCbCr_16x16_neon;
         }
 #endif
 

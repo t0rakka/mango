@@ -373,6 +373,26 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
     constexpr s16 JPEG_PREC = 12;
     constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
+    static inline
+    void convert_ycbcr_8x1_sse2(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
+    {
+        int16x8_t cb0 = vqdmulhq_s16(cb, s2);
+        int16x8_t cr0 = vqdmulhq_s16(cr, s0);
+        int16x8_t cb1 = vqdmulhq_s16(cb, s3);
+        int16x8_t cr1 = vqdmulhq_s16(cr, s1);
+        int16x8_t r = vaddq_s16(y, cr0);
+        int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
+        int16x8_t b = vaddq_s16(y, cb1);
+
+        uint8x8x4_t packed;
+        packed.val[0] = vqrshrun_n_s16(b, 4);
+        packed.val[1] = vqrshrun_n_s16(g, 4);
+        packed.val[2] = vqrshrun_n_s16(r, 4);
+        packed.val[3] = vdup_n_u8(255);
+
+        vst4_u8(dest, packed);
+    }
+
     void process_YCbCr_8x8_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 3];
@@ -391,30 +411,145 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
 
         for (int y = 0; y < 8; ++y)
         {
-            uint8x8_t u_yy = vld1_u8(ptr + 0);
+            uint8x8_t u_y  = vld1_u8(ptr + 0);
             uint8x8_t u_cb = vld1_u8(ptr + 64);
             uint8x8_t u_cr = vld1_u8(ptr + 128);
             ptr += 8;
 
-            int16x8_t yy = vreinterpretq_s16_u16(vshll_n_u8(u_yy, 4));
-            int16x8_t cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
-            int16x8_t cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
+            int16x8_t s_y = vreinterpretq_s16_u16(vshll_n_u8(u_y, 4));
+            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
+            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
 
-            int16x8_t cb0 = vqdmulhq_s16(cb, s2);
-            int16x8_t cr0 = vqdmulhq_s16(cr, s0);
-            int16x8_t cb1 = vqdmulhq_s16(cb, s3);
-            int16x8_t cr1 = vqdmulhq_s16(cr, s1);
-            int16x8_t r = vaddq_s16(yy, cr0);
-            int16x8_t g = vaddq_s16(vaddq_s16(yy, cb0), cr1);
-            int16x8_t b = vaddq_s16(yy, cb1);
+            convert_ycbcr_8x1_sse2(dest, s_y, s_cb, s_cr, s0, s1, s2, s3);
+            dest += stride;
+        }
 
-            uint8x8x4_t packed;
-            packed.val[0] = vqrshrun_n_s16(b, 4);
-            packed.val[1] = vqrshrun_n_s16(g, 4);
-            packed.val[2] = vqrshrun_n_s16(r, 4);
-            packed.val[3] = vdup_n_u8(255);
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
 
-            vst4_u8(dest, packed);
+    void process_YCbCr_8x16_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        u8 result[64 * 4];
+
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+        state->idct(result +  64, data +  64, state->block[1].qt); // Y1
+        state->idct(result + 128, data + 128, state->block[2].qt); // Cb
+        state->idct(result + 192, data + 192, state->block[3].qt); // Cr
+
+        const uint8x8_t tosigned = vdup_n_u8(0x80);
+        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
+        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
+        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
+        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
+
+        // TODO: optimize - can load 16 samples with a single load and process low/high parts
+        for (int y = 0; y < 8; ++y)
+        {
+            uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
+            uint8x8_t u_y1 = vld1_u8(result + y * 16 + 8);
+            uint8x8_t u_cb = vld1_u8(result + y * 8 + 128);
+            uint8x8_t u_cr = vld1_u8(result + y * 8 + 192);
+
+            int16x8_t s_y0 = vreinterpretq_s16_u16(vshll_n_u8(u_y0, 4));
+            int16x8_t s_y1 = vreinterpretq_s16_u16(vshll_n_u8(u_y1, 4));
+            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
+            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
+
+            convert_ycbcr_8x1_sse2(dest, s_y0, s_cb, s_cr, s0, s1, s2, s3);
+            dest += stride;
+
+            convert_ycbcr_8x1_sse2(dest, s_y1, s_cb, s_cr, s0, s1, s2, s3);
+            dest += stride;
+        }
+
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
+
+    void process_YCbCr_16x8_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        u8 result[64 * 4];
+
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+        state->idct(result +  64, data +  64, state->block[1].qt); // Y1
+        state->idct(result + 128, data + 128, state->block[2].qt); // Cb
+        state->idct(result + 192, data + 192, state->block[3].qt); // Cr
+
+        const uint8x8_t tosigned = vdup_n_u8(0x80);
+        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
+        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
+        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
+        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
+
+        // TODO: optimize - can load 16 samples with a single load and process low/high parts
+        for (int y = 0; y < 8; ++y)
+        {
+            uint8x8_t u_y0 = vld1_u8(result + y * 8 + 0);
+            uint8x8_t u_y1 = vld1_u8(result + y * 8 + 64);
+            uint8x8_t u_cb = vld1_u8(result + y * 8 + 128);
+            uint8x8_t u_cr = vld1_u8(result + y * 8 + 192);
+
+            int16x8_t s_y0 = vreinterpretq_s16_u16(vshll_n_u8(u_y0, 4));
+            int16x8_t s_y1 = vreinterpretq_s16_u16(vshll_n_u8(u_y1, 4));
+            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
+            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
+
+            int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
+            int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
+
+            convert_ycbcr_8x1_sse2(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            convert_ycbcr_8x1_sse2(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            dest += stride;
+        }
+
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+    }
+
+    void process_YCbCr_16x16_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    {
+        u8 result[64 * 6];
+
+        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
+        state->idct(result + 128, data +  64, state->block[1].qt); // Y1
+        state->idct(result +  64, data + 128, state->block[2].qt); // Y2
+        state->idct(result + 192, data + 192, state->block[3].qt); // Y3
+        state->idct(result + 256, data + 256, state->block[4].qt); // Cb
+        state->idct(result + 320, data + 320, state->block[5].qt); // Cr
+
+        const uint8x8_t tosigned = vdup_n_u8(0x80);
+        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
+        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
+        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
+        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
+
+        // TODO: optimize - can load 16 samples with a single load and process low/high parts
+        for (int y = 0; y < 8; ++y)
+        {
+            uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
+            uint8x8_t u_y1 = vld1_u8(result + y * 16 + 128);
+            uint8x8_t u_y2 = vld1_u8(result + y * 16 + 8);
+            uint8x8_t u_y3 = vld1_u8(result + y * 16 + 136);
+            uint8x8_t u_cb = vld1_u8(result + y * 8 + 256);
+            uint8x8_t u_cr = vld1_u8(result + y * 8 + 320);
+
+            int16x8_t s_y0 = vreinterpretq_s16_u16(vshll_n_u8(u_y0, 4));
+            int16x8_t s_y1 = vreinterpretq_s16_u16(vshll_n_u8(u_y1, 4));
+            int16x8_t s_y2 = vreinterpretq_s16_u16(vshll_n_u8(u_y2, 4));
+            int16x8_t s_y3 = vreinterpretq_s16_u16(vshll_n_u8(u_y3, 4));
+            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
+            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
+
+            int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
+            int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
+
+            convert_ycbcr_8x1_sse2(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            convert_ycbcr_8x1_sse2(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            dest += stride;
+
+            convert_ycbcr_8x1_sse2(dest +  0, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            convert_ycbcr_8x1_sse2(dest + 32, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
         }
 
