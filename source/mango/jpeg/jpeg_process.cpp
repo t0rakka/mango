@@ -374,7 +374,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
     constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
     static inline
-    void convert_ycbcr_8x1_sse2(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
+    void convert_ycbcr_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
     {
         int16x8_t cb0 = vqdmulhq_s16(cb, s2);
         int16x8_t cr0 = vqdmulhq_s16(cr, s0);
@@ -420,7 +420,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
             int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
             int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
 
-            convert_ycbcr_8x1_sse2(dest, s_y, s_cb, s_cr, s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest, s_y, s_cb, s_cr, s0, s1, s2, s3);
             dest += stride;
         }
 
@@ -456,10 +456,10 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
             int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
             int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
 
-            convert_ycbcr_8x1_sse2(dest, s_y0, s_cb, s_cr, s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest, s_y0, s_cb, s_cr, s0, s1, s2, s3);
             dest += stride;
 
-            convert_ycbcr_8x1_sse2(dest, s_y1, s_cb, s_cr, s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest, s_y1, s_cb, s_cr, s0, s1, s2, s3);
             dest += stride;
         }
 
@@ -498,8 +498,8 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
             int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
             int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
 
-            convert_ycbcr_8x1_sse2(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            convert_ycbcr_8x1_sse2(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
         }
 
@@ -544,12 +544,12 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
             int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
             int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
 
-            convert_ycbcr_8x1_sse2(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            convert_ycbcr_8x1_sse2(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
 
-            convert_ycbcr_8x1_sse2(dest +  0, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            convert_ycbcr_8x1_sse2(dest + 32, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest +  0, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            convert_ycbcr_8x1_neon(dest + 32, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
         }
 
