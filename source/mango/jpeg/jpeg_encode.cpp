@@ -249,33 +249,33 @@ namespace
 
     struct jpeg_chan
     {
-        int         component;
-        u16*     qtable;
+        int     component;
+        u16*    qtable;
     };
 
     struct jpeg_encode
     {
-        int         mcu_width;
-        int         mcu_height;
-        int         horizontal_mcus;
-        int         vertical_mcus;
-        int         cols_in_right_mcus;
-        int         rows_in_bottom_mcus;
+        int     mcu_width;
+        int     mcu_height;
+        int     horizontal_mcus;
+        int     vertical_mcus;
+        int     cols_in_right_mcus;
+        int     rows_in_bottom_mcus;
 
-        int         length_minus_mcu_width;
-        int         length_minus_width;
-        int         mcu_width_size;
+        int     length_minus_mcu_width;
+        int     length_minus_width;
+        int     mcu_width_size;
 
-        u8       Lqt [BLOCK_SIZE];
-        u8       Cqt [BLOCK_SIZE];
-        u16      ILqt [BLOCK_SIZE];
-        u16      ICqt [BLOCK_SIZE];
+        u8      Lqt [BLOCK_SIZE];
+        u8      Cqt [BLOCK_SIZE];
+        u16     ILqt [BLOCK_SIZE];
+        u16     ICqt [BLOCK_SIZE];
 
         // MCU configuration
         jpeg_chan   channel[3];
         int         channel_count;
 
-        void (*read_format) (jpeg_encode* jp, BlockType *block, u8* input, int rows, int cols, int incr);
+        void (*read_format) (jpeg_encode* jp, s16 *block, u8* input, int rows, int cols, int incr);
 
         jpeg_encode(jpegSampleFormat format, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
@@ -286,16 +286,16 @@ namespace
 
     struct HuffmanEncoder
     {
-        int     ldc1;
-        int     ldc2;
-        int     ldc3;
+        int ldc1;
+        int ldc2;
+        int ldc3;
 
 #if defined(MANGO_CPU_64BIT)
-        u64  lcode;
+        u64 lcode;
 #else
-        u32  lcode;
+        u32 lcode;
 #endif
-        int     bitindex;
+        int bitindex;
 
         HuffmanEncoder()
         {
@@ -389,7 +389,7 @@ namespace
             return p;
         }
 
-        u8* encode(u8* p, int component, BlockType* temp)
+        u8* encode(u8* p, int component, s16* temp)
         {
             const u16* DcCodeTable;
             const u16* DcSizeTable;
@@ -452,7 +452,7 @@ namespace
 
             for (int i = 0; i < 63; ++i)
             {
-                BlockType Coeff = *temp++;
+                s16 Coeff = *temp++;
                 if (Coeff)
                 {
                     while (RunLength > 15)
@@ -499,7 +499,7 @@ namespace
         }
     };
 
-    void fdct(BlockType* dest, BlockType* data, const u16* quant_table)
+    void fdct(s16* dest, s16* data, const u16* quant_table)
     {
         const u16 c1 = 1420;  // cos  PI/16 * root(2)
         const u16 c2 = 1338;  // cos  PI/8  * root(2)
@@ -522,14 +522,14 @@ namespace
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            data[0] = BlockType(x4 + x5);
-            data[4] = BlockType(x4 - x5);
-            data[2] = BlockType((x8 * c2 + x7 * c6) >> 10);
-            data[6] = BlockType((x8 * c6 - x7 * c2) >> 10);
-            data[7] = BlockType((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10);
-            data[5] = BlockType((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10);
-            data[3] = BlockType((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10);
-            data[1] = BlockType((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10);
+            data[0] = s16(x4 + x5);
+            data[4] = s16(x4 - x5);
+            data[2] = s16((x8 * c2 + x7 * c6) >> 10);
+            data[6] = s16((x8 * c6 - x7 * c2) >> 10);
+            data[7] = s16((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10);
+            data[5] = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10);
+            data[3] = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10);
+            data[1] = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10);
             data += 8;
         }
 
@@ -549,22 +549,22 @@ namespace
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            auto v0 = BlockType((x4 + x5) >> 3);
-            auto v4 = BlockType((x4 - x5) >> 3);
-            auto v2 = BlockType((x8 * c2 + x7 * c6) >> 13);
-            auto v6 = BlockType((x8 * c6 - x7 * c2) >> 13);
-            auto v7 = BlockType((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13);
-            auto v5 = BlockType((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13);
-            auto v3 = BlockType((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13);
-            auto v1 = BlockType((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13);
-            dest[zigzag_table[i + 0 * 8]] = BlockType((v0 * quant_table[i + 0 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 1 * 8]] = BlockType((v1 * quant_table[i + 1 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 2 * 8]] = BlockType((v2 * quant_table[i + 2 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 3 * 8]] = BlockType((v3 * quant_table[i + 3 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 4 * 8]] = BlockType((v4 * quant_table[i + 4 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 5 * 8]] = BlockType((v5 * quant_table[i + 5 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 6 * 8]] = BlockType((v6 * quant_table[i + 6 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 7 * 8]] = BlockType((v7 * quant_table[i + 7 * 8] + 0x4000) >> 15);
+            auto v0 = s16((x4 + x5) >> 3);
+            auto v4 = s16((x4 - x5) >> 3);
+            auto v2 = s16((x8 * c2 + x7 * c6) >> 13);
+            auto v6 = s16((x8 * c6 - x7 * c2) >> 13);
+            auto v7 = s16((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13);
+            auto v5 = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13);
+            auto v3 = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13);
+            auto v1 = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13);
+            dest[zigzag_table[i + 0 * 8]] = s16((v0 * quant_table[i + 0 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 1 * 8]] = s16((v1 * quant_table[i + 1 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 2 * 8]] = s16((v2 * quant_table[i + 2 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 3 * 8]] = s16((v3 * quant_table[i + 3 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 4 * 8]] = s16((v4 * quant_table[i + 4 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 5 * 8]] = s16((v5 * quant_table[i + 5 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 6 * 8]] = s16((v6 * quant_table[i + 6 * 8] + 0x4000) >> 15);
+            dest[zigzag_table[i + 7 * 8]] = s16((v7 * quant_table[i + 7 * 8] + 0x4000) >> 15);
         }
     }
 
@@ -572,7 +572,7 @@ namespace
     // read_xxx_format
     // ----------------------------------------------------------------------------
 
-    void read_400_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
+    void read_400_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -602,7 +602,7 @@ namespace
         }
     }
 
-    void read_bgr888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
+    void read_bgr888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -614,9 +614,9 @@ namespace
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = BlockType(y - 128);
-                block[1 * 64] = BlockType(cb);
-                block[2 * 64] = BlockType(cr);
+                block[0 * 64] = s16(y - 128);
+                block[1 * 64] = s16(cb);
+                block[2 * 64] = s16(cr);
                 ++block;
                 input += 3;
             }
@@ -646,7 +646,7 @@ namespace
         }
     }
 
-    void read_rgb888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
+    void read_rgb888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -658,9 +658,9 @@ namespace
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = BlockType(y - 128);
-                block[1 * 64] = BlockType(cb);
-                block[2 * 64] = BlockType(cr);
+                block[0 * 64] = s16(y - 128);
+                block[1 * 64] = s16(cb);
+                block[2 * 64] = s16(cr);
                 ++block;
                 input += 3;
             }
@@ -690,7 +690,7 @@ namespace
         }
     }
 
-    void read_bgra8888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
+    void read_bgra8888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -702,9 +702,9 @@ namespace
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = BlockType(y - 128);
-                block[1 * 64] = BlockType(cb);
-                block[2 * 64] = BlockType(cr);
+                block[0 * 64] = s16(y - 128);
+                block[1 * 64] = s16(cb);
+                block[2 * 64] = s16(cr);
                 ++block;
                 input += 4;
             }
@@ -734,7 +734,7 @@ namespace
         }
     }
 
-    void read_rgba8888_format(jpeg_encode* jp, BlockType* block, u8* input, int rows, int cols, int incr)
+    void read_rgba8888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -746,9 +746,9 @@ namespace
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = BlockType(y - 128);
-                block[1 * 64] = BlockType(cb);
-                block[2 * 64] = BlockType(cr);
+                block[0 * 64] = s16(y - 128);
+                block[1 * 64] = s16(cb);
+                block[2 * 64] = s16(cr);
                 ++block;
                 input += 4;
             }
@@ -870,7 +870,7 @@ namespace
                 value = 255;
 
             Lqt [index] = (u8) value;
-            ILqt [i] = static_cast<u16>(0x8000 / value);
+            ILqt [i] = u16(0x8000 / value);
 
             // chrominance quantization table * quality factor
             value = chrominance_quant_table [i] * quality;
@@ -882,7 +882,7 @@ namespace
                 value = 255;
 
             Cqt [index] = (u8) value;
-            ICqt [i] = static_cast<u16>(0x8000 / value);
+            ICqt [i] = u16(0x8000 / value);
         }
     }
 
@@ -930,8 +930,8 @@ namespace
 
         p.write16(header_length); // frame header length
         p.write8(8); // precision
-        p.write16(static_cast<u16>(height)); // image height
-        p.write16(static_cast<u16>(width)); // image width
+        p.write16(u16(height)); // image height
+        p.write16(u16(width)); // image width
         p.write8(number_of_components); // Nf
 
         const u8 nfdata[] =
@@ -1038,7 +1038,7 @@ namespace
                         incr = jp.length_minus_width;
                     }
 
-                    BlockType block[BLOCK_SIZE * 3];
+                    s16 block[BLOCK_SIZE * 3];
 
                     // read MCU data
                     jp.read_format(&jp, block, image, rows, cols, incr);
@@ -1046,7 +1046,7 @@ namespace
                     // encode the data in MCU
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
-                        BlockType temp[BLOCK_SIZE];
+                        s16 temp[BLOCK_SIZE];
                         fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
                         ptr = huffman.encode(ptr, jp.channel[i].component, temp);
                     }

@@ -1350,7 +1350,7 @@ namespace jpeg
 
         // allocate blocks
         int count = mcus * blocks_in_mcu * 64;
-        blockVector = reinterpret_cast<BlockType*>(aligned_malloc(count * sizeof(BlockType)));
+        blockVector = reinterpret_cast<s16*>(aligned_malloc(count * sizeof(s16)));
 
         // target surface size has to match (clipping isn't yet supported)
         if (target.width != xsize || target.height != ysize)
@@ -1432,7 +1432,7 @@ namespace jpeg
         {
             for (int x = 0; x < width; ++x)
             {
-                BlockType data[JPEG_MAX_BLOCKS_IN_MCU];
+                s16 data[JPEG_MAX_BLOCKS_IN_MCU];
 
                 decodeFunction(data, &decodeState);
                 bool restarted = handleRestart();
@@ -1522,7 +1522,7 @@ namespace jpeg
         const int ystride = stride * yblock;
         u8* image = m_surface->address<u8>(0, 0);
 
-        BlockType data[640];
+        s16 data[640];
 
         for (int y = 0; y < ymcu; ++y)
         {
@@ -1568,7 +1568,7 @@ namespace jpeg
 
         if (!restartInterval)
         {
-            BlockType* data = blockVector;
+            s16* data = blockVector;
             const int mcu_data_size = blocks_in_mcu * 64;
 
             const int pool_size = ThreadPool::getInstanceSize();
@@ -1584,7 +1584,7 @@ namespace jpeg
                 const int count = (y1 - y0) * xmcu;
                 jpegPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
-                BlockType* idata = data + y * (xmcu * mcu_data_size);
+                s16* idata = data + y * (xmcu * mcu_data_size);
 
                 for (int i = 0; i < count; ++i)
                 {
@@ -1597,7 +1597,7 @@ namespace jpeg
                     for (int y = y0; y < y1; ++y)
                     {
                         u8* dest = image + y * ystride;
-                        BlockType* source = data + y * xmcu * mcu_data_size;
+                        s16* source = data + y * xmcu * mcu_data_size;
 
                         ProcessFunc process = processState.process;
                         int width = xblock;
@@ -1633,7 +1633,7 @@ namespace jpeg
             {
                 // enqueue task
                 queue.enqueue([=] {
-                    BlockType data[640]; // TODO: alignment
+                    s16 data[640]; // TODO: alignment
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
 
@@ -1685,7 +1685,7 @@ namespace jpeg
     void Parser::decodeProgressive()
     {
         const bool dc_scan = (decodeState.spectralStart == 0);
-        BlockType* data = blockVector;
+        s16* data = blockVector;
 
         if (dc_scan)
         {
@@ -1736,7 +1736,7 @@ namespace jpeg
             {
                 int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
                 int block_offset = (x & HMask) + block_yoffset;
-                BlockType* mcudata = data + (block_offset + mcu_offset) * 64;
+                s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
                 // decode
                 decodeState.decode(mcudata, &decodeState);
@@ -1770,7 +1770,7 @@ namespace jpeg
         u8* image = m_surface->address<u8>(0, 0);
 
         const int mcu_data_size = blocks_in_mcu * 64;
-        BlockType* data = blockVector;
+        s16* data = blockVector;
 
         for (int y = 0; y < ymcu; ++y)
         {
@@ -1809,7 +1809,7 @@ namespace jpeg
         u8* image = m_surface->address<u8>(0, 0);
 
         const int mcu_data_size = blocks_in_mcu * 64;
-        BlockType* data = blockVector;
+        s16* data = blockVector;
 
         ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
         const int pool_size = ThreadPool::getInstanceSize();
@@ -1829,7 +1829,7 @@ namespace jpeg
                 for (int y = y0; y < y1; ++y)
                 {
                     u8* dest = image + y * ystride;
-                    BlockType* source = data + y * xmcu * mcu_data_size;
+                    s16* source = data + y * xmcu * mcu_data_size;
 
                     ProcessFunc process = processState.process;
                     int width = xblock;

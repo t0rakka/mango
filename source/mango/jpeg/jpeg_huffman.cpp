@@ -103,7 +103,7 @@ namespace jpeg
     // huffman decoder
     // ----------------------------------------------------------------------------
 
-    void huff_decode_mcu_lossless(BlockType* output, DecodeState* state)
+    void huff_decode_mcu_lossless(s16* output, DecodeState* state)
     {
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
@@ -125,13 +125,13 @@ namespace jpeg
         }
     }
 
-    void huff_decode_mcu(BlockType* output, DecodeState* state)
+    void huff_decode_mcu(s16* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
-        std::memset(output, 0, state->blocks * 64 * sizeof(BlockType));
+        std::memset(output, 0, state->blocks * 64 * sizeof(s16));
 
         for (int j = 0; j < state->blocks; ++j)
         {
@@ -151,7 +151,7 @@ namespace jpeg
             s += huffman.last_dc_value[block->pred];
             huffman.last_dc_value[block->pred] = s;
 
-            output[0] = static_cast<BlockType>(s);
+            output[0] = s16(s);
 
             // AC
             for (int i = 1; i < 64; )
@@ -166,7 +166,7 @@ namespace jpeg
                 {
                     i += r;
                     HUFF_RECEIVE(buffer, s);
-                    output[zigzagTable[i++]] = static_cast<BlockType>(s);
+                    output[zigzagTable[i++]] = s16(s);
                 }
                 else
                 {
@@ -179,7 +179,7 @@ namespace jpeg
         }
     }
     
-    void huff_decode_dc_first(BlockType* output, DecodeState* state)
+    void huff_decode_dc_first(s16* output, DecodeState* state)
     {
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
@@ -188,10 +188,10 @@ namespace jpeg
         {
             const DecodeBlock* block = state->block + j;
 
-            BlockType* dest = output + block->offset;
+            s16* dest = output + block->offset;
             const HuffTable* dc_table = block->table.dc;
             
-            std::memset(dest, 0, 64 * sizeof(BlockType));
+            std::memset(dest, 0, 64 * sizeof(s16));
 
             int s;
             HUFF_DECODE(s, dc_table);
@@ -203,11 +203,11 @@ namespace jpeg
             s += huffman.last_dc_value[block->pred];
             huffman.last_dc_value[block->pred] = s;
 
-            dest[0] = static_cast<BlockType>(s << state->successiveLow);
+            dest[0] = s16(s << state->successiveLow);
         }
     }
 
-    void huff_decode_dc_refine(BlockType* output, DecodeState* state)
+    void huff_decode_dc_refine(s16* output, DecodeState* state)
     {
         jpegBuffer& buffer = state->buffer;
 
@@ -215,12 +215,12 @@ namespace jpeg
 
         for (int j = 0; j < state->blocks; ++j)
         {
-            BlockType* dest = output + state->block[j].offset;
+            s16* dest = output + state->block[j].offset;
             dest[0] |= (GET_BITS(buffer, 1) << state->successiveLow);
         }
     }
     
-    void huff_decode_ac_first(BlockType* output, DecodeState* state)
+    void huff_decode_ac_first(s16* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
@@ -250,7 +250,7 @@ namespace jpeg
                 if (s)
                 {
                     HUFF_RECEIVE(buffer, s);
-                    output[zigzagTable[i]] = static_cast<BlockType>(s << state->successiveLow);
+                    output[zigzagTable[i]] = s16(s << state->successiveLow);
                 }
                 else
                 {
@@ -271,7 +271,7 @@ namespace jpeg
         }
     }
 
-    void huff_decode_ac_refine(BlockType* output, DecodeState* state)
+    void huff_decode_ac_refine(s16* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
@@ -323,7 +323,7 @@ namespace jpeg
 
                 do
                 {
-                    BlockType* coef = output + zigzagTable[k];
+                    s16* coef = output + zigzagTable[k];
 
                     if (*coef != 0)
                     {
@@ -333,7 +333,7 @@ namespace jpeg
                             if ((*coef & p1) == 0)
                             {
                                 const int d = *coef >= 0 ? p1 : m1;
-                                *coef += static_cast<BlockType>(d);
+                                *coef += s16(d);
                             }
                         }
                     }
@@ -348,7 +348,7 @@ namespace jpeg
                 
                 if ((s) && (k < 64))
                 {
-                    output[zigzagTable[k]] = static_cast<BlockType>(s);
+                    output[zigzagTable[k]] = s16(s);
                 }
             }
         }
@@ -357,7 +357,7 @@ namespace jpeg
         {
             for ( ; k <= end; k++)
             {
-                BlockType* coef = output + zigzagTable[k];
+                s16* coef = output + zigzagTable[k];
                 
                 if (*coef != 0)
                 {
@@ -367,7 +367,7 @@ namespace jpeg
                         if ((*coef & p1) == 0)
                         {
                             const int d = *coef >= 0 ? p1 : m1;
-                            *coef += static_cast<BlockType>(d);
+                            *coef += s16(d);
                         }
                     }
                 }

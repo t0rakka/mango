@@ -56,7 +56,7 @@ namespace jpeg
 // Generic C++ implementation
 // ----------------------------------------------------------------------------
 
-void process_Y(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_Y(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64];
     state->idct(result, data, state->block[0].qt); // Y
@@ -68,7 +68,7 @@ void process_Y(u8* dest, int stride, const BlockType* data, ProcessState* state,
     }
 }
 
-void process_YCbCr(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
 
@@ -133,7 +133,7 @@ void process_YCbCr(u8* dest, int stride, const BlockType* data, ProcessState* st
     }
 }
 
-void process_CMYK(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_CMYK(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
 
@@ -207,7 +207,7 @@ void process_CMYK(u8* dest, int stride, const BlockType* data, ProcessState* sta
     }
 }
 
-void process_YCbCr_8x8(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_8x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
 
@@ -238,7 +238,7 @@ void process_YCbCr_8x8(u8* dest, int stride, const BlockType* data, ProcessState
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-void process_YCbCr_8x16(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_8x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
 
@@ -271,7 +271,7 @@ void process_YCbCr_8x16(u8* dest, int stride, const BlockType* data, ProcessStat
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-void process_YCbCr_16x8(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_16x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
 
@@ -312,7 +312,7 @@ void process_YCbCr_16x8(u8* dest, int stride, const BlockType* data, ProcessStat
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+void process_YCbCr_16x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 6];
 
@@ -393,7 +393,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         vst4_u8(dest, packed);
     }
 
-    void process_YCbCr_8x8_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_8x8_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 3];
 
@@ -425,7 +425,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-    void process_YCbCr_8x16_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_8x16_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 4];
 
@@ -463,7 +463,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-    void process_YCbCr_16x8_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_16x8_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 4];
 
@@ -502,7 +502,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-    void process_YCbCr_16x16_neon(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_16x16_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 6];
 
@@ -551,7 +551,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-#endif
+#endif // JPEG_ENABLE_NEON
 
 #if defined(JPEG_ENABLE_SSE2)
 
@@ -623,7 +623,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 16), bgra1);
     }
 
-    void process_YCbCr_8x8_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_8x8_sse2(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 3];
 
@@ -667,7 +667,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-    void process_YCbCr_8x16_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_8x16_sse2(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 4];
 
@@ -719,7 +719,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-    void process_YCbCr_16x8_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_16x8_sse2(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 4];
 
@@ -787,7 +787,7 @@ void process_YCbCr_16x16(u8* dest, int stride, const BlockType* data, ProcessSta
         MANGO_UNREFERENCED_PARAMETER(height);
     }
 
-    void process_YCbCr_16x16_sse2(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height)
+    void process_YCbCr_16x16_sse2(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
     {
         u8 result[64 * 6];
 

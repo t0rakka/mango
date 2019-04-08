@@ -145,7 +145,7 @@ namespace jpeg
     // arithmetic decoder
     // ----------------------------------------------------------------------------
 
-    void arith_decode_mcu_lossless(BlockType* output, DecodeState* state)
+    void arith_decode_mcu_lossless(s16* output, DecodeState* state)
     {
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
@@ -211,18 +211,18 @@ namespace jpeg
                 arithmetic.last_dc_value[ci] += v;
             }
 
-            output[j] = static_cast<BlockType>(arithmetic.last_dc_value[ci]);
+            output[j] = s16(arithmetic.last_dc_value[ci]);
         }
     }
 
-    void arith_decode_mcu(BlockType* output, DecodeState* state)
+    void arith_decode_mcu(s16* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
-        std::memset(output, 0, state->blocks * 64 * sizeof(BlockType));
+        std::memset(output, 0, state->blocks * 64 * sizeof(s16));
 
         const int end = state->spectralEnd;
 
@@ -286,7 +286,7 @@ namespace jpeg
                 arithmetic.last_dc_value[ci] += v;
             }
 
-            output[0] = static_cast<BlockType>(arithmetic.last_dc_value[ci]);
+            output[0] = s16(arithmetic.last_dc_value[ci]);
 
             // AC
             tbl = block->index.ac;
@@ -338,7 +338,7 @@ namespace jpeg
                 }
                 v += 1; if (sign) v = -v;
 
-                output[zigzagTable[k]] = static_cast<BlockType>(v);
+                output[zigzagTable[k]] = s16(v);
             }
 
             ++block;
@@ -346,7 +346,7 @@ namespace jpeg
         }
     }
 
-    void arith_decode_dc_first(BlockType* output, DecodeState* state)
+    void arith_decode_dc_first(s16* output, DecodeState* state)
     {
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
@@ -354,10 +354,10 @@ namespace jpeg
 
         for (int j = 0; j < state->blocks; ++j)
         {
-            BlockType* dest = output + block->offset;
+            s16* dest = output + block->offset;
             const int ci = block->pred;
 
-            std::memset(dest, 0, 64 * sizeof(BlockType));
+            std::memset(dest, 0, 64 * sizeof(s16));
 
             int tbl = block->index.dc;
             u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
@@ -414,13 +414,13 @@ namespace jpeg
                 v += 1; if (sign) v = -v;
                 arithmetic.last_dc_value[ci] += v;
             }
-            
-            dest[0] = static_cast<BlockType>(arithmetic.last_dc_value[ci] << state->successiveLow);
+
+            dest[0] = s16(arithmetic.last_dc_value[ci] << state->successiveLow);
             ++block;
         }
     }
 
-    void arith_decode_dc_refine(BlockType* output, DecodeState* state)
+    void arith_decode_dc_refine(s16* output, DecodeState* state)
     {
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
@@ -428,7 +428,7 @@ namespace jpeg
 
         for (int j = 0; j < state->blocks; ++j)
         {
-            BlockType* dest = output + state->block[j].offset;
+            s16* dest = output + state->block[j].offset;
 
             // Encoded data is simply the next bit of the two's-complement DC value
             if (arith_decode(arithmetic, buffer, st))
@@ -438,7 +438,7 @@ namespace jpeg
         }
     }
 
-    void arith_decode_ac_first(BlockType* output, DecodeState* state)
+    void arith_decode_ac_first(s16* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
@@ -500,11 +500,11 @@ namespace jpeg
             v += 1; if (sign) v = -v;
             
             // Scale and output coefficient in natural (dezigzagged) order
-            output[zigzagTable[k]] = static_cast<BlockType>(v << state->successiveLow);
+            output[zigzagTable[k]] = s16(v << state->successiveLow);
         }
     }
 
-    void arith_decode_ac_refine(BlockType* output, DecodeState* state)
+    void arith_decode_ac_refine(s16* output, DecodeState* state)
     {
         const int* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
@@ -537,7 +537,7 @@ namespace jpeg
                     break; // EOB flag
             }
 
-            BlockType* coef = output + zigzagTable[k];
+            s16* coef = output + zigzagTable[k];
             
             for (;;)
             {
@@ -547,24 +547,24 @@ namespace jpeg
                     if (arith_decode(arithmetic, buffer, st + 2))
                     {
                         if (*coef < 0)
-                            *coef += static_cast<BlockType>(m1);
+                            *coef += s16(m1);
                         else
-                            *coef += static_cast<BlockType>(p1);
+                            *coef += s16(p1);
                     }
                     break;
                 }
-                
+
                 if (arith_decode(arithmetic, buffer, st + 1))
                 {
                     // newly nonzero coef
                     if (arith_decode(arithmetic, buffer, arithmetic.fixed_bin))
-                        *coef = static_cast<BlockType>(m1);
+                        *coef = s16(m1);
                     else
-                        *coef = static_cast<BlockType>(p1);
+                        *coef = s16(p1);
                     
                     break;
                 }
-                
+
                 st += 3;
                 ++k;
             }

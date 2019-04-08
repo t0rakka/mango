@@ -58,13 +58,12 @@ namespace jpeg
     using mango::u16;
     using mango::u32;
     using mango::u64;
+    using mango::s16;
     using mango::Memory;
     using mango::Format;
     using mango::Surface;
 	using mango::Stream;
     using mango::ThreadPool;
-
-    using BlockType = mango::s16;
 
 #ifdef MANGO_CPU_64BIT
 
@@ -274,7 +273,7 @@ namespace jpeg
         int successiveHigh;
         int successiveLow;
 
-        void (*decode)(BlockType* output, DecodeState* state);
+        void (*decode)(s16* output, DecodeState* state);
     };
 
     struct Block
@@ -291,17 +290,17 @@ namespace jpeg
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
 
-	    void (*idct)(u8* dest, const BlockType* data, const u16* qt);
-        void (*process)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*clipped)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+	    void (*idct)(u8* dest, const s16* data, const u16* qt);
+        void (*process)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*clipped)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-        void (*process_Y          )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr      )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_CMYK       )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_8x8  )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_8x16 )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_16x8 )(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_16x16)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+        void (*process_Y          )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr      )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_CMYK       )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_8x8  )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_8x16 )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_16x8 )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_16x16)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     };
 
     // ----------------------------------------------------------------------------
@@ -315,7 +314,7 @@ namespace jpeg
         HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
         AlignedVector<u16> quantTableVector;
-        BlockType* blockVector;
+        s16* blockVector;
 
         std::vector< Frame > frames;
         Frame* scanFrame; // current Progressive AC scan frame
@@ -403,52 +402,52 @@ namespace jpeg
     // functions
     // ----------------------------------------------------------------------------
 
-    typedef void (*ProcessFunc)(u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    typedef void (*ProcessFunc)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-    void huff_decode_mcu_lossless   (BlockType* output, DecodeState* state);
-    void huff_decode_mcu            (BlockType* output, DecodeState* state);
-    void huff_decode_dc_first       (BlockType* output, DecodeState* state);
-    void huff_decode_dc_refine      (BlockType* output, DecodeState* state);
-    void huff_decode_ac_first       (BlockType* output, DecodeState* state);
-    void huff_decode_ac_refine      (BlockType* output, DecodeState* state);
+    void huff_decode_mcu_lossless   (s16* output, DecodeState* state);
+    void huff_decode_mcu            (s16* output, DecodeState* state);
+    void huff_decode_dc_first       (s16* output, DecodeState* state);
+    void huff_decode_dc_refine      (s16* output, DecodeState* state);
+    void huff_decode_ac_first       (s16* output, DecodeState* state);
+    void huff_decode_ac_refine      (s16* output, DecodeState* state);
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
-    void arith_decode_mcu_lossless  (BlockType* output, DecodeState* state);
-    void arith_decode_mcu           (BlockType* output, DecodeState* state);
-    void arith_decode_dc_first      (BlockType* output, DecodeState* state);
-    void arith_decode_dc_refine     (BlockType* output, DecodeState* state);
-    void arith_decode_ac_first      (BlockType* output, DecodeState* state);
-    void arith_decode_ac_refine     (BlockType* output, DecodeState* state);
+    void arith_decode_mcu_lossless  (s16* output, DecodeState* state);
+    void arith_decode_mcu           (s16* output, DecodeState* state);
+    void arith_decode_dc_first      (s16* output, DecodeState* state);
+    void arith_decode_dc_refine     (s16* output, DecodeState* state);
+    void arith_decode_ac_first      (s16* output, DecodeState* state);
+    void arith_decode_ac_refine     (s16* output, DecodeState* state);
 #endif
 
-    void idct8                      (u8* dest, const BlockType* data, const u16* qt);
-    void idct12                     (u8* dest, const BlockType* data, const u16* qt);
-    void process_Y                  (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr              (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_CMYK               (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x8          (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16         (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8         (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16        (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void idct8                      (u8* dest, const s16* data, const u16* qt);
+    void idct12                     (u8* dest, const s16* data, const u16* qt);
+    void process_Y                  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_CMYK               (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x8          (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
 #if defined(JPEG_ENABLE_SIMD)
-    void idct_simd                  (u8* dest, const BlockType* data, const u16* qt);
+    void idct_simd                  (u8* dest, const s16* data, const u16* qt);
 #endif
 
 #if defined(JPEG_ENABLE_NEON)
-    void idct_neon                  (u8* dest, const BlockType* data, const u16* qt);
-    void process_YCbCr_8x8_neon     (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16_neon    (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8_neon    (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16_neon   (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void idct_neon                  (u8* dest, const s16* data, const u16* qt);
+    void process_YCbCr_8x8_neon     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
-    void idct_sse2                  (u8* dest, const BlockType* data, const u16* qt);
-    void process_YCbCr_8x8_sse2     (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_8x16_sse2    (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x8_sse2    (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
-    void process_YCbCr_16x16_sse2   (u8* dest, int stride, const BlockType* data, ProcessState* state, int width, int height);
+    void idct_sse2                  (u8* dest, const s16* data, const u16* qt);
+    void process_YCbCr_8x8_sse2     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_8x16_sse2    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x8_sse2    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_YCbCr_16x16_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 #endif
 
 	void EncodeImage(Stream& stream, const Surface& surface, float quality);

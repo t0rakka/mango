@@ -44,7 +44,7 @@ namespace
     };
 
     template <int PRECISION>
-    void idct(u8* dest, const BlockType* data, const u16* qt)
+    void idct(u8* dest, const s16* data, const u16* qt)
     {
         int temp[64];
         int* v;
@@ -135,12 +135,12 @@ namespace jpeg
     // Generic C++ implementation
     // ------------------------------------------------------------------------------------------------
 
-    void idct8(u8* dest, const BlockType* data, const u16* qt)
+    void idct8(u8* dest, const s16* data, const u16* qt)
     {
         idct<8>(dest, data, qt);
     }
 
-    void idct12(u8* dest, const BlockType* data, const u16* qt)
+    void idct12(u8* dest, const s16* data, const u16* qt)
     {
         idct<12>(dest, data, qt);
     }
@@ -182,7 +182,7 @@ namespace jpeg
         return simd::narrow(d0.m, d1.m);
     }
 
-    void idct_simd(u8* dest, const BlockType* data, const u16* qt)
+    void idct_simd(u8* dest, const s16* data, const u16* qt)
     {
         float32x4 temp[16];
         float32x4* v = temp;
@@ -377,7 +377,7 @@ namespace jpeg
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    void idct_sse2(u8* dest, const BlockType* src, const u16* qt)
+    void idct_sse2(u8* dest, const s16* src, const u16* qt)
     {
         const __m128i* data = reinterpret_cast<const __m128i *>(src);
         const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
@@ -672,7 +672,7 @@ static void stbi__idct_simd(u8 *out, const short data[64], const u16* qt)
 }
 
 
-    void idct_neon(u8* dest, const BlockType* data, const u16* qt)
+    void idct_neon(u8* dest, const s16* data, const u16* qt)
     {
         stbi__idct_simd(dest, data, qt);
     }
