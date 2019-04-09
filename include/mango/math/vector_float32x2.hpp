@@ -157,6 +157,15 @@ namespace mango
         return a;
     }
 
+    template <typename VT, int I>
+    static inline Vector<float, 2>& operator /= (Vector<float, 2>& a, ScalarAccessor<float, VT, I> b)
+    {
+        float s = b;
+        a.x /= s;
+        a.y /= s;
+        return a;
+    }
+
     static inline Vector<float, 2>& operator /= (Vector<float, 2>& a, const Vector<float, 2>& b)
     {
         a.x /= b.x;
@@ -190,6 +199,15 @@ namespace mango
     {
         float x = a.x * b.x;
         float y = a.y * b.y;
+        return Vector<float, 2>(x, y);
+    }
+
+    template <typename VT, int I>
+    static inline Vector<float, 2> operator / (Vector<float, 2> a, ScalarAccessor<float, VT, I> b)
+    {
+        float s = b;
+        float x = a.x / s;
+        float y = a.y / s;
         return Vector<float, 2>(x, y);
     }
 

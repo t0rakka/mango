@@ -525,6 +525,13 @@ namespace mango
         return a;
     }
 
+    template <typename VT, int I>
+    static inline Vector<double, 4>& operator /= (Vector<double, 4>& a, ScalarAccessor<double, VT, I> b)
+    {
+        a = simd::div(a, b);
+        return a;
+    }
+
     static inline Vector<double, 4>& operator /= (Vector<double, 4>& a, Vector<double, 4> b)
     {
         a = simd::div(a, b);
@@ -550,6 +557,12 @@ namespace mango
     static inline Vector<double, 4> operator * (Vector<double, 4> a, Vector<double, 4> b)
     {
         return simd::mul(a, b);
+    }
+
+    template <typename VT, int I>
+    static inline Vector<double, 4> operator / (Vector<double, 4> a, ScalarAccessor<double, VT, I> b)
+    {
+        return simd::div(a, b);
     }
 
     static inline Vector<double, 4> operator / (Vector<double, 4> a, Vector<double, 4> b)
