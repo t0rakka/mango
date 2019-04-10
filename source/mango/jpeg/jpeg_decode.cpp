@@ -1301,10 +1301,16 @@ namespace jpeg
             case JPEG_U8_Y:
                 break;
             case JPEG_U8_BGR:
-                // TODO
+                processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
                 break;
             case JPEG_U8_RGB:
-                // TODO
+                processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
                 break;
             case JPEG_U8_BGRA:
                 processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
@@ -1313,7 +1319,10 @@ namespace jpeg
                 processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
                 break;
             case JPEG_U8_RGBA:
-                // TODO
+                processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
                 break;
         }
 #endif

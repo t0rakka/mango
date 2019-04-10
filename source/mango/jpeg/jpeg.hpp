@@ -454,10 +454,26 @@ namespace jpeg
 
 #if defined(JPEG_ENABLE_NEON)
     void idct_neon                      (u8* dest, const s16* data, const u16* qt);
+
     void process_ycbcr_bgra_8x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_8x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_16x8_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_16x16_neon  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
+    void process_ycbcr_rgba_8x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x8_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x16_neon  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
+    void process_ycbcr_bgr_8x8_neon     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x16_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
+    void process_ycbcr_rgb_8x8_neon     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x16_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)

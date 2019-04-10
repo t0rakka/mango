@@ -249,4 +249,4 @@ void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, 
     MANGO_UNREFERENCED_PARAMETER(height);
 }
 
-#endif
+#endif // INNERLOOP

@@ -366,189 +366,143 @@ void process_ycbcr_bgra_16x16(u8* dest, int stride, const s16* data, ProcessStat
 
 #if defined(JPEG_ENABLE_NEON)
 
-    // ------------------------------------------------------------------------------------------------
-    // NEON implementation
-    // ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// NEON implementation
+// ------------------------------------------------------------------------------------------------
 
-    constexpr s16 JPEG_PREC = 12;
-    constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
+constexpr s16 JPEG_PREC = 12;
+constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
-    static inline
-    void convert_ycbcr_bgra_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
-    {
-        int16x8_t cb0 = vqdmulhq_s16(cb, s2);
-        int16x8_t cr0 = vqdmulhq_s16(cr, s0);
-        int16x8_t cb1 = vqdmulhq_s16(cb, s3);
-        int16x8_t cr1 = vqdmulhq_s16(cr, s1);
-        int16x8_t r = vaddq_s16(y, cr0);
-        int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
-        int16x8_t b = vaddq_s16(y, cb1);
+static inline
+void convert_ycbcr_bgra_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
+{
+    int16x8_t cb0 = vqdmulhq_s16(cb, s2);
+    int16x8_t cr0 = vqdmulhq_s16(cr, s0);
+    int16x8_t cb1 = vqdmulhq_s16(cb, s3);
+    int16x8_t cr1 = vqdmulhq_s16(cr, s1);
+    int16x8_t r = vaddq_s16(y, cr0);
+    int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
+    int16x8_t b = vaddq_s16(y, cb1);
 
-        uint8x8x4_t packed;
-        packed.val[0] = vqrshrun_n_s16(b, 4);
-        packed.val[1] = vqrshrun_n_s16(g, 4);
-        packed.val[2] = vqrshrun_n_s16(r, 4);
-        packed.val[3] = vdup_n_u8(255);
-        vst4_u8(dest, packed);
-    }
+    uint8x8x4_t packed;
+    packed.val[0] = vqrshrun_n_s16(b, 4);
+    packed.val[1] = vqrshrun_n_s16(g, 4);
+    packed.val[2] = vqrshrun_n_s16(r, 4);
+    packed.val[3] = vdup_n_u8(255);
+    vst4_u8(dest, packed);
+}
 
-    void process_ycbcr_bgra_8x8_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
-    {
-        u8 result[64 * 3];
+static inline
+void convert_ycbcr_rgba_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
+{
+    int16x8_t cb0 = vqdmulhq_s16(cb, s2);
+    int16x8_t cr0 = vqdmulhq_s16(cr, s0);
+    int16x8_t cb1 = vqdmulhq_s16(cb, s3);
+    int16x8_t cr1 = vqdmulhq_s16(cr, s1);
+    int16x8_t r = vaddq_s16(y, cr0);
+    int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
+    int16x8_t b = vaddq_s16(y, cb1);
 
-        state->idct(result +   0, data +   0, state->block[0].qt); // Y
-        state->idct(result +  64, data +  64, state->block[1].qt); // Cb
-        state->idct(result + 128, data + 128, state->block[2].qt); // Cr
+    // TODO
+    uint8x8x4_t packed;
+    packed.val[0] = vqrshrun_n_s16(b, 4);
+    packed.val[1] = vqrshrun_n_s16(g, 4);
+    packed.val[2] = vqrshrun_n_s16(r, 4);
+    packed.val[3] = vdup_n_u8(255);
+    vst4_u8(dest, packed);
+}
 
-        const uint8x8_t tosigned = vdup_n_u8(0x80);
-        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
-        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
-        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
-        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
+static inline
+void convert_ycbcr_bgr_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
+{
+    int16x8_t cb0 = vqdmulhq_s16(cb, s2);
+    int16x8_t cr0 = vqdmulhq_s16(cr, s0);
+    int16x8_t cb1 = vqdmulhq_s16(cb, s3);
+    int16x8_t cr1 = vqdmulhq_s16(cr, s1);
+    int16x8_t r = vaddq_s16(y, cr0);
+    int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
+    int16x8_t b = vaddq_s16(y, cb1);
 
-        for (int y = 0; y < 8; ++y)
-        {
-            uint8x8_t u_y  = vld1_u8(result + y * 8 + 0);
-            uint8x8_t u_cb = vld1_u8(result + y * 8 + 64);
-            uint8x8_t u_cr = vld1_u8(result + y * 8 + 128);
+    // TODO
+    uint8x8x4_t packed;
+    packed.val[0] = vqrshrun_n_s16(b, 4);
+    packed.val[1] = vqrshrun_n_s16(g, 4);
+    packed.val[2] = vqrshrun_n_s16(r, 4);
+    packed.val[3] = vdup_n_u8(255);
+    //vst4_u8(dest, packed);
+}
 
-            int16x8_t s_y = vreinterpretq_s16_u16(vshll_n_u8(u_y, 4));
-            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
-            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
+static inline
+void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
+{
+    int16x8_t cb0 = vqdmulhq_s16(cb, s2);
+    int16x8_t cr0 = vqdmulhq_s16(cr, s0);
+    int16x8_t cb1 = vqdmulhq_s16(cb, s3);
+    int16x8_t cr1 = vqdmulhq_s16(cr, s1);
+    int16x8_t r = vaddq_s16(y, cr0);
+    int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
+    int16x8_t b = vaddq_s16(y, cb1);
 
-            convert_ycbcr_8x1_neon(dest, s_y, s_cb, s_cr, s0, s1, s2, s3);
-            dest += stride;
-        }
+    // TODO
+    uint8x8x4_t packed;
+    packed.val[0] = vqrshrun_n_s16(b, 4);
+    packed.val[1] = vqrshrun_n_s16(g, 4);
+    packed.val[2] = vqrshrun_n_s16(r, 4);
+    packed.val[3] = vdup_n_u8(255);
+    //vst4_u8(dest, packed);
+}
 
-        MANGO_UNREFERENCED_PARAMETER(width);
-        MANGO_UNREFERENCED_PARAMETER(height);
-    }
+// Generate 32 bit BGRA functions
+#define INNERLOOP      convert_ycbcr_bgra_8x1_neon
+#define FUNCTION_8x8   process_ycbcr_bgra_8x8_neon
+#define FUNCTION_8x16  process_ycbcr_bgra_8x16_neon
+#define FUNCTION_16x8  process_ycbcr_bgra_16x8_neon
+#define FUNCTION_16x16 process_ycbcr_bgra_16x16_neon
+#include "jpeg_process_neon.hpp"
+#undef INNERLOOP
+#undef FUNCTION_8x8
+#undef FUNCTION_8x16
+#undef FUNCTION_16x8
+#undef FUNCTION_16x16
 
-    void process_ycbcr_bgra_8x16_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
-    {
-        u8 result[64 * 4];
+// Generate 32 bit RGBA functions
+#define INNERLOOP      convert_ycbcr_rgba_8x1_neon
+#define FUNCTION_8x8   process_ycbcr_rgba_8x8_neon
+#define FUNCTION_8x16  process_ycbcr_rgba_8x16_neon
+#define FUNCTION_16x8  process_ycbcr_rgba_16x8_neon
+#define FUNCTION_16x16 process_ycbcr_rgba_16x16_neon
+#include "jpeg_process_neon.hpp"
+#undef INNERLOOP
+#undef FUNCTION_8x8
+#undef FUNCTION_8x16
+#undef FUNCTION_16x8
+#undef FUNCTION_16x16
 
-        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-        state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-        state->idct(result + 128, data + 128, state->block[2].qt); // Cb
-        state->idct(result + 192, data + 192, state->block[3].qt); // Cr
+// Generate 24 bit BGR functions
+#define INNERLOOP      convert_ycbcr_bgr_8x1_neon
+#define FUNCTION_8x8   process_ycbcr_bgr_8x8_neon
+#define FUNCTION_8x16  process_ycbcr_bgr_8x16_neon
+#define FUNCTION_16x8  process_ycbcr_bgr_16x8_neon
+#define FUNCTION_16x16 process_ycbcr_bgr_16x16_neon
+#include "jpeg_process_neon.hpp"
+#undef INNERLOOP
+#undef FUNCTION_8x8
+#undef FUNCTION_8x16
+#undef FUNCTION_16x8
+#undef FUNCTION_16x16
 
-        const uint8x8_t tosigned = vdup_n_u8(0x80);
-        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
-        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
-        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
-        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
-
-        for (int y = 0; y < 8; ++y)
-        {
-            uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
-            uint8x8_t u_y1 = vld1_u8(result + y * 16 + 8);
-            uint8x8_t u_cb = vld1_u8(result + y * 8 + 128);
-            uint8x8_t u_cr = vld1_u8(result + y * 8 + 192);
-
-            int16x8_t s_y0 = vreinterpretq_s16_u16(vshll_n_u8(u_y0, 4));
-            int16x8_t s_y1 = vreinterpretq_s16_u16(vshll_n_u8(u_y1, 4));
-            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
-            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
-
-            convert_ycbcr_8x1_neon(dest, s_y0, s_cb, s_cr, s0, s1, s2, s3);
-            dest += stride;
-
-            convert_ycbcr_8x1_neon(dest, s_y1, s_cb, s_cr, s0, s1, s2, s3);
-            dest += stride;
-        }
-
-        MANGO_UNREFERENCED_PARAMETER(width);
-        MANGO_UNREFERENCED_PARAMETER(height);
-    }
-
-    void process_ycbcr_bgra_16x8_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
-    {
-        u8 result[64 * 4];
-
-        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-        state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-        state->idct(result + 128, data + 128, state->block[2].qt); // Cb
-        state->idct(result + 192, data + 192, state->block[3].qt); // Cr
-
-        const uint8x8_t tosigned = vdup_n_u8(0x80);
-        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
-        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
-        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
-        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
-
-        for (int y = 0; y < 8; ++y)
-        {
-            uint8x8_t u_y0 = vld1_u8(result + y * 8 + 0);
-            uint8x8_t u_y1 = vld1_u8(result + y * 8 + 64);
-            uint8x8_t u_cb = vld1_u8(result + y * 8 + 128);
-            uint8x8_t u_cr = vld1_u8(result + y * 8 + 192);
-
-            int16x8_t s_y0 = vreinterpretq_s16_u16(vshll_n_u8(u_y0, 4));
-            int16x8_t s_y1 = vreinterpretq_s16_u16(vshll_n_u8(u_y1, 4));
-            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
-            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
-
-            int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
-            int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
-
-            convert_ycbcr_8x1_neon(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            convert_ycbcr_8x1_neon(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
-            dest += stride;
-        }
-
-        MANGO_UNREFERENCED_PARAMETER(width);
-        MANGO_UNREFERENCED_PARAMETER(height);
-    }
-
-    void process_ycbcr_16x16_neon(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
-    {
-        u8 result[64 * 6];
-
-        state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-        state->idct(result + 128, data +  64, state->block[1].qt); // Y1
-        state->idct(result +  64, data + 128, state->block[2].qt); // Y2
-        state->idct(result + 192, data + 192, state->block[3].qt); // Y3
-        state->idct(result + 256, data + 256, state->block[4].qt); // Cb
-        state->idct(result + 320, data + 320, state->block[5].qt); // Cr
-
-        const uint8x8_t tosigned = vdup_n_u8(0x80);
-        const int16x8_t s0 = vdupq_n_s16(JPEG_FIXED( 1.40200));
-        const int16x8_t s1 = vdupq_n_s16(JPEG_FIXED(-0.71414));
-        const int16x8_t s2 = vdupq_n_s16(JPEG_FIXED(-0.34414));
-        const int16x8_t s3 = vdupq_n_s16(JPEG_FIXED( 1.77200));
-
-        for (int y = 0; y < 8; ++y)
-        {
-            uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
-            uint8x8_t u_y1 = vld1_u8(result + y * 16 + 128);
-            uint8x8_t u_y2 = vld1_u8(result + y * 16 + 8);
-            uint8x8_t u_y3 = vld1_u8(result + y * 16 + 136);
-            uint8x8_t u_cb = vld1_u8(result + y * 8 + 256);
-            uint8x8_t u_cr = vld1_u8(result + y * 8 + 320);
-
-            int16x8_t s_y0 = vreinterpretq_s16_u16(vshll_n_u8(u_y0, 4));
-            int16x8_t s_y1 = vreinterpretq_s16_u16(vshll_n_u8(u_y1, 4));
-            int16x8_t s_y2 = vreinterpretq_s16_u16(vshll_n_u8(u_y2, 4));
-            int16x8_t s_y3 = vreinterpretq_s16_u16(vshll_n_u8(u_y3, 4));
-            int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
-            int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
-
-            int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
-            int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
-
-            convert_ycbcr_8x1_neon(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            convert_ycbcr_8x1_neon(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
-            dest += stride;
-
-            convert_ycbcr_8x1_neon(dest +  0, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            convert_ycbcr_8x1_neon(dest + 32, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
-            dest += stride;
-        }
-
-        MANGO_UNREFERENCED_PARAMETER(width);
-        MANGO_UNREFERENCED_PARAMETER(height);
-    }
+// Generate 24 bit RGB functions
+#define INNERLOOP      convert_ycbcr_rgb_8x1_neon
+#define FUNCTION_8x8   process_ycbcr_rgb_8x8_neon
+#define FUNCTION_8x16  process_ycbcr_rgb_8x16_neon
+#define FUNCTION_16x8  process_ycbcr_rgb_16x8_neon
+#define FUNCTION_16x16 process_ycbcr_rgb_16x16_neon
+#include "jpeg_process_neon.hpp"
+#undef INNERLOOP
+#undef FUNCTION_8x8
+#undef FUNCTION_8x16
+#undef FUNCTION_16x8
+#undef FUNCTION_16x16
 
 #endif // JPEG_ENABLE_NEON
 
