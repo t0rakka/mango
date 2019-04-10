@@ -52,6 +52,12 @@ namespace jpeg
 #define PACK_BGRA(y) \
     0xff000000 | (byteclamp(y + r) << 16) | (byteclamp(y + g) << 8) | byteclamp(y + b);
 
+#define PACK_RGBA(y) \
+    0xff000000 | (byteclamp(y + b) << 16) | (byteclamp(y + g) << 8) | byteclamp(y + r);
+
+#define PACK_COMPONENT(y, c) \
+    byteclamp(y + c);
+
 // ----------------------------------------------------------------------------
 // Generic C++ implementation
 // ----------------------------------------------------------------------------
@@ -182,6 +188,186 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
     }
 }
 
+void process_ycbcr_8bit(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+
+    const int luma_blocks = state->blocks - 2; // don't idct two last blocks (Cb, Cr)
+    for (int i = 0; i < luma_blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    // MCU size in blocks
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
+
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
+    {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
+        for (int xb = 0; xb < xsize; ++xb)
+        {
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u8);
+            u8* y_block = result + (yb * xsize + xb) * 64;
+
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
+            // process 8x8 block
+            for (int y = 0; y < ymax; ++y)
+            {
+                u8* d = dest_block;
+
+                for (int x = 0; x < xmax; ++x)
+                {
+                    d[x] = y_block[x];
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
+    }
+}
+
+void process_ycbcr_bgr(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    // MCU size in blocks
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
+
+    int cb_offset = state->frame[1].offset * 64;
+    int cb_xshift = state->frame[1].Hsf;
+    int cb_yshift = state->frame[1].Vsf;
+
+    int cr_offset = state->frame[2].offset * 64;
+    int cr_xshift = state->frame[2].Hsf;
+    int cr_yshift = state->frame[2].Vsf;
+
+    u8* cb_data = result + cb_offset;
+    u8* cr_data = result + cr_offset;
+
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
+    {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
+        for (int xb = 0; xb < xsize; ++xb)
+        {
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * 3;
+            u8* y_block = result + (yb * xsize + xb) * 64;
+            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
+            // process 8x8 block
+            for (int y = 0; y < ymax; ++y)
+            {
+                u8* d = dest_block;
+                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+
+                for (int x = 0; x < xmax; ++x)
+                {
+                    u8 Y = y_block[x];
+                    u8 cb = cb_scan[x >> cb_xshift];
+                    u8 cr = cr_scan[x >> cr_xshift];
+                    COMPUTE_CBCR(cb, cr);
+                    d[0] = PACK_COMPONENT(Y, b);
+                    d[1] = PACK_COMPONENT(Y, g);
+                    d[2] = PACK_COMPONENT(Y, r);
+                    d += 3;
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
+    }
+}
+
+void process_ycbcr_rgb(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    // MCU size in blocks
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
+
+    int cb_offset = state->frame[1].offset * 64;
+    int cb_xshift = state->frame[1].Hsf;
+    int cb_yshift = state->frame[1].Vsf;
+
+    int cr_offset = state->frame[2].offset * 64;
+    int cr_xshift = state->frame[2].Hsf;
+    int cr_yshift = state->frame[2].Vsf;
+
+    u8* cb_data = result + cb_offset;
+    u8* cr_data = result + cr_offset;
+
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
+    {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
+        for (int xb = 0; xb < xsize; ++xb)
+        {
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * 3;
+            u8* y_block = result + (yb * xsize + xb) * 64;
+            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
+            // process 8x8 block
+            for (int y = 0; y < ymax; ++y)
+            {
+                u8* d = dest_block;
+                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+
+                for (int x = 0; x < xmax; ++x)
+                {
+                    u8 Y = y_block[x];
+                    u8 cb = cb_scan[x >> cb_xshift];
+                    u8 cr = cr_scan[x >> cr_xshift];
+                    COMPUTE_CBCR(cb, cr);
+                    d[0] = PACK_COMPONENT(Y, r);
+                    d[1] = PACK_COMPONENT(Y, g);
+                    d[2] = PACK_COMPONENT(Y, b);
+                    d += 3;
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
+    }
+}
+
 void process_ycbcr_bgra(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
@@ -239,6 +425,71 @@ void process_ycbcr_bgra(u8* dest, int stride, const s16* data, ProcessState* sta
                     u8 cr = cr_scan[x >> cr_xshift];
                     COMPUTE_CBCR(cb, cr);
                     d[x] = PACK_BGRA(Y);
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
+    }
+}
+
+void process_ycbcr_rgba(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    // MCU size in blocks
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
+
+    int cb_offset = state->frame[1].offset * 64;
+    int cb_xshift = state->frame[1].Hsf;
+    int cb_yshift = state->frame[1].Vsf;
+
+    int cr_offset = state->frame[2].offset * 64;
+    int cr_xshift = state->frame[2].Hsf;
+    int cr_yshift = state->frame[2].Vsf;
+
+    u8* cb_data = result + cb_offset;
+    u8* cr_data = result + cr_offset;
+
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
+    {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
+        for (int xb = 0; xb < xsize; ++xb)
+        {
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u32);
+            u8* y_block = result + (yb * xsize + xb) * 64;
+            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
+            // process 8x8 block
+            for (int y = 0; y < ymax; ++y)
+            {
+                u32* d = reinterpret_cast<u32*>(dest_block);
+
+                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+
+                for (int x = 0; x < xmax; ++x)
+                {
+                    u8 Y = y_block[x];
+                    u8 cb = cb_scan[x >> cb_xshift];
+                    u8 cr = cr_scan[x >> cr_xshift];
+                    COMPUTE_CBCR(cb, cr);
+                    d[x] = PACK_RGBA(Y);
                 }
                 dest_block += stride;
                 y_block += 8;
@@ -403,6 +654,8 @@ void process_ycbcr_bgra_16x16(u8* dest, int stride, const s16* data, ProcessStat
 #undef COMPUTE_CBCR
 #undef COMPUTE_CMYK
 #undef PACK_BGRA
+#undef PACK_RGBA
+#undef PACK_COMPONENT
 
 #if defined(JPEG_ENABLE_NEON)
 

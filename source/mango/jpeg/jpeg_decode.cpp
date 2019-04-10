@@ -1274,8 +1274,8 @@ namespace jpeg
         {
             case JPEG_U8_Y:
                 processState.process_y           = process_y_8bit;
-                /* TODO
                 processState.process_ycbcr       = process_ycbcr_8bit;
+                /* TODO
                 processState.process_ycbcr_8x8   = process_ycbcr_8bit_8x8;
                 processState.process_ycbcr_8x16  = process_ycbcr_8bit_8x16;
                 processState.process_ycbcr_16x8  = process_ycbcr_8bit_16x8;
@@ -1284,8 +1284,8 @@ namespace jpeg
                 break;
             case JPEG_U8_BGR:
                 processState.process_y           = process_y_24bit;
-                /* TODO
                 processState.process_ycbcr       = process_ycbcr_bgr;
+                /* TODO
                 processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
                 processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16;
                 processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8;
@@ -1294,8 +1294,8 @@ namespace jpeg
                 break;
             case JPEG_U8_RGB:
                 processState.process_y           = process_y_24bit;
-                /* TODO
                 processState.process_ycbcr       = process_ycbcr_rgb;
+                /* TODO
                 processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
                 processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16;
                 processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8;
@@ -1313,8 +1313,8 @@ namespace jpeg
                 break;
             case JPEG_U8_RGBA:
                 processState.process_y           = process_y_32bit;
-                /* TODO
                 processState.process_ycbcr       = process_ycbcr_rgba;
+                /* TODO
                 processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
                 processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16;
                 processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8;
@@ -1406,9 +1406,10 @@ namespace jpeg
                 processState.process = processState.process_ycbcr;
                 processState.clipped = processState.process_ycbcr;
 
+                // detect optimized cases
                 if (blocks_in_mcu <= 6)
                 {
-                    // detect optimized cases
+#if 1 // hax
                     if (xblock == 8 && yblock == 8)
                     {
                         processState.process = processState.process_ycbcr_8x8;
@@ -1428,6 +1429,7 @@ namespace jpeg
                     {
                         processState.process = processState.process_ycbcr_16x16;
                     }
+#endif
                 }
                 break;
 
