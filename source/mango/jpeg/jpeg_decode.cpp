@@ -1275,32 +1275,29 @@ namespace jpeg
             case JPEG_U8_Y:
                 processState.process_y           = process_y_8bit;
                 processState.process_ycbcr       = process_ycbcr_8bit;
-                /* TODO
-                processState.process_ycbcr_8x8   = process_ycbcr_8bit_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_8bit_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_8bit_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_8bit_16x16;
-                */
+                // TODO: optimize
+                processState.process_ycbcr_8x8   = nullptr; //process_ycbcr_8bit_8x8;
+                processState.process_ycbcr_8x16  = nullptr; //process_ycbcr_8bit_8x16;
+                processState.process_ycbcr_16x8  = nullptr; //process_ycbcr_8bit_16x8;
+                processState.process_ycbcr_16x16 = nullptr; //process_ycbcr_8bit_16x16;
                 break;
             case JPEG_U8_BGR:
                 processState.process_y           = process_y_24bit;
                 processState.process_ycbcr       = process_ycbcr_bgr;
-                /* TODO
-                processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16;
-                */
+                // TODO: optimize
+                processState.process_ycbcr_8x8   = nullptr; //process_ycbcr_bgr_8x8;
+                processState.process_ycbcr_8x16  = nullptr; //process_ycbcr_bgr_8x16;
+                processState.process_ycbcr_16x8  = nullptr; //process_ycbcr_bgr_16x8;
+                processState.process_ycbcr_16x16 = nullptr; //process_ycbcr_bgr_16x16;
                 break;
             case JPEG_U8_RGB:
                 processState.process_y           = process_y_24bit;
                 processState.process_ycbcr       = process_ycbcr_rgb;
-                /* TODO
-                processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16;
-                */
+                // TODO: optimize
+                processState.process_ycbcr_8x8   = nullptr; //process_ycbcr_rgb_8x8;
+                processState.process_ycbcr_8x16  = nullptr; //process_ycbcr_rgb_8x16;
+                processState.process_ycbcr_16x8  = nullptr; //process_ycbcr_rgb_16x8;
+                processState.process_ycbcr_16x16 = nullptr; //process_ycbcr_rgb_16x16;
                 break;
             case JPEG_U8_BGRA:
                 processState.process_y           = process_y_32bit;
@@ -1314,12 +1311,11 @@ namespace jpeg
             case JPEG_U8_RGBA:
                 processState.process_y           = process_y_32bit;
                 processState.process_ycbcr       = process_ycbcr_rgba;
-                /* TODO
-                processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16;
-                */
+                // TODO: optimize
+                processState.process_ycbcr_8x8   = nullptr; //process_ycbcr_rgba_8x8;
+                processState.process_ycbcr_8x16  = nullptr; //process_ycbcr_rgba_8x16;
+                processState.process_ycbcr_16x8  = nullptr; //process_ycbcr_rgba_16x8;
+                processState.process_ycbcr_16x16 = nullptr; //process_ycbcr_rgba_16x16;
                 break;
         }
 
@@ -1409,27 +1405,29 @@ namespace jpeg
                 // detect optimized cases
                 if (blocks_in_mcu <= 6)
                 {
-#if 1 // hax
                     if (xblock == 8 && yblock == 8)
                     {
-                        processState.process = processState.process_ycbcr_8x8;
+                        if (processState.process_ycbcr_8x8)
+                            processState.process = processState.process_ycbcr_8x8;
                     }
 
                     if (xblock == 8 && yblock == 16)
                     {
-                        processState.process = processState.process_ycbcr_8x16;
+                        if (processState.process_ycbcr_8x16)
+                            processState.process = processState.process_ycbcr_8x16;
                     }
 
                     if (xblock == 16 && yblock == 8)
                     {
-                        processState.process = processState.process_ycbcr_16x8;
+                        if (processState.process_ycbcr_16x8)
+                            processState.process = processState.process_ycbcr_16x8;
                     }
 
                     if (xblock == 16 && yblock == 16)
                     {
-                        processState.process = processState.process_ycbcr_16x16;
+                        if (processState.process_ycbcr_16x16)
+                            processState.process = processState.process_ycbcr_16x16;
                     }
-#endif
                 }
                 break;
 
