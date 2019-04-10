@@ -403,11 +403,10 @@ void convert_ycbcr_rgba_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t 
     int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
     int16x8_t b = vaddq_s16(y, cb1);
 
-    // TODO
     uint8x8x4_t packed;
-    packed.val[0] = vqrshrun_n_s16(b, 4);
+    packed.val[0] = vqrshrun_n_s16(r, 4);
     packed.val[1] = vqrshrun_n_s16(g, 4);
-    packed.val[2] = vqrshrun_n_s16(r, 4);
+    packed.val[2] = vqrshrun_n_s16(b, 4);
     packed.val[3] = vdup_n_u8(255);
     vst4_u8(dest, packed);
 }
@@ -423,13 +422,11 @@ void convert_ycbcr_bgr_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
     int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
     int16x8_t b = vaddq_s16(y, cb1);
 
-    // TODO
-    uint8x8x4_t packed;
+    uint8x8x3_t packed;
     packed.val[0] = vqrshrun_n_s16(b, 4);
     packed.val[1] = vqrshrun_n_s16(g, 4);
     packed.val[2] = vqrshrun_n_s16(r, 4);
-    packed.val[3] = vdup_n_u8(255);
-    //vst4_u8(dest, packed);
+    vst3_u8(dest, packed);
 }
 
 static inline
@@ -443,13 +440,11 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
     int16x8_t g = vaddq_s16(vaddq_s16(y, cb0), cr1);
     int16x8_t b = vaddq_s16(y, cb1);
 
-    // TODO
-    uint8x8x4_t packed;
-    packed.val[0] = vqrshrun_n_s16(b, 4);
+    uint8x8x3_t packed;
+    packed.val[0] = vqrshrun_n_s16(r, 4);
     packed.val[1] = vqrshrun_n_s16(g, 4);
-    packed.val[2] = vqrshrun_n_s16(r, 4);
-    packed.val[3] = vdup_n_u8(255);
-    //vst4_u8(dest, packed);
+    packed.val[2] = vqrshrun_n_s16(b, 4);
+    vst3_u8(dest, packed);
 }
 
 // Generate 32 bit BGRA functions
