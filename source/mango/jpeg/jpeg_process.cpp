@@ -449,12 +449,14 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 
 // Generate 32 bit BGRA functions
 #define INNERLOOP      convert_ycbcr_bgra_8x1_neon
+#define XSTEP          32
 #define FUNCTION_8x8   process_ycbcr_bgra_8x8_neon
 #define FUNCTION_8x16  process_ycbcr_bgra_8x16_neon
 #define FUNCTION_16x8  process_ycbcr_bgra_16x8_neon
 #define FUNCTION_16x16 process_ycbcr_bgra_16x16_neon
 #include "jpeg_process_neon.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -462,12 +464,14 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 
 // Generate 32 bit RGBA functions
 #define INNERLOOP      convert_ycbcr_rgba_8x1_neon
+#define XSTEP          32
 #define FUNCTION_8x8   process_ycbcr_rgba_8x8_neon
 #define FUNCTION_8x16  process_ycbcr_rgba_8x16_neon
 #define FUNCTION_16x8  process_ycbcr_rgba_16x8_neon
 #define FUNCTION_16x16 process_ycbcr_rgba_16x16_neon
 #include "jpeg_process_neon.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -475,12 +479,14 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 
 // Generate 24 bit BGR functions
 #define INNERLOOP      convert_ycbcr_bgr_8x1_neon
+#define XSTEP          24
 #define FUNCTION_8x8   process_ycbcr_bgr_8x8_neon
 #define FUNCTION_8x16  process_ycbcr_bgr_8x16_neon
 #define FUNCTION_16x8  process_ycbcr_bgr_16x8_neon
 #define FUNCTION_16x16 process_ycbcr_bgr_16x16_neon
 #include "jpeg_process_neon.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -488,12 +494,14 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 
 // Generate 24 bit RGB functions
 #define INNERLOOP      convert_ycbcr_rgb_8x1_neon
+#define XSTEP          24
 #define FUNCTION_8x8   process_ycbcr_rgb_8x8_neon
 #define FUNCTION_8x16  process_ycbcr_rgb_8x16_neon
 #define FUNCTION_16x8  process_ycbcr_rgb_16x8_neon
 #define FUNCTION_16x16 process_ycbcr_rgb_16x16_neon
 #include "jpeg_process_neon.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -746,12 +754,14 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 
 // Generate 32 bit BGRA functions
 #define INNERLOOP      convert_ycbcr_bgra_8x1_sse2
+#define XSTEP          32
 #define FUNCTION_8x8   process_ycbcr_bgra_8x8_sse2
 #define FUNCTION_8x16  process_ycbcr_bgra_8x16_sse2
 #define FUNCTION_16x8  process_ycbcr_bgra_16x8_sse2
 #define FUNCTION_16x16 process_ycbcr_bgra_16x16_sse2
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -759,12 +769,14 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 
 // Generate 32 bit RGBA functions
 #define INNERLOOP      convert_ycbcr_rgba_8x1_sse2
+#define XSTEP          32
 #define FUNCTION_8x8   process_ycbcr_rgba_8x8_sse2
 #define FUNCTION_8x16  process_ycbcr_rgba_8x16_sse2
 #define FUNCTION_16x8  process_ycbcr_rgba_16x8_sse2
 #define FUNCTION_16x16 process_ycbcr_rgba_16x16_sse2
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -772,12 +784,14 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 
 // Generate 24 bit BGR functions
 #define INNERLOOP      convert_ycbcr_bgr_8x1_sse3
+#define XSTEP          24
 #define FUNCTION_8x8   process_ycbcr_bgr_8x8_sse3
 #define FUNCTION_8x16  process_ycbcr_bgr_8x16_sse3
 #define FUNCTION_16x8  process_ycbcr_bgr_16x8_sse3
 #define FUNCTION_16x16 process_ycbcr_bgr_16x16_sse3
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8
@@ -785,12 +799,14 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 
 // Generate 24 bit RGB functions
 #define INNERLOOP      convert_ycbcr_rgb_8x1_sse3
+#define XSTEP          24
 #define FUNCTION_8x8   process_ycbcr_rgb_8x8_sse3
 #define FUNCTION_8x16  process_ycbcr_rgb_8x16_sse3
 #define FUNCTION_16x8  process_ycbcr_rgb_16x8_sse3
 #define FUNCTION_16x16 process_ycbcr_rgb_16x16_sse3
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP
+#undef XSTEP
 #undef FUNCTION_8x8
 #undef FUNCTION_8x16
 #undef FUNCTION_16x8

@@ -143,8 +143,8 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
         cb1 = _mm_add_epi16(cb1, tosigned);
         cr1 = _mm_add_epi16(cr1, tosigned);
 
-        INNERLOOP(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-        INNERLOOP(dest + 32, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP(dest + 0 * XSTEP, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP(dest + 1 * XSTEP, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
 
         cb0 = _mm_unpackhi_epi8(cb, cb);
@@ -160,8 +160,8 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
         cb1 = _mm_add_epi16(cb1, tosigned);
         cr1 = _mm_add_epi16(cr1, tosigned);
 
-        INNERLOOP(dest +  0, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-        INNERLOOP(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP(dest + 0 * XSTEP, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP(dest + 1 * XSTEP, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
     }
 
@@ -215,12 +215,12 @@ void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, 
         cb1 = _mm_add_epi16(cb1, tosigned);
         cr1 = _mm_add_epi16(cr1, tosigned);
 
-        INNERLOOP(dest +  0, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-        INNERLOOP(dest + 32, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP(dest + 0 * XSTEP, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP(dest + 1 * XSTEP, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
 
-        INNERLOOP(dest +  0, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-        INNERLOOP(dest + 32, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP(dest + 0 * XSTEP, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP(dest + 1 * XSTEP, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
 
         cb0 = _mm_unpackhi_epi8(cb, cb);
@@ -236,12 +236,12 @@ void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, 
         cb1 = _mm_add_epi16(cb1, tosigned);
         cr1 = _mm_add_epi16(cr1, tosigned);
 
-        INNERLOOP(dest +  0, _mm_unpacklo_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
-        INNERLOOP(dest + 32, _mm_unpacklo_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP(dest + 0 * XSTEP, _mm_unpacklo_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP(dest + 1 * XSTEP, _mm_unpacklo_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
 
-        INNERLOOP(dest +  0, _mm_unpackhi_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
-        INNERLOOP(dest + 32, _mm_unpackhi_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP(dest + 0 * XSTEP, _mm_unpackhi_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP(dest + 1 * XSTEP, _mm_unpackhi_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
     }
 

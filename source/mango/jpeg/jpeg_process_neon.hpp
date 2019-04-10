@@ -105,8 +105,8 @@
             int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
             int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
 
-            INNERLOOP(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            INNERLOOP(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            INNERLOOP(dest + 0 * XSTEP, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            INNERLOOP(dest + 1 * XSTEP, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
         }
 
@@ -150,12 +150,12 @@
             int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
             int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
 
-            INNERLOOP(dest +  0, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            INNERLOOP(dest + 32, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            INNERLOOP(dest + 0 * XSTEP, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            INNERLOOP(dest + 1 * XSTEP, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
 
-            INNERLOOP(dest +  0, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-            INNERLOOP(dest + 32, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+            INNERLOOP(dest + 0 * XSTEP, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+            INNERLOOP(dest + 1 * XSTEP, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
             dest += stride;
         }
 
