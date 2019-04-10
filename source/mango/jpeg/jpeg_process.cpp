@@ -389,7 +389,6 @@ void process_YCbCr_16x16(u8* dest, int stride, const s16* data, ProcessState* st
         packed.val[1] = vqrshrun_n_s16(g, 4);
         packed.val[2] = vqrshrun_n_s16(r, 4);
         packed.val[3] = vdup_n_u8(255);
-
         vst4_u8(dest, packed);
     }
 

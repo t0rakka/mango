@@ -80,7 +80,7 @@ namespace
 
     void imageEncode(Stream& stream, const Surface& surface, float quality)
     {
-        jpeg::EncodeImage(stream, surface, quality);
+        jpeg::encodeImage(stream, surface, quality);
     }
 
 } // namespace

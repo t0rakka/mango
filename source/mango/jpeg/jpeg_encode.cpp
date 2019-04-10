@@ -38,28 +38,14 @@ namespace
     using namespace mango;
     using namespace jpeg;
 
-    enum jpegSampleFormat
+    static SampleFormat g_format_table [] =
     {
-        JPEG_FORMAT_YUV400,
-        JPEG_FORMAT_BGR888,
-        JPEG_FORMAT_RGB888,
-        JPEG_FORMAT_BGRA8888,
-        JPEG_FORMAT_RGBA8888,
+        { JPEG_U8_Y,    FORMAT_L8 },
+        { JPEG_U8_BGR,  FORMAT_B8G8R8 },
+        { JPEG_U8_RGB,  FORMAT_R8G8B8 },
+        { JPEG_U8_BGRA, FORMAT_B8G8R8A8 },
+        { JPEG_U8_RGBA, FORMAT_R8G8B8A8 },
     };
-
-    struct xxx
-    {
-        Format source;
-        jpegSampleFormat sample;
-    } g_format_table[] =
-    {
-        { FORMAT_L8, JPEG_FORMAT_YUV400 },
-        { FORMAT_B8G8R8, JPEG_FORMAT_BGR888 },
-        { FORMAT_R8G8B8, JPEG_FORMAT_RGB888 },
-        { FORMAT_B8G8R8A8, JPEG_FORMAT_BGRA8888 },
-        { FORMAT_R8G8B8A8, JPEG_FORMAT_RGBA8888 },
-    };
-    const int g_format_table_size = sizeof(g_format_table) / sizeof(g_format_table[0]);
 
     const u16 luminance_dc_code_table [] =
     {
@@ -277,11 +263,11 @@ namespace
 
         void (*read_format) (jpeg_encode* jp, s16 *block, u8* input, int rows, int cols, int incr);
 
-        jpeg_encode(jpegSampleFormat format, u32 width, u32 height, u32 stride, u32 quality);
+        jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(u32 quality);
-        void write_markers(BigEndianStream& p, u32 format, u32 width, u32 height);
+        void write_markers(BigEndianStream& p, Sample sample, u32 width, u32 height);
     };
 
     struct HuffmanEncoder
@@ -572,7 +558,7 @@ namespace
     // read_xxx_format
     // ----------------------------------------------------------------------------
 
-    void read_400_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    void read_y_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -602,7 +588,7 @@ namespace
         }
     }
 
-    void read_bgr888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    void read_bgr_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -646,7 +632,7 @@ namespace
         }
     }
 
-    void read_rgb888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    void read_rgb_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -690,7 +676,7 @@ namespace
         }
     }
 
-    void read_bgra8888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    void read_bgra_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -734,7 +720,7 @@ namespace
         }
     }
 
-    void read_rgba8888_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    void read_rgba_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -782,7 +768,7 @@ namespace
     // jpeg_encode methods
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(jpegSampleFormat format, u32 width, u32 height, u32 stride, u32 quality)
+    jpeg_encode::jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality)
     {
         int bytes_per_pixel = 0;
 
@@ -797,34 +783,34 @@ namespace
         channel[2].component = 3;
         channel[2].qtable = ICqt;
 
-        switch (format)
+        switch (sample)
         {
-            case JPEG_FORMAT_YUV400:
-                read_format = read_400_format;
+            case JPEG_U8_Y:
+                read_format = read_y_format;
                 bytes_per_pixel = 1;
                 channel_count = 1;
                 break;
 
-            case JPEG_FORMAT_BGR888:
-                read_format = read_bgr888_format;
+            case JPEG_U8_BGR:
+                read_format = read_bgr_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
 
-            case JPEG_FORMAT_RGB888:
-                read_format = read_rgb888_format;
+            case JPEG_U8_RGB:
+                read_format = read_rgb_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
 
-            case JPEG_FORMAT_BGRA8888:
-                read_format = read_bgra8888_format;
+            case JPEG_U8_BGRA:
+                read_format = read_bgra_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
                 break;
 
-            case JPEG_FORMAT_RGBA8888:
-                read_format = read_rgba8888_format;
+            case JPEG_U8_RGBA:
+                read_format = read_rgba_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
                 break;
@@ -886,7 +872,7 @@ namespace
         }
     }
 
-    void jpeg_encode::write_markers(BigEndianStream& p, u32 format, u32 width, u32 height)
+    void jpeg_encode::write_markers(BigEndianStream& p, Sample sample, u32 width, u32 height)
     {
         // Start of image marker
         p.write16(0xffd8);
@@ -912,16 +898,16 @@ namespace
 
         u8 number_of_components = 0;
 
-        switch (format)
+        switch (sample)
         {
-            case JPEG_FORMAT_YUV400:
+            case JPEG_U8_Y:
                 number_of_components = 1;
                 break;
 
-            case JPEG_FORMAT_RGB888:
-            case JPEG_FORMAT_BGR888:
-            case JPEG_FORMAT_BGRA8888:
-            case JPEG_FORMAT_RGBA8888:
+            case JPEG_U8_RGB:
+            case JPEG_U8_BGR:
+            case JPEG_U8_BGRA:
+            case JPEG_U8_RGBA:
                 number_of_components = 3;
                 break;
         }
@@ -975,16 +961,16 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(const Surface& surface, Stream& stream, int quality, jpegSampleFormat sample_format)
+    void encodeJPEG(const Surface& surface, Stream& stream, int quality, Sample sample)
     {
         u8* input = surface.image;
 
-        jpeg_encode jp(sample_format, surface.width, surface.height, surface.stride, quality);
+        jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
         BigEndianStream s(stream);
 
         // writing marker data
-        jp.write_markers(s, sample_format, surface.width, surface.height);
+        jp.write_markers(s, sample, surface.width, surface.height);
 
         ConcurrentQueue queue;
 
@@ -1094,38 +1080,43 @@ namespace
 namespace jpeg
 {
 
-    void EncodeImage(Stream& stream, const Surface& surface, float quality)
+    SampleFormat getSampleFormat(const Format& format)
+    {
+        // set default format
+        SampleFormat result { JPEG_U8_RGBA, FORMAT_R8G8B8A8 };
+
+        // find better match
+        for (auto sf : g_format_table)
+        {
+            if (format == sf.format)
+            {
+                result = sf;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    void encodeImage(Stream& stream, const Surface& surface, float quality)
     {
         // configure quality
         quality = clamp(1.0f - quality, 0.0f, 1.0f);
         const u32 iq = u32(quality * 1024);
 
-        // set default format
-        Format sourceFormat = FORMAT_R8G8B8A8;
-        jpegSampleFormat sample = JPEG_FORMAT_RGBA8888;
-
-        // search for a better match
-        for (int i = 0; i < g_format_table_size; ++i)
-        {
-            if (surface.format == g_format_table[i].source)
-            {
-                sourceFormat = g_format_table[i].source;
-                sample = g_format_table[i].sample;
-                break;
-            }
-        }
+        SampleFormat sf = getSampleFormat(surface.format);
 
         // encode
-        if (surface.format == sourceFormat)
+        if (surface.format == sf.format)
         {
-            encodeJPEG(surface, stream, iq, sample);
+            encodeJPEG(surface, stream, iq, sf.sample);
         }
         else
         {
             // convert source surface to format supported in the encoder
-            Bitmap temp(surface.width, surface.height, sourceFormat);
+            Bitmap temp(surface.width, surface.height, sf.format);
             temp.blit(0, 0, surface);
-            encodeJPEG(temp, stream, iq, sample);
+            encodeJPEG(temp, stream, iq, sf.sample);
         }
     }
 

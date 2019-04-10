@@ -80,6 +80,21 @@ namespace jpeg
     template <typename T>
     using AlignedVector = std::vector<T, mango::AlignedAllocator<T>>;
 
+    enum Sample
+    {
+        JPEG_U8_Y,
+        JPEG_U8_BGR,
+        JPEG_U8_RGB,
+        JPEG_U8_BGRA,
+        JPEG_U8_RGBA,
+    };
+
+    struct SampleFormat
+    {
+        Sample sample;
+        Format format;
+    };
+
     struct Header
     {
         int width;
@@ -99,19 +114,19 @@ namespace jpeg
     struct QuantTable
     {
         u16* table;  // Quantization table
-        int     bits;   // Quantization table precision (8 or 16 bits)
+        int  bits;   // Quantization table precision (8 or 16 bits)
     };
 
 #ifndef JPEG_ENABLE_MODERN_HUFFMAN
 
     struct HuffTable
     {
-        u8   size[17];
-        u8   value[256];
+        u8  size[17];
+        u8  value[256];
 
-        int     maxcode[18];
-        int     valoffset[18+1];
-        int     lookup[JPEG_HUFF_LOOKUP_SIZE];
+        int maxcode[18];
+        int valoffset[18+1];
+        int lookup[JPEG_HUFF_LOOKUP_SIZE];
 
         void configure();
     };
@@ -120,14 +135,14 @@ namespace jpeg
 
     struct HuffTable
     {
-        u8       size[17];
-        u8       value[256];
+        u8  size[17];
+        u8  value[256];
 
         // acceleration tables
-        DataType    maxcode[18];
-        u8*      valueAddress[19];
-        u8       lookupSize[JPEG_HUFF_LOOKUP_SIZE];
-        u8       lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+        DataType maxcode[18];
+        u8* valueAddress[19];
+        u8  lookupSize[JPEG_HUFF_LOOKUP_SIZE];
+        u8  lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
         void configure();
     };
@@ -290,17 +305,17 @@ namespace jpeg
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
 
-	    void (*idct)(u8* dest, const s16* data, const u16* qt);
-        void (*process)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*clipped)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+	    void (*idct) (u8* dest, const s16* data, const u16* qt);
+        void (*process            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*clipped            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-        void (*process_Y          )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr      )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_CMYK       )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_8x8  )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_8x16 )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_16x8 )(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_YCbCr_16x16)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_Y          ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr      ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_CMYK       ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_8x8  ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_8x16 ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_16x8 ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_YCbCr_16x16) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     };
 
     // ----------------------------------------------------------------------------
@@ -386,7 +401,6 @@ namespace jpeg
         void finishProgressiveMT();
 
     public:
-
         Header header;
         Memory exif_memory; // Exif block, if one is present
         Memory icc_memory; // ICC color profile block, if one is present
@@ -450,6 +464,7 @@ namespace jpeg
     void process_YCbCr_16x16_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 #endif
 
-	void EncodeImage(Stream& stream, const Surface& surface, float quality);
+    SampleFormat getSampleFormat(const Format& format);
+	void encodeImage(Stream& stream, const Surface& surface, float quality);
 
 } // namespace jpeg
