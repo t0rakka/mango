@@ -56,7 +56,7 @@ namespace jpeg
 // Generic C++ implementation
 // ----------------------------------------------------------------------------
 
-void process_y(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+void process_y_8bit(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64];
     state->idct(result, data, state->block[0].qt); // Y
@@ -64,6 +64,46 @@ void process_y(u8* dest, int stride, const s16* data, ProcessState* state, int w
     for (int y = 0; y < height; ++y)
     {
         std::memcpy(dest, result + y * 8, width);
+        dest += stride;
+    }
+}
+
+void process_y_24bit(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64];
+    state->idct(result, data, state->block[0].qt); // Y
+
+    stride -= width * 3;
+
+    for (int y = 0; y < height; ++y)
+    {
+        const u8* s = result + y * 8;
+        for (int x = 0; x < width; ++x)
+        {
+            u8 v = s[x];
+            dest[0] = v;
+            dest[1] = v;
+            dest[2] = v;
+            dest += 3;
+        }
+        dest += stride;
+    }
+}
+
+void process_y_32bit(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64];
+    state->idct(result, data, state->block[0].qt); // Y
+
+    for (int y = 0; y < height; ++y)
+    {
+        const u8* s = result + y * 8;
+        u32* d = reinterpret_cast<u32*>(dest);
+        for (int x = 0; x < width; ++x)
+        {
+            u32 v = s[x];
+            d[x] = 0xff000000 | (v << 16) | (v << 8) | v;
+        }
         dest += stride;
     }
 }

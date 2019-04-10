@@ -440,7 +440,11 @@ namespace jpeg
 
     void idct8                          (u8* dest, const s16* data, const u16* qt);
     void idct12                         (u8* dest, const s16* data, const u16* qt);
-    void process_y                      (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
+    void process_y_8bit                 (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_y_24bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_y_32bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
     void process_cmyk_bgra              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_8x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
