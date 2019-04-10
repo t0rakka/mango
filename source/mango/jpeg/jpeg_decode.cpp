@@ -10,7 +10,6 @@
 
 namespace jpeg
 {
-
     using namespace mango;
 
 #if defined(JPEG_ENABLE_SSE2) || defined(JPEG_ENABLE_NEON)
@@ -229,55 +228,8 @@ namespace jpeg
         : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
         , blockVector(nullptr)
     {
-        // configure default implementation
-        decodeState.zigzagTable = g_zigzag_table_variant;
-        processState.idct = idct8;
-
-        processState.process_Y           = process_Y;
-        processState.process_YCbCr       = process_YCbCr;
-        processState.process_CMYK        = process_CMYK;
-        processState.process_YCbCr_8x8   = process_YCbCr_8x8;
-        processState.process_YCbCr_8x16  = process_YCbCr_8x16;
-        processState.process_YCbCr_16x8  = process_YCbCr_16x8;
-        processState.process_YCbCr_16x16 = process_YCbCr_16x16;
-
         restartInterval = 0;
         restartCounter = 0;
-
-        u64 cpuFlags = getCPUFlags();
-
-#if defined(JPEG_ENABLE_SIMD) && !defined(JPEG_ENABLE_NEON)
-        decodeState.zigzagTable = g_zigzag_table_variant;
-        processState.idct = idct_simd;
-#endif
-
-#if defined(JPEG_ENABLE_NEON)
-        // NEON is built-in; no runtime check in this version
-        {
-            decodeState.zigzagTable = g_zigzag_table_standard;
-            processState.idct = idct_neon;
-
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_neon;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_neon;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_neon;
-        }
-#endif
-
-#if defined(JPEG_ENABLE_SSE2)
-        if (cpuFlags & CPU_SSE2)
-        {
-            decodeState.zigzagTable = g_zigzag_table_standard;
-            processState.idct = idct_sse2;
-
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse2;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse2;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse2;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse2;
-        }
-#endif
-
-        MANGO_UNREFERENCED_PARAMETER(cpuFlags);
 
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
@@ -296,11 +248,36 @@ namespace jpeg
         header.yblock = 0;
         header.format = Format();
 
+        cpu_flags = getCPUFlags();
+
+        // configure default implementation
+        decodeState.zigzagTable = g_zigzag_table_variant;
+        processState.idct = idct8;
+
+#if defined(JPEG_ENABLE_SIMD)
+        decodeState.zigzagTable = g_zigzag_table_variant;
+        processState.idct = idct_simd;
+#endif
+
+#if defined(JPEG_ENABLE_NEON)
+        decodeState.zigzagTable = g_zigzag_table_standard;
+        processState.idct = idct_neon;
+#endif
+
+#if defined(JPEG_ENABLE_SSE2)
+        if (cpu_flags & CPU_SSE2)
+        {
+            decodeState.zigzagTable = g_zigzag_table_standard;
+            processState.idct = idct_sse2;
+        }
+#endif
+
         if (isJPEG(memory))
         {
             parse(memory, false);
         }
 
+        // precision is not known until parse() above is complete
         if (precision == 12)
         {
             // Force 12 bit idct
@@ -539,7 +516,7 @@ namespace jpeg
         precision = p[2];
         ysize = uload16be(p + 3);
         xsize = uload16be(p + 5);
-        u8 comps = p[7];
+        components = p[7];
         p += 8;
 
         jpegPrint("  Image: %d x %d x %d\n", xsize, ysize, precision);
@@ -602,9 +579,9 @@ namespace jpeg
         blocks_in_mcu = 0;
         int offset = 0;
 
-        processState.frames = comps;
+        processState.frames = components;
 
-        for (int i = 0; i < comps; ++i)
+        for (int i = 0; i < components; ++i)
         {
             Frame& frame = processState.frame[i];
 
@@ -616,7 +593,7 @@ namespace jpeg
             frame.offset = offset;
             p += 3;
 
-            if (comps == 1)
+            if (components == 1)
             {
                 // Optimization: force block size to 8x8 with grayscale images
                 frame.Hsf = 1;
@@ -646,7 +623,7 @@ namespace jpeg
 
         // Compute frame sampling factors against maximum sampling factor,
         // then convert them into power-of-two presentation.
-        for (int i = 0; i < comps; ++i)
+        for (int i = 0; i < components; ++i)
         {
             Frame& frame = processState.frame[i];
             frame.Hsf = u32_log2(Hmax / frame.Hsf);
@@ -678,55 +655,12 @@ namespace jpeg
         jpegPrint("  Image: %d x %d\n", xsize, ysize);
         jpegPrint("  Clip: %d x %d\n", xclip, yclip);
 
-        // determine jpeg type
-        switch (comps)
-        {
-            case 1:
-                processState.process = processState.process_Y;
-                processState.clipped = processState.process_Y;
-                break;
-
-            case 3:
-                processState.process = processState.process_YCbCr;
-                processState.clipped = processState.process_YCbCr;
-
-                if (blocks_in_mcu <= 6)
-                {
-                    // detect optimized cases
-                    if (xblock == 8 && yblock == 8)
-                    {
-                        processState.process = processState.process_YCbCr_8x8;
-                    }
-
-                    if (xblock == 8 && yblock == 16)
-                    {
-                        processState.process = processState.process_YCbCr_8x16;
-                    }
-
-                    if (xblock == 16 && yblock == 8)
-                    {
-                        processState.process = processState.process_YCbCr_16x8;
-                    }
-
-                    if (xblock == 16 && yblock == 16)
-                    {
-                        processState.process = processState.process_YCbCr_16x16;
-                    }
-                }
-                break;
-
-            case 4:
-                processState.process = processState.process_CMYK;
-                processState.clipped = processState.process_CMYK;
-                break;
-        }
-
         // configure header
         header.width = xsize;
         header.height = ysize;
         header.xblock = xblock;
         header.yblock = yblock;
-        header.format = comps > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
+        header.format = components > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
 
         MANGO_UNREFERENCED_PARAMETER(length);
     }
@@ -1333,10 +1267,139 @@ namespace jpeg
         return false;
     }
 
+    void Parser::configureCPU(Sample sample)
+    {
+        // configure default implementation
+        processState.process_y = process_y;
+        switch (sample)
+        {
+            case JPEG_U8_Y:
+                break;
+            case JPEG_U8_BGR:
+                // TODO
+                break;
+            case JPEG_U8_RGB:
+                // TODO
+                break;
+            case JPEG_U8_BGRA:
+                processState.process_cmyk        = process_cmyk_bgra;
+                processState.process_ycbcr       = process_ycbcr_bgra;
+                processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16;
+                break;
+            case JPEG_U8_RGBA:
+                // TODO
+                break;
+        }
+
+#if defined(JPEG_ENABLE_NEON)
+        // NEON is built-in; no runtime check in this version
+        switch (sample)
+        {
+            case JPEG_U8_Y:
+                break;
+            case JPEG_U8_BGR:
+                // TODO
+                break;
+            case JPEG_U8_RGB:
+                // TODO
+                break;
+            case JPEG_U8_BGRA:
+                processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
+                break;
+            case JPEG_U8_RGBA:
+                // TODO
+                break;
+        }
+#endif
+
+#if defined(JPEG_ENABLE_SSE2)
+        if (cpu_flags & CPU_SSE3)
+        {
+            switch (sample)
+            {
+                case JPEG_U8_Y:
+                    break;
+                case JPEG_U8_BGR:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse3;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse3;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse3;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse3;
+                    break;
+                case JPEG_U8_RGB:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse3;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse3;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse3;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse3;
+                    break;
+                case JPEG_U8_BGRA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_sse2;
+                    break;
+                case JPEG_U8_RGBA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_sse2;
+                    break;
+            }
+        }
+#endif
+
+        // determine jpeg type -> select innerloops
+        switch (components)
+        {
+            case 1:
+                processState.process = processState.process_y;
+                processState.clipped = processState.process_y;
+                break;
+
+            case 3:
+                processState.process = processState.process_ycbcr;
+                processState.clipped = processState.process_ycbcr;
+
+                if (blocks_in_mcu <= 6)
+                {
+                    // detect optimized cases
+                    if (xblock == 8 && yblock == 8)
+                    {
+                        processState.process = processState.process_ycbcr_8x8;
+                    }
+
+                    if (xblock == 8 && yblock == 16)
+                    {
+                        processState.process = processState.process_ycbcr_8x16;
+                    }
+
+                    if (xblock == 16 && yblock == 8)
+                    {
+                        processState.process = processState.process_ycbcr_16x8;
+                    }
+
+                    if (xblock == 16 && yblock == 16)
+                    {
+                        processState.process = processState.process_ycbcr_16x16;
+                    }
+                }
+                break;
+
+            case 4:
+                processState.process = processState.process_cmyk;
+                processState.clipped = processState.process_cmyk;
+                break;
+        }
+    }
+
     Status Parser::decode(Surface& target)
     {
         Status status;
-
         status.success = true;
         status.enableDirectDecode = true;
 
@@ -1352,14 +1415,19 @@ namespace jpeg
         int count = mcus * blocks_in_mcu * 64;
         blockVector = reinterpret_cast<s16*>(aligned_malloc(count * sizeof(s16)));
 
+        // find best matching format
+        SampleFormat sf = getSampleFormat(target.format);
+
+        // configure innerloops based on CPU caps
+        configureCPU(sf.sample);
+
         // target surface size has to match (clipping isn't yet supported)
         if (target.width != xsize || target.height != ysize)
         {
             status.enableDirectDecode = false;
         }
 
-        // pixel format has to match (we don't yet support convert-on-write)
-        if (target.format != header.format)
+        if (target.format != sf.format)
         {
             status.enableDirectDecode = false;
         }
