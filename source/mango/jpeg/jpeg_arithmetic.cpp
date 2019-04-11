@@ -30,7 +30,7 @@
 
 namespace
 {
-
+    using namespace mango;
     using namespace jpeg;
 
     const u32 jpeg_aritab[] =
@@ -138,8 +138,8 @@ namespace
 
 } // namespace
 
-namespace jpeg
-{
+namespace mango {
+namespace jpeg {
 
     // ----------------------------------------------------------------------------
     // arithmetic decoder
@@ -607,6 +607,7 @@ namespace jpeg
     }
 
 } // namespace jpeg
+} // namespace mango
 
 #else // MANGO_ENABLE_LICENSE_BSD
 

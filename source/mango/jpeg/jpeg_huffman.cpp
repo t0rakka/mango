@@ -5,8 +5,8 @@
 #include <cstring>
 #include "jpeg.hpp"
 
-namespace jpeg
-{
+namespace mango {
+namespace jpeg {
 
     // ----------------------------------------------------------------------------
     // bextr()
@@ -567,3 +567,4 @@ namespace jpeg
 #endif
     
 } // namespace jpeg
+} // namespace mango

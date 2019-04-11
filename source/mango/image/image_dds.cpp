@@ -1,14 +1,15 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
+#include <mango/core/system.hpp>
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 
 #define ID "[ImageDecoder.DDS] "
-
-//#define DEBUG_DDS
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
     Format(bits, Format::type, Format::order, s0, s1, s2, s3)
@@ -445,10 +446,9 @@ namespace
 
         void processFourCC()
         {
-#ifdef DEBUG_DDS
-            const char* c = reinterpret_cast<const char*>(&fourCC);
-            printf(".dds fourcc: %c%c%c%c\n", c[0], c[1],c[2], c[3]);
-#endif
+            char temp[4];
+            ustore32(temp, fourCC);
+            debugPrint(".dds fourcc: %c%c%c%c\n", temp[0], temp[1], temp[2], temp[3]);
 
             switch (fourCC)
             {
@@ -554,14 +554,12 @@ namespace
             bBitMask = p.read32();
             aBitMask = p.read32();
 
-#ifdef DEBUG_DDS
-            printf(".dds format: [bits: %d, red: %d, green: %d, blue: %d, alpha: %d]\n",
+            debugPrint(".dds format: [bits: %d, red: %d, green: %d, blue: %d, alpha: %d]\n",
                 rgbBitCount,
                 u32_count_bits(rBitMask),
                 u32_count_bits(gBitMask),
                 u32_count_bits(bBitMask),
                 u32_count_bits(aBitMask));
-#endif
 
             if (flags & DDPF_FOURCC)
             {
@@ -650,10 +648,8 @@ namespace
             caps4 = p.read32();
             p += 4;
 
-#ifdef DEBUG_DDS
-            printf(".dds image: [%d x %d]\n", width, height);
-            printf("     depth: %d, mips: %d\n", depth, mipMapCount);
-#endif
+            debugPrint(".dds image: [%d x %d]\n", width, height);
+            debugPrint("     depth: %d, mips: %d\n", depth, mipMapCount);
 
             if (pixelFormat.flags & DDPF_FOURCC)
             {
@@ -674,9 +670,7 @@ namespace
 
         void processDX10(const HeaderDX10& header)
         {
-#ifdef DEBUG_DDS
-            printf("DXGI format: %d\n", header.dxgiFormat);
-#endif
+            debugPrint("DXGI format: %d\n", header.dxgiFormat);
 
             if (header.dxgiFormat >= u32(g_dxgi_table_size))
             {

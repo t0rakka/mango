@@ -4,9 +4,8 @@
 */
 #include "jpeg.hpp"
 
-namespace jpeg
-{
-    using namespace mango;
+namespace mango {
+namespace jpeg {
 
 // ----------------------------------------------------------------------------
 // color conversion
@@ -1101,3 +1100,4 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 #endif // JPEG_ENABLE_SSE2
 
 } // namespace jpeg
+} // namespace mango

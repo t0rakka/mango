@@ -1,19 +1,19 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
+
+//#define MANGO_ENABLE_DEBUG_PRINT
+#define JPEG_ENABLE_THREAD
+#define JPEG_ENABLE_SIMD
+#define JPEG_ENABLE_MODERN_HUFFMAN
 
 #include <vector>
 #include <string>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
-
-//#define JPEG_ENABLE_PRINT
-#define JPEG_ENABLE_THREAD
-#define JPEG_ENABLE_SIMD
-#define JPEG_ENABLE_MODERN_HUFFMAN
 
 #define JPEG_MAX_BLOCKS_IN_MCU   10  // Maximum # of blocks per MCU in the JPEG specification
 #define JPEG_MAX_COMPS_IN_SCAN   4   // JPEG limit on # of components in one scan
@@ -39,16 +39,8 @@
 
 #endif
 
-#ifdef JPEG_ENABLE_PRINT
-
-    #define jpegPrint(...) printf(__VA_ARGS__)
-#else
-
-    #define jpegPrint(...)
-#endif
-
-namespace jpeg
-{
+namespace mango {
+namespace jpeg {
 
     // ----------------------------------------------------------------------------
     // typedefs
@@ -540,3 +532,4 @@ namespace jpeg
 	void encodeImage(Stream& stream, const Surface& surface, float quality);
 
 } // namespace jpeg
+} // namespace mango

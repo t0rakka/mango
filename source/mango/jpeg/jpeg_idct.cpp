@@ -128,8 +128,8 @@ namespace
 
 } // namespace
 
-namespace jpeg
-{
+namespace mango {
+namespace jpeg {
 
     // ------------------------------------------------------------------------------------------------
     // Generic C++ implementation
@@ -680,3 +680,4 @@ static void stbi__idct_simd(u8 *out, const short data[64], const u16* qt)
 #endif // JPEG_ENABLE_NEON
 
 } // namespace jpeg
+} // namespace mango
