@@ -970,17 +970,16 @@ void convert_ycbcr_bgr_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
     g = _mm_packus_epi16(g, g);
     b = _mm_packus_epi16(b, b);
 
+    __m128i bg = _mm_unpacklo_epi64(b, g);
+
     constexpr u8 n = 0x80;
 
-    __m128i b0 = _mm_shuffle_epi8(b, _mm_setr_epi8(0, n, n, 1, n, n, 2, n, n, 3, n, n, 4, n, n, 5));
-    __m128i g0 = _mm_shuffle_epi8(g, _mm_setr_epi8(n, 0, n, n, 1, n, n, 2, n, n, 3, n, n, 4, n, n));
+    __m128i bg0 = _mm_shuffle_epi8(bg, _mm_setr_epi8(0, 8, n, 1, 9, n, 2, 10, n, 3, 11, n, 4, 12, n, 5));
+    __m128i bg1 = _mm_shuffle_epi8(bg, _mm_setr_epi8(13, n, 6, 14, n, 7, 15, n, n, n, n, n, n, n, n, n));
     __m128i r0 = _mm_shuffle_epi8(r, _mm_setr_epi8(n, n, 0, n, n, 1, n, n, 2, n, n, 3, n, n, 4, n));
-    __m128i b1 = _mm_shuffle_epi8(b, _mm_setr_epi8(n, n, 6, n, n, 7, n, n, n, n, n, n, n, n, n, n));
-    __m128i g1 = _mm_shuffle_epi8(g, _mm_setr_epi8(5, n, n, 6, n, n, 7, n, n, n, n, n, n, n, n, n));
     __m128i r1 = _mm_shuffle_epi8(r, _mm_setr_epi8(n, 5, n, n, 6, n, n, 7, n, n, n, n, n, n, n, n));
-
-    __m128i bgr0 = _mm_or_si128(b0, _mm_or_si128(g0, r0));
-    __m128i bgr1 = _mm_or_si128(b1, _mm_or_si128(g1, r1));
+    __m128i bgr0 = _mm_or_si128(bg0, r0);
+    __m128i bgr1 = _mm_or_si128(bg1, r1);
 
     _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), bgr0);
     _mm_storel_epi64(reinterpret_cast<__m128i *>(dest + 16), bgr1);
@@ -1029,17 +1028,16 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
     g = _mm_packus_epi16(g, g);
     b = _mm_packus_epi16(b, b);
 
+    __m128i rg = _mm_unpacklo_epi64(r, g);
+
     constexpr u8 n = 0x80;
 
-    __m128i r0 = _mm_shuffle_epi8(r, _mm_setr_epi8(0, n, n, 1, n, n, 2, n, n, 3, n, n, 4, n, n, 5));
-    __m128i g0 = _mm_shuffle_epi8(g, _mm_setr_epi8(n, 0, n, n, 1, n, n, 2, n, n, 3, n, n, 4, n, n));
+    __m128i rg0 = _mm_shuffle_epi8(rg, _mm_setr_epi8(0, 8, n, 1, 9, n, 2, 10, n, 3, 11, n, 4, 12, n, 5));
+    __m128i rg1 = _mm_shuffle_epi8(rg, _mm_setr_epi8(13, n, 6, 14, n, 7, 15, n, n, n, n, n, n, n, n, n));
     __m128i b0 = _mm_shuffle_epi8(b, _mm_setr_epi8(n, n, 0, n, n, 1, n, n, 2, n, n, 3, n, n, 4, n));
-    __m128i r1 = _mm_shuffle_epi8(r, _mm_setr_epi8(n, n, 6, n, n, 7, n, n, n, n, n, n, n, n, n, n));
-    __m128i g1 = _mm_shuffle_epi8(g, _mm_setr_epi8(5, n, n, 6, n, n, 7, n, n, n, n, n, n, n, n, n));
     __m128i b1 = _mm_shuffle_epi8(b, _mm_setr_epi8(n, 5, n, n, 6, n, n, 7, n, n, n, n, n, n, n, n));
-
-    __m128i rgb0 = _mm_or_si128(r0, _mm_or_si128(g0, b0));
-    __m128i rgb1 = _mm_or_si128(r1, _mm_or_si128(g1, b1));
+    __m128i rgb0 = _mm_or_si128(rg0, b0);
+    __m128i rgb1 = _mm_or_si128(rg1, b1);
 
     _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), rgb0);
     _mm_storel_epi64(reinterpret_cast<__m128i *>(dest + 16), rgb1);
