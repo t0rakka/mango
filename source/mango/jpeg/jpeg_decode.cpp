@@ -8,10 +8,8 @@
 #include <mango/core/thread.hpp>
 #include "jpeg.hpp"
 
-namespace jpeg
-{
-
-    using namespace mango;
+namespace mango {
+namespace jpeg {
 
 #if defined(JPEG_ENABLE_SSE2) || defined(JPEG_ENABLE_NEON)
 
@@ -229,55 +227,8 @@ namespace jpeg
         : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
         , blockVector(nullptr)
     {
-        // configure default implementation
-        decodeState.zigzagTable = g_zigzag_table_variant;
-        processState.idct = idct8;
-
-        processState.process_Y           = process_Y;
-        processState.process_YCbCr       = process_YCbCr;
-        processState.process_CMYK        = process_CMYK;
-        processState.process_YCbCr_8x8   = process_YCbCr_8x8;
-        processState.process_YCbCr_8x16  = process_YCbCr_8x16;
-        processState.process_YCbCr_16x8  = process_YCbCr_16x8;
-        processState.process_YCbCr_16x16 = process_YCbCr_16x16;
-
         restartInterval = 0;
         restartCounter = 0;
-
-        u64 cpuFlags = getCPUFlags();
-
-#if defined(JPEG_ENABLE_SIMD) && !defined(JPEG_ENABLE_NEON)
-        decodeState.zigzagTable = g_zigzag_table_variant;
-        processState.idct = idct_simd;
-#endif
-
-#if defined(JPEG_ENABLE_NEON)
-        // NEON is built-in; no runtime check in this version
-        {
-            decodeState.zigzagTable = g_zigzag_table_standard;
-            processState.idct = idct_neon;
-
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_neon;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_neon;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_neon;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_neon;
-        }
-#endif
-
-#if defined(JPEG_ENABLE_SSE2)
-        if (cpuFlags & CPU_SSE2)
-        {
-            decodeState.zigzagTable = g_zigzag_table_standard;
-            processState.idct = idct_sse2;
-
-            processState.process_YCbCr_8x8   = process_YCbCr_8x8_sse2;
-            processState.process_YCbCr_8x16  = process_YCbCr_8x16_sse2;
-            processState.process_YCbCr_16x8  = process_YCbCr_16x8_sse2;
-            processState.process_YCbCr_16x16 = process_YCbCr_16x16_sse2;
-        }
-#endif
-
-        MANGO_UNREFERENCED_PARAMETER(cpuFlags);
 
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
@@ -296,11 +247,36 @@ namespace jpeg
         header.yblock = 0;
         header.format = Format();
 
+        cpu_flags = getCPUFlags();
+
+        // configure default implementation
+        decodeState.zigzagTable = g_zigzag_table_variant;
+        processState.idct = idct8;
+
+#if defined(JPEG_ENABLE_SIMD)
+        decodeState.zigzagTable = g_zigzag_table_variant;
+        processState.idct = idct_simd;
+#endif
+
+#if defined(JPEG_ENABLE_NEON)
+        decodeState.zigzagTable = g_zigzag_table_standard;
+        processState.idct = idct_neon;
+#endif
+
+#if defined(JPEG_ENABLE_SSE2)
+        if (cpu_flags & CPU_SSE2)
+        {
+            decodeState.zigzagTable = g_zigzag_table_standard;
+            processState.idct = idct_sse2;
+        }
+#endif
+
         if (isJPEG(memory))
         {
             parse(memory, false);
         }
 
+        // precision is not known until parse() above is complete
         if (precision == 12)
         {
             // Force 12 bit idct
@@ -370,37 +346,37 @@ namespace jpeg
 
         //if (*p != 0xff)
         ++p; // skip last byte (warning! if it is 0xff a marker can be potentially missed)
-        jpegPrint("  Seek: %d bytes\n", int(p - start));
+        debugPrint("  Seek: %d bytes\n", int(p - start));
 
         return p;
     }
 
     void Parser::processSOI()
     {
-        jpegPrint("[ SOI ]\n");
+        debugPrint("[ SOI ]\n");
         restartInterval = 0;
     }
 
     void Parser::processEOI()
     {
-        jpegPrint("[ EOI ]\n");
+        debugPrint("[ EOI ]\n");
     }
 
     void Parser::processCOM(u8* p)
     {
-        jpegPrint("[ COM ]\n");
+        debugPrint("[ COM ]\n");
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
     void Parser::processTEM(u8* p)
     {
-        jpegPrint("[ TEM ]\n");
+        debugPrint("[ TEM ]\n");
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
     void Parser::processRES(u8* p)
     {
-        jpegPrint("[ RES ]\n");
+        debugPrint("[ RES ]\n");
 
         // Reserved for jpeg extensions
         MANGO_UNREFERENCED_PARAMETER(p);
@@ -408,7 +384,7 @@ namespace jpeg
 
     void Parser::processJPG(u8* p)
     {
-        jpegPrint("[ JPG ]\n");
+        debugPrint("[ JPG ]\n");
 
         // Reserved for jpeg extensions
         MANGO_UNREFERENCED_PARAMETER(p);
@@ -416,7 +392,7 @@ namespace jpeg
 
     void Parser::processJPG(u8* p, u16 marker)
     {
-        jpegPrint("[ JPG%d ]\n", int(marker - MARKER_JPG0));
+        debugPrint("[ JPG%d ]\n", int(marker - MARKER_JPG0));
 
         // Reserved for jpeg extensions
         MANGO_UNREFERENCED_PARAMETER(p);
@@ -425,7 +401,7 @@ namespace jpeg
 
     void Parser::processAPP(u8* p, u16 marker)
     {
-        jpegPrint("[ APP%d ]\n", int(marker - MARKER_APP0));
+        debugPrint("[ APP%d ]\n", int(marker - MARKER_APP0));
 
         int size = uload16be(p) - 2;
         p += 2;
@@ -442,7 +418,7 @@ namespace jpeg
                     p += 5;
                     size -= 5;
 
-                    jpegPrint("  JFIF: %i bytes\n", size);
+                    debugPrint("  JFIF: %i bytes\n", size);
 
                     int version = p[0] * 100 + p[1];
                     int units = p[2]; // 0 - no units, 1 - dots per inch, 2 - dots per cm
@@ -459,9 +435,9 @@ namespace jpeg
                         case 2: unit_str = "cpi"; break;
                     }
 
-                    jpegPrint("    version: %i\n", version);
-                    jpegPrint("    density: %i x %i %s\n", Xdensity, Ydensity, unit_str);
-                    jpegPrint("    thumbnail: %i x %i\n", Xthumbnail, Ythumbnail);
+                    debugPrint("    version: %i\n", version);
+                    debugPrint("    density: %i x %i %s\n", Xdensity, Ydensity, unit_str);
+                    debugPrint("    thumbnail: %i x %i\n", Xthumbnail, Ythumbnail);
 
                     // TODO: process thumbnail / store JFIF block
                     MANGO_UNREFERENCED_PARAMETER(version);
@@ -485,7 +461,7 @@ namespace jpeg
                     p += 6;
                     size -= 6;
                     exif_memory = Memory(p, size);
-                    jpegPrint("  EXIF: %d bytes\n", size);
+                    debugPrint("  EXIF: %d bytes\n", size);
                 }
 
                 // TODO: detect and support XMP
@@ -502,7 +478,7 @@ namespace jpeg
                     p += 12;
                     size -= 12;
                     icc_memory = Memory(p, size);
-                    jpegPrint("  ICC: %d bytes\n", size);
+                    debugPrint("  ICC: %d bytes\n", size);
                 }
 
                 break;
@@ -518,7 +494,7 @@ namespace jpeg
                     p += 6;
                     size -= 6;
                     exif_memory = Memory(p, size);
-                    jpegPrint("  EXIF: %d bytes\n", size);
+                    debugPrint("  EXIF: %d bytes\n", size);
                 }
 
                 break;
@@ -528,7 +504,7 @@ namespace jpeg
 
     void Parser::processSOF(u8* p, u16 marker)
     {
-        jpegPrint("[ SOF%d ]\n", int(marker - MARKER_SOF0));
+        debugPrint("[ SOF%d ]\n", int(marker - MARKER_SOF0));
 
         is_progressive = false;
         is_arithmetic = false;
@@ -539,10 +515,10 @@ namespace jpeg
         precision = p[2];
         ysize = uload16be(p + 3);
         xsize = uload16be(p + 5);
-        u8 comps = p[7];
+        components = p[7];
         p += 8;
 
-        jpegPrint("  Image: %d x %d x %d\n", xsize, ysize, precision);
+        debugPrint("  Image: %d x %d x %d\n", xsize, ysize, precision);
 
         is_arithmetic = marker > MARKER_SOF7;
         std::string compression = is_arithmetic ? "Arithmetic" : "Huffman";
@@ -568,8 +544,8 @@ namespace jpeg
             case MARKER_SOF15: encoding = "Differential lossless"; break;
         }
 
-        jpegPrint("  Encoding: %s\n", encoding.c_str());
-        jpegPrint("  Compression: %s\n", compression.c_str());
+        debugPrint("  Encoding: %s\n", encoding.c_str());
+        debugPrint("  Compression: %s\n", compression.c_str());
 
         m_info = encoding;
         m_info += "  ";
@@ -602,9 +578,9 @@ namespace jpeg
         blocks_in_mcu = 0;
         int offset = 0;
 
-        processState.frames = comps;
+        processState.frames = components;
 
-        for (int i = 0; i < comps; ++i)
+        for (int i = 0; i < components; ++i)
         {
             Frame& frame = processState.frame[i];
 
@@ -616,7 +592,7 @@ namespace jpeg
             frame.offset = offset;
             p += 3;
 
-            if (comps == 1)
+            if (components == 1)
             {
                 // Optimization: force block size to 8x8 with grayscale images
                 frame.Hsf = 1;
@@ -636,7 +612,7 @@ namespace jpeg
                 }
             }
 
-            jpegPrint("  Frame: %d, compid: %d, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
+            debugPrint("  Frame: %d, compid: %d, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
                 i, frame.compid, frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
 
             frames.push_back(frame);
@@ -646,7 +622,7 @@ namespace jpeg
 
         // Compute frame sampling factors against maximum sampling factor,
         // then convert them into power-of-two presentation.
-        for (int i = 0; i < comps; ++i)
+        for (int i = 0; i < components; ++i)
         {
             Frame& frame = processState.frame[i];
             frame.Hsf = u32_log2(Hmax / frame.Hsf);
@@ -656,8 +632,8 @@ namespace jpeg
         xblock = 8 * Hmax;
         yblock = 8 * Vmax;
 
-        jpegPrint("  Blocks per MCU: %d\n", blocks_in_mcu);
-        jpegPrint("  MCU size: %d x %d\n", xblock, yblock);
+        debugPrint("  Blocks per MCU: %d\n", blocks_in_mcu);
+        debugPrint("  MCU size: %d x %d\n", xblock, yblock);
 
         // Align to next MCU boundary
         int xmask = xblock - 1;
@@ -674,72 +650,29 @@ namespace jpeg
         xclip = xsize % xblock;
         yclip = ysize % yblock;
 
-        jpegPrint("  %d MCUs (%d x %d) -> (%d x %d)\n", mcus, xmcu, ymcu, xmcu*xblock, ymcu*yblock);
-        jpegPrint("  Image: %d x %d\n", xsize, ysize);
-        jpegPrint("  Clip: %d x %d\n", xclip, yclip);
-
-        // determine jpeg type
-        switch (comps)
-        {
-            case 1:
-                processState.process = processState.process_Y;
-                processState.clipped = processState.process_Y;
-                break;
-
-            case 3:
-                processState.process = processState.process_YCbCr;
-                processState.clipped = processState.process_YCbCr;
-
-                if (blocks_in_mcu <= 6)
-                {
-                    // detect optimized cases
-                    if (xblock == 8 && yblock == 8)
-                    {
-                        processState.process = processState.process_YCbCr_8x8;
-                    }
-
-                    if (xblock == 8 && yblock == 16)
-                    {
-                        processState.process = processState.process_YCbCr_8x16;
-                    }
-
-                    if (xblock == 16 && yblock == 8)
-                    {
-                        processState.process = processState.process_YCbCr_16x8;
-                    }
-
-                    if (xblock == 16 && yblock == 16)
-                    {
-                        processState.process = processState.process_YCbCr_16x16;
-                    }
-                }
-                break;
-
-            case 4:
-                processState.process = processState.process_CMYK;
-                processState.clipped = processState.process_CMYK;
-                break;
-        }
+        debugPrint("  %d MCUs (%d x %d) -> (%d x %d)\n", mcus, xmcu, ymcu, xmcu*xblock, ymcu*yblock);
+        debugPrint("  Image: %d x %d\n", xsize, ysize);
+        debugPrint("  Clip: %d x %d\n", xclip, yclip);
 
         // configure header
         header.width = xsize;
         header.height = ysize;
         header.xblock = xblock;
         header.yblock = yblock;
-        header.format = comps > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
+        header.format = components > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
 
         MANGO_UNREFERENCED_PARAMETER(length);
     }
 
     u8* Parser::processSOS(u8* p, u8* end)
     {
-        jpegPrint("[ SOS ]\n");
+        debugPrint("[ SOS ]\n");
 
         u16 length = uload16be(p);
         decodeState.comps_in_scan = p[2]; // Ns
         p += 3;
 
-        jpegPrint("  components: %i\n", decodeState.comps_in_scan);
+        debugPrint("  components: %i\n", decodeState.comps_in_scan);
         MANGO_UNREFERENCED_PARAMETER(length);
 
         decodeState.blocks = 0;
@@ -772,7 +705,7 @@ namespace jpeg
             const int size = frame->Hsf * frame->Vsf;
             int offset = frame->offset;
 
-            jpegPrint("  Component: %i, DC: %i, AC: %i, offset: %d, size: %d\n", cs, dc, ac, frame->offset, size);
+            debugPrint("  Component: %i, DC: %i, AC: %i, offset: %d, size: %d\n", cs, dc, ac, frame->offset, size);
 
             for (int j = 0; j < size; ++j)
             {
@@ -793,7 +726,7 @@ namespace jpeg
                     block.table.ac = &huffTable[1][ac];
                 }
 
-                jpegPrint("      - offset: %d, pred: %d,\n", offset * 64, frameIndex);
+                debugPrint("      - offset: %d, pred: %d,\n", offset * 64, frameIndex);
                 ++offset;
                 ++decodeState.blocks;
             }
@@ -812,7 +745,7 @@ namespace jpeg
         decodeState.successiveLow = Al;
         decodeState.successiveHigh = Ah;
 
-        jpegPrint("    Spectral range: (%d, %d)\n", Ss, Se);
+        debugPrint("    Spectral range: (%d, %d)\n", Ss, Se);
 
         bool dc_scan = (decodeState.spectralStart == 0);
         bool refine_scan = (decodeState.successiveHigh != 0);
@@ -842,12 +775,12 @@ namespace jpeg
                 {
                     if (!refine_scan)
                     {
-                        jpegPrint("  * decode_dc_first()\n");
+                        debugPrint("  * decode_dc_first()\n");
                         decodeState.decode = arith_decode_dc_first;
                     }
                     else
                     {
-                        jpegPrint("  * decode_dc_refine()\n");
+                        debugPrint("  * decode_dc_refine()\n");
                         decodeState.decode = arith_decode_dc_refine;
                     }
                 }
@@ -855,12 +788,12 @@ namespace jpeg
                 {
                     if (!refine_scan)
                     {
-                        jpegPrint("  * decode_ac_first()\n");
+                        debugPrint("  * decode_ac_first()\n");
                         decodeState.decode = arith_decode_ac_first;
                     }
                     else
                     {
-                        jpegPrint("  * decode_ac_refine()\n");
+                        debugPrint("  * decode_ac_refine()\n");
                         decodeState.decode = arith_decode_ac_refine;
                     }
                 }
@@ -895,12 +828,12 @@ namespace jpeg
                 {
                     if (!refine_scan)
                     {
-                        jpegPrint("  * decode_dc_first()\n");
+                        debugPrint("  * decode_dc_first()\n");
                         decodeState.decode = huff_decode_dc_first;
                     }
                     else
                     {
-                        jpegPrint("  * decode_dc_refine()\n");
+                        debugPrint("  * decode_dc_refine()\n");
                         decodeState.decode = huff_decode_dc_refine;
                     }
                 }
@@ -908,12 +841,12 @@ namespace jpeg
                 {
                     if (!refine_scan)
                     {
-                        jpegPrint("  * decode_ac_first()\n");
+                        debugPrint("  * decode_ac_first()\n");
                         decodeState.decode = huff_decode_ac_first;
                     }
                     else
                     {
-                        jpegPrint("  * decode_ac_refine()\n");
+                        debugPrint("  * decode_ac_refine()\n");
                         decodeState.decode = huff_decode_ac_refine;
                     }
                 }
@@ -935,7 +868,7 @@ namespace jpeg
 
     void Parser::processDQT(u8* p)
     {
-        jpegPrint("[ DQT ]\n");
+        debugPrint("[ DQT ]\n");
 
         u16 Lq = uload16be(p); // Quantization table definition length
         p += 2;
@@ -948,11 +881,11 @@ namespace jpeg
             u8 Tq = (x >> 0) & 0xf; // Quantization table destination identifier (0..3)
 
             const int bits = (Pq + 1) * 8;
-            jpegPrint("  Quantization table #%i element precision: %i bits\n", Tq, bits);
+            debugPrint("  Quantization table #%i element precision: %i bits\n", Tq, bits);
 
             if (Tq >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                jpegPrint("  Incorrect quantization table.\n");
+                debugPrint("  Incorrect quantization table.\n");
                 return;
             }
 
@@ -977,7 +910,7 @@ namespace jpeg
                     break;
 
                 default:
-                    jpegPrint("  Incorrect quantization table element precision.\n");
+                    debugPrint("  Incorrect quantization table element precision.\n");
                     break;
             }
 
@@ -987,7 +920,7 @@ namespace jpeg
 
     void Parser::processDHT(u8* p)
     {
-        jpegPrint("[ DHT ]\n");
+        debugPrint("[ DHT ]\n");
 
         int Lh = uload16be(p); // Huffman table definition length
         p += 2;
@@ -1001,14 +934,14 @@ namespace jpeg
 
             if (Tc >= 2 || Th >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                jpegPrint("  Incorrect huffman table.\n");
+                debugPrint("  Incorrect huffman table.\n");
                 return;
             }
 
             HuffTable& table = huffTable[Tc][Th];
 
-            jpegPrint("  Huffman table #%i table class: %i\n", Th, Tc);
-            jpegPrint("    codes: ");
+            debugPrint("  Huffman table #%i table class: %i\n", Th, Tc);
+            debugPrint("    codes: ");
 
             int count = 0;
 
@@ -1017,11 +950,11 @@ namespace jpeg
                 u8 L = *p++; // Number of Huffman codes of length i bits
                 table.size[i] = L;
                 count += L;
-                jpegPrint("%i ", L);
+                debugPrint("%i ", L);
             }
 
             Lh -= 17;
-            jpegPrint("\n");
+            debugPrint("\n");
 
             for (int i = 0; i < count; ++i)
             {
@@ -1035,14 +968,14 @@ namespace jpeg
 
     void Parser::processDAC(u8* p)
     {
-        jpegPrint("[ DAC ]\n");
+        debugPrint("[ DAC ]\n");
 
         u16 La = uload16be(p); // Arithmetic coding conditioning definition length
         p += 2;
 
         int n = (La - 2) / 2;
 
-        jpegPrint("  n: %i\n", n);
+        debugPrint("  n: %i\n", n);
 
         for (int i = 0; i < n; ++i)
         {
@@ -1066,13 +999,13 @@ namespace jpeg
                     break;
             }
 
-            jpegPrint("  Tc: %i, Tb: %i, Cs: %i\n", Tc, Tb, Cs);
+            debugPrint("  Tc: %i, Tb: %i, Cs: %i\n", Tc, Tb, Cs);
         }
     }
 
     void Parser::processDNL(u8* p)
     {
-        jpegPrint("[ DNL ]\n");
+        debugPrint("[ DNL ]\n");
 
         u16 Ld = uload16be(p + 0); // Define number of lines segment length
         u16 NL = uload16be(p + 2); // Number of lines
@@ -1082,7 +1015,7 @@ namespace jpeg
 
     void Parser::processDRI(u8* p)
     {
-        jpegPrint("[ DRI ]\n");
+        debugPrint("[ DRI ]\n");
 
         int Lh = uload16be(p + 0); // length
         if (Lh != 4)
@@ -1091,12 +1024,12 @@ namespace jpeg
         }
 
         restartInterval = uload16be(p + 2); // number of MCU in restart interval
-        jpegPrint("  Restart interval: %i\n", restartInterval);
+        debugPrint("  Restart interval: %i\n", restartInterval);
     }
 
     void Parser::processDHP(u8* p)
     {
-        jpegPrint("[ DHP ]\n");
+        debugPrint("[ DHP ]\n");
 
         // TODO: "Define Hierarchical Progression" marker
         MANGO_UNREFERENCED_PARAMETER(p);
@@ -1104,7 +1037,7 @@ namespace jpeg
 
     void Parser::processEXP(u8* p)
     {
-        jpegPrint("[ EXP ]\n");
+        debugPrint("[ EXP ]\n");
 
         u16 Le = uload16be(p); // Expand reference components segment length
         u8 x = p[2];
@@ -1276,13 +1209,13 @@ namespace jpeg
                     break;
 
                 default:
-                    jpegPrint("[ 0x%x ]\n", marker);
+                    debugPrint("[ 0x%x ]\n", marker);
                     p = seekMarker(p, end);
                     break;
             }
 
             u64 time1 = timer.us();
-            jpegPrint("  Time: %d us\n\n", int(time1 - time0));
+            debugPrint("  Time: %d us\n\n", int(time1 - time0));
 
             MANGO_UNREFERENCED_PARAMETER(time0);
             MANGO_UNREFERENCED_PARAMETER(time1);
@@ -1333,10 +1266,222 @@ namespace jpeg
         return false;
     }
 
+    void Parser::configureCPU(Sample sample)
+    {
+        const char* simd = "";
+
+        // configure default implementation
+        switch (sample)
+        {
+            case JPEG_U8_Y:
+                processState.process_y           = process_y_8bit;
+                processState.process_ycbcr       = process_ycbcr_8bit;
+                processState.process_ycbcr_8x8   = nullptr;
+                processState.process_ycbcr_8x16  = nullptr;
+                processState.process_ycbcr_16x8  = nullptr;
+                processState.process_ycbcr_16x16 = nullptr;
+                break;
+            case JPEG_U8_BGR:
+                processState.process_y           = process_y_24bit;
+                processState.process_ycbcr       = process_ycbcr_bgr;
+                processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16;
+                break;
+            case JPEG_U8_RGB:
+                processState.process_y           = process_y_24bit;
+                processState.process_ycbcr       = process_ycbcr_rgb;
+                processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
+                processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16;
+                processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8;
+                processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16;
+                break;
+            case JPEG_U8_BGRA:
+                processState.process_y           = process_y_32bit;
+                processState.process_cmyk        = process_cmyk_bgra;
+                processState.process_ycbcr       = process_ycbcr_bgra;
+                processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16;
+                break;
+            case JPEG_U8_RGBA:
+                processState.process_y           = process_y_32bit;
+                processState.process_ycbcr       = process_ycbcr_rgba;
+                processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
+                processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16;
+                processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8;
+                processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16;
+                break;
+        }
+
+        // CMYK is always in the slow path (only support BGRA, enforced elsewhere)
+        processState.process_cmyk = process_cmyk_bgra;
+
+#if defined(JPEG_ENABLE_NEON)
+        // NEON is built-in; no runtime check in this version
+        switch (sample)
+        {
+            case JPEG_U8_Y:
+                break;
+            case JPEG_U8_BGR:
+                processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
+                simd = "NEON";
+                break;
+            case JPEG_U8_RGB:
+                processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
+                simd = "NEON";
+                break;
+            case JPEG_U8_BGRA:
+                processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
+                simd = "NEON";
+                break;
+            case JPEG_U8_RGBA:
+                processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
+                processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
+                processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
+                processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
+                simd = "NEON";
+                break;
+        }
+#endif
+
+#if defined(JPEG_ENABLE_SSE2)
+        if (cpu_flags & CPU_SSE2)
+        {
+            switch (sample)
+            {
+                case JPEG_U8_Y:
+                    break;
+                case JPEG_U8_BGR:
+                    break;
+                case JPEG_U8_RGB:
+                    break;
+                case JPEG_U8_BGRA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_sse2;
+                    simd = "SSE2";
+                    break;
+                case JPEG_U8_RGBA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_sse2;
+                    simd = "SSE2";
+                    break;
+            }
+        }
+
+        if (cpu_flags & CPU_SSE3)
+        {
+            switch (sample)
+            {
+                case JPEG_U8_Y:
+                    break;
+                case JPEG_U8_BGR:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse3;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse3;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse3;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse3;
+                    simd = "SSE3";
+                    break;
+                case JPEG_U8_RGB:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse3;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse3;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse3;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse3;
+                    simd = "SSE3";
+                    break;
+                case JPEG_U8_BGRA:
+                    break;
+                case JPEG_U8_RGBA:
+                    break;
+            }
+        }
+#endif
+
+        std::string id;
+
+        // determine jpeg type -> select innerloops
+        switch (components)
+        {
+            case 1:
+                processState.process = processState.process_y;
+                processState.clipped = processState.process_y;
+                id = "Y";
+                break;
+
+            case 3:
+                processState.process = processState.process_ycbcr;
+                processState.clipped = processState.process_ycbcr;
+                id = "YCbCr";
+
+                // detect optimized cases
+                if (blocks_in_mcu <= 6)
+                {
+                    if (xblock == 8 && yblock == 8)
+                    {
+                        if (processState.process_ycbcr_8x8)
+                        {
+                            processState.process = processState.process_ycbcr_8x8;
+                            id = makeString("YCbCr 8x8 %s", simd);
+                        }
+                    }
+
+                    if (xblock == 8 && yblock == 16)
+                    {
+                        if (processState.process_ycbcr_8x16)
+                        {
+                            processState.process = processState.process_ycbcr_8x16;
+                            id = makeString("YCbCr 8x16 %s", simd);
+                        }
+                    }
+
+                    if (xblock == 16 && yblock == 8)
+                    {
+                        if (processState.process_ycbcr_16x8)
+                        {
+                            processState.process = processState.process_ycbcr_16x8;
+                            id = makeString("YCbCr 16x8 %s", simd);
+                        }
+                    }
+
+                    if (xblock == 16 && yblock == 16)
+                    {
+                        if (processState.process_ycbcr_16x16)
+                        {
+                            processState.process = processState.process_ycbcr_16x16;
+                            id = makeString("YCbCr 16x16 %s", simd);
+                        }
+                    }
+                }
+                break;
+
+            case 4:
+                processState.process = processState.process_cmyk;
+                processState.clipped = processState.process_cmyk;
+                id = "CMYK";
+                break;
+        }
+
+        debugPrint("  Decoder: %s\n", id.c_str());
+    }
+
     Status Parser::decode(Surface& target)
     {
         Status status;
-
         status.success = true;
         status.enableDirectDecode = true;
 
@@ -1352,14 +1497,40 @@ namespace jpeg
         int count = mcus * blocks_in_mcu * 64;
         blockVector = reinterpret_cast<s16*>(aligned_malloc(count * sizeof(s16)));
 
+        // find best matching format
+        SampleFormat sf = getSampleFormat(target.format);
+
+        // configure innerloops based on CPU caps
+        configureCPU(sf.sample);
+
+        if (is_lossless)
+        {
+            // lossless only supports L8 and BGRA
+            if (components == 1)
+            {
+                sf.sample = JPEG_U8_Y;
+                sf.format = FORMAT_L8;
+            }
+            else
+            {
+                sf.sample = JPEG_U8_BGRA;
+                sf.format = FORMAT_B8G8R8A8;
+            }
+        }
+        else if (components == 4)
+        {
+            // CMYK is in the slow-path anyway so force BGRA
+            sf.sample = JPEG_U8_BGRA;
+            sf.format = FORMAT_B8G8R8A8;
+        }
+
         // target surface size has to match (clipping isn't yet supported)
         if (target.width != xsize || target.height != ysize)
         {
             status.enableDirectDecode = false;
         }
 
-        // pixel format has to match (we don't yet support convert-on-write)
-        if (target.format != header.format)
+        if (target.format != sf.format)
         {
             status.enableDirectDecode = false;
         }
@@ -1582,7 +1753,7 @@ namespace jpeg
                 const int y0 = y;
                 const int y1 = std::min(y + N, ymcu);
                 const int count = (y1 - y0) * xmcu;
-                jpegPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
+                debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
                 s16* idata = data + y * (xmcu * mcu_data_size);
 
@@ -1714,15 +1885,15 @@ namespace jpeg
         const int hsize = (Hmax >> hsf) * 8;
         const int vsize = (Vmax >> vsf) * 8;
 
-        jpegPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
-        jpegPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
+        debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
+        debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
 
         const int scan_offset = scanFrame->offset;
 
         const int xs = ((xsize + hsize - 1) / hsize);
         const int ys = ((ysize + vsize - 1) / vsize);
 
-        jpegPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
+        debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
 
         const int HMask = (1 << hsf) - 1;
         const int VMask = (1 << vsf) - 1;
@@ -1822,7 +1993,7 @@ namespace jpeg
         {
             const int y0 = y;
             const int y1 = std::min(y + N, ymcu);
-            jpegPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
+            debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
             // enqueue task
             queue.enqueue([=] {
@@ -1862,3 +2033,4 @@ namespace jpeg
     }
 
 } // namespace jpeg
+} // namespace mango

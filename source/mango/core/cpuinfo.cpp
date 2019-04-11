@@ -62,13 +62,6 @@ namespace
 		for (unsigned int i = 0; i <= nIds; ++i)
 		{
             cpuid(cpuInfo, i);
-            /*
-            printf("%d:\n", i);
-            printf("  eax: 0x%.8x\n", cpuInfo[0]);
-            printf("  ebx: 0x%.8x\n", cpuInfo[1]);
-            printf("  ecx: 0x%.8x\n", cpuInfo[2]);
-            printf("  edx: 0x%.8x\n", cpuInfo[3]);
-            */
             
 			switch (i)
 			{

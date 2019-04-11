@@ -1077,8 +1077,8 @@ namespace
 
 } // namespace
 
-namespace jpeg
-{
+namespace mango {
+namespace jpeg {
 
     SampleFormat getSampleFormat(const Format& format)
     {
@@ -1121,3 +1121,4 @@ namespace jpeg
     }
 
 } // namespace jpeg
+} // namespace mango

@@ -1,7 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
@@ -12,21 +14,10 @@
 #define ID "[ImageDecoder.PNG] "
 #define FILTER_BYTE 1
 //#define DECODE_WITH_MINIZ
-//#define PNG_ENABLE_PRINT
 
 namespace
 {
     using namespace mango;
-
-    // ------------------------------------------------------------
-    // print()
-    // ------------------------------------------------------------
-
-#ifdef PNG_ENABLE_PRINT
-    #define print(...) printf(__VA_ARGS__)
-#else
-    #define print(...)
-#endif
 
     // ------------------------------------------------------------
     // stb zlib
@@ -683,7 +674,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
     void ParserPNG::read_IHDR(BigEndianPointer p, u32 size)
     {
-        print("[\"IHDR\"] %d bytes\n", size);
+        debugPrint("[\"IHDR\"] %d bytes\n", size);
 
         if (size != 13)
         {
@@ -775,11 +766,11 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
         m_bytes_per_line = m_channels * ((m_bit_depth * m_width + 7) / 8);
 
-        print("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
-        print("  Color:       %d\n", m_color_type);
-        print("  Compression: %d\n", m_compression);
-        print("  Filter:      %d\n", m_filter);
-        print("  Interlace:   %d\n", m_interlace);
+        debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
+        debugPrint("  Color:       %d\n", m_color_type);
+        debugPrint("  Compression: %d\n", m_compression);
+        debugPrint("  Filter:      %d\n", m_filter);
+        debugPrint("  Interlace:   %d\n", m_interlace);
     }
 
     void ParserPNG::read_IDAT(BigEndianPointer p, u32 size)
@@ -974,7 +965,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             const u32 size = p.read32();
             const u32 id = p.read32();
 
-            print("[\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+            debugPrint("[\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
 
             // check that we won't read past end of file
             if (p + size + 4 > m_end)
@@ -1031,7 +1022,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                     break;
 
                 default:
-                    print("UNKNOWN CHUNK: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+                    debugPrint("UNKNOWN CHUNK: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
                     break;
             }
 
@@ -1145,7 +1136,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         for (int pass = 0; pass < 7; ++pass)
         {
             AdamInterleave adam(pass, m_width, m_height);
-            print("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
             const int bw = FILTER_BYTE + ((adam.w + mask) >> shift);
             filter(p, bw - FILTER_BYTE, adam.h);
@@ -1183,7 +1174,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         for (int pass = 0; pass < 7; ++pass)
         {
             AdamInterleave adam(pass, m_width, m_height);
-            print("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
             const int bw = FILTER_BYTE + adam.w * size;
             filter(p, bw - FILTER_BYTE, adam.h);
@@ -1711,7 +1702,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
 #ifdef DECODE_WITH_MINIZ
             // allocate output buffer
-            print("  buffer bytes: %d\n", buffer_size);
+            debugPrint("  buffer bytes: %d\n", buffer_size);
             u8* buffer = new u8[buffer_size];
             if (!buffer)
             {
@@ -1741,7 +1732,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 // TODO: error
             }
 
-            print("  # total_out: %d \n", int(stream.total_out));
+            debugPrint("  # total_out: %d \n", int(stream.total_out));
             status = mz_inflateEnd(&stream);
 
             // process image
@@ -1758,7 +1749,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 1);
             if (buffer)
             {
-                print("  # total_out: %d \n", raw_len);
+                debugPrint("  # total_out: %d \n", raw_len);
 
                 // process image
                 process(dest.image, dest.stride, buffer, ptr_palette);
@@ -1883,7 +1874,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             const char* error = m_parser.getError();
             if (error)
             {
-                print("HEADER ERROR: %s\n", error);
+                debugPrint("HEADER ERROR: %s\n", error);
             }
         }
 
@@ -1930,7 +1921,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
             if (error)
             {
-                print("DECODE ERROR: %s\n", error);
+                debugPrint("DECODE ERROR: %s\n", error);
             }
         }
     };
