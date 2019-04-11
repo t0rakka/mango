@@ -1476,7 +1476,7 @@ namespace jpeg {
                 break;
         }
 
-        debugPrint("Decoder: %s\n", id.c_str());
+        debugPrint("  Decoder: %s\n", id.c_str());
     }
 
     Status Parser::decode(Surface& target)
