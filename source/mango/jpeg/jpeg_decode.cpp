@@ -1269,6 +1269,8 @@ namespace jpeg
 
     void Parser::configureCPU(Sample sample)
     {
+        const char* simd = "";
+
         // configure default implementation
         switch (sample)
         {
@@ -1333,29 +1335,60 @@ namespace jpeg
                 processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
                 processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
                 processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
+                simd = "NEON";
                 break;
             case JPEG_U8_RGB:
                 processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
                 processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
                 processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
                 processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
+                simd = "NEON";
                 break;
             case JPEG_U8_BGRA:
                 processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
                 processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
                 processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
                 processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
+                simd = "NEON";
                 break;
             case JPEG_U8_RGBA:
                 processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
                 processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
                 processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
                 processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
+                simd = "NEON";
                 break;
         }
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
+        if (cpu_flags & CPU_SSE2)
+        {
+            switch (sample)
+            {
+                case JPEG_U8_Y:
+                    break;
+                case JPEG_U8_BGR:
+                    break;
+                case JPEG_U8_RGB:
+                    break;
+                case JPEG_U8_BGRA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_sse2;
+                    simd = "SSE2";
+                    break;
+                case JPEG_U8_RGBA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_sse2;
+                    simd = "SSE2";
+                    break;
+            }
+        }
+
         if (cpu_flags & CPU_SSE3)
         {
             switch (sample)
@@ -1367,28 +1400,24 @@ namespace jpeg
                     processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse3;
                     processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse3;
                     processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse3;
+                    simd = "SSE3";
                     break;
                 case JPEG_U8_RGB:
                     processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse3;
                     processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse3;
                     processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse3;
                     processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse3;
+                    simd = "SSE3";
                     break;
                 case JPEG_U8_BGRA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_sse2;
                     break;
                 case JPEG_U8_RGBA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_sse2;
                     break;
             }
         }
 #endif
+
+        std::string id;
 
         // determine jpeg type -> select innerloops
         switch (components)
@@ -1396,11 +1425,13 @@ namespace jpeg
             case 1:
                 processState.process = processState.process_y;
                 processState.clipped = processState.process_y;
+                id = "Y";
                 break;
 
             case 3:
                 processState.process = processState.process_ycbcr;
                 processState.clipped = processState.process_ycbcr;
+                id = "YCbCr";
 
                 // detect optimized cases
                 if (blocks_in_mcu <= 6)
@@ -1408,25 +1439,37 @@ namespace jpeg
                     if (xblock == 8 && yblock == 8)
                     {
                         if (processState.process_ycbcr_8x8)
+                        {
                             processState.process = processState.process_ycbcr_8x8;
+                            id = makeString("YCbCr 8x8 %s", simd);
+                        }
                     }
 
                     if (xblock == 8 && yblock == 16)
                     {
                         if (processState.process_ycbcr_8x16)
+                        {
                             processState.process = processState.process_ycbcr_8x16;
+                            id = makeString("YCbCr 8x16 %s", simd);
+                        }
                     }
 
                     if (xblock == 16 && yblock == 8)
                     {
                         if (processState.process_ycbcr_16x8)
+                        {
                             processState.process = processState.process_ycbcr_16x8;
+                            id = makeString("YCbCr 16x8 %s", simd);
+                        }
                     }
 
                     if (xblock == 16 && yblock == 16)
                     {
                         if (processState.process_ycbcr_16x16)
+                        {
                             processState.process = processState.process_ycbcr_16x16;
+                            id = makeString("YCbCr 16x16 %s", simd);
+                        }
                     }
                 }
                 break;
@@ -1434,8 +1477,11 @@ namespace jpeg
             case 4:
                 processState.process = processState.process_cmyk;
                 processState.clipped = processState.process_cmyk;
+                id = "CMYK";
                 break;
         }
+
+        jpegPrint("Decoder: %s\n", id.c_str());
     }
 
     Status Parser::decode(Surface& target)
