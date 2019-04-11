@@ -221,12 +221,7 @@ void process_ycbcr_8bit(u8* dest, int stride, const s16* data, ProcessState* sta
             // process 8x8 block
             for (int y = 0; y < ymax; ++y)
             {
-                u8* d = dest_block;
-
-                for (int x = 0; x < xmax; ++x)
-                {
-                    d[x] = y_block[x];
-                }
+                std::memcpy(dest_block, y_block, xmax);
                 dest_block += stride;
                 y_block += 8;
             }
