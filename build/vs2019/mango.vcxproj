@@ -281,6 +281,9 @@
     <ClInclude Include="..\..\source\external\zstd\zstd.h" />
     <ClInclude Include="..\..\source\mango\filesystem\indexer.hpp" />
     <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_func.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_neon.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_sse2.hpp" />
     <ClInclude Include="..\..\source\mango\window\win32\win32_handle.hpp" />
   </ItemGroup>
   <ItemGroup>

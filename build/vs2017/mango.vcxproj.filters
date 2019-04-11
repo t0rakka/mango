@@ -918,6 +918,15 @@
     <ClInclude Include="..\..\include\mango\opengl\khronos\GL\wglext.h">
       <Filter>mango\include\opengl\khronos\GL</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_func.hpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_neon.hpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_sse2.hpp">
+      <Filter>mango\source\jpeg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
