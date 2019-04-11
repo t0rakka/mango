@@ -437,30 +437,19 @@ namespace jpeg {
     void process_y_24bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_32bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_cmyk_bgra              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-
     void process_ycbcr_8bit             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    /* TODO
-    void process_ycbcr_8bit_8x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_8bit_8x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_8bit_16x8        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_8bit_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    */
 
     void process_ycbcr_bgr              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    /* TODO
     void process_ycbcr_bgr_8x8          (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_8x16         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_16x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_16x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    */
 
     void process_ycbcr_rgb              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    /* TODO
     void process_ycbcr_rgb_8x8          (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_8x16         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    */
 
     void process_ycbcr_bgra             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_8x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -469,12 +458,10 @@ namespace jpeg {
     void process_ycbcr_bgra_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
     void process_ycbcr_rgba             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    /* TODO
     void process_ycbcr_rgba_8x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_8x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x8        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    */
 
 #if defined(JPEG_ENABLE_SIMD)
     void idct_simd                      (u8* dest, const s16* data, const u16* qt);
