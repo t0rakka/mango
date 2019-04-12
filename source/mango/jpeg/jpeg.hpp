@@ -72,6 +72,7 @@ namespace jpeg {
     template <typename T>
     using AlignedVector = std::vector<T, mango::AlignedAllocator<T>>;
 
+    // supported external data formats (encode from, decode to)
     enum Sample
     {
         JPEG_U8_Y,

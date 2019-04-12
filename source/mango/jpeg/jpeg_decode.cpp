@@ -1299,7 +1299,6 @@ namespace jpeg {
                 break;
             case JPEG_U8_BGRA:
                 processState.process_y           = process_y_32bit;
-                processState.process_cmyk        = process_cmyk_bgra;
                 processState.process_ycbcr       = process_ycbcr_bgra;
                 processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
                 processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16;
