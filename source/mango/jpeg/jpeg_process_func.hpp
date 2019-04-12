@@ -3,8 +3,7 @@
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
-#ifdef WRITE_COLOR
-
+#ifdef FUNCTION_GENERIC
 void FUNCTION_GENERIC(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
@@ -71,7 +70,9 @@ void FUNCTION_GENERIC(u8* dest, int stride, const s16* data, ProcessState* state
         }
     }
 }
+#endif
 
+#ifdef FUNCTION_8x8
 void FUNCTION_8x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
@@ -105,7 +106,9 @@ void FUNCTION_8x8(u8* dest, int stride, const s16* data, ProcessState* state, in
     MANGO_UNREFERENCED_PARAMETER(width);
     MANGO_UNREFERENCED_PARAMETER(height);
 }
+#endif
 
+#ifdef FUNCTION_8x16
 void FUNCTION_8x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
@@ -143,7 +146,9 @@ void FUNCTION_8x16(u8* dest, int stride, const s16* data, ProcessState* state, i
     MANGO_UNREFERENCED_PARAMETER(width);
     MANGO_UNREFERENCED_PARAMETER(height);
 }
+#endif
 
+#ifdef FUNCTION_16x8
 void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
@@ -192,7 +197,9 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
     MANGO_UNREFERENCED_PARAMETER(width);
     MANGO_UNREFERENCED_PARAMETER(height);
 }
+#endif
 
+#ifdef FUNCTION_16x16
 void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 6];
@@ -248,5 +255,4 @@ void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, 
     MANGO_UNREFERENCED_PARAMETER(width);
     MANGO_UNREFERENCED_PARAMETER(height);
 }
-
-#endif // WRITE_COLOR
+#endif
