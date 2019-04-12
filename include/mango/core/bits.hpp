@@ -178,10 +178,27 @@ namespace mango
         return std::min(high, std::max(low, value));
     }
 
+#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_CLANG)
+
     static inline u32 byteclamp(s32 v)
     {
         return clamp(v, 0, 255);
     }
+
+#else
+
+    static inline u32 byteclamp(s32 v)
+    {
+        // clamp value to [0, 255] range
+        if (v & 0xffffff00)
+        {
+            // value < 0 generates 0x00, value > 0xff generates 0xff
+            v = (((~v) >> 31) & 0xff);
+        }
+        return u32(v);
+    }
+
+#endif
 
     static inline int modulo(int value, int range)
     {
