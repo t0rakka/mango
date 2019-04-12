@@ -3,8 +3,8 @@
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
-#ifdef FUNCTION_8x8
-void FUNCTION_8x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+#ifdef FUNCTION_YCBCR_8x8
+void FUNCTION_YCBCR_8x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
 
@@ -28,7 +28,7 @@ void FUNCTION_8x8(u8* dest, int stride, const s16* data, ProcessState* state, in
         int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
         int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
 
-        INNERLOOP(dest, s_y, s_cb, s_cr, s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest, s_y, s_cb, s_cr, s0, s1, s2, s3);
         dest += stride;
     }
 
@@ -37,8 +37,8 @@ void FUNCTION_8x8(u8* dest, int stride, const s16* data, ProcessState* state, in
 }
 #endif
 
-#ifdef FUNCTION_8x16
-void FUNCTION_8x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+#ifdef FUNCTION_YCBCR_8x16
+void FUNCTION_YCBCR_8x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
 
@@ -65,10 +65,10 @@ void FUNCTION_8x16(u8* dest, int stride, const s16* data, ProcessState* state, i
         int16x8_t s_cb = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cb, tosigned)), 7);
         int16x8_t s_cr = vshll_n_s8(vreinterpret_s8_u8(vsub_u8(u_cr, tosigned)), 7);
 
-        INNERLOOP(dest, s_y0, s_cb, s_cr, s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest, s_y0, s_cb, s_cr, s0, s1, s2, s3);
         dest += stride;
 
-        INNERLOOP(dest, s_y1, s_cb, s_cr, s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest, s_y1, s_cb, s_cr, s0, s1, s2, s3);
         dest += stride;
     }
 
@@ -77,8 +77,8 @@ void FUNCTION_8x16(u8* dest, int stride, const s16* data, ProcessState* state, i
 }
 #endif
 
-#ifdef FUNCTION_16x8
-void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+#ifdef FUNCTION_YCBCR_16x8
+void FUNCTION_YCBCR_16x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
 
@@ -108,8 +108,8 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
         int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
         int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
 
-        INNERLOOP(dest + 0 * XSTEP, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-        INNERLOOP(dest + 1 * XSTEP, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest + 0 * XSTEP, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest + 1 * XSTEP, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
         dest += stride;
     }
 
@@ -118,8 +118,8 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
 }
 #endif
 
-#ifdef FUNCTION_16x16
-void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+#ifdef FUNCTION_YCBCR_16x16
+void FUNCTION_YCBCR_16x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 6];
 
@@ -155,12 +155,12 @@ void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, 
         int16x8x2_t w_cb = vzipq_s16(s_cb, s_cb);
         int16x8x2_t w_cr = vzipq_s16(s_cr, s_cr);
 
-        INNERLOOP(dest + 0 * XSTEP, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-        INNERLOOP(dest + 1 * XSTEP, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest + 0 * XSTEP, s_y0, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest + 1 * XSTEP, s_y1, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
         dest += stride;
 
-        INNERLOOP(dest + 0 * XSTEP, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
-        INNERLOOP(dest + 1 * XSTEP, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest + 0 * XSTEP, s_y2, w_cb.val[0], w_cr.val[0], s0, s1, s2, s3);
+        INNERLOOP_YCBCR(dest + 1 * XSTEP, s_y3, w_cb.val[1], w_cr.val[1], s0, s1, s2, s3);
         dest += stride;
     }
 
