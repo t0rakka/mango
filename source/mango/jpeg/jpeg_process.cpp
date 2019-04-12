@@ -48,15 +48,6 @@ namespace jpeg {
     g = ((255 - g - y) * k) / 255; \
     b = ((255 - b - y) * k) / 255;
 
-#define PACK_BGRA(y) \
-    0xff000000 | (byteclamp(y + r) << 16) | (byteclamp(y + g) << 8) | byteclamp(y + b);
-
-#define PACK_RGBA(y) \
-    0xff000000 | (byteclamp(y + b) << 16) | (byteclamp(y + g) << 8) | byteclamp(y + r);
-
-#define PACK_COMPONENT(y, c) \
-    byteclamp(y + c);
-
 // ----------------------------------------------------------------------------
 // Generic C++ implementation
 // ----------------------------------------------------------------------------
@@ -178,7 +169,10 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
                     u8 ck = ck_scan[x >> ck_xshift];
                     COMPUTE_CBCR(cb, cr);
                     COMPUTE_CMYK(Y, ck);
-                    d[x] = PACK_BGRA(0);
+                    r = byteclamp(r);
+                    g = byteclamp(g);
+                    b = byteclamp(b);
+                    d[x] = makeBGRA(r, g, b, 0xff);
                 }
                 dest_block += stride;
                 y_block += 8;
@@ -228,34 +222,34 @@ void process_ycbcr_8bit(u8* dest, int stride, const s16* data, ProcessState* sta
     }
 }
 
-static inline void write_color_bgra(u8* dest, int r, int g, int b)
+static inline void write_color_bgra(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = b;
-    dest[1] = g;
-    dest[2] = r;
+    dest[0] = byteclamp(b + y);
+    dest[1] = byteclamp(g + y);
+    dest[2] = byteclamp(r + y);
     dest[3] = 0xff;
 }
 
-static inline void write_color_rgba(u8* dest, int r, int g, int b)
+static inline void write_color_rgba(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = r;
-    dest[1] = g;
-    dest[2] = b;
+    dest[0] = byteclamp(r + y);
+    dest[1] = byteclamp(g + y);
+    dest[2] = byteclamp(b + y);
     dest[3] = 0xff;
 }
 
-static inline void write_color_bgr(u8* dest, int r, int g, int b)
+static inline void write_color_bgr(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = b;
-    dest[1] = g;
-    dest[2] = r;
+    dest[0] = byteclamp(b + y);
+    dest[1] = byteclamp(g + y);
+    dest[2] = byteclamp(r + y);
 }
 
-static inline void write_color_rgb(u8* dest, int r, int g, int b)
+static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = r;
-    dest[1] = g;
-    dest[2] = b;
+    dest[0] = byteclamp(r + y);
+    dest[1] = byteclamp(g + y);
+    dest[2] = byteclamp(b + y);
 }
 
 // Generate 32 bit BGRA functions
@@ -328,9 +322,6 @@ static inline void write_color_rgb(u8* dest, int r, int g, int b)
 
 #undef COMPUTE_CBCR
 #undef COMPUTE_CMYK
-#undef PACK_BGRA
-#undef PACK_RGBA
-#undef PACK_COMPONENT
 
 #if defined(JPEG_ENABLE_NEON)
 

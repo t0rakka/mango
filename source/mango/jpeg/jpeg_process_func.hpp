@@ -59,8 +59,7 @@ void FUNCTION_GENERIC(u8* dest, int stride, const s16* data, ProcessState* state
                     u8 cb = cb_scan[x >> cb_xshift];
                     u8 cr = cr_scan[x >> cr_xshift];
                     COMPUTE_CBCR(cb, cr);
-
-                    WRITE_COLOR(d, byteclamp(r + y0), byteclamp(g + y0), byteclamp(b + y0));
+                    WRITE_COLOR(d, y0, r, g, b);
                     d += XSTEP;
                 }
 
@@ -95,8 +94,7 @@ void FUNCTION_8x8(u8* dest, int stride, const s16* data, ProcessState* state, in
             int cb = s[x + 64];
             int cr = s[x + 128];
             COMPUTE_CBCR(cb, cr);
-
-            WRITE_COLOR(d, byteclamp(r + y0), byteclamp(g + y0), byteclamp(b + y0));
+            WRITE_COLOR(d, y0, r, g, b);
             d += XSTEP;
         }
 
@@ -133,9 +131,8 @@ void FUNCTION_8x16(u8* dest, int stride, const s16* data, ProcessState* state, i
             int cb = c[x + 0];
             int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-
-            WRITE_COLOR(d0, byteclamp(r + y0), byteclamp(g + y0), byteclamp(b + y0));
-            WRITE_COLOR(d1, byteclamp(r + y1), byteclamp(g + y1), byteclamp(b + y1));
+            WRITE_COLOR(d0, y0, r, g, b);
+            WRITE_COLOR(d1, y1, r, g, b);
             d0 += XSTEP;
             d1 += XSTEP;
         }
@@ -172,9 +169,8 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
             int cb = c[x + 0];
             int cr = c[x + 64];
             COMPUTE_CBCR(cb, cr);
-
-            WRITE_COLOR(d + 0 * XSTEP, byteclamp(r + y0), byteclamp(g + y0), byteclamp(b + y0));
-            WRITE_COLOR(d + 1 * XSTEP, byteclamp(r + y1), byteclamp(g + y1), byteclamp(b + y1));
+            WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
+            WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
             d += 2 * XSTEP;
         }
 
@@ -185,9 +181,8 @@ void FUNCTION_16x8(u8* dest, int stride, const s16* data, ProcessState* state, i
             int cb = c[x + 4];
             int cr = c[x + 68];
             COMPUTE_CBCR(cb, cr);
-
-            WRITE_COLOR(d + 0 * XSTEP, byteclamp(r + y0), byteclamp(g + y0), byteclamp(b + y0));
-            WRITE_COLOR(d + 1 * XSTEP, byteclamp(r + y1), byteclamp(g + y1), byteclamp(b + y1));
+            WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
+            WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
             d += 2 * XSTEP;
         }
 
@@ -235,15 +230,13 @@ void FUNCTION_16x16(u8* dest, int stride, const s16* data, ProcessState* state, 
                 u8 cr = ptr_cbcr[x + 64];
 
                 COMPUTE_CBCR(cb, cr);
-
-                WRITE_COLOR(scan + 0 * XSTEP, byteclamp(r + y0), byteclamp(g + y0), byteclamp(b + y0));
-                WRITE_COLOR(scan + 1 * XSTEP, byteclamp(r + y1), byteclamp(g + y1), byteclamp(b + y1));
+                WRITE_COLOR(scan + 0 * XSTEP, y0, r, g, b);
+                WRITE_COLOR(scan + 1 * XSTEP, y1, r, g, b);
 
                 u8* next = scan + stride;
                 scan += 2 * XSTEP;
-
-                WRITE_COLOR(next + 0 * XSTEP, byteclamp(r + y2), byteclamp(g + y2), byteclamp(b + y2));
-                WRITE_COLOR(next + 1 * XSTEP, byteclamp(r + y3), byteclamp(g + y3), byteclamp(b + y3));
+                WRITE_COLOR(next + 0 * XSTEP, y2, r, g, b);
+                WRITE_COLOR(next + 1 * XSTEP, y3, r, g, b);
             }
 
             ptr_dest += stride * 2;
