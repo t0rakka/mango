@@ -253,72 +253,72 @@ static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
 }
 
 // Generate YCBCR to BGRA functions
-#define WRITE_COLOR      write_color_bgra
-#define XSTEP            4
-#define FUNCTION_GENERIC process_ycbcr_bgra
-#define FUNCTION_8x8     process_ycbcr_bgra_8x8
-#define FUNCTION_8x16    process_ycbcr_bgra_8x16
-#define FUNCTION_16x8    process_ycbcr_bgra_16x8
-#define FUNCTION_16x16   process_ycbcr_bgra_16x16
+#define WRITE_COLOR            write_color_bgra
+#define XSTEP                  4
+#define FUNCTION_GENERIC       process_ycbcr_bgra
+#define FUNCTION_YCBCR_8x8     process_ycbcr_bgra_8x8
+#define FUNCTION_YCBCR_8x16    process_ycbcr_bgra_8x16
+#define FUNCTION_YCBCR_16x8    process_ycbcr_bgra_16x8
+#define FUNCTION_YCBCR_16x16   process_ycbcr_bgra_16x16
 #include "jpeg_process_func.hpp"
 #undef WRITE_COLOR
 #undef XSTEP
 #undef FUNCTION_GENERIC
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to RGBA functions
-#define WRITE_COLOR      write_color_rgba
-#define XSTEP            4
-#define FUNCTION_GENERIC process_ycbcr_rgba
-#define FUNCTION_8x8     process_ycbcr_rgba_8x8
-#define FUNCTION_8x16    process_ycbcr_rgba_8x16
-#define FUNCTION_16x8    process_ycbcr_rgba_16x8
-#define FUNCTION_16x16   process_ycbcr_rgba_16x16
+#define WRITE_COLOR            write_color_rgba
+#define XSTEP                  4
+#define FUNCTION_GENERIC       process_ycbcr_rgba
+#define FUNCTION_YCBCR_8x8     process_ycbcr_rgba_8x8
+#define FUNCTION_YCBCR_8x16    process_ycbcr_rgba_8x16
+#define FUNCTION_YCBCR_16x8    process_ycbcr_rgba_16x8
+#define FUNCTION_YCBCR_16x16   process_ycbcr_rgba_16x16
 #include "jpeg_process_func.hpp"
 #undef WRITE_COLOR
 #undef XSTEP
 #undef FUNCTION_GENERIC
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to BGR functions
-#define WRITE_COLOR      write_color_bgr
-#define XSTEP            3
-#define FUNCTION_GENERIC process_ycbcr_bgr
-#define FUNCTION_8x8     process_ycbcr_bgr_8x8
-#define FUNCTION_8x16    process_ycbcr_bgr_8x16
-#define FUNCTION_16x8    process_ycbcr_bgr_16x8
-#define FUNCTION_16x16   process_ycbcr_bgr_16x16
+#define WRITE_COLOR            write_color_bgr
+#define XSTEP                  3
+#define FUNCTION_GENERIC       process_ycbcr_bgr
+#define FUNCTION_YCBCR_8x8     process_ycbcr_bgr_8x8
+#define FUNCTION_YCBCR_8x16    process_ycbcr_bgr_8x16
+#define FUNCTION_YCBCR_16x8    process_ycbcr_bgr_16x8
+#define FUNCTION_YCBCR_16x16   process_ycbcr_bgr_16x16
 #include "jpeg_process_func.hpp"
 #undef WRITE_COLOR
 #undef XSTEP
 #undef FUNCTION_GENERIC
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to RGB functions
-#define WRITE_COLOR      write_color_rgb
-#define XSTEP            3
-#define FUNCTION_GENERIC process_ycbcr_rgb
-#define FUNCTION_8x8     process_ycbcr_rgb_8x8
-#define FUNCTION_8x16    process_ycbcr_rgb_8x16
-#define FUNCTION_16x8    process_ycbcr_rgb_16x8
-#define FUNCTION_16x16   process_ycbcr_rgb_16x16
+#define WRITE_COLOR            write_color_rgb
+#define XSTEP                  3
+#define FUNCTION_GENERIC       process_ycbcr_rgb
+#define FUNCTION_YCBCR_8x8     process_ycbcr_rgb_8x8
+#define FUNCTION_YCBCR_8x16    process_ycbcr_rgb_8x16
+#define FUNCTION_YCBCR_16x8    process_ycbcr_rgb_16x8
+#define FUNCTION_YCBCR_16x16   process_ycbcr_rgb_16x16
 #include "jpeg_process_func.hpp"
 #undef WRITE_COLOR
 #undef XSTEP
 #undef FUNCTION_GENERIC
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 #undef COMPUTE_CBCR
 #undef COMPUTE_CMYK
@@ -710,64 +710,64 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 }
 
 // Generate YCBCR to BGRA functions
-#define INNERLOOP      convert_ycbcr_bgra_8x1_sse2
-#define XSTEP          32
-#define FUNCTION_8x8   process_ycbcr_bgra_8x8_sse2
-#define FUNCTION_8x16  process_ycbcr_bgra_8x16_sse2
-#define FUNCTION_16x8  process_ycbcr_bgra_16x8_sse2
-#define FUNCTION_16x16 process_ycbcr_bgra_16x16_sse2
+#define INNERLOOP_YCBCR      convert_ycbcr_bgra_8x1_sse2
+#define XSTEP                32
+#define FUNCTION_YCBCR_8x8   process_ycbcr_bgra_8x8_sse2
+#define FUNCTION_YCBCR_8x16  process_ycbcr_bgra_8x16_sse2
+#define FUNCTION_YCBCR_16x8  process_ycbcr_bgra_16x8_sse2
+#define FUNCTION_YCBCR_16x16 process_ycbcr_bgra_16x16_sse2
 #include "jpeg_process_sse2.hpp"
-#undef INNERLOOP
+#undef INNERLOOP_YCBCR
 #undef XSTEP
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to RGBA functions
-#define INNERLOOP      convert_ycbcr_rgba_8x1_sse2
-#define XSTEP          32
-#define FUNCTION_8x8   process_ycbcr_rgba_8x8_sse2
-#define FUNCTION_8x16  process_ycbcr_rgba_8x16_sse2
-#define FUNCTION_16x8  process_ycbcr_rgba_16x8_sse2
-#define FUNCTION_16x16 process_ycbcr_rgba_16x16_sse2
+#define INNERLOOP_YCBCR      convert_ycbcr_rgba_8x1_sse2
+#define XSTEP                32
+#define FUNCTION_YCBCR_8x8   process_ycbcr_rgba_8x8_sse2
+#define FUNCTION_YCBCR_8x16  process_ycbcr_rgba_8x16_sse2
+#define FUNCTION_YCBCR_16x8  process_ycbcr_rgba_16x8_sse2
+#define FUNCTION_YCBCR_16x16 process_ycbcr_rgba_16x16_sse2
 #include "jpeg_process_sse2.hpp"
-#undef INNERLOOP
+#undef INNERLOOP_YCBCR
 #undef XSTEP
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to BGR functions
-#define INNERLOOP      convert_ycbcr_bgr_8x1_sse3
-#define XSTEP          24
-#define FUNCTION_8x8   process_ycbcr_bgr_8x8_sse3
-#define FUNCTION_8x16  process_ycbcr_bgr_8x16_sse3
-#define FUNCTION_16x8  process_ycbcr_bgr_16x8_sse3
-#define FUNCTION_16x16 process_ycbcr_bgr_16x16_sse3
+#define INNERLOOP_YCBCR      convert_ycbcr_bgr_8x1_sse3
+#define XSTEP                24
+#define FUNCTION_YCBCR_8x8   process_ycbcr_bgr_8x8_sse3
+#define FUNCTION_YCBCR_8x16  process_ycbcr_bgr_8x16_sse3
+#define FUNCTION_YCBCR_16x8  process_ycbcr_bgr_16x8_sse3
+#define FUNCTION_YCBCR_16x16 process_ycbcr_bgr_16x16_sse3
 #include "jpeg_process_sse2.hpp"
-#undef INNERLOOP
+#undef INNERLOOP_YCBCR
 #undef XSTEP
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to RGB functions
-#define INNERLOOP      convert_ycbcr_rgb_8x1_sse3
-#define XSTEP          24
-#define FUNCTION_8x8   process_ycbcr_rgb_8x8_sse3
-#define FUNCTION_8x16  process_ycbcr_rgb_8x16_sse3
-#define FUNCTION_16x8  process_ycbcr_rgb_16x8_sse3
-#define FUNCTION_16x16 process_ycbcr_rgb_16x16_sse3
+#define INNERLOOP_YCBCR      convert_ycbcr_rgb_8x1_sse3
+#define XSTEP                24
+#define FUNCTION_YCBCR_8x8   process_ycbcr_rgb_8x8_sse3
+#define FUNCTION_YCBCR_8x16  process_ycbcr_rgb_8x16_sse3
+#define FUNCTION_YCBCR_16x8  process_ycbcr_rgb_16x8_sse3
+#define FUNCTION_YCBCR_16x16 process_ycbcr_rgb_16x16_sse3
 #include "jpeg_process_sse2.hpp"
-#undef INNERLOOP
+#undef INNERLOOP_YCBCR
 #undef XSTEP
-#undef FUNCTION_8x8
-#undef FUNCTION_8x16
-#undef FUNCTION_16x8
-#undef FUNCTION_16x16
+#undef FUNCTION_YCBCR_8x8
+#undef FUNCTION_YCBCR_8x16
+#undef FUNCTION_YCBCR_16x8
+#undef FUNCTION_YCBCR_16x16
 
 #endif // JPEG_ENABLE_SSE2
 
