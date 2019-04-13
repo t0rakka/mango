@@ -199,14 +199,26 @@ namespace
 
     const u8 zigzag_table [] =
     {
-        0,  1,   5,  6, 14, 15, 27, 28,
-        2,  4,   7, 13, 16, 26, 29, 42,
-        3,  8,  12, 17, 25, 30, 41, 43,
-        9,  11, 18, 24, 31, 40, 44, 53,
+         0,  1,  5,  6, 14, 15, 27, 28,
+         2,  4,  7, 13, 16, 26, 29, 42,
+         3,  8, 12, 17, 25, 30, 41, 43,
+         9, 11, 18, 24, 31, 40, 44, 53,
         10, 19, 23, 32, 39, 45, 52, 54,
         20, 22, 33, 38, 46, 51, 55, 60,
         21, 34, 37, 47, 50, 56, 59, 61,
         35, 36, 48, 49, 57, 58, 62, 63
+    };
+
+    const u8 zigzag_table_transpose [] =
+    {
+         0,  2,  3,  9, 10, 20, 21, 35,
+         1,  4,  8, 11, 19, 22, 34, 36,
+         5,  7, 12, 18, 23, 33, 37, 48,
+         6, 13, 17, 24, 32, 38, 47, 49,
+        14, 16, 25, 31, 39, 46, 50, 57,
+        15, 26, 30, 40, 45, 51, 56, 58,
+        27, 29, 41, 44, 52, 55, 59, 62,
+        28, 42, 43, 53, 54, 60, 61, 63
     };
 
     const u8 luminance_quant_table [] =
@@ -543,14 +555,14 @@ namespace
             auto v5 = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13);
             auto v3 = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13);
             auto v1 = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13);
-            dest[zigzag_table[i + 0 * 8]] = s16((v0 * quant_table[i + 0 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 1 * 8]] = s16((v1 * quant_table[i + 1 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 2 * 8]] = s16((v2 * quant_table[i + 2 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 3 * 8]] = s16((v3 * quant_table[i + 3 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 4 * 8]] = s16((v4 * quant_table[i + 4 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 5 * 8]] = s16((v5 * quant_table[i + 5 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 6 * 8]] = s16((v6 * quant_table[i + 6 * 8] + 0x4000) >> 15);
-            dest[zigzag_table[i + 7 * 8]] = s16((v7 * quant_table[i + 7 * 8] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 0]] = s16((v0 * quant_table[i * 8 + 0] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 1]] = s16((v1 * quant_table[i * 8 + 1] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 2]] = s16((v2 * quant_table[i * 8 + 2] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 3]] = s16((v3 * quant_table[i * 8 + 3] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 4]] = s16((v4 * quant_table[i * 8 + 4] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 5]] = s16((v5 * quant_table[i * 8 + 5] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 6]] = s16((v6 * quant_table[i * 8 + 6] + 0x4000) >> 15);
+            dest[zigzag_table_transpose[i * 8 + 7]] = s16((v7 * quant_table[i * 8 + 7] + 0x4000) >> 15);
         }
     }
 
@@ -843,6 +855,7 @@ namespace
 
         for (int i = 0; i < 64; ++i)
         {
+            int i_transpose = ((i & 7) <<3 ) | (i >>3);
             u16 index = zigzag_table [i];
             u32 value;
 
@@ -856,7 +869,7 @@ namespace
                 value = 255;
 
             Lqt [index] = (u8) value;
-            ILqt [i] = u16(0x8000 / value);
+            ILqt [i_transpose] = u16(0x8000 / value);
 
             // chrominance quantization table * quality factor
             value = chrominance_quant_table [i] * quality;
@@ -868,7 +881,7 @@ namespace
                 value = 255;
 
             Cqt [index] = (u8) value;
-            ICqt [i] = u16(0x8000 / value);
+            ICqt [i_transpose] = u16(0x8000 / value);
         }
     }
 
