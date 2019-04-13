@@ -505,15 +505,15 @@ namespace jpeg {
     void process_ycbcr_rgba_16x8_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16_sse2  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_bgr_8x8_sse3     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16_sse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8_sse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16_sse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x8_ssse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x16_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x16_ssse3  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgb_8x8_sse3     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16_sse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8_sse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16_sse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x8_ssse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x16_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x16_ssse3  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 #endif
 
     SampleFormat getSampleFormat(const Format& format);

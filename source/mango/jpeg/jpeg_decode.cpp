@@ -1383,25 +1383,25 @@ namespace jpeg {
             }
         }
 
-        if (cpu_flags & CPU_SSE3)
+        if (cpu_flags & CPU_SSSE3)
         {
             switch (sample)
             {
                 case JPEG_U8_Y:
                     break;
                 case JPEG_U8_BGR:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse3;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse3;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse3;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse3;
-                    simd = "SSE3";
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_ssse3;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_ssse3;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_ssse3;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_ssse3;
+                    simd = "SSSE3";
                     break;
                 case JPEG_U8_RGB:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse3;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse3;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse3;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse3;
-                    simd = "SSE3";
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_ssse3;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_ssse3;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_ssse3;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_ssse3;
+                    simd = "SSSE3";
                     break;
                 case JPEG_U8_BGRA:
                     break;

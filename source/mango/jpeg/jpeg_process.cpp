@@ -594,7 +594,7 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 }
 
 static inline
-void convert_ycbcr_bgr_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
+void convert_ycbcr_bgr_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
 {
     __m128i zero = _mm_setzero_si128();
 
@@ -652,7 +652,7 @@ void convert_ycbcr_bgr_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 }
 
 static inline
-void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
+void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
 {
     __m128i zero = _mm_setzero_si128();
 
@@ -740,12 +740,12 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 #undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to BGR functions
-#define INNERLOOP_YCBCR      convert_ycbcr_bgr_8x1_sse3
+#define INNERLOOP_YCBCR      convert_ycbcr_bgr_8x1_ssse3
 #define XSTEP                24
-#define FUNCTION_YCBCR_8x8   process_ycbcr_bgr_8x8_sse3
-#define FUNCTION_YCBCR_8x16  process_ycbcr_bgr_8x16_sse3
-#define FUNCTION_YCBCR_16x8  process_ycbcr_bgr_16x8_sse3
-#define FUNCTION_YCBCR_16x16 process_ycbcr_bgr_16x16_sse3
+#define FUNCTION_YCBCR_8x8   process_ycbcr_bgr_8x8_ssse3
+#define FUNCTION_YCBCR_8x16  process_ycbcr_bgr_8x16_ssse3
+#define FUNCTION_YCBCR_16x8  process_ycbcr_bgr_16x8_ssse3
+#define FUNCTION_YCBCR_16x16 process_ycbcr_bgr_16x16_ssse3
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP_YCBCR
 #undef XSTEP
@@ -755,12 +755,12 @@ void convert_ycbcr_rgb_8x1_sse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m
 #undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to RGB functions
-#define INNERLOOP_YCBCR      convert_ycbcr_rgb_8x1_sse3
+#define INNERLOOP_YCBCR      convert_ycbcr_rgb_8x1_ssse3
 #define XSTEP                24
-#define FUNCTION_YCBCR_8x8   process_ycbcr_rgb_8x8_sse3
-#define FUNCTION_YCBCR_8x16  process_ycbcr_rgb_8x16_sse3
-#define FUNCTION_YCBCR_16x8  process_ycbcr_rgb_16x8_sse3
-#define FUNCTION_YCBCR_16x16 process_ycbcr_rgb_16x16_sse3
+#define FUNCTION_YCBCR_8x8   process_ycbcr_rgb_8x8_ssse3
+#define FUNCTION_YCBCR_8x16  process_ycbcr_rgb_8x16_ssse3
+#define FUNCTION_YCBCR_16x8  process_ycbcr_rgb_16x8_ssse3
+#define FUNCTION_YCBCR_16x16 process_ycbcr_rgb_16x16_ssse3
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP_YCBCR
 #undef XSTEP
