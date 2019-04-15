@@ -44,7 +44,7 @@ namespace
 		void* m_address;
 
     public:
-        FileMemory(const std::string& filename, u64 _offset, u64 _size)
+        FileMemory(const std::string& filename, u64 x_offset, u64 x_size)
             : m_file(-1)
             , m_size(0)
             , m_address(nullptr)
@@ -64,7 +64,7 @@ namespace
                 else
                 {
 					const size_t file_size = size_t(sb.st_size);
-					const size_t file_offset = size_t(_offset);
+					const size_t file_offset = size_t(x_offset);
 
 					size_t page_offset = 0;
 					if (file_offset > 0)
@@ -75,9 +75,9 @@ namespace
 					}
 
 					m_size = file_size - file_offset;
-					if (_size > 0)
+					if (x_size > 0)
 					{
-						m_size = std::min(size_t(_size), m_size);
+						m_size = std::min(size_t(x_size), m_size);
 					}
 
                     if (m_size > 0)

@@ -30,7 +30,7 @@ namespace
         HANDLE  m_map;
 
     public:
-        FileMemory(const std::string& filename, u64 _offset, u64 _size)
+        FileMemory(const std::string& filename, u64 x_offset, u64 x_size)
             : m_address(nullptr)
             , m_file(INVALID_HANDLE_VALUE)
             , m_map(nullptr)
@@ -67,28 +67,28 @@ namespace
 						SIZE_T bytes = 0;
 
 						u64 page_offset = 0;
-						if (_offset > 0)
+						if (x_offset > 0)
 						{
 							SYSTEM_INFO info;
 							::GetSystemInfo(&info);
 							const DWORD page_size = info.dwAllocationGranularity;
-							const DWORD page_number = static_cast<DWORD>(_offset / page_size);
+							const DWORD page_number = static_cast<DWORD>(x_offset / page_size);
 							page_offset = page_number * page_size;
 							offsetHigh = DWORD(page_offset >> 32);
 							offsetLow = DWORD(page_offset & 0xffffffff);
 						}
 
 						m_memory.size = size_t(file_size.QuadPart);
-						if (_size > 0)
+						if (x_size > 0)
 						{
-							m_memory.size = std::min(m_memory.size, static_cast<size_t>(_size));
+							m_memory.size = std::min(m_memory.size, static_cast<size_t>(x_size));
 							bytes = static_cast<SIZE_T>(m_memory.size);
 						}
 
 						LPVOID address_ = MapViewOfFile(m_map, FILE_MAP_READ, offsetHigh, offsetLow, bytes);
 
 						m_address = address_;
-						m_memory.address = reinterpret_cast<u8*>(address_) + (_offset - page_offset);
+						m_memory.address = reinterpret_cast<u8*>(address_) + (x_offset - page_offset);
 					}
 					else
 					{
