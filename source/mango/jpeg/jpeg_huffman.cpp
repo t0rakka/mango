@@ -127,7 +127,6 @@ namespace jpeg {
 
     void huff_decode_mcu(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
@@ -166,7 +165,7 @@ namespace jpeg {
                 {
                     i += r;
                     HUFF_RECEIVE(buffer, s);
-                    output[zigzagTable[i++]] = s16(s);
+                    output[i++] = s16(s);
                 }
                 else
                 {
@@ -222,7 +221,6 @@ namespace jpeg {
     
     void huff_decode_ac_first(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
@@ -250,7 +248,7 @@ namespace jpeg {
                 if (s)
                 {
                     HUFF_RECEIVE(buffer, s);
-                    output[zigzagTable[i]] = s16(s << state->successiveLow);
+                    output[i] = s16(s << state->successiveLow);
                 }
                 else
                 {
@@ -273,7 +271,6 @@ namespace jpeg {
 
     void huff_decode_ac_refine(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
@@ -323,7 +320,7 @@ namespace jpeg {
 
                 do
                 {
-                    s16* coef = output + zigzagTable[k];
+                    s16* coef = output + k;
 
                     if (*coef != 0)
                     {
@@ -348,7 +345,7 @@ namespace jpeg {
                 
                 if ((s) && (k < 64))
                 {
-                    output[zigzagTable[k]] = s16(s);
+                    output[k] = s16(s);
                 }
             }
         }
@@ -357,8 +354,8 @@ namespace jpeg {
         {
             for ( ; k <= end; k++)
             {
-                s16* coef = output + zigzagTable[k];
-                
+                s16* coef = output + k;
+
                 if (*coef != 0)
                 {
                     buffer.ensure16();
