@@ -47,11 +47,11 @@ namespace
     {
         static const u8 zz [] =
         {
-             0,  8,  1,  2,  9, 16, 24, 17, 10,  3,  4, 11, 18, 25, 32, 40,
-            33, 26, 19, 12,  5,  6, 13, 20, 27, 34, 41, 48, 56, 49, 42, 35,
-            28, 21, 14,  7, 15, 22, 29, 36, 43, 50, 57, 58, 51, 44, 37, 30,
-            23, 31, 38, 45, 52, 59, 60, 53, 46, 39, 47, 54, 61, 62, 55, 63,
-       };
+             0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
+            12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
+            35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
+            58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
+        };
 
         alignas(16) s16 data[64];
         for (int i = 0; i < 64; ++i)
@@ -69,17 +69,17 @@ namespace
 
         for (int i = 0; i < 8; ++i)
         {
-            if (s[1] || s[2] || s[3] || s[4] || s[5] || s[6] || s[7])
+            if (s[i + 8 * 1] || s[i + 8 * 2] || s[i + 8 * 3] || s[i + 8 * 4] || s[i + 8 * 5] || s[i + 8 * 6] || s[i + 8 * 7])
             {
                 // dequantize
-                const int s0 = s[0] * qt[0];
-                const int s1 = s[1] * qt[1];
-                const int s2 = s[2] * qt[2];
-                const int s3 = s[3] * qt[3];
-                const int s4 = s[4] * qt[4];
-                const int s5 = s[5] * qt[5];
-                const int s6 = s[6] * qt[6];
-                const int s7 = s[7] * qt[7];
+                const int s0 = s[i + 8 * 0] * qt[i + 8 * 0];
+                const int s1 = s[i + 8 * 1] * qt[i + 8 * 1];
+                const int s2 = s[i + 8 * 2] * qt[i + 8 * 2];
+                const int s3 = s[i + 8 * 3] * qt[i + 8 * 3];
+                const int s4 = s[i + 8 * 4] * qt[i + 8 * 4];
+                const int s5 = s[i + 8 * 5] * qt[i + 8 * 5];
+                const int s6 = s[i + 8 * 6] * qt[i + 8 * 6];
+                const int s7 = s[i + 8 * 7] * qt[i + 8 * 7];
 
                 IDCT idct;
                 idct.compute(s0, s1, s2, s3, s4, s5, s6, s7);
@@ -99,7 +99,7 @@ namespace
             }
             else
             {
-                int dc = (s[0] * qt[0]) << 2;
+                int dc = (s[i] * qt[i]) << 2;
                 v[0] = dc;
                 v[1] = dc;
                 v[2] = dc;
@@ -111,8 +111,6 @@ namespace
             }
 
             v += 8;
-            s += 8;
-            qt += 8;
         }
 
         v = temp;
@@ -158,131 +156,6 @@ namespace jpeg {
     {
         idct<12>(dest, data, qt);
     }
-
-#if defined(JPEG_ENABLE_SIMD)
-
-    // ------------------------------------------------------------------------------------------------
-    // SIMD implementation
-    // ------------------------------------------------------------------------------------------------
-
-#if 0
-    static inline uint8x16 packRow(float32x4 x, float32x4 y)
-    {
-        float32x4 a = x - y;
-        float32x4 b = x + y;
-        b = b.wzyx;
-        int16x8 c0 = simd::narrow(convert<int32x4>(a).m, convert<int32x4>(b).m);
-        uint16x8 c1 = reinterpret<uint16x8>(c0);
-        return simd::narrow(c1.m, c1.m);
-    }
-#endif
-
-    static inline uint8x16 packRow2(float32x4 x0, float32x4 y0, float32x4 x1, float32x4 y1)
-    {
-        float32x4 a0 = x0 - y0;
-        float32x4 b0 = x0 + y0;
-        b0 = b0.wzyx;
-
-        float32x4 a1 = x1 - y1;
-        float32x4 b1 = x1 + y1;
-        b1 = b1.wzyx;
-
-        int16x8 c0 = simd::narrow(convert<int32x4>(a0).m, convert<int32x4>(b0).m);
-        uint16x8 d0 = reinterpret<uint16x8>(c0);
-
-        int16x8 c1 = simd::narrow(convert<int32x4>(a1).m, convert<int32x4>(b1).m);
-        uint16x8 d1 = reinterpret<uint16x8>(c1);
-
-        return simd::narrow(d0.m, d1.m);
-    }
-
-    void idct_simd(u8* dest, const s16* in, const u16* qt)
-    {
-        static const u8 zz [] =
-        {
-             0,  8,  1,  2,  9, 16, 24, 17, 10,  3,  4, 11, 18, 25, 32, 40,
-            33, 26, 19, 12,  5,  6, 13, 20, 27, 34, 41, 48, 56, 49, 42, 35,
-            28, 21, 14,  7, 15, 22, 29, 36, 43, 50, 57, 58, 51, 44, 37, 30,
-            23, 31, 38, 45, 52, 59, 60, 53, 46, 39, 47, 54, 61, 62, 55, 63,
-       };
-
-        alignas(16) s16 data_temp[64];
-        for (int i = 0; i < 64; ++i)
-        {
-            int offset = zz[i];
-            data_temp[offset] = in[i];
-        }
-
-        s16* data = data_temp;
-
-        float32x4 temp[16];
-        float32x4* v = temp;
-
-        const float32x4 f0(-0.3535533905f, 0.3535533905f, 128.0f,        128.0f);
-        const float32x4 f1( 0.4619397662f, 0.1913417161f,-0.4619397662f,-0.1913417161f);
-        const float32x4 c0 = f0.yyyy;
-        const float32x4 c1 = f1.xywz;
-        const float32x4 c2 = f0.yxxy;
-        const float32x4 c3 = f1.yzxw;
-        const float32x4 c4(-0.4903926402f,-0.4157348061f,-0.2777851165f,-0.0975451610f);
-        const float32x4 c5(-0.4157348061f, 0.0975451610f, 0.4903926402f, 0.2777851165f);
-        const float32x4 c6(-0.2777851165f, 0.4903926402f,-0.0975451610f,-0.4157348061f);
-        const float32x4 c7(-0.0975451610f, 0.2777851165f,-0.4157348061f, 0.4903926402f);
-        const float32x4 c8 = f0.wwww;
-
-        for (int i = 0; i < 8; ++i)
-        {
-            int16x8 d = *reinterpret_cast<const int16x8 *>(data);
-            int16x8 q = *reinterpret_cast<const int16x8 *>(qt);
-            int16x8 dq = simd::mullo(d, q);
-            float32x8 s = convert<float32x8>(int32x8(simd::extend32x8(dq)));
-            float32x4 s0 = s.low;
-            float32x4 s1 = s.high;
-            float32x4 x = madd(madd(madd(s0.xxxx * c0, s0.zzzz, c1), s1.xxxx, c2), s1.zzzz, c3);
-            float32x4 y = madd(madd(madd(s0.yyyy * c4, s0.wwww, c5), s1.yyyy, c6), s1.wwww, c7);
-            float32x4 a = x + y;
-            float32x4 b = x - y;
-            b = b.wzyx;
-
-            v[0] = a;
-            v[1] = b;
-
-            data += 8;
-            qt += 8;
-            v += 2;
-        }
-
-        v = temp + 1;
-
-        for (int i = 0; i < 2; ++i)
-        {
-            float32x4 v0 = v[0];
-            float32x4 v2 = v[4];
-            float32x4 v4 = v[8];
-            float32x4 v6 = v[12];
-            float32x4 x0 = madd(madd(madd(v0.xxxx * c0, v2.xxxx, c1), v4.xxxx, c2), v6.xxxx, c3) + c8;
-            float32x4 x1 = madd(madd(madd(v0.yyyy * c0, v2.yyyy, c1), v4.yyyy, c2), v6.yyyy, c3) + c8;
-            float32x4 x2 = madd(madd(madd(v0.zzzz * c0, v2.zzzz, c1), v4.zzzz, c2), v6.zzzz, c3) + c8;
-            float32x4 x3 = madd(madd(madd(v0.wwww * c0, v2.wwww, c1), v4.wwww, c2), v6.wwww, c3) + c8;
-
-            float32x4 v1 = v[2];
-            float32x4 v3 = v[6];
-            float32x4 v5 = v[10];
-            float32x4 v7 = v[14];
-            float32x4 y0 = madd(madd(madd(v1.xxxx * c4, v3.xxxx, c5), v5.xxxx, c6), v7.xxxx, c7);
-            float32x4 y1 = madd(madd(madd(v1.yyyy * c4, v3.yyyy, c5), v5.yyyy, c6), v7.yyyy, c7);
-            float32x4 y2 = madd(madd(madd(v1.zzzz * c4, v3.zzzz, c5), v5.zzzz, c6), v7.zzzz, c7);
-            float32x4 y3 = madd(madd(madd(v1.wwww * c4, v3.wwww, c5), v5.wwww, c6), v7.wwww, c7);
-
-            uint8x16* d = reinterpret_cast<uint8x16 *>(dest);
-            d[0] = packRow2(x3, y3, x2, y2);
-            d[1] = packRow2(x1, y1, x0, y0);
-            dest += 8 * 4;
-            --v;
-        }
-    }
-
-#endif // JPEG_ENABLE_SIMD
 
 #if defined(JPEG_ENABLE_SSE2)
 
@@ -412,7 +285,7 @@ namespace jpeg {
     {
         static const u8 zz [] =
         {
-            0 , 1 , 8 , 16, 9 , 2 , 3 , 10, 17, 24, 32, 25, 18, 11, 4 , 5 ,
+             0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
             12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
             35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
             58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
@@ -501,7 +374,7 @@ static void stbi__idct_simd(u8 *out, const short in[64], const u16* qt)
 {
     static const u8 zz [] =
     {
-        0 , 1 , 8 , 16, 9 , 2 , 3 , 10, 17, 24, 32, 25, 18, 11, 4 , 5 ,
+         0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
         12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
         35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
         58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,

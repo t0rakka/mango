@@ -274,8 +274,6 @@ namespace jpeg {
         int blocks;
         int comps_in_scan;
 
-        const int* zigzagTable;
-
         int spectralStart;
         int spectralEnd;
         int successiveHigh;
@@ -463,10 +461,6 @@ namespace jpeg {
     void process_ycbcr_rgba_8x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x8        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-
-#if defined(JPEG_ENABLE_SIMD)
-    void idct_simd                      (u8* dest, const s16* data, const u16* qt);
-#endif
 
 #if defined(JPEG_ENABLE_NEON)
     void idct_neon                      (u8* dest, const s16* data, const u16* qt);
