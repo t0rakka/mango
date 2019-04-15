@@ -721,6 +721,8 @@ namespace jpeg {
         bool dc_scan = (decodeState.spectralStart == 0);
         bool refine_scan = (decodeState.successiveHigh != 0);
 
+        decodeState.zigzagTable = g_zigzag_table;
+
         restartCounter = restartInterval;
 
         if (is_arithmetic)

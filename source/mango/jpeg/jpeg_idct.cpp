@@ -43,23 +43,8 @@ namespace
     };
 
     template <int PRECISION>
-    void idct(u8* dest, const s16* in, const u16* qt)
+    void idct(u8* dest, const s16* data, const u16* qt)
     {
-        static const u8 zz [] =
-        {
-             0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
-            12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
-            35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
-            58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
-        };
-
-        alignas(16) s16 data[64];
-        for (int i = 0; i < 64; ++i)
-        {
-            int offset = zz[i];
-            data[offset] = in[i];
-        }
-
         int temp[64];
         int* v;
 
@@ -283,22 +268,7 @@ namespace jpeg {
 
     void idct_sse2(u8* dest, const s16* src, const u16* qt)
     {
-        static const u8 zz [] =
-        {
-             0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
-            12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
-            35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
-            58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
-        };
-
-        alignas(16) s16 temp[64];
-        for (int i = 0; i < 64; ++i)
-        {
-            int offset = zz[i];
-            temp[offset] = src[i];
-        }
-        
-        const __m128i* data = reinterpret_cast<const __m128i *>(temp);
+        const __m128i* data = reinterpret_cast<const __m128i *>(src);
         const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
 
         // Load and dequantize
@@ -370,23 +340,8 @@ namespace jpeg {
 
 #define stbi__f2f(x)  ((int) (((x) * 4096 + 0.5)))
 
-static void stbi__idct_simd(u8 *out, const short in[64], const u16* qt)
+void idct_neon(u8* out, const s16* data, const u16* qt)
 {
-    static const u8 zz [] =
-    {
-         0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
-        12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
-        35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
-        58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
-    };
-
-    alignas(16) s16 data[64];
-    for (int i = 0; i < 64; ++i)
-    {
-        int offset = zz[i];
-        data[offset] = in[i];
-    }
-
     int16x8_t row0, row1, row2, row3, row4, row5, row6, row7;
 
     int16x4_t rot0_0 = vdup_n_s16(stbi__f2f(0.5411961f));
@@ -604,11 +559,6 @@ static void stbi__idct_simd(u8 *out, const short in[64], const u16* qt)
 #undef dct_bfly32o
 #undef dct_pass
 }
-
-    void idct_neon(u8* dest, const s16* data, const u16* qt)
-    {
-        stbi__idct_simd(dest, data, qt);
-    }
 
 #endif // JPEG_ENABLE_NEON
 

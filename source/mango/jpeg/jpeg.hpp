@@ -274,6 +274,8 @@ namespace jpeg {
         int blocks;
         int comps_in_scan;
 
+        const int* zigzagTable;
+
         int spectralStart;
         int spectralEnd;
         int successiveHigh;

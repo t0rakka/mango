@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstdio>
 #include <cstddef>
@@ -217,6 +217,7 @@ namespace jpeg {
 
     void arith_decode_mcu(s16* output, DecodeState* state)
     {
+        const int* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
@@ -337,7 +338,7 @@ namespace jpeg {
                 }
                 v += 1; if (sign) v = -v;
 
-                output[k] = s16(v);
+                output[zigzagTable[k]] = s16(v);
             }
 
             ++block;
@@ -439,6 +440,7 @@ namespace jpeg {
 
     void arith_decode_ac_first(s16* output, DecodeState* state)
     {
+        const int* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
 
@@ -497,13 +499,14 @@ namespace jpeg {
             
             v += 1; if (sign) v = -v;
             
-            // Scale and output coefficient
-            output[k] = s16(v << state->successiveLow);
+            // Scale and output coefficient in natural (dezigzagged) order
+            output[zigzagTable[k]] = s16(v << state->successiveLow);
         }
     }
 
     void arith_decode_ac_refine(s16* output, DecodeState* state)
     {
+        const int* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
 
@@ -520,7 +523,7 @@ namespace jpeg {
         // Establish EOBx (previous stage end-of-block) index
         for (kex = end; kex > 0; kex--)
         {
-            if (output[kex])
+            if (output[zigzagTable[kex]])
                 break;
         }
 
@@ -534,7 +537,7 @@ namespace jpeg {
                     break; // EOB flag
             }
 
-            s16* coef = output + k;
+            s16* coef = output + zigzagTable[k];
             
             for (;;)
             {
