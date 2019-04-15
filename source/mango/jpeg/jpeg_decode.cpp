@@ -11,33 +11,16 @@
 namespace mango {
 namespace jpeg {
 
-#if defined(JPEG_ENABLE_SSE2) || defined(JPEG_ENABLE_NEON)
-
-    // The zigzag table is in 'natural' order ; each entry indicates
-    // where the sample is located at in the original 8x8 block.
-
-    static const int g_zigzag_table_standard [] =
+    static const int g_zigzag_table [] =
     {
-        0 , 1 , 8 , 16, 9 , 2 , 3 , 10, 17, 24, 32, 25, 18, 11, 4 , 5 ,
-        12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6 , 7 , 14, 21, 28,
-        35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
-        58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
-
-        63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63,
-    };
-
-#endif
-
-    // Non-standard memory layout is used by some idct routines.
-
-    static const int g_zigzag_table_variant [] =
-    {
-         0,  8,  1,  2,  9, 16, 24, 17, 10,  3,  4, 11, 18, 25, 32, 40,
-        33, 26, 19, 12,  5,  6, 13, 20, 27, 34, 41, 48, 56, 49, 42, 35,
-        28, 21, 14,  7, 15, 22, 29, 36, 43, 50, 57, 58, 51, 44, 37, 30,
-        23, 31, 38, 45, 52, 59, 60, 53, 46, 39, 47, 54, 61, 62, 55, 63,
-
-        63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63,
+         0,  1,  8, 16,  9,  2,  3, 10,
+        17, 24, 32, 25, 18, 11,  4,  5,
+        12, 19, 26, 33, 40, 48, 41, 34,
+        27, 20, 13,  6,  7, 14, 21, 28,
+        35, 42, 49, 56, 57, 50, 43, 36,
+        29, 22, 15, 23, 30, 37, 44, 51,
+        58, 59, 52, 45, 38, 31, 39, 46,
+        53, 60, 61, 54, 47, 55, 62, 63,
     };
 
     // ----------------------------------------------------------------------------
@@ -250,23 +233,15 @@ namespace jpeg {
         cpu_flags = getCPUFlags();
 
         // configure default implementation
-        decodeState.zigzagTable = g_zigzag_table_variant;
         processState.idct = idct8;
 
-#if defined(JPEG_ENABLE_SIMD)
-        decodeState.zigzagTable = g_zigzag_table_variant;
-        processState.idct = idct_simd;
-#endif
-
 #if defined(JPEG_ENABLE_NEON)
-        decodeState.zigzagTable = g_zigzag_table_standard;
         processState.idct = idct_neon;
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
         if (cpu_flags & CPU_SSE2)
         {
-            decodeState.zigzagTable = g_zigzag_table_standard;
             processState.idct = idct_sse2;
         }
 #endif
@@ -280,11 +255,7 @@ namespace jpeg {
         if (precision == 12)
         {
             // Force 12 bit idct
-            //
-            // NOTE:
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
-            // The most likely implementation is to decode into 16 bit float "HDR" render target 
-            decodeState.zigzagTable = g_zigzag_table_variant;
             processState.idct = idct12;
         }
     }
@@ -750,6 +721,8 @@ namespace jpeg {
         bool dc_scan = (decodeState.spectralStart == 0);
         bool refine_scan = (decodeState.successiveHigh != 0);
 
+        decodeState.zigzagTable = g_zigzag_table;
+
         restartCounter = restartInterval;
 
         if (is_arithmetic)
@@ -897,14 +870,14 @@ namespace jpeg {
                 case 0:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[decodeState.zigzagTable[i]] = *p++;
+                        table.table[g_zigzag_table[i]] = *p++;
                     }
                     break;
 
                 case 1:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[decodeState.zigzagTable[i]] = uload16be(p);
+                        table.table[g_zigzag_table[i]] = uload16be(p);
                         p += 2;
                     }
                     break;
