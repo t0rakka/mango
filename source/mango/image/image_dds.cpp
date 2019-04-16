@@ -39,8 +39,8 @@ namespace
     enum
     {
         // chunks
-        FOURCC_DDS        = make_u32('D', 'D', 'S', ' '),
-        FOURCC_DX10       = make_u32('D', 'X', '1', '0'),
+        FOURCC_DDS        = u32_mask('D', 'D', 'S', ' '),
+        FOURCC_DX10       = u32_mask('D', 'X', '1', '0'),
 
         // floatint point
         FOURCC_R16F       = 111,
@@ -812,14 +812,14 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                const int xblocks = round_multiple_up(xsize, info.width);
-                const int yblocks = round_multiple_up(ysize, info.height);
+                const int xblocks = ceil_div(xsize, info.width);
+                const int yblocks = ceil_div(ysize, info.height);
                 pitch = xblocks * info.bytes;
                 ysize = yblocks;
             }
             else
             {
-                const int bytesPerPixel = round_multiple_up(pixelFormat.format.bits, 8);
+                const int bytesPerPixel = ceil_div(pixelFormat.format.bits, 8);
                 pitch = xsize * bytesPerPixel;
             }
 

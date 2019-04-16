@@ -38,7 +38,7 @@ namespace
         void read(BigEndianPointer& p)
         {
             u32 magic = p.read32();
-            if (magic != make_u32rev('P', 'K', 'M', ' '))
+            if (magic != u32_mask_rev('P', 'K', 'M', ' '))
             {
                 MANGO_EXCEPTION(ID"Incorrect header.");
             }

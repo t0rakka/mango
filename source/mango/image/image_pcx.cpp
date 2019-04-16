@@ -339,7 +339,7 @@ namespace
 
             // RLE scanline buffer
             int bytesPerLine = m_header.BytesPerLine;
-            if (!bytesPerLine) bytesPerLine = width * round_multiple_up(m_header.BitsPerPixel, 8);
+            if (!bytesPerLine) bytesPerLine = width * ceil_div(m_header.BitsPerPixel, 8);
             int scansize = m_header.NPlanes * bytesPerLine;
 
             Buffer buffer(scansize * height);

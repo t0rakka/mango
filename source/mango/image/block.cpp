@@ -510,8 +510,8 @@ namespace mango
         if (!decode)
             return;
 
-        const int xsize = round_multiple_up(surface.width, width);
-        const int ysize = round_multiple_up(surface.height, height);
+        const int xsize = ceil_div(surface.width, width);
+        const int ysize = ceil_div(surface.height, height);
 
         const bool noclip = surface.width == (xsize * width) &&
                             surface.height == (ysize * height);
@@ -551,8 +551,8 @@ namespace mango
 
         u8* address = memory.address;
 
-        const int xblocks = round_multiple_up(surface.width, width);
-        const int yblocks = round_multiple_up(surface.height, height);
+        const int xblocks = ceil_div(surface.width, width);
+        const int yblocks = ceil_div(surface.height, height);
 
         for (int y = 0; y < yblocks; ++y)
         {

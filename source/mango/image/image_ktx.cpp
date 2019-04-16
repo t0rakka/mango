@@ -479,7 +479,7 @@ namespace
 
             u8* ptr = memory.address + sizeof(ktxIdentifier);
 
-            endianness = make_u32(ptr[0], ptr[1], ptr[2], ptr[3]);
+            endianness = u32_mask(ptr[0], ptr[1], ptr[2], ptr[3]);
             ptr += 4;
 
 			if (endianness == 0x04030201)

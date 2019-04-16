@@ -133,20 +133,20 @@ namespace mango
     };
 
     // --------------------------------------------------------------
-    // unsigned builders
+    // unsigned mask builders
     // --------------------------------------------------------------
 
-    constexpr u8 make_u8(u8 c0, u8 c1, u8 c2, u8 c3) noexcept
+    constexpr u8 u8_mask(u8 c0, u8 c1, u8 c2, u8 c3) noexcept
     {
         return (c3 << 6) | (c2 << 4) | (c1 << 2) | c0;
     }
 
-    constexpr u32 make_u32(char c0, char c1, char c2, char c3) noexcept
+    constexpr u32 u32_mask(char c0, char c1, char c2, char c3) noexcept
     {
         return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
     }
 
-    constexpr u32 make_u32rev(char c0, char c1, char c2, char c3) noexcept
+    constexpr u32 u32_mask_rev(char c0, char c1, char c2, char c3) noexcept
     {
         return (c0 << 24) | (c1 << 16) | (c2 << 8) | c3;
     }
@@ -154,11 +154,6 @@ namespace mango
     // ----------------------------------------------------------------------------
     // misc
     // ----------------------------------------------------------------------------
-
-    static inline float ntsc_luminance(float red, float green, float blue)
-    {
-        return red * 0.299f + green * 0.587f + blue * 0.114f;
-    }
 
     template <typename T>
     static inline T min(T a, T b)
@@ -200,24 +195,23 @@ namespace mango
 
 #endif
 
-    static inline int modulo(int value, int range)
+    constexpr int modulo(int value, int range)
     {
         const int remainder = value % range;
         return remainder < 0 ? remainder + range : remainder;
     }
 
-    static inline int round_multiple_down(int value, int multiple)
+    constexpr int floor_div(int value, int multiple)
     {
         return value / multiple;
     }
 
-    static inline int round_multiple_up(int value, int multiple)
+    constexpr int ceil_div(int value, int multiple)
     {
-        value = (value + multiple - 1) / multiple;
-        return std::max(1, value);
+        return (value + multiple - 1) / multiple;
     }
 
-    static inline constexpr float snap(float value, float grid)
+    constexpr float snap(float value, float grid)
     {
         return grid ? std::floor(0.5f + value / grid) * grid : value;
     }
@@ -280,7 +274,7 @@ namespace mango
 
 #else
 
-    static inline u32 u32_clear_lsb(u32 value)
+    constexpr u32 u32_clear_lsb(u32 value)
     {
         // value:     xxxxx100000
         // value - 1: xxxxx011111
@@ -292,20 +286,20 @@ namespace mango
         return value & (value - 1);
     }
 
-    static inline u32 u32_expand_lsb(u32 value)
+    constexpr u32 u32_expand_lsb(u32 value)
     {
 		// NOTE: 0 expands to 0xffffffff
         return value ^ (value - 1);
     }
 
-    static inline u32 u32_lsb(u32 value)
+    constexpr u32 u32_lsb(u32 value)
     {
         return value & (0 - value);
     }
 
 #endif
 
-    static inline u32 u32_expand_high_lsb(u32 value)
+    constexpr u32 u32_expand_high_lsb(u32 value)
     {
         return value | (0 - value);
     }
@@ -464,7 +458,7 @@ namespace mango
 
 #else
 
-    static inline u32 u32_extract_bits(u32 value, int offset, int size)
+    constexpr u32 u32_extract_bits(u32 value, int offset, int size)
     {
         return (value >> offset) & ((1 << size) - 1);
     }
@@ -516,13 +510,13 @@ namespace mango
 
 #endif
 
-    static inline u32 u32_select(u32 mask, u32 a, u32 b)
+    constexpr u32 u32_select(u32 mask, u32 a, u32 b)
     {
         // bitwise mask ? a : b
         return (mask & (a ^ b)) ^ b;
     }
 
-    static inline bool u32_has_zero_byte(u32 value)
+    constexpr bool u32_has_zero_byte(u32 value)
     {
 	    return ((value - 0x01010101) & ~value & 0x80808080) != 0;
     }
@@ -588,18 +582,18 @@ namespace mango
 
 #else
 
-    static inline u64 u64_clear_lsb(u64 value)
+    constexpr u64 u64_clear_lsb(u64 value)
     {
         return value & (value - 1);
     }
 
-    static inline u64 u64_expand_lsb(u64 value)
+    constexpr u64 u64_expand_lsb(u64 value)
     {
 		// NOTE: 0 expands to 0xffffffffffffffff
         return value ^ (value - 1);
     }
 
-    static inline u64 u64_lsb(u64 value)
+    constexpr u64 u64_lsb(u64 value)
     {
         return value & (0 - value);
     }
@@ -788,7 +782,7 @@ namespace mango
 
 #else
 
-    static inline u64 u64_extract_bits(u64 value, int offset, int size)
+    constexpr u64 u64_extract_bits(u64 value, int offset, int size)
     {
         return (value >> offset) & ((1 << size) - 1);
     }
@@ -842,13 +836,13 @@ namespace mango
 
 #endif
 
-    static inline u64 u64_select(u64 mask, u64 a, u64 b)
+    constexpr u64 u64_select(u64 mask, u64 a, u64 b)
     {
         // bitwise mask ? a : b
         return (mask & (a ^ b)) ^ b;
     }
 
-    static inline bool u64_has_zero_byte(u64 value)
+    constexpr bool u64_has_zero_byte(u64 value)
     {
 	    return (~value & (value - 0x0101010101010101) & 0x8080808080808080) != 0;
     }
