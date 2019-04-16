@@ -127,7 +127,7 @@ namespace jpeg {
 
     void huff_decode_mcu(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
+        const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
@@ -222,7 +222,7 @@ namespace jpeg {
     
     void huff_decode_ac_first(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
+        const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
@@ -273,7 +273,7 @@ namespace jpeg {
 
     void huff_decode_ac_refine(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
+        const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         jpegBuffer& buffer = state->buffer;
 
@@ -324,7 +324,6 @@ namespace jpeg {
                 do
                 {
                     s16* coef = output + zigzagTable[k];
-
                     if (*coef != 0)
                     {
                         buffer.ensure16();

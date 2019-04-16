@@ -217,7 +217,7 @@ namespace jpeg {
 
     void arith_decode_mcu(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
+        const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
@@ -440,7 +440,7 @@ namespace jpeg {
 
     void arith_decode_ac_first(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
+        const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
 
@@ -499,14 +499,14 @@ namespace jpeg {
             
             v += 1; if (sign) v = -v;
             
-            // Scale and output coefficient in natural (dezigzagged) order
+            // Scale and output coefficient in natural order
             output[zigzagTable[k]] = s16(v << state->successiveLow);
         }
     }
 
     void arith_decode_ac_refine(s16* output, DecodeState* state)
     {
-        const int* zigzagTable = state->zigzagTable;
+        const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         jpegBuffer& buffer = state->buffer;
 
@@ -538,7 +538,6 @@ namespace jpeg {
             }
 
             s16* coef = output + zigzagTable[k];
-            
             for (;;)
             {
                 if (*coef)
