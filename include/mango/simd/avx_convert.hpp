@@ -279,7 +279,7 @@ namespace detail {
 
     static inline u16x8 narrow(u32x4 a, u32x4 b)
     {
-        return detail::simd128_packus_epi32(a, b);
+        return _mm_packus_epi32(a, b);
     }
 
     static inline s8x16 narrow(s16x8 a, s16x8 b)

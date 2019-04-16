@@ -240,10 +240,25 @@ namespace detail {
         return _mm_packus_epi16(a, b);
     }
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
     static inline u16x8 narrow(u32x4 a, u32x4 b)
     {
-        return detail::simd128_packus_epi32(a, b);
+        return _mm_packus_epi32(a, b);
     }
+
+#else
+
+    static inline u16x8 narrow(u32x4 a, u32x4 b)
+    {
+        a = _mm_slli_epi32(a, 16);
+        a = _mm_srai_epi32(a, 16);
+        b = _mm_slli_epi32(b, 16);
+        b = _mm_srai_epi32(b, 16);
+        return _mm_packs_epi32(a, b);
+    }
+
+#endif
 
     static inline s8x16 narrow(s16x8 a, s16x8 b)
     {

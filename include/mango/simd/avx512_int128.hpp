@@ -19,16 +19,8 @@ namespace simd {
 #define simd128_shuffle_epi64(a, b, mask) \
     _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), mask))
 
-namespace detail {
-
-    static inline __m128i simd128_packus_epi32(__m128i a, __m128i b)
-    {
-        a = _mm_slli_epi32(a, 16);
-        a = _mm_srai_epi32(a, 16);
-        b = _mm_slli_epi32(b, 16);
-        b = _mm_srai_epi32(b, 16);
-        return _mm_packs_epi32(a, b);
-    }
+namespace detail
+{
 
     static inline __m128i simd128_not_si128(__m128i a)
     {
