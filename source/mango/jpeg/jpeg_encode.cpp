@@ -34,7 +34,6 @@
 
 namespace
 {
-
     using namespace mango;
     using namespace jpeg;
 
@@ -209,16 +208,16 @@ namespace
         35, 36, 48, 49, 57, 58, 62, 63
     };
 
-    const u8 zigzag_table_transpose [] =
+    const u8 zigzag_table_inverse [] =
     {
-         0,  2,  3,  9, 10, 20, 21, 35,
-         1,  4,  8, 11, 19, 22, 34, 36,
-         5,  7, 12, 18, 23, 33, 37, 48,
-         6, 13, 17, 24, 32, 38, 47, 49,
-        14, 16, 25, 31, 39, 46, 50, 57,
-        15, 26, 30, 40, 45, 51, 56, 58,
-        27, 29, 41, 44, 52, 55, 59, 62,
-        28, 42, 43, 53, 54, 60, 61, 63
+         0,  1,  8, 16,  9,  2,  3, 10,
+        17, 24, 32, 25, 18, 11,  4,  5,
+        12, 19, 26, 33, 40, 48, 41, 34,
+        27, 20, 13,  6,  7, 14, 21, 28,
+        35, 42, 49, 56, 57, 50, 43, 36,
+        29, 22, 15, 23, 30, 37, 44, 51,
+        58, 59, 52, 45, 38, 31, 39, 46,
+        53, 60, 61, 54, 47, 55, 62, 63,
     };
 
     const u8 luminance_quant_table [] =
@@ -387,14 +386,14 @@ namespace
             return p;
         }
 
-        u8* encode(u8* p, int component, s16* temp)
+        u8* encode(u8* p, int component, s16* input)
         {
             const u16* DcCodeTable;
             const u16* DcSizeTable;
             const u16* AcCodeTable;
             const u16* AcSizeTable;
 
-            int Coeff = *temp++;
+            int Coeff = input[0];
             int LastDc;
 
             if (component == 1)
@@ -448,9 +447,9 @@ namespace
 
             int RunLength = 0;
 
-            for (int i = 0; i < 63; ++i)
+            for (int i = 1; i < 64; ++i)
             {
-                s16 Coeff = *temp++;
+                s16 Coeff = input[zigzag_table_inverse[i]];
                 if (Coeff)
                 {
                     while (RunLength > 15)
@@ -499,12 +498,12 @@ namespace
 
     void fdct(s16* dest, s16* data, const u16* quant_table)
     {
-        const u16 c1 = 1420;  // cos  PI/16 * root(2)
-        const u16 c2 = 1338;  // cos  PI/8  * root(2)
-        const u16 c3 = 1204;  // cos 3PI/16 * root(2)
-        const u16 c5 = 805;   // cos 5PI/16 * root(2)
-        const u16 c6 = 554;   // cos 3PI/8  * root(2)
-        const u16 c7 = 283;   // cos 7PI/16 * root(2)
+        const s16 c1 = 1420;  // cos  PI/16 * root(2)
+        const s16 c2 = 1338;  // cos  PI/8  * root(2)
+        const s16 c3 = 1204;  // cos 3PI/16 * root(2)
+        const s16 c5 = 805;   // cos 5PI/16 * root(2)
+        const s16 c6 = 554;   // cos 3PI/8  * root(2)
+        const s16 c7 = 283;   // cos 7PI/16 * root(2)
 
         for (int i = 0; i < 8; ++i)
         {
@@ -533,6 +532,7 @@ namespace
 
         data -= 64;
 
+#if 1
         for (int i = 0; i < 8; ++i)
         {
             int x8 = data [i +  0] + data [i + 56];
@@ -555,15 +555,82 @@ namespace
             auto v5 = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13);
             auto v3 = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13);
             auto v1 = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13);
-            dest[zigzag_table_transpose[i * 8 + 0]] = s16((v0 * quant_table[i * 8 + 0] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 1]] = s16((v1 * quant_table[i * 8 + 1] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 2]] = s16((v2 * quant_table[i * 8 + 2] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 3]] = s16((v3 * quant_table[i * 8 + 3] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 4]] = s16((v4 * quant_table[i * 8 + 4] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 5]] = s16((v5 * quant_table[i * 8 + 5] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 6]] = s16((v6 * quant_table[i * 8 + 6] + 0x4000) >> 15);
-            dest[zigzag_table_transpose[i * 8 + 7]] = s16((v7 * quant_table[i * 8 + 7] + 0x4000) >> 15);
+            dest[i + 8 * 0] = s16((v0 * quant_table[i * 8 + 0] + 0x4000) >> 15);
+            dest[i + 8 * 1] = s16((v1 * quant_table[i * 8 + 1] + 0x4000) >> 15);
+            dest[i + 8 * 2] = s16((v2 * quant_table[i * 8 + 2] + 0x4000) >> 15);
+            dest[i + 8 * 3] = s16((v3 * quant_table[i * 8 + 3] + 0x4000) >> 15);
+            dest[i + 8 * 4] = s16((v4 * quant_table[i * 8 + 4] + 0x4000) >> 15);
+            dest[i + 8 * 5] = s16((v5 * quant_table[i * 8 + 5] + 0x4000) >> 15);
+            dest[i + 8 * 6] = s16((v6 * quant_table[i * 8 + 6] + 0x4000) >> 15);
+            dest[i + 8 * 7] = s16((v7 * quant_table[i * 8 + 7] + 0x4000) >> 15);
         }
+#else
+        // first draft of SIMD processing
+        // - requires AVX2 to be "efficient" (256 bit wide vectors, boo!)
+        // - ugly mix of simd:: and vector classes, bad style!
+        // - rewrite to use 16 bit low/high processing like the inverse-DCT
+        // + at least it works and is nearly verbatim of scalar version above
+        // + code could be improved with upgrades to integer vector classes
+
+        const int32x8 vc1(c1);
+        const int32x8 vc2(c2);
+        const int32x8 vc3(c3);
+        const int32x8 vc5(c5);
+        const int32x8 vc6(c6);
+        const int32x8 vc7(c7);
+
+        int16x8* d = reinterpret_cast<int16x8*>(data);
+        const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
+
+        int32x8 x8 = simd::extend32x8(d[0] + d[7]);
+        int32x8 x0 = simd::extend32x8(d[0] - d[7]);
+        int32x8 x7 = simd::extend32x8(d[1] + d[6]);
+        int32x8 x1 = simd::extend32x8(d[1] - d[6]);
+        int32x8 x6 = simd::extend32x8(d[2] + d[5]);
+        int32x8 x2 = simd::extend32x8(d[2] - d[5]);
+        int32x8 x5 = simd::extend32x8(d[3] + d[4]);
+        int32x8 x3 = simd::extend32x8(d[3] - d[4]);
+        int32x8 x4 = x8 + x5;
+        x8 = x8 - x5;
+        x5 = x7 + x6;
+        x7 = x7 - x6;
+
+        int32x8 u0 = (x4 + x5) >> 3;
+        int32x8 u4 = (x4 - x5) >> 3;
+        int32x8 u2 = (x8 * vc2 + x7 * vc6) >> 13;
+        int32x8 u6 = (x8 * vc6 - x7 * vc2) >> 13;
+        int32x8 u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 13;
+        int32x8 u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 13;
+        int32x8 u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 13;
+        int32x8 u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 13;
+
+        u0 = (u0 * int32x8(simd::extend32x8(q[0])) + 0x4000) >> 15;
+        u1 = (u1 * int32x8(simd::extend32x8(q[1])) + 0x4000) >> 15;
+        u2 = (u2 * int32x8(simd::extend32x8(q[2])) + 0x4000) >> 15;
+        u3 = (u3 * int32x8(simd::extend32x8(q[3])) + 0x4000) >> 15;
+        u4 = (u4 * int32x8(simd::extend32x8(q[4])) + 0x4000) >> 15;
+        u5 = (u5 * int32x8(simd::extend32x8(q[5])) + 0x4000) >> 15;
+        u6 = (u6 * int32x8(simd::extend32x8(q[6])) + 0x4000) >> 15;
+        u7 = (u7 * int32x8(simd::extend32x8(q[7])) + 0x4000) >> 15;
+
+        int16x8 v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
+        int16x8 v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
+        int16x8 v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
+        int16x8 v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
+        int16x8 v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
+        int16x8 v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
+        int16x8 v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
+        int16x8 v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
+
+        std::memcpy(dest + 0 * 8, &v0, 16);
+        std::memcpy(dest + 1 * 8, &v1, 16);
+        std::memcpy(dest + 2 * 8, &v2, 16);
+        std::memcpy(dest + 3 * 8, &v3, 16);
+        std::memcpy(dest + 4 * 8, &v4, 16);
+        std::memcpy(dest + 5 * 8, &v5, 16);
+        std::memcpy(dest + 6 * 8, &v6, 16);
+        std::memcpy(dest + 7 * 8, &v7, 16);
+#endif
     }
 
     // ----------------------------------------------------------------------------
