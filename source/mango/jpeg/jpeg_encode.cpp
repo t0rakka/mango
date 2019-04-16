@@ -266,8 +266,8 @@ namespace
 
         u8      Lqt [BLOCK_SIZE];
         u8      Cqt [BLOCK_SIZE];
-        u16     ILqt [BLOCK_SIZE];
-        u16     ICqt [BLOCK_SIZE];
+        AlignedVector<u16> ILqt;
+        AlignedVector<u16> ICqt;
 
         // MCU configuration
         jpeg_chan   channel[3];
@@ -781,19 +781,21 @@ namespace
     // ----------------------------------------------------------------------------
 
     jpeg_encode::jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality)
+        : ILqt(64)
+        , ICqt(64)
     {
         int bytes_per_pixel = 0;
 
         channel_count = 0;
 
         channel[0].component = 1;
-        channel[0].qtable = ILqt;
+        channel[0].qtable = ILqt.data();
 
         channel[1].component = 2;
-        channel[1].qtable = ICqt;
+        channel[1].qtable = ICqt.data();
 
         channel[2].component = 3;
-        channel[2].qtable = ICqt;
+        channel[2].qtable = ICqt.data();
 
         switch (sample)
         {
