@@ -496,7 +496,7 @@ namespace
         }
     };
 
-#if 1
+#if 0
 
     void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
@@ -606,14 +606,15 @@ namespace
         const s16 c6 = 554;   // cos 6PI/16 * root(2)
         const s16 c7 = 283;   // cos 7PI/16 * root(2)
 
-        const int32x8 vc1(c1);
-        const int32x8 vc2(c2);
-        const int32x8 vc3(c3);
-        const int32x8 vc5(c5);
-        const int32x8 vc6(c6);
-        const int32x8 vc7(c7);
+        const int16x8 vc1(c1);
+        const int16x8 vc2(c2);
+        const int16x8 vc3(c3);
+        const int16x8 vc5(c5);
+        const int16x8 vc6(c6);
+        const int16x8 vc7(c7);
 
         const int16x8* vdata = reinterpret_cast<const int16x8*>(data);
+        const __m128i z = _mm_setzero_si128();
 
         int16x8 v0 = vdata[0];
         int16x8 v1 = vdata[1];
@@ -624,90 +625,205 @@ namespace
         int16x8 v6 = vdata[6];
         int16x8 v7 = vdata[7];
 
-        int32x8 x8 = simd::extend32x8(v0 + v7);
-        int32x8 x0 = simd::extend32x8(v0 - v7);
-        int32x8 x7 = simd::extend32x8(v1 + v6);
-        int32x8 x1 = simd::extend32x8(v1 - v6);
-        int32x8 x6 = simd::extend32x8(v2 + v5);
-        int32x8 x2 = simd::extend32x8(v2 - v5);
-        int32x8 x5 = simd::extend32x8(v3 + v4);
-        int32x8 x3 = simd::extend32x8(v3 - v4);
-        int32x8 x4 = x8 + x5;
+        int16x8 x8 = v0 + v7;
+        int16x8 x7 = v1 + v6;
+        int16x8 x6 = v2 + v5;
+        int16x8 x5 = v3 + v4;
+        int16x8 x0 = v0 - v7;
+        int16x8 x1 = v1 - v6;
+        int16x8 x2 = v2 - v5;
+        int16x8 x3 = v3 - v4;
+        int16x8 x4 = x8 + x5;
         x8 = x8 - x5;
         x5 = x7 + x6;
         x7 = x7 - x6;
-        int32x8 u0 = x4 + x5;
-        int32x8 u4 = x4 - x5;
-        int32x8 u2 = (x8 * vc2 + x7 * vc6) >> 10;
-        int32x8 u6 = (x8 * vc6 - x7 * vc2) >> 10;
-        int32x8 u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 10;
-        int32x8 u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 10;
-        int32x8 u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 10;
-        int32x8 u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 10;
 
-        v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
-        v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
-        v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
-        v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
-        v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
-        v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
-        v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
-        v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
+        v0 = x4 + x5;
+        v4 = x4 - x5;
+
+        __m128i lo0 = _mm_unpacklo_epi16(x0, z);
+        __m128i hi0 = _mm_unpackhi_epi16(x0, z);
+        __m128i lo1 = _mm_unpacklo_epi16(x1, z);
+        __m128i hi1 = _mm_unpackhi_epi16(x1, z);
+        __m128i lo2 = _mm_unpacklo_epi16(x2, z);
+        __m128i hi2 = _mm_unpackhi_epi16(x2, z);
+        __m128i lo3 = _mm_unpacklo_epi16(x3, z);
+        __m128i hi3 = _mm_unpackhi_epi16(x3, z);
+        __m128i lo7 = _mm_unpacklo_epi16(x7, z);
+        __m128i hi7 = _mm_unpackhi_epi16(x7, z);
+        __m128i lo8 = _mm_unpacklo_epi16(x8, z);
+        __m128i hi8 = _mm_unpackhi_epi16(x8, z);
+
+        __m128i a_lo;
+        __m128i a_hi;
+        __m128i b_lo;
+        __m128i b_hi;
+        __m128i c_lo;
+        __m128i c_hi;
+        __m128i d_lo;
+        __m128i d_hi;
+
+        //v2 = (x8 * vc2 + x7 * vc6) >> 10;
+        a_lo = _mm_madd_epi16(lo8, vc2);
+        a_hi = _mm_madd_epi16(hi8, vc2);
+        b_lo = _mm_madd_epi16(lo7, vc6);
+        b_hi = _mm_madd_epi16(hi7, vc6);
+        a_lo = _mm_add_epi32(a_lo, b_lo);
+        a_hi = _mm_add_epi32(a_hi, b_hi);
+        a_lo = _mm_srai_epi32(a_lo, 10);
+        a_hi = _mm_srai_epi32(a_hi, 10);
+        v2 = _mm_packs_epi32(a_lo, a_hi);
+
+        //v6 = (x8 * vc6 - x7 * vc2) >> 10;
+        a_lo = _mm_madd_epi16(lo8, vc6);
+        a_hi = _mm_madd_epi16(hi8, vc6);
+        b_lo = _mm_madd_epi16(lo7, vc2);
+        b_hi = _mm_madd_epi16(hi7, vc2);
+        a_lo = _mm_sub_epi32(a_lo, b_lo);
+        a_hi = _mm_sub_epi32(a_hi, b_hi);
+        a_lo = _mm_srai_epi32(a_lo, 10);
+        a_hi = _mm_srai_epi32(a_hi, 10);
+        v6 = _mm_packs_epi32(a_lo, a_hi);
+
+        //v7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 10;
+        a_lo = _mm_madd_epi16(lo0, vc7);
+        a_hi = _mm_madd_epi16(hi0, vc7);
+        b_lo = _mm_madd_epi16(lo1, vc5);
+        b_hi = _mm_madd_epi16(hi1, vc5);
+        c_lo = _mm_madd_epi16(lo2, vc3);
+        c_hi = _mm_madd_epi16(hi2, vc3);
+        d_lo = _mm_madd_epi16(lo3, vc1);
+        d_hi = _mm_madd_epi16(hi3, vc1);
+        a_lo = _mm_sub_epi32(a_lo, b_lo);
+        a_hi = _mm_sub_epi32(a_hi, b_hi);
+        a_lo = _mm_add_epi32(a_lo, c_lo);
+        a_hi = _mm_add_epi32(a_hi, c_hi);
+        a_lo = _mm_sub_epi32(a_lo, d_lo);
+        a_hi = _mm_sub_epi32(a_hi, d_hi);
+        a_lo = _mm_srai_epi32(a_lo, 10);
+        a_hi = _mm_srai_epi32(a_hi, 10);
+        v7 = _mm_packs_epi32(a_lo, a_hi);
+
+        //v5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 10;
+        a_lo = _mm_madd_epi16(lo0, vc5);
+        a_hi = _mm_madd_epi16(hi0, vc5);
+        b_lo = _mm_madd_epi16(lo1, vc1);
+        b_hi = _mm_madd_epi16(hi1, vc1);
+        c_lo = _mm_madd_epi16(lo2, vc7);
+        c_hi = _mm_madd_epi16(hi2, vc7);
+        d_lo = _mm_madd_epi16(lo3, vc3);
+        d_hi = _mm_madd_epi16(hi3, vc3);
+        a_lo = _mm_sub_epi32(a_lo, b_lo);
+        a_hi = _mm_sub_epi32(a_hi, b_hi);
+        a_lo = _mm_add_epi32(a_lo, c_lo);
+        a_hi = _mm_add_epi32(a_hi, c_hi);
+        a_lo = _mm_add_epi32(a_lo, d_lo);
+        a_hi = _mm_add_epi32(a_hi, d_hi);
+        a_lo = _mm_srai_epi32(a_lo, 10);
+        a_hi = _mm_srai_epi32(a_hi, 10);
+        v5 = _mm_packs_epi32(a_lo, a_hi);
+
+        //v3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 10;
+        a_lo = _mm_madd_epi16(lo0, vc3);
+        a_hi = _mm_madd_epi16(hi0, vc3);
+        b_lo = _mm_madd_epi16(lo1, vc7);
+        b_hi = _mm_madd_epi16(hi1, vc7);
+        c_lo = _mm_madd_epi16(lo2, vc1);
+        c_hi = _mm_madd_epi16(hi2, vc1);
+        d_lo = _mm_madd_epi16(lo3, vc5);
+        d_hi = _mm_madd_epi16(hi3, vc5);
+        a_lo = _mm_sub_epi32(a_lo, b_lo);
+        a_hi = _mm_sub_epi32(a_hi, b_hi);
+        a_lo = _mm_sub_epi32(a_lo, c_lo);
+        a_hi = _mm_sub_epi32(a_hi, c_hi);
+        a_lo = _mm_sub_epi32(a_lo, d_lo);
+        a_hi = _mm_sub_epi32(a_hi, d_hi);
+        a_lo = _mm_srai_epi32(a_lo, 10);
+        a_hi = _mm_srai_epi32(a_hi, 10);
+        v3 = _mm_packs_epi32(a_lo, a_hi);
+
+        //v1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 10;
+        a_lo = _mm_madd_epi16(lo0, vc1);
+        a_hi = _mm_madd_epi16(hi0, vc1);
+        b_lo = _mm_madd_epi16(lo1, vc3);
+        b_hi = _mm_madd_epi16(hi1, vc3);
+        c_lo = _mm_madd_epi16(lo2, vc5);
+        c_hi = _mm_madd_epi16(hi2, vc5);
+        d_lo = _mm_madd_epi16(lo3, vc7);
+        d_hi = _mm_madd_epi16(hi3, vc7);
+        a_lo = _mm_add_epi32(a_lo, b_lo);
+        a_hi = _mm_add_epi32(a_hi, b_hi);
+        a_lo = _mm_add_epi32(a_lo, c_lo);
+        a_hi = _mm_add_epi32(a_hi, c_hi);
+        a_lo = _mm_add_epi32(a_lo, d_lo);
+        a_hi = _mm_add_epi32(a_hi, d_hi);
+        a_lo = _mm_srai_epi32(a_lo, 10);
+        a_hi = _mm_srai_epi32(a_hi, 10);
+        v1 = _mm_packs_epi32(a_lo, a_hi);
 
         TRANSPOSE_16X8();
 
         const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
 
-        x8 = simd::extend32x8(v0 + v7);
-        x0 = simd::extend32x8(v0 - v7);
-        x7 = simd::extend32x8(v1 + v6);
-        x1 = simd::extend32x8(v1 - v6);
-        x6 = simd::extend32x8(v2 + v5);
-        x2 = simd::extend32x8(v2 - v5);
-        x5 = simd::extend32x8(v3 + v4);
-        x3 = simd::extend32x8(v3 - v4);
-        x4 = x8 + x5;
-        x8 = x8 - x5;
-        x5 = x7 + x6;
-        x7 = x7 - x6;
+        {
+            const int32x8 vc1(c1);
+            const int32x8 vc2(c2);
+            const int32x8 vc3(c3);
+            const int32x8 vc5(c5);
+            const int32x8 vc6(c6);
+            const int32x8 vc7(c7);
 
-        u0 = (x4 + x5) >> 3;
-        u4 = (x4 - x5) >> 3;
-        u2 = (x8 * vc2 + x7 * vc6) >> 13;
-        u6 = (x8 * vc6 - x7 * vc2) >> 13;
-        u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 13;
-        u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 13;
-        u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 13;
-        u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 13;
+            int32x8 x8 = simd::extend32x8(v0 + v7);
+            int32x8 x0 = simd::extend32x8(v0 - v7);
+            int32x8 x7 = simd::extend32x8(v1 + v6);
+            int32x8 x1 = simd::extend32x8(v1 - v6);
+            int32x8 x6 = simd::extend32x8(v2 + v5);
+            int32x8 x2 = simd::extend32x8(v2 - v5);
+            int32x8 x5 = simd::extend32x8(v3 + v4);
+            int32x8 x3 = simd::extend32x8(v3 - v4);
+            int32x8 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
 
-        u0 = (u0 * int32x8(simd::extend32x8(q[0])) + 0x4000) >> 15;
-        u1 = (u1 * int32x8(simd::extend32x8(q[1])) + 0x4000) >> 15;
-        u2 = (u2 * int32x8(simd::extend32x8(q[2])) + 0x4000) >> 15;
-        u3 = (u3 * int32x8(simd::extend32x8(q[3])) + 0x4000) >> 15;
-        u4 = (u4 * int32x8(simd::extend32x8(q[4])) + 0x4000) >> 15;
-        u5 = (u5 * int32x8(simd::extend32x8(q[5])) + 0x4000) >> 15;
-        u6 = (u6 * int32x8(simd::extend32x8(q[6])) + 0x4000) >> 15;
-        u7 = (u7 * int32x8(simd::extend32x8(q[7])) + 0x4000) >> 15;
+            int32x8 u0 = (x4 + x5) >> 3;
+            int32x8 u4 = (x4 - x5) >> 3;
+            int32x8 u2 = (x8 * vc2 + x7 * vc6) >> 13;
+            int32x8 u6 = (x8 * vc6 - x7 * vc2) >> 13;
+            int32x8 u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 13;
+            int32x8 u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 13;
+            int32x8 u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 13;
+            int32x8 u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 13;
 
-        v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
-        v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
-        v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
-        v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
-        v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
-        v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
-        v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
-        v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
+            u0 = (u0 * int32x8(simd::extend32x8(q[0])) + 0x4000) >> 15;
+            u1 = (u1 * int32x8(simd::extend32x8(q[1])) + 0x4000) >> 15;
+            u2 = (u2 * int32x8(simd::extend32x8(q[2])) + 0x4000) >> 15;
+            u3 = (u3 * int32x8(simd::extend32x8(q[3])) + 0x4000) >> 15;
+            u4 = (u4 * int32x8(simd::extend32x8(q[4])) + 0x4000) >> 15;
+            u5 = (u5 * int32x8(simd::extend32x8(q[5])) + 0x4000) >> 15;
+            u6 = (u6 * int32x8(simd::extend32x8(q[6])) + 0x4000) >> 15;
+            u7 = (u7 * int32x8(simd::extend32x8(q[7])) + 0x4000) >> 15;
 
-        TRANSPOSE_16X8();
+            v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
+            v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
+            v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
+            v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
+            v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
+            v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
+            v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
+            v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
 
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 0), v0);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 1), v1);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 2), v2);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 3), v3);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 4), v4);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 5), v5);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 6), v6);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 7), v7);
+            TRANSPOSE_16X8();
+
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 0), v0);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 1), v1);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 2), v2);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 3), v3);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 4), v4);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 5), v5);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 6), v6);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 7), v7);
+        }
     }
 
 #endif
