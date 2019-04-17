@@ -1278,6 +1278,9 @@ namespace
 
                 HuffmanEncoder huffman;
 
+                AlignedVector<s16> aligned_blocks(BLOCK_SIZE * jp.channel_count * jp.horizontal_mcus);
+                s16* block = aligned_blocks.data();
+
                 constexpr int buffer_size = 2048;
                 constexpr int flush_threshold = buffer_size - 512;
 
@@ -1303,17 +1306,27 @@ namespace
                         incr = jp.length_minus_width;
                     }
 
-                    s16 block[BLOCK_SIZE * 3];
-
                     // read MCU data
                     jp.read_format(&jp, block, image, rows, cols, incr);
+                    block += 64 * jp.channel_count;
+                    image += jp.mcu_width_size;
+                }
 
-                    // encode the data in MCU
+                block = aligned_blocks.data();
+
+                for (int x = 0; x < jp.horizontal_mcus; ++x)
+                {
+                    s16 temp[BLOCK_SIZE * 3];
+
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
-                        s16 temp[BLOCK_SIZE];
-                        fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-                        ptr = huffman.encode(ptr, jp.channel[i].component, temp);
+                        fdct(temp + i * 64, block, jp.channel[i].qtable);
+                        block += 64;
+                    }
+
+                    for (int i = 0; i < jp.channel_count; ++i)
+                    {
+                        ptr = huffman.encode(ptr, jp.channel[i].component, temp + i * 64);
                     }
 
                     // flush encoding buffer
@@ -1322,8 +1335,6 @@ namespace
                         buffers[y].write(huff_temp, ptr - huff_temp);
                         ptr = huff_temp;
                     }
-
-                    image += jp.mcu_width_size;
                 }
 
                 // flush encoding buffer
