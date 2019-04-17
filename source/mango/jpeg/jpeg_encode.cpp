@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -496,14 +496,18 @@ namespace
         }
     };
 
-    void fdct(s16* dest, s16* data, const u16* quant_table)
+#if 1
+
+    void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
-        const s16 c1 = 1420;  // cos  PI/16 * root(2)
-        const s16 c2 = 1338;  // cos  PI/8  * root(2)
+        const s16 c1 = 1420;  // cos 1PI/16 * root(2)
+        const s16 c2 = 1338;  // cos 2PI/16 * root(2)
         const s16 c3 = 1204;  // cos 3PI/16 * root(2)
         const s16 c5 = 805;   // cos 5PI/16 * root(2)
-        const s16 c6 = 554;   // cos 3PI/8  * root(2)
+        const s16 c6 = 554;   // cos 6PI/16 * root(2)
         const s16 c7 = 283;   // cos 7PI/16 * root(2)
+
+        s16 temp[64];
 
         for (int i = 0; i < 8; ++i)
         {
@@ -519,30 +523,27 @@ namespace
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            data[0] = s16(x4 + x5);
-            data[4] = s16(x4 - x5);
-            data[2] = s16((x8 * c2 + x7 * c6) >> 10);
-            data[6] = s16((x8 * c6 - x7 * c2) >> 10);
-            data[7] = s16((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10);
-            data[5] = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10);
-            data[3] = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10);
-            data[1] = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10);
+            temp[i * 8 + 0] = s16(x4 + x5);
+            temp[i * 8 + 4] = s16(x4 - x5);
+            temp[i * 8 + 2] = s16((x8 * c2 + x7 * c6) >> 10);
+            temp[i * 8 + 6] = s16((x8 * c6 - x7 * c2) >> 10);
+            temp[i * 8 + 7] = s16((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10);
+            temp[i * 8 + 5] = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10);
+            temp[i * 8 + 3] = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10);
+            temp[i * 8 + 1] = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10);
             data += 8;
         }
 
-        data -= 64;
-
-#if 1
         for (int i = 0; i < 8; ++i)
         {
-            int x8 = data [i +  0] + data [i + 56];
-            int x0 = data [i +  0] - data [i + 56];
-            int x7 = data [i +  8] + data [i + 48];
-            int x1 = data [i +  8] - data [i + 48];
-            int x6 = data [i + 16] + data [i + 40];
-            int x2 = data [i + 16] - data [i + 40];
-            int x5 = data [i + 24] + data [i + 32];
-            int x3 = data [i + 24] - data [i + 32];
+            int x8 = temp [i +  0] + temp [i + 56];
+            int x0 = temp [i +  0] - temp [i + 56];
+            int x7 = temp [i +  8] + temp [i + 48];
+            int x1 = temp [i +  8] - temp [i + 48];
+            int x6 = temp [i + 16] + temp [i + 40];
+            int x2 = temp [i + 16] - temp [i + 40];
+            int x5 = temp [i + 24] + temp [i + 32];
+            int x3 = temp [i + 24] - temp [i + 32];
             int x4 = x8 + x5;
             x8 = x8 - x5;
             x5 = x7 + x6;
@@ -564,13 +565,46 @@ namespace
             dest[i + 8 * 6] = s16((v6 * quant_table[i * 8 + 6] + 0x4000) >> 15);
             dest[i + 8 * 7] = s16((v7 * quant_table[i * 8 + 7] + 0x4000) >> 15);
         }
+    }
+
 #else
+
+    static inline void interleave16(int16x8& a, int16x8& b)
+    {
+        int16x8 c = a;
+        a = simd::unpacklo(a, b);
+        b = simd::unpackhi(c, b);
+    }
+
+    #define TRANSPOSE_16X8() \
+        interleave16(v0, v4); \
+        interleave16(v2, v6); \
+        interleave16(v1, v5); \
+        interleave16(v3, v7); \
+        interleave16(v0, v2); \
+        interleave16(v1, v3); \
+        interleave16(v4, v6); \
+        interleave16(v5, v7); \
+        interleave16(v0, v1); \
+        interleave16(v2, v3); \
+        interleave16(v4, v5); \
+        interleave16(v6, v7)
+
+    void fdct(s16* dest, const s16* data, const u16* quant_table)
+    {
         // first draft of SIMD processing
         // - requires AVX2 to be "efficient" (256 bit wide vectors, boo!)
         // - ugly mix of simd:: and vector classes, bad style!
         // - rewrite to use 16 bit low/high processing like the inverse-DCT
         // + at least it works and is nearly verbatim of scalar version above
         // + code could be improved with upgrades to integer vector classes
+
+        const s16 c1 = 1420;  // cos 1PI/16 * root(2)
+        const s16 c2 = 1338;  // cos 2PI/16 * root(2)
+        const s16 c3 = 1204;  // cos 3PI/16 * root(2)
+        const s16 c5 = 805;   // cos 5PI/16 * root(2)
+        const s16 c6 = 554;   // cos 6PI/16 * root(2)
+        const s16 c7 = 283;   // cos 7PI/16 * root(2)
 
         const int32x8 vc1(c1);
         const int32x8 vc2(c2);
@@ -579,30 +613,72 @@ namespace
         const int32x8 vc6(c6);
         const int32x8 vc7(c7);
 
-        int16x8* d = reinterpret_cast<int16x8*>(data);
-        const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
+        const int16x8* vdata = reinterpret_cast<const int16x8*>(data);
 
-        int32x8 x8 = simd::extend32x8(d[0] + d[7]);
-        int32x8 x0 = simd::extend32x8(d[0] - d[7]);
-        int32x8 x7 = simd::extend32x8(d[1] + d[6]);
-        int32x8 x1 = simd::extend32x8(d[1] - d[6]);
-        int32x8 x6 = simd::extend32x8(d[2] + d[5]);
-        int32x8 x2 = simd::extend32x8(d[2] - d[5]);
-        int32x8 x5 = simd::extend32x8(d[3] + d[4]);
-        int32x8 x3 = simd::extend32x8(d[3] - d[4]);
+        int16x8 v0 = vdata[0];
+        int16x8 v1 = vdata[1];
+        int16x8 v2 = vdata[2];
+        int16x8 v3 = vdata[3];
+        int16x8 v4 = vdata[4];
+        int16x8 v5 = vdata[5];
+        int16x8 v6 = vdata[6];
+        int16x8 v7 = vdata[7];
+
+        int32x8 x8 = simd::extend32x8(v0 + v7);
+        int32x8 x0 = simd::extend32x8(v0 - v7);
+        int32x8 x7 = simd::extend32x8(v1 + v6);
+        int32x8 x1 = simd::extend32x8(v1 - v6);
+        int32x8 x6 = simd::extend32x8(v2 + v5);
+        int32x8 x2 = simd::extend32x8(v2 - v5);
+        int32x8 x5 = simd::extend32x8(v3 + v4);
+        int32x8 x3 = simd::extend32x8(v3 - v4);
         int32x8 x4 = x8 + x5;
         x8 = x8 - x5;
         x5 = x7 + x6;
         x7 = x7 - x6;
+        int32x8 u0 = x4 + x5;
+        int32x8 u4 = x4 - x5;
+        int32x8 u2 = (x8 * vc2 + x7 * vc6) >> 10;
+        int32x8 u6 = (x8 * vc6 - x7 * vc2) >> 10;
+        int32x8 u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 10;
+        int32x8 u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 10;
+        int32x8 u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 10;
+        int32x8 u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 10;
 
-        int32x8 u0 = (x4 + x5) >> 3;
-        int32x8 u4 = (x4 - x5) >> 3;
-        int32x8 u2 = (x8 * vc2 + x7 * vc6) >> 13;
-        int32x8 u6 = (x8 * vc6 - x7 * vc2) >> 13;
-        int32x8 u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 13;
-        int32x8 u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 13;
-        int32x8 u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 13;
-        int32x8 u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 13;
+        v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
+        v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
+        v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
+        v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
+        v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
+        v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
+        v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
+        v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
+
+        TRANSPOSE_16X8();
+
+        const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
+
+        x8 = simd::extend32x8(v0 + v7);
+        x0 = simd::extend32x8(v0 - v7);
+        x7 = simd::extend32x8(v1 + v6);
+        x1 = simd::extend32x8(v1 - v6);
+        x6 = simd::extend32x8(v2 + v5);
+        x2 = simd::extend32x8(v2 - v5);
+        x5 = simd::extend32x8(v3 + v4);
+        x3 = simd::extend32x8(v3 - v4);
+        x4 = x8 + x5;
+        x8 = x8 - x5;
+        x5 = x7 + x6;
+        x7 = x7 - x6;
+
+        u0 = (x4 + x5) >> 3;
+        u4 = (x4 - x5) >> 3;
+        u2 = (x8 * vc2 + x7 * vc6) >> 13;
+        u6 = (x8 * vc6 - x7 * vc2) >> 13;
+        u7 = (x0 * vc7 - x1 * vc5 + x2 * vc3 - x3 * vc1) >> 13;
+        u5 = (x0 * vc5 - x1 * vc1 + x2 * vc7 + x3 * vc3) >> 13;
+        u3 = (x0 * vc3 - x1 * vc7 - x2 * vc1 - x3 * vc5) >> 13;
+        u1 = (x0 * vc1 + x1 * vc3 + x2 * vc5 + x3 * vc7) >> 13;
 
         u0 = (u0 * int32x8(simd::extend32x8(q[0])) + 0x4000) >> 15;
         u1 = (u1 * int32x8(simd::extend32x8(q[1])) + 0x4000) >> 15;
@@ -613,25 +689,28 @@ namespace
         u6 = (u6 * int32x8(simd::extend32x8(q[6])) + 0x4000) >> 15;
         u7 = (u7 * int32x8(simd::extend32x8(q[7])) + 0x4000) >> 15;
 
-        int16x8 v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
-        int16x8 v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
-        int16x8 v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
-        int16x8 v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
-        int16x8 v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
-        int16x8 v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
-        int16x8 v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
-        int16x8 v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
+        v0 = simd::narrow(simd::get_low(u0), simd::get_high(u0));
+        v1 = simd::narrow(simd::get_low(u1), simd::get_high(u1));
+        v2 = simd::narrow(simd::get_low(u2), simd::get_high(u2));
+        v3 = simd::narrow(simd::get_low(u3), simd::get_high(u3));
+        v4 = simd::narrow(simd::get_low(u4), simd::get_high(u4));
+        v5 = simd::narrow(simd::get_low(u5), simd::get_high(u5));
+        v6 = simd::narrow(simd::get_low(u6), simd::get_high(u6));
+        v7 = simd::narrow(simd::get_low(u7), simd::get_high(u7));
 
-        std::memcpy(dest + 0 * 8, &v0, 16);
-        std::memcpy(dest + 1 * 8, &v1, 16);
-        std::memcpy(dest + 2 * 8, &v2, 16);
-        std::memcpy(dest + 3 * 8, &v3, 16);
-        std::memcpy(dest + 4 * 8, &v4, 16);
-        std::memcpy(dest + 5 * 8, &v5, 16);
-        std::memcpy(dest + 6 * 8, &v6, 16);
-        std::memcpy(dest + 7 * 8, &v7, 16);
-#endif
+        TRANSPOSE_16X8();
+
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 0), v0);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 1), v1);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 2), v2);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 3), v3);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 4), v4);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 5), v5);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 6), v6);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 7), v7);
     }
+
+#endif
 
     // ----------------------------------------------------------------------------
     // read_xxx_format
@@ -924,7 +1003,7 @@ namespace
 
         for (int i = 0; i < 64; ++i)
         {
-            int i_transpose = ((i & 7) <<3 ) | (i >>3);
+            int i_transpose = ((i & 7) << 3) | (i >> 3);
             u16 index = zigzag_table [i];
             u32 value;
 
@@ -1076,7 +1155,8 @@ namespace
                 rows = jp.rows_in_bottom_mcus;
             }
 
-            queue.enqueue([&jp, y, buffers, input, rows] {
+            queue.enqueue([&jp, y, buffers, input, rows]
+            {
                 u8* image = input;
 
                 HuffmanEncoder huffman;
