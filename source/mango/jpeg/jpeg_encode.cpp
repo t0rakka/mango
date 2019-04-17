@@ -569,11 +569,11 @@ namespace
 
 #else
 
-    static inline void interleave16(int16x8& a, int16x8& b)
+    static inline void interleave16(__m128i& a, __m128i& b)
     {
-        int16x8 c = a;
-        a = simd::unpacklo(a, b);
-        b = simd::unpackhi(c, b);
+        __m128i c = a;
+        a = _mm_unpacklo_epi16(a, b);
+        b = _mm_unpackhi_epi16(c, b);
     }
 
     #define TRANSPOSE_16X8() \
@@ -599,31 +599,31 @@ namespace
         const int16x8 c6 = 554;   // cos 6PI/16 * root(2)
         const int16x8 c7 = 283;   // cos 7PI/16 * root(2)
 
-        const int16x8* vdata = reinterpret_cast<const int16x8*>(data);
         const __m128i z = _mm_setzero_si128();
 
-        int16x8 v0 = vdata[0];
-        int16x8 v1 = vdata[1];
-        int16x8 v2 = vdata[2];
-        int16x8 v3 = vdata[3];
-        int16x8 v4 = vdata[4];
-        int16x8 v5 = vdata[5];
-        int16x8 v6 = vdata[6];
-        int16x8 v7 = vdata[7];
+        const __m128i* s = reinterpret_cast<const __m128i *>(data);
+        __m128i v0 = _mm_loadu_si128(s + 0);
+        __m128i v1 = _mm_loadu_si128(s + 1);
+        __m128i v2 = _mm_loadu_si128(s + 2);
+        __m128i v3 = _mm_loadu_si128(s + 3);
+        __m128i v4 = _mm_loadu_si128(s + 4);
+        __m128i v5 = _mm_loadu_si128(s + 5);
+        __m128i v6 = _mm_loadu_si128(s + 6);
+        __m128i v7 = _mm_loadu_si128(s + 7);
 
-        int16x8 x8 = v0 + v7;
-        int16x8 x7 = v1 + v6;
-        int16x8 x6 = v2 + v5;
-        int16x8 x5 = v3 + v4;
-        int16x8 x0 = v0 - v7;
-        int16x8 x1 = v1 - v6;
-        int16x8 x2 = v2 - v5;
-        int16x8 x3 = v3 - v4;
-        int16x8 x4 = x8 + x5;
+        __m128i x8 = _mm_add_epi16(v0, v7);
+        __m128i x7 = _mm_add_epi16(v1, v6);
+        __m128i x6 = _mm_add_epi16(v2, v5);
+        __m128i x5 = _mm_add_epi16(v3, v4);
+        __m128i x0 = _mm_sub_epi16(v0, v7);
+        __m128i x1 = _mm_sub_epi16(v1, v6);
+        __m128i x2 = _mm_sub_epi16(v2, v5);
+        __m128i x3 = _mm_sub_epi16(v3, v4);
+        __m128i x4 = _mm_add_epi16(x8, x5);
 
-        x8 = x8 - x5;
-        x5 = x7 + x6;
-        x7 = x7 - x6;
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
 
         __m128i lo0 = _mm_unpacklo_epi16(x0, z);
         __m128i hi0 = _mm_unpackhi_epi16(x0, z);
@@ -752,19 +752,19 @@ namespace
 
         const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
 
-        x8 = v0 + v7;
-        x0 = v0 - v7;
-        x7 = v1 + v6;
-        x1 = v1 - v6;
-        x6 = v2 + v5;
-        x2 = v2 - v5;
-        x5 = v3 + v4;
-        x3 = v3 - v4;
+        x8 = _mm_add_epi16(v0, v7);
+        x0 = _mm_sub_epi16(v0, v7);
+        x7 = _mm_add_epi16(v1, v6);
+        x1 = _mm_sub_epi16(v1, v6);
+        x6 = _mm_add_epi16(v2, v5);
+        x2 = _mm_sub_epi16(v2, v5);
+        x5 = _mm_add_epi16(v3, v4);
+        x3 = _mm_sub_epi16(v3, v4);
 
-        x4 = x8 + x5;
-        x8 = x8 - x5;
-        x5 = x7 + x6;
-        x7 = x7 - x6;
+        x4 = _mm_add_epi16(x8, x5);
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
 
         lo0 = _mm_unpacklo_epi16(x0, z);
         hi0 = _mm_unpackhi_epi16(x0, z);
@@ -779,8 +779,8 @@ namespace
         lo8 = _mm_unpacklo_epi16(x8, z);
         hi8 = _mm_unpackhi_epi16(x8, z);
 
-        v0 = (x4 + x5) >> 3;
-        v4 = (x4 - x5) >> 3;
+        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
+        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
 
         //v2 = (x8 * c2 + x7 * c6) >> 13;
         a_lo = _mm_madd_epi16(lo8, c2);
@@ -901,14 +901,15 @@ namespace
 
         TRANSPOSE_16X8();
 
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 0), v0);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 1), v1);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 2), v2);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 3), v3);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 4), v4);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 5), v5);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 6), v6);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest + 8 * 7), v7);
+        __m128i* d = reinterpret_cast<__m128i *>(dest);
+        _mm_storeu_si128(d + 0, v0);
+        _mm_storeu_si128(d + 1, v1);
+        _mm_storeu_si128(d + 2, v2);
+        _mm_storeu_si128(d + 3, v3);
+        _mm_storeu_si128(d + 4, v4);
+        _mm_storeu_si128(d + 5, v5);
+        _mm_storeu_si128(d + 6, v6);
+        _mm_storeu_si128(d + 7, v7);
     }
 
 #endif
