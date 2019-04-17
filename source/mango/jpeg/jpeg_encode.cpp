@@ -576,7 +576,10 @@ namespace
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    #define TRANSPOSE_16X8() \
+    #define JPEG_CONST16(x, y) \
+        _mm_setr_epi16(x, y, x, y, x, y, x, y)
+
+    #define JPEG_TRANSPOSE16() \
         interleave16(v0, v4); \
         interleave16(v2, v6); \
         interleave16(v1, v5); \
@@ -592,14 +595,12 @@ namespace
 
     void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
-        const int16x8 c1 = 1420;  // cos 1PI/16 * root(2)
-        const int16x8 c2 = 1338;  // cos 2PI/16 * root(2)
-        const int16x8 c3 = 1204;  // cos 3PI/16 * root(2)
-        const int16x8 c5 = 805;   // cos 5PI/16 * root(2)
-        const int16x8 c6 = 554;   // cos 6PI/16 * root(2)
-        const int16x8 c7 = 283;   // cos 7PI/16 * root(2)
-
-        const __m128i z = _mm_setzero_si128();
+        constexpr s16 c1 = 1420;  // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338;  // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204;  // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;   // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;   // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;   // cos 7PI/16 * root(2)
 
         const __m128i* s = reinterpret_cast<const __m128i *>(data);
         __m128i v0 = _mm_loadu_si128(s + 0);
@@ -625,130 +626,91 @@ namespace
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
 
-        __m128i lo0 = _mm_unpacklo_epi16(x0, z);
-        __m128i hi0 = _mm_unpackhi_epi16(x0, z);
-        __m128i lo1 = _mm_unpacklo_epi16(x1, z);
-        __m128i hi1 = _mm_unpackhi_epi16(x1, z);
-        __m128i lo2 = _mm_unpacklo_epi16(x2, z);
-        __m128i hi2 = _mm_unpackhi_epi16(x2, z);
-        __m128i lo3 = _mm_unpacklo_epi16(x3, z);
-        __m128i hi3 = _mm_unpackhi_epi16(x3, z);
-        __m128i lo7 = _mm_unpacklo_epi16(x7, z);
-        __m128i hi7 = _mm_unpackhi_epi16(x7, z);
-        __m128i lo8 = _mm_unpacklo_epi16(x8, z);
-        __m128i hi8 = _mm_unpackhi_epi16(x8, z);
+        __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
+        __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
+        __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
+        __m128i x01_hi = _mm_unpackhi_epi16(x0, x1);
+        __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
+        __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        __m128i c26p = JPEG_CONST16(c2, c6);
+        __m128i c62n = JPEG_CONST16(c6,-c2);
+        __m128i c75n = JPEG_CONST16(c7,-c5);
+        __m128i c31n = JPEG_CONST16(c3,-c1);
+        __m128i c51n = JPEG_CONST16(c5,-c1);
+        __m128i c73p = JPEG_CONST16(c7, c3);
+        __m128i c37n = JPEG_CONST16(c3,-c7);
+        __m128i c15p = JPEG_CONST16(c1, c5);
+        __m128i c13p = JPEG_CONST16(c1, c3);
+        __m128i c57p = JPEG_CONST16(c5, c7);
 
         __m128i a_lo;
         __m128i a_hi;
         __m128i b_lo;
         __m128i b_hi;
-        __m128i c_lo;
-        __m128i c_hi;
-        __m128i d_lo;
-        __m128i d_hi;
 
         v0 = x4 + x5;
         v4 = x4 - x5;
 
-        //v2 = (x8 * c2 + x7 * c6) >> 10;
-        a_lo = _mm_madd_epi16(lo8, c2);
-        a_hi = _mm_madd_epi16(hi8, c2);
-        b_lo = _mm_madd_epi16(lo7, c6);
-        b_hi = _mm_madd_epi16(hi7, c6);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
+        // v2 = (x8 * c2 + x7 * c6) >> 10;
+        a_lo = _mm_madd_epi16(x87_lo, c26p);
+        a_hi = _mm_madd_epi16(x87_hi, c26p);
         a_lo = _mm_srai_epi32(a_lo, 10);
         a_hi = _mm_srai_epi32(a_hi, 10);
         v2 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v6 = (x8 * c6 - x7 * c2) >> 10;
-        a_lo = _mm_madd_epi16(lo8, c6);
-        a_hi = _mm_madd_epi16(hi8, c6);
-        b_lo = _mm_madd_epi16(lo7, c2);
-        b_hi = _mm_madd_epi16(hi7, c2);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
+        // v6 = (x8 * c6 - x7 * c2) >> 10;
+        a_lo = _mm_madd_epi16(x87_lo, c62n);
+        a_hi = _mm_madd_epi16(x87_hi, c62n);
         a_lo = _mm_srai_epi32(a_lo, 10);
         a_hi = _mm_srai_epi32(a_hi, 10);
         v6 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
-        a_lo = _mm_madd_epi16(lo0, c7);
-        a_hi = _mm_madd_epi16(hi0, c7);
-        b_lo = _mm_madd_epi16(lo1, c5);
-        b_hi = _mm_madd_epi16(hi1, c5);
-        c_lo = _mm_madd_epi16(lo2, c3);
-        c_hi = _mm_madd_epi16(hi2, c3);
-        d_lo = _mm_madd_epi16(lo3, c1);
-        d_hi = _mm_madd_epi16(hi3, c1);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_add_epi32(a_lo, c_lo);
-        a_hi = _mm_add_epi32(a_hi, c_hi);
-        a_lo = _mm_sub_epi32(a_lo, d_lo);
-        a_hi = _mm_sub_epi32(a_hi, d_hi);
+        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 10;
+        a_lo = _mm_madd_epi16(x01_lo, c75n);
+        a_hi = _mm_madd_epi16(x01_hi, c75n);
+        b_lo = _mm_madd_epi16(x23_lo, c31n);
+        b_hi = _mm_madd_epi16(x23_hi, c31n);
+        a_lo = _mm_add_epi32(a_lo, b_lo);
+        a_hi = _mm_add_epi32(a_hi, b_hi);
         a_lo = _mm_srai_epi32(a_lo, 10);
         a_hi = _mm_srai_epi32(a_hi, 10);
         v7 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
-        a_lo = _mm_madd_epi16(lo0, c5);
-        a_hi = _mm_madd_epi16(hi0, c5);
-        b_lo = _mm_madd_epi16(lo1, c1);
-        b_hi = _mm_madd_epi16(hi1, c1);
-        c_lo = _mm_madd_epi16(lo2, c7);
-        c_hi = _mm_madd_epi16(hi2, c7);
-        d_lo = _mm_madd_epi16(lo3, c3);
-        d_hi = _mm_madd_epi16(hi3, c3);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_add_epi32(a_lo, c_lo);
-        a_hi = _mm_add_epi32(a_hi, c_hi);
-        a_lo = _mm_add_epi32(a_lo, d_lo);
-        a_hi = _mm_add_epi32(a_hi, d_hi);
+        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 10;
+        a_lo = _mm_madd_epi16(x01_lo, c51n);
+        a_hi = _mm_madd_epi16(x01_hi, c51n);
+        b_lo = _mm_madd_epi16(x23_lo, c73p);
+        b_hi = _mm_madd_epi16(x23_hi, c73p);
+        a_lo = _mm_add_epi32(a_lo, b_lo);
+        a_hi = _mm_add_epi32(a_hi, b_hi);
         a_lo = _mm_srai_epi32(a_lo, 10);
         a_hi = _mm_srai_epi32(a_hi, 10);
         v5 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
-        a_lo = _mm_madd_epi16(lo0, c3);
-        a_hi = _mm_madd_epi16(hi0, c3);
-        b_lo = _mm_madd_epi16(lo1, c7);
-        b_hi = _mm_madd_epi16(hi1, c7);
-        c_lo = _mm_madd_epi16(lo2, c1);
-        c_hi = _mm_madd_epi16(hi2, c1);
-        d_lo = _mm_madd_epi16(lo3, c5);
-        d_hi = _mm_madd_epi16(hi3, c5);
+        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 10;
+        a_lo = _mm_madd_epi16(x01_lo, c37n);
+        a_hi = _mm_madd_epi16(x01_hi, c37n);
+        b_lo = _mm_madd_epi16(x23_lo, c15p);
+        b_hi = _mm_madd_epi16(x23_hi, c15p);
         a_lo = _mm_sub_epi32(a_lo, b_lo);
         a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_sub_epi32(a_lo, c_lo);
-        a_hi = _mm_sub_epi32(a_hi, c_hi);
-        a_lo = _mm_sub_epi32(a_lo, d_lo);
-        a_hi = _mm_sub_epi32(a_hi, d_hi);
         a_lo = _mm_srai_epi32(a_lo, 10);
         a_hi = _mm_srai_epi32(a_hi, 10);
         v3 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
-        a_lo = _mm_madd_epi16(lo0, c1);
-        a_hi = _mm_madd_epi16(hi0, c1);
-        b_lo = _mm_madd_epi16(lo1, c3);
-        b_hi = _mm_madd_epi16(hi1, c3);
-        c_lo = _mm_madd_epi16(lo2, c5);
-        c_hi = _mm_madd_epi16(hi2, c5);
-        d_lo = _mm_madd_epi16(lo3, c7);
-        d_hi = _mm_madd_epi16(hi3, c7);
+        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 10;
+        a_lo = _mm_madd_epi16(x01_lo, c13p);
+        a_hi = _mm_madd_epi16(x01_hi, c13p);
+        b_lo = _mm_madd_epi16(x23_lo, c57p);
+        b_hi = _mm_madd_epi16(x23_hi, c57p);
         a_lo = _mm_add_epi32(a_lo, b_lo);
         a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_add_epi32(a_lo, c_lo);
-        a_hi = _mm_add_epi32(a_hi, c_hi);
-        a_lo = _mm_add_epi32(a_lo, d_lo);
-        a_hi = _mm_add_epi32(a_hi, d_hi);
         a_lo = _mm_srai_epi32(a_lo, 10);
         a_hi = _mm_srai_epi32(a_hi, 10);
         v1 = _mm_packs_epi32(a_lo, a_hi);
 
-        TRANSPOSE_16X8();
+        JPEG_TRANSPOSE16();
 
         const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
 
@@ -766,122 +728,75 @@ namespace
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
 
-        lo0 = _mm_unpacklo_epi16(x0, z);
-        hi0 = _mm_unpackhi_epi16(x0, z);
-        lo1 = _mm_unpacklo_epi16(x1, z);
-        hi1 = _mm_unpackhi_epi16(x1, z);
-        lo2 = _mm_unpacklo_epi16(x2, z);
-        hi2 = _mm_unpackhi_epi16(x2, z);
-        lo3 = _mm_unpacklo_epi16(x3, z);
-        hi3 = _mm_unpackhi_epi16(x3, z);
-        lo7 = _mm_unpacklo_epi16(x7, z);
-        hi7 = _mm_unpackhi_epi16(x7, z);
-        lo8 = _mm_unpacklo_epi16(x8, z);
-        hi8 = _mm_unpackhi_epi16(x8, z);
+        x87_lo = _mm_unpacklo_epi16(x8, x7);
+        x87_hi = _mm_unpackhi_epi16(x8, x7);
+        x01_lo = _mm_unpacklo_epi16(x0, x1);
+        x01_hi = _mm_unpackhi_epi16(x0, x1);
+        x23_lo = _mm_unpacklo_epi16(x2, x3);
+        x23_hi = _mm_unpackhi_epi16(x2, x3);
 
         v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
         v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
 
-        //v2 = (x8 * c2 + x7 * c6) >> 13;
-        a_lo = _mm_madd_epi16(lo8, c2);
-        a_hi = _mm_madd_epi16(hi8, c2);
-        b_lo = _mm_madd_epi16(lo7, c6);
-        b_hi = _mm_madd_epi16(hi7, c6);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
+        // v2 = (x8 * c2 + x7 * c6) >> 13;
+        a_lo = _mm_madd_epi16(x87_lo, c26p);
+        a_hi = _mm_madd_epi16(x87_hi, c26p);
         a_lo = _mm_srai_epi32(a_lo, 13);
         a_hi = _mm_srai_epi32(a_hi, 13);
         v2 = _mm_packs_epi32(a_lo, a_hi);
 
-
-        //v6 = (x8 * c6 - x7 * c2) >> 13;
-        a_lo = _mm_madd_epi16(lo8, c6);
-        a_hi = _mm_madd_epi16(hi8, c6);
-        b_lo = _mm_madd_epi16(lo7, c2);
-        b_hi = _mm_madd_epi16(hi7, c2);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
+        // v6 = (x8 * c6 - x7 * c2) >> 13;
+        a_lo = _mm_madd_epi16(x87_lo, c62n);
+        a_hi = _mm_madd_epi16(x87_hi, c62n);
         a_lo = _mm_srai_epi32(a_lo, 13);
         a_hi = _mm_srai_epi32(a_hi, 13);
         v6 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
-        a_lo = _mm_madd_epi16(lo0, c7);
-        a_hi = _mm_madd_epi16(hi0, c7);
-        b_lo = _mm_madd_epi16(lo1, c5);
-        b_hi = _mm_madd_epi16(hi1, c5);
-        c_lo = _mm_madd_epi16(lo2, c3);
-        c_hi = _mm_madd_epi16(hi2, c3);
-        d_lo = _mm_madd_epi16(lo3, c1);
-        d_hi = _mm_madd_epi16(hi3, c1);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_add_epi32(a_lo, c_lo);
-        a_hi = _mm_add_epi32(a_hi, c_hi);
-        a_lo = _mm_sub_epi32(a_lo, d_lo);
-        a_hi = _mm_sub_epi32(a_hi, d_hi);
+        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 13;
+        a_lo = _mm_madd_epi16(x01_lo, c75n);
+        a_hi = _mm_madd_epi16(x01_hi, c75n);
+        b_lo = _mm_madd_epi16(x23_lo, c31n);
+        b_hi = _mm_madd_epi16(x23_hi, c31n);
+        a_lo = _mm_add_epi32(a_lo, b_lo);
+        a_hi = _mm_add_epi32(a_hi, b_hi);
         a_lo = _mm_srai_epi32(a_lo, 13);
         a_hi = _mm_srai_epi32(a_hi, 13);
         v7 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
-        a_lo = _mm_madd_epi16(lo0, c5);
-        a_hi = _mm_madd_epi16(hi0, c5);
-        b_lo = _mm_madd_epi16(lo1, c1);
-        b_hi = _mm_madd_epi16(hi1, c1);
-        c_lo = _mm_madd_epi16(lo2, c7);
-        c_hi = _mm_madd_epi16(hi2, c7);
-        d_lo = _mm_madd_epi16(lo3, c3);
-        d_hi = _mm_madd_epi16(hi3, c3);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_add_epi32(a_lo, c_lo);
-        a_hi = _mm_add_epi32(a_hi, c_hi);
-        a_lo = _mm_add_epi32(a_lo, d_lo);
-        a_hi = _mm_add_epi32(a_hi, d_hi);
+        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 13;
+        a_lo = _mm_madd_epi16(x01_lo, c51n);
+        a_hi = _mm_madd_epi16(x01_hi, c51n);
+        b_lo = _mm_madd_epi16(x23_lo, c73p);
+        b_hi = _mm_madd_epi16(x23_hi, c73p);
+        a_lo = _mm_add_epi32(a_lo, b_lo);
+        a_hi = _mm_add_epi32(a_hi, b_hi);
         a_lo = _mm_srai_epi32(a_lo, 13);
         a_hi = _mm_srai_epi32(a_hi, 13);
         v5 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
-        a_lo = _mm_madd_epi16(lo0, c3);
-        a_hi = _mm_madd_epi16(hi0, c3);
-        b_lo = _mm_madd_epi16(lo1, c7);
-        b_hi = _mm_madd_epi16(hi1, c7);
-        c_lo = _mm_madd_epi16(lo2, c1);
-        c_hi = _mm_madd_epi16(hi2, c1);
-        d_lo = _mm_madd_epi16(lo3, c5);
-        d_hi = _mm_madd_epi16(hi3, c5);
+        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 13;
+        a_lo = _mm_madd_epi16(x01_lo, c37n);
+        a_hi = _mm_madd_epi16(x01_hi, c37n);
+        b_lo = _mm_madd_epi16(x23_lo, c15p);
+        b_hi = _mm_madd_epi16(x23_hi, c15p);
         a_lo = _mm_sub_epi32(a_lo, b_lo);
         a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_sub_epi32(a_lo, c_lo);
-        a_hi = _mm_sub_epi32(a_hi, c_hi);
-        a_lo = _mm_sub_epi32(a_lo, d_lo);
-        a_hi = _mm_sub_epi32(a_hi, d_hi);
         a_lo = _mm_srai_epi32(a_lo, 13);
         a_hi = _mm_srai_epi32(a_hi, 13);
         v3 = _mm_packs_epi32(a_lo, a_hi);
 
-        //v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
-        a_lo = _mm_madd_epi16(lo0, c1);
-        a_hi = _mm_madd_epi16(hi0, c1);
-        b_lo = _mm_madd_epi16(lo1, c3);
-        b_hi = _mm_madd_epi16(hi1, c3);
-        c_lo = _mm_madd_epi16(lo2, c5);
-        c_hi = _mm_madd_epi16(hi2, c5);
-        d_lo = _mm_madd_epi16(lo3, c7);
-        d_hi = _mm_madd_epi16(hi3, c7);
+        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 13;
+        a_lo = _mm_madd_epi16(x01_lo, c13p);
+        a_hi = _mm_madd_epi16(x01_hi, c13p);
+        b_lo = _mm_madd_epi16(x23_lo, c57p);
+        b_hi = _mm_madd_epi16(x23_hi, c57p);
         a_lo = _mm_add_epi32(a_lo, b_lo);
         a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_add_epi32(a_lo, c_lo);
-        a_hi = _mm_add_epi32(a_hi, c_hi);
-        a_lo = _mm_add_epi32(a_lo, d_lo);
-        a_hi = _mm_add_epi32(a_hi, d_hi);
         a_lo = _mm_srai_epi32(a_lo, 13);
         a_hi = _mm_srai_epi32(a_hi, 13);
         v1 = _mm_packs_epi32(a_lo, a_hi);
 
-        // NOTE: we can double the qtable values instead of doing this v += v thing here
+        // NOTE: we can double the qtable values at setup
         v0 = _mm_add_epi16(v0, v0);
         v1 = _mm_add_epi16(v1, v1);
         v2 = _mm_add_epi16(v2, v2);
@@ -899,7 +814,7 @@ namespace
         v6 = _mm_mulhi_epi16(v6, q[6]);
         v7 = _mm_mulhi_epi16(v7, q[7]);
 
-        TRANSPOSE_16X8();
+        JPEG_TRANSPOSE16();
 
         __m128i* d = reinterpret_cast<__m128i *>(dest);
         _mm_storeu_si128(d + 0, v0);
