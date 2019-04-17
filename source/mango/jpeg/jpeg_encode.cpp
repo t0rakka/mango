@@ -496,7 +496,7 @@ namespace
         }
     };
 
-#if 0
+#if 1
 
     void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
@@ -592,26 +592,12 @@ namespace
 
     void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
-        // first draft of SIMD processing
-        // - requires AVX2 to be "efficient" (256 bit wide vectors, boo!)
-        // - ugly mix of simd:: and vector classes, bad style!
-        // - rewrite to use 16 bit low/high processing like the inverse-DCT
-        // + at least it works and is nearly verbatim of scalar version above
-        // + code could be improved with upgrades to integer vector classes
-
-        const s16 c1 = 1420;  // cos 1PI/16 * root(2)
-        const s16 c2 = 1338;  // cos 2PI/16 * root(2)
-        const s16 c3 = 1204;  // cos 3PI/16 * root(2)
-        const s16 c5 = 805;   // cos 5PI/16 * root(2)
-        const s16 c6 = 554;   // cos 6PI/16 * root(2)
-        const s16 c7 = 283;   // cos 7PI/16 * root(2)
-
-        const int16x8 vc1(c1);
-        const int16x8 vc2(c2);
-        const int16x8 vc3(c3);
-        const int16x8 vc5(c5);
-        const int16x8 vc6(c6);
-        const int16x8 vc7(c7);
+        const int16x8 c1 = 1420;  // cos 1PI/16 * root(2)
+        const int16x8 c2 = 1338;  // cos 2PI/16 * root(2)
+        const int16x8 c3 = 1204;  // cos 3PI/16 * root(2)
+        const int16x8 c5 = 805;   // cos 5PI/16 * root(2)
+        const int16x8 c6 = 554;   // cos 6PI/16 * root(2)
+        const int16x8 c7 = 283;   // cos 7PI/16 * root(2)
 
         const int16x8* vdata = reinterpret_cast<const int16x8*>(data);
         const __m128i z = _mm_setzero_si128();
