@@ -712,7 +712,7 @@ namespace
 
         JPEG_TRANSPOSE16();
 
-        const int16x8* q = reinterpret_cast<const int16x8*>(quant_table);
+        const __m128i* q = reinterpret_cast<const __m128i*>(quant_table);
 
         x8 = _mm_add_epi16(v0, v7);
         x0 = _mm_sub_epi16(v0, v7);
