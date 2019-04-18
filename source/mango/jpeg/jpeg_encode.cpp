@@ -1241,27 +1241,21 @@ namespace
 
     void encodeJPEG(const Surface& surface, Stream& stream, int quality, Sample sample)
     {
-        u8* input = surface.image;
-
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
-        BigEndianStream s(stream);
-
-        // writing marker data
-        jp.write_markers(s, sample, surface.width, surface.height);
-
-        ConcurrentQueue queue;
+        u8* input = surface.image;
 
         // bitstream for each MCU scan
         Buffer* buffers = new Buffer[jp.vertical_mcus];
 
-        // encode MCUs
-        const int bottom_mcu = jp.vertical_mcus - 1;
+        ConcurrentQueue queue;
 
+        // encode MCUs
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
             int rows;
 
+            const int bottom_mcu = jp.vertical_mcus - 1;
             if (y < bottom_mcu)
             {
                 rows = jp.mcu_height;
@@ -1335,6 +1329,11 @@ namespace
         }
 
         queue.wait();
+
+        BigEndianStream s(stream);
+
+        // writing marker data
+        jp.write_markers(s, sample, surface.width, surface.height);
 
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
