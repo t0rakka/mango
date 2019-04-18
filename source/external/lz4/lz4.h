@@ -51,19 +51,23 @@ extern "C" {
   multiple GB/s per core, typically reaching RAM speed limits on multi-core systems.
 
   The LZ4 compression library provides in-memory compression and decompression functions.
+  It gives full buffer control to user.
   Compression can be done in:
     - a single step (described as Simple Functions)
     - a single step, reusing a context (described in Advanced Functions)
     - unbounded multiple steps (described as Streaming compression)
 
-  lz4.h provides block compression functions. It gives full buffer control to user.
-  Decompressing an lz4-compressed block also requires metadata (such as compressed size).
-  Each application is free to encode such metadata in whichever way it wants.
+  lz4.h generates and decodes LZ4-compressed blocks (doc/lz4_Block_format.md).
+  Decompressing a block requires additional metadata, such as its compressed size.
+  Each application is free to encode and pass such metadata in whichever way it wants.
 
-  An additional format, called LZ4 frame specification (doc/lz4_Frame_format.md),
-  take care of encoding standard metadata alongside LZ4-compressed blocks.
-  Frame format is required for interoperability.
-  It is delivered through a companion API, declared in lz4frame.h.
+  lz4.h only handle blocks, it can not generate Frames.
+
+  Blocks are different from Frames (doc/lz4_Frame_format.md).
+  Frames bundle both blocks and metadata in a specified manner.
+  This are required for compressed data to be self-contained and portable.
+  Frame format is delivered through a companion API, declared in lz4frame.h.
+  Note that the `lz4` CLI can only manage frames.
 */
 
 /*^***************************************************************
@@ -92,8 +96,8 @@ extern "C" {
 
 /*------   Version   ------*/
 #define LZ4_VERSION_MAJOR    1    /* for breaking interface changes  */
-#define LZ4_VERSION_MINOR    8    /* for new (non-breaking) interface capabilities */
-#define LZ4_VERSION_RELEASE  3    /* for tweaks, bug-fixes, or development */
+#define LZ4_VERSION_MINOR    9    /* for new (non-breaking) interface capabilities */
+#define LZ4_VERSION_RELEASE  0    /* for tweaks, bug-fixes, or development */
 
 #define LZ4_VERSION_NUMBER (LZ4_VERSION_MAJOR *100*100 + LZ4_VERSION_MINOR *100 + LZ4_VERSION_RELEASE)
 
@@ -203,27 +207,6 @@ LZ4LIB_API int LZ4_compress_fast_extState (void* state, const char* src, char* d
 LZ4LIB_API int LZ4_compress_destSize (const char* src, char* dst, int* srcSizePtr, int targetDstSize);
 
 
-/*! LZ4_decompress_fast() : **unsafe!**
- *  This function used to be a bit faster than LZ4_decompress_safe(),
- *  though situation has changed in recent versions,
- *  and now `LZ4_decompress_safe()` can be as fast and sometimes faster than `LZ4_decompress_fast()`.
- *  Moreover, LZ4_decompress_fast() is not protected vs malformed input, as it doesn't perform full validation of compressed data.
- *  As a consequence, this function is no longer recommended, and may be deprecated in future versions.
- *  It's last remaining specificity is that it can decompress data without knowing its compressed size.
- *
- *  originalSize : is the uncompressed size to regenerate.
- *                 `dst` must be already allocated, its size must be >= 'originalSize' bytes.
- * @return : number of bytes read from source buffer (== compressed size).
- *           If the source stream is detected malformed, the function stops decoding and returns a negative result.
- *  note : This function requires uncompressed originalSize to be known in advance.
- *         The function never writes past the output buffer.
- *         However, since it doesn't know its 'src' size, it may read past the intended input.
- *         Also, because match offsets are not validated during decoding,
- *         reads from 'src' may underflow.
- *         Use this function in trusted environment **only**.
- */
-LZ4LIB_API int LZ4_decompress_fast (const char* src, char* dst, int originalSize);
-
 /*! LZ4_decompress_safe_partial() :
  *  Decompress an LZ4 compressed block, of size 'srcSize' at position 'src',
  *  into destination buffer 'dst' of size 'dstCapacity'.
@@ -259,17 +242,40 @@ typedef union LZ4_stream_u LZ4_stream_t;  /* incomplete type (defined later) */
 LZ4LIB_API LZ4_stream_t* LZ4_createStream(void);
 LZ4LIB_API int           LZ4_freeStream (LZ4_stream_t* streamPtr);
 
-/*! LZ4_resetStream() :
- *  An LZ4_stream_t structure can be allocated once and re-used multiple times.
- *  Use this function to start compressing a new stream.
+/*! LZ4_resetStream_fast() : v1.9.0+
+ *  Use this to prepare an LZ4_stream_t for a new chain of dependent blocks
+ *  (e.g., LZ4_compress_fast_continue()).
+ *
+ *  An LZ4_stream_t must be initialized once before usage.
+ *  This is automatically done when created by LZ4_createStream().
+ *  However, should the LZ4_stream_t be simply declared on stack (for example),
+ *  it's necessary to initialize it first, using LZ4_initStream().
+ *
+ *  After init, start any new stream with LZ4_resetStream_fast().
+ *  A same LZ4_stream_t can be re-used multiple times consecutively
+ *  and compress multiple streams,
+ *  provided that it starts each new stream with LZ4_resetStream_fast().
+ *
+ *  LZ4_resetStream_fast() is much faster than LZ4_initStream(),
+ *  but is not compatible with memory regions containing garbage data.
+ *
+ *  Note: it's only useful to call LZ4_resetStream_fast()
+ *        in the context of streaming compression.
+ *        The *extState* functions perform their own resets.
+ *        Invoking LZ4_resetStream_fast() before is redundant, and even counterproductive.
  */
-LZ4LIB_API void LZ4_resetStream (LZ4_stream_t* streamPtr);
+LZ4LIB_API void LZ4_resetStream_fast (LZ4_stream_t* streamPtr);
 
 /*! LZ4_loadDict() :
- *  Use this function to load a static dictionary into LZ4_stream_t.
- *  Any previous data will be forgotten, only 'dictionary' will remain in memory.
+ *  Use this function to reference a static dictionary into LZ4_stream_t.
+ *  The dictionary must remain available during compression.
+ *  LZ4_loadDict() triggers a reset, so any previous data will be forgotten.
+ *  The same dictionary will have to be loaded on decompression side for successful decoding.
+ *  Dictionary are useful for better compression of small data (KB range).
+ *  While LZ4 accept any input as dictionary,
+ *  results are generally better when using Zstandard's Dictionary Builder.
  *  Loading a size of 0 is allowed, and is the same as reset.
- * @return : dictionary size, in bytes (necessarily <= 64 KB)
+ * @return : loaded dictionary size, in bytes (necessarily <= 64 KB)
  */
 LZ4LIB_API int LZ4_loadDict (LZ4_stream_t* streamPtr, const char* dictionary, int dictSize);
 
@@ -370,7 +376,6 @@ LZ4LIB_API int LZ4_decoderRingBufferSize(int maxBlockSize);
  *  then indicate where this data is saved using LZ4_setStreamDecode(), before decompressing next block.
 */
 LZ4LIB_API int LZ4_decompress_safe_continue (LZ4_streamDecode_t* LZ4_streamDecode, const char* src, char* dst, int srcSize, int dstCapacity);
-LZ4LIB_API int LZ4_decompress_fast_continue (LZ4_streamDecode_t* LZ4_streamDecode, const char* src, char* dst, int originalSize);
 
 
 /*! LZ4_decompress_*_usingDict() :
@@ -382,7 +387,6 @@ LZ4LIB_API int LZ4_decompress_fast_continue (LZ4_streamDecode_t* LZ4_streamDecod
  *                    when dst == dictStart + dictSize.
  */
 LZ4LIB_API int LZ4_decompress_safe_usingDict (const char* src, char* dst, int srcSize, int dstCapcity, const char* dictStart, int dictSize);
-LZ4LIB_API int LZ4_decompress_fast_usingDict (const char* src, char* dst, int originalSize, const char* dictStart, int dictSize);
 
 
 /*^*************************************
@@ -390,17 +394,20 @@ LZ4LIB_API int LZ4_decompress_fast_usingDict (const char* src, char* dst, int or
  ***************************************/
 
 /*-****************************************************************************
+ * Experimental section
+ *
  * Symbols declared in this section must be considered unstable. Their
  * signatures or semantics may change, or they may be removed altogether in the
  * future. They are therefore only safe to depend on when the caller is
  * statically linked against the library.
  *
- * To protect against unsafe usage, not only are the declarations guarded, the
- * definitions are hidden by default when building LZ4 as a shared/dynamic
- * library.
+ * To protect against unsafe usage, not only are the declarations guarded,
+ * the definitions are hidden by default
+ * when building LZ4 as a shared/dynamic library.
  *
- * In order to access these declarations, define LZ4_STATIC_LINKING_ONLY in
- * your application before including LZ4's headers.
+ * In order to access these declarations,
+ * define LZ4_STATIC_LINKING_ONLY in your application
+ * before including LZ4's headers.
  *
  * In order to make their implementations accessible dynamically, you must
  * define LZ4_PUBLISH_STATIC_FUNCTIONS when building the LZ4 library.
@@ -414,42 +421,6 @@ LZ4LIB_API int LZ4_decompress_fast_usingDict (const char* src, char* dst, int or
 
 #ifdef LZ4_STATIC_LINKING_ONLY
 
-/*! LZ4_resetStream_fast() :
- *  Use this to prepare a context for a new chain of calls to a streaming API
- *  (e.g., LZ4_compress_fast_continue()).
- *
- *  Note:
- *  To stay on the safe side, when LZ4_stream_t is used for the first time,
- *  it should be either created using LZ4_createStream() or
- *  initialized using LZ4_resetStream().
- *
- *  Note:
- *  Using this in advance of a non-streaming-compression function is redundant,
- *  since they all perform their own custom reset internally.
- *
- *  Differences from LZ4_resetStream():
- *  When an LZ4_stream_t is known to be in an internally coherent state,
- *  it will be prepared for a new compression with almost no work.
- *  Otherwise, it will fall back to the full, expensive reset.
- *
- *  LZ4_streams are guaranteed to be in a valid state when:
- *  - returned from LZ4_createStream()
- *  - reset by LZ4_resetStream()
- *  - memset(stream, 0, sizeof(LZ4_stream_t)), though this is discouraged
- *  - the stream was in a valid state and was reset by LZ4_resetStream_fast()
- *  - the stream was in a valid state and was then used in any compression call
- *    that returned success
- *  - the stream was in an indeterminate state and was used in a compression
- *    call that fully reset the state (e.g., LZ4_compress_fast_extState()) and
- *    that returned success
- *
- *  Note:
- *  A stream that was used in a compression call that did not return success
- *  (e.g., LZ4_compress_fast_continue()), can still be passed to this function,
- *  however, it's history is not preserved because of previous compression
- *  failure.
- */
-LZ4LIB_STATIC_API void LZ4_resetStream_fast (LZ4_stream_t* streamPtr);
 
 /*! LZ4_compress_fast_extState_fastReset() :
  *  A variant of LZ4_compress_fast_extState().
@@ -550,10 +521,12 @@ typedef struct {
 
 /*! LZ4_stream_t :
  *  information structure to track an LZ4 stream.
- *  init this structure with LZ4_resetStream() before first use.
- *  note : only use in association with static linking !
- *         this definition is not API/ABI safe,
- *         it may change in a future version !
+ *  LZ4_stream_t can also be created using LZ4_createStream(), which is recommended.
+ *  The structure definition can be convenient for static allocation
+ *  (on stack, or as part of larger structure).
+ *  Init this structure with LZ4_initStream() before first use.
+ *  note : only use this definition in association with static linking !
+ *    this definition is not API/ABI safe, and may change in a future version.
  */
 #define LZ4_STREAMSIZE_U64 ((1 << (LZ4_MEMORY_USAGE-3)) + 4 + ((sizeof(void*)==16) ? 4 : 0) /*AS-400*/ )
 #define LZ4_STREAMSIZE     (LZ4_STREAMSIZE_U64 * sizeof(unsigned long long))
@@ -561,6 +534,22 @@ union LZ4_stream_u {
     unsigned long long table[LZ4_STREAMSIZE_U64];
     LZ4_stream_t_internal internal_donotuse;
 } ;  /* previously typedef'd to LZ4_stream_t */
+
+/*! LZ4_initStream() : v1.9.0+
+ *  An LZ4_stream_t structure must be initialized at least once.
+ *  This is automatically done when invoking LZ4_createStream(),
+ *  but it's not when the structure is simply declared on stack (for example).
+ *
+ *  Use LZ4_initStream() to properly initialize a newly declared LZ4_stream_t.
+ *  It can also initialize any arbitrary buffer of sufficient size,
+ *  and will @return a pointer of proper type upon initialization.
+ *
+ *  Note : initialization fails if size and alignment conditions are not respected.
+ *         In which case, the function will @return NULL.
+ *  Note2: An LZ4_stream_t structure guarantees correct alignment and size.
+ *  Note3: Before v1.9.0, use LZ4_resetStream() instead
+ */
+LZ4LIB_API LZ4_stream_t* LZ4_initStream (void* buffer, size_t size);
 
 
 /*! LZ4_streamDecode_t :
@@ -583,11 +572,16 @@ union LZ4_streamDecode_u {
 **************************************/
 
 /*! Deprecation warnings
- *  Should deprecation warnings be a problem,
- *  it is generally possible to disable them,
+ *
+ *  Deprecated functions make the compiler generate a warning when invoked.
+ *  This is meant to invite users to update their source code.
+ *  Should deprecation warnings be a problem, it is generally possible to disable them,
  *  typically with -Wno-deprecated-declarations for gcc
  *  or _CRT_SECURE_NO_WARNINGS in Visual.
- *  Otherwise, it's also possible to define LZ4_DISABLE_DEPRECATE_WARNINGS */
+ *
+ *  Another method is to define LZ4_DISABLE_DEPRECATE_WARNINGS
+ *  before including the header file.
+ */
 #ifdef LZ4_DISABLE_DEPRECATE_WARNINGS
 #  define LZ4_DEPRECATED(message)   /* disable deprecation warnings */
 #else
@@ -635,6 +629,47 @@ LZ4_DEPRECATED("Use LZ4_saveDict() instead")     LZ4LIB_API char* LZ4_slideInput
 /* Obsolete streaming decoding functions */
 LZ4_DEPRECATED("use LZ4_decompress_safe_usingDict() instead") LZ4LIB_API int LZ4_decompress_safe_withPrefix64k (const char* src, char* dst, int compressedSize, int maxDstSize);
 LZ4_DEPRECATED("use LZ4_decompress_fast_usingDict() instead") LZ4LIB_API int LZ4_decompress_fast_withPrefix64k (const char* src, char* dst, int originalSize);
+
+/*! LZ4_decompress_fast() : **unsafe!**
+ *  These functions are generally slightly faster than LZ4_decompress_safe(),
+ *  though the difference is small (generally ~5%).
+ *  However, the real cost is a risk :  LZ4_decompress_safe() is protected vs malformed input, while `LZ4_decompress_fast()` is not, making it a security liability.
+ *  As a consequence, LZ4_decompress_fast() is strongly discouraged, and deprecated.
+ *  These functions will generate a deprecation warning in the future.
+ *
+ *  Last LZ4_decompress_fast() specificity is that it can decompress a block without knowing its compressed size.
+ *  Note that even that functionality could be achieved in a more secure manner if need be,
+ *  though it would require new prototypes, and adaptation of the implementation to this new use case.
+ *
+ *  Parameters:
+ *  originalSize : is the uncompressed size to regenerate.
+ *                 `dst` must be already allocated, its size must be >= 'originalSize' bytes.
+ * @return : number of bytes read from source buffer (== compressed size).
+ *           The function expects to finish at block's end exactly.
+ *           If the source stream is detected malformed, the function stops decoding and returns a negative result.
+ *  note : LZ4_decompress_fast*() requires originalSize. Thanks to this information, it never writes past the output buffer.
+ *         However, since it doesn't know its 'src' size, it may read an unknown amount of input, past input buffer bounds.
+ *         Also, since match offsets are not validated, match reads from 'src' may underflow too.
+ *         These issues never happen if input (compressed) data is correct.
+ *         But they may happen if input data is invalid (error or intentional tampering).
+ *         As a consequence, use these functions in trusted environments with trusted data **only**.
+ */
+
+/* LZ4_DEPRECATED("This function is deprecated and unsafe. Consider using LZ4_decompress_safe() instead")  */
+LZ4LIB_API int LZ4_decompress_fast (const char* src, char* dst, int originalSize);
+/* LZ4_DEPRECATED("This function is deprecated and unsafe. Consider using LZ4_decompress_safe_continue() instead") */
+LZ4LIB_API int LZ4_decompress_fast_continue (LZ4_streamDecode_t* LZ4_streamDecode, const char* src, char* dst, int originalSize);
+/* LZ4_DEPRECATED("This function is deprecated and unsafe. Consider using LZ4_decompress_safe_usingDict() instead") */
+LZ4LIB_API int LZ4_decompress_fast_usingDict (const char* src, char* dst, int originalSize, const char* dictStart, int dictSize);
+
+/*! LZ4_resetStream() :
+ *  An LZ4_stream_t structure must be initialized at least once.
+ *  This is done with LZ4_initStream(), or LZ4_resetStream().
+ *  Consider switching to LZ4_initStream(),
+ *  invoking LZ4_resetStream() will trigger deprecation warnings in the future.
+ */
+LZ4LIB_API void LZ4_resetStream (LZ4_stream_t* streamPtr);
+
 
 #endif /* LZ4_H_2983827168210 */
 
