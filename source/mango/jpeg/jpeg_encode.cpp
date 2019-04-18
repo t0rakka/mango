@@ -511,59 +511,59 @@ namespace
 
         for (int i = 0; i < 8; ++i)
         {
-            int x8 = data [0] + data [7];
-            int x0 = data [0] - data [7];
-            int x7 = data [1] + data [6];
-            int x1 = data [1] - data [6];
-            int x6 = data [2] + data [5];
-            int x2 = data [2] - data [5];
-            int x5 = data [3] + data [4];
-            int x3 = data [3] - data [4];
-            int x4 = x8 + x5;
+            s16 x8 = data [0] + data [7];
+            s16 x0 = data [0] - data [7];
+            s16 x7 = data [1] + data [6];
+            s16 x1 = data [1] - data [6];
+            s16 x6 = data [2] + data [5];
+            s16 x2 = data [2] - data [5];
+            s16 x5 = data [3] + data [4];
+            s16 x3 = data [3] - data [4];
+            s16 x4 = x8 + x5;
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            temp[i * 8 + 0] = s16(x4 + x5);
-            temp[i * 8 + 4] = s16(x4 - x5);
-            temp[i * 8 + 2] = s16((x8 * c2 + x7 * c6) >> 10);
-            temp[i * 8 + 6] = s16((x8 * c6 - x7 * c2) >> 10);
-            temp[i * 8 + 7] = s16((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10);
-            temp[i * 8 + 5] = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10);
-            temp[i * 8 + 3] = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10);
-            temp[i * 8 + 1] = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10);
+            temp[i * 8 + 0] = x4 + x5;
+            temp[i * 8 + 4] = x4 - x5;
+            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
+            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
+            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
+            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
+            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
+            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
             data += 8;
         }
 
         for (int i = 0; i < 8; ++i)
         {
-            int x8 = temp [i +  0] + temp [i + 56];
-            int x0 = temp [i +  0] - temp [i + 56];
-            int x7 = temp [i +  8] + temp [i + 48];
-            int x1 = temp [i +  8] - temp [i + 48];
-            int x6 = temp [i + 16] + temp [i + 40];
-            int x2 = temp [i + 16] - temp [i + 40];
-            int x5 = temp [i + 24] + temp [i + 32];
-            int x3 = temp [i + 24] - temp [i + 32];
-            int x4 = x8 + x5;
+            s16 x8 = temp [i +  0] + temp [i + 56];
+            s16 x0 = temp [i +  0] - temp [i + 56];
+            s16 x7 = temp [i +  8] + temp [i + 48];
+            s16 x1 = temp [i +  8] - temp [i + 48];
+            s16 x6 = temp [i + 16] + temp [i + 40];
+            s16 x2 = temp [i + 16] - temp [i + 40];
+            s16 x5 = temp [i + 24] + temp [i + 32];
+            s16 x3 = temp [i + 24] - temp [i + 32];
+            s16 x4 = x8 + x5;
             x8 = x8 - x5;
             x5 = x7 + x6;
             x7 = x7 - x6;
-            auto v0 = s16((x4 + x5) >> 3);
-            auto v4 = s16((x4 - x5) >> 3);
-            auto v2 = s16((x8 * c2 + x7 * c6) >> 13);
-            auto v6 = s16((x8 * c6 - x7 * c2) >> 13);
-            auto v7 = s16((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13);
-            auto v5 = s16((x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13);
-            auto v3 = s16((x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13);
-            auto v1 = s16((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13);
-            dest[i + 8 * 0] = s16((v0 * quant_table[i * 8 + 0] + 0x4000) >> 15);
-            dest[i + 8 * 1] = s16((v1 * quant_table[i * 8 + 1] + 0x4000) >> 15);
-            dest[i + 8 * 2] = s16((v2 * quant_table[i * 8 + 2] + 0x4000) >> 15);
-            dest[i + 8 * 3] = s16((v3 * quant_table[i * 8 + 3] + 0x4000) >> 15);
-            dest[i + 8 * 4] = s16((v4 * quant_table[i * 8 + 4] + 0x4000) >> 15);
-            dest[i + 8 * 5] = s16((v5 * quant_table[i * 8 + 5] + 0x4000) >> 15);
-            dest[i + 8 * 6] = s16((v6 * quant_table[i * 8 + 6] + 0x4000) >> 15);
-            dest[i + 8 * 7] = s16((v7 * quant_table[i * 8 + 7] + 0x4000) >> 15);
+            s16 v0 = (x4 + x5) >> 3;
+            s16 v4 = (x4 - x5) >> 3;
+            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
+            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
+            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
+            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
+            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
+            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
+            dest[i + 8 * 0] = (v0 * quant_table[i * 8 + 0] + 0x4000) >> 15;
+            dest[i + 8 * 1] = (v1 * quant_table[i * 8 + 1] + 0x4000) >> 15;
+            dest[i + 8 * 2] = (v2 * quant_table[i * 8 + 2] + 0x4000) >> 15;
+            dest[i + 8 * 3] = (v3 * quant_table[i * 8 + 3] + 0x4000) >> 15;
+            dest[i + 8 * 4] = (v4 * quant_table[i * 8 + 4] + 0x4000) >> 15;
+            dest[i + 8 * 5] = (v5 * quant_table[i * 8 + 5] + 0x4000) >> 15;
+            dest[i + 8 * 6] = (v6 * quant_table[i * 8 + 6] + 0x4000) >> 15;
+            dest[i + 8 * 7] = (v7 * quant_table[i * 8 + 7] + 0x4000) >> 15;
         }
     }
 
@@ -612,6 +612,8 @@ namespace
         __m128i v6 = _mm_loadu_si128(s + 6);
         __m128i v7 = _mm_loadu_si128(s + 7);
 
+        JPEG_TRANSPOSE16();
+
         __m128i x8 = _mm_add_epi16(v0, v7);
         __m128i x7 = _mm_add_epi16(v1, v6);
         __m128i x6 = _mm_add_epi16(v2, v5);
@@ -649,8 +651,8 @@ namespace
         __m128i b_lo;
         __m128i b_hi;
 
-        v0 = x4 + x5;
-        v4 = x4 - x5;
+        v0 = _mm_add_epi16(x4, x5);
+        v4 = _mm_sub_epi16(x4, x5);
 
         // v2 = (x8 * c2 + x7 * c6) >> 10;
         a_lo = _mm_madd_epi16(x87_lo, c26p);
@@ -797,6 +799,8 @@ namespace
         v1 = _mm_packs_epi32(a_lo, a_hi);
 
         // NOTE: we can double the qtable values at setup
+        // TODO: the bias (0x4000) should be added if we want
+        //       bit-exact results compared to the scalar fdct()
         v0 = _mm_add_epi16(v0, v0);
         v1 = _mm_add_epi16(v1, v1);
         v2 = _mm_add_epi16(v2, v2);
@@ -813,8 +817,6 @@ namespace
         v5 = _mm_mulhi_epi16(v5, q[5]);
         v6 = _mm_mulhi_epi16(v6, q[6]);
         v7 = _mm_mulhi_epi16(v7, q[7]);
-
-        JPEG_TRANSPOSE16();
 
         __m128i* d = reinterpret_cast<__m128i *>(dest);
         _mm_storeu_si128(d + 0, v0);
