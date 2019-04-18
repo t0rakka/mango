@@ -500,12 +500,12 @@ namespace
 
     void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
-        const s16 c1 = 1420;  // cos 1PI/16 * root(2)
-        const s16 c2 = 1338;  // cos 2PI/16 * root(2)
-        const s16 c3 = 1204;  // cos 3PI/16 * root(2)
-        const s16 c5 = 805;   // cos 5PI/16 * root(2)
-        const s16 c6 = 554;   // cos 6PI/16 * root(2)
-        const s16 c7 = 283;   // cos 7PI/16 * root(2)
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
         s16 temp[64];
 
@@ -556,14 +556,14 @@ namespace
             s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
             s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
             s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
-            dest[i + 8 * 0] = (v0 * quant_table[i * 8 + 0] + 0x4000) >> 15;
-            dest[i + 8 * 1] = (v1 * quant_table[i * 8 + 1] + 0x4000) >> 15;
-            dest[i + 8 * 2] = (v2 * quant_table[i * 8 + 2] + 0x4000) >> 15;
-            dest[i + 8 * 3] = (v3 * quant_table[i * 8 + 3] + 0x4000) >> 15;
-            dest[i + 8 * 4] = (v4 * quant_table[i * 8 + 4] + 0x4000) >> 15;
-            dest[i + 8 * 5] = (v5 * quant_table[i * 8 + 5] + 0x4000) >> 15;
-            dest[i + 8 * 6] = (v6 * quant_table[i * 8 + 6] + 0x4000) >> 15;
-            dest[i + 8 * 7] = (v7 * quant_table[i * 8 + 7] + 0x4000) >> 15;
+            dest[i + 8 * 0] = (v0 * quant_table[i + 8 * 0] + 0x4000) >> 15;
+            dest[i + 8 * 1] = (v1 * quant_table[i + 8 * 1] + 0x4000) >> 15;
+            dest[i + 8 * 2] = (v2 * quant_table[i + 8 * 2] + 0x4000) >> 15;
+            dest[i + 8 * 3] = (v3 * quant_table[i + 8 * 3] + 0x4000) >> 15;
+            dest[i + 8 * 4] = (v4 * quant_table[i + 8 * 4] + 0x4000) >> 15;
+            dest[i + 8 * 5] = (v5 * quant_table[i + 8 * 5] + 0x4000) >> 15;
+            dest[i + 8 * 6] = (v6 * quant_table[i + 8 * 6] + 0x4000) >> 15;
+            dest[i + 8 * 7] = (v7 * quant_table[i + 8 * 7] + 0x4000) >> 15;
         }
     }
 
@@ -595,12 +595,12 @@ namespace
 
     void fdct(s16* dest, const s16* data, const u16* quant_table)
     {
-        constexpr s16 c1 = 1420;  // cos 1PI/16 * root(2)
-        constexpr s16 c2 = 1338;  // cos 2PI/16 * root(2)
-        constexpr s16 c3 = 1204;  // cos 3PI/16 * root(2)
-        constexpr s16 c5 = 805;   // cos 5PI/16 * root(2)
-        constexpr s16 c6 = 554;   // cos 6PI/16 * root(2)
-        constexpr s16 c7 = 283;   // cos 7PI/16 * root(2)
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
         const __m128i* s = reinterpret_cast<const __m128i *>(data);
         __m128i v0 = _mm_loadu_si128(s + 0);
@@ -1118,11 +1118,8 @@ namespace
 
     void jpeg_encode::init_quantization_tables(u32 quality)
     {
-        quality = std::min(quality, 1024u) * 16;
-
         for (int i = 0; i < 64; ++i)
         {
-            int i_transpose = i;//((i & 7) << 3) | (i >> 3);
             u16 index = zigzag_table [i];
             u32 value;
 
@@ -1136,7 +1133,7 @@ namespace
                 value = 255;
 
             Lqt [index] = (u8) value;
-            ILqt [i_transpose] = u16(0x8000 / value);
+            ILqt [i] = u16(0x8000 / value);
 
             // chrominance quantization table * quality factor
             value = chrominance_quant_table [i] * quality;
@@ -1148,7 +1145,7 @@ namespace
                 value = 255;
 
             Cqt [index] = (u8) value;
-            ICqt [i_transpose] = u16(0x8000 / value);
+            ICqt [i] = u16(0x8000 / value);
         }
     }
 
@@ -1382,7 +1379,7 @@ namespace jpeg {
     {
         // configure quality
         quality = clamp(1.0f - quality, 0.0f, 1.0f);
-        const u32 iq = u32(quality * 1024);
+        u32 iq = u32(std::pow(1.0f + quality, 11.0f) * 8.0f);
 
         SampleFormat sf = getSampleFormat(surface.format);
 
