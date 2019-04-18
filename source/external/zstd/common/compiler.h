@@ -15,6 +15,8 @@
 *  Compiler specifics
 *********************************************************/
 /* force inlining */
+
+#if !defined(ZSTD_NO_INLINE)
 #if defined (__GNUC__) || defined(__cplusplus) || defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L   /* C99 */
 #  define INLINE_KEYWORD inline
 #else
@@ -29,9 +31,16 @@
 #  define FORCE_INLINE_ATTR
 #endif
 
+#else
+
+#define INLINE_KEYWORD
+#define FORCE_INLINE_ATTR
+
+#endif
+
 /**
  * FORCE_INLINE_TEMPLATE is used to define C "templates", which take constant
- * parameters. They must be inlined for the compiler to elimininate the constant
+ * parameters. They must be inlined for the compiler to eliminate the constant
  * branches.
  */
 #define FORCE_INLINE_TEMPLATE static INLINE_KEYWORD FORCE_INLINE_ATTR

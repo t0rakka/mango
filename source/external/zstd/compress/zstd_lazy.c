@@ -195,7 +195,7 @@ ZSTD_DUBT_findBetterDictMatch (
             if ( (4*(int)(matchLength-bestLength)) > (int)(ZSTD_highbit32(current-matchIndex+1) - ZSTD_highbit32((U32)offsetPtr[0]+1)) ) {
                 DEBUGLOG(9, "ZSTD_DUBT_findBetterDictMatch(%u) : found better match length %u -> %u and offsetCode %u -> %u (dictMatchIndex %u, matchIndex %u)",
                     current, (U32)bestLength, (U32)matchLength, (U32)*offsetPtr, ZSTD_REP_MOVE + current - matchIndex, dictMatchIndex, matchIndex);
-                (void)(bestLength = matchLength), *offsetPtr = ZSTD_REP_MOVE + current - matchIndex;
+                bestLength = matchLength; *offsetPtr = ZSTD_REP_MOVE + current - matchIndex;
             }
             if (ip+matchLength == iend) {   /* reached end of input : ip[matchLength] is not valid, no way to know if it's larger or smaller than match */
                 break;   /* drop, to guarantee consistency (miss a little bit of compression) */
@@ -324,7 +324,7 @@ ZSTD_DUBT_findBestMatch(ZSTD_matchState_t* ms,
                 if (matchLength > matchEndIdx - matchIndex)
                     matchEndIdx = matchIndex + (U32)matchLength;
                 if ( (4*(int)(matchLength-bestLength)) > (int)(ZSTD_highbit32(current-matchIndex+1) - ZSTD_highbit32((U32)offsetPtr[0]+1)) )
-                    (void)(bestLength = matchLength), *offsetPtr = ZSTD_REP_MOVE + current - matchIndex;
+                { bestLength = matchLength; *offsetPtr = ZSTD_REP_MOVE + current - matchIndex; }
                 if (ip+matchLength == iend) {   /* equal : no way to know if inf or sup */
                     if (dictMode == ZSTD_dictMatchState) {
                         nbCompares = 0; /* in addition to avoiding checking any
@@ -656,8 +656,8 @@ size_t ZSTD_compressBlock_lazy_generic(
     ms->nextToUpdate3 = ms->nextToUpdate;
     if (dictMode == ZSTD_noDict) {
         U32 const maxRep = (U32)(ip - prefixLowest);
-        if (offset_2 > maxRep) (void)(savedOffset = offset_2), offset_2 = 0;
-        if (offset_1 > maxRep) (void)(savedOffset = offset_1), offset_1 = 0;
+        if (offset_2 > maxRep) { savedOffset = offset_2; offset_2 = 0; }
+        if (offset_1 > maxRep) { savedOffset = offset_1; offset_1 = 0; }
     }
     if (dictMode == ZSTD_dictMatchState) {
         /* dictMatchState repCode checks don't currently handle repCode == 0
@@ -696,7 +696,7 @@ size_t ZSTD_compressBlock_lazy_generic(
         {   size_t offsetFound = 999999999;
             size_t const ml2 = searchMax(ms, ip, iend, &offsetFound);
             if (ml2 > matchLength)
-                (void)(matchLength = ml2), (void)(start = ip), offset=offsetFound;
+            { matchLength = ml2; start = ip; offset=offsetFound; }
         }
 
         if (matchLength < 4) {
@@ -714,7 +714,7 @@ size_t ZSTD_compressBlock_lazy_generic(
                 int const gain2 = (int)(mlRep * 3);
                 int const gain1 = (int)(matchLength*3 - ZSTD_highbit32((U32)offset+1) + 1);
                 if ((mlRep >= 4) && (gain2 > gain1))
-                    (void)(matchLength = mlRep), (void)(offset = 0), start = ip;
+                { matchLength = mlRep; offset = 0; start = ip; }
             }
             if (dictMode == ZSTD_dictMatchState) {
                 const U32 repIndex = (U32)(ip - base) - offset_1;
@@ -728,7 +728,7 @@ size_t ZSTD_compressBlock_lazy_generic(
                     int const gain2 = (int)(mlRep * 3);
                     int const gain1 = (int)(matchLength*3 - ZSTD_highbit32((U32)offset+1) + 1);
                     if ((mlRep >= 4) && (gain2 > gain1))
-                        (void)(matchLength = mlRep), (void)(offset = 0), start = ip;
+                    { matchLength = mlRep; offset = 0; start = ip; }
                 }
             }
             {   size_t offset2=999999999;
@@ -736,7 +736,7 @@ size_t ZSTD_compressBlock_lazy_generic(
                 int const gain2 = (int)(ml2*4 - ZSTD_highbit32((U32)offset2+1));   /* raw approx */
                 int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 4);
                 if ((ml2 >= 4) && (gain2 > gain1)) {
-                    (void)(matchLength = ml2), (void)(offset = offset2), start = ip;
+                    matchLength = ml2; offset = offset2; start = ip;
                     continue;   /* search a better one */
             }   }
 
@@ -749,7 +749,7 @@ size_t ZSTD_compressBlock_lazy_generic(
                     int const gain2 = (int)(mlRep * 4);
                     int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 1);
                     if ((mlRep >= 4) && (gain2 > gain1))
-                        (void)(matchLength = mlRep), (void)(offset = 0), start = ip;
+                    { matchLength = mlRep; offset = 0; start = ip; }
                 }
                 if (dictMode == ZSTD_dictMatchState) {
                     const U32 repIndex = (U32)(ip - base) - offset_1;
@@ -763,7 +763,7 @@ size_t ZSTD_compressBlock_lazy_generic(
                         int const gain2 = (int)(mlRep * 4);
                         int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 1);
                         if ((mlRep >= 4) && (gain2 > gain1))
-                            (void)(matchLength = mlRep), (void)(offset = 0), start = ip;
+                        { matchLength = mlRep; offset = 0; start = ip; }
                     }
                 }
                 {   size_t offset2=999999999;
@@ -771,7 +771,7 @@ size_t ZSTD_compressBlock_lazy_generic(
                     int const gain2 = (int)(ml2*4 - ZSTD_highbit32((U32)offset2+1));   /* raw approx */
                     int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 7);
                     if ((ml2 >= 4) && (gain2 > gain1)) {
-                        (void)(matchLength = ml2), (void)(offset = offset2), start = ip;
+                        matchLength = ml2; offset = offset2; start = ip;
                         continue;
             }   }   }
             break;  /* nothing found : store previous solution */
@@ -959,7 +959,7 @@ size_t ZSTD_compressBlock_lazy_extDict_generic(
         {   size_t offsetFound = 999999999;
             size_t const ml2 = searchMax(ms, ip, iend, &offsetFound);
             if (ml2 > matchLength)
-                (void)(matchLength = ml2), (void)(start = ip), offset=offsetFound;
+            { matchLength = ml2; start = ip; offset=offsetFound; }
         }
 
          if (matchLength < 4) {
@@ -985,7 +985,7 @@ size_t ZSTD_compressBlock_lazy_extDict_generic(
                     int const gain2 = (int)(repLength * 3);
                     int const gain1 = (int)(matchLength*3 - ZSTD_highbit32((U32)offset+1) + 1);
                     if ((repLength >= 4) && (gain2 > gain1))
-                        (void)(matchLength = repLength), (void)(offset = 0), start = ip;
+                    { matchLength = repLength; offset = 0; start = ip; }
             }   }
 
             /* search match, depth 1 */
@@ -994,7 +994,7 @@ size_t ZSTD_compressBlock_lazy_extDict_generic(
                 int const gain2 = (int)(ml2*4 - ZSTD_highbit32((U32)offset2+1));   /* raw approx */
                 int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 4);
                 if ((ml2 >= 4) && (gain2 > gain1)) {
-                    (void)(matchLength = ml2), (void)(offset = offset2), start = ip;
+                    matchLength = ml2; offset = offset2; start = ip;
                     continue;   /* search a better one */
             }   }
 
@@ -1015,7 +1015,7 @@ size_t ZSTD_compressBlock_lazy_extDict_generic(
                         int const gain2 = (int)(repLength * 4);
                         int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 1);
                         if ((repLength >= 4) && (gain2 > gain1))
-                            (void)(matchLength = repLength), (void)(offset = 0), start = ip;
+                        { matchLength = repLength; offset = 0; start = ip; }
                 }   }
 
                 /* search match, depth 2 */
@@ -1024,7 +1024,7 @@ size_t ZSTD_compressBlock_lazy_extDict_generic(
                     int const gain2 = (int)(ml2*4 - ZSTD_highbit32((U32)offset2+1));   /* raw approx */
                     int const gain1 = (int)(matchLength*4 - ZSTD_highbit32((U32)offset+1) + 7);
                     if ((ml2 >= 4) && (gain2 > gain1)) {
-                        (void)(matchLength = ml2), (void)(offset = offset2), start = ip;
+                        matchLength = ml2; offset = offset2; start = ip;
                         continue;
             }   }   }
             break;  /* nothing found : store previous solution */
