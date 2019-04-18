@@ -273,6 +273,7 @@ namespace
         int         channel_count;
 
         void (*read_format) (jpeg_encode* jp, s16 *block, u8* input, int rows, int cols, int incr);
+        void (*fdct) (s16* dest, const s16* data, const s16* quant_table);
 
         jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
@@ -496,9 +497,12 @@ namespace
         }
     };
 
-#if 1
+    // ----------------------------------------------------------------------------
+    // fdct_scalar
+    // ----------------------------------------------------------------------------
 
-    void fdct(s16* dest, const s16* data, const s16* quant_table)
+    static
+    void fdct_scalar(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -567,7 +571,11 @@ namespace
         }
     }
 
-#else
+#if defined(JPEG_ENABLE_SSE2)
+
+    // ----------------------------------------------------------------------------
+    // fdct_sse2
+    // ----------------------------------------------------------------------------
 
     static inline void interleave16(__m128i& a, __m128i& b)
     {
@@ -600,7 +608,8 @@ namespace
         a_hi = _mm_srai_epi32(a_hi, 15); \
         vec = _mm_packs_epi32(a_lo, a_hi)
 
-    void fdct(s16* dest, const s16* data, const s16* quant_table)
+    static
+    void fdct_sse2(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -1048,6 +1057,11 @@ namespace
         : ILqt(64)
         , ICqt(64)
     {
+        fdct = fdct_scalar;
+#if defined(JPEG_ENABLE_SSE2)
+        fdct = fdct_sse2;
+#endif
+
         int bytes_per_pixel = 0;
 
         channel_count = 0;
@@ -1304,7 +1318,7 @@ namespace
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
                         s16 temp[BLOCK_SIZE];
-                        fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+                        jp.fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
                         ptr = huffman.encode(ptr, jp.channel[i].component, temp);
                     }
 
