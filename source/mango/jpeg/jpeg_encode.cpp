@@ -1120,7 +1120,7 @@ namespace
 
         for (int i = 0; i < 64; ++i)
         {
-            int i_transpose = ((i & 7) << 3) | (i >> 3);
+            int i_transpose = i;//((i & 7) << 3) | (i >> 3);
             u16 index = zigzag_table [i];
             u32 value;
 
