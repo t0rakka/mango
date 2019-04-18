@@ -247,7 +247,7 @@ namespace
     struct jpeg_chan
     {
         int     component;
-        u16*    qtable;
+        s16*    qtable;
     };
 
     struct jpeg_encode
@@ -265,8 +265,8 @@ namespace
 
         u8      Lqt [BLOCK_SIZE];
         u8      Cqt [BLOCK_SIZE];
-        AlignedVector<u16> ILqt;
-        AlignedVector<u16> ICqt;
+        AlignedVector<s16> ILqt;
+        AlignedVector<s16> ICqt;
 
         // MCU configuration
         jpeg_chan   channel[3];
@@ -498,7 +498,7 @@ namespace
 
 #if 1
 
-    void fdct(s16* dest, const s16* data, const u16* quant_table)
+    void fdct(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -593,7 +593,14 @@ namespace
         interleave16(v4, v5); \
         interleave16(v6, v7)
 
-    void fdct(s16* dest, const s16* data, const u16* quant_table)
+    #define JPEG_QUANTIZE(vec, idx) \
+        a_lo = _mm_madd_epi16(_mm_unpacklo_epi16(vec, one), _mm_unpacklo_epi16(q[idx], bias)); \
+        a_hi = _mm_madd_epi16(_mm_unpackhi_epi16(vec, one), _mm_unpackhi_epi16(q[idx], bias)); \
+        a_lo = _mm_srai_epi32(a_lo, 15); \
+        a_hi = _mm_srai_epi32(a_hi, 15); \
+        vec = _mm_packs_epi32(a_lo, a_hi)
+
+    void fdct(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -798,25 +805,17 @@ namespace
         a_hi = _mm_srai_epi32(a_hi, 13);
         v1 = _mm_packs_epi32(a_lo, a_hi);
 
-        // NOTE: we can double the qtable values at setup
-        // TODO: the bias (0x4000) should be added if we want
-        //       bit-exact results compared to the scalar fdct()
-        v0 = _mm_add_epi16(v0, v0);
-        v1 = _mm_add_epi16(v1, v1);
-        v2 = _mm_add_epi16(v2, v2);
-        v3 = _mm_add_epi16(v3, v3);
-        v4 = _mm_add_epi16(v4, v4);
-        v5 = _mm_add_epi16(v5, v5);
-        v6 = _mm_add_epi16(v6, v6);
-        v7 = _mm_add_epi16(v7, v7);
-        v0 = _mm_mulhi_epi16(v0, q[0]);
-        v1 = _mm_mulhi_epi16(v1, q[1]);
-        v2 = _mm_mulhi_epi16(v2, q[2]);
-        v3 = _mm_mulhi_epi16(v3, q[3]);
-        v4 = _mm_mulhi_epi16(v4, q[4]);
-        v5 = _mm_mulhi_epi16(v5, q[5]);
-        v6 = _mm_mulhi_epi16(v6, q[6]);
-        v7 = _mm_mulhi_epi16(v7, q[7]);
+        const __m128i one = JPEG_CONST16(1, 1);
+        const __m128i bias = JPEG_CONST16(0x4000, 0x4000);
+
+        JPEG_QUANTIZE(v0, 0);
+        JPEG_QUANTIZE(v1, 1);
+        JPEG_QUANTIZE(v2, 2);
+        JPEG_QUANTIZE(v3, 3);
+        JPEG_QUANTIZE(v4, 4);
+        JPEG_QUANTIZE(v5, 5);
+        JPEG_QUANTIZE(v6, 6);
+        JPEG_QUANTIZE(v7, 7);
 
         __m128i* d = reinterpret_cast<__m128i *>(dest);
         _mm_storeu_si128(d + 0, v0);
