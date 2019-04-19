@@ -259,8 +259,6 @@ namespace
         int     cols_in_right_mcus;
         int     rows_in_bottom_mcus;
 
-        int     length_minus_mcu_width;
-        int     length_minus_width;
         int     mcu_width_size;
 
         u8      Lqt [BLOCK_SIZE];
@@ -1320,9 +1318,6 @@ namespace
 
         rows_in_bottom_mcus = height - (vertical_mcus - 1) * mcu_height;
         cols_in_right_mcus  = width  - (horizontal_mcus - 1) * mcu_width;
-
-        length_minus_mcu_width = stride - mcu_width * bytes_per_pixel;
-        length_minus_width     = stride - cols_in_right_mcus * bytes_per_pixel;
 
         mcu_width_size = mcu_width * bytes_per_pixel;
 
