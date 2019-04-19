@@ -272,7 +272,8 @@ namespace
         jpeg_chan   channel[3];
         int         channel_count;
 
-        void (*read_format) (jpeg_encode* jp, s16 *block, u8* input, int rows, int cols, int incr);
+        void (*read_8x8) (s16 *block, const u8* input, int stride, int rows, int cols);
+        void (*read) (s16 *block, const u8* input, int stride, int rows, int cols);
         void (*fdct) (s16* dest, const s16* data, const s16* quant_table);
 
         jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality);
@@ -843,13 +844,15 @@ namespace
     // read_xxx_format
     // ----------------------------------------------------------------------------
 
-    void read_y_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    static
+    void read_y_format(s16* block, const u8* input, int stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
+            const u8* scan = input;
             for (int j = cols; j > 0; --j)
             {
-                *block++ = (*input++) - 128;
+                *block++ = (*scan++) - 128;
             }
 
             // replicate last column
@@ -859,7 +862,7 @@ namespace
                 ++block;
             }
 
-            input += incr;
+            input += stride;
         }
 
         // replicate last row
@@ -873,15 +876,17 @@ namespace
         }
     }
 
-    void read_bgr_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    static
+    void read_bgr_format(s16* block, const u8* input, int stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
+            const u8* scan = input;
             for (int j = 0; j < cols; ++j)
             {
-                int r = input[2];
-                int g = input[1];
-                int b = input[0];
+                int r = scan[2];
+                int g = scan[1];
+                int b = scan[0];
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
@@ -889,7 +894,7 @@ namespace
                 block[1 * 64] = s16(cb);
                 block[2 * 64] = s16(cr);
                 ++block;
-                input += 3;
+                scan += 3;
             }
 
             // replicate last column
@@ -901,7 +906,7 @@ namespace
                 ++block;
             }
 
-            input += incr;
+            input += stride;
         }
 
         // replicate last row
@@ -917,15 +922,17 @@ namespace
         }
     }
 
-    void read_rgb_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    static
+    void read_rgb_format(s16* block, const u8* input, int stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
+            const u8* scan = input;
             for (int j = 0; j < cols; ++j)
             {
-                int r = input[0];
-                int g = input[1];
-                int b = input[2];
+                int r = scan[0];
+                int g = scan[1];
+                int b = scan[2];
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
@@ -933,7 +940,7 @@ namespace
                 block[1 * 64] = s16(cb);
                 block[2 * 64] = s16(cr);
                 ++block;
-                input += 3;
+                scan += 3;
             }
 
             // replicate last column
@@ -945,7 +952,7 @@ namespace
                 ++block;
             }
 
-            input += incr;
+            input += stride;
         }
 
         // replicate last row
@@ -961,23 +968,25 @@ namespace
         }
     }
 
-    void read_bgra_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    static
+    void read_bgra_format(s16* block, const u8* input, int stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
+            const u8* scan = input;
             for (int j = 0; j < cols; ++j)
             {
-                int r = input[2];
-                int g = input[1];
-                int b = input[0];
-                int y = (76 * r + 151 * g + 29 * b) >> 8;
-                int cr = ((r - y) * 182) >> 8;
-                int cb = ((b - y) * 144) >> 8;
+                s16 r = scan[2];
+                s16 g = scan[1];
+                s16 b = scan[0];
+                s16 y = (76 * r + 151 * g + 29 * b) >> 8;
+                s16 cr = ((r - y) * 182) >> 8;
+                s16 cb = ((b - y) * 144) >> 8;
                 block[0 * 64] = s16(y - 128);
                 block[1 * 64] = s16(cb);
                 block[2 * 64] = s16(cr);
                 ++block;
-                input += 4;
+                scan += 4;
             }
 
             // replicate last column
@@ -989,7 +998,7 @@ namespace
                 ++block;
             }
 
-            input += incr;
+            input += stride;
         }
 
         // replicate last row
@@ -1005,15 +1014,17 @@ namespace
         }
     }
 
-    void read_rgba_format(jpeg_encode* jp, s16* block, u8* input, int rows, int cols, int incr)
+    static
+    void read_rgba_format(s16* block, const u8* input, int stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
+            const u8* scan = input;
             for (int j = 0; j < cols; ++j)
             {
-                int r = input[0];
-                int g = input[1];
-                int b = input[2];
+                int r = scan[0];
+                int g = scan[1];
+                int b = scan[2];
                 int y = (76 * r + 151 * g + 29 * b) >> 8;
                 int cr = ((r - y) * 182) >> 8;
                 int cb = ((b - y) * 144) >> 8;
@@ -1021,7 +1032,7 @@ namespace
                 block[1 * 64] = s16(cb);
                 block[2 * 64] = s16(cr);
                 ++block;
-                input += 4;
+                scan += 4;
             }
 
             // replicate last column
@@ -1033,7 +1044,7 @@ namespace
                 ++block;
             }
 
-            input += incr;
+            input += stride;
         }
 
         // replicate last row
@@ -1048,6 +1059,66 @@ namespace
             }
         }
     }
+
+#if defined(JPEG_ENABLE_SSE2)
+
+    static
+    void read_bgra_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
+    {
+        MANGO_UNREFERENCED_PARAMETER(rows);
+        MANGO_UNREFERENCED_PARAMETER(cols);
+
+        __m128i* dest = reinterpret_cast<__m128i*>(block);
+
+        const __m128i mask = _mm_set1_epi32(0xff);
+        const __m128i c76 = _mm_set1_epi16(76);
+        const __m128i c151 = _mm_set1_epi16(151);
+        const __m128i c29 = _mm_set1_epi16(29);
+        const __m128i c128 = _mm_set1_epi16(128);
+        const __m128i c182 = _mm_set1_epi16(182);
+        const __m128i c144 = _mm_set1_epi16(144);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
+            input += stride;
+            __m128i b0 = _mm_loadu_si128(ptr + 0);
+            __m128i b1 = _mm_loadu_si128(ptr + 1);
+            __m128i g0 = _mm_srli_epi32(b0, 8);
+            __m128i r0 = _mm_srli_epi32(b0, 16);
+            __m128i g1 = _mm_srli_epi32(b1, 8);
+            __m128i r1 = _mm_srli_epi32(b1, 16);
+            b0 = _mm_and_si128(b0, mask);
+            b1 = _mm_and_si128(b1, mask);
+            g0 = _mm_and_si128(g0, mask);
+            g1 = _mm_and_si128(g1, mask);
+            r0 = _mm_and_si128(r0, mask);
+            r1 = _mm_and_si128(r1, mask);
+            __m128i b = _mm_packus_epi32(b0, b1);
+            __m128i g = _mm_packus_epi32(g0, g1);
+            __m128i r = _mm_packus_epi32(r0, r1);
+
+            __m128i s0 = _mm_mullo_epi16(r, c76);
+            __m128i s1 = _mm_mullo_epi16(g, c151);
+            __m128i s2 = _mm_mullo_epi16(b, c29);
+            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
+            s = _mm_srli_epi16(s, 8);
+
+            __m128i cr = _mm_sub_epi16(r, s);
+            __m128i cb = _mm_sub_epi16(b, s);
+            cr = _mm_mullo_epi16(cr, c182);
+            cb = _mm_mullo_epi16(cb, c144);
+            cr = _mm_srai_epi16(cr, 8);
+            cb = _mm_srai_epi16(cb, 8);
+
+            s = _mm_sub_epi16(s, c128);
+            _mm_storeu_si128(dest + y + 0, s);
+            _mm_storeu_si128(dest + y + 8, cb);
+            _mm_storeu_si128(dest + y + 16, cr);
+        }
+    }
+
+#endif
 
     // ----------------------------------------------------------------------------
     // jpeg_encode methods
@@ -1075,37 +1146,47 @@ namespace
         channel[2].component = 3;
         channel[2].qtable = ICqt.data();
 
+        read_8x8 = nullptr;
+
         switch (sample)
         {
             case JPEG_U8_Y:
-                read_format = read_y_format;
+                read = read_y_format;
                 bytes_per_pixel = 1;
                 channel_count = 1;
                 break;
 
             case JPEG_U8_BGR:
-                read_format = read_bgr_format;
+                read = read_bgr_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
 
             case JPEG_U8_RGB:
-                read_format = read_rgb_format;
+                read = read_rgb_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
 
             case JPEG_U8_BGRA:
-                read_format = read_bgra_format;
+#if defined(JPEG_ENABLE_SSE2)
+                read_8x8 = read_bgra_format_sse2;
+#endif
+                read = read_bgra_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
                 break;
 
             case JPEG_U8_RGBA:
-                read_format = read_rgba_format;
+                read = read_rgba_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
                 break;
+        }
+
+        if (!read_8x8)
+        {
+            read_8x8 = read;
         }
 
         mcu_width = 8;
@@ -1256,6 +1337,7 @@ namespace
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
         u8* input = surface.image;
+        int stride = surface.stride;
 
         // bitstream for each MCU scan
         Buffer* buffers = new Buffer[jp.vertical_mcus];
@@ -1265,8 +1347,9 @@ namespace
         // encode MCUs
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
-            int rows;
+            auto read_func = jp.read_8x8; // default: optimized 8x8 reader
 
+            int rows;
             const int bottom_mcu = jp.vertical_mcus - 1;
             if (y < bottom_mcu)
             {
@@ -1276,10 +1359,12 @@ namespace
             {
                 // clipping
                 rows = jp.rows_in_bottom_mcus;
+                read_func = jp.read; // clipping reader
             }
 
-            queue.enqueue([&jp, y, buffers, input, rows]
+            queue.enqueue([&jp, y, buffers, input, stride, rows, read_func]
             {
+                auto read = read_func;
                 u8* image = input;
 
                 HuffmanEncoder huffman;
@@ -1295,24 +1380,21 @@ namespace
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
                     int cols;
-                    int incr;
-
                     if (x < right_mcu)
                     {
                         cols = jp.mcu_width;
-                        incr = jp.length_minus_mcu_width;
                     }
                     else
                     {
                         // clipping
                         cols = jp.cols_in_right_mcus;
-                        incr = jp.length_minus_width;
+                        read = jp.read; // clipping reader
                     }
 
                     s16 block[BLOCK_SIZE * 3];
 
                     // read MCU data
-                    jp.read_format(&jp, block, image, rows, cols, incr);
+                    read(block, image, stride, rows, cols);
 
                     // encode the data in MCU
                     for (int i = 0; i < jp.channel_count; ++i)
