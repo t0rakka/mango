@@ -1063,6 +1063,64 @@ namespace
 #if defined(JPEG_ENABLE_SSE2)
 
     static
+    void read_y_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
+    {
+        MANGO_UNREFERENCED_PARAMETER(rows);
+        MANGO_UNREFERENCED_PARAMETER(cols);
+
+        __m128i v0 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v1 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v2 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v3 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v4 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v5 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v6 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v7 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input));
+
+        __m128i bias = _mm_set1_epi8(0x80);
+        v0 = _mm_sub_epi8(v0, bias);
+        v1 = _mm_sub_epi8(v1, bias);
+        v2 = _mm_sub_epi8(v2, bias);
+        v3 = _mm_sub_epi8(v3, bias);
+        v4 = _mm_sub_epi8(v4, bias);
+        v5 = _mm_sub_epi8(v5, bias);
+        v6 = _mm_sub_epi8(v6, bias);
+        v7 = _mm_sub_epi8(v7, bias);
+
+        // sign-extend
+        __m128i zero = _mm_setzero_si128();
+        v0 = _mm_unpacklo_epi8(v0, _mm_cmpgt_epi8(zero, v0));
+        v1 = _mm_unpacklo_epi8(v1, _mm_cmpgt_epi8(zero, v1));
+        v2 = _mm_unpacklo_epi8(v2, _mm_cmpgt_epi8(zero, v2));
+        v3 = _mm_unpacklo_epi8(v3, _mm_cmpgt_epi8(zero, v3));
+        v4 = _mm_unpacklo_epi8(v4, _mm_cmpgt_epi8(zero, v4));
+        v5 = _mm_unpacklo_epi8(v5, _mm_cmpgt_epi8(zero, v5));
+        v6 = _mm_unpacklo_epi8(v6, _mm_cmpgt_epi8(zero, v6));
+        v7 = _mm_unpacklo_epi8(v7, _mm_cmpgt_epi8(zero, v7));
+
+        /* SSE 4.1 sign-extend
+        v0 = _mm_cvtepi8_epi16(v0);
+        v1 = _mm_cvtepi8_epi16(v1);
+        v2 = _mm_cvtepi8_epi16(v2);
+        v3 = _mm_cvtepi8_epi16(v3);
+        v4 = _mm_cvtepi8_epi16(v4);
+        v5 = _mm_cvtepi8_epi16(v5);
+        v6 = _mm_cvtepi8_epi16(v6);
+        v7 = _mm_cvtepi8_epi16(v7);
+        */
+
+        __m128i* dest = reinterpret_cast<__m128i*>(block);
+        _mm_storeu_si128(dest + 0, v0);
+        _mm_storeu_si128(dest + 1, v1);
+        _mm_storeu_si128(dest + 2, v2);
+        _mm_storeu_si128(dest + 3, v3);
+        _mm_storeu_si128(dest + 4, v4);
+        _mm_storeu_si128(dest + 5, v5);
+        _mm_storeu_si128(dest + 6, v6);
+        _mm_storeu_si128(dest + 7, v7);
+    }
+
+    static
     void read_bgra_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
     {
         MANGO_UNREFERENCED_PARAMETER(rows);
@@ -1094,9 +1152,9 @@ namespace
             g1 = _mm_and_si128(g1, mask);
             r0 = _mm_and_si128(r0, mask);
             r1 = _mm_and_si128(r1, mask);
-            __m128i b = _mm_packus_epi32(b0, b1);
-            __m128i g = _mm_packus_epi32(g0, g1);
-            __m128i r = _mm_packus_epi32(r0, r1);
+            __m128i b = _mm_packs_epi32(b0, b1);
+            __m128i g = _mm_packs_epi32(g0, g1);
+            __m128i r = _mm_packs_epi32(r0, r1);
 
             __m128i s0 = _mm_mullo_epi16(r, c76);
             __m128i s1 = _mm_mullo_epi16(g, c151);
@@ -1151,6 +1209,9 @@ namespace
         switch (sample)
         {
             case JPEG_U8_Y:
+#if defined(JPEG_ENABLE_SSE2)
+                read_8x8 = read_y_format_sse2;
+#endif
                 read = read_y_format;
                 bytes_per_pixel = 1;
                 channel_count = 1;
