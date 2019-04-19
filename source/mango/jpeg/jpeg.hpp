@@ -29,6 +29,10 @@
         #define JPEG_ENABLE_SSE2
     #endif
 
+    #if defined(MANGO_ENABLE_SSE4_1)
+        #define JPEG_ENABLE_SSE4
+    #endif
+
     #if defined(MANGO_ENABLE_AVX2)
         #define JPEG_ENABLE_AVX2
     #endif

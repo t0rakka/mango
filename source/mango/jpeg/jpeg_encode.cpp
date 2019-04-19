@@ -1068,6 +1068,7 @@ namespace
         MANGO_UNREFERENCED_PARAMETER(rows);
         MANGO_UNREFERENCED_PARAMETER(cols);
 
+        // load
         __m128i v0 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
         __m128i v1 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
         __m128i v2 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
@@ -1077,6 +1078,7 @@ namespace
         __m128i v6 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
         __m128i v7 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input));
 
+        // adjust bias
         __m128i bias = _mm_set1_epi8(-128);
         v0 = _mm_sub_epi8(v0, bias);
         v1 = _mm_sub_epi8(v1, bias);
@@ -1088,6 +1090,16 @@ namespace
         v7 = _mm_sub_epi8(v7, bias);
 
         // sign-extend
+#if defined(JPEG_ENABLE_SSE4)
+        v0 = _mm_cvtepi8_epi16(v0);
+        v1 = _mm_cvtepi8_epi16(v1);
+        v2 = _mm_cvtepi8_epi16(v2);
+        v3 = _mm_cvtepi8_epi16(v3);
+        v4 = _mm_cvtepi8_epi16(v4);
+        v5 = _mm_cvtepi8_epi16(v5);
+        v6 = _mm_cvtepi8_epi16(v6);
+        v7 = _mm_cvtepi8_epi16(v7);
+#else
         __m128i zero = _mm_setzero_si128();
         v0 = _mm_unpacklo_epi8(v0, _mm_cmpgt_epi8(zero, v0));
         v1 = _mm_unpacklo_epi8(v1, _mm_cmpgt_epi8(zero, v1));
@@ -1097,18 +1109,9 @@ namespace
         v5 = _mm_unpacklo_epi8(v5, _mm_cmpgt_epi8(zero, v5));
         v6 = _mm_unpacklo_epi8(v6, _mm_cmpgt_epi8(zero, v6));
         v7 = _mm_unpacklo_epi8(v7, _mm_cmpgt_epi8(zero, v7));
+#endif
 
-        /* SSE 4.1 sign-extend
-        v0 = _mm_cvtepi8_epi16(v0);
-        v1 = _mm_cvtepi8_epi16(v1);
-        v2 = _mm_cvtepi8_epi16(v2);
-        v3 = _mm_cvtepi8_epi16(v3);
-        v4 = _mm_cvtepi8_epi16(v4);
-        v5 = _mm_cvtepi8_epi16(v5);
-        v6 = _mm_cvtepi8_epi16(v6);
-        v7 = _mm_cvtepi8_epi16(v7);
-        */
-
+        // store
         __m128i* dest = reinterpret_cast<__m128i*>(block);
         _mm_storeu_si128(dest + 0, v0);
         _mm_storeu_si128(dest + 1, v1);
@@ -1146,6 +1149,62 @@ namespace
             __m128i r0 = _mm_srli_epi32(b0, 16);
             __m128i g1 = _mm_srli_epi32(b1, 8);
             __m128i r1 = _mm_srli_epi32(b1, 16);
+            b0 = _mm_and_si128(b0, mask);
+            b1 = _mm_and_si128(b1, mask);
+            g0 = _mm_and_si128(g0, mask);
+            g1 = _mm_and_si128(g1, mask);
+            r0 = _mm_and_si128(r0, mask);
+            r1 = _mm_and_si128(r1, mask);
+            __m128i b = _mm_packs_epi32(b0, b1);
+            __m128i g = _mm_packs_epi32(g0, g1);
+            __m128i r = _mm_packs_epi32(r0, r1);
+
+            __m128i s0 = _mm_mullo_epi16(r, c76);
+            __m128i s1 = _mm_mullo_epi16(g, c151);
+            __m128i s2 = _mm_mullo_epi16(b, c29);
+            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
+            s = _mm_srli_epi16(s, 8);
+
+            __m128i cr = _mm_sub_epi16(r, s);
+            __m128i cb = _mm_sub_epi16(b, s);
+            cr = _mm_mullo_epi16(cr, c182);
+            cb = _mm_mullo_epi16(cb, c144);
+            cr = _mm_srai_epi16(cr, 8);
+            cb = _mm_srai_epi16(cb, 8);
+
+            s = _mm_sub_epi16(s, c128);
+            _mm_storeu_si128(dest + y + 0, s);
+            _mm_storeu_si128(dest + y + 8, cb);
+            _mm_storeu_si128(dest + y + 16, cr);
+        }
+    }
+
+    static
+    void read_rgba_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
+    {
+        MANGO_UNREFERENCED_PARAMETER(rows);
+        MANGO_UNREFERENCED_PARAMETER(cols);
+
+        __m128i* dest = reinterpret_cast<__m128i*>(block);
+
+        const __m128i mask = _mm_set1_epi32(0xff);
+        const __m128i c76 = _mm_set1_epi16(76);
+        const __m128i c151 = _mm_set1_epi16(151);
+        const __m128i c29 = _mm_set1_epi16(29);
+        const __m128i c128 = _mm_set1_epi16(128);
+        const __m128i c182 = _mm_set1_epi16(182);
+        const __m128i c144 = _mm_set1_epi16(144);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
+            input += stride;
+            __m128i r0 = _mm_loadu_si128(ptr + 0);
+            __m128i r1 = _mm_loadu_si128(ptr + 1);
+            __m128i g0 = _mm_srli_epi32(r0, 8);
+            __m128i b0 = _mm_srli_epi32(r0, 16);
+            __m128i g1 = _mm_srli_epi32(r1, 8);
+            __m128i b1 = _mm_srli_epi32(r1, 16);
             b0 = _mm_and_si128(b0, mask);
             b1 = _mm_and_si128(b1, mask);
             g0 = _mm_and_si128(g0, mask);
@@ -1239,6 +1298,9 @@ namespace
                 break;
 
             case JPEG_U8_RGBA:
+#if defined(JPEG_ENABLE_SSE2)
+                read_8x8 = read_rgba_format_sse2;
+#endif
                 read = read_rgba_format;
                 bytes_per_pixel = 4;
                 channel_count = 3;
