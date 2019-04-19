@@ -1068,14 +1068,14 @@ namespace
         MANGO_UNREFERENCED_PARAMETER(rows);
         MANGO_UNREFERENCED_PARAMETER(cols);
 
-        __m128i v0 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v1 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v2 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v3 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v4 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v5 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v6 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input)); input += stride;
-        __m128i v7 = _mm_loadu_si64(reinterpret_cast<const __m128i*>(input));
+        __m128i v0 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v1 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v2 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v3 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v4 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v5 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v6 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
+        __m128i v7 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input));
 
         __m128i bias = _mm_set1_epi8(0x80);
         v0 = _mm_sub_epi8(v0, bias);
