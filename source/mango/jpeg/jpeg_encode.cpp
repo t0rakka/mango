@@ -1077,7 +1077,7 @@ namespace
         __m128i v6 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
         __m128i v7 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input));
 
-        __m128i bias = _mm_set1_epi8(0x80);
+        __m128i bias = _mm_set1_epi8(s8(0x80));
         v0 = _mm_sub_epi8(v0, bias);
         v1 = _mm_sub_epi8(v1, bias);
         v2 = _mm_sub_epi8(v2, bias);
