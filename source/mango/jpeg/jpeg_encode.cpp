@@ -1122,6 +1122,128 @@ namespace
     }
 
     static
+    void read_bgr_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
+    {
+        MANGO_UNREFERENCED_PARAMETER(rows);
+        MANGO_UNREFERENCED_PARAMETER(cols);
+
+        __m128i* dest = reinterpret_cast<__m128i*>(block);
+
+        const __m128i c76 = _mm_set1_epi16(76);
+        const __m128i c151 = _mm_set1_epi16(151);
+        const __m128i c29 = _mm_set1_epi16(29);
+        const __m128i c128 = _mm_set1_epi16(128);
+        const __m128i c182 = _mm_set1_epi16(182);
+        const __m128i c144 = _mm_set1_epi16(144);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
+            input += stride;
+
+            // load
+            __m128i v0 = _mm_loadu_si128(ptr + 0);
+            __m128i v1 = _mm_loadl_epi64(ptr + 1);
+
+            // unpack
+            constexpr u8 n = 0x80;
+            __m128i b0 = _mm_shuffle_epi8(v0, _mm_setr_epi8(0, n, 3, n, 6, n, 9, n, 12, n, 15, n, n, n, n, n));
+            __m128i b1 = _mm_shuffle_epi8(v1, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, 2, n, 5, n));
+            __m128i g0 = _mm_shuffle_epi8(v0, _mm_setr_epi8(1, n, 4, n, 7, n, 10, n, 13, n, n, n, n, n, n, n));
+            __m128i g1 = _mm_shuffle_epi8(v1, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, 0, n, 3, n, 6, n));
+            __m128i r0 = _mm_shuffle_epi8(v0, _mm_setr_epi8(2, n, 5, n, 8, n, 11, n, 14, n, n, n, n, n, n, n));
+            __m128i r1 = _mm_shuffle_epi8(v1, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, 1, n, 4, n, 7, n));
+           __m128i b = _mm_or_si128(b0, b1);
+           __m128i g = _mm_or_si128(g0, g1);
+           __m128i r = _mm_or_si128(r0, r1);
+
+            // compute luminance
+            __m128i s0 = _mm_mullo_epi16(r, c76);
+            __m128i s1 = _mm_mullo_epi16(g, c151);
+            __m128i s2 = _mm_mullo_epi16(b, c29);
+            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
+            s = _mm_srli_epi16(s, 8);
+
+            // compute chroma
+            __m128i cr = _mm_sub_epi16(r, s);
+            __m128i cb = _mm_sub_epi16(b, s);
+            cr = _mm_mullo_epi16(cr, c182);
+            cb = _mm_mullo_epi16(cb, c144);
+            cr = _mm_srai_epi16(cr, 8);
+            cb = _mm_srai_epi16(cb, 8);
+
+            // adjust bias
+            s = _mm_sub_epi16(s, c128);
+
+            // store
+            _mm_storeu_si128(dest + y + 0, s);
+            _mm_storeu_si128(dest + y + 8, cb);
+            _mm_storeu_si128(dest + y + 16, cr);
+        }
+    }
+
+    static
+    void read_rgb_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
+    {
+        MANGO_UNREFERENCED_PARAMETER(rows);
+        MANGO_UNREFERENCED_PARAMETER(cols);
+
+        __m128i* dest = reinterpret_cast<__m128i*>(block);
+
+        const __m128i c76 = _mm_set1_epi16(76);
+        const __m128i c151 = _mm_set1_epi16(151);
+        const __m128i c29 = _mm_set1_epi16(29);
+        const __m128i c128 = _mm_set1_epi16(128);
+        const __m128i c182 = _mm_set1_epi16(182);
+        const __m128i c144 = _mm_set1_epi16(144);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
+            input += stride;
+
+            // load
+            __m128i v0 = _mm_loadu_si128(ptr + 0);
+            __m128i v1 = _mm_loadl_epi64(ptr + 1);
+
+            // unpack
+            constexpr u8 n = 0x80;
+            __m128i r0 = _mm_shuffle_epi8(v0, _mm_setr_epi8(0, n, 3, n, 6, n, 9, n, 12, n, 15, n, n, n, n, n));
+            __m128i r1 = _mm_shuffle_epi8(v1, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, 2, n, 5, n));
+            __m128i g0 = _mm_shuffle_epi8(v0, _mm_setr_epi8(1, n, 4, n, 7, n, 10, n, 13, n, n, n, n, n, n, n));
+            __m128i g1 = _mm_shuffle_epi8(v1, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, 0, n, 3, n, 6, n));
+            __m128i b0 = _mm_shuffle_epi8(v0, _mm_setr_epi8(2, n, 5, n, 8, n, 11, n, 14, n, n, n, n, n, n, n));
+            __m128i b1 = _mm_shuffle_epi8(v1, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, 1, n, 4, n, 7, n));
+           __m128i b = _mm_or_si128(b0, b1);
+           __m128i g = _mm_or_si128(g0, g1);
+           __m128i r = _mm_or_si128(r0, r1);
+
+            // compute luminance
+            __m128i s0 = _mm_mullo_epi16(r, c76);
+            __m128i s1 = _mm_mullo_epi16(g, c151);
+            __m128i s2 = _mm_mullo_epi16(b, c29);
+            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
+            s = _mm_srli_epi16(s, 8);
+
+            // compute chroma
+            __m128i cr = _mm_sub_epi16(r, s);
+            __m128i cb = _mm_sub_epi16(b, s);
+            cr = _mm_mullo_epi16(cr, c182);
+            cb = _mm_mullo_epi16(cb, c144);
+            cr = _mm_srai_epi16(cr, 8);
+            cb = _mm_srai_epi16(cb, 8);
+
+            // adjust bias
+            s = _mm_sub_epi16(s, c128);
+
+            // store
+            _mm_storeu_si128(dest + y + 0, s);
+            _mm_storeu_si128(dest + y + 8, cb);
+            _mm_storeu_si128(dest + y + 16, cr);
+        }
+    }
+
+    static
     void read_bgra_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
     {
         MANGO_UNREFERENCED_PARAMETER(rows);
@@ -1141,6 +1263,8 @@ namespace
         {
             const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
             input += stride;
+
+            // load, unpack
             __m128i b0 = _mm_loadu_si128(ptr + 0);
             __m128i b1 = _mm_loadu_si128(ptr + 1);
             __m128i g0 = _mm_srli_epi32(b0, 8);
@@ -1157,12 +1281,14 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
+            // compute luminance
             __m128i s0 = _mm_mullo_epi16(r, c76);
             __m128i s1 = _mm_mullo_epi16(g, c151);
             __m128i s2 = _mm_mullo_epi16(b, c29);
             __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
             s = _mm_srli_epi16(s, 8);
 
+            // compute chroma
             __m128i cr = _mm_sub_epi16(r, s);
             __m128i cb = _mm_sub_epi16(b, s);
             cr = _mm_mullo_epi16(cr, c182);
@@ -1170,7 +1296,10 @@ namespace
             cr = _mm_srai_epi16(cr, 8);
             cb = _mm_srai_epi16(cb, 8);
 
+            // adjust bias
             s = _mm_sub_epi16(s, c128);
+
+            // store
             _mm_storeu_si128(dest + y + 0, s);
             _mm_storeu_si128(dest + y + 8, cb);
             _mm_storeu_si128(dest + y + 16, cr);
@@ -1197,6 +1326,8 @@ namespace
         {
             const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
             input += stride;
+
+            // load, unpack
             __m128i r0 = _mm_loadu_si128(ptr + 0);
             __m128i r1 = _mm_loadu_si128(ptr + 1);
             __m128i g0 = _mm_srli_epi32(r0, 8);
@@ -1213,12 +1344,14 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
+            // compute luminance
             __m128i s0 = _mm_mullo_epi16(r, c76);
             __m128i s1 = _mm_mullo_epi16(g, c151);
             __m128i s2 = _mm_mullo_epi16(b, c29);
             __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
             s = _mm_srli_epi16(s, 8);
 
+            // compute chroma
             __m128i cr = _mm_sub_epi16(r, s);
             __m128i cb = _mm_sub_epi16(b, s);
             cr = _mm_mullo_epi16(cr, c182);
@@ -1226,7 +1359,10 @@ namespace
             cr = _mm_srai_epi16(cr, 8);
             cb = _mm_srai_epi16(cb, 8);
 
+            // adjust bias
             s = _mm_sub_epi16(s, c128);
+
+            // store
             _mm_storeu_si128(dest + y + 0, s);
             _mm_storeu_si128(dest + y + 8, cb);
             _mm_storeu_si128(dest + y + 16, cr);
@@ -1263,11 +1399,17 @@ namespace
 
         read_8x8 = nullptr;
 
+        u64 cpu_flags = getCPUFlags();
+        MANGO_UNREFERENCED_PARAMETER(cpu_flags);
+
         switch (sample)
         {
             case JPEG_U8_Y:
 #if defined(JPEG_ENABLE_SSE2)
-                read_8x8 = read_y_format_sse2;
+                if (cpu_flags & CPU_SSE2)
+                {
+                    read_8x8 = read_y_format_sse2;
+                }
 #endif
                 read = read_y_format;
                 bytes_per_pixel = 1;
@@ -1275,12 +1417,24 @@ namespace
                 break;
 
             case JPEG_U8_BGR:
+#if defined(JPEG_ENABLE_SSE2)
+                if (cpu_flags & CPU_SSSE3)
+                {
+                    read_8x8 = read_bgr_format_ssse3;
+                }
+#endif
                 read = read_bgr_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
                 break;
 
             case JPEG_U8_RGB:
+#if defined(JPEG_ENABLE_SSE2)
+                if (cpu_flags & CPU_SSSE3)
+                {
+                    read_8x8 = read_rgb_format_ssse3;
+                }
+#endif
                 read = read_rgb_format;
                 bytes_per_pixel = 3;
                 channel_count = 3;
@@ -1288,7 +1442,10 @@ namespace
 
             case JPEG_U8_BGRA:
 #if defined(JPEG_ENABLE_SSE2)
-                read_8x8 = read_bgra_format_sse2;
+                if (cpu_flags & CPU_SSE2)
+                {
+                    read_8x8 = read_bgra_format_sse2;
+                }
 #endif
                 read = read_bgra_format;
                 bytes_per_pixel = 4;
@@ -1297,7 +1454,10 @@ namespace
 
             case JPEG_U8_RGBA:
 #if defined(JPEG_ENABLE_SSE2)
-                read_8x8 = read_rgba_format_sse2;
+                if (cpu_flags & CPU_SSE2)
+                {
+                    read_8x8 = read_rgba_format_sse2;
+                }
 #endif
                 read = read_rgba_format;
                 bytes_per_pixel = 4;
