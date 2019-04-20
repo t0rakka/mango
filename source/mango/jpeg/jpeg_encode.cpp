@@ -352,26 +352,10 @@ namespace
                 lcode = (lcode << (regbits - bitindex)) | (data >> bits_in_next_word);
 
 #if defined(MANGO_CPU_64BIT)
-                if (u64_has_zero_byte(~lcode))
-                {
-                    output = write32_stuff(output, u32(lcode >> 32));
-                    output = write32_stuff(output, u32(lcode));
-                }
-                else
-                {
-                    ustore64be(output, lcode);
-                    output += 8;
-                }
+                output = write32_stuff(output, u32(lcode >> 32));
+                output = write32_stuff(output, u32(lcode));
 #else
-                if (u32_has_zero_byte(~lcode))
-                {
-                    output = write32_stuff(output, lcode);
-                }
-                else
-                {
-                    ustore32be(output, lcode);
-                    output += 4;
-                }
+                output = write32_stuff(output, lcode);
 #endif
                 lcode = data;
                 bitindex = bits_in_next_word;
