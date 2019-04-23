@@ -30,12 +30,17 @@
 #include "jpeg.hpp"
 #include <cstring>
 
-#define BLOCK_SIZE  64
+// enable different implementations...
+#define TABLE_SYMBOL
+#define UNROLL_STUFF
+#define MODERN_PUTBITS
 
 namespace
 {
     using namespace mango;
     using namespace jpeg;
+
+    constexpr int BLOCK_SIZE = 64;
 
     static SampleFormat g_format_table [] =
     {
@@ -224,7 +229,7 @@ namespace
         99, 99, 99, 99, 99, 99, 99, 99
     };
 
-#if 1
+#ifdef TABLE_SYMBOL
 
     const u8 bit_size [] =
     {
@@ -259,6 +264,58 @@ namespace
     int getSymbolSize(int value)
     {
         return u32_log2(value) + 1;
+    }
+
+#endif
+
+    static inline
+    u8* write_stuffed_bytes(u8* output, DataType code, int count)
+    {
+        code = byteswap(code);
+        for (int i = 0; i < count; ++i)
+        {
+            u8 value = u8(code);
+            code >>= 8;
+            *output++ = value;
+            if (value == 0xff)
+            {
+                // write stuff byte
+                *output++ = 0;
+            }
+        }
+        return output;
+    }
+
+#if defined(MANGO_CPU_64BIT)
+
+    static inline
+    u8* write_stuff(u8* output, u64 code)
+    {
+#ifdef UNROLL_STUFF
+        if ((*output++ = u8(code >> 56)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >> 48)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >> 40)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >> 32)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
+#else
+        output = write_stuffed_bytes(output, code, 8);
+#endif
+        return output;
+    }
+
+#else
+
+    static inline
+    u8* write_stuff(u8* output, u32 code)
+    {
+        if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
+        if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
+        return output;
     }
 
 #endif
@@ -306,96 +363,88 @@ namespace
         int ldc2;
         int ldc3;
 
-        DataType lcode;
+        DataType code;
+#ifdef MODERN_PUTBITS
+        int space;
+#else
         int bitindex;
+#endif
 
         HuffmanEncoder()
         {
             ldc1 = 0;
             ldc2 = 0;
             ldc3 = 0;
-            lcode = 0;
+#ifdef MODERN_PUTBITS
+            code = 0;
+            space = JPEG_REGISTER_BITS;
+#else
+            code = 0;
             bitindex = 0;
+#endif
         }
 
         ~HuffmanEncoder()
         {
         }
 
-#if defined(MANGO_CPU_64BIT)
+#ifdef MODERN_PUTBITS
 
-        u8* write_stuff(u8* output, u64 code) const
+        u8* putbits(u8* output, u32 xdata, int numbits)
         {
-            // JPEG bitstream uses 0xff as a marker, followed by ID byte
-            // If the ID byte is zero ("stuff") that means the preceding 0xff is a literal value
-            if ((*output++ = u8(code >> 56)) == 0xff) *output++ = 0; // write stuff byte
-            if ((*output++ = u8(code >> 48)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >> 40)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >> 32)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
+            DataType data = xdata;
+            if (space >= numbits)
+            {
+                space -= numbits;
+                code |= (data << space);
+            }
+            else
+            {
+                int overflow = numbits - space;
+                code |= (data >> overflow);
+                output = write_stuff(output, code);
+                space = JPEG_REGISTER_BITS - overflow;
+                code = data << space;
+            }
+            return output;
+        }
+
+        u8* flush(u8* output)
+        {
+            int count = ((JPEG_REGISTER_BITS - space) + 7) >> 3;
+            output = write_stuffed_bytes(output, code, count);
             return output;
         }
 
 #else
-
-        u8* write_stuff(u8* output, u32 code) const
-        {
-            // JPEG bitstream uses 0xff as a marker, followed by ID byte
-            // If the ID byte is zero ("stuff") that means the preceding 0xff is a literal value
-            if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0; // write stuff byte
-            if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
-            if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
-            return output;
-        }
-
-#endif
 
         u8* putbits(u8* output, u32 data, int numbits)
         {
             int bits_in_next_word = bitindex + numbits - JPEG_REGISTER_BITS;
             if (bits_in_next_word < 0)
             {
-                lcode = (lcode << numbits) | data;
+                code = (code << numbits) | data;
                 bitindex += numbits;
             }
             else
             {
-                lcode = (lcode << (JPEG_REGISTER_BITS - bitindex)) | (data >> bits_in_next_word);
-                output = write_stuff(output, lcode);
-                lcode = data;
+                code = (code << (JPEG_REGISTER_BITS - bitindex)) | (data >> bits_in_next_word);
+                output = write_stuff(output, code);
+                code = data;
                 bitindex = bits_in_next_word;
             }
-
             return output;
         }
 
-        u8* flush(u8* p)
+        u8* flush(u8* output)
         {
-            if (bitindex > 0)
-            {
-                lcode <<= (JPEG_REGISTER_BITS - bitindex);
-
-                int count = (bitindex + 7) >> 3;
-                u8* ptr = reinterpret_cast<u8 *>(&lcode) + (sizeof(lcode) - 1);
-
-                for (int i = 0; i < count; ++i)
-                {
-                    u8 v = *ptr--;
-                    *p++ = v;
-                    if (v == 0xff)
-                    {
-                        // write stuff byte
-                        *p++ = 0;
-                    }
-                }
-            }
-
-            return p;
+            int count = (bitindex + 7) >> 3;
+            code <<= (JPEG_REGISTER_BITS - bitindex);
+            output = write_stuffed_bytes(output, code, count);
+            return output;
         }
+
+#endif
 
         u8* encode(u8* p, int component, s16* input)
         {
