@@ -87,11 +87,11 @@ namespace jpeg {
         symbol = h->lookupValue[v]; \
         int size = h->lookupSize[v]; \
         if (size == JPEG_HUFF_LOOKUP_BITS + 1) { \
-            DataType x = (buffer.data << (JPEG_REGISTER_SIZE - buffer.remain)); \
+            DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain)); \
             while (x > h->maxcode[size]) { \
                 size++; \
             }  \
-            v = int(x >> (JPEG_REGISTER_SIZE - size)); \
+            v = int(x >> (JPEG_REGISTER_BITS - size)); \
             symbol = h->valueAddress[size][v]; \
         } \
         buffer.remain -= size; \
@@ -522,8 +522,8 @@ namespace jpeg {
                 valueAddress[l] = value + offset;
                 p += size[l];
                 maxcode[l] = huffcode[p - 1]; // maximum code of length l
-                maxcode[l] <<= (JPEG_REGISTER_SIZE - l); // left justify
-                maxcode[l] |= (DataType(1) << (JPEG_REGISTER_SIZE - l)) - 1;
+                maxcode[l] <<= (JPEG_REGISTER_BITS - l); // left justify
+                maxcode[l] |= (DataType(1) << (JPEG_REGISTER_BITS - l)) - 1;
             }
             else
             {

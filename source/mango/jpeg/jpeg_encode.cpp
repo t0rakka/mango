@@ -306,11 +306,7 @@ namespace
         int ldc2;
         int ldc3;
 
-#if defined(MANGO_CPU_64BIT)
-        u64 lcode;
-#else
-        u32 lcode;
-#endif
+        DataType lcode;
         int bitindex;
 
         HuffmanEncoder()
@@ -360,9 +356,7 @@ namespace
 
         u8* putbits(u8* output, u32 data, int numbits)
         {
-            constexpr int regbits = sizeof(lcode) * 8;
-
-            int bits_in_next_word = bitindex + numbits - regbits;
+            int bits_in_next_word = bitindex + numbits - JPEG_REGISTER_BITS;
             if (bits_in_next_word < 0)
             {
                 lcode = (lcode << numbits) | data;
@@ -370,7 +364,7 @@ namespace
             }
             else
             {
-                lcode = (lcode << (regbits - bitindex)) | (data >> bits_in_next_word);
+                lcode = (lcode << (JPEG_REGISTER_BITS - bitindex)) | (data >> bits_in_next_word);
                 output = write_stuff(output, lcode);
                 lcode = data;
                 bitindex = bits_in_next_word;
@@ -383,8 +377,7 @@ namespace
         {
             if (bitindex > 0)
             {
-                constexpr int regbits = sizeof(lcode) * 8;
-                lcode <<= (regbits - bitindex);
+                lcode <<= (JPEG_REGISTER_BITS - bitindex);
 
                 int count = (bitindex + 7) >> 3;
                 u8* ptr = reinterpret_cast<u8 *>(&lcode) + (sizeof(lcode) - 1);

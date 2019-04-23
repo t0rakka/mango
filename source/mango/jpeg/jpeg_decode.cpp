@@ -169,11 +169,11 @@ namespace jpeg {
         nextFF = reinterpret_cast<u8*>(std::memchr(ptr, 0xff, end - ptr));
     }
 
-    DataType jpegBuffer::bytes(int n)
+    DataType jpegBuffer::bytes(int count)
     {
         DataType temp = 0;
 
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < count; ++i)
         {
             int a = ptr < end ? *ptr++ : 0;
             if (a == 0xff)

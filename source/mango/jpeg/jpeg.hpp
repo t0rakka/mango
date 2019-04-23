@@ -64,12 +64,12 @@ namespace jpeg {
 #ifdef MANGO_CPU_64BIT
 
     using DataType = u64;
-    #define JPEG_REGISTER_SIZE 64
+    #define JPEG_REGISTER_BITS 64
 
 #else
 
     using DataType = u32;
-    #define JPEG_REGISTER_SIZE 32
+    #define JPEG_REGISTER_BITS 32
 
 #endif
 
@@ -156,7 +156,7 @@ namespace jpeg {
         int remain;
 
         void restart();
-        DataType bytes(int n);
+        DataType bytes(int count);
 
 #ifdef MANGO_CPU_64BIT
 
