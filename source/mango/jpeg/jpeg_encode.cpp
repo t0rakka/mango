@@ -326,7 +326,26 @@ namespace
         {
         }
 
-        u8* write32_stuff(u8* output, u32 code) const
+#if defined(MANGO_CPU_64BIT)
+
+        u8* write_stuff(u8* output, u64 code) const
+        {
+            // JPEG bitstream uses 0xff as a marker, followed by ID byte
+            // If the ID byte is zero ("stuff") that means the preceding 0xff is a literal value
+            if ((*output++ = u8(code >> 56)) == 0xff) *output++ = 0; // write stuff byte
+            if ((*output++ = u8(code >> 48)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >> 40)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >> 32)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
+            if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
+            return output;
+        }
+
+#else
+
+        u8* write_stuff(u8* output, u32 code) const
         {
             // JPEG bitstream uses 0xff as a marker, followed by ID byte
             // If the ID byte is zero ("stuff") that means the preceding 0xff is a literal value
@@ -336,6 +355,8 @@ namespace
             if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
             return output;
         }
+
+#endif
 
         u8* putbits(u8* output, u32 data, int numbits)
         {
@@ -350,13 +371,7 @@ namespace
             else
             {
                 lcode = (lcode << (regbits - bitindex)) | (data >> bits_in_next_word);
-
-#if defined(MANGO_CPU_64BIT)
-                output = write32_stuff(output, u32(lcode >> 32));
-                output = write32_stuff(output, u32(lcode));
-#else
-                output = write32_stuff(output, lcode);
-#endif
+                output = write_stuff(output, lcode);
                 lcode = data;
                 bitindex = bits_in_next_word;
             }
