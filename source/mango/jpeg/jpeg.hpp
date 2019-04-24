@@ -5,6 +5,7 @@
 #pragma once
 
 //#define MANGO_ENABLE_DEBUG_PRINT
+
 #define JPEG_ENABLE_THREAD
 #define JPEG_ENABLE_SIMD
 #define JPEG_ENABLE_MODERN_HUFFMAN
@@ -351,6 +352,7 @@ namespace jpeg {
         int precision; // 8 or 12 bits
         int components; // 1..4
         bool is_progressive;
+        bool is_multiscan;
         bool is_arithmetic;
         bool is_lossless;
         bool is_differential;

@@ -500,6 +500,7 @@ namespace jpeg {
         debugPrint("[ SOF%d ]\n", int(marker - MARKER_SOF0));
 
         is_progressive = false;
+        is_multiscan = false;
         is_arithmetic = false;
         is_lossless = false;
         is_differential = false;
@@ -671,7 +672,13 @@ namespace jpeg {
         decodeState.comps_in_scan = p[2]; // Ns
         p += 3;
 
-        debugPrint("  components: %i\n", decodeState.comps_in_scan);
+        if (decodeState.comps_in_scan != processState.frames)
+        {
+            is_multiscan = true;
+        }
+
+        debugPrint("  components: %i%s\n", 
+            decodeState.comps_in_scan, is_multiscan ? " (MultiScan)" : "");
         MANGO_UNREFERENCED_PARAMETER(length);
 
         decodeState.blocks = 0;
@@ -687,7 +694,7 @@ namespace jpeg {
             int compid = cs; // ...
 
             // find frame
-            Frame* frame = NULL;
+            Frame* frame = nullptr;
             int frameIndex = 0;
 
             for (int j = 0; j < int(frames.size()); ++j)
