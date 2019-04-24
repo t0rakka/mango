@@ -219,7 +219,6 @@ namespace jpeg {
         }
 
         exif_memory = Memory(nullptr, 0);
-        icc_memory = Memory(nullptr, 0);
         scan_memory = Memory(nullptr, 0);
 
         m_surface = nullptr;
@@ -449,7 +448,9 @@ namespace jpeg {
                 {
                     p += 12;
                     size -= 12;
-                    icc_memory = Memory(p, size);
+                    // ICC data is usually split into multiple APP2 markers as
+                    // the JPEG standard has a maximum marker size of ~64KB
+                    icc_buffer.write(p, size);
                     debugPrint("  ICC: %d bytes\n", size);
                 }
 

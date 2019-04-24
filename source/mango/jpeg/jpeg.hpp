@@ -408,8 +408,8 @@ namespace jpeg {
     public:
         Header header;
         Memory exif_memory; // Exif block, if one is present
-        Memory icc_memory; // ICC color profile block, if one is present
         Memory scan_memory; // Scan block
+        Buffer icc_buffer; // ICC color profile block, if one is present
 
         Parser(Memory memory);
         ~Parser();
