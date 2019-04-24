@@ -234,6 +234,7 @@ namespace jpeg {
 
         // configure default implementation
         processState.idct = idct8;
+        processState.is_ycck = false;
 
 #if defined(JPEG_ENABLE_NEON)
         processState.idct = idct_neon;
@@ -468,6 +469,27 @@ namespace jpeg {
                     debugPrint("  EXIF: %d bytes\n", size);
                 }
 
+                break;
+            }
+
+            case MARKER_APP14:
+            {
+                const u8 magicAdobe[] = { 0x41, 0x64, 0x6f, 0x62, 0x65 }; // 'Adobe'
+                if (size == 12 && !std::memcmp(p, magicAdobe, 5))
+                {
+                    u16 version = uload16be(p + 5);
+                    //u16 flags0 = uload16be(p + 7);
+                    //u16 flags1 = uload16be(p + 9);
+                    u8 color_transform = p[11]; // 0 - CMYK, 1 - YCbCr, 2 - YCCK
+                    if (color_transform == 2)
+                    {
+                        processState.is_ycck = true;
+                    }
+                    debugPrint("  Version: %d\n", version);
+                    debugPrint("  ColorTransform: %d\n", color_transform);
+                    MANGO_UNREFERENCED_PARAMETER(version);
+                    MANGO_UNREFERENCED_PARAMETER(color_transform);
+                }
                 break;
             }
         }

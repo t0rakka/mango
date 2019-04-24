@@ -58,6 +58,7 @@ void FUNCTION_GENERIC(u8* dest, int stride, const s16* data, ProcessState* state
                     u8 y0 = y_block[x];
                     u8 cb = cb_scan[x >> cb_xshift];
                     u8 cr = cr_scan[x >> cr_xshift];
+                    int r, g, b;
                     COMPUTE_CBCR(cb, cr);
                     WRITE_COLOR(d, y0, r, g, b);
                     d += XSTEP;
@@ -93,6 +94,7 @@ void FUNCTION_YCBCR_8x8(u8* dest, int stride, const s16* data, ProcessState* sta
             int y0 = s[x];
             int cb = s[x + 64];
             int cr = s[x + 128];
+            int r, g, b;
             COMPUTE_CBCR(cb, cr);
             WRITE_COLOR(d, y0, r, g, b);
             d += XSTEP;
@@ -130,6 +132,7 @@ void FUNCTION_YCBCR_8x16(u8* dest, int stride, const s16* data, ProcessState* st
             int y1 = s[x + 8];
             int cb = c[x + 0];
             int cr = c[x + 64];
+            int r, g, b;
             COMPUTE_CBCR(cb, cr);
             WRITE_COLOR(d0, y0, r, g, b);
             WRITE_COLOR(d1, y1, r, g, b);
@@ -168,6 +171,7 @@ void FUNCTION_YCBCR_16x8(u8* dest, int stride, const s16* data, ProcessState* st
             int y1 = s[x * 2 + 1];
             int cb = c[x + 0];
             int cr = c[x + 64];
+            int r, g, b;
             COMPUTE_CBCR(cb, cr);
             WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
             WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
@@ -180,6 +184,7 @@ void FUNCTION_YCBCR_16x8(u8* dest, int stride, const s16* data, ProcessState* st
             int y1 = s[x * 2 + 65];
             int cb = c[x + 4];
             int cr = c[x + 68];
+            int r, g, b;
             COMPUTE_CBCR(cb, cr);
             WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
             WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
@@ -229,6 +234,7 @@ void FUNCTION_YCBCR_16x16(u8* dest, int stride, const s16* data, ProcessState* s
                 u8 cb = ptr_cbcr[x + 0];
                 u8 cr = ptr_cbcr[x + 64];
 
+                int r, g, b;
                 COMPUTE_CBCR(cb, cr);
                 WRITE_COLOR(scan + 0 * XSTEP, y0, r, g, b);
                 WRITE_COLOR(scan + 1 * XSTEP, y1, r, g, b);

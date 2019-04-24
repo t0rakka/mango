@@ -39,9 +39,9 @@ namespace jpeg {
 */
 
 #define COMPUTE_CBCR(cb, cr) \
-    int r = (cr * 91750 - 11711232) >> 16; \
-    int g = (cb * -22479 + cr * -46596 + 8874368) >> 16; \
-    int b = (cb * 115671 - 14773120) >> 16;
+    r = (cr * 91750 - 11711232) >> 16; \
+    g = (cb * -22479 + cr * -46596 + 8874368) >> 16; \
+    b = (cb * 115671 - 14773120) >> 16;
 
 #define COMPUTE_CMYK(y, k) \
     r = ((255 - r - y) * k) / 255; \
@@ -135,6 +135,8 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
     u8* cr_data = result + cr_offset;
     u8* ck_data = result + ck_offset;
 
+    bool ycck = state->is_ycck;
+
     // process MCU
     for (int yb = 0; yb < ysize; ++yb)
     {
@@ -167,8 +169,30 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
                     u8 cb = cb_scan[x >> cb_xshift];
                     u8 cr = cr_scan[x >> cr_xshift];
                     u8 ck = ck_scan[x >> ck_xshift];
-                    COMPUTE_CBCR(cb, cr);
-                    COMPUTE_CMYK(y0, ck);
+
+                    // TODO: clean up + optimize
+                    // TODO: the ycck condition is reversed!?
+                    int r, g, b;
+                    if (!ycck)
+                    {
+                        cb = cb - 128;
+                        cr = cr - 128;
+                        float R = y0 + 1.402*cr - 179.456;
+                        float G = y0 - 0.34414*cb - 0.71414*cr + 135.45984;
+                        float B = y0 + 1.772*cb - 226.816;
+                        r = int(R);
+                        g = int(G);
+                        b = int(B);
+                        r = (r * ck) / 255;
+                        g = (g * ck) / 255;
+                        b = (b * ck) / 255;
+                    }
+                    else
+                    {
+                        COMPUTE_CBCR(cb, cr);
+                        COMPUTE_CMYK(y0, ck);
+                    }
+
                     r = byteclamp(r);
                     g = byteclamp(g);
                     b = byteclamp(b);

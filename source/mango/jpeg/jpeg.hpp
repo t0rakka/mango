@@ -301,6 +301,7 @@ namespace jpeg {
 
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
+        bool is_ycck;
 
 	    void (*idct) (u8* dest, const s16* data, const u16* qt);
         void (*process            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
