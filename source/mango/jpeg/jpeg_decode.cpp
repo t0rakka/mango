@@ -672,7 +672,7 @@ namespace jpeg {
         decodeState.comps_in_scan = p[2]; // Ns
         p += 3;
 
-        if (decodeState.comps_in_scan != processState.frames)
+        if (decodeState.comps_in_scan != processState.frames && !is_progressive)
         {
             is_multiscan = true;
         }
@@ -758,7 +758,7 @@ namespace jpeg {
         decodeState.successiveLow = Al;
         decodeState.successiveHigh = Ah;
 
-        debugPrint("    Spectral range: (%d, %d)\n", Ss, Se);
+        debugPrint("  Spectral range: (%d, %d)\n", Ss, Se);
 
         bool dc_scan = (decodeState.spectralStart == 0);
         bool refine_scan = (decodeState.successiveHigh != 0);
