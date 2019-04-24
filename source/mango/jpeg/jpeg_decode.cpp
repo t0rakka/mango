@@ -1573,7 +1573,7 @@ namespace jpeg {
         }
         else
         {
-            Bitmap temp(width, height, header.format);
+            Bitmap temp(width, height, sf.format);
             m_surface = &temp;
 
             parse(scan_memory, true);
