@@ -583,8 +583,14 @@ namespace jpeg {
                 }
             }
 
-            debugPrint("  Frame: %d, compid: %d, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
-                i, frame.compid, frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
+            std::string compid_name;
+            if (frame.compid >= 32 && frame.compid < 128)
+            {
+                compid_name = makeString(" (%c)", char(frame.compid));
+            }
+
+            debugPrint("  Frame: %d, compid: %d%s, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
+                i, frame.compid, compid_name.c_str(), frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
 
             frames.push_back(frame);
         }
@@ -676,7 +682,14 @@ namespace jpeg {
             const int size = frame->Hsf * frame->Vsf;
             int offset = frame->offset;
 
-            debugPrint("  Component: %i, DC: %i, AC: %i, offset: %d, size: %d\n", cs, dc, ac, frame->offset, size);
+            std::string cs_name;
+            if (cs >= 32 && cs < 128)
+            {
+                cs_name = makeString(" (%c)", char(cs));
+            }
+
+            debugPrint("  Component: %i%s, DC: %i, AC: %i, offset: %d, size: %d\n",
+                cs, cs_name.c_str(), dc, ac, frame->offset, size);
 
             for (int j = 0; j < size; ++j)
             {
