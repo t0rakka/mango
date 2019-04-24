@@ -163,12 +163,12 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
 
                 for (int x = 0; x < xmax; ++x)
                 {
-                    u8 Y = y_block[x];
+                    u8 y0 = y_block[x];
                     u8 cb = cb_scan[x >> cb_xshift];
                     u8 cr = cr_scan[x >> cr_xshift];
                     u8 ck = ck_scan[x >> ck_xshift];
                     COMPUTE_CBCR(cb, cr);
-                    COMPUTE_CMYK(Y, ck);
+                    COMPUTE_CMYK(y0, ck);
                     r = byteclamp(r);
                     g = byteclamp(g);
                     b = byteclamp(b);
