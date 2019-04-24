@@ -452,6 +452,7 @@ namespace jpeg {
     void process_y_8bit                 (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_24bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_32bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_cmyk_8bit              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_cmyk_bgra              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_8bit             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 

@@ -1297,9 +1297,14 @@ namespace jpeg {
         const char* simd = "";
 
         // configure default implementation
+
+        processState.process_cmyk = process_cmyk_bgra;
+
         switch (sample)
         {
             case JPEG_U8_Y:
+                processState.process_cmyk        = process_cmyk_8bit;
+
                 processState.process_y           = process_y_8bit;
                 processState.process_ycbcr       = process_ycbcr_8bit;
                 processState.process_ycbcr_8x8   = nullptr;
@@ -1340,9 +1345,6 @@ namespace jpeg {
                 processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16;
                 break;
         }
-
-        // CMYK is always in the slow path (only support BGRA, enforced elsewhere)
-        processState.process_cmyk = process_cmyk_bgra;
 
 #if defined(JPEG_ENABLE_NEON)
         // NEON is built-in; no runtime check in this version
@@ -1544,9 +1546,16 @@ namespace jpeg {
         }
         else if (components == 4)
         {
-            // CMYK is in the slow-path anyway so force BGRA
-            sf.sample = JPEG_U8_BGRA;
-            sf.format = FORMAT_B8G8R8A8;
+            if (sf.sample == JPEG_U8_Y)
+            {
+                sf.format = FORMAT_L8;
+            }
+            else
+            {
+                // CMYK is in the slow-path anyway so force BGRA
+                sf.sample = JPEG_U8_BGRA;
+                sf.format = FORMAT_B8G8R8A8;
+            }
         }
 
         // target surface size has to match (clipping isn't yet supported)

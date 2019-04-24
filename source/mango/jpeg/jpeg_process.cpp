@@ -89,6 +89,104 @@ void process_y_32bit(u8* dest, int stride, const s16* data, ProcessState* state,
     }
 }
 
+void process_cmyk_8bit(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+{
+    // NOTE: not very optimized.. unnecessary idct() calls, unused components computed etc.
+    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    // MCU size in blocks
+    int xsize = (width + 7) / 8;
+    int ysize = (height + 7) / 8;
+
+    int cb_offset = state->frame[1].offset * 64;
+    int cb_xshift = state->frame[1].Hsf;
+    int cb_yshift = state->frame[1].Vsf;
+
+    int cr_offset = state->frame[2].offset * 64;
+    int cr_xshift = state->frame[2].Hsf;
+    int cr_yshift = state->frame[2].Vsf;
+
+    int ck_offset = state->frame[3].offset * 64;
+    int ck_xshift = state->frame[3].Hsf;
+    int ck_yshift = state->frame[3].Vsf;
+
+    u8* cb_data = result + cb_offset;
+    u8* cr_data = result + cr_offset;
+    u8* ck_data = result + ck_offset;
+
+    const ColorSpace colorspace = state->colorspace;
+
+    // process MCU
+    for (int yb = 0; yb < ysize; ++yb)
+    {
+        // vertical clipping limit for current block
+        const int ymax = std::min(8, height - yb * 8);
+
+        for (int xb = 0; xb < xsize; ++xb)
+        {
+            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u32);
+            u8* y_block = result + (yb * xsize + xb) * 64;
+            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
+            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
+            u8* ck_block = ck_data + yb * (8 >> ck_yshift) * 8 + xb * (8 >> ck_xshift);
+
+            // horizontal clipping limit for current block
+            const int xmax = std::min(8, width - xb * 8);
+
+            // process 8x8 block
+            for (int y = 0; y < ymax; ++y)
+            {
+                u8* d = dest_block;
+
+                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
+                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+                u8* ck_scan = ck_block + (y >> ck_yshift) * 8;
+
+                for (int x = 0; x < xmax; ++x)
+                {
+                    u8 y0 = y_block[x];
+                    u8 cb = cb_scan[x >> cb_xshift];
+                    u8 cr = cr_scan[x >> cr_xshift];
+                    u8 ck = ck_scan[x >> ck_xshift];
+
+                    int s;
+
+                    switch (colorspace)
+                    {
+                        case ColorSpace::CMYK:
+                        {
+                            int r = (y0 * ck) / 255;
+                            int g = (cb * ck) / 255;
+                            int b = (cr * ck) / 255;
+                            // ITU BT.601: Y = 0.299 R + 0.587 G + 0.114 B
+                            s = (r * 3 + g * 4 + b) / 8; // quick approximation
+                            break;
+                        }
+                        case ColorSpace::YCCK:
+                            s = y0;
+                            break;
+                        default:
+                        case ColorSpace::YCBCR:
+                            s = 0;
+                            break;
+                    }
+
+                    d[x] = s;
+                }
+                dest_block += stride;
+                y_block += 8;
+            }
+        }
+    }
+}
+
 void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
