@@ -784,6 +784,11 @@ namespace jpeg {
             {
                 decodeLossless();
             }
+            else if (is_multiscan)
+            {
+                decodeState.decode = arith_decode_mcu;
+                decodeMultiScan();
+            }
             else if (is_progressive)
             {
                 if (dc_scan)
@@ -836,6 +841,11 @@ namespace jpeg {
             if (is_lossless)
             {
                 decodeLossless();
+            }
+            else if (is_multiscan)
+            {
+                decodeState.decode = huff_decode_mcu;
+                decodeMultiScan();
             }
             else if (is_progressive)
             {
@@ -1555,7 +1565,7 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
-            if (is_progressive)
+            if (is_progressive || is_multiscan)
 			{
 	            finishProgressive();
 			}
@@ -1567,7 +1577,7 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
-            if (is_progressive)
+            if (is_progressive || is_multiscan)
 			{
 	            finishProgressive();
 			}
@@ -1865,6 +1875,19 @@ namespace jpeg {
 
         // synchronize
         queue.wait();
+    }
+
+    void Parser::decodeMultiScan()
+    {
+        s16* data = blockVector;
+        data += decodeState.block[0].offset;
+
+        for (int i = 0; i < mcus; ++i)
+        {
+            decodeState.decode(data, &decodeState);
+            handleRestart();
+            data += blocks_in_mcu * 64;
+        }
     }
 
     void Parser::decodeProgressive()

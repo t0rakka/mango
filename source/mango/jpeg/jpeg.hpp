@@ -397,6 +397,7 @@ namespace jpeg {
         void decodeSequential();
         void decodeSequentialST();
         void decodeSequentialMT();
+        void decodeMultiScan();
         void decodeProgressive();
         void finishProgressive();
         void finishProgressiveST();
