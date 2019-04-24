@@ -27,26 +27,11 @@ namespace jpeg {
 
     NOTE: ITU BT.601 would be the correct method :)
 */
-/*
-    CMYK to RGB color conversion:
-
-    i = 1.0 - k
-    r = 1.0 - min(1.0, c * i + k)
-    g = 1.0 - min(1.0, m * i + k)
-    b = 1.0 - min(1.0, y * i + k)
-
-    NOTE: we use alternate conversion formula in COMPUTE_CMYK()
-*/
 
 #define COMPUTE_CBCR(cb, cr) \
     r = (cr * 91750 - 11711232) >> 16; \
     g = (cb * -22479 + cr * -46596 + 8874368) >> 16; \
     b = (cb * 115671 - 14773120) >> 16;
-
-#define COMPUTE_CMYK(y, k) \
-    r = ((255 - r - y) * k) / 255; \
-    g = ((255 - g - y) * k) / 255; \
-    b = ((255 - b - y) * k) / 255;
 
 // ----------------------------------------------------------------------------
 // Generic C++ implementation
@@ -135,7 +120,7 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
     u8* cr_data = result + cr_offset;
     u8* ck_data = result + ck_offset;
 
-    bool ycck = state->is_ycck;
+    const ColorSpace colorspace = state->colorspace;
 
     // process MCU
     for (int yb = 0; yb < ysize; ++yb)
@@ -170,27 +155,32 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
                     u8 cr = cr_scan[x >> cr_xshift];
                     u8 ck = ck_scan[x >> ck_xshift];
 
-                    // TODO: clean up + optimize
-                    // TODO: the ycck condition is reversed!?
-                    int r, g, b;
-                    if (!ycck)
+                    int r;
+                    int g;
+                    int b;
+
+                    switch (colorspace)
                     {
-                        cb = cb - 128;
-                        cr = cr - 128;
-                        float R = y0 + 1.402*cr - 179.456;
-                        float G = y0 - 0.34414*cb - 0.71414*cr + 135.45984;
-                        float B = y0 + 1.772*cb - 226.816;
-                        r = int(R);
-                        g = int(G);
-                        b = int(B);
-                        r = (r * ck) / 255;
-                        g = (g * ck) / 255;
-                        b = (b * ck) / 255;
-                    }
-                    else
-                    {
-                        COMPUTE_CBCR(cb, cr);
-                        COMPUTE_CMYK(y0, ck);
+                        case ColorSpace::CMYK:
+                            r = y0;
+                            g = cb;
+                            b = cr;
+                            r = (r * ck) / 255;
+                            g = (g * ck) / 255;
+                            b = (b * ck) / 255;
+                            break;
+                        case ColorSpace::YCCK:
+                            COMPUTE_CBCR(cb, cr);
+                            r = ((255 - r - y0) * ck) / 255;
+                            g = ((255 - g - y0) * ck) / 255;
+                            b = ((255 - b - y0) * ck) / 255;
+                            break;
+                        default:
+                        case ColorSpace::YCBCR:
+                            r = 0;
+                            g = 0;
+                            b = 0;
+                            break;
                     }
 
                     r = byteclamp(r);
@@ -345,7 +335,6 @@ static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
 #undef FUNCTION_YCBCR_16x16
 
 #undef COMPUTE_CBCR
-#undef COMPUTE_CMYK
 
 #if defined(JPEG_ENABLE_NEON)
 

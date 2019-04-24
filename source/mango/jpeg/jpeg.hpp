@@ -87,6 +87,13 @@ namespace jpeg {
         JPEG_U8_RGBA,
     };
 
+    enum class ColorSpace
+    {
+        CMYK = 0,
+        YCBCR = 1,
+        YCCK = 2
+    };
+
     struct SampleFormat
     {
         Sample sample;
@@ -302,7 +309,7 @@ namespace jpeg {
 
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
-        bool is_ycck;
+        ColorSpace colorspace;
 
 	    void (*idct) (u8* dest, const s16* data, const u16* qt);
         void (*process            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);

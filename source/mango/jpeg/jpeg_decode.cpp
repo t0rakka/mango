@@ -233,7 +233,7 @@ namespace jpeg {
 
         // configure default implementation
         processState.idct = idct8;
-        processState.is_ycck = false;
+        processState.colorspace = ColorSpace::CMYK;
 
 #if defined(JPEG_ENABLE_NEON)
         processState.idct = idct_neon;
@@ -482,9 +482,9 @@ namespace jpeg {
                     //u16 flags0 = uload16be(p + 7);
                     //u16 flags1 = uload16be(p + 9);
                     u8 color_transform = p[11]; // 0 - CMYK, 1 - YCbCr, 2 - YCCK
-                    if (color_transform == 2)
+                    if (color_transform <= 2)
                     {
-                        processState.is_ycck = true;
+                        processState.colorspace = ColorSpace(color_transform);
                     }
                     debugPrint("  Version: %d\n", version);
                     debugPrint("  ColorTransform: %d\n", color_transform);
