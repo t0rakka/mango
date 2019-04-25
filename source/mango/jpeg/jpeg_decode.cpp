@@ -446,12 +446,22 @@ namespace jpeg {
 
                 if (!std::memcmp(p, magicICC, 12))
                 {
+                    // skip magic
                     p += 12;
                     size -= 12;
-                    // ICC data is usually split into multiple APP2 markers as
-                    // the JPEG standard has a maximum marker size of ~64KB
+
+                    // read sequence information
+                    u8 sequence_number = p[0];
+                    u8 sequence_total = p[1];
+                    p += 2;
+                    size -= 2;
+
+                    debugPrint("  ICC: %d / %d (%d bytes)\n", sequence_number, sequence_total, size);
+                    MANGO_UNREFERENCED_PARAMETER(sequence_number);
+                    MANGO_UNREFERENCED_PARAMETER(sequence_total);
+
+                    // append ICC segment (JPEG markers have a maximum size and are split)
                     icc_buffer.write(p, size);
-                    debugPrint("  ICC: %d bytes\n", size);
                 }
 
                 break;
