@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 #include <mango/core/exception.hpp>
@@ -512,13 +512,14 @@ namespace {
 
 namespace mango {
 
-    void sha1(u32 hash[5], Memory memory)
+    SHA1 sha1(Memory memory)
     {
-        hash[0] = 0x67452301;
-        hash[1] = 0xEFCDAB89;
-        hash[2] = 0x98BADCFE;
-        hash[3] = 0x10325476;
-        hash[4] = 0xC3D2E1F0;
+        SHA1 hash;
+        hash.data[0] = 0x67452301;
+        hash.data[1] = 0xEFCDAB89;
+        hash.data[2] = 0x98BADCFE;
+        hash.data[3] = 0x10325476;
+        hash.data[4] = 0xC3D2E1F0;
 
         auto transform = generic_sha1_update;
 #if defined(__ARM_FEATURE_CRYPTO)
@@ -537,7 +538,7 @@ namespace mango {
         const u8* message = memory.address;
 
         int block_count = len / 64;
-        transform(hash, message, block_count);
+        transform(hash.data, message, block_count);
         message += block_count * 64;
         u32 i = block_count * 64;
 
@@ -553,20 +554,22 @@ namespace mango {
         else
         {
             memset(block + rem, 0, 64 - rem);
-            transform(hash, block, 1);
+            transform(hash.data, block, 1);
             memset(block, 0, 56);
         }
 
         ustore64be(block + 56, memory.size * 8);
-        transform(hash, block, 1);
+        transform(hash.data, block, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN
-        hash[0] = byteswap(hash[0]);
-        hash[1] = byteswap(hash[1]);
-        hash[2] = byteswap(hash[2]);
-        hash[3] = byteswap(hash[3]);
-        hash[4] = byteswap(hash[4]);
+        hash.data[0] = byteswap(hash.data[0]);
+        hash.data[1] = byteswap(hash.data[1]);
+        hash.data[2] = byteswap(hash.data[2]);
+        hash.data[3] = byteswap(hash.data[3]);
+        hash.data[4] = byteswap(hash.data[4]);
 #endif
+
+        return hash;
     }
 
 } // namespace mango

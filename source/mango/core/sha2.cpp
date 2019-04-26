@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 #include <mango/core/exception.hpp>
@@ -571,16 +571,17 @@ namespace {
 
 namespace mango {
 
-    void sha2(u32 hash[8], Memory memory)
+    SHA2 sha2(Memory memory)
     {
-        hash[0] = 0x6a09e667;
-        hash[1] = 0xbb67ae85;
-        hash[2] = 0x3c6ef372;
-        hash[3] = 0xa54ff53a;
-        hash[4] = 0x510e527f;
-        hash[5] = 0x9b05688c;
-        hash[6] = 0x1f83d9ab;
-        hash[7] = 0x5be0cd19;
+        SHA2 hash;
+        hash.data[0] = 0x6a09e667;
+        hash.data[1] = 0xbb67ae85;
+        hash.data[2] = 0x3c6ef372;
+        hash.data[3] = 0xa54ff53a;
+        hash.data[4] = 0x510e527f;
+        hash.data[5] = 0x9b05688c;
+        hash.data[6] = 0x1f83d9ab;
+        hash.data[7] = 0x5be0cd19;
 
         auto transform = generic_sha2_transform;
 #if defined(__ARM_FEATURE_CRYPTO)
@@ -599,7 +600,7 @@ namespace mango {
         const u8* data = memory.address;
 
         const int block_count = size / 64;
-        transform(hash, data, block_count);
+        transform(hash.data, data, block_count);
         data += block_count * 64;
         size -= block_count * 64;
         
@@ -610,23 +611,25 @@ namespace mango {
 
         if (size >= 56)
         {
-            transform(hash, buffer, 1);
+            transform(hash.data, buffer, 1);
             std::memset(buffer, 0, 56);
         }
 
         ustore64be(buffer + 56, memory.size * 8);
-        transform(hash, buffer, 1);
+        transform(hash.data, buffer, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN
-        hash[0] = byteswap(hash[0]);
-        hash[1] = byteswap(hash[1]);
-        hash[2] = byteswap(hash[2]);
-        hash[3] = byteswap(hash[3]);
-        hash[4] = byteswap(hash[4]);
-        hash[5] = byteswap(hash[5]);
-        hash[6] = byteswap(hash[6]);
-        hash[7] = byteswap(hash[7]);
+        hash.data[0] = byteswap(hash.data[0]);
+        hash.data[1] = byteswap(hash.data[1]);
+        hash.data[2] = byteswap(hash.data[2]);
+        hash.data[3] = byteswap(hash.data[3]);
+        hash.data[4] = byteswap(hash.data[4]);
+        hash.data[5] = byteswap(hash.data[5]);
+        hash.data[6] = byteswap(hash.data[6]);
+        hash.data[7] = byteswap(hash.data[7]);
 #endif
+
+        return hash;
     }
 
 } // namespace mango

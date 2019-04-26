@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 #include <mango/core/exception.hpp>
@@ -104,18 +104,19 @@ namespace {
 
 namespace mango {
 
-    void md5(u32 hash[4], Memory memory)
+    MD5 md5(Memory memory)
     {
-        hash[0] = 0x67452301;
-        hash[1] = 0xEFCDAB89;
-        hash[2] = 0x98BADCFE;
-        hash[3] = 0x10325476;
+        MD5 hash;
+        hash.data[0] = 0x67452301;
+        hash.data[1] = 0xEFCDAB89;
+        hash.data[2] = 0x98BADCFE;
+        hash.data[3] = 0x10325476;
 
         const u32 size = u32(memory.size);
         u32 i = 0;
         for ( ; size - i >= 64; i += 64)
         {
-            md5_update(hash, reinterpret_cast<const u32 *>(memory.address + i));
+            md5_update(hash.data, reinterpret_cast<const u32 *>(memory.address + i));
         }
 
         u32 block[16];
@@ -132,12 +133,14 @@ namespace mango {
         else
         {
             memset(byteBlock + remain, 0, 64 - remain);
-            md5_update(hash, block);
+            md5_update(hash.data, block);
             memset(block, 0, 56);
         }
         block[14] = size << 3;
         block[15] = size >> 29;
-        md5_update(hash, block);
+        md5_update(hash.data, block);
+
+        return hash;
     }
 
 } // namespace mango

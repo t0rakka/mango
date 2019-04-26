@@ -7,15 +7,13 @@
 
 namespace mango {
 
-    u32 xxhash32(Memory memory)
+    u32 xxhash32(u32 seed, Memory memory)
     {
-        u32 seed = 0;
         return XXH32(memory.address, memory.size, seed);
     }
 
-    u64 xxhash64(Memory memory)
+    u64 xxhash64(u64 seed, Memory memory)
     {
-        u64 seed = 0;
         return XXH64(memory.address, memory.size, seed);
     }
 
