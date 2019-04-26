@@ -461,7 +461,7 @@ namespace jpeg {
                     MANGO_UNREFERENCED_PARAMETER(sequence_total);
 
                     // append ICC segment (JPEG markers have a maximum size and are split)
-                    icc_buffer.write(p, size);
+                    icc_buffer.append(p, size);
                 }
 
                 break;

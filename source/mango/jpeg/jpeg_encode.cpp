@@ -1742,7 +1742,7 @@ namespace
                     // flush encoding buffer
                     if (ptr - huff_temp > flush_threshold)
                     {
-                        buffers[y].write(huff_temp, ptr - huff_temp);
+                        buffers[y].append(huff_temp, ptr - huff_temp);
                         ptr = huff_temp;
                     }
 
@@ -1751,7 +1751,7 @@ namespace
 
                 // flush encoding buffer
                 ptr = huffman.flush(ptr);
-                buffers[y].write(huff_temp, ptr - huff_temp);
+                buffers[y].append(huff_temp, ptr - huff_temp);
             });
 
             input += surface.stride * jp.mcu_height;

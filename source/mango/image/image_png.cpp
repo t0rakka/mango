@@ -775,7 +775,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
 
     void ParserPNG::read_IDAT(BigEndianPointer p, u32 size)
     {
-        m_compressed.write(p, size);
+        m_compressed.append(p, size);
     }
 
     void ParserPNG::read_PLTE(BigEndianPointer p, u32 size)
@@ -1765,24 +1765,25 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
     // writePNG()
     // ------------------------------------------------------------
 
-    void writeChunk(Stream& stream, Memory memory)
+    void writeChunk(Stream& stream, u32 chunkid, Memory memory)
     {
         BigEndianStream s(stream);
 
-        const u32 chunk_size = static_cast<u32>(memory.size - 4);
-        const u32 chunk_crc = crc32(0, memory);
+        u8 temp[4];
+        ustore32be(temp, chunkid);
+        u32 crc = crc32(0, Memory(temp, 4));
+        crc = crc32(crc, memory);
 
-        s.write32(chunk_size);
+        s.write32(u32(memory.size));
+        s.write32(chunkid);
         s.write(memory);
-        s.write32(chunk_crc);
+        s.write32(crc);
     }
 
     void write_IHDR(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
-        Buffer buffer;
+        MemoryStream buffer;
         BigEndianStream s(buffer);
-
-        s.write32(u32_mask_rev('I', 'H', 'D', 'R'));
 
         s.write32(surface.width);
         s.write32(surface.height);
@@ -1792,7 +1793,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         s.write8(0); // filter
         s.write8(0); // interlace
 
-        writeChunk(stream, buffer);
+        writeChunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
     void write_IDAT(Stream& stream, const Surface& surface)
@@ -1804,12 +1805,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         deflateInit(&z, -1);
 
         z.avail_out = (unsigned int)deflateBound(&z, bytes);
-        Buffer buffer(4 + z.avail_out);
+        Buffer buffer(z.avail_out);
 
-        BigEndianStream s(buffer);
-        s.write32(u32_mask_rev('I', 'D', 'A', 'T'));
-
-        z.next_out = buffer + 4;
+        z.next_out = buffer;
 
         for (int y = 0; y < surface.height; ++y)
         {
@@ -1833,7 +1831,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         deflateEnd(&z);
 
         // write chunkdID + compressed data
-        writeChunk(stream, Memory(buffer, compressed_size));
+        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(buffer, compressed_size));
     }
 
     void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
