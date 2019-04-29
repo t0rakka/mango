@@ -150,7 +150,7 @@ namespace
             identifier    = 0;
         }
 
-        void HeaderSize(LittleEndianPointer& p)
+        void parseHeaderSize(LittleEndianPointer& p)
         {
             headerSize = p.read32();
         }
@@ -220,10 +220,18 @@ namespace
             debugPrint("  profile data: %d, size: %d\n", profileData, profileSize);
         }
 
-        void OS2BitmapHeader1(LittleEndianPointer& p)
+        void OS2BitmapHeader1(LittleEndianPointer& p, int headerSize)
         {
-            width        = p.read16();
-            height       = p.read16();
+            if (headerSize == 16)
+            {
+                width    = p.read32();
+                height   = p.read32();
+            }
+            else
+            {
+                width    = p.read16();
+                height   = p.read16();
+            }
             numPlanes    = p.read16();
             bitsPerPixel = p.read16();
 
@@ -231,7 +239,7 @@ namespace
             debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
         }
 
-        void OS2BitmapHeader2(LittleEndianPointer& p)
+        void OS2BitmapHeader2(LittleEndianPointer& p, int headerSize)
         {
             units         = p.read16();
             reserved      = p.read16();
@@ -239,8 +247,11 @@ namespace
             rendering     = p.read16();
             size1         = p.read32();
             size2         = p.read32();
-            colorEncoding = p.read32();
-            identifier    = p.read32();
+            if (headerSize == 64)
+            {
+                colorEncoding = p.read32();
+                identifier    = p.read32();
+            }
 
             debugPrint("[OS2BitmapHeader2]\n");
         }
@@ -259,22 +270,32 @@ namespace
 
             LittleEndianPointer p = memory.address;
 
-            HeaderSize(p);
+            parseHeaderSize(p);
+
+            debugPrint("  HeaderSize: %d\n", headerSize);
 
             switch (headerSize)
             {
-                case 64:
+                case 12:
                 {
-                    WinBitmapHeader1(p);
-                    OS2BitmapHeader2(p);
+                    OS2BitmapHeader1(p, headerSize);
+                    paletteComponents = 3;
+                    break;
+                }
+
+                case 16:
+                {
+                    OS2BitmapHeader1(p, headerSize);
+                    OS2BitmapHeader2(p, headerSize);
                     paletteComponents = 4;
                     break;
                 }
 
-                case 12:
+                case 64:
                 {
-                    OS2BitmapHeader1(p);
-                    paletteComponents = 3;
+                    WinBitmapHeader1(p);
+                    OS2BitmapHeader2(p, headerSize);
+                    paletteComponents = 4;
                     break;
                 }
 
@@ -320,13 +341,16 @@ namespace
                 }
 
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect header size.");
+                    MANGO_EXCEPTION(ID"Incorrect header size (%d).", headerSize);
                     break;
             }
 
+            debugPrint("  numPlanes: %d\n", numPlanes);
+            debugPrint("  bitsPerPixel: %d\n", bitsPerPixel);
+
             if (numPlanes != 1)
             {
-                MANGO_EXCEPTION(ID"Incorrect number of planes.");
+                MANGO_EXCEPTION(ID"Incorrect number of planes (%d).", numPlanes);
             }
 
             if (isIcon)
@@ -356,7 +380,7 @@ namespace
                     paletteSize = 1 << bitsPerPixel;
                 }
 
-                if (!importantColorCount)
+                if (!importantColorCount || importantColorCount > 256)
                 {
                     importantColorCount = paletteSize;
                 }
@@ -878,7 +902,7 @@ namespace
         LittleEndianPointer pa = block.address;
 
         Header header;
-        header.HeaderSize(pa);
+        header.parseHeaderSize(pa);
         header.WinBitmapHeader1(pa);
 
         u32 headersize = header.headerSize & 0xffff;
@@ -951,6 +975,8 @@ namespace
             FileHeader fileHeader(m_memory);
             ImageHeader header;
 
+            debugPrint("magic: 0x%x\n", fileHeader.magic);
+
             switch (fileHeader.magic)
             {
                 case 0x4d42: // BM - Windows Bitmap
@@ -971,6 +997,9 @@ namespace
         			header.palette = bmp_header.isPalette();
                     header.format  = bmp_header.format;
                     header.compression = TextureCompression::NONE;
+
+                    debugPrint("[header]\n");
+                    debugPrint("  image: %d x %d, bits: %d\n", header.width, header.height, header.format.bits);
                     break;
                 }
 
