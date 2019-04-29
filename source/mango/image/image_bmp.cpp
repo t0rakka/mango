@@ -168,6 +168,21 @@ namespace
             paletteSize = p.read32();
             importantColorCount = p.read32();
 
+            if (compression == BIC_BITFIELDS || compression == BIC_ALPHABITFIELDS)
+            {
+                if (bitsPerPixel == 16 || bitsPerPixel == 32)
+                {
+                    LittleEndianPointer x = p;
+                    redMask = x.read32();
+                    greenMask = x.read32();
+                    blueMask = x.read32();
+                    if (compression == BIC_ALPHABITFIELDS)
+                    {
+                        alphaMask = x.read32();
+                    }
+                }
+            }
+
             debugPrint("[WinBitmapHeader1]\n");
             debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
             debugPrint("  compression: %d, imageDataSize: %d\n", compression, imageDataSize);
@@ -239,7 +254,7 @@ namespace
             debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
         }
 
-        void OS2BitmapHeader2(LittleEndianPointer& p, int headerSize)
+        void OS2BitmapHeader2(LittleEndianPointer& p)
         {
             units         = p.read16();
             reserved      = p.read16();
@@ -247,11 +262,8 @@ namespace
             rendering     = p.read16();
             size1         = p.read32();
             size2         = p.read32();
-            if (headerSize == 64)
-            {
-                colorEncoding = p.read32();
-                identifier    = p.read32();
-            }
+            colorEncoding = p.read32();
+            identifier    = p.read32();
 
             debugPrint("[OS2BitmapHeader2]\n");
         }
@@ -286,7 +298,7 @@ namespace
                 case 16:
                 {
                     OS2BitmapHeader1(p, headerSize);
-                    OS2BitmapHeader2(p, headerSize);
+                    OS2BitmapHeader2(p);
                     paletteComponents = 4;
                     break;
                 }
@@ -294,7 +306,7 @@ namespace
                 case 64:
                 {
                     WinBitmapHeader1(p);
-                    OS2BitmapHeader2(p, headerSize);
+                    OS2BitmapHeader2(p);
                     paletteComponents = 4;
                     break;
                 }
@@ -398,8 +410,8 @@ namespace
                 if (colorMask)
                 {
                     // Filter out alpha if it doesn't fit into the pixel
-                    u32 pixelMask = u32((1ull << bitsPerPixel) - 1);
-                    alphaMask &= pixelMask;
+                    u32 pixelSizeMask = u32((1ull << bitsPerPixel) - 1);
+                    alphaMask &= pixelSizeMask;
 
                     // WinBitmapHeader2 or later store the component masks
                     format = Format(bitsPerPixel, redMask, greenMask, blueMask, alphaMask);
@@ -410,19 +422,13 @@ namespace
                     switch (bitsPerPixel)
                     {
                         case 16:
-                            if (compression == BIC_BITFIELDS)
-                                format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
-                            else
-                                format = Format(16, Format::UNORM, Format::BGR, 5, 5, 5, 0);
+                            format = Format(16, Format::UNORM, Format::BGR, 5, 5, 5, 0);
                             break;
                         case 24:
                             format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0);
                             break;
                         case 32:
-                            if (compression == BIC_ALPHABITFIELDS)
-                                format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-                            else
-                                format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
+                            format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
                             MANGO_EXCEPTION(ID"Incorrect number of color bits.");
@@ -696,6 +702,7 @@ namespace
         {
             case BIC_RGB:
             case BIC_BITFIELDS:
+            case BIC_ALPHABITFIELDS:
             {
                 switch (header.bitsPerPixel)
                 {
@@ -727,7 +734,7 @@ namespace
                     }
 
                     default:
-                        MANGO_EXCEPTION(ID"Incorrect number of color bits.");
+                        MANGO_EXCEPTION(ID"Incorrect number of color bits (%d).", header.bitsPerPixel);
                         break;
                 }
                 break;
@@ -771,15 +778,14 @@ namespace
 
             case BIC_JPEG:
             case BIC_PNG:
-            case BIC_ALPHABITFIELDS:
             case BIC_CMYK:
             case BIC_CMYKRLE8:
             case BIC_CMYKRLE4:
-                MANGO_EXCEPTION(ID"Unsupported compression.");
+                MANGO_EXCEPTION(ID"Unsupported compression (%d).", header.compression);
                 break;
 
             default:
-                MANGO_EXCEPTION(ID"Incorrect compression.");
+                MANGO_EXCEPTION(ID"Incorrect compression (%d).", header.compression);
                 break;
         }
     }
