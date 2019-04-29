@@ -386,7 +386,8 @@ namespace
                     switch (bitsPerPixel)
                     {
                         case 16:
-                            format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
+                            //format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
+                            format = Format(16, Format::UNORM, Format::BGR, 5, 5, 5, 0);
                             break;
                         case 24:
                             format = Format(24, 0xff0000, 0x00ff00, 0x0000ff, 0);
