@@ -348,6 +348,10 @@ namespace
                 u32 colorMask = redMask | greenMask | blueMask;
                 if (colorMask)
                 {
+                    // Filter out alpha if it doesn't fit into the pixel
+                    u32 pixelMask = (1 << bitsPerPixel) - 1;
+                    alphaMask &= pixelMask;
+
                     // WinBitmapHeader2 or later store the component masks
                     format = Format(bitsPerPixel, redMask, greenMask, blueMask, alphaMask);
                 }
