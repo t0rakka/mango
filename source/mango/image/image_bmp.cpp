@@ -797,10 +797,6 @@ namespace
         {
             header = decoder.header();
         }
-        else
-        {
-            header = ImageHeader();
-        }
 
         return header;
     }
@@ -960,24 +956,16 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
+        FileHeader m_file_header;
+        ImageHeader m_image_header;
 
         Interface(Memory memory)
             : m_memory(memory)
+            , m_file_header(memory)
         {
-        }
+            debugPrint("magic: 0x%x\n", m_file_header.magic);
 
-        ~Interface()
-        {
-        }
-
-        ImageHeader header() override
-        {
-            FileHeader fileHeader(m_memory);
-            ImageHeader header;
-
-            debugPrint("magic: 0x%x\n", fileHeader.magic);
-
-            switch (fileHeader.magic)
+            switch (m_file_header.magic)
             {
                 case 0x4d42: // BM - Windows Bitmap
                 case 0x4142: // BA - OS/2 Bitmap
@@ -989,46 +977,54 @@ namespace
                     Memory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
 
-                    header.width   = bmp_header.width;
-                    header.height  = bmp_header.height;
-                    header.depth   = 0;
-                    header.levels  = 0;
-                    header.faces   = 0;
-        			header.palette = bmp_header.isPalette();
-                    header.format  = bmp_header.format;
-                    header.compression = TextureCompression::NONE;
+                    m_image_header.width   = bmp_header.width;
+                    m_image_header.height  = bmp_header.height;
+                    m_image_header.depth   = 0;
+                    m_image_header.levels  = 0;
+                    m_image_header.faces   = 0;
+        			m_image_header.palette = bmp_header.isPalette();
+                    m_image_header.format  = bmp_header.format;
+                    m_image_header.compression = TextureCompression::NONE;
 
                     debugPrint("[header]\n");
-                    debugPrint("  image: %d x %d, bits: %d\n", header.width, header.height, header.format.bits);
+                    debugPrint("  image: %d x %d, bits: %d\n", 
+                        m_image_header.width, m_image_header.height, m_image_header.format.bits);
                     break;
                 }
 
                 case 0x0000:
-                    parseIco(&header, nullptr, m_memory);
+                    parseIco(&m_image_header, nullptr, m_memory);
                     break;
 
                 case 0x5089:
-                    header = getHeader(m_memory, "png");
+                    m_image_header = getHeader(m_memory, "png");
                     break;
 
                 case 0xd8ff:
-                    header = getHeader(m_memory, "jpg");
+                    m_image_header = getHeader(m_memory, "jpg");
                     break;
 
                 case 0x4947:
-                    header = getHeader(m_memory, "gif");
+                    m_image_header = getHeader(m_memory, "gif");
                     break;
 
                 case 0xcdd7:
-                    header = getHeader(m_memory, "apm");
+                    m_image_header = getHeader(m_memory, "apm");
                     break;
 
                 default:
                     MANGO_EXCEPTION(ID"Incorrect header identifier.");
                     break;
             }
+        }
 
-            return header;
+        ~Interface()
+        {
+        }
+
+        ImageHeader header() override
+        {
+            return m_image_header;
         }
 
         void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
@@ -1037,9 +1033,7 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            FileHeader fileHeader(m_memory);
-
-            switch (fileHeader.magic)
+            switch (m_file_header.magic)
             {
                 case 0x4d42: // BM - Windows Bitmap
                 case 0x4142: // BA - OS/2 Bitmap
@@ -1075,7 +1069,7 @@ namespace
             }
 
             Memory block = m_memory.slice(14);
-            decodeBitmap(dest, block, fileHeader.offset - 14, false, ptr_palette);
+            decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
         }
     };
 
