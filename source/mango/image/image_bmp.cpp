@@ -374,7 +374,7 @@ namespace
                 if (colorMask)
                 {
                     // Filter out alpha if it doesn't fit into the pixel
-                    u32 pixelMask = (1 << bitsPerPixel) - 1;
+                    u32 pixelMask = u32((1ull << bitsPerPixel) - 1);
                     alphaMask &= pixelMask;
 
                     // WinBitmapHeader2 or later store the component masks
@@ -386,14 +386,19 @@ namespace
                     switch (bitsPerPixel)
                     {
                         case 16:
-                            //format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
-                            format = Format(16, Format::UNORM, Format::BGR, 5, 5, 5, 0);
+                            if (compression == BIC_BITFIELDS)
+                                format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
+                            else
+                                format = Format(16, Format::UNORM, Format::BGR, 5, 5, 5, 0);
                             break;
                         case 24:
-                            format = Format(24, 0xff0000, 0x00ff00, 0x0000ff, 0);
+                            format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0);
                             break;
                         case 32:
-                            format = Format(32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+                            if (compression == BIC_ALPHABITFIELDS)
+                                format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                            else
+                                format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
                             MANGO_EXCEPTION(ID"Incorrect number of color bits.");
