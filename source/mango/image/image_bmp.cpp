@@ -1,7 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
@@ -11,7 +13,6 @@
 
 namespace
 {
-
     using namespace mango;
 
     // ------------------------------------------------------------
@@ -166,6 +167,12 @@ namespace
             yResolution = p.read32();
             paletteSize = p.read32();
             importantColorCount = p.read32();
+
+            debugPrint("[WinBitmapHeader1]\n");
+            debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
+            debugPrint("  compression: %d, imageDataSize: %d\n", compression, imageDataSize);
+            debugPrint("  resolution: %d x %d\n", xResolution, yResolution);
+            debugPrint("  palette: %d, importantColorCount: %d\n", paletteSize, importantColorCount);
         }
 
         void WinBitmapHeader2(LittleEndianPointer& p)
@@ -173,11 +180,17 @@ namespace
             redMask = p.read32();
             greenMask = p.read32();
             blueMask = p.read32();
+
+            debugPrint("[WinBitmapHeader2]\n");
+            debugPrint("  redMask: 0x%x, greenMask: 0x%x, blueMask: 0x%x\n", redMask, greenMask, blueMask);
         }
 
         void WinBitmapHeader3(LittleEndianPointer& p)
         {
             alphaMask = p.read32();
+
+            debugPrint("[WinBitmapHeader3]\n");
+            debugPrint("  alphaMask: 0x%x\n", alphaMask);
         }
 
         void WinBitmapHeader4(LittleEndianPointer& p)
@@ -190,6 +203,9 @@ namespace
             gammaRed = p.read32();
             gammaGreen = p.read32();
             gammaBlue = p.read32();
+
+            debugPrint("[WinBitmapHeader4]\n");
+            debugPrint("  gamma: %d %d %d\n", gammaRed, gammaGreen, gammaBlue);
         }
 
         void WinBitmapHeader5(LittleEndianPointer& p)
@@ -198,6 +214,10 @@ namespace
             profileData = p.read32();
             profileSize = p.read32();
             reserved3 = p.read32();
+
+            debugPrint("[WinBitmapHeader5]\n");
+            debugPrint("  intent: %d\n", intent);
+            debugPrint("  profile data: %d, size: %d\n", profileData, profileSize);
         }
 
         void OS2BitmapHeader1(LittleEndianPointer& p)
@@ -206,6 +226,9 @@ namespace
             height       = p.read16();
             numPlanes    = p.read16();
             bitsPerPixel = p.read16();
+
+            debugPrint("[OS2BitmapHeader1]\n");
+            debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
         }
 
         void OS2BitmapHeader2(LittleEndianPointer& p)
@@ -218,6 +241,8 @@ namespace
             size2         = p.read32();
             colorEncoding = p.read32();
             identifier    = p.read32();
+
+            debugPrint("[OS2BitmapHeader2]\n");
         }
     };
 
@@ -604,6 +629,17 @@ namespace
 
         if (header.palette)
         {
+            debugPrint("[Palette]\n");
+            debugPrint("  size: %d\n", header.importantColorCount);
+            debugPrint("  components: %d\n", header.paletteComponents);
+
+            int components = header.paletteComponents;
+            if (!components)
+            {
+                // default to 4 components (last one is padding; forced to 0xff below)
+                components = 4;
+            }
+
             palette.size = header.importantColorCount;
 
             // read palette
@@ -611,7 +647,7 @@ namespace
             for (u32 i = 0; i < palette.size; ++i)
             {
                 palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
-                p += header.paletteComponents;
+                p += components;
             }
         }
 
