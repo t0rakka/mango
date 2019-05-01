@@ -33,7 +33,7 @@ namespace
 		u16	height = 0;
 		u8	packed = 0;
 		u8	background = 0;
-		u8   aspect = 0;
+		u8  aspect = 0;
 		u8* palette = nullptr;
 
         void read(u8*& data, u8* end)
@@ -141,7 +141,7 @@ namespace
 		u8* q = q_buffer;
 
 		u8 packet[256];
-		u8* c = NULL;
+		u8* c = nullptr;
 
 		while (q < q_buffer_end)
 		{
@@ -350,7 +350,7 @@ namespace
 		if (ptr_palette && dimensions && surface.format.bits == 8)
 		{
 			*ptr_palette = palette;
-			u8* dest = surface.address<u8>(0,0);
+			u8* dest = surface.address<u8>(0, 0);
 			std::memcpy(dest, bits, width * height);
 		}
 		else

@@ -1,7 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
 #include <cmath>
 #include <cctype>
 #include <mango/core/pointer.hpp>
@@ -16,17 +18,41 @@ namespace
 {
     using namespace mango;
 
-	const char* nextline(const char* p)
-	{
-		do
-		{
-			for ( ; *p++ != '\n'; )
-			{
-			}
-		}
-		while (*p == '#');
-		return p;
-	}
+    const char* skipComment(const char* p, const char* end)
+    {
+        for (;;)
+        {
+            if (p >= end)
+                break;
+
+            if (*p++ == '\n')
+                break;
+        }
+        return p;
+    }
+
+    inline
+    const char* nextValue(int& value, const char* p, const char* end)
+    {
+        for (;;)
+        {
+            if (p >= end)
+                return nullptr;
+
+            char c = *p;
+            if (std::isdigit(c))
+                break;
+
+            if (c == '#')
+                p = skipComment(p, end);
+            else
+                ++p;
+        }
+
+        char* n;
+        value = int(std::strtol(p, &n, 10));
+        return n + 1;
+    }
 
     // ------------------------------------------------------------
     // HeaderPNM
@@ -42,6 +68,7 @@ namespace
 		Format format;
 		bool ascii;
         const char* data;
+        u8 invert;
 
         HeaderPNM(Memory memory)
             : width(0)
@@ -50,32 +77,43 @@ namespace
             , maxvalue(0)
             , ascii(false)
             , data(nullptr)
+            , invert(0)
         {
             const char* p = reinterpret_cast<const char *>(memory.address);
+            const char* end = reinterpret_cast<const char *>(memory.address + memory.size);
 
-            if (!std::strncmp(p, "P7\n", 3))
+            debugPrint("[Header: %c%c]\n", p[0], p[1]);
+
+            if (!std::strncmp(p, "PF\n", 3))
             {
+                // not supported
+            }
+            else if (!std::strncmp(p, "P7\n", 3))
+            {
+                // not supported
+#if 0
                 char type[100];
 
-                p = nextline(p);
+                p = nextLine(p, end);
                 if (std::sscanf(p, "WIDTH %i", &width) < 1)
                     MANGO_EXCEPTION(ID"Incorrect width");
 
-                p = nextline(p);
+                p = nextLine(p, end);
                 if (std::sscanf(p, "HEIGHT %i", &height) < 1)
                     MANGO_EXCEPTION(ID"Incorrect height");
 
-                p = nextline(p);
+                p = nextLine(p, end);
                 if (std::sscanf(p, "DEPTH %i", &channels) < 1)
                     MANGO_EXCEPTION(ID"Incorrect depth");
 
-                p = nextline(p);
+                p = nextLine(p, end);
                 if (std::sscanf(p, "MAXVAL %i", &maxvalue) < 1)
                     MANGO_EXCEPTION(ID"Incorrect maxval");
 
-                p = nextline(p);
+                p = nextLine(p, end);
                 if (std::sscanf(p, "TUPLTYPE %s", type) > 0)
                 {
+                    debugPrint("  tupltype: %s\n", type);
                     /*
                     if (!strncmp(type, "BLACKANDWHITE_ALPHA", strlen("BLACKANDWHITE_ALPHA")))
                     {
@@ -96,9 +134,10 @@ namespace
                     */
                 }
 
-                p = nextline(p);
+                p = nextLine(p, end);
                 if (std::strncmp(p, "ENDHDR", 6))
                     MANGO_EXCEPTION(ID"Incorrect endhdr");
+#endif
             }
             else
             {
@@ -107,6 +146,7 @@ namespace
                     ascii = true;
                     channels = 1;
                     maxvalue = 1;
+                    invert = 0xff;
                 }
                 else if (!std::strncmp(p, "P2", 2))
                 {
@@ -122,6 +162,7 @@ namespace
                 {
                     channels = 1;
                     maxvalue = 1;
+                    invert = 0xff;
                 }
                 else if (!std::strncmp(p, "P5", 2))
                 {
@@ -136,17 +177,26 @@ namespace
                     MANGO_EXCEPTION(ID"Incorrect header magic (%s)", p);
                 }
 
-                p = nextline(p);
-                if (std::sscanf(p, "%i %i", &width, &height) < 2)
-                    MANGO_EXCEPTION(ID"Incorrect header (missing dimension fields)");
+                p += 3; // skip header magic
+
+                p = nextValue(width, p, end);
+                if (!p)
+                    MANGO_EXCEPTION(ID"Incorrect header.");
+
+                p = nextValue(height, p, end);
+                if (!p)
+                    MANGO_EXCEPTION(ID"Incorrect header.");
 
                 if (!maxvalue)
                 {
-                    p = nextline(p);
-                    if (std::sscanf(p, "%i", &maxvalue) < 1)
-                        MANGO_EXCEPTION(ID"Incorrect header (missing max value)");
+                    p = nextValue(maxvalue, p, end);
+                    if (!p)
+                        MANGO_EXCEPTION(ID"Incorrect header.");
                 }
             }
+
+            debugPrint("  image: %d x %d, channels: %d\n", width, height, channels);
+            debugPrint("  maxvalue: %d\n", maxvalue);
 
             if (maxvalue < 1 || maxvalue > 65535)
                 MANGO_EXCEPTION(ID"Incorrect maxvalue");
@@ -200,13 +250,14 @@ namespace
             return header;
         }
 
-        void decode_matching(Surface& dest)
+        bool decode_matching(Surface& dest)
         {
             const char* p = m_header.data;
             const char* end = reinterpret_cast<const char *>(m_memory.address + m_memory.size);
 
-    		p = nextline(p);
             const int xcount = m_header.width * m_header.channels;
+            int maxvalue = m_header.maxvalue;
+            u8 invert = m_header.invert;
 
             if (m_header.ascii)
             {
@@ -216,21 +267,50 @@ namespace
 
                     for (int x = 0; x < xcount; ++x)
                     {
-                        int value = std::atoi(p);
-                        image[x] = u8(value * 255 / m_header.maxvalue);
-
-                        for ( ; !std::isspace(*p++); )
+                        int value;
+                        p = nextValue(value, p, end);
+                        if (!p)
                         {
+                            return false;
                         }
 
-                        if (p >= end)
-                            break;
+                        image[x] = u8(value * 255 / maxvalue) ^ invert;
                     }
                 }
             }
             else
             {
-                if (m_header.maxvalue <= 255)
+                if (m_header.invert)
+                {
+                    for (int y = 0; y < m_header.height; ++y)
+                    {
+                        u8* image = dest.address<u8>(0, y);
+
+                        // 1 bit data is byte aligned; reset data register
+                        u8 data = 0;
+                        int size = 0;
+
+                        for (int x = 0; x < xcount; ++x)
+                        {
+                            if (!size)
+                            {
+                                // out of data; fetch a byte
+                                data = *p++;
+                                size = 8;
+                            }
+
+                            // extract one bit in reverse order (MSB-first)
+                            --size;
+                            u8 sample = (data >> size) & 1;
+
+                            // invert the sample
+                            // 0 --> 255
+                            // 1 --> 0
+                            image[x] = sample + 0xff;
+                        }
+                    }
+                }
+                else if (m_header.maxvalue <= 255)
                 {
                     for (int y = 0; y < m_header.height; ++y)
                     {
@@ -255,6 +335,8 @@ namespace
                     }
                 }
             }
+
+            return true;
         }
 
         void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
@@ -268,12 +350,16 @@ namespace
                 dest.width >= m_header.width &&
                 dest.height >= m_header.height)
             {
-                decode_matching(dest);
+                bool status = decode_matching(dest);
+                if (!status)
+                    MANGO_EXCEPTION(ID"Decoding error.");
             }
             else
             {
                 Bitmap temp(m_header.width, m_header.height, m_header.format);
-                decode_matching(temp);
+                bool status = decode_matching(temp);
+                if (!status)
+                    MANGO_EXCEPTION(ID"Decoding error.");
                 dest.blit(0, 0, temp);
             }
         }
@@ -296,6 +382,7 @@ namespace mango
         registerImageDecoder(createInterface, ".pgm");
         registerImageDecoder(createInterface, ".ppm");
         registerImageDecoder(createInterface, ".pam");
+        registerImageDecoder(createInterface, ".pfm");
     }
 
 } // namespace mango
