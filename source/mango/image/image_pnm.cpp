@@ -311,6 +311,8 @@ namespace
             }
             else if (m_header.is_float)
             {
+                // TODO: Don't convert float color components to u8
+
                 if (m_header.endian < 0)
                 {
                     LittleEndianPointer e = (u8*) p;
@@ -321,9 +323,8 @@ namespace
 
                         for (int x = 0; x < xcount; ++x)
                         {
-                            float f = e.read32f();
-                            f = clamp(f, 0.0f, 1.0f) * 255.0f;
-                            image[x] = u8(f);
+                            float s = e.read32f();
+                            image[x] = u8(clamp(s, 0.0f, 1.0f) * 255.0f);
                         }
                     }
                 }
@@ -337,9 +338,8 @@ namespace
 
                         for (int x = 0; x < xcount; ++x)
                         {
-                            float f = e.read32f();
-                            f = clamp(f, 0.0f, 1.0f) * 255.0f;
-                            image[x] = u8(f);
+                            float s = e.read32f();
+                            image[x] = u8(clamp(s, 0.0f, 1.0f) * 255.0f);
                         }
                     }
                 }
