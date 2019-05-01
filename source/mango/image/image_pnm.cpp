@@ -37,10 +37,12 @@ namespace
         for (;;)
         {
             if (p >= end)
-                return nullptr;
+            {
+                MANGO_EXCEPTION(ID"Decoding error (out of data).");
+            }
 
             char c = *p;
-            if (std::isdigit(c))
+            if (std::isdigit(c) || c == '-')
                 break;
 
             if (c == '#')
@@ -54,6 +56,22 @@ namespace
         return n + 1;
     }
 
+    const char* nextLine(const char* p, const char* end)
+    {
+        for (;;)
+        {
+            if (p >= end)
+            {
+                MANGO_EXCEPTION(ID"Decoding error (out of data).");
+            }
+
+            char c = *p++;
+            if (c == '\n')
+                break;
+        }
+        return p;
+    }
+
     // ------------------------------------------------------------
     // HeaderPNM
     // ------------------------------------------------------------
@@ -64,9 +82,11 @@ namespace
 		int height;
 		int channels;
 		int maxvalue;
+        int endian;
 
 		Format format;
-		bool ascii;
+		bool is_ascii;
+        bool is_float;
         const char* data;
         u8 invert;
 
@@ -75,7 +95,9 @@ namespace
             , height(0)
             , channels(0)
             , maxvalue(0)
-            , ascii(false)
+            , endian(0)
+            , is_ascii(false)
+            , is_float(false)
             , data(nullptr)
             , invert(0)
         {
@@ -84,14 +106,32 @@ namespace
 
             debugPrint("[Header: %c%c]\n", p[0], p[1]);
 
-            if (!std::strncmp(p, "PF\n", 3))
+            if (!std::strncmp(p, "Pf\n", 3))
             {
-                // not supported
+                p = nextLine(p, end);
+                p = nextValue(width, p, end);
+                p = nextValue(height, p, end);
+                p = nextValue(endian, p, end);
+                p = nextLine(p, end);
+
+                channels = 1;
+                maxvalue = 255;
+                is_float = true;
+            }
+            else if (!std::strncmp(p, "PF\n", 3))
+            {
+                p = nextLine(p, end);
+                p = nextValue(width, p, end);
+                p = nextValue(height, p, end);
+                p = nextValue(endian, p, end);
+                p = nextLine(p, end);
+
+                channels = 3;
+                maxvalue = 255;
+                is_float = true;
             }
             else if (!std::strncmp(p, "P7\n", 3))
             {
-                // not supported
-#if 0
                 char type[100];
 
                 p = nextLine(p, end);
@@ -137,25 +177,24 @@ namespace
                 p = nextLine(p, end);
                 if (std::strncmp(p, "ENDHDR", 6))
                     MANGO_EXCEPTION(ID"Incorrect endhdr");
-#endif
             }
             else
             {
                 if (!std::strncmp(p, "P1", 2))
                 {
-                    ascii = true;
+                    is_ascii = true;
                     channels = 1;
                     maxvalue = 1;
                     invert = 0xff;
                 }
                 else if (!std::strncmp(p, "P2", 2))
                 {
-                    ascii = true;
+                    is_ascii = true;
                     channels = 1;
                 }
                 else if (!std::strncmp(p, "P3", 2))
                 {
-                    ascii = true;
+                    is_ascii = true;
                     channels = 3;
                 }
                 else if (!std::strncmp(p, "P4", 2))
@@ -178,20 +217,12 @@ namespace
                 }
 
                 p += 3; // skip header magic
-
                 p = nextValue(width, p, end);
-                if (!p)
-                    MANGO_EXCEPTION(ID"Incorrect header.");
-
                 p = nextValue(height, p, end);
-                if (!p)
-                    MANGO_EXCEPTION(ID"Incorrect header.");
 
                 if (!maxvalue)
                 {
                     p = nextValue(maxvalue, p, end);
-                    if (!p)
-                        MANGO_EXCEPTION(ID"Incorrect header.");
                 }
             }
 
@@ -259,7 +290,7 @@ namespace
             int maxvalue = m_header.maxvalue;
             u8 invert = m_header.invert;
 
-            if (m_header.ascii)
+            if (m_header.is_ascii)
             {
                 for (int y = 0; y < m_header.height; ++y)
                 {
@@ -275,6 +306,41 @@ namespace
                         }
 
                         image[x] = u8(value * 255 / maxvalue) ^ invert;
+                    }
+                }
+            }
+            else if (m_header.is_float)
+            {
+                if (m_header.endian < 0)
+                {
+                    LittleEndianPointer e = (u8*) p;
+
+                    for (int y = 0; y < m_header.height; ++y)
+                    {
+                        u8* image = dest.address<u8>(0, m_header.height - 1 - y);
+
+                        for (int x = 0; x < xcount; ++x)
+                        {
+                            float f = e.read32f();
+                            f = clamp(f, 0.0f, 1.0f) * 255.0f;
+                            image[x] = u8(f);
+                        }
+                    }
+                }
+                else
+                {
+                    BigEndianPointer e = (u8*) p;
+
+                    for (int y = 0; y < m_header.height; ++y)
+                    {
+                        u8* image = dest.address<u8>(0, m_header.height - 1 - y);
+
+                        for (int x = 0; x < xcount; ++x)
+                        {
+                            float f = e.read32f();
+                            f = clamp(f, 0.0f, 1.0f) * 255.0f;
+                            image[x] = u8(f);
+                        }
                     }
                 }
             }
@@ -350,16 +416,12 @@ namespace
                 dest.width >= m_header.width &&
                 dest.height >= m_header.height)
             {
-                bool status = decode_matching(dest);
-                if (!status)
-                    MANGO_EXCEPTION(ID"Decoding error.");
+                decode_matching(dest);
             }
             else
             {
                 Bitmap temp(m_header.width, m_header.height, m_header.format);
-                bool status = decode_matching(temp);
-                if (!status)
-                    MANGO_EXCEPTION(ID"Decoding error.");
+                decode_matching(temp);
                 dest.blit(0, 0, temp);
             }
         }
