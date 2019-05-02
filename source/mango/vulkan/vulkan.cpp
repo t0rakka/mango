@@ -938,7 +938,7 @@ namespace vulkan {
 			{ Format(16, Format::SNORM, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
 			{ Format(16, Format::UINT, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
 			{ Format(16, Format::SINT, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
-			{ Format(16, Format::FP16, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+			{ Format(16, Format::FLOAT16, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
 
 			{ Format(32, Format::UNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
 			{ Format(32, Format::SNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
@@ -946,7 +946,7 @@ namespace vulkan {
 			{ Format(32, Format::SNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
 			{ Format(32, Format::UINT, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
 			{ Format(32, Format::SINT, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
-			{ Format(32, Format::FP16, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+			{ Format(32, Format::FLOAT16, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
 
 			{ Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
 			{ Format(48, Format::SNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
@@ -954,7 +954,7 @@ namespace vulkan {
 			{ Format(48, Format::SNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
 			{ Format(48, Format::UINT, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
 			{ Format(48, Format::SINT, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
-			{ Format(48, Format::FP16, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+			{ Format(48, Format::FLOAT16, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
 
 			{ Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
 			{ Format(64, Format::SNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
@@ -962,7 +962,7 @@ namespace vulkan {
 			{ Format(64, Format::SNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
 			{ Format(64, Format::UINT, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
 			{ Format(64, Format::SINT, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
-			{ Format(64, Format::FP16, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+			{ Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
 
 			{ Format(32, Format::UINT, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
 			{ Format(32, Format::SINT, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
@@ -982,19 +982,19 @@ namespace vulkan {
 
 			{ Format(64, Format::UINT, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
 			{ Format(64, Format::SINT, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
-			{ Format(64, Format::FP64, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
+			{ Format(64, Format::FLOAT64, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
 
 			{ Format(128, Format::UINT, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
 			{ Format(128, Format::SINT, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
-			{ Format(128, Format::FP64, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
+			{ Format(128, Format::FLOAT64, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
 
 			{ Format(192, Format::UINT, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
 			{ Format(192, Format::SINT, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
-			{ Format(192, Format::FP64, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
+			{ Format(192, Format::FLOAT64, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
 
 			{ Format(256, Format::UINT, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
 			{ Format(256, Format::SINT, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
-			{ Format(256, Format::FP64, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
+			{ Format(256, Format::FLOAT64, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
 
 			{ FORMAT_NONE, TextureCompression::R11F_G11F_B10F },
 			{ FORMAT_NONE, TextureCompression::RGB9_E5 },
