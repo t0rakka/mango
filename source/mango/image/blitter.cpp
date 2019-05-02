@@ -258,6 +258,7 @@ namespace
         return bits;
     }
 
+    /*
     template <typename FloatType>
     inline u32 floatToByte(FloatType sample)
     {
@@ -265,6 +266,7 @@ namespace
         v = clamp(v, 0.0f, 1.0f);
         return u32(v * 255.0f + 0.5f);
     }
+    */
 
     inline u32 packFloat(u32 mask, float v)
     {
@@ -737,7 +739,7 @@ namespace
         {
             u32 v = s[x];
             u32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
-            d[x] = static_cast<u16>(u);
+            d[x] = u16(u);
         }
     }
 
@@ -748,7 +750,7 @@ namespace
         {
             u32 v = s[x];
             u32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) | ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
-            d[x] = static_cast<u16>(u);
+            d[x] = u16(u);
         }
     }
 
@@ -759,7 +761,7 @@ namespace
         {
             u32 v = s[x];
             u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) | ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
-            d[x] = static_cast<u16>(u);
+            d[x] = u16(u);
         }
     }
 
@@ -769,7 +771,7 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             u32 v = s[x];
-            d[x] = static_cast<u24>(v * 65793);
+            d[x] = u24(v * 0x010101);
         }
     }
 
@@ -779,7 +781,7 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             u32 v = s[x];
-            d[x] = 0xff000000 | v * 65793;
+            d[x] = 0xff000000 | v * 0x010101;
         }
     }
 

@@ -264,9 +264,9 @@ namespace mango
     {
     }
 
-    Surface::Surface(int width, int height, const Format& format, int stride, u8* image)
+    Surface::Surface(int width, int height, const Format& format, int stride, void* image)
         : format(format)
-        , image(image)
+        , image(reinterpret_cast<u8*>(image))
         , stride(stride)
         , width(width)
         , height(height)
