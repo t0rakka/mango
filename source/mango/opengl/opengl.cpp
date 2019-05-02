@@ -40,18 +40,18 @@ namespace
 
     const InternalFormat g_formatTable[] =
     {
-        { 0x803B, MAKE_FORMAT(  8, UNORM, A,  4, 0, 0, 0), false, "ALPHA4" },
-        { 0x803C, MAKE_FORMAT(  8, UNORM, A,  8, 0, 0, 0), false, "ALPHA8" },
-        { 0x803D, MAKE_FORMAT( 16, UNORM, A, 12, 0, 0, 0), false, "ALPHA12" },
-        { 0x803D, MAKE_FORMAT( 16, UNORM, A, 16, 0, 0, 0), false, "ALPHA16" },
-        { 0x8D90, MAKE_FORMAT(  8, SINT,  A,  8, 0, 0, 0), false, "ALPHA8I" },
-        { 0x8D7E, MAKE_FORMAT(  8, UINT,  A,  8, 0, 0, 0), false, "ALPHA8UI" },
-        { 0x8D8A, MAKE_FORMAT( 16, SINT,  A, 16, 0, 0, 0), false, "ALPHA16I" },
-        { 0x8D78, MAKE_FORMAT( 16, UINT,  A, 16, 0, 0, 0), false, "ALPHA16UI" },
-        { 0x881C, MAKE_FORMAT( 16, FP16,  A, 16, 0, 0, 0), false, "ALPHA16F" },
-        { 0x8D84, MAKE_FORMAT( 32, SINT,  A, 32, 0, 0, 0), false, "ALPHA32I" },
-        { 0x8D72, MAKE_FORMAT( 32, UINT,  A, 32, 0, 0, 0), false, "ALPHA32UI" },
-        { 0x8816, MAKE_FORMAT( 32, FP32,  A, 32, 0, 0, 0), false, "ALPHA32F" },
+        { 0x803B, MAKE_FORMAT(  8, UNORM,   A,  4, 0, 0, 0), false, "ALPHA4" },
+        { 0x803C, MAKE_FORMAT(  8, UNORM,   A,  8, 0, 0, 0), false, "ALPHA8" },
+        { 0x803D, MAKE_FORMAT( 16, UNORM,   A, 12, 0, 0, 0), false, "ALPHA12" },
+        { 0x803D, MAKE_FORMAT( 16, UNORM,   A, 16, 0, 0, 0), false, "ALPHA16" },
+        { 0x8D90, MAKE_FORMAT(  8, SINT,    A,  8, 0, 0, 0), false, "ALPHA8I" },
+        { 0x8D7E, MAKE_FORMAT(  8, UINT,    A,  8, 0, 0, 0), false, "ALPHA8UI" },
+        { 0x8D8A, MAKE_FORMAT( 16, SINT,    A, 16, 0, 0, 0), false, "ALPHA16I" },
+        { 0x8D78, MAKE_FORMAT( 16, UINT,    A, 16, 0, 0, 0), false, "ALPHA16UI" },
+        { 0x881C, MAKE_FORMAT( 16, FLOAT16, A, 16, 0, 0, 0), false, "ALPHA16F" },
+        { 0x8D84, MAKE_FORMAT( 32, SINT,    A, 32, 0, 0, 0), false, "ALPHA32I" },
+        { 0x8D72, MAKE_FORMAT( 32, UINT,    A, 32, 0, 0, 0), false, "ALPHA32UI" },
+        { 0x8816, MAKE_FORMAT( 32, FLOAT32, A, 32, 0, 0, 0), false, "ALPHA32F" },
 
         { 0x8229, MAKE_FORMAT(  8, UNORM, R,     8,  0,  0,  0), false, "R8" },
         { 0x822A, MAKE_FORMAT( 16, UNORM, R,    16,  0,  0,  0), false, "R16" },
@@ -120,15 +120,15 @@ namespace
         { 0x8D83, MAKE_FORMAT( 96, SINT,  RGB,  32, 32, 32,  0), false, "RGB32I" },
         { 0x8D82, MAKE_FORMAT(128, SINT,  RGBA, 32, 32, 32, 32), false, "RGBA32I" },
 
-        { 0x822D, MAKE_FORMAT( 16, FP16,  R,    16,  0,  0,  0), false, "R16F" },
-        { 0x822F, MAKE_FORMAT( 32, FP16,  RG,   16, 16,  0,  0), false, "RG16F" },
-        { 0x881B, MAKE_FORMAT( 48, FP16,  RGB,  16, 16, 16,  0), false, "RGB16F" },
-        { 0x881A, MAKE_FORMAT( 64, FP16,  RGBA, 16, 16, 16, 16), false, "RGBA16F" },
+        { 0x822D, MAKE_FORMAT( 16, FLOAT16, R,    16,  0,  0,  0), false, "R16F" },
+        { 0x822F, MAKE_FORMAT( 32, FLOAT16, RG,   16, 16,  0,  0), false, "RG16F" },
+        { 0x881B, MAKE_FORMAT( 48, FLOAT16, RGB,  16, 16, 16,  0), false, "RGB16F" },
+        { 0x881A, MAKE_FORMAT( 64, FLOAT16, RGBA, 16, 16, 16, 16), false, "RGBA16F" },
 
-        { 0x822E, MAKE_FORMAT( 32, FP32,  R,    32,  0,  0,  0), false, "R32F" },
-        { 0x8230, MAKE_FORMAT( 64, FP32,  RG,   32, 32,  0,  0), false, "RG32F" },
-        { 0x8815, MAKE_FORMAT( 96, FP32,  RGB,  32, 32, 32,  0), false, "RGB32F" },
-        { 0x8814, MAKE_FORMAT(128, FP32,  RGBA, 32, 32, 32, 32), false, "RGBA32F" },
+        { 0x822E, MAKE_FORMAT( 32, FLOAT32, R,    32,  0,  0,  0), false, "R32F" },
+        { 0x8230, MAKE_FORMAT( 64, FLOAT32, RG,   32, 32,  0,  0), false, "RG32F" },
+        { 0x8815, MAKE_FORMAT( 96, FLOAT32, RGB,  32, 32, 32,  0), false, "RGB32F" },
+        { 0x8814, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "RGBA32F" },
     };
 
 } // namespace

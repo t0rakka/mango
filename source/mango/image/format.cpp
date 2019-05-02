@@ -102,19 +102,24 @@ namespace mango
         return bits >> 3;
     }
 
-    bool Format::alpha() const
+    bool Format::isAlpha() const
     {
         // check alpha channel size
         return size[ALPHA] > 0;
     }
 
-    bool Format::luminance() const
+    bool Format::isLuminance() const
     {
         // check if red, green and blue channels are identical
         u32 red   = mask(RED);
         u32 green = mask(GREEN);
         u32 blue  = mask(BLUE);
         return (red != 0) && (red == green) && (red == blue);
+    }
+
+    bool Format::isFloat() const
+    {
+        return (type & 0x0100) != 0;
     }
 
     u32 Format::mask(int component) const
@@ -150,9 +155,9 @@ namespace mango
             case SNORM:
             case UINT:
             case SINT:
-            case FP16:
-			case FP32:
-			case FP64:
+            case FLOAT16:
+			case FLOAT32:
+			case FLOAT64:
 				// not supported
                 break;
         }

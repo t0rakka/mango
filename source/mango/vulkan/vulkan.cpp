@@ -966,19 +966,19 @@ namespace vulkan {
 
 			{ Format(32, Format::UINT, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
 			{ Format(32, Format::SINT, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
-			{ Format(32, Format::FP32, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
+			{ Format(32, Format::FLOAT32, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
 
 			{ Format(64, Format::UINT, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
 			{ Format(64, Format::SINT, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
-			{ Format(64, Format::FP32, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
+			{ Format(64, Format::FLOAT32, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
 
 			{ Format(96, Format::UINT, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
 			{ Format(96, Format::SINT, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
-			{ Format(96, Format::FP32, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
+			{ Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
 
 			{ Format(128, Format::UINT, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
 			{ Format(128, Format::SINT, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
-			{ Format(128, Format::FP32, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
+			{ Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
 
 			{ Format(64, Format::UINT, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
 			{ Format(64, Format::SINT, Format::R, 64, 0, 0, 0), TextureCompression::NONE },

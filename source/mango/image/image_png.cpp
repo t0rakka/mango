@@ -1944,9 +1944,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
         Format format;
 
         // select png format
-        if (surface.format.luminance())
+        if (surface.format.isLuminance())
         {
-            if (surface.format.alpha())
+            if (surface.format.isAlpha())
             {
                 color_type = COLOR_TYPE_IA;
 

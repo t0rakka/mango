@@ -68,16 +68,16 @@ namespace
 
 #ifdef MANGO_ENABLE_LICENSE_MICROSOFT
         // RGTC
-        { 4, 4,  8, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc4u, encode_block_bc4u, TextureCompression::RGTC1_RED },
-        { 4, 4,  8, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc4s, encode_block_bc4s, TextureCompression::RGTC1_SIGNED_RED },
-        { 4, 4, 16, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc5u, encode_block_bc5u, TextureCompression::RGTC2_RG },
-        { 4, 4, 16, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc5s, encode_block_bc5s, TextureCompression::RGTC2_SIGNED_RG },
+        { 4, 4,  8, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc4u, encode_block_bc4u, TextureCompression::RGTC1_RED },
+        { 4, 4,  8, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc4s, encode_block_bc4s, TextureCompression::RGTC1_SIGNED_RED },
+        { 4, 4, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc5u, encode_block_bc5u, TextureCompression::RGTC2_RG },
+        { 4, 4, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc5s, encode_block_bc5s, TextureCompression::RGTC2_SIGNED_RG },
 
         // BPTC
-        { 4, 4, 16, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc6hu, encode_block_bc6hu, TextureCompression::BPTC_RGB_UNSIGNED_FLOAT },
-        { 4, 4, 16, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc6hs, encode_block_bc6hs, TextureCompression::BPTC_RGB_SIGNED_FLOAT },
-        { 4, 4, 16, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc7, encode_block_bc7, TextureCompression::BPTC_RGBA_UNORM },
-        { 4, 4, 16, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_bc7, encode_block_bc7, TextureCompression::BPTC_SRGB_ALPHA_UNORM },
+        { 4, 4, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc6hu, encode_block_bc6hu, TextureCompression::BPTC_RGB_UNSIGNED_FLOAT },
+        { 4, 4, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc6hs, encode_block_bc6hs, TextureCompression::BPTC_RGB_SIGNED_FLOAT },
+        { 4, 4, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc7, encode_block_bc7, TextureCompression::BPTC_RGBA_UNORM },
+        { 4, 4, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc7, encode_block_bc7, TextureCompression::BPTC_SRGB_ALPHA_UNORM },
 #endif
 
         // IMG_texture_compression_pvrtc
@@ -166,9 +166,9 @@ namespace
 #endif
 
         // Packed Pixel
-        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_rgb9e5, nullptr, TextureCompression::RGB9_E5 },
-        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_r11f_g11f_b10f, nullptr, TextureCompression::R11F_G11F_B10F },
-        { 1, 1, 4, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), decode_block_r10f_g11f_b11f, nullptr, TextureCompression::R10F_G11F_B11F },
+        { 1, 1, 4, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_rgb9e5, nullptr, TextureCompression::RGB9_E5 },
+        { 1, 1, 4, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_r11f_g11f_b10f, nullptr, TextureCompression::R11F_G11F_B10F },
+        { 1, 1, 4, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_r10f_g11f_b11f, nullptr, TextureCompression::R10F_G11F_B11F },
         { 2, 1, 4, FORMAT_R8G8B8A8, decode_block_grgb8, nullptr, TextureCompression::G8R8G8B8 },
         { 2, 1, 4, FORMAT_R8G8B8A8, decode_block_rgbg8, nullptr, TextureCompression::R8G8B8G8 },
 		{ 2, 1, 4, FORMAT_R8G8B8A8, decode_block_uyvy, nullptr, TextureCompression::UYVY },

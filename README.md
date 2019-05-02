@@ -126,7 +126,7 @@ The pixelformat conversion code, "the blitter" used to be JIT-compiled using a r
 
     u32 src = 0x000000ff; // unorm component's source bitmask
     u32 dst = 0x00ffff00; // we want to convert to this mask
-    double scale = double(dst) / src; // double because fp32 can only handle 24 bits of unorm w/o precision loss
+    double scale = double(dst) / src; // double because float can only handle 24 bits of unorm w/o precision loss
 
 It's magic, but multiplying any value in the src format by this scale will yield the correct normalized value in the dst format. The largest cost here is the conversion between integer and floating-point but it can be handled efficiently. Our SIMD implementation is using AoS layout so each pixel is individually processed. This approach is very wasteful and round-trip to floating-point format increases processing overhead. The work for improved blitter is on-going and it is built around two cornerstone principles: 
 

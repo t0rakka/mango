@@ -187,21 +187,21 @@ namespace
     {
         { 0, FORMAT_NONE, false, "UNKNOWN" },
         { 0, MAKE_FORMAT(128, NONE, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_TYPELESS" },
-        { 0, MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_FLOAT" },
+        { 0, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_FLOAT" },
         { 0, MAKE_FORMAT(128, UINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_UINT" },
         { 0, MAKE_FORMAT(128, SINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_SINT" },
         { 0, MAKE_FORMAT(96, NONE, RGB, 32, 32, 32, 0), false, "R32G32B32_TYPELESS" },
-        { 0, MAKE_FORMAT(96, FP32, RGB, 32, 32, 32, 0), false, "R32G32B32_FLOAT" },
+        { 0, MAKE_FORMAT(96, FLOAT32, RGB, 32, 32, 32, 0), false, "R32G32B32_FLOAT" },
         { 0, MAKE_FORMAT(96, UINT, RGB, 32, 32, 32, 0), false, "R32G32B32_UINT" },
         { 0, MAKE_FORMAT(96, SINT, RGB, 32, 32, 32, 0), false, "R32G32B32_SINT" },
         { 0, MAKE_FORMAT(64, NONE, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_TYPELESS" },
-        { 0, MAKE_FORMAT(64, FP16, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_FLOAT" },
+        { 0, MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_FLOAT" },
         { 0, MAKE_FORMAT(64, UNORM, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_UNORM" },
         { 0, MAKE_FORMAT(64, UINT, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_UINT" },
         { 0, MAKE_FORMAT(64, SNORM, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_SNORM" },
         { 0, MAKE_FORMAT(64, SINT, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_SINT" },
         { 0, MAKE_FORMAT(64, NONE, RG, 32, 32, 0, 0), false, "R32G32_TYPELESS" },
-        { 0, MAKE_FORMAT(64, FP32, RG, 32, 32, 0, 0), false, "R32G32_FLOAT" },
+        { 0, MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0), false, "R32G32_FLOAT" },
         { 0, MAKE_FORMAT(64, UINT, RG, 32, 32, 0, 0), false, "R32G32_UINT" },
         { 0, MAKE_FORMAT(64, SINT, RG, 32, 32, 0, 0), false, "R32G32_SINT" },
         { 0, FORMAT_NONE, false, "R32G8X24_TYPELESS" }, // not supported
@@ -219,14 +219,14 @@ namespace
         { 0, MAKE_FORMAT(32, SNORM, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_SNORM" },
         { 0, MAKE_FORMAT(32, SINT, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_SINT" },
         { 0, MAKE_FORMAT(32, NONE, RG, 16, 16, 0, 0), false, "R16G16_TYPELESS" },
-        { 0, MAKE_FORMAT(32, FP16, RG, 16, 16, 0, 0), false, "R16G16_FLOAT" },
+        { 0, MAKE_FORMAT(32, FLOAT16, RG, 16, 16, 0, 0), false, "R16G16_FLOAT" },
         { 0, MAKE_FORMAT(32, UNORM, RG, 16, 16, 0, 0), false, "R16G16_UNORM" },
         { 0, MAKE_FORMAT(32, UINT, RG, 16, 16, 0, 0), false, "R16G16_UINT" },
         { 0, MAKE_FORMAT(32, SNORM, RG, 16, 16, 0, 0), false, "R16G16_SNORM" },
         { 0, MAKE_FORMAT(32, SINT, RG, 16, 16, 0, 0), false, "R16G16_SINT" },
         { 0, MAKE_FORMAT(32, NONE, R, 32, 0, 0, 0), false, "R32_TYPELESS" },
         { 0, FORMAT_NONE, false, "D32_FLOAT" }, // not supported
-        { 0, MAKE_FORMAT(32, FP32, R, 32, 0, 0, 0), false, "R32_FLOAT" },
+        { 0, MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0), false, "R32_FLOAT" },
         { 0, MAKE_FORMAT(32, UINT, R, 32, 0, 0, 0), false, "R32_UINT" },
         { 0, MAKE_FORMAT(32, SINT, R, 32, 0, 0, 0), false, "R32_SINT" },
         { 0, MAKE_FORMAT(32, NONE, RG, 24, 8, 0, 0), false, "R24G8_TYPELESS" },
@@ -239,7 +239,7 @@ namespace
         { 0, MAKE_FORMAT(16, SNORM, RG, 8, 8, 0, 0), false, "R8G8_SNORM" },
         { 0, MAKE_FORMAT(16, SINT, RG, 8, 8, 0, 0), false, "R8G8_SINT" },
         { 0, MAKE_FORMAT(16, NONE, R, 16, 0, 0, 0), false, "R16_TYPELESS" },
-        { 0, MAKE_FORMAT(16, FP16, R, 16, 0, 0, 0), false, "R16_FLOAT" },
+        { 0, MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0), false, "R16_FLOAT" },
         { 0, FORMAT_NONE, false, "D16_UNORM" }, // not supported
         { 0, MAKE_FORMAT(16, UNORM, R, 16, 0, 0, 0), false, "R16_UNORM" },
         { 0, MAKE_FORMAT(16, UINT, R, 16, 0, 0, 0), false, "R16_UINT" },
@@ -458,37 +458,37 @@ namespace
 					break;
 
                 case FOURCC_R16F:
-                    format = MAKE_FORMAT(16, FP16, R, 16, 0, 0, 0);
+                    format = MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0);
                     compression = TextureCompression::NONE;
                     fourCC = 0;
                     break;
 
                 case FOURCC_GR16F:
-                    format = MAKE_FORMAT(32, FP16, RG, 16, 16, 0, 0);
+                    format = MAKE_FORMAT(32, FLOAT16, RG, 16, 16, 0, 0);
                     compression = TextureCompression::NONE;
                     fourCC = 0;
                     break;
 
                 case FOURCC_ABGR16F:
-                    format = MAKE_FORMAT(64, FP16, RGBA, 16, 16, 16, 16);
+                    format = MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16);
                     compression = TextureCompression::NONE;
                     fourCC = 0;
                     break;
 
                 case FOURCC_R32F:
-                    format = MAKE_FORMAT(32, FP32, R, 32, 0, 0, 0);
+                    format = MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0);
                     compression = TextureCompression::NONE;
                     fourCC = 0;
                     break;
 
                 case FOURCC_GR32F:
-                    format = MAKE_FORMAT(64, FP32, RG, 32, 32, 0, 0);
+                    format = MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0);
                     compression = TextureCompression::NONE;
                     fourCC = 0;
                     break;
 
                 case FOURCC_ABGR32F:
-                    format = MAKE_FORMAT(128, FP32, RGBA, 32, 32, 32, 32);
+                    format = MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32);
                     compression = TextureCompression::NONE;
                     fourCC = 0;
                     break;
@@ -738,8 +738,8 @@ namespace
 
                 switch (dxgi.format.type)
                 {
-                    case Format::FP16:
-                    case Format::FP32:
+                    case Format::FLOAT16:
+                    case Format::FLOAT32:
                     case Format::UNORM:
                         pixelFormat.format = dxgi.format;
                         break;
@@ -749,7 +749,7 @@ namespace
                     case Format::UINT:
                     case Format::SINT:
                     case Format::SNORM:
-					case Format::FP64:
+					case Format::FLOAT64:
 						// TODO: these WILL be supported in custom "DXGI Blitter"
                         MANGO_EXCEPTION(ID"DXGI format type not supported.");
                         break;

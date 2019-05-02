@@ -415,7 +415,7 @@ namespace
         MANGO_UNREFERENCED_PARAMETER(quality);
 
         // configure output
-        const bool isalpha = surface.format.alpha();
+        const bool isalpha = surface.format.isAlpha();
         const Format format = isalpha ? FORMAT_B8G8R8A8 : FORMAT_B8G8R8;
         const int width = surface.width;
         const int height = surface.height;

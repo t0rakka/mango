@@ -336,11 +336,11 @@ namespace
                 break;
             case KTX_FLOAT:
                 size = 32;
-                type = Format::FP32;
+                type = Format::FLOAT32;
                 break;
             case KTX_HALF_FLOAT:
                 size = 16;
-                type = Format::FP16;
+                type = Format::FLOAT16;
                 break;
 
             case KTX_UNSIGNED_BYTE_3_3_2:

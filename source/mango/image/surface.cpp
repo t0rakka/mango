@@ -353,7 +353,7 @@ namespace mango
                 break;
             }
 
-            case Format::FP16:
+            case Format::FLOAT16:
             {
                 float16 color[4];
                 int size = config_clear_color<float16>(color, format, red, green, blue, alpha);
@@ -366,7 +366,7 @@ namespace mango
                 break;
             }
 
-            case Format::FP32:
+            case Format::FLOAT32:
             {
                 float color[4];
                 int size = config_clear_color<float>(color, format, red, green, blue, alpha);

@@ -239,15 +239,15 @@ namespace
 				bits = format.bits;
 				break;
 		
-			case Format::FP16:
+			case Format::FLOAT16:
 				bits = BITS_FP16;
 				break;
 
-			case Format::FP32:
+			case Format::FLOAT32:
 				bits = BITS_FP32;
 				break;
 
-			case Format::FP64:
+			case Format::FLOAT64:
 				// TODO: support FP64
 				break;
 
@@ -363,7 +363,7 @@ namespace
         u32 alphaMask = df.mask(3);
 
         // if source format has alpha channel use computed alpha instead of the default
-        if (sf.alpha())
+        if (sf.isAlpha())
             alphaMask = 0;
 
         for (int y = 0; y < rect.height; ++y)
@@ -433,7 +433,6 @@ namespace
 
         const int components = std::min(4, blitter.components);
 
-        // TODO: initialize blitter variables; they are not configured for FP formats in the code yet!
         for (int i = 0; i < components; ++i)
         {
             int offset = blitter.component[i].offset;
@@ -448,6 +447,17 @@ namespace
                 stride[i] = blitter.sampleSize;
             }
         }
+
+#if 0
+        printf("components: %d\n", components);
+        for (int i = 0; i < components; ++i)
+        {
+            printf("  component[%d]:  .offset: %d,  .stride: %d \n",
+                i,
+                blitter.component[i].offset,
+                stride[i]);
+        }
+#endif
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -565,7 +575,7 @@ namespace
 
     Blitter::ConvertFunc convert_sse2(int modeMask)
     {
-        Blitter::ConvertFunc func = NULL;
+        Blitter::ConvertFunc func = nullptr;
 
         switch (modeMask)
         {
@@ -1072,7 +1082,10 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Blitter::Blitter(const Format& dest, const Format& source)
-    : srcFormat(source), destFormat(dest), custom(NULL), convertFunc(NULL)
+        : srcFormat(source)
+        , destFormat(dest)
+        , custom(nullptr)
+        , convertFunc(nullptr)
     {
         custom = find_custom_blitter(dest, source);
         if (custom)
@@ -1086,25 +1099,38 @@ namespace mango
         initMask = 0;
         copyMask = 0;
 
-        sampleSize = 0; // TODO
+        sampleSize = 0;
+        const int source_float_shift = source.type - Format::FLOAT16 + 4;
 
-        u64 cpuFlags = getCPUFlags();
-        bool sse2 = (cpuFlags & CPU_SSE2) != 0;
-
-        int component_bits = 0;
-        switch (source.type)
+        if (dest.isFloat() && source.isFloat())
         {
-            case Format::FP16:
-                component_bits = 16;
-                break;
-            case Format::FP32:
-                component_bits = 32;
-                break;
-            case Format::FP64:
-                component_bits = 64;
-                break;
-            default:
-                break;
+            for (int i = 0; i < 4; ++i)
+            {
+                if (dest.size[i])
+                {
+                    // not used in float to float blitting
+                    component[components].srcMask = 0;
+                    component[components].destMask = 0;
+                    component[components].scale = 1.0f;
+                    component[components].bias = 0.0f;
+
+                    component[components].constant = i == 3 ? 1.0f : 0.0f;
+                    component[components].offset = source.size[i] ? source.offset[i] >> source_float_shift : -1;
+
+                    if (source.size[i])
+                        ++sampleSize;
+                    ++components;
+                }
+            }
+
+            // select innerloop
+            int destBits = modeBits(dest);
+            int sourceBits = modeBits(source);
+            int modeMask = MAKE_MODEMASK(destBits, sourceBits);
+
+            convertFunc = convert_fpu(modeMask);
+
+            return;
         }
 
         for (int i = 0; i < 4; ++i)
@@ -1127,7 +1153,8 @@ namespace mango
                         component[components].scale = float(dest_mask) / float(src_mask);
                         component[components].bias = lsb * 0.5f;
                         component[components].constant = i == 3 ? 1.0f : 0.0f;
-                        component[components].offset = source.offset[i] >> component_bits;
+                        component[components].offset = source.offset[i] >> source_float_shift;
+
                         ++components;
                     }
                     else
@@ -1152,6 +1179,9 @@ namespace mango
                 }
             }
         }
+
+        u64 cpuFlags = getCPUFlags();
+        bool sse2 = (cpuFlags & CPU_SSE2) != 0;
 
         if (components < 2)
         {

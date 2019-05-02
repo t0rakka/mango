@@ -10,8 +10,19 @@
 
 namespace mango {
 
-    struct Format
+    class Format
     {
+    protected:
+        enum TypeFlags
+        {
+            TYPE_NORM   = 0x0020,
+            TYPE_INT    = 0x0040,
+            TYPE_FLOAT  = 0x0080,
+            TYPE_SIGNED = 0x0100,
+            TYPE_SRGB   = 0x0200,
+        };
+
+    public:
         enum Component : u32
         {
             RED   = 0,
@@ -93,15 +104,15 @@ namespace mango {
 
         enum Type : u32
         {
-            NONE   = 0,
-            SRGB   = 1,
-            UNORM  = 2,
-            SNORM  = 3,
-            UINT   = 4,
-            SINT   = 5,
-            FP16   = 6,
-            FP32   = 7,
-            FP64   = 8
+            NONE    = 0,
+            UNORM   = 1 | TYPE_NORM,
+            SNORM   = 2 | TYPE_NORM | TYPE_SIGNED,
+            SRGB    = 3 | TYPE_NORM | TYPE_SRGB,
+            UINT    = 4 | TYPE_INT,
+            SINT    = 5 | TYPE_INT   | TYPE_SIGNED,
+            FLOAT16 = 6 | TYPE_FLOAT | TYPE_SIGNED,
+            FLOAT32 = 7 | TYPE_FLOAT | TYPE_SIGNED,
+            FLOAT64 = 8 | TYPE_FLOAT | TYPE_SIGNED,
         };
 
         u32 bits;
@@ -138,8 +149,9 @@ namespace mango {
         bool operator < (const Format& format) const;
 
         int bytes() const;
-        bool alpha() const;
-        bool luminance() const;
+        bool isAlpha() const;
+        bool isLuminance() const;
+        bool isFloat() const;
         u32 mask(int component) const;
         u32 pack(float red, float green, float blue, float alpha) const;
     };
@@ -183,8 +195,8 @@ namespace mango {
     #define FORMAT_L16A16               Format(32, mango::Format::UNORM, ColorRGBA(16, 16, 16, 16), ColorRGBA(0, 0, 0, 16))
 
     // FLOAT / HALF luminance
-    #define FORMAT_L16F                 Format(16, mango::Format::FP16, ColorRGBA(16, 16, 16, 0), ColorRGBA(0, 0, 0, 0))
-    #define FORMAT_L32F                 Format(32, mango::Format::FP32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0))
+    #define FORMAT_L16F                 Format(16, mango::Format::FLOAT16, ColorRGBA(16, 16, 16, 0), ColorRGBA(0, 0, 0, 0))
+    #define FORMAT_L32F                 Format(32, mango::Format::FLOAT32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0))
 
     // ----------------------------------------------------------------------------
     // OpenGL packed formats
@@ -227,7 +239,7 @@ namespace mango {
     #define FORMAT_ABGR_EXT_UNSIGNED_SHORT_1_5_5_5_REV   Format(16, mango::Format::UNORM, mango::Format::ABGR, 5, 5, 5, 1)
 
     // FLOAT / HALF
-    #define FORMAT_RGBA16F                               Format(64,  mango::Format::FP16, mango::Format::RGBA, 16, 16, 16, 16)
-    #define FORMAT_RGBA32F                               Format(128, mango::Format::FP32, mango::Format::RGBA, 32, 32, 32, 32)
+    #define FORMAT_RGBA16F                               Format(64,  mango::Format::FLOAT16, mango::Format::RGBA, 16, 16, 16, 16)
+    #define FORMAT_RGBA32F                               Format(128, mango::Format::FLOAT32, mango::Format::RGBA, 32, 32, 32, 32)
 
 } // namespace mango

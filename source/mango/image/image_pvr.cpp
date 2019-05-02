@@ -385,22 +385,22 @@ namespace
                     // TODO
                     break;
                 case 0x30: // R 16F
-                    format = Format(16, Format::FP16, Format::R, 16, 0, 0, 0);
+                    format = Format(16, Format::FLOAT16, Format::R, 16, 0, 0, 0);
                     break;
                 case 0x31: // GR 1616F
-                    format = Format(32, Format::FP16, Format::RG, 16, 16, 0, 0);
+                    format = Format(32, Format::FLOAT16, Format::RG, 16, 16, 0, 0);
                     break;
                 case 0x32: // ABGR 16161616F
-                    format = Format(64, Format::FP16, Format::RGBA, 16, 16, 16, 16);
+                    format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
                     break;
                 case 0x33: // R 32F
-                    format = Format(32, Format::FP32, Format::R, 32, 0, 0, 0);
+                    format = Format(32, Format::FLOAT32, Format::R, 32, 0, 0, 0);
                     break;
                 case 0x34: // GR 3232F
-                    format = Format(64, Format::FP32, Format::RG, 32, 32, 0, 0);
+                    format = Format(64, Format::FLOAT32, Format::RG, 32, 32, 0, 0);
                     break;
                 case 0x35: // ABGR 32323232F
-                    format = Format(128, Format::FP32, Format::RGBA, 32, 32, 32, 32);
+                    format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
                     break;
                 case 0x36: // ETC
                     compression = TextureCompression::ETC1_RGB;
