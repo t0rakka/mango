@@ -33,12 +33,15 @@ namespace mango
 
         struct Component
         {
+            // integer components
             u32 srcMask;
             u32 destMask;
             float scale;
             float bias;
-            float constant; // TODO: configure
-            int offset; // TODO: configure
+
+            // float components
+            float constant;
+            int offset;
 
             u32 computePack(u32 s) const
             {

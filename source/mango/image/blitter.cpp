@@ -1091,6 +1091,22 @@ namespace mango
         u64 cpuFlags = getCPUFlags();
         bool sse2 = (cpuFlags & CPU_SSE2) != 0;
 
+        int component_bits = 0;
+        switch (source.type)
+        {
+            case Format::FP16:
+                component_bits = 16;
+                break;
+            case Format::FP32:
+                component_bits = 32;
+                break;
+            case Format::FP64:
+                component_bits = 64;
+                break;
+            default:
+                break;
+        }
+
         for (int i = 0; i < 4; ++i)
         {
             u32 src_mask = source.mask(i);
@@ -1110,6 +1126,8 @@ namespace mango
                         component[components].destMask = dest_mask;
                         component[components].scale = float(dest_mask) / float(src_mask);
                         component[components].bias = lsb * 0.5f;
+                        component[components].constant = i == 3 ? 1.0f : 0.0f;
+                        component[components].offset = source.offset[i] >> component_bits;
                         ++components;
                     }
                     else
@@ -1141,9 +1159,6 @@ namespace mango
             // the fpu can handle mask 0xffffffff where SSE will corrupt LSB when using 32 bit mask
             sse2 = false; // force fpu conversion
         }
-
-        //float constant; // TODO: configure
-        //int offset; // TODO: configure
 
         // select innerloop
         int destBits = modeBits(dest);
