@@ -120,24 +120,10 @@ namespace mango {
         ColorRGBA size;
         ColorRGBA offset;
 
-        Format()
-            : bits(0)
-            , type(NONE)
-            , size(0)
-            , offset(0)
-        {
-        }
-
-        Format(int bits, Type type, const ColorRGBA& size, const ColorRGBA& offset)
-            : bits(bits)
-            , type(type)
-            , size(size)
-            , offset(offset)
-        {
-        }
-
+        Format();
         explicit Format(int bits, u32 luminanceMask, u32 alphaMask);
         explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
+        explicit Format(int bits, Type type, ColorRGBA size, ColorRGBA offset);
         explicit Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3);
         Format(const Format& format) = default;
         ~Format() = default;

@@ -13,6 +13,14 @@ namespace mango
     // Format
     // ----------------------------------------------------------------------------
 
+    Format::Format()
+        : bits(0)
+        , type(NONE)
+        , size(0)
+        , offset(0)
+    {
+    }
+
     Format::Format(int bits, u32 luminanceMask, u32 alphaMask)
         : bits(bits)
         , type(UNORM)
@@ -45,6 +53,14 @@ namespace mango
         offset[1] = u8(u32_index_of_lsb(greenMask));
         offset[2] = u8(u32_index_of_lsb(blueMask));
         offset[3] = u8(u32_index_of_lsb(alphaMask));
+    }
+
+    Format::Format(int bits, Type type, ColorRGBA size, ColorRGBA offset)
+        : bits(bits)
+        , type(type)
+        , size(size)
+        , offset(offset)
+    {
     }
 
     Format::Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3)

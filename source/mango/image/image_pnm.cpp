@@ -232,14 +232,27 @@ namespace
             if (maxvalue < 1 || maxvalue > 65535)
                 MANGO_EXCEPTION(ID"Incorrect maxvalue");
 
-            switch (channels)
+            if (is_float)
             {
-                case 1: format = Format(8, 0xff, 0); break;
-                case 2: format = Format(16, 0x00ff, 0xff00); break;
-                case 3: format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
-                case 4: format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
-                default:
-                    MANGO_EXCEPTION(ID"Incorrect number of channels");
+                switch (channels)
+                {
+                    case 1: format = Format(32, Format::FLOAT32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0)); break;
+                    case 3: format = Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0); break;
+                    default:
+                        MANGO_EXCEPTION(ID"Incorrect number of channels");
+                }
+            }
+            else
+            {
+                switch (channels)
+                {
+                    case 1: format = Format(8, 0xff, 0); break;
+                    case 2: format = Format(16, 0x00ff, 0xff00); break;
+                    case 3: format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
+                    case 4: format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
+                    default:
+                        MANGO_EXCEPTION(ID"Incorrect number of channels");
+                }
             }
 
             data = p;
@@ -311,35 +324,31 @@ namespace
             }
             else if (m_header.is_float)
             {
-                // TODO: Don't convert float color components to u8
-
                 if (m_header.endian < 0)
                 {
-                    LittleEndianPointer e = const_cast<char*>(p);
+                    LittleEndianPointer ptr = const_cast<char*>(p);
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
-                        u8* image = dest.address<u8>(0, m_header.height - 1 - y);
+                        float* image = dest.address<float>(0, m_header.height - 1 - y);
 
                         for (int x = 0; x < xcount; ++x)
                         {
-                            float s = e.read32f();
-                            image[x] = u8(clamp(s, 0.0f, 1.0f) * 255.0f);
+                            image[x] = ptr.read32f();
                         }
                     }
                 }
                 else
                 {
-                    BigEndianPointer e = const_cast<char*>(p);
+                    BigEndianPointer ptr = const_cast<char*>(p);
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
-                        u8* image = dest.address<u8>(0, m_header.height - 1 - y);
+                        float* image = dest.address<float>(0, m_header.height - 1 - y);
 
                         for (int x = 0; x < xcount; ++x)
                         {
-                            float s = e.read32f();
-                            image[x] = u8(clamp(s, 0.0f, 1.0f) * 255.0f);
+                            image[x] = ptr.read32f();
                         }
                     }
                 }
@@ -387,7 +396,7 @@ namespace
                 }
                 else
                 {
-                    BigEndianPointer e = (u8*) p;
+                    BigEndianPointer e = const_cast<char*>(p);
 
                     for (int y = 0; y < m_header.height; ++y)
                     {

@@ -62,7 +62,7 @@ namespace
                 bits += cc_size[i];
             }
         }
-        
+
         bits = ceil_div(bits, 8) * 8;
         return Format(bits, Format::UNORM, size, offset);
     }
