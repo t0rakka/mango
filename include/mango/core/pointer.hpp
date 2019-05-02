@@ -24,17 +24,17 @@ namespace mango {
         {
         }
 
-        explicit Pointer(u8* address)
-            : p(address)
+        explicit Pointer(void* address)
+            : p(reinterpret_cast<u8*>(address))
         {
         }
 
         Pointer() = default;
         ~Pointer() = default;
 
-        const Pointer& operator = (u8* address)
+        const Pointer& operator = (void* address)
         {
-            p = address;
+            p = reinterpret_cast<u8*>(address);
             return *this;
         }
 
@@ -102,7 +102,7 @@ namespace mango {
         using Pointer::p;
 
     public:
-        SameEndianPointer(u8* address)
+        SameEndianPointer(void* address)
             : Pointer(address)
         {
         }
@@ -225,7 +225,7 @@ namespace mango {
         using Pointer::p;
 
     public:
-        SwapEndianPointer(u8* address)
+        SwapEndianPointer(void* address)
             : Pointer(address)
         {
         }

@@ -315,7 +315,7 @@ namespace
 
                 if (m_header.endian < 0)
                 {
-                    LittleEndianPointer e = (u8*) p;
+                    LittleEndianPointer e = const_cast<char*>(p);
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
@@ -330,7 +330,7 @@ namespace
                 }
                 else
                 {
-                    BigEndianPointer e = (u8*) p;
+                    BigEndianPointer e = const_cast<char*>(p);
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
