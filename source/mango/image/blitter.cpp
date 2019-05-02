@@ -1100,6 +1100,7 @@ namespace mango
         copyMask = 0;
 
         sampleSize = 0;
+
         const int source_float_shift = source.type - Format::FLOAT16 + 4;
 
         if (dest.isFloat() && source.isFloat())
@@ -1119,6 +1120,7 @@ namespace mango
 
                     if (source.size[i])
                         ++sampleSize;
+
                     ++components;
                 }
             }
@@ -1152,8 +1154,12 @@ namespace mango
                         component[components].destMask = dest_mask;
                         component[components].scale = float(dest_mask) / float(src_mask);
                         component[components].bias = lsb * 0.5f;
+
                         component[components].constant = i == 3 ? 1.0f : 0.0f;
                         component[components].offset = source.offset[i] >> source_float_shift;
+
+                        if (source.size[i])
+                            ++sampleSize;
 
                         ++components;
                     }
