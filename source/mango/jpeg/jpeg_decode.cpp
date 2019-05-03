@@ -525,6 +525,16 @@ namespace jpeg {
 
         debugPrint("  Image: %d x %d x %d\n", xsize, ysize, precision);
 
+        if (xsize <= 0 || ysize <= 0)
+        {
+            MANGO_EXCEPTION("[JPEG] Incorrect dimensions (%d x %d)", xsize, ysize);
+        }
+
+        if (components < 1 || components > 4)
+        {
+            MANGO_EXCEPTION("[JPEG] Incorrect number of components (%d)", components);
+        }
+
         is_arithmetic = marker > MARKER_SOF7;
         std::string compression = is_arithmetic ? "Arithmetic" : "Huffman";
 
@@ -625,6 +635,11 @@ namespace jpeg {
 
             debugPrint("  Frame: %d, compid: %d%s, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
                 i, frame.compid, compid_name.c_str(), frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
+
+            if (frame.Hsf > 8 || frame.Vsf > 8)
+            {
+                MANGO_EXCEPTION("[JPEG] Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf);
+            }
 
             frames.push_back(frame);
         }
@@ -930,8 +945,7 @@ namespace jpeg {
 
             if (Tq >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                debugPrint("  Incorrect quantization table.\n");
-                return;
+                MANGO_EXCEPTION("[JPEG] Incorrect quantization table (Tq: %d >= %d)", Tq, JPEG_MAX_COMPS_IN_SCAN);
             }
 
             QuantTable& table = quantTable[Tq];
@@ -955,8 +969,7 @@ namespace jpeg {
                     break;
 
                 default:
-                    debugPrint("  Incorrect quantization table element precision.\n");
-                    break;
+                    MANGO_EXCEPTION("[JPEG] Incorrect quantization table element precision (%d)", Pq);
             }
 
             Lq -= (1 + (Pq + 1) * 64);
@@ -977,15 +990,19 @@ namespace jpeg {
             u8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table.
             u8 Th = (x >> 0) & 0xf; // Huffman table identifier
 
-            if (Tc >= 2 || Th >= JPEG_MAX_COMPS_IN_SCAN)
+            if (Tc >= 2)
             {
-                debugPrint("  Incorrect huffman table.\n");
-                return;
+                MANGO_EXCEPTION("[JPEG] Incorrect huffman table class (%d)", Tc);
+            }
+
+            if (Th >= JPEG_MAX_COMPS_IN_SCAN)
+            {
+                MANGO_EXCEPTION("[JPEG] Incorrect huffman table identifier (%d)", Th);
             }
 
             HuffTable& table = huffTable[Tc][Th];
 
-            debugPrint("  Huffman table #%i table class: %i\n", Th, Tc);
+            debugPrint("  Huffman table #%d table class: %d\n", Th, Tc);
             debugPrint("    codes: ");
 
             int count = 0;
