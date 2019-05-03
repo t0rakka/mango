@@ -636,12 +636,21 @@ namespace jpeg {
         for (int i = 0; i < components; ++i)
         {
             Frame& frame = processState.frame[i];
+            if (!frame.Hsf || !frame.Vsf)
+            {
+                MANGO_EXCEPTION("[JPEG] Incorrect sampling factors (%d x %d)", frame.Hsf, frame.Vsf);
+            }
             frame.Hsf = u32_log2(Hmax / frame.Hsf);
             frame.Vsf = u32_log2(Vmax / frame.Vsf);
         }
 
         xblock = 8 * Hmax;
         yblock = 8 * Vmax;
+
+        if (!xblock || !yblock)
+        {
+            MANGO_EXCEPTION("[JPEG] Incorrect dimensions (%d x %d)", xblock, yblock);
+        }
 
         debugPrint("  Blocks per MCU: %d\n", blocks_in_mcu);
         debugPrint("  MCU size: %d x %d\n", xblock, yblock);

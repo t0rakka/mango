@@ -393,31 +393,27 @@ namespace jpeg {
     // ----------------------------------------------------------------------------
     // HuffTable
     // ----------------------------------------------------------------------------
-    
+
 #ifndef JPEG_ENABLE_MODERN_HUFFMAN
 
     void HuffTable::configure()
     {
-        int p, i, l, si;//, numsymbols;
-        int lookbits, ctr;
         char huffsize[257];
-        unsigned int huffcode[257];
-        unsigned int code;
+        u32 huffcode[257];
 
         // Figure C.1: make table of Huffman code length for each symbol
-        p = 0;
-        for (l = 1; l <= 16; l++)
+        int p = 0;
+        for (int l = 1; l <= 16; l++)
         {
-            i = (int) size[l];
+            int i = int(size[l]);
             while (i--)
-                huffsize[p++] = (char) l;
+                huffsize[p++] = char(l);
         }
         huffsize[p] = 0;
-        //numsymbols = p;
 
         // Figure C.2: generate the codes themselves
-        code = 0;
-        si = huffsize[0];
+        u32 code = 0;
+        int si = huffsize[0];
         p = 0;
         while (huffsize[p])
         {
@@ -432,7 +428,7 @@ namespace jpeg {
 
         // Figure F.15: generate decoding tables for bit-sequential decoding
         p = 0;
-        for (l = 1; l <= 16; l++)
+        for (int l = 1; l <= 16; l++)
         {
             if (size[l])
             {
@@ -454,20 +450,20 @@ namespace jpeg {
         // fill in all the entries that correspond to bit sequences starting
         // with that code.
 
-        for (i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
+        for (int i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
         {
             lookup[i] = (JPEG_HUFF_LOOKUP_BITS + 1) << JPEG_HUFF_LOOKUP_BITS;
         }
         
         p = 0;
-        for (l = 1; l <= JPEG_HUFF_LOOKUP_BITS; l++)
+        for (int l = 1; l <= JPEG_HUFF_LOOKUP_BITS; l++)
         {
-            for (i = 1; i <= (int) size[l]; i++, p++)
+            for (int i = 1; i <= (int) size[l]; i++, p++)
             {
                 // l = current code's length, p = its index in huffcode[] & huffval[].
                 // Generate left-justified code followed by all possible bit sequences
-                lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
-                for (ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--)
+                int lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
+                for (int ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--)
                 {
                     lookup[lookbits] = (l << JPEG_HUFF_LOOKUP_BITS) | value[p];
                     lookbits++;
@@ -480,30 +476,28 @@ namespace jpeg {
 
     void HuffTable::configure()
     {
-        int p, si;
         char huffsize[257];
-        unsigned int huffcode[257];
-        unsigned int code;
+        u32 huffcode[257];
 
         // Figure C.1: make table of Huffman code length for each symbol
-        p = 0;
+        int p = 0;
         for (int l = 1; l <= 16; l++)
         {
-            int i = (int) size[l];
+            int i = int(size[l]);
             while (i--)
             {
-                huffsize[p++] = (char) l;
+                huffsize[p++] = char(l);
             }
         }
         huffsize[p] = 0;
 
         // Figure C.2: generate the codes themselves
-        code = 0;
-        si = huffsize[0];
+        u32 code = 0;
+        int si = huffsize[0];
         p = 0;
         while (huffsize[p])
         {
-            while (((int) huffsize[p]) == si)
+            while ((int(huffsize[p])) == si)
             {
                 huffcode[p++] = code;
                 code++;
