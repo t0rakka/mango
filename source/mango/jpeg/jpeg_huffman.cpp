@@ -481,12 +481,12 @@ namespace jpeg {
 
         // Figure C.1: make table of Huffman code length for each symbol
         int p = 0;
-        for (int l = 1; l <= 16; l++)
+        for (int j = 1; j <= 16; j++)
         {
-            int i = int(size[l]);
+            int i = int(size[j]);
             while (i--)
             {
-                huffsize[p++] = char(l);
+                huffsize[p++] = char(j);
             }
         }
         huffsize[p] = 0;
@@ -508,20 +508,20 @@ namespace jpeg {
 
         // Figure F.15: generate decoding tables for bit-sequential decoding
         p = 0;
-        for (int l = 1; l <= 16; l++)
+        for (int j = 1; j <= 16; j++)
         {
-            if (size[l])
+            if (size[j])
             {
                 int offset = p - int(huffcode[p]);
-                valueAddress[l] = value + offset;
-                p += size[l];
-                maxcode[l] = huffcode[p - 1]; // maximum code of length l
-                maxcode[l] <<= (JPEG_REGISTER_BITS - l); // left justify
-                maxcode[l] |= (DataType(1) << (JPEG_REGISTER_BITS - l)) - 1;
+                valueAddress[j] = value + offset;
+                p += size[j];
+                maxcode[j] = huffcode[p - 1]; // maximum code of length j
+                maxcode[j] <<= (JPEG_REGISTER_BITS - j); // left justify
+                maxcode[j] |= (DataType(1) << (JPEG_REGISTER_BITS - j)) - 1;
             }
             else
             {
-                maxcode[l] = 0; // TODO: should be -1 if no codes of this length
+                maxcode[j] = 0; // TODO: should be -1 if no codes of this length
             }
         }
         valueAddress[18] = value + 0;
@@ -540,16 +540,17 @@ namespace jpeg {
         }
 
         p = 0;
-        for (int l = 1; l <= JPEG_HUFF_LOOKUP_BITS; l++)
+        for (int j = 1; j <= JPEG_HUFF_LOOKUP_BITS; j++)
         {
-            for (int i = 1; i <= (int) size[l]; i++, p++)
+            int jshift = JPEG_HUFF_LOOKUP_BITS - j;
+            for (int i = 1; i <= int(size[j]); i++, p++)
             {
-                // l = current code's length, p = its index in huffcode[] & huffval[].
+                // j = current code's length, p = its index in huffcode[] & huffval[].
                 // Generate left-justified code followed by all possible bit sequences
-                int lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
-                for (int ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--)
+                int lookbits = huffcode[p] << jshift;
+                for (int ctr = 1 << jshift; ctr > 0; ctr--)
                 {
-                    lookupSize[lookbits] = u8(l);
+                    lookupSize[lookbits] = u8(j);
                     lookupValue[lookbits] = value[p];
                     lookbits++;
                 }
