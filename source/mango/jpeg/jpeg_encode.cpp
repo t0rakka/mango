@@ -231,7 +231,7 @@ namespace
 
 #ifdef TABLE_SYMBOL
 
-    const u8 bit_size [] =
+    const u8 g_log2_table [] =
     {
         0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -254,8 +254,13 @@ namespace
     static inline
     int getSymbolSize(int value)
     {
-        return (value >> 8 == 0) ? bit_size [value]
-                                 : bit_size [value >> 8] + 8;
+        int base = 0;
+        if (value >> 8)
+        {
+            value >>= 8;
+            base += 8;
+        }
+        return g_log2_table[value] + base;
     }
 
 #else
@@ -487,21 +492,13 @@ namespace
 
             Coeff -= LastDc;
             int AbsCoeff = (Coeff < 0) ? -Coeff-- : Coeff;
-
-            int DataSize = 0;
-
-            while (AbsCoeff != 0)
-            {
-                AbsCoeff >>= 1;
-                DataSize++;
-            }
+            int DataSize = getSymbolSize(AbsCoeff);
+            int DataMask = (1 << DataSize) - 1;
 
             u16 HuffCode = DcCodeTable [DataSize];
             u16 HuffSize = DcSizeTable [DataSize];
 
-            Coeff &= (1 << DataSize) - 1;
-
-            u32 data = (HuffCode << DataSize) | Coeff;
+            u32 data = (HuffCode << DataSize) | (Coeff & DataMask);
             int numbits = HuffSize + DataSize;
             p = putbits(p, data, numbits);
 
@@ -523,14 +520,13 @@ namespace
 
                     AbsCoeff = (Coeff < 0) ? -Coeff-- : Coeff;
                     DataSize = getSymbolSize(AbsCoeff);
+                    DataMask = (1 << DataSize) - 1;
 
                     int index = RunLength * 10 + DataSize;
                     HuffCode = AcCodeTable [index];
                     HuffSize = AcSizeTable [index];
 
-                    Coeff &= (1 << DataSize) - 1;
-
-                    data = (HuffCode << DataSize) | Coeff;
+                    data = (HuffCode << DataSize) | (Coeff & DataMask);
                     numbits = HuffSize + DataSize;
                     p = putbits(p, data, numbits);
 
