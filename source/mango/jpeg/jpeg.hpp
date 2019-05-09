@@ -438,12 +438,14 @@ namespace jpeg {
     void huff_decode_ac_refine      (s16* output, DecodeState* state);
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
+
     void arith_decode_mcu_lossless  (s16* output, DecodeState* state);
     void arith_decode_mcu           (s16* output, DecodeState* state);
     void arith_decode_dc_first      (s16* output, DecodeState* state);
     void arith_decode_dc_refine     (s16* output, DecodeState* state);
     void arith_decode_ac_first      (s16* output, DecodeState* state);
     void arith_decode_ac_refine     (s16* output, DecodeState* state);
+
 #endif
 
     void idct8                          (u8* dest, const s16* data, const u16* qt);
@@ -480,6 +482,7 @@ namespace jpeg {
     void process_ycbcr_rgba_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
 #if defined(JPEG_ENABLE_NEON)
+
     void idct_neon                      (u8* dest, const s16* data, const u16* qt);
 
     void process_ycbcr_bgra_8x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -501,9 +504,11 @@ namespace jpeg {
     void process_ycbcr_rgb_8x16_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
+
     void idct_sse2                      (u8* dest, const s16* data, const u16* qt);
 
     void process_ycbcr_bgra_8x8_sse2    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -516,6 +521,8 @@ namespace jpeg {
     void process_ycbcr_rgba_16x8_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16_sse2  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
+#if defined(JPEG_ENABLE_SSE4)
+
     void process_ycbcr_bgr_8x8_ssse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_8x16_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -525,7 +532,9 @@ namespace jpeg {
     void process_ycbcr_rgb_8x16_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x16_ssse3  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-#endif
+
+#endif // JPEG_ENABLE_SSE4
+#endif // JPEG_ENABLE_SSE4
 
     SampleFormat getSampleFormat(const Format& format);
 	void encodeImage(Stream& stream, const Surface& surface, float quality);

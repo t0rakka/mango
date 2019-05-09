@@ -1418,6 +1418,7 @@ namespace jpeg {
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
+
         if (cpu_flags & CPU_SSE2)
         {
             switch (sample)
@@ -1445,6 +1446,8 @@ namespace jpeg {
             }
         }
 
+#if defined(JPEG_ENABLE_SSE4)
+
         if (cpu_flags & CPU_SSSE3)
         {
             switch (sample)
@@ -1471,7 +1474,9 @@ namespace jpeg {
                     break;
             }
         }
-#endif
+
+#endif // JPEG_ENABLE_SSE4
+#endif // JPEG_ENABLE_SSE2
 
         std::string id;
 

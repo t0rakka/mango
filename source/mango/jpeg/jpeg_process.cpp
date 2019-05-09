@@ -621,6 +621,8 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
     _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 16), rgba1);
 }
 
+#if defined(JPEG_ENABLE_SSE4)
+
 static inline
 void convert_ycbcr_bgr_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
 {
@@ -737,6 +739,8 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
     _mm_storel_epi64(reinterpret_cast<__m128i *>(dest + 16), rgb1);
 }
 
+#endif // // JPEG_ENABLE_SSE4
+
 // Generate YCBCR to BGRA functions
 #define INNERLOOP_YCBCR      convert_ycbcr_bgra_8x1_sse2
 #define XSTEP                32
@@ -766,6 +770,8 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_8x16
 #undef FUNCTION_YCBCR_16x8
 #undef FUNCTION_YCBCR_16x16
+
+#if defined(JPEG_ENABLE_SSE4)
 
 // Generate YCBCR to BGR functions
 #define INNERLOOP_YCBCR      convert_ycbcr_bgr_8x1_ssse3
@@ -797,6 +803,7 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_16x8
 #undef FUNCTION_YCBCR_16x16
 
+#endif // JPEG_ENABLE_SSE4
 #endif // JPEG_ENABLE_SSE2
 
 } // namespace jpeg

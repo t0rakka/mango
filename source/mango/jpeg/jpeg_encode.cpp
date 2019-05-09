@@ -1174,6 +1174,8 @@ namespace
         _mm_storeu_si128(dest + 7, v7);
     }
 
+#if defined(JPEG_ENABLE_SSE4)
+
     static
     void read_bgr_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
     {
@@ -1295,6 +1297,8 @@ namespace
             _mm_storeu_si128(dest + y + 16, cr);
         }
     }
+
+#endif // JPEG_ENABLE_SSE4
 
     static
     void read_bgra_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
@@ -1470,7 +1474,7 @@ namespace
                 break;
 
             case JPEG_U8_BGR:
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(JPEG_ENABLE_SSE4)
                 if (cpu_flags & CPU_SSSE3)
                 {
                     read_8x8 = read_bgr_format_ssse3;
@@ -1482,7 +1486,7 @@ namespace
                 break;
 
             case JPEG_U8_RGB:
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(JPEG_ENABLE_SSE4)
                 if (cpu_flags & CPU_SSSE3)
                 {
                     read_8x8 = read_rgb_format_ssse3;
