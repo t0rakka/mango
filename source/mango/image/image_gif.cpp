@@ -281,6 +281,9 @@ namespace
 
     void blit_palette(Surface& surface, const u8* bits, const Palette& palette, int width, int height)
     {
+		width = std::min(width, surface.width);
+		height = std::min(height, surface.height);
+
         for (int y = 0; y < height; ++y)
         {
             u32* dest = surface.address<u32>(0, y);
@@ -419,14 +422,14 @@ namespace
 
 				case GIF_IMAGE:
                     data = read_image(data, end, screen_desc, surface, ptr_palette);
-                    return data; // break to keep reading frames..
+                    return data;
 
 				case GIF_TERMINATE:
-                    return data;
+                    return nullptr;
 			}
 		}
 
-		return data;
+		return nullptr;
     }
 
     // ------------------------------------------------------------
@@ -439,8 +442,10 @@ namespace
 		ImageHeader m_header;
         gif_logical_screen_descriptor m_screen_desc;
 
-        u8* m_image;
-        
+		std::unique_ptr<u8[]> m_image;
+		int m_frame_counter = 0;
+
+		u8* m_start;
 		u8* m_end;
 		u8* m_data;
 
@@ -448,6 +453,7 @@ namespace
         	: m_memory(memory)
             , m_image(nullptr)
         {
+			m_start = m_memory.address;
 			m_end = m_memory.address + m_memory.size;
             m_data = m_memory.address;
 
@@ -463,12 +469,11 @@ namespace
             m_header.format  = FORMAT_B8G8R8A8;
             m_header.compression = TextureCompression::NONE;
 
-            m_image = new u8[m_header.width * m_header.height * 4];
+			m_image.reset(new u8[m_header.width * m_header.height * 4]);
         }
 
         ~Interface()
         {
-            delete[] m_image;
         }
 
         ImageHeader header() override
@@ -482,9 +487,26 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image);
-            m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
-			dest.blit(0, 0, target);
+			if (m_data)
+			{
+				Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image.get());
+				m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+				dest.blit(0, 0, target);
+			}
+
+			if (m_data)
+			{
+				++m_frame_counter;
+			}
+			else
+			{
+				if (m_frame_counter > 1)
+				{
+					m_frame_counter = 0;
+					m_data = m_start;
+
+				}
+			}
         }
     };
 
