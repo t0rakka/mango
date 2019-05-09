@@ -20,6 +20,9 @@ namespace
 	// decoder
 	// ------------------------------------------------------------
 
+	// Specification:
+	// https://www.w3.org/Graphics/GIF/spec-gif89a.txt
+
 	enum
 	{
 		GIF_IMAGE      = 0x2c,
@@ -36,7 +39,7 @@ namespace
 		u8  aspect = 0;
 		u8* palette = nullptr;
 
-        void read(u8*& data, u8* end)
+        u8* read(u8* data, u8* end)
 		{
 			LittleEndianPointer p = data;
 
@@ -55,7 +58,7 @@ namespace
                 }
 			}
 
-            data = p;
+			return p;
 		}
 
 		int  color_table_size() const { return 1 << ((packed & 0x07) + 1); }
@@ -73,7 +76,7 @@ namespace
 		u8	field = 0;
 		u8* palette = nullptr;
 
-        void read(u8*& data, u8* end)
+        u8* read(u8* data, u8* end)
 		{
             LittleEndianPointer p = data;
 
@@ -92,7 +95,7 @@ namespace
                 }
             }
 
-            data = p;
+			return p;
 		}
 
 		bool interlaced()        const { return (field & 0x40) != 0; }
@@ -295,7 +298,7 @@ namespace
     u8* read_image(u8* data, u8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
-        image_desc.read(data, end);
+        data = image_desc.read(data, end);
 
 		Palette palette;
 
@@ -464,7 +467,7 @@ namespace
 			read_magic(data, end);
 
             gif_logical_screen_descriptor screen_desc;
-            screen_desc.read(data, end);
+            data = screen_desc.read(data, end);
 
             ImageHeader header;
 
@@ -491,7 +494,7 @@ namespace
 
             read_magic(data, end);
             gif_logical_screen_descriptor screen_desc;
-            screen_desc.read(data, end);
+            data = screen_desc.read(data, end);
             read_chunks(data, end, screen_desc, dest, ptr_palette);
         }
     };
