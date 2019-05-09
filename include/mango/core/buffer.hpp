@@ -12,7 +12,7 @@
 namespace mango
 {
 
-    class Buffer
+    class Buffer : public NonCopyable
     {
     private:
         Memory m_memory;
