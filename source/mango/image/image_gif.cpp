@@ -292,7 +292,7 @@ namespace
         }
     }
 
-    void read_image(u8*& data, u8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
+    u8* read_image(u8* data, u8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
         image_desc.read(data, end);
@@ -374,12 +374,12 @@ namespace
 		}
 
 		delete[] bits;
+		return data;
     }
 
-	void read_extension(u8*& data)
+	u8* read_extension(u8* data)
 	{
         u8* p = data;
-
 		++p;
 
 		for (;;)
@@ -389,7 +389,7 @@ namespace
 			if (!size) break;
 		}
 
-        data = p;
+		return p;
 	}
 
     void read_magic(u8*& data, u8* end)
@@ -417,7 +417,7 @@ namespace
 			switch (chunkID)
 			{
 				case GIF_EXTENSION:
-					read_extension(data);
+					data = read_extension(data);
 					break;
 
 				case GIF_IMAGE:
@@ -429,7 +429,7 @@ namespace
                     //       This requires the decoding target to be unchanged between frames. The "animation"
                     //       will progressively fill the screen_desc. This is a curiosity we don't feel pressed to
                     //       support at this time.
-                    read_image(data, end, screen_desc, surface, ptr_palette);
+                    data = read_image(data, end, screen_desc, surface, ptr_palette);
                     return;
 				}
 
