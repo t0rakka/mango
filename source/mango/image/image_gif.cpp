@@ -246,15 +246,12 @@ namespace
 
 		// read the terminator
 		u8 terminator = *p++;
-		MANGO_UNREFERENCED_PARAMETER(terminator);
 
-#if 0
         if (terminator != 0)
 		{
-			// Disable terminator check for animated gif files
+			// There are files with incorrect terminator; let them pass silently
 			//MANGO_EXCEPTION(ID"Terminator missing from the gif stream.");
 		}
-#endif
 
 		return p;
 	}
@@ -279,10 +276,30 @@ namespace
 		}
 	}
 
-    void blit_palette(Surface& surface, const u8* bits, const Palette& palette, int width, int height)
+    void blit_raw(Surface& surface, const u8* bits, u8 transparent)
+	{
+		int width = surface.width;
+		int height = surface.height;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u8* dest = surface.address<u8>(0, y);
+            for (int x = 0; x < width; ++x)
+            {
+				u8 sample = bits[x];
+				if (sample != transparent)
+				{
+					dest[x] = sample;
+				}
+            }
+            bits += width;
+        }
+	}
+
+    void blit_palette(Surface& surface, const u8* bits, const Palette& palette)
     {
-		width = std::min(width, surface.width);
-		height = std::min(height, surface.height);
+		int width = surface.width;
+		int height = surface.height;
 
         for (int y = 0; y < height; ++y)
         {
@@ -356,19 +373,19 @@ namespace
 
 		if (ptr_palette)
 		{
-			// TODO: fixme
-			/*
 			*ptr_palette = palette;
-			u8* dest = surface.address<u8>(0, 0);
-			std::memcpy(dest, bits, width * height);
-			*/
+
+			int x = image_desc.left;
+			int y = image_desc.top;
+			Surface temp(surface, x, y, width, height);
+			blit_raw(temp, bits, screen_desc.background);
 		}
 		else
 		{
 			int x = image_desc.left;
 			int y = image_desc.top;
 			Surface temp(surface, x, y, width, height);
-			blit_palette(temp, bits, palette, width, height);
+			blit_palette(temp, bits, palette);
 		}
 
 		delete[] bits;
@@ -489,9 +506,18 @@ namespace
 
 			if (m_data)
 			{
-				Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image.get());
-				m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
-				dest.blit(0, 0, target);
+				if (ptr_palette)
+				{
+					Surface target(m_header.width, m_header.height, FORMAT_L8, m_header.width, m_image.get());
+					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+					dest.blit(0, 0, target);
+				}
+				else
+				{
+					Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image.get());
+					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+					dest.blit(0, 0, target);
+				}
 			}
 
 			if (m_data)
