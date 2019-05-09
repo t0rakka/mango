@@ -103,14 +103,9 @@ namespace
 		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	u8* readBits(u8*& data, int width, int height)
+	u8* readBits(u8* data, u8* dest, int samples)
 	{
         u8* p = data;
-
-		// initialize gif data stream decoder
-		const int samples = width * height;
-		u8* q_buffer = new u8[samples];
-		u8* q_buffer_end = q_buffer + samples;
 
 		const int MaxStackSize = 4096;
 
@@ -141,12 +136,14 @@ namespace
 		int count = 0;
 		u32 datum = 0;
 		u8 first = 0;
-		u8* q = q_buffer;
+
+		u8* q = dest;
+		u8* qend = dest + samples;
 
 		u8 packet[256];
 		u8* c = nullptr;
 
-		while (q < q_buffer_end)
+		while (q < qend)
 		{
 			if (top_stack == pixel_stack)
 			{
@@ -249,17 +246,17 @@ namespace
 
 		// read the terminator
 		u8 terminator = *p++;
+		MANGO_UNREFERENCED_PARAMETER(terminator);
 
-        data = p;
-
+#if 0
         if (terminator != 0)
 		{
 			// Disable terminator check for animated gif files
-            //delete[] q_buffer;
 			//MANGO_EXCEPTION(ID"Terminator missing from the gif stream.");
 		}
+#endif
 
-		return q_buffer;
+		return p;
 	}
 
 	void deinterlace(u8* dest, u8* buffer, int width, int height)
@@ -337,7 +334,9 @@ namespace
         int height = image_desc.height;
 
 		// decode gif bit stream
-		u8* bits = readBits(data, width, height);
+		int samples = width * height;
+		u8* bits = new u8[samples];
+		data = readBits(data, bits, samples);
 
         // deinterlace
 		if (image_desc.interlaced())
@@ -395,7 +394,7 @@ namespace
 		return p;
 	}
 
-    void read_magic(u8*& data, u8* end)
+    u8* read_magic(u8* data, u8* end)
     {
 		if (data + 6 >= end)
 		{
@@ -409,6 +408,8 @@ namespace
 		{
             MANGO_EXCEPTION(ID"Incorrect gif header, missing GIF87a or GIF89a identifier.");
 		}
+
+		return data;
     }
 
     void read_chunks(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
@@ -425,19 +426,15 @@ namespace
 
 				case GIF_IMAGE:
 				{
-                    // TODO: Support animation / multiple frames. No random-access to individual frames
-                    //       would be practical so the efficient API would be "decode_next_frame()" but
-                    //       we don't really intend this interface to be for animations so it's all good. :)
-                    // NOTE: Multi-frame GIFs can also store RGB images as 16x16 image_descs with unique palette.
-                    //       This requires the decoding target to be unchanged between frames. The "animation"
-                    //       will progressively fill the screen_desc. This is a curiosity we don't feel pressed to
-                    //       support at this time.
                     data = read_image(data, end, screen_desc, surface, ptr_palette);
                     return;
 				}
 
 				case GIF_TERMINATE:
                     return;
+
+				default:
+					break;
 			}
 		}
     }
@@ -464,7 +461,7 @@ namespace
             u8* data = m_memory.address;
 			u8* end = data + m_memory.size;
 
-			read_magic(data, end);
+			data = read_magic(data, end);
 
             gif_logical_screen_descriptor screen_desc;
             data = screen_desc.read(data, end);
@@ -492,7 +489,7 @@ namespace
             u8* data = m_memory.address;
             u8* end = data + m_memory.size;
 
-            read_magic(data, end);
+            data = read_magic(data, end);
             gif_logical_screen_descriptor screen_desc;
             data = screen_desc.read(data, end);
             read_chunks(data, end, screen_desc, dest, ptr_palette);
