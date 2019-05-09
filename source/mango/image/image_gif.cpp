@@ -1,9 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
-    GIF decoder source: ImageMagick.
+    GIF decoder source: ImageMagick (readBits function).
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
@@ -504,33 +504,37 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-			if (m_data)
+			if (ptr_palette)
 			{
-				if (ptr_palette)
+				Surface target(m_header.width, m_header.height, FORMAT_L8, m_header.width, m_image.get());
+				if (m_data)
 				{
-					Surface target(m_header.width, m_header.height, FORMAT_L8, m_header.width, m_image.get());
 					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
-					dest.blit(0, 0, target);
+					m_frame_counter += (m_data != nullptr);
 				}
-				else
-				{
-					Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image.get());
-					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
-					dest.blit(0, 0, target);
-				}
-			}
 
-			if (m_data)
-			{
-				++m_frame_counter;
+				dest.blit(0, 0, target);
 			}
 			else
 			{
+				Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image.get());
+				if (m_data)
+				{
+					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+					m_frame_counter += (m_data != nullptr);
+				}
+
+				dest.blit(0, 0, target);
+			}
+
+			if (!m_data)
+			{
+				// out of data - we reached the end of file
 				if (m_frame_counter > 1)
 				{
+					// there was more than 1 frame so it is animation -> restart animation
 					m_frame_counter = 0;
 					m_data = m_start;
-
 				}
 			}
         }
