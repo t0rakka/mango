@@ -286,13 +286,17 @@ namespace
             u32* dest = surface.address<u32>(0, y);
             for (int x = 0; x < width; ++x)
             {
-                dest[x] = palette[bits[x]];
+				ColorBGRA color = palette[bits[x]];
+				if (color.a)
+				{
+					dest[x] = color;
+				}
             }
             bits += width;
         }
     }
 
-    u8* read_image(u8* data, u8* end, const gif_logical_screen_descriptor& desc, Surface& surface, Palette* ptr_palette)
+    u8* read_image(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
         data = image_desc.read(data, end);
@@ -316,19 +320,19 @@ namespace
 		else
 		{
 			// global palette
-			palette.size = desc.color_table_size();
+			palette.size = screen_desc.color_table_size();
 
 			for (u32 i = 0; i < palette.size; ++i)
 			{
-            	u32 r = desc.palette[i * 3 + 0];
-            	u32 g = desc.palette[i * 3 + 1];
-            	u32 b = desc.palette[i * 3 + 2];
+            	u32 r = screen_desc.palette[i * 3 + 0];
+            	u32 g = screen_desc.palette[i * 3 + 1];
+            	u32 b = screen_desc.palette[i * 3 + 2];
             	palette[i] = ColorBGRA(r, g, b, 0xff);
 			}
 		}
 
 		// translucent color
-		palette[desc.background].a = 0;
+		palette[screen_desc.background].a = 0;
 
         int width = image_desc.width;
         int height = image_desc.height;
@@ -347,32 +351,21 @@ namespace
             bits = temp;
 		}
 
-		bool dimensions = surface.width == width && surface.height == height;
-
-		if (ptr_palette && dimensions && surface.format.bits == 8)
+		if (ptr_palette)
 		{
+			// TODO: fixme
+			/*
 			*ptr_palette = palette;
 			u8* dest = surface.address<u8>(0, 0);
 			std::memcpy(dest, bits, width * height);
+			*/
 		}
 		else
 		{
-    	    bool suitable = dimensions && surface.format == FORMAT_B8G8R8A8;
-        	bool direct = suitable && !(image_desc.left || image_desc.top);
-
-        	if (direct)
-        	{
-            	blit_palette(surface, bits, palette, width, height);
-        	}
-        	else
-        	{
-            	Bitmap temp(width, height, FORMAT_B8G8R8A8);
-            	blit_palette(temp, bits, palette, width, height);
-
-            	int x = image_desc.left;
-            	int y = image_desc.top;
-            	surface.blit(x, y, temp);
-        	}
+			int x = image_desc.left;
+			int y = image_desc.top;
+			Surface temp(surface, x, y, width, height);
+			blit_palette(temp, bits, palette, width, height);
 		}
 
 		delete[] bits;
@@ -412,7 +405,7 @@ namespace
 		return data;
     }
 
-    void read_chunks(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
+    u8* read_chunks(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
     {
         while (data < end)
 		{
@@ -425,18 +418,15 @@ namespace
 					break;
 
 				case GIF_IMAGE:
-				{
                     data = read_image(data, end, screen_desc, surface, ptr_palette);
-                    return;
-				}
+                    return data; // break to keep reading frames..
 
 				case GIF_TERMINATE:
-                    return;
-
-				default:
-					break;
+                    return data;
 			}
 		}
+
+		return data;
     }
 
     // ------------------------------------------------------------
@@ -446,38 +436,44 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
+		ImageHeader m_header;
+        gif_logical_screen_descriptor m_screen_desc;
+
+        u8* m_image;
+        
+		u8* m_end;
+		u8* m_data;
 
         Interface(Memory memory)
         	: m_memory(memory)
+            , m_image(nullptr)
         {
+			m_end = m_memory.address + m_memory.size;
+            m_data = m_memory.address;
+
+			m_data = read_magic(m_data, m_end);
+            m_data = m_screen_desc.read(m_data, m_end);
+
+            m_header.width   = m_screen_desc.width;
+            m_header.height  = m_screen_desc.height;
+            m_header.depth   = 0;
+            m_header.levels  = 0;
+            m_header.faces   = 0;
+			m_header.palette = true;
+            m_header.format  = FORMAT_B8G8R8A8;
+            m_header.compression = TextureCompression::NONE;
+
+            m_image = new u8[m_header.width * m_header.height * 4];
         }
 
         ~Interface()
         {
+            delete[] m_image;
         }
 
         ImageHeader header() override
         {
-            u8* data = m_memory.address;
-			u8* end = data + m_memory.size;
-
-			data = read_magic(data, end);
-
-            gif_logical_screen_descriptor screen_desc;
-            data = screen_desc.read(data, end);
-
-            ImageHeader header;
-
-            header.width   = screen_desc.width;
-            header.height  = screen_desc.height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = true;
-            header.format  = FORMAT_B8G8R8A8;
-            header.compression = TextureCompression::NONE;
-
-            return header;
+            return m_header;
         }
 
         void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
@@ -486,13 +482,9 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            u8* data = m_memory.address;
-            u8* end = data + m_memory.size;
-
-            data = read_magic(data, end);
-            gif_logical_screen_descriptor screen_desc;
-            data = screen_desc.read(data, end);
-            read_chunks(data, end, screen_desc, dest, ptr_palette);
+            Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image);
+            m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+			dest.blit(0, 0, target);
         }
     };
 
