@@ -43,7 +43,7 @@ namespace
 		{
 			LittleEndianPointer p = data;
 
-			if (p + 7 < end)
+			if (p + 7 <= end)
 			{
                 width      = p.read16();
                 height     = p.read16();
@@ -80,7 +80,7 @@ namespace
 		{
             LittleEndianPointer p = data;
 
-            if (p + 9 < end)
+            if (p + 9 <= end)
             {
                 left   = p.read16();
                 top    = p.read16();
