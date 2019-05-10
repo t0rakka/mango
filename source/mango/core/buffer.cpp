@@ -160,15 +160,15 @@ namespace mango {
         switch (mode)
         {
             case BEGIN:
-                m_offset = std::min(size, distance);
+                m_offset = size_t(std::min(size, distance));
                 break;
 
             case CURRENT:
-                m_offset = std::min(size, m_offset + distance);
+                m_offset = size_t(std::min(size, m_offset + distance));
                 break;
 
             case END:
-                m_offset = distance > size ? 0 : size - distance;
+                m_offset = size_t(distance > size ? 0 : size - distance);
                 break;
         }
     }

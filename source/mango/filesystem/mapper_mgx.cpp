@@ -307,14 +307,14 @@ namespace filesystem {
                         MANGO_EXCEPTION(ID"File \"%s\" has mapped region outside of parent memory.", filename.c_str());
                     }
 
-                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, file.size);
+                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size_t(file.size));
                     return vm;
                 }
             }
 
             // generic compression case
 
-            u8* ptr = new u8[file.size];
+            u8* ptr = new u8[size_t(file.size)];
             u8* x = ptr;
 
             ConcurrentQueue q("mgx.decompessor", Priority::HIGH);
@@ -326,18 +326,18 @@ namespace filesystem {
                 if (block.method)
                 {
                     Compressor compressor = getCompressor(Compressor::Method(block.method));
-                    Memory src(m_header.m_memory.address + block.offset, block.compressed);
+                    Memory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
 
                     q.enqueue([=, &block, &segment] {
                         if (block.uncompressed == segment.size && segment.offset == 0)
                         {
                             // segment is full-block so we can decode directly w/o intermediate buffer
-                            Memory dest(x, block.uncompressed);
+                            Memory dest(x, size_t(block.uncompressed));
                             compressor.decompress(dest, src);
                         }
                         else
                         {
-                            Buffer dest(block.uncompressed);
+                            Buffer dest(size_t(block.uncompressed));
                             compressor.decompress(dest, src);
                             std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
                         }
@@ -354,7 +354,7 @@ namespace filesystem {
 
             q.wait();
 
-            VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
+            VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, size_t(file.size));
             return vm;
         }
     };
