@@ -470,12 +470,14 @@ namespace
         	: m_memory(memory)
             , m_image(nullptr)
         {
-			m_start = m_memory.address;
+			m_start = nullptr;
 			m_end = m_memory.address + m_memory.size;
             m_data = m_memory.address;
 
 			m_data = read_magic(m_data, m_end);
             m_data = m_screen_desc.read(m_data, m_end);
+
+			m_start = m_data;
 
             m_header.width   = m_screen_desc.width;
             m_header.height  = m_screen_desc.height;
