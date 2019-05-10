@@ -1562,6 +1562,10 @@ namespace jpeg {
         // allocate blocks
         int count = mcus * blocks_in_mcu * 64;
         blockVector = reinterpret_cast<s16*>(aligned_malloc(count * sizeof(s16)));
+        if (!blockVector)
+        {
+            MANGO_EXCEPTION("[JPEG] Memory allocation failed (%d bytes)", int(count * sizeof(s16)));
+        }
 
         // find best matching format
         SampleFormat sf = getSampleFormat(target.format);
