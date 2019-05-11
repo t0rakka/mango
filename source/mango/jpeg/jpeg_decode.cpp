@@ -1627,6 +1627,7 @@ namespace jpeg {
         }
 
         blockVector = nullptr;
+
         status.info = m_info;
 
         return status;
@@ -1830,7 +1831,8 @@ namespace jpeg {
                 }
 
                 // enqueue task
-                queue.enqueue([=] {
+                queue.enqueue([=]
+                {
                     for (int y = y0; y < y1; ++y)
                     {
                         u8* dest = image + y * ystride;
@@ -1869,7 +1871,8 @@ namespace jpeg {
             for (int i = 0; i < mcus; i += restartInterval)
             {
                 // enqueue task
-                queue.enqueue([=] {
+                queue.enqueue([=]
+                {
                     s16 data[640]; // TODO: alignment
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2075,7 +2078,8 @@ namespace jpeg {
             debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
             // enqueue task
-            queue.enqueue([=] {
+            queue.enqueue([=]
+            {
                 for (int y = y0; y < y1; ++y)
                 {
                     u8* dest = image + y * ystride;
