@@ -18,6 +18,10 @@
 namespace mango {
 namespace simd {
 
+    using f16 = float16;
+    using f32 = float32;
+    using f64 = float64;
+
     // --------------------------------------------------------------
     // SIMD vector base classes
     // --------------------------------------------------------------
