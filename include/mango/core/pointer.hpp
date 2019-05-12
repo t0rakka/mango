@@ -1,11 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include "configure.hpp"
 #include "endian.hpp"
+#include "memory.hpp"
 
 namespace mango {
 
@@ -107,7 +108,7 @@ namespace mango {
         {
         }
 
-        // read methods
+        // read functions
 
         void read(u8* dest, size_t count)
         {
@@ -165,12 +166,18 @@ namespace mango {
             return value;
         }
 
-        // write methods
+        // write functions
 
         void write(const u8* source, size_t count)
         {
             std::memcpy(p, source, count);
             p += count;
+        }
+
+        void write(Memory memory)
+        {
+            std::memcpy(p, memory.address, memory.size);
+            p += memory.size;
         }
 
         void write8(u8 value)
@@ -230,7 +237,7 @@ namespace mango {
         {
         }
 
-        // read methods
+        // read functions
 
         void read(u8* dest, size_t count)
         {
@@ -288,12 +295,18 @@ namespace mango {
             return value;
         }
 
-        // write methods
+        // write functions
 
         void write(const u8* source, size_t count)
         {
             std::memcpy(p, source, count);
             p += count;
+        }
+
+        void write(Memory memory)
+        {
+            std::memcpy(p, memory.address, memory.size);
+            p += memory.size;
         }
 
         void write8(u8 value)

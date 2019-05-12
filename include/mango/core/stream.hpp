@@ -74,6 +74,8 @@ namespace mango
             s.seek(distance, mode);
         }
 
+        // read functions
+
         void read(void* dest, size_t size)
         {
             s.read(dest, size);
@@ -127,6 +129,8 @@ namespace mango
             value.u = read64();
             return value;
         }
+
+        // write functions
 
         void write(const void* data, size_t size)
         {
@@ -205,6 +209,8 @@ namespace mango
             s.seek(distance, mode);
         }
 
+        // read functions
+
         void read(void* dest, size_t size)
         {
             s.read(dest, size);
@@ -261,6 +267,8 @@ namespace mango
             value.u = read64();
             return value;
         }
+
+        // write functions
 
         void write(const void* data, size_t size)
         {

@@ -13,17 +13,16 @@ namespace
     using namespace mango;
 
     // ----------------------------------------------------------------------------
-    // ASTC formats
+    // FormatASTC
     // ----------------------------------------------------------------------------
 
-    struct astc_t
+    struct FormatASTC
     {
         int xblock;
         int yblock;
         TextureCompression compression;
-    };
-
-    const astc_t astcTable[] =
+    }
+    const g_astc_table[] =
     {
         {  4,  4, TextureCompression::ASTC_RGBA_4x4 },
         {  5,  4, TextureCompression::ASTC_RGBA_5x4 },
@@ -41,15 +40,13 @@ namespace
         { 12, 12, TextureCompression::ASTC_RGBA_12x12 }
     };
 
-    const int astcTableSize = sizeof(astcTable) / sizeof(astcTable[0]);
-
     TextureCompression select_astc_format(int width, int height)
     {
-        for (int i = 0; i < astcTableSize; ++i)
+        for (const auto& astc : g_astc_table)
         {
-            if (width == astcTable[i].xblock && height == astcTable[i].yblock)
+            if (width == astc.xblock && height == astc.yblock)
             {
-                return astcTable[i].compression;
+                return astc.compression;
             }
         }
 
@@ -57,7 +54,7 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // header
+    // HeaderASTC
     // ----------------------------------------------------------------------------
 
     struct HeaderASTC
