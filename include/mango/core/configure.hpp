@@ -627,23 +627,11 @@
 namespace mango
 {
 
-#if 1
-    // legacy names
-    using int8   = std::int8_t;
-    using int16  = std::int16_t;
-    using int32  = std::int32_t;
-    using int64  = std::int64_t;
-    using uint8  = std::uint8_t;
-    using uint16 = std::uint16_t;
-    using uint32 = std::uint32_t;
-    using uint64 = std::uint64_t;
-
-    // "modern" names
-#endif
     using s8  = std::int8_t;
     using s16 = std::int16_t;
     using s32 = std::int32_t;
     using s64 = std::int64_t;
+
     using u8  = std::uint8_t;
     using u16 = std::uint16_t;
     using u32 = std::uint32_t;
