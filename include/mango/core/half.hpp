@@ -7,10 +7,15 @@
 */
 #pragma once
 
+#include <algorithm>
 #include "configure.hpp"
 
 namespace mango
 {
+
+    // -----------------------------------------------------------------------
+    // Double
+    // -----------------------------------------------------------------------
 
     union Double
     {
@@ -68,6 +73,10 @@ namespace mango
         }
     };
 
+    // -----------------------------------------------------------------------
+    // Float
+    // -----------------------------------------------------------------------
+
     union Float
     {
         enum
@@ -122,79 +131,86 @@ namespace mango
         {
             return f;
         }
-    };
 
-    template <int SIGN, int EXPONENT, int MANTISSA>
-    u32 packFloat(const Float& value)
-    {
-        const Float infty(0, (1 << EXPONENT) - 1, 0);
-        const Float magic(0, (1 << (EXPONENT - 1)) - 1, 0);
+        // pack
 
-        u32 result = 0;
-
-        Float temp(value);
-        temp.sign = 0;
-
-        if (temp.exponent == (1 << Float::EXPONENT) - 1)
+        template <int Sign, int Exponent, int Mantissa>
+        static u32 pack(float value)
         {
-            // Inf / NaN
-            result = ((1 << EXPONENT) - 1) << MANTISSA;
-            result |= temp.mantissa ? temp.mantissa >> (Float::MANTISSA - MANTISSA) : 0; // Nan -> qNaN, Inf -> Inf
-        }
-        else
-        {
-            // (De)Normalized number or zero
-            temp.u &= ~((1 << (Float::MANTISSA - MANTISSA - 1)) - 1);
-            temp.f *= magic.f;
-            temp.u += (1 << (Float::MANTISSA - MANTISSA - 1)); // Rounding bias
+            u32 result = 0;
 
-            if (temp.u > infty.u)
-            {
-                // Clamp to signed Infinity
-                temp.u = infty.u;
-            }
+            Float temp = value;
+            u32 sign = temp.sign;
+            temp.sign = 0;
 
-            result = temp.u >> (Float::MANTISSA - MANTISSA);
-        }
-
-        result |= ((value.sign & SIGN) << (EXPONENT + MANTISSA));
-
-        return result;
-    }
-
-    template <u32 SIGN, u32 EXPONENT, u32 MANTISSA>
-    Float unpackFloat(u32 sign, u32 exponent, u32 mantissa)
-    {
-        const int bias = (1 << (EXPONENT - 1)) - 1;
-        const Float magic(0, Float::BIAS - 1, 0);
-
-        Float result;
-
-        if (!exponent)
-        {
-            // Zero / Denormal
-            result.u = magic.u + mantissa;
-            result.f -= magic.f;
-        }
-        else
-        {
-            result.mantissa = mantissa << (Float::MANTISSA - MANTISSA);
-
-            if (exponent == (1 << EXPONENT) - 1)
+            if (temp.exponent == (1 << Float::EXPONENT) - 1)
             {
                 // Inf / NaN
-                result.exponent = (1 << Float::EXPONENT) - 1;
+                result = ((1 << Exponent) - 1) << Mantissa;
+                result |= temp.mantissa ? temp.mantissa >> (Float::MANTISSA - Mantissa) : 0; // Nan -> qNaN, Inf -> Inf
             }
             else
             {
-                result.exponent = Float::BIAS - bias + exponent;
+                // (De)Normalized number or zero
+                const Float magic(0, (1 << (Exponent - 1)) - 1, 0);
+                temp.u &= ~((1 << (Float::MANTISSA - Mantissa - 1)) - 1);
+                temp.f *= magic.f;
+                temp.u += (1 << (Float::MANTISSA - Mantissa - 1)); // Rounding bias
+
+                const Float infty(0, (1 << Exponent) - 1, 0);
+                if (temp.u > infty.u)
+                {
+                    // Clamp to signed Infinity
+                    temp.u = infty.u;
+                }
+
+                result = temp.u >> (Float::MANTISSA - Mantissa);
             }
+
+            result |= ((sign & Sign) << (Exponent + Mantissa));
+
+            return result;
         }
 
-        result.sign = sign & SIGN;
+        // unpack
 
-        return result;
-    }
+        template <u32 Sign, u32 Exponent, u32 Mantissa>
+        static float unpack(u32 sign, u32 exponent, u32 mantissa)
+        {
+            Float result;
+
+            if (!exponent)
+            {
+                // Zero / Denormal
+                const Float magic(0, BIAS - 1, 0);
+                result.u = magic.u + mantissa;
+                result.f -= magic.f;
+            }
+            else
+            {
+                result.mantissa = mantissa << (MANTISSA - Mantissa);
+
+                if (exponent == (1 << Exponent) - 1)
+                {
+                    // Inf / NaN
+                    result.exponent = (1 << EXPONENT) - 1;
+                }
+                else
+                {
+                    const int bias = (1 << (Exponent - 1)) - 1;
+                    result.exponent = BIAS - bias + exponent;
+                }
+            }
+
+            result.sign = sign & SIGN;
+
+            return result;
+        }
+    };
+
+    // -----------------------------------------------------------------------
+    // Half
+    // -----------------------------------------------------------------------
 
     union Half
     {
@@ -241,18 +257,56 @@ namespace mango
 
         Half& operator = (float s)
         {
-            u = u16(packFloat<SIGN, EXPONENT, MANTISSA>(s));
+            u = u16(Float::pack<SIGN, EXPONENT, MANTISSA>(s));
             return *this;
         }
 
         operator float () const
         {
-            Float result = unpackFloat<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa);
-            return result;
+            return Float::unpack<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa);
         }
     };
 
+    // ----------------------------------------------------------------------------
+    // UnsignedInteger24
+    // ----------------------------------------------------------------------------
+
+    struct UnsignedInteger24
+    {
+        u8 data[3];
+
+        UnsignedInteger24()
+        {
+        }
+
+        UnsignedInteger24(u32 v)
+        {
+            *this = v;
+        }
+
+        operator u32 () const
+        {
+            u32 v = (data[2] << 16) | (data[1] << 8) | data[0];
+            return v;
+        }
+
+        UnsignedInteger24& operator = (u32 v)
+        {
+            data[0] = u8(v);
+            data[1] = u8(v >> 8);
+            data[2] = u8(v >> 16);
+            return *this;
+        }
+
+        void byteswap()
+        {
+            std::swap(data[0], data[2]);
+        }
+    };
+
+    // -----------------------------------------------------------------------
     // conversions
+    // -----------------------------------------------------------------------
 
     static inline Half f32_to_f16(float f)
     {
@@ -278,12 +332,16 @@ namespace mango
         return u32(x.u);
     }
 
-    // floating-point types
-#if 1
+    // -----------------------------------------------------------------------
+    // types
+    // -----------------------------------------------------------------------
+
+    using u24 = UnsignedInteger24;
+
     using float16 = Half;
     using float32 = float;
     using float64 = double;
-#endif
+
     using f16 = Half;
     using f32 = float;
     using f64 = double;

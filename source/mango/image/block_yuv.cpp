@@ -179,9 +179,9 @@ namespace mango
         const u32 blue_exponent = (data >> 27) & 0x1f;
 
         float* dest = reinterpret_cast<float*>(output);
-        dest[0] = unpackFloat<0, 5, 6>(0, red_exponent, red_mantissa);
-        dest[1] = unpackFloat<0, 5, 6>(0, green_exponent, green_mantissa);
-        dest[2] = unpackFloat<0, 5, 5>(0, blue_exponent, blue_mantissa);
+        dest[0] = Float::unpack<0, 5, 6>(0, red_exponent, red_mantissa);
+        dest[1] = Float::unpack<0, 5, 6>(0, green_exponent, green_mantissa);
+        dest[2] = Float::unpack<0, 5, 5>(0, blue_exponent, blue_mantissa);
         dest[3] = 1.0f;
     }
 
@@ -201,9 +201,9 @@ namespace mango
         const u32 blue_exponent = (data >> 27) & 0x1f;
 
         float* dest = reinterpret_cast<float*>(output);
-        dest[0] = unpackFloat<0, 5, 5>(0, red_exponent, red_mantissa);
-        dest[1] = unpackFloat<0, 5, 6>(0, green_exponent, green_mantissa);
-        dest[2] = unpackFloat<0, 5, 6>(0, blue_exponent, blue_mantissa);
+        dest[0] = Float::unpack<0, 5, 5>(0, red_exponent, red_mantissa);
+        dest[1] = Float::unpack<0, 5, 6>(0, green_exponent, green_mantissa);
+        dest[2] = Float::unpack<0, 5, 6>(0, blue_exponent, blue_mantissa);
         dest[3] = 1.0f;
     }
 
