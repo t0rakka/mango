@@ -278,7 +278,7 @@ namespace
 							MANGO_EXCEPTION(ID"Incorrect rle_rgbe stream (rle count).");
 						}
 
-						*p++ = static_cast<u8>(value);
+						*p++ = u8(value);
 
 						if (--count > 0)
 						{
@@ -348,15 +348,15 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            const Format decoder_format = FORMAT_RGBA32F;
+            Format format = FORMAT_RGBA32F;
 
-            if (dest.format == decoder_format)
+            if (dest.format == format)
             {
                 hdr_decode(dest, m_data);
             }
             else
             {
-                Bitmap temp(m_header.width, m_header.height, decoder_format);
+                Bitmap temp(m_header.width, m_header.height, format);
                 hdr_decode(temp, m_data);
                 dest.blit(0, 0, temp);
             }

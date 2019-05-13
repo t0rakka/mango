@@ -506,28 +506,18 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-			if (ptr_palette)
-			{
-				Surface target(m_header.width, m_header.height, FORMAT_L8, m_header.width, m_image.get());
-				if (m_data)
-				{
-					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
-					m_frame_counter += (m_data != nullptr);
-				}
+			Format format = ptr_palette ? FORMAT_L8 : FORMAT_B8G8R8A8;
 
-				dest.blit(0, 0, target);
-			}
-			else
-			{
-				Surface target(m_header.width, m_header.height, FORMAT_B8G8R8A8, m_header.width * 4, m_image.get());
-				if (m_data)
-				{
-					m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
-					m_frame_counter += (m_data != nullptr);
-				}
+			int stride = m_header.width * format.bytes();
+			Surface target(m_header.width, m_header.height, format, stride, m_image.get());
 
-				dest.blit(0, 0, target);
+			if (m_data)
+			{
+				m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+				m_frame_counter += (m_data != nullptr);
 			}
+
+			dest.blit(0, 0, target);
 
 			if (!m_data)
 			{
