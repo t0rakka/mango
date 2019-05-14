@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
@@ -16,31 +16,16 @@ namespace mango
     Format::Format()
         : bits(0)
         , type(NONE)
+        , flags(0)
         , size(0)
         , offset(0)
     {
     }
 
-    Format::Format(int bits, u32 luminanceMask, u32 alphaMask)
-        : bits(bits)
-        , type(UNORM)
-    {
-        assert(!(bits & 7));
-        assert(bits >= 8 && bits <= 32);
-
-        size[0] = u8(u32_count_bits(luminanceMask));
-        size[1] = u8(u32_count_bits(luminanceMask));
-        size[2] = u8(u32_count_bits(luminanceMask));
-        size[3] = u8(u32_count_bits(alphaMask));
-        offset[0] = u8(u32_index_of_lsb(luminanceMask));
-        offset[1] = u8(u32_index_of_lsb(luminanceMask));
-        offset[2] = u8(u32_index_of_lsb(luminanceMask));
-        offset[3] = u8(u32_index_of_lsb(alphaMask));
-    }
-
     Format::Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask)
         : bits(bits)
         , type(UNORM)
+        , flags(0)
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 32);
@@ -58,6 +43,7 @@ namespace mango
     Format::Format(int bits, Type type, ColorRGBA size, ColorRGBA offset)
         : bits(bits)
         , type(type)
+        , flags(0)
         , size(size)
         , offset(offset)
     {
@@ -66,6 +52,7 @@ namespace mango
     Format::Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3)
         : bits(bits)
         , type(type)
+        , flags(0)
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 128);
@@ -91,9 +78,10 @@ namespace mango
 
     const Format& Format::operator = (const Format& format)
     {
-        bits = format.bits;
-        type = format.type;
-        size = format.size;
+        bits   = format.bits;
+        type   = format.type;
+        flags  = format.flags;
+        size   = format.size;
         offset = format.offset;
         return *this;
     }
@@ -126,11 +114,12 @@ namespace mango
 
     bool Format::isLuminance() const
     {
-        // check if red, green and blue channels are identical
-        u32 red   = mask(RED);
-        u32 green = mask(GREEN);
-        u32 blue  = mask(BLUE);
-        return (red != 0) && (red == green) && (red == blue);
+        return (flags & FLAG_LUMINANCE) != 0;
+    }
+
+    bool Format::isIndexed() const
+    {
+        return (flags & FLAG_INDEXED) != 0;
     }
 
     bool Format::isFloat() const
@@ -179,6 +168,32 @@ namespace mango
         }
 
         return color;
+    }
+
+    // ----------------------------------------------------------------------------
+    // LuminanceFormat
+    // ----------------------------------------------------------------------------
+
+    LuminanceFormat::LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask)
+        : Format(bits, luminanceMask, luminanceMask, luminanceMask, alphaMask)
+    {
+        flags = FLAG_LUMINANCE;
+    }
+
+    LuminanceFormat::LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits)
+        : Format(bits, type, ColorRGBA(luminanceBits, luminanceBits, luminanceBits, alphaBits), ColorRGBA(0, 0, 0, luminanceBits))
+    {
+        flags = FLAG_LUMINANCE;
+    }
+
+    // ----------------------------------------------------------------------------
+    // IndexedFormat
+    // ----------------------------------------------------------------------------
+
+    IndexedFormat::IndexedFormat(int bits)
+        : Format(bits, Format::UNORM, ColorRGBA(bits, bits, bits, 0), ColorRGBA(0, 0, 0, 0))
+    {
+        flags = FLAG_INDEXED;
     }
 
 } // namespace mango

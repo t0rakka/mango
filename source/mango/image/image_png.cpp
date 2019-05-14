@@ -1953,12 +1953,12 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 if (surface.format.size[0] > 8)
                 {
                     color_bits = 16;
-                    format = Format(32, 0x0000ffff, 0xffff0000);
+                    format = LuminanceFormat(32, Format::UNORM, 16, 16);
                 }
                 else
                 {
                     color_bits = 8;
-                    format = Format(16, 0x00ff, 0xff00);
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
                 }
             }
             else
@@ -1968,12 +1968,12 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 if (surface.format.size[0] > 8)
                 {
                     color_bits = 16;
-                    format = Format(16, 0xffff, 0x0000);
+                    format = LuminanceFormat(16, Format::UNORM, 16, 0);
                 }
                 else
                 {
                     color_bits = 8;
-                    format = Format(8, 0xff, 0x00);
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
                 }
             }
         }

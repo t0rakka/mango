@@ -577,11 +577,11 @@ namespace
                 }
                 else if (flags & DDPF_LUMINANCE)
                 {
-                    format = Format(rgbBitCount, rBitMask, alphaMask);
+                    format = LuminanceFormat(rgbBitCount, rBitMask, alphaMask);
                 }
                 else if (flags & DDPF_ALPHA)
                 {
-                    format = Format(rgbBitCount, 0, aBitMask);
+                    format = LuminanceFormat(rgbBitCount, 0, aBitMask);
                 }
                 else if (flags & DDPF_YUV)
                 {

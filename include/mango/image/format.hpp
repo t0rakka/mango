@@ -13,13 +13,16 @@ namespace mango {
     class Format
     {
     protected:
-        enum TypeFlags
+        enum : u16
         {
-            TYPE_NORM   = 0x0020,
-            TYPE_INT    = 0x0040,
-            TYPE_FLOAT  = 0x0080,
-            TYPE_SIGNED = 0x0100,
-            TYPE_SRGB   = 0x0200,
+            TYPE_NORM       = 0x0020,
+            TYPE_INT        = 0x0040,
+            TYPE_FLOAT      = 0x0080,
+            TYPE_SIGNED     = 0x0100,
+            TYPE_SRGB       = 0x0200,
+
+            FLAG_LUMINANCE  = 0x0001,
+            FLAG_INDEXED    = 0x0002,
         };
 
     public:
@@ -102,12 +105,12 @@ namespace mango {
             ABGR = u8_mask(3, 2, 1, 0)
         };
 
-        enum Type : u32
+        enum Type : u16
         {
             NONE    = 0,
-            UNORM   = 1 | TYPE_NORM,
-            SNORM   = 2 | TYPE_NORM | TYPE_SIGNED,
-            SRGB    = 3 | TYPE_NORM | TYPE_SRGB,
+            SRGB    = 1 | TYPE_NORM | TYPE_SRGB,
+            UNORM   = 2 | TYPE_NORM,
+            SNORM   = 3 | TYPE_NORM | TYPE_SIGNED,
             UINT    = 4 | TYPE_INT,
             SINT    = 5 | TYPE_INT   | TYPE_SIGNED,
             FLOAT16 = 6 | TYPE_FLOAT | TYPE_SIGNED,
@@ -117,11 +120,11 @@ namespace mango {
 
         u32 bits;
         Type type;
+        u16 flags;
         ColorRGBA size;
         ColorRGBA offset;
 
         Format();
-        explicit Format(int bits, u32 luminanceMask, u32 alphaMask);
         explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
         explicit Format(int bits, Type type, ColorRGBA size, ColorRGBA offset);
         explicit Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3);
@@ -137,9 +140,21 @@ namespace mango {
         int bytes() const;
         bool isAlpha() const;
         bool isLuminance() const;
+        bool isIndexed() const;
         bool isFloat() const;
         u32 mask(int component) const;
         u32 pack(float red, float green, float blue, float alpha) const;
+    };
+
+    struct LuminanceFormat : Format
+    {
+        explicit LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask);
+        explicit LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits);
+    };
+
+    struct IndexedFormat : Format
+    {
+        explicit IndexedFormat(int bits);
     };
 
     // ----------------------------------------------------------------------------
@@ -174,15 +189,15 @@ namespace mango {
     #define FORMAT_RGBA16               Format(64, mango::Format::UNORM, mango::Format::RGBA, 16, 16, 16, 16)
 
     // UNORM luminance
-    #define FORMAT_L8                   Format(8, 0xff, 0)
-    #define FORMAT_L8A8                 Format(16, 0x00ff, 0xff00)
-    #define FORMAT_L4A4                 Format(8, 0x0f, 0xf0)
-    #define FORMAT_L16                  Format(16, 0xffff, 0)
-    #define FORMAT_L16A16               Format(32, mango::Format::UNORM, ColorRGBA(16, 16, 16, 16), ColorRGBA(0, 0, 0, 16))
+    #define FORMAT_L8                   LuminanceFormat( 8, mango::Format::UNORM,  8,  0)
+    #define FORMAT_L8A8                 LuminanceFormat(16, mango::Format::UNORM,  8,  8)
+    #define FORMAT_L4A4                 LuminanceFormat( 8, mango::Format::UNORM,  4,  4)
+    #define FORMAT_L16                  LuminanceFormat(16, mango::Format::UNORM, 16,  0)
+    #define FORMAT_L16A16               LuminanceFormat(32, mango::Format::UNORM, 16, 16)
 
     // FLOAT / HALF luminance
-    #define FORMAT_L16F                 Format(16, mango::Format::FLOAT16, ColorRGBA(16, 16, 16, 0), ColorRGBA(0, 0, 0, 0))
-    #define FORMAT_L32F                 Format(32, mango::Format::FLOAT32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0))
+    #define FORMAT_L16F                 LuminanceFormat(16, mango::Format::FLOAT16, 16, 0)
+    #define FORMAT_L32F                 LuminanceFormat(32, mango::Format::FLOAT32, 32, 0)
 
     // ----------------------------------------------------------------------------
     // OpenGL packed formats

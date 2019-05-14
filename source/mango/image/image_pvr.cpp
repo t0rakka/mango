@@ -283,10 +283,10 @@ namespace
                     format = Format(16, Format::UNORM, Format::ARGB, 8, 3, 3, 2);
                     break;
                 case 0x07: // I 8
-                    format = Format(8, 0xff, 0);
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
                     break;
                 case 0x08: // AI 88
-                    format = Format(16, 0x00ff, 0xff00);
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x09: // 1BPP
                     // TODO
@@ -322,10 +322,10 @@ namespace
                     format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
                     break;
                 case 0x16: // I 8
-                    format = Format(8, 0xff, 0);
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
                     break;
                 case 0x17: // AI 88
-                    format = Format(16, 0x00ff, 0xff00);
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x18: // PVRTC2
                     compression = TextureCompression::PVRTC_RGBA_2BPP;
@@ -355,7 +355,7 @@ namespace
                     format = Format(8, Format::UNORM, Format::RGB, 3, 3, 2, 0);
                     break;
                 case 0x26: // AL 44
-                    format = Format(8, 0x0f, 0xf0);
+                    format = LuminanceFormat(8, Format::UNORM, 4, 4);
                     break;
                 case 0x27: // LVU 655
                     // TODO
@@ -412,13 +412,13 @@ namespace
                     // TODO
                     break;
                 case 0x42: // L16
-                    format = Format(16, 0xffff, 0);
+                    format = LuminanceFormat(16, Format::UNORM, 16, 0);
                     break;
                 case 0x43: // L8
-                    format = Format(8, 0xff, 0);
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
                     break;
                 case 0x44: // AL 88
-                    format = Format(16, 0x00ff, 0xff00);
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x45: // UYVY
                     // TODO

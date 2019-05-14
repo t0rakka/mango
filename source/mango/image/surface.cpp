@@ -221,7 +221,7 @@ namespace
                 // configure surface
                 surface.width  = header.width;
                 surface.height = header.height;
-                surface.format = Format(8, 0xff, 0);
+                surface.format = IndexedFormat(8);
                 surface.stride = surface.width;
                 surface.image  = new u8[surface.height * surface.stride];
 

@@ -61,10 +61,10 @@ namespace
             switch (zsize)
             {
                 case 1:
-                    format = Format(8, 0xff, 0);
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
                     break;
                 case 2:
-                    format = Format(16, 0x00ff, 0xff00);
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 3:
                     format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
