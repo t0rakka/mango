@@ -135,7 +135,7 @@ namespace mango
 
     bool Format::isFloat() const
     {
-        return (type & 0x0100) != 0;
+        return (type & TYPE_FLOAT) != 0;
     }
 
     u32 Format::mask(int component) const
