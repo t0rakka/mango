@@ -929,14 +929,14 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
             {
                 case COLOR_TYPE_I:
                     header.format = m_bit_depth <= 8 ?
-                        Format(8, 0xff, 0xff, 0xff, 0) :
-                        Format(16, 0xffff, 0xffff, 0xffff, 0);
+                        LuminanceFormat(8, Format::UNORM, 8, 0) :
+                        LuminanceFormat(16, Format::UNORM, 16, 0);
                     break;
 
                 case COLOR_TYPE_IA:
                     header.format = m_bit_depth <= 8 ?
-                        Format(16, 0xff, 0xff, 0xff, 0xff00) :
-                        Format(32, 0xffff, 0xffff, 0xffff, 0xffff0000);
+                        LuminanceFormat(16, Format::UNORM, 8, 8) :
+                        LuminanceFormat(32, Format::UNORM, 16, 16);
                     break;
 
                 case COLOR_TYPE_PALETTE:
@@ -948,7 +948,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
                 case COLOR_TYPE_RGBA:
                     header.format = m_bit_depth <= 8 ?
                         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) :
-                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // RGBA!
+                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // NOTE: RGBA is not and error here!
                     break;
             }
         }
