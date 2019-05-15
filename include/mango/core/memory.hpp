@@ -71,6 +71,8 @@ namespace mango
     // aligned malloc/free
     // -----------------------------------------------------------------------
 
+    // NOTE: The alignment has to be a power-of-two and at least sizeof(void*)
+
     void* aligned_malloc(size_t size, size_t alignment = MANGO_DEFAULT_ALIGNMENT);
     void aligned_free(void* aligned);
 
@@ -78,7 +80,7 @@ namespace mango
     // aligned memory allocator
     // -----------------------------------------------------------------------
 
-    template <typename T>
+    template <typename T, size_t ALIGNMENT>
     class AlignedAllocator
     {
     public:
@@ -100,7 +102,7 @@ namespace mango
         }
 
         template <class U>
-        AlignedAllocator(const AlignedAllocator<U>& allocator)
+        AlignedAllocator(const AlignedAllocator<U, ALIGNMENT>& allocator)
         {
             MANGO_UNREFERENCED_PARAMETER(allocator);
         }
@@ -122,7 +124,7 @@ namespace mango
         pointer allocate(size_type n, std::allocator<void>::const_pointer hint = 0)
         {
             MANGO_UNREFERENCED_PARAMETER(hint);
-            void* s = aligned_malloc(n * sizeof(T), MANGO_DEFAULT_ALIGNMENT);
+            void* s = aligned_malloc(n * sizeof(T), ALIGNMENT);
             return reinterpret_cast<pointer>(s);
         }
 
@@ -162,7 +164,7 @@ namespace mango
         template <typename U>
         struct rebind
         {
-            typedef AlignedAllocator<U> other;
+            typedef AlignedAllocator<U, ALIGNMENT> other;
         };
 
         bool operator == (AlignedAllocator const& allocator)
