@@ -27,7 +27,12 @@ namespace
 	{
 		GIF_IMAGE      = 0x2c,
 		GIF_EXTENSION  = 0x21,
-		GIF_TERMINATE  = 0x3b
+		GIF_TERMINATE  = 0x3b,
+
+		PLAIN_TEXT_EXTENSION = 0x01,
+		GRAPHICS_CONTROL_EXTENSION = 0xf9,
+		COMMENT_EXTENSION = 0xfe,
+		APPLICATION_EXTENSION = 0xff,
 	};
 
 	struct gif_logical_screen_descriptor
@@ -392,16 +397,53 @@ namespace
 		return data;
     }
 
-	u8* read_extension(u8* data)
+	void read_graphics_control_extension(u8* p)
 	{
-        u8* p = data;
-		++p;
+		LittleEndianPointer x = p;
 
-		for (;;)
+		u8 packed = *x++;
+		int disposal_method = (packed >> 2) & 0x07; // 2 - restore background color, 3 - restore previous
+		int user_input_flag = (packed >> 1) & 0x01; // 0 - user input is not expected, 1 - user input is expected
+		int transparent_color_flag = packed & 0x01; // pixels with this value are not to be touched
+
+		u16 delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
+		u8 transparent_color = transparent_color_flag ? *x : 0;
+
+        MANGO_UNREFERENCED_PARAMETER(delay);
+        MANGO_UNREFERENCED_PARAMETER(transparent_color);
+        MANGO_UNREFERENCED_PARAMETER(user_input_flag);
+        MANGO_UNREFERENCED_PARAMETER(disposal_method);
+	}
+
+	void read_application_extension(u8* p)
+	{
+		std::string identifier(reinterpret_cast<char*>(p), 8);
+		MANGO_UNREFERENCED_PARAMETER(identifier);
+	}
+
+	u8* read_extension(u8* p)
+	{
+		u8 label = *p++;
+		u8 size = *p++;
+
+		switch (label)
 		{
-			u8 size = *p++;
+			case PLAIN_TEXT_EXTENSION:
+				break;
+			case GRAPHICS_CONTROL_EXTENSION:
+				read_graphics_control_extension(p);
+				break;
+			case COMMENT_EXTENSION:
+				break;
+			case APPLICATION_EXTENSION:
+				read_application_extension(p);
+				break;
+		}
+
+		for ( ; size; )
+		{
 			p += size;
-			if (!size) break;
+			size = *p++;
 		}
 
 		return p;
@@ -419,7 +461,7 @@ namespace
 
 		if (std::strncmp(magic, "GIF87a", 6) && std::strncmp(magic, "GIF89a", 6))
 		{
-            MANGO_EXCEPTION(ID"Incorrect gif header, missing GIF87a or GIF89a identifier.");
+            MANGO_EXCEPTION(ID"Incorrect gif header; missing GIF87a or GIF89a identifier.");
 		}
 
 		return data;
@@ -430,7 +472,6 @@ namespace
         while (data < end)
 		{
 			u8 chunkID = *data++;
-
 			switch (chunkID)
 			{
 				case GIF_EXTENSION:
