@@ -454,7 +454,7 @@ namespace image {
         Bitmap temp(width, height, FORMAT_B8G8R8A8);
         temp.blit(0, 0, source);
 
-        int sample = 30 - int(quality * 29.0f + 1.0f);
+        int sample = std::max(1, 30 - int(quality * 29.0f + 1.0f));
         NeuQuant nq(temp.image, width * height * 4, sample);
 
         nq.learn();
