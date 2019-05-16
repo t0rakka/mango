@@ -52,11 +52,11 @@ namespace mango
     // unsupportedImageEncoder
     // ----------------------------------------------------------------------------
 
-    void unsupportedImageEncoder(Stream& output, const Surface& source, float quality)
+    void unsupportedImageEncoder(Stream& output, const Surface& source, const ImageEncoderOptions* options)
     {
         MANGO_UNREFERENCED_PARAMETER(output);
         MANGO_UNREFERENCED_PARAMETER(source);
-        MANGO_UNREFERENCED_PARAMETER(quality);
+        MANGO_UNREFERENCED_PARAMETER(options);
         printf("[WARNING] ImageEncoder::encode() is not supported for this extension.");
     }
 
@@ -254,9 +254,9 @@ namespace mango
         return m_encode != unsupportedImageEncoder;
     }
 
-    void ImageEncoder::encode(Stream& output, const Surface& source, float quality)
+    void ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncoderOptions* options)
     {
-        m_encode(output, source,quality);
+        m_encode(output, source, options);
     }
 
 } // namespace mango

@@ -14,6 +14,7 @@
 
 namespace mango
 {
+    struct ImageEncoderOptions;
 
     class Surface
     {
@@ -44,7 +45,7 @@ namespace mango
             return scan + x;
         }
 
-        void save(const std::string& filename, float quality = 1.0f);
+        void save(const std::string& filename, const ImageEncoderOptions* options = nullptr);
         void clear(float red, float green, float blue, float alpha);
         void blit(int x, int y, const Surface& source);
         void xflip();

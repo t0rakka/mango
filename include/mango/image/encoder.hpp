@@ -15,17 +15,24 @@
 namespace mango
 {
 
+    struct ImageEncoderOptions
+    {
+        Palette palette;
+        float quality = 0.90f;
+        bool dithering = true;
+    };
+
     class ImageEncoder : protected NonCopyable
     {
     public:
-        typedef void (*CreateFunc)(Stream& output, const Surface& source, float quality);
+        typedef void (*CreateFunc)(Stream& output, const Surface& source, const ImageEncoderOptions* options);
 
         ImageEncoder(const std::string& extension);
         ~ImageEncoder();
 
         bool isEncoder() const;
 
-        void encode(Stream& output, const Surface& source, float quality);
+        void encode(Stream& output, const Surface& source, const ImageEncoderOptions* options = nullptr);
 
     protected:
         CreateFunc m_encode;

@@ -1934,9 +1934,9 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, float quality)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions* options)
     {
-        MANGO_UNREFERENCED_PARAMETER(quality);
+        MANGO_UNREFERENCED_PARAMETER(options);
 
         // defaults
         u8 color_bits = 8;

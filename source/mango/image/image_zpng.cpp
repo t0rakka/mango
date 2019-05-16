@@ -147,9 +147,9 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, float quality)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions* options)
     {
-        MANGO_UNREFERENCED_PARAMETER(quality);
+        MANGO_UNREFERENCED_PARAMETER(options);
 
         // TODO: optimize encoder
         Bitmap temp(surface.width, surface.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));

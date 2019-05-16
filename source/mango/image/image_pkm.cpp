@@ -146,9 +146,9 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, float quality)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions* options)
     {
-        MANGO_UNREFERENCED_PARAMETER(quality);
+        MANGO_UNREFERENCED_PARAMETER(options);
 
         // ETC1 compression uses 4x4 blocks
         const int width = (surface.width + 3) & ~3;
