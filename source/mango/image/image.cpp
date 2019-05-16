@@ -52,7 +52,7 @@ namespace mango
     // unsupportedImageEncoder
     // ----------------------------------------------------------------------------
 
-    void unsupportedImageEncoder(Stream& output, const Surface& source, const ImageEncoderOptions* options)
+    void unsupportedImageEncoder(Stream& output, const Surface& source, const ImageEncoderOptions& options)
     {
         MANGO_UNREFERENCED_PARAMETER(output);
         MANGO_UNREFERENCED_PARAMETER(source);
@@ -87,7 +87,7 @@ namespace mango
     {
     protected:
         std::map<std::string, ImageDecoder::CreateFunc> m_decoders;
-        std::map<std::string, ImageEncoder::CreateFunc> m_encoders;
+        std::map<std::string, ImageEncoder::EncodeFunc> m_encoders;
 
     public:
         ImageServer()
@@ -128,7 +128,7 @@ namespace mango
             m_decoders[toLower(extension)] = func;
         }
 
-        void registerImageEncoder(ImageEncoder::CreateFunc func, const std::string& extension)
+        void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension)
         {
             m_encoders[toLower(extension)] = func;
         }
@@ -144,7 +144,7 @@ namespace mango
             return createUnsupportedImageDecoderInterface;
         }
 
-        ImageEncoder::CreateFunc getImageEncoder(const std::string& extension) const
+        ImageEncoder::EncodeFunc getImageEncoder(const std::string& extension) const
         {
             auto i = m_encoders.find(getLowerCaseExtension(extension));
             if (i != m_encoders.end())
@@ -161,7 +161,7 @@ namespace mango
         g_imageServer.registerImageDecoder(func, extension);
     }
 
-    void registerImageEncoder(ImageEncoder::CreateFunc func, const std::string& extension)
+    void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension)
     {
         g_imageServer.registerImageEncoder(func, extension);
     }
@@ -242,7 +242,7 @@ namespace mango
 
     ImageEncoder::ImageEncoder(const std::string& extension)
     {
-        m_encode = g_imageServer.getImageEncoder(extension);
+        m_encode_func = g_imageServer.getImageEncoder(extension);
     }
 
     ImageEncoder::~ImageEncoder()
@@ -251,12 +251,12 @@ namespace mango
 
     bool ImageEncoder::isEncoder() const
     {
-        return m_encode != unsupportedImageEncoder;
+        return m_encode_func != unsupportedImageEncoder;
     }
 
-    void ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncoderOptions* options)
+    void ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncoderOptions& options)
     {
-        m_encode(output, source, options);
+        m_encode_func(output, source, options);
     }
 
 } // namespace mango

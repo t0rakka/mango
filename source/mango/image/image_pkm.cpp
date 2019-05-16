@@ -146,7 +146,7 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions* options)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions& options)
     {
         MANGO_UNREFERENCED_PARAMETER(options);
 

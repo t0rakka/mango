@@ -11,10 +11,10 @@
 #include "../core/memory.hpp"
 #include "../filesystem/file.hpp"
 #include "format.hpp"
+#include "encoder.hpp"
 
 namespace mango
 {
-    struct ImageEncoderOptions;
 
     class Surface
     {
@@ -45,7 +45,7 @@ namespace mango
             return scan + x;
         }
 
-        void save(const std::string& filename, const ImageEncoderOptions* options = nullptr);
+        void save(const std::string& filename, const ImageEncoderOptions& options = ImageEncoderOptions());
         void clear(float red, float green, float blue, float alpha);
         void blit(int x, int y, const Surface& source);
         void xflip();

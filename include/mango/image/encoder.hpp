@@ -14,6 +14,7 @@
 
 namespace mango
 {
+    class Surface;
 
     struct ImageEncoderOptions
     {
@@ -25,20 +26,20 @@ namespace mango
     class ImageEncoder : protected NonCopyable
     {
     public:
-        typedef void (*CreateFunc)(Stream& output, const Surface& source, const ImageEncoderOptions* options);
+        typedef void (*EncodeFunc)(Stream& output, const Surface& source, const ImageEncoderOptions& options);
 
         ImageEncoder(const std::string& extension);
         ~ImageEncoder();
 
         bool isEncoder() const;
 
-        void encode(Stream& output, const Surface& source, const ImageEncoderOptions* options = nullptr);
+        void encode(Stream& output, const Surface& source, const ImageEncoderOptions& options);
 
     protected:
-        CreateFunc m_encode;
+        EncodeFunc m_encode_func;
     };
 
-    void registerImageEncoder(ImageEncoder::CreateFunc func, const std::string& extension);
+    void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension);
     bool isImageEncoder(const std::string& extension);
 
 } // namespace mango

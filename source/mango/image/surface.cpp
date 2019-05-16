@@ -293,7 +293,7 @@ namespace mango
     {
     }
 
-    void Surface::save(const std::string& filename, const ImageEncoderOptions* options)
+    void Surface::save(const std::string& filename, const ImageEncoderOptions& options)
     {
         ImageEncoder encoder(filename);
         if (encoder.isEncoder())

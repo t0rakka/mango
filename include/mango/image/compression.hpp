@@ -1,15 +1,16 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
-#include "../core/configure.hpp"
-#include "surface.hpp"
+#include "../core/memory.hpp"
+#include "format.hpp"
 #include "fourcc.hpp"
 
 namespace mango
 {
+    class Surface;
 
     constexpr u32 makeTextureCompression(u32 format, u32 index, u32 flags) noexcept
     {
