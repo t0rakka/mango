@@ -927,6 +927,9 @@
     <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_sse2.hpp">
       <Filter>mango\source\jpeg</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\image\quantize.hpp">
+      <Filter>mango\include\image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1435,6 +1438,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\framebuffer\win32\d3d9_framebuffer.cpp">
       <Filter>mango\source\framebuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\quantize.cpp">
+      <Filter>mango\source\image</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
