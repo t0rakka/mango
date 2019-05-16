@@ -61,6 +61,7 @@
 		A0F241D419D5E30D00218F92 /* simd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A0F241D219D5E30D00218F92 /* simd.cpp */; };
 		A0F981BE15B9E61D00B8C49F /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0F981BD15B9E61D00B8C49F /* Cocoa.framework */; };
 		A0FF42CE1BBEDC9D0036141B /* simd in Headers */ = {isa = PBXBuildFile; fileRef = A0FF42CC1BBEDC630036141B /* simd */; settings = {ATTRIBUTES = (Public, ); }; };
+		A60B0760228CCA9C00BD520D /* quantize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60B075F228CCA9C00BD520D /* quantize.cpp */; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
@@ -355,6 +356,7 @@
 		A0F981BD15B9E61D00B8C49F /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		A0F981C515B9E61D00B8C49F /* mango-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "mango-Info.plist"; sourceTree = "<group>"; };
 		A0FF42CC1BBEDC630036141B /* simd */ = {isa = PBXFileReference; lastKnownFileType = folder; name = simd; path = mango/simd; sourceTree = "<group>"; };
+		A60B075F228CCA9C00BD520D /* quantize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = quantize.cpp; path = image/quantize.cpp; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
@@ -663,6 +665,7 @@
 		A00559AA1C93328800A6D963 /* image */ = {
 			isa = PBXGroup;
 			children = (
+				A60B075F228CCA9C00BD520D /* quantize.cpp */,
 				A00559AB1C93329A00A6D963 /* blitter.cpp */,
 				A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */,
 				A00559AC1C93329A00A6D963 /* block_dxt.cpp */,
@@ -1365,6 +1368,7 @@
 				A63DD7781E706EF100D4D499 /* lzvn_decode_base.c in Sources */,
 				A645DD9421419C7F00EC714B /* hash.cpp in Sources */,
 				A00559941C93324E00A6D963 /* buffer.cpp in Sources */,
+				A60B0760228CCA9C00BD520D /* quantize.cpp in Sources */,
 				A00559A71C93327800A6D963 /* mapper_zip.cpp in Sources */,
 				A63DD7AE1E706FA000D4D499 /* astc.cpp in Sources */,
 				A645DD51214154F400EC714B /* debug.c in Sources */,
