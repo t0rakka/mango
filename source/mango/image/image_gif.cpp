@@ -10,7 +10,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "[ImageDecoderGIF] "
+#define ID "[GIF] "
 
 namespace
 {
@@ -578,6 +578,219 @@ namespace
         return x;
     }
 
+	// ------------------------------------------------------------
+	// encoder
+	// ------------------------------------------------------------
+
+	struct EncoderState
+	{
+		u8 data = 0;
+		int index = 0;
+
+		int chunkIndex = 0;
+		u8 chunk[256];
+
+		void writeBits(LittleEndianStream& s, u32 code, int numbits)
+		{
+			while (numbits > 0)
+			{
+				// how many bits still fit into the register
+				int size = std::min(numbits, 8 - index);
+
+				// insert the bits into the register
+				u32 mask = (1 << size) - 1;
+				data |= ((code & mask) << index);
+
+				code >>= size;
+				index += size;
+				numbits -= size;
+
+				if (index > 7)
+				{
+					chunk[chunkIndex++] = data;
+					if (chunkIndex == 255)
+					{
+						flushChunk(s);
+					}
+
+					data = 0;
+					index = 0;
+				}
+			}
+		}
+
+		void flushChunk(LittleEndianStream& s)
+		{
+			s.write8(chunkIndex);
+			s.write(chunk, chunkIndex);
+			chunkIndex = 0;
+		}
+
+		void terminate(LittleEndianStream& s)
+		{
+			if (index)
+			{
+				chunk[chunkIndex++] = data;
+			}
+
+			if (chunkIndex > 0)
+			{
+				flushChunk(s);
+			}
+		}
+	};
+
+	void gif_encode_image_block(LittleEndianStream& s, int depth, int width, int height, int stride, u8* image)
+	{
+		const int minCodeSize = depth;
+		const u32 clearCode = 1 << depth;
+
+		s.write8(minCodeSize);
+
+		std::vector<u16> codetree(4096 * 256, 0);
+
+		s32 curCode = -1;
+		u32 codeSize = u32(minCodeSize + 1);
+		u32 maxCode = clearCode + 1;
+
+		EncoderState state;
+
+		state.writeBits(s, clearCode, codeSize); // start with a fresh LZW dictionary
+
+		for (int y = 0; y < height; ++y)
+		{
+			u8* scan = image + y * stride;
+
+			for (int x = 0; x < width; ++x)
+			{
+				u8 nextValue = scan[x];
+
+				if (curCode < 0)
+				{
+					// first value in a new run
+					curCode = nextValue;
+				}
+				else if (codetree[curCode * 256 + nextValue])
+				{
+					// current run already in the dictionary
+					curCode = codetree[curCode * 256 + nextValue];
+				}
+				else
+				{
+					// finish the current run, write a code
+					state.writeBits(s, curCode, codeSize);
+
+					// insert the new run into the dictionary
+					codetree[curCode * 256 + nextValue] = u16(++maxCode);
+
+					if (maxCode >= (1ul << codeSize))
+					{
+						// dictionary entry count has broken a size barrier,
+						// we need more bits for codes
+						codeSize++;
+					}
+					if (maxCode == 4095)
+					{
+						// the dictionary is full, clear it out and begin anew
+						state.writeBits(s, clearCode, codeSize); // clear tree
+						
+						std::memset(codetree.data(), 0, 4096 * 256 * sizeof(u16));
+						codeSize = u32(minCodeSize + 1);
+						maxCode = clearCode + 1;
+					}
+
+					curCode = nextValue;
+				}
+			}
+		}
+
+		// compression footer
+		state.writeBits(s, curCode, codeSize);
+		state.writeBits(s, clearCode, codeSize);
+		state.writeBits(s, clearCode + 1, minCodeSize + 1);
+		state.terminate(s);
+
+		s.write8(0); // image block terminator
+	}
+
+	void gif_encode_file(Stream& stream, const Surface& surface, const Palette& palette)
+	{
+		int width = surface.width;
+		int height = surface.height;
+		int stride = surface.stride;
+		u8* image = surface.image;
+
+		LittleEndianStream s = stream;
+
+		// identifier
+		s.write("GIF89a", 6);
+
+		// screen descriptor
+		s.write16(width);
+		s.write16(height);
+
+		u8 packed = 0;
+		packed |= 0x7; // color table size as log2(size) - 1 (0 -> 2 colors, 7 -> 256 colors)
+		packed |= 0x80; // color table present
+		packed |= (0x7 << 4); // color resolution as bits - 1 (0 -> 1 bit, 7 -> 8 bits)
+		s.write8(packed);
+
+		s.write8(255); // background color
+		s.write8(0); // aspect ratio
+
+		// palette
+		for (int i = 0; i < 256; ++i)
+		{
+			s.write8(palette[i].r);
+			s.write8(palette[i].g);
+			s.write8(palette[i].b);
+		}
+
+		// image descriptor
+		s.write8(0x2c);
+
+		s.write16(0);
+		s.write16(0);
+		s.write16(width);
+		s.write16(height);
+
+		// local palette
+		u8 field = 0;
+		s.write8(field);
+
+		gif_encode_image_block(s, 8, width, height, stride, image);
+
+		// end of file
+		s.write8(0x3b);
+	}
+
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions& options)
+    {
+		if (options.palette.size > 0)
+		{
+			if (options.palette.size != 256)
+			{
+				MANGO_EXCEPTION(ID"Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+			}
+
+			if (surface.format.isIndexed() || surface.format.bits != 8)
+			{
+				MANGO_EXCEPTION(ID"Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+			}
+
+			gif_encode_file(stream, surface, options.palette);
+		}
+		else
+		{
+    		Bitmap temp(surface.width, surface.height, IndexedFormat(8));
+
+			image::ColorQuantizer qt;
+			qt.quantize(temp, surface, options.dithering, options.quality);
+
+			gif_encode_file(stream, temp, qt.palette);
+		}
+    }
+
 } // namespace
 
 namespace mango
@@ -586,6 +799,7 @@ namespace mango
     void registerImageDecoderGIF()
     {
         registerImageDecoder(createInterface, ".gif");
+        registerImageEncoder(imageEncode, ".gif");
     }
 
 } // namespace mango
