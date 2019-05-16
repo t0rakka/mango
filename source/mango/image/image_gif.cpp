@@ -145,7 +145,7 @@ namespace
 		u8* q = dest;
 		u8* qend = dest + samples;
 
-		u8 packet[256];
+		u8* packet = nullptr;
 		u8* c = nullptr;
 
 		while (q < qend)
@@ -158,12 +158,11 @@ namespace
 					if (!count)
 					{
 						// read a new data block
-						u8 block_size = *p++;
-						count = block_size;
+						count = *p++;
 
 						if (count > 0)
 						{
-							std::memcpy(packet, p, count);
+							packet = p;
 							p += count;
 						}
 						else
