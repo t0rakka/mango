@@ -118,7 +118,7 @@ namespace jpeg {
 
     struct QuantTable
     {
-        u16* table;  // Quantization table
+        s16* table;  // Quantization table
         int  bits;   // Quantization table precision (8 or 16 bits)
     };
 
@@ -140,14 +140,14 @@ namespace jpeg {
 
     struct HuffTable
     {
-        u8  size[17];
-        u8  value[256];
+        u8 size[17];
+        u8 value[256];
 
         // acceleration tables
         DataType maxcode[18];
         u8* valueAddress[19];
-        u8  lookupSize[JPEG_HUFF_LOOKUP_SIZE];
-        u8  lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+        u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
+        u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
         void configure();
     };
@@ -298,7 +298,7 @@ namespace jpeg {
 
     struct Block
     {
-        u16* qt;
+        s16* qt;
     };
 
     struct ProcessState
@@ -311,10 +311,10 @@ namespace jpeg {
         int frames;
         ColorSpace colorspace;
 
-	    void (*idct) (u8* dest, const s16* data, const u16* qt);
+	    void (*idct) (u8* dest, const s16* data, const s16* qt);
+
         void (*process            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
         void (*clipped            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-
         void (*process_y          ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
         void (*process_cmyk       ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
         void (*process_ycbcr      ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -334,7 +334,7 @@ namespace jpeg {
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
         HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
-        AlignedVector<u16> quantTableVector;
+        AlignedVector<s16> quantTableVector;
         s16* blockVector;
 
         std::vector< Frame > frames;
@@ -448,8 +448,8 @@ namespace jpeg {
 
 #endif
 
-    void idct8                          (u8* dest, const s16* data, const u16* qt);
-    void idct12                         (u8* dest, const s16* data, const u16* qt);
+    void idct8                          (u8* dest, const s16* data, const s16* qt);
+    void idct12                         (u8* dest, const s16* data, const s16* qt);
 
     void process_y_8bit                 (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_24bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -483,7 +483,7 @@ namespace jpeg {
 
 #if defined(JPEG_ENABLE_NEON)
 
-    void idct_neon                      (u8* dest, const s16* data, const u16* qt);
+    void idct_neon                      (u8* dest, const s16* data, const s16* qt);
 
     void process_ycbcr_bgra_8x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_8x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -509,7 +509,7 @@ namespace jpeg {
 
 #if defined(JPEG_ENABLE_SSE2)
 
-    void idct_sse2                      (u8* dest, const s16* data, const u16* qt);
+    void idct_sse2                      (u8* dest, const s16* data, const s16* qt);
 
     void process_ycbcr_bgra_8x8_sse2    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgra_8x16_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
@@ -520,6 +520,8 @@ namespace jpeg {
     void process_ycbcr_rgba_8x16_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x8_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16_sse2  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+
+#endif // JPEG_ENABLE_SSE4
 
 #if defined(JPEG_ENABLE_SSE4)
 
@@ -533,7 +535,6 @@ namespace jpeg {
     void process_ycbcr_rgb_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x16_ssse3  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-#endif // JPEG_ENABLE_SSE4
 #endif // JPEG_ENABLE_SSE4
 
     SampleFormat getSampleFormat(const Format& format);

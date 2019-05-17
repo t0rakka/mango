@@ -43,7 +43,7 @@ namespace
     };
 
     template <int PRECISION>
-    void idct(u8* dest, const s16* data, const u16* qt)
+    void idct(u8* dest, const s16* data, const s16* qt)
     {
         int temp[64];
         int* v;
@@ -132,12 +132,12 @@ namespace jpeg {
     // Generic C++ implementation
     // ------------------------------------------------------------------------------------------------
 
-    void idct8(u8* dest, const s16* data, const u16* qt)
+    void idct8(u8* dest, const s16* data, const s16* qt)
     {
         idct<8>(dest, data, qt);
     }
 
-    void idct12(u8* dest, const s16* data, const u16* qt)
+    void idct12(u8* dest, const s16* data, const s16* qt)
     {
         idct<12>(dest, data, qt);
     }
@@ -266,7 +266,7 @@ namespace jpeg {
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    void idct_sse2(u8* dest, const s16* src, const u16* qt)
+    void idct_sse2(u8* dest, const s16* src, const s16* qt)
     {
         const __m128i* data = reinterpret_cast<const __m128i *>(src);
         const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
@@ -340,7 +340,7 @@ namespace jpeg {
 
 #define stbi__f2f(x)  ((int) (((x) * 4096 + 0.5)))
 
-void idct_neon(u8* out, const s16* data, const u16* qt)
+void idct_neon(u8* out, const s16* data, const s16* qt)
 {
     int16x8_t row0, row1, row2, row3, row4, row5, row6, row7;
 
@@ -438,14 +438,14 @@ void idct_neon(u8* out, const s16* data, const u16* qt)
     row6 = vld1q_s16(data + 6*8);
     row7 = vld1q_s16(data + 7*8);
 
-    int16x8_t qt0 = vreinterpretq_s16_u16(vld1q_u16(qt + 0*8));
-    int16x8_t qt1 = vreinterpretq_s16_u16(vld1q_u16(qt + 1*8));
-    int16x8_t qt2 = vreinterpretq_s16_u16(vld1q_u16(qt + 2*8));
-    int16x8_t qt3 = vreinterpretq_s16_u16(vld1q_u16(qt + 3*8));
-    int16x8_t qt4 = vreinterpretq_s16_u16(vld1q_u16(qt + 4*8));
-    int16x8_t qt5 = vreinterpretq_s16_u16(vld1q_u16(qt + 5*8));
-    int16x8_t qt6 = vreinterpretq_s16_u16(vld1q_u16(qt + 6*8));
-    int16x8_t qt7 = vreinterpretq_s16_u16(vld1q_u16(qt + 7*8));
+    int16x8_t qt0 = vld1q_s16(qt + 0*8);
+    int16x8_t qt1 = vld1q_s16(qt + 1*8);
+    int16x8_t qt2 = vld1q_s16(qt + 2*8);
+    int16x8_t qt3 = vld1q_s16(qt + 3*8);
+    int16x8_t qt4 = vld1q_s16(qt + 4*8);
+    int16x8_t qt5 = vld1q_s16(qt + 5*8);
+    int16x8_t qt6 = vld1q_s16(qt + 6*8);
+    int16x8_t qt7 = vld1q_s16(qt + 7*8);
 
     row0 = vmulq_s16(row0, qt0);
     row1 = vmulq_s16(row1, qt1);
