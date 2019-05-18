@@ -126,10 +126,10 @@ namespace
 
         float64x4 unpack(u32 sample) const
         {
-            double x = u32_to_f64(sample & m_mask[0]) * m_inv_scale[0];
-            double y = u32_to_f64(sample & m_mask[1]) * m_inv_scale[1];
-            double z = u32_to_f64(sample & m_mask[2]) * m_inv_scale[2];
-            double w = u32_to_f64(sample & m_mask[3]) * m_inv_scale[3];
+            double x = unsignedIntToDouble(sample & m_mask[0]) * m_inv_scale[0];
+            double y = unsignedIntToDouble(sample & m_mask[1]) * m_inv_scale[1];
+            double z = unsignedIntToDouble(sample & m_mask[2]) * m_inv_scale[2];
+            double w = unsignedIntToDouble(sample & m_mask[3]) * m_inv_scale[3];
             w += m_alpha;
             return float64x4(x, y, z, w);
         }
@@ -137,10 +137,10 @@ namespace
         u32 pack(const float64x4& value) const
         {
             u32 s = 0;
-            s |= f64_to_u32(value[0] * m_scale[0]) & m_mask[0];
-            s |= f64_to_u32(value[1] * m_scale[1]) & m_mask[1];
-            s |= f64_to_u32(value[2] * m_scale[2]) & m_mask[2];
-            s |= f64_to_u32(value[3] * m_scale[3]) & m_mask[3];
+            s |= doubleToUnsignedInt(value[0] * m_scale[0]) & m_mask[0];
+            s |= doubleToUnsignedInt(value[1] * m_scale[1]) & m_mask[1];
+            s |= doubleToUnsignedInt(value[2] * m_scale[2]) & m_mask[2];
+            s |= doubleToUnsignedInt(value[3] * m_scale[3]) & m_mask[3];
             return s;
         }
     };

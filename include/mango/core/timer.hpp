@@ -56,6 +56,13 @@ namespace mango
         Time m_start { now() };
     };
 
+    struct Time
+    {
+        static u64 ms();
+        static u64 us();
+        static u64 ns();
+    };
+
     struct LocalTime
     {
         u16  year;   // [....]

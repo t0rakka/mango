@@ -519,20 +519,20 @@ namespace simd {
     inline f64x4 convert<f64x4>(u32x4 u)
     {
         f64x4 v;
-        v.lo[0] = u32_to_f64(u[0]);
-        v.lo[1] = u32_to_f64(u[1]);
-        v.hi[0] = u32_to_f64(u[2]);
-        v.hi[1] = u32_to_f64(u[3]);
+        v.lo[0] = unsignedIntToDouble(u[0]);
+        v.lo[1] = unsignedIntToDouble(u[1]);
+        v.hi[0] = unsignedIntToDouble(u[2]);
+        v.hi[1] = unsignedIntToDouble(u[3]);
         return v;
     }
 
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
-        u32 x = f64_to_u32(d.lo[0]);
-        u32 y = f64_to_u32(d.lo[1]);
-        u32 z = f64_to_u32(d.hi[0]);
-        u32 w = f64_to_u32(d.hi[1]);
+        u32 x = doubleToUnsignedInt(d.lo[0]);
+        u32 y = doubleToUnsignedInt(d.lo[1]);
+        u32 z = doubleToUnsignedInt(d.hi[0]);
+        u32 w = doubleToUnsignedInt(d.hi[1]);
         return u32x4_set4(x, y, z, w);
     }
 

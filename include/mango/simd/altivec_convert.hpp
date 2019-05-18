@@ -641,20 +641,20 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(f16x4 h)
     {
-        f32 x = f16_to_f32(h[0]);
-        f32 y = f16_to_f32(h[1]);
-        f32 z = f16_to_f32(h[2]);
-        f32 w = f16_to_f32(h[3]);
+        f32 x = f32(h[0]);
+        f32 y = f32(h[1]);
+        f32 z = f32(h[2]);
+        f32 w = f32(h[3]);
         return f32x4_set4(x, y, z, w);
     }
 
     template <>
     inline f16x4 convert<f16x4>(f32x4 f)
     {
-        f32 x = f32_to_f16(get_component<0>(f));
-        f32 y = f32_to_f16(get_component<1>(f));
-        f32 z = f32_to_f16(get_component<2>(f));
-        f32 w = f32_to_f16(get_component<3>(f));
+        f16 x = f16(get_component<0>(f));
+        f16 y = f16(get_component<1>(f));
+        f16 z = f16(get_component<2>(f));
+        f16 w = f16(get_component<3>(f));
         return {{ x, y, z, w }};
     }
 

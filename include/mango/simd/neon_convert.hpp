@@ -734,20 +734,20 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(u32x4 s)
     {
-        f64 x = u32_to_f64(get_x(s));
-        f64 y = u32_to_f64(get_y(s));
-        f64 z = u32_to_f64(get_z(s));
-        f64 w = u32_to_f64(get_w(s));
+        f64 x = unsignedIntToDouble(get_x(s));
+        f64 y = unsignedIntToDouble(get_y(s));
+        f64 z = unsignedIntToDouble(get_z(s));
+        f64 w = unsignedIntToDouble(get_w(s));
         return f64x4_set4(x, y, z, w);
     }
 
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
-        u32 x = f64_to_u32(get_x(d.lo));
-        u32 y = f64_to_u32(get_y(d.lo));
-        u32 z = f64_to_u32(get_x(d.hi));
-        u32 w = f64_to_u32(get_y(d.hi));
+        u32 x = doubleToUnsignedInt(get_x(d.lo));
+        u32 y = doubleToUnsignedInt(get_y(d.lo));
+        u32 z = doubleToUnsignedInt(get_x(d.hi));
+        u32 w = doubleToUnsignedInt(get_y(d.hi));
         return u32x4_set4(x, y, z, w);
     }
 

@@ -268,18 +268,18 @@ namespace mango
     };
 
     // ----------------------------------------------------------------------------
-    // UnsignedInteger24
+    // UnsignedInt24
     // ----------------------------------------------------------------------------
 
-    struct UnsignedInteger24
+    struct UnsignedInt24
     {
         u8 data[3];
 
-        UnsignedInteger24()
+        UnsignedInt24()
         {
         }
 
-        UnsignedInteger24(u32 v)
+        UnsignedInt24(u32 v)
         {
             *this = v;
         }
@@ -290,17 +290,12 @@ namespace mango
             return v;
         }
 
-        UnsignedInteger24& operator = (u32 v)
+        UnsignedInt24& operator = (u32 v)
         {
             data[0] = u8(v);
             data[1] = u8(v >> 8);
             data[2] = u8(v >> 16);
             return *this;
-        }
-
-        void byteswap()
-        {
-            std::swap(data[0], data[2]);
         }
     };
 
@@ -308,24 +303,14 @@ namespace mango
     // conversions
     // -----------------------------------------------------------------------
 
-    static inline Half f32_to_f16(float f)
-    {
-        return Half(f);
-    }
-
-    static inline float f16_to_f32(Half h)
-    {
-        return float(h);
-    }
-
-    static inline double u32_to_f64(u32 i)
+    static inline double unsignedIntToDouble(u32 i)
     {
         const double bias = (1ll << 52) * 1.5;
         Double x(u64(0x4338000000000000UL | i));
         return x.f - bias;
     }
 
-    static inline u32 f64_to_u32(double d)
+    static inline u32 doubleToUnsignedInt(double d)
     {
         const double bias = (1ll << 52) * 1.5;
         Double x = d + bias;
@@ -336,7 +321,7 @@ namespace mango
     // types
     // -----------------------------------------------------------------------
 
-    using u24 = UnsignedInteger24;
+    using u24 = UnsignedInt24;
 
     using float16 = Half;
     using float32 = float;
