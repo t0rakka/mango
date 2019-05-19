@@ -77,7 +77,7 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions& options)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         jpeg::encodeImage(stream, surface, options.quality);
     }

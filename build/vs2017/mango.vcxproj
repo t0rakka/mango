@@ -63,7 +63,6 @@
     <ClInclude Include="..\..\include\mango\image\exif.hpp" />
     <ClInclude Include="..\..\include\mango\image\format.hpp" />
     <ClInclude Include="..\..\include\mango\image\fourcc.hpp" />
-    <ClInclude Include="..\..\include\mango\image\header.hpp" />
     <ClInclude Include="..\..\include\mango\image\image.hpp" />
     <ClInclude Include="..\..\include\mango\image\quantize.hpp" />
     <ClInclude Include="..\..\include\mango\image\surface.hpp" />

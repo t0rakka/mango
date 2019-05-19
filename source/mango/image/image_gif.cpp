@@ -767,7 +767,7 @@ namespace
 		s.write8(0x3b);
 	}
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions& options)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
 		if (options.palette.size > 0)
 		{

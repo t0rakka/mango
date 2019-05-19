@@ -9,14 +9,13 @@
 #include "../core/stream.hpp"
 #include "format.hpp"
 #include "compression.hpp"
-#include "header.hpp"
 #include "exif.hpp"
 
 namespace mango
 {
     class Surface;
 
-    struct ImageEncoderOptions
+    struct ImageEncodeOptions
     {
         Palette palette;
         float quality = 0.90f;
@@ -26,14 +25,13 @@ namespace mango
     class ImageEncoder : protected NonCopyable
     {
     public:
-        typedef void (*EncodeFunc)(Stream& output, const Surface& source, const ImageEncoderOptions& options);
-
         ImageEncoder(const std::string& extension);
         ~ImageEncoder();
 
         bool isEncoder() const;
+        void encode(Stream& output, const Surface& source, const ImageEncodeOptions& options);
 
-        void encode(Stream& output, const Surface& source, const ImageEncoderOptions& options);
+        typedef void (*EncodeFunc)(Stream& output, const Surface& source, const ImageEncodeOptions& options);
 
     protected:
         EncodeFunc m_encode_func;

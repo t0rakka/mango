@@ -9,7 +9,6 @@
 #include "color.hpp"
 #include "format.hpp"
 #include "compression.hpp"
-#include "header.hpp"
 #include "decoder.hpp"
 #include "encoder.hpp"
 #include "blitter.hpp"

@@ -52,7 +52,7 @@ namespace mango
     // unsupportedImageEncoder
     // ----------------------------------------------------------------------------
 
-    void unsupportedImageEncoder(Stream& output, const Surface& source, const ImageEncoderOptions& options)
+    void unsupportedImageEncoder(Stream& output, const Surface& source, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED_PARAMETER(output);
         MANGO_UNREFERENCED_PARAMETER(source);
@@ -86,7 +86,7 @@ namespace mango
     class ImageServer
     {
     protected:
-        std::map<std::string, ImageDecoder::CreateFunc> m_decoders;
+        std::map<std::string, ImageDecoder::CreateDecoderFunc> m_decoders;
         std::map<std::string, ImageEncoder::EncodeFunc> m_encoders;
 
     public:
@@ -123,7 +123,7 @@ namespace mango
             return toLower(extension.empty() ? filename : extension);
         }
 
-        void registerImageDecoder(ImageDecoder::CreateFunc func, const std::string& extension)
+        void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
         {
             m_decoders[toLower(extension)] = func;
         }
@@ -133,7 +133,7 @@ namespace mango
             m_encoders[toLower(extension)] = func;
         }
 
-        ImageDecoder::CreateFunc getImageDecoder(const std::string& extension) const
+        ImageDecoder::CreateDecoderFunc getImageDecoder(const std::string& extension) const
         {
             auto i = m_decoders.find(getLowerCaseExtension(extension));
             if (i != m_decoders.end())
@@ -156,7 +156,7 @@ namespace mango
         }
     } g_imageServer;
 
-    void registerImageDecoder(ImageDecoder::CreateFunc func, const std::string& extension)
+    void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
     {
         g_imageServer.registerImageDecoder(func, extension);
     }
@@ -201,7 +201,7 @@ namespace mango
 
     ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
     {
-        ImageDecoder::CreateFunc func = g_imageServer.getImageDecoder(filename);
+        ImageDecoder::CreateDecoderFunc func = g_imageServer.getImageDecoder(filename);
         m_interface = func(memory);
         m_is_decoder = func != createUnsupportedImageDecoderInterface;
     }
@@ -254,7 +254,7 @@ namespace mango
         return m_encode_func != unsupportedImageEncoder;
     }
 
-    void ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncoderOptions& options)
+    void ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncodeOptions& options)
     {
         m_encode_func(output, source, options);
     }

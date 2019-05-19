@@ -252,9 +252,6 @@
     <ClInclude Include="..\..\include\mango\image\fourcc.hpp">
       <Filter>mango\include\image</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\image\header.hpp">
-      <Filter>mango\include\image</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mango\image\image.hpp">
       <Filter>mango\include\image</Filter>
     </ClInclude>

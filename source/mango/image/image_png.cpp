@@ -1934,7 +1934,7 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncoderOptions& options)
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED_PARAMETER(options);
 
