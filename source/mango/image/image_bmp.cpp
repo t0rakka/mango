@@ -630,14 +630,14 @@ namespace
         }
     }
 
-    void readRGB(Surface surface, const BitmapHeader& header, int stride, u8* data)
+    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, u8* data)
     {
         u8* image = data;
         Surface source(header.width, header.height, header.format, stride, image);
         surface.blit(0, 0, source);
     }
 
-    void blitPalette(Surface& dest, Surface& indices, const Palette& palette)
+    void blitPalette(const Surface& dest, const Surface& indices, const Palette& palette)
     {
         const int width = dest.width;
         const int height = dest.height;
@@ -691,11 +691,11 @@ namespace
         u8* data = memory.address + offset;
 
         Surface mirror = surface;
-
+        
         if (header.yflip)
         {
-            mirror.image += (header.height - 1) * mirror.stride;
-            mirror.stride = -mirror.stride;
+            mirror.image += (header.height - 1) * surface.stride;
+            mirror.stride = -surface.stride;
         }
 
         switch (header.compression)

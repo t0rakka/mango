@@ -45,11 +45,11 @@ namespace mango
             return scan + x;
         }
 
-        void save(const std::string& filename, const ImageEncoderOptions& options = ImageEncoderOptions());
-        void clear(float red, float green, float blue, float alpha);
-        void blit(int x, int y, const Surface& source);
-        void xflip();
-        void yflip();
+        void save(const std::string& filename, const ImageEncoderOptions& options = ImageEncoderOptions()) const;
+        void clear(float red, float green, float blue, float alpha) const;
+        void blit(int x, int y, const Surface& source) const;
+        void xflip() const;
+        void yflip() const;
     };
 
     class Bitmap : private NonCopyable, public Surface

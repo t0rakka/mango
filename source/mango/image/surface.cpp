@@ -293,7 +293,7 @@ namespace mango
     {
     }
 
-    void Surface::save(const std::string& filename, const ImageEncoderOptions& options)
+    void Surface::save(const std::string& filename, const ImageEncoderOptions& options) const
     {
         ImageEncoder encoder(filename);
         if (encoder.isEncoder())
@@ -303,7 +303,7 @@ namespace mango
         }
     }
 
-    void Surface::clear(float red, float green, float blue, float alpha)
+    void Surface::clear(float red, float green, float blue, float alpha) const
     {
         switch (format.type)
         {
@@ -385,7 +385,7 @@ namespace mango
         }
     }
 
-    void Surface::blit(int x, int y, const Surface& source)
+    void Surface::blit(int x, int y, const Surface& source) const
     {
         if (!source.width || !source.height || !source.format.bits || !format.bits)
             return;
@@ -458,7 +458,7 @@ namespace mango
         queue.wait();
     }
 
-    void Surface::xflip()
+    void Surface::xflip() const
     {
         if (!image || !stride)
             return;
@@ -493,7 +493,7 @@ namespace mango
         }
     }
 
-    void Surface::yflip()
+    void Surface::yflip() const
     {
         if (!image || !stride)
             return;
