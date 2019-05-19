@@ -9,15 +9,17 @@
 #include "memory.hpp"
 
 namespace mango {
+namespace detail {
 
     // --------------------------------------------------------------
     // Pointer
     // --------------------------------------------------------------
 
+    template <typename P>
     class Pointer
     {
     protected:
-        u8* p;
+        P* p;
 
     public:
         explicit Pointer(const Pointer& pointer)
@@ -25,8 +27,8 @@ namespace mango {
         {
         }
 
-        explicit Pointer(void* address)
-            : p(reinterpret_cast<u8*>(address))
+        Pointer(void* address)
+            : p(reinterpret_cast<P*>(address))
         {
         }
 
@@ -35,7 +37,7 @@ namespace mango {
 
         const Pointer& operator = (void* address)
         {
-            p = reinterpret_cast<u8*>(address);
+            p = reinterpret_cast<P*>(address);
             return *this;
         }
 
@@ -45,66 +47,62 @@ namespace mango {
             return reinterpret_cast<T*>(p);
         }
 
-        operator u8* () const
+        operator P* () const
         {
             return p;
         }
 
-        u8& operator * () const
+        P& operator * () const
         {
             return *p;
         }
 
-        u8* operator ++ ()
+        P* operator ++ ()
         {
             return ++p;
         }
 
-        u8* operator ++ (int)
+        P* operator ++ (int)
         {
             return p++;
         }
 
-        u8* operator -- ()
+        P* operator -- ()
         {
             return --p;
         }
 
-        u8* operator -- (int)
+        P* operator -- (int)
         {
             return p--;
         }
 
-        u8* operator += (size_t count)
+        P* operator += (size_t count)
         {
             p += count;
             return p;
         }
 
-        u8* operator -= (size_t count)
+        P* operator -= (size_t count)
         {
             p -= count;
             return p;
         }
     };
 
-    static inline ptrdiff_t operator - (const Pointer& a, const Pointer& b)
-    {
-        return static_cast<const u8 *>(a) - static_cast<const u8 *>(b);
-    }
-
     // --------------------------------------------------------------
     // SameEndianPointer
     // --------------------------------------------------------------
 
-    class SameEndianPointer : public Pointer
+    template <typename P>
+    class SameEndianPointer : public Pointer<P>
     {
     protected:
-        using Pointer::p;
+        using Pointer<P>::p;
 
     public:
         SameEndianPointer(void* address)
-            : Pointer(address)
+            : Pointer<P>(address)
         {
         }
 
@@ -226,14 +224,15 @@ namespace mango {
     // SwapEndianPointer
     // --------------------------------------------------------------
 
-    class SwapEndianPointer : public Pointer
+    template <typename P>
+    class SwapEndianPointer : public Pointer<P>
     {
     protected:
-        using Pointer::p;
+        using Pointer<P>::p;
 
     public:
         SwapEndianPointer(void* address)
-            : Pointer(address)
+            : Pointer<P>(address)
         {
         }
 
@@ -351,19 +350,36 @@ namespace mango {
         }
     };
 
+} // namespace detail
+
     // --------------------------------------------------------------
-    // Little/BigEndianPointer
+    // pointer types
     // --------------------------------------------------------------
+
+    using Pointer = detail::Pointer<u8>;
+    using ConstPointer = detail::Pointer<const u8>;
+
+    using SameEndianPointer = detail::SameEndianPointer<u8>;
+    using SameEndianConstPointer = detail::SameEndianPointer<const u8>;
+
+    using SwapEndianPointer = detail::SwapEndianPointer<u8>;
+    using SwapEndianConstPointer = detail::SwapEndianPointer<const u8>;
 
 #ifdef MANGO_LITTLE_ENDIAN
 
     using LittleEndianPointer = SameEndianPointer;
+    using LittleEndianConstPointer = SameEndianConstPointer;
+
     using BigEndianPointer = SwapEndianPointer;
+    using BigEndianConstPointer = SwapEndianConstPointer;
 
 #else
 
     using LittleEndianPointer = SwapEndianPointer;
+    using LittleEndianConstPointer = SwapEndianConstPointer;
+
     using BigEndianPointer = SameEndianPointer;
+    using BigEndianConstPointer = SameEndianConstPointer;
 
 #endif
 
