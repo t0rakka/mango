@@ -9,6 +9,7 @@ mango::core
 [ ] Unify stream offset type (size_t vs. u64)
 [ ] should the seek offset by signed? u64 -> s64
 [-] Improved string builder: variadic template variant of a + b + c + d.. -> makeString(a,b,c,d, ...)
+[ ] Upgrade to ConstMemory and ConstPointer where memory is read-only (File, ...)
 
 ---------------------------------------------------------------------------------------------
 mango::image
