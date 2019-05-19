@@ -20,8 +20,8 @@ namespace mango
         int     depth = 0;   // depth
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
-        bool    palette = false; // decoder supports palette export
-        Format  format;
+        bool    palette = false; // palette is available
+        Format  format; // preferred format (fastest available decoding)
         TextureCompression compression = TextureCompression::NONE;
     };
 
@@ -32,9 +32,9 @@ namespace mango
         virtual ~ImageDecoderInterface() = default;
 
         virtual ImageHeader header() = 0;
-        virtual void decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
-        virtual Exif exif(); // get exif data (optional)
         virtual Memory memory(int level, int depth, int face); // get compressed data (optional)
+        virtual Exif exif(); // get exif data (optional)
+        virtual void decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
     };
 
     class ImageDecoder : protected NonCopyable
@@ -45,8 +45,8 @@ namespace mango
 
         bool isDecoder() const;
         ImageHeader header();
-        Exif exif();
         Memory memory(int level, int depth, int face);
+        Exif exif();
         void decode(Surface& dest, Palette* palette = nullptr, int level = 0, int depth = 0, int face = 0);
 
         typedef ImageDecoderInterface* (*CreateDecoderFunc)(Memory memory);
