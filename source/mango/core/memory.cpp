@@ -6,43 +6,8 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/memory.hpp>
 
-namespace mango {
-
-    // -----------------------------------------------------------------------
-    // Memory
-    // -----------------------------------------------------------------------
-
-    Memory::Memory()
-        : address(nullptr)
-        , size(0)
-    {
-    }
-
-    Memory::Memory(u8* address, size_t size)
-        : address(address)
-        , size(size)
-    {
-    }
-
-    Memory::operator u8* () const
-    {
-        return address;
-    }
-
-    Memory::operator char* () const
-    {
-		return reinterpret_cast<char *>(address);
-    }
-
-    Memory Memory::slice(size_t slice_offset, size_t slice_size) const
-    {
-        Memory memory(address + slice_offset, size - slice_offset);
-        if (slice_size)
-        {
-            memory.size = std::min(memory.size, slice_size);
-        }
-        return memory;
-    }
+namespace mango
+{
 
     // -----------------------------------------------------------------------
     // SharedMemory

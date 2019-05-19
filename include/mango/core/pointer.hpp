@@ -168,7 +168,7 @@ namespace detail {
             p += count;
         }
 
-        void write(Memory memory)
+        void write(mango::Memory memory)
         {
             std::memcpy(p, memory.address, memory.size);
             p += memory.size;
@@ -299,7 +299,7 @@ namespace detail {
             p += count;
         }
 
-        void write(Memory memory)
+        void write(mango::Memory memory)
         {
             std::memcpy(p, memory.address, memory.size);
             p += memory.size;

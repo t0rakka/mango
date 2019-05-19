@@ -10,26 +10,61 @@
 #include "configure.hpp"
 #include "object.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace detail {
+
+    // -----------------------------------------------------------------------
+    // Memory
+    // -----------------------------------------------------------------------
+
+    template <typename P>
+    struct Memory
+    {
+        P* address;
+        size_t size;
+
+        Memory()
+            : address(nullptr)
+            , size(0)
+        {
+        }
+
+        Memory(P* address, size_t size)
+            : address(address)
+            , size(size)
+        {
+        }
+
+        operator P* () const
+        {
+            return address;
+        }
+
+        template <typename T>
+        T* cast() const
+        {
+            return reinterpret_cast<T*>(address);
+        }
+
+        Memory slice(size_t slice_offset, size_t slice_size = 0) const
+        {
+            Memory memory(address + slice_offset, size - slice_offset);
+            if (slice_size)
+            {
+                memory.size = std::min(memory.size, slice_size);
+            }
+            return memory;
+        }
+    };
+
+} // namespace detail
 
     // -----------------------------------------------------------------------
     // memory
     // -----------------------------------------------------------------------
 
-    struct Memory
-    {
-        u8* address;
-        size_t size;
-
-        Memory();
-        Memory(u8* address, size_t size);
-
-        operator u8* () const;
-        operator char* () const;
-
-        Memory slice(size_t offset, size_t size = 0) const;
-    };
+    using Memory = detail::Memory<u8>;
+    using ConstMemory = detail::Memory<const u8>;
 
     class SharedMemory
     {
@@ -68,7 +103,7 @@ namespace mango
     };
 
     // -----------------------------------------------------------------------
-    // aligned malloc/free
+    // aligned malloc / free
     // -----------------------------------------------------------------------
 
     // NOTE: The alignment has to be a power-of-two and at least sizeof(void*)
@@ -77,7 +112,7 @@ namespace mango
     void aligned_free(void* aligned);
 
     // -----------------------------------------------------------------------
-    // aligned memory allocator
+    // aligned (std) memory allocator
     // -----------------------------------------------------------------------
 
     template <typename T, size_t ALIGNMENT>

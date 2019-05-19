@@ -149,12 +149,12 @@ namespace lz4 {
         if (level > 6)
         {
             const int compression_level = 1 + (level - 7) * 5;
-            written = LZ4_compress_HC(source, dest, source_size, dest_size, compression_level);
+            written = LZ4_compress_HC(source.cast<const char>(), dest.cast<char>(), source_size, dest_size, compression_level);
         }
         else
         {
             const int acceleration = 19 - level * 3;
-            written = LZ4_compress_fast(source, dest, source_size, dest_size, acceleration);
+            written = LZ4_compress_fast(source.cast<const char>(), dest.cast<char>(), source_size, dest_size, acceleration);
         }
 
 	    if (written <= 0 || written > dest.size)
@@ -167,7 +167,7 @@ namespace lz4 {
 
     void decompress(Memory dest, Memory source)
     {
-        int status = LZ4_decompress_fast(source, dest, int(dest.size));
+        int status = LZ4_decompress_fast(source.cast<const char>(), dest.cast<char>(), int(dest.size));
         if (status < 0)
         {
             MANGO_EXCEPTION("[lz4] decompression failed.");
@@ -223,7 +223,7 @@ namespace lz4 {
                 source.address += block_size;
                 source.size -= block_size;
 
-                char* dst = reinterpret_cast<char *>(dest.address);
+                char* dst = dest.cast<char>();
                 int bytes = LZ4_compress_fast_continue(m_stream, temp, dst, int(block_size), int(dest.size), m_acceleration);
 
                 dest.address += bytes;
@@ -534,8 +534,8 @@ namespace bzip2 {
 
         unsigned int destLength = static_cast<unsigned int>(dest.size);
 
-        strm.next_in = source;
-        strm.next_out = dest;
+        strm.next_in = source.cast<char>();
+        strm.next_out = dest.cast<char>();
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = destLength;
 
@@ -571,8 +571,8 @@ namespace bzip2 {
             MANGO_EXCEPTION("[bzip2] decompression failed.");
         }
 
-        strm.next_in = source;
-        strm.next_out = dest;
+        strm.next_in = source.cast<char>();
+        strm.next_out = dest.cast<char>();
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = static_cast<unsigned int>(dest.size);
 
