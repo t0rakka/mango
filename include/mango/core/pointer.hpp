@@ -27,7 +27,8 @@ namespace detail {
         {
         }
 
-        Pointer(void* address)
+        template <typename T>
+        Pointer(T* address)
             : p(reinterpret_cast<P*>(address))
         {
         }
@@ -101,7 +102,8 @@ namespace detail {
         using Pointer<P>::p;
 
     public:
-        SameEndianPointer(void* address)
+        template <typename T>
+        SameEndianPointer(T* address)
             : Pointer<P>(address)
         {
         }
@@ -231,7 +233,8 @@ namespace detail {
         using Pointer<P>::p;
 
     public:
-        SwapEndianPointer(void* address)
+        template <typename T>
+        SwapEndianPointer(T* address)
             : Pointer<P>(address)
         {
         }
