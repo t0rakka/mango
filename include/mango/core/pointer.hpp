@@ -36,12 +36,6 @@ namespace detail {
         Pointer() = default;
         ~Pointer() = default;
 
-        const Pointer& operator = (void* address)
-        {
-            p = reinterpret_cast<P*>(address);
-            return *this;
-        }
-
         template <typename T>
         T* cast() const
         {
