@@ -12,6 +12,7 @@
 
 namespace mango
 {
+    class Surface;
 
     struct ImageHeader
     {
@@ -37,6 +38,11 @@ namespace mango
         virtual void decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
     };
 
+    struct ImageDecodeOptions
+    {
+        Palette* palette = nullptr; // request indexed decoding; write palette here
+    };
+
     class ImageDecoder : protected NonCopyable
     {
     public:
@@ -47,7 +53,7 @@ namespace mango
         ImageHeader header();
         Memory memory(int level, int depth, int face);
         Exif exif();
-        void decode(Surface& dest, Palette* palette = nullptr, int level = 0, int depth = 0, int face = 0);
+        void decode(Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
 
         typedef ImageDecoderInterface* (*CreateDecoderFunc)(Memory memory);
 

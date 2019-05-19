@@ -231,9 +231,9 @@ namespace mango
         return m_interface->memory(level, depth, face);
     }
 
-    void ImageDecoder::decode(Surface& dest, Palette* palette, int level, int depth, int face)
+    void ImageDecoder::decode(Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
     {
-        m_interface->decode(dest, palette, level, depth, face);
+        m_interface->decode(dest, options.palette, level, depth, face);
     }
 
     // ----------------------------------------------------------------------------

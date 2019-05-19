@@ -193,7 +193,7 @@ namespace
             surface.image  = new u8[surface.height * surface.stride];
 
             // decode
-            decoder.decode(surface, nullptr, 0, 0, 0);
+            decoder.decode(surface);
         }
 
         return surface;
@@ -226,7 +226,9 @@ namespace
                 surface.image  = new u8[surface.height * surface.stride];
 
                 // decode
-                decoder.decode(surface, &palette, 0, 0, 0);
+                ImageDecodeOptions options;
+                options.palette = &palette;
+                decoder.decode(surface, options, 0, 0, 0);
             }
             else
             {

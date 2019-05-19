@@ -813,7 +813,7 @@ namespace
 
         if (decoder.isDecoder())
         {
-            decoder.decode(surface, nullptr, 0, 0, 0);
+            decoder.decode(surface);
         }
     }
 
