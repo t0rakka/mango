@@ -35,6 +35,13 @@ namespace detail {
         {
         }
 
+        template <typename T>
+        Memory(const Memory<T>& memory)
+            : address(memory.address)
+            , size(memory.size)
+        {
+        }
+
         operator P* () const
         {
             return address;
