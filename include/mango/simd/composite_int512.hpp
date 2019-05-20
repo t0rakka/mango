@@ -29,6 +29,20 @@ namespace simd {
         return result;
     }
 
+    static inline u8x64 u8x64_uload(const u8* source)
+    {
+        u8x64 result;
+        result.lo = u8x32_uload(source + 0);
+        result.hi = u8x32_uload(source + 32);
+        return result;
+    }
+
+    static inline void u8x64_ustore(u8* dest, u8x64 a)
+    {
+        u8x32_ustore(dest + 0, a.lo);
+        u8x32_ustore(dest + 32, a.hi);
+    }
+
     static inline u8x64 unpacklo(u8x64 a, u8x64 b)
     {
         u8x64 result;
@@ -181,6 +195,20 @@ namespace simd {
         result.lo = u16x16_set1(s);
         result.hi = u16x16_set1(s);
         return result;
+    }
+
+    static inline u16x32 u16x32_uload(const u16* source)
+    {
+        u16x32 result;
+        result.lo = u16x16_uload(source + 0);
+        result.hi = u16x16_uload(source + 16);
+        return result;
+    }
+
+    static inline void u16x32_ustore(u16* dest, u16x32 a)
+    {
+        u16x16_ustore(dest + 0, a.lo);
+        u16x16_ustore(dest + 16, a.hi);
     }
 
     static inline u16x32 unpacklo(u16x32 a, u16x32 b)
@@ -653,6 +681,20 @@ namespace simd {
         return result;
     }
 
+    static inline u64x8 u64x8_uload(const u64* source)
+    {
+        u64x8 result;
+        result.lo = u64x4_uload(source + 0);
+        result.hi = u64x4_uload(source + 4);
+        return result;
+    }
+
+    static inline void u64x8_ustore(u64* dest, u64x8 a)
+    {
+        u64x4_ustore(dest + 0, a.lo);
+        u64x4_ustore(dest + 4, a.hi);
+    }
+
     static inline u64x8 unpacklo(u64x8 a, u64x8 b)
     {
         u64x8 result;
@@ -789,6 +831,20 @@ namespace simd {
         result.lo = s8x32_set1(s);
         result.hi = s8x32_set1(s);
         return result;
+    }
+
+    static inline s8x64 s8x64_uload(const s8* source)
+    {
+        s8x64 result;
+        result.lo = s8x32_uload(source + 0);
+        result.hi = s8x32_uload(source + 32);
+        return result;
+    }
+
+    static inline void s8x64_ustore(s8* dest, s8x64 a)
+    {
+        s8x32_ustore(dest + 0, a.lo);
+        s8x32_ustore(dest + 32, a.hi);
     }
 
     static inline s8x64 unpacklo(s8x64 a, s8x64 b)
@@ -959,6 +1015,20 @@ namespace simd {
         result.lo = s16x16_set1(s);
         result.hi = s16x16_set1(s);
         return result;
+    }
+
+    static inline s16x32 s16x32_uload(const s16* source)
+    {
+        s16x32 result;
+        result.lo = s16x16_uload(source + 0);
+        result.hi = s16x16_uload(source + 16);
+        return result;
+    }
+
+    static inline void s16x32_ustore(s16* dest, s16x32 a)
+    {
+        s16x16_ustore(dest + 0, a.lo);
+        s16x16_ustore(dest + 16, a.hi);
     }
 
     static inline s16x32 unpacklo(s16x32 a, s16x32 b)
@@ -1461,6 +1531,20 @@ namespace simd {
         result.lo = s64x4_set4(s0, s1, s2, s3);
         result.hi = s64x4_set4(s4, s5, s6, s7);
         return result;
+    }
+
+    static inline s64x8 s64x8_uload(const s64* source)
+    {
+        s64x8 result;
+        result.lo = s64x4_uload(source + 0);
+        result.hi = s64x4_uload(source + 4);
+        return result;
+    }
+
+    static inline void s64x8_ustore(s64* dest, s64x8 a)
+    {
+        s64x4_ustore(dest + 0, a.lo);
+        s64x4_ustore(dest + 4, a.hi);
     }
 
     static inline s64x8 unpacklo(s64x8 a, s64x8 b)

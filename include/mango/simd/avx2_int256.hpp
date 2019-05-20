@@ -55,6 +55,16 @@ namespace detail {
         return _mm256_set1_epi8(s);
     }
 
+    static inline u8x32 u8x32_uload(const u8* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void u8x32_ustore(u8* dest, u8x32 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
+    }
+
     static inline u8x32 unpacklo(u8x32 a, u8x32 b)
     {
         return _mm256_unpacklo_epi8(a, b);
@@ -168,6 +178,16 @@ namespace detail {
     static inline u16x16 u16x16_set1(u16 s)
     {
         return _mm256_set1_epi16(s);
+    }
+
+    static inline u16x16 u16x16_uload(const u16* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void u16x16_ustore(u16* dest, u16x16 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline u16x16 unpacklo(u16x16 a, u16x16 b)
@@ -523,6 +543,16 @@ namespace detail {
         return _mm256_setr_epi64x(x, y, z, w);
     }
 
+    static inline u64x4 u64x4_uload(const u64* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void u64x4_ustore(u64* dest, u64x4 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
+    }
+
     static inline u64x4 unpacklo(u64x4 a, u64x4 b)
     {
         return _mm256_unpacklo_epi64(a, b);
@@ -625,6 +655,16 @@ namespace detail {
     static inline s8x32 s8x32_set1(s8 s)
     {
         return _mm256_set1_epi8(s);
+    }
+
+    static inline s8x32 s8x32_uload(const s8* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void s8x32_ustore(s8* dest, s8x32 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline s8x32 unpacklo(s8x32 a, s8x32 b)
@@ -749,6 +789,16 @@ namespace detail {
     static inline s16x16 s16x16_set1(s16 s)
     {
         return _mm256_set1_epi16(s);
+    }
+
+    static inline s16x16 s16x16_uload(const s16* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void s16x16_ustore(s16* dest, s16x16 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline s16x16 unpacklo(s16x16 a, s16x16 b)
@@ -1126,6 +1176,16 @@ namespace detail {
     static inline s64x4 s64x4_set4(s64 x, s64 y, s64 z, s64 w)
     {
         return _mm256_setr_epi64x(x, y, z, w);
+    }
+
+    static inline s64x4 s64x4_uload(const s64* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void s64x4_ustore(s64* dest, s64x4 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline s64x4 unpacklo(s64x4 a, s64x4 b)

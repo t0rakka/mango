@@ -36,6 +36,16 @@ namespace detail {
         return _mm512_set1_epi8(s);
     }
 
+    static inline u8x64 u8x64_uload(const u8* source)
+    {
+        return _mm512_loadu_si512(source);
+    }
+
+    static inline void u8x64_ustore(u8* dest, u8x64 a)
+    {
+        _mm512_storeu_si512(dest, a);
+    }
+
     static inline u8x64 unpacklo(u8x64 a, u8x64 b)
     {
         return _mm512_unpacklo_epi8(a, b);
@@ -134,6 +144,16 @@ namespace detail {
     static inline u16x32 u16x32_set1(u16 s)
     {
         return _mm512_set1_epi16(s);
+    }
+
+    static inline u16x32 u16x32_uload(const u16* source)
+    {
+        return _mm512_loadu_si512(source);
+    }
+
+    static inline void u16x32_ustore(u16* dest, u16x32 a)
+    {
+        _mm512_storeu_si512(dest, a);
     }
 
     static inline u16x32 unpacklo(u16x32 a, u16x32 b)
@@ -446,6 +466,16 @@ namespace detail {
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
+    static inline u64x8 u64x8_uload(const u64* source)
+    {
+        return _mm512_loadu_si512(source);
+    }
+
+    static inline void u64x8_ustore(u64* dest, u64x8 a)
+    {
+        _mm512_storeu_si512(dest, a);
+    }
+
     static inline u64x8 unpacklo(u64x8 a, u64x8 b)
     {
         return _mm512_unpacklo_epi64(a, b);
@@ -534,6 +564,16 @@ namespace detail {
     static inline s8x64 s8x64_set1(s8 s)
     {
         return _mm512_set1_epi8(s);
+    }
+
+    static inline s8x64 s8x64_uload(const s8* source)
+    {
+        return _mm512_loadu_si512(source);
+    }
+
+    static inline void s8x64_ustore(s8* dest, s8x64 a)
+    {
+        _mm512_storeu_si512(dest, a);
     }
 
     static inline s8x64 unpacklo(s8x64 a, s8x64 b)
@@ -644,6 +684,16 @@ namespace detail {
     static inline s16x32 s16x32_set1(s16 s)
     {
         return _mm512_set1_epi16(s);
+    }
+
+    static inline s16x32 s16x32_uload(const s16* source)
+    {
+        return _mm512_loadu_si512(source);
+    }
+
+    static inline void s16x32_ustore(s16* dest, s16x32 a)
+    {
+        _mm512_storeu_si512(dest, a);
     }
 
     static inline s16x32 unpacklo(s16x32 a, s16x32 b)
@@ -974,6 +1024,16 @@ namespace detail {
     static inline s64x8 s64x8_set8(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
     {
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
+    }
+
+    static inline s64x8 s64x8_uload(const s64* source)
+    {
+        return _mm512_loadu_si512(source);
+    }
+
+    static inline void s64x8_ustore(s64* dest, s64x8 a)
+    {
+        _mm512_storeu_si512(dest, a);
     }
 
     static inline s64x8 unpacklo(s64x8 a, s64x8 b)
