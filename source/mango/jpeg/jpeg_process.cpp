@@ -496,16 +496,6 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 
 #endif // JPEG_ENABLE_NEON
 
-#if defined(JPEG_ENABLE_SSE2) || defined(JPEG_ENABLE_SSE4)
-
-constexpr int JPEG_PREC = 12;
-constexpr int JPEG_SCALE(int x) { return x << JPEG_PREC; }
-constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.5)); }
-
-#define JPEG_CONST_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
-
-#endif
-
 #if defined(JPEG_ENABLE_SSE2)
 
 // ------------------------------------------------------------------------------------------------
@@ -516,6 +506,12 @@ constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.
 // https://github.com/kobalicek/simdtests
 // [License]
 // Public Domain <unlicense.org>
+
+constexpr int JPEG_PREC = 12;
+constexpr int JPEG_SCALE(int x) { return x << JPEG_PREC; }
+constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.5)); }
+
+#define JPEG_CONST_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
 
 static inline
 void convert_ycbcr_bgra_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)

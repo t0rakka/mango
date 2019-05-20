@@ -195,7 +195,11 @@
 
     // AVX and AVX2 include support for these
     #if defined(__AVX__) || defined(__AVX2__)
-        #ifndef __SSE3__
+		#ifndef __SSE2__
+        #define __SSE2__
+        #endif
+
+		#ifndef __SSE3__
         #define __SSE3__
         #endif
 
@@ -385,38 +389,8 @@
 
 #if defined(MANGO_CPU_INTEL)
 
-    // Intel SSE vector intrinsics
-    #define MANGO_ENABLE_SSE
-    #include <xmmintrin.h>
-
-    #ifdef __SSE2__
-        // Required minimum feature level
-        #define MANGO_ENABLE_SSE2
-        #include <emmintrin.h>
-    #endif
-
-    #ifdef __SSE3__
-        #define MANGO_ENABLE_SSE3
-        #include <pmmintrin.h>
-    #endif
-
-    #ifdef __SSSE3__
-        #define MANGO_ENABLE_SSSE3
-        #include <tmmintrin.h>
-    #endif
-
-    #ifdef __SSE4_1__
-        #define MANGO_ENABLE_SSE4_1
-        #include <smmintrin.h>
-    #endif
-
-    #ifdef __SSE4_2__
-        #define MANGO_ENABLE_SSE4_2
-        #include <nmmintrin.h>
-    #endif
-
-    #ifdef __AVX__
-        #define MANGO_ENABLE_AVX
+    #if defined(__AVX512F__) && defined(__AVX512DQ__)
+        #define MANGO_ENABLE_AVX512
         #include <immintrin.h>
     #endif
 
@@ -425,10 +399,39 @@
         #include <immintrin.h>
     #endif
 
-    #if defined(__AVX512F__) && defined(__AVX512DQ__)
-        #define MANGO_ENABLE_AVX512
+    #ifdef __AVX__
+        #define MANGO_ENABLE_AVX
         #include <immintrin.h>
     #endif
+
+    #ifdef __SSE4_2__
+        #define MANGO_ENABLE_SSE4_2
+        #include <nmmintrin.h>
+    #endif
+
+    #ifdef __SSE4_1__
+        #define MANGO_ENABLE_SSE4_1
+        #include <smmintrin.h>
+    #endif
+
+    #ifdef __SSSE3__
+        #define MANGO_ENABLE_SSSE3
+        #include <tmmintrin.h>
+    #endif
+
+    #ifdef __SSE3__
+        #define MANGO_ENABLE_SSE3
+        #include <pmmintrin.h>
+    #endif
+
+    #ifdef __SSE2__
+        #define MANGO_ENABLE_SSE2
+        #include <emmintrin.h>
+    #endif
+
+    // Intel SSE vector intrinsics
+    #define MANGO_ENABLE_SSE
+    #include <xmmintrin.h>
 
     #ifdef __XOP__
         #if defined(MANGO_COMPILER_MICROSOFT)

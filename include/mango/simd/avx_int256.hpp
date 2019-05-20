@@ -1910,7 +1910,7 @@ namespace detail {
 
     static inline bool all_of(mask8x32 a)
     {
-        return _mm256_testc_si256(a, _mm256_set1_epi8(0xff));
+        return _mm256_testc_si256(a, _mm256_set1_epi8(-1)) != 0;
     }
 
     // -----------------------------------------------------------------
@@ -1950,7 +1950,7 @@ namespace detail {
 
     static inline bool all_of(mask16x16 a)
     {
-        return _mm256_testc_si256(a, _mm256_set1_epi16(0xffff));
+        return _mm256_testc_si256(a, _mm256_set1_epi16(-1)) != 0;
     }
 
     // -----------------------------------------------------------------
@@ -1990,7 +1990,7 @@ namespace detail {
 
     static inline bool all_of(mask32x8 a)
     {
-        return _mm256_testc_si256(a, _mm256_set1_epi32(0xffffffff));
+        return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
     }
 
     // -----------------------------------------------------------------
@@ -2030,7 +2030,7 @@ namespace detail {
 
     static inline bool all_of(mask64x4 a)
     {
-        return _mm256_testc_si256(a, _mm256_set1_epi32(0xffffffff));
+        return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
     }
 
 #undef SET_COMPONENT
