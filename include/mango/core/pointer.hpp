@@ -104,7 +104,7 @@ namespace detail {
 
         // read functions
 
-        void read(u8* dest, size_t count)
+        void read(void* dest, size_t count)
         {
             std::memcpy(dest, p, count);
             p += count;
@@ -162,7 +162,7 @@ namespace detail {
 
         // write functions
 
-        void write(const u8* source, size_t count)
+        void write(const void* source, size_t count)
         {
             std::memcpy(p, source, count);
             p += count;
@@ -235,7 +235,7 @@ namespace detail {
 
         // read functions
 
-        void read(u8* dest, size_t count)
+        void read(void* dest, size_t count)
         {
             std::memcpy(dest, p, count);
             p += count;
@@ -293,7 +293,7 @@ namespace detail {
 
         // write functions
 
-        void write(const u8* source, size_t count)
+        void write(const void* source, size_t count)
         {
             std::memcpy(p, source, count);
             p += count;
