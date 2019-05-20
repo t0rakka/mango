@@ -58,8 +58,7 @@ namespace mango
         typedef ImageDecoderInterface* (*CreateDecoderFunc)(Memory memory);
 
     protected:
-        ImageDecoderInterface* m_interface;
-        bool m_is_decoder;
+        std::unique_ptr<ImageDecoderInterface> m_interface;
     };
 
     void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension);
