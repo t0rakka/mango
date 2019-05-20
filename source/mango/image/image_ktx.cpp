@@ -485,7 +485,7 @@ namespace
 			if (endianness == 0x04030201)
             {
                 // same endianness
-                SameEndianPointer p = ptr;
+                ConstPointer p = ptr;
 
                 glType = p.read32();
                 glTypeSize = p.read32();
@@ -509,7 +509,7 @@ namespace
 				else
 				{
 					// different endianness
-                    SwapEndianPointer p = ptr;
+                    SwapEndianConstPointer p = ptr;
 
                     glType = p.read32();
                     glTypeSize = p.read32();

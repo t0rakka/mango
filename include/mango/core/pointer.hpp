@@ -86,23 +86,21 @@ namespace detail {
     };
 
     // --------------------------------------------------------------
-    // SameEndianPointer
+    // ReadPointer
     // --------------------------------------------------------------
 
     template <typename P>
-    class SameEndianPointer : public Pointer<P>
+    class ReadPointer : public Pointer<P>
     {
     protected:
         using Pointer<P>::p;
 
     public:
         template <typename T>
-        SameEndianPointer(T* address)
+        ReadPointer(T* address)
             : Pointer<P>(address)
         {
         }
-
-        // read functions
 
         void read(void* dest, size_t count)
         {
@@ -159,8 +157,24 @@ namespace detail {
             p += 8;
             return value;
         }
+    };
 
-        // write functions
+    // --------------------------------------------------------------
+    // ReadWritePointer
+    // --------------------------------------------------------------
+
+    template <typename P>
+    class ReadWritePointer : public ReadPointer<P>
+    {
+    protected:
+        using Pointer<P>::p;
+
+    public:
+        template <typename T>
+        ReadWritePointer(T* address)
+            : ReadPointer<P>(address)
+        {
+        }
 
         void write(const void* source, size_t count)
         {
@@ -217,23 +231,21 @@ namespace detail {
     };
 
     // --------------------------------------------------------------
-    // SwapEndianPointer
+    // SwapEndianReadPointer
     // --------------------------------------------------------------
 
     template <typename P>
-    class SwapEndianPointer : public Pointer<P>
+    class SwapEndianReadPointer : public Pointer<P>
     {
     protected:
         using Pointer<P>::p;
 
     public:
         template <typename T>
-        SwapEndianPointer(T* address)
+        SwapEndianReadPointer(T* address)
             : Pointer<P>(address)
         {
         }
-
-        // read functions
 
         void read(void* dest, size_t count)
         {
@@ -290,8 +302,24 @@ namespace detail {
             p += 8;
             return value;
         }
+    };
 
-        // write functions
+    // --------------------------------------------------------------
+    // SwapEndianReadWritePointer
+    // --------------------------------------------------------------
+
+    template <typename P>
+    class SwapEndianReadWritePointer : public SwapEndianReadPointer<P>
+    {
+    protected:
+        using Pointer<P>::p;
+
+    public:
+        template <typename T>
+        SwapEndianReadWritePointer(T* address)
+            : SwapEndianReadPointer<P>(address)
+        {
+        }
 
         void write(const void* source, size_t count)
         {
@@ -353,19 +381,16 @@ namespace detail {
     // pointer types
     // --------------------------------------------------------------
 
-    using Pointer = detail::Pointer<u8>;
-    using ConstPointer = detail::Pointer<const u8>;
+    using Pointer = detail::ReadWritePointer<u8>;
+    using ConstPointer = detail::ReadPointer<const u8>;
 
-    using SameEndianPointer = detail::SameEndianPointer<u8>;
-    using SameEndianConstPointer = detail::SameEndianPointer<const u8>;
-
-    using SwapEndianPointer = detail::SwapEndianPointer<u8>;
-    using SwapEndianConstPointer = detail::SwapEndianPointer<const u8>;
+    using SwapEndianPointer = detail::SwapEndianReadWritePointer<u8>;
+    using SwapEndianConstPointer = detail::SwapEndianReadPointer<const u8>;
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    using LittleEndianPointer = SameEndianPointer;
-    using LittleEndianConstPointer = SameEndianConstPointer;
+    using LittleEndianPointer = Pointer;
+    using LittleEndianConstPointer = ConstPointer;
 
     using BigEndianPointer = SwapEndianPointer;
     using BigEndianConstPointer = SwapEndianConstPointer;
@@ -375,8 +400,8 @@ namespace detail {
     using LittleEndianPointer = SwapEndianPointer;
     using LittleEndianConstPointer = SwapEndianConstPointer;
 
-    using BigEndianPointer = SameEndianPointer;
-    using BigEndianConstPointer = SameEndianConstPointer;
+    using BigEndianPointer = Pointer;
+    using BigEndianConstPointer = ConstPointer;
 
 #endif
 
