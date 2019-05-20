@@ -199,20 +199,25 @@
         #define __SSE2__
         #endif
 
-		#ifndef __SSE3__
-        #define __SSE3__
-        #endif
+        // 32 it x86 target has limited / broken SSE3..SSE4 support :(
+        #if !defined(_M_IX86) && !defined(__i386__)
 
-        #ifndef __SSSE3__
-        #define __SSSE3__
-        #endif
+            #ifndef __SSE3__
+            #define __SSE3__
+            #endif
 
-        #ifndef __SSE4_1__
-        #define __SSE4_1__
-        #endif
+            #ifndef __SSSE3__
+            #define __SSSE3__
+            #endif
 
-        #ifndef __SSE4_2__
-        #define __SSE4_2__
+            #ifndef __SSE4_1__
+            #define __SSE4_1__
+            #endif
+
+            #ifndef __SSE4_2__
+            #define __SSE4_2__
+            #endif
+
         #endif
     #endif
 
