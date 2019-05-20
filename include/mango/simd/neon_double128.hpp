@@ -89,14 +89,12 @@ namespace simd {
 
     static inline f64x2 f64x2_uload(const f64* source)
     {
-        float64x2_t temp = { source[0], source[1] };
-        return temp;
+        return vld1q_f64(source);
     }
 
     static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
-        dest[0] = vgetq_lane_f64(a, 0);
-        dest[1] = vgetq_lane_f64(a, 1);
+        return vst1q_f64(dest, a);
     }
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)

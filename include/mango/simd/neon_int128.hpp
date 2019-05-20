@@ -419,16 +419,12 @@ namespace simd {
 
     static inline u32x4 u32x4_uload(const u32* source)
     {
-        uint32x4_t temp = { source[0], source[1], source[2], source[3] };
-        return temp;
+        return vld1q_u32(source);
     }
 
     static inline void u32x4_ustore(u32* dest, u32x4 a)
     {
-        dest[0] = vgetq_lane_u32(a, 0);
-        dest[1] = vgetq_lane_u32(a, 1);
-        dest[2] = vgetq_lane_u32(a, 2);
-        dest[3] = vgetq_lane_u32(a, 3);
+        return vst1q_u32(dest, a);
     }
 
     static inline u32x4 u32x4_load_low(const u32* source)
@@ -1169,16 +1165,12 @@ namespace simd {
 
     static inline s32x4 s32x4_uload(const s32* source)
     {
-        int32x4_t temp = { source[0], source[1], source[2], source[3] };
-        return temp;
+        return vld1q_s32(source);
     }
 
     static inline void s32x4_ustore(s32* dest, s32x4 a)
     {
-        dest[0] = vgetq_lane_s32(a, 0);
-        dest[1] = vgetq_lane_s32(a, 1);
-        dest[2] = vgetq_lane_s32(a, 2);
-        dest[3] = vgetq_lane_s32(a, 3);
+        return vst1q_s32(dest, a);
     }
 
     static inline s32x4 s32x4_load_low(const s32* source)

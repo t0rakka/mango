@@ -181,16 +181,12 @@ namespace simd {
 
     static inline f32x4 f32x4_uload(const f32* source)
     {
-        float32x4_t temp = { source[0], source[1], source[2], source[3] };
-        return temp;
+        return vld1q_f32(source);
     }
 
     static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
-        dest[0] = vgetq_lane_f32(a, 0);
-        dest[1] = vgetq_lane_f32(a, 1);
-        dest[2] = vgetq_lane_f32(a, 2);
-        dest[3] = vgetq_lane_f32(a, 3);
+        return vst1q_f32(dest, a);
     }
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)
