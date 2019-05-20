@@ -45,6 +45,16 @@ namespace simd {
         return temp;
     }
 
+    static inline u8x16 u8x16_uload(const u8* source)
+    {
+        return vld1q_u8(source);
+    }
+
+    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    {
+        vst1q_u8(dest, a);
+    }
+
     static inline u8x16 u8x16_load_low(const u8* source)
     {
         const uint8x8_t low = vld1_u8(source);
@@ -197,6 +207,16 @@ namespace simd {
     {
         uint16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
+    }
+
+    static inline u16x8 u16x8_uload(const u16* source)
+    {
+        return vld1q_u16(source);
+    }
+
+    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    {
+        vst1q_u16(dest, a);
     }
 
     static inline u16x8 u16x8_load_low(const u16* source)
@@ -424,7 +444,7 @@ namespace simd {
 
     static inline void u32x4_ustore(u32* dest, u32x4 a)
     {
-        return vst1q_u32(dest, a);
+        vst1q_u32(dest, a);
     }
 
     static inline u32x4 u32x4_load_low(const u32* source)
@@ -644,6 +664,16 @@ namespace simd {
         return temp;
     }
 
+    static inline u64x2 u64x2_uload(const u64* source)
+    {
+        return vld1q_u64(source);
+    }
+
+    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    {
+        vst1q_u64(dest, a);
+    }
+
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
     {
         return vsetq_lane_u64(vgetq_lane_u64(b, 0), a, 1);
@@ -765,6 +795,16 @@ namespace simd {
     {
         int8x16_t temp = { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
         return temp;
+    }
+
+    static inline s8x16 s8x16_uload(const s8* source)
+    {
+        return vld1q_s8(source);
+    }
+
+    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    {
+        vst1q_s8(dest, a);
     }
 
     static inline s8x16 s8x16_load_low(const s8* source)
@@ -929,6 +969,16 @@ namespace simd {
     {
         int16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
+    }
+
+    static inline s16x8 s16x8_uload(const s16* source)
+    {
+        return vld1q_s16(source);
+    }
+
+    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    {
+        vst1q_s16(dest, a);
     }
 
     static inline s16x8 s16x8_load_low(const s16* source)
@@ -1170,7 +1220,7 @@ namespace simd {
 
     static inline void s32x4_ustore(s32* dest, s32x4 a)
     {
-        return vst1q_s32(dest, a);
+        vst1q_s32(dest, a);
     }
 
     static inline s32x4 s32x4_load_low(const s32* source)
@@ -1416,6 +1466,16 @@ namespace simd {
     {
         int64x2_t temp = { x, y };
         return temp;
+    }
+
+    static inline s64x2 s64x2_uload(const s64* source)
+    {
+        return vld1q_s64(source);
+    }
+
+    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    {
+        vst1q_s64(dest, a);
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)

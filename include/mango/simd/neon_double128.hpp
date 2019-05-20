@@ -94,7 +94,7 @@ namespace simd {
 
     static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
-        return vst1q_f64(dest, a);
+        vst1q_f64(dest, a);
     }
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)

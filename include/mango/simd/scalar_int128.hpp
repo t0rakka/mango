@@ -392,23 +392,30 @@ namespace detail {
         return {{ s0, s1, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
     }
 
-    static inline u8x16 u8x16_load_low(const u8* source)
+    static inline u8x16 u8x16_uload(const u8* s)
     {
-        return {{ source[0], source[1], source[2], source[3],
-                  source[4], source[5], source[6], source[7],
-                  0, 0, 0, 0, 0, 0, 0, 0 }};
+        return u8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
+    }
+
+    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    {
+        for (int i = 0; i < 16; ++i)
+        {
+            dest[i] = a[i];
+        }
+    }
+
+    static inline u8x16 u8x16_load_low(const u8* s)
+    {
+        return u8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     static inline void u8x16_store_low(u8* dest, u8x16 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
-        dest[2] = a[2];
-        dest[3] = a[3];
-        dest[4] = a[4];
-        dest[5] = a[5];
-        dest[6] = a[6];
-        dest[7] = a[7];
+        for (int i = 0; i < 8; ++i)
+        {
+            dest[i] = a[i];
+        }
     }
 
     static inline u8x16 unpacklo(u8x16 a, u8x16 b)
@@ -551,17 +558,30 @@ namespace detail {
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
-    static inline u16x8 u16x8_load_low(const u16* source)
+    static inline u16x8 u16x8_uload(const u16* s)
     {
-        return {{ source[0], source[1], source[2], source[3], 0, 0, 0, 0 }};
+        return u16x8_set8(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
+    }
+
+    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            dest[i] = a[i];
+        }
+    }
+
+    static inline u16x8 u16x8_load_low(const u16* s)
+    {
+        return u16x8_set8(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
     }
 
     static inline void u16x8_store_low(u16* dest, u16x8 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
-        dest[2] = a[2];
-        dest[3] = a[3];
+        for (int i = 0; i < 4; ++i)
+        {
+            dest[i] = a[i];
+        }
     }
 
     static inline u16x8 unpacklo(u16x8 a, u16x8 b)
@@ -764,9 +784,9 @@ namespace detail {
         return {{ x, y, z, w }};
     }
 
-    static inline u32x4 u32x4_uload(const u32* source)
+    static inline u32x4 u32x4_uload(const u32* s)
     {
-        return u32x4_set4(source[0], source[1], source[2], source[3]);
+        return u32x4_set4(s[0], s[1], s[2], s[3]);
     }
 
     static inline void u32x4_ustore(u32* dest, u32x4 a)
@@ -777,9 +797,9 @@ namespace detail {
         dest[3] = a[3];
     }
 
-    static inline u32x4 u32x4_load_low(const u32* source)
+    static inline u32x4 u32x4_load_low(const u32* s)
     {
-        return {{ source[0], source[1], 0, 0 }};
+        return u32x4_set4(s[0], s[1], 0, 0);
     }
 
     static inline void u32x4_store_low(u32* dest, u32x4 a)
@@ -987,6 +1007,17 @@ namespace detail {
         return {{ x, y }};
     }
 
+    static inline u64x2 u64x2_uload(const u64* s)
+    {
+        return u64x2_set2(s[0], s[1]);
+    }
+
+    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
+    }
+
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
     {
         return detail::scalar_unpacklo(a, b);
@@ -1099,23 +1130,30 @@ namespace detail {
         return {{ v0, v1, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 }};
     }
 
-    static inline s8x16 s8x16_load_low(const s8* source)
+    static inline s8x16 s8x16_uload(const s8* s)
     {
-        return {{ source[0], source[1], source[2], source[3],
-                  source[4], source[5], source[6], source[7],
-                  0, 0, 0, 0, 0, 0, 0, 0 }};
+        return s8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
+    }
+
+    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    {
+        for (int i = 0; i < 16; ++i)
+        {
+            dest[i] = a[i];
+        }
+    }
+
+    static inline s8x16 s8x16_load_low(const s8* s)
+    {
+        return s8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     static inline void s8x16_store_low(s8* dest, s8x16 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
-        dest[2] = a[2];
-        dest[3] = a[3];
-        dest[4] = a[4];
-        dest[5] = a[5];
-        dest[6] = a[6];
-        dest[7] = a[7];
+        for (int i = 0; i < 8; ++i)
+        {
+            dest[i] = a[i];
+        }
     }
 
     static inline s8x16 unpacklo(s8x16 a, s8x16 b)
@@ -1268,9 +1306,22 @@ namespace detail {
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
-    static inline s16x8 s16x8_load_low(const s16* source)
+    static inline s16x8 s16x8_uload(const s16* s)
     {
-        return {{ source[0], source[1], source[2], source[3], 0, 0, 0, 0 }};
+        return s16x8_set8(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
+    }
+
+    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            dest[i] = a[i];
+        }
+    }
+
+    static inline s16x8 s16x8_load_low(const s16* s)
+    {
+        return s16x8_set8(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
     }
 
     static inline void s16x8_store_low(s16* dest, s16x8 a)
@@ -1491,9 +1542,9 @@ namespace detail {
         return {{ x, y, z, w }};
     }
 
-    static inline s32x4 s32x4_uload(const s32* source)
+    static inline s32x4 s32x4_uload(const s32* s)
     {
-        return s32x4_set4(source[0], source[1], source[2], source[3]);
+        return s32x4_set4(s[0], s[1], s[2], s[3]);
     }
 
     static inline void s32x4_ustore(s32* dest, s32x4 a)
@@ -1504,9 +1555,9 @@ namespace detail {
         dest[3] = a[3];
     }
 
-    static inline s32x4 s32x4_load_low(const s32* source)
+    static inline s32x4 s32x4_load_low(const s32* s)
     {
-        return {{ source[0], source[1], 0, 0 }};
+        return s32x4_set4(s[0], s[1], 0, 0);
     }
 
     static inline void s32x4_store_low(s32* dest, s32x4 a)
@@ -1741,6 +1792,17 @@ namespace detail {
     static inline s64x2 s64x2_set2(s64 x, s64 y)
     {
         return {{ x, y }};
+    }
+
+    static inline s64x2 s64x2_uload(const s64* s)
+    {
+        return s64x2_set2(s[0], s[1]);
+    }
+
+    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    {
+        dest[0] = a[0];
+        dest[1] = a[1];
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)

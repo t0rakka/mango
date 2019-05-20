@@ -186,7 +186,7 @@ namespace simd {
 
     static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
-        return vst1q_f32(dest, a);
+        vst1q_f32(dest, a);
     }
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)

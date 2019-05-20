@@ -44,6 +44,18 @@ namespace simd {
         return (u8x16::vector) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
+    static inline u8x16 u8x16_uload(const u8* source)
+    {
+        u8x16 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
+    }
+
     static inline u8x16 u8x16_load_low(const u8* source)
     {
         auto s0 = source[0];
@@ -202,6 +214,18 @@ namespace simd {
     static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return (u16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
+    }
+
+    static inline u16x8 u16x8_uload(const u16* source)
+    {
+        u16x8 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline u16x8 u16x8_load_low(const u16* source)
@@ -658,6 +682,18 @@ namespace simd {
         return (u64x2::vector) { x, y };
     }
 
+    static inline u64x2 u64x2_uload(const u64* source)
+    {
+        u64x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
+    }
+
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
     {
         return vec_insert(vec_extract(b.data, 0), a.data, 1);
@@ -775,6 +811,18 @@ namespace simd {
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
         return (s8x16::vector) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
+    }
+
+    static inline s8x16 s8x16_uload(const s8* source)
+    {
+        s8x16 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s8x16 s8x16_load_low(const s8* source)
@@ -945,6 +993,18 @@ namespace simd {
     static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return (s16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
+    }
+
+    static inline s16x8 s16x8_uload(const s16* source)
+    {
+        s16x8 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s16x8 s16x8_load_low(const s16* source)
@@ -1434,6 +1494,18 @@ namespace simd {
     static inline s64x2 s64x2_set2(s64 x, s64 y)
     {
         return (s64x2::vector) { x, y };
+    }
+
+    static inline s64x2 s64x2_uload(const s64* source)
+    {
+        s64x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)

@@ -101,6 +101,16 @@ namespace detail
         return _mm_setr_epi8(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
     }
 
+    static inline u8x16 u8x16_uload(const u8* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
+    }
+
     static inline u8x16 u8x16_load_low(const u8* source)
     {
         return _mm_loadl_epi64(reinterpret_cast<__m128i const *>(source));
@@ -248,6 +258,16 @@ namespace detail
     static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return _mm_setr_epi16(s0, s1, s2, s3, s4, s5, s6, s7);
+    }
+
+    static inline u16x8 u16x8_uload(const u16* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
     static inline u16x8 u16x8_load_low(const u16* source)
@@ -679,6 +699,16 @@ namespace detail
         return _mm_set_epi64x(y, x);
     }
 
+    static inline u64x2 u64x2_uload(const u64* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
+    }
+
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
     {
         return _mm_unpacklo_epi64(a, b);
@@ -788,6 +818,16 @@ namespace detail
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
         return _mm_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
+    }
+
+    static inline s8x16 s8x16_uload(const s8* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
     static inline s8x16 s8x16_load_low(const s8* source)
@@ -947,6 +987,16 @@ namespace detail
     static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return _mm_setr_epi16(s0, s1, s2, s3, s4, s5, s6, s7);
+    }
+
+    static inline s16x8 s16x8_uload(const s16* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
     static inline s16x8 s16x8_load_low(const s16* source)
@@ -1415,6 +1465,16 @@ namespace detail
     static inline s64x2 s64x2_set2(s64 x, s64 y)
     {
         return _mm_set_epi64x(y, x);
+    }
+
+    static inline s64x2 s64x2_uload(const s64* source)
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(source));
+    }
+
+    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dest), a);
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)
