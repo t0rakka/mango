@@ -889,7 +889,270 @@ namespace
         _mm_storeu_si128(d + 7, v7);
     }
 
-#endif
+#endif // JPEG_ENABLE_SSE2
+
+//#if defined(JPEG_ENABLE_NEON)
+#if 0
+
+    // ----------------------------------------------------------------------------
+    // fdct_neon
+    // ----------------------------------------------------------------------------
+
+    static inline
+    void dct_trn16(int16x8_t& x, int16x8_t& y)
+    {
+        int16x8x2_t t = vtrnq_s16(x, y);
+        x = t.val[0];
+        y = t.val[1];
+    }
+
+    static inline
+    void dct_trn32(int16x8_t& x, int16x8_t& y)
+    {
+        int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y));
+        x = vreinterpretq_s16_s32(t.val[0]);
+        y = vreinterpretq_s16_s32(t.val[1]);
+    }
+
+    static inline
+    void dct_trn64(int16x8_t& x, int16x8_t& y)
+    {
+        int16x8_t x0 = x;
+        int16x8_t y0 = y;
+        x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0));
+        y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0));
+    }
+
+    #define JPEG_TRANSPOSE16() \
+        dct_trn16(v0, v1); \
+        dct_trn16(v2, v3); \
+        dct_trn16(v4, v5); \
+        dct_trn16(v6, v7); \
+        dct_trn32(v0, v2); \
+        dct_trn32(v1, v3); \
+        dct_trn32(v4, v6); \
+        dct_trn32(v5, v7); \
+        dct_trn64(v0, v4); \
+        dct_trn64(v1, v5); \
+        dct_trn64(v2, v6); \
+        dct_trn64(v3, v7)
+
+    static inline
+    int16x8_t unpacklo(int16x8_t a, int16x8_t b)
+    {
+	    const int16x4x2_t temp = vzip_s16(vget_low_s16(a), vget_low_s16(b));
+	    return vcombine_s16(temp.val[0], temp.val[1]);
+    }
+
+    static inline
+    int16x8_t unpackhi(int16x8_t a, int16x8_t b)
+    {
+	    const int16x4x2_t temp = vzip_s16(vget_high_s16(a), vget_high_s16(b));
+	    return vcombine_s16(temp.val[0], temp.val[1]);
+    }
+
+    static inline
+    int32x4_t madd(int16x8_t a, int16x8_t b)
+    {
+        int32x4_t lo = vmull_s16(vget_low_s16(a),  vget_low_s16(b));
+        int32x4_t hi = vmull_s16(vget_high_s16(a), vget_high_s16(b));
+        int32x2_t x = vpadd_s32(vget_low_s32(lo), vget_high_s32(lo));
+        int32x2_t y = vpadd_s32(vget_low_s32(hi), vget_high_s32(hi));
+        return vcombine_s32(x, y);
+    }
+
+    static inline
+    int16x8_t packs(int32x4_t a, int32x4_t b)
+    {
+        return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
+    }
+
+    #define JPEG_CONST16(x, y) \
+        { x, y, x, y, x, y, x, y }
+
+    #define JPEG_MADD2_PACK(V, A, X, N) \
+        a_lo = madd(A##_lo, X); \
+        a_hi = madd(A##_hi, X); \
+        a_lo = vshrq_n_s32(a_lo, N); \
+        a_hi = vshrq_n_s32(a_hi, N); \
+        V = packs(a_lo, a_hi)
+
+    #define JPEG_MADD4_ADD_PACK(V, A, B, X, Y, N) \
+        a_lo = madd(A##_lo, X); \
+        a_hi = madd(A##_hi, X); \
+        b_lo = madd(B##_lo, Y); \
+        b_hi = madd(B##_hi, Y); \
+        a_lo = vaddq_s32(a_lo, b_lo); \
+        a_hi = vaddq_s32(a_hi, b_hi); \
+        a_lo = vshrq_n_s32(a_lo, N); \
+        a_hi = vshrq_n_s32(a_hi, N); \
+        V = packs(a_lo, a_hi)
+
+    #define JPEG_MADD4_SUB_PACK(V, A, B, X, Y, N) \
+        a_lo = madd(A##_lo, X); \
+        a_hi = madd(A##_hi, X); \
+        b_lo = madd(B##_lo, Y); \
+        b_hi = madd(B##_hi, Y); \
+        a_lo = vsubq_s32(a_lo, b_lo); \
+        a_hi = vsubq_s32(a_hi, b_hi); \
+        a_lo = vshrq_n_s32(a_lo, N); \
+        a_hi = vshrq_n_s32(a_hi, N); \
+        V = packs(a_lo, a_hi)
+
+    #define JPEG_QUANTIZE(vec, idx) \
+        a_lo = madd(unpacklo(vec, one), unpacklo(q[idx], bias)); \
+        a_hi = madd(unpackhi(vec, one), unpackhi(q[idx], bias)); \
+        a_lo = vshrq_n_s32(a_lo, 15); \
+        a_hi = vshrq_n_s32(a_hi, 15); \
+        vec = packs(a_lo, a_hi)
+
+    static
+    void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
+    {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        int16x8_t v0 = vld1q_s16(data + 0 * 8);
+        int16x8_t v1 = vld1q_s16(data + 1 * 8);
+        int16x8_t v2 = vld1q_s16(data + 2 * 8);
+        int16x8_t v3 = vld1q_s16(data + 3 * 8);
+        int16x8_t v4 = vld1q_s16(data + 4 * 8);
+        int16x8_t v5 = vld1q_s16(data + 5 * 8);
+        int16x8_t v6 = vld1q_s16(data + 6 * 8);
+        int16x8_t v7 = vld1q_s16(data + 7 * 8);
+    
+        JPEG_TRANSPOSE16();
+
+        int16x8_t x8 = vaddq_s16(v0, v7);
+        int16x8_t x7 = vaddq_s16(v1, v6);
+        int16x8_t x6 = vaddq_s16(v2, v5);
+        int16x8_t x5 = vaddq_s16(v3, v4);
+        int16x8_t x0 = vsubq_s16(v0, v7);
+        int16x8_t x1 = vsubq_s16(v1, v6);
+        int16x8_t x2 = vsubq_s16(v2, v5);
+        int16x8_t x3 = vsubq_s16(v3, v4);
+        int16x8_t x4 = vaddq_s16(x8, x5);
+
+        x8 = vsubq_s16(x8, x5);
+        x5 = vaddq_s16(x7, x6);
+        x7 = vsubq_s16(x7, x6);
+
+        int16x8_t x87_lo = unpacklo(x8, x7);
+        int16x8_t x87_hi = unpackhi(x8, x7);
+        int16x8_t x01_lo = unpacklo(x0, x1);
+        int16x8_t x01_hi = unpackhi(x0, x1);
+        int16x8_t x23_lo = unpacklo(x2, x3);
+        int16x8_t x23_hi = unpackhi(x2, x3);
+
+        int16x8_t c26p = JPEG_CONST16(c2, c6);
+        int16x8_t c62n = JPEG_CONST16(c6,-c2);
+        int16x8_t c75n = JPEG_CONST16(c7,-c5);
+        int16x8_t c31n = JPEG_CONST16(c3,-c1);
+        int16x8_t c51n = JPEG_CONST16(c5,-c1);
+        int16x8_t c73p = JPEG_CONST16(c7, c3);
+        int16x8_t c37n = JPEG_CONST16(c3,-c7);
+        int16x8_t c15p = JPEG_CONST16(c1, c5);
+        int16x8_t c13p = JPEG_CONST16(c1, c3);
+        int16x8_t c57p = JPEG_CONST16(c5, c7);
+
+        int32x4_t a_lo;
+        int32x4_t a_hi;
+        int32x4_t b_lo;
+        int32x4_t b_hi;
+
+        v0 = vaddq_s16(x4, x5);
+        v4 = vsubq_s16(x4, x5);
+
+        // v2 = (x8 * c2 + x7 * c6) >> 10;
+        JPEG_MADD2_PACK(v2, x87, c26p, 10);
+
+        // v6 = (x8 * c6 - x7 * c2) >> 10;
+        JPEG_MADD2_PACK(v6, x87, c62n, 10);
+
+        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 10;
+        JPEG_MADD4_ADD_PACK(v7, x01, x23, c75n, c31n, 10);
+
+        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 10;
+        JPEG_MADD4_ADD_PACK(v5, x01, x23, c51n, c73p, 10);
+
+        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 10;
+        JPEG_MADD4_SUB_PACK(v3, x01, x23, c37n, c15p, 10);
+
+        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 10;
+        JPEG_MADD4_ADD_PACK(v1, x01, x23, c13p, c57p, 10);
+
+        JPEG_TRANSPOSE16();
+
+        x8 = vaddq_s16(v0, v7);
+        x0 = vsubq_s16(v0, v7);
+        x7 = vaddq_s16(v1, v6);
+        x1 = vsubq_s16(v1, v6);
+        x6 = vaddq_s16(v2, v5);
+        x2 = vsubq_s16(v2, v5);
+        x5 = vaddq_s16(v3, v4);
+        x3 = vsubq_s16(v3, v4);
+
+        x4 = vaddq_s16(x8, x5);
+        x8 = vsubq_s16(x8, x5);
+        x5 = vaddq_s16(x7, x6);
+        x7 = vsubq_s16(x7, x6);
+
+        x87_lo = unpacklo(x8, x7);
+        x87_hi = unpackhi(x8, x7);
+        x01_lo = unpacklo(x0, x1);
+        x01_hi = unpackhi(x0, x1);
+        x23_lo = unpacklo(x2, x3);
+        x23_hi = unpackhi(x2, x3);
+
+        v0 = vshrq_n_s16(vaddq_s16(x4, x5), 3);
+        v4 = vshrq_n_s16(vsubq_s16(x4, x5), 3);
+
+        // v2 = (x8 * c2 + x7 * c6) >> 13;
+        JPEG_MADD2_PACK(v2, x87, c26p, 13);
+
+        // v6 = (x8 * c6 - x7 * c2) >> 13;
+        JPEG_MADD2_PACK(v6, x87, c62n, 13);
+
+        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 13;
+        JPEG_MADD4_ADD_PACK(v7, x01, x23, c75n, c31n, 13);
+
+        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 13;
+        JPEG_MADD4_ADD_PACK(v5, x01, x23, c51n, c73p, 13);
+
+        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 13;
+        JPEG_MADD4_SUB_PACK(v3, x01, x23, c37n, c15p, 13);
+
+        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 13;
+        JPEG_MADD4_ADD_PACK(v1, x01, x23, c13p, c57p, 13);
+
+        const int16x8_t one = JPEG_CONST16(1, 1);
+        const int16x8_t bias = JPEG_CONST16(0x4000, 0x4000);
+        const int16x8_t* q = reinterpret_cast<const int16x8_t *>(quant_table);
+
+        JPEG_QUANTIZE(v0, 0);
+        JPEG_QUANTIZE(v1, 1);
+        JPEG_QUANTIZE(v2, 2);
+        JPEG_QUANTIZE(v3, 3);
+        JPEG_QUANTIZE(v4, 4);
+        JPEG_QUANTIZE(v5, 5);
+        JPEG_QUANTIZE(v6, 6);
+        JPEG_QUANTIZE(v7, 7);
+
+        vst1q_s16(dest + 0 * 8, v0);
+        vst1q_s16(dest + 1 * 8, v1);
+        vst1q_s16(dest + 2 * 8, v2);
+        vst1q_s16(dest + 3 * 8, v3);
+        vst1q_s16(dest + 4 * 8, v4);
+        vst1q_s16(dest + 5 * 8, v5);
+        vst1q_s16(dest + 6 * 8, v6);
+        vst1q_s16(dest + 7 * 8, v7);
+    }
+
+#endif // JPEG_ENABLE_NEON
 
     // ----------------------------------------------------------------------------
     // read_xxx_format
