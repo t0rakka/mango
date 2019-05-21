@@ -922,6 +922,23 @@ namespace
         y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0));
     }
 
+    static inline
+    int16x8_t packs_s32(int32x4_t a, int32x4_t b)
+    {
+        return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
+    }
+
+    static inline
+    int16x8_t quantize(int16x8_t v, int16x8_t q, int32x4_t bias)
+    {
+        int32x4_t lo = vmlal_s16(bias, vget_low_s16(v), vget_low_s16(q));
+        int32x4_t hi = vmlal_s16(bias, vget_high_s16(v), vget_high_s16(q));
+        lo = vshrq_n_s32(lo, 15);
+        hi = vshrq_n_s32(hi, 15);
+        v = packs_s32(lo, hi);
+        return v;
+    }
+
     #define JPEG_TRANSPOSE16() \
         dct_trn16(v0, v1); \
         dct_trn16(v2, v3); \
@@ -936,88 +953,39 @@ namespace
         dct_trn64(v2, v6); \
         dct_trn64(v3, v7)
 
-    static inline
-    int16x8_t packs_s32(int32x4_t a, int32x4_t b)
-    {
-        return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
-    }
+    #define JPEG_MUL2(v, x0, c0, x1, c1, f1, f2, n) { \
+        int32x4_t lo; \
+        int32x4_t hi; \
+        lo = f1(vget_low_s16(x0),  c0); \
+        lo = f2(lo, vget_low_s16(x1), c1); \
+        lo = vshrq_n_s32(lo, n); \
+        hi = f1(vget_high_s16(x0), c0); \
+        hi = f2(hi, vget_high_s16(x1), c1); \
+        hi = vshrq_n_s32(hi, n); \
+        v = packs_s32(lo, hi); }
 
-    #define JPEG_MUL_ADD_MUL(v, x0, c0, x1, c1, n) \
-        a_lo = vmull_s16(vget_low_s16(x0),  c0); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x1), c1); \
-        a_lo = vshrq_n_s32(a_lo, n); \
-        a_hi = vmull_s16(vget_high_s16(x0), c0); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x1), c1); \
-        a_hi = vshrq_n_s32(a_hi, n); \
-        v = packs_s32(a_lo, a_hi)
+    #define JPEG_MUL4(v, x0, c0, x1, c1, x2, c2, x3, c3, f1, f2, f3, f4, n) { \
+        int32x4_t lo; \
+        int32x4_t hi; \
+        lo = f1(vget_low_s16(x0),  c0); \
+        lo = f2(lo, vget_low_s16(x1), c1); \
+        lo = f3(lo, vget_low_s16(x2), c2); \
+        lo = f4(lo, vget_low_s16(x3), c3); \
+        lo = vshrq_n_s32(lo, n); \
+        hi = f1(vget_high_s16(x0), c0); \
+        hi = f2(hi, vget_high_s16(x1), c1); \
+        hi = f3(hi, vget_high_s16(x2), c2); \
+        hi = f4(hi, vget_high_s16(x3), c3); \
+        hi = vshrq_n_s32(hi, n); \
+        v = packs_s32(lo, hi); }
 
-    #define JPEG_MUL_SUB_MUL(v, x0, c0, x1, c1, n) \
-        a_lo = vmull_s16(vget_low_s16(x0),  c0); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x1), c1); \
-        a_lo = vshrq_n_s32(a_lo, n); \
-        a_hi = vmull_s16(vget_high_s16(x0), c0); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x1), c1); \
-        a_hi = vshrq_n_s32(a_hi, n); \
-        v = packs_s32(a_lo, a_hi)
-
-    #define JPEG_MUL_SUB_MUL_ADD_MUL_SUB_MUL(v, x0, c0, x1, c1, x2, c2, x3, c3, n) \
-        a_lo = vmull_s16(vget_low_s16(x0),  c0); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x1), c1); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x2), c2); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x3), c3); \
-        a_lo = vshrq_n_s32(a_lo, n); \
-        a_hi = vmull_s16(vget_high_s16(x0), c0); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x1), c1); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x2), c2); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x3), c3); \
-        a_hi = vshrq_n_s32(a_hi, n); \
-        v = packs_s32(a_lo, a_hi)
-
-    #define JPEG_MUL_SUB_MUL_ADD_MUL_ADD_MUL(v, x0, c0, x1, c1, x2, c2, x3, c3, n) \
-        a_lo = vmull_s16(vget_low_s16(x0),  c0); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x1), c1); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x2), c2); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x3), c3); \
-        a_lo = vshrq_n_s32(a_lo, n); \
-        a_hi = vmull_s16(vget_high_s16(x0), c0); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x1), c1); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x2), c2); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x3), c3); \
-        a_hi = vshrq_n_s32(a_hi, n); \
-        v = packs_s32(a_lo, a_hi)
-
-    #define JPEG_MUL_SUB_MUL_SUB_MUL_SUB_MUL(v, x0, c0, x1, c1, x2, c2, x3, c3, n) \
-        a_lo = vmull_s16(vget_low_s16(x0),  c0); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x1), c1); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x2), c2); \
-        a_lo = vmlsl_s16(a_lo, vget_low_s16(x3), c3); \
-        a_lo = vshrq_n_s32(a_lo, n); \
-        a_hi = vmull_s16(vget_high_s16(x0), c0); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x1), c1); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x2), c2); \
-        a_hi = vmlsl_s16(a_hi, vget_high_s16(x3), c3); \
-        a_hi = vshrq_n_s32(a_hi, n); \
-        v = packs_s32(a_lo, a_hi)
-
-    #define JPEG_MUL_ADD_MUL_ADD_MUL_ADD_MUL(v, x0, c0, x1, c1, x2, c2, x3, c3, n) \
-        a_lo = vmull_s16(vget_low_s16(x0),  c0); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x1), c1); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x2), c2); \
-        a_lo = vmlal_s16(a_lo, vget_low_s16(x3), c3); \
-        a_lo = vshrq_n_s32(a_lo, n); \
-        a_hi = vmull_s16(vget_high_s16(x0), c0); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x1), c1); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x2), c2); \
-        a_hi = vmlal_s16(a_hi, vget_high_s16(x3), c3); \
-        a_hi = vshrq_n_s32(a_hi, n); \
-        v = packs_s32(a_lo, a_hi)
-
-    #define JPEG_QUANTIZE(vec, idx) \
-        a_lo = vmlal_s16(bias, vget_low_s16(vec), vget_low_s16(q[idx])); \
-        a_lo = vshrq_n_s32(a_lo, 15); \
-        a_hi = vmlal_s16(bias, vget_high_s16(vec), vget_high_s16(q[idx])); \
-        a_hi = vshrq_n_s32(a_hi, 15); \
-        vec = packs_s32(a_lo, a_hi)
+    #define JPEG_TRANSFORM(n) \
+        JPEG_MUL2(v2, x8, c2, x7, c6, vmull_s16, vmlal_s16, n); \
+        JPEG_MUL2(v6, x8, c6, x7, c2, vmull_s16, vmlsl_s16, n); \
+        JPEG_MUL4(v7, x0, c7, x1, c5, x2, c3, x3, c1, vmull_s16, vmlsl_s16, vmlal_s16, vmlsl_s16, n); \
+        JPEG_MUL4(v5, x0, c5, x1, c1, x2, c7, x3, c3, vmull_s16, vmlsl_s16, vmlal_s16, vmlal_s16, n); \
+        JPEG_MUL4(v3, x0, c3, x1, c7, x2, c1, x3, c5, vmull_s16, vmlsl_s16, vmlsl_s16, vmlsl_s16, n); \
+        JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, vmull_s16, vmlal_s16, vmlal_s16, vmlal_s16, n);
 
     static
     void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
@@ -1029,6 +997,8 @@ namespace
         const int16x4_t c6 = vdup_n_s16(554);  // cos 6PI/16 * root(2)
         const int16x4_t c7 = vdup_n_s16(283);  // cos 7PI/16 * root(2)
 
+        // load
+
         int16x8_t v0 = vld1q_s16(data + 0 * 8);
         int16x8_t v1 = vld1q_s16(data + 1 * 8);
         int16x8_t v2 = vld1q_s16(data + 2 * 8);
@@ -1038,8 +1008,7 @@ namespace
         int16x8_t v6 = vld1q_s16(data + 6 * 8);
         int16x8_t v7 = vld1q_s16(data + 7 * 8);
 
-        int32x4_t a_lo;
-        int32x4_t a_hi;
+        // pass 1
 
         JPEG_TRANSPOSE16();
 
@@ -1058,24 +1027,9 @@ namespace
 
         v0 = vaddq_s16(x4, x5);
         v4 = vsubq_s16(x4, x5);
+        JPEG_TRANSFORM(10);
 
-        // v2 = (x8 * c2 + x7 * c6) >> 10;
-        JPEG_MUL_ADD_MUL(v2, x8, c2, x7, c6, 10);
-
-        // v6 = (x8 * c6 - x7 * c2) >> 10;
-        JPEG_MUL_SUB_MUL(v6, x8, c6, x7, c2, 10);
-
-        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 10;
-        JPEG_MUL_SUB_MUL_ADD_MUL_SUB_MUL(v7, x0, c7, x1, c5, x2, c3, x3, c1, 10);
-
-        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 10;
-        JPEG_MUL_SUB_MUL_ADD_MUL_ADD_MUL(v5, x0, c5, x1, c1, x2, c7, x3, c3, 10);
-
-        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 10;
-        JPEG_MUL_SUB_MUL_SUB_MUL_SUB_MUL(v3, x0, c3, x1, c7, x2, c1, x3, c5, 10);
-
-        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 10;
-        JPEG_MUL_ADD_MUL_ADD_MUL_ADD_MUL(v1, x0, c1, x1, c3, x2, c5, x3, c7, 10);
+        // pass 2
 
         JPEG_TRANSPOSE16();
 
@@ -1094,36 +1048,23 @@ namespace
 
         v0 = vshrq_n_s16(vaddq_s16(x4, x5), 3);
         v4 = vshrq_n_s16(vsubq_s16(x4, x5), 3);
+        JPEG_TRANSFORM(13);
 
-        // v2 = (x8 * c2 + x7 * c6) >> 13;
-        JPEG_MUL_ADD_MUL(v2, x8, c2, x7, c6, 13);
-
-        // v6 = (x8 * c6 - x7 * c2) >> 13;
-        JPEG_MUL_SUB_MUL(v6, x8, c6, x7, c2, 13);
-
-        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 13;
-        JPEG_MUL_SUB_MUL_ADD_MUL_SUB_MUL(v7, x0, c7, x1, c5, x2, c3, x3, c1, 13);
-
-        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 13;
-        JPEG_MUL_SUB_MUL_ADD_MUL_ADD_MUL(v5, x0, c5, x1, c1, x2, c7, x3, c3, 13);
-
-        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 13;
-        JPEG_MUL_SUB_MUL_SUB_MUL_SUB_MUL(v3, x0, c3, x1, c7, x2, c1, x3, c5, 13);
-
-        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 13;
-        JPEG_MUL_ADD_MUL_ADD_MUL_ADD_MUL(v1, x0, c1, x1, c3, x2, c5, x3, c7, 13);
+        // quantize
 
         const int32x4_t bias = vdupq_n_s32(0x4000);
         const int16x8_t* q = reinterpret_cast<const int16x8_t *>(quant_table);
 
-        JPEG_QUANTIZE(v0, 0);
-        JPEG_QUANTIZE(v1, 1);
-        JPEG_QUANTIZE(v2, 2);
-        JPEG_QUANTIZE(v3, 3);
-        JPEG_QUANTIZE(v4, 4);
-        JPEG_QUANTIZE(v5, 5);
-        JPEG_QUANTIZE(v6, 6);
-        JPEG_QUANTIZE(v7, 7);
+        v0 = quantize(v0, q[0], bias);
+        v1 = quantize(v1, q[1], bias);
+        v2 = quantize(v2, q[2], bias);
+        v3 = quantize(v3, q[3], bias);
+        v4 = quantize(v4, q[4], bias);
+        v5 = quantize(v5, q[5], bias);
+        v6 = quantize(v6, q[6], bias);
+        v7 = quantize(v7, q[7], bias);
+
+        // store
 
         vst1q_s16(dest + 0 * 8, v0);
         vst1q_s16(dest + 1 * 8, v1);
