@@ -891,7 +891,7 @@ namespace
 
 #endif // JPEG_ENABLE_SSE2
 
-#if defined(JPEG_ENABLE_NEON__)
+#if defined(JPEG_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
     // fdct_neon
@@ -1026,13 +1026,29 @@ namespace
 
         JPEG_TRANSPOSE16();
 
+        int32x4_t a_lo;
+        int32x4_t a_hi;
+        int32x4_t b_lo;
+        int32x4_t b_hi;
+
+        int16x8_t c26p = JPEG_CONST16(c2, c6);
+        int16x8_t c62n = JPEG_CONST16(c6,-c2);
+        int16x8_t c75n = JPEG_CONST16(c7,-c5);
+        int16x8_t c31n = JPEG_CONST16(c3,-c1);
+        int16x8_t c51n = JPEG_CONST16(c5,-c1);
+        int16x8_t c73p = JPEG_CONST16(c7, c3);
+        int16x8_t c37n = JPEG_CONST16(c3,-c7);
+        int16x8_t c15p = JPEG_CONST16(c1, c5);
+        int16x8_t c13p = JPEG_CONST16(c1, c3);
+        int16x8_t c57p = JPEG_CONST16(c5, c7);
+
         int16x8_t x8 = vaddq_s16(v0, v7);
-        int16x8_t x7 = vaddq_s16(v1, v6);
-        int16x8_t x6 = vaddq_s16(v2, v5);
-        int16x8_t x5 = vaddq_s16(v3, v4);
         int16x8_t x0 = vsubq_s16(v0, v7);
+        int16x8_t x7 = vaddq_s16(v1, v6);
         int16x8_t x1 = vsubq_s16(v1, v6);
+        int16x8_t x6 = vaddq_s16(v2, v5);
         int16x8_t x2 = vsubq_s16(v2, v5);
+        int16x8_t x5 = vaddq_s16(v3, v4);
         int16x8_t x3 = vsubq_s16(v3, v4);
         int16x8_t x4 = vaddq_s16(x8, x5);
 
@@ -1046,22 +1062,6 @@ namespace
         int16x8_t x01_hi = unpackhi(x0, x1);
         int16x8_t x23_lo = unpacklo(x2, x3);
         int16x8_t x23_hi = unpackhi(x2, x3);
-
-        int16x8_t c26p = JPEG_CONST16(c2, c6);
-        int16x8_t c62n = JPEG_CONST16(c6,-c2);
-        int16x8_t c75n = JPEG_CONST16(c7,-c5);
-        int16x8_t c31n = JPEG_CONST16(c3,-c1);
-        int16x8_t c51n = JPEG_CONST16(c5,-c1);
-        int16x8_t c73p = JPEG_CONST16(c7, c3);
-        int16x8_t c37n = JPEG_CONST16(c3,-c7);
-        int16x8_t c15p = JPEG_CONST16(c1, c5);
-        int16x8_t c13p = JPEG_CONST16(c1, c3);
-        int16x8_t c57p = JPEG_CONST16(c5, c7);
-
-        int32x4_t a_lo;
-        int32x4_t a_hi;
-        int32x4_t b_lo;
-        int32x4_t b_hi;
 
         v0 = vaddq_s16(x4, x5);
         v4 = vsubq_s16(x4, x5);
@@ -1094,8 +1094,8 @@ namespace
         x2 = vsubq_s16(v2, v5);
         x5 = vaddq_s16(v3, v4);
         x3 = vsubq_s16(v3, v4);
-
         x4 = vaddq_s16(x8, x5);
+
         x8 = vsubq_s16(x8, x5);
         x5 = vaddq_s16(x7, x6);
         x7 = vsubq_s16(x7, x6);
@@ -1704,8 +1704,9 @@ namespace
         fdct = fdct_sse2;
 #endif
 
-#if defined(JPEG_ENABLE_NEON__)
+#if defined(JPEG_ENABLE_NEON)
         //fdct = fdct_neon;
+        (void) fdct_neon;
 #endif
 
         int bytes_per_pixel = 0;
