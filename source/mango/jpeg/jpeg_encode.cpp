@@ -891,8 +891,7 @@ namespace
 
 #endif // JPEG_ENABLE_SSE2
 
-//#if defined(JPEG_ENABLE_NEON)
-#if 0
+#if defined(JPEG_ENABLE_NEON__)
 
     // ----------------------------------------------------------------------------
     // fdct_neon
@@ -1024,7 +1023,7 @@ namespace
         int16x8_t v5 = vld1q_s16(data + 5 * 8);
         int16x8_t v6 = vld1q_s16(data + 6 * 8);
         int16x8_t v7 = vld1q_s16(data + 7 * 8);
-    
+
         JPEG_TRANSPOSE16();
 
         int16x8_t x8 = vaddq_s16(v0, v7);
@@ -1700,8 +1699,13 @@ namespace
         , ICqt(64)
     {
         fdct = fdct_scalar;
+
 #if defined(JPEG_ENABLE_SSE2)
         fdct = fdct_sse2;
+#endif
+
+#if defined(JPEG_ENABLE_NEON__)
+        //fdct = fdct_neon;
 #endif
 
         int bytes_per_pixel = 0;
