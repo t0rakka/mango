@@ -653,12 +653,73 @@ namespace
         interleave16(v4, v5); \
         interleave16(v6, v7)
 
-    #define JPEG_QUANTIZE(vec, idx) \
-        a_lo = _mm_madd_epi16(_mm_unpacklo_epi16(vec, one), _mm_unpacklo_epi16(q[idx], bias)); \
-        a_hi = _mm_madd_epi16(_mm_unpackhi_epi16(vec, one), _mm_unpackhi_epi16(q[idx], bias)); \
-        a_lo = _mm_srai_epi32(a_lo, 15); \
-        a_hi = _mm_srai_epi32(a_hi, 15); \
-        vec = _mm_packs_epi32(a_lo, a_hi)
+    #define JPEG_TRANSFORM(n) { \
+        __m128i a_lo; \
+        __m128i a_hi; \
+        __m128i b_lo; \
+        __m128i b_hi; \
+        \
+        a_lo = _mm_madd_epi16(x87_lo, c26p); \
+        a_hi = _mm_madd_epi16(x87_hi, c26p); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v2 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x87_lo, c62n); \
+        a_hi = _mm_madd_epi16(x87_hi, c62n); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v6 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c75n); \
+        a_hi = _mm_madd_epi16(x01_hi, c75n); \
+        b_lo = _mm_madd_epi16(x23_lo, c31n); \
+        b_hi = _mm_madd_epi16(x23_hi, c31n); \
+        a_lo = _mm_add_epi32(a_lo, b_lo); \
+        a_hi = _mm_add_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v7 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c51n); \
+        a_hi = _mm_madd_epi16(x01_hi, c51n); \
+        b_lo = _mm_madd_epi16(x23_lo, c73p); \
+        b_hi = _mm_madd_epi16(x23_hi, c73p); \
+        a_lo = _mm_add_epi32(a_lo, b_lo); \
+        a_hi = _mm_add_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v5 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c37n); \
+        a_hi = _mm_madd_epi16(x01_hi, c37n); \
+        b_lo = _mm_madd_epi16(x23_lo, c15p); \
+        b_hi = _mm_madd_epi16(x23_hi, c15p); \
+        a_lo = _mm_sub_epi32(a_lo, b_lo); \
+        a_hi = _mm_sub_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v3 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c13p); \
+        a_hi = _mm_madd_epi16(x01_hi, c13p); \
+        b_lo = _mm_madd_epi16(x23_lo, c57p); \
+        b_hi = _mm_madd_epi16(x23_hi, c57p); \
+        a_lo = _mm_add_epi32(a_lo, b_lo); \
+        a_hi = _mm_add_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v1 = _mm_packs_epi32(a_lo, a_hi); }
+
+    __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
+    {
+        __m128i lo = _mm_madd_epi16(_mm_unpacklo_epi16(v, one), _mm_unpacklo_epi16(q, bias));
+        __m128i hi = _mm_madd_epi16(_mm_unpackhi_epi16(v, one), _mm_unpackhi_epi16(q, bias));
+        lo = _mm_srai_epi32(lo, 15);
+        hi = _mm_srai_epi32(hi, 15);
+        v = _mm_packs_epi32(lo, hi);
+        return v;
+    }
 
     static
     void fdct_sse2(s16* dest, const s16* data, const s16* quant_table)
@@ -670,6 +731,19 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
+        __m128i c26p = JPEG_CONST16(c2, c6);
+        __m128i c62n = JPEG_CONST16(c6,-c2);
+        __m128i c75n = JPEG_CONST16(c7,-c5);
+        __m128i c31n = JPEG_CONST16(c3,-c1);
+        __m128i c51n = JPEG_CONST16(c5,-c1);
+        __m128i c73p = JPEG_CONST16(c7, c3);
+        __m128i c37n = JPEG_CONST16(c3,-c7);
+        __m128i c15p = JPEG_CONST16(c1, c5);
+        __m128i c13p = JPEG_CONST16(c1, c3);
+        __m128i c57p = JPEG_CONST16(c5, c7);
+
+        // load
+
         const __m128i* s = reinterpret_cast<const __m128i *>(data);
         __m128i v0 = _mm_loadu_si128(s + 0);
         __m128i v1 = _mm_loadu_si128(s + 1);
@@ -679,6 +753,8 @@ namespace
         __m128i v5 = _mm_loadu_si128(s + 5);
         __m128i v6 = _mm_loadu_si128(s + 6);
         __m128i v7 = _mm_loadu_si128(s + 7);
+
+        // pass 1
 
         JPEG_TRANSPOSE16();
 
@@ -703,86 +779,14 @@ namespace
         __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
         __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
 
-        __m128i c26p = JPEG_CONST16(c2, c6);
-        __m128i c62n = JPEG_CONST16(c6,-c2);
-        __m128i c75n = JPEG_CONST16(c7,-c5);
-        __m128i c31n = JPEG_CONST16(c3,-c1);
-        __m128i c51n = JPEG_CONST16(c5,-c1);
-        __m128i c73p = JPEG_CONST16(c7, c3);
-        __m128i c37n = JPEG_CONST16(c3,-c7);
-        __m128i c15p = JPEG_CONST16(c1, c5);
-        __m128i c13p = JPEG_CONST16(c1, c3);
-        __m128i c57p = JPEG_CONST16(c5, c7);
-
-        __m128i a_lo;
-        __m128i a_hi;
-        __m128i b_lo;
-        __m128i b_hi;
-
         v0 = _mm_add_epi16(x4, x5);
         v4 = _mm_sub_epi16(x4, x5);
 
-        // v2 = (x8 * c2 + x7 * c6) >> 10;
-        a_lo = _mm_madd_epi16(x87_lo, c26p);
-        a_hi = _mm_madd_epi16(x87_hi, c26p);
-        a_lo = _mm_srai_epi32(a_lo, 10);
-        a_hi = _mm_srai_epi32(a_hi, 10);
-        v2 = _mm_packs_epi32(a_lo, a_hi);
+        JPEG_TRANSFORM(10);
 
-        // v6 = (x8 * c6 - x7 * c2) >> 10;
-        a_lo = _mm_madd_epi16(x87_lo, c62n);
-        a_hi = _mm_madd_epi16(x87_hi, c62n);
-        a_lo = _mm_srai_epi32(a_lo, 10);
-        a_hi = _mm_srai_epi32(a_hi, 10);
-        v6 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 10;
-        a_lo = _mm_madd_epi16(x01_lo, c75n);
-        a_hi = _mm_madd_epi16(x01_hi, c75n);
-        b_lo = _mm_madd_epi16(x23_lo, c31n);
-        b_hi = _mm_madd_epi16(x23_hi, c31n);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 10);
-        a_hi = _mm_srai_epi32(a_hi, 10);
-        v7 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 10;
-        a_lo = _mm_madd_epi16(x01_lo, c51n);
-        a_hi = _mm_madd_epi16(x01_hi, c51n);
-        b_lo = _mm_madd_epi16(x23_lo, c73p);
-        b_hi = _mm_madd_epi16(x23_hi, c73p);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 10);
-        a_hi = _mm_srai_epi32(a_hi, 10);
-        v5 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 10;
-        a_lo = _mm_madd_epi16(x01_lo, c37n);
-        a_hi = _mm_madd_epi16(x01_hi, c37n);
-        b_lo = _mm_madd_epi16(x23_lo, c15p);
-        b_hi = _mm_madd_epi16(x23_hi, c15p);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 10);
-        a_hi = _mm_srai_epi32(a_hi, 10);
-        v3 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 10;
-        a_lo = _mm_madd_epi16(x01_lo, c13p);
-        a_hi = _mm_madd_epi16(x01_hi, c13p);
-        b_lo = _mm_madd_epi16(x23_lo, c57p);
-        b_hi = _mm_madd_epi16(x23_hi, c57p);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 10);
-        a_hi = _mm_srai_epi32(a_hi, 10);
-        v1 = _mm_packs_epi32(a_lo, a_hi);
+        // pass 2
 
         JPEG_TRANSPOSE16();
-
-        const __m128i* q = reinterpret_cast<const __m128i*>(quant_table);
 
         x8 = _mm_add_epi16(v0, v7);
         x0 = _mm_sub_epi16(v0, v7);
@@ -792,8 +796,8 @@ namespace
         x2 = _mm_sub_epi16(v2, v5);
         x5 = _mm_add_epi16(v3, v4);
         x3 = _mm_sub_epi16(v3, v4);
-
         x4 = _mm_add_epi16(x8, x5);
+
         x8 = _mm_sub_epi16(x8, x5);
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
@@ -808,75 +812,24 @@ namespace
         v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
         v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
 
-        // v2 = (x8 * c2 + x7 * c6) >> 13;
-        a_lo = _mm_madd_epi16(x87_lo, c26p);
-        a_hi = _mm_madd_epi16(x87_hi, c26p);
-        a_lo = _mm_srai_epi32(a_lo, 13);
-        a_hi = _mm_srai_epi32(a_hi, 13);
-        v2 = _mm_packs_epi32(a_lo, a_hi);
+        JPEG_TRANSFORM(13);
 
-        // v6 = (x8 * c6 - x7 * c2) >> 13;
-        a_lo = _mm_madd_epi16(x87_lo, c62n);
-        a_hi = _mm_madd_epi16(x87_hi, c62n);
-        a_lo = _mm_srai_epi32(a_lo, 13);
-        a_hi = _mm_srai_epi32(a_hi, 13);
-        v6 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v7 = (x0 * c7 - x1 * c5   +   x2 * c3 - x3 * c1) >> 13;
-        a_lo = _mm_madd_epi16(x01_lo, c75n);
-        a_hi = _mm_madd_epi16(x01_hi, c75n);
-        b_lo = _mm_madd_epi16(x23_lo, c31n);
-        b_hi = _mm_madd_epi16(x23_hi, c31n);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 13);
-        a_hi = _mm_srai_epi32(a_hi, 13);
-        v7 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v5 = (x0 * c5 - x1 * c1   +   x2 * c7 + x3 * c3) >> 13;
-        a_lo = _mm_madd_epi16(x01_lo, c51n);
-        a_hi = _mm_madd_epi16(x01_hi, c51n);
-        b_lo = _mm_madd_epi16(x23_lo, c73p);
-        b_hi = _mm_madd_epi16(x23_hi, c73p);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 13);
-        a_hi = _mm_srai_epi32(a_hi, 13);
-        v5 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v3 = (x0 * c3 - x1 * c7   -   x2 * c1 - x3 * c5) >> 13;
-        a_lo = _mm_madd_epi16(x01_lo, c37n);
-        a_hi = _mm_madd_epi16(x01_hi, c37n);
-        b_lo = _mm_madd_epi16(x23_lo, c15p);
-        b_hi = _mm_madd_epi16(x23_hi, c15p);
-        a_lo = _mm_sub_epi32(a_lo, b_lo);
-        a_hi = _mm_sub_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 13);
-        a_hi = _mm_srai_epi32(a_hi, 13);
-        v3 = _mm_packs_epi32(a_lo, a_hi);
-
-        // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 13;
-        a_lo = _mm_madd_epi16(x01_lo, c13p);
-        a_hi = _mm_madd_epi16(x01_hi, c13p);
-        b_lo = _mm_madd_epi16(x23_lo, c57p);
-        b_hi = _mm_madd_epi16(x23_hi, c57p);
-        a_lo = _mm_add_epi32(a_lo, b_lo);
-        a_hi = _mm_add_epi32(a_hi, b_hi);
-        a_lo = _mm_srai_epi32(a_lo, 13);
-        a_hi = _mm_srai_epi32(a_hi, 13);
-        v1 = _mm_packs_epi32(a_lo, a_hi);
+        // quantize
 
         const __m128i one = JPEG_CONST16(1, 1);
         const __m128i bias = JPEG_CONST16(0x4000, 0x4000);
+        const __m128i* q = reinterpret_cast<const __m128i*>(quant_table);
 
-        JPEG_QUANTIZE(v0, 0);
-        JPEG_QUANTIZE(v1, 1);
-        JPEG_QUANTIZE(v2, 2);
-        JPEG_QUANTIZE(v3, 3);
-        JPEG_QUANTIZE(v4, 4);
-        JPEG_QUANTIZE(v5, 5);
-        JPEG_QUANTIZE(v6, 6);
-        JPEG_QUANTIZE(v7, 7);
+        v0 = quantize(v0, q[0], one, bias);
+        v1 = quantize(v1, q[1], one, bias);
+        v2 = quantize(v2, q[2], one, bias);
+        v3 = quantize(v3, q[3], one, bias);
+        v4 = quantize(v4, q[4], one, bias);
+        v5 = quantize(v5, q[5], one, bias);
+        v6 = quantize(v6, q[6], one, bias);
+        v7 = quantize(v7, q[7], one, bias);
+
+        // store
 
         __m128i* d = reinterpret_cast<__m128i *>(dest);
         _mm_storeu_si128(d + 0, v0);
