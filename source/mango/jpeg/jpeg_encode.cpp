@@ -961,7 +961,7 @@ namespace
     }
 
     static inline
-    int16x8_t packs(int32x4_t a, int32x4_t b)
+    int16x8_t packs_s32(int32x4_t a, int32x4_t b)
     {
         return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
     }
@@ -974,7 +974,7 @@ namespace
         a_hi = madd(A##_hi, X); \
         a_lo = vshrq_n_s32(a_lo, N); \
         a_hi = vshrq_n_s32(a_hi, N); \
-        V = packs(a_lo, a_hi)
+        V = packs_s32(a_lo, a_hi)
 
     #define JPEG_MADD4_ADD_PACK(V, A, B, X, Y, N) \
         a_lo = madd(A##_lo, X); \
@@ -985,7 +985,7 @@ namespace
         a_hi = vaddq_s32(a_hi, b_hi); \
         a_lo = vshrq_n_s32(a_lo, N); \
         a_hi = vshrq_n_s32(a_hi, N); \
-        V = packs(a_lo, a_hi)
+        V = packs_s32(a_lo, a_hi)
 
     #define JPEG_MADD4_SUB_PACK(V, A, B, X, Y, N) \
         a_lo = madd(A##_lo, X); \
@@ -996,14 +996,14 @@ namespace
         a_hi = vsubq_s32(a_hi, b_hi); \
         a_lo = vshrq_n_s32(a_lo, N); \
         a_hi = vshrq_n_s32(a_hi, N); \
-        V = packs(a_lo, a_hi)
+        V = packs_s32(a_lo, a_hi)
 
     #define JPEG_QUANTIZE(vec, idx) \
-        a_lo = madd(unpacklo(vec, one), unpacklo(q[idx], bias)); \
-        a_hi = madd(unpackhi(vec, one), unpackhi(q[idx], bias)); \
+        a_lo = vmlal_s16(bias, vget_low_s16(vec), vget_low_s16(q[idx])); \
+        a_hi = vmlal_s16(bias, vget_high_s16(vec), vget_high_s16(q[idx])); \
         a_lo = vshrq_n_s32(a_lo, 15); \
         a_hi = vshrq_n_s32(a_hi, 15); \
-        vec = packs(a_lo, a_hi)
+        vec = packs_s32(a_lo, a_hi)
 
     static
     void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
@@ -1128,8 +1128,7 @@ namespace
         // v1 = (x0 * c1 + x1 * c3   +   x2 * c5 + x3 * c7) >> 13;
         JPEG_MADD4_ADD_PACK(v1, x01, x23, c13p, c57p, 13);
 
-        const int16x8_t one = JPEG_CONST16(1, 1);
-        const int16x8_t bias = JPEG_CONST16(0x4000, 0x4000);
+        const int32x4_t bias = vdupq_n_s32(0x4000);
         const int16x8_t* q = reinterpret_cast<const int16x8_t *>(quant_table);
 
         JPEG_QUANTIZE(v0, 0);
