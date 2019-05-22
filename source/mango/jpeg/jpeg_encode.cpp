@@ -906,39 +906,39 @@ namespace
         dct_trn64(v2, v6); \
         dct_trn64(v3, v7)
 
-    #define JPEG_MUL2(v, x0, c0, x1, c1, f1, f2, n) { \
+    #define JPEG_MUL2(v, x0, c0, x1, c1, f1, n) { \
         int32x4_t lo; \
         int32x4_t hi; \
-        lo = f1(vget_low_s16(x0),  c0); \
-        lo = f2(lo, vget_low_s16(x1), c1); \
+        lo = vmull_s16(vget_low_s16(x0), c0); \
+        lo = vml##f1##l_s16(lo, vget_low_s16(x1), c1); \
         lo = vshrq_n_s32(lo, n); \
-        hi = f1(vget_high_s16(x0), c0); \
-        hi = f2(hi, vget_high_s16(x1), c1); \
+        hi = vmull_s16(vget_high_s16(x0), c0); \
+        hi = vml##f1##l_s16(hi, vget_high_s16(x1), c1); \
         hi = vshrq_n_s32(hi, n); \
         v = packs_s32(lo, hi); }
 
-    #define JPEG_MUL4(v, x0, c0, x1, c1, x2, c2, x3, c3, f1, f2, f3, f4, n) { \
+    #define JPEG_MUL4(v, x0, c0, x1, c1, x2, c2, x3, c3, f1, f2, f3, n) { \
         int32x4_t lo; \
         int32x4_t hi; \
-        lo = f1(vget_low_s16(x0),  c0); \
-        lo = f2(lo, vget_low_s16(x1), c1); \
-        lo = f3(lo, vget_low_s16(x2), c2); \
-        lo = f4(lo, vget_low_s16(x3), c3); \
+        lo = vmull_s16(vget_low_s16(x0), c0); \
+        lo = vml##f1##l_s16(lo, vget_low_s16(x1), c1); \
+        lo = vml##f2##l_s16(lo, vget_low_s16(x2), c2); \
+        lo = vml##f3##l_s16(lo, vget_low_s16(x3), c3); \
         lo = vshrq_n_s32(lo, n); \
-        hi = f1(vget_high_s16(x0), c0); \
-        hi = f2(hi, vget_high_s16(x1), c1); \
-        hi = f3(hi, vget_high_s16(x2), c2); \
-        hi = f4(hi, vget_high_s16(x3), c3); \
+        hi = vmull_s16(vget_high_s16(x0), c0); \
+        hi = vml##f1##l_s16(hi, vget_high_s16(x1), c1); \
+        hi = vml##f2##l_s16(hi, vget_high_s16(x2), c2); \
+        hi = vml##f3##l_s16(hi, vget_high_s16(x3), c3); \
         hi = vshrq_n_s32(hi, n); \
         v = packs_s32(lo, hi); }
 
     #define JPEG_TRANSFORM(n) \
-        JPEG_MUL2(v2, x8, c2, x7, c6, vmull_s16, vmlal_s16, n); \
-        JPEG_MUL2(v6, x8, c6, x7, c2, vmull_s16, vmlsl_s16, n); \
-        JPEG_MUL4(v7, x0, c7, x1, c5, x2, c3, x3, c1, vmull_s16, vmlsl_s16, vmlal_s16, vmlsl_s16, n); \
-        JPEG_MUL4(v5, x0, c5, x1, c1, x2, c7, x3, c3, vmull_s16, vmlsl_s16, vmlal_s16, vmlal_s16, n); \
-        JPEG_MUL4(v3, x0, c3, x1, c7, x2, c1, x3, c5, vmull_s16, vmlsl_s16, vmlsl_s16, vmlsl_s16, n); \
-        JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, vmull_s16, vmlal_s16, vmlal_s16, vmlal_s16, n);
+        JPEG_MUL2(v2, x8, c2, x7, c6, a, n); \
+        JPEG_MUL2(v6, x8, c6, x7, c2, s, n); \
+        JPEG_MUL4(v7, x0, c7, x1, c5, x2, c3, x3, c1, s, a, s, n); \
+        JPEG_MUL4(v5, x0, c5, x1, c1, x2, c7, x3, c3, s, a, a, n); \
+        JPEG_MUL4(v3, x0, c3, x1, c7, x2, c1, x3, c5, s, s, s, n); \
+        JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
 
     static
     void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
@@ -980,6 +980,7 @@ namespace
 
         v0 = vaddq_s16(x4, x5);
         v4 = vsubq_s16(x4, x5);
+
         JPEG_TRANSFORM(10);
 
         // pass 2
@@ -1001,6 +1002,7 @@ namespace
 
         v0 = vshrq_n_s16(vaddq_s16(x4, x5), 3);
         v4 = vshrq_n_s16(vsubq_s16(x4, x5), 3);
+
         JPEG_TRANSFORM(13);
 
         // quantize
