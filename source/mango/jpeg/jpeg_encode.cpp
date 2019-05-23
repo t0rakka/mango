@@ -547,81 +547,7 @@ namespace
             return p;
         }
     };
-
-    // ----------------------------------------------------------------------------
-    // fdct_scalar
-    // ----------------------------------------------------------------------------
-
-    static
-    void fdct_scalar(s16* dest, const s16* data, const s16* quant_table)
-    {
-        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
-        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
-        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
-        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
-        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
-        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
-
-        s16 temp[64];
-
-        for (int i = 0; i < 8; ++i)
-        {
-            s16 x8 = data [0] + data [7];
-            s16 x0 = data [0] - data [7];
-            s16 x7 = data [1] + data [6];
-            s16 x1 = data [1] - data [6];
-            s16 x6 = data [2] + data [5];
-            s16 x2 = data [2] - data [5];
-            s16 x5 = data [3] + data [4];
-            s16 x3 = data [3] - data [4];
-            s16 x4 = x8 + x5;
-            x8 = x8 - x5;
-            x5 = x7 + x6;
-            x7 = x7 - x6;
-            temp[i * 8 + 0] = x4 + x5;
-            temp[i * 8 + 4] = x4 - x5;
-            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
-            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
-            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
-            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
-            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
-            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
-            data += 8;
-        }
-
-        for (int i = 0; i < 8; ++i)
-        {
-            s16 x8 = temp [i +  0] + temp [i + 56];
-            s16 x0 = temp [i +  0] - temp [i + 56];
-            s16 x7 = temp [i +  8] + temp [i + 48];
-            s16 x1 = temp [i +  8] - temp [i + 48];
-            s16 x6 = temp [i + 16] + temp [i + 40];
-            s16 x2 = temp [i + 16] - temp [i + 40];
-            s16 x5 = temp [i + 24] + temp [i + 32];
-            s16 x3 = temp [i + 24] - temp [i + 32];
-            s16 x4 = x8 + x5;
-            x8 = x8 - x5;
-            x5 = x7 + x6;
-            x7 = x7 - x6;
-            s16 v0 = (x4 + x5) >> 3;
-            s16 v4 = (x4 - x5) >> 3;
-            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
-            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
-            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
-            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
-            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
-            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
-            dest[i + 8 * 0] = (v0 * quant_table[i + 8 * 0] + 0x4000) >> 15;
-            dest[i + 8 * 1] = (v1 * quant_table[i + 8 * 1] + 0x4000) >> 15;
-            dest[i + 8 * 2] = (v2 * quant_table[i + 8 * 2] + 0x4000) >> 15;
-            dest[i + 8 * 3] = (v3 * quant_table[i + 8 * 3] + 0x4000) >> 15;
-            dest[i + 8 * 4] = (v4 * quant_table[i + 8 * 4] + 0x4000) >> 15;
-            dest[i + 8 * 5] = (v5 * quant_table[i + 8 * 5] + 0x4000) >> 15;
-            dest[i + 8 * 6] = (v6 * quant_table[i + 8 * 6] + 0x4000) >> 15;
-            dest[i + 8 * 7] = (v7 * quant_table[i + 8 * 7] + 0x4000) >> 15;
-        }
-    }
-
+    
 #if defined(JPEG_ENABLE_SSE2)
 
     // ----------------------------------------------------------------------------
@@ -841,9 +767,7 @@ namespace
         _mm_storeu_si128(d + 7, v7);
     }
 
-#endif // JPEG_ENABLE_SSE2
-
-#if defined(JPEG_ENABLE_NEON)
+#elif defined(JPEG_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
     // fdct_neon
@@ -1030,7 +954,83 @@ namespace
         vst1q_s16(dest + 7 * 8, v7);
     }
 
-#endif // JPEG_ENABLE_NEON
+#else
+
+    // ----------------------------------------------------------------------------
+    // fdct_scalar
+    // ----------------------------------------------------------------------------
+
+    static
+    void fdct_scalar(s16* dest, const s16* data, const s16* quant_table)
+    {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        s16 temp[64];
+
+        for (int i = 0; i < 8; ++i)
+        {
+            s16 x8 = data [0] + data [7];
+            s16 x0 = data [0] - data [7];
+            s16 x7 = data [1] + data [6];
+            s16 x1 = data [1] - data [6];
+            s16 x6 = data [2] + data [5];
+            s16 x2 = data [2] - data [5];
+            s16 x5 = data [3] + data [4];
+            s16 x3 = data [3] - data [4];
+            s16 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
+            temp[i * 8 + 0] = x4 + x5;
+            temp[i * 8 + 4] = x4 - x5;
+            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
+            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
+            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
+            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
+            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
+            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
+            data += 8;
+        }
+
+        for (int i = 0; i < 8; ++i)
+        {
+            s16 x8 = temp [i +  0] + temp [i + 56];
+            s16 x0 = temp [i +  0] - temp [i + 56];
+            s16 x7 = temp [i +  8] + temp [i + 48];
+            s16 x1 = temp [i +  8] - temp [i + 48];
+            s16 x6 = temp [i + 16] + temp [i + 40];
+            s16 x2 = temp [i + 16] - temp [i + 40];
+            s16 x5 = temp [i + 24] + temp [i + 32];
+            s16 x3 = temp [i + 24] - temp [i + 32];
+            s16 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
+            s16 v0 = (x4 + x5) >> 3;
+            s16 v4 = (x4 - x5) >> 3;
+            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
+            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
+            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
+            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
+            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
+            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
+            dest[i + 8 * 0] = (v0 * quant_table[i + 8 * 0] + 0x4000) >> 15;
+            dest[i + 8 * 1] = (v1 * quant_table[i + 8 * 1] + 0x4000) >> 15;
+            dest[i + 8 * 2] = (v2 * quant_table[i + 8 * 2] + 0x4000) >> 15;
+            dest[i + 8 * 3] = (v3 * quant_table[i + 8 * 3] + 0x4000) >> 15;
+            dest[i + 8 * 4] = (v4 * quant_table[i + 8 * 4] + 0x4000) >> 15;
+            dest[i + 8 * 5] = (v5 * quant_table[i + 8 * 5] + 0x4000) >> 15;
+            dest[i + 8 * 6] = (v6 * quant_table[i + 8 * 6] + 0x4000) >> 15;
+            dest[i + 8 * 7] = (v7 * quant_table[i + 8 * 7] + 0x4000) >> 15;
+        }
+    }
+
+#endif
 
     // ----------------------------------------------------------------------------
     // read_xxx_format
@@ -1876,11 +1876,10 @@ namespace
                     {
                         s16 temp[BLOCK_SIZE];
 
-                        // select fdct must be done here since the function signatures are different
-#if defined(JPEG_ENABLE_NEON)
-                        fdct_neon(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable, bias);
-#elif defined(JPEG_ENABLE_SSE2)
+#if defined(JPEG_ENABLE_SSE2)
                         fdct_sse2(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+#elif defined(JPEG_ENABLE_NEON)
+                        fdct_neon(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable, bias);
 #else
                         fdct_scalar(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 #endif
