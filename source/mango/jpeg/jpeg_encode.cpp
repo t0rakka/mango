@@ -864,7 +864,7 @@ namespace
         JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
 
     static
-    void fdct_neon(s16* dest, const s16* data, const s16* quant_table, int32x4_t bias)
+    void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
     {
         const int16x4_t c1 = vdup_n_s16(1420); // cos 1PI/16 * root(2)
         const int16x4_t c2 = vdup_n_s16(1338); // cos 2PI/16 * root(2)
@@ -930,7 +930,7 @@ namespace
 
         // quantize
 
-        //const int32x4_t bias = vdupq_n_s32(0x4000);
+        const int32x4_t bias = vdupq_n_s32(0x4000);
         const int16x8_t* q = reinterpret_cast<const int16x8_t *>(quant_table);
 
         v0 = quantize(v0, q[0], bias);
@@ -1848,10 +1848,6 @@ namespace
 
                 const int right_mcu = jp.horizontal_mcus - 1;
 
-#if defined(JPEG_ENABLE_NEON)
-                const int32x4_t bias = vdupq_n_s32(0x4000);
-#endif
-
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
                     int cols;
@@ -1879,7 +1875,7 @@ namespace
 #if defined(JPEG_ENABLE_SSE2)
                         fdct_sse2(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 #elif defined(JPEG_ENABLE_NEON)
-                        fdct_neon(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable, bias);
+                        fdct_neon(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 #else
                         fdct_scalar(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 #endif
