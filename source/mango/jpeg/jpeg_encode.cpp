@@ -352,8 +352,7 @@ namespace
         int         channel_count;
 
         void (*read_8x8) (s16 *block, const u8* input, int stride, int rows, int cols);
-        void (*read) (s16 *block, const u8* input, int stride, int rows, int cols);
-        void (*fdct) (s16* dest, const s16* data, const s16* quant_table);
+        void (*read)     (s16 *block, const u8* input, int stride, int rows, int cols);
 
         jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
@@ -941,7 +940,7 @@ namespace
         JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
 
     static
-    void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
+    void fdct_neon(s16* dest, const s16* data, const s16* quant_table, int32x4_t bias)
     {
         const int16x4_t c1 = vdup_n_s16(1420); // cos 1PI/16 * root(2)
         const int16x4_t c2 = vdup_n_s16(1338); // cos 2PI/16 * root(2)
@@ -1007,7 +1006,7 @@ namespace
 
         // quantize
 
-        const int32x4_t bias = vdupq_n_s32(0x4000);
+        //const int32x4_t bias = vdupq_n_s32(0x4000);
         const int16x8_t* q = reinterpret_cast<const int16x8_t *>(quant_table);
 
         v0 = quantize(v0, q[0], bias);
@@ -1578,16 +1577,6 @@ namespace
         : ILqt(64)
         , ICqt(64)
     {
-        fdct = fdct_scalar;
-
-#if defined(JPEG_ENABLE_SSE2)
-        fdct = fdct_sse2;
-#endif
-
-#if defined(JPEG_ENABLE_NEON)
-        fdct = fdct_neon;
-#endif
-
         int bytes_per_pixel = 0;
 
         channel_count = 0;
@@ -1859,6 +1848,10 @@ namespace
 
                 const int right_mcu = jp.horizontal_mcus - 1;
 
+#if defined(JPEG_ENABLE_NEON)
+                const int32x4_t bias = vdupq_n_s32(0x4000);
+#endif
+
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
                     int cols;
@@ -1882,7 +1875,16 @@ namespace
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
                         s16 temp[BLOCK_SIZE];
-                        jp.fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+
+                        // select fdct must be done here since the function signatures are different
+#if defined(JPEG_ENABLE_NEON)
+                        fdct_neon(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable, bias);
+#elif defined(JPEG_ENABLE_SSE2)
+                        fdct_sse2(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+#else
+                        fdct_scalar(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
+#endif
+
                         ptr = huffman.encode(ptr, jp.channel[i].component, temp);
                     }
 
