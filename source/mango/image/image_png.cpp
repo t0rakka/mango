@@ -81,7 +81,6 @@ namespace
 
             int p = b - c;
             int q = a - c;
-
             int pa = std::abs(p);
             int pb = std::abs(q);
             int pc = std::abs(p + q);
@@ -101,6 +100,177 @@ namespace
         }
     }
 
+    void filter_paeth_8bit(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        int c = prev[0];
+        int a = (scan[0] + c) & 0xff;
+        scan[0] = u8(a);
+
+        for (int x = 1; x < bytes; ++x)
+        {
+            int b = prev[x];
+
+            int p = b - c;
+            int q = a - c;
+            int pa = abs(p);
+            int pb = abs(q);
+            int pc = abs(p + q);
+
+            if (pb < pa)
+            {
+                pa = pb;
+                a = b;
+            }
+
+            if (pc < pa)
+            {
+                a = c;
+            }
+
+            c = b;
+            a = (a + scan[x]) & 0xff;
+            scan[x] = u8(a);
+        }
+    }
+
+#if defined(MANGO_ENABLE_SSE2)
+
+    // -----------------------------------------------------------------------------------
+    // SSE2 Filters
+    // -----------------------------------------------------------------------------------
+
+    inline int8x16 load4(const void* p)
+    {
+        u32 temp = uload32(p);
+        return int8x16(_mm_cvtsi32_si128(temp));
+    }
+
+    inline void store4(void* p, __m128i v)
+    {
+        u32 temp = _mm_cvtsi128_si32(v);
+        ustore32(p, temp);
+    }
+
+    inline int8x16 load3(const void* p)
+    {
+        u32 temp = 0;
+        std::memcpy(&temp, p, 3);
+        return int8x16(_mm_cvtsi32_si128(temp));
+    }
+
+    inline void store3(void* p, __m128i v)
+    {
+        u32 temp = _mm_cvtsi128_si32(v);
+        std::memcpy(p, &temp, 3);
+    }
+
+    inline __m128i average_sse2(__m128i a, __m128i b, __m128i d)
+    {
+        __m128i avg = _mm_avg_epu8(a, b);
+        avg = _mm_sub_epi8(avg, _mm_and_si128(_mm_xor_si128(a, b), _mm_set1_epi8(1)));
+        d = _mm_add_epi8(d, avg);
+        return d;
+    }
+
+    inline int16x8 nearest_sse2(u8* scan, const u8* prev, __m128i zero, int16x8 a, int16x8 b, int16x8 c, int16x8 d)
+    {
+        int16x8 pa = b - c;
+        int16x8 pb = a - c;
+        int16x8 pc = pa + pb;
+        pa = abs(pa);
+        pb = abs(pb);
+        pc = abs(pc);
+        int16x8 smallest = min(pc, min(pa, pb));
+        int16x8 nearest = select(smallest == pa, a,
+                          select(smallest == pb, b, c));
+        d = _mm_add_epi8(d, nearest);
+        return d;
+    }
+
+    void filter_sub_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED_PARAMETER(prev);
+
+        __m128i d = _mm_setzero_si128();
+
+        for (int x = 0; x < bytes; x += 3)
+        {
+            d = _mm_add_epi8(load3(scan + x), d);
+            store3(scan + x, d);
+        }
+    }
+
+    void filter_sub_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED_PARAMETER(prev);
+
+        __m128i d = _mm_setzero_si128();
+
+        for (int x = 0; x < bytes; x += 4)
+        {
+            d = _mm_add_epi8(load4(scan + x), d);
+            store4(scan + x, d);
+        }
+    }
+
+    void filter_average_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        __m128i d = _mm_setzero_si128();
+
+        for (int x = 0; x < bytes; x += 3)
+        {
+            d = average_sse2(d, load3(prev + x), load3(scan + x));
+            store3(scan + x, d);
+        }
+    }
+
+    void filter_average_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        __m128i d = _mm_setzero_si128();
+
+        for (int x = 0; x < bytes; x += 4)
+        {
+            d = average_sse2(d, load4(prev + x), load4(scan + x));
+            store4(scan + x, d);
+        }
+    }
+
+    void filter_paeth_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        int8x16 zero = 0;
+        int16x8 b = 0;
+        int16x8 d = 0;
+
+        for (int x = 0; x < bytes; x += 3)
+        {
+            int16x8 c = b;
+            int16x8 a = d;
+            b = _mm_unpacklo_epi8(load3(prev + x), zero);
+            d = _mm_unpacklo_epi8(load3(scan + x), zero);
+            d = nearest_sse2(scan, prev, zero, a, b, c, d);
+            store3(scan + x, _mm_packus_epi16(d, d));
+        }
+    }
+
+    void filter_paeth_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        int8x16 zero = 0;
+        int16x8 b = 0;
+        int16x8 d = 0;
+
+        for (int x = 0; x < bytes; x += 4)
+        {
+            int16x8 c = b;
+            int16x8 a = d;
+            b = _mm_unpacklo_epi8(load4(prev + x), zero);
+            d = _mm_unpacklo_epi8(load4(scan + x), zero);
+            d = nearest_sse2(scan, prev, zero, a, b, c, d);
+            store4(scan + x, _mm_packus_epi16(d, d));
+        }
+    }
+
+#endif // MANGO_ENABLE_SSE2
+
     struct FilterDispatcher
     {
         FilterFunc sub = filter_sub;
@@ -108,8 +278,33 @@ namespace
         FilterFunc average = filter_average;
         FilterFunc paeth = filter_paeth;
 
+        FilterDispatcher(int bpp)
+        {
+            switch (bpp)
+            {
+                case 1:
+                    paeth = filter_paeth_8bit;
+                    break;
+                case 3:
+#if defined(MANGO_ENABLE_SSE2)
+                    sub = filter_sub_24bit_sse2;
+                    average = filter_average_24bit_sse2;
+                    paeth = filter_paeth_24bit_sse2;
+#endif
+                    break;
+                case 4:
+#if defined(MANGO_ENABLE_SSE2)
+                    sub = filter_sub_32bit_sse2;
+                    average = filter_average_32bit_sse2;
+                    paeth = filter_paeth_32bit_sse2;
+#endif
+                    break;
+            }
+        }
+
         void call(FilterType method, u8* scan, const u8* prev, int bytes, int bpp)
         {
+            //printf("%d", method);
             switch (method)
             {
                 case FILTER_NONE:
@@ -687,8 +882,6 @@ namespace
 
     void ParserPNG::filter(u8* buffer, int bytes, int height)
     {
-        FilterDispatcher dispatcher;
-
         // zero scanline
         std::vector<u8> zeros(bytes, 0);
         const u8* prev = zeros.data();
@@ -696,6 +889,8 @@ namespace
         const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
         if (bpp > 8)
             return;
+
+        FilterDispatcher dispatcher(bpp);
 
         u8* s = buffer;
 
