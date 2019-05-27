@@ -232,6 +232,16 @@ namespace mango
         return simd::rcp(a);
     }
 
+    static inline Vector<double, 8> unpacklo(Vector<double, 8> a, Vector<double, 8> b)
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    static inline Vector<double, 8> unpackhi(Vector<double, 8> a, Vector<double, 8> b)
+    {
+        return simd::unpackhi(a, b);
+    }
+
     static inline Vector<double, 8> min(Vector<double, 8> a, Vector<double, 8> b)
     {
         return simd::min(a, b);

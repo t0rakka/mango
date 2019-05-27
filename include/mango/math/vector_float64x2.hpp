@@ -274,6 +274,16 @@ namespace mango
         return simd::dot2(a, b);
     }
 
+    static inline Vector<double, 2> unpacklo(Vector<double, 2> a, Vector<double, 2> b)
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    static inline Vector<double, 2> unpackhi(Vector<double, 2> a, Vector<double, 2> b)
+    {
+        return simd::unpackhi(a, b);
+    }
+
     static inline Vector<double, 2> min(Vector<double, 2> a, Vector<double, 2> b)
     {
         return simd::min(a, b);

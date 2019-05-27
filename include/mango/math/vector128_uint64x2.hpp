@@ -171,6 +171,16 @@ namespace mango
         return simd::bitwise_xor(a, b);
     }
 
+    static inline Vector<u64, 2> unpacklo(Vector<u64, 2> a, Vector<u64, 2> b)
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    static inline Vector<u64, 2> unpackhi(Vector<u64, 2> a, Vector<u64, 2> b)
+    {
+        return simd::unpackhi(a, b);
+    }
+
     static inline Vector<u64, 2> select(mask64x2 mask, Vector<u64, 2> a, Vector<u64, 2> b)
     {
         return simd::select(mask, a, b);

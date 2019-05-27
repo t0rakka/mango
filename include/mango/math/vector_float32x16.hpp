@@ -233,6 +233,16 @@ namespace mango
         return simd::rcp(a);
     }
 
+    static inline Vector<float, 16> unpacklo(Vector<float, 16> a, Vector<float, 16> b)
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    static inline Vector<float, 16> unpackhi(Vector<float, 16> a, Vector<float, 16> b)
+    {
+        return simd::unpackhi(a, b);
+    }
+
     static inline Vector<float, 16> min(Vector<float, 16> a, Vector<float, 16> b)
     {
         return simd::min(a, b);

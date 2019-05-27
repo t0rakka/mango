@@ -163,6 +163,16 @@ namespace mango
         return simd::bitwise_not(a);
     }
 
+    static inline Vector<s16, 8> unpacklo(Vector<s16, 8> a, Vector<s16, 8> b)
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    static inline Vector<s16, 8> unpackhi(Vector<s16, 8> a, Vector<s16, 8> b)
+    {
+        return simd::unpackhi(a, b);
+    }
+
     static inline Vector<s16, 8> abs(Vector<s16, 8> a)
     {
         return simd::abs(a);
