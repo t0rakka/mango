@@ -300,6 +300,26 @@ namespace
 
 #endif // MANGO_ENABLE_SSE2
 
+#if defined(MANGO_ENABLE_NEON__todo)
+
+    // -----------------------------------------------------------------------------------
+    // NEON Filters
+    // -----------------------------------------------------------------------------------
+
+    void filter_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED_PARAMETER(bpp);
+
+        for (int x = 0; x < bytes; x += 16)
+        {
+            uint8x16_t a = vld1q_u8(scan + x);
+            uint8x16_t b = vld1q_u8(prev + x);
+            vst1q_u8(scan + x, vaddq_u8(a, b));
+        }
+    }
+
+#endif // MANGO_ENABLE_NEON
+
     struct FilterDispatcher
     {
         FilterFunc sub = filter_sub;
@@ -320,6 +340,9 @@ namespace
                     average = filter_average_24bit_sse2;
                     paeth = filter_paeth_24bit_sse2;
 #endif
+#if defined(MANGO_ENABLE_NEON__todo)
+#endif
+
                     break;
                 case 4:
 #if defined(MANGO_ENABLE_SSE2)
@@ -327,8 +350,14 @@ namespace
                     average = filter_average_32bit_sse2;
                     paeth = filter_paeth_32bit_sse2;
 #endif
+#if defined(MANGO_ENABLE_NEON__todo)
+#endif
                     break;
             }
+
+#if defined(MANGO_ENABLE_NEON__todo)
+            up = filter_up_neon;
+#endif
         }
 
         void call(FilterType method, u8* scan, const u8* prev, int bytes, int bpp)
