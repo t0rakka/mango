@@ -8,11 +8,40 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
+#define ID "[ImageDecoder.PNG] "
+#define FILTER_BYTE 1
+
+// ------------------------------------------------------------
+// miniz
+// ------------------------------------------------------------
+
 #include "../../external/miniz/miniz.h"
 #undef crc32 // fix miniz pollution
 
-#define ID "[ImageDecoder.PNG] "
-#define FILTER_BYTE 1
+// ------------------------------------------------------------
+// stb zlib
+// ------------------------------------------------------------
+
+#define STBI_NO_STDIO
+#define STBI_NO_JPEG
+#define STBI_NO_BMP
+#define STBI_NO_PSD
+#define STBI_NO_PIC
+#define STBI_NO_TGA
+#define STBI_NO_GIF
+#define STBI_NO_PNM
+//#define STBI_NO_PNG
+//#define STBI_NO_HDR
+
+#define STBI_SUPPORT_ZLIB
+
+#define STBI_MALLOC(sz)           malloc(sz)
+#define STBI_REALLOC(p,newsz)     realloc(p,newsz)
+#define STBI_FREE(p)              free(p)
+
+#define STB_IMAGE_IMPLEMENTATION
+
+#include "../../external/stb/stb_image.h"
 
 namespace
 {
@@ -1479,43 +1508,63 @@ namespace
                 buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
             }
 
-            // allocate output buffer
-            debugPrint("  buffer bytes: %d\n", buffer_size);
-            u8* buffer = new u8[buffer_size];
-            if (!buffer)
+            // decompression
+            // - use STB for small buffers
+            // - use MINIZ for large buffers
+
+            if (m_compressed.size() <= 128 * 1024)
             {
-                setError("Memory allocation failed.");
-                return m_error;
+                Memory mem = m_compressed;
+                int raw_len = buffer_size;
+                u8 *buffer = (u8*) stbi_zlib_decode_malloc_guesssize_headerflag(
+                    reinterpret_cast<const char *>(mem.address),
+                    int(mem.size),
+                    raw_len,
+                    &raw_len,
+                    1);
+                if (buffer)
+                {
+                    debugPrint("  # total_out: %d \n", raw_len);
+
+                    // process image
+                    process(dest.image, dest.stride, buffer, ptr_palette);
+                    STBI_FREE(buffer);
+                }
             }
-
-            // decompress stream
-            mz_stream stream;
-            int status;
-            memset(&stream, 0, sizeof(stream));
-
-            stream.next_in   = m_compressed;
-            stream.avail_in  = (unsigned int)m_compressed.size();
-            stream.next_out  = buffer;
-            stream.avail_out = (unsigned int)buffer_size;
-
-            status = mz_inflateInit(&stream);
-            if (status != MZ_OK)
+            else
             {
-                // TODO: error
+                // allocate output buffer
+                debugPrint("  buffer bytes: %d\n", buffer_size);
+                Buffer buffer(buffer_size);
+
+                // decompress stream
+                mz_stream stream;
+                int status;
+                memset(&stream, 0, sizeof(stream));
+
+                stream.next_in   = m_compressed;
+                stream.avail_in  = (unsigned int)m_compressed.size();
+                stream.next_out  = buffer;
+                stream.avail_out = (unsigned int)buffer_size;
+
+                status = mz_inflateInit(&stream);
+                if (status != MZ_OK)
+                {
+                    // TODO: error
+                }
+
+                status = mz_inflate(&stream, MZ_FINISH);
+                if (status != MZ_STREAM_END)
+                {
+                    // TODO: error
+                }
+
+                debugPrint("  # total_out: %d \n", int(stream.total_out));
+                status = mz_inflateEnd(&stream);
+
+                // process image
+                process(dest.image, dest.stride, buffer, ptr_palette);
             }
-
-            status = mz_inflate(&stream, MZ_FINISH);
-            if (status != MZ_STREAM_END)
-            {
-                // TODO: error
-            }
-
-            debugPrint("  # total_out: %d \n", int(stream.total_out));
-            status = mz_inflateEnd(&stream);
-
-            // process image
-            process(dest.image, dest.stride, buffer, ptr_palette);
-            delete[] buffer;
         }
 
         return m_error;

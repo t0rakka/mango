@@ -62,6 +62,7 @@
 		A0F981BE15B9E61D00B8C49F /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0F981BD15B9E61D00B8C49F /* Cocoa.framework */; };
 		A0FF42CE1BBEDC9D0036141B /* simd in Headers */ = {isa = PBXBuildFile; fileRef = A0FF42CC1BBEDC630036141B /* simd */; settings = {ATTRIBUTES = (Public, ); }; };
 		A60B0760228CCA9C00BD520D /* quantize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60B075F228CCA9C00BD520D /* quantize.cpp */; };
+		A60B0763229D21C900BD520D /* stb_image.h in Headers */ = {isa = PBXBuildFile; fileRef = A60B0762229D21C900BD520D /* stb_image.h */; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
@@ -357,6 +358,7 @@
 		A0F981C515B9E61D00B8C49F /* mango-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "mango-Info.plist"; sourceTree = "<group>"; };
 		A0FF42CC1BBEDC630036141B /* simd */ = {isa = PBXFileReference; lastKnownFileType = folder; name = simd; path = mango/simd; sourceTree = "<group>"; };
 		A60B075F228CCA9C00BD520D /* quantize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = quantize.cpp; path = image/quantize.cpp; sourceTree = "<group>"; };
+		A60B0762229D21C900BD520D /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = external/stb/stb_image.h; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
@@ -801,6 +803,14 @@
 			path = mango;
 			sourceTree = "<group>";
 		};
+		A60B0761229D21A700BD520D /* stb */ = {
+			isa = PBXGroup;
+			children = (
+				A60B0762229D21C900BD520D /* stb_image.h */,
+			);
+			name = stb;
+			sourceTree = "<group>";
+		};
 		A63DD6F21E706D5900D4D499 /* jpeg */ = {
 			isa = PBXGroup;
 			children = (
@@ -821,6 +831,7 @@
 		A63DD7011E706DAA00D4D499 /* external */ = {
 			isa = PBXGroup;
 			children = (
+				A60B0761229D21A700BD520D /* stb */,
 				A642430021852ABF0044B763 /* lzma */,
 				A6CD2BCE209B3817000B0EF8 /* zpng */,
 				A672D90F2026632700947D7E /* aes */,
@@ -1232,6 +1243,7 @@
 				A63DD7791E706EF100D4D499 /* lzvn_decode_base.h in Headers */,
 				A642437E21852AEF0044B763 /* HuffEnc.h in Headers */,
 				A645DD712141551200EC714B /* zstd_ldm.h in Headers */,
+				A60B0763229D21C900BD520D /* stb_image.h in Headers */,
 				A64243B22185E70B0044B763 /* 7zSha1.h in Headers */,
 				A003D309192B9998009FED25 /* opengl in Headers */,
 				A642438E21852AEF0044B763 /* 7zVersion.h in Headers */,
