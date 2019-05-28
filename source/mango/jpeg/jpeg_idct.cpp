@@ -338,24 +338,56 @@ namespace jpeg {
     // [License]
     // Public Domain / MIT
 
-#define stbi__f2f(x)  ((int) (((x) * 4096 + 0.5)))
+    #define JPEG_FIXED(x)  ((int) (((x) * 4096 + 0.5)))
 
-void idct_neon(u8* out, const s16* data, const s16* qt)
-{
-    int16x8_t row0, row1, row2, row3, row4, row5, row6, row7;
+    static inline
+    void dct_trn16(int16x8_t& x, int16x8_t& y)
+    {
+        int16x8x2_t t = vtrnq_s16(x, y);
+        x = t.val[0];
+        y = t.val[1];
+    }
 
-    int16x4_t rot0_0 = vdup_n_s16(stbi__f2f(0.5411961f));
-    int16x4_t rot0_1 = vdup_n_s16(stbi__f2f(-1.847759065f));
-    int16x4_t rot0_2 = vdup_n_s16(stbi__f2f( 0.765366865f));
-    int16x4_t rot1_0 = vdup_n_s16(stbi__f2f( 1.175875602f));
-    int16x4_t rot1_1 = vdup_n_s16(stbi__f2f(-0.899976223f));
-    int16x4_t rot1_2 = vdup_n_s16(stbi__f2f(-2.562915447f));
-    int16x4_t rot2_0 = vdup_n_s16(stbi__f2f(-1.961570560f));
-    int16x4_t rot2_1 = vdup_n_s16(stbi__f2f(-0.390180644f));
-    int16x4_t rot3_0 = vdup_n_s16(stbi__f2f( 0.298631336f));
-    int16x4_t rot3_1 = vdup_n_s16(stbi__f2f( 2.053119869f));
-    int16x4_t rot3_2 = vdup_n_s16(stbi__f2f( 3.072711026f));
-    int16x4_t rot3_3 = vdup_n_s16(stbi__f2f( 1.501321110f));
+    static inline
+    void dct_trn32(int16x8_t& x, int16x8_t& y)
+    {
+        int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y));
+        x = vreinterpretq_s16_s32(t.val[0]);
+        y = vreinterpretq_s16_s32(t.val[1]);
+    }
+
+    static inline
+    void dct_trn64(int16x8_t& x, int16x8_t& y)
+    {
+        int16x8_t x0 = x;
+        int16x8_t y0 = y;
+        x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0));
+        y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0));
+    }
+
+    static inline
+    void dct_trn8(uint8x8_t& x, uint8x8_t& y)
+    {
+        uint8x8x2_t t = vtrn_u8(x, y); 
+        x = t.val[0]; 
+        y = t.val[1];
+    }
+
+    static inline
+    void dct_trn16(uint8x8_t& x, uint8x8_t& y)
+    {
+        uint16x4x2_t t = vtrn_u16(vreinterpret_u16_u8(x), vreinterpret_u16_u8(y)); 
+        x = vreinterpret_u8_u16(t.val[0]); 
+        y = vreinterpret_u8_u16(t.val[1]); 
+    }
+
+    static inline
+    void dct_trn32(uint8x8_t& x, uint8x8_t& y)
+    {
+        uint32x2x2_t t = vtrn_u32(vreinterpret_u32_u8(x), vreinterpret_u32_u8(y)); 
+        x = vreinterpret_u8_u32(t.val[0]); 
+        y = vreinterpret_u8_u32(t.val[1]); 
+    }
 
 #define dct_long_mul(out, inq, coeff) \
     int32x4_t out##_l = vmull_s16(vget_low_s16(inq), coeff); \
@@ -380,7 +412,7 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
     int32x4_t out##_h = vsubq_s32(a##_h, b##_h)
 
 // butterfly a/b, then shift using "shiftop" by "s" and pack
-#define dct_bfly32o(out0,out1, a,b,shiftop,s) \
+#define dct_bfly32o(out0, out1, a, b, shiftop, s) \
     { \
         dct_wadd(sum, a, b); \
         dct_wsub(dif, a, b); \
@@ -428,24 +460,39 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
         dct_bfly32o(row3,row4, x3,x4,shiftop,shift); \
     }
 
-    // load
-    row0 = vld1q_s16(data + 0*8);
-    row1 = vld1q_s16(data + 1*8);
-    row2 = vld1q_s16(data + 2*8);
-    row3 = vld1q_s16(data + 3*8);
-    row4 = vld1q_s16(data + 4*8);
-    row5 = vld1q_s16(data + 5*8);
-    row6 = vld1q_s16(data + 6*8);
-    row7 = vld1q_s16(data + 7*8);
+void idct_neon(u8* out, const s16* data, const s16* qt)
+{
+    const int16x4_t rot0_0 = vdup_n_s16(JPEG_FIXED(0.5411961f));
+    const int16x4_t rot0_1 = vdup_n_s16(JPEG_FIXED(-1.847759065f));
+    const int16x4_t rot0_2 = vdup_n_s16(JPEG_FIXED( 0.765366865f));
+    const int16x4_t rot1_0 = vdup_n_s16(JPEG_FIXED( 1.175875602f));
+    const int16x4_t rot1_1 = vdup_n_s16(JPEG_FIXED(-0.899976223f));
+    const int16x4_t rot1_2 = vdup_n_s16(JPEG_FIXED(-2.562915447f));
+    const int16x4_t rot2_0 = vdup_n_s16(JPEG_FIXED(-1.961570560f));
+    const int16x4_t rot2_1 = vdup_n_s16(JPEG_FIXED(-0.390180644f));
+    const int16x4_t rot3_0 = vdup_n_s16(JPEG_FIXED( 0.298631336f));
+    const int16x4_t rot3_1 = vdup_n_s16(JPEG_FIXED( 2.053119869f));
+    const int16x4_t rot3_2 = vdup_n_s16(JPEG_FIXED( 3.072711026f));
+    const int16x4_t rot3_3 = vdup_n_s16(JPEG_FIXED( 1.501321110f));
 
-    int16x8_t qt0 = vld1q_s16(qt + 0*8);
-    int16x8_t qt1 = vld1q_s16(qt + 1*8);
-    int16x8_t qt2 = vld1q_s16(qt + 2*8);
-    int16x8_t qt3 = vld1q_s16(qt + 3*8);
-    int16x8_t qt4 = vld1q_s16(qt + 4*8);
-    int16x8_t qt5 = vld1q_s16(qt + 5*8);
-    int16x8_t qt6 = vld1q_s16(qt + 6*8);
-    int16x8_t qt7 = vld1q_s16(qt + 7*8);
+    // load
+    int16x8_t row0 = vld1q_s16(data + 0 * 8);
+    int16x8_t row1 = vld1q_s16(data + 1 * 8);
+    int16x8_t row2 = vld1q_s16(data + 2 * 8);
+    int16x8_t row3 = vld1q_s16(data + 3 * 8);
+    int16x8_t row4 = vld1q_s16(data + 4 * 8);
+    int16x8_t row5 = vld1q_s16(data + 5 * 8);
+    int16x8_t row6 = vld1q_s16(data + 6 * 8);
+    int16x8_t row7 = vld1q_s16(data + 7 * 8);
+
+    int16x8_t qt0 = vld1q_s16(qt + 0 * 8);
+    int16x8_t qt1 = vld1q_s16(qt + 1 * 8);
+    int16x8_t qt2 = vld1q_s16(qt + 2 * 8);
+    int16x8_t qt3 = vld1q_s16(qt + 3 * 8);
+    int16x8_t qt4 = vld1q_s16(qt + 4 * 8);
+    int16x8_t qt5 = vld1q_s16(qt + 5 * 8);
+    int16x8_t qt6 = vld1q_s16(qt + 6 * 8);
+    int16x8_t qt7 = vld1q_s16(qt + 7 * 8);
 
     row0 = vmulq_s16(row0, qt0);
     row1 = vmulq_s16(row1, qt1);
@@ -463,35 +510,18 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
     dct_pass(vrshrn_n_s32, 10);
 
     // 16bit 8x8 transpose
-    {
-// these three map to a single VTRN.16, VTRN.32, and VSWP, respectively.
-// whether compilers actually get this is another story, sadly.
-#define dct_trn16(x, y) { int16x8x2_t t = vtrnq_s16(x, y); x = t.val[0]; y = t.val[1]; }
-#define dct_trn32(x, y) { int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y)); x = vreinterpretq_s16_s32(t.val[0]); y = vreinterpretq_s16_s32(t.val[1]); }
-#define dct_trn64(x, y) { int16x8_t x0 = x; int16x8_t y0 = y; x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0)); y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0)); }
-
-        // pass 1
-        dct_trn16(row0, row1); // a0b0a2b2a4b4a6b6
-        dct_trn16(row2, row3);
-        dct_trn16(row4, row5);
-        dct_trn16(row6, row7);
-
-        // pass 2
-        dct_trn32(row0, row2); // a0b0c0d0a4b4c4d4
-        dct_trn32(row1, row3);
-        dct_trn32(row4, row6);
-        dct_trn32(row5, row7);
-
-        // pass 3
-        dct_trn64(row0, row4); // a0b0c0d0e0f0g0h0
-        dct_trn64(row1, row5);
-        dct_trn64(row2, row6);
-        dct_trn64(row3, row7);
-
-#undef dct_trn16
-#undef dct_trn32
-#undef dct_trn64
-    }
+    dct_trn16(row0, row1);
+    dct_trn16(row2, row3);
+    dct_trn16(row4, row5);
+    dct_trn16(row6, row7);
+    dct_trn32(row0, row2);
+    dct_trn32(row1, row3);
+    dct_trn32(row4, row6);
+    dct_trn32(row5, row7);
+    dct_trn64(row0, row4);
+    dct_trn64(row1, row5);
+    dct_trn64(row2, row6);
+    dct_trn64(row3, row7);
 
     // row pass
     // vrshrn_n_s32 only supports shifts up to 16, we need
@@ -499,57 +529,40 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
     // up with a rounding shift by 1.
     dct_pass(vshrn_n_s32, 16);
 
-    {
-        // pack and round
-        uint8x8_t p0 = vqrshrun_n_s16(row0, 1);
-        uint8x8_t p1 = vqrshrun_n_s16(row1, 1);
-        uint8x8_t p2 = vqrshrun_n_s16(row2, 1);
-        uint8x8_t p3 = vqrshrun_n_s16(row3, 1);
-        uint8x8_t p4 = vqrshrun_n_s16(row4, 1);
-        uint8x8_t p5 = vqrshrun_n_s16(row5, 1);
-        uint8x8_t p6 = vqrshrun_n_s16(row6, 1);
-        uint8x8_t p7 = vqrshrun_n_s16(row7, 1);
+    // pack and round
+    uint8x8_t p0 = vqrshrun_n_s16(row0, 1);
+    uint8x8_t p1 = vqrshrun_n_s16(row1, 1);
+    uint8x8_t p2 = vqrshrun_n_s16(row2, 1);
+    uint8x8_t p3 = vqrshrun_n_s16(row3, 1);
+    uint8x8_t p4 = vqrshrun_n_s16(row4, 1);
+    uint8x8_t p5 = vqrshrun_n_s16(row5, 1);
+    uint8x8_t p6 = vqrshrun_n_s16(row6, 1);
+    uint8x8_t p7 = vqrshrun_n_s16(row7, 1);
 
-        // again, these can translate into one instruction, but often don't.
-#define dct_trn8_8(x, y) { uint8x8x2_t t = vtrn_u8(x, y); x = t.val[0]; y = t.val[1]; }
-#define dct_trn8_16(x, y) { uint16x4x2_t t = vtrn_u16(vreinterpret_u16_u8(x), vreinterpret_u16_u8(y)); x = vreinterpret_u8_u16(t.val[0]); y = vreinterpret_u8_u16(t.val[1]); }
-#define dct_trn8_32(x, y) { uint32x2x2_t t = vtrn_u32(vreinterpret_u32_u8(x), vreinterpret_u32_u8(y)); x = vreinterpret_u8_u32(t.val[0]); y = vreinterpret_u8_u32(t.val[1]); }
+    // 8x8 8-bit transpose pass 1
+    dct_trn8(p0, p1);
+    dct_trn8(p2, p3);
+    dct_trn8(p4, p5);
+    dct_trn8(p6, p7);
+    dct_trn16(p0, p2);
+    dct_trn16(p1, p3);
+    dct_trn16(p4, p6);
+    dct_trn16(p5, p7);
+    dct_trn32(p0, p4);
+    dct_trn32(p1, p5);
+    dct_trn32(p2, p6);
+    dct_trn32(p3, p7);
 
-        // sadly can't use interleaved stores here since we only write
-        // 8 bytes to each scan line!
-
-        // 8x8 8-bit transpose pass 1
-        dct_trn8_8(p0, p1);
-        dct_trn8_8(p2, p3);
-        dct_trn8_8(p4, p5);
-        dct_trn8_8(p6, p7);
-
-        // pass 2
-        dct_trn8_16(p0, p2);
-        dct_trn8_16(p1, p3);
-        dct_trn8_16(p4, p6);
-        dct_trn8_16(p5, p7);
-
-        // pass 3
-        dct_trn8_32(p0, p4);
-        dct_trn8_32(p1, p5);
-        dct_trn8_32(p2, p6);
-        dct_trn8_32(p3, p7);
-
-        // store
-        vst1_u8(out, p0); out += 8;
-        vst1_u8(out, p1); out += 8;
-        vst1_u8(out, p2); out += 8;
-        vst1_u8(out, p3); out += 8;
-        vst1_u8(out, p4); out += 8;
-        vst1_u8(out, p5); out += 8;
-        vst1_u8(out, p6); out += 8;
-        vst1_u8(out, p7);
-
-#undef dct_trn8_8
-#undef dct_trn8_16
-#undef dct_trn8_32
-    }
+    // store
+    vst1_u8(out, p0); out += 8;
+    vst1_u8(out, p1); out += 8;
+    vst1_u8(out, p2); out += 8;
+    vst1_u8(out, p3); out += 8;
+    vst1_u8(out, p4); out += 8;
+    vst1_u8(out, p5); out += 8;
+    vst1_u8(out, p6); out += 8;
+    vst1_u8(out, p7);
+}
 
 #undef dct_long_mul
 #undef dct_long_mac
@@ -558,7 +571,6 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
 #undef dct_wsub
 #undef dct_bfly32o
 #undef dct_pass
-}
 
 #endif // JPEG_ENABLE_NEON
 
