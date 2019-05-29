@@ -539,7 +539,7 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
     uint8x8_t p6 = vqrshrun_n_s16(row6, 1);
     uint8x8_t p7 = vqrshrun_n_s16(row7, 1);
 
-    // 8x8 8-bit transpose pass 1
+    // 8x8 8-bit transpose
     dct_trn8(p0, p1);
     dct_trn8(p2, p3);
     dct_trn8(p4, p5);
