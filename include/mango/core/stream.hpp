@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -38,7 +38,7 @@ namespace mango
         virtual void read(void* dest, size_t size) = 0;
         virtual void write(const void* data, size_t size) = 0;
 
-        void write(Memory memory)
+        void write(ConstMemory memory)
         {
             write(memory.address, memory.size);
         }
@@ -137,7 +137,7 @@ namespace mango
             s.write(data, size);
         }
 
-        void write(Memory memory)
+        void write(ConstMemory memory)
         {
             s.write(memory);
         }
@@ -275,7 +275,7 @@ namespace mango
             s.write(data, size);
         }
 
-        void write(Memory memory)
+        void write(ConstMemory memory)
         {
             s.write(memory);
         }
