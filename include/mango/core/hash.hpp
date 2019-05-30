@@ -59,11 +59,11 @@ namespace mango
     // hashing functions
     // -----------------------------------------------------------------------
 
-    MD5 md5(Memory memory);
-    SHA1 sha1(Memory memory);
-    SHA2 sha2(Memory memory);
+    MD5 md5(ConstMemory memory);
+    SHA1 sha1(ConstMemory memory);
+    SHA2 sha2(ConstMemory memory);
 
-    u32 xxhash32(u32 seed, Memory memory);
-    u64 xxhash64(u64 seed, Memory memory);
+    u32 xxhash32(u32 seed, ConstMemory memory);
+    u64 xxhash64(u64 seed, ConstMemory memory);
 
 } // namespace mango

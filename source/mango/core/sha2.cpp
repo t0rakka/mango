@@ -8,7 +8,8 @@
 #include <mango/core/endian.hpp>
 #include <mango/core/cpuinfo.hpp>
 
-namespace {
+namespace
+{
     using namespace mango;
 
 #if defined(__ARM_FEATURE_CRYPTO)
@@ -569,9 +570,10 @@ namespace {
 
 } // namespace
 
-namespace mango {
+namespace mango
+{
 
-    SHA2 sha2(Memory memory)
+    SHA2 sha2(ConstMemory memory)
     {
         SHA2 hash;
         hash.data[0] = 0x6a09e667;

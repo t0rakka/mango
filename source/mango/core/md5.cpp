@@ -7,7 +7,8 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
-namespace {
+namespace
+{
     using namespace mango;
 
 #define ROUND_TAIL(a, b, expr, k, s, t)    \
@@ -102,9 +103,10 @@ namespace {
 
 } // namespace
 
-namespace mango {
+namespace mango
+{
 
-    MD5 md5(Memory memory)
+    MD5 md5(ConstMemory memory)
     {
         MD5 hash;
         hash.data[0] = 0x67452301;
