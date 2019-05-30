@@ -745,7 +745,6 @@ namespace
                         break;
 
                     case Format::NONE:
-                    case Format::SRGB:
                     case Format::UINT:
                     case Format::SINT:
                     case Format::SNORM:

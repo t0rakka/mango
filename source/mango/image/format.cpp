@@ -156,7 +156,6 @@ namespace mango
                 break;
 
             case NONE:
-            case SRGB:
             case SNORM:
             case UINT:
             case SINT:

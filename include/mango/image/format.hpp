@@ -19,7 +19,6 @@ namespace mango {
             TYPE_INT        = 0x0040,
             TYPE_FLOAT      = 0x0080,
             TYPE_SIGNED     = 0x0100,
-            TYPE_SRGB       = 0x0200,
 
             FLAG_LUMINANCE  = 0x0001,
             FLAG_INDEXED    = 0x0002,
@@ -108,14 +107,13 @@ namespace mango {
         enum Type : u16
         {
             NONE    = 0,
-            SRGB    = 1 | TYPE_NORM | TYPE_SRGB,
-            UNORM   = 2 | TYPE_NORM,
-            SNORM   = 3 | TYPE_NORM | TYPE_SIGNED,
-            UINT    = 4 | TYPE_INT,
-            SINT    = 5 | TYPE_INT   | TYPE_SIGNED,
-            FLOAT16 = 6 | TYPE_FLOAT | TYPE_SIGNED,
-            FLOAT32 = 7 | TYPE_FLOAT | TYPE_SIGNED,
-            FLOAT64 = 8 | TYPE_FLOAT | TYPE_SIGNED,
+            UNORM   = 1 | TYPE_NORM,
+            SNORM   = 2 | TYPE_NORM | TYPE_SIGNED,
+            UINT    = 3 | TYPE_INT,
+            SINT    = 4 | TYPE_INT   | TYPE_SIGNED,
+            FLOAT16 = 5 | TYPE_FLOAT | TYPE_SIGNED,
+            FLOAT32 = 6 | TYPE_FLOAT | TYPE_SIGNED,
+            FLOAT64 = 7 | TYPE_FLOAT | TYPE_SIGNED,
         };
 
         u32 bits;
