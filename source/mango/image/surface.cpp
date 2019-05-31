@@ -160,10 +160,9 @@ namespace
 
         for (int i = 0; i < 4; ++i)
         {
-            u32 mask = format.mask(i);
-            if (mask)
+            if (format.size[i])
             {
-                int index = clamp(u32_index_of_lsb(mask), 0, 3);
+                int index = format.offset[i] / (sizeof(FloatType) * 8);
                 color[index] = FloatType(temp[i]);
                 size = std::max(size, index + 1);
             }
