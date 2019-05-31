@@ -23,7 +23,7 @@ namespace filesystem {
     public:
         Path(const std::string& pathname, const std::string& password = "");
         Path(const Path& path, const std::string& filename, const std::string& password = "");
-        Path(const ConstMemory& memory, const std::string& extension, const std::string& password = "");
+        Path(const Memory& memory, const std::string& extension, const std::string& password = "");
         ~Path();
 
         const std::string& pathname() const

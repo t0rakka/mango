@@ -90,7 +90,7 @@ namespace
         const char* data;
         u8 invert;
 
-        HeaderPNM(ConstMemory memory)
+        HeaderPNM(Memory memory)
             : width(0)
             , height(0)
             , channels(0)
@@ -265,10 +265,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
         HeaderPNM m_header;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -326,7 +326,7 @@ namespace
             {
                 if (m_header.endian < 0)
                 {
-                    LittleEndianPointer ptr = const_cast<char*>(p);
+                    LittleEndianConstPointer ptr = p;
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
@@ -340,7 +340,7 @@ namespace
                 }
                 else
                 {
-                    BigEndianPointer ptr = const_cast<char*>(p);
+                    BigEndianConstPointer ptr = p;
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
@@ -396,7 +396,7 @@ namespace
                 }
                 else
                 {
-                    BigEndianPointer e = const_cast<char*>(p);
+                    BigEndianConstPointer e = p;
 
                     for (int y = 0; y < m_header.height; ++y)
                     {
@@ -436,7 +436,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

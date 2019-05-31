@@ -10,7 +10,7 @@
 namespace mango
 {
 
-    u32 crc32(u32 crc, ConstMemory memory);
-    u32 crc32c(u32 crc, ConstMemory memory);
+    u32 crc32(u32 crc, Memory memory);
+    u32 crc32c(u32 crc, Memory memory);
 
 } // namespace mango

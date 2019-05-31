@@ -199,7 +199,7 @@ namespace
         int m_data_offset;
         TextureCompressionInfo m_info;
 
-        void read(ConstMemory memory)
+        void read(Memory memory)
         {
             LittleEndianConstPointer p = memory.address;
 
@@ -225,7 +225,7 @@ namespace
             }
         }
 
-        void parse_legacy(ConstMemory memory)
+        void parse_legacy(Memory memory)
         {
             LittleEndianConstPointer p = memory.address;
 
@@ -463,7 +463,7 @@ namespace
             m_info.format = format;
         }
 
-        void parse_version3(ConstMemory memory, bool swap_header)
+        void parse_version3(Memory memory, bool swap_header)
         {
             pvr_header3_t pvr;
             std::memcpy(&pvr, memory.address, sizeof(pvr));
@@ -558,11 +558,11 @@ namespace
             m_data_offset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
         }
 
-        ConstMemory getMemory(ConstMemory memory, int level, int depth, u32 face) const
+        Memory getMemory(Memory memory, int level, int depth, u32 face) const
         {
             const u8* p = memory.address + m_data_offset;
 
-            ConstMemory data;
+            Memory data;
 
             for (int iLevel = 0; iLevel < m_mipmaps; ++iLevel)
             {
@@ -586,8 +586,7 @@ namespace
                             if (iLevel == level && iDepth == depth && iFace == int(face) && iSurface == 0)
                             {
                                 // Store selected address
-                                data.address = p;
-                                data.size = size;
+                                data = Memory(p, size);
                             }
 
                             p += size;
@@ -606,10 +605,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
         HeaderPVR m_header;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
             : m_memory(memory)
         {
             m_header.read(memory);
@@ -635,7 +634,7 @@ namespace
             return header;
         }
 
-        ConstMemory memory(int level, int depth, int face) override
+        Memory memory(int level, int depth, int face) override
         {
             return m_header.getMemory(m_memory, level, depth, face);
         }
@@ -644,7 +643,7 @@ namespace
         {
             MANGO_UNREFERENCED_PARAMETER(palette);
 
-            ConstMemory data = m_header.getMemory(m_memory, level, depth, face);
+            Memory data = m_header.getMemory(m_memory, level, depth, face);
 
             int width = std::max(1, m_header.m_width >> level);
             int height = std::max(1, m_header.m_height >> level);
@@ -652,7 +651,7 @@ namespace
             if (m_header.m_info.compression == TextureCompression::NONE)
             {
                 int stride = width * m_header.m_info.format.bytes();
-                Surface source(width, height, m_header.m_info.format, stride, const_cast<u8*>(data.address));
+                Surface source(width, height, m_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
             }
             else
@@ -662,7 +661,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

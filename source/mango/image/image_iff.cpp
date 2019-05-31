@@ -239,9 +239,9 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
             : m_memory(memory)
         {
         }
@@ -518,7 +518,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

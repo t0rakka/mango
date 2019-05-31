@@ -217,7 +217,7 @@ namespace mango
         TextureCompressionInfo(TextureCompression compression);
         TextureCompressionInfo(int width, int height, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode, TextureCompression compression);
 
-        void decompress(const Surface& surface, ConstMemory memory) const;
+        void decompress(const Surface& surface, Memory memory) const;
         void compress(Memory memory, const Surface& surface) const;
 
         CompressionFormat getCompressionFormat() const

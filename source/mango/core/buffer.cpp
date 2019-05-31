@@ -14,7 +14,7 @@ namespace mango {
     // ----------------------------------------------------------------------------
 
     Buffer::Buffer()
-        : m_memory(nullptr, 0)
+        : m_memory()
         , m_capacity(0)
     {
     }

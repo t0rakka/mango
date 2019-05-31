@@ -31,7 +31,7 @@ namespace
 
         Format format;
 
-        HeaderSGI(ConstMemory memory)
+        HeaderSGI(Memory memory)
         {
             BigEndianConstPointer p = memory.address;
 
@@ -84,10 +84,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
         HeaderSGI m_header;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -242,7 +242,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -11,16 +11,14 @@
 #include "object.hpp"
 
 namespace mango {
-namespace detail {
 
     // -----------------------------------------------------------------------
-    // Memory
+    // memory
     // -----------------------------------------------------------------------
 
-    template <typename P>
     struct Memory
     {
-        P* address;
+        u8* address;
         size_t size;
 
         Memory()
@@ -29,20 +27,19 @@ namespace detail {
         {
         }
 
-        Memory(P* address, size_t size)
+        Memory(u8* address, size_t size)
             : address(address)
             , size(size)
         {
         }
 
-        template <typename T>
-        Memory(const Memory<T>& memory)
-            : address(memory.address)
-            , size(memory.size)
+        Memory(const u8* address, size_t size)
+            : address(const_cast<u8*>(address))
+            , size(size)
         {
         }
 
-        operator P* () const
+        operator u8* () const
         {
             return address;
         }
@@ -64,15 +61,6 @@ namespace detail {
         }
     };
 
-} // namespace detail
-
-    // -----------------------------------------------------------------------
-    // memory
-    // -----------------------------------------------------------------------
-
-    using Memory = detail::Memory<u8>;
-    using ConstMemory = detail::Memory<const u8>;
-
     class SharedMemory
     {
     private:
@@ -92,18 +80,18 @@ namespace detail {
     class VirtualMemory : private NonCopyable
     {
     protected:
-        ConstMemory m_memory;
+        Memory m_memory;
 
     public:
         VirtualMemory() = default;
         virtual ~VirtualMemory() {}
 
-        const ConstMemory* operator -> () const
+        const Memory* operator -> () const
         {
             return &m_memory;
         }
 
-        operator ConstMemory () const
+        operator Memory () const
         {
             return m_memory;
         }

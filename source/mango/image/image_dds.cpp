@@ -826,7 +826,7 @@ namespace
             return ysize * pitch;
         }
 
-        ConstMemory getMemory(int level, int depth, int face) const
+        Memory getMemory(int level, int depth, int face) const
         {
             MANGO_UNREFERENCED_PARAMETER(depth); // TODO: support depth parameter for volume textures
 
@@ -834,7 +834,7 @@ namespace
             const int maxLevel = getMipmapCount();
 
             const u8* image = data;
-            ConstMemory selected;
+            Memory selected;
 
             for (int iFace = 0; iFace < maxFace; ++iFace)
             {
@@ -847,7 +847,7 @@ namespace
                     if (iFace == face && iLevel == level)
                     {
                         // Store selected address
-                        selected = ConstMemory(image, bytes);
+                        selected = Memory(image, bytes);
                     }
 
                     image += bytes;
@@ -866,7 +866,7 @@ namespace
     {
         HeaderDDS m_header;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
         {
             LittleEndianConstPointer p = memory.address;
             m_header.read(p);
@@ -892,7 +892,7 @@ namespace
             return header;
         }
 
-        ConstMemory memory(int level, int depth, int face) override
+        Memory memory(int level, int depth, int face) override
         {
             return m_header.getMemory(level, depth, face);
         }
@@ -901,7 +901,7 @@ namespace
         {
             MANGO_UNREFERENCED_PARAMETER(palette);
 
-            ConstMemory imageMemory = m_header.getMemory(level, depth, face);
+            Memory imageMemory = m_header.getMemory(level, depth, face);
             TextureCompression compression = m_header.getCompression();
 
             if (m_header.pixelFormat.fourCC)
@@ -916,7 +916,7 @@ namespace
             }
             else
             {
-                u8* image = const_cast<u8*>(imageMemory.address);
+                u8* image = imageMemory.address;
                 Format format = m_header.getFormat();
                 int width = std::max(1, m_header.getWidth() >> level);
                 int height = std::max(1, m_header.getHeight() >> level);
@@ -928,7 +928,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -39,7 +39,7 @@ namespace
         u32 filesize;
         u32 offset;
 
-        FileHeader(ConstMemory memory)
+        FileHeader(Memory memory)
         {
             LittleEndianConstPointer p = memory.address;
             magic = p.read16();
@@ -276,7 +276,7 @@ namespace
         const u8* palette;
         bool yflip;
 
-        BitmapHeader(ConstMemory memory, bool isIcon)
+        BitmapHeader(Memory memory, bool isIcon)
         {
             paletteComponents = 0;
 
@@ -657,7 +657,7 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    void decodeBitmap(Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
+    void decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
 
@@ -794,7 +794,7 @@ namespace
 	// support for embedded format files
 	// ------------------------------------------------------------
 
-    ImageHeader getHeader(ConstMemory memory, std::string extension)
+    ImageHeader getHeader(Memory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
         ImageHeader header;
@@ -807,7 +807,7 @@ namespace
         return header;
     }
 
-    void getImage(Surface& surface, ConstMemory memory, std::string extension)
+    void getImage(Surface& surface, Memory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
 
@@ -821,7 +821,7 @@ namespace
     // .ico parser
     // ------------------------------------------------------------
 
-    void parseIco(ImageHeader* imageHeader, Surface* surface, ConstMemory memory)
+    void parseIco(ImageHeader* imageHeader, Surface* surface, Memory memory)
     {
         LittleEndianConstPointer p = memory.address;
 
@@ -899,7 +899,7 @@ namespace
             }
         }
 
-        ConstMemory block = memory.slice(bestOffset, bestSize);
+        Memory block = memory.slice(bestOffset, bestSize);
 
         LittleEndianConstPointer pa = block.address;
 
@@ -961,11 +961,11 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
         FileHeader m_file_header;
         ImageHeader m_image_header;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
             : m_memory(memory)
             , m_file_header(memory)
         {
@@ -980,7 +980,7 @@ namespace
                 case 0x4349: // IC - OS/2 Icon
                 case 0x5450: // PT - OS/2 Pointer
                 {
-                    ConstMemory bitmapMemory = m_memory.slice(14);
+                    Memory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
 
                     m_image_header.width   = bmp_header.width;
@@ -1074,12 +1074,12 @@ namespace
                     break;
             }
 
-            ConstMemory block = m_memory.slice(14);
+            Memory block = m_memory.slice(14);
             decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

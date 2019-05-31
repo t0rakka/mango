@@ -27,7 +27,7 @@ namespace
     // -----------------------------------------------------------------
 
     using mango::Memory;
-    using mango::ConstMemory;
+    using mango::Memory;
     using mango::VirtualMemory;
     using mango::filesystem::Indexer;
 
@@ -45,7 +45,7 @@ namespace
         VirtualMemoryRAR(const u8* address, const u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
-            m_memory = ConstMemory(address, size);
+            m_memory = Memory(address, size);
         }
 
         ~VirtualMemoryRAR()
@@ -417,7 +417,7 @@ namespace filesystem {
         Indexer<FileHeader> m_folders;
         bool is_encrypted { false };
 
-        MapperRAR(ConstMemory parent, const std::string& password)
+        MapperRAR(Memory parent, const std::string& password)
             : m_password(password)
         {
             const u8* start = parent.address;
@@ -543,7 +543,7 @@ namespace filesystem {
             return value;
         }
 
-        void parse_rar5_file_header(mango::LittleEndianConstPointer p, ConstMemory compressed_data)
+        void parse_rar5_file_header(mango::LittleEndianConstPointer p, Memory compressed_data)
         {
             u64 flags = vint(p);
             u64 unpacked_size = vint(p);
@@ -651,7 +651,7 @@ namespace filesystem {
                     data_size = vint(p);
                 }
 
-                ConstMemory compressed_data(base + header_size, size_t(data_size));
+                Memory compressed_data(base + header_size, size_t(data_size));
 
                 //printf("crc: %.8x, type: %x, flags: %x, header: %x, extra: %x, data: %x\n", 
                 //    crc, type, flags, (int)header_size, (int)extra_size, (int)data_size);
@@ -747,7 +747,7 @@ namespace filesystem {
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password)
+    AbstractMapper* createMapperRAR(Memory parent, const std::string& password)
     {
         AbstractMapper* mapper = new MapperRAR(parent, password);
         return mapper;

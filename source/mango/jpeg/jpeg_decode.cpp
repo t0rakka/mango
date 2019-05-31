@@ -206,7 +206,7 @@ namespace jpeg {
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory)
+    Parser::Parser(Memory memory)
         : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
         , blockVector(nullptr)
     {
@@ -217,9 +217,6 @@ namespace jpeg {
         {
             quantTable[i].table = &quantTableVector[i * 64];
         }
-
-        exif_memory = ConstMemory(nullptr, 0);
-        scan_memory = ConstMemory(nullptr, 0);
 
         m_surface = nullptr;
 
@@ -264,7 +261,7 @@ namespace jpeg {
     {
     }
 
-    bool Parser::isJPEG(ConstMemory memory) const
+    bool Parser::isJPEG(Memory memory) const
     {
         if (!memory.address || memory.size < 4)
             return false;
@@ -430,7 +427,7 @@ namespace jpeg {
                 {
                     p += 6;
                     size -= 6;
-                    exif_memory = ConstMemory(p, size);
+                    exif_memory = Memory(p, size);
                     debugPrint("  EXIF: %d bytes\n", size);
                 }
 
@@ -475,7 +472,7 @@ namespace jpeg {
                 {
                     p += 6;
                     size -= 6;
-                    exif_memory = ConstMemory(p, size);
+                    exif_memory = Memory(p, size);
                     debugPrint("  EXIF: %d bytes\n", size);
                 }
 
@@ -1111,7 +1108,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(Ev);
     }
 
-    void Parser::parse(ConstMemory memory, bool decode)
+    void Parser::parse(Memory memory, bool decode)
     {
         const u8* end = memory.address + memory.size;
         const u8* p = memory.address;
@@ -1245,7 +1242,7 @@ namespace jpeg {
                     if (!decode)
                     {
                         // parse header mode (no decoding)
-                        scan_memory = ConstMemory(p, end - p);
+                        scan_memory = Memory(p, end - p);
                         p = end; // terminate parsing
                     }
                     break;

@@ -33,7 +33,7 @@ namespace mango
         virtual ~ImageDecoderInterface() = default;
 
         virtual ImageHeader header() = 0;
-        virtual ConstMemory memory(int level, int depth, int face); // get compressed data (optional)
+        virtual Memory memory(int level, int depth, int face); // get compressed data (optional)
         virtual Exif exif(); // get exif data (optional)
         virtual void decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
     };
@@ -46,16 +46,16 @@ namespace mango
     class ImageDecoder : protected NonCopyable
     {
     public:
-        ImageDecoder(ConstMemory memory, const std::string& extension);
+        ImageDecoder(Memory memory, const std::string& extension);
         ~ImageDecoder();
 
         bool isDecoder() const;
         ImageHeader header();
-        ConstMemory memory(int level, int depth, int face);
+        Memory memory(int level, int depth, int face);
         Exif exif();
         void decode(Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
 
-        typedef ImageDecoderInterface* (*CreateDecoderFunc)(ConstMemory memory);
+        typedef ImageDecoderInterface* (*CreateDecoderFunc)(Memory memory);
 
     protected:
         std::unique_ptr<ImageDecoderInterface> m_interface;

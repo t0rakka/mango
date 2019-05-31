@@ -15,13 +15,13 @@ namespace filesystem {
     // extension registry
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperZIP(Memory parent, const std::string& password);
 #ifdef MANGO_ENABLE_LICENSE_GPL
-    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperRAR(Memory parent, const std::string& password);
 #endif
-    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperMGX(Memory parent, const std::string& password);
 
-    typedef AbstractMapper* (*CreateMapperFunc)(ConstMemory, const std::string&);
+    typedef AbstractMapper* (*CreateMapperFunc)(Memory, const std::string&);
 
     struct MapperExtension
     {
@@ -40,7 +40,7 @@ namespace filesystem {
         {
         }
 
-        AbstractMapper* createMapper(ConstMemory memory, const std::string& password) const
+        AbstractMapper* createMapper(Memory memory, const std::string& password) const
         {
             AbstractMapper* mapper = createMapperFunc(memory, password);
             return mapper;
@@ -157,7 +157,7 @@ namespace filesystem {
 #endif
     }
 
-    Mapper::Mapper(const ConstMemory& memory, const std::string& extension, const std::string& password)
+    Mapper::Mapper(const Memory& memory, const std::string& extension, const std::string& password)
     {
         // create mapper to raw memory
         m_mapper = createMemoryMapper(memory, extension, password);
@@ -234,7 +234,7 @@ namespace filesystem {
         return nullptr;
     }
 
-    AbstractMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
+    AbstractMapper* Mapper::createMemoryMapper(Memory memory, const std::string& extension, const std::string& password)
     {
         std::string f = toLower(extension);
 

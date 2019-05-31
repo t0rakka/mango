@@ -514,7 +514,7 @@ namespace
 namespace mango
 {
 
-    SHA1 sha1(ConstMemory memory)
+    SHA1 sha1(Memory memory)
     {
         SHA1 hash;
         hash.data[0] = 0x67452301;

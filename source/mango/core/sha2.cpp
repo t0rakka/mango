@@ -573,7 +573,7 @@ namespace
 namespace mango
 {
 
-    SHA2 sha2(ConstMemory memory)
+    SHA2 sha2(Memory memory)
     {
         SHA2 hash;
         hash.data[0] = 0x6a09e667;

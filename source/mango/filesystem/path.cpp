@@ -32,7 +32,7 @@ namespace filesystem {
         }
     }
 
-    Path::Path(const ConstMemory& memory, const std::string& extension, const std::string& password)
+    Path::Path(const Memory& memory, const std::string& extension, const std::string& password)
         : m_mapper(std::make_shared<Mapper>(memory, extension, password))
     {
         AbstractMapper* mapper = *m_mapper;

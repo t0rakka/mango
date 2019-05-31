@@ -732,7 +732,7 @@ namespace
 #endif
 
     template <typename F8, typename F64>
-    inline u32 crc_template(u32 crc, ConstMemory memory, F8 u8_func, F64 u64_func)
+    inline u32 crc_template(u32 crc, Memory memory, F8 u8_func, F64 u64_func)
     {
         crc = ~crc;
 
@@ -766,12 +766,12 @@ namespace
 namespace mango
 {
 
-    u32 crc32(u32 crc, ConstMemory memory)
+    u32 crc32(u32 crc, Memory memory)
     {
         return crc_template(crc, memory, u8_crc32, u64_crc32);
     }
 
-    u32 crc32c(u32 crc, ConstMemory memory)
+    u32 crc32c(u32 crc, Memory memory)
     {
         return crc_template(crc, memory, u8_crc32c, u64_crc32c);
     }

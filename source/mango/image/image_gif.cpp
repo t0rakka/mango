@@ -495,7 +495,7 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
 		ImageHeader m_header;
         gif_logical_screen_descriptor m_screen_desc;
 
@@ -506,7 +506,7 @@ namespace
 		const u8* m_end;
 		const u8* m_data;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
         	: m_memory(memory)
             , m_image(nullptr)
         {
@@ -572,7 +572,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -176,7 +176,7 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    Surface load_surface(ConstMemory memory, const std::string& extension, const Format* format)
+    Surface load_surface(Memory memory, const std::string& extension, const Format* format)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
 
@@ -206,7 +206,7 @@ namespace
         return surface;
     }
 
-    Surface load_palette_surface(ConstMemory memory, const std::string& extension, Palette& palette)
+    Surface load_palette_surface(Memory memory, const std::string& extension, Palette& palette)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
         palette.size = 0;
@@ -537,12 +537,12 @@ namespace mango
         }
     }
 
-    Bitmap::Bitmap(ConstMemory memory, const std::string& extension)
+    Bitmap::Bitmap(Memory memory, const std::string& extension)
         : Surface(load_surface(memory, extension, nullptr))
     {
     }
 
-    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format)
+    Bitmap::Bitmap(Memory memory, const std::string& extension, const Format& format)
         : Surface(load_surface(memory, extension, &format))
     {
     }
@@ -557,7 +557,7 @@ namespace mango
     {
     }
 
-    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, Palette& palette)
+    Bitmap::Bitmap(Memory memory, const std::string& extension, Palette& palette)
         : Surface(load_palette_surface(memory, extension, palette))
     {
     }

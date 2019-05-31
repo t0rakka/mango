@@ -677,7 +677,7 @@ namespace mango
         initExif(*this);
     }
 
-    Exif::Exif(ConstMemory memory)
+    Exif::Exif(Memory memory)
     {
         initExif(*this);
 

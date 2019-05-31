@@ -244,7 +244,7 @@ namespace
         HeaderTGA m_header;
         const u8* m_pointer;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
         {
             LittleEndianConstPointer p = memory.address;
             m_header.read(p);
@@ -400,7 +400,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecoderInterface* createInterface(Memory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -67,7 +67,7 @@ namespace filesystem {
         }
     }
 
-    File::File(const ConstMemory& memory, const std::string& extension, const std::string& filename)
+    File::File(const Memory& memory, const std::string& extension, const std::string& filename)
     {
         std::string password;
 
@@ -107,7 +107,7 @@ namespace filesystem {
         return m_path->m_mapper->pathname();
     }
 
-    File::operator ConstMemory () const
+    File::operator Memory () const
     {
         return getMemory();
     }
@@ -127,9 +127,9 @@ namespace filesystem {
         return getMemory().size;
     }
 
-    ConstMemory File::getMemory() const
+    Memory File::getMemory() const
     {
-        return m_memory ? *m_memory : ConstMemory(nullptr, 0);
+        return m_memory ? *m_memory : Memory();
     }
 
 } // namespace filesystem

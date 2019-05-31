@@ -57,7 +57,7 @@ namespace jpeg {
     using mango::u64;
     using mango::s16;
     using mango::Memory;
-    using mango::ConstMemory;
+    using mango::Memory;
     using mango::Format;
     using mango::Surface;
 	using mango::Stream;
@@ -373,7 +373,7 @@ namespace jpeg {
         int ymcu;
         int mcus;
 
-        bool isJPEG(ConstMemory memory) const;
+        bool isJPEG(Memory memory) const;
 
         const u8* stepMarker(const u8* p) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
@@ -396,7 +396,7 @@ namespace jpeg {
         void processDHP(const u8* p);
         void processEXP(const u8* p);
 
-        void parse(ConstMemory memory, bool decode);
+        void parse(Memory memory, bool decode);
 
         void restart();
         bool handleRestart();
@@ -415,11 +415,11 @@ namespace jpeg {
 
     public:
         Header header;
-        ConstMemory exif_memory; // Exif block, if one is present
-        ConstMemory scan_memory; // Scan block
+        Memory exif_memory; // Exif block, if one is present
+        Memory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(ConstMemory memory);
+        Parser(Memory memory);
         ~Parser();
 
         Status decode(Surface& target);

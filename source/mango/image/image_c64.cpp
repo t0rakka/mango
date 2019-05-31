@@ -444,10 +444,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ConstMemory m_memory;
+        Memory m_memory;
         ImageHeader m_header;
 
-        Interface(ConstMemory memory)
+        Interface(Memory memory)
             : m_memory(memory)
         {
         }
@@ -488,7 +488,7 @@ namespace
         header_generic m_generic_header;
         const u8* m_data;
 
-        GenericInterface(ConstMemory memory, u16 format_address, size_t format_size)
+        GenericInterface(Memory memory, u16 format_address, size_t format_size)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -508,7 +508,7 @@ namespace
 
     struct InterfaceMPIC : GenericInterface
     {
-        InterfaceMPIC(ConstMemory memory)
+        InterfaceMPIC(Memory memory)
             : GenericInterface(memory, 0x2000, 10018)
         {
         }
@@ -522,7 +522,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceMPIC(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceMPIC(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceMPIC(memory);
         return x;
@@ -534,7 +534,7 @@ namespace
 
     struct InterfaceAFL : GenericInterface
     {
-        InterfaceAFL(ConstMemory memory)
+        InterfaceAFL(Memory memory)
             : GenericInterface(memory, 0x4000, 16385)
         {
         }
@@ -548,7 +548,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceAFL(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceAFL(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceAFL(memory);
         return x;
@@ -563,7 +563,7 @@ namespace
         header_generic m_generic_header;
         const u8* m_data;
 
-        InterfaceAMI(ConstMemory memory)
+        InterfaceAMI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -604,7 +604,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceAMI(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceAMI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceAMI(memory);
         return x;
@@ -616,7 +616,7 @@ namespace
 
     struct InterfaceART : GenericInterface
     {
-        InterfaceART(ConstMemory memory)
+        InterfaceART(Memory memory)
             : GenericInterface(memory, 0x2000, 9009)
         {
         }
@@ -630,7 +630,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceART(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceART(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceART(memory);
         return x;
@@ -642,7 +642,7 @@ namespace
 
     struct InterfaceA64 : GenericInterface
     {
-        InterfaceA64(ConstMemory memory)
+        InterfaceA64(Memory memory)
             : GenericInterface(memory, 0x4000, 10242)
         {
         }
@@ -656,7 +656,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceA64(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceA64(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceA64(memory);
         return x;
@@ -668,7 +668,7 @@ namespace
 
     struct InterfaceBLP : GenericInterface
     {
-        InterfaceBLP(ConstMemory memory)
+        InterfaceBLP(Memory memory)
             : GenericInterface(memory, 0xa000, 10242)
         {
         }
@@ -682,7 +682,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceBLP(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceBLP(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceBLP(memory);
         return x;
@@ -694,7 +694,7 @@ namespace
 
     struct InterfaceCDU : GenericInterface
     {
-        InterfaceCDU(ConstMemory memory)
+        InterfaceCDU(Memory memory)
             : GenericInterface(memory, 0x7eef, 10277)
         {
         }
@@ -708,7 +708,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceCDU(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceCDU(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceCDU(memory);
         return x;
@@ -720,7 +720,7 @@ namespace
 
     struct InterfaceDOL : GenericInterface
     {
-        InterfaceDOL(ConstMemory memory)
+        InterfaceDOL(Memory memory)
             : GenericInterface(memory, 0x5800, 10242)
         {
         }
@@ -734,7 +734,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDOL(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceDOL(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceDOL(memory);
         return x;
@@ -746,7 +746,7 @@ namespace
 
     struct InterfaceDD : GenericInterface
     {
-        InterfaceDD(ConstMemory memory)
+        InterfaceDD(Memory memory)
             : GenericInterface(memory, 0x1c00, 9218)
         {
         }
@@ -760,7 +760,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDD(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceDD(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceDD(memory);
         return x;
@@ -776,7 +776,7 @@ namespace
         bool m_compressed;
         u8 m_escape_char;
 
-        InterfaceDRL(ConstMemory memory)
+        InterfaceDRL(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
             , m_compressed(false)
@@ -838,7 +838,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDRL(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceDRL(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceDRL(memory);
         return x;
@@ -854,7 +854,7 @@ namespace
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceDRZ(ConstMemory memory)
+        InterfaceDRZ(Memory memory)
             : Interface(memory)
         {
             LittleEndianConstPointer p = memory.address;
@@ -911,7 +911,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDRZ(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceDRZ(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceDRZ(memory);
         return x;
@@ -927,7 +927,7 @@ namespace
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceECI(ConstMemory memory)
+        InterfaceECI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -979,7 +979,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceECI(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceECI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceECI(memory);
         return x;
@@ -991,7 +991,7 @@ namespace
 
     struct InterfaceFPT : GenericInterface
     {
-        InterfaceFPT(ConstMemory memory)
+        InterfaceFPT(Memory memory)
             : GenericInterface(memory, 0x4000, 10004)
         {
         }
@@ -1005,7 +1005,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFPT(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceFPT(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceFPT(memory);
         return x;
@@ -1017,7 +1017,7 @@ namespace
 
     struct InterfaceFD2 : GenericInterface
     {
-        InterfaceFD2(ConstMemory memory)
+        InterfaceFD2(Memory memory)
             : GenericInterface(memory, 0x3c00, 17409)
         {
         }
@@ -1031,7 +1031,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFD2(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceFD2(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceFD2(memory);
         return x;
@@ -1043,7 +1043,7 @@ namespace
 
     struct InterfaceFPR : GenericInterface
     {
-        InterfaceFPR(ConstMemory memory)
+        InterfaceFPR(Memory memory)
             : GenericInterface(memory, 0x3780, 18370)
         {
         }
@@ -1109,7 +1109,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFPR(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceFPR(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceFPR(memory);
         return x;
@@ -1150,7 +1150,7 @@ namespace
         bool m_compressed;
         u8 m_escape_char;
 
-        InterfaceFUN(ConstMemory memory)
+        InterfaceFUN(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
             , m_compressed(false)
@@ -1213,7 +1213,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFUN(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceFUN(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceFUN(memory);
         return x;
@@ -1227,7 +1227,7 @@ namespace
     {
         const u8* m_data;
 
-        InterfaceGUN(ConstMemory memory)
+        InterfaceGUN(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1262,7 +1262,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceGUN(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceGUN(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceGUN(memory);
         return x;
@@ -1274,7 +1274,7 @@ namespace
 
     struct InterfaceHCB : GenericInterface
     {
-        InterfaceHCB(ConstMemory memory)
+        InterfaceHCB(Memory memory)
             : GenericInterface(memory, 0x5000, 12148)
         {
         }
@@ -1359,7 +1359,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHCB(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceHCB(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceHCB(memory);
         return x;
@@ -1371,7 +1371,7 @@ namespace
 
     struct InterfaceHFC : GenericInterface
     {
-        InterfaceHFC(ConstMemory memory)
+        InterfaceHFC(Memory memory)
             : GenericInterface(memory, 0x4000, 16386)
         {
         }
@@ -1385,7 +1385,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHFC(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceHFC(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceHFC(memory);
         return x;
@@ -1446,7 +1446,7 @@ namespace
         const u8* m_data;
         bool m_compressed = false;
 
-        InterfaceHIM(ConstMemory memory)
+        InterfaceHIM(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1495,7 +1495,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHIM(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceHIM(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceHIM(memory);
         return x;
@@ -1509,7 +1509,7 @@ namespace
     {
         const u8* m_data;
 
-        InterfaceKOA(ConstMemory memory)
+        InterfaceKOA(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1534,7 +1534,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceKOA(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceKOA(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceKOA(memory);
         return x;
@@ -1546,7 +1546,7 @@ namespace
 
     struct InterfacePMG : GenericInterface
     {
-        InterfacePMG(ConstMemory memory)
+        InterfacePMG(Memory memory)
             : GenericInterface(memory, 0x3f8e, 9332)
         {
         }
@@ -1570,7 +1570,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfacePMG(ConstMemory memory)
+    ImageDecoderInterface* createInterfacePMG(Memory memory)
     {
         ImageDecoderInterface* x = new InterfacePMG(memory);
         return x;
@@ -1640,7 +1640,7 @@ namespace
         header_generic m_generic_header;
         const u8* m_data;
 
-        InterfacePP(ConstMemory memory)
+        InterfacePP(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1675,7 +1675,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfacePP(ConstMemory memory)
+    ImageDecoderInterface* createInterfacePP(Memory memory)
     {
         ImageDecoderInterface* x = new InterfacePP(memory);
         return x;
@@ -1687,7 +1687,7 @@ namespace
 
     struct InterfaceRPM : GenericInterface
     {
-        InterfaceRPM(ConstMemory memory)
+        InterfaceRPM(Memory memory)
             : GenericInterface(memory, 0x6000, 10006)
         {
         }
@@ -1701,7 +1701,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceRPM(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceRPM(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceRPM(memory);
         return x;
@@ -1713,7 +1713,7 @@ namespace
 
     struct InterfaceSAR : GenericInterface
     {
-        InterfaceSAR(ConstMemory memory)
+        InterfaceSAR(Memory memory)
             : GenericInterface(memory, 0x7800, 10018)
         {
         }
@@ -1727,7 +1727,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSAR(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceSAR(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceSAR(memory);
         return x;
@@ -1743,7 +1743,7 @@ namespace
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceSHF(ConstMemory memory)
+        InterfaceSHF(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1877,7 +1877,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSHF(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceSHF(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceSHF(memory);
         return x;
@@ -1889,7 +1889,7 @@ namespace
 
     struct InterfaceSHFXL : GenericInterface
     {
-        InterfaceSHFXL(ConstMemory memory)
+        InterfaceSHFXL(Memory memory)
             : GenericInterface(memory, 0x4000, 15362)
         {
             if (m_data)
@@ -1969,7 +1969,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSHFXL(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceSHFXL(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceSHFXL(memory);
         return x;
@@ -2101,7 +2101,7 @@ namespace
         const u8* m_data;
         bool m_compressed = false;
 
-        InterfaceMCI(ConstMemory memory)
+        InterfaceMCI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -2152,7 +2152,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceMCI(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceMCI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceMCI(memory);
         return x;
@@ -2168,7 +2168,7 @@ namespace
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceUFLI(ConstMemory memory)
+        InterfaceUFLI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -2295,7 +2295,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceUFLI(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceUFLI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceUFLI(memory);
         return x;
@@ -2344,7 +2344,7 @@ namespace
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceUIFLI(ConstMemory memory)
+        InterfaceUIFLI(Memory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -2479,7 +2479,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceUIFLI(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceUIFLI(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceUIFLI(memory);
         return x;
@@ -2491,7 +2491,7 @@ namespace
 
     struct InterfaceVID : GenericInterface
     {
-        InterfaceVID(ConstMemory memory)
+        InterfaceVID(Memory memory)
             : GenericInterface(memory, 0x5800, 10050)
         {
         }
@@ -2505,7 +2505,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceVID(ConstMemory memory)
+    ImageDecoderInterface* createInterfaceVID(Memory memory)
     {
         ImageDecoderInterface* x = new InterfaceVID(memory);
         return x;

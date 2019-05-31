@@ -22,19 +22,19 @@ namespace filesystem {
         std::unique_ptr<Path> m_path;
         std::unique_ptr<VirtualMemory> m_memory;
 
-        ConstMemory getMemory() const;
+        Memory getMemory() const;
 
     public:
         File(const std::string& filename);
         File(const Path& path, const std::string& filename);
-        File(const ConstMemory& memory, const std::string& extension, const std::string& filename);
+        File(const Memory& memory, const std::string& extension, const std::string& filename);
         ~File();
 
         const std::string& filename() const;
         const std::string& pathname() const;
 
         // memory
-        operator ConstMemory () const;
+        operator Memory () const;
         operator const u8* () const;
         const u8* data() const;
         size_t size() const;
