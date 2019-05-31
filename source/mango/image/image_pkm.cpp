@@ -35,7 +35,7 @@ namespace
         // compression type
         s16 type;
 
-        void read(BigEndianPointer& p)
+        void read(BigEndianConstPointer& p)
         {
             u32 magic = p.read32();
             if (magic != u32_mask_rev('P', 'K', 'M', ' '))
@@ -86,13 +86,13 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderPKM m_header;
-        Memory m_data;
+        ConstMemory m_data;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            BigEndianPointer p = memory.address;
+            BigEndianConstPointer p = memory.address;
             m_header.read(p);
-            m_data = Memory(memory.address + 16, memory.size - 16);
+            m_data = ConstMemory(memory.address + 16, memory.size - 16);
         }
 
         ~Interface()
@@ -115,7 +115,7 @@ namespace
             return header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
@@ -136,7 +136,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

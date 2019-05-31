@@ -42,11 +42,11 @@ namespace
 		u8	packed = 0;
 		u8	background = 0;
 		u8  aspect = 0;
-		u8* palette = nullptr;
+		const u8* palette = nullptr;
 
-        u8* read(u8* data, u8* end)
+        const u8* read(const u8* data, const u8* end)
 		{
-			LittleEndianPointer p = data;
+			LittleEndianConstPointer p = data;
 
 			if (p + 7 <= end)
 			{
@@ -79,11 +79,11 @@ namespace
 		u16	width = 0;
 		u16	height = 0;
 		u8	field = 0;
-		u8* palette = nullptr;
+		const u8* palette = nullptr;
 
-        u8* read(u8* data, u8* end)
+        const u8* read(const u8* data, const u8* end)
 		{
-            LittleEndianPointer p = data;
+            LittleEndianConstPointer p = data;
 
             if (p + 9 <= end)
             {
@@ -108,9 +108,9 @@ namespace
 		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	u8* readBits(u8* data, u8* dest, int samples)
+	const u8* readBits(const u8* data, u8* dest, int samples)
 	{
-        u8* p = data;
+        const u8* p = data;
 
 		const int MaxStackSize = 4096;
 
@@ -145,8 +145,8 @@ namespace
 		u8* q = dest;
 		u8* qend = dest + samples;
 
-		u8* packet = nullptr;
-		u8* c = nullptr;
+		const u8* packet = nullptr;
+		const u8* c = nullptr;
 
 		while (q < qend)
 		{
@@ -320,7 +320,7 @@ namespace
         }
     }
 
-    u8* read_image(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
+    const u8* read_image(const u8* data, const u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
         data = image_desc.read(data, end);
@@ -396,9 +396,9 @@ namespace
 		return data;
     }
 
-	void read_graphics_control_extension(u8* p)
+	void read_graphics_control_extension(const u8* p)
 	{
-		LittleEndianPointer x = p;
+		LittleEndianConstPointer x = p;
 
 		u8 packed = *x++;
 		int disposal_method = (packed >> 2) & 0x07; // 2 - restore background color, 3 - restore previous
@@ -414,13 +414,13 @@ namespace
         MANGO_UNREFERENCED_PARAMETER(disposal_method);
 	}
 
-	void read_application_extension(u8* p)
+	void read_application_extension(const u8* p)
 	{
-		std::string identifier(reinterpret_cast<char*>(p), 8);
+		std::string identifier(reinterpret_cast<const char*>(p), 8);
 		MANGO_UNREFERENCED_PARAMETER(identifier);
 	}
 
-	u8* read_extension(u8* p)
+	const u8* read_extension(const u8* p)
 	{
 		u8 label = *p++;
 		u8 size = *p++;
@@ -448,7 +448,7 @@ namespace
 		return p;
 	}
 
-    u8* read_magic(u8* data, u8* end)
+    const u8* read_magic(const u8* data, const u8* end)
     {
 		if (data + 6 >= end)
 		{
@@ -466,7 +466,7 @@ namespace
 		return data;
     }
 
-    u8* read_chunks(u8* data, u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
+    const u8* read_chunks(const u8* data, const u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
     {
         while (data < end)
 		{
@@ -495,18 +495,18 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
 		ImageHeader m_header;
         gif_logical_screen_descriptor m_screen_desc;
 
 		std::unique_ptr<u8[]> m_image;
 		int m_frame_counter = 0;
 
-		u8* m_start;
-		u8* m_end;
-		u8* m_data;
+		const u8* m_start;
+		const u8* m_end;
+		const u8* m_data;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         	: m_memory(memory)
             , m_image(nullptr)
         {
@@ -572,7 +572,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

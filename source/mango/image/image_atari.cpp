@@ -24,10 +24,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         ImageHeader m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
         }
@@ -133,9 +133,9 @@ namespace
         int bitplanes = 0;
         bool compressed = false;
 
-        u8* parse(u8* data, size_t size)
+        const u8* parse(const u8* data, size_t size)
         {
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             u16 resolution_data = p.read16();
             u8 resolution = (resolution_data & 0x3);
@@ -176,7 +176,7 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, Palette& palette, u8* data, u8* end)
+        void decode(Surface& s, Palette& palette, const u8* data, const u8* end)
         {
             std::vector<u8> tempImage(width * height, 0);
 
@@ -187,7 +187,7 @@ namespace
                 std::vector<u8> buffer(32000);
 			    degas_decompress(buffer.data(), data, end, 32000);
 
-                BigEndianPointer p = buffer.data();
+                BigEndianConstPointer p = buffer.data();
 
                 for (int y = 0; y < height; ++y)
                 {
@@ -247,9 +247,9 @@ namespace
     struct InterfaceDEGAS : Interface
     {
         header_degas m_degas_header;
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceDEGAS(Memory memory)
+        InterfaceDEGAS(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -267,8 +267,8 @@ namespace
 			if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
-            BigEndianPointer p = m_data;
+            const u8* end = m_memory.address + m_memory.size;
+            BigEndianConstPointer p = m_data;
 
             // read palette
             Palette palette;
@@ -285,7 +285,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDEGAS(Memory memory)
+    ImageDecoderInterface* createInterfaceDEGAS(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceDEGAS(memory);
         return x;
@@ -301,14 +301,14 @@ namespace
 		int height = 0;
         int bitplanes;
 
-        u8* parse(u8* data, size_t size)
+        const u8* parse(const u8* data, size_t size)
         {
             if (size != 32128)
             {
                 return nullptr;
             }
 
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             u16 flag = p.read16();
             u16 resolution_data = p.read16();
@@ -346,9 +346,9 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, u8* data, u8* end)
+        void decode(Surface& s, const u8* data, const u8* end)
         {
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             // read palette
             Palette palette;
@@ -407,9 +407,9 @@ namespace
     struct InterfaceNEO : Interface
     {
         header_neo m_neo_header;
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceNEO(Memory memory)
+        InterfaceNEO(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -427,13 +427,13 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
 
             m_neo_header.decode(s, m_data, end);
         }
     };
 
-    ImageDecoderInterface* createInterfaceNEO(Memory memory)
+    ImageDecoderInterface* createInterfaceNEO(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceNEO(memory);
         return x;
@@ -494,14 +494,14 @@ namespace
         int length_of_data_bit_map = 0;
         int length_of_color_bit_map = 0;
 
-        u8* parse(u8* data, size_t size)
+        const u8* parse(const u8* data, size_t size)
         {
             if (size < 12)
             {
                 return nullptr;
             }
 
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             u16 flag = p.read16();
 
@@ -536,9 +536,9 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, u8* data, u8* end)
+        void decode(Surface& s, const u8* data, const u8* end)
         {
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             std::vector<u8> bitmap(width * height, 0);
             std::vector<ColorBGRA> palette(16 * 3 * (height - 1), ColorBGRA(0, 0, 0, 0xff));
@@ -665,9 +665,9 @@ namespace
     struct InterfaceSPU : Interface
     {
         header_spu m_spu_header;
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceSPU(Memory memory)
+        InterfaceSPU(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -689,14 +689,14 @@ namespace
             if (!m_data)
                 return;
 
-            u8* data = m_data;
-            u8* end = m_memory.address + m_memory.size;
+            const u8* data = m_data;
+            const u8* end = m_memory.address + m_memory.size;
 
             m_spu_header.decode(s, data, end);
         }
     };
 
-    ImageDecoderInterface* createInterfaceSPU(Memory memory)
+    ImageDecoderInterface* createInterfaceSPU(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceSPU(memory);
         return x;
@@ -873,9 +873,9 @@ namespace
         int bitplanes = 0;
         bool compressed = false;
 
-        u8* parse(u8* data, size_t size)
+        const u8* parse(const u8* data, size_t size)
         {
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             if (std::memcmp(p, "CA", 2))
                 return nullptr;
@@ -919,9 +919,9 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, u8* data, u8* end)
+        void decode(Surface& s, const u8* data, const u8* end)
         {
-            BigEndianPointer p = data;
+            BigEndianConstPointer p = data;
 
             Palette palette;
             palette.size = 1 << bitplanes;
@@ -933,7 +933,7 @@ namespace
             }
 
             std::vector<u8> temp;
-            u8* buffer = p;
+            const u8* buffer = p;
 
             if (compressed)
             {
@@ -987,9 +987,9 @@ namespace
     struct InterfaceCA : Interface
     {
         header_ca m_ca_header;
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceCA(Memory memory)
+        InterfaceCA(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1007,12 +1007,12 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
             m_ca_header.decode(s, m_data, end);
 		}
     };
 
-    ImageDecoderInterface* createInterfaceCA(Memory memory)
+    ImageDecoderInterface* createInterfaceCA(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceCA(memory);
         return x;

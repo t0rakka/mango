@@ -464,7 +464,7 @@ namespace
 		u32 numberOfMipmapLevels;
 		u32 bytesOfKeyValueData;
 
-		HeaderKTX(Memory memory)
+		HeaderKTX(ConstMemory memory)
 		{
 			const u8 ktxIdentifier[] =
 			{
@@ -477,7 +477,7 @@ namespace
                 MANGO_EXCEPTION(ID"Incorrect identifier.");
 			}
 
-            u8* ptr = memory.address + sizeof(ktxIdentifier);
+            const u8* ptr = memory.address + sizeof(ktxIdentifier);
 
             endianness = u32_mask(ptr[0], ptr[1], ptr[2], ptr[3]);
             ptr += 4;
@@ -590,9 +590,9 @@ namespace
             return compression;
         }
 
-		Memory getMemory(Memory memory, int level, int depth, int face) const
+		ConstMemory getMemory(ConstMemory memory, int level, int depth, int face) const
 		{
-			u8* address = memory.address;
+			const u8* address = memory.address;
 			address += sizeof(HeaderKTX) + bytesOfKeyValueData;
 
             const int maxLevel = int(numberOfMipmapLevels);
@@ -600,7 +600,7 @@ namespace
 
             MANGO_UNREFERENCED_PARAMETER(depth); // TODO
 
-            Memory data;
+            ConstMemory data;
 
             for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
             {
@@ -613,7 +613,7 @@ namespace
                     if (iLevel == level && iFace == face)
                     {
                         // Store selected address
-                        data = Memory(address, imageSizeRounded);
+                        data = ConstMemory(address, imageSizeRounded);
                     }
 
                     address += imageSizeRounded;
@@ -630,10 +630,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderKTX m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -659,9 +659,9 @@ namespace
             return header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
-            Memory data = m_header.getMemory(m_memory, level, depth, face);
+            ConstMemory data = m_header.getMemory(m_memory, level, depth, face);
             return data;
         }
 
@@ -669,7 +669,7 @@ namespace
         {
             MANGO_UNREFERENCED_PARAMETER(palette);
 
-            Memory data = m_header.getMemory(m_memory, level, depth, face);
+            ConstMemory data = m_header.getMemory(m_memory, level, depth, face);
 
             Format format;
             TextureCompressionInfo info = m_header.computeFormat(format);
@@ -687,13 +687,13 @@ namespace
                 // KTX format stores data with GL_UNPACK_ALIGNMENT of 4
                 stride = (stride + 3) & ~3;
 
-                Surface source(width, height, format, stride, data.address);
+                Surface source(width, height, format, stride, const_cast<u8*>(data.address));
                 dest.blit(0, 0, source);
             }
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

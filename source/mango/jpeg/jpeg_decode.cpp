@@ -119,7 +119,7 @@ namespace jpeg {
 
 #if defined(JPEG_ENABLE_SSE2)
 
-    static inline u8* jpeg_memchr(u8* p, u8 value, size_t count)
+    static inline const u8* jpeg_memchr(const u8* p, u8 value, size_t count)
     {
         __m128i ref = _mm_set1_epi8(value);
         while (count >= 16)
@@ -150,9 +150,9 @@ namespace jpeg {
 
 #else
 
-    static inline u8* jpeg_memchr(u8* p, u8 value, size_t count)
+    static inline const u8* jpeg_memchr(const u8* p, u8 value, size_t count)
     {
-        p = reinterpret_cast<u8 *>(std::memchr(p, value, count));
+        p = reinterpret_cast<const u8 *>(std::memchr(p, value, count));
         return p ? p : p + count;
     }
 
@@ -166,7 +166,7 @@ namespace jpeg {
     {
         data = 0;
         remain = 0;
-        nextFF = reinterpret_cast<u8*>(std::memchr(ptr, 0xff, end - ptr));
+        nextFF = reinterpret_cast<const u8*>(std::memchr(ptr, 0xff, end - ptr));
     }
 
     DataType jpegBuffer::bytes(int count)
@@ -206,7 +206,7 @@ namespace jpeg {
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(Memory memory)
+    Parser::Parser(ConstMemory memory)
         : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
         , blockVector(nullptr)
     {
@@ -218,8 +218,8 @@ namespace jpeg {
             quantTable[i].table = &quantTableVector[i * 64];
         }
 
-        exif_memory = Memory(nullptr, 0);
-        scan_memory = Memory(nullptr, 0);
+        exif_memory = ConstMemory(nullptr, 0);
+        scan_memory = ConstMemory(nullptr, 0);
 
         m_surface = nullptr;
 
@@ -264,7 +264,7 @@ namespace jpeg {
     {
     }
 
-    bool Parser::isJPEG(Memory memory) const
+    bool Parser::isJPEG(ConstMemory memory) const
     {
         if (!memory.address || memory.size < 4)
             return false;
@@ -290,7 +290,7 @@ namespace jpeg {
 #endif
     }
 
-    u8* Parser::stepMarker(u8* p) const
+    const u8* Parser::stepMarker(const u8* p) const
     {
         u16 size = uload16be(p);
         p += size;
@@ -299,9 +299,9 @@ namespace jpeg {
         return p;
     }
 
-    u8* Parser::seekMarker(u8* start, u8* end) const
+    const u8* Parser::seekMarker(const u8* start, const u8* end) const
     {
-        u8* p = start;
+        const u8* p = start;
         --end; // marker is two bytes: don't look at last byte
 
         while (p < end)
@@ -332,19 +332,19 @@ namespace jpeg {
         debugPrint("[ EOI ]\n");
     }
 
-    void Parser::processCOM(u8* p)
+    void Parser::processCOM(const u8* p)
     {
         debugPrint("[ COM ]\n");
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processTEM(u8* p)
+    void Parser::processTEM(const u8* p)
     {
         debugPrint("[ TEM ]\n");
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processRES(u8* p)
+    void Parser::processRES(const u8* p)
     {
         debugPrint("[ RES ]\n");
 
@@ -352,7 +352,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processJPG(u8* p)
+    void Parser::processJPG(const u8* p)
     {
         debugPrint("[ JPG ]\n");
 
@@ -360,7 +360,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processJPG(u8* p, u16 marker)
+    void Parser::processJPG(const u8* p, u16 marker)
     {
         debugPrint("[ JPG%d ]\n", int(marker - MARKER_JPG0));
 
@@ -369,7 +369,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(marker);
     }
 
-    void Parser::processAPP(u8* p, u16 marker)
+    void Parser::processAPP(const u8* p, u16 marker)
     {
         debugPrint("[ APP%d ]\n", int(marker - MARKER_APP0));
 
@@ -430,7 +430,7 @@ namespace jpeg {
                 {
                     p += 6;
                     size -= 6;
-                    exif_memory = Memory(p, size);
+                    exif_memory = ConstMemory(p, size);
                     debugPrint("  EXIF: %d bytes\n", size);
                 }
 
@@ -475,7 +475,7 @@ namespace jpeg {
                 {
                     p += 6;
                     size -= 6;
-                    exif_memory = Memory(p, size);
+                    exif_memory = ConstMemory(p, size);
                     debugPrint("  EXIF: %d bytes\n", size);
                 }
 
@@ -505,7 +505,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::processSOF(u8* p, u16 marker)
+    void Parser::processSOF(const u8* p, u16 marker)
     {
         debugPrint("[ SOF%d ]\n", int(marker - MARKER_SOF0));
 
@@ -698,7 +698,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(length);
     }
 
-    u8* Parser::processSOS(u8* p, u8* end)
+    const u8* Parser::processSOS(const u8* p, const u8* end)
     {
         debugPrint("[ SOS ]\n");
 
@@ -925,7 +925,7 @@ namespace jpeg {
         return p;
     }
 
-    void Parser::processDQT(u8* p)
+    void Parser::processDQT(const u8* p)
     {
         debugPrint("[ DQT ]\n");
 
@@ -975,7 +975,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::processDHT(u8* p)
+    void Parser::processDHT(const u8* p)
     {
         debugPrint("[ DHT ]\n");
 
@@ -1027,7 +1027,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::processDAC(u8* p)
+    void Parser::processDAC(const u8* p)
     {
         debugPrint("[ DAC ]\n");
 
@@ -1064,7 +1064,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::processDNL(u8* p)
+    void Parser::processDNL(const u8* p)
     {
         debugPrint("[ DNL ]\n");
 
@@ -1074,7 +1074,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(Ld);
     }
 
-    void Parser::processDRI(u8* p)
+    void Parser::processDRI(const u8* p)
     {
         debugPrint("[ DRI ]\n");
 
@@ -1088,7 +1088,7 @@ namespace jpeg {
         debugPrint("  Restart interval: %i\n", restartInterval);
     }
 
-    void Parser::processDHP(u8* p)
+    void Parser::processDHP(const u8* p)
     {
         debugPrint("[ DHP ]\n");
 
@@ -1096,7 +1096,7 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(p);
     }
 
-    void Parser::processEXP(u8* p)
+    void Parser::processEXP(const u8* p)
     {
         debugPrint("[ EXP ]\n");
 
@@ -1111,19 +1111,17 @@ namespace jpeg {
         MANGO_UNREFERENCED_PARAMETER(Ev);
     }
 
-    void Parser::parse(Memory memory, bool decode)
+    void Parser::parse(ConstMemory memory, bool decode)
     {
-        u8* end = memory.address + memory.size;
-        u8* p = memory.address;
-
-        Timer timer;
+        const u8* end = memory.address + memory.size;
+        const u8* p = memory.address;
 
         for (; p < end;)
         {
             u16 marker = uload16be(p);
             p += 2;
 
-            u64 time0 = timer.us();
+            u64 time0 = Time::us();
 
             switch (marker)
             {
@@ -1247,7 +1245,7 @@ namespace jpeg {
                     if (!decode)
                     {
                         // parse header mode (no decoding)
-                        scan_memory = Memory(p, end - p);
+                        scan_memory = ConstMemory(p, end - p);
                         p = end; // terminate parsing
                     }
                     break;
@@ -1275,7 +1273,7 @@ namespace jpeg {
                     break;
             }
 
-            u64 time1 = timer.us();
+            u64 time1 = Time::us();
             debugPrint("  Time: %d us\n\n", int(time1 - time0));
 
             MANGO_UNREFERENCED_PARAMETER(time0);
@@ -1867,7 +1865,7 @@ namespace jpeg {
         }
         else
         {
-            u8* p = decodeState.buffer.ptr;
+            const u8* p = decodeState.buffer.ptr;
 
             for (int i = 0; i < mcus; i += restartInterval)
             {

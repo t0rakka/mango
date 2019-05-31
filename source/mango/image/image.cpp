@@ -137,19 +137,19 @@ namespace mango
         return Exif();
     }
 
-    Memory ImageDecoderInterface::memory(int level, int depth, int face)
+    ConstMemory ImageDecoderInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED_PARAMETER(level);
         MANGO_UNREFERENCED_PARAMETER(depth);
         MANGO_UNREFERENCED_PARAMETER(face);
-        return Memory();
+        return ConstMemory();
     }
 
     // ----------------------------------------------------------------------------
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
-    ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
+    ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
     {
         ImageDecoder::CreateDecoderFunc create_decoder_func = g_imageServer.getImageDecoder(filename);
         ImageDecoderInterface* x = create_decoder_func(memory);
@@ -185,12 +185,12 @@ namespace mango
         return m_interface->exif();
     }
 
-    Memory ImageDecoder::memory(int level, int depth, int face)
+    ConstMemory ImageDecoder::memory(int level, int depth, int face)
     {
         if (!m_interface)
         {
             printf("[WARNING] ImageDecoder::memory() is not supported for this extension.");
-            return Memory();
+            return ConstMemory();
         }
         return m_interface->memory(level, depth, face);
     }

@@ -199,9 +199,9 @@ namespace
         int m_data_offset;
         TextureCompressionInfo m_info;
 
-        void read(Memory memory)
+        void read(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u32 magic = p.read32();
             switch (magic)
@@ -225,9 +225,9 @@ namespace
             }
         }
 
-        void parse_legacy(Memory memory)
+        void parse_legacy(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u32 header_size = p.read32();
             m_height = p.read32();
@@ -463,7 +463,7 @@ namespace
             m_info.format = format;
         }
 
-        void parse_version3(Memory memory, bool swap_header)
+        void parse_version3(ConstMemory memory, bool swap_header)
         {
             pvr_header3_t pvr;
             std::memcpy(&pvr, memory.address, sizeof(pvr));
@@ -558,11 +558,11 @@ namespace
             m_data_offset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
         }
 
-        Memory getMemory(Memory memory, int level, int depth, u32 face) const
+        ConstMemory getMemory(ConstMemory memory, int level, int depth, u32 face) const
         {
-            u8* p = memory.address + m_data_offset;
+            const u8* p = memory.address + m_data_offset;
 
-            Memory data;
+            ConstMemory data;
 
             for (int iLevel = 0; iLevel < m_mipmaps; ++iLevel)
             {
@@ -606,10 +606,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderPVR m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
             m_header.read(memory);
@@ -635,7 +635,7 @@ namespace
             return header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             return m_header.getMemory(m_memory, level, depth, face);
         }
@@ -644,7 +644,7 @@ namespace
         {
             MANGO_UNREFERENCED_PARAMETER(palette);
 
-            Memory data = m_header.getMemory(m_memory, level, depth, face);
+            ConstMemory data = m_header.getMemory(m_memory, level, depth, face);
 
             int width = std::max(1, m_header.m_width >> level);
             int height = std::max(1, m_header.m_height >> level);
@@ -652,7 +652,7 @@ namespace
             if (m_header.m_info.compression == TextureCompression::NONE)
             {
                 int stride = width * m_header.m_info.format.bytes();
-                Surface source(width, height, m_header.m_info.format, stride, data.address);
+                Surface source(width, height, m_header.m_info.format, stride, const_cast<u8*>(data.address));
                 dest.blit(0, 0, source);
             }
             else
@@ -662,7 +662,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

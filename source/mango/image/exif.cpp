@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstdio>
 #include <cmath>
@@ -677,7 +677,7 @@ namespace mango
         initExif(*this);
     }
 
-    Exif::Exif(Memory memory)
+    Exif::Exif(ConstMemory memory)
     {
         initExif(*this);
 

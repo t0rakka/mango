@@ -39,9 +39,9 @@ namespace
         u32 filesize;
         u32 offset;
 
-        FileHeader(Memory memory)
+        FileHeader(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
             magic = p.read16();
             filesize = p.read32();
             p += 4;
@@ -150,12 +150,12 @@ namespace
             identifier    = 0;
         }
 
-        void parseHeaderSize(LittleEndianPointer& p)
+        void parseHeaderSize(LittleEndianConstPointer& p)
         {
             headerSize = p.read32();
         }
 
-        void WinBitmapHeader1(LittleEndianPointer& p)
+        void WinBitmapHeader1(LittleEndianConstPointer& p)
         {
             width = p.read32();
             height = p.read32();
@@ -172,7 +172,7 @@ namespace
             {
                 if (bitsPerPixel == 16 || bitsPerPixel == 32)
                 {
-                    LittleEndianPointer x = p;
+                    LittleEndianConstPointer x = p;
                     redMask = x.read32();
                     greenMask = x.read32();
                     blueMask = x.read32();
@@ -190,7 +190,7 @@ namespace
             debugPrint("  palette: %d, importantColorCount: %d\n", paletteSize, importantColorCount);
         }
 
-        void WinBitmapHeader2(LittleEndianPointer& p)
+        void WinBitmapHeader2(LittleEndianConstPointer& p)
         {
             redMask = p.read32();
             greenMask = p.read32();
@@ -200,7 +200,7 @@ namespace
             debugPrint("  redMask: 0x%x, greenMask: 0x%x, blueMask: 0x%x\n", redMask, greenMask, blueMask);
         }
 
-        void WinBitmapHeader3(LittleEndianPointer& p)
+        void WinBitmapHeader3(LittleEndianConstPointer& p)
         {
             alphaMask = p.read32();
 
@@ -208,7 +208,7 @@ namespace
             debugPrint("  alphaMask: 0x%x\n", alphaMask);
         }
 
-        void WinBitmapHeader4(LittleEndianPointer& p)
+        void WinBitmapHeader4(LittleEndianConstPointer& p)
         {
             csType = p.read32();
             for (int i = 0; i < 9; ++i)
@@ -223,7 +223,7 @@ namespace
             debugPrint("  gamma: %d %d %d\n", gammaRed, gammaGreen, gammaBlue);
         }
 
-        void WinBitmapHeader5(LittleEndianPointer& p)
+        void WinBitmapHeader5(LittleEndianConstPointer& p)
         {
             intent = p.read32();
             profileData = p.read32();
@@ -235,7 +235,7 @@ namespace
             debugPrint("  profile data: %d, size: %d\n", profileData, profileSize);
         }
 
-        void OS2BitmapHeader1(LittleEndianPointer& p, int headerSize)
+        void OS2BitmapHeader1(LittleEndianConstPointer& p, int headerSize)
         {
             if (headerSize == 16)
             {
@@ -254,7 +254,7 @@ namespace
             debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
         }
 
-        void OS2BitmapHeader2(LittleEndianPointer& p)
+        void OS2BitmapHeader2(LittleEndianConstPointer& p)
         {
             units         = p.read16();
             reserved      = p.read16();
@@ -276,11 +276,11 @@ namespace
         const u8* palette;
         bool yflip;
 
-        BitmapHeader(Memory memory, bool isIcon)
+        BitmapHeader(ConstMemory memory, bool isIcon)
         {
             paletteComponents = 0;
 
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             parseHeaderSize(p);
 
@@ -603,14 +603,14 @@ namespace
         }
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, u8* data)
+    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
         const int bits = header.bitsPerPixel;
         const u32 mask = (1 << bits) - 1;
 
         for (int y = 0; y < header.height; ++y)
         {
-            BigEndianPointer p(data + y * stride);
+            BigEndianConstPointer p(data + y * stride);
             u8* dest = surface.address<u8>(0, y);
 
             u32 value = 0;
@@ -630,9 +630,9 @@ namespace
         }
     }
 
-    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, u8* data)
+    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
-        u8* image = data;
+        u8* image = const_cast<u8*>(data);
         Surface source(header.width, header.height, header.format, stride, image);
         surface.blit(0, 0, source);
     }
@@ -657,7 +657,7 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    void decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon, Palette* ptr_palette)
+    void decodeBitmap(Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
 
@@ -688,7 +688,7 @@ namespace
         }
 
         const int stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
-        u8* data = memory.address + offset;
+        const u8* data = memory.address + offset;
 
         Surface mirror = surface;
         
@@ -794,7 +794,7 @@ namespace
 	// support for embedded format files
 	// ------------------------------------------------------------
 
-    ImageHeader getHeader(Memory memory, std::string extension)
+    ImageHeader getHeader(ConstMemory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
         ImageHeader header;
@@ -807,7 +807,7 @@ namespace
         return header;
     }
 
-    void getImage(Surface& surface, Memory memory, std::string extension)
+    void getImage(Surface& surface, ConstMemory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
 
@@ -821,9 +821,9 @@ namespace
     // .ico parser
     // ------------------------------------------------------------
 
-    void parseIco(ImageHeader* imageHeader, Surface* surface, Memory memory)
+    void parseIco(ImageHeader* imageHeader, Surface* surface, ConstMemory memory)
     {
-        LittleEndianPointer p = memory.address;
+        LittleEndianConstPointer p = memory.address;
 
         u32 magic = p.read32();
         int size = p.read16();
@@ -899,9 +899,9 @@ namespace
             }
         }
 
-        Memory block = memory.slice(bestOffset, bestSize);
+        ConstMemory block = memory.slice(bestOffset, bestSize);
 
-        LittleEndianPointer pa = block.address;
+        LittleEndianConstPointer pa = block.address;
 
         Header header;
         header.parseHeaderSize(pa);
@@ -961,11 +961,11 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         FileHeader m_file_header;
         ImageHeader m_image_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_file_header(memory)
         {
@@ -980,7 +980,7 @@ namespace
                 case 0x4349: // IC - OS/2 Icon
                 case 0x5450: // PT - OS/2 Pointer
                 {
-                    Memory bitmapMemory = m_memory.slice(14);
+                    ConstMemory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
 
                     m_image_header.width   = bmp_header.width;
@@ -1074,12 +1074,12 @@ namespace
                     break;
             }
 
-            Memory block = m_memory.slice(14);
+            ConstMemory block = m_memory.slice(14);
             decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

@@ -96,7 +96,7 @@ namespace
         u16  filenameLen;       // length of the filename field following this structure
         u16  extraFieldLen;     // length of the extra field following the filename field
 
-        LocalFileHeader(LittleEndianPointer p)
+        LocalFileHeader(LittleEndianConstPointer p)
         {
             signature = p.read32();
             if (status())
@@ -115,14 +115,14 @@ namespace
                 p += filenameLen;
 
                 // read extra fields
-                u8* ext = p;
-                u8* end = p + extraFieldLen;
+                const u8* ext = p;
+                const u8* end = p + extraFieldLen;
                 for ( ; ext < end;)
                 {
-                    LittleEndianPointer e = ext;
+                    LittleEndianConstPointer e = ext;
                     u16 magic = e.read16();
                     u16 size = e.read16();
-                    u8* next = e + size;
+                    const u8* next = e + size;
                     switch (magic)
                     {
                         case 0x0001:
@@ -180,7 +180,7 @@ namespace
         bool        is_folder;     // if the last character of filename is "/", it is a folder
         Encryption  encryption;
 
-		bool read(LittleEndianPointer& p)
+		bool read(LittleEndianConstPointer& p)
 		{
 			signature = p.read32();
             if (signature != 0x02014b50)
@@ -206,7 +206,7 @@ namespace
             localOffset      = p.read32();
 
             // read filename
-            u8* us = p;
+            const u8* us = p;
             const char* s = reinterpret_cast<const char*>(us);
             p += filenameLen;
 
@@ -223,14 +223,14 @@ namespace
             encryption = flags & 1 ? ENCRYPTION_CLASSIC : ENCRYPTION_NONE;
 
             // read extra fields
-            u8* ext = p;
-            u8* end = p + extraFieldLen;
+            const u8* ext = p;
+            const u8* end = p + extraFieldLen;
             for ( ; ext < end;)
             {
-                LittleEndianPointer e = ext;
+                LittleEndianConstPointer e = ext;
                 u16 magic = e.read16();
                 u16 size = e.read16();
-                u8* next = e + size;
+                const u8* next = e + size;
                 switch (magic)
                 {
                     case 0x0001:
@@ -308,20 +308,20 @@ namespace
 		u64	dirStartOffset;    // offset of the start of central directory on the disk
 		u16	commentLen;        // zip file comment length
 
-		DirEndRecord(Memory memory)
+		DirEndRecord(ConstMemory memory)
 		{
             std::memset(this, 0, sizeof(DirEndRecord));
 
 			// find central directory end record signature
 			// by scanning backwards from the end of the file
-            u8* start = memory.address;
-            u8* end = memory.address + memory.size;
+            const u8* start = memory.address;
+            const u8* end = memory.address + memory.size;
 
             end -= 22; // header size is 22 bytes
 
             for ( ; end >= start; --end)
 			{
-                LittleEndianPointer p = end;
+                LittleEndianConstPointer p = end;
 
 				signature = p.read32();
 				if (status())
@@ -488,7 +488,7 @@ namespace
 		return true;
 	}
 
-	u64 zip_decompress(u8* compressed, u8* uncompressed, u64 compressedLen, u64 uncompressedLen)
+	u64 zip_decompress(const u8* compressed, u8* uncompressed, u64 compressedLen, u64 uncompressedLen)
 	{
 		z_stream zstream;
 		std::memset(&zstream, 0, sizeof(zstream));
@@ -546,13 +546,13 @@ namespace filesystem {
     class VirtualMemoryZIP : public mango::VirtualMemory
     {
     protected:
-        u8* m_delete_address;
+        const u8* m_delete_address;
 
     public:
-        VirtualMemoryZIP(u8* address, u8* delete_address, size_t size)
+        VirtualMemoryZIP(const u8* address, const u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
-            m_memory = Memory(address, size);
+            m_memory = ConstMemory(address, size);
         }
 
         ~VirtualMemoryZIP()
@@ -568,11 +568,11 @@ namespace filesystem {
     class MapperZIP : public AbstractMapper
     {
     public:
-        Memory m_parent_memory;
+        ConstMemory m_parent_memory;
         std::string m_password;
         Indexer<FileHeader> m_folders;
 
-        MapperZIP(Memory parent, const std::string& password)
+        MapperZIP(ConstMemory parent, const std::string& password)
             : m_parent_memory(parent)
             , m_password(password)
         {
@@ -584,7 +584,7 @@ namespace filesystem {
                     const int numFiles = int(record.numEntriesTotal);
 
                     // read file headers
-                    LittleEndianPointer p = parent.address + record.dirStartOffset;
+                    LittleEndianConstPointer p = parent.address + record.dirStartOffset;
 
                     for (int i = 0; i < numFiles; ++i)
                     {
@@ -611,9 +611,9 @@ namespace filesystem {
         {
         }
 
-        VirtualMemory* mmap(const FileHeader& header, u8* start, const std::string& password)
+        VirtualMemory* mmap(const FileHeader& header, const u8* start, const std::string& password)
         {
-            LittleEndianPointer p = start + header.localOffset;
+            LittleEndianConstPointer p = start + header.localOffset;
 
             LocalFileHeader localHeader(p);
             if (!localHeader.status())
@@ -623,7 +623,7 @@ namespace filesystem {
 
             u64 offset = header.localOffset + 30 + localHeader.filenameLen + localHeader.extraFieldLen;
 
-            u8* address = start + offset;
+            const u8* address = start + offset;
             u64 size = 0;
 
             u8* buffer = nullptr; // remember allocated memory
@@ -638,7 +638,7 @@ namespace filesystem {
                 case ENCRYPTION_CLASSIC:
                 {
                     // decryption header
-                    u8* dcheader = address;
+                    const u8* dcheader = address;
                     address += DCKEYSIZE;
 
                     // NOTE: decryption capability reduced on 32 bit platforms
@@ -731,7 +731,7 @@ namespace filesystem {
                     address = p;
                     u64 compressed_size = header.compressedSize - 4;
 
-                    lzma::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(compressed_size)));
+                    lzma::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), ConstMemory(address, size_t(compressed_size)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -747,7 +747,7 @@ namespace filesystem {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
                     u8* uncompressed_buffer = new u8[uncompressed_size];
 
-                    ppmd8::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
+                    ppmd8::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), ConstMemory(address, size_t(header.compressedSize)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -763,7 +763,7 @@ namespace filesystem {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
                     u8* uncompressed_buffer = new u8[uncompressed_size];
 
-                    bzip2::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
+                    bzip2::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), ConstMemory(address, size_t(header.compressedSize)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -856,7 +856,7 @@ namespace filesystem {
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperZIP(Memory parent, const std::string& password)
+    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password)
     {
         AbstractMapper* mapper = new MapperZIP(parent, password);
         return mapper;

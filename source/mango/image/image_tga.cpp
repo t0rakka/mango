@@ -42,7 +42,7 @@ namespace
         u8   pixel_size;
         u8   descriptor;
 
-        void read(LittleEndianPointer& p)
+        void read(LittleEndianConstPointer& p)
         {
             idfield_length   = p.read8();
             colormap_type    = p.read8();
@@ -177,7 +177,7 @@ namespace
 	// tga code
 	// ------------------------------------------------------------
 
-    void decompressRLE(u8* temp, u8* p, int width, int height, int bpp)
+    void decompressRLE(u8* temp, const u8* p, int width, int height, int bpp)
     {
         int x = 0;
         int y = 0;
@@ -242,11 +242,11 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderTGA m_header;
-        u8* m_pointer;
+        const u8* m_pointer;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
             m_header.read(p);
             m_pointer = p;
         }
@@ -276,7 +276,7 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            LittleEndianPointer p = m_pointer;
+            LittleEndianConstPointer p = m_pointer;
 
             Palette palette;
 
@@ -350,7 +350,7 @@ namespace
             }
 
             u8* temp = nullptr;
-            u8* data = p;
+            const u8* data = p;
 
             if (m_header.isRLE())
             {
@@ -366,7 +366,7 @@ namespace
                 case TYPE_RAW_RGB:
                 case TYPE_RLE_RGB:
                 {
-                    dest.blit(0, 0, Surface(width, height, format, width * bpp, data));
+                    dest.blit(0, 0, Surface(width, height, format, width * bpp, const_cast<u8*>(data)));
                     break;
                 }
 
@@ -376,7 +376,7 @@ namespace
                     if (ptr_palette)
                     {
                         *ptr_palette = palette;
-                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, data));
+                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, const_cast<u8*>(data)));
                     }
                     else
                     {
@@ -384,7 +384,7 @@ namespace
                         for (int y = 0; y < height; ++y)
                         {
                             ColorBGRA* d = bitmap.address<ColorBGRA>(0, y);
-                            u8* s = data + y * width;
+                            const u8* s = data + y * width;
                             for (int x = 0; x < width; ++x)
                             {
                                 d[x] = palette[s[x]];
@@ -400,7 +400,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

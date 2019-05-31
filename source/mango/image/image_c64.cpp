@@ -69,7 +69,7 @@ namespace
         }
     }
 
-    void rle_ecb(u8* buffer, const u8* input, int scansize, u8* input_end, u8 escape_char)
+    void rle_ecb(u8* buffer, const u8* input, int scansize, const u8* input_end, u8 escape_char)
     {
         u8* buffer_end = buffer + scansize;
 
@@ -406,9 +406,9 @@ namespace
         bool compressed = false;
         u8 escape_char = 0;
 
-        u8* parse(u8* data, size_t size, u16 format_address, size_t format_size)
+        const u8* parse(const u8* data, size_t size, u16 format_address, size_t format_size)
         {
-            LittleEndianPointer p = data;
+            LittleEndianConstPointer p = data;
             u16 load_address = p.read16();
 
             if (check_format(format_address, format_size, load_address, size))
@@ -421,18 +421,18 @@ namespace
             return nullptr;
         }
 
-        void multicolor_load(Surface& s, u8* data,
-                            u32 bitmap_offset, u32 video_ram_offset, 
-                            u32 color_ram_offset, u32 background_offset, u32 opcode_colors_offset,
-                            int background_mode, bool fli)
+        void multicolor_load(Surface& s, const u8* data,
+                             u32 bitmap_offset, u32 video_ram_offset, 
+                             u32 color_ram_offset, u32 background_offset, u32 opcode_colors_offset,
+                             int background_mode, bool fli)
         {
             multicolor_to_surface(s, data, width, height, 
                                   bitmap_offset, video_ram_offset, color_ram_offset, background_offset, opcode_colors_offset,
                                   background_mode, fli);
         }
 
-        void hires_load(Surface& s, u8* data, 
-                                u32 bitmap_offset, u32 video_ram_offset, bool fli)
+        void hires_load(Surface& s, const u8* data, 
+                        u32 bitmap_offset, u32 video_ram_offset, bool fli)
         {
             hires_to_surface(s, data, width, height, bitmap_offset, video_ram_offset, fli);
         }
@@ -444,10 +444,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         ImageHeader m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
         }
@@ -486,9 +486,9 @@ namespace
     struct GenericInterface : Interface
     {
         header_generic m_generic_header;
-        u8* m_data;
+        const u8* m_data;
 
-        GenericInterface(Memory memory, u16 format_address, size_t format_size)
+        GenericInterface(ConstMemory memory, u16 format_address, size_t format_size)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -508,7 +508,7 @@ namespace
 
     struct InterfaceMPIC : GenericInterface
     {
-        InterfaceMPIC(Memory memory)
+        InterfaceMPIC(ConstMemory memory)
             : GenericInterface(memory, 0x2000, 10018)
         {
         }
@@ -522,7 +522,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceMPIC(Memory memory)
+    ImageDecoderInterface* createInterfaceMPIC(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceMPIC(memory);
         return x;
@@ -534,7 +534,7 @@ namespace
 
     struct InterfaceAFL : GenericInterface
     {
-        InterfaceAFL(Memory memory)
+        InterfaceAFL(ConstMemory memory)
             : GenericInterface(memory, 0x4000, 16385)
         {
         }
@@ -548,7 +548,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceAFL(Memory memory)
+    ImageDecoderInterface* createInterfaceAFL(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceAFL(memory);
         return x;
@@ -561,14 +561,14 @@ namespace
     struct InterfaceAMI : Interface
     {
         header_generic m_generic_header;
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceAMI(Memory memory)
+        InterfaceAMI(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
             // read header
-            u8* end = memory.address + memory.size;
+            const u8* end = memory.address + memory.size;
 
             if (end[-1] == 0x0 && end[-2] == 0xc2)
             {
@@ -588,10 +588,10 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
 
             std::vector<u8> temp;
-            u8* buffer = m_data;
+            const u8* buffer = m_data;
 
             if (m_generic_header.compressed)
             {
@@ -604,7 +604,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceAMI(Memory memory)
+    ImageDecoderInterface* createInterfaceAMI(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceAMI(memory);
         return x;
@@ -616,7 +616,7 @@ namespace
 
     struct InterfaceART : GenericInterface
     {
-        InterfaceART(Memory memory)
+        InterfaceART(ConstMemory memory)
             : GenericInterface(memory, 0x2000, 9009)
         {
         }
@@ -630,7 +630,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceART(Memory memory)
+    ImageDecoderInterface* createInterfaceART(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceART(memory);
         return x;
@@ -642,7 +642,7 @@ namespace
 
     struct InterfaceA64 : GenericInterface
     {
-        InterfaceA64(Memory memory)
+        InterfaceA64(ConstMemory memory)
             : GenericInterface(memory, 0x4000, 10242)
         {
         }
@@ -656,7 +656,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceA64(Memory memory)
+    ImageDecoderInterface* createInterfaceA64(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceA64(memory);
         return x;
@@ -668,7 +668,7 @@ namespace
 
     struct InterfaceBLP : GenericInterface
     {
-        InterfaceBLP(Memory memory)
+        InterfaceBLP(ConstMemory memory)
             : GenericInterface(memory, 0xa000, 10242)
         {
         }
@@ -682,7 +682,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceBLP(Memory memory)
+    ImageDecoderInterface* createInterfaceBLP(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceBLP(memory);
         return x;
@@ -694,7 +694,7 @@ namespace
 
     struct InterfaceCDU : GenericInterface
     {
-        InterfaceCDU(Memory memory)
+        InterfaceCDU(ConstMemory memory)
             : GenericInterface(memory, 0x7eef, 10277)
         {
         }
@@ -708,7 +708,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceCDU(Memory memory)
+    ImageDecoderInterface* createInterfaceCDU(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceCDU(memory);
         return x;
@@ -720,7 +720,7 @@ namespace
 
     struct InterfaceDOL : GenericInterface
     {
-        InterfaceDOL(Memory memory)
+        InterfaceDOL(ConstMemory memory)
             : GenericInterface(memory, 0x5800, 10242)
         {
         }
@@ -734,7 +734,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDOL(Memory memory)
+    ImageDecoderInterface* createInterfaceDOL(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceDOL(memory);
         return x;
@@ -746,7 +746,7 @@ namespace
 
     struct InterfaceDD : GenericInterface
     {
-        InterfaceDD(Memory memory)
+        InterfaceDD(ConstMemory memory)
             : GenericInterface(memory, 0x1c00, 9218)
         {
         }
@@ -760,7 +760,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDD(Memory memory)
+    ImageDecoderInterface* createInterfaceDD(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceDD(memory);
         return x;
@@ -772,17 +772,17 @@ namespace
 
     struct InterfaceDRL : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed;
         u8 m_escape_char;
 
-        InterfaceDRL(Memory memory)
+        InterfaceDRL(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
             , m_compressed(false)
             , m_escape_char(0)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x5800, 18242, load_address, memory.size))
@@ -820,7 +820,7 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
 
             std::vector<u8> temp;
             const u8* buffer = m_data;
@@ -838,7 +838,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDRL(Memory memory)
+    ImageDecoderInterface* createInterfaceDRL(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceDRL(memory);
         return x;
@@ -850,14 +850,14 @@ namespace
 
     struct InterfaceDRZ : Interface
     {
-        u8* m_data = nullptr;
+        const u8* m_data = nullptr;
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceDRZ(Memory memory)
+        InterfaceDRZ(ConstMemory memory)
             : Interface(memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x5800, 10051, load_address, memory.size))
@@ -895,7 +895,7 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
 
             std::vector<u8> temp;
             const u8* buffer = m_data;
@@ -911,7 +911,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDRZ(Memory memory)
+    ImageDecoderInterface* createInterfaceDRZ(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceDRZ(memory);
         return x;
@@ -923,15 +923,15 @@ namespace
 
     struct InterfaceECI : Interface
     {
-        u8* m_data = nullptr;
+        const u8* m_data = nullptr;
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceECI(Memory memory)
+        InterfaceECI(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x4000, 32770, load_address, memory.size))
@@ -963,7 +963,7 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
 
             std::vector<u8> temp;
             const u8* buffer = m_data;
@@ -979,7 +979,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceECI(Memory memory)
+    ImageDecoderInterface* createInterfaceECI(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceECI(memory);
         return x;
@@ -991,7 +991,7 @@ namespace
 
     struct InterfaceFPT : GenericInterface
     {
-        InterfaceFPT(Memory memory)
+        InterfaceFPT(ConstMemory memory)
             : GenericInterface(memory, 0x4000, 10004)
         {
         }
@@ -1005,7 +1005,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFPT(Memory memory)
+    ImageDecoderInterface* createInterfaceFPT(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceFPT(memory);
         return x;
@@ -1017,7 +1017,7 @@ namespace
 
     struct InterfaceFD2 : GenericInterface
     {
-        InterfaceFD2(Memory memory)
+        InterfaceFD2(ConstMemory memory)
             : GenericInterface(memory, 0x3c00, 17409)
         {
         }
@@ -1031,7 +1031,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFD2(Memory memory)
+    ImageDecoderInterface* createInterfaceFD2(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceFD2(memory);
         return x;
@@ -1043,7 +1043,7 @@ namespace
 
     struct InterfaceFPR : GenericInterface
     {
-        InterfaceFPR(Memory memory)
+        InterfaceFPR(ConstMemory memory)
             : GenericInterface(memory, 0x3780, 18370)
         {
         }
@@ -1109,7 +1109,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFPR(Memory memory)
+    ImageDecoderInterface* createInterfaceFPR(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceFPR(memory);
         return x;
@@ -1119,7 +1119,7 @@ namespace
     // ImageDecoder: FUN (Funpaint 2)
     // ------------------------------------------------------------
 
-    void depack_fun(u8* buffer, const u8* input, int scansize, u8* input_end, u8 escape_char)
+    void depack_fun(u8* buffer, const u8* input, int scansize, const u8* input_end, u8 escape_char)
     {
         u8* buffer_end = buffer + scansize;
 
@@ -1146,17 +1146,17 @@ namespace
 
     struct InterfaceFUN : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed;
         u8 m_escape_char;
 
-        InterfaceFUN(Memory memory)
+        InterfaceFUN(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
             , m_compressed(false)
             , m_escape_char(0)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (load_address == 0x3ff0 && memory.size > 16)
@@ -1193,10 +1193,10 @@ namespace
             if (!m_data)
                 return;
 
-            u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.address + m_memory.size;
 
             std::vector<u8> temp;
-            u8* buffer = m_data;
+            const u8* buffer = m_data;
 
             if (m_compressed)
             {
@@ -1213,7 +1213,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFUN(Memory memory)
+    ImageDecoderInterface* createInterfaceFUN(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceFUN(memory);
         return x;
@@ -1225,13 +1225,13 @@ namespace
 
     struct InterfaceGUN : Interface
     {
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceGUN(Memory memory)
+        InterfaceGUN(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x4000, 33603, load_address, memory.size))
@@ -1262,7 +1262,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceGUN(Memory memory)
+    ImageDecoderInterface* createInterfaceGUN(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceGUN(memory);
         return x;
@@ -1274,7 +1274,7 @@ namespace
 
     struct InterfaceHCB : GenericInterface
     {
-        InterfaceHCB(Memory memory)
+        InterfaceHCB(ConstMemory memory)
             : GenericInterface(memory, 0x5000, 12148)
         {
         }
@@ -1359,7 +1359,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHCB(Memory memory)
+    ImageDecoderInterface* createInterfaceHCB(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceHCB(memory);
         return x;
@@ -1371,7 +1371,7 @@ namespace
 
     struct InterfaceHFC : GenericInterface
     {
-        InterfaceHFC(Memory memory)
+        InterfaceHFC(ConstMemory memory)
             : GenericInterface(memory, 0x4000, 16386)
         {
         }
@@ -1385,7 +1385,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHFC(Memory memory)
+    ImageDecoderInterface* createInterfaceHFC(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceHFC(memory);
         return x;
@@ -1443,14 +1443,14 @@ namespace
 
     struct InterfaceHIM : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed = false;
 
-        InterfaceHIM(Memory memory)
+        InterfaceHIM(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x4000, 16385, load_address, memory.size))
@@ -1495,7 +1495,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHIM(Memory memory)
+    ImageDecoderInterface* createInterfaceHIM(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceHIM(memory);
         return x;
@@ -1507,13 +1507,13 @@ namespace
 
     struct InterfaceKOA : Interface
     {
-        u8* m_data;
+        const u8* m_data;
 
-        InterfaceKOA(Memory memory)
+        InterfaceKOA(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x6000, 10003, load_address, memory.size))
@@ -1534,7 +1534,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceKOA(Memory memory)
+    ImageDecoderInterface* createInterfaceKOA(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceKOA(memory);
         return x;
@@ -1546,7 +1546,7 @@ namespace
 
     struct InterfacePMG : GenericInterface
     {
-        InterfacePMG(Memory memory)
+        InterfacePMG(ConstMemory memory)
             : GenericInterface(memory, 0x3f8e, 9332)
         {
         }
@@ -1570,7 +1570,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfacePMG(Memory memory)
+    ImageDecoderInterface* createInterfacePMG(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfacePMG(memory);
         return x;
@@ -1601,9 +1601,9 @@ namespace
         }
     }
 
-    u8* read_header_pp(header_generic& header, u8* data, size_t size)
+    const u8* read_header_pp(header_generic& header, const u8* data, size_t size)
     {
-        LittleEndianPointer p = data;
+        LittleEndianConstPointer p = data;
         u16 load_address = p.read16();
 
         if (check_format(0x3c00, 33602, load_address, size))
@@ -1638,9 +1638,9 @@ namespace
     struct InterfacePP : Interface
     {
         header_generic m_generic_header;
-        u8* m_data;
+        const u8* m_data;
 
-        InterfacePP(Memory memory)
+        InterfacePP(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1675,7 +1675,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfacePP(Memory memory)
+    ImageDecoderInterface* createInterfacePP(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfacePP(memory);
         return x;
@@ -1687,7 +1687,7 @@ namespace
 
     struct InterfaceRPM : GenericInterface
     {
-        InterfaceRPM(Memory memory)
+        InterfaceRPM(ConstMemory memory)
             : GenericInterface(memory, 0x6000, 10006)
         {
         }
@@ -1701,7 +1701,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceRPM(Memory memory)
+    ImageDecoderInterface* createInterfaceRPM(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceRPM(memory);
         return x;
@@ -1713,7 +1713,7 @@ namespace
 
     struct InterfaceSAR : GenericInterface
     {
-        InterfaceSAR(Memory memory)
+        InterfaceSAR(ConstMemory memory)
             : GenericInterface(memory, 0x7800, 10018)
         {
         }
@@ -1727,7 +1727,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSAR(Memory memory)
+    ImageDecoderInterface* createInterfaceSAR(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceSAR(memory);
         return x;
@@ -1739,15 +1739,15 @@ namespace
 
     struct InterfaceSHF : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceSHF(Memory memory)
+        InterfaceSHF(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x4000, 15874, load_address, memory.size))
@@ -1783,7 +1783,7 @@ namespace
             if (m_compressed)
             {
                 temp = std::vector<u8>(15874);
-                u8* end = m_memory.address + m_memory.size;
+                const u8* end = m_memory.address + m_memory.size;
                 rle_ecb(temp.data(), m_data, 15874, end, m_escape_char);
                 buffer = temp.data();
 
@@ -1877,7 +1877,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSHF(Memory memory)
+    ImageDecoderInterface* createInterfaceSHF(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceSHF(memory);
         return x;
@@ -1889,7 +1889,7 @@ namespace
 
     struct InterfaceSHFXL : GenericInterface
     {
-        InterfaceSHFXL(Memory memory)
+        InterfaceSHFXL(ConstMemory memory)
             : GenericInterface(memory, 0x4000, 15362)
         {
             if (m_data)
@@ -1969,7 +1969,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSHFXL(Memory memory)
+    ImageDecoderInterface* createInterfaceSHFXL(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceSHFXL(memory);
         return x;
@@ -2098,14 +2098,14 @@ namespace
 
     struct InterfaceMCI : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed = false;
 
-        InterfaceMCI(Memory memory)
+        InterfaceMCI(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x9c00, 19434, load_address, memory.size))
@@ -2152,7 +2152,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceMCI(Memory memory)
+    ImageDecoderInterface* createInterfaceMCI(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceMCI(memory);
         return x;
@@ -2164,15 +2164,15 @@ namespace
 
     struct InterfaceUFLI : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceUFLI(Memory memory)
+        InterfaceUFLI(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (check_format(0x4000, 16194, load_address, memory.size))
@@ -2207,7 +2207,7 @@ namespace
             if (m_compressed)
             {
                 temp = std::vector<u8>(16192);
-                u8* end = m_memory.address + m_memory.size;
+                const u8* end = m_memory.address + m_memory.size;
                 rle_ecb(temp.data(), m_data, 16192, end, m_escape_char);
                 buffer = temp.data();
             }
@@ -2295,7 +2295,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceUFLI(Memory memory)
+    ImageDecoderInterface* createInterfaceUFLI(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceUFLI(memory);
         return x;
@@ -2340,15 +2340,15 @@ namespace
 
     struct InterfaceUIFLI : Interface
     {
-        u8* m_data;
+        const u8* m_data;
         bool m_compressed = false;
         u8 m_escape_char = 0;
 
-        InterfaceUIFLI(Memory memory)
+        InterfaceUIFLI(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
             if (load_address == 0x4000)
@@ -2479,7 +2479,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceUIFLI(Memory memory)
+    ImageDecoderInterface* createInterfaceUIFLI(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceUIFLI(memory);
         return x;
@@ -2491,7 +2491,7 @@ namespace
 
     struct InterfaceVID : GenericInterface
     {
-        InterfaceVID(Memory memory)
+        InterfaceVID(ConstMemory memory)
             : GenericInterface(memory, 0x5800, 10050)
         {
         }
@@ -2505,7 +2505,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceVID(Memory memory)
+    ImageDecoderInterface* createInterfaceVID(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceVID(memory);
         return x;

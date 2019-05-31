@@ -31,9 +31,9 @@ namespace
 
         Format format;
 
-        HeaderSGI(Memory memory)
+        HeaderSGI(ConstMemory memory)
         {
-            BigEndianPointer p = memory.address;
+            BigEndianConstPointer p = memory.address;
 
             u16 magic = p.read16();
             if (magic != 474)
@@ -41,8 +41,8 @@ namespace
                 MANGO_EXCEPTION(ID"Incorrect header magic.");
             }
 
-            encoding   = p.read8(); // 0 - UNCOMPRESSED, 1 - RLE
-            bpc        = p.read8(); // bytes per pixel channel (1, 2)
+            encoding  = p.read8();  // 0 - UNCOMPRESSED, 1 - RLE
+            bpc       = p.read8();  // bytes per pixel channel (1, 2)
             dimension = p.read16(); // number of dimensions (1, 2, 3)
             xsize     = p.read16(); // width
             ysize     = p.read16(); // height
@@ -84,10 +84,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderSGI m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -119,7 +119,7 @@ namespace
             int height = m_header.ysize;
             int channels = m_header.zsize;
 
-            u8* data = m_memory.address + 512;
+            const u8* data = m_memory.address + 512;
             
             for (int channel = 0; channel < channels; ++channel)
             {
@@ -129,7 +129,7 @@ namespace
                     u8* dest = s.address<u8>(0, scanline) + channel;
 
                     int offset = (y + channel * height) * width;
-                    u8* src = data + offset;
+                    const u8* src = data + offset;
 
                     for (int x = 0; x < width; ++x)
                     {
@@ -145,9 +145,9 @@ namespace
             int height = m_header.ysize;
             int channels = m_header.zsize;
 
-            u8* data = m_memory.address;
+            const u8* data = m_memory.address;
 
-            BigEndianPointer p = data + 512;
+            BigEndianConstPointer p = data + 512;
 
             // read RLE offset table
             int num = height * channels;
@@ -174,8 +174,8 @@ namespace
 
                     int index = y + channel * height;
                     int offset = offsets[index];
-                    u8* src = data + offset;
-                    u8* end = src + sizes[index];
+                    const u8* src = data + offset;
+                    const u8* end = src + sizes[index];
 
                     for (; src < end;)
                     {
@@ -242,7 +242,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

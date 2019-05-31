@@ -64,9 +64,9 @@ namespace
     {
         ZPNG_Buffer m_buffer;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            m_buffer.Data = memory.address;
+            m_buffer.Data = const_cast<u8*>(memory.address);
             m_buffer.Bytes = static_cast<unsigned int>(memory.size);
         }
 
@@ -137,7 +137,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

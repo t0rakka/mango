@@ -313,7 +313,7 @@ namespace
         u32 arraySize;
         u32 reserved;
 
-        u8* read(LittleEndianPointer p)
+        const u8* read(LittleEndianConstPointer p)
         {
             dxgiFormat = p.read32();
             resourceDimension = p.read32();
@@ -539,7 +539,7 @@ namespace
             }
         }
 
-        u8* read(LittleEndianPointer p)
+        const u8* read(LittleEndianConstPointer p)
         {
             size = p.read32();
             if (size != 32)
@@ -618,9 +618,9 @@ namespace
 
         TextureCompressionInfo info;
 
-        u8* data;
+        const u8* data;
 
-        u8* read(LittleEndianPointer p)
+        const u8* read(LittleEndianConstPointer p)
         {
             u32 magic = p.read32();
             if (magic != FOURCC_DDS)
@@ -826,15 +826,15 @@ namespace
             return ysize * pitch;
         }
 
-        Memory getMemory(int level, int depth, int face) const
+        ConstMemory getMemory(int level, int depth, int face) const
         {
             MANGO_UNREFERENCED_PARAMETER(depth); // TODO: support depth parameter for volume textures
 
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
 
-            u8* image = data;
-            Memory selected;
+            const u8* image = data;
+            ConstMemory selected;
 
             for (int iFace = 0; iFace < maxFace; ++iFace)
             {
@@ -847,7 +847,7 @@ namespace
                     if (iFace == face && iLevel == level)
                     {
                         // Store selected address
-                        selected = Memory(image, bytes);
+                        selected = ConstMemory(image, bytes);
                     }
 
                     image += bytes;
@@ -866,9 +866,9 @@ namespace
     {
         HeaderDDS m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
             m_header.read(p);
         }
 
@@ -892,7 +892,7 @@ namespace
             return header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             return m_header.getMemory(level, depth, face);
         }
@@ -901,7 +901,7 @@ namespace
         {
             MANGO_UNREFERENCED_PARAMETER(palette);
 
-            Memory imageMemory = m_header.getMemory(level, depth, face);
+            ConstMemory imageMemory = m_header.getMemory(level, depth, face);
             TextureCompression compression = m_header.getCompression();
 
             if (m_header.pixelFormat.fourCC)
@@ -916,7 +916,7 @@ namespace
             }
             else
             {
-                u8* image = imageMemory.address;
+                u8* image = const_cast<u8*>(imageMemory.address);
                 Format format = m_header.getFormat();
                 int width = std::max(1, m_header.getWidth() >> level);
                 int height = std::max(1, m_header.getHeight() >> level);
@@ -928,7 +928,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

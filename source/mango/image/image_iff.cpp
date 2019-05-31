@@ -182,9 +182,9 @@ namespace
         }
     }
 
-    bool read_signature(u8*& data)
+    bool read_signature(const u8*& data)
     {
-        BigEndianPointer p = data;
+        BigEndianConstPointer p = data;
 
 		u32 v0 = p.read32(); p += 4;
 		u32 v1 = p.read32();
@@ -239,9 +239,9 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
         }
@@ -252,8 +252,8 @@ namespace
 
         ImageHeader header() override
         {
-            u8* data = m_memory.address;
-            u8* end = m_memory.address + m_memory.size - 12;
+            const u8* data = m_memory.address;
+            const u8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
             MANGO_UNREFERENCED_PARAMETER(is_pbm);
@@ -276,7 +276,7 @@ namespace
             while (data < end)
             {
                 // chunk header
-                BigEndianPointer p = data;
+                BigEndianConstPointer p = data;
 
                 u32 id = p.read32();
                 u32 size = p.read32();
@@ -321,15 +321,15 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
 
-            u8* data = m_memory.address;
-            u8* end = m_memory.address + m_memory.size - 12;
+            const u8* data = m_memory.address;
+            const u8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
 
             Palette palette;
 
             u8* buffer_allocated = nullptr;
-            u8* buffer = nullptr;
+            const u8* buffer = nullptr;
 
             bool ham = false;
             bool ehb = false;
@@ -352,7 +352,7 @@ namespace
             while (data < end)
             {
                 // chunk header
-                BigEndianPointer p = data;
+                BigEndianConstPointer p = data;
 
                 u32 id = p.read32();
                 u32 size = p.read32();
@@ -518,7 +518,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

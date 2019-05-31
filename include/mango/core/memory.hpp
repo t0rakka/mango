@@ -92,18 +92,18 @@ namespace detail {
     class VirtualMemory : private NonCopyable
     {
     protected:
-        Memory m_memory;
+        ConstMemory m_memory;
 
     public:
         VirtualMemory() = default;
         virtual ~VirtualMemory() {}
 
-        const Memory* operator -> () const
+        const ConstMemory* operator -> () const
         {
             return &m_memory;
         }
 
-        operator Memory () const
+        operator ConstMemory () const
         {
             return m_memory;
         }

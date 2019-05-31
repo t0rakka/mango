@@ -113,13 +113,13 @@ namespace filesystem {
 
         std::string parse(std::string& pathname, const std::string& password);
         AbstractMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
-        AbstractMapper* createMemoryMapper(Memory memory, const std::string& extension, const std::string& password);
+        AbstractMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
         AbstractMapper* createFileMapper(const std::string& basepath);
 
     public:
         Mapper(const std::string& pathname, const std::string& password);
         Mapper(std::shared_ptr<Mapper> mapper, const std::string& filename, const std::string& password);
-        Mapper(const Memory& memory, const std::string& extension, const std::string& password);
+        Mapper(const ConstMemory& memory, const std::string& extension, const std::string& password);
         ~Mapper();
 
         const std::string& basepath() const;

@@ -21,28 +21,28 @@ namespace
 
     struct HeaderPCX
     {
-        u8       Manufacturer;
-        u8       Version;
-        u8       Encoding;
-        u8       BitsPerPixel;
-        u16      Xmin;
-        u16      Ymin;
-        u16      Xmax;
-        u16      Ymax;
-        u16      HDpi;
-        u16      VDpi;
-        u8       ColorMap[48];
-        u8       Reserved;
-        u8       NPlanes;
-        u16      BytesPerLine;
-        u16      PaletteInfo;
-        u16      HscreenSize;
-        u16      VscreenSize;
-        u8       Padding[54];
+        u8      Manufacturer;
+        u8      Version;
+        u8      Encoding;
+        u8      BitsPerPixel;
+        u16     Xmin;
+        u16     Ymin;
+        u16     Xmax;
+        u16     Ymax;
+        u16     HDpi;
+        u16     VDpi;
+        u8      ColorMap[48];
+        u8      Reserved;
+        u8      NPlanes;
+        u16     BytesPerLine;
+        u16     PaletteInfo;
+        u16     HscreenSize;
+        u16     VscreenSize;
+        u8      Padding[54];
 
-        HeaderPCX(Memory memory)
+        HeaderPCX(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
 
             Manufacturer  = p.read8();
             Version       = p.read8();
@@ -139,7 +139,7 @@ namespace
         }
     };
 
-    bool getPaletteMarker(Memory memory)
+    bool getPaletteMarker(ConstMemory memory)
     {
         bool isPaletteMarker = false;
 
@@ -287,10 +287,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderPCX m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -470,7 +470,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

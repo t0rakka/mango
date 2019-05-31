@@ -57,6 +57,7 @@ namespace jpeg {
     using mango::u64;
     using mango::s16;
     using mango::Memory;
+    using mango::ConstMemory;
     using mango::Format;
     using mango::Surface;
 	using mango::Stream;
@@ -156,9 +157,9 @@ namespace jpeg {
 
     struct jpegBuffer
     {
-        u8* ptr;
-        u8* end;
-        u8* nextFF;
+        const u8* ptr;
+        const u8* end;
+        const u8* nextFF;
 
         DataType data;
         int remain;
@@ -372,30 +373,30 @@ namespace jpeg {
         int ymcu;
         int mcus;
 
-        bool isJPEG(Memory memory) const;
+        bool isJPEG(ConstMemory memory) const;
 
-        u8* stepMarker(u8* p) const;
-        u8* seekMarker(u8* p, u8* end) const;
+        const u8* stepMarker(const u8* p) const;
+        const u8* seekMarker(const u8* p, const u8* end) const;
 
         void processSOI();
         void processEOI();
-        void processCOM(u8* p);
-        void processTEM(u8* p);
-        void processRES(u8* p);
-        void processJPG(u8* p);
-        void processJPG(u8* p, u16 marker);
-        void processAPP(u8* p, u16 marker);
-        void processSOF(u8* p, u16 marker);
-        u8* processSOS(u8* p, u8* end);
-        void processDQT(u8* p);
-        void processDNL(u8* p);
-        void processDRI(u8* p);
-        void processDHT(u8* p);
-        void processDAC(u8* p);
-        void processDHP(u8* p);
-        void processEXP(u8* p);
+        void processCOM(const u8* p);
+        void processTEM(const u8* p);
+        void processRES(const u8* p);
+        void processJPG(const u8* p);
+        void processJPG(const u8* p, u16 marker);
+        void processAPP(const u8* p, u16 marker);
+        void processSOF(const u8* p, u16 marker);
+        const u8* processSOS(const u8* p, const u8* end);
+        void processDQT(const u8* p);
+        void processDNL(const u8* p);
+        void processDRI(const u8* p);
+        void processDHT(const u8* p);
+        void processDAC(const u8* p);
+        void processDHP(const u8* p);
+        void processEXP(const u8* p);
 
-        void parse(Memory memory, bool decode);
+        void parse(ConstMemory memory, bool decode);
 
         void restart();
         bool handleRestart();
@@ -414,11 +415,11 @@ namespace jpeg {
 
     public:
         Header header;
-        Memory exif_memory; // Exif block, if one is present
-        Memory scan_memory; // Scan block
+        ConstMemory exif_memory; // Exif block, if one is present
+        ConstMemory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(Memory memory);
+        Parser(ConstMemory memory);
         ~Parser();
 
         Status decode(Surface& target);

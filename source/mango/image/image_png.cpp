@@ -441,10 +441,10 @@ namespace
     class ParserPNG
     {
     protected:
-        Memory m_memory;
+        ConstMemory m_memory;
 
-        u8* m_pointer = nullptr;
-        u8* m_end = nullptr;
+        const u8* m_pointer = nullptr;
+        const u8* m_end = nullptr;
         const char* m_error = nullptr;
 
         Buffer m_compressed;
@@ -483,14 +483,14 @@ namespace
 
         void setError(const char* error);
 
-        void read_IHDR(BigEndianPointer p, u32 size);
-        void read_IDAT(BigEndianPointer p, u32 size);
-        void read_PLTE(BigEndianPointer p, u32 size);
-        void read_tRNS(BigEndianPointer p, u32 size);
-        void read_cHRM(BigEndianPointer p, u32 size);
-        void read_gAMA(BigEndianPointer p, u32 size);
-        void read_sBIT(BigEndianPointer p, u32 size);
-        void read_sRGB(BigEndianPointer p, u32 size);
+        void read_IHDR(BigEndianConstPointer p, u32 size);
+        void read_IDAT(BigEndianConstPointer p, u32 size);
+        void read_PLTE(BigEndianConstPointer p, u32 size);
+        void read_tRNS(BigEndianConstPointer p, u32 size);
+        void read_cHRM(BigEndianConstPointer p, u32 size);
+        void read_gAMA(BigEndianConstPointer p, u32 size);
+        void read_sBIT(BigEndianConstPointer p, u32 size);
+        void read_sRGB(BigEndianConstPointer p, u32 size);
 
         void parse();
         void filter(u8* buffer, int bytes, int height);
@@ -512,7 +512,7 @@ namespace
         void process(u8* image, int stride, u8* src, Palette* palette);
 
     public:
-        ParserPNG(Memory memory);
+        ParserPNG(ConstMemory memory);
         ~ParserPNG();
 
         const char* getError() const;
@@ -525,11 +525,11 @@ namespace
     // ParserPNG
     // ------------------------------------------------------------
 
-    ParserPNG::ParserPNG(Memory memory)
+    ParserPNG::ParserPNG(ConstMemory memory)
         : m_memory(memory)
         , m_end(memory.address + memory.size)
     {
-        BigEndianPointer p = memory.address;
+        BigEndianConstPointer p = memory.address;
 
         // read header magic
         const u64 magic = p.read64();
@@ -573,7 +573,7 @@ namespace
         return m_error;
     }
 
-    void ParserPNG::read_IHDR(BigEndianPointer p, u32 size)
+    void ParserPNG::read_IHDR(BigEndianConstPointer p, u32 size)
     {
         debugPrint("[\"IHDR\"] %d bytes\n", size);
 
@@ -674,12 +674,12 @@ namespace
         debugPrint("  Interlace:   %d\n", m_interlace);
     }
 
-    void ParserPNG::read_IDAT(BigEndianPointer p, u32 size)
+    void ParserPNG::read_IDAT(BigEndianConstPointer p, u32 size)
     {
         m_compressed.append(p, size);
     }
 
-    void ParserPNG::read_PLTE(BigEndianPointer p, u32 size)
+    void ParserPNG::read_PLTE(BigEndianConstPointer p, u32 size)
     {
         if (size % 3)
         {
@@ -701,7 +701,7 @@ namespace
         }
     }
 
-    void ParserPNG::read_tRNS(BigEndianPointer p, u32 size)
+    void ParserPNG::read_tRNS(BigEndianConstPointer p, u32 size)
     {
         if (m_color_type == COLOR_TYPE_I)
         {
@@ -749,7 +749,7 @@ namespace
         }
     }
 
-    void ParserPNG::read_cHRM(BigEndianPointer p, u32 size)
+    void ParserPNG::read_cHRM(BigEndianConstPointer p, u32 size)
     {
         if (size != 32)
         {
@@ -768,7 +768,7 @@ namespace
         m_chromaticity.blue.y  = p.read32() / scale;
     }
 
-    void ParserPNG::read_gAMA(BigEndianPointer p, u32 size)
+    void ParserPNG::read_gAMA(BigEndianConstPointer p, u32 size)
     {
         if (size != 4)
         {
@@ -779,7 +779,7 @@ namespace
         m_gamma = p.read32() / 100000.0f;
     }
 
-    void ParserPNG::read_sBIT(BigEndianPointer p, u32 size)
+    void ParserPNG::read_sBIT(BigEndianConstPointer p, u32 size)
     {
         if (size > 4)
         {
@@ -793,7 +793,7 @@ namespace
         }
     }
 
-    void ParserPNG::read_sRGB(BigEndianPointer p, u32 size)
+    void ParserPNG::read_sRGB(BigEndianConstPointer p, u32 size)
     {
         if (size != 1)
         {
@@ -859,7 +859,7 @@ namespace
 
     void ParserPNG::parse()
     {
-        BigEndianPointer p = m_pointer;
+        BigEndianConstPointer p = m_pointer;
 
         for (; p < m_end - 8;)
         {
@@ -1702,7 +1702,7 @@ namespace
         ParserPNG m_parser;
         ImageHeader m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_parser(memory)
         {
             m_header = m_parser.header();
@@ -1762,7 +1762,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

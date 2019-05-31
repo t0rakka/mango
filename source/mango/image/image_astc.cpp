@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/exception.hpp>
@@ -67,14 +67,14 @@ namespace
         int depth;
         TextureCompression compression;
 
-        u32 read24(LittleEndianPointer& p) const
+        u32 read24(LittleEndianConstPointer& p) const
         {
             u32 value = (p[2] << 16) | (p[1] << 8) | p[0];
             p += 3;
             return value;
         }
 
-        void read(LittleEndianPointer& p)
+        void read(LittleEndianConstPointer& p)
         {
             u32 magic = p.read32();
             if (magic != 0x5ca1ab13)
@@ -104,13 +104,13 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderASTC m_header;
-        Memory m_data;
+        ConstMemory m_data;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
             m_header.read(p);
-            m_data = Memory(p, memory.address + memory.size - p);
+            m_data = ConstMemory(p, memory.address + memory.size - p);
         }
 
         ~Interface()
@@ -135,7 +135,7 @@ namespace
             return header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
@@ -160,7 +160,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

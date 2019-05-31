@@ -59,11 +59,11 @@ namespace
 
     struct HeaderMGX
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
 
-        HeaderMGX(Memory memory)
+        HeaderMGX(ConstMemory memory)
             : m_memory(memory)
         {
             if (!memory.address)
@@ -71,7 +71,7 @@ namespace
                 MANGO_EXCEPTION(ID"Parent container doesn't have memory");
             }
 
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
             u32 magic0 = p.read32();
             if (magic0 != u32_mask('m', 'g', 'x', '0'))
             {
@@ -97,7 +97,7 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(version);
         }
 
-        void read_blocks(LittleEndianPointer p)
+        void read_blocks(LittleEndianConstPointer p)
         {
             u32 magic1 = p.read32();
             if (magic1 != u32_mask('m', 'g', 'x', '1'))
@@ -123,7 +123,7 @@ namespace
             }
         }
 
-        void read_files(LittleEndianPointer p)
+        void read_files(LittleEndianConstPointer p)
         {
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
@@ -191,13 +191,13 @@ namespace filesystem {
     class VirtualMemoryMGX : public mango::VirtualMemory
     {
     protected:
-        u8* m_delete_address;
+        const u8* m_delete_address;
 
     public:
-        VirtualMemoryMGX(u8* address, u8* delete_address, size_t size)
+        VirtualMemoryMGX(const u8* address, const u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
-            m_memory = Memory(address, size);
+            m_memory = ConstMemory(address, size);
         }
 
         ~VirtualMemoryMGX()
@@ -217,7 +217,7 @@ namespace filesystem {
         std::string m_password;
 
     public:
-        MapperMGX(Memory parent, const std::string& password)
+        MapperMGX(ConstMemory parent, const std::string& password)
             : m_header(parent)
             , m_password(password)
         {
@@ -300,7 +300,7 @@ namespace filesystem {
                     // The file is encoded as a single, non-compressed block, so
                     // we can simply map it into parent's memory
 
-                    u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
+                    const u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
 
                     if (block.offset + segment.offset + file.size > m_header.m_memory.size)
                     {
@@ -326,7 +326,7 @@ namespace filesystem {
                 if (block.method)
                 {
                     Compressor compressor = getCompressor(Compressor::Method(block.method));
-                    Memory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
+                    ConstMemory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
 
                     q.enqueue([=, &block, &segment] {
                         if (block.uncompressed == segment.size && segment.offset == 0)
@@ -363,7 +363,7 @@ namespace filesystem {
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperMGX(Memory parent, const std::string& password)
+    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password)
     {
         AbstractMapper* mapper = new MapperMGX(parent, password);
         return mapper;
