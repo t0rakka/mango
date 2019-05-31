@@ -868,7 +868,7 @@ namespace vulkan {
 			{ Format(8, Format::SNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
 			{ Format(8, Format::UINT, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
 			{ Format(8, Format::SINT, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
-			{ Format(8, Format::SRGB, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+			{ Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE }, // srgb
 
 			{ Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
 			{ Format(16, Format::SNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
@@ -876,7 +876,7 @@ namespace vulkan {
 			{ Format(16, Format::SNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
 			{ Format(16, Format::UINT, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
 			{ Format(16, Format::SINT, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
-			{ Format(16, Format::SRGB, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+			{ Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE }, // srgb
 
 			{ Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
 			{ Format(24, Format::SNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
@@ -884,7 +884,7 @@ namespace vulkan {
 			{ Format(24, Format::SNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
 			{ Format(24, Format::UINT, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
 			{ Format(24, Format::SINT, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
-			{ Format(24, Format::SRGB, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+			{ Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE }, // srgb
 
 			{ Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
 			{ Format(24, Format::SNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
@@ -892,7 +892,7 @@ namespace vulkan {
 			{ Format(24, Format::SNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
 			{ Format(24, Format::UINT, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
 			{ Format(24, Format::SINT, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
-			{ Format(24, Format::SRGB, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+			{ Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE }, // srgb
 
 			{ Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::SNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
@@ -900,7 +900,7 @@ namespace vulkan {
 			{ Format(32, Format::SNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::UINT, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::SINT, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
-			{ Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+			{ Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE }, // srgb
 
 			{ Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::SNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
@@ -908,7 +908,7 @@ namespace vulkan {
 			{ Format(32, Format::SNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::UINT, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::SINT, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
-			{ Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+			{ Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE }, // srgb
 
 			{ Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::SNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
@@ -916,7 +916,7 @@ namespace vulkan {
 			{ Format(32, Format::SNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::UINT, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
 			{ Format(32, Format::SINT, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
-			{ Format(32, Format::SRGB, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+			{ Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE }, // srgb
 
 			{ Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
 			{ Format(32, Format::SNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
