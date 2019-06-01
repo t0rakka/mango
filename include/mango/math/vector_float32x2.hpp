@@ -305,4 +305,92 @@ namespace mango
         return Vector<float, 2>(s);
     }
 
+    // ------------------------------------------------------------------
+    // trigonometric functions
+    // ------------------------------------------------------------------
+
+    static inline Vector<float, 2> sin(Vector<float, 2> v)
+    {
+        float x = std::sin(v.x);
+        float y = std::sin(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> cos(Vector<float, 2> v)
+    {
+        float x = std::cos(v.x);
+        float y = std::cos(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> tan(Vector<float, 2> v)
+    {
+        float x = std::tan(v.x);
+        float y = std::tan(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> exp(Vector<float, 2> v)
+    {
+        float x = std::exp(v.x);
+        float y = std::exp(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> exp2(Vector<float, 2> v)
+    {
+        float x = std::exp2(v.x);
+        float y = std::exp2(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> log(Vector<float, 2> v)
+    {
+        float x = std::log(v.x);
+        float y = std::log(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> log2(Vector<float, 2> v)
+    {
+        float x = std::log2(v.x);
+        float y = std::log2(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> asin(Vector<float, 2> v)
+    {
+        float x = std::asin(v.x);
+        float y = std::asin(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> acos(Vector<float, 2> v)
+    {
+        float x = std::acos(v.x);
+        float y = std::acos(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> atan(Vector<float, 2> v)
+    {
+        float x = std::atan(v.x);
+        float y = std::atan(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> atan2(Vector<float, 2> a, Vector<float, 2> b)
+    {
+        float x = std::atan2(a.x, b.x);
+        float y = std::atan2(a.y, b.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> pow(Vector<float, 2> a, Vector<float, 2> b)
+    {
+        float x = std::pow(a.x, b.x);
+        float y = std::pow(a.y, b.y);
+        return Vector<float, 2>(x, y);
+    }
+
 } // namespace mango

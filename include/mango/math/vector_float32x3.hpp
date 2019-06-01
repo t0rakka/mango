@@ -398,4 +398,104 @@ namespace mango
         return Vector<float, 3>(s);
     }
 
+    // ------------------------------------------------------------------
+    // trigonometric functions
+    // ------------------------------------------------------------------
+
+    static inline Vector<float, 3> sin(Vector<float, 3> v)
+    {
+        float x = std::sin(v.x);
+        float y = std::sin(v.y);
+        float z = std::sin(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> cos(Vector<float, 3> v)
+    {
+        float x = std::cos(v.x);
+        float y = std::cos(v.y);
+        float z = std::cos(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> tan(Vector<float, 3> v)
+    {
+        float x = std::tan(v.x);
+        float y = std::tan(v.y);
+        float z = std::tan(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> exp(Vector<float, 3> v)
+    {
+        float x = std::exp(v.x);
+        float y = std::exp(v.y);
+        float z = std::exp(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> exp2(Vector<float, 3> v)
+    {
+        float x = std::exp2(v.x);
+        float y = std::exp2(v.y);
+        float z = std::exp2(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> log(Vector<float, 3> v)
+    {
+        float x = std::log(v.x);
+        float y = std::log(v.y);
+        float z = std::log(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> log2(Vector<float, 3> v)
+    {
+        float x = std::log2(v.x);
+        float y = std::log2(v.y);
+        float z = std::log2(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> asin(Vector<float, 3> v)
+    {
+        float x = std::asin(v.x);
+        float y = std::asin(v.y);
+        float z = std::asin(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> acos(Vector<float, 3> v)
+    {
+        float x = std::acos(v.x);
+        float y = std::acos(v.y);
+        float z = std::acos(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> atan(Vector<float, 3> v)
+    {
+        float x = std::atan(v.x);
+        float y = std::atan(v.y);
+        float z = std::atan(v.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> atan2(Vector<float, 3> a, Vector<float, 3> b)
+    {
+        float x = std::atan2(a.x, b.x);
+        float y = std::atan2(a.y, b.y);
+        float z = std::atan2(a.z, b.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> pow(Vector<float, 3> a, Vector<float, 3> b)
+    {
+        float x = std::pow(a.x, b.x);
+        float y = std::pow(a.y, b.y);
+        float z = std::pow(a.z, b.z);
+        return Vector<float, 3>(x, y, z);
+    }
+
 } // namespace mango
