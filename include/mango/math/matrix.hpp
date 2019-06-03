@@ -77,7 +77,7 @@ namespace mango
     };
 
     // ------------------------------------------------------------------
-    // specializations
+    // 2x2
     // ------------------------------------------------------------------
 
     template <>
@@ -87,6 +87,12 @@ namespace mango
 
         explicit Matrix()
         {
+        }
+
+        explicit Matrix(float32x2 v0, float32x2 v1)
+        {
+            m[0] = v0;
+            m[1] = v1;
         }
 
         explicit Matrix(float s0, float s1, float s2, float s3)
@@ -110,6 +116,25 @@ namespace mango
         }
     };
 
+    static inline Matrix<float, 2, 2> operator * (const Matrix<float, 2, 2>& m, float s)
+    {
+        Matrix<float, 2, 2> result;
+        result[0] = m[0] * s;
+        result[1] = m[1] * s;
+        return result;
+    }
+
+    static inline Vector<float, 2> operator * (const Vector<float, 2>& v, const Matrix<float, 2, 2>& m)
+    {
+        float x = v[0] * m(0, 0) + v[1] * m(1, 0);
+        float y = v[0] * m(0, 1) + v[1] * m(1, 1);
+        return Vector<float, 2>(x, y);
+    }
+
+    // ------------------------------------------------------------------
+    // 3x3
+    // ------------------------------------------------------------------
+
     template <>
     struct Matrix<float, 3, 3> : MatrixBase<float, 3, 3>
     {
@@ -117,6 +142,13 @@ namespace mango
 
         explicit Matrix()
         {
+        }
+
+        explicit Matrix(float32x3 v0, float32x3 v1, float32x3 v2)
+        {
+            m[0] = v0;
+            m[1] = v1;
+            m[2] = v2;
         }
 
         explicit Matrix(float s0, float s1, float s2, float s3, float s4, float s5, float s6, float s7, float s8)
@@ -140,21 +172,6 @@ namespace mango
             return m;
         }
     };
-
-    static inline Matrix<float, 2, 2> operator * (const Matrix<float, 2, 2>& m, float s)
-    {
-        Matrix<float, 2, 2> result;
-        result[0] = m[0] * s;
-        result[1] = m[1] * s;
-        return result;
-    }
-
-    static inline Vector<float, 2> operator * (const Vector<float, 2>& v, const Matrix<float, 2, 2>& m)
-    {
-        float x = v[0] * m(0, 0) + v[1] * m(1, 0);
-        float y = v[0] * m(0, 1) + v[1] * m(1, 1);
-        return Vector<float, 2>(x, y);
-    }
 
     static inline Matrix<float, 3, 3> operator * (const Matrix<float, 3, 3>& m, float s)
     {
