@@ -80,114 +80,118 @@ namespace mango
     // 2x2
     // ------------------------------------------------------------------
 
-    template <>
-    struct Matrix<float, 2, 2> : MatrixBase<float, 2, 2>
+    template <typename ScalarType>
+    struct Matrix<ScalarType, 2, 2> : MatrixBase<ScalarType, 2, 2>
     {
-        float32x2 m[2];
+        Vector<ScalarType, 2> m[2];
 
         explicit Matrix()
         {
         }
 
-        explicit Matrix(float32x2 v0, float32x2 v1)
+        explicit Matrix(Vector<ScalarType, 2> v0, Vector<ScalarType, 2> v1)
         {
             m[0] = v0;
             m[1] = v1;
         }
 
-        explicit Matrix(float s0, float s1, float s2, float s3)
+        explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2, ScalarType s3)
         {
-            m[0] = float32x2(s0, s1);
-            m[1] = float32x2(s2, s3);
+            m[0] = Vector<ScalarType, 2>(s0, s1);
+            m[1] = Vector<ScalarType, 2>(s2, s3);
         }
 
         ~Matrix()
         {
         }
 
-        operator float32x2* ()
+        operator Vector<ScalarType, 2>* ()
         {
             return m;
         }
 
-        operator const float32x2* () const
+        operator const Vector<ScalarType, 2>* () const
         {
             return m;
         }
     };
 
-    static inline Matrix<float, 2, 2> operator * (const Matrix<float, 2, 2>& m, float s)
+    template <typename ScalarType>
+    static inline Matrix<ScalarType, 2, 2> operator * (const Matrix<ScalarType, 2, 2>& m, ScalarType s)
     {
-        Matrix<float, 2, 2> result;
+        Matrix<ScalarType, 2, 2> result;
         result[0] = m[0] * s;
         result[1] = m[1] * s;
         return result;
     }
 
-    static inline Vector<float, 2> operator * (const Vector<float, 2>& v, const Matrix<float, 2, 2>& m)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 2> operator * (const Vector<ScalarType, 2>& v, const Matrix<ScalarType, 2, 2>& m)
     {
-        float x = v[0] * m(0, 0) + v[1] * m(1, 0);
-        float y = v[0] * m(0, 1) + v[1] * m(1, 1);
-        return Vector<float, 2>(x, y);
+        ScalarType x = v[0] * m(0, 0) + v[1] * m(1, 0);
+        ScalarType y = v[0] * m(0, 1) + v[1] * m(1, 1);
+        return Vector<ScalarType, 2>(x, y);
     }
 
     // ------------------------------------------------------------------
     // 3x3
     // ------------------------------------------------------------------
 
-    template <>
-    struct Matrix<float, 3, 3> : MatrixBase<float, 3, 3>
+    template <typename ScalarType>
+    struct Matrix<ScalarType, 3, 3> : MatrixBase<ScalarType, 3, 3>
     {
-        float32x3 m[3];
+        Vector<ScalarType, 3> m[3];
 
         explicit Matrix()
         {
         }
 
-        explicit Matrix(float32x3 v0, float32x3 v1, float32x3 v2)
+        explicit Matrix(Vector<ScalarType, 3> v0, Vector<ScalarType, 3> v1, Vector<ScalarType, 3> v2)
         {
             m[0] = v0;
             m[1] = v1;
             m[2] = v2;
         }
 
-        explicit Matrix(float s0, float s1, float s2, float s3, float s4, float s5, float s6, float s7, float s8)
+        explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2, ScalarType s3, ScalarType s4, ScalarType s5, ScalarType s6, ScalarType s7, ScalarType s8)
         {
-            m[0] = float32x3(s0, s1, s2);
-            m[1] = float32x3(s3, s4, s5);
-            m[2] = float32x3(s6, s7, s8);
+            m[0] = Vector<ScalarType, 3>(s0, s1, s2);
+            m[1] = Vector<ScalarType, 3>(s3, s4, s5);
+            m[2] = Vector<ScalarType, 3>(s6, s7, s8);
         }
 
         ~Matrix()
         {
         }
 
-        operator float32x3* ()
+        operator Vector<ScalarType, 3>* ()
         {
             return m;
         }
 
-        operator const float32x3* () const
+        operator const Vector<ScalarType, 3>* () const
         {
             return m;
         }
     };
 
-    static inline Matrix<float, 3, 3> operator * (const Matrix<float, 3, 3>& m, float s)
+    template <typename ScalarType>
+    static inline Matrix<ScalarType, 3, 3> operator * (const Matrix<ScalarType, 3, 3>& m, ScalarType s)
     {
-        Matrix<float, 3, 3> result;
+        Matrix<ScalarType, 3, 3> result;
         result[0] = m[0] * s;
         result[1] = m[1] * s;
         result[2] = m[2] * s;
         return result;
     }
 
-    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix<float, 3, 3>& m)
+    template <typename ScalarType>
+    static inline Vector<ScalarType, 3> operator * (const Vector<ScalarType, 3>& v, const Matrix<ScalarType, 3, 3>& m)
     {
-        float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0);
-        float y = v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1);
-        float z = v[0] * m(0, 2) + v[1] * m(1, 2) + v[2] * m(2, 2);
-        return Vector<float, 3>(x, y, z);
+        ScalarType x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0);
+        ScalarType y = v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1);
+        ScalarType z = v[0] * m(0, 2) + v[1] * m(1, 2) + v[2] * m(2, 2);
+        return Vector<ScalarType, 3>(x, y, z);
     }
 
     // ------------------------------------------------------------------

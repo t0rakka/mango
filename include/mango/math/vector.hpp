@@ -48,6 +48,28 @@ namespace mango
     // scalar variants
     // ------------------------------------------------------------------
 
+    // these will also resolve to overloads later so we don't want to
+    // explicitly use the std variants
+    using std::abs;
+    using std::min;
+    using std::max;
+    using std::sqrt;
+    using std::sin;
+    using std::cos;
+    using std::tan;
+    using std::asin;
+    using std::acos;
+    using std::atan;
+    using std::exp;
+    using std::log;
+    using std::exp2;
+    using std::log2;
+    using std::pow;
+    using std::atan2;
+    using std::round;
+    using std::floor;
+    using std::ceil;
+
 	static inline float sign(float a)
 	{
 		if (a < 0) a = -1.0f;
@@ -557,7 +579,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::abs(a[i]);
+            temp[i] = abs(a[i]);
         }
         return temp;
     }
@@ -568,7 +590,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::min(a[i], b[i]);
+            temp[i] = min(a[i], b[i]);
         }
         return temp;
     }
@@ -579,7 +601,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::max(a[i], b[i]);
+            temp[i] = max(a[i], b[i]);
         }
         return temp;
     }
@@ -614,7 +636,7 @@ namespace mango
         {
             s += a[i] * a[i];
         }
-        return static_cast<ScalarType>(std::sqrt(s));
+        return ScalarType(sqrt(s));
     }
 
     template <typename ScalarType, int VectorSize>
@@ -629,7 +651,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::min(amax[i], std::max(amin[i], a[i]));
+            temp[i] = min(amax[i], max(amin[i], a[i]));
         }
         return temp;
     }
@@ -643,6 +665,12 @@ namespace mango
             temp[i] = a[i] + b[i] * c[i];
         }
         return temp;
+    }
+
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> lerp(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b, const Vector<ScalarType, VectorSize>& factor)
+    {
+        return a + (b - a) * factor;
     }
 
     template <typename ScalarType, int VectorSize>
@@ -690,7 +718,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::sin(a[i]);
+            temp[i] = sin(a[i]);
         }
         return temp;
 	}
@@ -701,7 +729,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::cos(a[i]);
+            temp[i] = cos(a[i]);
         }
         return temp;
 	}
@@ -712,7 +740,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::tan(a[i]);
+            temp[i] = tan(a[i]);
         }
         return temp;
 	}
@@ -723,7 +751,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::asin(a[i]);
+            temp[i] = asin(a[i]);
         }
         return temp;
 	}
@@ -734,7 +762,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::acos(a[i]);
+            temp[i] = acos(a[i]);
         }
         return temp;
 	}
@@ -745,7 +773,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::atan(a[i]);
+            temp[i] = atan(a[i]);
         }
         return temp;
 	}
@@ -756,7 +784,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::exp(a[i]);
+            temp[i] = exp(a[i]);
         }
         return temp;
 	}
@@ -767,7 +795,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::log(a[i]);
+            temp[i] = log(a[i]);
         }
         return temp;
 	}
@@ -778,7 +806,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::exp2(a[i]);
+            temp[i] = exp2(a[i]);
         }
         return temp;
 	}
@@ -789,7 +817,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::log2(a[i]);
+            temp[i] = log2(a[i]);
         }
         return temp;
 	}
@@ -800,7 +828,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::sqrt(a[i]);
+            temp[i] = sqrt(a[i]);
         }
         return temp;
 	}
@@ -811,7 +839,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = 1.0f / std::sqrt(a[i]);
+            temp[i] = ScalarType(1.0f) / sqrt(a[i]);
         }
         return temp;
 	}
@@ -822,7 +850,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::round(a[i]);
+            temp[i] = round(a[i]);
         }
         return temp;
 	}
@@ -833,7 +861,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::floor(a[i]);
+            temp[i] = floor(a[i]);
         }
         return temp;
 	}
@@ -844,7 +872,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::ceil(a[i]);
+            temp[i] = ceil(a[i]);
         }
         return temp;
 	}
@@ -855,7 +883,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = a[i] - std::floor(a[i]);
+            temp[i] = a[i] - floor(a[i]);
         }
         return temp;
 	}
@@ -866,7 +894,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::pow(a[i], b[i]);
+            temp[i] = pow(a[i], b[i]);
         }
         return temp;
 	}
@@ -877,7 +905,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = a[i] - b[i] * std::floor(a[i] / b[i]);
+            temp[i] = a[i] - b[i] * floor(a[i] / b[i]);
         }
         return temp;
 	}
@@ -888,7 +916,7 @@ namespace mango
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = std::atan2(a[i], b[i]);
+            temp[i] = atan2(a[i], b[i]);
         }
         return temp;
 	}
@@ -901,7 +929,7 @@ namespace mango
     static inline ScalarType length(const Vector<ScalarType, 2>& v)
     {
         ScalarType s = square(v);
-        return static_cast<ScalarType>(std::sqrt(s));
+        return static_cast<ScalarType>(sqrt(s));
     }
 
     template <typename ScalarType>
@@ -913,8 +941,7 @@ namespace mango
     template <typename ScalarType>
     static inline Vector<ScalarType, 2> normalize(const Vector<ScalarType, 2>& v)
     {
-        ScalarType s = length(v);
-        if (s) s = ScalarType(1.0) / s;
+        ScalarType s = ScalarType(1.0) / length(v);
         return v * s;
     }
 
@@ -942,7 +969,7 @@ namespace mango
         }
         else
         {
-            p = ScalarType(std::sqrt(p));
+            p = ScalarType(sqrt(p));
         }
         return v * factor - normal * (p + factor * vdotn);
     }
@@ -950,14 +977,14 @@ namespace mango
     template <typename ScalarType>
     static inline Vector<ScalarType, 2> hmin(const Vector<ScalarType, 2>& v)
     {
-        const ScalarType s = std::min(v.x, v.y);
+        const ScalarType s = min(v.x, v.y);
         return Vector<ScalarType, 2>(s);
     }
 
     template <typename ScalarType>
     static inline Vector<ScalarType, 2> hmax(const Vector<ScalarType, 2>& v)
     {
-        const ScalarType s = std::max(v.x, v.y);
+        const ScalarType s = max(v.x, v.y);
         return Vector<ScalarType, 2>(s);
     }
 
@@ -978,7 +1005,7 @@ namespace mango
     static inline ScalarType length(const Vector<ScalarType, 3>& v)
     {
         ScalarType s = square(v);
-        return static_cast<ScalarType>(std::sqrt(s));
+        return ScalarType(sqrt(s));
     }
 
     template <typename ScalarType>
@@ -990,8 +1017,7 @@ namespace mango
     template <typename ScalarType>
     static inline Vector<ScalarType, 3> normalize(const Vector<ScalarType, 3>& v)
     {
-        ScalarType s = length(v);
-        if (s) s = ScalarType(1.0) / s;
+        ScalarType s = ScalarType(1.0) / length(v);
         return v * s;
     }
 
@@ -1019,7 +1045,7 @@ namespace mango
         }
         else
         {
-            p = ScalarType(std::sqrt(p));
+            p = ScalarType(sqrt(p));
         }
         return v * factor - normal * (p + factor * vdotn);
     }
@@ -1027,14 +1053,14 @@ namespace mango
     template <typename ScalarType>
     static inline Vector<ScalarType, 3> hmin(const Vector<ScalarType, 3>& v)
     {
-        const ScalarType s = std::min(std::min(v.x, v.y), v.z);
+        const ScalarType s = min(min(v.x, v.y), v.z);
         return Vector<ScalarType, 3>(s);
     }
 
     template <typename ScalarType>
     static inline Vector<ScalarType, 3> hmax(const Vector<ScalarType, 3>& v)
     {
-        const ScalarType s = std::max(std::max(v.x, v.y), v.z);
+        const ScalarType s = max(max(v.x, v.y), v.z);
         return Vector<ScalarType, 3>(s);
     }
 
