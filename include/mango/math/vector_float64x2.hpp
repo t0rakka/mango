@@ -294,9 +294,9 @@ namespace mango
         return simd::min(a, b);
     }
 
-    static inline Vector<double, 2> clamp(Vector<double, 2> a, Vector<double, 2> amin, Vector<double, 2> amax)
+    static inline Vector<double, 2> clamp(Vector<double, 2> a, Vector<double, 2> low, Vector<double, 2> high)
     {
-        return simd::clamp(a, amin, amax);
+        return simd::clamp(a, low, high);
     }
 
     static inline Vector<double, 2> madd(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> c)

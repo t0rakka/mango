@@ -274,10 +274,10 @@ namespace mango
         return a.x * b.x + a.y * b.y;
     }
 
-    static inline Vector<float, 2> clamp(const Vector<float, 2>& a, const Vector<float, 2>& amin, const Vector<float, 2>& amax)
+    static inline Vector<float, 2> clamp(const Vector<float, 2>& a, const Vector<float, 2>& low, const Vector<float, 2>& high)
     {
-        const float x = std::max(amin.x, std::min(amax.x, a.x));
-        const float y = std::max(amin.y, std::min(amax.y, a.y));
+        const float x = std::max(low.x, std::min(high.x, a.x));
+        const float y = std::max(low.y, std::min(high.y, a.y));
         return Vector<float, 2>(x, y);
     }
 

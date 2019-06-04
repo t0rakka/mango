@@ -474,9 +474,9 @@ namespace mango
         return simd::max(a, b);
     }
 
-    static inline Vector<s32, 4> clamp(Vector<s32, 4> a, Vector<s32, 4> amin, Vector<s32, 4> amax)
+    static inline Vector<s32, 4> clamp(Vector<s32, 4> a, Vector<s32, 4> low, Vector<s32, 4> high)
     {
-        return simd::clamp(a, amin, amax);
+        return simd::clamp(a, low, high);
     }
 
     static inline mask32x4 operator > (Vector<s32, 4> a, Vector<s32, 4> b)

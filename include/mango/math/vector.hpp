@@ -603,12 +603,12 @@ namespace mango
     }
 
     template <typename ScalarType, int VectorSize>
-    static inline const Vector<ScalarType, VectorSize> clamp(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& amin, const Vector<ScalarType, VectorSize>& amax)
+    static inline const Vector<ScalarType, VectorSize> clamp(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& low, const Vector<ScalarType, VectorSize>& high)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = min(amax[i], max(amin[i], a[i]));
+            temp[i] = max(low[i], min(high[i], a[i]));
         }
         return temp;
     }

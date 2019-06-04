@@ -253,9 +253,9 @@ namespace mango
         return simd::max(a, b);
     }
 
-    static inline Vector<float, 16> clamp(Vector<float, 16> a, Vector<float, 16> amin, Vector<float, 16> amax)
+    static inline Vector<float, 16> clamp(Vector<float, 16> a, Vector<float, 16> low, Vector<float, 16> high)
     {
-        return simd::max(amin, simd::min(amax, a));
+        return simd::max(low, simd::min(high, a));
     }
 
     static inline Vector<float, 16> madd(Vector<float, 16> a, Vector<float, 16> b, Vector<float, 16> c)

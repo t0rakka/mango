@@ -689,9 +689,9 @@ namespace mango
         return simd::mod(a, b);
     }
 
-    static inline Vector<float, 4> clamp(Vector<float, 4> a, Vector<float, 4> amin, Vector<float, 4> amax)
+    static inline Vector<float, 4> clamp(Vector<float, 4> a, Vector<float, 4> low, Vector<float, 4> high)
     {
-        return simd::clamp(a, amin, amax);
+        return simd::clamp(a, low, high);
     }
 
     static inline Vector<float, 4> madd(Vector<float, 4> a, Vector<float, 4> b, Vector<float, 4> c)

@@ -193,9 +193,9 @@ namespace mango
         return simd::max(a, b);
     }
 
-    static inline Vector<u16, 8> clamp(Vector<u16, 8> a, Vector<u16, 8> amin, Vector<u16, 8> amax)
+    static inline Vector<u16, 8> clamp(Vector<u16, 8> a, Vector<u16, 8> low, Vector<u16, 8> high)
     {
-        return simd::clamp(a, amin, amax);
+        return simd::clamp(a, low, high);
     }
 
     static inline mask16x8 operator > (Vector<u16, 8> a, Vector<u16, 8> b)
