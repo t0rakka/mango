@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     This work is based on "SLEEF" library and converted to use MANGO SIMD abstraction
@@ -25,84 +25,86 @@ namespace fp32 {
     constexpr float float_l2u   = 0.693145751953125f;
     constexpr float float_l2l   = 1.428606765330187045e-06f;
 
-    template <typename FloatVector>
-    inline FloatVector signbit(FloatVector f)
+    // utility functions
+
+    template <typename F>
+    inline F signbit(F f)
     {
-        return f & FloatVector(-0.0f);
+        return f & F(-0.0f);
     }
 
-    template <typename FloatVector>
-    inline FloatVector mulsign(FloatVector x, FloatVector y)
+    template <typename F>
+    inline F mulsign(F x, F y)
     {
         return x ^ signbit(y);
     }
 
-    template <typename FloatVector, typename IntVector>
-    inline FloatVector is_nan(FloatVector d)
+    template <typename F, typename I>
+    inline F is_nan(F d)
     {
         const auto mask = d != d;
-        return select(mask, reinterpret<FloatVector>(IntVector(0xffffffff)), FloatVector(0.0f));
+        return select(mask, reinterpret<F>(I(0xffffffff)), F(0.0f));
     }
 
-    template <typename FloatVector, typename IntVector>
-    inline FloatVector is_inf(FloatVector d)
+    template <typename F, typename I>
+    inline F is_inf(F d)
     {
-        const auto mask = abs(d) == FloatVector(float_r_inf);
-        return select(mask, reinterpret<FloatVector>(IntVector(0xffffffff)), FloatVector(0.0f));
+        const auto mask = abs(d) == F(float_r_inf);
+        return select(mask, reinterpret<F>(I(0xffffffff)), F(0.0f));
     }
 
-    template <typename FloatVector, typename IntVector>
-    inline FloatVector is_inf2(FloatVector d, FloatVector m)
+    template <typename F, typename I>
+    inline F is_inf2(F d, F m)
     {
-        return is_inf<FloatVector, IntVector>(d) & (signbit(d) | m);
+        return is_inf<F, I>(d) & (signbit(d) | m);
     }
 
-    template <typename FloatVector, typename IntVector>
-    inline FloatVector is_negative_inf(FloatVector d)
+    template <typename F, typename I>
+    inline F is_negative_inf(F d)
     {
-        const auto mask = d == FloatVector(-float_r_inf);
-        return select(mask, reinterpret<FloatVector>(IntVector(0xffffffff)), FloatVector(0.0f));
+        const auto mask = d == F(-float_r_inf);
+        return select(mask, reinterpret<F>(I(0xffffffff)), F(0.0f));
     }
 
-    template <typename FloatVector>
-    inline FloatVector signed_one(FloatVector f)
+    template <typename F>
+    inline F signed_one(F f)
     {
-        return FloatVector(1.0f) | signbit(f);
+        return F(1.0f) | signbit(f);
     }
 
-    template <typename FloatVector, typename IntVector>
-    inline FloatVector ldexp(FloatVector x, IntVector q)
+    template <typename F, typename I>
+    inline F ldexp(F x, I q)
     {
-        IntVector m = simd::srai(q, 31);
+        I m = simd::srai(q, 31);
         m = simd::slli(simd::srai(m + q, 6) - m, 4);
         q = q - simd::slli(m, 2);
         m = m + 0x7f;
 
-        m = max(m, IntVector(0));
-        m = min(m, IntVector(0xff));
+        m = max(m, I(0));
+        m = min(m, I(0xff));
 
-        FloatVector u;
-        u = reinterpret<FloatVector>(simd::slli(m, 23));
+        F u;
+        u = reinterpret<F>(simd::slli(m, 23));
         x = x * u * u * u * u;
-        u = reinterpret<FloatVector>(simd::slli(q + 0x7f, 23));
+        u = reinterpret<F>(simd::slli(q + 0x7f, 23));
         return x * u;
     }
 
-    template <typename FloatVector, typename IntVector>
-    inline FloatVector atan2kf(FloatVector b, FloatVector a)
+    template <typename F, typename I>
+    inline F atan2kf(F b, F a)
     {
-        IntVector q = select(a < 0.0f, IntVector(-2), IntVector(0));
-        FloatVector x = abs(a);
-        FloatVector y = b;
+        I q = select(a < 0.0f, I(-2), I(0));
+        F x = abs(a);
+        F y = b;
 
         q = select(x < y, q + 1, q);
-        FloatVector s = select(x < y, -x, y);
-        FloatVector t = max(x, y);
+        F s = select(x < y, -x, y);
+        F t = max(x, y);
 
         s = s / t;
         t = s * s;
 
-        FloatVector u(0.00282363896258175373077393f);
+        F u(0.00282363896258175373077393f);
         u = madd(-0.0159569028764963150024414f, u, t);
         u = madd( 0.0425049886107444763183594f, u, t);
         u = madd(-0.0748900920152664184570312f, u, t);
@@ -112,16 +114,18 @@ namespace fp32 {
         u = madd(-0.333331018686294555664062f, u, t);
 
         t = madd(s, s, t * u);
-        t = madd(t, convert<FloatVector>(q), FloatVector(float_pi_2));
+        t = madd(t, convert<F>(q), F(float_pi_2));
 
         return t;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector sin(FloatVector d)
+    // API
+
+    template <typename F, typename I>
+    F sin(F d)
     {
-        IntVector q = convert<IntVector>(d * float_1_pi);
-        FloatVector u = convert<FloatVector>(q);
+        I q = convert<I>(d * float_1_pi);
+        F u = convert<F>(q);
 
         d = madd(d, u, -4.0f * float_pi4_a);
         d = madd(d, u, -4.0f * float_pi4_b);
@@ -130,22 +134,22 @@ namespace fp32 {
 
         d = select((q & 1) == 1, -d, d);
 
-        const FloatVector s = d * d;
-        u = FloatVector(2.6083159809786593541503e-06f);
+        const F s = d * d;
+        u = F(2.6083159809786593541503e-06f);
         u = madd(-0.0001981069071916863322258f, u, s);
         u = madd(0.00833307858556509017944336f, u, s);
         u = madd(-0.166666597127914428710938f, u, s);
         u = madd(d, s, u * d);
-        u = is_inf<FloatVector, IntVector>(d) | u;
+        u = is_inf<F, I>(d) | u;
         return u;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector cos(FloatVector d)
+    template <typename F, typename I>
+    F cos(F d)
     {
-        IntVector q = convert<IntVector>(madd(FloatVector(-0.5f), d, float_1_pi));
+        I q = convert<I>(madd(F(-0.5f), d, float_1_pi));
         q = q + q + 1;
-        FloatVector u = convert<FloatVector>(q);
+        F u = convert<F>(q);
 
         d = madd(d, u, -2.0f * float_pi4_a);
         d = madd(d, u, -2.0f * float_pi4_b);
@@ -154,33 +158,33 @@ namespace fp32 {
 
         d = select((q & 2) == 0, -d, d);
 
-        const FloatVector s = d * d;
-        u = FloatVector(2.6083159809786593541503e-06f);
+        const F s = d * d;
+        u = F(2.6083159809786593541503e-06f);
         u = madd(-0.0001981069071916863322258f, u, s);
         u = madd(0.00833307858556509017944336f, u, s);
         u = madd(-0.166666597127914428710938f, u, s);
         u = madd(d, s, u * d);
-        u = is_inf<FloatVector, IntVector>(d) | u;
+        u = is_inf<F, I>(d) | u;
         return u;
     }
 
-    template <typename FloatVector, typename IntVector, typename Mask>
-    FloatVector tan(FloatVector d)
+    template <typename F, typename I, typename Mask>
+    F tan(F d)
     {
-        const IntVector q = convert<IntVector>(d * float_2_pi);
+        const I q = convert<I>(d * float_2_pi);
 
-        FloatVector x = d;
-        FloatVector u = convert<FloatVector>(q);
+        F x = d;
+        F u = convert<F>(q);
         x = madd(x, u, -2.0f * float_pi4_a);
         x = madd(x, u, -2.0f * float_pi4_b);
         x = madd(x, u, -2.0f * float_pi4_c);
         x = madd(x, u, -2.0f * float_pi4_d);
 
-        const FloatVector s = x * x;
+        const F s = x * x;
         const Mask mask = (q & 1) == 1;
         x = select(mask, -x, x);
 
-        u = FloatVector(0.00927245803177356719970703f);
+        u = F(0.00927245803177356719970703f);
         u = madd(0.00331984995864331722259521f, u, s);
         u = madd(0.0242998078465461730957031f, u, s);
         u = madd(0.0534495301544666290283203f, u, s);
@@ -188,21 +192,21 @@ namespace fp32 {
         u = madd(0.333331853151321411132812f, u, s);
         u = madd(x, s, u * x);
         u = select(mask, 1.0f / u, u);
-        u = is_inf<FloatVector, IntVector>(d) | u;
+        u = is_inf<F, I>(d) | u;
         return u;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector exp(FloatVector v)
+    template <typename F, typename I>
+    F exp(F v)
     {
-        const IntVector q = convert<IntVector>(v * float_r_ln2);
-        const FloatVector p = convert<FloatVector>(q);
+        const I q = convert<I>(v * float_r_ln2);
+        const F p = convert<F>(q);
 
-        FloatVector s;
+        F s;
         s = madd(v, p, -float_l2u);
         s = madd(s, p, -float_l2l);
 
-        FloatVector u(0.00136324646882712841033936f);
+        F u(0.00136324646882712841033936f);
         u = madd(0.00836596917361021041870117f, u, s);
         u = madd(0.0416710823774337768554688f, u, s);
         u = madd(0.166665524244308471679688f, u, s);
@@ -210,98 +214,98 @@ namespace fp32 {
 
         u = madd(s, s * s, u) + 1.0f;
         u = ldexp(u, q);
-        u = nand(is_negative_inf<FloatVector, IntVector>(v), u);
+        u = nand(is_negative_inf<F, I>(v), u);
 
         return u;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector exp2(FloatVector v)
+    template <typename F, typename I>
+    F exp2(F v)
     {
-        const FloatVector fx = v + reinterpret<FloatVector>(nand(simd::srai(convert<IntVector>(v), 31), 0x3f7fffff));
-        const IntVector ix = truncate<IntVector>(fx);
-        FloatVector f = (convert<FloatVector>(ix) - v) * 0.69314718055994530942f;
-        FloatVector hi = madd(0.0013298820f, f, FloatVector(-0.0001413161f));
-        FloatVector lo = madd(0.4999999206f, f, FloatVector(-0.1666653019f));
+        const F fx = v + reinterpret<F>(nand(simd::srai(convert<I>(v), 31), 0x3f7fffff));
+        const I ix = truncate<I>(fx);
+        F f = (convert<F>(ix) - v) * 0.69314718055994530942f;
+        F hi = madd(0.0013298820f, f, F(-0.0001413161f));
+        F lo = madd(0.4999999206f, f, F(-0.1666653019f));
         hi = madd(-0.0083013598f, f, hi);
         hi = madd(0.0416573475f, f, hi);
         lo = madd(-0.9999999995f, f, lo);
         lo = madd(1.0f, f, lo);
-        FloatVector f2 = f * f;
-        FloatVector a = f2 * f2 * hi + lo;
-        IntVector xxx = select(ix > -128, IntVector(0xffffffff), IntVector(0));
-        FloatVector b = reinterpret<FloatVector>(simd::slli((ix + 127), 23) & xxx);
-        IntVector mask = select(ix > 128, IntVector(0x7fffffff), IntVector(0));
-        return (a * b) | reinterpret<FloatVector>(mask);
+        F f2 = f * f;
+        F a = f2 * f2 * hi + lo;
+        I xxx = select(ix > -128, I(0xffffffff), I(0));
+        F b = reinterpret<F>(simd::slli((ix + 127), 23) & xxx);
+        I mask = select(ix > 128, I(0x7fffffff), I(0));
+        return (a * b) | reinterpret<F>(mask);
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector log2(FloatVector v)
+    template <typename F, typename I>
+    F log2(F v)
     {
-        const IntVector exponent = simd::srli(reinterpret<IntVector>(v) & 0x7fffffff, 23) - 127;
-        const FloatVector x = reinterpret<FloatVector>(reinterpret<IntVector>(v) - simd::slli(exponent, 23)) - 1.0f;
-        const FloatVector x2 = x * x;
-        const FloatVector x4 = x2 * x2;
-        FloatVector hi(-0.00931049621349f);
-        FloatVector lo( 0.47868480909345f);
+        const I exponent = simd::srli(reinterpret<I>(v) & 0x7fffffff, 23) - 127;
+        const F x = reinterpret<F>(reinterpret<I>(v) - simd::slli(exponent, 23)) - 1.0f;
+        const F x2 = x * x;
+        const F x4 = x2 * x2;
+        F hi(-0.00931049621349f);
+        F lo( 0.47868480909345f);
         hi = madd( 0.05206469089414f, x, hi);
         lo = madd(-0.72116591947498f, x, lo);
         hi = madd(-0.13753123777116f, x, hi);
         hi = madd( 0.24187369696082f, x, hi);
         hi = madd(-0.34730547155299f, x, hi);
         lo = madd(1.442689881667200f, x, lo);
-        const FloatVector u = madd(convert<FloatVector>(exponent), x, lo);
+        const F u = madd(convert<F>(exponent), x, lo);
         return madd(u, x4, hi);
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector asin(FloatVector d)
+    template <typename F, typename I>
+    F asin(F d)
     {
-        const FloatVector one(1.0f);
-        FloatVector x, y;
+        const F one(1.0f);
+        F x, y;
         x = one + d;
         y = one - d;
         x = x * y;
         x = sqrt(x);
-        x = is_nan<FloatVector, IntVector>(x) | atan2kf<FloatVector, IntVector>(abs(d), x);
+        x = is_nan<F, I>(x) | atan2kf<F, I>(abs(d), x);
         return mulsign(x, d);
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector acos(FloatVector d)
+    template <typename F, typename I>
+    F acos(F d)
     {
-        const FloatVector zero(0.0f);
-        const FloatVector one(1.0f);
+        const F zero(0.0f);
+        const F one(1.0f);
 
-        FloatVector x, y;
+        F x, y;
         x = one + d;
         y = one - d;
         x = x * y;
         x = sqrt(x);
 
-        FloatVector absd = abs(d);
-        x = mulsign<FloatVector>(atan2kf<FloatVector, IntVector>(x, absd), d);
-        y = select(d < zero, FloatVector(float_pi), zero);
+        F absd = abs(d);
+        x = mulsign<F>(atan2kf<F, I>(x, absd), d);
+        y = select(d < zero, F(float_pi), zero);
         return x + y;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector atan(FloatVector d)
+    template <typename F, typename I>
+    F atan(F d)
     {
-        const FloatVector zero(0.0f);
-        const FloatVector one(1.0f);
+        const F zero(0.0f);
+        const F one(1.0f);
 
-        const IntVector i1 = 1;
-        const IntVector i2 = i1 + i1;
+        const I i1 = 1;
+        const I i2 = i1 + i1;
 
-        IntVector q = select(d < zero, i2, 0);
-        FloatVector s = abs(d);
+        I q = select(d < zero, i2, 0);
+        F s = abs(d);
 
         q = select(one < s, q + i1, q);
         s = select(one < s, 1.0f / s, s);
 
-        FloatVector t = s * s;
-        FloatVector u = FloatVector(0.00282363896258175373077393f);
+        F t = s * s;
+        F u = F(0.00282363896258175373077393f);
         u = madd(-0.0159569028764963150024414f, u, t);
         u = madd( 0.0425049886107444763183594f, u, t);
         u = madd(-0.0748900920152664184570312f, u, t);
@@ -311,32 +315,32 @@ namespace fp32 {
         u = madd(-0.333331018686294555664062f, u, t);
         t = madd(s, s, t * u);
 
-        t = select((q & i1) == i1, FloatVector(float_pi_2) - t, t);
+        t = select((q & i1) == i1, F(float_pi_2) - t, t);
         t = select((q & i2) == i2, -t, t);
         return t;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector atan2(FloatVector y, FloatVector x)
+    template <typename F, typename I>
+    F atan2(F y, F x)
     {
-        static const FloatVector pi(float_pi);
-        static const FloatVector pi_2(float_pi_2);
-        static const FloatVector pi_4(float_pi_4);
+        const F pi(float_pi);
+        const F pi_2(float_pi_2);
+        const F pi_4(float_pi_4);
 
-        FloatVector r = atan2kf<FloatVector, IntVector>(abs(y), x);
-        r = mulsign<FloatVector>(r, x);
-        r = select(abs(x) == float_r_inf, pi_2 - is_inf2<FloatVector, IntVector>(x, mulsign<FloatVector>(pi_2, x)), r);
-        r = select(abs(y) == float_r_inf, pi_2 - is_inf2<FloatVector, IntVector>(x, mulsign<FloatVector>(pi_4, x)), r);
-        r = select(y == 0.0f, select(signed_one(x) == -1.0f, pi, FloatVector(0.0f)), r);
-        r = is_nan<FloatVector, IntVector>(x) | is_nan<FloatVector, IntVector>(y) | mulsign(r, y);
+        F r = atan2kf<F, I>(abs(y), x);
+        r = mulsign<F>(r, x);
+        r = select(abs(x) == float_r_inf, pi_2 - is_inf2<F, I>(x, mulsign<F>(pi_2, x)), r);
+        r = select(abs(y) == float_r_inf, pi_2 - is_inf2<F, I>(x, mulsign<F>(pi_4, x)), r);
+        r = select(y == 0.0f, select(signed_one(x) == -1.0f, pi, F(0.0f)), r);
+        r = is_nan<F, I>(x) | is_nan<F, I>(y) | mulsign(r, y);
         return r;
     }
 
-    template <typename FloatVector, typename IntVector>
-    FloatVector pow(FloatVector a, FloatVector b)
+    template <typename F, typename I>
+    F pow(F a, F b)
     {
-        FloatVector temp = log2<FloatVector, IntVector>(abs(a)) * b;
-        return exp2<FloatVector, IntVector>(temp);
+        F temp = log2<F, I>(abs(a)) * b;
+        return exp2<F, I>(temp);
     }
 
 } // namespace fp32
