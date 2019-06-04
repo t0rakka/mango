@@ -83,6 +83,7 @@ namespace mango
 			y = v.y;
         }
 
+#if 0
         template <int X, int Y>
         Vector(const ShuffleAccessor2<X, Y>& p)
         {
@@ -99,6 +100,7 @@ namespace mango
 			y = v[Y];
             return *this;
         }
+#endif
 
         Vector& operator = (float s)
         {

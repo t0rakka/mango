@@ -119,9 +119,27 @@ namespace mango
         return (c0 << 24) | (c1 << 16) | (c2 << 8) | c3;
     }
 
-    // ----------------------------------------------------------------------------
-    // misc
-    // ----------------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // scalar variants
+    // ------------------------------------------------------------------
+
+    using std::abs;
+    using std::sqrt;
+    using std::sin;
+    using std::cos;
+    using std::tan;
+    using std::asin;
+    using std::acos;
+    using std::atan;
+    using std::exp;
+    using std::log;
+    using std::exp2;
+    using std::log2;
+    using std::pow;
+    using std::atan2;
+    using std::round;
+    using std::floor;
+    using std::ceil;
 
     template <typename T>
     static inline T min(T a, T b)
@@ -140,6 +158,43 @@ namespace mango
     {
         return std::min(high, std::max(low, value));
     }
+
+    template <typename T>
+    static inline T lerp(T a, T b, T t)
+    {
+        return a + (b - a) * t;
+    }
+
+    template <typename T>
+    static inline T smoothstep(T a, T b, T t)
+    {
+        t = clamp((t - a) / (b - a), T(0.0), T(1.0));
+        return t * t * (T(3.0) - T(2.0) * t);
+    }
+
+    template <typename T>
+	static inline T sign(T a)
+	{
+		if (a < 0) a = -T(1.0);
+		else if (a > 0) a = T(1.0);
+		return a;
+	}
+
+    template <typename T>
+	static inline T radians(T a)
+	{
+        return a * T(0.01745329251);
+	}
+
+    template <typename T>
+	static inline T degrees(T a)
+	{
+        return a * T(57.2957795131);
+	}
+
+    // ----------------------------------------------------------------------------
+    // misc
+    // ----------------------------------------------------------------------------
 
 #if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_CLANG)
 

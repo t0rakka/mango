@@ -45,49 +45,6 @@ namespace mango
 {
 
     // ------------------------------------------------------------------
-    // scalar variants
-    // ------------------------------------------------------------------
-
-    // these will also resolve to overloads later so we don't want to
-    // explicitly use the std variants
-    using std::abs;
-    using std::min;
-    using std::max;
-    using std::sqrt;
-    using std::sin;
-    using std::cos;
-    using std::tan;
-    using std::asin;
-    using std::acos;
-    using std::atan;
-    using std::exp;
-    using std::log;
-    using std::exp2;
-    using std::log2;
-    using std::pow;
-    using std::atan2;
-    using std::round;
-    using std::floor;
-    using std::ceil;
-
-	static inline float sign(float a)
-	{
-		if (a < 0) a = -1.0f;
-		else if (a > 0) a = 1.0f;
-		return a;
-	}
-
-	constexpr static inline float radians(float a)
-	{
-        return a * 0.01745329251f;
-	}
-
-	constexpr static inline float degrees(float a)
-	{
-        return a * 57.2957795131f;
-	}
-
-    // ------------------------------------------------------------------
     // Vector
     // ------------------------------------------------------------------
 

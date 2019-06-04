@@ -145,6 +145,7 @@ namespace mango
 			z = v.z;
         }
 
+#if 0
         template <int X, int Y, int Z>
         Vector(const ShuffleAccessor3<X, Y, Z>& p)
         {
@@ -163,6 +164,7 @@ namespace mango
 			z = v[Z];
             return *this;
         }
+#endif
 
         Vector& operator = (float s)
         {

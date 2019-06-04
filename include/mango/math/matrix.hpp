@@ -119,18 +119,17 @@ namespace mango
     template <typename ScalarType>
     static inline Matrix<ScalarType, 2, 2> operator * (const Matrix<ScalarType, 2, 2>& m, ScalarType s)
     {
-        Matrix<ScalarType, 2, 2> result;
-        result[0] = m[0] * s;
-        result[1] = m[1] * s;
-        return result;
+        return Matrix<ScalarType, 2, 2>(
+            m[0] * s,
+            m[1] * s);
     }
 
     template <typename ScalarType>
     static inline Vector<ScalarType, 2> operator * (const Vector<ScalarType, 2>& v, const Matrix<ScalarType, 2, 2>& m)
     {
-        ScalarType x = v[0] * m(0, 0) + v[1] * m(1, 0);
-        ScalarType y = v[0] * m(0, 1) + v[1] * m(1, 1);
-        return Vector<ScalarType, 2>(x, y);
+        return Vector<ScalarType, 2>(
+            v[0] * m(0, 0) + v[1] * m(1, 0),
+            v[0] * m(0, 1) + v[1] * m(1, 1));
     }
 
     // ------------------------------------------------------------------
@@ -178,20 +177,19 @@ namespace mango
     template <typename ScalarType>
     static inline Matrix<ScalarType, 3, 3> operator * (const Matrix<ScalarType, 3, 3>& m, ScalarType s)
     {
-        Matrix<ScalarType, 3, 3> result;
-        result[0] = m[0] * s;
-        result[1] = m[1] * s;
-        result[2] = m[2] * s;
-        return result;
+        return Matrix<ScalarType, 3, 3>(
+            m[0] * s,
+            m[1] * s,
+            m[2] * s);
     }
 
     template <typename ScalarType>
     static inline Vector<ScalarType, 3> operator * (const Vector<ScalarType, 3>& v, const Matrix<ScalarType, 3, 3>& m)
     {
-        ScalarType x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0);
-        ScalarType y = v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1);
-        ScalarType z = v[0] * m(0, 2) + v[1] * m(1, 2) + v[2] * m(2, 2);
-        return Vector<ScalarType, 3>(x, y, z);
+        return Vector<ScalarType, 3>(
+            v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0),
+            v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1),
+            v[0] * m(0, 2) + v[1] * m(1, 2) + v[2] * m(2, 2));
     }
 
     // ------------------------------------------------------------------
