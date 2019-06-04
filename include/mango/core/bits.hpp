@@ -123,23 +123,108 @@ namespace mango
     // scalar variants
     // ------------------------------------------------------------------
 
-    using std::abs;
-    using std::sqrt;
-    using std::sin;
-    using std::cos;
-    using std::tan;
-    using std::asin;
-    using std::acos;
-    using std::atan;
-    using std::exp;
-    using std::log;
-    using std::exp2;
-    using std::log2;
-    using std::pow;
-    using std::atan2;
-    using std::round;
-    using std::floor;
-    using std::ceil;
+    template <typename T>
+    static inline T abs(T a)
+    {
+        return std::abs(a);
+    }
+
+    template <typename T>
+    static inline T sqrt(T a)
+    {
+        return std::sqrt(a);
+    }
+
+    template <typename T>
+    static inline T sin(T a)
+    {
+        return std::sin(a);
+    }
+
+    template <typename T>
+    static inline T cos(T a)
+    {
+        return std::cos(a);
+    }
+
+    template <typename T>
+    static inline T tan(T a)
+    {
+        return std::tan(a);
+    }
+
+    template <typename T>
+    static inline T asin(T a)
+    {
+        return std::asin(a);
+    }
+
+    template <typename T>
+    static inline T acos(T a)
+    {
+        return std::acos(a);
+    }
+
+    template <typename T>
+    static inline T atan(T a)
+    {
+        return std::atan(a);
+    }
+
+    template <typename T>
+    static inline T exp(T a)
+    {
+        return std::exp(a);
+    }
+
+    template <typename T>
+    static inline T log(T a)
+    {
+        return std::log(a);
+    }
+
+    template <typename T>
+    static inline T exp2(T a)
+    {
+        return std::exp2(a);
+    }
+
+    template <typename T>
+    static inline T log2(T a)
+    {
+        return std::log2(a);
+    }
+
+    template <typename T>
+    static inline T pow(T a, T b)
+    {
+        return std::pow(a, b);
+    }
+
+    template <typename T>
+    static inline T atan2(T a, T b)
+    {
+        return std::atan2(a, b);
+    }
+
+    template <typename T>
+    static inline T round(T a)
+    {
+        return std::round(a);
+    }
+
+    template <typename T>
+    static inline T floor(T a)
+    {
+        return std::floor(a);
+    }
+
+    template <typename T>
+    static inline T ceil(T a)
+    {
+        return std::ceil(a);
+    }
+
 
     template <typename T>
     static inline T min(T a, T b)
