@@ -136,12 +136,8 @@ It's magic, but multiplying any value in the src format by this scale will yield
 #### TODO
 Features currently being worked on or considered for future roadmap:
 - OpenEXR decompressor / compressor
-- More fileformats as external library?
-- Fun Commodore64/ATARI legacy fileformat plugin we used to have in older version of the library
 - Improved blitter
 - Rewrite some of the Intel specific SIMD code to be more portable (ARM NEON specificly)
-- Remove exceptions?
-- Complete security overhaul
 - Memory leak audit: strenghten the code against thrown exceptions with RAII applied for dynamic allocations
-- More Short Vector Math specializations - the SIMD back-end is now much richer in functionality
+- More Short Vector Math specializations (at least everything supported in mango::simd)
 - Re-introduce the LLVM SIMD as external library?
