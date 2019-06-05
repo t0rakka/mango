@@ -11,6 +11,8 @@
 namespace mango {
 namespace fp32 {
 
+    // constants
+
     constexpr float float_pi    = 3.14159265358979323846f;
     constexpr float float_pi_2  = 1.57079632679489661923f;
     constexpr float float_pi_4  = 0.785398163397448309616f;
@@ -345,6 +347,188 @@ namespace fp32 {
 
 } // namespace fp32
 
+#if 0
+
+namespace fp64 {
+
+    // constants
+
+    //constexpr double double_pi    = 3.14159265358979323846;
+    //constexpr double double_pi_2  = 1.57079632679489661923;
+    //constexpr double double_pi_4  = 0.785398163397448309616;
+    constexpr double double_1_pi  = 0.318309886183790671538;
+    //constexpr double double_2_pi  = 0.636619772367581343076;
+    constexpr double double_pi4_a = 0.78539816290140151978;
+    constexpr double double_pi4_b = 4.9604678871439933374e-10;
+    constexpr double double_pi4_c = 1.1258708853173288931e-18;
+    constexpr double double_pi4_d = 1.7607799325916000908e-27;
+    //constexpr double double_r_ln2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
+    constexpr double double_r_inf = double(std::numeric_limits<double>::infinity());
+    //constexpr double double_l2u   = 0.693145751953125;
+    //constexpr double double_l2l   = 1.428606765330187045e-06;
+
+    // utility functions
+
+    /*
+    template <typename F>
+    inline F signbit(F f)
+    {
+        return f & F(-0.0f);
+    }
+
+    template <typename F>
+    inline F mulsign(F x, F y)
+    {
+        return x ^ signbit(y);
+    }
+    */
+
+    template <typename F, typename I>
+    inline F is_nan(F d)
+    {
+        const auto mask = d != d;
+        return select(mask, reinterpret<F>(I(0xffffffffffffffff)), F(0.0));
+    }
+
+    template <typename F, typename I>
+    inline F is_inf(F d)
+    {
+        const auto mask = abs(d) == F(double_r_inf);
+        return select(mask, reinterpret<F>(I(0xffffffffffffffff)), F(0.0));
+    }
+
+    /*
+    template <typename F, typename I>
+    inline F is_inf2(F d, F m)
+    {
+        return is_inf<F, I>(d) & (signbit(d) | m);
+    }
+
+    template <typename F, typename I>
+    inline F is_negative_inf(F d)
+    {
+        const auto mask = d == F(-float_r_inf);
+        return select(mask, reinterpret<F>(I(0xffffffff)), F(0.0f));
+    }
+
+    template <typename F>
+    inline F signed_one(F f)
+    {
+        return F(1.0f) | signbit(f);
+    }
+
+    template <typename F, typename I>
+    inline F ldexp(F x, I q)
+    {
+        I m = simd::srai(q, 31);
+        m = simd::slli(simd::srai(m + q, 6) - m, 4);
+        q = q - simd::slli(m, 2);
+        m = m + 0x7f;
+
+        m = max(m, I(0));
+        m = min(m, I(0xff));
+
+        F u;
+        u = reinterpret<F>(simd::slli(m, 23));
+        x = x * u * u * u * u;
+        u = reinterpret<F>(simd::slli(q + 0x7f, 23));
+        return x * u;
+    }
+
+    template <typename F, typename I>
+    inline F atan2kf(F b, F a)
+    {
+        I q = select(a < 0.0f, I(-2), I(0));
+        F x = abs(a);
+        F y = b;
+
+        q = select(x < y, q + 1, q);
+        F s = select(x < y, -x, y);
+        F t = max(x, y);
+
+        s = s / t;
+        t = s * s;
+
+        F u(0.00282363896258175373077393f);
+        u = madd(-0.0159569028764963150024414f, u, t);
+        u = madd( 0.0425049886107444763183594f, u, t);
+        u = madd(-0.0748900920152664184570312f, u, t);
+        u = madd( 0.106347933411598205566406f, u, t);
+        u = madd(-0.142027363181114196777344f, u, t);
+        u = madd( 0.199926957488059997558594f, u, t);
+        u = madd(-0.333331018686294555664062f, u, t);
+
+        t = madd(s, s, t * u);
+        t = madd(t, convert<F>(q), F(float_pi_2));
+
+        return t;
+    }
+    */
+
+    // API
+
+    template <typename F, typename I>
+    F sin(F d)
+    {
+        F u = round(d * double_1_pi);
+
+        d = madd(d, u, -4.0 * double_pi4_a);
+        d = madd(d, u, -4.0 * double_pi4_b);
+        d = madd(d, u, -4.0 * double_pi4_c);
+        d = madd(d, u, -4.0 * double_pi4_d);
+
+        d = select((u & 1ll) != 0, -d, d);
+
+        const F s = d * d;
+
+        u = F(-7.97255955009037868891952e-18);
+        u = madd(2.81009972710863200091251e-15, u, s);
+        u = madd(-7.64712219118158833288484e-13, u, s);
+        u = madd(1.60590430605664501629054e-10, u, s);
+        u = madd(-2.50521083763502045810755e-08, u, s);
+        u = madd(2.75573192239198747630416e-06, u, s);
+        u = madd(-0.000198412698412696162806809, u, s);
+        u = madd(0.00833333333333332974823815, u, s);
+        u = madd(-0.166666666666666657414808, u, s);
+
+        u = madd(d, s, u * d);
+        u = is_inf<F, I>(d) | u;
+        return u;
+    }
+
+    template <typename F, typename I>
+    F cos(F d)
+    {
+        F u = round(madd(F(-0.5), d, double_1_pi)) + 1.0;
+
+        d = madd(d, u, -2.0 * double_pi4_a);
+        d = madd(d, u, -2.0 * double_pi4_b);
+        d = madd(d, u, -2.0 * double_pi4_c);
+        d = madd(d, u, -2.0 * double_pi4_d);
+
+        d = select((u & 2ll) != 0, d, -d);
+
+        const F s = d * d;
+
+        u = F(-7.97255955009037868891952e-18);
+        u = madd(2.81009972710863200091251e-15, u, s);
+        u = madd(-7.64712219118158833288484e-13, u, s);
+        u = madd(1.60590430605664501629054e-10, u, s);
+        u = madd(-2.50521083763502045810755e-08, u, s);
+        u = madd(2.75573192239198747630416e-06, u, s);
+        u = madd(-0.000198412698412696162806809, u, s);
+        u = madd(0.00833333333333332974823815, u, s);
+        u = madd(-0.166666666666666657414808, u, s);
+
+        u = madd(d, s, u * d);
+        u = is_inf<F, I>(d) | u;
+        return u;
+    }
+
+} // namespace fp64
+
+#endif
+
     // ------------------------------------------------------------------------
     // float32x4
     // ------------------------------------------------------------------------
@@ -536,5 +720,51 @@ namespace fp32 {
     {
         return fp32::pow<float32x16, int32x16>(a, b);
     }
+
+#if 0
+
+    // ------------------------------------------------------------------------
+    // float64x2
+    // ------------------------------------------------------------------------
+
+    float64x2 sin(float64x2 v)
+    {
+        return fp64::sin<float64x2, int64x2>(v);
+    }
+
+    float64x2 cos(float64x2 v)
+    {
+        return fp64::cos<float64x2, int64x2>(v);
+    }
+
+    // ------------------------------------------------------------------------
+    // float64x4
+    // ------------------------------------------------------------------------
+
+    float64x4 sin(float64x4 v)
+    {
+        return fp64::sin<float64x4, int64x4>(v);
+    }
+
+    float64x4 cos(float64x4 v)
+    {
+        return fp64::cos<float64x4, int64x4>(v);
+    }
+
+    // ------------------------------------------------------------------------
+    // float64x8
+    // ------------------------------------------------------------------------
+
+    float64x8 sin(float64x8 v)
+    {
+        return fp64::sin<float64x8, int64x8>(v);
+    }
+
+    float64x8 cos(float64x8 v)
+    {
+        return fp64::cos<float64x8, int64x8>(v);
+    }
+
+#endif
 
 } // namespace mango

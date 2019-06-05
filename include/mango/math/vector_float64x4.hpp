@@ -713,6 +713,25 @@ namespace mango
     }
 
     // ------------------------------------------------------------------
+    // trigonometric functions
+    // ------------------------------------------------------------------
+
+    /* These come from default implementation
+    Vector<double, 4> sin(Vector<double, 4> a);
+    Vector<double, 4> cos(Vector<double, 4> a);
+    Vector<double, 4> tan(Vector<double, 4> a);
+    Vector<double, 4> exp(Vector<double, 4> a);
+    Vector<double, 4> exp2(Vector<double, 4> a);
+    Vector<double, 4> log(Vector<double, 4> a);
+    Vector<double, 4> log2(Vector<double, 4> a);
+    Vector<double, 4> asin(Vector<double, 4> a);
+    Vector<double, 4> acos(Vector<double, 4> a);
+    Vector<double, 4> atan(Vector<double, 4> a);
+    Vector<double, 4> atan2(Vector<double, 4> a, Vector<double, 4> b);
+    Vector<double, 4> pow(Vector<double, 4> a, Vector<double, 4> b);
+    */
+
+    // ------------------------------------------------------------------
 	// bitwise operators
     // ------------------------------------------------------------------
 
