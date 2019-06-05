@@ -7,6 +7,7 @@
     Based on Self Organizing Map (SOM) neural network algorithm by Kohonen
 */
 #include <mango/core/bits.hpp>
+#include <mango/math/math.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/quantize.hpp>
 

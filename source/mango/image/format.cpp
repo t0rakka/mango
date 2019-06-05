@@ -4,6 +4,7 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
+#include <mango/math/math.hpp>
 #include <mango/image/format.hpp>
 
 namespace mango

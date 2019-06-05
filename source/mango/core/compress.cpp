@@ -11,6 +11,7 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 #include <mango/core/pointer.hpp>
+#include <mango/math/math.hpp>
 
 #define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
 #include "../../external/miniz/miniz.h"
