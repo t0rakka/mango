@@ -442,19 +442,6 @@ namespace mango
         {
         }
 
-        template <int X, int Y, int Z, int W>
-        Vector(const ShuffleAccessor4<double, simd::f64x4, X, Y, Z, W>& p)
-        {
-            m = p;
-        }
-
-        template <int X, int Y, int Z, int W>
-        Vector& operator = (const ShuffleAccessor4<double, simd::f64x4, X, Y, Z, W>& p)
-        {
-            m = p;
-            return *this;
-        }
-
         template <typename T, int I>
         Vector& operator = (const ScalarAccessor<ScalarType, T, I>& accessor)
         {
