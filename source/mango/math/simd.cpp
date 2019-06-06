@@ -170,7 +170,7 @@ namespace fp32 {
         return u;
     }
 
-    template <typename F, typename I, typename Mask>
+    template <typename F, typename I>
     F tan(F d)
     {
         const I q = convert<I>(d * float_2_pi);
@@ -183,7 +183,7 @@ namespace fp32 {
         x = madd(x, u, -2.0f * float_pi4_d);
 
         const F s = x * x;
-        const Mask mask = (q & 1) == 1;
+        const auto mask = (q & 1) == 1;
         x = select(mask, -x, x);
 
         u = F(0.00927245803177356719970703f);
@@ -357,7 +357,7 @@ namespace fp64 {
     //constexpr double double_pi_2  = 1.57079632679489661923;
     //constexpr double double_pi_4  = 0.785398163397448309616;
     constexpr double double_1_pi  = 0.318309886183790671538;
-    //constexpr double double_2_pi  = 0.636619772367581343076;
+    constexpr double double_2_pi  = 0.636619772367581343076;
     constexpr double double_pi4_a = 0.78539816290140151978;
     constexpr double double_pi4_b = 4.9604678871439933374e-10;
     constexpr double double_pi4_c = 1.1258708853173288931e-18;
@@ -525,6 +525,45 @@ namespace fp64 {
         return u;
     }
 
+    // NOTE: don't use.. doesn't work..
+    // TODO: fixme
+    template <typename F, typename I>
+    F tan(F d)
+    {
+        F u = round(d * double_2_pi);
+        I q = convert<I>(u);
+
+        F x = d;
+        x = madd(x, u, -2.0 * double_pi4_a);
+        x = madd(x, u, -2.0 * double_pi4_b);
+        x = madd(x, u, -2.0 * double_pi4_c);
+        x = madd(x, u, -2.0 * double_pi4_d);
+
+        const F s = x * x;
+        const auto mask = reinterpret<F>(q & I(1)) != 0;
+        x = select(mask, -x, x);
+
+        u = F(1.01419718511083373224408e-05);
+        u = madd(-2.59519791585924697698614e-05, u, s);
+        u = madd(5.23388081915899855325186e-05, u, s);
+        u = madd(-3.05033014433946488225616e-05, u, s);
+        u = madd(7.14707504084242744267497e-05, u, s);
+        u = madd(8.09674518280159187045078e-05, u, s);
+        u = madd(0.000244884931879331847054404, u, s);
+        u = madd(0.000588505168743587154904506, u, s);
+        u = madd(0.00145612788922812427978848, u, s);
+        u = madd(0.00359208743836906619142924, u, s);
+        u = madd(0.00886323944362401618113356, u, s);
+        u = madd(0.0218694882853846389592078, u, s);
+        u = madd(0.0539682539781298417636002, u, s);
+        u = madd(0.133333333333125941821962, u, s);
+        u = madd(0.333333333333334980164153, u, s);
+        u = madd(x, s, u * x);
+        u = select(mask, 1.0 / u, u);
+        u = is_inf<F, I>(d) | u;
+        return u;
+    }
+
 } // namespace fp64
 
 #endif
@@ -545,7 +584,7 @@ namespace fp64 {
 
     float32x4 tan(float32x4 v)
     {
-        return fp32::tan<float32x4, int32x4, mask32x4>(v);
+        return fp32::tan<float32x4, int32x4>(v);
     }
 
     float32x4 exp(float32x4 v)
@@ -609,7 +648,7 @@ namespace fp64 {
 
     float32x8 tan(float32x8 v)
     {
-        return fp32::tan<float32x8, int32x8, mask32x8>(v);
+        return fp32::tan<float32x8, int32x8>(v);
     }
 
     float32x8 exp(float32x8 v)
@@ -673,7 +712,7 @@ namespace fp64 {
 
     float32x16 tan(float32x16 v)
     {
-        return fp32::tan<float32x16, int32x16, mask32x16>(v);
+        return fp32::tan<float32x16, int32x16>(v);
     }
 
     float32x16 exp(float32x16 v)
@@ -737,6 +776,11 @@ namespace fp64 {
         return fp64::cos<float64x2, int64x2>(v);
     }
 
+    float64x2 tan(float64x2 v)
+    {
+        return fp64::tan<float64x2, int64x2>(v);
+    }
+
     // ------------------------------------------------------------------------
     // float64x4
     // ------------------------------------------------------------------------
@@ -751,6 +795,11 @@ namespace fp64 {
         return fp64::cos<float64x4, int64x4>(v);
     }
 
+    float64x4 tan(float64x4 v)
+    {
+        return fp64::tan<float64x4, int64x4>(v);
+    }
+
     // ------------------------------------------------------------------------
     // float64x8
     // ------------------------------------------------------------------------
@@ -763,6 +812,11 @@ namespace fp64 {
     float64x8 cos(float64x8 v)
     {
         return fp64::cos<float64x8, int64x8>(v);
+    }
+
+    float64x8 tan(float64x8 v)
+    {
+        return fp64::tan<float64x8, int64x8>(v);
     }
 
 #endif

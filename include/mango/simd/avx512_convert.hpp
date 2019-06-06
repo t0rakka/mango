@@ -491,12 +491,23 @@ namespace detail {
     }
 
     template <>
+    inline f64x4 convert<f64x4>(u32x4 ui)
+    {
+        return _mm256_cvtepu32_pd(ui);
+    }
+
+    template <>
     inline f64x4 convert<f64x4>(f32x4 s)
     {
         return _mm256_cvtps_pd(s);
     }
 
     // 128 <- 256
+
+    static inline s32x4 s32x4_truncate(f64x4 s)
+    {
+        return _mm256_cvttpd_epi32(s);
+    }
 
     template <>
     inline s32x4 convert<s32x4>(f64x4 s)
@@ -505,33 +516,80 @@ namespace detail {
     }
 
     template <>
-    inline f32x4 convert<f32x4>(f64x4 s)
-    {
-        return _mm256_cvtpd_ps(s);
-    }
-
-    // 256 <- 128
-
-    template <>
-    inline f64x4 convert<f64x4>(u32x4 ui)
-    {
-        return _mm256_cvtepu32_pd(ui);
-    }
-
-    // 128 <- 256
-
-    template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
         return _mm256_cvtpd_epu32(d);
     }
 
-    static inline s32x4 s32x4_truncate(f64x4 s)
+    template <>
+    inline f32x4 convert<f32x4>(f64x4 s)
     {
-        return _mm256_cvttpd_epi32(s);
+        return _mm256_cvtpd_ps(s);
+    }
+
+    // 128 <- 128
+
+    template <>
+    inline s64x2 convert<s64x2>(f64x2 v)
+    {
+        return _mm_cvtpd_epi64(v);
+    }
+
+    template <>
+    inline u64x2 convert<u64x2>(f64x2 v)
+    {
+        return _mm_cvtpd_epu64(v);
+    }
+
+    template <>
+    inline s64x2 truncate<s64x2>(f64x2 v)
+    {
+        return _mm_cvttpd_epi64(v);
+    }
+
+    template <>
+    inline u64x2 truncate<u64x2>(f64x2 v)
+    {
+        return _mm_cvttpd_epu64(v);
+    }
+
+    template <>
+    inline f64x2 convert<f64x2>(s64x2 v)
+    {
+        return _mm_cvtepi64_pd(v);
+    }
+
+    template <>
+    inline f64x2 convert<f64x2>(u64x2 v)
+    {
+        return _mm_cvtepu64_pd(v);
     }
 
     // 256 <- 256
+
+    template <>
+    inline s64x4 convert<s64x4>(f64x4 v)
+    {
+        return _mm256_cvtpd_epi64(v);
+    }
+
+    template <>
+    inline u64x4 convert<u64x4>(f64x4 v)
+    {
+        return _mm256_cvtpd_epu64(v);
+    }
+
+    template <>
+    inline s64x4 truncate<s64x4>(f64x4 v)
+    {
+        return _mm256_cvttpd_epi64(v);
+    }
+
+    template <>
+    inline u64x4 truncate<u64x4>(f64x4 v)
+    {
+        return _mm256_cvttpd_epu64(v);
+    }
 
     template <>
     inline f64x4 convert<f64x4>(s64x4 v)
@@ -540,9 +598,47 @@ namespace detail {
     }
 
     template <>
-    inline s64x4 convert<s64x4>(f64x4 v)
+    inline f64x4 convert<f64x4>(u64x4 v)
     {
-        return _mm256_cvtpd_epi64(v);
+        return _mm256_cvtepu64_pd(v);
+    }
+
+    // 512 <- 512
+
+    template <>
+    inline s64x8 convert<s64x8>(f64x8 v)
+    {
+        return _mm512_cvtpd_epi64(v);
+    }
+
+    template <>
+    inline u64x8 convert<u64x8>(f64x8 v)
+    {
+        return _mm512_cvtpd_epu64(v);
+    }
+
+    template <>
+    inline s64x8 truncate<s64x8>(f64x8 v)
+    {
+        return _mm512_cvttpd_epi64(v);
+    }
+
+    template <>
+    inline u64x8 truncate<u64x8>(f64x8 v)
+    {
+        return _mm512_cvttpd_epu64(v);
+    }
+
+    template <>
+    inline f64x8 convert<f64x8>(s64x8 v)
+    {
+        return _mm512_cvtepi64_pd(v);
+    }
+
+    template <>
+    inline f64x8 convert<f64x8>(u64x8 v)
+    {
+        return _mm512_cvtepu64_pd(v);
     }
 
     // -----------------------------------------------------------------

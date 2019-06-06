@@ -664,28 +664,6 @@ namespace detail {
     }
 
     template <>
-    inline f64x4 convert<f64x4>(f32x4 s)
-    {
-        return _mm256_cvtps_pd(s);
-    }
-
-    // 128 <- 256
-
-    template <>
-    inline s32x4 convert<s32x4>(f64x4 s)
-    {
-        return _mm256_cvtpd_epi32(s);
-    }
-
-    template <>
-    inline f32x4 convert<f32x4>(f64x4 s)
-    {
-        return _mm256_cvtpd_ps(s);
-    }
-
-    // 256 <- 128
-
-    template <>
     inline f64x4 convert<f64x4>(u32x4 ui)
     {
         const __m256d bias = _mm256_set1_pd((1ll << 52) * 1.5);
@@ -696,7 +674,24 @@ namespace detail {
         return v;
     }
 
+    template <>
+    inline f64x4 convert<f64x4>(f32x4 s)
+    {
+        return _mm256_cvtps_pd(s);
+    }
+
     // 128 <- 256
+
+    static inline s32x4 s32x4_truncate(f64x4 s)
+    {
+        return _mm256_cvttpd_epi32(s);
+    }
+
+    template <>
+    inline s32x4 convert<s32x4>(f64x4 s)
+    {
+        return _mm256_cvtpd_epi32(s);
+    }
 
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
@@ -709,12 +704,107 @@ namespace detail {
         return _mm_castps_si128(xyzw);
     }
 
-    static inline s32x4 s32x4_truncate(f64x4 s)
+    template <>
+    inline f32x4 convert<f32x4>(f64x4 s)
     {
-        return _mm256_cvttpd_epi32(s);
+        return _mm256_cvtpd_ps(s);
+    }
+
+    // 128 <- 128
+
+    template <>
+    inline s64x2 convert<s64x2>(f64x2 v)
+    {
+        s64 x = s64(get_component<0>(v) + 0.5);
+        s64 y = s64(get_component<1>(v) + 0.5);
+        return s64x2_set2(x, y);
+    }
+
+    template <>
+    inline u64x2 convert<u64x2>(f64x2 v)
+    {
+        u64 x = u64(get_component<0>(v) + 0.5);
+        u64 y = u64(get_component<1>(v) + 0.5);
+        return u64x2_set2(x, y);
+    }
+
+    template <>
+    inline s64x2 truncate<s64x2>(f64x2 v)
+    {
+        v = trunc(v);
+        s64 x = s64(get_component<0>(v));
+        s64 y = s64(get_component<1>(v));
+        return s64x2_set2(x, y);
+    }
+
+    template <>
+    inline u64x2 truncate<u64x2>(f64x2 v)
+    {
+        v = trunc(v);
+        u64 x = u64(get_component<0>(v));
+        u64 y = u64(get_component<1>(v));
+        return u64x2_set2(x, y);
+    }
+
+    template <>
+    inline f64x2 convert<f64x2>(s64x2 v)
+    {
+        f64 x = f64(get_component<0>(v));
+        f64 y = f64(get_component<1>(v));
+        return f64x2_set2(x, y);
+    }
+
+    template <>
+    inline f64x2 convert<f64x2>(u64x2 v)
+    {
+        f64 x = f64(get_component<0>(v));
+        f64 y = f64(get_component<1>(v));
+        return f64x2_set2(x, y);
     }
 
     // 256 <- 256
+
+    template <>
+    inline s64x4 convert<s64x4>(f64x4 v)
+    {
+        s64 x = s64(get_component<0>(v) + 0.5);
+        s64 y = s64(get_component<1>(v) + 0.5);
+        s64 z = s64(get_component<2>(v) + 0.5);
+        s64 w = s64(get_component<3>(v) + 0.5);
+        return s64x4_set4(x, y, z, w);
+    }
+
+    template <>
+    inline u64x4 convert<u64x4>(f64x4 v)
+    {
+        u64 x = u64(get_component<0>(v) + 0.5);
+        u64 y = u64(get_component<1>(v) + 0.5);
+        u64 z = u64(get_component<2>(v) + 0.5);
+        u64 w = u64(get_component<3>(v) + 0.5);
+        return u64x4_set4(x, y, z, w);
+    }
+
+    template <>
+    inline s64x4 truncate<s64x4>(f64x4 v)
+    {
+        v = trunc(v);
+        s64 x = s64(get_component<0>(v));
+        s64 y = s64(get_component<1>(v));
+        s64 z = s64(get_component<2>(v));
+        s64 w = s64(get_component<3>(v));
+        return s64x4_set4(x, y, z, w);
+    }
+
+    template <>
+    inline u64x4 truncate<u64x4>(f64x4 v)
+    {
+        v = trunc(v);
+        u64 x = u64(get_component<0>(v));
+        u64 y = u64(get_component<1>(v));
+        u64 z = u64(get_component<2>(v));
+        u64 w = u64(get_component<3>(v));
+        return u64x4_set4(x, y, z, w);
+    }
 
     template <>
     inline f64x4 convert<f64x4>(s64x4 v)
@@ -727,13 +817,63 @@ namespace detail {
     }
 
     template <>
-    inline s64x4 convert<s64x4>(f64x4 v)
+    inline f64x4 convert<f64x4>(u64x4 v)
     {
-        s64 x = s64(get_component<0>(v));
-        s64 y = s64(get_component<1>(v));
-        s64 z = s64(get_component<2>(v));
-        s64 w = s64(get_component<3>(v));
-        return s64x4_set4(x, y, z, w);
+        f64 x = f64(get_component<0>(v));
+        f64 y = f64(get_component<1>(v));
+        f64 z = f64(get_component<2>(v));
+        f64 w = f64(get_component<3>(v));
+        return f64x4_set4(x, y, z, w);
+    }
+
+    // 512 <- 512
+
+    template <>
+    inline s64x8 convert<s64x8>(f64x8 v)
+    {
+        auto lo = convert<s64x4>(v.lo);
+        auto hi = convert<s64x4>(v.hi);
+        return { lo, hi };
+    }
+
+    template <>
+    inline u64x8 convert<u64x8>(f64x8 v)
+    {
+        auto lo = convert<u64x4>(v.lo);
+        auto hi = convert<u64x4>(v.hi);
+        return { lo, hi };
+    }
+
+    template <>
+    inline s64x8 truncate<s64x8>(f64x8 v)
+    {
+        auto lo = truncate<s64x4>(v.lo);
+        auto hi = truncate<s64x4>(v.hi);
+        return { lo, hi };
+    }
+
+    template <>
+    inline u64x8 truncate<u64x8>(f64x8 v)
+    {
+        auto lo = truncate<u64x4>(v.lo);
+        auto hi = truncate<u64x4>(v.hi);
+        return { lo, hi };
+    }
+
+    template <>
+    inline f64x8 convert<f64x8>(s64x8 v)
+    {
+        auto lo = convert<f64x4>(v.lo);
+        auto hi = convert<f64x4>(v.hi);
+        return { lo, hi };
+    }
+
+    template <>
+    inline f64x8 convert<f64x8>(u64x8 v)
+    {
+        auto lo = convert<f64x4>(v.lo);
+        auto hi = convert<f64x4>(v.hi);
+        return { lo, hi };
     }
 
     // -----------------------------------------------------------------
