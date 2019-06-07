@@ -767,6 +767,24 @@ namespace simd {
         return result;
     }
 
+    // compare
+
+    static inline mask64x8 compare_eq(u64x8 a, u64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_eq(a.lo, b.lo);
+        result.hi = compare_eq(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_gt(u64x8 a, u64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_gt(a.lo, b.lo);
+        result.hi = compare_gt(a.hi, b.hi);
+        return result;
+    }
+
     static inline u64x8 select(mask64x8 mask, u64x8 a, u64x8 b)
     {
         u64x8 result;
@@ -1616,6 +1634,24 @@ namespace simd {
         s64x8 result;
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
+        return result;
+    }
+
+    // compare
+
+    static inline mask64x8 compare_eq(s64x8 a, s64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_eq(a.lo, b.lo);
+        result.hi = compare_eq(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_gt(s64x8 a, s64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_gt(a.lo, b.lo);
+        result.hi = compare_gt(a.hi, b.hi);
         return result;
     }
 

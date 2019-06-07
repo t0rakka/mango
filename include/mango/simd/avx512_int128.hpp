@@ -754,6 +754,18 @@ namespace detail
         return detail::simd128_not_si128(a);
     }
 
+    // compare
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        return _mm_cmp_epu64_mask(a, b, 0);
+    }
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        return _mm_cmp_epu64_mask(b, a, 1);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return _mm_mask_blend_epi64(mask, b, a);
@@ -1520,6 +1532,18 @@ namespace detail
     static inline s64x2 bitwise_not(s64x2 a)
     {
         return detail::simd128_not_si128(a);
+    }
+
+    // compare
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        return _mm_cmp_epi64_mask(a, b, 0);
+    }
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        return _mm_cmp_epi64_mask(b, a, 1);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

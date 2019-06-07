@@ -1063,6 +1063,18 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_not, a);
     }
 
+    // compare
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_compare_eq(a, b);
+    }
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_compare_gt(a, b);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return detail::scalar_select(mask, a, b);
@@ -1848,6 +1860,18 @@ namespace detail {
     static inline s64x2 bitwise_not(s64x2 a)
     {
         return detail::scalar_unroll(detail::scalar_not, a);
+    }
+
+    // compare
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_compare_eq(a, b);
+    }
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_compare_gt(a, b);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

@@ -739,6 +739,18 @@ namespace simd {
         return vec_nor(a.data, a.data);
     }
 
+    // compare
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        return vec_cmpeq(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        return vec_cmpgt(a.data, b.data);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return vec_sel(b.data, a.data, mask.data);
@@ -1551,6 +1563,18 @@ namespace simd {
     static inline s64x2 bitwise_not(s64x2 a)
     {
         return vec_nor(a.data, a.data);
+    }
+
+    // compare
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        return vec_cmpeq(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        return vec_cmpgt(a.data, b.data);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

@@ -521,6 +521,18 @@ namespace detail {
         return detail::simd512_not(a);
     }
 
+    // compare
+
+    static inline mask64x8 compare_eq(u64x8 a, u64x8 b)
+    {
+        return _mm512_cmp_epu64_mask(a, b, 0);
+    }
+
+    static inline mask64x8 compare_gt(u64x8 a, u64x8 b)
+    {
+        return _mm512_cmp_epu64_mask(b, a, 1);
+    }
+
     static inline u64x8 select(mask64x8 mask, u64x8 a, u64x8 b)
     {
         return _mm512_mask_blend_epi64(mask, b, a);
@@ -1079,6 +1091,18 @@ namespace detail {
     static inline s64x8 bitwise_not(s64x8 a)
     {
         return detail::simd512_not(a);
+    }
+
+    // compare
+
+    static inline mask64x8 compare_eq(s64x8 a, s64x8 b)
+    {
+        return _mm512_cmp_epi64_mask(a, b, 0);
+    }
+
+    static inline mask64x8 compare_gt(s64x8 a, s64x8 b)
+    {
+        return _mm512_cmp_epi64_mask(b, a, 1);
     }
 
     static inline s64x8 select(mask64x8 mask, s64x8 a, s64x8 b)

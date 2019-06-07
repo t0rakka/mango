@@ -705,6 +705,18 @@ namespace simd {
         return (v2u64) __msa_nor_v((v16u8) a, (v16u8) a);
     }
 
+    // compare
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        return (v2u64) __msa_ceq_d((v2u64) a, (v2u64) b);
+    }
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        return (v2u64) __msa_clti_u_d((v2u64) a, (v2u64) b);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return (v2u64) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
@@ -1481,6 +1493,18 @@ namespace simd {
     static inline s64x2 bitwise_not(s64x2 a)
     {
         return (v2i64) __msa_nor_v((v16u8) a, (v16u8) a);
+    }
+
+    // compare
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        return (v2u64) __msa_ceq_d((v2i64) a, (v2i64) b);
+    }
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        return (v2u64) __msa_clti_s_d((v2i64) a, (v2i64) b);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

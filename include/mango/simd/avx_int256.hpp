@@ -78,6 +78,24 @@ namespace detail {
         return _mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1);
     }
 
+#if defined(MANGO_COMPILER_GCC)
+
+    // These intrinsics are missing with GCC (tested with 7.3 - 8.1)
+
+    #define _mm256_set_m128(high, low) \
+        _mm256_insertf128_ps(_mm256_castps128_ps256(low), high, 1)
+
+    #define _mm256_setr_m128(low, high) \
+        _mm256_insertf128_ps(_mm256_castps128_ps256(low), high, 1)
+
+    #define _mm256_set_m128i(high, low) \
+        _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1)
+
+    #define _mm256_setr_m128i(low, high) \
+        _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1)
+
+#endif
+
 } // namespace detail
 
     // -----------------------------------------------------------------
@@ -907,6 +925,22 @@ namespace detail {
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
+    }
+
+    // compare
+
+    static inline mask64x4 compare_eq(u64x4 a, u64x4 b)
+    {
+        __m128i lo = compare_eq(a.lo, b.lo);
+        __m128i hi = compare_eq(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_gt(u64x4 a, u64x4 b)
+    {
+        __m128i lo = compare_gt(a.lo, b.lo);
+        __m128i hi = compare_gt(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
     }
 
     static inline u64x4 select(mask64x4 mask, u64x4 a, u64x4 b)
@@ -1827,6 +1861,22 @@ namespace detail {
         result.lo = bitwise_not(a.lo);
         result.hi = bitwise_not(a.hi);
         return result;
+    }
+
+    // compare
+
+    static inline mask64x4 compare_eq(s64x4 a, s64x4 b)
+    {
+        __m128i lo = compare_eq(a.lo, b.lo);
+        __m128i hi = compare_eq(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_gt(s64x4 a, s64x4 b)
+    {
+        __m128i lo = compare_gt(a.lo, b.lo);
+        __m128i hi = compare_gt(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
     }
 
     static inline s64x4 select(mask64x4 mask, s64x4 a, s64x4 b)

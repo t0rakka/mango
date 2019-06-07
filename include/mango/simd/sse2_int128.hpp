@@ -1105,6 +1105,51 @@ namespace detail {
         return detail::simd128_not_si128(a);
     }
 
+    // compare
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        return _mm_cmpeq_epi64(a, b);
+    }
+
+#else
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        __m128i xyzw = _mm_cmpeq_epi32(a, b);
+        __m128i yxwz = _mm_shuffle_epi32(xyzw, 0xb1);
+        return _mm_and_si128(xyzw, yxwz);
+    }
+
+#endif
+
+#if defined(MANGO_ENABLE_SSE4_2)
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        const __m128i sign = _mm_set1_epi64x(0x8000000000000000);
+        a = _mm_xor_si128(a, sign);
+        b = _mm_xor_si128(b, sign);
+        return _mm_cmpgt_epi64(a, b);
+    }
+
+#else
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        const __m128i sign = _mm_set1_epi64x(0x8000000000000000);
+        a = _mm_xor_si128(a, sign);
+        b = _mm_xor_si128(b, sign);
+        __m128i diff = _mm_sub_epi64(b, a);
+        __m128i flip = _mm_xor_si128(b, a);
+        __m128i mask = _mm_or_si128(_mm_andnot_si128(a, b), _mm_andnot_si128(flip, diff));
+        return _mm_shuffle_epi32(_mm_srai_epi32(mask, 31), 0xf5);
+    }
+
+#endif
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return detail::simd128_select_si128(mask, a, b);
@@ -2204,6 +2249,45 @@ namespace detail {
     {
         return detail::simd128_not_si128(a);
     }
+
+    // compare
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        return _mm_cmpeq_epi64(a, b);
+    }
+
+#else
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        __m128i xyzw = _mm_cmpeq_epi32(a, b);
+        __m128i yxwz = _mm_shuffle_epi32(xyzw, 0xb1);
+        return _mm_and_si128(xyzw, yxwz);
+    }
+
+#endif
+
+#if defined(MANGO_ENABLE_SSE4_2)
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        return _mm_cmpgt_epi64(a, b);
+    }
+
+#else
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        __m128i diff = _mm_sub_epi64(b, a);
+        __m128i flip = _mm_xor_si128(b, a);
+        __m128i mask = _mm_or_si128(_mm_andnot_si128(a, b), _mm_andnot_si128(flip, diff));
+        return _mm_shuffle_epi32(_mm_srai_epi32(mask, 31), 0xf5);
+    }
+
+#endif
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
