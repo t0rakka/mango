@@ -36,6 +36,11 @@ namespace detail {
         return a;
     }
 
+    static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
+    {
+        return _mm_blendv_epi8(b, a, mask);
+    }
+
 #else
 
     static inline __m128i simd128_shuffle_x0z0(__m128i a)
@@ -48,6 +53,11 @@ namespace detail {
         const __m128i v0 = simd128_shuffle_epi32(a, b, _MM_SHUFFLE(1, 1, 0, 0));
         const __m128i v1 = simd128_shuffle_epi32(c, d, _MM_SHUFFLE(3, 3, 2, 2));
         return simd128_shuffle_epi32(v0, v1, _MM_SHUFFLE(2, 0, 2, 0));
+    }
+
+    static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
+    {
+        return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
 
 #endif
@@ -64,11 +74,6 @@ namespace detail {
     static inline __m128i simd128_not_si128(__m128i a)
     {
         return _mm_xor_si128(a, _mm_cmpeq_epi8(a, a));
-    }
-
-    static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
-    {
-        return _mm_or_si128(_mm_and_si128(mask, a), _mm_andnot_si128(mask, b));
     }
 
 #if defined(MANGO_CPU_64BIT)

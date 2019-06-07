@@ -22,7 +22,7 @@ namespace detail {
 
     static inline __m256i simd256_select_si256(__m256i mask, __m256i a, __m256i b)
     {
-        return _mm256_or_si256(_mm256_and_si256(mask, a), _mm256_andnot_si256(mask, b));
+        return _mm256_blendv_epi8(b, a, mask);
     }
 
 } // namespace detail
