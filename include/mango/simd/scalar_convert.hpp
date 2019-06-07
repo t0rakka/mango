@@ -158,8 +158,8 @@ namespace simd {
         u16x8 v;
         for (int i = 0; i < 4; ++i)
         {
-            v[i + 0] = std::min(u32(0xffff), a[i]);
-            v[i + 4] = std::min(u32(0xffff), b[i]);
+            v[i + 0] = u16(std::min(u32(0xffff), a[i]));
+            v[i + 4] = u16(std::min(u32(0xffff), b[i]));
         }
         return v;
     }
@@ -180,8 +180,8 @@ namespace simd {
         s16x8 v;
         for (int i = 0; i < 4; ++i)
         {
-            v[i + 0] = std::min(s32(0x7fff), std::max(s32(-0x8000), a[i]));
-            v[i + 4] = std::min(s32(0x7fff), std::max(s32(-0x8000), b[i]));
+            v[i + 0] = s16(std::min(s32(0x7fff), std::max(s32(-0x8000), a[i])));
+            v[i + 4] = s16(std::min(s32(0x7fff), std::max(s32(-0x8000), b[i])));
         }
         return v;
     }
