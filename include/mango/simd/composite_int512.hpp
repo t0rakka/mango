@@ -785,6 +785,38 @@ namespace simd {
         return result;
     }
 
+    static inline mask64x8 compare_neq(u64x8 a, u64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_neq(a.lo, b.lo);
+        result.hi = compare_neq(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_lt(u64x8 a, u64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_lt(a.lo, b.lo);
+        result.hi = compare_lt(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_le(u64x8 a, u64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_le(a.lo, b.lo);
+        result.hi = compare_le(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_ge(u64x8 a, u64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_ge(a.lo, b.lo);
+        result.hi = compare_ge(a.hi, b.hi);
+        return result;
+    }
+
     static inline u64x8 select(mask64x8 mask, u64x8 a, u64x8 b)
     {
         u64x8 result;
@@ -1652,6 +1684,38 @@ namespace simd {
         mask64x8 result;
         result.lo = compare_gt(a.lo, b.lo);
         result.hi = compare_gt(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_neq(s64x8 a, s64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_neq(a.lo, b.lo);
+        result.hi = compare_neq(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_lt(s64x8 a, s64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_lt(a.lo, b.lo);
+        result.hi = compare_lt(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_le(s64x8 a, s64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_le(a.lo, b.lo);
+        result.hi = compare_le(a.hi, b.hi);
+        return result;
+    }
+
+    static inline mask64x8 compare_ge(s64x8 a, s64x8 b)
+    {
+        mask64x8 result;
+        result.lo = compare_ge(a.lo, b.lo);
+        result.hi = compare_ge(a.hi, b.hi);
         return result;
     }
 

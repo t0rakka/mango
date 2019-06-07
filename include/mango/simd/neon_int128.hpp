@@ -748,6 +748,38 @@ namespace simd {
         return vreinterpretq_u8_u64(temp);
     }
 
+    static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) != vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) != vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) < vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) < vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) <= vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) <= vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) >= vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) >= vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return vbslq_u64(mask, a, b);
@@ -1566,6 +1598,38 @@ namespace simd {
     {
         u64 x = 0 - (vgetq_lane_s64(a, 0) > vgetq_lane_s64(b, 0));
         u64 y = 0 - (vgetq_lane_s64(a, 1) > vgetq_lane_s64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) != vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) != vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) < vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) < vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) <= vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) <= vgetq_lane_u64(b, 1));
+        uint64x2_t temp = { x, y };
+        return vreinterpretq_u8_u64(temp);
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        u64 x = 0 - (vgetq_lane_u64(a, 0) >= vgetq_lane_u64(b, 0));
+        u64 y = 0 - (vgetq_lane_u64(a, 1) >= vgetq_lane_u64(b, 1));
         uint64x2_t temp = { x, y };
         return vreinterpretq_u8_u64(temp);
     }

@@ -1075,6 +1075,26 @@ namespace detail {
         return detail::scalar_compare_gt(a, b);
     }
 
+    static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_compare_neq(a, b);
+    }
+
+    static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_compare_lt(a, b);
+    }
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_compare_le(a, b);
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_compare_ge(a, b);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return detail::scalar_select(mask, a, b);
@@ -1872,6 +1892,26 @@ namespace detail {
     static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
     {
         return detail::scalar_compare_gt(a, b);
+    }
+
+    static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_compare_neq(a, b);
+    }
+
+    static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_compare_lt(a, b);
+    }
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_compare_le(a, b);
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_compare_ge(a, b);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

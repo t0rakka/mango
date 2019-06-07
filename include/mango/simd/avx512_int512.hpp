@@ -533,6 +533,26 @@ namespace detail {
         return _mm512_cmp_epu64_mask(b, a, 1);
     }
 
+    static inline mask64x8 compare_neq(u64x8 a, u64x8 b)
+    {
+        return _mm512_cmp_epu64_mask(a, b, 4);
+    }
+
+    static inline mask64x8 compare_lt(u64x8 a, u64x8 b)
+    {
+        return _mm512_cmp_epu64_mask(a, b, 1);
+    }
+
+    static inline mask64x8 compare_le(u64x8 a, u64x8 b)
+    {
+        return _mm512_cmp_epu64_mask(a, b, 2);
+    }
+
+    static inline mask64x8 compare_ge(u64x8 a, u64x8 b)
+    {
+        return _mm512_cmp_epu64_mask(b, a, 2);
+    }
+
     static inline u64x8 select(mask64x8 mask, u64x8 a, u64x8 b)
     {
         return _mm512_mask_blend_epi64(mask, b, a);
@@ -1103,6 +1123,26 @@ namespace detail {
     static inline mask64x8 compare_gt(s64x8 a, s64x8 b)
     {
         return _mm512_cmp_epi64_mask(b, a, 1);
+    }
+
+    static inline mask64x8 compare_neq(s64x8 a, s64x8 b)
+    {
+        return _mm512_cmp_epi64_mask(a, b, 4);
+    }
+
+    static inline mask64x8 compare_lt(s64x8 a, s64x8 b)
+    {
+        return _mm512_cmp_epi64_mask(a, b, 1);
+    }
+
+    static inline mask64x8 compare_le(s64x8 a, s64x8 b)
+    {
+        return _mm512_cmp_epi64_mask(a, b, 2);
+    }
+
+    static inline mask64x8 compare_ge(s64x8 a, s64x8 b)
+    {
+        return _mm512_cmp_epi64_mask(b, a, 2);
     }
 
     static inline s64x8 select(mask64x8 mask, s64x8 a, s64x8 b)

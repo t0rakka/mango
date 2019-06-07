@@ -751,6 +751,29 @@ namespace simd {
         return vec_cmpgt(a.data, b.data);
     }
 
+    static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
+    {
+        auto mask = vec_cmpeq(a.data, b.data);
+        return vec_nor(mask, mask);
+    }
+
+    static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
+    {
+        return vec_cmplt(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        auto mask = vec_cmpgt(a.data, b.data);
+        return vec_nor(mask, mask);
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        auto mask = vec_cmplt(a.data, b.data);
+        return vec_nor(mask, mask);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return vec_sel(b.data, a.data, mask.data);
@@ -1575,6 +1598,29 @@ namespace simd {
     static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
     {
         return vec_cmpgt(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
+    {
+        auto mask = vec_cmpeq(a.data, b.data);
+        return vec_nor(mask, mask);
+    }
+
+    static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
+    {
+        return vec_cmplt(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        auto mask = vec_cmpgt(a.data, b.data);
+        return vec_nor(mask, mask);
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        auto mask = vec_cmplt(a.data, b.data);
+        return vec_nor(mask, mask);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)

@@ -57,7 +57,7 @@ namespace detail {
     {
         return _mm256_extractf128_si256(a, 0);
     }
-    
+
     static inline mask64x2 get_high(mask64x4 a)
     {
         return _mm256_extractf128_si256(a, 1);
@@ -940,6 +940,38 @@ namespace detail {
     {
         __m128i lo = compare_gt(a.lo, b.lo);
         __m128i hi = compare_gt(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_neq(u64x4 a, u64x4 b)
+    {
+        __m128i lo = compare_eq(b.lo, a.lo);
+        __m128i hi = compare_eq(b.hi, a.hi);
+        lo = detail::simd128_not_si128(lo);
+        hi = detail::simd128_not_si128(hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_lt(u64x4 a, u64x4 b)
+    {
+        return compare_gt(b, a);
+    }
+
+    static inline mask64x4 compare_le(u64x4 a, u64x4 b)
+    {
+        __m128i lo = compare_gt(a.lo, b.lo);
+        __m128i hi = compare_gt(a.hi, b.hi);
+        lo = detail::simd128_not_si128(lo);
+        hi = detail::simd128_not_si128(hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_ge(u64x4 a, u64x4 b)
+    {
+        __m128i lo = compare_gt(b.lo, a.lo);
+        __m128i hi = compare_gt(b.hi, a.hi);
+        lo = detail::simd128_not_si128(lo);
+        hi = detail::simd128_not_si128(hi);
         return _mm256_setr_m128i(lo, hi);
     }
 
@@ -1876,6 +1908,38 @@ namespace detail {
     {
         __m128i lo = compare_gt(a.lo, b.lo);
         __m128i hi = compare_gt(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_neq(s64x4 a, s64x4 b)
+    {
+        __m128i lo = compare_eq(b.lo, a.lo);
+        __m128i hi = compare_eq(b.hi, a.hi);
+        lo = detail::simd128_not_si128(lo);
+        hi = detail::simd128_not_si128(hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_lt(s64x4 a, s64x4 b)
+    {
+        return compare_gt(b, a);
+    }
+
+    static inline mask64x4 compare_le(s64x4 a, s64x4 b)
+    {
+        __m128i lo = compare_gt(a.lo, b.lo);
+        __m128i hi = compare_gt(a.hi, b.hi);
+        lo = detail::simd128_not_si128(lo);
+        hi = detail::simd128_not_si128(hi);
+        return _mm256_setr_m128i(lo, hi);
+    }
+
+    static inline mask64x4 compare_ge(s64x4 a, s64x4 b)
+    {
+        __m128i lo = compare_gt(b.lo, a.lo);
+        __m128i hi = compare_gt(b.hi, a.hi);
+        lo = detail::simd128_not_si128(lo);
+        hi = detail::simd128_not_si128(hi);
         return _mm256_setr_m128i(lo, hi);
     }
 

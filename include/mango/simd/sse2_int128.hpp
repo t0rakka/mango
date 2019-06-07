@@ -1150,6 +1150,26 @@ namespace detail {
 
 #endif
 
+    static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
+    {
+        return detail::simd128_not_si128(compare_eq(b, a));
+    }
+
+    static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
+    {
+        return compare_gt(b, a);
+    }
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        return detail::simd128_not_si128(compare_gt(a, b));
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        return detail::simd128_not_si128(compare_gt(b, a));
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return detail::simd128_select_si128(mask, a, b);
@@ -2288,6 +2308,26 @@ namespace detail {
     }
 
 #endif
+
+    static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
+    {
+        return detail::simd128_not_si128(compare_eq(b, a));
+    }
+
+    static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
+    {
+        return compare_gt(b, a);
+    }
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        return detail::simd128_not_si128(compare_gt(a, b));
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        return detail::simd128_not_si128(compare_gt(b, a));
+    }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {

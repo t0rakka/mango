@@ -766,6 +766,26 @@ namespace detail
         return _mm_cmp_epu64_mask(b, a, 1);
     }
 
+    static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
+    {
+        return _mm_cmp_epu64_mask(a, b, 4);
+    }
+
+    static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
+    {
+        return _mm_cmp_epu64_mask(a, b, 1);
+    }
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        return _mm_cmp_epu64_mask(a, b, 2);
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        return _mm_cmp_epu64_mask(b, a, 2);
+    }
+
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return _mm_mask_blend_epi64(mask, b, a);
@@ -1544,6 +1564,26 @@ namespace detail
     static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
     {
         return _mm_cmp_epi64_mask(b, a, 1);
+    }
+
+    static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
+    {
+        return _mm_cmp_epi64_mask(a, b, 4);
+    }
+
+    static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
+    {
+        return _mm_cmp_epi64_mask(a, b, 1);
+    }
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        return _mm_cmp_epi64_mask(a, b, 2);
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        return _mm_cmp_epi64_mask(b, a, 2);
     }
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
