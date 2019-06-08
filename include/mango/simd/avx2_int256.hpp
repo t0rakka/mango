@@ -134,7 +134,38 @@ namespace detail {
     static inline mask8x32 compare_gt(u8x32 a, u8x32 b)
     {
         const __m256i sign = _mm256_set1_epi32(0x80808080);
-        return _mm256_cmpgt_epi8(_mm256_xor_si256(a, sign), _mm256_xor_si256(b, sign));
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi8(a, b);
+    }
+
+    static inline mask8x32 compare_neq(u8x32 a, u8x32 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpeq_epi8(b, a));
+    }
+
+    static inline mask8x32 compare_lt(u8x32 a, u8x32 b)
+    {
+        const __m256i sign = _mm256_set1_epi8(0x80);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi8(b, a);
+    }
+
+    static inline mask8x32 compare_le(u8x32 a, u8x32 b)
+    {
+        const __m256i sign = _mm256_set1_epi8(0x80);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi8(a, b));
+    }
+
+    static inline mask8x32 compare_ge(u8x32 a, u8x32 b)
+    {
+        const __m256i sign = _mm256_set1_epi8(0x80);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi8(b, a));
     }
 
     static inline u8x32 select(mask8x32 mask, u8x32 a, u8x32 b)
@@ -264,7 +295,38 @@ namespace detail {
     static inline mask16x16 compare_gt(u16x16 a, u16x16 b)
     {
         const __m256i sign = _mm256_set1_epi32(0x80008000);
-        return _mm256_cmpgt_epi16(_mm256_xor_si256(a, sign), _mm256_xor_si256(b, sign));
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi16(a, b);
+    }
+
+    static inline mask16x16 compare_neq(u16x16 a, u16x16 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpeq_epi16(b, a));
+    }
+
+    static inline mask16x16 compare_lt(u16x16 a, u16x16 b)
+    {
+        const __m256i sign = _mm256_set1_epi16(0x8000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi16(b, a);
+    }
+
+    static inline mask16x16 compare_le(u16x16 a, u16x16 b)
+    {
+        const __m256i sign = _mm256_set1_epi16(0x8000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi16(a, b));
+    }
+
+    static inline mask16x16 compare_ge(u16x16 a, u16x16 b)
+    {
+        const __m256i sign = _mm256_set1_epi16(0x8000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi16(b, a));
     }
 
     static inline u16x16 select(mask16x16 mask, u16x16 a, u16x16 b)
@@ -438,7 +500,38 @@ namespace detail {
     static inline mask32x8 compare_gt(u32x8 a, u32x8 b)
     {
         const __m256i sign = _mm256_set1_epi32(0x80000000);
-        return _mm256_cmpgt_epi32(_mm256_xor_si256(a, sign), _mm256_xor_si256(b, sign));
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi32(a, b);
+    }
+
+    static inline mask32x8 compare_neq(u32x8 a, u32x8 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpeq_epi32(b, a));
+    }
+
+    static inline mask32x8 compare_lt(u32x8 a, u32x8 b)
+    {
+        const __m256i sign = _mm256_set1_epi32(0x80000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi32(b, a);
+    }
+
+    static inline mask32x8 compare_le(u32x8 a, u32x8 b)
+    {
+        const __m256i sign = _mm256_set1_epi32(0x80000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi32(a, b));
+    }
+
+    static inline mask32x8 compare_ge(u32x8 a, u32x8 b)
+    {
+        const __m256i sign = _mm256_set1_epi32(0x80000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi32(b, a));
     }
 
     static inline u32x8 select(mask32x8 mask, u32x8 a, u32x8 b)
@@ -615,22 +708,31 @@ namespace detail {
 
     static inline mask64x4 compare_neq(u64x4 a, u64x4 b)
     {
-        return detail::simd256_not_si256(compare_eq(b, a));
+        return detail::simd256_not_si256(_mm256_cmpeq_epi64(b, a));
     }
 
     static inline mask64x4 compare_lt(u64x4 a, u64x4 b)
     {
-        return compare_gt(b, a);
+        const __m256i sign = _mm256_set1_epi64x(0x8000000000000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return _mm256_cmpgt_epi64(b, a);
     }
 
     static inline mask64x4 compare_le(u64x4 a, u64x4 b)
     {
-        return detail::simd256_not_si256(compare_gt(a, b));
+        const __m256i sign = _mm256_set1_epi64x(0x8000000000000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi64(a, b));
     }
 
     static inline mask64x4 compare_ge(u64x4 a, u64x4 b)
     {
-        return detail::simd256_not_si256(compare_gt(b, a));
+        const __m256i sign = _mm256_set1_epi64x(0x8000000000000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+        return detail::simd256_not_si256(_mm256_cmpgt_epi64(b, a));
     }
 
     static inline u64x4 select(mask64x4 mask, u64x4 a, u64x4 b)
@@ -783,6 +885,26 @@ namespace detail {
         return _mm256_cmpgt_epi8(a, b);
     }
 
+    static inline mask8x32 compare_neq(s8x32 a, s8x32 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpeq_epi8(b, a));
+    }
+
+    static inline mask8x32 compare_lt(s8x32 a, s8x32 b)
+    {
+        return _mm256_cmpgt_epi8(b, a);
+    }
+
+    static inline mask8x32 compare_le(s8x32 a, s8x32 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpgt_epi8(a, b));
+    }
+
+    static inline mask8x32 compare_ge(s8x32 a, s8x32 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpgt_epi8(b, a));
+    }
+
     static inline s8x32 select(mask8x32 mask, s8x32 a, s8x32 b)
     {
         return detail::simd256_select_si256(mask, a, b);
@@ -920,6 +1042,26 @@ namespace detail {
     static inline mask16x16 compare_gt(s16x16 a, s16x16 b)
     {
         return _mm256_cmpgt_epi16(a, b);
+    }
+
+    static inline mask16x16 compare_neq(s16x16 a, s16x16 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpeq_epi16(b, a));
+    }
+
+    static inline mask16x16 compare_lt(s16x16 a, s16x16 b)
+    {
+        return _mm256_cmpgt_epi16(b, a);
+    }
+
+    static inline mask16x16 compare_le(s16x16 a, s16x16 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpgt_epi16(a, b));
+    }
+
+    static inline mask16x16 compare_ge(s16x16 a, s16x16 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpgt_epi16(b, a));
     }
 
     static inline s16x16 select(mask16x16 mask, s16x16 a, s16x16 b)
@@ -1111,6 +1253,26 @@ namespace detail {
         return _mm256_cmpgt_epi32(a, b);
     }
 
+    static inline mask32x8 compare_neq(s32x8 a, s32x8 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpeq_epi32(b, a));
+    }
+
+    static inline mask32x8 compare_lt(s32x8 a, s32x8 b)
+    {
+        return _mm256_cmpgt_epi32(b, a);
+    }
+
+    static inline mask32x8 compare_le(s32x8 a, s32x8 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpgt_epi32(a, b));
+    }
+
+    static inline mask32x8 compare_ge(s32x8 a, s32x8 b)
+    {
+        return detail::simd256_not_si256(_mm256_cmpgt_epi32(b, a));
+    }
+
     static inline s32x8 select(mask32x8 mask, s32x8 a, s32x8 b)
     {
         return detail::simd256_select_si256(mask, a, b);
@@ -1282,22 +1444,22 @@ namespace detail {
 
     static inline mask64x4 compare_neq(s64x4 a, s64x4 b)
     {
-        return detail::simd256_not_si256(compare_eq(b, a));
+        return detail::simd256_not_si256(_mm256_cmpeq_epi64(b, a));
     }
 
     static inline mask64x4 compare_lt(s64x4 a, s64x4 b)
     {
-        return compare_gt(b, a);
+        return _mm256_cmpgt_epi64(b, a);
     }
 
     static inline mask64x4 compare_le(s64x4 a, s64x4 b)
     {
-        return detail::simd256_not_si256(compare_gt(a, b));
+        return detail::simd256_not_si256(_mm256_cmpgt_epi64(a, b));
     }
 
     static inline mask64x4 compare_ge(s64x4 a, s64x4 b)
     {
-        return detail::simd256_not_si256(compare_gt(b, a));
+        return detail::simd256_not_si256(_mm256_cmpgt_epi64(b, a));
     }
 
     static inline s64x4 select(mask64x4 mask, s64x4 a, s64x4 b)

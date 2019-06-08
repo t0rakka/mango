@@ -262,6 +262,34 @@ namespace detail {
         return detail::combine(lo, hi);
     }
 
+    static inline mask8x32 compare_neq(u8x32 a, u8x32 b)
+    {
+        mask8x16 lo = compare_neq(a.lo, b.lo);
+        mask8x16 hi = compare_neq(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask8x32 compare_lt(u8x32 a, u8x32 b)
+    {
+        mask8x16 lo = compare_lt(a.lo, b.lo);
+        mask8x16 hi = compare_lt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask8x32 compare_le(u8x32 a, u8x32 b)
+    {
+        mask8x16 lo = compare_le(a.lo, b.lo);
+        mask8x16 hi = compare_le(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask8x32 compare_ge(u8x32 a, u8x32 b)
+    {
+        mask8x16 lo = compare_ge(a.lo, b.lo);
+        mask8x16 hi = compare_ge(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
     static inline u8x32 select(mask8x32 mask, u8x32 a, u8x32 b)
     {
         u8x16 lo = select(detail::get_low (mask), a.lo, b.lo);
@@ -447,6 +475,34 @@ namespace detail {
     {
         mask16x8 lo = compare_gt(a.lo, b.lo);
         mask16x8 hi = compare_gt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_neq(u16x16 a, u16x16 b)
+    {
+        mask16x8 lo = compare_neq(a.lo, b.lo);
+        mask16x8 hi = compare_neq(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_lt(u16x16 a, u16x16 b)
+    {
+        mask16x8 lo = compare_lt(a.lo, b.lo);
+        mask16x8 hi = compare_lt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_le(u16x16 a, u16x16 b)
+    {
+        mask16x8 lo = compare_le(a.lo, b.lo);
+        mask16x8 hi = compare_le(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_ge(u16x16 a, u16x16 b)
+    {
+        mask16x8 lo = compare_ge(a.lo, b.lo);
+        mask16x8 hi = compare_ge(a.hi, b.hi);
         return detail::combine(lo, hi);
     }
 
@@ -701,6 +757,34 @@ namespace detail {
         return detail::combine(lo, hi);
     }
 
+    static inline mask32x8 compare_neq(u32x8 a, u32x8 b)
+    {
+        mask32x4 lo = compare_neq(a.lo, b.lo);
+        mask32x4 hi = compare_neq(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask32x8 compare_lt(u32x8 a, u32x8 b)
+    {
+        mask32x4 lo = compare_lt(a.lo, b.lo);
+        mask32x4 hi = compare_lt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask32x8 compare_le(u32x8 a, u32x8 b)
+    {
+        mask32x4 lo = compare_le(a.lo, b.lo);
+        mask32x4 hi = compare_le(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask32x8 compare_ge(u32x8 a, u32x8 b)
+    {
+        mask32x4 lo = compare_ge(a.lo, b.lo);
+        mask32x4 hi = compare_ge(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
     static inline u32x8 select(mask32x8 mask, u32x8 a, u32x8 b)
     {
         u32x4 lo = select(detail::get_low (mask), a.lo, b.lo);
@@ -952,33 +1036,29 @@ namespace detail {
 
     static inline mask64x4 compare_neq(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_eq(b.lo, a.lo);
-        __m128i hi = compare_eq(b.hi, a.hi);
-        lo = detail::simd128_not_si128(lo);
-        hi = detail::simd128_not_si128(hi);
+        __m128i lo = compare_neq(a.lo, b.lo);
+        __m128i hi = compare_neq(a.hi, b.hi);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_lt(u64x4 a, u64x4 b)
     {
-        return compare_gt(b, a);
+        __m128i lo = compare_lt(a.lo, b.lo);
+        __m128i hi = compare_lt(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_le(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_gt(a.lo, b.lo);
-        __m128i hi = compare_gt(a.hi, b.hi);
-        lo = detail::simd128_not_si128(lo);
-        hi = detail::simd128_not_si128(hi);
+        __m128i lo = compare_le(a.lo, b.lo);
+        __m128i hi = compare_le(a.hi, b.hi);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_ge(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_gt(b.lo, a.lo);
-        __m128i hi = compare_gt(b.hi, a.hi);
-        lo = detail::simd128_not_si128(lo);
-        hi = detail::simd128_not_si128(hi);
+        __m128i lo = compare_ge(a.lo, b.lo);
+        __m128i hi = compare_ge(a.hi, b.hi);
         return _mm256_setr_m128i(lo, hi);
     }
 
@@ -1200,6 +1280,34 @@ namespace detail {
         return detail::combine(lo, hi);
     }
 
+    static inline mask8x32 compare_neq(s8x32 a, s8x32 b)
+    {
+        mask8x16 lo = compare_neq(a.lo, b.lo);
+        mask8x16 hi = compare_neq(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask8x32 compare_lt(s8x32 a, s8x32 b)
+    {
+        mask8x16 lo = compare_lt(a.lo, b.lo);
+        mask8x16 hi = compare_lt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask8x32 compare_le(s8x32 a, s8x32 b)
+    {
+        mask8x16 lo = compare_le(a.lo, b.lo);
+        mask8x16 hi = compare_le(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask8x32 compare_ge(s8x32 a, s8x32 b)
+    {
+        mask8x16 lo = compare_ge(a.lo, b.lo);
+        mask8x16 hi = compare_ge(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
     static inline s8x32 select(mask8x32 mask, s8x32 a, s8x32 b)
     {
         s8x16 lo = select(detail::get_low (mask), a.lo, b.lo);
@@ -1399,6 +1507,34 @@ namespace detail {
     {
         mask16x8 lo = compare_gt(a.lo, b.lo);
         mask16x8 hi = compare_gt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_neq(s16x16 a, s16x16 b)
+    {
+        mask16x8 lo = compare_neq(a.lo, b.lo);
+        mask16x8 hi = compare_neq(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_lt(s16x16 a, s16x16 b)
+    {
+        mask16x8 lo = compare_lt(a.lo, b.lo);
+        mask16x8 hi = compare_lt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_le(s16x16 a, s16x16 b)
+    {
+        mask16x8 lo = compare_le(a.lo, b.lo);
+        mask16x8 hi = compare_le(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask16x16 compare_ge(s16x16 a, s16x16 b)
+    {
+        mask16x8 lo = compare_ge(a.lo, b.lo);
+        mask16x8 hi = compare_ge(a.hi, b.hi);
         return detail::combine(lo, hi);
     }
 
@@ -1669,6 +1805,34 @@ namespace detail {
         return detail::combine(lo, hi);
     }
 
+    static inline mask32x8 compare_neq(s32x8 a, s32x8 b)
+    {
+        mask32x4 lo = compare_neq(a.lo, b.lo);
+        mask32x4 hi = compare_neq(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask32x8 compare_lt(s32x8 a, s32x8 b)
+    {
+        mask32x4 lo = compare_lt(a.lo, b.lo);
+        mask32x4 hi = compare_lt(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask32x8 compare_le(s32x8 a, s32x8 b)
+    {
+        mask32x4 lo = compare_le(a.lo, b.lo);
+        mask32x4 hi = compare_le(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
+    static inline mask32x8 compare_ge(s32x8 a, s32x8 b)
+    {
+        mask32x4 lo = compare_ge(a.lo, b.lo);
+        mask32x4 hi = compare_ge(a.hi, b.hi);
+        return detail::combine(lo, hi);
+    }
+
     static inline s32x8 select(mask32x8 mask, s32x8 a, s32x8 b)
     {
         s32x4 lo = select(detail::get_low (mask), a.lo, b.lo);
@@ -1920,33 +2084,29 @@ namespace detail {
 
     static inline mask64x4 compare_neq(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_eq(b.lo, a.lo);
-        __m128i hi = compare_eq(b.hi, a.hi);
-        lo = detail::simd128_not_si128(lo);
-        hi = detail::simd128_not_si128(hi);
+        __m128i lo = compare_neq(a.lo, b.lo);
+        __m128i hi = compare_neq(a.hi, b.hi);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_lt(s64x4 a, s64x4 b)
     {
-        return compare_gt(b, a);
+        __m128i lo = compare_lt(a.lo, b.lo);
+        __m128i hi = compare_lt(a.hi, b.hi);
+        return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_le(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_gt(a.lo, b.lo);
-        __m128i hi = compare_gt(a.hi, b.hi);
-        lo = detail::simd128_not_si128(lo);
-        hi = detail::simd128_not_si128(hi);
+        __m128i lo = compare_le(a.lo, b.lo);
+        __m128i hi = compare_le(a.hi, b.hi);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_ge(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_gt(b.lo, a.lo);
-        __m128i hi = compare_gt(b.hi, a.hi);
-        lo = detail::simd128_not_si128(lo);
-        hi = detail::simd128_not_si128(hi);
+        __m128i lo = compare_ge(a.lo, b.lo);
+        __m128i hi = compare_ge(a.hi, b.hi);
         return _mm256_setr_m128i(lo, hi);
     }
 

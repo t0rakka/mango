@@ -117,6 +117,26 @@ namespace detail {
         return _mm512_cmp_epu8_mask(b, a, 1);
     }
 
+    static inline mask8x64 compare_neq(u8x64 a, u8x64 b)
+    {
+        return _mm512_cmp_epu8_mask(a, b, 4);
+    }
+
+    static inline mask8x64 compare_lt(u8x64 a, u8x64 b)
+    {
+        return _mm512_cmp_epu8_mask(a, b, 1);
+    }
+
+    static inline mask8x64 compare_le(u8x64 a, u8x64 b)
+    {
+        return _mm512_cmp_epu8_mask(a, b, 2);
+    }
+
+    static inline mask8x64 compare_ge(u8x64 a, u8x64 b)
+    {
+        return _mm512_cmp_epu8_mask(b, a, 2);
+    }
+
     static inline u8x64 select(mask8x64 mask, u8x64 a, u8x64 b)
     {
         return _mm512_mask_blend_epi8(mask, b, a);
@@ -230,6 +250,26 @@ namespace detail {
     static inline mask16x32 compare_gt(u16x32 a, u16x32 b)
     {
         return _mm512_cmp_epu16_mask(b, a, 1);
+    }
+
+    static inline mask16x32 compare_neq(u16x32 a, u16x32 b)
+    {
+        return _mm512_cmp_epu16_mask(a, b, 4);
+    }
+
+    static inline mask16x32 compare_lt(u16x32 a, u16x32 b)
+    {
+        return _mm512_cmp_epu16_mask(a, b, 1);
+    }
+
+    static inline mask16x32 compare_le(u16x32 a, u16x32 b)
+    {
+        return _mm512_cmp_epu16_mask(a, b, 2);
+    }
+
+    static inline mask16x32 compare_ge(u16x32 a, u16x32 b)
+    {
+        return _mm512_cmp_epu16_mask(b, a, 2);
     }
 
     static inline u16x32 select(mask16x32 mask, u16x32 a, u16x32 b)
@@ -376,6 +416,26 @@ namespace detail {
     static inline mask32x16 compare_gt(u32x16 a, u32x16 b)
     {
         return _mm512_cmp_epu32_mask(b, a, 1);
+    }
+
+    static inline mask32x16 compare_neq(u32x16 a, u32x16 b)
+    {
+        return _mm512_cmp_epu32_mask(a, b, 4);
+    }
+
+    static inline mask32x16 compare_lt(u32x16 a, u32x16 b)
+    {
+        return _mm512_cmp_epu32_mask(a, b, 1);
+    }
+
+    static inline mask32x16 compare_le(u32x16 a, u32x16 b)
+    {
+        return _mm512_cmp_epu32_mask(a, b, 2);
+    }
+
+    static inline mask32x16 compare_ge(u32x16 a, u32x16 b)
+    {
+        return _mm512_cmp_epu32_mask(b, a, 2);
     }
 
     static inline u32x16 select(mask32x16 mask, u32x16 a, u32x16 b)
@@ -689,6 +749,26 @@ namespace detail {
         return _mm512_cmp_epi8_mask(b, a, 1);
     }
 
+    static inline mask8x64 compare_neq(s8x64 a, s8x64 b)
+    {
+        return _mm512_cmp_epi8_mask(a, b, 4);
+    }
+
+    static inline mask8x64 compare_lt(s8x64 a, s8x64 b)
+    {
+        return _mm512_cmp_epi8_mask(a, b, 1);
+    }
+
+    static inline mask8x64 compare_le(s8x64 a, s8x64 b)
+    {
+        return _mm512_cmp_epi8_mask(a, b, 2);
+    }
+
+    static inline mask8x64 compare_ge(s8x64 a, s8x64 b)
+    {
+        return _mm512_cmp_epi8_mask(b, a, 2);
+    }
+
     static inline s8x64 select(mask8x64 mask, s8x64 a, s8x64 b)
     {
         return _mm512_mask_blend_epi8(mask, b, a);
@@ -812,6 +892,26 @@ namespace detail {
     static inline mask16x32 compare_gt(s16x32 a, s16x32 b)
     {
         return _mm512_cmp_epi16_mask(b, a, 1);
+    }
+
+    static inline mask16x32 compare_neq(s16x32 a, s16x32 b)
+    {
+        return _mm512_cmp_epi16_mask(a, b, 4);
+    }
+
+    static inline mask16x32 compare_lt(s16x32 a, s16x32 b)
+    {
+        return _mm512_cmp_epi16_mask(a, b, 1);
+    }
+
+    static inline mask16x32 compare_le(s16x32 a, s16x32 b)
+    {
+        return _mm512_cmp_epi16_mask(a, b, 2);
+    }
+
+    static inline mask16x32 compare_ge(s16x32 a, s16x32 b)
+    {
+        return _mm512_cmp_epi16_mask(b, a, 2);
     }
 
     static inline s16x32 select(mask16x32 mask, s16x32 a, s16x32 b)
@@ -968,6 +1068,26 @@ namespace detail {
     static inline mask32x16 compare_gt(s32x16 a, s32x16 b)
     {
         return _mm512_cmp_epi32_mask(b, a, 1);
+    }
+
+    static inline mask32x16 compare_neq(s32x16 a, s32x16 b)
+    {
+        return _mm512_cmp_epi32_mask(a, b, 4);
+    }
+
+    static inline mask32x16 compare_lt(s32x16 a, s32x16 b)
+    {
+        return _mm512_cmp_epi32_mask(a, b, 1);
+    }
+
+    static inline mask32x16 compare_le(s32x16 a, s32x16 b)
+    {
+        return _mm512_cmp_epi32_mask(a, b, 2);
+    }
+
+    static inline mask32x16 compare_ge(s32x16 a, s32x16 b)
+    {
+        return _mm512_cmp_epi32_mask(b, a, 2);
     }
 
     static inline s32x16 select(mask32x16 mask, s32x16 a, s32x16 b)
