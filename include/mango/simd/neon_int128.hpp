@@ -1688,6 +1688,11 @@ namespace simd {
         return veorq_u8(a, b);
     }
 
+    static inline mask8x16 operator ! (mask8x16 a)
+    {
+        return bitwise_not(u8x16(a)).data;
+    }
+
     static inline u32 get_mask(mask8x16 a)
     {
         const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
@@ -1763,6 +1768,11 @@ namespace simd {
     static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
     {
         return veorq_u16(a, b);
+    }
+
+    static inline mask16x8 operator ! (mask16x8 a)
+    {
+        return bitwise_not(u16x8(a)).data;
     }
 
 #ifdef __aarch64__
@@ -1843,6 +1853,11 @@ namespace simd {
         return veorq_u32(a, b);
     }
 
+    static inline mask32x4 operator ! (mask32x4 a)
+    {
+        return bitwise_not(u32x4(a)).data;
+    }
+
 #ifdef __aarch64__
 
     static inline u32 get_mask(mask32x4 a)
@@ -1917,6 +1932,11 @@ namespace simd {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return veorq_u64(a, b);
+    }
+
+    static inline mask64x2 operator ! (mask64x2 a)
+    {
+        return bitwise_not(u64x2(a)).data;
     }
 
 #ifdef __aarch64__

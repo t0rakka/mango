@@ -22,7 +22,7 @@ namespace detail {
 
     static inline __m256i simd256_select_si256(__m256i mask, __m256i a, __m256i b)
     {
-        return _mm256_or_si256(_mm256_and_si256(mask, a), _mm256_andnot_si256(mask, b));
+        return _mm256_blendv_epi8(b, a, mask);
     }
 
 } // namespace detail
@@ -1286,6 +1286,11 @@ namespace detail {
         return _mm512_kxor(a, b);
     }
 
+    static inline mask8x32 operator ! (mask8x32 a)
+    {
+        return _mm512_knot(a);
+    }
+
 #endif
 
     static inline u32 get_mask(mask8x32 a)
@@ -1327,6 +1332,11 @@ namespace detail {
     static inline mask16x16 operator ^ (mask16x16 a, mask16x16 b)
     {
         return _mm512_kxor(a, b);
+    }
+
+    static inline mask16x16 operator ! (mask16x16 a)
+    {
+        return _mm512_knot(a);
     }
 
 #endif
@@ -1372,6 +1382,11 @@ namespace detail {
         return _mm512_kxor(a, b);
     }
 
+    static inline mask32x8 operator ! (mask32x8 a)
+    {
+        return _mm512_knot(a);
+    }
+
 #endif
 
     static inline u32 get_mask(mask32x8 a)
@@ -1413,6 +1428,11 @@ namespace detail {
     static inline mask64x4 operator ^ (mask64x4 a, mask64x4 b)
     {
         return _mm512_kxor(a, b);
+    }
+
+    static inline mask64x4 operator ! (mask64x4 a)
+    {
+        return _mm512_knot(a);
     }
 
 #endif

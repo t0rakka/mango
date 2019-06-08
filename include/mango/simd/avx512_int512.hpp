@@ -1197,6 +1197,11 @@ namespace detail {
         return _mm512_kxor(a, b);
     }
 
+    static inline mask8x64 operator ! (mask8x64 a)
+    {
+        return _mm512_knot(a);
+    }
+
 #endif
 
     static inline u64 get_mask(mask8x64 a)
@@ -1238,6 +1243,11 @@ namespace detail {
     static inline mask16x32 operator ^ (mask16x32 a, mask16x32 b)
     {
         return _mm512_kxor(a, b);
+    }
+
+    static inline mask16x32 operator ! (mask16x32 a)
+    {
+        return _mm512_knot(a);
     }
 
 #endif
@@ -1283,6 +1293,11 @@ namespace detail {
         return _mm512_kxor(a, b);
     }
 
+    static inline mask32x16 operator ! (mask32x16 a)
+    {
+        return _mm512_knot(a);
+    }
+
 #endif
 
     static inline u32 get_mask(mask32x16 a)
@@ -1324,6 +1339,11 @@ namespace detail {
     static inline mask64x8 operator ^ (mask64x8 a, mask64x8 b)
     {
         return _mm512_kxor(a, b);
+    }
+
+    static inline mask64x8 operator ! (mask64x8 a)
+    {
+        return _mm512_knot(a);
     }
 
 #endif

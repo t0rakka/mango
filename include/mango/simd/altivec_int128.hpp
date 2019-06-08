@@ -1681,6 +1681,11 @@ namespace simd {
         return vec_xor(a.data, b.data);
     }
 
+    static inline mask8x16 operator ! (mask8x16 a)
+    {
+        return vec_nor(a.data, a.data);
+    }
+
     static inline u32 get_mask(mask8x16 a)
     {
         const u32x4::vector zero = u32x4_zero();
@@ -1721,6 +1726,11 @@ namespace simd {
     static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
     {
         return vec_xor(a.data, b.data);
+    }
+
+    static inline mask16x8 operator ! (mask16x8 a)
+    {
+        return vec_nor(a.data, a.data);
     }
 
     static inline u32 get_mask(mask16x8 a)
@@ -1765,6 +1775,11 @@ namespace simd {
         return vec_xor(a.data, b.data);
     }
 
+    static inline mask32x4 operator ! (mask32x4 a)
+    {
+        return vec_nor(a.data, a.data);
+    }
+
     static inline u32 get_mask(mask32x4 a)
     {
         const s32x4::vector zero = s32x4_zero();
@@ -1804,6 +1819,11 @@ namespace simd {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return (mask64x2::vector) vec_xor((u64x2::vector)a.data, (u64x2::vector)b.data);
+    }
+
+    static inline mask64x2 operator ! (mask64x2 a)
+    {
+        return vec_nor(a.data, a.data);
     }
 
     static inline u32 get_mask(mask64x2 a)

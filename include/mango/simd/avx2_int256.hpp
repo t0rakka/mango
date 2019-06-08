@@ -1350,6 +1350,11 @@ namespace detail {
         return _mm256_xor_si256(a, b);
     }
 
+    static inline mask8x32 operator ! (mask8x32 a)
+    {
+        return detail::simd256_not_si256(a);
+    }
+
     static inline u32 get_mask(mask8x32 a)
     {
         return _mm256_movemask_epi8(a);
@@ -1387,6 +1392,11 @@ namespace detail {
     static inline mask16x16 operator ^ (mask16x16 a, mask16x16 b)
     {
         return _mm256_xor_si256(a, b);
+    }
+
+    static inline mask16x16 operator ! (mask16x16 a)
+    {
+        return detail::simd256_not_si256(a);
     }
 
     static inline u32 get_mask(mask16x16 a)
@@ -1429,6 +1439,11 @@ namespace detail {
         return _mm256_xor_si256(a, b);
     }
 
+    static inline mask32x8 operator ! (mask32x8 a)
+    {
+        return detail::simd256_not_si256(a);
+    }
+
     static inline u32 get_mask(mask32x8 a)
     {
         return _mm256_movemask_ps(_mm256_castsi256_ps(a));
@@ -1466,6 +1481,11 @@ namespace detail {
     static inline mask64x4 operator ^ (mask64x4 a, mask64x4 b)
     {
         return _mm256_xor_si256(a, b);
+    }
+
+    static inline mask64x4 operator ! (mask64x4 a)
+    {
+        return detail::simd256_not_si256(a);
     }
 
     static inline u32 get_mask(mask64x4 a)

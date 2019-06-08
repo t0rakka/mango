@@ -1964,6 +1964,11 @@ namespace detail {
         return a.mask ^ b.mask;
     }
 
+    static inline mask8x16 operator ! (mask8x16 a)
+    {
+        return ~a.mask;
+    }
+
     static inline u32 get_mask(mask8x16 a)
     {
         return a.mask;
@@ -2001,6 +2006,11 @@ namespace detail {
     static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
     {
         return a.mask ^ b.mask;
+    }
+
+    static inline mask16x8 operator ! (mask16x8 a)
+    {
+        return ~a.mask;
     }
 
     static inline u32 get_mask(mask16x8 a)
@@ -2042,6 +2052,11 @@ namespace detail {
         return a.mask ^ b.mask;
     }
 
+    static inline mask32x4 operator ! (mask32x4 a)
+    {
+        return ~a.mask;
+    }
+
     static inline u32 get_mask(mask32x4 a)
     {
         return a.mask;
@@ -2079,6 +2094,11 @@ namespace detail {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return a.mask ^ b.mask;
+    }
+
+    static inline mask64x2 operator ! (mask64x2 a)
+    {
+        return ~a.mask;
     }
 
     static inline u32 get_mask(mask64x2 a)

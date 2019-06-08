@@ -1597,6 +1597,11 @@ namespace simd {
         return (v16u8) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
+    static inline mask8x16 operator ! (mask8x16 a)
+    {
+        return (v16u8) __msa_nor_v((v16u8) a, (v16u8) a);
+    }
+
     static inline u32 get_mask(mask8x16 a)
     {
         u32 x = __msa_copy_u_w(a, 0) & 0x01800180;
@@ -1644,6 +1649,11 @@ namespace simd {
         return (v8u16) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
+    static inline mask16x8 operator ! (mask16x8 a)
+    {
+        return (v8u16) __msa_nor_v((v16u8) a, (v16u8) a);
+    }
+
     static inline u32 get_mask(mask16x8 a)
     {
         u32 x = __msa_copy_u_w(a, 0) & 0x00018000;
@@ -1687,6 +1697,11 @@ namespace simd {
         return (v4u32) __msa_xor_v((v16u8) a, (v16u8) b);
     }
 
+    static inline mask32x4 operator ! (mask32x4 a)
+    {
+        return (v4u32) __msa_nor_v((v16u8) a, (v16u8) a);
+    }
+
     static inline u32 get_mask(mask32x4 a)
     {
         u32 x = __msa_copy_u_w(a, 0) & 1;
@@ -1728,6 +1743,11 @@ namespace simd {
     static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
     {
         return (v2u64) __msa_xor_v((v16u8) a, (v16u8) b);
+    }
+
+    static inline mask64x2 operator ! (mask64x2 a)
+    {
+        return (v2u64) __msa_nor_v((v16u8) a, (v16u8) a);
     }
 
     static inline u32 get_mask(mask64x2 a)
