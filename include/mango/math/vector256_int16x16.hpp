@@ -200,6 +200,21 @@ namespace mango
         return simd::compare_eq(a, b);
     }
 
+    static inline mask16x16 operator >= (Vector<s16, 16> a, Vector<s16, 16> b)
+    {
+        return simd::compare_ge(a, b);
+    }
+
+    static inline mask16x16 operator <= (Vector<s16, 16> a, Vector<s16, 16> b)
+    {
+        return simd::compare_le(b, a);
+    }
+
+    static inline mask16x16 operator != (Vector<s16, 16> a, Vector<s16, 16> b)
+    {
+        return simd::compare_neq(a, b);
+    }
+
     static inline Vector<s16, 16> select(mask16x16 mask, Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::select(mask, a, b);
