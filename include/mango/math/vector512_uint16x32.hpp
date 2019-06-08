@@ -122,26 +122,6 @@ namespace mango
         return simd::sub(a, b);
     }
 
-    static inline Vector<u16, 32> nand(Vector<u16, 32> a, Vector<u16, 32> b)
-    {
-        return simd::bitwise_nand(a, b);
-    }
-
-    static inline Vector<u16, 32> operator & (Vector<u16, 32> a, Vector<u16, 32> b)
-    {
-        return simd::bitwise_and(a, b);
-    }
-
-    static inline Vector<u16, 32> operator | (Vector<u16, 32> a, Vector<u16, 32> b)
-    {
-        return simd::bitwise_or(a, b);
-    }
-
-    static inline Vector<u16, 32> operator ^ (Vector<u16, 32> a, Vector<u16, 32> b)
-    {
-        return simd::bitwise_xor(a, b);
-    }
-
     static inline Vector<u16, 32> unpacklo(Vector<u16, 32> a, Vector<u16, 32> b)
     {
         return simd::unpacklo(a, b);
@@ -171,6 +151,39 @@ namespace mango
     {
         return simd::max(a, b);
     }
+
+    // ------------------------------------------------------------------
+	// bitwise operators
+    // ------------------------------------------------------------------
+
+    static inline Vector<u16, 32> nand(Vector<u16, 32> a, Vector<u16, 32> b)
+    {
+        return simd::bitwise_nand(a, b);
+    }
+
+    static inline Vector<u16, 32> operator & (Vector<u16, 32> a, Vector<u16, 32> b)
+    {
+        return simd::bitwise_and(a, b);
+    }
+
+    static inline Vector<u16, 32> operator | (Vector<u16, 32> a, Vector<u16, 32> b)
+    {
+        return simd::bitwise_or(a, b);
+    }
+
+    static inline Vector<u16, 32> operator ^ (Vector<u16, 32> a, Vector<u16, 32> b)
+    {
+        return simd::bitwise_xor(a, b);
+    }
+
+    static inline Vector<u16, 32> operator ~ (Vector<u16, 32> a)
+    {
+        return simd::bitwise_not(a);
+    }
+
+    // ------------------------------------------------------------------
+	// compare / select
+    // ------------------------------------------------------------------
 
     static inline mask16x32 operator > (Vector<u16, 32> a, Vector<u16, 32> b)
     {

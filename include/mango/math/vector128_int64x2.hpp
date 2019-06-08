@@ -151,6 +151,20 @@ namespace mango
         return simd::sub(a, b);
     }
 
+    static inline Vector<s64, 2> unpacklo(Vector<s64, 2> a, Vector<s64, 2> b)
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    static inline Vector<s64, 2> unpackhi(Vector<s64, 2> a, Vector<s64, 2> b)
+    {
+        return simd::unpackhi(a, b);
+    }
+
+    // ------------------------------------------------------------------
+	// bitwise operators
+    // ------------------------------------------------------------------
+
     static inline Vector<s64, 2> nand(Vector<s64, 2> a, Vector<s64, 2> b)
     {
         return simd::bitwise_nand(a, b);
@@ -171,15 +185,14 @@ namespace mango
         return simd::bitwise_xor(a, b);
     }
 
-    static inline Vector<s64, 2> unpacklo(Vector<s64, 2> a, Vector<s64, 2> b)
+    static inline Vector<s64, 2> operator ~ (Vector<s64, 2> a)
     {
-        return simd::unpacklo(a, b);
+        return simd::bitwise_not(a);
     }
 
-    static inline Vector<s64, 2> unpackhi(Vector<s64, 2> a, Vector<s64, 2> b)
-    {
-        return simd::unpackhi(a, b);
-    }
+    // ------------------------------------------------------------------
+	// compare / select
+    // ------------------------------------------------------------------
 
     static inline mask64x2 operator > (Vector<s64, 2> a, Vector<s64, 2> b)
     {

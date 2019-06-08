@@ -409,31 +409,6 @@ namespace mango
         return simd::sub(a, b);
     }
 
-    static inline Vector<u32, 4> nand(Vector<u32, 4> a, Vector<u32, 4> b)
-    {
-        return simd::bitwise_nand(a, b);
-    }
-
-    static inline Vector<u32, 4> operator & (Vector<u32, 4> a, Vector<u32, 4> b)
-    {
-        return simd::bitwise_and(a, b);
-    }
-
-    static inline Vector<u32, 4> operator | (Vector<u32, 4> a, Vector<u32, 4> b)
-    {
-        return simd::bitwise_or(a, b);
-    }
-
-    static inline Vector<u32, 4> operator ^ (Vector<u32, 4> a, Vector<u32, 4> b)
-    {
-        return simd::bitwise_xor(a, b);
-    }
-
-    static inline Vector<u32, 4> operator ~ (Vector<u32, 4> a)
-    {
-        return simd::bitwise_not(a);
-    }
-
     static inline Vector<u32, 4> unpacklo(Vector<u32, 4> a, Vector<u32, 4> b)
     {
         return simd::unpacklo(a, b);
@@ -468,6 +443,39 @@ namespace mango
     {
         return simd::clamp(a, low, high);
     }
+
+    // ------------------------------------------------------------------
+	// bitwise operators
+    // ------------------------------------------------------------------
+
+    static inline Vector<u32, 4> nand(Vector<u32, 4> a, Vector<u32, 4> b)
+    {
+        return simd::bitwise_nand(a, b);
+    }
+
+    static inline Vector<u32, 4> operator & (Vector<u32, 4> a, Vector<u32, 4> b)
+    {
+        return simd::bitwise_and(a, b);
+    }
+
+    static inline Vector<u32, 4> operator | (Vector<u32, 4> a, Vector<u32, 4> b)
+    {
+        return simd::bitwise_or(a, b);
+    }
+
+    static inline Vector<u32, 4> operator ^ (Vector<u32, 4> a, Vector<u32, 4> b)
+    {
+        return simd::bitwise_xor(a, b);
+    }
+
+    static inline Vector<u32, 4> operator ~ (Vector<u32, 4> a)
+    {
+        return simd::bitwise_not(a);
+    }
+
+    // ------------------------------------------------------------------
+	// compare / select
+    // ------------------------------------------------------------------
 
     static inline mask32x4 operator > (Vector<u32, 4> a, Vector<u32, 4> b)
     {

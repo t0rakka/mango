@@ -138,31 +138,6 @@ namespace mango
         return simd::sub(a, b);
     }
 
-    static inline Vector<s16, 8> nand(Vector<s16, 8> a, Vector<s16, 8> b)
-    {
-        return simd::bitwise_nand(a, b);
-    }
-
-    static inline Vector<s16, 8> operator & (Vector<s16, 8> a, Vector<s16, 8> b)
-    {
-        return simd::bitwise_and(a, b);
-    }
-
-    static inline Vector<s16, 8> operator | (Vector<s16, 8> a, Vector<s16, 8> b)
-    {
-        return simd::bitwise_or(a, b);
-    }
-
-    static inline Vector<s16, 8> operator ^ (Vector<s16, 8> a, Vector<s16, 8> b)
-    {
-        return simd::bitwise_xor(a, b);
-    }
-
-    static inline Vector<s16, 8> operator ~ (Vector<s16, 8> a)
-    {
-        return simd::bitwise_not(a);
-    }
-
     static inline Vector<s16, 8> unpacklo(Vector<s16, 8> a, Vector<s16, 8> b)
     {
         return simd::unpacklo(a, b);
@@ -202,6 +177,39 @@ namespace mango
     {
         return simd::clamp(a, low, high);
     }
+
+    // ------------------------------------------------------------------
+	// bitwise operators
+    // ------------------------------------------------------------------
+
+    static inline Vector<s16, 8> nand(Vector<s16, 8> a, Vector<s16, 8> b)
+    {
+        return simd::bitwise_nand(a, b);
+    }
+
+    static inline Vector<s16, 8> operator & (Vector<s16, 8> a, Vector<s16, 8> b)
+    {
+        return simd::bitwise_and(a, b);
+    }
+
+    static inline Vector<s16, 8> operator | (Vector<s16, 8> a, Vector<s16, 8> b)
+    {
+        return simd::bitwise_or(a, b);
+    }
+
+    static inline Vector<s16, 8> operator ^ (Vector<s16, 8> a, Vector<s16, 8> b)
+    {
+        return simd::bitwise_xor(a, b);
+    }
+
+    static inline Vector<s16, 8> operator ~ (Vector<s16, 8> a)
+    {
+        return simd::bitwise_not(a);
+    }
+
+    // ------------------------------------------------------------------
+	// compare / select
+    // ------------------------------------------------------------------
 
     static inline mask16x8 operator > (Vector<s16, 8> a, Vector<s16, 8> b)
     {
