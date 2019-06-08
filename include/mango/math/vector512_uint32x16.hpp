@@ -201,6 +201,10 @@ namespace mango
         return simd::select(mask, a, b);
     }
 
+    // ------------------------------------------------------------------
+	// shift
+    // ------------------------------------------------------------------
+
     static inline Vector<u32, 16> operator << (Vector<u32, 16> a, int b)
     {
         return simd::sll(a, b);
