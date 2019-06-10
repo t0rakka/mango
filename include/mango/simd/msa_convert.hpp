@@ -780,10 +780,10 @@ namespace detail {
     inline f16x4 convert<f16x4>(f32x4 s)
     {
         f16x4 v;
-        v[0] = get_x(s);
-        v[1] = get_y(s);
-        v[2] = get_z(s);
-        v[3] = get_w(s);
+        v[0] = get_component<0>(s);
+        v[1] = get_component<1>(s);
+        v[2] = get_component<2>(s);
+        v[3] = get_component<3>(s);
         return v;
     }
 

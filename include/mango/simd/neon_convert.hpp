@@ -722,30 +722,30 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(s32x4 s)
     {
-        f64 x = f64(get_x(s));
-        f64 y = f64(get_y(s));
-        f64 z = f64(get_z(s));
-        f64 w = f64(get_w(s));
+        f64 x = f64(get_component<0>(s));
+        f64 y = f64(get_component<1>(s));
+        f64 z = f64(get_component<2>(s));
+        f64 w = f64(get_component<3>(s));
         return f64x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(u32x4 s)
     {
-        f64 x = unsignedIntToDouble(get_x(s));
-        f64 y = unsignedIntToDouble(get_y(s));
-        f64 z = unsignedIntToDouble(get_z(s));
-        f64 w = unsignedIntToDouble(get_w(s));
+        f64 x = unsignedIntToDouble(get_component<0>(s));
+        f64 y = unsignedIntToDouble(get_component<1>(s));
+        f64 z = unsignedIntToDouble(get_component<2>(s));
+        f64 w = unsignedIntToDouble(get_component<3>(s));
         return f64x4_set4(x, y, z, w);
     }
 
     template <>
     inline f64x4 convert<f64x4>(f32x4 s)
     {
-        f64 x = f64(get_x(s));
-        f64 y = f64(get_y(s));
-        f64 z = f64(get_z(s));
-        f64 w = f64(get_w(s));
+        f64 x = f64(get_component<0>(s));
+        f64 y = f64(get_component<1>(s));
+        f64 z = f64(get_component<2>(s));
+        f64 w = f64(get_component<3>(s));
         return f64x4_set4(x, y, z, w);
     }
 
@@ -754,40 +754,40 @@ namespace detail {
     template <>
     inline s32x4 truncate<s32x4>(f64x4 s)
     {
-        s32 x = s32(get_x(s.lo));
-        s32 y = s32(get_y(s.lo));
-        s32 z = s32(get_x(s.hi));
-        s32 w = s32(get_y(s.hi));
+        s32 x = s32(get_component<0>(s.lo));
+        s32 y = s32(get_component<1>(s.lo));
+        s32 z = s32(get_component<0>(s.hi));
+        s32 w = s32(get_component<1>(s.hi));
         return s32x4_set4(x, y, z, w);
     }
 
     template <>
     inline s32x4 convert<s32x4>(f64x4 s)
     {
-        s32 x = s32(get_x(s.lo) + 0.5);
-        s32 y = s32(get_y(s.lo) + 0.5);
-        s32 z = s32(get_x(s.hi) + 0.5);
-        s32 w = s32(get_y(s.hi) + 0.5);
+        s32 x = s32(get_component<0>(s.lo) + 0.5);
+        s32 y = s32(get_component<1>(s.lo) + 0.5);
+        s32 z = s32(get_component<0>(s.hi) + 0.5);
+        s32 w = s32(get_component<1>(s.hi) + 0.5);
         return s32x4_set4(x, y, z, w);
     }
 
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
-        u32 x = doubleToUnsignedInt(get_x(d.lo));
-        u32 y = doubleToUnsignedInt(get_y(d.lo));
-        u32 z = doubleToUnsignedInt(get_x(d.hi));
-        u32 w = doubleToUnsignedInt(get_y(d.hi));
+        u32 x = doubleToUnsignedInt(get_component<0>(d.lo));
+        u32 y = doubleToUnsignedInt(get_component<1>(d.lo));
+        u32 z = doubleToUnsignedInt(get_component<0>(d.hi));
+        u32 w = doubleToUnsignedInt(get_component<1>(d.hi));
         return u32x4_set4(x, y, z, w);
     }
 
     template <>
     inline f32x4 convert<f32x4>(f64x4 s)
     {
-        f32 x = f32(get_x(s.lo));
-        f32 y = f32(get_y(s.lo));
-        f32 z = f32(get_x(s.hi));
-        f32 w = f32(get_y(s.hi));
+        f32 x = f32(get_component<0>(s.lo));
+        f32 y = f32(get_component<1>(s.lo));
+        f32 z = f32(get_component<0>(s.hi));
+        f32 w = f32(get_component<1>(s.hi));
         return f32x4_set4(x, y, z, w);
     }
 
@@ -979,10 +979,10 @@ namespace detail {
     inline f16x4 convert<f16x4>(f32x4 s)
     {
         f16x4 v;
-        v[0] = get_x(s);
-        v[1] = get_y(s);
-        v[2] = get_z(s);
-        v[3] = get_w(s);
+        v[0] = get_component<0>(s);
+        v[1] = get_component<1>(s);
+        v[2] = get_component<2>(s);
+        v[3] = get_component<3>(s);
         return v;
     }
 

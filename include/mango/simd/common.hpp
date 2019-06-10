@@ -19,6 +19,24 @@ namespace simd {
     }
 
     // ------------------------------------------------------------------
+    // u8x32
+    // ------------------------------------------------------------------
+
+    static inline u8x32 clamp(u8x32 v, u8x32 vmin, u8x32 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
+    // u8x64
+    // ------------------------------------------------------------------
+
+    static inline u8x64 clamp(u8x64 v, u8x64 vmin, u8x64 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
     // u16x8
     // ------------------------------------------------------------------
 
@@ -28,84 +46,79 @@ namespace simd {
     }
 
     // ------------------------------------------------------------------
-    // u32x4
+    // u16x16
     // ------------------------------------------------------------------
 
-    static inline u32x4 set_x(u32x4 a, u32 x)
+    static inline u16x16 clamp(u16x16 v, u16x16 vmin, u16x16 vmax)
     {
-        return set_component<0>(a, x);
+        return min(vmax, max(vmin, v));
     }
 
-    static inline u32x4 set_y(u32x4 a, u32 y)
+    // ------------------------------------------------------------------
+    // u16x32
+    // ------------------------------------------------------------------
+
+    static inline u16x32 clamp(u16x32 v, u16x32 vmin, u16x32 vmax)
     {
-        return set_component<1>(a, y);
+        return min(vmax, max(vmin, v));
     }
 
-    static inline u32x4 set_z(u32x4 a, u32 z)
-    {
-        return set_component<2>(a, z);
-    }
-
-    static inline u32x4 set_w(u32x4 a, u32 w)
-    {
-        return set_component<3>(a, w);
-    }
-
-    static inline u32 get_x(u32x4 a)
-    {
-        return get_component<0>(a);
-    }
-
-    static inline u32 get_y(u32x4 a)
-    {
-        return get_component<1>(a);
-    }
-
-    static inline u32 get_z(u32x4 a)
-    {
-        return get_component<2>(a);
-    }
-
-    static inline u32 get_w(u32x4 a)
-    {
-        return get_component<3>(a);
-    }
-
-    static inline u32x4 splat_x(u32x4 a)
-    {
-        return shuffle<0, 0, 0, 0>(a);
-    }
-
-    static inline u32x4 splat_y(u32x4 a)
-    {
-        return shuffle<1, 1, 1, 1>(a);
-    }
-
-    static inline u32x4 splat_z(u32x4 a)
-    {
-        return shuffle<2, 2, 2, 2>(a);
-    }
-
-    static inline u32x4 splat_w(u32x4 a)
-    {
-        return shuffle<3, 3, 3, 3>(a);
-    }
+    // ------------------------------------------------------------------
+    // u32x4
+    // ------------------------------------------------------------------
 
     static inline u32x4 clamp(u32x4 v, u32x4 vmin, u32x4 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline u32x4 clamp(u32x4 v, u32 vmin, u32 vmax)
+    // ------------------------------------------------------------------
+    // u32x8
+    // ------------------------------------------------------------------
+
+    static inline u32x8 clamp(u32x8 v, u32x8 vmin, u32x8 vmax)
     {
-        return min(u32x4_set1(vmax), max(u32x4_set1(vmin), v));
+        return min(vmax, max(vmin, v));
     }
+
+    // ------------------------------------------------------------------
+    // u32x16
+    // ------------------------------------------------------------------
+
+    static inline u32x16 clamp(u32x16 v, u32x16 vmin, u32x16 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
+    // u64x2
+    // ------------------------------------------------------------------
+
+    // ...
 
     // ------------------------------------------------------------------
     // s8x16
     // ------------------------------------------------------------------
 
     static inline s8x16 clamp(s8x16 v, s8x16 vmin, s8x16 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
+    // s8x32
+    // ------------------------------------------------------------------
+
+    static inline s8x32 clamp(s8x32 v, s8x32 vmin, s8x32 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
+    // s8x64
+    // ------------------------------------------------------------------
+
+    static inline s8x64 clamp(s8x64 v, s8x64 vmin, s8x64 vmax)
     {
         return min(vmax, max(vmin, v));
     }
@@ -120,169 +133,78 @@ namespace simd {
     }
 
     // ------------------------------------------------------------------
-    // s32x4
+    // s16x16
     // ------------------------------------------------------------------
 
-    static inline s32x4 set_x(s32x4 a, s32 x)
+    static inline s16x16 clamp(s16x16 v, s16x16 vmin, s16x16 vmax)
     {
-        return set_component<0>(a, x);
+        return min(vmax, max(vmin, v));
     }
 
-    static inline s32x4 set_y(s32x4 a, s32 y)
+    // ------------------------------------------------------------------
+    // s16x32
+    // ------------------------------------------------------------------
+
+    static inline s16x32 clamp(s16x32 v, s16x32 vmin, s16x32 vmax)
     {
-        return set_component<1>(a, y);
+        return min(vmax, max(vmin, v));
     }
 
-    static inline s32x4 set_z(s32x4 a, s32 z)
-    {
-        return set_component<2>(a, z);
-    }
-
-    static inline s32x4 set_w(s32x4 a, s32 w)
-    {
-        return set_component<3>(a, w);
-    }
-
-    static inline s32 get_x(s32x4 a)
-    {
-        return get_component<0>(a);
-    }
-
-    static inline s32 get_y(s32x4 a)
-    {
-        return get_component<1>(a);
-    }
-
-    static inline s32 get_z(s32x4 a)
-    {
-        return get_component<2>(a);
-    }
-
-    static inline s32 get_w(s32x4 a)
-    {
-        return get_component<3>(a);
-    }
-
-    static inline s32x4 splat_x(s32x4 a)
-    {
-        return shuffle<0, 0, 0, 0>(a);
-    }
-
-    static inline s32x4 splat_y(s32x4 a)
-    {
-        return shuffle<1, 1, 1, 1>(a);
-    }
-
-    static inline s32x4 splat_z(s32x4 a)
-    {
-        return shuffle<2, 2, 2, 2>(a);
-    }
-
-    static inline s32x4 splat_w(s32x4 a)
-    {
-        return shuffle<3, 3, 3, 3>(a);
-    }
+    // ------------------------------------------------------------------
+    // s32x4
+    // ------------------------------------------------------------------
 
     static inline s32x4 clamp(s32x4 v, s32x4 vmin, s32x4 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline s32x4 clamp(s32x4 v, s32 vmin, s32 vmax)
+    // ------------------------------------------------------------------
+    // s32x8
+    // ------------------------------------------------------------------
+
+    static inline s32x8 clamp(s32x8 v, s32x8 vmin, s32x8 vmax)
     {
-        return min(s32x4_set1(vmax), max(s32x4_set1(vmin), v));
+        return min(vmax, max(vmin, v));
     }
+
+    // ------------------------------------------------------------------
+    // s32x16
+    // ------------------------------------------------------------------
+
+    static inline s32x16 clamp(s32x16 v, s32x16 vmin, s32x16 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    // ------------------------------------------------------------------
+    // s64x2
+    // ------------------------------------------------------------------
+
+    // ...
 
     // ------------------------------------------------------------------
     // f32x4
     // ------------------------------------------------------------------
-
-    static inline f32x4 set_x(f32x4 a, f32 x)
-    {
-        return set_component<0>(a, x);
-    }
-
-    static inline f32x4 set_y(f32x4 a, f32 y)
-    {
-        return set_component<1>(a, y);
-    }
-
-    static inline f32x4 set_z(f32x4 a, f32 z)
-    {
-        return set_component<2>(a, z);
-    }
-
-    static inline f32x4 set_w(f32x4 a, f32 w)
-    {
-        return set_component<3>(a, w);
-    }
-
-    static inline f32 get_x(f32x4 a)
-    {
-        return get_component<0>(a);
-    }
-
-    static inline f32 get_y(f32x4 a)
-    {
-        return get_component<1>(a);
-    }
-
-    static inline f32 get_z(f32x4 a)
-    {
-        return get_component<2>(a);
-    }
-
-    static inline f32 get_w(f32x4 a)
-    {
-        return get_component<3>(a);
-    }
-
-    static inline f32x4 splat_x(f32x4 a)
-    {
-        return shuffle<0, 0, 0, 0>(a);
-    }
-
-    static inline f32x4 splat_y(f32x4 a)
-    {
-        return shuffle<1, 1, 1, 1>(a);
-    }
-
-    static inline f32x4 splat_z(f32x4 a)
-    {
-        return shuffle<2, 2, 2, 2>(a);
-    }
-
-    static inline f32x4 splat_w(f32x4 a)
-    {
-        return shuffle<3, 3, 3, 3>(a);
-    }
 
     static inline f32x4 clamp(f32x4 v, f32x4 vmin, f32x4 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f32x4 clamp(f32x4 v, f32 vmin, f32 vmax)
-    {
-        return min(f32x4_set1(vmax), max(f32x4_set1(vmin), v));
-    }
-
     static inline f32x4 mod(f32x4 a, f32x4 b)
     {
-        f32x4 temp = floor(div(a, b));
-        return sub(a, mul(b, temp));
+        return sub(a, mul(b, floor(div(a, b))));
     }
 
     static inline f32x4 radians(f32x4 a)
     {
-        static const f32x4 s = f32x4_set1(0.01745329251f);
-        return mul(a, s);
+        return mul(a, f32x4_set1(0.01745329251f));
     }
 
     static inline f32x4 degrees(f32x4 a)
     {
-        static const f32x4 s = f32x4_set1(57.2957795131f);
-        return mul(a, s);
+        return mul(a, f32x4_set1(57.2957795131f));
     }
 
     static inline f32 square(f32x4 a)
@@ -297,9 +219,7 @@ namespace simd {
 
     static inline f32x4 normalize(f32x4 a)
     {
-        f32 s = square(a);
-        f32x4 v = f32x4_set1(s);
-        return mul(a, rsqrt(v));
+        return mul(a, rsqrt(f32x4_set1(square(a))));
     }
 
     // ------------------------------------------------------------------
@@ -311,89 +231,67 @@ namespace simd {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f32x8 clamp(f32x8 v, f32 vmin, f32 vmax)
-    {
-        return min(f32x8_set1(vmax), max(f32x8_set1(vmin), v));
-    }
-
     static inline f32x8 mod(f32x8 a, f32x8 b)
     {
-        f32x8 temp = floor(div(a, b));
-        return sub(a, mul(b, temp));
+        return sub(a, mul(b, floor(div(a, b))));
     }
 
     static inline f32x8 radians(f32x8 a)
     {
-        static const f32x8 s = f32x8_set1(0.01745329251f);
-        return mul(a, s);
+        return mul(a, f32x8_set1(0.01745329251f));
     }
 
     static inline f32x8 degrees(f32x8 a)
     {
-        static const f32x8 s = f32x8_set1(57.2957795131f);
-        return mul(a, s);
+        return mul(a, f32x8_set1(57.2957795131f));
+    }
+
+    // ------------------------------------------------------------------
+    // f32x16
+    // ------------------------------------------------------------------
+
+    static inline f32x16 clamp(f32x16 v, f32x16 vmin, f32x16 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    static inline f32x16 mod(f32x16 a, f32x16 b)
+    {
+        return sub(a, mul(b, floor(div(a, b))));
+    }
+
+    static inline f32x16 radians(f32x16 a)
+    {
+        return mul(a, f32x16_set1(0.01745329251f));
+    }
+
+    static inline f32x16 degrees(f32x16 a)
+    {
+        return mul(a, f32x16_set1(57.2957795131f));
     }
 
     // ------------------------------------------------------------------
     // f64x2
     // ------------------------------------------------------------------
 
-    static inline f64x2 set_x(f64x2 a, f64 x)
-    {
-        return set_component<0>(a, x);
-    }
-
-    static inline f64x2 set_y(f64x2 a, f64 y)
-    {
-        return set_component<1>(a, y);
-    }
-
-    static inline f64 get_x(f64x2 a)
-    {
-        return get_component<0>(a);
-    }
-
-    static inline f64 get_y(f64x2 a)
-    {
-        return get_component<1>(a);
-    }
-
-    static inline f64x2 splat_x(f64x2 a)
-    {
-        return shuffle<0, 0>(a);
-    }
-
-    static inline f64x2 splat_y(f64x2 a)
-    {
-        return shuffle<1, 1>(a);
-    }
-
     static inline f64x2 clamp(f64x2 v, f64x2 vmin, f64x2 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f64x2 clamp(f64x2 v, f64 vmin, f64 vmax)
-    {
-        return min(f64x2_set1(vmax), max(f64x2_set1(vmin), v));
-    }
-
     static inline f64x2 mod(f64x2 a, f64x2 b)
     {
-        f64x2 temp = floor(div(a, b));
-        return sub(a, mul(b, temp));
+        return sub(a, mul(b, floor(div(a, b))));
     }
 
     static inline f64x2 radians(f64x2 a)
     {
-        static const f64x2 s = f64x2_set1(0.01745329251);
-        return mul(a, s);
+        return mul(a, f64x2_set1(0.01745329251));
     }
 
     static inline f64x2 degrees(f64x2 a)
     {
-        static const f64x2 s = f64x2_set1(57.2957795131);
-        return mul(a, s);
+        return mul(a, f64x2_set1(57.2957795131));
     }
 
     static inline f64 square(f64x2 a)
@@ -408,101 +306,31 @@ namespace simd {
 
     static inline f64x2 normalize(f64x2 a)
     {
-        f64 s = square(a);
-        f64x2 v = f64x2_set1(s);
-        return mul(a, rsqrt(v));
+        return mul(a, rsqrt(f64x2_set1(square(a))));
     }
 
     // ------------------------------------------------------------------
     // f64x4
     // ------------------------------------------------------------------
 
-    static inline f64x4 set_x(f64x4 a, f64 x)
-    {
-        return set_component<0>(a, x);
-    }
-
-    static inline f64x4 set_y(f64x4 a, f64 y)
-    {
-        return set_component<1>(a, y);
-    }
-
-    static inline f64x4 set_z(f64x4 a, f64 z)
-    {
-        return set_component<2>(a, z);
-    }
-
-    static inline f64x4 set_w(f64x4 a, f64 w)
-    {
-        return set_component<3>(a, w);
-    }
-
-    static inline f64 get_x(f64x4 a)
-    {
-        return get_component<0>(a);
-    }
-
-    static inline f64 get_y(f64x4 a)
-    {
-        return get_component<1>(a);
-    }
-
-    static inline f64 get_z(f64x4 a)
-    {
-        return get_component<2>(a);
-    }
-
-    static inline f64 get_w(f64x4 a)
-    {
-        return get_component<3>(a);
-    }
-
-    static inline f64x4 splat_x(f64x4 a)
-    {
-        return shuffle<0, 0, 0, 0>(a);
-    }
-
-    static inline f64x4 splat_y(f64x4 a)
-    {
-        return shuffle<1, 1, 1, 1>(a);
-    }
-
-    static inline f64x4 splat_z(f64x4 a)
-    {
-        return shuffle<2, 2, 2, 2>(a);
-    }
-
-    static inline f64x4 splat_w(f64x4 a)
-    {
-        return shuffle<3, 3, 3, 3>(a);
-    }
-
     static inline f64x4 clamp(f64x4 v, f64x4 vmin, f64x4 vmax)
     {
         return min(vmax, max(vmin, v));
     }
 
-    static inline f64x4 clamp(f64x4 v, f64 vmin, f64 vmax)
-    {
-        return min(f64x4_set1(vmax), max(f64x4_set1(vmin), v));
-    }
-
     static inline f64x4 mod(f64x4 a, f64x4 b)
     {
-        f64x4 temp = floor(div(a, b));
-        return sub(a, mul(b, temp));
+        return sub(a, mul(b, floor(div(a, b))));
     }
 
     static inline f64x4 radians(f64x4 a)
     {
-        static const f64x4 s = f64x4_set1(0.01745329251);
-        return mul(a, s);
+        return mul(a, f64x4_set1(0.01745329251));
     }
 
     static inline f64x4 degrees(f64x4 a)
     {
-        static const f64x4 s = f64x4_set1(57.2957795131);
-        return mul(a, s);
+        return mul(a, f64x4_set1(57.2957795131));
     }
 
     static inline f64 square(f64x4 a)
@@ -517,9 +345,32 @@ namespace simd {
 
     static inline f64x4 normalize(f64x4 a)
     {
-        f64 s = square(a);
-        f64x4 v = f64x4_set1(s);
+        f64x4 v = f64x4_set1(square(a));
         return mul(a, rsqrt(v));
+    }
+
+    // ------------------------------------------------------------------
+    // f64x8
+    // ------------------------------------------------------------------
+
+    static inline f64x8 clamp(f64x8 v, f64x8 vmin, f64x8 vmax)
+    {
+        return min(vmax, max(vmin, v));
+    }
+
+    static inline f64x8 mod(f64x8 a, f64x8 b)
+    {
+        return sub(a, mul(b, floor(div(a, b))));
+    }
+
+    static inline f64x8 radians(f64x8 a)
+    {
+        return mul(a, f64x8_set1(0.01745329251));
+    }
+
+    static inline f64x8 degrees(f64x8 a)
+    {
+        return mul(a, f64x8_set1(57.2957795131));
     }
 
     // ------------------------------------------------------------------

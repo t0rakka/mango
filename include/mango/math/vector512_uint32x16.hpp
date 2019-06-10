@@ -148,6 +148,11 @@ namespace mango
         return simd::max(a, b);
     }
 
+    static inline Vector<u32, 16> clamp(Vector<u32, 16> a, Vector<u32, 16> low, Vector<u32, 16> high)
+    {
+        return simd::clamp(a, low, high);
+    }
+
     // ------------------------------------------------------------------
 	// bitwise operators
     // ------------------------------------------------------------------
