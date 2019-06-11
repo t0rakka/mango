@@ -97,7 +97,7 @@ namespace mango
 
     static inline Vector<s16, 16> operator - (Vector<s16, 16> v)
     {
-        return simd::sub(simd::s16x16_zero(), v);
+        return simd::neg(v);
     }
 
     static inline Vector<s16, 16>& operator += (Vector<s16, 16>& a, Vector<s16, 16> b)
@@ -130,6 +130,11 @@ namespace mango
     static inline Vector<s16, 16> unpackhi(Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::unpackhi(a, b);
+    }
+
+    static inline Vector<s16, 16> abs(Vector<s16, 16> a)
+    {
+        return simd::abs(a);
     }
 
     static inline Vector<s16, 16> adds(Vector<s16, 16> a, Vector<s16, 16> b)
