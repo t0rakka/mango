@@ -189,6 +189,16 @@ namespace simd {
         return vec_div(a.data, vec_splats(b));
     }
 
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+        return add(unpacklo(a, b), unpackhi(a, b));
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+        return sub(unpacklo(a, b), unpackhi(a, b));
+    }
+
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
         return vec_madd(b.data, c.data, a.data);

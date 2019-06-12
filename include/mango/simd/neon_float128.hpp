@@ -334,6 +334,12 @@ namespace simd {
         return vpaddq_f32(a, b);
     }
 
+    static inline f32x4 hsub(f32x4 a, f32x4 b)
+    {
+        b = vnegq_f32(b);
+        return vpaddq_f32(a, b);
+    }
+
 #else
 
     static inline f32x4 div(f32x4 a, f32x4 b)
@@ -355,7 +361,14 @@ namespace simd {
 
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
-        return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)), 
+        return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)),
+	                        vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
+    }
+
+    static inline f32x4 hsub(f32x4 a, f32x4 b)
+    {
+        b = vnegq_f32(b);
+        return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)),
 	                        vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
     }
 

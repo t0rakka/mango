@@ -302,6 +302,16 @@ namespace simd {
         return _mm256_div_pd(a, _mm256_set1_pd(b));
     }
 
+    static inline f64x4 hadd(f64x4 a, f64x4 b)
+    {
+        return _mm256_hadd_pd(a, b);
+    }
+
+    static inline f64x4 hsub(f64x4 a, f64x4 b)
+    {
+        return _mm256_hsub_pd(a, b);
+    }
+
 #if defined(MANGO_ENABLE_FMA3)
 
     static inline f64x4 madd(f64x4 a, f64x4 b, f64x4 c)

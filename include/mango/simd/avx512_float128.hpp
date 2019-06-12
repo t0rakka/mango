@@ -215,6 +215,11 @@ namespace simd {
 	    return _mm_hadd_ps(a, b);
     }
 
+    static inline f32x4 hsub(f32x4 a, f32x4 b)
+    {
+	    return _mm_hsub_ps(a, b);
+    }
+
 #if defined(MANGO_ENABLE_FMA3)
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)

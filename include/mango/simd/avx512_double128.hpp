@@ -178,6 +178,16 @@ namespace simd {
         return _mm_div_pd(a, _mm_set1_pd(b));
     }
 
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+        return _mm_hadd_pd(a, b);
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+        return _mm_hsub_pd(a, b);
+    }
+
 #if defined(MANGO_ENABLE_FMA3)
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)

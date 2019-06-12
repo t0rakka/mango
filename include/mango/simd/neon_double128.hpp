@@ -189,6 +189,17 @@ namespace simd {
         return vdivq_f64(a, s);
     }
 
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+        return vpaddq_f64(a, b);
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+        b = vnegq_f64(b);
+        return vpaddq_f64(a, b);
+    }
+
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
         return vmlaq_f64(a, b, c);
@@ -491,6 +502,22 @@ namespace simd {
         v.data[0] = a.data[0] / b;
         v.data[1] = a.data[1] / b;
         return v;
+    }
+
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+	    f64x2 v;
+	    v.data[0] = a.data[0] + a.data[1];
+	    v.data[1] = b.data[0] + b.data[1];
+	    return v;
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+	    f64x2 v;
+	    v.data[0] = a.data[0] - a.data[1];
+	    v.data[1] = b.data[0] - b.data[1];
+	    return v;
     }
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)

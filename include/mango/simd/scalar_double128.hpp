@@ -194,6 +194,22 @@ namespace simd {
         return v;
     }
 
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+	    f64x2 v;
+	    v[0] = a[0] + a[1];
+	    v[1] = b[0] + b[1];
+	    return v;
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+	    f64x2 v;
+	    v[0] = a[0] - a[1];
+	    v[1] = b[0] - b[1];
+	    return v;
+    }
+
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
         f64x2 v;

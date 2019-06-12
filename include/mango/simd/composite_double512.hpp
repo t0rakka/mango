@@ -189,6 +189,22 @@ namespace simd {
         return result;
     }
 
+    static inline f64x8 hadd(f64x8 a, f64x8 b)
+    {
+        f64x8 result;
+        result.lo = hadd(a.lo, b.lo);
+        result.hi = hadd(a.hi, b.hi);
+        return result;
+    }
+
+    static inline f64x8 hsub(f64x8 a, f64x8 b)
+    {
+        f64x8 result;
+        result.lo = hsub(a.lo, b.lo);
+        result.hi = hsub(a.hi, b.hi);
+        return result;
+    }
+
     static inline f64x8 madd(f64x8 a, f64x8 b, f64x8 c)
     {
         f64x8 result;

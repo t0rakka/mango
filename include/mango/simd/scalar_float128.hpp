@@ -269,6 +269,16 @@ namespace simd {
 	    return v;
     }
 
+    static inline f32x4 hsub(f32x4 a, f32x4 b)
+    {
+	    f32x4 v;
+	    v[0] = a[0] - a[1];
+	    v[1] = a[2] - a[3];
+	    v[2] = b[0] - b[1];
+	    v[3] = b[2] - b[3];
+	    return v;
+    }
+
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
         f32x4 v;

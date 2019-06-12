@@ -197,6 +197,14 @@ namespace simd {
         return result;
     }
 
+    static inline f32x8 hsub(f32x8 a, f32x8 b)
+    {
+        f32x8 result;
+        result.lo = hsub(a.lo, b.lo);
+        result.hi = hsub(a.hi, b.hi);
+        return result;
+    }
+
     static inline f32x8 madd(f32x8 a, f32x8 b, f32x8 c)
     {
         f32x8 result;

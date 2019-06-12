@@ -178,6 +178,32 @@ namespace simd {
         return _mm_div_pd(a, _mm_set1_pd(b));
     }
 
+#if defined(MANGO_ENABLE_SSE3)
+
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+	    return _mm_hadd_pd(a, b);
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+	    return _mm_hsub_pd(a, b);
+    }
+
+#else
+
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+        return _mm_add_pd(_mm_unpacklo_pd(a, b), _mm_unpackhi_pd(a, b));
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+        return _mm_sub_pd(_mm_unpacklo_pd(a, b), _mm_unpackhi_pd(a, b));
+    }
+
+#endif
+
 #if defined(MANGO_ENABLE_FMA3)
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)

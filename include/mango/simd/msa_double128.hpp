@@ -166,6 +166,16 @@ namespace simd {
         return __msa_fdiv_d(a, f64x2_set1(b));
     }
 
+    static inline f64x2 hadd(f64x2 a, f64x2 b)
+    {
+        return add(unpacklo(a, b), unpackhi(a, b));
+    }
+
+    static inline f64x2 hsub(f64x2 a, f64x2 b)
+    {
+        return sub(unpacklo(a, b), unpackhi(a, b));
+    }
+
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
         return __msa_fmadd_d(a, b, c);

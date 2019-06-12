@@ -203,6 +203,12 @@ namespace simd {
                    shuffle<1, 3, 1, 3>(a, b));
     }
 
+    static inline f32x4 hsub(f32x4 a, f32x4 b)
+    {
+        return sub(shuffle<0, 2, 0, 2>(a, b),
+                   shuffle<1, 3, 1, 3>(a, b));
+    }
+
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
         return __msa_fmadd_w(a, b, c);

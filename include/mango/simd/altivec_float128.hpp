@@ -235,6 +235,12 @@ namespace simd {
                        (f32x4::vector) shuffle<1, 3, 1, 3>(a, b));
     }
 
+    static inline f32x4 hsub(f32x4 a, f32x4 b)
+    {
+        return vec_sub((f32x4::vector) shuffle<0, 2, 0, 2>(a, b),
+                       (f32x4::vector) shuffle<1, 3, 1, 3>(a, b));
+    }
+
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
         return vec_madd(b.data, c.data, a.data);
