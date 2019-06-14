@@ -1410,6 +1410,22 @@ namespace detail {
         return result;
     }
 
+    static inline s16x16 hadd(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = hadd(a.lo, b.lo);
+        result.hi = hadd(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s16x16 hsub(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = hsub(a.lo, b.lo);
+        result.hi = hsub(a.hi, b.hi);
+        return result;
+    }
+
     static inline s16x16 mullo(s16x16 a, s16x16 b)
     {
         s16x16 result;
@@ -1718,6 +1734,22 @@ namespace detail {
         s32x8 result;
         result.lo = sub(a.lo, b.lo);
         result.hi = sub(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s32x8 hadd(s32x8 a, s32x8 b)
+    {
+        s32x8 result;
+        result.lo = hadd(a.lo, b.lo);
+        result.hi = hadd(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s32x8 hsub(s32x8 a, s32x8 b)
+    {
+        s32x8 result;
+        result.lo = hsub(a.lo, b.lo);
+        result.hi = hsub(a.hi, b.hi);
         return result;
     }
 

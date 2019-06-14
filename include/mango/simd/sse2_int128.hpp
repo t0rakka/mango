@@ -1527,6 +1527,44 @@ namespace detail {
         return _mm_sub_epi16(a, b);
     }
 
+#if defined(MANGO_ENABLE_SSSE3)
+
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        return _mm_hadd_epi16(a, b);
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        return _mm_hsub_epi16(a, b);
+    }
+
+#else
+
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        __m128i temp_a = _mm_unpacklo_epi16(a, b);
+        __m128i temp_b = _mm_unpackhi_epi16(a, b);
+        a = _mm_unpacklo_epi16(temp_a, temp_b);
+        b = _mm_unpackhi_epi16(temp_a, temp_b);
+        temp_a = _mm_unpacklo_epi16(a, b);
+        temp_b = _mm_unpackhi_epi16(a, b);
+        return _mm_add_epi16(temp_a, temp_b);
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        __m128i temp_a = _mm_unpacklo_epi16(a, b);
+        __m128i temp_b = _mm_unpackhi_epi16(a, b);
+        a = _mm_unpacklo_epi16(temp_a, temp_b);
+        b = _mm_unpackhi_epi16(temp_a, temp_b);
+        temp_a = _mm_unpacklo_epi16(a, b);
+        temp_b = _mm_unpackhi_epi16(a, b);
+        return _mm_sub_epi16(temp_a, temp_b);
+    }
+
+#endif
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return _mm_mullo_epi16(a, b);
@@ -1875,6 +1913,40 @@ namespace detail {
     {
         return _mm_sub_epi32(a, b);
     }
+
+#if defined(MANGO_ENABLE_SSSE3)
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        return _mm_hadd_epi32(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        return _mm_hsub_epi32(a, b);
+    }
+
+#else
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        __m128i temp_a = _mm_unpacklo_epi32(a, b);
+        __m128i temp_b = _mm_unpackhi_epi32(a, b);
+        a = _mm_unpacklo_epi32(temp_a, temp_b);
+        b = _mm_unpackhi_epi32(temp_a, temp_b);
+        return _mm_add_epi32(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        __m128i temp_a = _mm_unpacklo_epi32(a, b);
+        __m128i temp_b = _mm_unpackhi_epi32(a, b);
+        a = _mm_unpacklo_epi32(temp_a, temp_b);
+        b = _mm_unpackhi_epi32(temp_a, temp_b);
+        return _mm_sub_epi32(a, b);
+    }
+
+#endif
 
 #if defined(MANGO_ENABLE_SSE4_1)
 

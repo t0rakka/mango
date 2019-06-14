@@ -1076,6 +1076,28 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return add(temp_a, temp_b);
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return sub(temp_a, temp_b);
+    }
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return vec_mladd(a.data, b.data, vec_xor(a.data, a.data));
@@ -1331,6 +1353,24 @@ namespace simd {
     static inline s32x4 sub(s32x4 a, s32x4 b)
     {
         return vec_sub(a.data, b.data);
+    }
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        s32x4 temp_a = unpacklo(a, b);
+        s32x4 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        return add(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        s32x4 temp_a = unpacklo(a, b);
+        s32x4 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        return sub(a, b);
     }
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)

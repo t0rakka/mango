@@ -1389,6 +1389,34 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        s16x8 dest;
+        dest[0] = a[0] + a[1];
+        dest[1] = a[2] + a[3];
+        dest[2] = a[4] + a[5];
+        dest[3] = a[6] + a[7];
+        dest[4] = b[0] + b[1];
+        dest[5] = b[2] + b[3];
+        dest[6] = b[4] + b[5];
+        dest[7] = b[6] + b[7];
+        return dest;
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        s16x8 dest;
+        dest[0] = a[0] - a[1];
+        dest[1] = a[2] - a[3];
+        dest[2] = a[4] - a[5];
+        dest[3] = a[6] - a[7];
+        dest[4] = b[0] - b[1];
+        dest[5] = b[2] - b[3];
+        dest[6] = b[4] - b[5];
+        dest[7] = b[6] - b[7];
+        return dest;
+    }
+
     // saturated
 
     static inline s16x8 adds(s16x8 a, s16x8 b)
@@ -1626,6 +1654,26 @@ namespace detail {
     static inline s32x4 sub(s32x4 a, s32x4 b)
     {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
+    }
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        s16x8 dest;
+        dest[0] = a[0] + a[1];
+        dest[1] = a[2] + a[3];
+        dest[2] = b[0] + b[1];
+        dest[3] = b[2] + b[3];
+        return dest;
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        s16x8 dest;
+        dest[0] = a[0] - a[1];
+        dest[1] = a[2] - a[3];
+        dest[2] = b[0] - b[1];
+        dest[3] = b[2] - b[3];
+        return dest;
     }
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)

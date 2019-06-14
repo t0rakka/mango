@@ -1065,6 +1065,45 @@ namespace simd {
         return vsubq_s16(a, b);
     }
 
+#if defined(__aarch64__)
+
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        return vpaddq_s16(a, b);
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        b = vnegq_s16(b);
+        return vpaddq_s16(a, b);
+    }
+
+#else
+
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return add(temp_a, temp_b);
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return sub(temp_a, temp_b);
+    }
+
+#endif
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return vmulq_s16(a, b);
@@ -1316,6 +1355,41 @@ namespace simd {
     {
         return vsubq_s32(a, b);
     }
+
+#if defined(__aarch64__)
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        return vpaddq_s32(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        b = vnegq_s32(b);
+        return vpaddq_s32(a, b);
+    }
+
+#else
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        s32x4 temp_a = unpacklo(a, b);
+        s32x4 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        return add(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        s32x4 temp_a = unpacklo(a, b);
+        s32x4 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        return sub(a, b);
+    }
+
+#endif
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {

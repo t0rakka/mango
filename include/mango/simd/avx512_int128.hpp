@@ -1061,6 +1061,16 @@ namespace detail
         return _mm_sub_epi16(a, b);
     }
 
+    static inline s16x8 hadd(s16x8 a, s16x8 b)
+    {
+        return _mm_hadd_epi16(a, b);
+    }
+
+    static inline s16x8 hsub(s16x8 a, s16x8 b)
+    {
+        return _mm_hsub_epi16(a, b);
+    }
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return _mm_mullo_epi16(a, b);
@@ -1298,6 +1308,16 @@ namespace detail
     static inline s32x4 sub(s32x4 a, s32x4 b)
     {
         return _mm_sub_epi32(a, b);
+    }
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        return _mm_hadd_epi32(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        return _mm_hsub_epi32(a, b);
     }
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
