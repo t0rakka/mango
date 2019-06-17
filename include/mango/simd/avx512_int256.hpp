@@ -75,8 +75,6 @@ namespace detail {
         return _mm256_sub_epi8(a, b);
     }
 
-    // saturated
-
     static inline u8x32 adds(u8x32 a, u8x32 b)
     {
         return _mm256_adds_epu8(a, b);
@@ -209,13 +207,6 @@ namespace detail {
         return _mm256_sub_epi16(a, b);
     }
 
-    static inline u16x16 mullo(u16x16 a, u16x16 b)
-    {
-        return _mm256_mullo_epi16(a, b);
-    }
-
-    // saturated
-
     static inline u16x16 adds(u16x16 a, u16x16 b)
     {
         return _mm256_adds_epu16(a, b);
@@ -224,6 +215,11 @@ namespace detail {
     static inline u16x16 subs(u16x16 a, u16x16 b)
     {
         return _mm256_subs_epu16(a, b);
+    }
+
+    static inline u16x16 mullo(u16x16 a, u16x16 b)
+    {
+        return _mm256_mullo_epi16(a, b);
     }
 
     // bitwise
@@ -400,13 +396,6 @@ namespace detail {
         return _mm256_sub_epi32(a, b);
     }
 
-    static inline u32x8 mullo(u32x8 a, u32x8 b)
-    {
-        return _mm256_mullo_epi32(a, b);
-    }
-
-    // saturated
-
     static inline u32x8 adds(u32x8 a, u32x8 b)
     {
   	    const __m256i temp = _mm256_add_epi32(a, b);
@@ -417,6 +406,11 @@ namespace detail {
     {
   	    const __m256i temp = _mm256_sub_epi32(a, b);
   	    return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
+    }
+
+    static inline u32x8 mullo(u32x8 a, u32x8 b)
+    {
+        return _mm256_mullo_epi32(a, b);
     }
 
     // bitwise
@@ -736,8 +730,6 @@ namespace detail {
         return _mm256_sub_epi8(a, b);
     }
 
-    // saturated
-
     static inline s8x32 adds(s8x32 a, s8x32 b)
     {
         return _mm256_adds_epi8(a, b);
@@ -880,6 +872,16 @@ namespace detail {
         return _mm256_sub_epi16(a, b);
     }
 
+    static inline s16x16 adds(s16x16 a, s16x16 b)
+    {
+        return _mm256_adds_epi16(a, b);
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b)
+    {
+        return _mm256_subs_epi16(a, b);
+    }
+
     static inline s16x16 hadd(s16x16 a, s16x16 b)
     {
         return _mm256_hadd_epi16(a, b);
@@ -890,21 +892,19 @@ namespace detail {
         return _mm256_hsub_epi16(a, b);
     }
 
+    static inline s16x16 hadds(s16x16 a, s16x16 b)
+    {
+        return _mm256_hadds_epi16(a, b);
+    }
+
+    static inline s16x16 hsubs(s16x16 a, s16x16 b)
+    {
+        return _mm256_hsubs_epi16(a, b);
+    }
+
     static inline s16x16 mullo(s16x16 a, s16x16 b)
     {
         return _mm256_mullo_epi16(a, b);
-    }
-
-    // saturated
-
-    static inline s16x16 adds(s16x16 a, s16x16 b)
-    {
-        return _mm256_adds_epi16(a, b);
-    }
-
-    static inline s16x16 subs(s16x16 a, s16x16 b)
-    {
-        return _mm256_subs_epi16(a, b);
     }
 
     static inline s16x16 abs(s16x16 a)
@@ -1101,23 +1101,6 @@ namespace detail {
         return _mm256_sub_epi32(a, b);
     }
 
-    static inline s32x8 hadd(s32x8 a, s32x8 b)
-    {
-        return _mm256_hadd_epi32(a, b);
-    }
-
-    static inline s32x8 hsub(s32x8 a, s32x8 b)
-    {
-        return _mm256_hsub_epi32(a, b);
-    }
-
-    static inline s32x8 mullo(s32x8 a, s32x8 b)
-    {
-        return _mm256_mullo_epi32(a, b);
-    }
-
-    // saturated
-
     static inline s32x8 adds(s32x8 a, s32x8 b)
     {
         const __m256i v = _mm256_add_epi32(a, b);
@@ -1134,6 +1117,21 @@ namespace detail {
         a = _mm256_srai_epi32(a, 31);
         __m256i temp = _mm256_and_si256(_mm256_xor_si256(a, b), _mm256_xor_si256(a, v));
         return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), a, v);
+    }
+
+    static inline s32x8 hadd(s32x8 a, s32x8 b)
+    {
+        return _mm256_hadd_epi32(a, b);
+    }
+
+    static inline s32x8 hsub(s32x8 a, s32x8 b)
+    {
+        return _mm256_hsub_epi32(a, b);
+    }
+
+    static inline s32x8 mullo(s32x8 a, s32x8 b)
+    {
+        return _mm256_mullo_epi32(a, b);
     }
 
     // bitwise

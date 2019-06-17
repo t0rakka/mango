@@ -89,6 +89,16 @@ namespace simd {
         return vsubq_u8(a, b);
     }
 
+    static inline u8x16 adds(u8x16 a, u8x16 b)
+    {
+        return vqaddq_u8(a, b);
+    }
+
+    static inline u8x16 subs(u8x16 a, u8x16 b)
+    {
+        return vqsubq_u8(a, b);
+    }
+
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
@@ -114,18 +124,6 @@ namespace simd {
     static inline u8x16 bitwise_not(u8x16 a)
     {
         return vmvnq_u8(a);
-    }
-
-    // saturated
-
-    static inline u8x16 adds(u8x16 a, u8x16 b)
-    {
-        return vqaddq_u8(a, b);
-    }
-
-    static inline u8x16 subs(u8x16 a, u8x16 b)
-    {
-        return vqsubq_u8(a, b);
     }
 
     // compare
@@ -253,13 +251,6 @@ namespace simd {
         return vsubq_u16(a, b);
     }
 
-    static inline u16x8 mullo(u16x8 a, u16x8 b)
-    {
-        return vmulq_u16(a, b);
-    }
-
-    // saturated
-
     static inline u16x8 adds(u16x8 a, u16x8 b)
     {
         return vqaddq_u16(a, b);
@@ -268,6 +259,11 @@ namespace simd {
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
         return vqsubq_u16(a, b);
+    }
+
+    static inline u16x8 mullo(u16x8 a, u16x8 b)
+    {
+        return vmulq_u16(a, b);
     }
 
     // bitwise
@@ -481,13 +477,6 @@ namespace simd {
         return vsubq_u32(a, b);
     }
 
-    static inline u32x4 mullo(u32x4 a, u32x4 b)
-    {
-        return vmulq_u32(a, b);
-    }
-
-    // saturated
-
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
         return vqaddq_u32(a, b);
@@ -496,6 +485,11 @@ namespace simd {
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
         return vqsubq_u32(a, b);
+    }
+
+    static inline u32x4 mullo(u32x4 a, u32x4 b)
+    {
+        return vmulq_u32(a, b);
     }
 
     // bitwise
@@ -891,8 +885,6 @@ namespace simd {
         return vsubq_s8(a, b);
     }
 
-    // saturated
-
     static inline s8x16 adds(s8x16 a, s8x16 b)
     {
         return vqaddq_s8(a, b);
@@ -1065,6 +1057,16 @@ namespace simd {
         return vsubq_s16(a, b);
     }
 
+    static inline s16x8 adds(s16x8 a, s16x8 b)
+    {
+        return vqaddq_s16(a, b);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b)
+    {
+        return vqsubq_s16(a, b);
+    }
+
 #if defined(__aarch64__)
 
     static inline s16x8 hadd(s16x8 a, s16x8 b)
@@ -1104,21 +1106,31 @@ namespace simd {
 
 #endif
 
+    static inline s16x8 hadds(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return adds(temp_a, temp_b);
+    }
+
+    static inline s16x8 hsubs(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return subs(temp_a, temp_b);
+    }
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return vmulq_s16(a, b);
-    }
-
-    // saturated
-
-    static inline s16x8 adds(s16x8 a, s16x8 b)
-    {
-        return vqaddq_s16(a, b);
-    }
-
-    static inline s16x8 subs(s16x8 a, s16x8 b)
-    {
-        return vqsubq_s16(a, b);
     }
 
     static inline s16x8 abs(s16x8 a)
@@ -1356,6 +1368,16 @@ namespace simd {
         return vsubq_s32(a, b);
     }
 
+    static inline s32x4 adds(s32x4 a, s32x4 b)
+    {
+        return vqaddq_s32(a, b);
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b)
+    {
+        return vqsubq_s32(a, b);
+    }
+
 #if defined(__aarch64__)
 
     static inline s32x4 hadd(s32x4 a, s32x4 b)
@@ -1394,18 +1416,6 @@ namespace simd {
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         return vmulq_s32(a, b);
-    }
-
-    // saturated
-
-    static inline s32x4 adds(s32x4 a, s32x4 b)
-    {
-        return vqaddq_s32(a, b);
-    }
-
-    static inline s32x4 subs(s32x4 a, s32x4 b)
-    {
-        return vqsubq_s32(a, b);
     }
 
     // bitwise

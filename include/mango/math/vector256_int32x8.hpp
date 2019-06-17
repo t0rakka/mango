@@ -152,6 +152,16 @@ namespace mango
         return simd::subs(a, b);
     }
 
+    static inline Vector<s32, 8> hadd(Vector<s32, 8> a, Vector<s32, 8> b)
+    {
+        return simd::hadd(a, b);
+    }
+
+    static inline Vector<s32, 8> hsub(Vector<s32, 8> a, Vector<s32, 8> b)
+    {
+        return simd::hsub(a, b);
+    }
+
     static inline Vector<s32, 8> min(Vector<s32, 8> a, Vector<s32, 8> b)
     {
         return simd::min(a, b);

@@ -94,8 +94,6 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
-    // saturated
-
     static inline u8x16 adds(u8x16 a, u8x16 b)
     {
         return vec_adds(a.data, b.data);
@@ -262,13 +260,6 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
-    static inline u16x8 mullo(u16x8 a, u16x8 b)
-    {
-        return vec_mladd(a.data, b.data, vec_xor(a.data, a.data));
-    }
-
-    // saturated
-
     static inline u16x8 adds(u16x8 a, u16x8 b)
     {
         return vec_adds(a.data, b.data);
@@ -277,6 +268,11 @@ namespace simd {
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
         return vec_subs(a.data, b.data);
+    }
+
+    static inline u16x8 mullo(u16x8 a, u16x8 b)
+    {
+        return vec_mladd(a.data, b.data, vec_xor(a.data, a.data));
     }
 
     // bitwise
@@ -499,15 +495,6 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
-    static inline u32x4 mullo(u32x4 a, u32x4 b)
-    {
-        f32x4 af = vec_ctf(a.data, 0);
-        f32x4 bf = vec_ctf(b.data, 0);
-        return vec_ctu(vec_mul(af.data, bf.data), 0);
-    }
-
-    // saturated
-
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
         return vec_adds(a.data, b.data);
@@ -516,6 +503,13 @@ namespace simd {
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
         return vec_subs(a.data, b.data);
+    }
+
+    static inline u32x4 mullo(u32x4 a, u32x4 b)
+    {
+        f32x4 af = vec_ctf(a.data, 0);
+        f32x4 bf = vec_ctf(b.data, 0);
+        return vec_ctu(vec_mul(af.data, bf.data), 0);
     }
 
     // bitwise
@@ -898,8 +892,6 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
-    // saturated
-
     static inline s8x16 adds(s8x16 a, s8x16 b)
     {
         return vec_adds(a.data, b.data);
@@ -1076,6 +1068,16 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
+    static inline s16x8 adds(s16x8 a, s16x8 b)
+    {
+        return vec_adds(a.data, b.data);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b)
+    {
+        return vec_subs(a.data, b.data);
+    }
+
     static inline s16x8 hadd(s16x8 a, s16x8 b)
     {
         s16x8 temp_a = unpacklo(a, b);
@@ -1098,21 +1100,31 @@ namespace simd {
         return sub(temp_a, temp_b);
     }
 
+    static inline s16x8 hadds(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return adds(temp_a, temp_b);
+    }
+
+    static inline s16x8 hsubs(s16x8 a, s16x8 b)
+    {
+        s16x8 temp_a = unpacklo(a, b);
+        s16x8 temp_b = unpackhi(a, b);
+        a = unpacklo(temp_a, temp_b);
+        b = unpackhi(temp_a, temp_b);
+        temp_a = unpacklo(a, b);
+        temp_b = unpackhi(a, b);
+        return subs(temp_a, temp_b);
+    }
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return vec_mladd(a.data, b.data, vec_xor(a.data, a.data));
-    }
-
-    // saturated
-
-    static inline s16x8 adds(s16x8 a, s16x8 b)
-    {
-        return vec_adds(a.data, b.data);
-    }
-
-    static inline s16x8 subs(s16x8 a, s16x8 b)
-    {
-        return vec_subs(a.data, b.data);
     }
 
     static inline s16x8 abs(s16x8 a)
@@ -1355,6 +1367,16 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
+    static inline s32x4 adds(s32x4 a, s32x4 b)
+    {
+        return vec_adds(a.data, b.data);
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b)
+    {
+        return vec_subs(a.data, b.data);
+    }
+
     static inline s32x4 hadd(s32x4 a, s32x4 b)
     {
         s32x4 temp_a = unpacklo(a, b);
@@ -1378,18 +1400,6 @@ namespace simd {
         f32x4 af = vec_ctf(a.data, 0);
         f32x4 bf = vec_ctf(b.data, 0);
         return vec_cts(vec_mul(af.data, bf.data), 0);
-    }
-
-    // saturated
-
-    static inline s32x4 adds(s32x4 a, s32x4 b)
-    {
-        return vec_adds(a.data, b.data);
-    }
-
-    static inline s32x4 subs(s32x4 a, s32x4 b)
-    {
-        return vec_subs(a.data, b.data);
     }
 
     // bitwise

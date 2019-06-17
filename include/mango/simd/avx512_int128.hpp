@@ -141,8 +141,6 @@ namespace detail
         return _mm_sub_epi8(a, b);
     }
 
-    // saturated
-
     static inline u8x16 adds(u8x16 a, u8x16 b)
     {
         return _mm_adds_epu8(a, b);
@@ -300,13 +298,6 @@ namespace detail
         return _mm_sub_epi16(a, b);
     }
 
-    static inline u16x8 mullo(u16x8 a, u16x8 b)
-    {
-        return _mm_mullo_epi16(a, b);
-    }
-
-    // saturated
-
     static inline u16x8 adds(u16x8 a, u16x8 b)
     {
         return _mm_adds_epu16(a, b);
@@ -315,6 +306,11 @@ namespace detail
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
         return _mm_subs_epu16(a, b);
+    }
+
+    static inline u16x8 mullo(u16x8 a, u16x8 b)
+    {
+        return _mm_mullo_epi16(a, b);
     }
 
     // bitwise
@@ -519,13 +515,6 @@ namespace detail
         return _mm_sub_epi32(a, b);
     }
 
-    static inline u32x4 mullo(u32x4 a, u32x4 b)
-    {
-        return _mm_mullo_epi32(a, b);
-    }
-
-    // saturated
-
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
   	    const __m128i temp = _mm_add_epi32(a, b);
@@ -536,6 +525,11 @@ namespace detail
     {
   	    const __m128i temp = _mm_sub_epi32(a, b);
   	    return _mm_and_si128(temp, _mm_cmpgt_epi32(a, temp));
+    }
+
+    static inline u32x4 mullo(u32x4 a, u32x4 b)
+    {
+        return _mm_mullo_epi32(a, b);
     }
 
     // bitwise
@@ -892,8 +886,6 @@ namespace detail
         return _mm_sub_epi8(a, b);
     }
 
-    // saturated
-
     static inline s8x16 adds(s8x16 a, s8x16 b)
     {
         return _mm_adds_epi8(a, b);
@@ -1061,6 +1053,16 @@ namespace detail
         return _mm_sub_epi16(a, b);
     }
 
+    static inline s16x8 adds(s16x8 a, s16x8 b)
+    {
+        return _mm_adds_epi16(a, b);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b)
+    {
+        return _mm_subs_epi16(a, b);
+    }
+
     static inline s16x8 hadd(s16x8 a, s16x8 b)
     {
         return _mm_hadd_epi16(a, b);
@@ -1071,21 +1073,19 @@ namespace detail
         return _mm_hsub_epi16(a, b);
     }
 
+    static inline s16x8 hadds(s16x8 a, s16x8 b)
+    {
+        return _mm_hadds_epi16(a, b);
+    }
+
+    static inline s16x8 hsubs(s16x8 a, s16x8 b)
+    {
+        return _mm_hsubs_epi16(a, b);
+    }
+
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
         return _mm_mullo_epi16(a, b);
-    }
-
-    // saturated
-
-    static inline s16x8 adds(s16x8 a, s16x8 b)
-    {
-        return _mm_adds_epi16(a, b);
-    }
-
-    static inline s16x8 subs(s16x8 a, s16x8 b)
-    {
-        return _mm_subs_epi16(a, b);
     }
 
     static inline s16x8 abs(s16x8 a)
@@ -1310,23 +1310,6 @@ namespace detail
         return _mm_sub_epi32(a, b);
     }
 
-    static inline s32x4 hadd(s32x4 a, s32x4 b)
-    {
-        return _mm_hadd_epi32(a, b);
-    }
-
-    static inline s32x4 hsub(s32x4 a, s32x4 b)
-    {
-        return _mm_hsub_epi32(a, b);
-    }
-
-    static inline s32x4 mullo(s32x4 a, s32x4 b)
-    {
-        return _mm_mullo_epi32(a, b);
-    }
-
-    // saturated
-
     static inline s32x4 adds(s32x4 a, s32x4 b)
     {
         const __m128i v = _mm_add_epi32(a, b);
@@ -1343,6 +1326,21 @@ namespace detail
         a = _mm_srai_epi32(a, 31);
         __m128i temp = _mm_and_si128(_mm_xor_si128(a, b), _mm_xor_si128(a, v));
         return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
+    }
+
+    static inline s32x4 hadd(s32x4 a, s32x4 b)
+    {
+        return _mm_hadd_epi32(a, b);
+    }
+
+    static inline s32x4 hsub(s32x4 a, s32x4 b)
+    {
+        return _mm_hsub_epi32(a, b);
+    }
+
+    static inline s32x4 mullo(s32x4 a, s32x4 b)
+    {
+        return _mm_mullo_epi32(a, b);
     }
 
     // bitwise

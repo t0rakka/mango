@@ -186,8 +186,6 @@ namespace detail {
         return result;
     }
 
-    // saturated
-
     static inline u8x32 adds(u8x32 a, u8x32 b)
     {
         u8x32 result;
@@ -394,16 +392,6 @@ namespace detail {
         return result;
     }
 
-    static inline u16x16 mullo(u16x16 a, u16x16 b)
-    {
-        u16x16 result;
-        result.lo = mullo(a.lo, b.lo);
-        result.hi = mullo(a.hi, b.hi);
-        return result;
-    }
-
-    // saturated
-
     static inline u16x16 adds(u16x16 a, u16x16 b)
     {
         u16x16 result;
@@ -417,6 +405,14 @@ namespace detail {
         u16x16 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
+    static inline u16x16 mullo(u16x16 a, u16x16 b)
+    {
+        u16x16 result;
+        result.lo = mullo(a.lo, b.lo);
+        result.hi = mullo(a.hi, b.hi);
         return result;
     }
 
@@ -673,16 +669,6 @@ namespace detail {
         return result;
     }
 
-    static inline u32x8 mullo(u32x8 a, u32x8 b)
-    {
-        u32x8 result;
-        result.lo = mullo(a.lo, b.lo);
-        result.hi = mullo(a.hi, b.hi);
-        return result;
-    }
-
-    // saturated
-
     static inline u32x8 adds(u32x8 a, u32x8 b)
     {
         u32x8 result;
@@ -696,6 +682,14 @@ namespace detail {
         u32x8 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
+    static inline u32x8 mullo(u32x8 a, u32x8 b)
+    {
+        u32x8 result;
+        result.lo = mullo(a.lo, b.lo);
+        result.hi = mullo(a.hi, b.hi);
         return result;
     }
 
@@ -1188,8 +1182,6 @@ namespace detail {
         return result;
     }
 
-    // saturated
-
     static inline s8x32 adds(s8x32 a, s8x32 b)
     {
         s8x32 result;
@@ -1410,6 +1402,22 @@ namespace detail {
         return result;
     }
 
+    static inline s16x16 adds(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = adds(a.lo, b.lo);
+        result.hi = adds(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = subs(a.lo, b.lo);
+        result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
     static inline s16x16 hadd(s16x16 a, s16x16 b)
     {
         s16x16 result;
@@ -1426,29 +1434,27 @@ namespace detail {
         return result;
     }
 
+    static inline s16x16 hadds(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = hadds(a.lo, b.lo);
+        result.hi = hadds(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s16x16 hsubs(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = hsubs(a.lo, b.lo);
+        result.hi = hsubs(a.hi, b.hi);
+        return result;
+    }
+
     static inline s16x16 mullo(s16x16 a, s16x16 b)
     {
         s16x16 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
-        return result;
-    }
-
-    // saturated
-
-    static inline s16x16 adds(s16x16 a, s16x16 b)
-    {
-        s16x16 result;
-        result.lo = adds(a.lo, b.lo);
-        result.hi = adds(a.hi, b.hi);
-        return result;
-    }
-
-    static inline s16x16 subs(s16x16 a, s16x16 b)
-    {
-        s16x16 result;
-        result.lo = subs(a.lo, b.lo);
-        result.hi = subs(a.hi, b.hi);
         return result;
     }
 
@@ -1737,6 +1743,22 @@ namespace detail {
         return result;
     }
 
+    static inline s32x8 adds(s32x8 a, s32x8 b)
+    {
+        s32x8 result;
+        result.lo = adds(a.lo, b.lo);
+        result.hi = adds(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b)
+    {
+        s32x8 result;
+        result.lo = subs(a.lo, b.lo);
+        result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
     static inline s32x8 hadd(s32x8 a, s32x8 b)
     {
         s32x8 result;
@@ -1758,24 +1780,6 @@ namespace detail {
         s32x8 result;
         result.lo = mullo(a.lo, b.lo);
         result.hi = mullo(a.hi, b.hi);
-        return result;
-    }
-
-    // saturated
-
-    static inline s32x8 adds(s32x8 a, s32x8 b)
-    {
-        s32x8 result;
-        result.lo = adds(a.lo, b.lo);
-        result.hi = adds(a.hi, b.hi);
-        return result;
-    }
-
-    static inline s32x8 subs(s32x8 a, s32x8 b)
-    {
-        s32x8 result;
-        result.lo = subs(a.lo, b.lo);
-        result.hi = subs(a.hi, b.hi);
         return result;
     }
 

@@ -77,12 +77,6 @@ namespace detail {
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_mullo(ScalarType a, ScalarType b)
-    {
-        return ScalarType(a * b);
-    }
-
-    template <typename ScalarType>
     static inline ScalarType scalar_unsigned_adds(ScalarType a, ScalarType b)
     {
 	    ScalarType v = a + b;
@@ -132,6 +126,12 @@ namespace detail {
 	    }
 
 	    return v;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_mullo(ScalarType a, ScalarType b)
+    {
+        return ScalarType(a * b);
     }
 
     template <typename ScalarType>
@@ -438,8 +438,6 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    // saturated
-
     static inline u8x16 adds(u8x16 a, u8x16 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_adds, a, b);
@@ -604,13 +602,6 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    static inline u16x8 mullo(u16x8 a, u16x8 b)
-    {
-        return detail::scalar_unroll(detail::scalar_mullo, a, b);
-    }
-
-    // saturated
-
     static inline u16x8 adds(u16x8 a, u16x8 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_adds, a, b);
@@ -619,6 +610,11 @@ namespace detail {
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_subs, a, b);
+    }
+
+    static inline u16x8 mullo(u16x8 a, u16x8 b)
+    {
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     // bitwise
@@ -828,13 +824,6 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    static inline u32x4 mullo(u32x4 a, u32x4 b)
-    {
-        return detail::scalar_unroll(detail::scalar_mullo, a, b);
-    }
-
-    // saturated
-
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_adds, a, b);
@@ -843,6 +832,11 @@ namespace detail {
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_subs, a, b);
+    }
+
+    static inline u32x4 mullo(u32x4 a, u32x4 b)
+    {
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     // bitwise
@@ -1208,8 +1202,6 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    // saturated
-
     static inline s8x16 adds(s8x16 a, s8x16 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
@@ -1384,9 +1376,14 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    static inline s16x8 mullo(s16x8 a, s16x8 b)
+    static inline s16x8 adds(s16x8 a, s16x8 b)
     {
-        return detail::scalar_unroll(detail::scalar_mullo, a, b);
+        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b)
+    {
+        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
     }
 
     static inline s16x8 hadd(s16x8 a, s16x8 b)
@@ -1417,16 +1414,37 @@ namespace detail {
         return dest;
     }
 
-    // saturated
-
-    static inline s16x8 adds(s16x8 a, s16x8 b)
+    static inline s16x8 hadds(s16x8 a, s16x8 b)
     {
-        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
+        s16x8 dest;
+        dest[0] = scalar_signed_adds(a[0], a[1]);
+        dest[1] = scalar_signed_adds(a[2], a[3]);
+        dest[2] = scalar_signed_adds(a[4], a[5]);
+        dest[3] = scalar_signed_adds(a[6], a[7]);
+        dest[4] = scalar_signed_adds(b[0], b[1]);
+        dest[5] = scalar_signed_adds(b[2], b[3]);
+        dest[6] = scalar_signed_adds(b[4], b[5]);
+        dest[7] = scalar_signed_adds(b[6], b[7]);
+        return dest;
     }
 
-    static inline s16x8 subs(s16x8 a, s16x8 b)
+    static inline s16x8 hsubs(s16x8 a, s16x8 b)
     {
-        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
+        s16x8 dest;
+        dest[0] = scalar_signed_subs(a[0], a[1]);
+        dest[1] = scalar_signed_subs(a[2], a[3]);
+        dest[2] = scalar_signed_subs(a[4], a[5]);
+        dest[3] = scalar_signed_subs(a[6], a[7]);
+        dest[4] = scalar_signed_subs(b[0], b[1]);
+        dest[5] = scalar_signed_subs(b[2], b[3]);
+        dest[6] = scalar_signed_subs(b[4], b[5]);
+        dest[7] = scalar_signed_subs(b[6], b[7]);
+        return dest;
+    }
+
+    static inline s16x8 mullo(s16x8 a, s16x8 b)
+    {
+        return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
     static inline s16x8 abs(s16x8 a)
@@ -1656,6 +1674,16 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
+    static inline s32x4 adds(s32x4 a, s32x4 b)
+    {
+        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b)
+    {
+        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
+    }
+
     static inline s32x4 hadd(s32x4 a, s32x4 b)
     {
         s16x8 dest;
@@ -1679,18 +1707,6 @@ namespace detail {
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         return detail::scalar_unroll(detail::scalar_mullo, a, b);
-    }
-
-    // saturated
-
-    static inline s32x4 adds(s32x4 a, s32x4 b)
-    {
-        return detail::scalar_unroll(detail::scalar_signed_adds, a, b);
-    }
-
-    static inline s32x4 subs(s32x4 a, s32x4 b)
-    {
-        return detail::scalar_unroll(detail::scalar_signed_subs, a, b);
     }
 
     // bitwise

@@ -66,8 +66,6 @@ namespace detail {
         return _mm512_sub_epi8(a, b);
     }
 
-    // saturated
-
     static inline u8x64 adds(u8x64 a, u8x64 b)
     {
         return _mm512_adds_epu8(a, b);
@@ -196,13 +194,6 @@ namespace detail {
         return _mm512_sub_epi16(a, b);
     }
 
-    static inline u16x32 mullo(u16x32 a, u16x32 b)
-    {
-        return _mm512_mullo_epi16(a, b);
-    }
-
-    // saturated
-
     static inline u16x32 adds(u16x32 a, u16x32 b)
     {
         return _mm512_adds_epu16(a, b);
@@ -211,6 +202,11 @@ namespace detail {
     static inline u16x32 subs(u16x32 a, u16x32 b)
     {
         return _mm512_subs_epu16(a, b);
+    }
+
+    static inline u16x32 mullo(u16x32 a, u16x32 b)
+    {
+        return _mm512_mullo_epi16(a, b);
     }
 
     // bitwise
@@ -688,8 +684,6 @@ namespace detail {
         return _mm512_sub_epi8(a, b);
     }
 
-    // saturated
-
     static inline s8x64 adds(s8x64 a, s8x64 b)
     {
         return _mm512_adds_epi8(a, b);
@@ -828,13 +822,6 @@ namespace detail {
         return _mm512_sub_epi16(a, b);
     }
 
-    static inline s16x32 mullo(s16x32 a, s16x32 b)
-    {
-        return _mm512_mullo_epi16(a, b);
-    }
-
-    // saturated
-
     static inline s16x32 adds(s16x32 a, s16x32 b)
     {
         return _mm512_adds_epi16(a, b);
@@ -843,6 +830,11 @@ namespace detail {
     static inline s16x32 subs(s16x32 a, s16x32 b)
     {
         return _mm512_subs_epi16(a, b);
+    }
+
+    static inline s16x32 mullo(s16x32 a, s16x32 b)
+    {
+        return _mm512_mullo_epi16(a, b);
     }
 
     static inline s16x32 abs(s16x32 a)
