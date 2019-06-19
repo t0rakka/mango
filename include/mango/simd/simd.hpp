@@ -524,6 +524,9 @@ namespace simd {
     // ARM NEON vector instrinsics
     // --------------------------------------------------------------
 
+    // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0491f/BABDFJCI.html
+    // http://kib.kiev.ua/x86docs/ARMARM/DDI0487A_e_armv8_arm.pdf
+
     #define MANGO_ENABLE_SIMD
 
     #define int128_is_hardware_vector
