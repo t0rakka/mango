@@ -99,6 +99,11 @@ namespace simd {
         return vqsubq_u8(a, b);
     }
 
+    static inline u8x16 avg(u8x16 a, u8x16 b)
+    {
+        return vhaddq_u8(a, b);
+    }
+
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
@@ -259,6 +264,11 @@ namespace simd {
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
         return vqsubq_u16(a, b);
+    }
+
+    static inline u16x8 avg(u16x8 a, u16x8 b)
+    {
+        return vhaddq_u16(a, b);
     }
 
     static inline u16x8 mullo(u16x8 a, u16x8 b)
@@ -487,6 +497,11 @@ namespace simd {
         return vqsubq_u32(a, b);
     }
 
+    static inline u32x4 avg(u32x4 a, u32x4 b)
+    {
+        return vhaddq_u32(a, b);
+    }
+
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
         return vmulq_u32(a, b);
@@ -687,6 +702,16 @@ namespace simd {
     {
         return vsubq_u64(a, b);
     }
+
+    static inline u64x2 avg(u64x2 a, u64x2 b)
+    {
+        // unsigned average
+        int64x2_t axb = veorq_s64(a, b);
+        int64x2_t temp = vaddq_s64(vandq_s64(a, b), vshrq_n_s64(axb, 1));
+        return temp;
+    }
+
+    // bitwise
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
     {
@@ -893,6 +918,11 @@ namespace simd {
     static inline s8x16 subs(s8x16 a, s8x16 b)
     {
         return vqsubq_s8(a, b);
+    }
+
+    static inline s8x16 avg(s8x16 a, s8x16 b)
+    {
+        return vhaddq_s8(a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1126,6 +1156,11 @@ namespace simd {
         temp_a = unpacklo(a, b);
         temp_b = unpackhi(a, b);
         return subs(temp_a, temp_b);
+    }
+
+    static inline s16x8 avg(s16x8 a, s16x8 b)
+    {
+        return vhaddq_s16(a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1413,6 +1448,11 @@ namespace simd {
 
 #endif
 
+    static inline s32x4 avg(s32x4 a, s32x4 b)
+    {
+        return vhaddq_s32(a, b);
+    }
+
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         return vmulq_s32(a, b);
@@ -1631,6 +1671,21 @@ namespace simd {
     {
         return vsubq_s64(a, b);
     }
+
+    static inline s64x2 avg(s64x2 a, s64x2 b)
+    {
+        // unsigned average
+        int64x2_t axb = veorq_s64(a, b);
+        int64x2_t temp = vaddq_s64(vandq_s64(a, b), vshrq_n_s64(axb, 1));
+
+        // signed rounding
+        int64x2_t sign = vreinterpretq_s64_u64(vshrq_n_s64(vreinterpretq_u64_s64(temp), 63));
+        temp = vaddq_s64(temp, vandq_s64(sign, axb));
+
+        return temp;
+    }
+
+    // bitwise
 
     static inline s64x2 bitwise_nand(s64x2 a, s64x2 b)
     {

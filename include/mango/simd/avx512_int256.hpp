@@ -25,6 +25,35 @@ namespace detail {
         return _mm256_blendv_epi8(b, a, mask);
     }
 
+    static inline __m256i simd256_srli1_epi8(__m256i a)
+    {
+        a = _mm256_srli_epi16(a, 1);
+        return _mm256_and_si256(a, _mm256_set1_epi32(0x7f7f7f7f));
+    }
+
+    static inline __m256i simd256_srli7_epi8(__m256i a)
+    {
+        a = _mm256_srli_epi16(a, 7);
+        return _mm256_and_si256(a, _mm256_set1_epi32(0x01010101));
+    }
+
+    static inline __m256i simd256_srai1_epi8(__m256i a)
+    {
+        __m256i b = _mm256_slli_epi16(a, 8);
+        a = _mm256_srai_epi16(a, 1);
+        b = _mm256_srai_epi16(b, 1);
+        a = _mm256_and_si256(a, _mm256_set1_epi32(0xff00ff00));
+        b = _mm256_srli_epi16(b, 8);
+        return _mm256_or_si256(a, b);
+    }
+
+    static inline __m256i simd256_srai1_epi64(__m256i a)
+    {
+        __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(-0x8000000000000000ull));
+        a = _mm256_or_si256(sign, _mm256_srli_epi64(a, 1));
+        return a;
+    }
+
 } // namespace detail
 
     // -----------------------------------------------------------------
@@ -83,6 +112,13 @@ namespace detail {
     static inline u8x32 subs(u8x32 a, u8x32 b)
     {
         return _mm256_subs_epu8(a, b);
+    }
+
+    static inline u8x32 avg(u8x32 a, u8x32 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi8(_mm256_and_si256(a, b), detail::simd256_srli1_epi8(axb));
+        return temp;
     }
 
     // bitwise
@@ -215,6 +251,13 @@ namespace detail {
     static inline u16x16 subs(u16x16 a, u16x16 b)
     {
         return _mm256_subs_epu16(a, b);
+    }
+
+    static inline u16x16 avg(u16x16 a, u16x16 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi16(_mm256_and_si256(a, b), _mm256_srli_epi16(axb, 1));
+        return temp;
     }
 
     static inline u16x16 mullo(u16x16 a, u16x16 b)
@@ -408,6 +451,13 @@ namespace detail {
   	    return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
     }
 
+    static inline u32x8 avg(u32x8 a, u32x8 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi32(_mm256_and_si256(a, b), _mm256_srli_epi32(axb, 1));
+        return temp;
+    }
+
     static inline u32x8 mullo(u32x8 a, u32x8 b)
     {
         return _mm256_mullo_epi32(a, b);
@@ -594,6 +644,15 @@ namespace detail {
         return _mm256_sub_epi64(a, b);
     }
 
+    static inline u64x4 avg(u64x4 a, u64x4 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi64(_mm256_and_si256(a, b), _mm256_srli_epi64(axb, 1));
+        return temp;
+    }
+
+    // bitwise
+
     static inline u64x4 bitwise_nand(u64x4 a, u64x4 b)
     {
         return _mm256_andnot_si256(a, b);
@@ -738,6 +797,14 @@ namespace detail {
     static inline s8x32 subs(s8x32 a, s8x32 b)
     {
         return _mm256_subs_epi8(a, b);
+    }
+
+    static inline s8x32 avg(s8x32 a, s8x32 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi8(_mm256_and_si256(a, b), detail::simd256_srai1_epi8(axb));
+        temp = _mm256_add_epi8(temp, _mm256_and_si256(detail::simd256_srli7_epi8(temp), axb));
+        return temp;
     }
 
     static inline s8x32 abs(s8x32 a)
@@ -900,6 +967,14 @@ namespace detail {
     static inline s16x16 hsubs(s16x16 a, s16x16 b)
     {
         return _mm256_hsubs_epi16(a, b);
+    }
+
+    static inline s16x16 avg(s16x16 a, s16x16 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi16(_mm256_and_si256(a, b), _mm256_srai_epi16(axb, 1));
+        temp = _mm256_add_epi16(temp, _mm256_and_si256(_mm256_srli_epi16(temp, 7), axb));
+        return temp;
     }
 
     static inline s16x16 mullo(s16x16 a, s16x16 b)
@@ -1129,6 +1204,14 @@ namespace detail {
         return _mm256_hsub_epi32(a, b);
     }
 
+    static inline s32x8 avg(s32x8 a, s32x8 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi32(_mm256_and_si256(a, b), _mm256_srai_epi32(axb, 1));
+        temp = _mm256_add_epi32(temp, _mm256_and_si256(_mm256_srli_epi32(temp, 7), axb));
+        return temp;
+    }
+
     static inline s32x8 mullo(s32x8 a, s32x8 b)
     {
         return _mm256_mullo_epi32(a, b);
@@ -1314,6 +1397,16 @@ namespace detail {
     {
         return _mm256_sub_epi64(a, b);
     }
+
+    static inline s64x4 avg(s64x4 a, s64x4 b)
+    {
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_add_epi64(_mm256_and_si256(a, b), detail::simd256_srai1_epi64(axb));
+        temp = _mm256_add_epi64(temp, _mm256_and_si256(_mm256_srli_epi64(temp, 7), axb));
+        return temp;
+    }
+
+    // bitwise
 
     static inline s64x4 bitwise_nand(s64x4 a, s64x4 b)
     {

@@ -104,6 +104,11 @@ namespace simd {
         return vec_subs(a.data, b.data);
     }
 
+    static inline u8x16 avg(u8x16 a, u8x16 b)
+    {
+        return vec_avg(a, b);
+    }
+
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
@@ -273,6 +278,11 @@ namespace simd {
     static inline u16x8 mullo(u16x8 a, u16x8 b)
     {
         return vec_mladd(a.data, b.data, vec_xor(a.data, a.data));
+    }
+
+    static inline u16x8 avg(u16x8 a, u16x8 b)
+    {
+        return vec_avg(a, b);
     }
 
     // bitwise
@@ -512,6 +522,11 @@ namespace simd {
         return vec_ctu(vec_mul(af.data, bf.data), 0);
     }
 
+    static inline u32x4 avg(u32x4 a, u32x4 b)
+    {
+        return vec_avg(a, b);
+    }
+
     // bitwise
 
     static inline u32x4 bitwise_nand(u32x4 a, u32x4 b)
@@ -708,6 +723,13 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
+    static inline u64x2 avg(u64x2 a, u64x2 b)
+    {
+        return vec_avg(a, b);
+    }
+
+    // bitwise
+
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
     {
         return vec_nand(a.data, b.data);
@@ -900,6 +922,11 @@ namespace simd {
     static inline s8x16 subs(s8x16 a, s8x16 b)
     {
         return vec_subs(a.data, b.data);
+    }
+
+    static inline s8x16 avg(s8x16 a, s8x16 b)
+    {
+        return vec_avg(a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1120,6 +1147,11 @@ namespace simd {
         temp_a = unpacklo(a, b);
         temp_b = unpackhi(a, b);
         return subs(temp_a, temp_b);
+    }
+
+    static inline s16x8 avg(s16x8 a, s16x8 b)
+    {
+        return vec_avg(a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1395,6 +1427,11 @@ namespace simd {
         return sub(a, b);
     }
 
+    static inline s32x4 avg(s32x4 a, s32x4 b)
+    {
+        return vec_avg(a, b);
+    }
+
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         f32x4 af = vec_ctf(a.data, 0);
@@ -1612,6 +1649,13 @@ namespace simd {
     {
         return vec_sub(a.data, b.data);
     }
+
+    static inline s64x2 avg(s64x2 a, s64x2 b)
+    {
+        return vec_avg(a, b);
+    }
+
+    // bitwise
 
     static inline s64x2 bitwise_nand(s64x2 a, s64x2 b)
     {

@@ -202,6 +202,14 @@ namespace detail {
         return result;
     }
 
+    static inline u8x32 avg(u8x32 a, u8x32 b)
+    {
+        u8x32 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
     // bitwise
 
     static inline u8x32 bitwise_nand(u8x32 a, u8x32 b)
@@ -405,6 +413,14 @@ namespace detail {
         u16x16 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
+    static inline u16x16 avg(u16x16 a, u16x16 b)
+    {
+        u16x16 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
         return result;
     }
 
@@ -682,6 +698,14 @@ namespace detail {
         u32x8 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
+    static inline u32x8 avg(u32x8 a, u32x8 b)
+    {
+        u32x8 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
         return result;
     }
 
@@ -972,6 +996,14 @@ namespace detail {
         return result;
     }
 
+    static inline u64x4 avg(u64x4 a, u64x4 b)
+    {
+        u64x4 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
     static inline u64x4 bitwise_nand(u64x4 a, u64x4 b)
     {
         u64x4 result;
@@ -1195,6 +1227,14 @@ namespace detail {
         s8x32 result;
         result.lo = subs(a.lo, b.lo);
         result.hi = subs(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s8x32 avg(s8x32 a, s8x32 b)
+    {
+        s8x32 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
         return result;
     }
 
@@ -1447,6 +1487,14 @@ namespace detail {
         s16x16 result;
         result.lo = hsubs(a.lo, b.lo);
         result.hi = hsubs(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s16x16 avg(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
         return result;
     }
 
@@ -1775,6 +1823,14 @@ namespace detail {
         return result;
     }
 
+    static inline s32x8 avg(s32x8 a, s32x8 b)
+    {
+        s32x8 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
     static inline s32x8 mullo(s32x8 a, s32x8 b)
     {
         s32x8 result;
@@ -2061,6 +2117,16 @@ namespace detail {
         result.hi = sub(a.hi, b.hi);
         return result;
     }
+
+    static inline s64x4 avg(s64x4 a, s64x4 b)
+    {
+        s64x4 result;
+        result.lo = avg(a.lo, b.lo);
+        result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
+    // bitwise
 
     static inline s64x4 bitwise_nand(s64x4 a, s64x4 b)
     {
