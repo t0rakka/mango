@@ -627,16 +627,18 @@ namespace simd {
 
 namespace mango {
 namespace simd {
-    
+
     // --------------------------------------------------------------
     // Altivec / VSX
     // --------------------------------------------------------------
+
+    // https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.cbcpx01/vectorbltin.htm
 
     #define MANGO_ENABLE_SIMD
 
     #define int128_is_hardware_vector
     #define float128_is_hardware_vector
-    
+
     // 64 bit vector
     using f16x4   = scalar_vector<f16, 4>;
 
