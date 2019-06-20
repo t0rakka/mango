@@ -49,7 +49,7 @@ namespace detail {
 
     static inline __m256i simd256_srai1_epi64(__m256i a)
     {
-        __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(-0x8000000000000000ull));
+        __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(0x8000000000000000ull));
         a = _mm256_or_si256(sign, _mm256_srli_epi64(a, 1));
         return a;
     }

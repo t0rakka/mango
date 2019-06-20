@@ -44,7 +44,7 @@ namespace detail {
 
     static inline __m512i simd512_srai1_epi64(__m512i a)
     {
-        __m512i sign = _mm512_and_si512(a, _mm512_set1_epi64(-0x8000000000000000ull));
+        __m512i sign = _mm512_and_si512(a, _mm512_set1_epi64(0x8000000000000000ull));
         a = _mm512_or_si512(sign, _mm512_srli_epi64(a, 1));
         return a;
     }
