@@ -140,7 +140,7 @@ namespace detail {
     {
         ScalarType v = (a & b) + ((a ^ b) >> 1);
         using UnsignedType = typename std::make_unsigned<ScalarType>::type;
-        return v + (UnsignedType(v) >> (sizeof(UnsignedType) * 8 - 1))) & (a ^ b);
+        return v + (UnsignedType(v) >> (sizeof(UnsignedType) * 8 - 1)) & (a ^ b);
     }
 
     template <typename ScalarType>
@@ -1459,28 +1459,28 @@ namespace detail {
     static inline s16x8 hadds(s16x8 a, s16x8 b)
     {
         s16x8 dest;
-        dest[0] = scalar_signed_adds(a[0], a[1]);
-        dest[1] = scalar_signed_adds(a[2], a[3]);
-        dest[2] = scalar_signed_adds(a[4], a[5]);
-        dest[3] = scalar_signed_adds(a[6], a[7]);
-        dest[4] = scalar_signed_adds(b[0], b[1]);
-        dest[5] = scalar_signed_adds(b[2], b[3]);
-        dest[6] = scalar_signed_adds(b[4], b[5]);
-        dest[7] = scalar_signed_adds(b[6], b[7]);
+        dest[0] = detail::scalar_signed_adds(a[0], a[1]);
+        dest[1] = detail::scalar_signed_adds(a[2], a[3]);
+        dest[2] = detail::scalar_signed_adds(a[4], a[5]);
+        dest[3] = detail::scalar_signed_adds(a[6], a[7]);
+        dest[4] = detail::scalar_signed_adds(b[0], b[1]);
+        dest[5] = detail::scalar_signed_adds(b[2], b[3]);
+        dest[6] = detail::scalar_signed_adds(b[4], b[5]);
+        dest[7] = detail::scalar_signed_adds(b[6], b[7]);
         return dest;
     }
 
     static inline s16x8 hsubs(s16x8 a, s16x8 b)
     {
         s16x8 dest;
-        dest[0] = scalar_signed_subs(a[0], a[1]);
-        dest[1] = scalar_signed_subs(a[2], a[3]);
-        dest[2] = scalar_signed_subs(a[4], a[5]);
-        dest[3] = scalar_signed_subs(a[6], a[7]);
-        dest[4] = scalar_signed_subs(b[0], b[1]);
-        dest[5] = scalar_signed_subs(b[2], b[3]);
-        dest[6] = scalar_signed_subs(b[4], b[5]);
-        dest[7] = scalar_signed_subs(b[6], b[7]);
+        dest[0] = detail::scalar_signed_subs(a[0], a[1]);
+        dest[1] = detail::scalar_signed_subs(a[2], a[3]);
+        dest[2] = detail::scalar_signed_subs(a[4], a[5]);
+        dest[3] = detail::scalar_signed_subs(a[6], a[7]);
+        dest[4] = detail::scalar_signed_subs(b[0], b[1]);
+        dest[5] = detail::scalar_signed_subs(b[2], b[3]);
+        dest[6] = detail::scalar_signed_subs(b[4], b[5]);
+        dest[7] = detail::scalar_signed_subs(b[6], b[7]);
         return dest;
     }
 
@@ -1733,7 +1733,7 @@ namespace detail {
 
     static inline s32x4 hadd(s32x4 a, s32x4 b)
     {
-        s16x8 dest;
+        s32x4 dest;
         dest[0] = a[0] + a[1];
         dest[1] = a[2] + a[3];
         dest[2] = b[0] + b[1];
@@ -1743,7 +1743,7 @@ namespace detail {
 
     static inline s32x4 hsub(s32x4 a, s32x4 b)
     {
-        s16x8 dest;
+        s32x4 dest;
         dest[0] = a[0] - a[1];
         dest[1] = a[2] - a[3];
         dest[2] = b[0] - b[1];

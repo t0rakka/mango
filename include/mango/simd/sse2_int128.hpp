@@ -128,7 +128,7 @@ namespace detail {
 
     static inline __m128i simd128_srai1_epi64(__m128i a)
     {
-        __m128i sign = _mm_and_si128(a, _mm_set1_epi64x(-0x8000000000000000ull));
+        __m128i sign = _mm_and_si128(a, _mm_set1_epi64x(0x8000000000000000ull));
         a = _mm_or_si128(sign, _mm_srli_epi64(a, 1));
         return a;
     }
