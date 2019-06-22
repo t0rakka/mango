@@ -501,7 +501,7 @@ namespace
                 bytesOfKeyValueData = p.read32();
             }
             else
-			{
+            {
                 if (endianness != 0x01020304)
                 {
                     MANGO_EXCEPTION(ID"Incorrect endianness.");
@@ -575,7 +575,7 @@ namespace
 
             if (compression != TextureCompression::NONE)
             {
-				TextureCompressionInfo info(compression);
+                TextureCompressionInfo info(compression);
                 format = info.format;
             }
             else
