@@ -450,39 +450,39 @@ namespace
     struct HeaderKTX
     {
         u8 reserved_identifier[12];
-		u32 endianness;
-		u32 glType;
-		u32 glTypeSize;
-		u32 glFormat;
-		u32 glInternalFormat;
-		u32 glBaseInternalFormat;
-		u32 pixelWidth;
-		u32 pixelHeight;
-		u32 pixelDepth;
-		u32 numberOfArrayElements;
-		u32 numberOfFaces;
-		u32 numberOfMipmapLevels;
-		u32 bytesOfKeyValueData;
+        u32 endianness;
+        u32 glType;
+        u32 glTypeSize;
+        u32 glFormat;
+        u32 glInternalFormat;
+        u32 glBaseInternalFormat;
+        u32 pixelWidth;
+        u32 pixelHeight;
+        u32 pixelDepth;
+        u32 numberOfArrayElements;
+        u32 numberOfFaces;
+        u32 numberOfMipmapLevels;
+        u32 bytesOfKeyValueData;
 
-		HeaderKTX(Memory memory)
-		{
-			const u8 ktxIdentifier[] =
-			{
-				0xab, 0x4b, 0x54, 0x58, 0x20, 0x31,
+        HeaderKTX(Memory memory)
+        {
+            const u8 ktxIdentifier[] =
+            {
+                0xab, 0x4b, 0x54, 0x58, 0x20, 0x31,
                 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a
-			};
+            };
 
-			if (std::memcmp(ktxIdentifier, memory.address, sizeof(ktxIdentifier)))
-			{
+            if (std::memcmp(ktxIdentifier, memory.address, sizeof(ktxIdentifier)))
+            {
                 MANGO_EXCEPTION(ID"Incorrect identifier.");
-			}
+            }
 
             const u8* ptr = memory.address + sizeof(ktxIdentifier);
 
             endianness = u32_mask(ptr[0], ptr[1], ptr[2], ptr[3]);
             ptr += 4;
 
-			if (endianness == 0x04030201)
+            if (endianness == 0x04030201)
             {
                 // same endianness
                 ConstPointer p = ptr;
@@ -502,13 +502,13 @@ namespace
             }
             else
 			{
-				if (endianness != 0x01020304)
-				{
+                if (endianness != 0x01020304)
+                {
                     MANGO_EXCEPTION(ID"Incorrect endianness.");
-				}
-				else
-				{
-					// different endianness
+                }
+                else
+                {
+                    // different endianness
                     SwapEndianConstPointer p = ptr;
 
                     glType = p.read32();
@@ -523,8 +523,8 @@ namespace
                     numberOfFaces = p.read32();
                     numberOfMipmapLevels = p.read32();
                     bytesOfKeyValueData = p.read32();
-				}
-			}
+                }
+            }
 
 #if 0
             printf("endianness: 0x%x\n", endianness);
@@ -553,11 +553,11 @@ namespace
             }
 
             numberOfMipmapLevels = std::max(1U, numberOfMipmapLevels);
-		}
+        }
 
-		~HeaderKTX()
-		{
-		}
+        ~HeaderKTX()
+        {
+        }
 
         u32 read32ktx(const u8* p) const
         {
@@ -571,7 +571,7 @@ namespace
 
         TextureCompression computeFormat(Format& format) const
         {
-			TextureCompression compression = opengl::getTextureCompression(glInternalFormat);
+            TextureCompression compression = opengl::getTextureCompression(glInternalFormat);
 
             if (compression != TextureCompression::NONE)
             {
@@ -590,10 +590,10 @@ namespace
             return compression;
         }
 
-		Memory getMemory(Memory memory, int level, int depth, int face) const
-		{
-			const u8* address = memory.address;
-			address += sizeof(HeaderKTX) + bytesOfKeyValueData;
+        Memory getMemory(Memory memory, int level, int depth, int face) const
+        {
+            const u8* address = memory.address;
+            address += sizeof(HeaderKTX) + bytesOfKeyValueData;
 
             const int maxLevel = int(numberOfMipmapLevels);
             const int maxFace = int(numberOfFaces);
@@ -652,7 +652,7 @@ namespace
             header.depth   = 0;
             header.levels  = m_header.numberOfMipmapLevels;
             header.faces   = m_header.numberOfFaces;
-			header.palette = false;
+            header.palette = false;
             header.format  = FORMAT_NONE;
             header.compression = m_header.computeFormat(header.format);
 
