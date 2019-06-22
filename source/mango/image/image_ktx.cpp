@@ -14,7 +14,7 @@ namespace
     using namespace mango;
 
     // KTX Format Specification:
-	// http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
 
     // OpenGL glTexImagewD specification:
     // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
