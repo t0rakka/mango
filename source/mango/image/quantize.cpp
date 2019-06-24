@@ -433,9 +433,9 @@ namespace
 namespace mango {
 namespace image {
 
-    void ColorQuantizer::quantize(const Surface& dest, const Surface& source, bool dithering, float quality)
+    void ColorQuantizer::quantize(const Surface& dest, const Surface& source, const ColorQuantizeOptions& options)
     {
-        quality = clamp(quality, 0.0f, 1.0f);
+        float quality = clamp(options.quality, 0.0f, 1.0f);
 
         int width = source.width;
         int height = source.height;
@@ -477,7 +477,7 @@ namespace image {
                 u8 index = nq.getIndex(r, g, b);
                 d[x] = index;
 
-                if (dithering)
+                if (options.dithering)
                 {
                     // quantization error
                     r -= palette[index].r;
