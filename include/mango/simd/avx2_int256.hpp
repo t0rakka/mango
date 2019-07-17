@@ -49,7 +49,7 @@ namespace detail {
 
     static inline __m256i simd256_srai1_epi64(__m256i a)
     {
-        __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(-0x8000000000000000ull));
+        __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(0 - 0x8000000000000000ull));
         a = _mm256_or_si256(sign, _mm256_srli_epi64(a, 1));
         return a;
     }
@@ -180,7 +180,7 @@ namespace detail {
 
     static inline mask8x32 compare_lt(u8x32 a, u8x32 b)
     {
-        const __m256i sign = _mm256_set1_epi8(-0x80);
+        const __m256i sign = _mm256_set1_epi8(0 - 0x80);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         return _mm256_cmpgt_epi8(b, a);
@@ -188,7 +188,7 @@ namespace detail {
 
     static inline mask8x32 compare_le(u8x32 a, u8x32 b)
     {
-        const __m256i sign = _mm256_set1_epi8(-0x80);
+        const __m256i sign = _mm256_set1_epi8(0 - 0x80);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         return detail::simd256_not_si256(_mm256_cmpgt_epi8(a, b));
@@ -196,7 +196,7 @@ namespace detail {
 
     static inline mask8x32 compare_ge(u8x32 a, u8x32 b)
     {
-        const __m256i sign = _mm256_set1_epi8(-0x80);
+        const __m256i sign = _mm256_set1_epi8(0 - 0x80);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         return detail::simd256_not_si256(_mm256_cmpgt_epi8(b, a));
@@ -346,7 +346,7 @@ namespace detail {
 
     static inline mask16x16 compare_lt(u16x16 a, u16x16 b)
     {
-        const __m256i sign = _mm256_set1_epi16(-0x8000);
+        const __m256i sign = _mm256_set1_epi16(0 - 0x8000);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         return _mm256_cmpgt_epi16(b, a);
@@ -354,7 +354,7 @@ namespace detail {
 
     static inline mask16x16 compare_le(u16x16 a, u16x16 b)
     {
-        const __m256i sign = _mm256_set1_epi16(-0x8000);
+        const __m256i sign = _mm256_set1_epi16(0 - 0x8000);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         return detail::simd256_not_si256(_mm256_cmpgt_epi16(a, b));
@@ -362,7 +362,7 @@ namespace detail {
 
     static inline mask16x16 compare_ge(u16x16 a, u16x16 b)
     {
-        const __m256i sign = _mm256_set1_epi16(-0x8000);
+        const __m256i sign = _mm256_set1_epi16(0 - 0x8000);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         return detail::simd256_not_si256(_mm256_cmpgt_epi16(b, a));
