@@ -24,6 +24,24 @@ namespace mango
             ScalarAccessor<s64, simd::s64x4, 1> y;
             ScalarAccessor<s64, simd::s64x4, 2> z;
             ScalarAccessor<s64, simd::s64x4, 3> w;
+
+            // generate 2 component accessors
+#define VECTOR4_SHUFFLE_ACCESSOR2(A, B, NAME) \
+            ShuffleAccessor4x2<s64, simd::s64x4, A, B> NAME
+#include "accessor.hpp"
+#undef VECTOR4_SHUFFLE_ACCESSOR2
+
+            // generate 3 component accessors
+#define VECTOR4_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
+            ShuffleAccessor4x3<s64, simd::s64x4, A, B, C> NAME
+#include "accessor.hpp"
+#undef VECTOR4_SHUFFLE_ACCESSOR3
+
+            // generate 4 component accessors
+#define VECTOR4_SHUFFLE_ACCESSOR4(A, B, C, D, NAME) \
+            ShuffleAccessor4<s64, simd::s64x4, A, B, C, D> NAME
+#include "accessor.hpp"
+#undef VECTOR4_SHUFFLE_ACCESSOR4
         };
 
         ScalarType& operator [] (size_t index)

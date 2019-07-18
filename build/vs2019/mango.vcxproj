@@ -66,6 +66,7 @@
     <ClInclude Include="..\..\include\mango\image\image.hpp" />
     <ClInclude Include="..\..\include\mango\image\quantize.hpp" />
     <ClInclude Include="..\..\include\mango\image\surface.hpp" />
+    <ClInclude Include="..\..\include\mango\math\accessor.hpp" />
     <ClInclude Include="..\..\include\mango\math\geometry.hpp" />
     <ClInclude Include="..\..\include\mango\math\math.hpp" />
     <ClInclude Include="..\..\include\mango\math\matrix.hpp" />
