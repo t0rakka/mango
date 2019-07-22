@@ -465,8 +465,8 @@ namespace image {
 
         for (int y = 0; y < height; ++y)
         {
-            ColorBGRA* s = source.address<ColorBGRA>(0, y + 0);
-            ColorBGRA* n = source.address<ColorBGRA>(0, y + 1);
+            ColorBGRA* s = temp.address<ColorBGRA>(0, y + 0);
+            ColorBGRA* n = temp.address<ColorBGRA>(0, y + 1);
             u8* d = dest.address<u8>(0, y);
 
             for (int x = 0; x < width; ++x)
