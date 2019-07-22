@@ -81,7 +81,7 @@ namespace
             {
                 int* p = m_network[i];
                 p[0] = p[1] = p[2] = (i << (netbiasshift + 8)) / netsize;
-                freq[i] = intbias/netsize;
+                freq[i] = intbias / netsize;
                 bias[i] = 0;
             }
         }
