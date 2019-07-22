@@ -23,10 +23,11 @@ namespace mango
             ScalarAccessor<s64, simd::s64x2, 0> x;
             ScalarAccessor<s64, simd::s64x2, 1> y;
 
-            ShuffleAccessor2<s64, simd::s64x2, 0, 0> xx;
-            ShuffleAccessor2<s64, simd::s64x2, 0, 1> xy;
-            ShuffleAccessor2<s64, simd::s64x2, 1, 0> yx;
-            ShuffleAccessor2<s64, simd::s64x2, 1, 1> yy;
+            // generate 2 component accessors
+#define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
+            ShuffleAccessor2<s64, simd::s64x2, A, B> NAME
+#include "accessor.hpp"
+#undef VECTOR2_SHUFFLE_ACCESSOR2
         };
 
         ScalarType& operator [] (size_t index)

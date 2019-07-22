@@ -35,10 +35,11 @@ namespace mango
         {
             struct { float x, y; };
 
-			ShuffleAccessor2<0, 0> xx;
-			ShuffleAccessor2<1, 0> yx;
-			ShuffleAccessor2<0, 1> xy;
-			ShuffleAccessor2<1, 1> yy;
+            // generate 2 component accessors
+#define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
+            ShuffleAccessor2<A, B> NAME
+#include "accessor.hpp"
+#undef VECTOR2_SHUFFLE_ACCESSOR2
         };
 
         ScalarType& operator [] (size_t index)

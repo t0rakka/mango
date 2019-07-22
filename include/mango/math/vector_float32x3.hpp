@@ -47,43 +47,17 @@ namespace mango
         {
             struct { float x, y, z; };
 
-			ShuffleAccessor2<0, 0> xx;
-			ShuffleAccessor2<1, 0> yx;
-			ShuffleAccessor2<2, 0> zx;
-			ShuffleAccessor2<0, 1> xy;
-			ShuffleAccessor2<1, 1> yy;
-			ShuffleAccessor2<2, 1> zy;
-			ShuffleAccessor2<0, 2> xz;
-			ShuffleAccessor2<1, 2> yz;
-			ShuffleAccessor2<2, 2> zz;
+            // generate 2 component accessors
+#define VECTOR3_SHUFFLE_ACCESSOR2(A, B, NAME) \
+            ShuffleAccessor2<A, B> NAME
+#include "accessor.hpp"
+#undef VECTOR3_SHUFFLE_ACCESSOR2
 
-            ShuffleAccessor3<0, 0, 0> xxx;
-            ShuffleAccessor3<1, 0, 0> yxx;
-            ShuffleAccessor3<2, 0, 0> zxx;
-            ShuffleAccessor3<0, 1, 0> xyx;
-            ShuffleAccessor3<1, 1, 0> yyx;
-            ShuffleAccessor3<2, 1, 0> zyx;
-            ShuffleAccessor3<0, 2, 0> xzx;
-            ShuffleAccessor3<1, 2, 0> yzx;
-            ShuffleAccessor3<2, 2, 0> zzx;
-            ShuffleAccessor3<0, 0, 1> xxy;
-            ShuffleAccessor3<1, 0, 1> yxy;
-            ShuffleAccessor3<2, 0, 1> zxy;
-            ShuffleAccessor3<0, 1, 1> xyy;
-            ShuffleAccessor3<1, 1, 1> yyy;
-            ShuffleAccessor3<2, 1, 1> zyy;
-            ShuffleAccessor3<0, 2, 1> xzy;
-            ShuffleAccessor3<1, 2, 1> yzy;
-            ShuffleAccessor3<2, 2, 1> zzy;
-            ShuffleAccessor3<0, 0, 2> xxz;
-            ShuffleAccessor3<1, 0, 2> yxz;
-            ShuffleAccessor3<2, 0, 2> zxz;
-            ShuffleAccessor3<0, 1, 2> xyz;
-            ShuffleAccessor3<1, 1, 2> yyz;
-            ShuffleAccessor3<2, 1, 2> zyz;
-            ShuffleAccessor3<0, 2, 2> xzz;
-            ShuffleAccessor3<1, 2, 2> yzz;
-            ShuffleAccessor3<2, 2, 2> zzz;
+            // generate 3 component accessors
+#define VECTOR3_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
+            ShuffleAccessor3<A, B, C> NAME
+#include "accessor.hpp"
+#undef VECTOR3_SHUFFLE_ACCESSOR3
         };
 
         ScalarType& operator [] (size_t index)
