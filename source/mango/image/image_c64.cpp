@@ -55,7 +55,7 @@ namespace
         }
     };
 
-    void resolve_palette(Surface& s, u8* data, int width, int height, Palette& palette)
+    void resolve_palette(Surface& s, u8* data, int width, int height, const Palette& palette)
     {
         for (int y = 0; y < height; ++y)
         {

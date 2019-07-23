@@ -79,7 +79,7 @@ namespace
         return color;
     }
 
-    void resolve_palette(Surface& s, int width, int height, const u8* image, Palette& palette)
+    void resolve_palette(Surface& s, int width, int height, const u8* image, const Palette& palette)
     {
         for (int y = 0; y < height; ++y)
         {
