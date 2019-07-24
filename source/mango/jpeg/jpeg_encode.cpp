@@ -361,6 +361,11 @@ namespace
         void write_markers(BigEndianStream& p, Sample sample, u32 width, u32 height);
     };
 
+    struct EncodeBuffer : Buffer
+    {
+        std::atomic<bool> ready { false };
+    };
+
     struct HuffmanEncoder
     {
         int ldc1;
@@ -546,7 +551,7 @@ namespace
             return p;
         }
     };
-    
+
 #if defined(JPEG_ENABLE_SSE2)
 
     // ----------------------------------------------------------------------------
@@ -1098,8 +1103,8 @@ namespace
             }
 
             input += stride;
-        }
 
+        }
         // replicate last row
         for (int i = 8 - rows; i > 0; --i)
         {
@@ -1810,7 +1815,7 @@ namespace
         int stride = surface.stride;
 
         // bitstream for each MCU scan
-        std::vector<Buffer> buffers(jp.vertical_mcus);
+        std::vector<EncodeBuffer> buffers(jp.vertical_mcus);
 
         ConcurrentQueue queue;
 
@@ -1838,6 +1843,7 @@ namespace
                 const u8* image = input;
 
                 HuffmanEncoder huffman;
+                EncodeBuffer& buffer = buffers[y];
 
                 constexpr int buffer_size = 2048;
                 constexpr int flush_threshold = buffer_size - 512;
@@ -1878,7 +1884,7 @@ namespace
                     // flush encoding buffer
                     if (ptr - huff_temp > flush_threshold)
                     {
-                        buffers[y].append(huff_temp, ptr - huff_temp);
+                        buffer.append(huff_temp, ptr - huff_temp);
                         ptr = huff_temp;
                     }
 
@@ -1887,7 +1893,10 @@ namespace
 
                 // flush encoding buffer
                 ptr = huffman.flush(ptr);
-                buffers[y].append(huff_temp, ptr - huff_temp);
+                buffer.append(huff_temp, ptr - huff_temp);
+
+                // mark buffer ready for writing
+                buffer.ready = true;
             });
 
             input += surface.stride * jp.mcu_height;
@@ -1898,21 +1907,22 @@ namespace
         // writing marker data
         jp.write_markers(s, sample, surface.width, surface.height);
 
-        // NOTE: instead of waiting here for all scans to complete
-        //       we could write (in order) all of the scans that have completed
-        //       this would be ~25% faster (tested by disablimg this wait, which is unsafe)
-        queue.wait();
-
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
-            Buffer& buffer = buffers[y];
+            EncodeBuffer& buffer = buffers[y];
+
+            for ( ; !buffer.ready; )
+            {
+                // buffer isn't yet ready.. try again later.. :)
+                // NOTE: work stealing API in the ConcurrentQueue would be nice here..
+                std::this_thread::yield();
+            }
 
             // write huffman bitstream
             s.write(buffer, size_t(buffer.size()));
 
             // write restart marker
-            int index = y & 7;
-            s.write16(0xffd0 + index);
+            s.write16(0xffd0 + y & 7);
         }
 
         // EOI marker
