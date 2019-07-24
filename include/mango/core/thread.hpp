@@ -196,6 +196,7 @@ namespace mango
             m_pool.enqueue(m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
 
+        void steal();
         void cancel();
         void wait();
     };

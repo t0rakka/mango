@@ -1913,8 +1913,8 @@ namespace
 
             for ( ; !buffer.ready; )
             {
-                // NOTE: work stealing API in the ConcurrentQueue would be nice here..
-                std::this_thread::sleep_for(std::chrono::microseconds(10));
+                // buffer is not processed yet; help the thread pool while waiting
+                queue.steal();
             }
 
             // write huffman bitstream
