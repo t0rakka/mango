@@ -1913,7 +1913,6 @@ namespace
 
             for ( ; !buffer.ready; )
             {
-                // buffer isn't yet ready.. try again later.. :)
                 // NOTE: work stealing API in the ConcurrentQueue would be nice here..
                 std::this_thread::yield();
             }
@@ -1922,7 +1921,8 @@ namespace
             s.write(buffer, size_t(buffer.size()));
 
             // write restart marker
-            s.write16(0xffd0 + y & 7);
+            int index = y & 7;
+            s.write16(0xffd0 + index);
         }
 
         // EOI marker
