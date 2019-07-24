@@ -1914,7 +1914,7 @@ namespace
             for ( ; !buffer.ready; )
             {
                 // NOTE: work stealing API in the ConcurrentQueue would be nice here..
-                std::this_thread::yield();
+                std::this_thread::sleep_for(std::chrono::microseconds(10));
             }
 
             // write huffman bitstream
