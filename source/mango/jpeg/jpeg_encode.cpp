@@ -394,9 +394,8 @@ namespace
 
 #ifdef MODERN_PUTBITS
 
-        u8* putbits(u8* output, u32 xdata, int numbits)
+        u8* putbits(u8* output, DataType data, int numbits)
         {
-            DataType data = xdata;
             if (space >= numbits)
             {
                 space -= numbits;
@@ -422,7 +421,7 @@ namespace
 
 #else
 
-        u8* putbits(u8* output, u32 data, int numbits)
+        u8* putbits(u8* output, DataType data, int numbits)
         {
             int bits_in_next_word = bitindex + numbits - JPEG_REGISTER_BITS;
             if (bits_in_next_word < 0)
@@ -551,7 +550,7 @@ namespace
 #if defined(JPEG_ENABLE_SSE2)
 
     // ----------------------------------------------------------------------------
-    // fdct_sse2
+    // fdct sse2
     // ----------------------------------------------------------------------------
 
     static inline void interleave16(__m128i& a, __m128i& b)
@@ -647,7 +646,7 @@ namespace
     }
 
     static
-    void fdct_sse2(s16* dest, const s16* data, const s16* quant_table)
+    void fdct(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -770,7 +769,7 @@ namespace
 #elif defined(JPEG_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
-    // fdct_neon
+    // fdct neon
     // ----------------------------------------------------------------------------
 
     static inline
@@ -864,7 +863,7 @@ namespace
         JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
 
     static
-    void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
+    void fdct(s16* dest, const s16* data, const s16* quant_table)
     {
         const int16x4_t c1 = vdup_n_s16(1420); // cos 1PI/16 * root(2)
         const int16x4_t c2 = vdup_n_s16(1338); // cos 2PI/16 * root(2)
@@ -957,11 +956,11 @@ namespace
 #else
 
     // ----------------------------------------------------------------------------
-    // fdct_scalar
+    // fdct scalar
     // ----------------------------------------------------------------------------
 
     static
-    void fdct_scalar(s16* dest, const s16* data, const s16* quant_table)
+    void fdct(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -1807,11 +1806,11 @@ namespace
     {
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
-        u8* input = surface.image;
+        const u8* input = surface.image;
         int stride = surface.stride;
 
         // bitstream for each MCU scan
-        Buffer* buffers = new Buffer[jp.vertical_mcus];
+        std::vector<Buffer> buffers(jp.vertical_mcus);
 
         ConcurrentQueue queue;
 
@@ -1833,10 +1832,10 @@ namespace
                 read_func = jp.read; // clipping reader
             }
 
-            queue.enqueue([&jp, y, buffers, input, stride, rows, read_func]
+            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func]
             {
                 auto read = read_func;
-                u8* image = input;
+                const u8* image = input;
 
                 HuffmanEncoder huffman;
 
@@ -1871,14 +1870,7 @@ namespace
                     for (int i = 0; i < jp.channel_count; ++i)
                     {
                         s16 temp[BLOCK_SIZE];
-
-#if defined(JPEG_ENABLE_SSE2)
-                        fdct_sse2(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-#elif defined(JPEG_ENABLE_NEON)
-                        fdct_neon(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-#else
-                        fdct_scalar(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-#endif
+                        fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 
                         ptr = huffman.encode(ptr, jp.channel[i].component, temp);
                     }
@@ -1901,12 +1893,15 @@ namespace
             input += surface.stride * jp.mcu_height;
         }
 
-        queue.wait();
-
         BigEndianStream s(stream);
 
         // writing marker data
         jp.write_markers(s, sample, surface.width, surface.height);
+
+        // NOTE: instead of waiting here for all scans to complete
+        //       we could write (in order) all of the scans that have completed
+        //       this would be ~25% faster (tested by disablimg this wait, which is unsafe)
+        queue.wait();
 
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
@@ -1919,8 +1914,6 @@ namespace
             int index = y & 7;
             s.write16(0xffd0 + index);
         }
-
-        delete[] buffers;
 
         // EOI marker
         s.write16(0xffd9);
