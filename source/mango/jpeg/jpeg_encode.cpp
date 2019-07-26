@@ -51,31 +51,31 @@ namespace
         { JPEG_U8_RGBA, FORMAT_R8G8B8A8 },
     };
 
-    const u16 luminance_dc_code_table [] =
+    const u16 g_luminance_dc_code_table [] =
     {
         0x0000, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006,
         0x000E, 0x001E, 0x003E, 0x007E, 0x00FE, 0x01FE
     };
 
-    const u16 luminance_dc_size_table [] =
+    const u16 g_luminance_dc_size_table [] =
     {
         0x0002, 0x0003, 0x0003, 0x0003, 0x0003, 0x0003,
         0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009
     };
 
-    const u16 chrominance_dc_code_table [] =
+    const u16 g_chrominance_dc_code_table [] =
     {
         0x0000, 0x0001, 0x0002, 0x0006, 0x000E, 0x001E,
         0x003E, 0x007E, 0x00FE, 0x01FE, 0x03FE, 0x07FE
     };
 
-    const u16 chrominance_dc_size_table [] =
+    const u16 g_chrominance_dc_size_table [] =
     {
         0x0002, 0x0002, 0x0002, 0x0003, 0x0004, 0x0005,
         0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B
     };
 
-    const u16 luminance_ac_code_table [] =
+    const u16 g_luminance_ac_code_table [] =
     {
         0x000A,
         0x0000, 0x0001, 0x0004, 0x000B, 0x001A, 0x0078, 0x00F8, 0x03F6, 0xFF82, 0xFF83,
@@ -97,7 +97,7 @@ namespace
         0x07F9
     };
 
-    const u16 luminance_ac_size_table [] =
+    const u16 g_luminance_ac_size_table [] =
     {
         0x0004,
         0x0002, 0x0002, 0x0003, 0x0004, 0x0005, 0x0007, 0x0008, 0x000A, 0x0010, 0x0010,
@@ -119,7 +119,7 @@ namespace
         0x000B
     };
 
-    const u16 chrominance_ac_code_table [] =
+    const u16 g_chrominance_ac_code_table [] =
     {
         0x0000,
         0x0001, 0x0004, 0x000A, 0x0018, 0x0019, 0x0038, 0x0078, 0x01F4, 0x03F6, 0x0FF4,
@@ -141,7 +141,7 @@ namespace
         0x03FA
     };
 
-    const u16 chrominance_ac_size_table [] =
+    const u16 g_chrominance_ac_size_table [] =
     {
         0x0002,
         0x0002, 0x0003, 0x0004, 0x0005, 0x0005, 0x0006, 0x0007, 0x0009, 0x000A, 0x000C,
@@ -368,9 +368,7 @@ namespace
 
     struct HuffmanEncoder
     {
-        int ldc1;
-        int ldc2;
-        int ldc3;
+        int ldc[3];
 
         DataType code;
 #ifdef MODERN_PUTBITS
@@ -381,9 +379,9 @@ namespace
 
         HuffmanEncoder()
         {
-            ldc1 = 0;
-            ldc2 = 0;
-            ldc3 = 0;
+            ldc[0] = 0;
+            ldc[1] = 0;
+            ldc[2] = 0;
 #ifdef MODERN_PUTBITS
             code = 0;
             space = JPEG_REGISTER_BITS;
@@ -454,98 +452,73 @@ namespace
 
 #endif
 
-        u8* encode(u8* p, int component, s16* input)
+        u8* encode(u8* p, int component, const s16* input)
         {
-            const u16* DcCodeTable;
-            const u16* DcSizeTable;
-            const u16* AcCodeTable;
-            const u16* AcSizeTable;
-
-            int Coeff = input[0];
-            int LastDc;
+            const u16* dcCodeTable;
+            const u16* dcSizeTable;
+            const u16* acCodeTable;
+            const u16* acSizeTable;
 
             if (component == 1)
             {
-                DcCodeTable = luminance_dc_code_table;
-                DcSizeTable = luminance_dc_size_table;
-                AcCodeTable = luminance_ac_code_table;
-                AcSizeTable = luminance_ac_size_table;
-
-                LastDc = ldc1;
-                ldc1 = Coeff;
+                dcCodeTable = g_luminance_dc_code_table;
+                dcSizeTable = g_luminance_dc_size_table;
+                acCodeTable = g_luminance_ac_code_table;
+                acSizeTable = g_luminance_ac_size_table;
             }
             else
             {
-                DcCodeTable = chrominance_dc_code_table;
-                DcSizeTable = chrominance_dc_size_table;
-                AcCodeTable = chrominance_ac_code_table;
-                AcSizeTable = chrominance_ac_size_table;
-
-                if (component == 2)
-                {
-                    LastDc = ldc2;
-                    ldc2 = Coeff;
-                }
-                else
-                {
-                    LastDc = ldc3;
-                    ldc3 = Coeff;
-                }
+                dcCodeTable = g_chrominance_dc_code_table;
+                dcSizeTable = g_chrominance_dc_size_table;
+                acCodeTable = g_chrominance_ac_code_table;
+                acSizeTable = g_chrominance_ac_size_table;
             }
 
-            Coeff -= LastDc;
-            int AbsCoeff = (Coeff < 0) ? -Coeff-- : Coeff;
-            int DataSize = getSymbolSize(AbsCoeff);
-            int DataMask = (1 << DataSize) - 1;
+            int coeff = input[0];
+            int lastDc = ldc[component - 1];
+            ldc[component - 1] = coeff;
 
-            u16 HuffCode = DcCodeTable [DataSize];
-            u16 HuffSize = DcSizeTable [DataSize];
+            coeff -= lastDc;
 
-            u32 data = (HuffCode << DataSize) | (Coeff & DataMask);
-            int numbits = HuffSize + DataSize;
-            p = putbits(p, data, numbits);
+            int absCoeff = (coeff < 0) ? -coeff-- : coeff;
+            int dataSize = getSymbolSize(absCoeff);
+            int dataMask = (1 << dataSize) - 1;
 
-            int RunLength = 0;
+            p = putbits(p, dcCodeTable[dataSize], dcSizeTable[dataSize]);
+            p = putbits(p, coeff & dataMask, dataSize);
+
+            int runLength = 0;
 
             for (int i = 1; i < 64; ++i)
             {
-                s16 Coeff = input[zigzag_table_inverse[i]];
-                if (Coeff)
+                int coeff = input[zigzag_table_inverse[i]];
+                if (coeff)
                 {
-                    while (RunLength > 15)
+                    while (runLength > 15)
                     {
-                        RunLength -= 16;
-
-                        data = AcCodeTable [161];
-                        numbits = AcSizeTable [161];
-                        p = putbits(p, data, numbits);
+                        runLength -= 16;
+                        p = putbits(p, acCodeTable[161], acSizeTable[161]);
                     }
 
-                    AbsCoeff = (Coeff < 0) ? -Coeff-- : Coeff;
-                    DataSize = getSymbolSize(AbsCoeff);
-                    DataMask = (1 << DataSize) - 1;
+                    int absCoeff = (coeff < 0) ? -coeff-- : coeff;
+                    int dataSize = getSymbolSize(absCoeff);
+                    int dataMask = (1 << dataSize) - 1;
 
-                    int index = RunLength * 10 + DataSize;
-                    HuffCode = AcCodeTable [index];
-                    HuffSize = AcSizeTable [index];
+                    int index = runLength * 10 + dataSize;
+                    p = putbits(p, acCodeTable[index], acSizeTable[index]);
+                    p = putbits(p, coeff & dataMask, dataSize);
 
-                    data = (HuffCode << DataSize) | (Coeff & DataMask);
-                    numbits = HuffSize + DataSize;
-                    p = putbits(p, data, numbits);
-
-                    RunLength = 0;
+                    runLength = 0;
                 }
                 else
                 {
-                    ++RunLength;
+                    ++runLength;
                 }
             }
 
-            if (RunLength != 0)
+            if (runLength != 0)
             {
-                data = AcCodeTable [0];
-                numbits = AcSizeTable [0];
-                p = putbits(p, data, numbits);
+                p = putbits(p, acCodeTable[0], acSizeTable[0]);
             }
 
             return p;
