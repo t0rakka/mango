@@ -121,7 +121,8 @@ namespace mango
 
         for (size_t i = 0; i < size; ++i)
         {
-            m_threads[i] = std::thread([this, i] {
+            m_threads[i] = std::thread([this, i]
+            {
                 thread(i);
             });
 
@@ -184,7 +185,7 @@ namespace mango
                     // sleep but check what's happening after a while unless signaled
                     ++m_sleep_count;
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(32));
+                    m_condition.wait_for(lock, milliseconds(200));
                     --m_sleep_count;
                 }
                 else
