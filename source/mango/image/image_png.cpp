@@ -438,6 +438,47 @@ namespace
         float2 blue;
     };
 
+    struct Frame
+    {
+        u32 sequence_number;
+        u32 width;
+        u32 height;
+        u32 xoffset;
+        u32 yoffset;
+        u16 delay_num;
+        u16 delay_den;
+        u8 dispose;
+        u8 blend;
+
+        void read(BigEndianConstPointer p)
+        {
+            sequence_number = p.read32();
+            width = p.read32();
+            height = p.read32();
+            xoffset = p.read32();
+            yoffset = p.read32();
+            delay_num = p.read16();
+            delay_den = p.read16();
+            dispose = p.read8();
+            blend = p.read8();
+
+            /*
+            APNG_DISPOSE_OP_NONE         0
+            APNG_DISPOSE_OP_BACKGROUND   1
+            APNG_DISPOSE_OP_PREVIOUS     2
+
+            APNG_BLEND_OP_SOURCE         0
+            APNG_BLEND_OP_OVER           1
+            */
+
+            debugPrint("  Sequence: %d\n", sequence_number);
+            debugPrint("  Frame: %d x %d (%d, %d)\n", width, height, xoffset, yoffset);
+            debugPrint("  Time: %d / %d\n", delay_num, delay_den);
+            debugPrint("  Dispose: %d\n", dispose);
+            debugPrint("  Blend: %d\n", blend);
+        }
+    };
+
     class ParserPNG
     {
     protected:
@@ -480,6 +521,14 @@ namespace
 
         // sRGB
         u8 m_srgb_render_intent = -1;
+
+        // acTL
+        u32 number_of_frames = 0;
+        u32 repeat_count = 0;
+
+        // fcTL
+        Frame m_frame;
+        const u8* m_first_frame = nullptr;
 
         void setError(const char* error);
 
@@ -815,14 +864,11 @@ namespace
             return;
         }
 
-        u32 number_of_frames = p.read32();
-        u32 repeat_count = p.read32();
+        number_of_frames = p.read32();
+        repeat_count = p.read32();
 
         debugPrint("  Frames: %d\n", number_of_frames);
         debugPrint("  Repeat: %d %s\n", repeat_count, repeat_count ? "" : "(infinite)");
-
-        MANGO_UNREFERENCED_PARAMETER(number_of_frames);
-        MANGO_UNREFERENCED_PARAMETER(repeat_count);
     }
 
     void ParserPNG::read_fcTL(BigEndianConstPointer p, u32 size)
@@ -833,40 +879,12 @@ namespace
             return;
         }
 
-        u32 sequence_number = p.read32();
-        u32 width = p.read32();
-        u32 height = p.read32();
-        u32 xoffset = p.read32();
-        u32 yoffset = p.read32();
-        u16 delay_numerator = p.read16();
-        u16 delay_denumerator = p.read16();
-        u8 dispose_op = p.read8();
-        u8 blend_op = p.read8();
+        if (!m_first_frame)
+        {
+            m_first_frame = p - 8;
+        }
 
-        /*
-        APNG_DISPOSE_OP_NONE         0
-        APNG_DISPOSE_OP_BACKGROUND   1
-        APNG_DISPOSE_OP_PREVIOUS     2
-
-        APNG_BLEND_OP_SOURCE         0
-        APNG_BLEND_OP_OVER           1
-        */
-
-        debugPrint("  Sequence: %d\n", sequence_number);
-        debugPrint("  Frame: %d x %d (%d, %d)\n", width, height, xoffset, yoffset);
-        debugPrint("  Time: %d / %d\n", delay_numerator, delay_denumerator);
-        debugPrint("  Dispose: %d\n", dispose_op);
-        debugPrint("  Blend: %d\n", blend_op);
-
-        MANGO_UNREFERENCED_PARAMETER(sequence_number);
-        MANGO_UNREFERENCED_PARAMETER(width);
-        MANGO_UNREFERENCED_PARAMETER(height);
-        MANGO_UNREFERENCED_PARAMETER(xoffset);
-        MANGO_UNREFERENCED_PARAMETER(yoffset);
-        MANGO_UNREFERENCED_PARAMETER(delay_numerator);
-        MANGO_UNREFERENCED_PARAMETER(delay_denumerator);
-        MANGO_UNREFERENCED_PARAMETER(dispose_op);
-        MANGO_UNREFERENCED_PARAMETER(blend_op);
+        m_frame.read(p);
     }
 
     void ParserPNG::read_fdAT(BigEndianConstPointer p, u32 size)
