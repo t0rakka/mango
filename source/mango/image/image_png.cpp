@@ -491,6 +491,9 @@ namespace
         void read_gAMA(BigEndianConstPointer p, u32 size);
         void read_sBIT(BigEndianConstPointer p, u32 size);
         void read_sRGB(BigEndianConstPointer p, u32 size);
+        void read_acTL(BigEndianConstPointer p, u32 size);
+        void read_fcTL(BigEndianConstPointer p, u32 size);
+        void read_fdAT(BigEndianConstPointer p, u32 size);
 
         void parse();
         void filter(u8* buffer, int bytes, int height);
@@ -804,6 +807,80 @@ namespace
         m_srgb_render_intent = p[0];
     }
 
+    void ParserPNG::read_acTL(BigEndianConstPointer p, u32 size)
+    {
+        if (size != 8)
+        {
+            setError("Incorrect acTL chunk size.");
+            return;
+        }
+
+        u32 number_of_frames = p.read32();
+        u32 repeat_count = p.read32();
+
+        debugPrint("  Frames: %d\n", number_of_frames);
+        debugPrint("  Repeat: %d %s\n", repeat_count, repeat_count ? "" : "(infinite)");
+
+        MANGO_UNREFERENCED_PARAMETER(number_of_frames);
+        MANGO_UNREFERENCED_PARAMETER(repeat_count);
+    }
+
+    void ParserPNG::read_fcTL(BigEndianConstPointer p, u32 size)
+    {
+        if (size != 26)
+        {
+            setError("Incorrect fcTL chunk size.");
+            return;
+        }
+
+        u32 sequence_number = p.read32();
+        u32 width = p.read32();
+        u32 height = p.read32();
+        u32 xoffset = p.read32();
+        u32 yoffset = p.read32();
+        u16 delay_numerator = p.read16();
+        u16 delay_denumerator = p.read16();
+        u8 dispose_op = p.read8();
+        u8 blend_op = p.read8();
+
+        /*
+        APNG_DISPOSE_OP_NONE         0
+        APNG_DISPOSE_OP_BACKGROUND   1
+        APNG_DISPOSE_OP_PREVIOUS     2
+
+        APNG_BLEND_OP_SOURCE         0
+        APNG_BLEND_OP_OVER           1
+        */
+
+        debugPrint("  Sequence: %d\n", sequence_number);
+        debugPrint("  Frame: %d x %d (%d, %d)\n", width, height, xoffset, yoffset);
+        debugPrint("  Time: %d / %d\n", delay_numerator, delay_denumerator);
+        debugPrint("  Dispose: %d\n", dispose_op);
+        debugPrint("  Blend: %d\n", blend_op);
+
+        MANGO_UNREFERENCED_PARAMETER(sequence_number);
+        MANGO_UNREFERENCED_PARAMETER(width);
+        MANGO_UNREFERENCED_PARAMETER(height);
+        MANGO_UNREFERENCED_PARAMETER(xoffset);
+        MANGO_UNREFERENCED_PARAMETER(yoffset);
+        MANGO_UNREFERENCED_PARAMETER(delay_numerator);
+        MANGO_UNREFERENCED_PARAMETER(delay_denumerator);
+        MANGO_UNREFERENCED_PARAMETER(dispose_op);
+        MANGO_UNREFERENCED_PARAMETER(blend_op);
+    }
+
+    void ParserPNG::read_fdAT(BigEndianConstPointer p, u32 size)
+    {
+        u32 sequence_number = p.read32();
+        size -= 4;
+
+        debugPrint("  Sequence: %d\n", sequence_number);
+        MANGO_UNREFERENCED_PARAMETER(sequence_number);
+
+        // NOTE: data is ignored for now
+        p += size;
+    }
+
     ImageHeader ParserPNG::header() const
     {
         ImageHeader header;
@@ -907,6 +984,18 @@ namespace
 
                 case u32_mask_rev('I', 'D', 'A', 'T'):
                     read_IDAT(p, size);
+                    break;
+
+                case u32_mask_rev('a', 'c', 'T', 'L'):
+                    read_acTL(p, size);
+                    break;
+
+                case u32_mask_rev('f', 'c', 'T', 'L'):
+                    read_fcTL(p, size);
+                    break;
+
+                case u32_mask_rev('f', 'd', 'A', 'T'):
+                    read_fdAT(p, size);
                     break;
 
                 case u32_mask_rev('p', 'H', 'Y', 's'):
