@@ -69,6 +69,13 @@ namespace mango {
         return m_capacity;        
     }
 
+    void Buffer::reset()
+    {
+        delete[] m_memory.address;
+        m_memory = Memory();
+        m_capacity = 0;
+    }
+
     void Buffer::resize(size_t bytes)
     {
         reserve(bytes);
