@@ -849,7 +849,7 @@ namespace
                 case COLOR_TYPE_RGBA:
                     header.format = m_bit_depth <= 8 ?
                         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) :
-                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // NOTE: RGBA is not and error here!
+                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // NOTE: RGBA is not an error here!
                     break;
             }
         }
