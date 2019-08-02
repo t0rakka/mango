@@ -443,6 +443,19 @@ namespace
 
     struct Frame
     {
+        enum Dispose : u8
+        {
+            NONE       = 0,
+            BACKGROUND = 1,
+            PREVIOUS   = 2,
+        };
+
+        enum Blend : u8
+        {
+            SOURCE = 0,
+            OVER   = 1,
+        };
+
         u32 sequence_number;
         u32 width;
         u32 height;
@@ -464,15 +477,6 @@ namespace
             delay_den = p.read16();
             dispose = p.read8();
             blend = p.read8();
-
-            /*
-            APNG_DISPOSE_OP_NONE         0
-            APNG_DISPOSE_OP_BACKGROUND   1
-            APNG_DISPOSE_OP_PREVIOUS     2
-
-            APNG_BLEND_OP_SOURCE         0
-            APNG_BLEND_OP_OVER           1
-            */
 
             debugPrint("  Sequence: %d\n", sequence_number);
             debugPrint("  Frame: %d x %d (%d, %d)\n", width, height, xoffset, yoffset);
@@ -563,12 +567,22 @@ namespace
         void process_ia16    (u8* dest, int width, int height, int stride, const u8* src);
         void process_rgba16  (u8* dest, int width, int height, int stride, const u8* src);
 
-        void process(u8* image, int width, int height, int stride, u8* src, Palette* palette);
+        void process(u8* dest, int width, int height, int stride, u8* buffer, Palette* palette);
+
+        void blend_ia8      (u8* dest, const u8* src, int width);
+        void blend_ia16     (u8* dest, const u8* src, int width);
+        void blend_bgra8    (u8* dest, const u8* src, int width);
+        void blend_rgba16   (u8* dest, const u8* src, int width);
+        void blend_indexed  (u8* dest, const u8* src, int width);
+
+        void blend(Surface& d, Surface& s, Palette* palette);
 
         int getBytesPerLine(int width) const
         {
             return m_channels * ((m_bit_depth * width + 7) / 8);
         }
+
+        int getImageBufferSize(int width, int height) const;
 
     public:
         ParserPNG(Memory memory);
@@ -1255,7 +1269,7 @@ namespace
                     {
                         color.a = 0;
                     }
-                    *d++ = color;
+                    d[x] = color;
                     src += 3;
                 }
             }
@@ -1270,7 +1284,7 @@ namespace
 
                 for (int x = 0; x < width; ++x)
                 {
-                    *d++ = ColorBGRA(src[0], src[1], src[2], 0xff);
+                    d[x] = ColorBGRA(src[0], src[1], src[2], 0xff);
                     src += 3;
                 }
             }
@@ -1326,7 +1340,7 @@ namespace
                         offset = 8 - bits;
                         data = *src++;
                     }
-                    *d++ = m_palette[(data >> offset) & mask];
+                    d[x] = m_palette[(data >> offset) & mask];
                     offset -= bits;
                 }
             }
@@ -1357,7 +1371,7 @@ namespace
 
                 for (int x = 0; x < width; ++x)
                 {
-                    *d++ = m_palette[*src++];
+                    d[x] = m_palette[*src++];
                 }
             }
         }
@@ -1600,6 +1614,147 @@ namespace
         }
     }
 
+    void ParserPNG::blend_ia8(u8* dest, const u8* src, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u8 alpha = src[1];
+            u8 invalpha = 255 - alpha;
+            dest[0] = src[0] + ((dest[0] - src[0]) * invalpha) / 255;
+            dest[1] = alpha;
+            src += 2;
+            dest += 2;
+        }
+    }
+
+    void ParserPNG::blend_ia16(u8* dest8, const u8* src8, int width)
+    {
+        u16* dest = reinterpret_cast<u16*>(dest8);
+        const u16* src = reinterpret_cast<const u16*>(src8);
+        for (int x = 0; x < width; ++x)
+        {
+            u16 alpha = src[1];
+            u16 invalpha = 255 - alpha;
+            dest[0] = src[0] + ((dest[0] - src[0]) * invalpha) / 255;
+            dest[1] = alpha;
+            src += 2;
+            dest += 2;
+        }
+    }
+
+    void ParserPNG::blend_bgra8(u8* dest, const u8* src, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u8 alpha = src[3];
+            u8 invalpha = 255 - alpha;
+            dest[0] = src[0] + ((dest[0] - src[0]) * invalpha) / 255;
+            dest[1] = src[1] + ((dest[1] - src[1]) * invalpha) / 255;
+            dest[2] = src[2] + ((dest[2] - src[2]) * invalpha) / 255;
+            dest[3] = alpha;
+            src += 4;
+            dest += 4;
+        }
+    }
+
+    void ParserPNG::blend_rgba16(u8* dest8, const u8* src8, int width)
+    {
+        u16* dest = reinterpret_cast<u16*>(dest8);
+        const u16* src = reinterpret_cast<const u16*>(src8);
+        for (int x = 0; x < width; ++x)
+        {
+            u16 alpha = src[3];
+            u16 invalpha = 255 - alpha;
+            dest[0] = src[0] + ((dest[0] - src[0]) * invalpha) / 65535;
+            dest[1] = src[1] + ((dest[1] - src[1]) * invalpha) / 65535;
+            dest[2] = src[2] + ((dest[2] - src[2]) * invalpha) / 65535;
+            dest[3] = alpha;
+            src += 4;
+            dest += 4;
+        }
+    }
+
+    void ParserPNG::blend_indexed(u8* dest, const u8* src, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u8 sample = src[x];
+            ColorBGRA color = m_palette[sample];
+            if (color.a)
+            {
+                dest[x] = sample;
+            }
+        }
+    }
+
+    void ParserPNG::blend(Surface& d, Surface& s, Palette* palette)
+    {
+        int width = s.width;
+        int height = s.height;
+        if (m_frame.blend == Frame::SOURCE || !s.format.isAlpha())
+        {
+            d.blit(0, 0, s);
+        }
+        else if (m_frame.blend == Frame::OVER)
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                const u8* src = s.address(0, y);
+                u8* dest = d.address(0, y);
+
+                if (palette)
+                {
+                    // palette extract mode: blend with the main image palette
+                    blend_indexed(dest, src, width);
+                }
+                else
+                {
+                    switch (s.format.bits)
+                    {
+                        case 8:
+                            blend_ia8(dest, src, width);
+                            break;
+                        case 16:
+                            blend_ia16(dest, src, width);
+                            break;
+                        case 32:
+                            blend_bgra8(dest, src, width);
+                            break;
+                        case 64:
+                            blend_rgba16(dest, src, width);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    int ParserPNG::getImageBufferSize(int width, int height) const
+    {
+        int buffer_size = 0;
+
+        if (m_interlace)
+        {
+            // NOTE: brute-force loop to resolve memory consumption
+            for (int pass = 0; pass < 7; ++pass)
+            {
+                AdamInterleave adam(pass, width, height);
+                if (adam.w && adam.h)
+                {
+                    buffer_size += (FILTER_BYTE + getBytesPerLine(adam.w)) * adam.h;
+                }
+            }
+        }
+        else
+        {
+            buffer_size = (FILTER_BYTE + getBytesPerLine(width)) * height;
+        }
+
+        return buffer_size;
+    }
+
     const char* ParserPNG::decode(Surface& dest, Palette* ptr_palette)
     {
         m_compressed.reset();
@@ -1612,44 +1767,30 @@ namespace
         }
 
         // default: main image from "IHDR" chunk
-        u8* image = dest.image;
-        int stride = dest.stride;
         int width = m_width;
         int height = m_height;
+        int stride = dest.stride;
+        u8* image = dest.image;
+
+        std::unique_ptr<u8[]> framebuffer;
 
         // override with animation frame
         if (m_number_of_frames > 0)
         {
-            image = dest.address(m_frame.xoffset, m_frame.yoffset);
             width = m_frame.width;
             height = m_frame.height;
-            //printf("  dispose: %d, blend: %d\n", m_frame.dispose, m_frame.blend);
-        }
+            stride = width * dest.format.bytes();
 
-        int buffer_size = 0;
-
-        // compute output buffer size
-        if (m_interlace)
-        {
-            // NOTE: brute-force loop to resolve memory consumption
-            for (int pass = 0; pass < 7; ++pass)
-            {
-                AdamInterleave adam(pass, width, height);
-                if (adam.w && adam.h)
-                {
-                    const int bytesPerLine = FILTER_BYTE + m_channels * ((adam.w * m_bit_depth + 7) / 8);
-                    buffer_size += bytesPerLine * adam.h;
-                }
-            }
-        }
-        else
-        {
-            buffer_size = (FILTER_BYTE + getBytesPerLine(width)) * height;
+            // decode frame into temporary buffer (for composition)
+            image = new u8[stride * height];
+            framebuffer.reset(image);
         }
 
         // decompression
         // - use STB for small buffers
         // - use MINIZ for large buffers
+
+        int buffer_size = getImageBufferSize(width, height);
 
         if (m_compressed.size() <= 128 * 1024)
         {
@@ -1703,6 +1844,13 @@ namespace
 
             // process image
             process(image, width, height, stride, buffer, ptr_palette);
+        }
+
+        if (m_number_of_frames > 0)
+        {
+            Surface d(dest, m_frame.xoffset, m_frame.yoffset, width, height);
+            Surface s(width, height, dest.format, stride, image);
+            blend(d, s, ptr_palette);
         }
 
         return m_error;
