@@ -363,16 +363,15 @@ namespace
 
 		// decode gif bit stream
 		int samples = width * height;
-		u8* bits = new u8[samples];
-		data = readBits(data, bits, samples);
+		std::unique_ptr<u8[]> bits(new u8[samples]);
+		data = readBits(data, bits.get(), samples);
 
         // deinterlace
 		if (image_desc.interlaced())
 		{
             u8* temp = new u8[width * height];
-			deinterlace(temp, bits, width, height);
-            delete[] bits;
-            bits = temp;
+			deinterlace(temp, bits.get(), width, height);
+			bits.reset(temp);
 		}
 
 		if (ptr_palette)
@@ -381,18 +380,17 @@ namespace
 
 			int x = image_desc.left;
 			int y = image_desc.top;
-			Surface temp(surface, x, y, width, height);
-			blit_raw(temp, bits, screen_desc.background);
+			Surface rect(surface, x, y, width, height);
+			blit_raw(rect, bits.get(), screen_desc.background);
 		}
 		else
 		{
 			int x = image_desc.left;
 			int y = image_desc.top;
-			Surface temp(surface, x, y, width, height);
-			blit_palette(temp, bits, palette);
+			Surface rect(surface, x, y, width, height);
+			blit_palette(rect, bits.get(), palette);
 		}
 
-		delete[] bits;
 		return data;
     }
 

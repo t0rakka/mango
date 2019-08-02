@@ -1541,18 +1541,13 @@ namespace
 
     void ParserPNG::process(u8* image, int stride, u8* buffer, Palette* ptr_palette)
     {
-        u8* temp = nullptr;
+        Buffer temp;
 
         if (m_interlace)
         {
             const int stride = FILTER_BYTE + m_bytes_per_line;
-            temp = new u8[m_height * stride];
-            if (!temp)
-            {
-                setError("Memory allocation failed.");
-                return;
-            }
 
+            temp.resize(m_height * stride);
             std::memset(temp, 0, m_height * stride);
 
             // deinterlace does filter for each pass
@@ -1572,7 +1567,6 @@ namespace
 
         if (m_error)
         {
-            delete [] temp;
             return;
         }
 
@@ -1613,8 +1607,6 @@ namespace
             else
                 process_rgba16(image, stride, buffer);
         }
-
-        delete [] temp;
     }
 
     const char* ParserPNG::decode(Surface& dest, Palette* ptr_palette)
