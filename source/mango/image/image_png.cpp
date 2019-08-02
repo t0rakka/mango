@@ -503,7 +503,6 @@ namespace
         int m_interlace;
 
         int m_channels;
-        int m_bytes_per_line;
 
         // PLTE
         Palette m_palette;
@@ -549,22 +548,27 @@ namespace
 
         void parse();
         void filter(u8* buffer, int bytes, int height);
-        void deinterlace1to4(u8* output, int stride, u8* buffer);
-        void deinterlace8to16(u8* output, int stride, u8* buffer);
+        void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
+        void deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer);
 
-        void process_i1to4   (u8* dest, int stride, const u8* src);
-        void process_i8      (u8* dest, int stride, const u8* src);
-        void process_rgb8    (u8* dest, int stride, const u8* src);
-        void process_pal1to4 (u8* dest, int stride, const u8* src, Palette* palette);
-        void process_pal8    (u8* dest, int stride, const u8* src, Palette* palette);
-        void process_ia8     (u8* dest, int stride, const u8* src);
-        void process_rgba8   (u8* dest, int stride, const u8* src);
-        void process_i16     (u8* dest, int stride, const u8* src);
-        void process_rgb16   (u8* dest, int stride, const u8* src);
-        void process_ia16    (u8* dest, int stride, const u8* src);
-        void process_rgba16  (u8* dest, int stride, const u8* src);
+        void process_i1to4   (u8* dest, int width, int height, int stride, const u8* src);
+        void process_i8      (u8* dest, int width, int height, int stride, const u8* src);
+        void process_rgb8    (u8* dest, int width, int height, int stride, const u8* src);
+        void process_pal1to4 (u8* dest, int width, int height, int stride, const u8* src, Palette* palette);
+        void process_pal8    (u8* dest, int width, int height, int stride, const u8* src, Palette* palette);
+        void process_ia8     (u8* dest, int width, int height, int stride, const u8* src);
+        void process_rgba8   (u8* dest, int width, int height, int stride, const u8* src);
+        void process_i16     (u8* dest, int width, int height, int stride, const u8* src);
+        void process_rgb16   (u8* dest, int width, int height, int stride, const u8* src);
+        void process_ia16    (u8* dest, int width, int height, int stride, const u8* src);
+        void process_rgba16  (u8* dest, int width, int height, int stride, const u8* src);
 
-        void process(u8* image, int stride, u8* src, Palette* palette);
+        void process(u8* image, int width, int height, int stride, u8* src, Palette* palette);
+
+        int getBytesPerLine(int width) const
+        {
+            return m_channels * ((m_bit_depth * width + 7) / 8);
+        }
 
     public:
         ParserPNG(Memory memory);
@@ -719,8 +723,6 @@ namespace
         {
             m_scale_bits[i] = m_bit_depth;
         }
-
-        m_bytes_per_line = m_channels * ((m_bit_depth * m_width + 7) / 8);
 
         debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
         debugPrint("  Color:       %d\n", m_color_type);
@@ -1088,7 +1090,7 @@ namespace
         }
     }
 
-    void ParserPNG::deinterlace1to4(u8* output, int stride, u8* buffer)
+    void ParserPNG::deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer)
     {
         u8* p = buffer;
 
@@ -1100,7 +1102,7 @@ namespace
 
         for (int pass = 0; pass < 7; ++pass)
         {
-            AdamInterleave adam(pass, m_width, m_height);
+            AdamInterleave adam(pass, width, height);
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
             const int bw = FILTER_BYTE + ((adam.w + mask) >> shift);
@@ -1131,14 +1133,14 @@ namespace
         }
     }
 
-    void ParserPNG::deinterlace8to16(u8* output, int stride, u8* buffer)
+    void ParserPNG::deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer)
     {
         u8* p = buffer;
-        const int size = m_bytes_per_line / m_width;
+        const int size = getBytesPerLine(width) / width;
 
         for (int pass = 0; pass < 7; ++pass)
         {
-            AdamInterleave adam(pass, m_width, m_height);
+            AdamInterleave adam(pass, width, height);
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
             const int bw = FILTER_BYTE + adam.w * size;
@@ -1171,10 +1173,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_i1to4(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_i1to4(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
         const int bits = m_bit_depth;
 
         const int maxValue = (1 << bits) - 1;
@@ -1208,11 +1208,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_i8(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_i8(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         if (m_transparent_enable)
         {
             for (int y = 0; y < height; ++y)
@@ -1241,11 +1238,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgb8(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_rgb8(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         if (m_transparent_enable)
         {
             for (int y = 0; y < height; ++y)
@@ -1283,10 +1277,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_pal1to4(u8* dest, int stride, const u8* src, Palette* ptr_palette)
+    void ParserPNG::process_pal1to4(u8* dest, int width, int height, int stride, const u8* src, Palette* ptr_palette)
     {
-        const int width = m_width;
-        const int height = m_height;
         const int bits = m_bit_depth;
 
         const u32 mask = (1 << bits) - 1;
@@ -1341,11 +1333,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_pal8(u8* dest, int stride, const u8* src, Palette* ptr_palette)
+    void ParserPNG::process_pal8(u8* dest, int width, int height, int stride, const u8* src, Palette* ptr_palette)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         if (ptr_palette)
         {
             *ptr_palette = m_palette;
@@ -1374,11 +1363,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_ia8(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_ia8(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         for (int y = 0; y < height; ++y)
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -1393,11 +1379,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgba8(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_rgba8(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         for (int y = 0; y < height; ++y)
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -1412,11 +1395,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_i16(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_i16(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         if (m_transparent_enable)
         {
             for (int y = 0; y < height; ++y)
@@ -1453,11 +1433,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgb16(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_rgb16(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         if (m_transparent_enable)
         {
             for (int y = 0; y < height; ++y)
@@ -1509,11 +1486,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_ia16(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_ia16(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         for (int y = 0; y < height; ++y)
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -1532,11 +1506,8 @@ namespace
         }
     }
 
-    void ParserPNG::process_rgba16(u8* dest, int stride, const u8* src)
+    void ParserPNG::process_rgba16(u8* dest, int width, int height, int stride, const u8* src)
     {
-        const int width = m_width;
-        const int height = m_height;
-
         for (int y = 0; y < height; ++y)
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -1559,22 +1530,22 @@ namespace
         }
     }
 
-    void ParserPNG::process(u8* image, int stride, u8* buffer, Palette* ptr_palette)
+    void ParserPNG::process(u8* image, int width, int height, int stride, u8* buffer, Palette* ptr_palette)
     {
         Buffer temp;
 
         if (m_interlace)
         {
-            const int stride = FILTER_BYTE + m_bytes_per_line;
+            const int stride = FILTER_BYTE + getBytesPerLine(width);
 
-            temp.resize(m_height * stride);
-            std::memset(temp, 0, m_height * stride);
+            temp.resize(height * stride);
+            std::memset(temp, 0, height * stride);
 
             // deinterlace does filter for each pass
             if (m_bit_depth < 8)
-                deinterlace1to4(temp, stride, buffer);
+                deinterlace1to4(temp, width, height, stride, buffer);
             else
-                deinterlace8to16(temp, stride, buffer);
+                deinterlace8to16(temp, width, height, stride, buffer);
 
             // use de-interlaced temp buffer as processing source
             buffer = temp;
@@ -1582,7 +1553,7 @@ namespace
         else
         {
             // filter the whole image in single pass
-            filter(buffer, m_bytes_per_line, m_height);
+            filter(buffer, getBytesPerLine(width), height);
         }
 
         if (m_error)
@@ -1593,39 +1564,39 @@ namespace
         if (m_color_type == COLOR_TYPE_I)
         {
             if (m_bit_depth < 8)
-                process_i1to4(image, stride, buffer);
+                process_i1to4(image, width, height, stride, buffer);
             else if (m_bit_depth == 8)
-                process_i8(image, stride, buffer);
+                process_i8(image, width, height, stride, buffer);
             else
-                process_i16(image, stride, buffer);
+                process_i16(image, width, height, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_RGB)
         {
             if (m_bit_depth == 8)
-                process_rgb8(image, stride, buffer);
+                process_rgb8(image, width, height, stride, buffer);
             else
-                process_rgb16(image, stride, buffer);
+                process_rgb16(image, width, height, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
             if (m_bit_depth < 8)
-                process_pal1to4(image, stride, buffer, ptr_palette);
+                process_pal1to4(image, width, height, stride, buffer, ptr_palette);
             else
-                process_pal8(image, stride, buffer, ptr_palette);
+                process_pal8(image, width, height, stride, buffer, ptr_palette);
         }
         else if (m_color_type == COLOR_TYPE_IA)
         {
             if (m_bit_depth == 8)
-                process_ia8(image, stride, buffer);
+                process_ia8(image, width, height, stride, buffer);
             else
-                process_ia16(image, stride, buffer);
+                process_ia16(image, width, height, stride, buffer);
         }
         else if (m_color_type == COLOR_TYPE_RGBA)
         {
             if (m_bit_depth == 8)
-                process_rgba8(image, stride, buffer);
+                process_rgba8(image, width, height, stride, buffer);
             else
-                process_rgba16(image, stride, buffer);
+                process_rgba16(image, width, height, stride, buffer);
         }
     }
 
@@ -1640,14 +1611,18 @@ namespace
             return m_error;
         }
 
+        // default: main image from "IHDR" chunk
         u8* image = dest.image;
         int stride = dest.stride;
+        int width = m_width;
+        int height = m_height;
 
+        // override with animation frame
         if (m_number_of_frames > 0)
         {
             image = dest.address(m_frame.xoffset, m_frame.yoffset);
-            m_width = m_frame.width;
-            m_height = m_frame.height;
+            width = m_frame.width;
+            height = m_frame.height;
             //printf("  dispose: %d, blend: %d\n", m_frame.dispose, m_frame.blend);
         }
 
@@ -1659,7 +1634,7 @@ namespace
             // NOTE: brute-force loop to resolve memory consumption
             for (int pass = 0; pass < 7; ++pass)
             {
-                AdamInterleave adam(pass, m_width, m_height);
+                AdamInterleave adam(pass, width, height);
                 if (adam.w && adam.h)
                 {
                     const int bytesPerLine = FILTER_BYTE + m_channels * ((adam.w * m_bit_depth + 7) / 8);
@@ -1669,7 +1644,7 @@ namespace
         }
         else
         {
-            buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
+            buffer_size = (FILTER_BYTE + getBytesPerLine(width)) * height;
         }
 
         // decompression
@@ -1691,7 +1666,7 @@ namespace
                 debugPrint("  # total_out: %d \n", raw_len);
 
                 // process image
-                process(image, stride, buffer, ptr_palette);
+                process(image, width, height, stride, buffer, ptr_palette);
                 STBI_FREE(buffer);
             }
         }
@@ -1727,7 +1702,7 @@ namespace
             status = mz_inflateEnd(&stream);
 
             // process image
-            process(image, stride, buffer, ptr_palette);
+            process(image, width, height, stride, buffer, ptr_palette);
         }
 
         return m_error;
