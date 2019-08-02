@@ -14,6 +14,10 @@
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
 // https://wiki.mozilla.org/APNG_Specification
 
+// TODO: discard modes (requires us to keep a copy of main image)
+// TODO: check that animations starting with "IDAT" and "fdAT" work correctly
+// TODO: SIMD blending (not critical)
+
 // ------------------------------------------------------------
 // miniz
 // ------------------------------------------------------------
