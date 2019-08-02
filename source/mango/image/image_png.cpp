@@ -523,8 +523,8 @@ namespace
         u8 m_srgb_render_intent = -1;
 
         // acTL
-        u32 number_of_frames = 0;
-        u32 repeat_count = 0;
+        u32 m_number_of_frames = 0;
+        u32 m_repeat_count = 0;
 
         // fcTL
         Frame m_frame;
@@ -864,11 +864,11 @@ namespace
             return;
         }
 
-        number_of_frames = p.read32();
-        repeat_count = p.read32();
+        m_number_of_frames = p.read32();
+        m_repeat_count = p.read32();
 
-        debugPrint("  Frames: %d\n", number_of_frames);
-        debugPrint("  Repeat: %d %s\n", repeat_count, repeat_count ? "" : "(infinite)");
+        debugPrint("  Frames: %d\n", m_number_of_frames);
+        debugPrint("  Repeat: %d %s\n", m_repeat_count, m_repeat_count ? "" : "(infinite)");
     }
 
     void ParserPNG::read_fcTL(BigEndianConstPointer p, u32 size)
@@ -895,8 +895,7 @@ namespace
         debugPrint("  Sequence: %d\n", sequence_number);
         MANGO_UNREFERENCED_PARAMETER(sequence_number);
 
-        // NOTE: data is ignored for now
-        p += size;
+        m_compressed.append(p, size);
     }
 
     ImageHeader ParserPNG::header() const
@@ -956,10 +955,13 @@ namespace
     {
         BigEndianConstPointer p = m_pointer;
 
-        for (; p < m_end - 8;)
+        for ( ; p < m_end - 8; )
         {
             const u32 size = p.read32();
             const u32 id = p.read32();
+
+            const u8* ptr_next_chunk = p + size;
+            ptr_next_chunk += 4; // skip crc
 
             debugPrint("[\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
 
@@ -1002,6 +1004,11 @@ namespace
 
                 case u32_mask_rev('I', 'D', 'A', 'T'):
                     read_IDAT(p, size);
+                    if (m_number_of_frames > 0)
+                    {
+                        m_pointer = ptr_next_chunk;
+                        return;
+                    }
                     break;
 
                 case u32_mask_rev('a', 'c', 'T', 'L'):
@@ -1014,20 +1021,31 @@ namespace
 
                 case u32_mask_rev('f', 'd', 'A', 'T'):
                     read_fdAT(p, size);
-                    break;
+                    m_pointer = ptr_next_chunk;
+                    return;
 
                 case u32_mask_rev('p', 'H', 'Y', 's'):
                 case u32_mask_rev('b', 'K', 'G', 'D'):
                 case u32_mask_rev('z', 'T', 'X', 't'):
                 case u32_mask_rev('t', 'E', 'X', 't'):
                 case u32_mask_rev('t', 'I', 'M', 'E'):
+                case u32_mask_rev('i', 'T', 'X', 't'):
                     // NOTE: ignoring these chunks
                     break;
 
                 case u32_mask_rev('I', 'E', 'N', 'D'):
-                    // terminate parsing (required for files with junk after the IEND marker)
-                    p = m_end; 
-                    break;
+                    if (m_number_of_frames > 0)
+                    {
+                        // reset current pointer to first animation frame (for looping)
+                        m_pointer = m_first_frame;
+                        // TODO: p = m_first_frame after we have correct termination at IDAT+fdAT
+                    }
+                    else
+                    {
+                        // terminate parsing
+                        m_pointer = m_end;
+                    }
+                    return;
 
                 default:
                     debugPrint("UNKNOWN CHUNK: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
@@ -1040,8 +1058,7 @@ namespace
                 return;
             }
 
-            p += size;
-            p += 4; // skip CRC
+            p = ptr_next_chunk;
         }
     }
 
@@ -1611,88 +1628,101 @@ namespace
 
     const char* ParserPNG::decode(Surface& dest, Palette* ptr_palette)
     {
-        if (!m_error)
+        m_compressed.reset();
+
+        parse();
+
+        if (!m_compressed.size())
         {
-            parse();
+            return m_error;
+        }
 
-            int buffer_size = 0;
-            
-            // compute output buffer size
-            if (m_interlace)
+        u8* image = dest.image;
+
+        if (m_number_of_frames > 0)
+        {
+            image = dest.address(m_frame.xoffset, m_frame.yoffset);
+            m_width = m_frame.width;
+            m_height = m_frame.height;
+        }
+
+        int buffer_size = 0;
+
+        // compute output buffer size
+        if (m_interlace)
+        {
+            // NOTE: brute-force loop to resolve memory consumption
+            for (int pass = 0; pass < 7; ++pass)
             {
-                // NOTE: brute-force loop to resolve memory consumption
-                for (int pass = 0; pass < 7; ++pass)
+                AdamInterleave adam(pass, m_width, m_height);
+                if (adam.w && adam.h)
                 {
-                    AdamInterleave adam(pass, m_width, m_height);
-                    if (adam.w && adam.h)
-                    {
-                        const int bytesPerLine = FILTER_BYTE + m_channels * ((adam.w * m_bit_depth + 7) / 8);
-                        buffer_size += bytesPerLine * adam.h;
-                    }
+                    const int bytesPerLine = FILTER_BYTE + m_channels * ((adam.w * m_bit_depth + 7) / 8);
+                    buffer_size += bytesPerLine * adam.h;
                 }
             }
-            else
+        }
+        else
+        {
+            buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
+        }
+
+        // decompression
+        // - use STB for small buffers
+        // - use MINIZ for large buffers
+
+        if (m_compressed.size() <= 128 * 1024)
+        {
+            Memory mem = m_compressed;
+            int raw_len = buffer_size;
+            u8 *buffer = (u8*) stbi_zlib_decode_malloc_guesssize_headerflag(
+                reinterpret_cast<const char *>(mem.address),
+                int(mem.size),
+                raw_len,
+                &raw_len,
+                1);
+            if (buffer)
             {
-                buffer_size = (FILTER_BYTE + m_bytes_per_line) * m_height;
-            }
-
-            // decompression
-            // - use STB for small buffers
-            // - use MINIZ for large buffers
-
-            if (m_compressed.size() <= 128 * 1024)
-            {
-                Memory mem = m_compressed;
-                int raw_len = buffer_size;
-                u8 *buffer = (u8*) stbi_zlib_decode_malloc_guesssize_headerflag(
-                    reinterpret_cast<const char *>(mem.address),
-                    int(mem.size),
-                    raw_len,
-                    &raw_len,
-                    1);
-                if (buffer)
-                {
-                    debugPrint("  # total_out: %d \n", raw_len);
-
-                    // process image
-                    process(dest.image, dest.stride, buffer, ptr_palette);
-                    STBI_FREE(buffer);
-                }
-            }
-            else
-            {
-                // allocate output buffer
-                debugPrint("  buffer bytes: %d\n", buffer_size);
-                Buffer buffer(buffer_size);
-
-                // decompress stream
-                mz_stream stream;
-                int status;
-                memset(&stream, 0, sizeof(stream));
-
-                stream.next_in   = m_compressed;
-                stream.avail_in  = (unsigned int)m_compressed.size();
-                stream.next_out  = buffer;
-                stream.avail_out = (unsigned int)buffer_size;
-
-                status = mz_inflateInit(&stream);
-                if (status != MZ_OK)
-                {
-                    // TODO: error
-                }
-
-                status = mz_inflate(&stream, MZ_FINISH);
-                if (status != MZ_STREAM_END)
-                {
-                    // TODO: error
-                }
-
-                debugPrint("  # total_out: %d \n", int(stream.total_out));
-                status = mz_inflateEnd(&stream);
+                debugPrint("  # total_out: %d \n", raw_len);
 
                 // process image
-                process(dest.image, dest.stride, buffer, ptr_palette);
+                process(image, dest.stride, buffer, ptr_palette);
+                STBI_FREE(buffer);
             }
+        }
+        else
+        {
+            // allocate output buffer
+            debugPrint("  buffer bytes: %d\n", buffer_size);
+            Buffer buffer(buffer_size);
+
+            // decompress stream
+            mz_stream stream;
+            int status;
+            memset(&stream, 0, sizeof(stream));
+
+            stream.next_in   = m_compressed;
+            stream.avail_in  = (unsigned int)m_compressed.size();
+            stream.next_out  = buffer;
+            stream.avail_out = (unsigned int)buffer_size;
+
+            status = mz_inflateInit(&stream);
+            if (status != MZ_OK)
+            {
+                // TODO: error
+            }
+
+            status = mz_inflate(&stream, MZ_FINISH);
+            if (status != MZ_STREAM_END)
+            {
+                // TODO: error
+            }
+
+            debugPrint("  # total_out: %d \n", int(stream.total_out));
+            status = mz_inflateEnd(&stream);
+
+            // process image
+            process(image, dest.stride, buffer, ptr_palette);
         }
 
         return m_error;
@@ -1827,6 +1857,13 @@ namespace
             MANGO_UNREFERENCED_PARAMETER(level);
             MANGO_UNREFERENCED_PARAMETER(depth);
             MANGO_UNREFERENCED_PARAMETER(face);
+
+            if (m_parser.getError())
+            {
+                // any internal errors in previous decoding / parsin passes
+                // and we're out of here
+                return;
+            }
 
             const char* error = nullptr;
 
