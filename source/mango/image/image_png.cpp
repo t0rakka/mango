@@ -11,6 +11,9 @@
 #define ID "[ImageDecoder.PNG] "
 #define FILTER_BYTE 1
 
+// https://www.w3.org/TR/2003/REC-PNG-20031110/
+// https://wiki.mozilla.org/APNG_Specification
+
 // ------------------------------------------------------------
 // miniz
 // ------------------------------------------------------------
@@ -1644,6 +1647,7 @@ namespace
             image = dest.address(m_frame.xoffset, m_frame.yoffset);
             m_width = m_frame.width;
             m_height = m_frame.height;
+            //printf("  dispose: %d, blend: %d\n", m_frame.dispose, m_frame.blend);
         }
 
         int buffer_size = 0;
