@@ -1641,6 +1641,7 @@ namespace
         }
 
         u8* image = dest.image;
+        int stride = dest.stride;
 
         if (m_number_of_frames > 0)
         {
@@ -1690,7 +1691,7 @@ namespace
                 debugPrint("  # total_out: %d \n", raw_len);
 
                 // process image
-                process(image, dest.stride, buffer, ptr_palette);
+                process(image, stride, buffer, ptr_palette);
                 STBI_FREE(buffer);
             }
         }
@@ -1726,7 +1727,7 @@ namespace
             status = mz_inflateEnd(&stream);
 
             // process image
-            process(image, dest.stride, buffer, ptr_palette);
+            process(image, stride, buffer, ptr_palette);
         }
 
         return m_error;
