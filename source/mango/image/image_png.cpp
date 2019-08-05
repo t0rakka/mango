@@ -1061,7 +1061,6 @@ namespace
                     {
                         // reset current pointer to first animation frame (for looping)
                         m_pointer = m_first_frame;
-                        // TODO: p = m_first_frame after we have correct termination at IDAT+fdAT
                     }
                     else
                     {
