@@ -332,10 +332,10 @@ namespace jpeg {
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
         HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
-        Array<s16> quantTableVector;
+        AlignedPointer<s16> quantTableVector;
         s16* blockVector;
 
-        std::vector< Frame > frames;
+        std::vector<Frame> frames;
         Frame* scanFrame; // current Progressive AC scan frame
 
         DecodeState decodeState;

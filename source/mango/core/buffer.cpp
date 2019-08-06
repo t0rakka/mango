@@ -5,8 +5,6 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
 
-#define ID "[Buffer] "
-
 namespace mango {
 
     // ----------------------------------------------------------------------------
@@ -185,7 +183,7 @@ namespace mango {
         const size_t left = m_buffer.size() - m_offset;
         if (left < bytes)
         {
-            MANGO_EXCEPTION(ID"Reading past end of buffer.");
+            MANGO_EXCEPTION("[MemoryStream] Reading past end of buffer.");
         }
 
         std::memcpy(dest, m_buffer.data() + m_offset, bytes);

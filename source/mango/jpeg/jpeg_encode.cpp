@@ -344,15 +344,15 @@ namespace
 
         u8      Lqt [BLOCK_SIZE];
         u8      Cqt [BLOCK_SIZE];
-        Array<s16> ILqt;
-        Array<s16> ICqt;
+        AlignedPointer<s16> ILqt;
+        AlignedPointer<s16> ICqt;
 
         // MCU configuration
         jpeg_chan   channel[3];
         int         channel_count;
 
-        void (*read_8x8) (s16 *block, const u8* input, int stride, int rows, int cols);
-        void (*read)     (s16 *block, const u8* input, int stride, int rows, int cols);
+        void (*read_8x8) (s16* block, const u8* input, int stride, int rows, int cols);
+        void (*read)     (s16* block, const u8* input, int stride, int rows, int cols);
 
         jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
@@ -1559,13 +1559,13 @@ namespace
         channel_count = 0;
 
         channel[0].component = 1;
-        channel[0].qtable = ILqt.data();
+        channel[0].qtable = ILqt;
 
         channel[1].component = 2;
-        channel[1].qtable = ICqt.data();
+        channel[1].qtable = ICqt;
 
         channel[2].component = 3;
-        channel[2].qtable = ICqt.data();
+        channel[2].qtable = ICqt;
 
         read_8x8 = nullptr;
 

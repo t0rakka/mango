@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -107,25 +107,28 @@ namespace mango {
     void aligned_free(void* aligned);
 
     // -----------------------------------------------------------------------
-    // Array
+    // AlignedPointer
     // -----------------------------------------------------------------------
 
+    // ONLY store POD types ; even if we have configurable type for the pointer
+    // it's only for convenience and WILL NOT call constructor / destructor !!!
+
     template <typename T>
-    class Array : public NonCopyable
+    class AlignedPointer : public NonCopyable
     {
     private:
         T* m_data;
         size_t m_size;
 
     public:
-        Array(size_t size, size_t alignment = MANGO_DEFAULT_ALIGNMENT)
+        AlignedPointer(size_t size, size_t alignment = MANGO_DEFAULT_ALIGNMENT)
             : m_size(size)
         {
             void* ptr = aligned_malloc(size * sizeof(T), alignment);
             m_data = reinterpret_cast<T*>(ptr);
         }
 
-        ~Array()
+        ~AlignedPointer()
         {
             aligned_free(m_data);
         }

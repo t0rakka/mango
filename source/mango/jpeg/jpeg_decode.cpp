@@ -215,7 +215,7 @@ namespace jpeg {
 
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
-            quantTable[i].table = &quantTableVector[i * 64];
+            quantTable[i].table = quantTableVector.data() + i * 64;
         }
 
         m_surface = nullptr;
@@ -1555,7 +1555,7 @@ namespace jpeg {
         }
 
         // allocate blocks
-        Array<s16> tempBlockVector(mcus * blocks_in_mcu * 64);
+        AlignedPointer<s16> tempBlockVector(mcus * blocks_in_mcu * 64);
         blockVector = tempBlockVector.data();
 
         // find best matching format
