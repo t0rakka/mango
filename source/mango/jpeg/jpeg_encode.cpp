@@ -344,8 +344,8 @@ namespace
 
         u8      Lqt [BLOCK_SIZE];
         u8      Cqt [BLOCK_SIZE];
-        AlignedVector<s16> ILqt;
-        AlignedVector<s16> ICqt;
+        Array<s16> ILqt;
+        Array<s16> ICqt;
 
         // MCU configuration
         jpeg_chan   channel[3];

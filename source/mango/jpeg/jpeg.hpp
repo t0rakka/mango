@@ -75,9 +75,6 @@ namespace jpeg {
 
 #endif
 
-    template <typename T>
-    using AlignedVector = std::vector<T, mango::AlignedAllocator<T, 64>>;
-
     // supported external data formats (encode from, decode to)
     enum Sample
     {
@@ -335,7 +332,7 @@ namespace jpeg {
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
         HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
-        AlignedVector<s16> quantTableVector;
+        Array<s16> quantTableVector;
         s16* blockVector;
 
         std::vector< Frame > frames;

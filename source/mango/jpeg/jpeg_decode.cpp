@@ -1555,7 +1555,7 @@ namespace jpeg {
         }
 
         // allocate blocks
-        AlignedVector<s16> tempBlockVector(mcus * blocks_in_mcu * 64);
+        Array<s16> tempBlockVector(mcus * blocks_in_mcu * 64);
         blockVector = tempBlockVector.data();
 
         // find best matching format
@@ -1623,7 +1623,6 @@ namespace jpeg {
         }
 
         blockVector = nullptr;
-
         status.info = m_info;
 
         return status;
