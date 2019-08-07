@@ -17,12 +17,13 @@ namespace mango
     private:
         Memory m_memory;
         size_t m_capacity;
+        Alignment m_alignment;
 
     public:
-        Buffer();
-        Buffer(size_t bytes);
-        Buffer(const u8* source, size_t bytes);
-        Buffer(Memory memory);
+        Buffer(Alignment alignment = Alignment());
+        Buffer(size_t bytes, Alignment alignment = Alignment());
+        Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
+        Buffer(Memory memory, Alignment alignment = Alignment());
         ~Buffer();
 
         operator Memory () const;
@@ -36,6 +37,10 @@ namespace mango
         void resize(size_t bytes);
         void reserve(size_t bytes);
         void append(const void* source, size_t bytes);
+
+    private:
+        u8* allocate(size_t bytes, Alignment alignment) const;
+        void free(u8* ptr) const;
     };
 
     class MemoryStream : public Stream
