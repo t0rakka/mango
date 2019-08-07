@@ -576,6 +576,14 @@
 // macros
 // -----------------------------------------------------------------------
 
+#if __cplusplus >= 201402L
+    // C++14
+#endif
+
+#if __cplusplus >= 201703L
+    // C++17
+#endif
+
 #define MANGO_UNREFERENCED_PARAMETER(x) (void) x
 #define MANGO_DEFAULT_ALIGNMENT 64
 

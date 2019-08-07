@@ -13,15 +13,15 @@ namespace mango
     // SharedMemory
     // -----------------------------------------------------------------------
 
-    SharedMemory::SharedMemory(size_t size)
+    SharedMemory::SharedMemory(size_t bytes)
     {
-        u8* address = new u8[size];
-        m_memory = Memory(address, size);
+        u8* address = new u8[bytes];
+        m_memory = Memory(address, bytes);
         m_ptr = std::shared_ptr<u8>(address, std::default_delete<u8[]>());
     }
 
-    SharedMemory::SharedMemory(u8* address, size_t size)
-        : m_memory(address, size)
+    SharedMemory::SharedMemory(u8* address, size_t bytes)
+        : m_memory(address, bytes)
         , m_ptr(address, std::default_delete<u8[]>())
     {
     }
@@ -32,10 +32,10 @@ namespace mango
 
 #if defined(MANGO_COMPILER_MICROSOFT)
 
-    void* aligned_malloc(size_t size, size_t alignment)
+    void* aligned_malloc(size_t bytes, size_t alignment)
     {
         assert(u32_is_power_of_two(u32(alignment)));
-        return _aligned_malloc(size, alignment);
+        return _aligned_malloc(bytes, alignment);
     }
 
     void aligned_free(void* aligned)
@@ -45,10 +45,10 @@ namespace mango
 
 #elif defined(MANGO_PLATFORM_LINUX)
 
-    void* aligned_malloc(size_t size, size_t alignment)
+    void* aligned_malloc(size_t bytes, size_t alignment)
     {
         assert(u32_is_power_of_two(u32(alignment)));
-        return memalign(alignment, size);
+        return memalign(alignment, bytes);
     }
 
     void aligned_free(void* aligned)
@@ -60,12 +60,12 @@ namespace mango
 
     // generic implementation
 
-    void* aligned_malloc(size_t size, size_t alignment)
+    void* aligned_malloc(size_t bytes, size_t alignment)
     {
         assert(u32_is_power_of_two(u32(alignment)));
 
         const size_t mask = alignment - 1;
-        void* block = std::malloc(size + mask + sizeof(void*));
+        void* block = std::malloc(bytes + mask + sizeof(void*));
         char* aligned = reinterpret_cast<char*>(block) + sizeof(void*);
 
         if (block)

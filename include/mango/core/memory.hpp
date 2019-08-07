@@ -27,15 +27,15 @@ namespace mango {
         {
         }
 
-        Memory(u8* address, size_t size)
+        Memory(u8* address, size_t bytes)
             : address(address)
-            , size(size)
+            , size(bytes)
         {
         }
 
-        Memory(const u8* address, size_t size)
+        Memory(const u8* address, size_t bytes)
             : address(const_cast<u8*>(address))
-            , size(size)
+            , size(bytes)
         {
         }
 
@@ -68,8 +68,8 @@ namespace mango {
         std::shared_ptr<u8> m_ptr;
 
     public:
-        SharedMemory(size_t size);
-        SharedMemory(u8* address, size_t size);
+        SharedMemory(size_t bytes);
+        SharedMemory(u8* address, size_t bytes);
 
         operator Memory () const
         {
@@ -103,7 +103,7 @@ namespace mango {
 
     // NOTE: The alignment has to be a power-of-two and at least sizeof(void*)
 
-    void* aligned_malloc(size_t size, size_t alignment = MANGO_DEFAULT_ALIGNMENT);
+    void* aligned_malloc(size_t bytes, size_t alignment = MANGO_DEFAULT_ALIGNMENT);
     void aligned_free(void* aligned);
 
     // -----------------------------------------------------------------------
