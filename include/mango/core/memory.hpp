@@ -98,12 +98,28 @@ namespace mango {
     };
 
     // -----------------------------------------------------------------------
-    // aligned malloc / free
+    // Alignment
     // -----------------------------------------------------------------------
 
     // NOTE: The alignment has to be a power-of-two and at least sizeof(void*)
 
-    void* aligned_malloc(size_t bytes, size_t alignment = MANGO_DEFAULT_ALIGNMENT);
+    class Alignment
+    {
+    protected:
+        u32 m_alignment;
+
+    public:
+        Alignment(); // default alignment
+        Alignment(u32 alignment);
+
+        operator u32 () const;
+    };
+
+    // -----------------------------------------------------------------------
+    // aligned malloc / free
+    // -----------------------------------------------------------------------
+
+    void* aligned_malloc(size_t bytes, Alignment alignment = Alignment());
     void aligned_free(void* aligned);
 
     // -----------------------------------------------------------------------
@@ -121,7 +137,7 @@ namespace mango {
         size_t m_size;
 
     public:
-        AlignedPointer(size_t size, size_t alignment = MANGO_DEFAULT_ALIGNMENT)
+        AlignedPointer(size_t size, Alignment alignment = Alignment())
             : m_size(size)
         {
             void* ptr = aligned_malloc(size * sizeof(T), alignment);

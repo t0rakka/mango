@@ -27,14 +27,34 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
+    // Alignment
+    // -----------------------------------------------------------------------
+
+    Alignment::Alignment()
+        : m_alignment(MANGO_DEFAULT_ALIGNMENT)
+    {
+    }
+
+    Alignment::Alignment(u32 alignment)
+        : m_alignment(alignment)
+    {
+        assert(u32_is_power_of_two(m_alignment));
+        assert(m_alignment >= sizeof(void*));
+    }
+
+    Alignment::operator u32 () const
+    {
+        return m_alignment;
+    }
+
+    // -----------------------------------------------------------------------
     // aligned malloc/free
     // -----------------------------------------------------------------------
 
 #if defined(MANGO_COMPILER_MICROSOFT)
 
-    void* aligned_malloc(size_t bytes, size_t alignment)
+    void* aligned_malloc(size_t bytes, Alignment alignment)
     {
-        assert(u32_is_power_of_two(u32(alignment)));
         return _aligned_malloc(bytes, alignment);
     }
 
@@ -45,9 +65,8 @@ namespace mango
 
 #elif defined(MANGO_PLATFORM_LINUX)
 
-    void* aligned_malloc(size_t bytes, size_t alignment)
+    void* aligned_malloc(size_t bytes, Alignment alignment)
     {
-        assert(u32_is_power_of_two(u32(alignment)));
         return memalign(alignment, bytes);
     }
 
@@ -60,17 +79,15 @@ namespace mango
 
     // generic implementation
 
-    void* aligned_malloc(size_t bytes, size_t alignment)
+    void* aligned_malloc(size_t bytes, Alignment alignment)
     {
-        assert(u32_is_power_of_two(u32(alignment)));
-
-        const size_t mask = alignment - 1;
+        const size_t mask = u32(alignment) - 1;
         void* block = std::malloc(bytes + mask + sizeof(void*));
         char* aligned = reinterpret_cast<char*>(block) + sizeof(void*);
 
         if (block)
         {
-            aligned += alignment - (reinterpret_cast<ptrdiff_t>(aligned) & mask);
+            aligned += u32(alignment) - (reinterpret_cast<ptrdiff_t>(aligned) & mask);
             reinterpret_cast<void**>(aligned)[-1] = block;
         }
         else
