@@ -367,7 +367,7 @@ namespace
 #endif
         }
 
-        void call(FilterType method, u8* scan, const u8* prev, int bytes, int bpp)
+        void operator () (FilterType method, u8* scan, const u8* prev, int bytes, int bpp)
         {
             //printf("%d", method);
             switch (method)
@@ -1086,13 +1086,13 @@ namespace
 
     void ParserPNG::filter(u8* buffer, int bytes, int height)
     {
-        // zero scanline
-        std::vector<u8> zeros(bytes, 0);
-        const u8* prev = zeros.data();
-
         const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
         if (bpp > 8)
             return;
+
+        // zero scanline
+        std::vector<u8> zeros(bytes, 0);
+        const u8* prev = zeros.data();
 
         FilterDispatcher dispatcher(bpp);
 
@@ -1101,7 +1101,7 @@ namespace
         for (int y = 0; y < height; ++y)
         {
             FilterType method = FilterType(*s++);
-            dispatcher.call(method, s, prev, bytes, bpp);
+            dispatcher(method, s, prev, bytes, bpp);
             prev = s;
             s += bytes;
         }
