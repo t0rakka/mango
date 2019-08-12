@@ -1090,20 +1090,18 @@ namespace
         if (bpp > 8)
             return;
 
+        FilterDispatcher dispatcher(bpp);
+
         // zero scanline
         std::vector<u8> zeros(bytes, 0);
         const u8* prev = zeros.data();
 
-        FilterDispatcher dispatcher(bpp);
-
-        u8* s = buffer;
-
         for (int y = 0; y < height; ++y)
         {
-            FilterType method = FilterType(*s++);
-            dispatcher(method, s, prev, bytes, bpp);
-            prev = s;
-            s += bytes;
+            FilterType method = FilterType(*buffer++);
+            dispatcher(method, buffer, prev, bytes, bpp);
+            prev = buffer;
+            buffer += bytes;
         }
     }
 
