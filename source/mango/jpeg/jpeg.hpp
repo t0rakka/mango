@@ -519,7 +519,7 @@ namespace jpeg {
     void process_ycbcr_rgba_16x8_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16_sse2  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
-#endif // JPEG_ENABLE_SSE4
+#endif // JPEG_ENABLE_SSE2
 
 #if defined(JPEG_ENABLE_SSE4)
 
