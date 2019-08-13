@@ -627,6 +627,20 @@ namespace
         a_hi = _mm_srai_epi32(a_hi, n); \
         v1 = _mm_packs_epi32(a_lo, a_hi); }
 
+#if defined(JPEG_ENABLE_AVX2)
+
+    __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
+    {
+        __m256i lo = _mm256_madd_epi16(_mm256_unpacklo_epi16(v, one), _mm256_unpacklo_epi16(q, bias));
+        __m256i hi = _mm256_madd_epi16(_mm256_unpackhi_epi16(v, one), _mm256_unpackhi_epi16(q, bias));
+        lo = _mm256_srai_epi32(lo, 15);
+        hi = _mm256_srai_epi32(hi, 15);
+        v = _mm256_packs_epi32(lo, hi);
+        return v;
+    }
+
+#else
+
     __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
     {
         __m128i lo = _mm_madd_epi16(_mm_unpacklo_epi16(v, one), _mm_unpacklo_epi16(q, bias));
@@ -636,6 +650,8 @@ namespace
         v = _mm_packs_epi32(lo, hi);
         return v;
     }
+
+#endif
 
     static
     void fdct(s16* dest, const s16* data, const s16* quant_table)
@@ -730,10 +746,38 @@ namespace
 
         JPEG_TRANSFORM(13);
 
+#if defined(JPEG_ENABLE_AVX2)
+
+        __m256i v01 = _mm256_setr_m128i(v0, v1);
+        __m256i v23 = _mm256_setr_m128i(v2, v3);
+        __m256i v45 = _mm256_setr_m128i(v4, v5);
+        __m256i v67 = _mm256_setr_m128i(v6, v7);
+
         // quantize
 
-        const __m128i one = JPEG_CONST16(1, 1);
-        const __m128i bias = JPEG_CONST16(0x4000, 0x4000);
+        const __m256i one = _mm256_set1_epi16(1);
+        const __m256i bias = _mm256_set1_epi16(0x4000);
+        const __m256i* q = reinterpret_cast<const __m256i*>(quant_table);
+
+        v01 = quantize(v01, q[0], one, bias);
+        v23 = quantize(v23, q[1], one, bias);
+        v45 = quantize(v45, q[2], one, bias);
+        v67 = quantize(v67, q[3], one, bias);
+
+        // store
+
+        __m256i* d = reinterpret_cast<__m256i *>(dest);
+        _mm256_storeu_si256(d + 0, v01);
+        _mm256_storeu_si256(d + 1, v23);
+        _mm256_storeu_si256(d + 2, v45);
+        _mm256_storeu_si256(d + 3, v67);
+
+#else
+
+        // quantize
+
+        const __m128i one = _mm_set1_epi16(1);
+        const __m128i bias = _mm_set1_epi16(0x4000);
         const __m128i* q = reinterpret_cast<const __m128i*>(quant_table);
 
         v0 = quantize(v0, q[0], one, bias);
@@ -756,6 +800,8 @@ namespace
         _mm_storeu_si128(d + 5, v5);
         _mm_storeu_si128(d + 6, v6);
         _mm_storeu_si128(d + 7, v7);
+
+#endif
     }
 
 #elif defined(JPEG_ENABLE_NEON)
