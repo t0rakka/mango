@@ -282,14 +282,28 @@ namespace
             u8 value = u8(code);
             code >>= 8;
             *output++ = value;
+
+#if 1
+            // always write the stuff byte
+            // .. but advance ptr only when it actually was one
+            // this variant of the code can be branchless (measured: ~5% faster)
+            *output = 0;
+            output += (value == 0xff);
+#else
             if (value == 0xff)
             {
                 // write stuff byte
                 *output++ = 0;
             }
+#endif
         }
         return output;
     }
+
+#define STUFF(x) \
+    output[0] = u8(code >> x); \
+    output[1] = 0; \
+    output += (1 + (output[0] == 0xff));
 
 #if defined(MANGO_CPU_64BIT)
 
@@ -297,14 +311,14 @@ namespace
     u8* write_stuff(u8* output, u64 code)
     {
 #ifdef UNROLL_STUFF
-        if ((*output++ = u8(code >> 56)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >> 48)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >> 40)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >> 32)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
+        STUFF(56);
+        STUFF(48);
+        STUFF(40);
+        STUFF(32);
+        STUFF(24);
+        STUFF(16);
+        STUFF(8);
+        STUFF(0);
 #else
         output = write_stuffed_bytes(output, code, 8);
 #endif
@@ -316,10 +330,10 @@ namespace
     static inline
     u8* write_stuff(u8* output, u32 code)
     {
-        if ((*output++ = u8(code >> 24)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >> 16)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >>  8)) == 0xff) *output++ = 0;
-        if ((*output++ = u8(code >>  0)) == 0xff) *output++ = 0;
+        STUFF(24);
+        STUFF(16);
+        STUFF(8);
+        STUFF(0);
         return output;
     }
 
