@@ -629,6 +629,7 @@ namespace
 
 #if defined(JPEG_ENABLE_AVX2)
 
+    static inline
     __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
     {
         __m256i lo = _mm256_madd_epi16(_mm256_unpacklo_epi16(v, one), _mm256_unpacklo_epi16(q, bias));
@@ -641,6 +642,7 @@ namespace
 
 #else
 
+    static inline
     __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
     {
         __m128i lo = _mm_madd_epi16(_mm_unpacklo_epi16(v, one), _mm_unpacklo_epi16(q, bias));
