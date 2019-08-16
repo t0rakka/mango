@@ -168,7 +168,7 @@ namespace lz4 {
 
     void decompress(Memory dest, Memory source)
     {
-        int status = LZ4_decompress_fast(source.cast<const char>(), dest.cast<char>(), int(dest.size));
+        int status = LZ4_decompress_safe(source.cast<const char>(), dest.cast<char>(), int(source.size), int(dest.size));
         if (status < 0)
         {
             MANGO_EXCEPTION("[lz4] decompression failed.");
@@ -273,7 +273,7 @@ namespace lz4 {
                 m_offset += block_size;
 
                 const char* src = reinterpret_cast<const char *>(source.address);
-                int bytes = LZ4_decompress_fast_continue(m_stream, src, temp, int(block_size));
+                int bytes = LZ4_decompress_safe_continue(m_stream, src, temp, int(source.size), int(block_size));
 
                 source.address += bytes;
                 source.size -= bytes;
