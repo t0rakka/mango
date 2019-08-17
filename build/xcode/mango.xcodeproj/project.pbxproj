@@ -301,6 +301,7 @@
 		A6EC3E622308589900B17F21 /* zstd_compress_literals.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */; };
 		A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */; };
 		A6EC3E642308589900B17F21 /* zstd_compress_sequences.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */; };
+		A6EC3E6623085FCE00B17F21 /* xxh3.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E6523085FCE00B17F21 /* xxh3.h */; };
 		A6FCC37A1E8122D40037C15F /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC3791E8122D40037C15F /* zstd.h */; };
 /* End PBXBuildFile section */
 
@@ -599,6 +600,7 @@
 		A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_literals.c; path = external/zstd/compress/zstd_compress_literals.c; sourceTree = "<group>"; };
 		A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_literals.h; path = external/zstd/compress/zstd_compress_literals.h; sourceTree = "<group>"; };
 		A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_sequences.c; path = external/zstd/compress/zstd_compress_sequences.c; sourceTree = "<group>"; };
+		A6EC3E6523085FCE00B17F21 /* xxh3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxh3.h; path = external/zstd/common/xxh3.h; sourceTree = "<group>"; };
 		A6FCC3791E8122D40037C15F /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/zstd.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1134,6 +1136,7 @@
 				A645DD31214154F300EC714B /* threading.h */,
 				A645DD34214154F300EC714B /* xxhash.c */,
 				A645DD41214154F300EC714B /* xxhash.h */,
+				A6EC3E6523085FCE00B17F21 /* xxh3.h */,
 				A645DD3A214154F300EC714B /* zstd_common.c */,
 				A645DD44214154F300EC714B /* zstd_errors.h */,
 				A645DD45214154F300EC714B /* zstd_internal.h */,
@@ -1252,6 +1255,7 @@
 				A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */,
 				A645DD59214154F400EC714B /* zstd_errors.h in Headers */,
 				A642437521852AEF0044B763 /* XzEnc.h in Headers */,
+				A6EC3E6623085FCE00B17F21 /* xxh3.h in Headers */,
 				A645DD762141551200EC714B /* zstd_lazy.h in Headers */,
 				A63DD7791E706EF100D4D499 /* lzvn_decode_base.h in Headers */,
 				A642437E21852AEF0044B763 /* HuffEnc.h in Headers */,
