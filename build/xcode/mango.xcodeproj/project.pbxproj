@@ -297,6 +297,10 @@
 		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
 		A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD2BD4209B3958000B0EF8 /* zpng.h */; };
 		A6CD2BD8209B3BA7000B0EF8 /* image_zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */; };
+		A6EC3E612308589900B17F21 /* zstd_compress_sequences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */; };
+		A6EC3E622308589900B17F21 /* zstd_compress_literals.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */; };
+		A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */; };
+		A6EC3E642308589900B17F21 /* zstd_compress_sequences.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */; };
 		A6FCC37A1E8122D40037C15F /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC3791E8122D40037C15F /* zstd.h */; };
 /* End PBXBuildFile section */
 
@@ -591,6 +595,10 @@
 		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
 		A6CD2BD4209B3958000B0EF8 /* zpng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpng.h; path = external/zpng/zpng.h; sourceTree = "<group>"; };
 		A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_zpng.cpp; path = image/image_zpng.cpp; sourceTree = "<group>"; };
+		A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_sequences.h; path = external/zstd/compress/zstd_compress_sequences.h; sourceTree = "<group>"; };
+		A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_literals.c; path = external/zstd/compress/zstd_compress_literals.c; sourceTree = "<group>"; };
+		A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_literals.h; path = external/zstd/compress/zstd_compress_literals.h; sourceTree = "<group>"; };
+		A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_sequences.c; path = external/zstd/compress/zstd_compress_sequences.c; sourceTree = "<group>"; };
 		A6FCC3791E8122D40037C15F /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/zstd.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1136,6 +1144,10 @@
 		A6FCC3A01E8122F30037C15F /* compress */ = {
 			isa = PBXGroup;
 			children = (
+				A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */,
+				A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */,
+				A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */,
+				A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */,
 				A645DD632141551200EC714B /* fse_compress.c */,
 				A645DD682141551200EC714B /* hist.c */,
 				A645DD672141551200EC714B /* hist.h */,
@@ -1187,6 +1199,7 @@
 				A645DD28213D53C000EC714B /* jpeg.hpp in Headers */,
 				A642436821852AEF0044B763 /* LzFind.h in Headers */,
 				A63DD7521E706EB200D4D499 /* model.hpp in Headers */,
+				A6EC3E612308589900B17F21 /* zstd_compress_sequences.h in Headers */,
 				A645DD53214154F400EC714B /* pool.h in Headers */,
 				A645DD9021415B3F00EC714B /* miniz_common.h in Headers */,
 				A645DD8F21415B3F00EC714B /* miniz_tinfl.h in Headers */,
@@ -1245,6 +1258,7 @@
 				A645DD712141551200EC714B /* zstd_ldm.h in Headers */,
 				A60B0763229D21C900BD520D /* stb_image.h in Headers */,
 				A64243B22185E70B0044B763 /* 7zSha1.h in Headers */,
+				A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */,
 				A003D309192B9998009FED25 /* opengl in Headers */,
 				A642438E21852AEF0044B763 /* 7zVersion.h in Headers */,
 				A645DD5A214154F400EC714B /* zstd_internal.h in Headers */,
@@ -1471,6 +1485,7 @@
 				A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */,
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
 				A642437321852AEF0044B763 /* Xz.c in Sources */,
+				A6EC3E642308589900B17F21 /* zstd_compress_sequences.c in Sources */,
 				A64243AF2185E70B0044B763 /* 7zSha256.c in Sources */,
 				A63DD7581E706EB200D4D499 /* rijndael.cpp in Sources */,
 				A645DD50214154F400EC714B /* fse_decompress.c in Sources */,
@@ -1492,6 +1507,7 @@
 				A63DD7081E706DFA00D4D499 /* lz4hc.c in Sources */,
 				A642435821852AEF0044B763 /* XzCrc64Opt.c in Sources */,
 				A64243A321852AEF0044B763 /* Bra86.c in Sources */,
+				A6EC3E622308589900B17F21 /* zstd_compress_literals.c in Sources */,
 				A63DD78E1E706F3400D4D499 /* bz_randtable.c in Sources */,
 				A642435921852AEF0044B763 /* Lzma86Dec.c in Sources */,
 				A00559951C93324E00A6D963 /* compress.cpp in Sources */,
