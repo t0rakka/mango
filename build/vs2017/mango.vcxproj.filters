@@ -927,6 +927,15 @@
     <ClInclude Include="..\..\include\mango\image\quantize.hpp">
       <Filter>mango\include\image</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\common\xxh3.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_literals.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_sequences.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1438,6 +1447,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\image\quantize.cpp">
       <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_literals.c">
+      <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_sequences.c">
+      <Filter>external\zstd\compress</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

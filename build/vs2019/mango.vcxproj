@@ -265,12 +265,15 @@
     <ClInclude Include="..\..\source\external\zstd\common\mem.h" />
     <ClInclude Include="..\..\source\external\zstd\common\pool.h" />
     <ClInclude Include="..\..\source\external\zstd\common\threading.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\xxh3.h" />
     <ClInclude Include="..\..\source\external\zstd\common\xxhash.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_errors.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\hist.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_internal.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_literals.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_sequences.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_double_fast.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_fast.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_lazy.h" />
@@ -382,6 +385,8 @@
     <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstdmt_compress.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_literals.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_sequences.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_double_fast.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_fast.c" />
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_lazy.c" />
