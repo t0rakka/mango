@@ -27,6 +27,7 @@
 #include "astc.hpp"
 #include <mango/core/endian.hpp>
 #include <mango/math/vector.hpp>
+#include <mango/math/srgb.hpp>
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
 
@@ -87,7 +88,12 @@ namespace
     {
         return getBits(v.u, 10, 14) == 31;
     }
-    
+
+    inline u8 linearToSRGB(float value)
+    {
+        return u8(linear_to_srgb(value) * 255.0f);
+    }
+
     // A helper for getting bits from a 128-bit block.
     class Block128
     {
@@ -373,11 +379,11 @@ namespace
                 }
             }
         }
-        
+
         blockMode.isError = false;
         return blockMode;
     }
-    
+
     inline void setASTCErrorColorBlock (void* dst, int blockWidth, int blockHeight, bool isSRGB)
     {
         if (isSRGB)
@@ -405,22 +411,22 @@ namespace
             }
         }
     }
-    
+
     void decodeVoidExtentBlock (void* dst, const Block128& blockData, int blockWidth, int blockHeight, bool isSRGB, bool isLDRMode)
     {
         const u32	minSExtent			= blockData.getBits(12, 24);
         const u32	maxSExtent			= blockData.getBits(25, 37);
         const u32	minTExtent			= blockData.getBits(38, 50);
         const u32	maxTExtent			= blockData.getBits(51, 63);
-        const bool		allExtentsAllOnes	= minSExtent == 0x1fff && maxSExtent == 0x1fff && minTExtent == 0x1fff && maxTExtent == 0x1fff;
-        const bool		isHDRBlock			= blockData.isBitSet(9);
-        
+        const bool	allExtentsAllOnes	= minSExtent == 0x1fff && maxSExtent == 0x1fff && minTExtent == 0x1fff && maxTExtent == 0x1fff;
+        const bool	isHDRBlock			= blockData.isBitSet(9);
+
         if ((isLDRMode && isHDRBlock) || (!allExtentsAllOnes && (minSExtent >= maxSExtent || minTExtent >= maxTExtent)))
         {
             setASTCErrorColorBlock(dst, blockWidth, blockHeight, isSRGB);
             return;
         }
-        
+
         const u32 rgba[4] =
         {
             blockData.getBits(64,  79),
@@ -428,7 +434,7 @@ namespace
             blockData.getBits(96,  111),
             blockData.getBits(112, 127)
         };
-        
+
         if (isSRGB)
         {
             u8* const dstU = (u8*)dst;
@@ -452,7 +458,7 @@ namespace
                         //throw tcu::InternalError("Infinity or NaN color component in HDR void extent block in ASTC texture (behavior undefined by ASTC specification)");
                     }
                 }
-                
+
                 for (int i = 0; i < blockWidth*blockHeight; i++)
                     for (int c = 0; c < 4; c++)
                     {
@@ -469,10 +475,10 @@ namespace
                     }
             }
         }
-        
+
         return;
     }
-    
+
     void decodeColorEndpointModes (u32* endpointModesDst, const Block128& blockData, int numPartitions, int extraCemBitsStart)
     {
         if (numPartitions == 1)
@@ -521,21 +527,21 @@ namespace
     void decodeISETritBlock (ISEDecodedResult* dst, int numValues, BitAccessStream& data, int numBits)
     {
         u32 m[5];
-        
-        m[0]		= data.getNext(numBits);
+
+        m[0]	= data.getNext(numBits);
         u32 T01	= data.getNext(2);
-        m[1]		= data.getNext(numBits);
+        m[1]	= data.getNext(numBits);
         u32 T23	= data.getNext(2);
-        m[2]		= data.getNext(numBits);
+        m[2]	= data.getNext(numBits);
         u32 T4	= data.getNext(1);
-        m[3]		= data.getNext(numBits);
+        m[3]	= data.getNext(numBits);
         u32 T56	= data.getNext(2);
-        m[4]		= data.getNext(numBits);
+        m[4]	= data.getNext(numBits);
         u32 T7	= data.getNext(1);
-        
+
         switch (numValues)
         {
-            // \note Fall-throughs.
+            // note Fall-throughs.
             case 1: T23		= 0;
             case 2: T4		= 0;
             case 3: T56		= 0;
@@ -544,9 +550,9 @@ namespace
             default:
                 break;
         }
-        
+
         const u32 T = (T7 << 7) | (T56 << 5) | (T4 << 4) | (T23 << 2) | (T01 << 0);
-        
+
         static const u32 tritsFromT[256][5] =
         {
             { 0,0,0,0,0 }, { 1,0,0,0,0 }, { 2,0,0,0,0 }, { 0,0,2,0,0 }, { 0,1,0,0,0 }, { 1,1,0,0,0 }, { 2,1,0,0,0 }, { 1,0,2,0,0 }, { 0,2,0,0,0 }, { 1,2,0,0,0 }, { 2,2,0,0,0 }, { 2,0,2,0,0 }, { 0,2,2,0,0 }, { 1,2,2,0,0 }, { 2,2,2,0,0 }, { 2,0,2,0,0 },
@@ -566,9 +572,9 @@ namespace
             { 0,0,0,1,2 }, { 1,0,0,1,2 }, { 2,0,0,1,2 }, { 0,0,2,1,2 }, { 0,1,0,1,2 }, { 1,1,0,1,2 }, { 2,1,0,1,2 }, { 1,0,2,1,2 }, { 0,2,0,1,2 }, { 1,2,0,1,2 }, { 2,2,0,1,2 }, { 2,0,2,1,2 }, { 0,2,2,1,2 }, { 1,2,2,1,2 }, { 2,2,2,1,2 }, { 2,0,2,1,2 },
             { 0,0,1,1,2 }, { 1,0,1,1,2 }, { 2,0,1,1,2 }, { 0,1,2,1,2 }, { 0,1,1,1,2 }, { 1,1,1,1,2 }, { 2,1,1,1,2 }, { 1,1,2,1,2 }, { 0,2,1,1,2 }, { 1,2,1,1,2 }, { 2,2,1,1,2 }, { 2,1,2,1,2 }, { 0,2,2,2,2 }, { 1,2,2,2,2 }, { 2,2,2,2,2 }, { 2,1,2,2,2 }
         };
-        
+
         const u32 (& trits)[5] = tritsFromT[T];
-        
+
         for (int i = 0; i < numValues; i++)
         {
             dst[i].m	= m[i];
@@ -576,30 +582,30 @@ namespace
             dst[i].v	= (trits[i] << numBits) + m[i];
         }
     }
-    
+
     void decodeISEQuintBlock (ISEDecodedResult* dst, int numValues, BitAccessStream& data, int numBits)
     {
         u32 m[3];
 
-        m[0]		= data.getNext(numBits);
-        u32 Q012	= data.getNext(3);
-        m[1]		= data.getNext(numBits);
-        u32 Q34	= data.getNext(2);
-        m[2]		= data.getNext(numBits);
-        u32 Q56	= data.getNext(2);
+        m[0]	 = data.getNext(numBits);
+        u32 Q012 = data.getNext(3);
+        m[1]	 = data.getNext(numBits);
+        u32 Q34	 = data.getNext(2);
+        m[2]	 = data.getNext(numBits);
+        u32 Q56	 = data.getNext(2);
 
         switch (numValues)
         {
-            // \note Fall-throughs.
+            // note Fall-throughs.
             case 1: Q34		= 0;
             case 2: Q56		= 0;
             case 3: break;
             default:
                 break;
         }
-        
+
         const u32 Q = (Q56 << 5) | (Q34 << 3) | (Q012 << 0);
-        
+
         static const u32 quintsFromQ[256][3] =
         {
             { 0,0,0 }, { 1,0,0 }, { 2,0,0 }, { 3,0,0 }, { 4,0,0 }, { 0,4,0 }, { 4,4,0 }, { 4,4,4 }, { 0,1,0 }, { 1,1,0 }, { 2,1,0 }, { 3,1,0 }, { 4,1,0 }, { 1,4,0 }, { 4,4,1 }, { 4,4,4 },
@@ -611,9 +617,9 @@ namespace
             { 0,0,3 }, { 1,0,3 }, { 2,0,3 }, { 3,0,3 }, { 4,0,3 }, { 0,4,3 }, { 0,0,4 }, { 1,0,4 }, { 0,1,3 }, { 1,1,3 }, { 2,1,3 }, { 3,1,3 }, { 4,1,3 }, { 1,4,3 }, { 0,1,4 }, { 1,1,4 },
             { 0,2,3 }, { 1,2,3 }, { 2,2,3 }, { 3,2,3 }, { 4,2,3 }, { 2,4,3 }, { 0,2,4 }, { 1,2,4 }, { 0,3,3 }, { 1,3,3 }, { 2,3,3 }, { 3,3,3 }, { 4,3,3 }, { 3,4,3 }, { 0,3,4 }, { 1,3,4 }
         };
-        
+
         const u32 (& quints)[3] = quintsFromQ[Q];
-        
+
         for (int i = 0; i < numValues; i++)
         {
             dst[i].m	= m[i];
@@ -621,13 +627,13 @@ namespace
             dst[i].v	= (quints[i] << numBits) + m[i];
         }
     }
-    
+
     inline void decodeISEBitBlock (ISEDecodedResult* dst, BitAccessStream& data, int numBits)
     {
         dst[0].m = data.getNext(numBits);
         dst[0].v = dst[0].m;
     }
-    
+
     void decodeISE (ISEDecodedResult* dst, int numValues, BitAccessStream& data, const ISEParams& params)
     {
         if (params.mode == ISEMODE_TRIT)
@@ -696,7 +702,7 @@ namespace
     {
         if (iseParams.mode == ISEMODE_TRIT || iseParams.mode == ISEMODE_QUINT)
         {
-            const int rangeCase				= iseParams.numBits*2 - (iseParams.mode == ISEMODE_TRIT ? 2 : 1);
+            const int rangeCase			= iseParams.numBits*2 - (iseParams.mode == ISEMODE_TRIT ? 2 : 1);
             static const u32	Ca[11]	= { 204, 113, 93, 54, 44, 26, 22, 13, 11, 6, 5 };
             const u32			C		= Ca[rangeCase];
             
@@ -758,11 +764,11 @@ namespace
     inline bool isColorEndpointModeHDR (u32 mode)
     {
         return mode == 2	||
-        mode == 3	||
-        mode == 7	||
-        mode == 11	||
-        mode == 14	||
-        mode == 15;
+               mode == 3	||
+               mode == 7	||
+               mode == 11	||
+               mode == 14	||
+               mode == 15;
     }
     
     void decodeHDREndpointMode7 (uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3)
@@ -770,17 +776,17 @@ namespace
         const u32 m10		= getBit(v1, 7) | (getBit(v2, 7) << 1);
         const u32 m23		= getBits(v0, 6, 7);
         const u32 majComp	= m10 != 3	? m10
-        : m23 != 3	? m23
-        :			  0;
+            : m23 != 3	? m23
+            :			  0;
         const u32 mode		= m10 != 3	? m23
-        : m23 != 3	? 4
-        :			  5;
+            : m23 != 3	? 4
+            :			  5;
         
         s32			red		= (s32)getBits(v0, 0, 5);
         s32			green	= (s32)getBits(v1, 0, 4);
         s32			blue	= (s32)getBits(v2, 0, 4);
         s32			scale	= (s32)getBits(v3, 0, 4);
-        
+
         {
 #define SHOR(DST_VAR, SHIFT, BIT_VAR) (DST_VAR) |= (BIT_VAR) << (SHIFT)
 #define ASSIGN_X_BITS(V0,S0, V1,S1, V2,S2, V3,S3, V4,S4, V5,S5, V6,S6) { SHOR(V0,S0,x0); SHOR(V1,S1,x1); SHOR(V2,S2,x2); SHOR(V3,S3,x3); SHOR(V4,S4,x4); SHOR(V5,S5,x5); SHOR(V6,S6,x6); }
@@ -941,14 +947,14 @@ namespace
             v7 -= 0x20 >> mode;
             v6 <<= 4-mode;
             v7 <<= 4-mode;
-            
+
             v7 += v6;
             v7 = clamp(v7, 0, 0xfff);
             e0.w = v6;
             e1.w = v7;
         }
     }
-    
+
     void decodeColorEndpoints (ColorEndpointPair* dst, const u32* unquantizedEndpoints, const u32* endpointModes, int numPartitions)
     {
         int unquantizedNdx = 0;
@@ -957,8 +963,8 @@ namespace
         {
             const u32		endpointMode	= endpointModes[partitionNdx];
             const u32*		v				= &unquantizedEndpoints[unquantizedNdx];
-            uint4&				e0				= dst[partitionNdx].e0;
-            uint4&				e1				= dst[partitionNdx].e1;
+            uint4&			e0				= dst[partitionNdx].e0;
+            uint4&			e1				= dst[partitionNdx].e1;
 
             unquantizedNdx += computeNumColorEndpointValues(endpointMode);
             
@@ -1142,19 +1148,19 @@ namespace
     {
         const int			colorEndpointDataStart = numPartitions == 1 ? 17 : 29;
         ISEDecodedResult	colorEndpointData[18];
-        
+
         {
             BitAccessStream dataStream(blockData, colorEndpointDataStart, numBitsAvailable, true);
             decodeISE(&colorEndpointData[0], numColorEndpointValues, dataStream, iseParams);
         }
-        
+
         {
             u32 unquantizedEndpoints[18];
             unquantizeColorEndpoints(&unquantizedEndpoints[0], &colorEndpointData[0], numColorEndpointValues, iseParams);
             decodeColorEndpoints(dst, &unquantizedEndpoints[0], &endpointModes[0], numPartitions);
         }
     }
-    
+
     void unquantizeWeights (u32* dst, const ISEDecodedResult* weightGrid, const ASTCBlockMode& blockMode)
     {
         const int			numWeights	= computeNumWeights(blockMode);
@@ -1428,9 +1434,9 @@ namespace
             setASTCErrorColorBlock(dst, blockWidth, blockHeight, isSRGB);
             return;
         }
-        
+
         // Compute number of bits available for color endpoint data.
-        
+
         const bool	isSingleUniqueCem			= numPartitions == 1 || blockData.getBits(23, 24) == 0;
         const int	numConfigDataBits			= (numPartitions == 1 ? 17 : isSingleUniqueCem ? 29 : 25 + 3*numPartitions) +
         (blockMode.isDualPlane ? 2 : 0);
@@ -1494,9 +1500,9 @@ namespace mango
 
         const Block128 blockData(input);
 
-        // TODO: Support writing directly into the output pointer
         if (isSRGB)
         {
+            // TODO: Support writing directly into the output pointer
             decompressASTCBlock(&decompressedBuffer.sRGB[0], blockData, blockWidth, blockHeight, isSRGB, isLDR);
 
             for (int y = 0; y < blockHeight; ++y)
@@ -1529,10 +1535,11 @@ namespace mango
 
                 for (int x = 0; x < blockWidth; ++x)
                 {
-                    dest[0] = u8(src[0] * 255);
-                    dest[1] = u8(src[1] * 255);
-                    dest[2] = u8(src[2] * 255);
-                    dest[3] = u8(src[3] * 255);
+                    
+                    dest[0] = linearToSRGB(src[0]);
+                    dest[1] = linearToSRGB(src[1]);
+                    dest[2] = linearToSRGB(src[2]);
+                    dest[3] = linearToSRGB(src[3]);
                     dest += 4;
                     src += 4;
                 }
