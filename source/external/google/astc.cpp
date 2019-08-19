@@ -1535,7 +1535,6 @@ namespace mango
 
                 for (int x = 0; x < blockWidth; ++x)
                 {
-                    
                     dest[0] = linearToSRGB(src[0]);
                     dest[1] = linearToSRGB(src[1]);
                     dest[2] = linearToSRGB(src[2]);
