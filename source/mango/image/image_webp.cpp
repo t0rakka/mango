@@ -36,8 +36,8 @@ namespace
 
     static const WebPFormat g_formats[] =
     {
-        { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), WebPDecodeBGRAInto },
         { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), WebPDecodeRGBAInto },
+        { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), WebPDecodeBGRAInto },
         { Format(32, Format::UNORM, Format::ARGB, 8, 8, 8, 8), WebPDecodeARGBInto },
         { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), WebPDecodeRGBInto },
         { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), WebPDecodeBGRInto },
