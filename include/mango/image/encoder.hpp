@@ -20,6 +20,7 @@ namespace mango
         Palette palette;
         float quality = 0.90f;
         bool dithering = true;
+        bool lossless = false;
     };
 
     class ImageEncoder : protected NonCopyable

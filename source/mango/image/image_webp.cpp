@@ -10,6 +10,7 @@
 #include <mango/image/image.hpp>
 
 #include "../../external/libwebp/src/webp/decode.h"
+#include "../../external/libwebp/src/webp/encode.h"
 
 namespace
 {
@@ -22,9 +23,13 @@ namespace
     struct WebPFormat
     {
         typedef uint8_t* (*DecodeFunc)(const uint8_t*, size_t, uint8_t*, size_t, int);
+        typedef size_t (*EncodeFunc)(const uint8_t* image, int width, int height, int stride, float quality_factor, uint8_t** output);
+        typedef size_t (*EncodeLosslessFunc)(const uint8_t* image, int width, int height, int stride, uint8_t** output);
 
         Format format;
         DecodeFunc decode_func;
+        EncodeFunc encode_func;
+        EncodeLosslessFunc encode_lossless_func;
 
         u8* decode(const Surface& dest, Memory memory) const
         {
@@ -32,15 +37,20 @@ namespace
             return decode_func(memory.address, memory.size, dest.image, bytes, dest.stride);
 
         }
+
+        size_t encode(uint8_t** output, const Surface& source, float quality, bool lossless)
+        {
+            return lossless ? encode_lossless_func(source.image, source.width, source.height, source.stride, output)
+                            : encode_func(source.image, source.width, source.height, source.stride, quality, output);
+        }
     };
 
     static const WebPFormat g_formats[] =
     {
-        { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), WebPDecodeRGBAInto },
-        { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), WebPDecodeBGRAInto },
-        { Format(32, Format::UNORM, Format::ARGB, 8, 8, 8, 8), WebPDecodeARGBInto },
-        { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), WebPDecodeRGBInto },
-        { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), WebPDecodeBGRInto },
+        { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), WebPDecodeRGBAInto, WebPEncodeRGBA, WebPEncodeLosslessRGBA },
+        { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), WebPDecodeBGRAInto, WebPEncodeBGRA, WebPEncodeLosslessBGRA },
+        { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), WebPDecodeRGBInto, WebPEncodeRGB, WebPEncodeLosslessRGB },
+        { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), WebPDecodeBGRInto, WebPEncodeBGR, WebPEncodeLosslessBGR },
     };
 
     WebPFormat webpDefaultFormat()
@@ -143,6 +153,49 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // ImageEncoder
+    // ------------------------------------------------------------
+
+    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        WebPFormat wpformat = webpFindFormat(surface.format);
+        bool matching_formats = wpformat.format == surface.format;
+
+        float quality = options.quality * 100.0f;
+        bool lossless = options.lossless;
+
+        u8* output = nullptr;
+        size_t bytes = 0;
+
+        if (matching_formats)
+        {
+            // Direct encoding
+            bytes = wpformat.encode(&output, surface, quality, lossless);
+        }
+        else
+        {
+            // Color conversion encoding
+            Bitmap temp(surface.width, surface.height, wpformat.format);
+            temp.blit(0, 0, surface);
+            bytes = wpformat.encode(&output, temp, quality, lossless);
+        }
+
+        if (bytes && output)
+        {
+            stream.write(output, bytes);
+            WebPFree(output);
+        }
+        else
+        {
+            if (output)
+            {
+                WebPFree(output);
+            }
+            MANGO_EXCEPTION("[ImageDecoder.WEBP] Encoding failed.");
+        }
+    }
+
 } // namespace
 
 namespace mango
@@ -151,6 +204,7 @@ namespace mango
     void registerImageDecoderWEBP()
     {
         registerImageDecoder(createInterface, ".webp");
+        registerImageEncoder(imageEncode, ".webp");
     }
 
 } // namespace mango
