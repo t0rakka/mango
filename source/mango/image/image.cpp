@@ -32,6 +32,7 @@ namespace mango
     void registerImageDecoderPNM();
     void registerImageDecoderATARI();
     void registerImageDecoderC64();
+    void registerImageDecoderWEBP();
 
     class ImageServer
     {
@@ -60,6 +61,7 @@ namespace mango
             registerImageDecoderPNM();
             registerImageDecoderATARI();
             registerImageDecoderC64();
+            registerImageDecoderWEBP();
         }
 
         ~ImageServer()

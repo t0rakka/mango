@@ -12,6 +12,14 @@ LOCAL_PATH := $(call my-dir)/../../..
 MANGO_INCLUDE := $(LOCAL_PATH)/include
 MANGO_SOURCE := $(LOCAL_PATH)/source
 
+INCLUDE_WEBP = $(LOCAL_PATH)/source/external/libwebp
+SOURCE_WEBP = external/libwebp/src/dec \
+              external/libwebp/src/enc \
+              external/libwebp/src/dsp \
+              external/libwebp/src/demux \
+              external/libwebp/src/mux \
+              external/libwebp/src/utils
+
 SOURCE_DIRS := mango/core \
                mango/core/unix \
                mango/filesystem \
@@ -33,7 +41,8 @@ SOURCE_DIRS := mango/core \
                external/lzo \
                external/bzip2 \
                external/aes \
-               external/lzma
+               external/lzma \
+               $(SOURCE_WEBP)
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS),$(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) $(wildcard $(MANGO_SOURCE)/$(dir)/*.c))
 mango_sources := $(SOURCES:$(LOCAL_PATH)/%=%)
@@ -80,7 +89,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := mango_shared
 
 LOCAL_SRC_FILES := $(mango_sources)
-LOCAL_C_INCLUDES := $(MANGO_INCLUDE)
+LOCAL_C_INCLUDES := $(MANGO_INCLUDE) $(INCLUDE_WEBP)
 LOCAL_EXPORT_C_INCLUDES := $(MANGO_INCLUDE)
 LOCAL_CPP_FEATURES += exceptions
 LOCAL_CPPFLAGS := $(OPTIONS) -Wno-extern-c-compat 

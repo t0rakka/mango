@@ -67,6 +67,14 @@ INCLUDE_BASE = ../../include
 SOURCE_BASE  = ../../source
 OBJECTS_PATH  = objects
 
+INCLUDE_WEBP = ../../source/external/libwebp
+SOURCE_WEBP = external/libwebp/src/dec \
+              external/libwebp/src/enc \
+              external/libwebp/src/dsp \
+              external/libwebp/src/demux \
+              external/libwebp/src/mux \
+              external/libwebp/src/utils
+
 SOURCE_DIRS_MANGO  = mango/core \
                      mango/core/unix \
                      mango/filesystem \
@@ -87,7 +95,8 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/lzo \
                      external/bzip2 \
                      external/aes \
-                     external/lzma
+                     external/lzma \
+                     $(SOURCE_WEBP)
 SOURCE_DIRS_OPENGL = mango/opengl
 SOURCE_DIRS_VULKAN = mango/vulkan
 SOURCE_DIRS_FRAMEBUFFER = mango/framebuffer
@@ -329,7 +338,7 @@ $(OBJECTS_PATH)/%.o: %.cpp
 $(OBJECTS_PATH)/%.o: %.c
 	@echo [Compile C] $<
 	@-mkdir -p $(@D)
-	@$(CC) $< -o $@
+	@$(CC) -I$(INCLUDE_WEBP) $< -o $@
 
 $(LIBRARY_MANGO): $(OBJECTS_MANGO)
 	@echo [Link $(PLATFORM)] $(LIBRARY_MANGO)
