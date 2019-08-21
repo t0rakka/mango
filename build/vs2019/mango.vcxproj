@@ -189,6 +189,50 @@
     <ClInclude Include="..\..\source\external\google\astc.hpp" />
     <ClInclude Include="..\..\source\external\google\etc.hpp" />
     <ClInclude Include="..\..\source\external\google\etc1.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\alphai_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\common_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8i_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8li_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\webpi_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\common_sse2.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\common_sse41.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\dsp.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\lossless.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\lossless_common.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\mips_macro.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\msa_macro.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\neon.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\quant.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\yuv.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\backward_references_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\cost_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\histogram_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\vp8i_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\vp8li_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\mux\animi.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\mux\muxi.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_reader_inl_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_reader_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_writer_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\color_cache_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\endian_inl_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\filters_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\huffman_encode_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\huffman_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\quant_levels_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\random_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\rescaler_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\thread_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\decode.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\demux.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\encode.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\format_constants.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\mux.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\mux_types.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\types.h" />
     <ClInclude Include="..\..\source\external\lz4\lz4.h" />
     <ClInclude Include="..\..\source\external\lz4\lz4hc.h" />
     <ClInclude Include="..\..\source\external\lzfse\lzfse.h" />
@@ -305,6 +349,120 @@
     <ClCompile Include="..\..\source\external\google\astc.cpp" />
     <ClCompile Include="..\..\source\external\google\etc.cpp" />
     <ClCompile Include="..\..\source\external\google\etc1.cpp" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\alpha_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\buffer_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\frame_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\idec_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\io_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\quant_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\tree_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\vp8l_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\vp8_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\webp_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\demux\anim_decode.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\demux\demux.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cpu.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_clip_tables.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\ssim.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\ssim_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\alpha_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\analysis_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\backward_references_cost_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\backward_references_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\config_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\cost_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\filter_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\frame_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\histogram_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\iterator_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\near_lossless_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_csp_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_psnr_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_rescale_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_tools_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\predictor_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\quant_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\syntax_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\token_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\tree_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\vp8l_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\webp_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\anim_encode.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxedit.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxinternal.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxread.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\bit_reader_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\bit_writer_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\color_cache_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\filters_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\huffman_encode_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\huffman_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\quant_levels_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\random_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\rescaler_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\thread_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\utils.c" />
     <ClCompile Include="..\..\source\external\lz4\lz4.c" />
     <ClCompile Include="..\..\source\external\lz4\lz4hc.c" />
     <ClCompile Include="..\..\source\external\lzfse\lzfse_decode.c" />
@@ -447,6 +605,7 @@
     <ClCompile Include="..\..\source\mango\image\image_pvr.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_sgi.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_tga.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_webp.cpp" />
     <ClCompile Include="..\..\source\mango\image\image_zpng.cpp" />
     <ClCompile Include="..\..\source\mango\image\quantize.cpp" />
     <ClCompile Include="..\..\source\mango\image\surface.cpp" />
@@ -536,7 +695,24 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|Win32'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>

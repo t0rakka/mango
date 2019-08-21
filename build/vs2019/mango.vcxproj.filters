@@ -151,6 +151,30 @@
     <Filter Include="mango\include\opengl\khronos\KHR">
       <UniqueIdentifier>{970c3bfb-142f-4f98-ad47-0a555af305a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\webp">
+      <UniqueIdentifier>{b20ff659-a178-41e9-91bd-b97236f6fd8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\dec">
+      <UniqueIdentifier>{a5d4cd4a-e574-4ee0-ad0b-d7019be55994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\demux">
+      <UniqueIdentifier>{931bc00a-361e-455b-8ab4-9d7f3242af33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\dsp">
+      <UniqueIdentifier>{b465c8a1-6616-4854-9c3a-7e0f656f923f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\enc">
+      <UniqueIdentifier>{1390ce2f-83c8-49c3-a1e5-dce864f903b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\mux">
+      <UniqueIdentifier>{f07b7ce5-b49b-42ac-aaf4-ebf0efa10d35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\utils">
+      <UniqueIdentifier>{13a2a9e8-ac86-4141-9396-da638dadbb76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\webp\webp">
+      <UniqueIdentifier>{71b24c5f-cfb7-49d6-b071-c26941a7b5e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -939,6 +963,138 @@
     <ClInclude Include="..\..\source\external\zstd\common\xxh3.h">
       <Filter>external\zstd\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\types.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\decode.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\demux.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\encode.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\format_constants.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\mux.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\mux_types.h">
+      <Filter>external\webp\webp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_reader_inl_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_reader_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_writer_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\color_cache_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\endian_inl_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\filters_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\huffman_encode_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\huffman_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\quant_levels_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\random_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\rescaler_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\thread_utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\utils.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\mux\animi.h">
+      <Filter>external\webp\mux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\mux\muxi.h">
+      <Filter>external\webp\mux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\backward_references_enc.h">
+      <Filter>external\webp\enc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\cost_enc.h">
+      <Filter>external\webp\enc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\histogram_enc.h">
+      <Filter>external\webp\enc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\vp8i_enc.h">
+      <Filter>external\webp\enc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\vp8li_enc.h">
+      <Filter>external\webp\enc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\common_sse2.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\common_sse41.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\dsp.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\lossless.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\lossless_common.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\mips_macro.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\msa_macro.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\neon.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\quant.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\yuv.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\alphai_dec.h">
+      <Filter>external\webp\dec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\common_dec.h">
+      <Filter>external\webp\dec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8_dec.h">
+      <Filter>external\webp\dec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8i_dec.h">
+      <Filter>external\webp\dec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8li_dec.h">
+      <Filter>external\webp\dec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\webpi_dec.h">
+      <Filter>external\webp\dec</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1456,6 +1612,351 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_sequences.c">
       <Filter>external\zstd\compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_webp.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\bit_reader_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\bit_writer_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\color_cache_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\filters_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\huffman_encode_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\huffman_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\quant_levels_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\random_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\rescaler_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\thread_utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\utils.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\anim_encode.c">
+      <Filter>external\webp\mux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxedit.c">
+      <Filter>external\webp\mux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxinternal.c">
+      <Filter>external\webp\mux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxread.c">
+      <Filter>external\webp\mux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\alpha_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\analysis_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\backward_references_cost_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\backward_references_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\config_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\cost_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\filter_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\frame_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\histogram_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\iterator_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\near_lossless_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_csp_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_psnr_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_rescale_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_tools_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\predictor_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\quant_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\syntax_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\token_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\tree_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\vp8l_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\webp_enc.c">
+      <Filter>external\webp\enc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_sse41.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_mips32.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cpu.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_clip_tables.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_mips32.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_sse41.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_mips32.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_sse41.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_mips32.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_sse41.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips32.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\ssim.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\ssim_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_msa.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_sse41.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_mips_dsp_r2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_mips32.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_neon.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_sse2.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_sse41.c">
+      <Filter>external\webp\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\demux\anim_decode.c">
+      <Filter>external\webp\demux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\demux\demux.c">
+      <Filter>external\webp\demux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\alpha_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\buffer_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\frame_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\idec_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\io_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\quant_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\tree_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\vp8_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\vp8l_dec.c">
+      <Filter>external\webp\dec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\webp_dec.c">
+      <Filter>external\webp\dec</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
