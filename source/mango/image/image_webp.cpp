@@ -181,17 +181,17 @@ namespace
             bytes = wpformat.encode(&output, temp, quality, lossless);
         }
 
-        if (bytes && output)
+        if (output)
         {
-            stream.write(output, bytes);
+            if (bytes)
+            {
+                stream.write(output, bytes);
+            }
             WebPFree(output);
         }
-        else
+
+        if (!bytes)
         {
-            if (output)
-            {
-                WebPFree(output);
-            }
             MANGO_EXCEPTION("[ImageDecoder.WEBP] Encoding failed.");
         }
     }
