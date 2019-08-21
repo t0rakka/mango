@@ -34,7 +34,7 @@ namespace
         }
     };
 
-    static WebPFormat g_formats[] =
+    static const WebPFormat g_formats[] =
     {
         { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), WebPDecodeBGRAInto },
         { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), WebPDecodeRGBAInto },
@@ -43,9 +43,14 @@ namespace
         { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), WebPDecodeBGRInto },
     };
 
+    WebPFormat webpDefaultFormat()
+    {
+        return g_formats[0];
+    }
+
     WebPFormat webpFindFormat(const Format& format)
     {
-        WebPFormat best = g_formats[0];
+        WebPFormat best = webpDefaultFormat();
         for (const auto& current : g_formats)
         {
             if (current.format == format)
@@ -82,7 +87,7 @@ namespace
             m_header.levels  = 0;
             m_header.faces   = 0;
 			m_header.palette = false;
-            m_header.format  = FORMAT_B8G8R8A8;
+            m_header.format  = webpDefaultFormat().format;
             m_header.compression = TextureCompression::NONE;
         }
 
