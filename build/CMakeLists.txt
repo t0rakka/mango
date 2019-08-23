@@ -42,11 +42,15 @@ else()
 endif()
 
 # ------------------------------------------------------------------------------
-# source directories
+# include directories
 # ------------------------------------------------------------------------------
 
 include_directories("../include/")
 include_directories("../source/external/libwebp/")
+
+# ------------------------------------------------------------------------------
+# source directories
+# ------------------------------------------------------------------------------
 
 FILE(GLOB CORE
     "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
