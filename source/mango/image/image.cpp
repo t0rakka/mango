@@ -141,9 +141,9 @@ namespace mango
 
     Memory ImageDecoderInterface::memory(int level, int depth, int face)
     {
-        MANGO_UNREFERENCED_PARAMETER(level);
-        MANGO_UNREFERENCED_PARAMETER(depth);
-        MANGO_UNREFERENCED_PARAMETER(face);
+        MANGO_UNREFERENCED(level);
+        MANGO_UNREFERENCED(depth);
+        MANGO_UNREFERENCED(face);
         return Memory();
     }
 
@@ -169,42 +169,67 @@ namespace mango
 
     ImageHeader ImageDecoder::header()
     {
+        ImageHeader header;
+
         if (!m_interface)
         {
             printf("[WARNING] ImageDecoder::header() is not supported for this extension.");
-            return ImageHeader();
         }
-        return m_interface->header();
+        else
+        {
+            header = m_interface->header();
+        }
+
+        return header;
     }
 
-    void ImageDecoder::decode(Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    ImageDecodeStatus ImageDecoder::decode(Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
     {
+        ImageDecodeStatus status;
+
         if (!m_interface)
         {
             printf("[WARNING] ImageDecoder::decode() is not supported for this extension.");
-            return;
+            status.success = false;
         }
-        m_interface->decode(dest, options.palette, level, depth, face);
+        else
+        {
+            status = m_interface->decode(dest, options.palette, level, depth, face);
+        }
+
+        return status;
     }
 
     Exif ImageDecoder::exif()
     {
+        Exif exif;
+
         if (!m_interface)
         {
             printf("[WARNING] ImageDecoder::exit() is not supported for this extension.");
-            return Exif();
         }
-        return m_interface->exif();
+        else
+        {
+            exif = m_interface->exif();
+        }
+
+        return exif;
     }
 
     Memory ImageDecoder::memory(int level, int depth, int face)
     {
+        Memory memory;
+
         if (!m_interface)
         {
             printf("[WARNING] ImageDecoder::memory() is not supported for this extension.");
-            return Memory();
         }
-        return m_interface->memory(level, depth, face);
+        else
+        {
+            memory = m_interface->memory(level, depth, face);
+        }
+
+        return memory;
     }
 
     // ----------------------------------------------------------------------------

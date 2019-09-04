@@ -397,7 +397,7 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_fp_unorm_fpu(const Blitter& blitter, const BlitRect& rect)
     {
-        MANGO_UNREFERENCED_PARAMETER(blitter);
+        MANGO_UNREFERENCED(blitter);
 
         u8* source = rect.src.address;
         u8* dest = rect.dest.address;
@@ -410,8 +410,8 @@ namespace
             for (int x = 0; x < rect.width; ++x)
             {
                 // TODO
-                MANGO_UNREFERENCED_PARAMETER(src);
-                MANGO_UNREFERENCED_PARAMETER(dst);
+                MANGO_UNREFERENCED(src);
+                MANGO_UNREFERENCED(dst);
             }
 
             source += rect.src.stride;
@@ -1255,7 +1255,7 @@ namespace mango
             }
         }
 #else
-        MANGO_UNREFERENCED_PARAMETER(sse2);
+        MANGO_UNREFERENCED(sse2);
 #endif
     }
 

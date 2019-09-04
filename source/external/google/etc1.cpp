@@ -390,7 +390,7 @@ namespace mango
 
     void encode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
 
         etc1_byte colors[8];
         etc1_byte flippedColors[8];

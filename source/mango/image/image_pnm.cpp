@@ -414,16 +414,20 @@ namespace
             return true;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
 
-            if (dest.format == m_header.format &&
-                dest.width >= m_header.width &&
-                dest.height >= m_header.height)
+            ImageDecodeStatus status;
+
+            status.direct = dest.format == m_header.format &&
+                            dest.width >= m_header.width &&
+                            dest.height >= m_header.height;
+
+            if (status.direct)
             {
                 decode_matching(dest);
             }
@@ -433,6 +437,9 @@ namespace
                 decode_matching(temp);
                 dest.blit(0, 0, temp);
             }
+
+            status.success = true;
+            return status;
         }
     };
 

@@ -584,7 +584,7 @@
     // C++17
 #endif
 
-#define MANGO_UNREFERENCED_PARAMETER(x) (void) x
+#define MANGO_UNREFERENCED(x) (void) x
 #define MANGO_DEFAULT_ALIGNMENT 64
 
 #ifdef MANGO_PLATFORM_WINDOWS

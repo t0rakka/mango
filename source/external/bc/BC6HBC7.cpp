@@ -2795,7 +2795,7 @@ namespace mango
 
     void decode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert(output && input);
         static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
         reinterpret_cast< const D3DX_BC6H* >( input )->Decode(false, output, stride);
@@ -2803,7 +2803,7 @@ namespace mango
 
     void decode_block_bc6hs(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert(output && input);
         static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
         reinterpret_cast< const D3DX_BC6H* >( input )->Decode(true, output, stride);
@@ -2811,7 +2811,7 @@ namespace mango
 
     void decode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert(output && input);
         static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
         reinterpret_cast< const D3DX_BC7* >( input )->Decode(output, stride);
@@ -2819,7 +2819,7 @@ namespace mango
 
     void encode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
         D3DXEncodeBC6HU(output, temp);
@@ -2827,7 +2827,7 @@ namespace mango
 
     void encode_block_bc6hs(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
         D3DXEncodeBC6HS(output, temp);
@@ -2835,7 +2835,7 @@ namespace mango
 
     void encode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
         D3DXEncodeBC7(output, temp);

@@ -107,13 +107,6 @@ namespace jpeg {
         Format format;
     };
 
-    struct Status
-    {
-        bool success;
-        bool enableDirectDecode;
-        std::string info;
-    };
-
     struct QuantTable
     {
         s16* table;  // Quantization table
@@ -344,7 +337,11 @@ namespace jpeg {
         int restartInterval;
         int restartCounter;
 
-        std::string m_info;
+        std::string m_encoding;
+        std::string m_compression;
+        std::string m_idct_name;
+        std::string m_ycbcr_name;
+
         Surface* m_surface;
         u64 cpu_flags;
 
@@ -419,7 +416,7 @@ namespace jpeg {
         Parser(Memory memory);
         ~Parser();
 
-        Status decode(Surface& target);
+        ImageDecodeStatus decode(Surface& target);
     };
 
     // ----------------------------------------------------------------------------

@@ -53,13 +53,13 @@ using std::chrono::milliseconds;
     template <typename H>
     static void set_thread_affinity(H handle, int processor)
     {
-        MANGO_UNREFERENCED_PARAMETER(handle);
-        MANGO_UNREFERENCED_PARAMETER(processor);
+        MANGO_UNREFERENCED(handle);
+        MANGO_UNREFERENCED(processor);
     }
 
     static void set_current_thread_affinity(int processor)
     {
-        MANGO_UNREFERENCED_PARAMETER(processor);
+        MANGO_UNREFERENCED(processor);
     }
 
 #endif

@@ -48,7 +48,7 @@ namespace filesystem {
     	    LARGE_INTEGER dist = { 0 };
 	        LARGE_INTEGER result = { 0 };
 	        BOOL status = SetFilePointerEx(m_handle, dist, &result, FILE_CURRENT);
-			MANGO_UNREFERENCED_PARAMETER(status);
+			MANGO_UNREFERENCED(status);
 	        return result.QuadPart;
 	    }
 
@@ -57,23 +57,23 @@ namespace filesystem {
 	        LARGE_INTEGER dist;
 	        dist.QuadPart = distance;
 	        BOOL status = SetFilePointerEx(m_handle, dist, NULL, method);
-			MANGO_UNREFERENCED_PARAMETER(status);
+			MANGO_UNREFERENCED(status);
 	    }
 
 	    void read(void* dest, size_t size)
 	    {
 	        DWORD bytes_read;
 	        BOOL status = ReadFile(m_handle, dest, static_cast<DWORD>(size), &bytes_read, NULL);
-			MANGO_UNREFERENCED_PARAMETER(status);
-			MANGO_UNREFERENCED_PARAMETER(bytes_read);
+			MANGO_UNREFERENCED(status);
+			MANGO_UNREFERENCED(bytes_read);
 	    }
 
 	    void write(const void* data, size_t size)
 	    {
 	        DWORD bytes_written;
 	        BOOL status = WriteFile(m_handle, data, static_cast<DWORD>(size), &bytes_written, NULL);
-			MANGO_UNREFERENCED_PARAMETER(status);
-			MANGO_UNREFERENCED_PARAMETER(bytes_written);
+			MANGO_UNREFERENCED(status);
+			MANGO_UNREFERENCED(bytes_written);
 	    }
 	};
 

@@ -1179,26 +1179,26 @@ namespace mango
 
     void decode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const DirectX::D3DX_BC1* data = reinterpret_cast<const DirectX::D3DX_BC1*>(input);
         DirectX::DecodeBC1(output, stride, data, true);
     }
 
     void decode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         DirectX::D3DXDecodeBC2(output, stride, input);
     }
 
     void decode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         DirectX::D3DXDecodeBC3(output, stride, input);
     }
 
     void encode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC1(output, temp, 0.0f, DirectX::BC_FLAGS_NONE);
@@ -1206,7 +1206,7 @@ namespace mango
 
     void encode_block_bc1a(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC1(output, temp, 1.0f, DirectX::BC_FLAGS_NONE);
@@ -1214,7 +1214,7 @@ namespace mango
 
     void encode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC2(output, temp, DirectX::BC_FLAGS_NONE);
@@ -1222,7 +1222,7 @@ namespace mango
 
     void encode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         float4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC3(output, temp, DirectX::BC_FLAGS_NONE);

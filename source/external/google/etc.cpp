@@ -628,7 +628,7 @@ namespace mango
 
     void decode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const u64 color = uload64be(input);
         decompress_block_etc1(output, stride, color);
     }
@@ -643,7 +643,7 @@ namespace mango
 
     void decode_block_etc2_eac(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const u64 alpha = uload64be(input + 0);
         const u64 color = uload64be(input + 8);
         decompress_block_etc2(output, stride, color, false);

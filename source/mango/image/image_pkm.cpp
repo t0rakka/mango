@@ -117,22 +117,29 @@ namespace
 
         Memory memory(int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
 
             return m_data;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             TextureCompressionInfo info = m_header.compression;
-            info.decompress(dest, m_data);
+            TextureCompressionStatus cs = info.decompress(dest, m_data);
+
+            status.success = cs.success;
+            status.direct = cs.direct;
+
+            return status;
         }
     };
 
@@ -148,7 +155,7 @@ namespace
 
     void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED_PARAMETER(options);
+        MANGO_UNREFERENCED(options);
 
         // ETC1 compression uses 4x4 blocks
         const int width = (surface.width + 3) & ~3;

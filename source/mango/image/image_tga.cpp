@@ -269,12 +269,13 @@ namespace
             return header;
         }
 
-        void decode(Surface& surface, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& surface, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(ptr_palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             LittleEndianConstPointer p = m_pointer;
 
@@ -349,14 +350,14 @@ namespace
                 dest.stride = -surface.stride;
             }
 
-            u8* temp = nullptr;
+		    std::unique_ptr<u8[]> temp;
             const u8* data = p;
 
             if (m_header.isRLE())
             {
-                temp = new u8[width * height * bpp];
-                decompressRLE(temp, p, width, height, bpp);
-                data = temp;
+                temp.reset(new u8[width * height * bpp]);
+                decompressRLE(temp.get(), p, width, height, bpp);
+                data = temp.get();
             }
 
             switch (m_header.data_type)
@@ -396,7 +397,8 @@ namespace
                 }
             }
 
-            delete[] temp;
+            status.success = true;
+            return status;
         }
     };
 
@@ -412,7 +414,7 @@ namespace
 
     void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED_PARAMETER(options);
+        MANGO_UNREFERENCED(options);
 
         // configure output
         const bool isalpha = surface.format.isAlpha();

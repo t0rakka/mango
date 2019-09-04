@@ -110,21 +110,25 @@ namespace
             return m_header;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             WebPFormat wpformat = webpFindFormat(dest.format);
             bool matching_formats = wpformat.format == dest.format;
             bool matching_dimensions = m_header.width == dest.width &&
                                        m_header.height == dest.height;
 
+            status.direct = matching_formats && matching_dimensions;
+
             uint8_t* output = nullptr;
 
-            if (matching_formats && matching_dimensions)
+            if (status.direct)
             {
                 // Direct decoding
                 output = wpformat.decode(dest, m_memory);
@@ -144,6 +148,12 @@ namespace
             {
                 MANGO_EXCEPTION("[ImageDecoder.WEBP] Decoding failed.");
             }
+            else
+            {
+                status.success = true;
+            }
+
+            return status;
         }
     };
 

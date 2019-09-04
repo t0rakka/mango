@@ -55,15 +55,15 @@ namespace
             return Exif();
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
 
-            jpeg::Status s = m_parser.decode(dest);
-            MANGO_UNREFERENCED_PARAMETER(s);
+            ImageDecodeStatus status = m_parser.decode(dest);
+            return status;
         }
     };
 

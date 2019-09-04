@@ -256,7 +256,7 @@ namespace
             const u8* end = m_memory.address + m_memory.size - 12;
 
             bool is_pbm = read_signature(data);
-            MANGO_UNREFERENCED_PARAMETER(is_pbm);
+            MANGO_UNREFERENCED(is_pbm);
 
             bool ham = false;
             u8 nplanes = 0;
@@ -314,12 +314,13 @@ namespace
             return header;
         }
 
-        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(ptr_palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+			ImageDecodeStatus status;
 
             const u8* data = m_memory.address;
             const u8* end = m_memory.address + m_memory.size - 12;
@@ -328,7 +329,7 @@ namespace
 
             Palette palette;
 
-            u8* buffer_allocated = nullptr;
+		    std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;
 
             bool ham = false;
@@ -412,10 +413,11 @@ namespace
                         {
                             int scansize = ((xsize + 15) & ~15) / 8 * (nplanes + (mask == 1));
                             int bytes = scansize * ysize;
-                            buffer_allocated = new u8[bytes];
+                            allocation.reset(new u8[bytes]);
+                            u8* allocated = allocation.get();
 
-                            unpackBits(buffer_allocated, p, bytes, size);
-                            buffer = buffer_allocated;
+                            unpackBits(allocated, p, bytes, size);
+                            buffer = allocated;
                         }
                         else
                         {
@@ -430,13 +432,13 @@ namespace
                 }
 
                 // silence compiler warnings about unused symbols
-                MANGO_UNREFERENCED_PARAMETER(xorigin);
-                MANGO_UNREFERENCED_PARAMETER(yorigin);
-                MANGO_UNREFERENCED_PARAMETER(transcolor);
-                MANGO_UNREFERENCED_PARAMETER(xaspect);
-                MANGO_UNREFERENCED_PARAMETER(yaspect);
-                MANGO_UNREFERENCED_PARAMETER(xscreen);
-                MANGO_UNREFERENCED_PARAMETER(yscreen);
+                MANGO_UNREFERENCED(xorigin);
+                MANGO_UNREFERENCED(yorigin);
+                MANGO_UNREFERENCED(transcolor);
+                MANGO_UNREFERENCED(xaspect);
+                MANGO_UNREFERENCED(yaspect);
+                MANGO_UNREFERENCED(xscreen);
+                MANGO_UNREFERENCED(yscreen);
             }
 
             // fix ehb palette
@@ -514,7 +516,8 @@ namespace
                 dest.blit(0, 0, temp);
             }
 
-            delete[] buffer_allocated;
+            status.success = true;
+            return status;
         }
     };
 

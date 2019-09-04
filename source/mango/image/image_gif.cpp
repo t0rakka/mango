@@ -406,16 +406,16 @@ namespace
 		u16 delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
 		u8 transparent_color = transparent_color_flag ? *x : 0;
 
-        MANGO_UNREFERENCED_PARAMETER(delay);
-        MANGO_UNREFERENCED_PARAMETER(transparent_color);
-        MANGO_UNREFERENCED_PARAMETER(user_input_flag);
-        MANGO_UNREFERENCED_PARAMETER(disposal_method);
+        MANGO_UNREFERENCED(delay);
+        MANGO_UNREFERENCED(transparent_color);
+        MANGO_UNREFERENCED(user_input_flag);
+        MANGO_UNREFERENCED(disposal_method);
 	}
 
 	void read_application_extension(const u8* p)
 	{
 		std::string identifier(reinterpret_cast<const char*>(p), 8);
-		MANGO_UNREFERENCED_PARAMETER(identifier);
+		MANGO_UNREFERENCED(identifier);
 	}
 
 	const u8* read_extension(const u8* p)
@@ -538,16 +538,20 @@ namespace
             return m_header;
         }
 
-        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+			ImageDecodeStatus status;
 
 			Format format = ptr_palette ? FORMAT_L8 : FORMAT_B8G8R8A8;
 
 			int stride = m_header.width * format.bytes();
 			Surface target(m_header.width, m_header.height, format, stride, m_image.get());
+
+			status.current_frame_index = m_frame_counter;
 
 			if (m_data)
 			{
@@ -567,6 +571,11 @@ namespace
 					m_data = m_start;
 				}
 			}
+
+			status.next_frame_index = m_frame_counter;
+
+            status.success = true;
+            return status;
         }
     };
 

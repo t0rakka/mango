@@ -412,7 +412,7 @@ namespace
 
     void parseGPS(Exif& exif, const u8* p, const u8* start, bool littleEndian)
     {
-        MANGO_UNREFERENCED_PARAMETER(exif);
+        MANGO_UNREFERENCED(exif);
 
         int count = parse16(p, littleEndian);
         p += 2;

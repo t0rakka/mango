@@ -17,6 +17,12 @@ namespace mango
         return flags | (index << 8) | format;
     }
 
+    struct TextureCompressionStatus
+    {
+        bool success = false;
+        bool direct = false;
+    };
+
     struct TextureCompressionInfo
     {
         enum CompressionFormat : u32
@@ -217,8 +223,8 @@ namespace mango
         TextureCompressionInfo(TextureCompression compression);
         TextureCompressionInfo(int width, int height, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode, TextureCompression compression);
 
-        void decompress(const Surface& surface, Memory memory) const;
-        void compress(Memory memory, const Surface& surface) const;
+        TextureCompressionStatus decompress(const Surface& surface, Memory memory) const;
+        TextureCompressionStatus compress(Memory memory, const Surface& surface) const;
 
         CompressionFormat getCompressionFormat() const
         {

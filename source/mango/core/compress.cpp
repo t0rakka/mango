@@ -50,7 +50,7 @@ namespace nocompress {
 
     size_t compress(Memory dest, Memory source, int level)
     {
-        MANGO_UNREFERENCED_PARAMETER(level);
+        MANGO_UNREFERENCED(level);
         std::memcpy(dest.address, source.address, source.size);
         return source.size;
     }
@@ -608,7 +608,7 @@ namespace lzfse {
 
     size_t compress(Memory dest, Memory source, int level)
     {
-        MANGO_UNREFERENCED_PARAMETER(level);
+        MANGO_UNREFERENCED(level);
 
         const size_t scratch_size = lzfse_encode_scratch_size();
         Buffer scratch(scratch_size);
@@ -621,7 +621,7 @@ namespace lzfse {
         const size_t scratch_size = lzfse_decode_scratch_size();
         Buffer scratch(scratch_size);
         size_t written = lzfse_decode_buffer(dest.address, dest.size, source, source.size, scratch);
-        MANGO_UNREFERENCED_PARAMETER(written);
+        MANGO_UNREFERENCED(written);
     }
 
 } // namespace lzfse

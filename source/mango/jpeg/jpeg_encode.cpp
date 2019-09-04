@@ -1296,8 +1296,8 @@ namespace
     static
     void read_y_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
     {
-        MANGO_UNREFERENCED_PARAMETER(rows);
-        MANGO_UNREFERENCED_PARAMETER(cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
 
         // load
         __m128i v0 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(input)); input += stride;
@@ -1357,8 +1357,8 @@ namespace
     static
     void read_bgra_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
     {
-        MANGO_UNREFERENCED_PARAMETER(rows);
-        MANGO_UNREFERENCED_PARAMETER(cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
 
         __m128i* dest = reinterpret_cast<__m128i*>(block);
 
@@ -1420,8 +1420,8 @@ namespace
     static
     void read_rgba_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
     {
-        MANGO_UNREFERENCED_PARAMETER(rows);
-        MANGO_UNREFERENCED_PARAMETER(cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
 
         __m128i* dest = reinterpret_cast<__m128i*>(block);
 
@@ -1487,8 +1487,8 @@ namespace
     static
     void read_bgr_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
     {
-        MANGO_UNREFERENCED_PARAMETER(rows);
-        MANGO_UNREFERENCED_PARAMETER(cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
 
         __m128i* dest = reinterpret_cast<__m128i*>(block);
 
@@ -1548,8 +1548,8 @@ namespace
     static
     void read_rgb_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
     {
-        MANGO_UNREFERENCED_PARAMETER(rows);
-        MANGO_UNREFERENCED_PARAMETER(cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
 
         __m128i* dest = reinterpret_cast<__m128i*>(block);
 
@@ -1632,7 +1632,7 @@ namespace
         read_8x8 = nullptr;
 
         u64 cpu_flags = getCPUFlags();
-        MANGO_UNREFERENCED_PARAMETER(cpu_flags);
+        MANGO_UNREFERENCED(cpu_flags);
 
         switch (sample)
         {

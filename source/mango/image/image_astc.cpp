@@ -137,26 +137,32 @@ namespace
 
         Memory memory(int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
 
             return m_data;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             TextureCompressionInfo info(m_header.compression);
 
             if (info.compression != TextureCompression::NONE)
             {
-                info.decompress(dest, m_data);
+                TextureCompressionStatus cs = info.decompress(dest, m_data);
+                status.success = cs.success;
+                status.direct = cs.direct;
             }
+
+            return status;
         }
     };
 

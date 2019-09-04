@@ -94,7 +94,7 @@ namespace
             read_blocks(memory.address + block_offset);
             read_files(memory.address + file_offset);
 
-            MANGO_UNREFERENCED_PARAMETER(version);
+            MANGO_UNREFERENCED(version);
         }
 
         void read_blocks(LittleEndianConstPointer p)

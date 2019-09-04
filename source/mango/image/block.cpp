@@ -505,10 +505,14 @@ namespace mango
     {
     }
 
-    void TextureCompressionInfo::decompress(const Surface& surface, Memory memory) const
+    TextureCompressionStatus TextureCompressionInfo::decompress(const Surface& surface, Memory memory) const
     {
+        TextureCompressionStatus status;
+
         if (!decode)
-            return;
+        {
+            return status;
+        }
 
         const int xsize = ceil_div(surface.width, width);
         const int ysize = ceil_div(surface.height, height);
@@ -540,12 +544,21 @@ namespace mango
                 clipConvertBlockDecode(*this, surface, memory, xsize, ysize);
             }
         }
+
+        status.direct = direct;
+        status.success = true;
+
+        return status;
     }
 
-    void TextureCompressionInfo::compress(Memory memory, const Surface& surface) const
+    TextureCompressionStatus TextureCompressionInfo::compress(Memory memory, const Surface& surface) const
     {
+        TextureCompressionStatus status;
+
         if (!encode)
-            return;
+        {
+            return status;
+        }
 
         ConcurrentQueue queue;
 
@@ -574,6 +587,10 @@ namespace mango
         }
 
         queue.wait();
+
+        status.success = true;
+
+        return status;
     }
 
 } // namespace mango

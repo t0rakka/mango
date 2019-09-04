@@ -566,9 +566,9 @@ namespace filesystem {
             u64 host_os = vint(p);
             u64 length = vint(p);
 
-            MANGO_UNREFERENCED_PARAMETER(attributes);
-            MANGO_UNREFERENCED_PARAMETER(mtime);
-            MANGO_UNREFERENCED_PARAMETER(host_os);
+            MANGO_UNREFERENCED(attributes);
+            MANGO_UNREFERENCED(mtime);
+            MANGO_UNREFERENCED(host_os);
 
             bool is_directory = (flags & 1) != 0;
 
@@ -656,8 +656,8 @@ namespace filesystem {
                 //printf("crc: %.8x, type: %x, flags: %x, header: %x, extra: %x, data: %x\n", 
                 //    crc, type, flags, (int)header_size, (int)extra_size, (int)data_size);
 
-                MANGO_UNREFERENCED_PARAMETER(crc);
-                MANGO_UNREFERENCED_PARAMETER(extra_size);
+                MANGO_UNREFERENCED(crc);
+                MANGO_UNREFERENCED(extra_size);
 
                 // TODO: add support for AES decryption headers
                 // TODO: add support for RAR 5.0 compression

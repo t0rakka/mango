@@ -32,8 +32,8 @@ void FUNCTION_YCBCR_8x8(u8* dest, int stride, const s16* data, ProcessState* sta
         dest += stride;
     }
 
-    MANGO_UNREFERENCED_PARAMETER(width);
-    MANGO_UNREFERENCED_PARAMETER(height);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 #endif
 
@@ -72,8 +72,8 @@ void FUNCTION_YCBCR_8x16(u8* dest, int stride, const s16* data, ProcessState* st
         dest += stride;
     }
 
-    MANGO_UNREFERENCED_PARAMETER(width);
-    MANGO_UNREFERENCED_PARAMETER(height);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 #endif
 
@@ -113,8 +113,8 @@ void FUNCTION_YCBCR_16x8(u8* dest, int stride, const s16* data, ProcessState* st
         dest += stride;
     }
 
-    MANGO_UNREFERENCED_PARAMETER(width);
-    MANGO_UNREFERENCED_PARAMETER(height);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 #endif
 
@@ -164,7 +164,7 @@ void FUNCTION_YCBCR_16x16(u8* dest, int stride, const s16* data, ProcessState* s
         dest += stride;
     }
 
-    MANGO_UNREFERENCED_PARAMETER(width);
-    MANGO_UNREFERENCED_PARAMETER(height);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 #endif

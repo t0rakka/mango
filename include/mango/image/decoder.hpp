@@ -22,8 +22,30 @@ namespace mango
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
         bool    palette = false; // palette is available
-        Format  format; // preferred format (fastest available decoding)
+        Format  format; // preferred format (fastest available "direct" decoding is possible)
         TextureCompression compression = TextureCompression::NONE;
+    };
+
+    struct ImageDecodeOptions
+    {
+        // request indexed decoding
+        // - palette is resolved into the provided palette object
+        // - decode() destination surface must be indexed
+        Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
+    };
+
+    struct ImageDecodeStatus
+    {
+        std::string info;
+        bool success = false;
+        bool direct = false;
+
+        // animation information
+        // NOTE: we would love to simply return number of animation frames in the ImageHeader
+        //       but some formats do not provide this information without decompressing frames
+        //       until running out of data.
+        int current_frame_index = 0;
+        int next_frame_index = 0;
     };
 
     class ImageDecoderInterface : protected NonCopyable
@@ -33,26 +55,12 @@ namespace mango
         virtual ~ImageDecoderInterface() = default;
 
         virtual ImageHeader header() = 0;
-        virtual void decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
+        virtual ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
 
         // optional
         virtual Memory memory(int level, int depth, int face); // get compressed data
         virtual Exif exif(); // get exif data
     };
-
-    struct ImageDecodeOptions
-    {
-        Palette* palette = nullptr; // request indexed decoding; write palette here
-    };
-
-#if 0
-    struct ImageDecodeStatus
-    {
-        std::string name;
-        bool direct;
-        int frame;
-    };
-#endif
 
     class ImageDecoder : protected NonCopyable
     {
@@ -62,7 +70,7 @@ namespace mango
 
         bool isDecoder() const;
         ImageHeader header();
-        void decode(Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        ImageDecodeStatus decode(Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
 
         Memory memory(int level, int depth, int face);
         Exif exif();

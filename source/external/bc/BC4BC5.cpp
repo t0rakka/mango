@@ -333,7 +333,7 @@ namespace mango
 
     void decode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
@@ -353,7 +353,7 @@ namespace mango
 
     void decode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
@@ -373,7 +373,7 @@ namespace mango
 
     void decode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
@@ -398,7 +398,7 @@ namespace mango
 
     void decode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
@@ -423,7 +423,7 @@ namespace mango
 
     void encode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
@@ -449,7 +449,7 @@ namespace mango
 
     void encode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
@@ -475,7 +475,7 @@ namespace mango
 
     void encode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
@@ -513,7 +513,7 @@ namespace mango
 
     void encode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         assert( output && input );
         static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 

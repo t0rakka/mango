@@ -187,13 +187,13 @@ namespace mango {
 
         AlignedAllocator(const AlignedAllocator& allocator)
         {
-            MANGO_UNREFERENCED_PARAMETER(allocator);
+            MANGO_UNREFERENCED(allocator);
         }
 
         template <class U>
         AlignedAllocator(const AlignedAllocator<U, ALIGNMENT>& allocator)
         {
-            MANGO_UNREFERENCED_PARAMETER(allocator);
+            MANGO_UNREFERENCED(allocator);
         }
 
         ~AlignedAllocator()
@@ -212,14 +212,14 @@ namespace mango {
 
         pointer allocate(size_type n, std::allocator<void>::const_pointer hint = 0)
         {
-            MANGO_UNREFERENCED_PARAMETER(hint);
+            MANGO_UNREFERENCED(hint);
             void* s = aligned_malloc(n * sizeof(T), ALIGNMENT);
             return reinterpret_cast<pointer>(s);
         }
 
         void deallocate(pointer p, size_type n)
         {
-            MANGO_UNREFERENCED_PARAMETER(n);
+            MANGO_UNREFERENCED(n);
             aligned_free(p);
         }
 
@@ -258,7 +258,7 @@ namespace mango {
 
         bool operator == (AlignedAllocator const& allocator)
         {
-            MANGO_UNREFERENCED_PARAMETER(allocator);
+            MANGO_UNREFERENCED(allocator);
             return true;
         }
 

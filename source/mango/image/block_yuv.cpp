@@ -64,8 +64,8 @@ namespace mango
 
     void decode_block_uyvy(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         int y0 = (input[1] - 16) * 298 + 128;
         int y1 = (input[3] - 16) * 298 + 128;
@@ -83,8 +83,8 @@ namespace mango
 
     void decode_block_yuy2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         int y0 = (input[0] - 16) * 298 + 128;
         int y1 = (input[2] - 16) * 298 + 128;
@@ -102,8 +102,8 @@ namespace mango
 
     void decode_block_grgb8(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         output[0] = input[1];
         output[1] = input[0];
@@ -118,8 +118,8 @@ namespace mango
 
     void decode_block_rgbg8(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         output[0] = input[0];
         output[1] = input[1];
@@ -134,8 +134,8 @@ namespace mango
 
     void decode_block_rgb9e5(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         u32 data = uload32le(input);
         RGB9E5 sample(data);
@@ -165,8 +165,8 @@ namespace mango
 
     void decode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         u32 data = uload32le(input);
 
@@ -187,8 +187,8 @@ namespace mango
 
     void decode_block_r10f_g11f_b11f(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
 
         u32 data = uload32le(input);
 

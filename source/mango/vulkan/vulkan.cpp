@@ -423,7 +423,7 @@ namespace vulkan {
 			}
 		}
 
-		MANGO_UNREFERENCED_PARAMETER(result);
+		MANGO_UNREFERENCED(result);
 		return physicalDevice;
 	}
 

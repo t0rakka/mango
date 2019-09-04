@@ -192,7 +192,8 @@ namespace
             surface.image  = new u8[surface.height * surface.stride];
 
             // decode
-            decoder.decode(surface);
+            ImageDecodeStatus status = decoder.decode(surface);
+            MANGO_UNREFERENCED(status);
         }
 
         return surface;

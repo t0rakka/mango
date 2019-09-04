@@ -234,12 +234,14 @@ namespace jpeg {
 
 #if defined(JPEG_ENABLE_NEON)
         processState.idct = idct_neon;
+        m_idct_name = "NEON iDCT";
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
         if (cpu_flags & CPU_SSE2)
         {
             processState.idct = idct_sse2;
+        m_idct_name = "SSE2 iDCT";
         }
 #endif
 
@@ -254,6 +256,7 @@ namespace jpeg {
             // Force 12 bit idct
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
             processState.idct = idct12;
+            m_idct_name = "12 bit iDCT";
         }
     }
 
@@ -332,13 +335,13 @@ namespace jpeg {
     void Parser::processCOM(const u8* p)
     {
         debugPrint("[ COM ]\n");
-        MANGO_UNREFERENCED_PARAMETER(p);
+        MANGO_UNREFERENCED(p);
     }
 
     void Parser::processTEM(const u8* p)
     {
         debugPrint("[ TEM ]\n");
-        MANGO_UNREFERENCED_PARAMETER(p);
+        MANGO_UNREFERENCED(p);
     }
 
     void Parser::processRES(const u8* p)
@@ -346,7 +349,7 @@ namespace jpeg {
         debugPrint("[ RES ]\n");
 
         // Reserved for jpeg extensions
-        MANGO_UNREFERENCED_PARAMETER(p);
+        MANGO_UNREFERENCED(p);
     }
 
     void Parser::processJPG(const u8* p)
@@ -354,7 +357,7 @@ namespace jpeg {
         debugPrint("[ JPG ]\n");
 
         // Reserved for jpeg extensions
-        MANGO_UNREFERENCED_PARAMETER(p);
+        MANGO_UNREFERENCED(p);
     }
 
     void Parser::processJPG(const u8* p, u16 marker)
@@ -362,8 +365,8 @@ namespace jpeg {
         debugPrint("[ JPG%d ]\n", int(marker - MARKER_JPG0));
 
         // Reserved for jpeg extensions
-        MANGO_UNREFERENCED_PARAMETER(p);
-        MANGO_UNREFERENCED_PARAMETER(marker);
+        MANGO_UNREFERENCED(p);
+        MANGO_UNREFERENCED(marker);
     }
 
     void Parser::processAPP(const u8* p, u16 marker)
@@ -407,12 +410,12 @@ namespace jpeg {
                     debugPrint("    thumbnail: %i x %i\n", Xthumbnail, Ythumbnail);
 
                     // TODO: process thumbnail / store JFIF block
-                    MANGO_UNREFERENCED_PARAMETER(version);
-                    MANGO_UNREFERENCED_PARAMETER(Xdensity);
-                    MANGO_UNREFERENCED_PARAMETER(Ydensity);
-                    MANGO_UNREFERENCED_PARAMETER(Xthumbnail);
-                    MANGO_UNREFERENCED_PARAMETER(Ythumbnail);
-                    MANGO_UNREFERENCED_PARAMETER(unit_str);
+                    MANGO_UNREFERENCED(version);
+                    MANGO_UNREFERENCED(Xdensity);
+                    MANGO_UNREFERENCED(Ydensity);
+                    MANGO_UNREFERENCED(Xthumbnail);
+                    MANGO_UNREFERENCED(Ythumbnail);
+                    MANGO_UNREFERENCED(unit_str);
                 }
 
                 break;
@@ -453,8 +456,8 @@ namespace jpeg {
                     size -= 2;
 
                     debugPrint("  ICC: %d / %d (%d bytes)\n", sequence_number, sequence_total, size);
-                    MANGO_UNREFERENCED_PARAMETER(sequence_number);
-                    MANGO_UNREFERENCED_PARAMETER(sequence_total);
+                    MANGO_UNREFERENCED(sequence_number);
+                    MANGO_UNREFERENCED(sequence_total);
 
                     // append ICC segment (JPEG markers have a maximum size and are split)
                     icc_buffer.append(p, size);
@@ -494,8 +497,8 @@ namespace jpeg {
                     }
                     debugPrint("  Version: %d\n", version);
                     debugPrint("  ColorTransform: %d\n", color_transform);
-                    MANGO_UNREFERENCED_PARAMETER(version);
-                    MANGO_UNREFERENCED_PARAMETER(color_transform);
+                    MANGO_UNREFERENCED(version);
+                    MANGO_UNREFERENCED(color_transform);
                 }
                 break;
             }
@@ -532,10 +535,9 @@ namespace jpeg {
         }
 
         is_arithmetic = marker > MARKER_SOF7;
-        std::string compression = is_arithmetic ? "Arithmetic" : "Huffman";
+        m_compression = is_arithmetic ? "Arithmetic" : "Huffman";
 
-        std::string encoding;
-
+        const char* encoding = "";
         switch (marker)
         {
             // Huffman
@@ -555,12 +557,10 @@ namespace jpeg {
             case MARKER_SOF15: encoding = "Differential lossless"; break;
         }
 
-        debugPrint("  Encoding: %s\n", encoding.c_str());
-        debugPrint("  Compression: %s\n", compression.c_str());
+        m_encoding = encoding;
 
-        m_info = encoding;
-        m_info += "  ";
-        m_info += compression;
+        debugPrint("  Encoding: %s\n", m_encoding.c_str());
+        debugPrint("  Compression: %s\n", m_compression.c_str());
 
         switch (marker)
         {
@@ -692,7 +692,7 @@ namespace jpeg {
         header.yblock = yblock;
         header.format = components > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
 
-        MANGO_UNREFERENCED_PARAMETER(length);
+        MANGO_UNREFERENCED(length);
     }
 
     const u8* Parser::processSOS(const u8* p, const u8* end)
@@ -710,7 +710,7 @@ namespace jpeg {
 
         debugPrint("  components: %i%s\n", 
             decodeState.comps_in_scan, is_multiscan ? " (MultiScan)" : "");
-        MANGO_UNREFERENCED_PARAMETER(length);
+        MANGO_UNREFERENCED(length);
 
         decodeState.blocks = 0;
 
@@ -1067,8 +1067,8 @@ namespace jpeg {
 
         u16 Ld = uload16be(p + 0); // Define number of lines segment length
         u16 NL = uload16be(p + 2); // Number of lines
-        MANGO_UNREFERENCED_PARAMETER(NL); // TODO: ysize = NL
-        MANGO_UNREFERENCED_PARAMETER(Ld);
+        MANGO_UNREFERENCED(NL); // TODO: ysize = NL
+        MANGO_UNREFERENCED(Ld);
     }
 
     void Parser::processDRI(const u8* p)
@@ -1090,7 +1090,7 @@ namespace jpeg {
         debugPrint("[ DHP ]\n");
 
         // TODO: "Define Hierarchical Progression" marker
-        MANGO_UNREFERENCED_PARAMETER(p);
+        MANGO_UNREFERENCED(p);
     }
 
     void Parser::processEXP(const u8* p)
@@ -1103,9 +1103,9 @@ namespace jpeg {
         u8 Ev = (x >> 0) & 0xf; // Expand vertically
 
         // Unsupported marker
-        MANGO_UNREFERENCED_PARAMETER(Le);
-        MANGO_UNREFERENCED_PARAMETER(Eh);
-        MANGO_UNREFERENCED_PARAMETER(Ev);
+        MANGO_UNREFERENCED(Le);
+        MANGO_UNREFERENCED(Eh);
+        MANGO_UNREFERENCED(Ev);
     }
 
     void Parser::parse(Memory memory, bool decode)
@@ -1273,8 +1273,8 @@ namespace jpeg {
             u64 time1 = Time::us();
             debugPrint("  Time: %d us\n\n", int(time1 - time0));
 
-            MANGO_UNREFERENCED_PARAMETER(time0);
-            MANGO_UNREFERENCED_PARAMETER(time1);
+            MANGO_UNREFERENCED(time0);
+            MANGO_UNREFERENCED(time1);
         }
     }
 
@@ -1497,7 +1497,7 @@ namespace jpeg {
                         if (processState.process_ycbcr_8x8)
                         {
                             processState.process = processState.process_ycbcr_8x8;
-                            id = makeString("YCbCr 8x8 %s", simd);
+                            id = makeString("%s YCbCr 8x8", simd);
                         }
                     }
 
@@ -1506,7 +1506,7 @@ namespace jpeg {
                         if (processState.process_ycbcr_8x16)
                         {
                             processState.process = processState.process_ycbcr_8x16;
-                            id = makeString("YCbCr 8x16 %s", simd);
+                            id = makeString("%s YCbCr 8x16", simd);
                         }
                     }
 
@@ -1515,7 +1515,7 @@ namespace jpeg {
                         if (processState.process_ycbcr_16x8)
                         {
                             processState.process = processState.process_ycbcr_16x8;
-                            id = makeString("YCbCr 16x8 %s", simd);
+                            id = makeString("%s YCbCr 16x8", simd);
                         }
                     }
 
@@ -1524,7 +1524,7 @@ namespace jpeg {
                         if (processState.process_ycbcr_16x16)
                         {
                             processState.process = processState.process_ycbcr_16x16;
-                            id = makeString("YCbCr 16x16 %s", simd);
+                            id = makeString("%s YCbCr 16x16", simd);
                         }
                     }
                 }
@@ -1537,16 +1537,16 @@ namespace jpeg {
                 break;
         }
 
+        m_ycbcr_name = id;
         debugPrint("  Decoder: %s\n", id.c_str());
     }
 
-    Status Parser::decode(Surface& target)
+    ImageDecodeStatus Parser::decode(Surface& target)
     {
-        Status status;
-        status.success = true;
-        status.enableDirectDecode = true;
+        ImageDecodeStatus status;
 
-        m_info = "";
+        status.success = true;
+        status.direct = true;
 
         if (!scan_memory.address)
         {
@@ -1588,15 +1588,15 @@ namespace jpeg {
         // target surface size has to match (clipping isn't yet supported)
         if (target.width != xsize || target.height != ysize)
         {
-            status.enableDirectDecode = false;
+            status.direct = false;
         }
 
         if (target.format != sf.format)
         {
-            status.enableDirectDecode = false;
+            status.direct = false;
         }
 
-        if (status.enableDirectDecode)
+        if (status.direct)
         {
             m_surface = &target;
 
@@ -1623,7 +1623,24 @@ namespace jpeg {
         }
 
         blockVector = nullptr;
-        status.info = m_info;
+
+        // build info string
+        status.info = m_encoding;
+
+        status.info += ", ";
+        status.info += m_compression;
+
+        if (!m_idct_name.empty())
+        {
+            status.info += ", ";
+            status.info += m_idct_name;
+        }
+
+        if (!m_ycbcr_name.empty())
+        {
+            status.info += ", ";
+            status.info += m_ycbcr_name;
+        }
 
         return status;
     }

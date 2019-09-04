@@ -323,11 +323,13 @@ namespace
             return header;
         }
 
-        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             bool isPaletteMarker = getPaletteMarker(m_memory);
 
@@ -467,6 +469,9 @@ namespace
                 default:
                     break;
             }
+
+            status.success = true;
+            return status;
         }
     };
 

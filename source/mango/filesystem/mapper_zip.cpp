@@ -662,7 +662,7 @@ namespace filesystem {
                 case ENCRYPTION_AES256:
                 {
                     u32 salt_length = getSaltLength(header.encryption);
-                    MANGO_UNREFERENCED_PARAMETER(salt_length);
+                    MANGO_UNREFERENCED(salt_length);
                     MANGO_EXCEPTION(ID"AES encryption is not yet supported.");
 #if 0                
                     u8* saltvalue = address;

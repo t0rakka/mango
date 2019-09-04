@@ -90,7 +90,7 @@ namespace mango
     Window::Window(int width, int height, u32 flags)
     {
 		m_handle = new WindowHandle(width, height);
-        MANGO_UNREFERENCED_PARAMETER(flags); // TODO
+        MANGO_UNREFERENCED(flags); // TODO
     }
 
     Window::~Window()
@@ -600,8 +600,8 @@ namespace mango
 
     void Window::onResize(int width, int height)
     {
-        MANGO_UNREFERENCED_PARAMETER(width);
-        MANGO_UNREFERENCED_PARAMETER(height);
+        MANGO_UNREFERENCED(width);
+        MANGO_UNREFERENCED(height);
     }
 
     void Window::onMinimize()
@@ -614,32 +614,32 @@ namespace mango
 
     void Window::onKeyPress(Keycode code, u32 mask)
     {
-        MANGO_UNREFERENCED_PARAMETER(code);
-        MANGO_UNREFERENCED_PARAMETER(mask);
+        MANGO_UNREFERENCED(code);
+        MANGO_UNREFERENCED(mask);
     }
 
     void Window::onKeyRelease(Keycode code)
     {
-        MANGO_UNREFERENCED_PARAMETER(code);
+        MANGO_UNREFERENCED(code);
     }
 
     void Window::onMouseMove(int x, int y)
     {
-        MANGO_UNREFERENCED_PARAMETER(x);
-        MANGO_UNREFERENCED_PARAMETER(y);
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
     }
 
     void Window::onMouseClick(int x, int y, MouseButton button, int count)
     {
-        MANGO_UNREFERENCED_PARAMETER(x);
-        MANGO_UNREFERENCED_PARAMETER(y);
-        MANGO_UNREFERENCED_PARAMETER(button);
-        MANGO_UNREFERENCED_PARAMETER(count);
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+        MANGO_UNREFERENCED(button);
+        MANGO_UNREFERENCED(count);
     }
 
     void Window::onDropFiles(const filesystem::FileIndex& index)
     {
-        MANGO_UNREFERENCED_PARAMETER(index);
+        MANGO_UNREFERENCED(index);
     }
 
     void Window::onClose()

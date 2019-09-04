@@ -65,13 +65,13 @@ namespace filesystem {
 	    void read(void* dest, size_t size)
 	    {
     	    size_t status = std::fread(dest, 1, size, m_file);
-	        MANGO_UNREFERENCED_PARAMETER(status);
+	        MANGO_UNREFERENCED(status);
 	    }
 
 	    void write(const void* data, size_t size)
 	    {
 	        size_t status = std::fwrite(data, 1, size, m_file);
-	        MANGO_UNREFERENCED_PARAMETER(status);
+	        MANGO_UNREFERENCED(status);
 	    }
 	};
 

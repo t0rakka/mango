@@ -233,14 +233,14 @@ namespace mango
 
     void decode_block_dxt1(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const DXTColBlock* blockColor = reinterpret_cast<const DXTColBlock*>(in + 0);
         DecodeColorBlock(out, stride, blockColor, 0xff);
     }
 
     void decode_block_dxt3(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const DXTAlphaBlockExplicit* alphaBlock = reinterpret_cast<const DXTAlphaBlockExplicit *>(in + 0);
         const DXTColBlock* colorBlock = reinterpret_cast<const DXTColBlock*>(in + 8);
         DecodeColorBlock(out + 0, stride, colorBlock, 0);
@@ -249,7 +249,7 @@ namespace mango
 
     void decode_block_dxt5(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* alphaBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear *>(in + 0);
         const DXTColBlock* colorBlock = reinterpret_cast<const DXTColBlock*>(in + 8);
         DecodeColorBlock(out + 0, stride, colorBlock, 0);
@@ -258,14 +258,14 @@ namespace mango
 
     void decode_block_3dc_x(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* redBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear*>(in + 0);
         Decode3BitLinear(out + 0, 1, stride, redBlock);
     }
 
     void decode_block_3dc_xy(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
-        MANGO_UNREFERENCED_PARAMETER(info);
+        MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* redBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear*>(in + 0);
         const DXTAlphaBlock3BitLinear* greenBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear*>(in + 8);
         Decode3BitLinear(out + 0, 2, stride, redBlock);

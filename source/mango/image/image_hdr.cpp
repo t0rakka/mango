@@ -341,16 +341,19 @@ namespace
             return header;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
 
             Format format = FORMAT_RGBA32F;
 
-            if (dest.format == format)
+			ImageDecodeStatus status;
+			status.direct = dest.format == format;
+
+            if (status.direct)
             {
                 hdr_decode(dest, m_data);
             }
@@ -360,6 +363,9 @@ namespace
                 hdr_decode(temp, m_data);
                 dest.blit(0, 0, temp);
             }
+
+            status.success = true;
+            return status;
         }
     };
 

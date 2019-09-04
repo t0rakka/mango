@@ -450,7 +450,7 @@ namespace
 
     void readRLE4(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(stride);
 
         int x = 0;
         int y = 0;
@@ -535,7 +535,7 @@ namespace
 
     void readRLE8(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
-        MANGO_UNREFERENCED_PARAMETER(stride);
+        MANGO_UNREFERENCED(stride);
 
         int x = 0;
         int y = 0;
@@ -1033,11 +1033,15 @@ namespace
             return m_image_header;
         }
 
-        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
+
+            status.success = true;
 
             switch (m_file_header.magic)
             {
@@ -1051,23 +1055,23 @@ namespace
 
                 case 0x0000:
                     parseIco(nullptr, &dest, m_memory);
-                    return;
+                    return status;
 
                 case 0x5089:
                     getImage(dest, m_memory, "png");
-                    return;
+                    return status;
 
                 case 0xd8ff:
                     getImage(dest, m_memory, "jpg");
-                    return;
+                    return status;
 
                 case 0x4947:
                     getImage(dest, m_memory, "gif");
-                    return;
+                    return status;
 
                 case 0xcdd7:
                     getImage(dest, m_memory, "apm");
-                    return;
+                    return status;
 
                 default:
                     MANGO_EXCEPTION(ID"Incorrect header identifier.");
@@ -1076,6 +1080,8 @@ namespace
 
             Memory block = m_memory.slice(14);
             decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
+
+            return status;
         }
     };
 
@@ -1091,7 +1097,7 @@ namespace
 
     void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED_PARAMETER(options);
+        MANGO_UNREFERENCED(options);
 
         int width = surface.width;
         int height = surface.height;

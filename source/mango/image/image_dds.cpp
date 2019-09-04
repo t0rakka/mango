@@ -828,7 +828,7 @@ namespace
 
         Memory getMemory(int level, int depth, int face) const
         {
-            MANGO_UNREFERENCED_PARAMETER(depth); // TODO: support depth parameter for volume textures
+            MANGO_UNREFERENCED(depth); // TODO: support depth parameter for volume textures
 
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
@@ -897,22 +897,28 @@ namespace
             return m_header.getMemory(level, depth, face);
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
+            MANGO_UNREFERENCED(palette);
 
             Memory imageMemory = m_header.getMemory(level, depth, face);
             TextureCompression compression = m_header.getCompression();
 
+            ImageDecodeStatus status;
+
             if (m_header.pixelFormat.fourCC)
             {
                 TextureCompressionInfo info = fourcc_to_compression(m_header.pixelFormat.fourCC);
-                info.decompress(dest, imageMemory);
+                TextureCompressionStatus cs = info.decompress(dest, imageMemory);
+                status.success = cs.success;
+                status.direct = cs.direct;
             }
             else if (compression != TextureCompression::NONE)
             {
                 TextureCompressionInfo info = compression;
-                info.decompress(dest, imageMemory);
+                TextureCompressionStatus cs = info.decompress(dest, imageMemory);
+                status.success = cs.success;
+                status.direct = cs.direct;
             }
             else
             {
@@ -924,7 +930,11 @@ namespace
 
                 Surface source(width, height, format, stride, image);
                 dest.blit(0, 0, source);
+
+                status.success = true;
             }
+
+            return status;
         }
     };
 

@@ -101,12 +101,14 @@ namespace
             return Exif();
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(palette);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             ZPNG_ImageData z = ZPNG_Decompress(m_buffer);
             if (z.Buffer.Data)
@@ -134,6 +136,9 @@ namespace
                 
                 ZPNG_Free(&z.Buffer);
             }
+
+            status.success = true;
+            return status;
         }
     };
 
@@ -149,7 +154,7 @@ namespace
 
     void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED_PARAMETER(options);
+        MANGO_UNREFERENCED(options);
 
         // TODO: optimize encoder
         Bitmap temp(surface.width, surface.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));

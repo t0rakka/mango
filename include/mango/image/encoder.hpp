@@ -26,7 +26,7 @@ namespace mango
 #if 0
     struct ImageEncodeStatus
     {
-        std::string name;
+        std::string info;
         bool direct;
     };
 #endif

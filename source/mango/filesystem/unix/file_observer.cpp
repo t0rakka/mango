@@ -314,7 +314,7 @@ namespace filesystem {
 
     void FileObserver::start(const std::string& pathname)
     {
-        MANGO_UNREFERENCED_PARAMETER(pathname);
+        MANGO_UNREFERENCED(pathname);
     }
 
     void FileObserver::stop()

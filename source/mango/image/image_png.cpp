@@ -71,7 +71,7 @@ namespace
 
     void filter_sub(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED_PARAMETER(prev);
+        MANGO_UNREFERENCED(prev);
 
         for (int x = bpp; x < bytes; ++x)
         {
@@ -81,7 +81,7 @@ namespace
 
     void filter_up(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED_PARAMETER(bpp);
+        MANGO_UNREFERENCED(bpp);
 
         for (int x = 0; x < bytes; ++x)
         {
@@ -225,7 +225,7 @@ namespace
 
     void filter_sub_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED_PARAMETER(prev);
+        MANGO_UNREFERENCED(prev);
 
         __m128i d = _mm_setzero_si128();
 
@@ -238,7 +238,7 @@ namespace
 
     void filter_sub_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED_PARAMETER(prev);
+        MANGO_UNREFERENCED(prev);
 
         __m128i d = _mm_setzero_si128();
 
@@ -315,7 +315,7 @@ namespace
 
     void filter_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED_PARAMETER(bpp);
+        MANGO_UNREFERENCED(bpp);
 
         for (int x = 0; x < bytes; x += 16)
         {
@@ -535,6 +535,8 @@ namespace
         // acTL
         u32 m_number_of_frames = 0;
         u32 m_repeat_count = 0;
+        u32 m_current_frame_index = 0;
+        u32 m_next_frame_index = 0;
 
         // fcTL
         Frame m_frame;
@@ -595,7 +597,7 @@ namespace
         const char* getError() const;
 
         ImageHeader header() const;
-        const char* decode(Surface& dest, Palette* palette);
+        ImageDecodeStatus decode(Surface& dest, Palette* palette);
     };
 
     // ------------------------------------------------------------
@@ -916,7 +918,7 @@ namespace
         size -= 4;
 
         debugPrint("  Sequence: %d\n", sequence_number);
-        MANGO_UNREFERENCED_PARAMETER(sequence_number);
+        MANGO_UNREFERENCED(sequence_number);
 
         m_compressed.append(p, size);
     }
@@ -1756,15 +1758,17 @@ namespace
         return buffer_size;
     }
 
-    const char* ParserPNG::decode(Surface& dest, Palette* ptr_palette)
+    ImageDecodeStatus ParserPNG::decode(Surface& dest, Palette* ptr_palette)
     {
+        ImageDecodeStatus status;
+
         m_compressed.reset();
 
         parse();
 
         if (!m_compressed.size())
         {
-            return m_error;
+            return status;
         }
 
         // default: main image from "IHDR" chunk
@@ -1785,6 +1789,13 @@ namespace
             // decode frame into temporary buffer (for composition)
             image = new u8[stride * height];
             framebuffer.reset(image);
+
+            // compute frame indices (for external users)
+            m_current_frame_index = m_next_frame_index++;
+            if (m_next_frame_index >= m_number_of_frames)
+            {
+                m_next_frame_index = 0;
+            }
         }
 
         // decompression
@@ -1854,7 +1865,12 @@ namespace
             blend(d, s, ptr_palette);
         }
 
-        return m_error;
+        status.current_frame_index = m_current_frame_index;
+        status.next_frame_index = m_next_frame_index;
+
+        status.success = true;
+
+        return status;
     }
 
     // ------------------------------------------------------------
@@ -1981,49 +1997,51 @@ namespace
             return m_header;
         }
 
-        void decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(level);
-            MANGO_UNREFERENCED_PARAMETER(depth);
-            MANGO_UNREFERENCED_PARAMETER(face);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
 
             if (m_parser.getError())
             {
                 // any internal errors in previous decoding / parsin passes
                 // and we're out of here
-                return;
+                return status;
             }
 
-            const char* error = nullptr;
+            bool direct = dest.format == m_header.format &&
+                          dest.width >= m_header.width &&
+                          dest.height >= m_header.height &&
+                          !ptr_palette;
 
-            if (dest.format == m_header.format &&
-                dest.width >= m_header.width &&
-                dest.height >= m_header.height &&
-                !ptr_palette)
+            if (direct)
             {
                 // direct decoding
-                error = m_parser.decode(dest, nullptr);
+                status = m_parser.decode(dest, nullptr);
             }
             else
             {
                 if (ptr_palette && m_header.palette)
                 {
                     // direct decoding with palette
-                    error = m_parser.decode(dest, ptr_palette);
+                    status = m_parser.decode(dest, ptr_palette);
+                    direct = true;
                 }
                 else
                 {
                     // indirect
                     Bitmap temp(m_header.width, m_header.height, m_header.format);
-                    error = m_parser.decode(temp, nullptr);
+                    status = m_parser.decode(temp, nullptr);
                     dest.blit(0, 0, temp);
                 }
             }
 
-            if (error)
-            {
-                debugPrint("DECODE ERROR: %s\n", error);
-            }
+            status.direct = direct;
+
+            return status;
         }
     };
 
@@ -2039,7 +2057,7 @@ namespace
 
     void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED_PARAMETER(options);
+        MANGO_UNREFERENCED(options);
 
         // defaults
         u8 color_bits = 8;

@@ -598,7 +598,7 @@ namespace
             const int maxLevel = int(numberOfMipmapLevels);
             const int maxFace = int(numberOfFaces);
 
-            MANGO_UNREFERENCED_PARAMETER(depth); // TODO
+            MANGO_UNREFERENCED(depth); // TODO
 
             Memory data;
 
@@ -665,18 +665,22 @@ namespace
             return data;
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
+            MANGO_UNREFERENCED(palette);
 
             Memory data = m_header.getMemory(m_memory, level, depth, face);
 
             Format format;
             TextureCompressionInfo info = m_header.computeFormat(format);
 
+            ImageDecodeStatus status;
+
             if (info.compression != TextureCompression::NONE)
             {
-                info.decompress(dest, data);
+                TextureCompressionStatus cs = info.decompress(dest, data);
+                status.success = cs.success;
+                status.direct = cs.direct;
             }
             else if (format != FORMAT_NONE)
             {
@@ -689,7 +693,11 @@ namespace
 
                 Surface source(width, height, format, stride, data.address);
                 dest.blit(0, 0, source);
+
+                status.success = true;
             }
+
+            return status;
         }
     };
 

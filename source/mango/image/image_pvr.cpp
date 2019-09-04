@@ -431,22 +431,22 @@ namespace
             u32 surface_size = p.read32();
             u32 bits_per_pixel = p.read32();
 
-            MANGO_UNREFERENCED_PARAMETER(surface_size);
-            MANGO_UNREFERENCED_PARAMETER(bits_per_pixel);
+            MANGO_UNREFERENCED(surface_size);
+            MANGO_UNREFERENCED(bits_per_pixel);
 
             u32 mask[4];
             mask[0] = p.read32();
             mask[1] = p.read32();
             mask[2] = p.read32();
             mask[3] = p.read32();
-            MANGO_UNREFERENCED_PARAMETER(mask);
+            MANGO_UNREFERENCED(mask);
 
             if (header_size == 52)
             {
                 u32 identifier = p.read32();
                 u32 number_of_surfaces = p.read32();
 
-                MANGO_UNREFERENCED_PARAMETER(number_of_surfaces);
+                MANGO_UNREFERENCED(number_of_surfaces);
 
                 if (identifier != 0x21525650)
                 {
@@ -639,25 +639,33 @@ namespace
             return m_header.getMemory(m_memory, level, depth, face);
         }
 
-        void decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED_PARAMETER(palette);
+            MANGO_UNREFERENCED(palette);
+
+            ImageDecodeStatus status;
 
             Memory data = m_header.getMemory(m_memory, level, depth, face);
 
             int width = std::max(1, m_header.m_width >> level);
             int height = std::max(1, m_header.m_height >> level);
 
-            if (m_header.m_info.compression == TextureCompression::NONE)
+            if (m_header.m_info.compression != TextureCompression::NONE)
+            {
+                TextureCompressionStatus cs = m_header.m_info.decompress(dest, data);
+                status.success = cs.success;
+                status.direct = cs.direct;
+            }
+            else
             {
                 int stride = width * m_header.m_info.format.bytes();
                 Surface source(width, height, m_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
+
+                status.success = true;
             }
-            else
-            {
-                m_header.m_info.decompress(dest, data);
-            }
+
+            return status;
         }
     };
 

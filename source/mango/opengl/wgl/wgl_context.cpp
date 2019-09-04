@@ -233,7 +233,7 @@ namespace opengl {
 			{
 				int pixelFormat = ::ChoosePixelFormat(hdc, &pfd);
 				::SetPixelFormat(hdc, format, &pfd);
-				MANGO_UNREFERENCED_PARAMETER(pixelFormat);
+				MANGO_UNREFERENCED(pixelFormat);
 			}
 
 			int contextAttribs[] =
