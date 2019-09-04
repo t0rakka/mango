@@ -177,6 +177,16 @@ namespace mango
         return m_interface->header();
     }
 
+    void ImageDecoder::decode(Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    {
+        if (!m_interface)
+        {
+            printf("[WARNING] ImageDecoder::decode() is not supported for this extension.");
+            return;
+        }
+        m_interface->decode(dest, options.palette, level, depth, face);
+    }
+
     Exif ImageDecoder::exif()
     {
         if (!m_interface)
@@ -195,16 +205,6 @@ namespace mango
             return Memory();
         }
         return m_interface->memory(level, depth, face);
-    }
-
-    void ImageDecoder::decode(Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
-    {
-        if (!m_interface)
-        {
-            printf("[WARNING] ImageDecoder::decode() is not supported for this extension.");
-            return;
-        }
-        m_interface->decode(dest, options.palette, level, depth, face);
     }
 
     // ----------------------------------------------------------------------------

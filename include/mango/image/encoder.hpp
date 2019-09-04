@@ -23,6 +23,14 @@ namespace mango
         bool lossless = false;
     };
 
+#if 0
+    struct ImageEncodeStatus
+    {
+        std::string name;
+        bool direct;
+    };
+#endif
+
     class ImageEncoder : protected NonCopyable
     {
     public:
