@@ -53,14 +53,14 @@ namespace
         { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), WebPDecodeBGRInto, WebPEncodeBGR, WebPEncodeLosslessBGR },
     };
 
-    WebPFormat webpDefaultFormat()
+    WebPFormat webpDefaultFormat(bool alpha)
     {
-        return g_formats[0];
+        return alpha ? g_formats[0] : g_formats[2];
     }
 
     WebPFormat webpFindFormat(const Format& format)
     {
-        WebPFormat best = webpDefaultFormat();
+        WebPFormat best = webpDefaultFormat(format.isAlpha());
         for (const auto& current : g_formats)
         {
             if (current.format == format)
@@ -97,7 +97,7 @@ namespace
             m_header.levels  = 0;
             m_header.faces   = 0;
 			m_header.palette = false;
-            m_header.format  = webpDefaultFormat().format;
+            m_header.format  = webpDefaultFormat(true).format;
             m_header.compression = TextureCompression::NONE;
         }
 
