@@ -1,12 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
-
-#define ID "[FileStream] "
 
 namespace mango {
 namespace filesystem {
@@ -100,7 +98,7 @@ namespace filesystem {
                 break;
 
             default:
-                MANGO_EXCEPTION(ID"Incorrect OpenMode.");
+                MANGO_EXCEPTION("[FileStream] Incorrect OpenMode.");
                 break;
         }
 
@@ -108,7 +106,7 @@ namespace filesystem {
         HANDLE handle = CreateFileW(u16_fromBytes(filename).c_str(), access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
         if (handle == INVALID_HANDLE_VALUE)
         {
-            MANGO_EXCEPTION(ID"CreateFileW() failed.");
+            MANGO_EXCEPTION("[FileStream] CreateFileW() failed.");
         }
 
 		m_handle = new FileHandle(filename, handle);
@@ -153,7 +151,7 @@ namespace filesystem {
                 break;
 
             default:
-                MANGO_EXCEPTION(ID"Invalid seek mode.");
+                MANGO_EXCEPTION("[FileStream] Invalid seek mode.");
         }
 
 		m_handle->seek(distance, method);

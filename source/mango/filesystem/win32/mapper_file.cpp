@@ -11,8 +11,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define ID "[FileMemory] "
-
 namespace
 {
     using namespace mango;
@@ -92,13 +90,13 @@ namespace
 					}
 					else
 					{
-						MANGO_EXCEPTION(ID"Memory \"%s\" mapping failed.", filename.c_str());
+						MANGO_EXCEPTION("[FileMemory] Memory \"%s\" mapping failed.", filename.c_str());
 					}
 				}
             }
             else
             {
-                MANGO_EXCEPTION(ID"File \"%s\" cannot be opened.", filename.c_str());
+                MANGO_EXCEPTION("[FileMemory] File \"%s\" cannot be opened.", filename.c_str());
             }
         }
 

@@ -7,8 +7,6 @@
 #include <mango/core/string.hpp>
 #include "xcb_handle.hpp"
 
-#define ID ""
-
 namespace
 {
     using namespace mango;
@@ -30,7 +28,7 @@ namespace mango
         connection = xcb_connect(nullptr, &screen_index);
         if (!connection)
         {
-            MANGO_EXCEPTION(ID"xcb_connect() failed.");
+            MANGO_EXCEPTION("[Window] xcb_connect() failed.");
         }
 
         const xcb_setup_t* setup = xcb_get_setup(connection);
@@ -142,20 +140,20 @@ namespace mango
             reinterpret_cast<char*>(bitmap.image), width, height, 32, 0);
         if (!icon)
         {
-            MANGO_EXCEPTION(ID"XCreateImage() failed.");
+            MANGO_EXCEPTION("[Window] XCreateImage() failed.");
         }
 
         Pixmap icon_pixmap = XCreatePixmap(m_handle->display, RootWindow(m_handle->display, screen), width, height, depth);
         if (!icon_pixmap)
         {
-            MANGO_EXCEPTION(ID"XCreatePixmap() failed.");
+            MANGO_EXCEPTION("[Window] XCreatePixmap() failed.");
         }
 
         XGCValues values;
         GC gc = XCreateGC(m_handle->display, icon_pixmap, 0, &values);
         if (!gc)
         {
-            MANGO_EXCEPTION(ID"XCreateGC() failed.");
+            MANGO_EXCEPTION("[Window] XCreateGC() failed.");
         }
 
         XPutImage(m_handle->display, icon_pixmap, gc, icon, 0, 0, 0, 0, width, height);

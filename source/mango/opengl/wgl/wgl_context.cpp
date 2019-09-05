@@ -1,13 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 #include "../../window/win32/win32_handle.hpp"
-
-#define ID "[WGL Context] "
 
 namespace
 {
@@ -105,8 +103,9 @@ namespace opengl {
 		m_context = new ContextHandle();
 
 		// TODO
-		if (shared) {
-			MANGO_EXCEPTION(ID"Shared context is not implemented.");
+		if (shared)
+		{
+			MANGO_EXCEPTION("[WGL Context] Shared context is not implemented.");
 		}
 
 		setWindowSize(width, height);

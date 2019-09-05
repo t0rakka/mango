@@ -6,8 +6,6 @@
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-#define ID "[File] "
-
 namespace mango {
 namespace filesystem {
 
@@ -30,7 +28,7 @@ namespace filesystem {
         Mapper* path_mapper = m_path->m_mapper.get();
         if (!path_mapper)
         {
-            MANGO_EXCEPTION(ID"Mapper interface missing.");
+            MANGO_EXCEPTION("[File] Mapper interface missing.");
         }
 
         AbstractMapper* mapper = *path_mapper;
@@ -56,7 +54,7 @@ namespace filesystem {
         Mapper* path_mapper = m_path->m_mapper.get();
         if (!path_mapper)
         {
-            MANGO_EXCEPTION(ID"Mapper interface missing.");
+            MANGO_EXCEPTION("[File] Mapper interface missing.");
         }
 
         AbstractMapper* mapper = *path_mapper;
@@ -77,7 +75,7 @@ namespace filesystem {
         Mapper* path_mapper = m_path->m_mapper.get();
         if (!path_mapper)
         {
-            MANGO_EXCEPTION(ID"Mapper interface missing.");
+            MANGO_EXCEPTION("[File] Mapper interface missing.");
         }
 
         // parse and create mappers

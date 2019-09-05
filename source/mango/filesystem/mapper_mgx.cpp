@@ -7,8 +7,6 @@
 #include <mango/image/fourcc.hpp>
 #include "indexer.hpp"
 
-#define ID "[mapper.mgx] "
-
 namespace
 {
     using namespace mango;
@@ -68,14 +66,14 @@ namespace
         {
             if (!memory.address)
             {
-                MANGO_EXCEPTION(ID"Parent container doesn't have memory");
+                MANGO_EXCEPTION("[mapper.mgx] Parent container doesn't have memory");
             }
 
             LittleEndianConstPointer p = memory.address;
             u32 magic0 = p.read32();
             if (magic0 != u32_mask('m', 'g', 'x', '0'))
             {
-                MANGO_EXCEPTION(ID"Incorrect file identifier (%x)", magic0);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect file identifier (%x)", magic0);
             }
 
             u64 header_offset = memory.size - mgx_header_size;
@@ -84,7 +82,7 @@ namespace
             u32 magic3 = p.read32();
             if (magic3 != u32_mask('m', 'g', 'x', '3'))
             {
-                MANGO_EXCEPTION(ID"Incorrect header identifier (%x)", magic3);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect header identifier (%x)", magic3);
             }
 
             u32 version = p.read32();
@@ -102,7 +100,7 @@ namespace
             u32 magic1 = p.read32();
             if (magic1 != u32_mask('m', 'g', 'x', '1'))
             {
-                MANGO_EXCEPTION(ID"Incorrect block identifier (%x)", magic1);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (%x)", magic1);
             }
 
             u32 num_blocks = p.read32();
@@ -119,7 +117,7 @@ namespace
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
             {
-                MANGO_EXCEPTION(ID"Incorrect block terminator (%x)", magic2);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (%x)", magic2);
             }
         }
 
@@ -128,7 +126,7 @@ namespace
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
             {
-                MANGO_EXCEPTION(ID"Incorrect block identifier (%x)", magic2);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (%x)", magic2);
             }
 
             u32 num_files = p.read32();
@@ -174,7 +172,7 @@ namespace
             u32 magic3 = p.read32();
             if (magic3 != u32_mask('m', 'g', 'x', '3'))
             {
-                MANGO_EXCEPTION(ID"Incorrect block terminator (%x)", magic3);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (%x)", magic3);
             }
         }
     };
@@ -264,7 +262,7 @@ namespace filesystem {
             const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.mgx] File \"%s\" not found.", filename.c_str());
             }
 
             const FileHeader& file = *ptrHeader;
@@ -304,7 +302,7 @@ namespace filesystem {
 
                     if (block.offset + segment.offset + file.size > m_header.m_memory.size)
                     {
-                        MANGO_EXCEPTION(ID"File \"%s\" has mapped region outside of parent memory.", filename.c_str());
+                        MANGO_EXCEPTION("[mapper.mgx] File \"%s\" has mapped region outside of parent memory.", filename.c_str());
                     }
 
                     VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size_t(file.size));

@@ -7,8 +7,6 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
 
-#define ID "[GLX Context] "
-
 namespace
 {
     using namespace mango;
@@ -78,7 +76,7 @@ namespace opengl {
 
         // TODO
         if (shared) {
-            MANGO_EXCEPTION(ID"Shared context is not implemented yet.");
+            MANGO_EXCEPTION("[GLX Context] Shared context is not implemented yet.");
         }
 
         // Configure attributes
@@ -142,7 +140,7 @@ namespace opengl {
         {
             deleteContext(m_handle, m_context);
             m_context = NULL;
-            MANGO_EXCEPTION(ID"glXQueryVersion() failed.");
+            MANGO_EXCEPTION("[GLX Context] glXQueryVersion() failed.");
         }
 
         printf("GLX version: %d.%d\n", glx_major, glx_minor);
@@ -151,7 +149,7 @@ namespace opengl {
         {
             deleteContext(m_handle, m_context);
             m_context = NULL;
-            MANGO_EXCEPTION(ID"Invalid GLX version.");
+            MANGO_EXCEPTION("[GLX Context] Invalid GLX version.");
         }
 
         int fbcount;
@@ -160,7 +158,7 @@ namespace opengl {
         {
             deleteContext(m_handle, m_context);
             m_context = NULL;
-            MANGO_EXCEPTION(ID"glXChooseFBConfig() failed.");
+            MANGO_EXCEPTION("[GLX Context] glXChooseFBConfig() failed.");
         }
 
         //printf("Found %d matching FB configs.\n", fbcount);
@@ -216,7 +214,7 @@ namespace opengl {
         {
             deleteContext(m_handle, m_context);
             m_context = NULL;
-            MANGO_EXCEPTION(ID"createWindow() failed.");
+            MANGO_EXCEPTION("[GLX Context] createWindow() failed.");
         }
 
         XFree(vi);
@@ -294,7 +292,7 @@ namespace opengl {
         {
             deleteContext(m_handle, m_context);
             m_context = nullptr;
-            MANGO_EXCEPTION(ID"OpenGL Context creation failed.");
+            MANGO_EXCEPTION("[GLX Context] OpenGL Context creation failed.");
         }
 
         // Verifying that context is a direct context

@@ -6,8 +6,6 @@
 #include <mango/core/exception.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
 
-#define ID "[Framebuffer] "
-
 namespace mango {
 namespace framebuffer {
 
@@ -31,7 +29,7 @@ namespace framebuffer {
             image = XCreateImage(handle.display, CopyFromParent, depth, ZPixmap, 0, NULL, width, height, 32, width * 4);
             if (!image)
             {
-                MANGO_EXCEPTION(ID"XCreateImage failed.");
+                MANGO_EXCEPTION("[Framebuffer] XCreateImage failed.");
             }
         }
 
@@ -72,7 +70,7 @@ namespace framebuffer {
 
         if (!m_handle->createWindow(screen, depth, visual, width, height, "[FramebufferWindow]"))
         {
-            MANGO_EXCEPTION(ID"Window creation failed.");
+            MANGO_EXCEPTION("[Framebuffer] Window creation failed.");
         }
 
         m_context = new FramebufferContext(screen, depth, width, height, *m_handle);

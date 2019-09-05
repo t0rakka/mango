@@ -12,8 +12,6 @@
 
 #include "../../external/miniz/miniz.h"
 
-#define ID "[mapper.zip] "
-
 /*
 https://courses.cs.ut.ee/MTAT.07.022/2015_fall/uploads/Main/dmitri-report-f15-16.pdf
 
@@ -265,7 +263,7 @@ namespace
 
                         if (version < 1 || version > 2 || magic != 0x4541)
                         {
-                            MANGO_EXCEPTION(ID"Incorrect AES header.");
+                            MANGO_EXCEPTION("[mapper.zip] Incorrect AES header.");
                         }
 
                         // select encryption mode
@@ -281,7 +279,7 @@ namespace
                                 encryption = ENCRYPTION_AES256;
                                 break;
                             default:
-                                MANGO_EXCEPTION(ID"Incorrect AES encryption mode.");
+                                MANGO_EXCEPTION("[mapper.zip] Incorrect AES encryption mode.");
                         }
 
                         break;
@@ -498,7 +496,7 @@ namespace
 
         if (inflateInit2(&zstream, -MAX_WBITS) != Z_OK)
 		{
-            MANGO_EXCEPTION(ID"InflateInit failed.");
+            MANGO_EXCEPTION("[mapper.zip] InflateInit failed.");
 		}
 
     	// decompression
@@ -508,19 +506,19 @@ namespace
     	int zcode = inflate(&zstream, Z_FINISH);
 		if (zcode != Z_STREAM_END)
         {
-            const char* msg = ID"Internal error.";
+            const char* msg = "[mapper.zip] Internal error.";
             switch (zcode)
             {
                 case Z_MEM_ERROR:
-                    msg = ID"Memory error.";
+                    msg = "[mapper.zip] Memory error.";
                     break;
 
                 case Z_BUF_ERROR:
-                    msg = ID"Buffer error.";
+                    msg = "[mapper.zip] Buffer error.";
                     break;
 
                 case Z_DATA_ERROR:
-                    msg = ID"Data error.";
+                    msg = "[mapper.zip] Data error.";
                     break;
             }
             MANGO_EXCEPTION(msg);
@@ -528,7 +526,7 @@ namespace
 
 		if (inflateEnd(&zstream) != Z_OK)
 	    {
-            MANGO_EXCEPTION(ID"Inflate failed.");
+            MANGO_EXCEPTION("[mapper.zip] Inflate failed.");
 		}
 
 		return zstream.total_out;
@@ -618,7 +616,7 @@ namespace filesystem {
             LocalFileHeader localHeader(p);
             if (!localHeader.status())
             {
-                MANGO_EXCEPTION(ID"Invalid local header.");
+                MANGO_EXCEPTION("[mapper.zip] Invalid local header.");
             }
 
             u64 offset = header.localOffset + 30 + localHeader.filenameLen + localHeader.extraFieldLen;
@@ -650,7 +648,7 @@ namespace filesystem {
                     if (!status)
                     {
                         delete[] buffer;
-                        MANGO_EXCEPTION(ID"Decryption failed (probably incorrect password).");
+                        MANGO_EXCEPTION("[mapper.zip] Decryption failed (probably incorrect password).");
                     }
 
                     address = buffer;
@@ -663,7 +661,7 @@ namespace filesystem {
                 {
                     u32 salt_length = getSaltLength(header.encryption);
                     MANGO_UNREFERENCED(salt_length);
-                    MANGO_EXCEPTION(ID"AES encryption is not yet supported.");
+                    MANGO_EXCEPTION("[mapper.zip] AES encryption is not yet supported.");
 #if 0                
                     u8* saltvalue = address;
                     address += salt_length;
@@ -705,7 +703,7 @@ namespace filesystem {
                     {
                         // incorrect output size
                         delete[] buffer;
-                        MANGO_EXCEPTION(ID"Incorrect decompressed size.");
+                        MANGO_EXCEPTION("[mapper.zip] Incorrect decompressed size.");
                     }
 
                     // use decode_buffer as memory map
@@ -726,7 +724,7 @@ namespace filesystem {
                     if (lzma_propsize != 5)
                     {
                         delete[] buffer;
-                        MANGO_EXCEPTION(ID"Incorrect LZMA header.");
+                        MANGO_EXCEPTION("[mapper.zip] Incorrect LZMA header.");
                     }
                     address = p;
                     u64 compressed_size = header.compressedSize - 4;
@@ -779,7 +777,7 @@ namespace filesystem {
                 case COMPRESSION_JPEG:
                 case COMPRESSION_AES:
                 case COMPRESSION_XZ:
-                    MANGO_EXCEPTION(ID"Unsupported compression algorithm (%d).", header.compression);
+                    MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
                     break;
             }
 
@@ -844,7 +842,7 @@ namespace filesystem {
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.zip] File \"%s\" not found.", filename.c_str());
             }
 
             const FileHeader& header = *ptrHeader;

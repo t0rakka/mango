@@ -1,13 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
-
-#define ID "[mapper.file] "
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -59,7 +57,7 @@ namespace
                 {
                     ::close(m_file);
                     m_file = -1;
-	                MANGO_EXCEPTION(ID"File \"%s\" cannot be read.", filename.c_str());
+	                MANGO_EXCEPTION("[mapper.file] Cannot fstat \"%s\".", filename.c_str());
                 }
                 else
                 {
@@ -86,7 +84,7 @@ namespace
 
                         if (m_address == MAP_FAILED)
                         {
-                            MANGO_EXCEPTION(ID"Memory mapping \"%s\" failed.", filename.c_str());
+                            MANGO_EXCEPTION("[mapper.file] Memory mapping \"%s\" failed.", filename.c_str());
                         }
 
                         m_memory.size = m_size;
@@ -101,7 +99,7 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Opening \"%s\" failed.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.file] Opening \"%s\" failed.", filename.c_str());
             }
         }
 

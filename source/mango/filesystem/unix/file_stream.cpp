@@ -13,8 +13,6 @@
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-#define ID "[FileStream] "
-
 namespace mango {
 namespace filesystem {
 
@@ -95,7 +93,7 @@ namespace filesystem {
            	    break;
 
             default:
-	            MANGO_EXCEPTION(ID"Incorrect OpenMode.");
+	            MANGO_EXCEPTION("[FileStream] Incorrect OpenMode.");
                 break;
         }
 
@@ -141,7 +139,7 @@ namespace filesystem {
                 break;
 
             default:
-                MANGO_EXCEPTION(ID"Invalid seek mode.");
+                MANGO_EXCEPTION("[FileStream] Invalid seek mode.");
         }
 
 		m_handle->seek(distance, method);

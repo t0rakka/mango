@@ -18,8 +18,6 @@
 
 #include "../../external/unrar/rar.hpp"
 
-#define ID "[mapper.rar] "
-
 namespace
 {
     // -----------------------------------------------------------------
@@ -143,7 +141,7 @@ namespace
     {
         if (filename_size >= 1024)
         {
-            MANGO_EXCEPTION(ID"Too long unicode filename.");
+            MANGO_EXCEPTION("[mapper.rar] Too long unicode filename.");
         }
 
         char buffer[1024];
@@ -390,7 +388,7 @@ namespace
                 if (!status)
                 {
                     delete[] buffer;
-                    MANGO_EXCEPTION(ID"Decompression failed.");
+                    MANGO_EXCEPTION("[mapper.rar] Decompression failed.");
                 }
 
                 memory = new VirtualMemoryRAR(buffer, buffer, size);
@@ -452,7 +450,7 @@ namespace filesystem {
             }
             else
             {
-                MANGO_EXCEPTION(ID"Incorrect signature.");
+                MANGO_EXCEPTION("[mapper.rar] Incorrect signature.");
             }
 
             for (auto& header : m_files)
@@ -735,7 +733,7 @@ namespace filesystem {
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION(ID"File \"%s\" not found.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.rar] File \"%s\" not found.", filename.c_str());
             }
 
             const FileHeader& header = *ptrHeader;
