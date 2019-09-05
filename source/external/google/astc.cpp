@@ -91,7 +91,8 @@ namespace
 
     inline u8 linearToSRGB(float value)
     {
-        return u8(linear_to_srgb(value) * 255.0f);
+        return u8(value * 255.0f);
+        //return u8(linear_to_srgb(value) * 255.0f);
     }
 
     // A helper for getting bits from a 128-bit block.
@@ -103,7 +104,7 @@ namespace
         enum
         {
             WORD_BYTES	= sizeof(Word),
-            WORD_BITS	= 8*WORD_BYTES,
+            WORD_BITS	= 8 * WORD_BYTES,
             NUM_WORDS	= 128 / WORD_BITS
         };
         
