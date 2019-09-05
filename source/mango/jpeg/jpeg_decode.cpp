@@ -526,12 +526,14 @@ namespace jpeg {
 
         if (xsize <= 0 || ysize <= 0)
         {
-            MANGO_EXCEPTION("[JPEG] Incorrect dimensions (%d x %d)", xsize, ysize);
+            m_error = makeString("Incorrect dimensions (%d x %d)", xsize, ysize);
+            return;
         }
 
         if (components < 1 || components > 4)
         {
-            MANGO_EXCEPTION("[JPEG] Incorrect number of components (%d)", components);
+            m_error = makeString("Incorrect number of components (%d)", components);
+            return;
         }
 
         is_arithmetic = marker > MARKER_SOF7;
@@ -634,7 +636,8 @@ namespace jpeg {
 
             if (frame.Hsf > 8 || frame.Vsf > 8)
             {
-                MANGO_EXCEPTION("[JPEG] Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf);
+                m_error = makeString("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf);
+                return;
             }
 
             frames.push_back(frame);
@@ -649,7 +652,8 @@ namespace jpeg {
             Frame& frame = processState.frame[i];
             if (!frame.Hsf || !frame.Vsf)
             {
-                MANGO_EXCEPTION("[JPEG] Incorrect sampling factors (%d x %d)", frame.Hsf, frame.Vsf);
+                m_error = makeString("Incorrect sampling factors (%d x %d)", frame.Hsf, frame.Vsf);
+                return;
             }
             frame.Hsf = u32_log2(Hmax / frame.Hsf);
             frame.Vsf = u32_log2(Vmax / frame.Vsf);
@@ -660,7 +664,8 @@ namespace jpeg {
 
         if (!xblock || !yblock)
         {
-            MANGO_EXCEPTION("[JPEG] Incorrect dimensions (%d x %d)", xblock, yblock);
+            m_error = makeString("Incorrect dimensions (%d x %d)", xblock, yblock);
+            return;
         }
 
         debugPrint("  Blocks per MCU: %d\n", blocks_in_mcu);
@@ -941,7 +946,8 @@ namespace jpeg {
 
             if (Tq >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                MANGO_EXCEPTION("[JPEG] Incorrect quantization table (Tq: %d >= %d)", Tq, JPEG_MAX_COMPS_IN_SCAN);
+                m_error = makeString("Incorrect quantization table (Tq: %d >= %d)", Tq, JPEG_MAX_COMPS_IN_SCAN);
+                return;
             }
 
             QuantTable& table = quantTable[Tq];
@@ -965,7 +971,8 @@ namespace jpeg {
                     break;
 
                 default:
-                    MANGO_EXCEPTION("[JPEG] Incorrect quantization table element precision (%d)", Pq);
+                    m_error = makeString("Incorrect quantization table element precision (%d)", Pq);
+                    return;
             }
 
             Lq -= (1 + (Pq + 1) * 64);
@@ -988,12 +995,14 @@ namespace jpeg {
 
             if (Tc >= 2)
             {
-                MANGO_EXCEPTION("[JPEG] Incorrect huffman table class (%d)", Tc);
+                m_error = makeString("Incorrect huffman table class (%d)", Tc);
+                return;
             }
 
             if (Th >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                MANGO_EXCEPTION("[JPEG] Incorrect huffman table identifier (%d)", Th);
+                m_error = makeString("Incorrect huffman table identifier (%d)", Th);
+                return;
             }
 
             HuffTable& table = huffTable[Tc][Th];
@@ -1113,8 +1122,14 @@ namespace jpeg {
         const u8* end = memory.address + memory.size;
         const u8* p = memory.address;
 
-        for (; p < end;)
+        for ( ; p < end; )
         {
+            if (!m_error.empty())
+            {
+                // we are in error state -> abort parsing
+                break;
+            }
+
             u16 marker = uload16be(p);
             p += 2;
 
@@ -1602,6 +1617,13 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
+            if (!m_error.empty())
+            {
+                status.success = false;
+                status.info = m_error;
+                return status;
+            }
+
             if (is_progressive || is_multiscan)
 			{
 	            finishProgressive();
@@ -1613,6 +1635,13 @@ namespace jpeg {
             m_surface = &temp;
 
             parse(scan_memory, true);
+
+            if (!m_error.empty())
+            {
+                status.success = false;
+                status.info = m_error;
+                return status;
+            }
 
             if (is_progressive || is_multiscan)
 			{

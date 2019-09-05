@@ -342,6 +342,8 @@ namespace jpeg {
         std::string m_idct_name;
         std::string m_ycbcr_name;
 
+        std::string m_error;
+
         Surface* m_surface;
         u64 cpu_flags;
 
