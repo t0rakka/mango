@@ -1,14 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
+#include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
 
 //#define ENABLE_PVR_DEBUG
-#define ID "[ImageDecoder.PVR] "
 
 // http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.Legacy.pdf
 // http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.pdf
@@ -198,6 +197,7 @@ namespace
         int m_mipmaps;
         int m_data_offset;
         TextureCompressionInfo m_info;
+        ImageHeader header;
 
         void read(Memory memory)
         {
@@ -220,9 +220,18 @@ namespace
                     parse_version3(memory, true);
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect format version: 0x%x", magic);
-                    break;
+                    header.setError("[ImageDecoder.PVR] Incorrect format version: 0x%x", magic);
+                    return;
             }
+
+            header.width   = m_width;
+            header.height  = m_height;
+            header.depth   = m_depth;
+            header.levels  = m_mipmaps;
+            header.faces   = m_faces;
+            header.palette = false;
+            header.format  = m_info.format;
+            header.compression = m_info.compression;
         }
 
         void parse_legacy(Memory memory)
@@ -450,7 +459,8 @@ namespace
 
                 if (identifier != 0x21525650)
                 {
-                    MANGO_EXCEPTION(ID"Incorrect format identifier: 0x%x", identifier);
+                    header.setError("[ImageDecoder.PVR] Incorrect format identifier: 0x%x", identifier);
+                    return;
                 }
             }
 
@@ -487,7 +497,8 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Incorrect channeltype: %d", int(pvr.channeltype));
+                header.setError("[ImageDecoder.PVR] Incorrect channeltype: %d", int(pvr.channeltype));
+                return;
             }
 
             if (pvr.pixelformat & 0xffffffff00000000)
@@ -522,7 +533,8 @@ namespace
                 }
                 else
                 {
-                    MANGO_EXCEPTION(ID"Incorrect pixelformat: %d", formatIndex);
+                    header.setError("[ImageDecoder.PVR] Incorrect pixelformat: %d", formatIndex);
+                    return;
                 }
             }
 
@@ -535,12 +547,14 @@ namespace
 
             if (m_surfaces > 1)
             {
-                MANGO_EXCEPTION(ID"Surface arrays not supported.");
+                header.setError("[ImageDecoder.PVR] Surface arrays not supported.");
+                return;
             }
 
             if (m_faces != 1 && m_faces != 6)
             {
-                MANGO_EXCEPTION(ID"Incorrect number of faces: %d", m_faces);
+                header.setError("[ImageDecoder.PVR] Incorrect number of faces: %d", m_faces);
+                return;
             }
 
             switch (pvr.colorspace)
@@ -552,7 +566,8 @@ namespace
                     // NOTE: sRGB
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect colorspace: %d", pvr.colorspace);
+                    header.setError("[ImageDecoder.PVR] Incorrect colorspace: %d", pvr.colorspace);
+                    return;
             }
 
             m_data_offset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
@@ -606,12 +621,12 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
-        HeaderPVR m_header;
+        HeaderPVR m_pvr_header;
 
         Interface(Memory memory)
             : m_memory(memory)
         {
-            m_header.read(memory);
+            m_pvr_header.read(memory);
         }
 
         ~Interface()
@@ -620,23 +635,12 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.m_width;
-            header.height  = m_header.m_height;
-            header.depth   = m_header.m_depth;
-            header.levels  = m_header.m_mipmaps;
-            header.faces   = m_header.m_faces;
-			header.palette = false;
-            header.format  = m_header.m_info.format;
-            header.compression = m_header.m_info.compression;
-
-            return header;
+            return m_pvr_header.header;
         }
 
         Memory memory(int level, int depth, int face) override
         {
-            return m_header.getMemory(m_memory, level, depth, face);
+            return m_pvr_header.getMemory(m_memory, level, depth, face);
         }
 
         ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
@@ -645,24 +649,31 @@ namespace
 
             ImageDecodeStatus status;
 
-            Memory data = m_header.getMemory(m_memory, level, depth, face);
-
-            int width = std::max(1, m_header.m_width >> level);
-            int height = std::max(1, m_header.m_height >> level);
-
-            if (m_header.m_info.compression != TextureCompression::NONE)
+			const ImageHeader& header = m_pvr_header.header;
+            if (!header.success)
             {
-                TextureCompressionStatus cs = m_header.m_info.decompress(dest, data);
+                status.setError(header.info);
+                return status;
+            }
+
+            Memory data = m_pvr_header.getMemory(m_memory, level, depth, face);
+
+            int width = std::max(1, m_pvr_header.m_width >> level);
+            int height = std::max(1, m_pvr_header.m_height >> level);
+
+            if (m_pvr_header.m_info.compression != TextureCompression::NONE)
+            {
+                TextureCompressionStatus cs = m_pvr_header.m_info.decompress(dest, data);
+
+                status.info = cs.info;
                 status.success = cs.success;
                 status.direct = cs.direct;
             }
             else
             {
-                int stride = width * m_header.m_info.format.bytes();
-                Surface source(width, height, m_header.m_info.format, stride, data.address);
+                int stride = width * m_pvr_header.m_info.format.bytes();
+                Surface source(width, height, m_pvr_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
-
-                status.success = true;
             }
 
             return status;

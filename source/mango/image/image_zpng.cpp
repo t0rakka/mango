@@ -1,12 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include "../../external/zpng/zpng.h"
-
-#define ID "[ImageDecoder.ZPNG] "
 
 namespace
 {
@@ -59,15 +57,33 @@ namespace
 
         return format;
     }
-    
+
     struct Interface : ImageDecoderInterface
     {
         ZPNG_Buffer m_buffer;
+        ImageHeader m_header;
 
         Interface(Memory memory)
         {
             m_buffer.Data = memory.address;
             m_buffer.Bytes = static_cast<unsigned int>(memory.size);
+
+            zpng_header* zheader = reinterpret_cast<zpng_header *>(memory.address);
+            if (zheader->magic != 0xfbf8)
+            {
+                m_header.setError("[ImageDecoder.ZPNG] Incorrect identifier.");
+            }
+            else
+            {
+                m_header.width   = zheader->width;
+                m_header.height  = zheader->height;
+                m_header.depth   = 0;
+                m_header.levels  = 0;
+                m_header.faces   = 0;
+                m_header.palette = false;
+                m_header.format  = resolve_format(zheader->channels, zheader->bytes_per_channel);
+                m_header.compression = TextureCompression::NONE;
+            }
         }
 
         ~Interface()
@@ -76,24 +92,7 @@ namespace
 
         ImageHeader header() override
         {
-            zpng_header *zheader = reinterpret_cast<zpng_header *>(m_buffer.Data);
-            if (zheader->magic != 0xfbf8)
-            {
-                MANGO_EXCEPTION(ID"Incorrect identifier.");
-            }
-
-            ImageHeader header;
-
-            header.width   = zheader->width;
-            header.height  = zheader->height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = resolve_format(zheader->channels, zheader->bytes_per_channel);
-            header.compression = TextureCompression::NONE;
-
-            return header;
+            return m_header;
         }
 
         Exif exif() override
@@ -109,6 +108,12 @@ namespace
             MANGO_UNREFERENCED(face);
 
             ImageDecodeStatus status;
+
+            if (!m_header.success)
+            {
+                status.setError(m_header.info);
+                return status;
+            }
 
             ZPNG_ImageData z = ZPNG_Decompress(m_buffer);
             if (z.Buffer.Data)
@@ -137,7 +142,6 @@ namespace
                 ZPNG_Free(&z.Buffer);
             }
 
-            status.success = true;
             return status;
         }
     };

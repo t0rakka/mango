@@ -8,11 +8,9 @@
 #include <cctype>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
+#include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.PNM] "
 
 namespace
 {
@@ -34,11 +32,16 @@ namespace
     inline
     const char* nextValue(int& value, const char* p, const char* end)
     {
+        if (!p)
+        {
+            return nullptr;
+        }
+
         for (;;)
         {
             if (p >= end)
             {
-                MANGO_EXCEPTION(ID"Decoding error (out of data).");
+                return nullptr;
             }
 
             char c = *p;
@@ -58,11 +61,16 @@ namespace
 
     const char* nextLine(const char* p, const char* end)
     {
+        if (!p)
+        {
+            return nullptr;
+        }
+
         for (;;)
         {
             if (p >= end)
             {
-                MANGO_EXCEPTION(ID"Decoding error (out of data).");
+                return nullptr;
             }
 
             char c = *p++;
@@ -84,11 +92,12 @@ namespace
 		int maxvalue;
         int endian;
 
-		Format format;
 		bool is_ascii;
         bool is_float;
         const char* data;
         u8 invert;
+
+        ImageHeader header;
 
         HeaderPNM(Memory memory)
             : width(0)
@@ -114,6 +123,12 @@ namespace
                 p = nextValue(endian, p, end);
                 p = nextLine(p, end);
 
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 channels = 1;
                 maxvalue = 255;
                 is_float = true;
@@ -126,6 +141,12 @@ namespace
                 p = nextValue(endian, p, end);
                 p = nextLine(p, end);
 
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 channels = 3;
                 maxvalue = 255;
                 is_float = true;
@@ -135,22 +156,64 @@ namespace
                 char type[100];
 
                 p = nextLine(p, end);
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 if (std::sscanf(p, "WIDTH %i", &width) < 1)
-                    MANGO_EXCEPTION(ID"Incorrect width");
+                {
+                    header.setError("[ImageDecoder.PNM] Incorrect width");
+                    return;
+                }
 
                 p = nextLine(p, end);
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 if (std::sscanf(p, "HEIGHT %i", &height) < 1)
-                    MANGO_EXCEPTION(ID"Incorrect height");
+                {
+                    header.setError("[ImageDecoder.PNM] Incorrect height");
+                    return;
+                }
 
                 p = nextLine(p, end);
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 if (std::sscanf(p, "DEPTH %i", &channels) < 1)
-                    MANGO_EXCEPTION(ID"Incorrect depth");
+                {
+                    header.setError("[ImageDecoder.PNM] Incorrect depth");
+                    return;
+                }
 
                 p = nextLine(p, end);
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 if (std::sscanf(p, "MAXVAL %i", &maxvalue) < 1)
-                    MANGO_EXCEPTION(ID"Incorrect maxval");
+                {
+                    header.setError("[ImageDecoder.PNM] Incorrect maxval");
+                    return;
+                }
 
                 p = nextLine(p, end);
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 if (std::sscanf(p, "TUPLTYPE %s", type) > 0)
                 {
                     debugPrint("  tupltype: %s\n", type);
@@ -175,8 +238,17 @@ namespace
                 }
 
                 p = nextLine(p, end);
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
+
                 if (std::strncmp(p, "ENDHDR", 6))
-                    MANGO_EXCEPTION(ID"Incorrect endhdr");
+                {
+                    header.setError("[ImageDecoder.PNM] Incorrect endhdr");
+                    return;
+                }
             }
             else
             {
@@ -213,7 +285,8 @@ namespace
                 }
                 else
                 {
-                    MANGO_EXCEPTION(ID"Incorrect header magic (%s)", p);
+                    header.setError("[ImageDecoder.PNM] Incorrect header magic (%s)", p);
+                    return;
                 }
 
                 p += 3; // skip header magic
@@ -224,13 +297,24 @@ namespace
                 {
                     p = nextValue(maxvalue, p, end);
                 }
+
+                if (!p)
+                {
+                    header.setError("Decoding error (out of data).");
+                    return;
+                }
             }
 
             debugPrint("  image: %d x %d, channels: %d\n", width, height, channels);
             debugPrint("  maxvalue: %d\n", maxvalue);
 
             if (maxvalue < 1 || maxvalue > 65535)
-                MANGO_EXCEPTION(ID"Incorrect maxvalue");
+            {
+                header.setError("[ImageDecoder.PNM] Incorrect maxvalue");
+                return;
+            }
+
+            Format format;
 
             if (is_float)
             {
@@ -239,7 +323,8 @@ namespace
                     case 1: format = Format(32, Format::FLOAT32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0)); break;
                     case 3: format = Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0); break;
                     default:
-                        MANGO_EXCEPTION(ID"Incorrect number of channels");
+                        header.setError("[ImageDecoder.PNM] Incorrect number of channels");
+                        return;
                 }
             }
             else
@@ -251,11 +336,21 @@ namespace
                     case 3: format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
                     case 4: format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
                     default:
-                        MANGO_EXCEPTION(ID"Incorrect number of channels");
+                        header.setError("[ImageDecoder.PNM] Incorrect number of channels");
+                        return;
                 }
             }
 
             data = p;
+
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = format;
+            header.compression = TextureCompression::NONE;
         }
     };
 
@@ -280,18 +375,7 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.width;
-            header.height  = m_header.height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = m_header.format;
-            header.compression = TextureCompression::NONE;
-
-            return header;
+            return m_header.header;
         }
 
         bool decode_matching(Surface& dest)
@@ -423,22 +507,28 @@ namespace
 
             ImageDecodeStatus status;
 
-            status.direct = dest.format == m_header.format &&
-                            dest.width >= m_header.width &&
-                            dest.height >= m_header.height;
+			const ImageHeader& header = m_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            status.direct = dest.format == header.format &&
+                            dest.width >= header.width &&
+                            dest.height >= header.height;
 
             if (status.direct)
             {
-                decode_matching(dest);
+                status.success = decode_matching(dest);
             }
             else
             {
-                Bitmap temp(m_header.width, m_header.height, m_header.format);
-                decode_matching(temp);
+                Bitmap temp(header.width, header.height, header.format);
+                status.success = decode_matching(temp);
                 dest.blit(0, 0, temp);
             }
 
-            status.success = true;
             return status;
         }
     };

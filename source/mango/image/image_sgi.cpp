@@ -1,15 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.RGB] "
 
 namespace
 {
@@ -29,7 +26,7 @@ namespace
         u16 zsize;
         u32 colormap;
 
-        Format format;
+        ImageHeader header;
 
         HeaderSGI(Memory memory)
         {
@@ -38,7 +35,8 @@ namespace
             u16 magic = p.read16();
             if (magic != 474)
             {
-                MANGO_EXCEPTION(ID"Incorrect header magic.");
+                header.setError("[ImageDecoder.SGI] Incorrect header magic.");
+                return;
             }
 
             encoding  = p.read8();  // 0 - UNCOMPRESSED, 1 - RLE
@@ -54,10 +52,12 @@ namespace
 
             if (bpc != 1 || colormap != 0)
             {
-                MANGO_EXCEPTION(ID"Incorrect channel/colormap.");
+                header.setError("[ImageDecoder.SGI] Incorrect channel/colormap.");
+                return;
             }
 
             // select color format
+            Format format;
             switch (zsize)
             {
                 case 1:
@@ -73,8 +73,18 @@ namespace
                     format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect color format.");
+                    header.setError("[ImageDecoder.SGI] Incorrect color format.");
+                    return;
             }
+
+            header.width   = xsize;
+            header.height  = ysize;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = format;
+            header.compression = TextureCompression::NONE;
         }
     };
 
@@ -85,11 +95,11 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
-        HeaderSGI m_header;
+        HeaderSGI m_sgi_header;
 
         Interface(Memory memory)
             : m_memory(memory)
-            , m_header(memory)
+            , m_sgi_header(memory)
         {
         }
 
@@ -99,25 +109,14 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.xsize;
-            header.height  = m_header.ysize;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = m_header.format;
-            header.compression = TextureCompression::NONE;
-
-            return header;
+            return m_sgi_header.header;
         }
 
         void decode_uncompressed(Surface& s)
         {
-            int width = m_header.xsize;
-            int height = m_header.ysize;
-            int channels = m_header.zsize;
+            int width = m_sgi_header.xsize;
+            int height = m_sgi_header.ysize;
+            int channels = m_sgi_header.zsize;
 
             const u8* data = m_memory.address + 512;
             
@@ -142,8 +141,8 @@ namespace
 
         void decode_rle(Surface& s)
         {
-            int height = m_header.ysize;
-            int channels = m_header.zsize;
+            int height = m_sgi_header.ysize;
+            int channels = m_sgi_header.zsize;
 
             const u8* data = m_memory.address;
 
@@ -215,13 +214,20 @@ namespace
 
             ImageDecodeStatus status;
 
-            status.direct = dest.format == m_header.format &&
-                            dest.width >= m_header.xsize &&
-                            dest.height >= m_header.ysize;
+			const ImageHeader& header = m_sgi_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            status.direct = dest.format == header.format &&
+                            dest.width >= m_sgi_header.xsize &&
+                            dest.height >= m_sgi_header.ysize;
 
             if (status.direct)
             {
-                switch (m_header.encoding)
+                switch (m_sgi_header.encoding)
                 {
                     case 0:
                         decode_uncompressed(dest);
@@ -233,8 +239,8 @@ namespace
             }
             else
             {
-                Bitmap temp(m_header.xsize, m_header.ysize, m_header.format);
-                switch (m_header.encoding)
+                Bitmap temp(m_sgi_header.xsize, m_sgi_header.ysize, header.format);
+                switch (m_sgi_header.encoding)
                 {
                     case 0:
                         decode_uncompressed(temp);
@@ -246,7 +252,6 @@ namespace
                 dest.blit(0, 0, temp);
             }
 
-            status.success = true;
             return status;
         }
     };

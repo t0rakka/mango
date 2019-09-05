@@ -5,7 +5,6 @@
 #include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
@@ -88,17 +87,19 @@ namespace
             int height;
             if (!WebPGetInfo(m_memory.address, m_memory.size, &width, &height))
             {
-                MANGO_EXCEPTION("[ImageDecoder.WEBP] Incorrect header.");
+                m_header.setError("[ImageDecoder.WEBP] Incorrect header.");
             }
-
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-			m_header.palette = false;
-            m_header.format  = webpDefaultFormat(true).format;
-            m_header.compression = TextureCompression::NONE;
+            else
+            {
+                m_header.width   = width;
+                m_header.height  = height;
+                m_header.depth   = 0;
+                m_header.levels  = 0;
+                m_header.faces   = 0;
+                m_header.palette = false;
+                m_header.format  = webpDefaultFormat(true).format;
+                m_header.compression = TextureCompression::NONE;
+            }
         }
 
         ~Interface()
@@ -118,6 +119,12 @@ namespace
             MANGO_UNREFERENCED(face);
 
             ImageDecodeStatus status;
+
+            if (!m_header.success)
+            {
+                status.setError(m_header.info);
+                return status;
+            }
 
             WebPFormat wpformat = webpFindFormat(dest.format);
             bool matching_formats = wpformat.format == dest.format;
@@ -146,11 +153,7 @@ namespace
 
             if (!output)
             {
-                MANGO_EXCEPTION("[ImageDecoder.WEBP] Decoding failed.");
-            }
-            else
-            {
-                status.success = true;
+                status.setError("[ImageDecoder.WEBP] Decoding failed.");
             }
 
             return status;
@@ -202,7 +205,8 @@ namespace
 
         if (!bytes)
         {
-            MANGO_EXCEPTION("[ImageDecoder.WEBP] Encoding failed.");
+            // TODO: signal error when the ImageEncodeState is enabled
+            //MANGO_EXCEPTION("[ImageDecoder.WEBP] Encoding failed.");
         }
     }
 

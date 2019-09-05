@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Commodore 64 decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -9,11 +9,8 @@
 #include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.C64] "
 
 namespace
 {
@@ -1406,7 +1403,7 @@ namespace
 
     void depack_him(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
-        (void) scansize;
+        MANGO_UNREFERENCED(scansize);
 
         const u8* in = input + insize - 1;
         const u8* in_end = input + 0x10 - 1;
@@ -1425,7 +1422,8 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    MANGO_EXCEPTION(ID"Hires Manager: unpacked size does not match file format.");
+                    // TODO: "Hires Manager: unpacked size does not match file format."
+                    return;
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -1439,7 +1437,8 @@ namespace
 
                 if (out - n < out_end || in - n < in_end)
                 {
-                    MANGO_EXCEPTION(ID"Hires Manager: unpacked size does not match file format.");
+                    // TODO: "Hires Manager: unpacked size does not match file format."
+                    return;
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -1838,7 +1837,8 @@ namespace
                     /*
                     if (sprite_pointer1 > 15872)
                     {
-                        MANGO_EXCEPTION("SHF: invalid sprite pointer.");
+                        // TODO: "SHF: invalid sprite pointer."
+                        return;
                     }
                     */
 
@@ -1850,7 +1850,8 @@ namespace
                     /*
                     if (sprite_pointer2 > 15872)
                     {
-                        MANGO_EXCEPTION("SHF: invalid sprite pointer.");
+                        // TODO: "SHF: invalid sprite pointer."
+                        return;
                     }
                     */
 
@@ -1948,7 +1949,7 @@ namespace
 
                     if (sprite_byte_offset > 15360)
                     {
-                        MANGO_EXCEPTION(ID"SHF-XL: invalid sprite pointer.");
+                        // TODO: "SHF-XL: invalid sprite pointer."
                     }
 
                     u8 sprite_byte = m_data[sprite_byte_offset];
@@ -2012,7 +2013,8 @@ namespace
 
                 if (out - 3 < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 *out-- = v;
@@ -2027,7 +2029,8 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -2040,7 +2043,8 @@ namespace
                 // 3-zero run
                 if (out - 3 < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 *out-- = 0;
@@ -2057,7 +2061,8 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -2070,7 +2075,8 @@ namespace
                 // 1st 2-character run
                 if (out - 2 < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 *out-- = *(input + 0x88);
@@ -2081,7 +2087,8 @@ namespace
                 // 2nd 2-character run
                 if (out - 2 < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 *out-- = *(input + 0x89);
@@ -2092,7 +2099,8 @@ namespace
                 // 3rd 2-character run
                 if (out - 2 < out_end)
                 {
-                    MANGO_EXCEPTION(ID"True Paint: unpacked size does not match file format.");
+                    // TODO: "True Paint: unpacked size does not match file format."
+                    return;
                 }
 
                 *out-- = *(input + 0x8a);

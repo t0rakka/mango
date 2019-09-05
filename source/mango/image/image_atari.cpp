@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     ATARI decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -8,11 +8,8 @@
 #include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.ATARI] "
 
 namespace
 {
@@ -50,6 +47,12 @@ namespace
 
             ImageDecodeStatus status;
 
+            if (!m_header.success)
+            {
+                status.setError(m_header.info);
+                return status;
+            }
+
             status.direct = dest.format == m_header.format &&
                             dest.width >= m_header.width &&
                             dest.height >= m_header.height;
@@ -65,7 +68,6 @@ namespace
                 dest.blit(0, 0, temp);
             }
 
-            status.success = true;
             return status;
         }
 
@@ -142,6 +144,8 @@ namespace
         int bitplanes = 0;
         bool compressed = false;
 
+        std::string error;
+
         const u8* parse(const u8* data, size_t size)
         {
             BigEndianConstPointer p = data;
@@ -169,7 +173,8 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"unsupported resolution.");
+                error = "[ImageDecoder.ATARI] unsupported resolution.";
+                return nullptr;
             }
 
             compressed = (resolution_data & 0x8000) != 0;
@@ -178,6 +183,7 @@ namespace
             {
                 if (size < 32034)
                 {
+                    error = "[ImageDecoder.ATARI] Out of data.";
                     return nullptr;
                 }
             }
@@ -269,6 +275,10 @@ namespace
                 m_header.height = m_degas_header.height;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             }
+            else
+            {
+                m_header.setError(m_degas_header.error);
+            }
         }
 
         void decodeImage(Surface& s) override
@@ -310,10 +320,13 @@ namespace
 		int height = 0;
         int bitplanes;
 
+        std::string error;
+
         const u8* parse(const u8* data, size_t size)
         {
             if (size != 32128)
             {
+                error = "[ImageDecoder.ATARI] Incorrect number of bytes.";
                 return nullptr;
             }
 
@@ -324,6 +337,7 @@ namespace
 
             if (flag)
             {
+                error = "[ImageDecoder.ATARI] Incorrect flags.";
                 return nullptr;
             }
             else
@@ -348,7 +362,8 @@ namespace
                 }
                 else
                 {
-                    MANGO_EXCEPTION(ID"Unsupported resolution.");
+                    error = "[ImageDecoder.ATARI] Unsupported resolution.";
+                    return nullptr;
                 }
             }
 
@@ -429,6 +444,10 @@ namespace
                 m_header.height = m_neo_header.height;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             }
+            else
+            {
+                m_header.setError(m_neo_header.error);
+            }
         }
 
         void decodeImage(Surface& s) override
@@ -502,11 +521,14 @@ namespace
         bool compressed = false;
         int length_of_data_bit_map = 0;
         int length_of_color_bit_map = 0;
+        
+        std::string error;
 
         const u8* parse(const u8* data, size_t size)
         {
             if (size < 12)
             {
+                error = "[ImageDecoder.ATARI] Incorrect header size.";
                 return nullptr;
             }
 
@@ -526,6 +548,7 @@ namespace
 
                 if (size != total_size && size != total_size_other)
                 {
+                    error = "[ImageDecoder.ATARI] Incorrect number of bytes.";
                     return nullptr;
                 }
             }
@@ -533,6 +556,7 @@ namespace
             {
                 if (size != 51104)
                 {
+                    error = "[ImageDecoder.ATARI] Incorrect number of bytes.";
                     return nullptr;
                 }
 
@@ -689,7 +713,7 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Incorrect header.");
+                m_header.setError(m_spu_header.error);
             }
         }
 
@@ -882,12 +906,17 @@ namespace
         int bitplanes = 0;
         bool compressed = false;
 
+        std::string error;
+
         const u8* parse(const u8* data, size_t size)
         {
             BigEndianConstPointer p = data;
 
             if (std::memcmp(p, "CA", 2))
+            {
+                error = "[ImageDecoder.ATARI] Incorrect header.";
                 return nullptr;
+            }
 
             p += 2;
 
@@ -914,13 +943,15 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION(ID"Unsupported resolution.");
+                error = "[ImageDecoder.ATARI] Unsupported resolution.";
+                return nullptr;
             }
 
             if (!compressed)
             {
                 if (size < size_t(32000 + 2 + 1 + 1 + (1 << bitplanes)))
                 {
+                    error = "[ImageDecoder.ATARI] Out of data.";
                     return nullptr;
                 }
             }
@@ -1008,6 +1039,10 @@ namespace
                 m_header.width  = m_ca_header.width;
                 m_header.height = m_ca_header.height;
                 m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            }
+            else
+            {
+                m_header.setError(m_ca_header.error);
             }
         }
 

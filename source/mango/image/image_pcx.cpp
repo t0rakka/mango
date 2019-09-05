@@ -1,18 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#define ID "[ImageDecoder.PCX] "
-
 namespace
 {
-
     using namespace mango;
 
     // ------------------------------------------------------------
@@ -31,14 +27,16 @@ namespace
         u16     Ymax;
         u16     HDpi;
         u16     VDpi;
-        u8      ColorMap[48];
+        const u8* ColorMap;
         u8      Reserved;
         u8      NPlanes;
         u16     BytesPerLine;
         u16     PaletteInfo;
         u16     HscreenSize;
         u16     VscreenSize;
-        u8      Padding[54];
+
+        bool isPaletteMarker = false;
+        ImageHeader header;
 
         HeaderPCX(Memory memory)
         {
@@ -55,7 +53,8 @@ namespace
             HDpi          = p.read16();
             VDpi          = p.read16();
 
-            p.read(ColorMap, 48);
+            ColorMap = p;
+            p += 48;
 
             Reserved      = p.read8();
             NPlanes       = p.read8();
@@ -63,97 +62,37 @@ namespace
             PaletteInfo   = p.read16();
             HscreenSize   = p.read16();
             VscreenSize   = p.read16();
+
+            if (Manufacturer != 10)
+            {
+                header.setError("[ImageDecoder.PCX] Incorrect manufacturer.");
+                return;
+            }
+
+            if (memory.size > (128 + 768))
+            {
+                isPaletteMarker = memory.address[memory.size - 1 - 768] == 0x0c;
+            }
+            else if (memory.size < 128)
+            {
+                header.setError("[ImageDecoder.PCX] Incorrect file size.");
+                return;
+            }
+
+            header.width   = int(Xmax - Xmin + 1);
+            header.height  = int(Ymax - Ymin + 1);
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = isPaletteMarker || (BitsPerPixel == 1 && NPlanes == 4);
+            header.format  = FORMAT_B8G8R8A8;
+            header.compression = TextureCompression::NONE;
         }
 
         ~HeaderPCX()
         {
         }
-
-        int getWidth() const
-        {
-            return int(Xmax - Xmin + 1);
-        }
-
-        int getHeight() const
-        {
-            return int(Ymax - Ymin + 1);
-        }
-
-        Format getFormat(bool isPaletteMarker) const
-        {
-            Format format;
-
-            switch (BitsPerPixel)
-            {
-            case 1:
-                switch (NPlanes)
-                {
-                case 4:
-                    format = FORMAT_B8G8R8A8;
-                    break;
-                default:
-                    MANGO_EXCEPTION(ID"Incorrect NPlanes.");
-                    break;
-                }
-                break;
-
-            case 4:
-                switch (NPlanes)
-                {
-                case 1:
-                    format = FORMAT_B8G8R8A8;
-                    break;
-                case 4:
-                    format = FORMAT_B4G4R4A4;
-                    break;
-                default:
-                    MANGO_EXCEPTION(ID"Incorrect NPlanes.");
-                    break;
-                }
-                break;
-
-            case 8:
-                switch (NPlanes)
-                {
-                case 1:
-                    format = isPaletteMarker ? FORMAT_B8G8R8A8 : FORMAT_L8;
-                    break;
-                case 3:
-                    format = FORMAT_B8G8R8;
-                    break;
-                case 4:
-                    format = FORMAT_B8G8R8A8;
-                    break;
-                default:
-                    MANGO_EXCEPTION(ID"Incorrect NPlanes.");
-                    break;
-                }
-                break;
-
-            default:
-                MANGO_EXCEPTION(ID"Incorrect BitsPerPixel.");
-                break;
-            }
-
-            return FORMAT_B8G8R8A8;
-        }
     };
-
-    bool getPaletteMarker(Memory memory)
-    {
-        bool isPaletteMarker = false;
-
-        if (memory.size > (128 + 768))
-        {
-            isPaletteMarker = memory.address[memory.size - 1 - 768] == 0x0c;
-        }
-        else if (memory.size < 128)
-        {
-            MANGO_EXCEPTION(ID"Incorrect file size.");
-        }
-
-        return isPaletteMarker;
-    }
 
     // ------------------------------------------------------------
     // scanline decoders
@@ -302,25 +241,7 @@ namespace
 
         ImageHeader header() override
         {
-            bool isPaletteMarker = getPaletteMarker(m_memory);
-
-            if (m_header.Manufacturer != 10)
-            {
-                MANGO_EXCEPTION(ID"Incorrect manufacturer.");
-            }
-
-            ImageHeader header;
-
-            header.width   = m_header.getWidth();
-            header.height  = m_header.getHeight();
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = isPaletteMarker || (m_header.BitsPerPixel == 1 && m_header.NPlanes == 4);
-            header.format  = m_header.getFormat(isPaletteMarker);
-            header.compression = TextureCompression::NONE;
-
-            return header;
+            return m_header.header;
         }
 
         ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
@@ -331,11 +252,16 @@ namespace
 
             ImageDecodeStatus status;
 
-            bool isPaletteMarker = getPaletteMarker(m_memory);
+			const ImageHeader& header = m_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
 
-            int width = m_header.getWidth();
-            int height = m_header.getHeight();
-            Format format = m_header.getFormat(isPaletteMarker);
+            int width = header.width;
+            int height = header.height;
+            Format format = header.format;
 
             Bitmap temp(width, height, format);
 
@@ -412,7 +338,7 @@ namespace
                     switch (m_header.NPlanes)
                     {
                         case 1:
-                            if (isPaletteMarker)
+                            if (m_header.isPaletteMarker)
                             {
                                 Palette palette;
                                 palette.size = 256;
@@ -470,7 +396,6 @@ namespace
                     break;
             }
 
-            status.success = true;
             return status;
         }
     };

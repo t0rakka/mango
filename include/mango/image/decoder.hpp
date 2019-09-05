@@ -14,7 +14,7 @@ namespace mango
 {
     class Surface;
 
-    struct ImageHeader
+    struct ImageHeader : image::Status
     {
         int     width = 0;   // width
         int     height = 0;  // height
@@ -26,18 +26,8 @@ namespace mango
         TextureCompression compression = TextureCompression::NONE;
     };
 
-    struct ImageDecodeOptions
+    struct ImageDecodeStatus : image::Status
     {
-        // request indexed decoding
-        // - palette is resolved into the provided palette object
-        // - decode() destination surface must be indexed
-        Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
-    };
-
-    struct ImageDecodeStatus
-    {
-        std::string info;
-        bool success = false;
         bool direct = false;
 
         // animation information
@@ -46,6 +36,14 @@ namespace mango
         //       until running out of data.
         int current_frame_index = 0;
         int next_frame_index = 0;
+    };
+
+    struct ImageDecodeOptions
+    {
+        // request indexed decoding
+        // - palette is resolved into the provided palette object
+        // - decode() destination surface must be indexed
+        Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
     };
 
     class ImageDecoderInterface : protected NonCopyable

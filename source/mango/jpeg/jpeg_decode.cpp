@@ -220,12 +220,6 @@ namespace jpeg {
 
         m_surface = nullptr;
 
-        header.width = 0;
-        header.height = 0;
-        header.xblock = 0;
-        header.yblock = 0;
-        header.format = Format();
-
         cpu_flags = getCPUFlags();
 
         // configure default implementation
@@ -526,13 +520,13 @@ namespace jpeg {
 
         if (xsize <= 0 || ysize <= 0)
         {
-            m_error = makeString("Incorrect dimensions (%d x %d)", xsize, ysize);
+            header.setError("Incorrect dimensions (%d x %d)", xsize, ysize);
             return;
         }
 
         if (components < 1 || components > 4)
         {
-            m_error = makeString("Incorrect number of components (%d)", components);
+            header.setError("Incorrect number of components (%d)", components);
             return;
         }
 
@@ -636,7 +630,7 @@ namespace jpeg {
 
             if (frame.Hsf > 8 || frame.Vsf > 8)
             {
-                m_error = makeString("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf);
+                header.setError("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf);
                 return;
             }
 
@@ -652,7 +646,7 @@ namespace jpeg {
             Frame& frame = processState.frame[i];
             if (!frame.Hsf || !frame.Vsf)
             {
-                m_error = makeString("Incorrect sampling factors (%d x %d)", frame.Hsf, frame.Vsf);
+                header.setError("Incorrect sampling factors (%d x %d)", frame.Hsf, frame.Vsf);
                 return;
             }
             frame.Hsf = u32_log2(Hmax / frame.Hsf);
@@ -664,7 +658,7 @@ namespace jpeg {
 
         if (!xblock || !yblock)
         {
-            m_error = makeString("Incorrect dimensions (%d x %d)", xblock, yblock);
+            header.setError("Incorrect dimensions (%d x %d)", xblock, yblock);
             return;
         }
 
@@ -693,8 +687,6 @@ namespace jpeg {
         // configure header
         header.width = xsize;
         header.height = ysize;
-        header.xblock = xblock;
-        header.yblock = yblock;
         header.format = components > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
 
         MANGO_UNREFERENCED(length);
@@ -946,7 +938,7 @@ namespace jpeg {
 
             if (Tq >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                m_error = makeString("Incorrect quantization table (Tq: %d >= %d)", Tq, JPEG_MAX_COMPS_IN_SCAN);
+                header.setError("Incorrect quantization table (Tq: %d >= %d)", Tq, JPEG_MAX_COMPS_IN_SCAN);
                 return;
             }
 
@@ -971,7 +963,7 @@ namespace jpeg {
                     break;
 
                 default:
-                    m_error = makeString("Incorrect quantization table element precision (%d)", Pq);
+                    header.setError("Incorrect quantization table element precision (%d)", Pq);
                     return;
             }
 
@@ -995,13 +987,13 @@ namespace jpeg {
 
             if (Tc >= 2)
             {
-                m_error = makeString("Incorrect huffman table class (%d)", Tc);
+                header.setError("Incorrect huffman table class (%d)", Tc);
                 return;
             }
 
             if (Th >= JPEG_MAX_COMPS_IN_SCAN)
             {
-                m_error = makeString("Incorrect huffman table identifier (%d)", Th);
+                header.setError("Incorrect huffman table identifier (%d)", Th);
                 return;
             }
 
@@ -1124,7 +1116,7 @@ namespace jpeg {
 
         for ( ; p < end; )
         {
-            if (!m_error.empty())
+            if (!header.success)
             {
                 // we are in error state -> abort parsing
                 break;
@@ -1617,10 +1609,9 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
-            if (!m_error.empty())
+            if (!header.success)
             {
-                status.success = false;
-                status.info = m_error;
+                status.setError(header.info);
                 return status;
             }
 
@@ -1636,10 +1627,9 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
-            if (!m_error.empty())
+            if (!header.success)
             {
-                status.success = false;
-                status.info = m_error;
+                status.setError(header.info);
                 return status;
             }
 
@@ -1652,26 +1642,31 @@ namespace jpeg {
         }
 
         blockVector = nullptr;
+        status.info = getInfo();
 
-        // build info string
-        status.info = m_encoding;
+        return status;
+    }
 
-        status.info += ", ";
-        status.info += m_compression;
+    std::string Parser::getInfo() const
+    {
+        std::string info = m_encoding;
+
+        info += ", ";
+        info += m_compression;
 
         if (!m_idct_name.empty())
         {
-            status.info += ", ";
-            status.info += m_idct_name;
+            info += ", ";
+            info += m_idct_name;
         }
 
         if (!m_ycbcr_name.empty())
         {
-            status.info += ", ";
-            status.info += m_ycbcr_name;
+            info += ", ";
+            info += m_ycbcr_name;
         }
 
-        return status;
+        return info;
     }
 
     void Parser::decodeLossless()

@@ -1,13 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.KTX] "
 
 namespace
 {
@@ -447,6 +444,8 @@ namespace
     // header
     // ----------------------------------------------------------------------------
 
+    constexpr int KTX_HEADER_SIZE = 64;
+
     struct HeaderKTX
     {
         u8 reserved_identifier[12];
@@ -464,6 +463,8 @@ namespace
         u32 numberOfMipmapLevels;
         u32 bytesOfKeyValueData;
 
+        ImageHeader header;
+
         HeaderKTX(Memory memory)
         {
             const u8 ktxIdentifier[] =
@@ -474,7 +475,8 @@ namespace
 
             if (std::memcmp(ktxIdentifier, memory.address, sizeof(ktxIdentifier)))
             {
-                MANGO_EXCEPTION(ID"Incorrect identifier.");
+                header.setError("[ImageDecoder.KTX] Incorrect identifier.");
+                return;
             }
 
             const u8* ptr = memory.address + sizeof(ktxIdentifier);
@@ -504,7 +506,8 @@ namespace
             {
                 if (endianness != 0x01020304)
                 {
-                    MANGO_EXCEPTION(ID"Incorrect endianness.");
+                    header.setError("[ImageDecoder.KTX] Incorrect endianness.");
+                    return;
                 }
                 else
                 {
@@ -544,33 +547,19 @@ namespace
 
             if (numberOfFaces != 1 && numberOfFaces != 6)
             {
-                MANGO_EXCEPTION(ID"Incorrect number of faces.");
+                header.setError("[ImageDecoder.KTX] Incorrect number of faces.");
+                return;
             }
 
             if (numberOfArrayElements != 0)
             {
-                MANGO_EXCEPTION(ID"Incorrect number of array elements (not supported).");
+                header.setError("[ImageDecoder.KTX] Incorrect number of array elements (not supported).");
+                return;
             }
 
             numberOfMipmapLevels = std::max(1U, numberOfMipmapLevels);
-        }
 
-        ~HeaderKTX()
-        {
-        }
-
-        u32 read32ktx(const u8* p) const
-        {
-            u32 value = uload32(p);
-            if (endianness != 0x04030201)
-            {
-                value = byteswap(value);
-            }
-            return value;
-        }
-
-        TextureCompression computeFormat(Format& format) const
-        {
+            Format format;
             TextureCompression compression = opengl::getTextureCompression(glInternalFormat);
 
             if (compression != TextureCompression::NONE)
@@ -587,13 +576,34 @@ namespace
                 }
             }
 
-            return compression;
+            header.width   = pixelWidth;
+            header.height  = pixelHeight;
+            header.depth   = 0;
+            header.levels  = numberOfMipmapLevels;
+            header.faces   = numberOfFaces;
+            header.palette = false;
+            header.format  = format;
+            header.compression = compression;
+        }
+
+        ~HeaderKTX()
+        {
+        }
+
+        u32 read32ktx(const u8* p) const
+        {
+            u32 value = uload32(p);
+            if (endianness != 0x04030201)
+            {
+                value = byteswap(value);
+            }
+            return value;
         }
 
         Memory getMemory(Memory memory, int level, int depth, int face) const
         {
             const u8* address = memory.address;
-            address += sizeof(HeaderKTX) + bytesOfKeyValueData;
+            address += KTX_HEADER_SIZE + bytesOfKeyValueData;
 
             const int maxLevel = int(numberOfMipmapLevels);
             const int maxFace = int(numberOfFaces);
@@ -631,11 +641,11 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
-        HeaderKTX m_header;
+        HeaderKTX m_ktx_header;
 
         Interface(Memory memory)
             : m_memory(memory)
-            , m_header(memory)
+            , m_ktx_header(memory)
         {
         }
 
@@ -645,23 +655,12 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.pixelWidth;
-            header.height  = m_header.pixelHeight;
-            header.depth   = 0;
-            header.levels  = m_header.numberOfMipmapLevels;
-            header.faces   = m_header.numberOfFaces;
-            header.palette = false;
-            header.format  = FORMAT_NONE;
-            header.compression = m_header.computeFormat(header.format);
-
-            return header;
+            return m_ktx_header.header;
         }
 
         Memory memory(int level, int depth, int face) override
         {
-            Memory data = m_header.getMemory(m_memory, level, depth, face);
+            Memory data = m_ktx_header.getMemory(m_memory, level, depth, face);
             return data;
         }
 
@@ -669,23 +668,32 @@ namespace
         {
             MANGO_UNREFERENCED(palette);
 
-            Memory data = m_header.getMemory(m_memory, level, depth, face);
-
-            Format format;
-            TextureCompressionInfo info = m_header.computeFormat(format);
-
             ImageDecodeStatus status;
+
+			const ImageHeader& header = m_ktx_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            Memory data = m_ktx_header.getMemory(m_memory, level, depth, face);
+
+            Format format = header.format;
+            TextureCompressionInfo info = header.compression;
 
             if (info.compression != TextureCompression::NONE)
             {
                 TextureCompressionStatus cs = info.decompress(dest, data);
+
+                status.info = cs.info;
                 status.success = cs.success;
                 status.direct = cs.direct;
             }
             else if (format != FORMAT_NONE)
             {
-                int width = std::max(1U, m_header.pixelWidth >> level);
-                int height = std::max(1U, m_header.pixelHeight >> level);
+                int width = std::max(1U, m_ktx_header.pixelWidth >> level);
+                int height = std::max(1U, m_ktx_header.pixelHeight >> level);
                 int stride = width * format.bytes();
 
                 // KTX format stores data with GL_UNPACK_ALIGNMENT of 4
@@ -693,8 +701,10 @@ namespace
 
                 Surface source(width, height, format, stride, data.address);
                 dest.blit(0, 0, source);
-
-                status.success = true;
+            }
+            else
+            {
+                status.setError("[ImageDecoder.KTX] Incorrect format.");
             }
 
             return status;

@@ -1,15 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.HDR] "
 
 namespace
 {
@@ -26,7 +23,7 @@ namespace
 		int endsize = 1;
 
 		// scan for endline
-		for (; buffer < end;)
+		for ( ; buffer < end; )
 		{
 			u8 v = *p++;
 
@@ -49,7 +46,6 @@ namespace
 		}
 
 		int size = int(p - buffer) - endsize;
-
 		std::string msg(reinterpret_cast<const char*>(buffer), size);
 
 		buffer = p;
@@ -126,9 +122,9 @@ namespace
 		buffer[3] = 1.0f;
 	}
 
-	struct radheader
+	struct HeaderRAD
 	{
-		enum radformat
+		enum rad_format
 		{
 			rad_rle_rgbe,
 			rad_unsupported
@@ -140,6 +136,8 @@ namespace
 		bool yflip;
 		float exposure;
 
+        ImageHeader header;
+
 		void parse(const u8*& buffer, const u8* end)
 		{
 			format   = rad_unsupported;
@@ -150,7 +148,8 @@ namespace
             std::string id = readline(buffer, end);
 			if (id != "#?RADIANCE")
 			{
-				MANGO_EXCEPTION(ID"Incorrect radiance header.");
+				header.setError("[ImageDecoder.HDR] Incorrect radiance header.");
+				return;
 			}
 
 			for ( ;; )
@@ -165,7 +164,8 @@ namespace
 				{
 					if (tokens.size() != 2)
 					{
-						MANGO_EXCEPTION(ID"Incorrect radiance header (format).");
+						header.setError("[ImageDecoder.HDR] Incorrect radiance header (format).");
+						return;
 					}
 
 					if (tokens[1] == "32-bit_rle_rgbe")
@@ -175,7 +175,8 @@ namespace
 				{
 					if (tokens.size() != 2)
 					{
-						MANGO_EXCEPTION(ID"Incorrect radiance header (exposure).");
+						header.setError("[ImageDecoder.HDR] Incorrect radiance header (exposure).");
+						return;
 					}
 
 					exposure = float(std::atof(tokens[1].c_str()));
@@ -184,7 +185,8 @@ namespace
 
 			if (format == rad_unsupported)
 			{
-				MANGO_EXCEPTION(ID"Incorrect or unsupported format.");
+				header.setError("[ImageDecoder.HDR] Incorrect or unsupported format.");
+				return;
 			}
 
             std::string dims = readline(buffer, end);
@@ -192,7 +194,8 @@ namespace
 
 			if (tokens.size() != 4)
 			{
-				MANGO_EXCEPTION(ID"Incorrect radiance header (dimensions).");
+				header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
+				return;
 			}
 
 			for (int i = 0; i < 2; ++i)
@@ -220,18 +223,29 @@ namespace
 				}
 				else
 				{
-					MANGO_EXCEPTION(ID"Incorrect radiance header (dimensions).");
+					header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
+					return;
 				}
 			}
 
 			if (!width || !height)
 			{
-				MANGO_EXCEPTION(ID"Incorrect radiance header (dimensions).");
+				header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
+				return;
 			}
+
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = FORMAT_RGBA32F;
+            header.compression = TextureCompression::NONE;
 		}
 	};
 
-    void hdr_decode(Surface& surface, const u8* data)
+    void hdr_decode(ImageDecodeStatus& status, Surface& surface, const u8* data)
     {
         Buffer buffer(surface.width * 4);
 
@@ -239,12 +253,14 @@ namespace
 		{
 			if (data[0] != 2 || data[1] != 2 || data[2] & 0x80)
 			{
-				MANGO_EXCEPTION(ID"Incorrect rle_rgbe stream (wrong header).");
+				status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (wrong header).");
+				return;
 			}
 
 			if (((data[2] << 8) | data[3]) != surface.width)
 			{
-				MANGO_EXCEPTION(ID"Incorrect rle_rgbe stream (wrong scan).");
+				status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (wrong scan).");
+				return;
 			}
 
 			data += 4;
@@ -265,7 +281,8 @@ namespace
 						count -= 128;
 						if (!count || count > (end - p))
 						{
-							MANGO_EXCEPTION(ID"Incorrect rle_rgbe stream (rle count).");
+							status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (rle count).");
+							return;
 						}
 
 						std::memset(p, value, count);
@@ -275,7 +292,8 @@ namespace
 					{
 						if (!count || count > (end - p))
 						{
-							MANGO_EXCEPTION(ID"Incorrect rle_rgbe stream (rle count).");
+							status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (rle count).");
+							return;
 						}
 
 						*p++ = u8(value);
@@ -310,14 +328,14 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        radheader m_header;
+        HeaderRAD m_rad_header;
         const u8* m_data;
 
         Interface(Memory memory)
         {
             const u8* data = memory.address;
             const u8* end = memory.address + memory.size;
-            m_header.parse(data, end);
+            m_rad_header.parse(data, end);
             m_data = data;
         }
 
@@ -327,18 +345,7 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.width;
-            header.height  = m_header.height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = FORMAT_RGBA32F;
-            header.compression = TextureCompression::NONE;
-
-            return header;
+            return m_rad_header.header;
         }
 
         ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
@@ -348,23 +355,28 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
-            Format format = FORMAT_RGBA32F;
-
 			ImageDecodeStatus status;
-			status.direct = dest.format == format;
+
+			const ImageHeader& header = m_rad_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+			status.direct = dest.format == header.format;
 
             if (status.direct)
             {
-                hdr_decode(dest, m_data);
+                hdr_decode(status, dest, m_data);
             }
             else
             {
-                Bitmap temp(m_header.width, m_header.height, format);
-                hdr_decode(temp, m_data);
+                Bitmap temp(header.width, header.height, header.format);
+                hdr_decode(status, temp, m_data);
                 dest.blit(0, 0, temp);
             }
 
-            status.success = true;
             return status;
         }
     };

@@ -1,14 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/bits.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.PKM] "
 
 namespace
 {
@@ -28,22 +25,25 @@ namespace
         u16 original_width;
         u16 original_height;
 
-        // preferred decode format
-        Format format;
-        TextureCompression compression;
-
         // compression type
         s16 type;
+
+        ImageHeader header;
 
         void read(BigEndianConstPointer& p)
         {
             u32 magic = p.read32();
             if (magic != u32_mask_rev('P', 'K', 'M', ' '))
             {
-                MANGO_EXCEPTION(ID"Incorrect header.");
+                header.setError("[ImageDecoder.PKM] Incorrect header.");
+                return;
             }
 
             p += 2; // skip version
+
+            // preferred decode format
+            Format format;
+            TextureCompression compression;
 
             type = p.read16();
             switch (type)
@@ -57,7 +57,8 @@ namespace
                     break;
 
                 case 2:
-                    MANGO_EXCEPTION(ID"Unsupported compression.");
+                    header.setError("[ImageDecoder.PKM] Unsupported compression.");
+                    return;
 
                 case 3:
                     compression = TextureCompression::ETC2_RGBA;
@@ -68,7 +69,8 @@ namespace
                     break;
 
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect compression.");
+                    header.setError("[ImageDecoder.PKM] Incorrect compression.");
+                    return;
             }
 
             extended_width  = p.read16();
@@ -76,6 +78,15 @@ namespace
             original_width  = p.read16();
             original_height = p.read16();
             format = FORMAT_R8G8B8A8;
+
+            header.width   = extended_width;
+            header.height  = extended_height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+			header.palette = false;
+            header.format  = format;
+            header.compression = compression;
         }
     };
 
@@ -101,18 +112,7 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.extended_width;
-            header.height  = m_header.extended_height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = m_header.format;
-            header.compression = m_header.compression;
-
-            return header;
+            return m_header.header;
         }
 
         Memory memory(int level, int depth, int face) override
@@ -133,9 +133,17 @@ namespace
 
             ImageDecodeStatus status;
 
-            TextureCompressionInfo info = m_header.compression;
+			const ImageHeader& header = m_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            TextureCompressionInfo info = header.compression;
             TextureCompressionStatus cs = info.decompress(dest, m_data);
 
+            status.info = cs.info;
             status.success = cs.success;
             status.direct = cs.direct;
 
@@ -178,7 +186,8 @@ namespace
         TextureCompressionInfo info(TextureCompression::ETC1_RGB);
         if (!info.encode)
         {
-            MANGO_EXCEPTION(ID"No ETC1 compressor.");
+            // TODO: signal error when ImageEncodeStatus is available
+            //MANGO_EXCEPTION(ID"No ETC1 compressor.");
         }
 
         // compute compressed data size

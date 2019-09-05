@@ -5,11 +5,8 @@
 //#define MANGO_ENABLE_DEBUG_PRINT
 
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.BMP] "
 
 namespace
 {
@@ -276,6 +273,8 @@ namespace
         const u8* palette;
         bool yflip;
 
+        const char* error = nullptr;
+
         BitmapHeader(Memory memory, bool isIcon)
         {
             paletteComponents = 0;
@@ -353,8 +352,8 @@ namespace
                 }
 
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect header size (%d).", headerSize);
-                    break;
+                    error = "[ImageDecoder.BMP] Incorrect header size.";
+                    return;
             }
 
             debugPrint("  numPlanes: %d\n", numPlanes);
@@ -362,7 +361,8 @@ namespace
 
             if (numPlanes != 1)
             {
-                MANGO_EXCEPTION(ID"Incorrect number of planes (%d).", numPlanes);
+                error = "[ImageDecoder.BMP] Incorrect number of planes.";
+                return;
             }
 
             if (isIcon)
@@ -431,8 +431,8 @@ namespace
                             format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
-                            MANGO_EXCEPTION(ID"Incorrect number of color bits.");
-                            break;
+                            error = "[ImageDecoder.BMP] Incorrect number of color bits.";
+                            return;
                     }
                 }
             }
@@ -657,9 +657,13 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    void decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon, Palette* ptr_palette)
+    const char* decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
+        if (header.error)
+        {
+            return header.error;
+        }
 
         Palette palette;
 
@@ -734,8 +738,7 @@ namespace
                     }
 
                     default:
-                        MANGO_EXCEPTION(ID"Incorrect number of color bits (%d).", header.bitsPerPixel);
-                        break;
+                        return "[ImageDecoder.BMP] Incorrect number of color bits.";
                 }
                 break;
             }
@@ -781,13 +784,13 @@ namespace
             case BIC_CMYK:
             case BIC_CMYKRLE8:
             case BIC_CMYKRLE4:
-                MANGO_EXCEPTION(ID"Unsupported compression (%d).", header.compression);
-                break;
+                return "[ImageDecoder.BMP] Unsupported compression.";
 
             default:
-                MANGO_EXCEPTION(ID"Incorrect compression (%d).", header.compression);
-                break;
+                return "[ImageDecoder.BMP] Incorrect compression.";
         }
+
+        return nullptr;
     }
 
 	// ------------------------------------------------------------
@@ -821,7 +824,7 @@ namespace
     // .ico parser
     // ------------------------------------------------------------
 
-    void parseIco(ImageHeader* imageHeader, Surface* surface, Memory memory)
+    const char* parseIco(ImageHeader* imageHeader, Surface* surface, Memory memory)
     {
         LittleEndianConstPointer p = memory.address;
 
@@ -837,8 +840,7 @@ namespace
                 // .cur
                 break;
             default:
-                MANGO_EXCEPTION(ID"Incorrect ICO/CUR identifier.");
-                break;
+                return "[ImageDecoder.BMP] Incorrect ICO/CUR identifier.";
         }
 
         u32 bestScore = 0;
@@ -861,7 +863,9 @@ namespace
                 planes = p.read16();
                 bpp = p.read16();
                 if (planes < 0 || planes > 1)
-                    MANGO_EXCEPTION(ID"Incorrect number of planes in ICO/CUR directory.");
+                {
+                    return "[ImageDecoder.BMP] Incorrect number of planes in ICO/CUR directory.";
+                }
             }
             else
             {
@@ -916,6 +920,10 @@ namespace
             case 0x28:
             {
                 BitmapHeader header(block, true);
+                if (header.error)
+                {
+                    return header.error;
+                }
 
                 if (imageHeader)
                 {
@@ -931,7 +939,11 @@ namespace
 
                 if (surface)
                 {
-                    decodeBitmap(*surface, block, headersize + palettesize * 4, true, nullptr);
+                    const char* error = decodeBitmap(*surface, block, headersize + palettesize * 4, true, nullptr);
+                    if (error)
+                    {
+                        return error;
+                    }
                 }
 
                 break;
@@ -950,9 +962,10 @@ namespace
                 break;
 
             default:
-                MANGO_EXCEPTION(ID"Incorrect ICO/CUR magic.");
-                break;
+                return "[ImageDecoder.BMP] Incorrect ICO/CUR magic.";
         }
+
+        return nullptr;
     }
 
     // ------------------------------------------------------------
@@ -982,6 +995,11 @@ namespace
                 {
                     Memory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
+                    if (bmp_header.error)
+                    {
+                        m_image_header.setError(bmp_header.error);
+                        return;
+                    }
 
                     m_image_header.width   = bmp_header.width;
                     m_image_header.height  = bmp_header.height;
@@ -999,8 +1017,14 @@ namespace
                 }
 
                 case 0x0000:
-                    parseIco(&m_image_header, nullptr, m_memory);
+                {
+                    const char* error = parseIco(&m_image_header, nullptr, m_memory);
+                    if (error)
+                    {
+                        m_image_header.setError(error);
+                    }
                     break;
+                }
 
                 case 0x5089:
                     m_image_header = getHeader(m_memory, "png");
@@ -1019,7 +1043,7 @@ namespace
                     break;
 
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect header identifier.");
+                    m_image_header.setError("[ImageDecoder.BMP] Incorrect header identifier.");
                     break;
             }
         }
@@ -1041,7 +1065,11 @@ namespace
 
             ImageDecodeStatus status;
 
-            status.success = true;
+            if (!m_image_header.success)
+            {
+                status.setError(m_image_header.info);
+                return status;
+            }
 
             switch (m_file_header.magic)
             {
@@ -1054,8 +1082,14 @@ namespace
                     break;
 
                 case 0x0000:
-                    parseIco(nullptr, &dest, m_memory);
+                {
+                    const char* error = parseIco(nullptr, &dest, m_memory);
+                    if (error)
+                    {
+                        status.setError(error);
+                    }
                     return status;
+                }
 
                 case 0x5089:
                     getImage(dest, m_memory, "png");
@@ -1074,12 +1108,16 @@ namespace
                     return status;
 
                 default:
-                    MANGO_EXCEPTION(ID"Incorrect header identifier.");
-                    break;
+                    status.setError("[ImageDecoder.BMP] Incorrect header identifier.");
+                    return status;
             }
 
             Memory block = m_memory.slice(14);
-            decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
+            const char* error = decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
+            if (error)
+            {
+                status.setError(error);
+            }
 
             return status;
         }

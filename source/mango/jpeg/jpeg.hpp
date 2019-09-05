@@ -98,15 +98,6 @@ namespace jpeg {
         Format format;
     };
 
-    struct Header
-    {
-        int width;
-        int height;
-        int xblock;
-        int yblock;
-        Format format;
-    };
-
     struct QuantTable
     {
         s16* table;  // Quantization table
@@ -342,8 +333,6 @@ namespace jpeg {
         std::string m_idct_name;
         std::string m_ycbcr_name;
 
-        std::string m_error;
-
         Surface* m_surface;
         u64 cpu_flags;
 
@@ -408,9 +397,10 @@ namespace jpeg {
         void finishProgressiveMT();
 
         void configureCPU(Sample sample);
+        std::string getInfo() const;
 
     public:
-        Header header;
+        ImageHeader header;
         Memory exif_memory; // Exif block, if one is present
         Memory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present

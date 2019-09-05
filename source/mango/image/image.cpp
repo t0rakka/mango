@@ -173,7 +173,7 @@ namespace mango
 
         if (!m_interface)
         {
-            printf("[WARNING] ImageDecoder::header() is not supported for this extension.");
+            header.setError("[WARNING] ImageDecoder::header() is not supported for this extension.");
         }
         else
         {
@@ -189,8 +189,7 @@ namespace mango
 
         if (!m_interface)
         {
-            printf("[WARNING] ImageDecoder::decode() is not supported for this extension.");
-            status.success = false;
+            status.setError("[WARNING] ImageDecoder::decode() is not supported for this extension.");
         }
         else
         {
@@ -204,11 +203,7 @@ namespace mango
     {
         Exif exif;
 
-        if (!m_interface)
-        {
-            printf("[WARNING] ImageDecoder::exit() is not supported for this extension.");
-        }
-        else
+        if (m_interface)
         {
             exif = m_interface->exif();
         }
@@ -220,11 +215,7 @@ namespace mango
     {
         Memory memory;
 
-        if (!m_interface)
-        {
-            printf("[WARNING] ImageDecoder::memory() is not supported for this extension.");
-        }
-        else
+        if (m_interface)
         {
             memory = m_interface->memory(level, depth, face);
         }

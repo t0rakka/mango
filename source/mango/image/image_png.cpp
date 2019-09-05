@@ -8,15 +8,15 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
-#define ID "[ImageDecoder.PNG] "
-#define FILTER_BYTE 1
-
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
 // https://wiki.mozilla.org/APNG_Specification
 
 // TODO: discard modes (requires us to keep a copy of main image)
 // TODO: check that animations starting with "IDAT" and "fdAT" work correctly
 // TODO: SIMD blending (not critical)
+
+static
+constexpr int FILTER_BYTE = 1;
 
 // ------------------------------------------------------------
 // miniz
@@ -494,6 +494,7 @@ namespace
     {
     protected:
         Memory m_memory;
+        ImageHeader m_header;
 
         const u8* m_pointer = nullptr;
         const u8* m_end = nullptr;
@@ -542,8 +543,6 @@ namespace
         Frame m_frame;
         const u8* m_first_frame = nullptr;
 
-        void setError(const char* error);
-
         void read_IHDR(BigEndianConstPointer p, u32 size);
         void read_IDAT(BigEndianConstPointer p, u32 size);
         void read_PLTE(BigEndianConstPointer p, u32 size);
@@ -588,15 +587,20 @@ namespace
             return m_channels * ((m_bit_depth * width + 7) / 8);
         }
 
+        void setError(const std::string& error)
+        {
+            m_header.info = "[ImageDecoder.PNG] ";
+            m_header.info += error;
+            m_header.success = false;
+        }
+
         int getImageBufferSize(int width, int height) const;
 
     public:
         ParserPNG(Memory memory);
         ~ParserPNG();
 
-        const char* getError() const;
-
-        ImageHeader header() const;
+        const ImageHeader& getHeader();
         ImageDecodeStatus decode(Surface& dest, Palette* palette);
     };
 
@@ -639,17 +643,55 @@ namespace
     {
     }
 
-    void ParserPNG::setError(const char* error)
+    const ImageHeader& ParserPNG::getHeader()
     {
-        if (!m_error)
+        if (m_header.success)
         {
-            m_error = error;
-        }
-    }
+            m_header.width   = m_width;
+            m_header.height  = m_height;
+            m_header.depth   = 0;
+            m_header.levels  = 0;
+            m_header.faces   = 0;
+			m_header.palette = false;
+            m_header.compression = TextureCompression::NONE;
 
-    const char* ParserPNG::getError() const
-    {
-        return m_error;
+            // force alpha channel on when transparency is enabled
+            int color_type = m_color_type;
+            if (m_transparent_enable && color_type != COLOR_TYPE_PALETTE)
+            {
+                color_type |= 4;
+            }
+
+            // select decoding format
+            switch (color_type)
+            {
+                case COLOR_TYPE_I:
+                    m_header.format = m_bit_depth <= 8 ?
+                        LuminanceFormat(8, Format::UNORM, 8, 0) :
+                        LuminanceFormat(16, Format::UNORM, 16, 0);
+                    break;
+
+                case COLOR_TYPE_IA:
+                    m_header.format = m_bit_depth <= 8 ?
+                        LuminanceFormat(16, Format::UNORM, 8, 8) :
+                        LuminanceFormat(32, Format::UNORM, 16, 16);
+                    break;
+
+                case COLOR_TYPE_PALETTE:
+                    m_header.palette = true;
+                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    break;
+
+                case COLOR_TYPE_RGB:
+                case COLOR_TYPE_RGBA:
+                    m_header.format = m_bit_depth <= 8 ?
+                        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) :
+                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // NOTE: RGBA is not an error here!
+                    break;
+            }
+        }
+
+        return m_header;
     }
 
     void ParserPNG::read_IHDR(BigEndianConstPointer p, u32 size)
@@ -923,59 +965,6 @@ namespace
         m_compressed.append(p, size);
     }
 
-    ImageHeader ParserPNG::header() const
-    {
-        ImageHeader header;
-
-        if (!m_error)
-        {
-            header.width   = m_width;
-            header.height  = m_height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.compression = TextureCompression::NONE;
-
-            // force alpha channel on when transparency is enabled
-            int color_type = m_color_type;
-            if (m_transparent_enable && color_type != COLOR_TYPE_PALETTE)
-            {
-                color_type |= 4;
-            }
-
-            // select decoding format
-            switch (color_type)
-            {
-                case COLOR_TYPE_I:
-                    header.format = m_bit_depth <= 8 ?
-                        LuminanceFormat(8, Format::UNORM, 8, 0) :
-                        LuminanceFormat(16, Format::UNORM, 16, 0);
-                    break;
-
-                case COLOR_TYPE_IA:
-                    header.format = m_bit_depth <= 8 ?
-                        LuminanceFormat(16, Format::UNORM, 8, 8) :
-                        LuminanceFormat(32, Format::UNORM, 16, 16);
-                    break;
-
-                case COLOR_TYPE_PALETTE:
-                    header.palette = true;
-                    header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-                    break;
-
-                case COLOR_TYPE_RGB:
-                case COLOR_TYPE_RGBA:
-                    header.format = m_bit_depth <= 8 ?
-                        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) :
-                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // NOTE: RGBA is not an error here!
-                    break;
-            }
-        }
-
-        return header;
-    }
-
     void ParserPNG::parse()
     {
         BigEndianConstPointer p = m_pointer;
@@ -1062,14 +1051,15 @@ namespace
                     if (m_number_of_frames > 0)
                     {
                         // reset current pointer to first animation frame (for looping)
-                        m_pointer = m_first_frame;
+                        ptr_next_chunk = m_first_frame;
                     }
                     else
                     {
                         // terminate parsing
                         m_pointer = m_end;
+                        return;
                     }
-                    return;
+                    break;
 
                 default:
                     debugPrint("UNKNOWN CHUNK: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
@@ -1768,6 +1758,13 @@ namespace
 
         if (!m_compressed.size())
         {
+            setError("No compressed data.");
+            return status;
+        }
+
+        if (!m_header.success)
+        {
+            status.setError(m_header.info);
             return status;
         }
 
@@ -1867,8 +1864,6 @@ namespace
 
         status.current_frame_index = m_current_frame_index;
         status.next_frame_index = m_next_frame_index;
-
-        status.success = true;
 
         return status;
     }
@@ -1974,18 +1969,10 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ParserPNG m_parser;
-        ImageHeader m_header;
 
         Interface(Memory memory)
             : m_parser(memory)
         {
-            m_header = m_parser.header();
-
-            const char* error = m_parser.getError();
-            if (error)
-            {
-                debugPrint("HEADER ERROR: %s\n", error);
-            }
         }
 
         ~Interface()
@@ -1994,7 +1981,7 @@ namespace
 
         ImageHeader header() override
         {
-            return m_header;
+            return m_parser.getHeader();
         }
 
         ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
@@ -2005,16 +1992,16 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (m_parser.getError())
+            const ImageHeader& header = m_parser.getHeader();
+            if (!header.success)
             {
-                // any internal errors in previous decoding / parsin passes
-                // and we're out of here
+                status.setError(header.info);
                 return status;
             }
 
-            bool direct = dest.format == m_header.format &&
-                          dest.width >= m_header.width &&
-                          dest.height >= m_header.height &&
+            bool direct = dest.format == header.format &&
+                          dest.width >= header.width &&
+                          dest.height >= header.height &&
                           !ptr_palette;
 
             if (direct)
@@ -2024,7 +2011,7 @@ namespace
             }
             else
             {
-                if (ptr_palette && m_header.palette)
+                if (ptr_palette && header.palette)
                 {
                     // direct decoding with palette
                     status = m_parser.decode(dest, ptr_palette);
@@ -2033,7 +2020,7 @@ namespace
                 else
                 {
                     // indirect
-                    Bitmap temp(m_header.width, m_header.height, m_header.format);
+                    Bitmap temp(header.width, header.height, header.format);
                     status = m_parser.decode(temp, nullptr);
                     dest.blit(0, 0, temp);
                 }

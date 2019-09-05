@@ -311,6 +311,8 @@ namespace
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
         const u8* data = memory.address;
 
+        // TODO: threading
+
         for (int y = 0; y < ysize; ++y)
         {
             u8* image = surface.image;
@@ -352,6 +354,8 @@ namespace
 
         const int pixelSize = block.width * surface.format.bytes();
 
+        // TODO: threading
+
         for (int y = 0; y < surface.height; y += block.height)
         {
             rect.dest.address = surface.image + (origin ? surface.height - y - 1 : y) * surface.stride;
@@ -362,8 +366,6 @@ namespace
                 block.decode(block, temp, data, rect.src.stride);
 
                 rect.width = std::min(x + block.width, surface.width) - x; // horizontal clipping
-
-                // TODO: async conversion
                 blitter.convert(rect);
 
                 rect.dest.address += pixelSize;
@@ -511,6 +513,7 @@ namespace mango
 
         if (!decode)
         {
+            status.setError("No decoder for 0x%x.", compression);
             return status;
         }
 
@@ -546,7 +549,6 @@ namespace mango
         }
 
         status.direct = direct;
-        status.success = true;
 
         return status;
     }
@@ -557,6 +559,7 @@ namespace mango
 
         if (!encode)
         {
+            status.setError("No encoder for 0x%x.", compression);
             return status;
         }
 
@@ -587,8 +590,6 @@ namespace mango
         }
 
         queue.wait();
-
-        status.success = true;
 
         return status;
     }

@@ -3,10 +3,7 @@
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.ASTC] "
 
 namespace
 {
@@ -62,10 +59,7 @@ namespace
         int xblock;
         int yblock;
         int zblock;
-        int width;
-        int height;
-        int depth;
-        TextureCompression compression;
+        ImageHeader header;
 
         u32 read24(LittleEndianConstPointer& p) const
         {
@@ -79,21 +73,26 @@ namespace
             u32 magic = p.read32();
             if (magic != 0x5ca1ab13)
             {
-                MANGO_EXCEPTION(ID"Incorrect header.");
+                header.setError("[ImageDecoder.ASTC] Incorrect header.");
+                return;
             }
 
             xblock = p.read8();
             yblock = p.read8();
             zblock = p.read8();
-            width = read24(p);
-            height = read24(p);
-            depth = read24(p);
+            header.width = read24(p);
+            header.height = read24(p);
+            header.depth = read24(p);
 
-            compression = select_astc_format(xblock, yblock);
-            if (compression == TextureCompression::NONE)
+            header.compression = select_astc_format(xblock, yblock);
+            if (header.compression == TextureCompression::NONE)
             {
-                MANGO_EXCEPTION(ID"Incorrect block size.");
+                header.setError("[ImageDecoder.ASTC] Incorrect block size.");
+                return;
             }
+
+            TextureCompressionInfo info(header.compression);
+            header.format = info.format;
         }
     };
 
@@ -119,20 +118,7 @@ namespace
 
         ImageHeader header() override
         {
-            TextureCompressionInfo info(m_header.compression);
-
-            ImageHeader header;
-
-            header.width   = m_header.width;
-            header.height  = m_header.height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = info.format;
-            header.compression = info.compression;
-
-            return header;
+            return m_header.header;
         }
 
         Memory memory(int level, int depth, int face) override
@@ -153,11 +139,19 @@ namespace
 
             ImageDecodeStatus status;
 
-            TextureCompressionInfo info(m_header.compression);
+            if (!m_header.header.success)
+            {
+                status.setError(m_header.header.info);
+                return status;
+            }
+
+            TextureCompressionInfo info(m_header.header.compression);
 
             if (info.compression != TextureCompression::NONE)
             {
                 TextureCompressionStatus cs = info.decompress(dest, m_data);
+
+                status.info = cs.info;
                 status.success = cs.success;
                 status.direct = cs.direct;
             }

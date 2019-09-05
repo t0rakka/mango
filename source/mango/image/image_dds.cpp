@@ -6,10 +6,7 @@
 
 #include <mango/core/system.hpp>
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.DDS] "
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
     Format(bits, Format::type, Format::order, s0, s1, s2, s3)
@@ -444,6 +441,8 @@ namespace
         Format format;
         TextureCompression compression;
 
+        const char* error = nullptr;
+
         void processFourCC()
         {
             char temp[4];
@@ -534,7 +533,7 @@ namespace
                     break;
 
                 default:
-                    MANGO_EXCEPTION(ID"Unsupported fourcc.");
+                    error = "Unsupported fourcc.";
                     break;
             }
         }
@@ -544,8 +543,10 @@ namespace
             size = p.read32();
             if (size != 32)
             {
-                MANGO_EXCEPTION(ID"Incorrect format size.");
+                error = "Incorrect format size.";
+                return nullptr;
             }
+
             flags = p.read32();
             fourCC = p.read32();
             rgbBitCount = p.read32();
@@ -585,15 +586,15 @@ namespace
                 }
                 else if (flags & DDPF_YUV)
                 {
-                    MANGO_EXCEPTION(ID"Unsupported mode (YUV).");
+                    error = "Unsupported mode (YUV).";
                 }
                 else if (flags & DDPF_PALETTE)
                 {
-                    MANGO_EXCEPTION(ID"Unsupported mode (P8).");
+                    error = "Unsupported mode (P8).";
                 }
                 else
                 {
-                    MANGO_EXCEPTION(ID"Unknown mode.");
+                    error = "Unknown mode.";
                 }
             }
 
@@ -616,22 +617,25 @@ namespace
         u32 caps3;
         u32 caps4;
 
+        ImageHeader header;
         TextureCompressionInfo info;
 
         const u8* data;
 
-        const u8* read(LittleEndianConstPointer p)
+        void read(LittleEndianConstPointer p)
         {
             u32 magic = p.read32();
             if (magic != FOURCC_DDS)
             {
-                MANGO_EXCEPTION(ID"Incorrect header.");
+                header.setError("[ImageDecoder.DDS] Incorrect header.");
+                return;
             }
 
             size = p.read32();
             if (size != 124)
             {
-                MANGO_EXCEPTION(ID"Incorrect header size.");
+                header.setError("[ImageDecoder.DDS] Incorrect header size.");
+                return;
             }
 
             flags = p.read32();
@@ -641,7 +645,14 @@ namespace
             depth = p.read32();
             mipMapCount = p.read32();
             p += 44;
+
             p = pixelFormat.read(p);
+            if (pixelFormat.error)
+            {
+                header.setError("[ImageDecoder.DDS] %s", pixelFormat.error);
+                return;
+            }
+
             caps = p.read32();
             caps2 = p.read32();
             caps3 = p.read32();
@@ -655,9 +666,9 @@ namespace
             {
                 if (pixelFormat.fourCC == FOURCC_DX10)
                 {
-                    HeaderDX10 header;
-                    p = header.read(p);
-                    processDX10(header);
+                    HeaderDX10 header10;
+                    p = header10.read(p);
+                    processDX10(header10);
                 }
             }
 
@@ -665,31 +676,41 @@ namespace
             info = pixelFormat.compression;
 
             data = p;
-            return p;
+
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0; // TODO: support volume images
+            header.levels  = getMipmapCount();
+            header.faces   = getFaceCount();
+			header.palette = false;
+            header.format  = pixelFormat.format;
+            header.compression = pixelFormat.compression;
         }
 
-        void processDX10(const HeaderDX10& header)
+        void processDX10(const HeaderDX10& header10)
         {
-            debugPrint("DXGI format: %d\n", header.dxgiFormat);
+            debugPrint("DXGI format: %d\n", header10.dxgiFormat);
 
-            if (header.dxgiFormat >= u32(g_dxgi_table_size))
+            if (header10.dxgiFormat >= u32(g_dxgi_table_size))
             {
-                MANGO_EXCEPTION(ID"DXGI index out of range.");
+                header.setError("[ImageDecoder.DDS] DXGI index out of range.");
+                return;
             }
-            else if (!header.dxgiFormat)
+            else if (!header10.dxgiFormat)
             {
                 // Unknown DXGI format
 				return;
             }
 
-            if (header.arraySize > 1)
+            if (header10.arraySize > 1)
             {
                 // TODO
-                //MANGO_EXCEPTION(DDSID"Arrays are not supported.");
+                header.setError("[ImageDecoder.DDS] Arrays are not supported.");
+                return;
             }
 
             // handle special cases
-            switch (header.dxgiFormat)
+            switch (header10.dxgiFormat)
             {
                 case DXGI_FORMAT_BC6H_TYPELESS:
                 case DXGI_FORMAT_BC6H_UF16:
@@ -718,7 +739,7 @@ namespace
                     return;
             }
 
-            const FormatDXGI& dxgi = g_dxgi_table[header.dxgiFormat];
+            const FormatDXGI& dxgi = g_dxgi_table[header10.dxgiFormat];
 
             if (dxgi.fourcc)
             {
@@ -730,7 +751,8 @@ namespace
                 if (!dxgi.format.bits)
                 {
                     // TODO: which format (id = header.dxgiFormat)
-                    MANGO_EXCEPTION(ID"DXGI format not supported.");
+                    header.setError("[ImageDecoder.DDS] DXGI format not supported.");
+                    return;
                 }
 
                 pixelFormat.fourCC = 0;
@@ -750,20 +772,10 @@ namespace
                     case Format::SNORM:
 					case Format::FLOAT64:
 						// TODO: these WILL be supported in custom "DXGI Blitter"
-                        MANGO_EXCEPTION(ID"DXGI format type not supported.");
-                        break;
+                        header.setError("[ImageDecoder.DDS] DXGI format type not supported.");
+                        return;
                 }
             }
-        }
-
-        int getWidth() const
-        {
-            return width;
-        }
-
-        int getHeight() const
-        {
-            return height;
         }
 
         int getMipmapCount() const
@@ -793,16 +805,6 @@ namespace
             }
 
             return value;
-        }
-
-        Format getFormat() const
-        {
-            return pixelFormat.format;
-        }
-
-        TextureCompression getCompression() const
-        {
-            return pixelFormat.compression;
         }
 
         int getLevelSize(int xsize, int ysize) const
@@ -878,18 +880,7 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-
-            header.width   = m_header.getWidth();
-            header.height  = m_header.getHeight();
-            header.depth   = 0; // TODO: support volume images
-            header.levels  = m_header.getMipmapCount();
-            header.faces   = m_header.getFaceCount();
-			header.palette = false;
-            header.format  = m_header.getFormat();
-            header.compression = m_header.getCompression();
-
-            return header;
+            return m_header.header;
         }
 
         Memory memory(int level, int depth, int face) override
@@ -901,15 +892,24 @@ namespace
         {
             MANGO_UNREFERENCED(palette);
 
-            Memory imageMemory = m_header.getMemory(level, depth, face);
-            TextureCompression compression = m_header.getCompression();
-
             ImageDecodeStatus status;
+
+			const ImageHeader& header = m_header.header;
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            Memory imageMemory = m_header.getMemory(level, depth, face);
+            TextureCompression compression = header.compression;
 
             if (m_header.pixelFormat.fourCC)
             {
                 TextureCompressionInfo info = fourcc_to_compression(m_header.pixelFormat.fourCC);
                 TextureCompressionStatus cs = info.decompress(dest, imageMemory);
+
+                status.info = cs.info;
                 status.success = cs.success;
                 status.direct = cs.direct;
             }
@@ -917,21 +917,21 @@ namespace
             {
                 TextureCompressionInfo info = compression;
                 TextureCompressionStatus cs = info.decompress(dest, imageMemory);
+
+                status.info = cs.info;
                 status.success = cs.success;
                 status.direct = cs.direct;
             }
             else
             {
                 u8* image = imageMemory.address;
-                Format format = m_header.getFormat();
-                int width = std::max(1, m_header.getWidth() >> level);
-                int height = std::max(1, m_header.getHeight() >> level);
+                Format format = header.format;
+                int width = std::max(1, header.width >> level);
+                int height = std::max(1, header.height >> level);
                 int stride = width * format.bytes();
 
                 Surface source(width, height, format, stride, image);
                 dest.blit(0, 0, source);
-
-                status.success = true;
             }
 
             return status;

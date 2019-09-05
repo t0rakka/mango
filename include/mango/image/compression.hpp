@@ -5,11 +5,36 @@
 #pragma once
 
 #include "../core/memory.hpp"
+#include "../core/string.hpp"
 #include "format.hpp"
 #include "fourcc.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace image {
+
+    struct Status
+    {
+        std::string info;
+        bool success = true;
+
+        void setError(const std::string& error)
+        {
+            info = error;
+            success = false;
+        }
+
+        void setError(const char* format, ...)
+        {
+            va_list args;
+            va_start(args, format);
+            info = makeString(format, args);
+            success = false;
+            va_end(args);
+        }
+    };
+
+} // namespace image
+
     class Surface;
 
     constexpr u32 makeTextureCompression(u32 format, u32 index, u32 flags) noexcept
@@ -17,9 +42,8 @@ namespace mango
         return flags | (index << 8) | format;
     }
 
-    struct TextureCompressionStatus
+    struct TextureCompressionStatus : image::Status
     {
-        bool success = false;
         bool direct = false;
     };
 

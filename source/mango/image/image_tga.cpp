@@ -4,10 +4,8 @@
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
-#include <mango/core/exception.hpp>
+#include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.TGA] "
 
 namespace
 {
@@ -42,7 +40,9 @@ namespace
         u8   pixel_size;
         u8   descriptor;
 
-        void read(LittleEndianConstPointer& p)
+        std::string error;
+
+        const u8* parse(LittleEndianConstPointer& p)
         {
             idfield_length   = p.read8();
             colormap_type    = p.read8();
@@ -67,7 +67,8 @@ namespace
                 case TYPE_RLE_BW:
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Invalid data type (%d).", data_type);
+                    error = makeString("[ImageDecoder.TGA] Invalid data type (%d).", data_type);
+                    return nullptr;
             }
 
             switch (pixel_size)
@@ -78,12 +79,14 @@ namespace
                 case 32:
                     break;
                 default:
-                    MANGO_EXCEPTION(ID"Invalid pixel size (%d).", pixel_size);
+                    error = makeString("[ImageDecoder.TGA] Invalid pixel size (%d).", pixel_size);
+                    return nullptr;
             }
 
             if (colormap_type > 1)
             {
-                MANGO_EXCEPTION(ID"Invalid colormap type (%d).", colormap_type);
+                error = makeString("[ImageDecoder.TGA] Invalid colormap type (%d).", colormap_type);
+                return nullptr;
             }
 
             if (data_type == TYPE_RAW_PALETTE || data_type == TYPE_RLE_PALETTE)
@@ -91,17 +94,21 @@ namespace
                 // palette
                 if (colormap_length > 256)
                 {
-                    MANGO_EXCEPTION(ID"Invalid colormap length.", colormap_length);
+                    error = makeString("[ImageDecoder.TGA] Invalid colormap length.", colormap_length);
+                    return nullptr;
                 }
 
                 if (colormap_bits != 16 && colormap_bits != 24)
                 {
-                    MANGO_EXCEPTION(ID"Invalid colormap size.", colormap_bits);
+                    error = makeString("[ImageDecoder.TGA] Invalid colormap size.", colormap_bits);
+                    return nullptr;
                 }
             }
 
             // skip idfield
             p += idfield_length;
+
+            return p;
         }
 
         void write(Stream& file)
@@ -241,14 +248,29 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        HeaderTGA m_header;
+        ImageHeader m_header;
+        HeaderTGA m_targa_header;
         const u8* m_pointer;
 
         Interface(Memory memory)
         {
             LittleEndianConstPointer p = memory.address;
-            m_header.read(p);
-            m_pointer = p;
+            m_pointer = m_targa_header.parse(p);
+            if (m_pointer)
+            {
+                m_header.width   = m_targa_header.image_width;
+                m_header.height  = m_targa_header.image_height;
+                m_header.depth   = 0;
+                m_header.levels  = 0;
+                m_header.faces   = 0;
+                m_header.palette = m_targa_header.isPalette();
+                m_header.format  = m_targa_header.getFormat();
+                m_header.compression = TextureCompression::NONE;
+            }
+            else
+            {
+                m_header.setError(m_targa_header.error);
+            }
         }
 
         ~Interface()
@@ -257,16 +279,7 @@ namespace
 
         ImageHeader header() override
         {
-            ImageHeader header;
-            header.width   = m_header.image_width;
-            header.height  = m_header.image_height;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = m_header.isPalette();
-            header.format  = m_header.getFormat();
-            header.compression = TextureCompression::NONE;
-            return header;
+            return m_header;
         }
 
         ImageDecodeStatus decode(Surface& surface, Palette* ptr_palette, int level, int depth, int face) override
@@ -277,11 +290,17 @@ namespace
 
             ImageDecodeStatus status;
 
+            if (!m_header.success)
+            {
+                status.setError(m_header.info);
+                return status;
+            }
+
             LittleEndianConstPointer p = m_pointer;
 
             Palette palette;
 
-            switch (m_header.data_type)
+            switch (m_targa_header.data_type)
             {
                 case TYPE_RAW_BW:
                 case TYPE_RLE_BW:
@@ -294,9 +313,9 @@ namespace
                 case TYPE_RLE_PALETTE:
                 {
                     // read palette
-                    palette.size = u32(m_header.colormap_length);
+                    palette.size = u32(m_targa_header.colormap_length);
 
-                    if (m_header.colormap_bits == 16)
+                    if (m_targa_header.colormap_bits == 16)
                     {
                         for (u32 i = 0; i < palette.size; ++i)
                         {
@@ -311,7 +330,7 @@ namespace
                             p += 2;
                         }
                     }
-                    else if (m_header.colormap_bits == 24)
+                    else if (m_targa_header.colormap_bits == 24)
                     {
                         for (u32 i = 0; i < palette.size; ++i)
                         {
@@ -325,20 +344,20 @@ namespace
                 case TYPE_RAW_RGB:
                 case TYPE_RLE_RGB:
                 {
-                    p += m_header.colormap_length * ((m_header.colormap_bits + 1) >> 3);
+                    p += m_targa_header.colormap_length * ((m_targa_header.colormap_bits + 1) >> 3);
                     break;
                 }
             }
 
-            Format format = m_header.getFormat();
+            Format format = m_targa_header.getFormat();
 
-            const int width = m_header.image_width;
-            const int height = m_header.image_height;
-            const int bpp = m_header.getBytesPerPixel();
+            const int width = m_targa_header.image_width;
+            const int height = m_targa_header.image_height;
+            const int bpp = m_targa_header.getBytesPerPixel();
 
             Surface dest(surface, 0, 0, width, height);
 
-            if (m_header.descriptor & 0x20)
+            if (m_targa_header.descriptor & 0x20)
             {
                 dest.image = surface.image;
                 dest.stride = surface.stride;
@@ -353,14 +372,14 @@ namespace
 		    std::unique_ptr<u8[]> temp;
             const u8* data = p;
 
-            if (m_header.isRLE())
+            if (m_targa_header.isRLE())
             {
                 temp.reset(new u8[width * height * bpp]);
                 decompressRLE(temp.get(), p, width, height, bpp);
                 data = temp.get();
             }
 
-            switch (m_header.data_type)
+            switch (m_targa_header.data_type)
             {
                 case TYPE_RAW_BW:
                 case TYPE_RLE_BW:
@@ -397,7 +416,6 @@ namespace
                 }
             }
 
-            status.success = true;
             return status;
         }
     };

@@ -6,11 +6,8 @@
     GIF decoder source: ImageMagick (readBits function).
 */
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[GIF] "
 
 namespace
 {
@@ -254,7 +251,6 @@ namespace
         if (terminator != 0)
 		{
 			// There are files with incorrect terminator; let them pass silently
-			//MANGO_EXCEPTION(ID"Terminator missing from the gif stream.");
 		}
 
 		return p;
@@ -446,11 +442,12 @@ namespace
 		return p;
 	}
 
-    const u8* read_magic(const u8* data, const u8* end)
+    const u8* read_magic(ImageHeader& header, const u8* data, const u8* end)
     {
 		if (data + 6 >= end)
 		{
-			MANGO_EXCEPTION(ID"Out of data.");
+			header.setError("[ImageDecoder.GIF] Incorrect header.");
+			return nullptr;
 		}
 
 		const char* magic = reinterpret_cast<const char*>(data);
@@ -458,7 +455,8 @@ namespace
 
 		if (std::strncmp(magic, "GIF87a", 6) && std::strncmp(magic, "GIF89a", 6))
 		{
-            MANGO_EXCEPTION(ID"Incorrect gif header; missing GIF87a or GIF89a identifier.");
+			header.setError("[ImageDecoder.GIF] Header is missing GIF87a or GIF89a identifier.");
+			return nullptr;
 		}
 
 		return data;
@@ -512,21 +510,24 @@ namespace
 			m_end = m_memory.address + m_memory.size;
             m_data = m_memory.address;
 
-			m_data = read_magic(m_data, m_end);
-            m_data = m_screen_desc.read(m_data, m_end);
+			m_data = read_magic(m_header, m_data, m_end);
+			if (m_header.success)
+			{
+				m_data = m_screen_desc.read(m_data, m_end);
 
-			m_start = m_data;
+				m_start = m_data;
 
-            m_header.width   = m_screen_desc.width;
-            m_header.height  = m_screen_desc.height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-			m_header.palette = true;
-            m_header.format  = FORMAT_B8G8R8A8;
-            m_header.compression = TextureCompression::NONE;
+				m_header.width   = m_screen_desc.width;
+				m_header.height  = m_screen_desc.height;
+				m_header.depth   = 0;
+				m_header.levels  = 0;
+				m_header.faces   = 0;
+				m_header.palette = true;
+				m_header.format  = FORMAT_B8G8R8A8;
+				m_header.compression = TextureCompression::NONE;
 
-			m_image.reset(new u8[m_header.width * m_header.height * 4]);
+				m_image.reset(new u8[m_header.width * m_header.height * 4]);
+			}
         }
 
         ~Interface()
@@ -545,6 +546,12 @@ namespace
             MANGO_UNREFERENCED(face);
 
 			ImageDecodeStatus status;
+
+            if (!m_header.success)
+            {
+                status.setError(m_header.info);
+                return status;
+            }
 
 			Format format = ptr_palette ? FORMAT_L8 : FORMAT_B8G8R8A8;
 
@@ -780,12 +787,14 @@ namespace
 		{
 			if (options.palette.size != 256)
 			{
-				MANGO_EXCEPTION(ID"Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+				// TODO: signal error
+				//MANGO_EXCEPTION(ID"Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
 			}
 
 			if (surface.format.isIndexed() || surface.format.bits != 8)
 			{
-				MANGO_EXCEPTION(ID"Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+				// TODO: signal error
+				//MANGO_EXCEPTION(ID"Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
 			}
 
 			gif_encode_file(stream, surface, options.palette);

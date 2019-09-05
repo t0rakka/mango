@@ -1,13 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
-
-#define ID "[ImageDecoder.IFF] "
 
 namespace
 {
@@ -182,7 +179,14 @@ namespace
         }
     }
 
-    bool read_signature(const u8*& data)
+    enum Signature
+    {
+        SIGNATURE_IFF = 0,
+        SIGNATURE_PBM = 1,
+        SIGNATURE_ERROR = 2
+    };
+
+    Signature read_signature(const u8*& data)
     {
         BigEndianConstPointer p = data;
 
@@ -191,12 +195,16 @@ namespace
         data = p;
 
 		if (v0 != u32_mask_rev('F','O','R','M'))
-            MANGO_EXCEPTION(ID"Incorrect signature.");
+        {
+            return SIGNATURE_ERROR;
+        }
 
 		if (v1 != u32_mask_rev('I','L','B','M') && v1 != u32_mask_rev('P','B','M',' '))
-            MANGO_EXCEPTION(ID"Incorrect signature.");
+        {
+            return SIGNATURE_ERROR;
+        }
 
-        return v1 == u32_mask_rev('P','B','M',' ');
+        return v1 == u32_mask_rev('P','B','M',' ') ? SIGNATURE_PBM : SIGNATURE_IFF;
     }
 
     Format select_format(int nplanes, bool ham)
@@ -240,37 +248,32 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         Memory m_memory;
+        ImageHeader m_header;
 
         Interface(Memory memory)
             : m_memory(memory)
         {
+            parseHeader();
         }
 
         ~Interface()
         {
         }
 
-        ImageHeader header() override
+        void parseHeader()
         {
             const u8* data = m_memory.address;
             const u8* end = m_memory.address + m_memory.size - 12;
 
-            bool is_pbm = read_signature(data);
-            MANGO_UNREFERENCED(is_pbm);
+            Signature signature = read_signature(data);
+            if (signature == SIGNATURE_ERROR)
+            {
+                m_header.setError("[ImageDecoder.IFF] Incorrect signature.");
+                return;
+            }
 
             bool ham = false;
             u8 nplanes = 0;
-
-            ImageHeader header;
-
-            header.width   = 0;
-            header.height  = 0;
-            header.depth   = 0;
-            header.levels  = 0;
-            header.faces   = 0;
-			header.palette = false;
-            header.format  = Format();
-            header.compression = TextureCompression::NONE;
 
             // chunk reader
             while (data < end)
@@ -288,8 +291,8 @@ namespace
                 {
                     case u32_mask_rev('B','M','H','D'):
                     {
-                        header.width  = p.read16();
-                        header.height = p.read16();
+                        m_header.width  = p.read16();
+                        m_header.height = p.read16();
                         p += 4;
                         nplanes = p.read8();
                         p += 12;
@@ -308,10 +311,13 @@ namespace
                 }
             }
 
-            header.palette = nplanes <= 8 && !ham;
-            header.format = select_format(nplanes, ham);
+            m_header.palette = nplanes <= 8 && !ham;
+            m_header.format = select_format(nplanes, ham);
+        }
 
-            return header;
+        ImageHeader header() override
+        {
+            return m_header;
         }
 
         ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
@@ -322,10 +328,17 @@ namespace
 
 			ImageDecodeStatus status;
 
+            if (!m_header.success)
+            {
+                status.setError(m_header.info);
+                return status;
+            }
+
             const u8* data = m_memory.address;
             const u8* end = m_memory.address + m_memory.size - 12;
 
-            bool is_pbm = read_signature(data);
+            Signature signature = read_signature(data);
+            bool is_pbm = signature == SIGNATURE_PBM;
 
             Palette palette;
 
@@ -516,7 +529,6 @@ namespace
                 dest.blit(0, 0, temp);
             }
 
-            status.success = true;
             return status;
         }
     };
