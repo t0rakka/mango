@@ -17,6 +17,11 @@ namespace image {
         std::string info;
         bool success = true;
 
+        operator bool () const
+        {
+            return success;
+        }
+
         void setError(const std::string& error)
         {
             info = error;
