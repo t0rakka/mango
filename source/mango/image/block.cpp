@@ -311,7 +311,7 @@ namespace
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
         const u8* data = memory.address;
 
-        // TODO: threading
+        ConcurrentQueue queue;
 
         for (int y = 0; y < ysize; ++y)
         {
@@ -329,49 +329,64 @@ namespace
                 image += y * blockImageStride;
             }
 
-            for (int x = 0; x < xsize; ++x)
+            queue.enqueue([&] (u8* image, const u8* data)
             {
-                block.decode(block, image, data, stride);
-                image += blockImageSize;
-                data += block.bytes;
-            }
+                for (int x = 0; x < xsize; ++x)
+                {
+                    block.decode(block, image, data, stride);
+                    image += blockImageSize;
+                    data += block.bytes;
+                }
+            }, image, data);
+
+            data += block.bytes * xsize;
         }
+
+        queue.wait();
     }
 
     void clipConvertBlockDecode(const TextureCompressionInfo& block, const Surface& surface, Memory memory, int xsize, int ysize)
     {
         Blitter blitter(surface.format, block.format);
-        BlitRect rect;
 
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
         const u8* data = memory.address;
 
+        BlitRect rect;
         rect.dest.stride = origin ? -surface.stride : surface.stride;
         rect.src.stride = block.width * block.format.bytes();
 
-        Buffer temp(block.height * rect.src.stride);
-        rect.src.address = temp;
+        const int blockStride = block.width * surface.format.bytes();
+        const int xblocks = ceil_div(surface.width, block.width);
 
-        const int pixelSize = block.width * surface.format.bytes();
-
-        // TODO: threading
+        ConcurrentQueue queue;
 
         for (int y = 0; y < surface.height; y += block.height)
         {
             rect.dest.address = surface.image + (origin ? surface.height - y - 1 : y) * surface.stride;
             rect.height = std::min(y + block.height, surface.height) - y; // vertical clipping
 
-            for (int x = 0; x < surface.width; x += block.width)
+            queue.enqueue([&] (BlitRect rect, const u8* data)
             {
-                block.decode(block, temp, data, rect.src.stride);
+                Buffer temp(block.height * rect.src.stride);
+                rect.src.address = temp;
 
-                rect.width = std::min(x + block.width, surface.width) - x; // horizontal clipping
-                blitter.convert(rect);
+                for (int x = 0; x < surface.width; x += block.width)
+                {
+                    block.decode(block, temp, data, rect.src.stride);
 
-                rect.dest.address += pixelSize;
-                data += block.bytes;
-            }
+                    rect.width = std::min(x + block.width, surface.width) - x; // horizontal clipping
+                    blitter.convert(rect);
+
+                    rect.dest.address += blockStride;
+                    data += block.bytes;
+                }
+            }, rect, data);
+
+            data += block.bytes * xblocks;
         }
+
+        queue.wait();
     }
 
     void directSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, Memory memory, int xsize, int ysize)
