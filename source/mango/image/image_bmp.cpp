@@ -951,12 +951,12 @@ namespace
             case 0x5089:
                 if (imageHeader)
                 {
-                    *imageHeader = getHeader(block, "png");
+                    *imageHeader = getHeader(block, ".png");
                 }
 
                 if (surface)
                 {
-                    getImage(*surface, block, "png");
+                    getImage(*surface, block, ".png");
                 }
 
                 break;
@@ -1027,19 +1027,19 @@ namespace
                 }
 
                 case 0x5089:
-                    m_image_header = getHeader(m_memory, "png");
+                    m_image_header = getHeader(m_memory, ".png");
                     break;
 
                 case 0xd8ff:
-                    m_image_header = getHeader(m_memory, "jpg");
+                    m_image_header = getHeader(m_memory, ".jpg");
                     break;
 
                 case 0x4947:
-                    m_image_header = getHeader(m_memory, "gif");
+                    m_image_header = getHeader(m_memory, ".gif");
                     break;
 
                 case 0xcdd7:
-                    m_image_header = getHeader(m_memory, "apm");
+                    m_image_header = getHeader(m_memory, ".apm");
                     break;
 
                 default:
@@ -1092,19 +1092,19 @@ namespace
                 }
 
                 case 0x5089:
-                    getImage(dest, m_memory, "png");
+                    getImage(dest, m_memory, ".png");
                     return status;
 
                 case 0xd8ff:
-                    getImage(dest, m_memory, "jpg");
+                    getImage(dest, m_memory, ".jpg");
                     return status;
 
                 case 0x4947:
-                    getImage(dest, m_memory, "gif");
+                    getImage(dest, m_memory, ".gif");
                     return status;
 
                 case 0xcdd7:
-                    getImage(dest, m_memory, "apm");
+                    getImage(dest, m_memory, ".apm");
                     return status;
 
                 default:
