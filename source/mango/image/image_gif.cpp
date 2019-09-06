@@ -781,20 +781,22 @@ namespace
 		s.write8(0x3b);
 	}
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
+        ImageEncodeStatus status;
+
 		if (options.palette.size > 0)
 		{
 			if (options.palette.size != 256)
 			{
-				// TODO: signal error
-				//MANGO_EXCEPTION(ID"Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+				status.setError("[ImageEncoder.GIF] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+				return status;
 			}
 
 			if (surface.format.isIndexed() || surface.format.bits != 8)
 			{
-				// TODO: signal error
-				//MANGO_EXCEPTION(ID"Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+				status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+				return status;
 			}
 
 			gif_encode_file(stream, surface, options.palette);
@@ -812,6 +814,8 @@ namespace
 
 			gif_encode_file(stream, temp, quantizer.palette);
 		}
+
+        return status;
     }
 
 } // namespace

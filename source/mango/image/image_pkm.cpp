@@ -161,9 +161,11 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
 
         // ETC1 compression uses 4x4 blocks
         const int width = (surface.width + 3) & ~3;
@@ -186,8 +188,8 @@ namespace
         TextureCompressionInfo info(TextureCompression::ETC1_RGB);
         if (!info.encode)
         {
-            // TODO: signal error when ImageEncodeStatus is available
-            //MANGO_EXCEPTION(ID"No ETC1 compressor.");
+            status.setError("[ImageEncoder.PKM] No ETC1 compressor.");
+            return status;
         }
 
         // compute compressed data size
@@ -200,6 +202,8 @@ namespace
 
         // write results
         stream.write(buffer, bytes);
+
+        return status;
     }
 
 } // namespace

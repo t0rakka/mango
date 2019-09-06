@@ -66,9 +66,10 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        jpeg::encodeImage(stream, surface, options.quality);
+        ImageEncodeStatus status = jpeg::encodeImage(stream, surface, options.quality);
+        return status;
     }
 
 } // namespace

@@ -241,14 +241,20 @@ namespace mango
         return m_encode_func != nullptr;
     }
 
-    void ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncodeOptions& options)
+    ImageEncodeStatus ImageEncoder::encode(Stream& output, const Surface& source, const ImageEncodeOptions& options)
     {
+        ImageEncodeStatus status;
+
         if (!m_encode_func)
         {
-            printf("[WARNING] ImageEncoder::encode() is not supported for this extension.");
-            return;
+            status.setError("[WARNING] ImageEncoder::encode() is not supported for this extension.");
         }
-        m_encode_func(output, source, options);
+        else
+        {
+            status = m_encode_func(output, source, options);
+        }
+
+        return status;
     }
 
 } // namespace mango

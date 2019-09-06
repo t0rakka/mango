@@ -156,9 +156,11 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
 
         // TODO: optimize encoder
         Bitmap temp(surface.width, surface.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
@@ -183,6 +185,8 @@ namespace
 
         // free compressed image
         ZPNG_Free(&buf);
+
+        return status;
     }
 
 } // namespace

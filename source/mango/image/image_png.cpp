@@ -2042,9 +2042,11 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
 
         // defaults
         u8 color_bits = 8;
@@ -2112,6 +2114,8 @@ namespace
             temp.blit(0, 0, surface);
             writePNG(stream, temp, color_bits, color_type);
         }
+
+        return status;
     }
 
 } // namespace

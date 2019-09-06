@@ -430,9 +430,11 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
 
         // configure output
         const bool isalpha = surface.format.isAlpha();
@@ -477,6 +479,8 @@ namespace
                 image += surface.stride;
             }
         }
+
+        return status;
     }
 
 } // namespace

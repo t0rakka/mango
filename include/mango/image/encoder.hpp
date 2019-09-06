@@ -15,6 +15,11 @@ namespace mango
 {
     class Surface;
 
+    struct ImageEncodeStatus : image::Status
+    {
+        bool direct;
+    };
+
     struct ImageEncodeOptions
     {
         Palette palette;
@@ -23,14 +28,6 @@ namespace mango
         bool lossless = false;
     };
 
-#if 0
-    struct ImageEncodeStatus
-    {
-        std::string info;
-        bool direct;
-    };
-#endif
-
     class ImageEncoder : protected NonCopyable
     {
     public:
@@ -38,9 +35,9 @@ namespace mango
         ~ImageEncoder();
 
         bool isEncoder() const;
-        void encode(Stream& output, const Surface& source, const ImageEncodeOptions& options);
+        ImageEncodeStatus encode(Stream& output, const Surface& source, const ImageEncodeOptions& options);
 
-        typedef void (*EncodeFunc)(Stream& output, const Surface& source, const ImageEncodeOptions& options);
+        typedef ImageEncodeStatus (*EncodeFunc)(Stream& output, const Surface& source, const ImageEncodeOptions& options);
 
     protected:
         EncodeFunc m_encode_func;

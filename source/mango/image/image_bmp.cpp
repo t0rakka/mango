@@ -1133,9 +1133,11 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
 
         int width = surface.width;
         int height = surface.height;
@@ -1179,6 +1181,8 @@ namespace
             u8* buffer = temp.image + (temp.height - y - 1) * stride;
             s.write(buffer, stride);
         }
+
+        return status;
     }
 
 } // namespace

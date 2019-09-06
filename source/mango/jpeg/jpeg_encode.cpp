@@ -365,6 +365,8 @@ namespace
         jpeg_chan   channel[3];
         int         channel_count;
 
+        std::string info;
+
         void (*read_8x8) (s16* block, const u8* input, int stride, int rows, int cols);
         void (*read)     (s16* block, const u8* input, int stride, int rows, int cols);
 
@@ -540,6 +542,12 @@ namespace
     };
 
 #if defined(JPEG_ENABLE_SSE2)
+
+#if defined(JPEG_ENABLE_AVX2)
+    constexpr const char* fdct_name = "AVX2 DCT";
+#else
+    constexpr const char* fdct_name = "SSE2 DCT";
+#endif
 
     // ----------------------------------------------------------------------------
     // fdct sse2
@@ -808,6 +816,8 @@ namespace
 
 #elif defined(JPEG_ENABLE_NEON)
 
+    constexpr const char* fdct_name = "NEON DCT";
+
     // ----------------------------------------------------------------------------
     // fdct neon
     // ----------------------------------------------------------------------------
@@ -994,6 +1004,8 @@ namespace
     }
 
 #else
+
+    constexpr const char* fdct_name = "Scalar DCT";
 
     // ----------------------------------------------------------------------------
     // fdct scalar
@@ -1609,7 +1621,7 @@ namespace
 #endif // JPEG_ENABLE_SSE4
 
     // ----------------------------------------------------------------------------
-    // jpeg_encode methods
+    // jpeg_encode
     // ----------------------------------------------------------------------------
 
     jpeg_encode::jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality)
@@ -1634,6 +1646,8 @@ namespace
         u64 cpu_flags = getCPUFlags();
         MANGO_UNREFERENCED(cpu_flags);
 
+        const char* sampler_name = nullptr;
+
         switch (sample)
         {
             case JPEG_U8_Y:
@@ -1641,6 +1655,7 @@ namespace
                 if (cpu_flags & CPU_SSE2)
                 {
                     read_8x8 = read_y_format_sse2;
+                    sampler_name = "SSE2 Y 8x8";
                 }
 #endif
                 read = read_y_format;
@@ -1653,6 +1668,7 @@ namespace
 				if (cpu_flags & CPU_SSSE3)
                 {
                     read_8x8 = read_bgr_format_ssse3;
+                    sampler_name = "SSSE3 BGR 8x8";
                 }
 #endif
                 read = read_bgr_format;
@@ -1665,6 +1681,7 @@ namespace
                 if (cpu_flags & CPU_SSSE3)
                 {
                     read_8x8 = read_rgb_format_ssse3;
+                    sampler_name = "SSSE3 RGB 8x8";
                 }
 #endif
                 read = read_rgb_format;
@@ -1677,6 +1694,7 @@ namespace
                 if (cpu_flags & CPU_SSE2)
                 {
                     read_8x8 = read_bgra_format_sse2;
+                    sampler_name = "SSE2 BGRA 8x8";
                 }
 #endif
                 read = read_bgra_format;
@@ -1689,6 +1707,7 @@ namespace
                 if (cpu_flags & CPU_SSE2)
                 {
                     read_8x8 = read_rgba_format_sse2;
+                    sampler_name = "SSE2 RGBA 8x8";
                 }
 #endif
                 read = read_rgba_format;
@@ -1700,6 +1719,15 @@ namespace
         if (!read_8x8)
         {
             read_8x8 = read;
+        }
+
+        // build encoder info string
+        info = "JPEG Encoder: ";
+        info += fdct_name;
+        if (sampler_name)
+        {
+            info += " ";
+            info += sampler_name;
         }
 
         mcu_width = 8;
@@ -1842,7 +1870,7 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(const Surface& surface, Stream& stream, int quality, Sample sample)
+    void encodeJPEG(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, Sample sample)
     {
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
@@ -1962,6 +1990,8 @@ namespace
 
         // EOI marker
         s.write16(0xffd9);
+
+        status.info = jp.info;
     }
 
 } // namespace
@@ -1987,8 +2017,10 @@ namespace jpeg {
         return result;
     }
 
-    void encodeImage(Stream& stream, const Surface& surface, float quality)
+    ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, float quality)
     {
+        ImageEncodeStatus status;
+
         // configure quality
         quality = clamp(1.0f - quality, 0.0f, 1.0f);
         u32 iq = u32(std::pow(1.0f + quality, 11.0f) * 8.0f);
@@ -1998,15 +2030,18 @@ namespace jpeg {
         // encode
         if (surface.format == sf.format)
         {
-            encodeJPEG(surface, stream, iq, sf.sample);
+            encodeJPEG(status, surface, stream, iq, sf.sample);
+            status.direct = true;
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface.width, surface.height, sf.format);
             temp.blit(0, 0, surface);
-            encodeJPEG(temp, stream, iq, sf.sample);
+            encodeJPEG(status, temp, stream, iq, sf.sample);
         }
+
+        return status;
     }
 
 } // namespace jpeg

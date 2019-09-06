@@ -170,8 +170,10 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    void imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
+        ImageEncodeStatus status;
+
         WebPFormat wpformat = webpFindFormat(surface.format);
         bool matching_formats = wpformat.format == surface.format;
 
@@ -205,9 +207,10 @@ namespace
 
         if (!bytes)
         {
-            // TODO: signal error when the ImageEncodeState is enabled
-            //MANGO_EXCEPTION("[ImageDecoder.WEBP] Encoding failed.");
+            status.setError("[ImageEncoder.WEBP] Encoding failed.");
         }
+
+        return status;
     }
 
 } // namespace
