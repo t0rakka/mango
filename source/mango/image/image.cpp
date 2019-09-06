@@ -154,8 +154,11 @@ namespace mango
     ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
     {
         ImageDecoder::CreateDecoderFunc create_decoder_func = g_imageServer.getImageDecoder(filename);
-        ImageDecoderInterface* x = create_decoder_func(memory);
-        m_interface.reset(x);
+        if (create_decoder_func)
+        {
+            ImageDecoderInterface* x = create_decoder_func(memory);
+            m_interface.reset(x);
+        }
     }
 
     ImageDecoder::~ImageDecoder()
