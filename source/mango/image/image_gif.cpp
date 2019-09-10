@@ -105,11 +105,11 @@ namespace
 		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	const u8* readBits(const u8* data, u8* dest, int samples)
+	const u8* readBits(u8* dest, int samples, const u8* data, const u8* data_end)
 	{
         const u8* p = data;
 
-		const int MaxStackSize = 4096;
+		const int MAX_STACK_SIZE = 4096;
 
 		u8 data_size = *p++;
 
@@ -121,10 +121,10 @@ namespace
 		int code_mask = (1 << code_size) - 1;
 		int old_code = -1;
 
-		u16 prefix[MaxStackSize];
-		u8 suffix[MaxStackSize];
+		u16 prefix[MAX_STACK_SIZE];
+		u8 suffix[MAX_STACK_SIZE];
 
-		u8 pixel_stack[MaxStackSize + 1];
+		u8 pixel_stack[MAX_STACK_SIZE + 1];
 		u8* top_stack = pixel_stack;
 
 		for (int code = 0; code < clear; ++code)
@@ -135,14 +135,13 @@ namespace
 
 		// decode gif pixel stream
 		int bits = 0;
-		int count = 0;
+		u8 count = 0;
 		u32 datum = 0;
 		u8 first = 0;
 
 		u8* q = dest;
 		u8* qend = dest + samples;
 
-		const u8* packet = nullptr;
 		const u8* c = nullptr;
 
 		while (q < qend)
@@ -156,18 +155,15 @@ namespace
 					{
 						// read a new data block
 						count = *p++;
-
-						if (count > 0)
+						if (!count)
 						{
-							packet = p;
-							p += count;
-						}
-						else
-						{
-							break;
+							// terminator
+							return p;
 						}
 
-						c = packet;
+						c = p;
+						p += count;
+
 					}
 
 					datum += (*c++) << bits;
@@ -222,7 +218,7 @@ namespace
 				first = suffix[code];
 
 				// add a new string to the string table
-				if (available >= MaxStackSize)
+				if (available >= MAX_STACK_SIZE)
 				{
 					break;
 				}
@@ -232,7 +228,7 @@ namespace
 				suffix[available] = first;
 				++available;
 
-				if (!(available & code_mask) && (available < MaxStackSize))
+				if (!(available & code_mask) && (available < MAX_STACK_SIZE))
 				{
 					++code_size;
 					code_mask += available;
@@ -245,12 +241,13 @@ namespace
 			*q++ = *(--top_stack);
 		}
 
-		// read the terminator
-		u8 terminator = *p++;
-
-        if (terminator != 0)
+		// skip junk in case we early-terminated
+		for ( ; p < data_end; )
 		{
-			// There are files with incorrect terminator; let them pass silently
+			u8 s = *p++;
+			if (!s)
+				break;
+			p += s;
 		}
 
 		return p;
@@ -276,7 +273,7 @@ namespace
 		}
 	}
 
-    void blit_raw(Surface& surface, const u8* bits, u8 transparent)
+    void blit_raw(Surface& surface, const u8* bits)
 	{
 		int width = surface.width;
 		int height = surface.height;
@@ -284,14 +281,7 @@ namespace
         for (int y = 0; y < height; ++y)
         {
             u8* dest = surface.address<u8>(0, y);
-            for (int x = 0; x < width; ++x)
-            {
-				u8 sample = bits[x];
-				if (sample != transparent)
-				{
-					dest[x] = sample;
-				}
-            }
+			std::memcpy(dest, bits, width);
             bits += width;
         }
 	}
@@ -307,10 +297,7 @@ namespace
             for (int x = 0; x < width; ++x)
             {
 				ColorBGRA color = palette[bits[x]];
-				if (color.a)
-				{
-					dest[x] = color;
-				}
+				dest[x] = color;
             }
             bits += width;
         }
@@ -352,7 +339,9 @@ namespace
 		}
 
 		// translucent color
+		/* NOTE: transparent samples will be rendered incorrectly if alpha blending is enabled
 		palette[screen_desc.background].a = 0;
+		*/
 
         int width = image_desc.width;
         int height = image_desc.height;
@@ -360,7 +349,7 @@ namespace
 		// decode gif bit stream
 		int samples = width * height;
 		std::unique_ptr<u8[]> bits(new u8[samples]);
-		data = readBits(data, bits.get(), samples);
+		data = readBits(bits.get(), samples, data, end);
 
         // deinterlace
 		if (image_desc.interlaced())
@@ -370,20 +359,17 @@ namespace
 			bits.reset(temp);
 		}
 
+		int x = image_desc.left;
+		int y = image_desc.top;
+		Surface rect(surface, x, y, width, height);
+
 		if (ptr_palette)
 		{
 			*ptr_palette = palette;
-
-			int x = image_desc.left;
-			int y = image_desc.top;
-			Surface rect(surface, x, y, width, height);
-			blit_raw(rect, bits.get(), screen_desc.background);
+			blit_raw(rect, bits.get());
 		}
 		else
 		{
-			int x = image_desc.left;
-			int y = image_desc.top;
-			Surface rect(surface, x, y, width, height);
 			blit_palette(rect, bits.get(), palette);
 		}
 
@@ -418,6 +404,7 @@ namespace
 	{
 		u8 label = *p++;
 		u8 size = *p++;
+		//printf("    label: %x, size: %d\n", int(label), int(size));
 
 		switch (label)
 		{
@@ -467,6 +454,7 @@ namespace
         while (data < end)
 		{
 			u8 chunkID = *data++;
+			//printf("  chunkID: %x\n", (int)chunkID);
 			switch (chunkID)
 			{
 				case GIF_EXTENSION:
@@ -581,7 +569,6 @@ namespace
 
 			status.next_frame_index = m_frame_counter;
 
-            status.success = true;
             return status;
         }
     };
