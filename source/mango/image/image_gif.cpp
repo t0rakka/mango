@@ -3,8 +3,10 @@
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
-    GIF decoder source: ImageMagick (readBits function).
+	The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
+	The symbol resolver is iterative instead of recursive as in the original.
 */
+#include <algorithm>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
@@ -105,152 +107,158 @@ namespace
 		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	const u8* readBits(u8* dest, int samples, const u8* data, const u8* data_end)
+	struct lzw
 	{
-        const u8* p = data;
+   		s16 prefix;
+   		u8 first;
+   		u8 suffix;
+	};
 
-		const int MAX_STACK_SIZE = 4096;
+	const u8* lzw_decode(u8* dest, u8* dest_end, const u8* src, const u8* src_end)
+	{
+		constexpr int MAX_STACK_SIZE = 8192;
+		constexpr int MAX_AVAILABLE = 0xfff;
 
-		u8 data_size = *p++;
+   		lzw codes[MAX_STACK_SIZE];
 
-		int clear = 1 << data_size;
-		int end_of_information = clear + 1;
-		int available = clear + 2;
-
-		int code_size = data_size + 1;
-		int code_mask = (1 << code_size) - 1;
-		int old_code = -1;
-
-		u16 prefix[MAX_STACK_SIZE];
-		u8 suffix[MAX_STACK_SIZE];
-
-		u8 pixel_stack[MAX_STACK_SIZE + 1];
-		u8* top_stack = pixel_stack;
-
-		for (int code = 0; code < clear; ++code)
+		const u8 lzw_codesize = *src++;
+		if (lzw_codesize > 12)
 		{
-			prefix[code] = 0;
-			suffix[code] = u8(code);
+			return nullptr;
 		}
 
-		// decode gif pixel stream
-		int bits = 0;
-		u8 count = 0;
-		u32 datum = 0;
-		u8 first = 0;
+		const s32 code_clear = 1 << lzw_codesize;
+		const s32 code_eoi = code_clear + 1;
 
-		u8* q = dest;
-		u8* qend = dest + samples;
-
-		const u8* c = nullptr;
-
-		while (q < qend)
+		for (int i = 0; i < code_clear; ++i)
 		{
-			if (top_stack == pixel_stack)
+			const u8 initcode = i;
+			codes[i].prefix = -1;
+			codes[i].first = initcode;
+			codes[i].suffix = initcode;
+		}
+
+		s32 codesize = lzw_codesize + 1;
+		s32 codemask = (1 << codesize) - 1;
+
+		s32 available = code_clear + 2;
+		s32 oldcode = -1;
+
+		s32 data = 0;
+		s32 data_bits = 0;
+		s32 length = 0;
+
+		for (;;)
+		{
+			if (data_bits < codesize)
 			{
-				if (bits < code_size)
+				if (!length)
 				{
-					// load bytes until there is enough bits for a code
-					if (!count)
+					// start compression block
+					length = *src++;
+					if (!length)
 					{
-						// read a new data block
-						count = *p++;
-						if (!count)
-						{
-							// terminator
-							return p;
-						}
-
-						c = p;
-						p += count;
-
+						// terminator
+						return src;
 					}
 
-					datum += (*c++) << bits;
-					bits += 8;
-					--count;
-					continue;
+					if (src + length >= src_end)
+					{
+						// overflow
+						return nullptr;
+					}
 				}
 
-				// get the next code
-				int code = datum & code_mask;
-				datum >>= code_size;
-				bits -= code_size;
-
-				// interpret the code
-				if ((code > available) || (code == end_of_information))
-				{
-					break;
-				}
-
-				if (code == clear)
-				{
-					// reset decoder
-					code_size = data_size + 1;
-					code_mask = (1 << code_size) - 1;
-					available = clear + 2;
-					old_code = -1;
-					continue;
-				}
-
-				if (old_code == -1)
-				{
-					*top_stack++ = suffix[code];
-					old_code = code;
-					first = u8(code);
-					continue;
-				}
-
-				int in_code = code;
-
-				if (code >= available)
-				{
-					*top_stack++ = first;
-					code = old_code;
-				}
-
-				while (code >= clear)
-				{
-					*top_stack++ = suffix[code];
-					code = prefix[code];
-				}
-
-				first = suffix[code];
-
-				// add a new string to the string table
-				if (available >= MAX_STACK_SIZE)
-				{
-					break;
-				}
-
-				*top_stack++ = first;
-				prefix[available] = u16(old_code);
-				suffix[available] = first;
-				++available;
-
-				if (!(available & code_mask) && (available < MAX_STACK_SIZE))
-				{
-					++code_size;
-					code_mask += available;
-				}
-
-				old_code = in_code;
+				// fill register
+				--length;
+				data |= s32(*src++) << data_bits;
+				data_bits += 8;
 			}
+			else
+			{
+				// consume register
+				s32 code = data & codemask;
+				data >>= codesize;
+				data_bits -= codesize;
 
-			// write sample
-			*q++ = *(--top_stack);
+				if (code == code_clear)
+				{
+					// clear code
+					codesize = lzw_codesize + 1;
+					codemask = (1 << codesize) - 1;
+					available = code_clear + 2;
+					oldcode = -1;
+				}
+				else if (code == code_eoi)
+				{
+					// end of information
+					src += length;
+					while ((length = *src++) > 0)
+					{
+						src += length;
+					}
+					return src;
+				}
+				else if (code <= available)
+				{
+					if (oldcode >= 0)
+					{
+						lzw* p = &codes[available++];
+						if (available >= MAX_STACK_SIZE)
+						{
+							// too many codes
+							return nullptr;
+						}
+
+						p->prefix = (s16) oldcode;
+						p->first = codes[oldcode].first;
+						p->suffix = (code == available) ? p->first : codes[code].first;
+					}
+					else if (code == available)
+					{
+						// illegal code
+						return nullptr;
+					}
+
+					oldcode = code;
+
+					// remember current address
+					u8* start = dest;
+
+					// resolve symbols
+					for (int depth = 1; depth > 0; --depth)
+					{
+						u8 sample = codes[code].suffix;
+						if (dest < dest_end)
+						{
+							*dest++ = sample;
+						}
+
+						if (codes[code].prefix >= 0)
+						{
+							++depth;
+							code = codes[code].prefix;
+						}
+					}
+
+					// reverse symbols
+					std::reverse(start, dest);
+
+					if (available > codemask && available < MAX_AVAILABLE)
+					{
+						++codesize;
+						codemask |= (codemask + 1);
+					}
+				}
+				else
+				{
+					// illegal code
+					return nullptr;
+				}
+			}
 		}
 
-		// skip junk in case we early-terminated
-		for ( ; p < data_end; )
-		{
-			u8 s = *p++;
-			if (!s)
-				break;
-			p += s;
-		}
-
-		return p;
+		return src;
 	}
 
 	void deinterlace(u8* dest, u8* buffer, int width, int height)
@@ -273,37 +281,59 @@ namespace
 		}
 	}
 
-    void blit_raw(Surface& surface, const u8* bits)
+	void scanline_copy_indices(u8* dest, const u8* src, int width, const Palette& palette, u8 transparent)
 	{
-		int width = surface.width;
-		int height = surface.height;
+		MANGO_UNREFERENCED(palette);
+		MANGO_UNREFERENCED(transparent);
 
-        for (int y = 0; y < height; ++y)
-        {
-            u8* dest = surface.address<u8>(0, y);
-			std::memcpy(dest, bits, width);
-            bits += width;
-        }
+		std::memcpy(dest, src, width);
 	}
 
-    void blit_palette(Surface& surface, const u8* bits, const Palette& palette)
-    {
-		int width = surface.width;
-		int height = surface.height;
+	void scanline_blend_indices(u8* dest, const u8* src, int width, const Palette& palette, u8 transparent)
+	{
+		MANGO_UNREFERENCED(palette);
 
-        for (int y = 0; y < height; ++y)
-        {
-            u32* dest = surface.address<u32>(0, y);
-            for (int x = 0; x < width; ++x)
-            {
-				ColorBGRA color = palette[bits[x]];
+		for (int x = 0; x < width; ++x)
+		{
+			u8 sample = src[x];
+			if (sample != transparent)
+			{
+				dest[x] = sample;
+			}
+		}
+	}
+
+	void scanline_copy_palette(u8* dest8, const u8* src, int width, const Palette& palette, u8 transparent)
+	{
+		MANGO_UNREFERENCED(transparent);
+
+		u32* dest = reinterpret_cast<u32*>(dest8);
+
+		for (int x = 0; x < width; ++x)
+		{
+			u8 sample = src[x];
+			ColorBGRA color = palette[sample];
+			dest[x] = color;
+		}
+	}
+
+	void scanline_blend_palette(u8* dest8, const u8* src, int width, const Palette& palette, u8 transparent)
+	{
+		u32* dest = reinterpret_cast<u32*>(dest8);
+
+		for (int x = 0; x < width; ++x)
+		{
+			u8 sample = src[x];
+			if (sample != transparent)
+			{
+				ColorBGRA color = palette[sample];
 				dest[x] = color;
-            }
-            bits += width;
-        }
-    }
+			}
+		}
+	}
 
-    const u8* read_image(const u8* data, const u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
+    const u8* read_image(const u8* data, const u8* end, const gif_logical_screen_descriptor& screen_desc, 
+	                     Surface& surface, Palette* ptr_palette, bool first_frame)
     {
 		gif_image_descriptor image_desc;
         data = image_desc.read(data, end);
@@ -339,38 +369,48 @@ namespace
 		}
 
 		// translucent color
-		/* NOTE: transparent samples will be rendered incorrectly if alpha blending is enabled
-		palette[screen_desc.background].a = 0;
-		*/
+		u8 transparent = screen_desc.background;
+		//palette[transparent].a = 0; // this breaks images when alpha blending them - just lose the alpha
 
+		int x = image_desc.left;
+		int y = image_desc.top;
         int width = image_desc.width;
         int height = image_desc.height;
 
 		// decode gif bit stream
-		int samples = width * height;
-		std::unique_ptr<u8[]> bits(new u8[samples]);
-		data = readBits(bits.get(), samples, data, end);
+		int bytes = width * height;
+		std::unique_ptr<u8[]> bits(new u8[bytes]);
+		data = lzw_decode(bits.get(), bits.get() + bytes, data, end);
 
-        // deinterlace
+		// deinterlace
 		if (image_desc.interlaced())
 		{
-            u8* temp = new u8[width * height];
+			u8* temp = new u8[bytes];
 			deinterlace(temp, bits.get(), width, height);
 			bits.reset(temp);
 		}
 
-		int x = image_desc.left;
-		int y = image_desc.top;
-		Surface rect(surface, x, y, width, height);
+		void (*func)(u8*, const u8*, int , const Palette& , u8) = nullptr;
 
 		if (ptr_palette)
 		{
 			*ptr_palette = palette;
-			blit_raw(rect, bits.get());
+			func = first_frame ? scanline_copy_indices : scanline_blend_indices;
 		}
 		else
 		{
-			blit_palette(rect, bits.get(), palette);
+			func = first_frame ? scanline_copy_palette : scanline_blend_palette;
+		}
+
+		// NOTE: clipping happens with some image files; don't be too clever and "optimize" this later :)
+		Surface rect(surface, x, y, width, height);
+		u8* src = bits.get();
+
+		for (int y = 0; y < rect.height; ++y)
+		{
+			u8* dest = rect.address<u8>(0, y);
+			func(dest, src, rect.width, palette, transparent);
+			src += width;
 		}
 
 		return data;
@@ -449,7 +489,9 @@ namespace
 		return data;
     }
 
-    const u8* read_chunks(const u8* data, const u8* end, const gif_logical_screen_descriptor& screen_desc, Surface& surface, Palette* ptr_palette)
+    const u8* read_chunks(const u8* data, const u8* end,
+	                      const gif_logical_screen_descriptor& screen_desc,
+	                      Surface& surface, Palette* ptr_palette, bool first_frame)
     {
         while (data < end)
 		{
@@ -462,7 +504,7 @@ namespace
 					break;
 
 				case GIF_IMAGE:
-                    data = read_image(data, end, screen_desc, surface, ptr_palette);
+                    data = read_image(data, end, screen_desc, surface, ptr_palette, first_frame);
                     return data;
 
 				case GIF_TERMINATE:
@@ -550,7 +592,8 @@ namespace
 
 			if (m_data)
 			{
-				m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette);
+				bool first_frame = status.current_frame_index == 0;
+				m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette, first_frame);
 				m_frame_counter += (m_data != nullptr);
 			}
 
