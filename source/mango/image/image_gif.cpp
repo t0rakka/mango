@@ -226,7 +226,7 @@ namespace
 					u8* start = dest;
 
 					// resolve symbols
-					for (int depth = 1; depth > 0; --depth)
+					for (;;)
 					{
 						u8 sample = codes[code].suffix;
 						if (dest < dest_end)
@@ -234,11 +234,10 @@ namespace
 							*dest++ = sample;
 						}
 
-						if (codes[code].prefix >= 0)
-						{
-							++depth;
-							code = codes[code].prefix;
-						}
+						if (codes[code].prefix < 0)
+							break;
+
+						code = codes[code].prefix;
 					}
 
 					// reverse symbols
