@@ -370,7 +370,7 @@ namespace
 
 		// translucent color
 		u8 transparent = screen_desc.background;
-		//palette[transparent].a = 0; // this breaks images when alpha blending them - just lose the alpha
+		palette[transparent].a = 0;
 
 		int x = image_desc.left;
 		int y = image_desc.top;
@@ -421,7 +421,7 @@ namespace
 		LittleEndianConstPointer x = p;
 
 		u8 packed = *x++;
-		int disposal_method = (packed >> 2) & 0x07; // 2 - restore background color, 3 - restore previous
+		int disposal_method = (packed >> 2) & 0x07; // 1 - do not dispose, 2 - restore background color, 3 - restore previous
 		int user_input_flag = (packed >> 1) & 0x01; // 0 - user input is not expected, 1 - user input is expected
 		int transparent_color_flag = packed & 0x01; // pixels with this value are not to be touched
 
@@ -432,6 +432,7 @@ namespace
         MANGO_UNREFERENCED(transparent_color);
         MANGO_UNREFERENCED(user_input_flag);
         MANGO_UNREFERENCED(disposal_method);
+		//printf("      delay: %d, dispose: %d, transparent: %d (%d)\n", delay, disposal_method, transparent_color_flag, transparent_color);
 	}
 
 	void read_application_extension(const u8* p)
