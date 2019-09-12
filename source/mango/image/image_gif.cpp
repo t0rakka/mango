@@ -6,6 +6,8 @@
 	The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
 	The symbol resolver is iterative instead of recursive as in the original.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
 #include <algorithm>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -28,10 +30,10 @@ namespace
 		GIF_EXTENSION  = 0x21,
 		GIF_TERMINATE  = 0x3b,
 
-		PLAIN_TEXT_EXTENSION = 0x01,
+		PLAIN_TEXT_EXTENSION       = 0x01,
 		GRAPHICS_CONTROL_EXTENSION = 0xf9,
-		COMMENT_EXTENSION = 0xfe,
-		APPLICATION_EXTENSION = 0xff,
+		COMMENT_EXTENSION          = 0xfe,
+		APPLICATION_EXTENSION      = 0xff,
 	};
 
 	struct gif_logical_screen_descriptor
@@ -65,10 +67,10 @@ namespace
 			return p;
 		}
 
-		int  color_table_size() const { return 1 << ((packed & 0x07) + 1); }
-		bool sort_flag()        const { return (packed & 0x08) == 0x08; }
-		int  color_resolution() const { return (packed >> 4) & 0x07; }
 		bool color_table_flag() const { return (packed & 0x80) == 0x80; }
+		int  color_resolution() const { return (packed >> 4) & 0x07; }
+		bool sort_flag()        const { return (packed & 0x08) == 0x08; }
+		int  color_table_size() const { return 1 << ((packed & 0x07) + 1); }
 	};
 
 	struct gif_image_descriptor
@@ -92,7 +94,7 @@ namespace
                 height = p.read16();
                 field  = p.read8();
 
-                if (local_color_table())
+                if (color_table_flag())
                 {
                     palette = p;
                     p += color_table_size() * 3;
@@ -102,16 +104,21 @@ namespace
 			return p;
 		}
 
-		bool interlaced()        const { return (field & 0x40) != 0; }
-		bool local_color_table() const { return (field & 0x80) != 0; }
-		int  color_table_size()  const { return 1 << ((field & 0x07) + 1); }
+		bool color_table_flag() const { return (field & 0x80) != 0; }
+		bool interlaced()       const { return (field & 0x40) != 0; }
+		int  color_table_size() const { return 1 << ((field & 0x07) + 1); }
 	};
 
-	struct lzw
+	struct gif_state
 	{
-   		s16 prefix;
-   		u8 first;
-   		u8 suffix;
+		gif_logical_screen_descriptor screen_desc;
+		gif_image_descriptor image_desc;
+
+		u16 delay = 0;
+		int disposal_method = 0;
+		int user_input_flag = 0;
+		int transparent_color_flag = 0;
+		u8 transparent_color = 0;
 	};
 
 	const u8* lzw_decode(u8* dest, u8* dest_end, const u8* src, const u8* src_end)
@@ -119,15 +126,20 @@ namespace
 		constexpr int MAX_STACK_SIZE = 8192;
 		constexpr int MAX_AVAILABLE = 0xfff;
 
-   		lzw codes[MAX_STACK_SIZE];
+		struct lzw
+		{
+			s16 prefix;
+			u8 first;
+			u8 suffix;
+		} codes[MAX_STACK_SIZE];
 
-		const u8 lzw_codesize = *src++;
-		if (lzw_codesize > 12)
+		const u8 minimum_codesize = *src++;
+		if (minimum_codesize > 12)
 		{
 			return nullptr;
 		}
 
-		const s32 code_clear = 1 << lzw_codesize;
+		const s32 code_clear = 1 << minimum_codesize;
 		const s32 code_eoi = code_clear + 1;
 
 		for (int i = 0; i < code_clear; ++i)
@@ -138,7 +150,7 @@ namespace
 			codes[i].suffix = initcode;
 		}
 
-		s32 codesize = lzw_codesize + 1;
+		s32 codesize = minimum_codesize + 1;
 		s32 codemask = (1 << codesize) - 1;
 
 		s32 available = code_clear + 2;
@@ -184,7 +196,7 @@ namespace
 				if (code == code_clear)
 				{
 					// clear code
-					codesize = lzw_codesize + 1;
+					codesize = minimum_codesize + 1;
 					codemask = (1 << codesize) - 1;
 					available = code_clear + 2;
 					oldcode = -1;
@@ -331,7 +343,8 @@ namespace
 		}
 	}
 
-    const u8* read_image(const u8* data, const u8* end, const gif_logical_screen_descriptor& screen_desc, 
+    const u8* read_image(const u8* data, const u8* end, 
+	                     gif_state& state, 
 	                     Surface& surface, Palette* ptr_palette, bool first_frame)
     {
 		gif_image_descriptor image_desc;
@@ -340,7 +353,7 @@ namespace
 		Palette palette;
 
 		// choose palette
-		if (image_desc.local_color_table())
+		if (image_desc.color_table_flag())
 		{
 			// local palette
 			palette.size = image_desc.color_table_size();
@@ -356,19 +369,19 @@ namespace
 		else
 		{
 			// global palette
-			palette.size = screen_desc.color_table_size();
+			palette.size = state.screen_desc.color_table_size();
 
 			for (u32 i = 0; i < palette.size; ++i)
 			{
-            	u32 r = screen_desc.palette[i * 3 + 0];
-            	u32 g = screen_desc.palette[i * 3 + 1];
-            	u32 b = screen_desc.palette[i * 3 + 2];
+            	u32 r = state.screen_desc.palette[i * 3 + 0];
+            	u32 g = state.screen_desc.palette[i * 3 + 1];
+            	u32 b = state.screen_desc.palette[i * 3 + 2];
             	palette[i] = ColorBGRA(r, g, b, 0xff);
 			}
 		}
 
 		// translucent color
-		u8 transparent = screen_desc.background;
+		u8 transparent = state.screen_desc.background;
 		palette[transparent].a = 0;
 
 		int x = image_desc.left;
@@ -415,23 +428,24 @@ namespace
 		return data;
     }
 
-	void read_graphics_control_extension(const u8* p)
+	void read_graphics_control_extension(const u8* p, gif_state& state)
 	{
 		LittleEndianConstPointer x = p;
 
 		u8 packed = *x++;
-		int disposal_method = (packed >> 2) & 0x07; // 1 - do not dispose, 2 - restore background color, 3 - restore previous
-		int user_input_flag = (packed >> 1) & 0x01; // 0 - user input is not expected, 1 - user input is expected
-		int transparent_color_flag = packed & 0x01; // pixels with this value are not to be touched
 
-		u16 delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
-		u8 transparent_color = transparent_color_flag ? *x : 0;
+		state.disposal_method = (packed >> 2) & 0x07; // 1 - do not dispose, 2 - restore background color, 3 - restore previous
+		state.user_input_flag = (packed >> 1) & 0x01; // 0 - user input is not expected, 1 - user input is expected
+		state.transparent_color_flag = packed & 0x01; // pixels with this value are not to be touched
 
-        MANGO_UNREFERENCED(delay);
-        MANGO_UNREFERENCED(transparent_color);
-        MANGO_UNREFERENCED(user_input_flag);
-        MANGO_UNREFERENCED(disposal_method);
-		//printf("      delay: %d, dispose: %d, transparent: %d (%d)\n", delay, disposal_method, transparent_color_flag, transparent_color);
+		state.delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
+		state.transparent_color = state.transparent_color_flag ? *x : 0;
+
+		debugPrint("      delay: %d, dispose: %d, transparent: %s (%d)\n",
+			state.delay,
+			state.disposal_method,
+			state.transparent_color_flag ? "YES" : "NO",
+			state.transparent_color);
 	}
 
 	void read_application_extension(const u8* p)
@@ -440,18 +454,18 @@ namespace
 		MANGO_UNREFERENCED(identifier);
 	}
 
-	const u8* read_extension(const u8* p)
+	const u8* read_extension(const u8* p, gif_state& state)
 	{
 		u8 label = *p++;
 		u8 size = *p++;
-		//printf("    label: %x, size: %d\n", int(label), int(size));
+		debugPrint("    label: %x, size: %d\n", int(label), int(size));
 
 		switch (label)
 		{
 			case PLAIN_TEXT_EXTENSION:
 				break;
 			case GRAPHICS_CONTROL_EXTENSION:
-				read_graphics_control_extension(p);
+				read_graphics_control_extension(p, state);
 				break;
 			case COMMENT_EXTENSION:
 				break;
@@ -490,21 +504,21 @@ namespace
     }
 
     const u8* read_chunks(const u8* data, const u8* end,
-	                      const gif_logical_screen_descriptor& screen_desc,
+						  gif_state& state,
 	                      Surface& surface, Palette* ptr_palette, bool first_frame)
     {
         while (data < end)
 		{
 			u8 chunkID = *data++;
-			//printf("  chunkID: %x\n", (int)chunkID);
+			debugPrint("  chunkID: %x\n", (int)chunkID);
 			switch (chunkID)
 			{
 				case GIF_EXTENSION:
-					data = read_extension(data);
+					data = read_extension(data, state);
 					break;
 
 				case GIF_IMAGE:
-                    data = read_image(data, end, screen_desc, surface, ptr_palette, first_frame);
+                    data = read_image(data, end, state, surface, ptr_palette, first_frame);
                     return data;
 
 				case GIF_TERMINATE:
@@ -523,7 +537,7 @@ namespace
     {
         Memory m_memory;
 		ImageHeader m_header;
-        gif_logical_screen_descriptor m_screen_desc;
+		gif_state m_state;
 
 		std::unique_ptr<u8[]> m_image;
 		int m_frame_counter = 0;
@@ -543,12 +557,12 @@ namespace
 			m_data = read_magic(m_header, m_data, m_end);
 			if (m_header.success)
 			{
-				m_data = m_screen_desc.read(m_data, m_end);
+				m_data = m_state.screen_desc.read(m_data, m_end);
 
 				m_start = m_data;
 
-				m_header.width   = m_screen_desc.width;
-				m_header.height  = m_screen_desc.height;
+				m_header.width   = m_state.screen_desc.width;
+				m_header.height  = m_state.screen_desc.height;
 				m_header.depth   = 0;
 				m_header.levels  = 0;
 				m_header.faces   = 0;
@@ -593,7 +607,7 @@ namespace
 			if (m_data)
 			{
 				bool first_frame = status.current_frame_index == 0;
-				m_data = read_chunks(m_data, m_end, m_screen_desc, target, ptr_palette, first_frame);
+				m_data = read_chunks(m_data, m_end, m_state, target, ptr_palette, first_frame);
 				m_frame_counter += (m_data != nullptr);
 			}
 
