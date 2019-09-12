@@ -276,20 +276,17 @@ namespace
 
 	void deinterlace(u8* dest, u8* buffer, int width, int height)
 	{
-		static const int interlace_rate[] = { 8, 8, 4, 2 };
-		static const int interlace_start[] = { 0, 4, 2, 1 };
-
 		for (int pass = 0; pass < 4; ++pass)
 		{
-			const int rate = interlace_rate[pass];
-			int j =  interlace_start[pass];
+			const int rate = std::min(8, 16 >> pass); // 8, 8, 4, 2
+			const int start = (8 >> pass) & 0x7;      // 0, 4, 2, 1
+			const int stride = rate * width;
 
-			while (j < height)
+			for (int y = start; y < height; y += rate)
 			{
-				u8* d = dest + j * width;
-				std::memcpy(d, buffer, width);
+				std::memcpy(dest, buffer, width);
+				dest += stride;
 				buffer += width;
-				j += rate;
 			}
 		}
 	}
