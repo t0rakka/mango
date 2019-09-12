@@ -17,7 +17,7 @@ mango::image
 [x] struct LuminanceFormat for initializing luminance formats
 [x] LUMINANCE -flag to format instead of inspecting the RGB(A) masks
 [x] INDEXED -flag to format (limits bit depth to 1..8 bits, used by palette blitter)
-[ ] struct DecodeStatus, returned from ImageDecoder::decode()
+[x] struct DecodeStatus, returned from ImageDecoder::decode()
     - frame number (to detect looping / terminating decoding)
     - decoder "name"  (example: "Huffman-Progressive YUV SSE4.1 blah blah")
     - was decoding direct? color converting? scaling? dithering? paletted.. source bitplanes..
@@ -27,8 +27,8 @@ mango::image
 [ ] namespace mango::image
 [ ] Palette blitters (palette + index -> RGBA)
 [x] Color quantizer / dithering for RGBA -> Palette + Index generation (supports 1..8 bits)
-[ ] GIF decoder: transparent color / preservation mode support for animation decoder
-[ ] GIF decoder should only support RGB decoding (because of the local palette)
+[ ] GIF decoder: preservation mode support for animation decoder
+[x] GIF decoder should only support RGB decoding (because of the local palette)
 [x] GIF encoder
 [-] GIF encoder + animation
 [ ] Blitter Engine v2.0
@@ -44,3 +44,105 @@ misc
 ---------------------------------------------------------------------------------------------
 
 [ ] Improve keyboard event handling on macOS
+
+---------------------------------------------------------------------------------------------
+compressed formats
+---------------------------------------------------------------------------------------------
+
+[ ] Unified compressed format handling / identifying systen
+[ ] ALL DXGI enumerations
+[ ] ALL GL enumerations (KTX parser has some already)
+[ ] NO magic numbers in block.cpp format table.. use the DXGI and GL enumerations
+[ ] FOURCC -> CompressedFormat
+[ ] DXGI -> CompressedFormat
+[ ] GL -> CompressedFormat
+
+[ ] Parse the following table and handle overlapped FOURCC's .. enhance FOURCC header!
+
+    FOURCC_PTC1       = u32_mask('P', 'T', 'C', '1'), // GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,  GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT
+    FOURCC_PTC2       = u32_mask('P', 'T', 'C', '2'), // GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT
+    FOURCC_PTC3       = u32_mask('P', 'T', 'C', '3'), // GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,  GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT
+    FOURCC_PTC4       = u32_mask('P', 'T', 'C', '4'), // GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT
+
+S3TC / DXT1 / BC1 / S3TC-RGB	'DXT1'	4bpp	RGB	-	565	    4x4	1	1	    71 DXGI_FORMAT_BC1_UNORM	83F0 GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+S3TC / DXT1 / BC1 / S3TC-RGBA	'DXT1'	4bpp	RGB	1bit	    565	4x4	1	1	71 DXGI_FORMAT_BC1_UNORM	83F1 GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+S3TC / DXT3 / BC2	            'DXT3'	8bpp	RGB	A	565 +4	4x4	1	2	    74 DXGI_FORMAT_BC2_UNORM	83F2 GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+S3TC / DXT5 / BC3	            'DXT5'	8bpp	RGB	A	565 +8	4x4	1	2	    77 DXGI_FORMAT_BC3_UNORM	83F3 GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+
+S3TC / BC1-SRGB		                    4bpp	SRGB	-	565	4x4	1	1	    72 DXGI_FORMAT_BC1_UNORM_SRGB	8C4C GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
+S3TC / BC1-SRGB		                    4bpp	SRGB	1bit	565	4x4	1	1	72 DXGI_FORMAT_BC1_UNORM_SRGB	8C4D GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
+S3TC / BC2-SRGB		                    8bpp	SRGB	A	565 +4	4x4	1	2	75 DXGI_FORMAT_BC2_UNORM_SRGB	8C4E GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT
+S3TC / BC3-SRGB	                      	8bpp	SRGB	A	565 +8	4x4	1	2	78 DXGI_FORMAT_BC3_UNORM_SRGB	8C4F GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+
+ATITC-RGB	                     'ATC'	4bpp	RGB	-						8C92 GL_ATC_RGB_AMD
+ATTIC-EA	                     'ATCA'	8bpp	RGB	A						8C93 GL_ATC_RGBA_EXPLICIT_ALPHA_AMD
+ATTIC-IA	                     'ATCI'	8bpp	RGB	A						87EE GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD
+
+ETC1                   	'ETC' / 'ETC1'	4bpp	RGB	-	555 + 333/444	4x2x2	2	1	8D64 GL_ETC1_RGB8_OES
+
+ETC2	                             	4bpp	RGB	-	5 mode	4x4	2	1		    9274 GL_COMPRESSED_RGB_ETC2
+ETC2-SRGB		                        4bpp	SRGB	-	5 mode	4x4	2	1		9275 GL_COMPRESSED_SRGB8_ETC2
+ETC2 A1bit		                        4bpp	RGB	1bit	4 mode	4x4	2	1		9276 GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2
+ETC2-SRGB A1bit		                    4bpp	SRGB	1bit	4 mode	4x4	2	1	9277 GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2
+ETC2 + EAC		                        8bpp	RGB	A	5 mode	4x4	2	2		    9278 GL_COMPRESSED_RGBA8_ETC2_EAC
+ETC2-SRGB + EAC		                    8bpp	SRGB	A	5 mode	4x4	2	2		9279 GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC
+
+EAC R11 UNSIGNED		                4bpp	R	-		4x4	1	1		9270 GL_COMPRESSED_R11_EAC
+EAC R11 SIGNED		                    4bpp	R	-		4x4	1	1		9271 GL_COMPRESSED_SIGNED_R11_EAC
+EAC RG11 UNSIGNED		                8bpp	RG	-		4x4	1	2		9272 GL_COMPRESSED_RG11_EAC
+EAC RG11 SIGNED		                    8bpp	RG	-		4x4	1	2		9273 GL_COMPRESSED_SIGNED_RG11_EAC
+
+RGTC / 3DC-X / BC4 U 'ATI1' / 'BC4U' / '3DC1'	4bpp	R	-	8	4x4	1	1	    80 DXGI_FORMAT_BC4_UNORM	87F9 GL_3DC_X_AMD / 8DBB GL_COMPRESSED_RED_RGTC1_EXT
+RGTC / 3DC-X / BC4 S	      'BC4S'	4bpp	R	-	8	4x4	1	1	            81 DXGI_FORMAT_BC4_SNORM	8DBC GL_COMPRESSED_SIGNED_RED_RGTC1_EXT
+RGTC / 3DC-XY / BC5 U	'ATI2' / 'BC5U' / '3DC2'	8bpp	RG	-	88	4x4	1	2	83 DXGI_FORMAT_BC5_UNORM	87FA GL_3DC_XY_AMD / 8DBD GL_COMPRESSED_RED_GREEN_RGTC2_EXT
+RGTC / 3DC-XY / BC5 S        	'BC5S'	8bpp	RG	-	88	4x4	1	2	            84 DXGI_FORMAT_BC5_SNORM	8DBE GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT
+
+LATC L UNSIGNED                 		4bpp	R	-	8	4x4	1	1		8C70 GL_COMPRESSED_LUMINANCE_LATC1_EXT
+LATC L SIGNED		                    4bpp	R	-	8	4x4	1	1		8C71 GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT
+LATC LA UNSIGNED	                 	8bpp	R	A	88	4x4	1	2		8C72 GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT
+LATC LA SIGNED		                    8bpp	R	A	88	4x4	1	2		8C73 GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT
+
+PVRTC RGBA 4bpp	              'PTC4'	4bpp	RGB	A	4443/4433	4x4	1	1 	         	        8C02 GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG
+PVRTC RGB 4bpp	              'PTC4'	4bpp	RGB	-	555/554	4x4	1	1		                    8C00 GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG
+PVRTC RGBA 2bpp	              'PTC2'	2bpp	RGB	A	4443/4433	4x8	1	1		                8C03 GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG
+PVRTC RGB 2bpp	              'PTC2'	2bpp	RGB	-	555/554	4x8	1	1		                    8C01 GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG
+PVRTC SRGB 4bpp		                    4bpp	RGB	-	555/554	4x4	1	1		                    8A55 GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT
+PVRTC SRGB 2bpp		                    2bpp	RGB	-	555/554	4x8	1	1		                    8A54 GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT
+PVRTC2 RGBx 4bpp	                	4bpp	RGB	(A)	555/554/4443/4433, 4 mode	4x4	1	1		9137 GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG
+PVRTC2 RGBx 2bpp		                2bpp	RGB	(A)	555/554/4443/4433, 4 mode	4x8	1	1		9138 GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG
+PVRTC2 SRGB 4bpp		                4bpp	RGB	(A)	555/554/4443/4433, 4 mode	4x4	1	1		8A57 GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT
+PVRTC2 SRGB 2bpp		                2bpp	RGB	(A)	555/554/4443/4433, 4 mode	4x2	1	1		8A56 GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT
+
+BPTC / BC6H-UF16		                8bpp	RGB	-	14 mode	4x4	1-2	1	    95 DXGI_FORMAT_BC6H_UF16	    8E8F GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB
+BPTC / BC6H-SF16		                8bpp	RGB	-	14 mode	4x4	1-2	1	    96 DXGI_FORMAT_BC6H_SF16	    8E8E GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB
+BPTC / BC7		                        8bpp	RGB	(A)	8 mode	4x4	1-3	1-2	    98 DXGI_FORMAT_BC7_UNORM	    8E8C GL_COMPRESSED_RGBA_BPTC_UNORM_ARB
+BPTC / BC7-SRGB		                    8bpp	SRGB	(A)	8 mode	4x4	1-3	1-2	99 DXGI_FORMAT_BC7_UNORM_SRGB	8E8D GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB
+
+ASTC LDR 4 × 4 RGBA		                8bpp	RGB	(A)		4x4	1-4	1-2	    134 DXGI_FORMAT_ASTC_4X4_UNORM	        93B0 GL_COMPRESSED_RGBA_ASTC_4x4_KHR
+ASTC LDR 4 × 4 SRGB		                8bpp	SRGB	(A)		4x4	1-4	1-2	135 DXGI_FORMAT_ASTC_4X4_UNORM_SRGB	    93D0 GL_COMPRESSED_SRGB_ALPHA8_ASTC_4x4_KHR
+ASTC LDR 5 × 4 RGBA		6.4bpp	RGB	(A)		5x4	1-4	1-2	                    138 DXGI_FORMAT_ASTC_5X4_UNORM	        93B1 GL_COMPRESSED_RGBA_ASTC_5x4_KHR
+ASTC LDR 5 × 4 SRGB		6.4bpp	SRGB	(A)		5x4	1-4	1-2	                139 DXGI_FORMAT_ASTC_5X4_UNORM_SRGB	    93D1 GL_COMPRESSED_SRGB_ALPHA8_ASTC_5x4_KHR
+ASTC LDR 5 × 5 RGBA		5.1bpp	RGB	(A)		5x5	1-4	1-2	                    142 DXGI_FORMAT_ASTC_5X5_UNORM	        93B2 GL_COMPRESSED_RGBA_ASTC_5x5_KHR
+ASTC LDR 5 × 5 SRGB		5.1bpp	SRGB	(A)		5x5	1-4	1-2	                143 DXGI_FORMAT_ASTC_5X5_UNORM_SRGB	    93D2 GL_COMPRESSED_SRGB_ALPHA8_ASTC_5x5_KHR
+ASTC LDR 6 × 5 RGBA		4.3bpp	RGB	(A)		6x5	1-4	1-2	                    146 DXGI_FORMAT_ASTC_6X5_UNORM	        93B3 GL_COMPRESSED_RGBA_ASTC_6x5_KHR
+ASTC LDR 6 × 5 SRGB		4.3bpp	SRGB	(A)		6x5	1-4	1-2	                147 DXGI_FORMAT_ASTC_6X5_UNORM_SRGB	    93D3 GL_COMPRESSED_SRGB_ALPHA8_ASTC_6x5_KHR
+ASTC LDR 6 × 6 RGBA		3.6bpp	RGB	(A)		6x6	1-4	1-2	                    150 DXGI_FORMAT_ASTC_6X6_UNORM	        93B4 GL_COMPRESSED_RGBA_ASTC_6x6_KHR
+ASTC LDR 6 × 6 SRGB		3.6bpp	SRGB	(A)		6x6	1-4	1-2	                151 DXGI_FORMAT_ASTC_6X6_UNORM_SRGB	    93D4 GL_COMPRESSED_SRGB_ALPHA8_ASTC_6x6_KHR
+ASTC LDR 8 × 5 RGBA		3.2bpp	RGB	(A)		8x5	1-4	1-2	                    154 DXGI_FORMAT_ASTC_8X5_UNORM	        93B5 GL_COMPRESSED_RGBA_ASTC_8x5_KHR
+ASTC LDR 8 × 5 SRGB		3.2bpp	SRGB	(A)		8x5	1-4	1-2	                155 DXGI_FORMAT_ASTC_8X5_UNORM_SRGB	    93D5 GL_COMPRESSED_SRGB_ALPHA8_ASTC_8x5_KHR
+ASTC LDR 8 × 6 RGBA		2.7bpp	RGB	(A)		8x6	1-4	1-2	                    158 DXGI_FORMAT_ASTC_8X6_UNORM	        93B6 GL_COMPRESSED_RGBA_ASTC_8x6_KHR
+ASTC LDR 8 × 6 SRGB		2.7bpp	SRGB	(A)		8x6	1-4	1-2	                159 DXGI_FORMAT_ASTC_8X6_UNORM_SRGB	    93D6 GL_COMPRESSED_SRGB_ALPHA8_ASTC_8x6_KHR
+ASTC LDR 8 × 8 RGBA		2.0bpp	RGB	(A)		8x8	1-4	1-2	                    162 DXGI_FORMAT_ASTC_8X8_UNORM	        93B7 GL_COMPRESSED_RGBA_ASTC_8x8_KHR
+ASTC LDR 8 × 8 SRGB		2.0bpp	SRGB	(A)		8x8	1-4	1-2	                163 DXGI_FORMAT_ASTC_8X8_UNORM_SRGB	    93D7 GL_COMPRESSED_SRGB_ALPHA8_ASTC_8x8_KHR
+ASTC LDR 10 × 5 RGBA		2.6bpp	RGB	(A)		10x5	1-4	1-2	            166 DXGI_FORMAT_ASTC_10X5_UNORM	        93B8 GL_COMPRESSED_RGBA_ASTC_10x5_KHR
+ASTC LDR 10 × 5 SRGB		2.6bpp	SRGB	(A)		10x5	1-4	1-2	        167 DXGI_FORMAT_ASTC_10X5_UNORM_SRGB	93D8 GL_COMPRESSED_SRGB_ALPHA8_ASTC_10x5_KHR
+ASTC LDR 10 × 6 RGBA		2.1bpp	RGB	(A)		10x6	1-4	1-2	            170 DXGI_FORMAT_ASTC_10X6_UNORM	        93B9 GL_COMPRESSED_RGBA_ASTC_10x6_KHR
+ASTC LDR 10 × 6 SRGB		2.1bpp	SRGB	(A)		10x6	1-4	1-2	        171 DXGI_FORMAT_ASTC_10X6_UNORM_SRGB	93D9 GL_COMPRESSED_SRGB_ALPHA8_ASTC_10x6_KHR
+ASTC LDR 10 × 8 RGBA		1.6bpp	RGB	(A)		10x8	1-4	1-2	            174 DXGI_FORMAT_ASTC_10X8_UNORM	        93BA GL_COMPRESSED_RGBA_ASTC_10x8_KHR
+ASTC LDR 10 × 8 SRGB		1.6bpp	SRGB	(A)		10x8	1-4	1-2	        175 DXGI_FORMAT_ASTC_10X8_UNORM_SRGB	93DA GL_COMPRESSED_SRGB_ALPHA8_ASTC_10x8_KHR
+ASTC LDR 10 × 10 RGBA		1.3bpp	RGB	(A)		10x10	1-4	1-2	            178 DXGI_FORMAT_ASTC_10X10_UNORM	    93BB GL_COMPRESSED_RGBA_ASTC_10x10_KHR
+ASTC LDR 10 × 10 SRGB		1.3bpp	SRGB	(A)		10x10	1-4	1-2	        179 DXGI_FORMAT_ASTC_10X10_UNORM_SRGB	93DB GL_COMPRESSED_SRGB_ALPHA8_ASTC_10x10_KHR
+ASTC LDR 12 × 10 RGBA		1.1bpp	RGB	(A)		12x10	1-4	1-2	            182 DXGI_FORMAT_ASTC_12X10_UNORM	    93BC GL_COMPRESSED_RGBA_ASTC_12x10_KHR
+ASTC LDR 12 × 10 SRGB		1.1bpp	SRGB	(A)		12x10	1-4	1-2	        183 DXGI_FORMAT_ASTC_12X10_UNORM_SRGB	93DC GL_COMPRESSED_SRGB_ALPHA8_ASTC_12x10_KHR
+ASTC LDR 12 × 12 RGBA		0.9bpp	RGB	(A)		12x12	1-4	1-2	            186 DXGI_FORMAT_ASTC_12X12_UNORM	    93BD GL_COMPRESSED_RGBA_ASTC_12x12_KHR
+ASTC_LDR 12 × 12 SRGB		0.9bpp	SRGB	(A)		12x12	1-4	1-2	        187 DXGI_FORMAT_ASTC_12X12_UNORM_SRGB	93DD GL_COMPRESSED_SRGB_ALPHA8_ASTC_12x12_KHR
