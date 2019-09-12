@@ -53,9 +53,9 @@ compressed formats
 [ ] ALL DXGI enumerations
 [ ] ALL GL enumerations (KTX parser has some already)
 [ ] NO magic numbers in block.cpp format table.. use the DXGI and GL enumerations
-[ ] FOURCC -> CompressedFormat
-[ ] DXGI -> CompressedFormat
-[ ] GL -> CompressedFormat
+[ ] FOURCC -> CompressedFormat (.dds)
+[ ] DXGI -> CompressedFormat (.dds)
+[ ] GL -> CompressedFormat (.ktx)
 
 [ ] Parse the following table and handle overlapped FOURCC's .. enhance FOURCC header!
 

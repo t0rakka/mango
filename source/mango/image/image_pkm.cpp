@@ -39,7 +39,12 @@ namespace
                 return;
             }
 
-            p += 2; // skip version
+            u16 version = p.read16();
+            if (version != u16_mask_rev('1','0') && version != u16_mask_rev('2','0'))
+            {
+                header.setError("[ImageDecoder.PKM] Incorrect version (0x%x).", version);
+                return;
+            }
 
             // preferred decode format
             Format format;
@@ -66,6 +71,22 @@ namespace
 
                 case 4:
                     compression = TextureCompression::ETC2_RGB_ALPHA1;
+                    break;
+
+                case 5:
+                    compression = TextureCompression::EAC_R11;
+                    break;
+
+                case 6:
+                    compression = TextureCompression::EAC_RG11;
+                    break;
+
+                case 7:
+                    compression = TextureCompression::EAC_SIGNED_R11;
+                    break;
+
+                case 8:
+                    compression = TextureCompression::EAC_SIGNED_RG11;
                     break;
 
                 default:

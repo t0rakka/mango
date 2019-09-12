@@ -2,12 +2,12 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
 #include <mango/core/system.hpp>
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
-
-//#define ENABLE_PVR_DEBUG
 
 // http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.Legacy.pdf
 // http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.pdf
@@ -257,17 +257,14 @@ namespace
             0x00008000  Alpha channel data is present (PVRTC only) 
 #endif
 
-#ifdef ENABLE_PVR_DEBUG
-            printf("flags: 0x%x\n", flags);
-            printf("format: 0x%x\n", fmt);
-#endif
+            debugPrint("flags: 0x%x\n", flags);
+            debugPrint("format: 0x%x\n", fmt);
 
             // compressed block default values
             TextureCompression compression = TextureCompression::NONE;
             Format format;
 
             // NOTE: these have NOT been tested
-
             switch (fmt)
             {
                 case 0x00: // ARGB 4444
@@ -504,22 +501,19 @@ namespace
             if (pvr.pixelformat & 0xffffffff00000000)
             {
                 m_info.format = eightcc_to_format(pvr.pixelformat);
-#ifdef ENABLE_PVR_DEBUG
-                printf("eightcc format: %d (%d,%d,%d,%d)\n", m_info.format.bits,
+                debugPrint("eightcc format: %d (%d,%d,%d,%d)\n", m_info.format.bits,
                     m_info.format.size[0],
                     m_info.format.size[1],
                     m_info.format.size[2],
                     m_info.format.size[3]);
-#endif
             }
             else
             {
                 const int formatIndex = int(pvr.pixelformat);
                 if (formatIndex < formatTableSize)
                 {
-#ifdef ENABLE_PVR_DEBUG
-                    printf("pvr.pixelformat: %d \n", formatIndex);
-#endif
+                    debugPrint("pvr.pixelformat: %d \n", formatIndex);
+
                     // TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
                     TextureCompression compression = formatTable[formatIndex];
 

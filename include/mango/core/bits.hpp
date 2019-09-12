@@ -109,6 +109,16 @@ namespace mango
         return (c3 << 6) | (c2 << 4) | (c1 << 2) | c0;
     }
 
+    constexpr u16 u16_mask(char c0, char c1) noexcept
+    {
+        return (c1 << 8) | c0;
+    }
+
+    constexpr u16 u16_mask_rev(char c0, char c1) noexcept
+    {
+        return (c0 << 8) | c1;
+    }
+
     constexpr u32 u32_mask(char c0, char c1, char c2, char c3) noexcept
     {
         return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
