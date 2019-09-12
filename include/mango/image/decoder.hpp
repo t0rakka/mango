@@ -36,6 +36,10 @@ namespace mango
         //       until running out of data.
         int current_frame_index = 0;
         int next_frame_index = 0;
+
+        // animation frame duration in (numerator / denominator) seconds
+        int frame_delay_numerator = 1;    // 1 frame...
+        int frame_delay_denominator = 60; // ... every 60th of a second
     };
 
     struct ImageDecodeOptions

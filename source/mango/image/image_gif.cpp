@@ -114,7 +114,9 @@ namespace
 		gif_logical_screen_descriptor screen_desc;
 		gif_image_descriptor image_desc;
 
-		u16 delay = 0;
+		bool first_frame = true;
+
+		u16 delay = 2; // default: 50 Hz
 		int disposal_method = 0;
 		int user_input_flag = 0;
 		int transparent_color_flag = 0;
@@ -345,7 +347,7 @@ namespace
 
     const u8* read_image(const u8* data, const u8* end, 
 	                     gif_state& state, 
-	                     Surface& surface, Palette* ptr_palette, bool first_frame)
+	                     Surface& surface, Palette* ptr_palette)
     {
 		gif_image_descriptor image_desc;
         data = image_desc.read(data, end);
@@ -380,9 +382,19 @@ namespace
 			}
 		}
 
-		// translucent color
-		u8 transparent = state.screen_desc.background;
-		palette[transparent].a = 0;
+		// transparency
+		u8 background = state.screen_desc.background;
+		u8 transparent = state.transparent_color;
+
+		if (state.transparent_color_flag)
+		{
+			palette[transparent].r = palette[background].r;
+			palette[transparent].g = palette[background].g;
+			palette[transparent].b = palette[background].b;
+			palette[transparent].a = 0;
+		}
+
+		bool blend = !state.first_frame && state.transparent_color_flag;
 
 		int x = image_desc.left;
 		int y = image_desc.top;
@@ -407,11 +419,11 @@ namespace
 		if (ptr_palette)
 		{
 			*ptr_palette = palette;
-			func = first_frame ? scanline_copy_indices : scanline_blend_indices;
+			func = blend ? scanline_blend_indices : scanline_copy_indices;
 		}
 		else
 		{
-			func = first_frame ? scanline_copy_palette : scanline_blend_palette;
+			func = blend ? scanline_blend_palette : scanline_copy_palette;
 		}
 
 		// NOTE: clipping happens with some image files; don't be too clever and "optimize" this later :)
@@ -505,7 +517,7 @@ namespace
 
     const u8* read_chunks(const u8* data, const u8* end,
 						  gif_state& state,
-	                      Surface& surface, Palette* ptr_palette, bool first_frame)
+	                      Surface& surface, Palette* ptr_palette)
     {
         while (data < end)
 		{
@@ -518,7 +530,7 @@ namespace
 					break;
 
 				case GIF_IMAGE:
-                    data = read_image(data, end, state, surface, ptr_palette, first_frame);
+                    data = read_image(data, end, state, surface, ptr_palette);
                     return data;
 
 				case GIF_TERMINATE:
@@ -606,8 +618,8 @@ namespace
 
 			if (m_data)
 			{
-				bool first_frame = status.current_frame_index == 0;
-				m_data = read_chunks(m_data, m_end, m_state, target, ptr_palette, first_frame);
+				m_state.first_frame = status.current_frame_index == 0;
+				m_data = read_chunks(m_data, m_end, m_state, target, ptr_palette);
 				m_frame_counter += (m_data != nullptr);
 			}
 
@@ -625,6 +637,9 @@ namespace
 			}
 
 			status.next_frame_index = m_frame_counter;
+
+			status.frame_delay_numerator = m_state.delay;
+			status.frame_delay_denominator = 100;
 
             return status;
         }
