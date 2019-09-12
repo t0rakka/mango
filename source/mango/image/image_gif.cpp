@@ -274,18 +274,16 @@ namespace
 		return src;
 	}
 
-	void deinterlace(u8* dest, u8* buffer, int width, int height)
+	void deinterlace(u8* dest, const u8* buffer, int width, int height)
 	{
 		for (int pass = 0; pass < 4; ++pass)
 		{
 			const int rate = std::min(8, 16 >> pass); // 8, 8, 4, 2
 			const int start = (8 >> pass) & 0x7;      // 0, 4, 2, 1
-			const int stride = rate * width;
 
 			for (int y = start; y < height; y += rate)
 			{
-				std::memcpy(dest, buffer, width);
-				dest += stride;
+				std::memcpy(dest + y * width, buffer, width);
 				buffer += width;
 			}
 		}
