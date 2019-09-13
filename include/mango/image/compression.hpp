@@ -100,19 +100,19 @@ namespace image {
 
             // LATC
             LATC1_LUMINANCE               = makeTextureCompression(LATC, 0, 0),
-            LATC2_LUMINANCE_ALPHA         = makeTextureCompression(LATC, 1, ALPHA),
-            LATC1_SIGNED_LUMINANCE        = makeTextureCompression(LATC, 2, SIGNED),
-            LATC2_SIGNED_LUMINANCE_ALPHA  = makeTextureCompression(LATC, 3, ALPHA | SIGNED),
+            LATC1_SIGNED_LUMINANCE        = makeTextureCompression(LATC, 1, SIGNED),
+            LATC2_LUMINANCE_ALPHA         = makeTextureCompression(LATC, 2, ALPHA),
+            LATC2_SIGNED_LUMINANCE_ALPHA  = makeTextureCompression(LATC, 3, SIGNED | ALPHA),
 
             // DXT
             DXT1                          = makeTextureCompression(DXT, 0, BC),
-            DXT1_SRGB                     = makeTextureCompression(DXT, 1, BC | SRGB),
-            DXT1_ALPHA1                   = makeTextureCompression(DXT, 2, BC | ALPHA),
-            DXT1_ALPHA1_SRGB              = makeTextureCompression(DXT, 3, BC | ALPHA | SRGB),
-            DXT3                          = makeTextureCompression(DXT, 4, BC | ALPHA),
-            DXT3_SRGB                     = makeTextureCompression(DXT, 5, BC | ALPHA | SRGB),
-            DXT5                          = makeTextureCompression(DXT, 6, BC | ALPHA),
-            DXT5_SRGB                     = makeTextureCompression(DXT, 7, BC | ALPHA | SRGB),
+            DXT1_ALPHA1                   = makeTextureCompression(DXT, 1, BC | ALPHA),
+            DXT3                          = makeTextureCompression(DXT, 2, BC | ALPHA),
+            DXT5                          = makeTextureCompression(DXT, 3, BC | ALPHA),
+            DXT1_SRGB                     = makeTextureCompression(DXT, 4, BC | SRGB),
+            DXT1_ALPHA1_SRGB              = makeTextureCompression(DXT, 5, BC | SRGB | ALPHA),
+            DXT3_SRGB                     = makeTextureCompression(DXT, 6, BC | SRGB | ALPHA),
+            DXT5_SRGB                     = makeTextureCompression(DXT, 7, BC | SRGB | ALPHA),
 
             // RGTC
             RGTC1_RED                     = makeTextureCompression(RGTC, 0, BC),
@@ -158,6 +158,7 @@ namespace image {
             PVRTC_SRGB_ALPHA_4BPP         = makeTextureCompression(PVRTC_EXT, 9, PVR | SURFACE | ALPHA | SRGB),
 
             // KHR_texture_compression_astc_ldr
+            // KHR_texture_compression_astc_hdr
             ASTC_RGBA_4x4                 = makeTextureCompression(ASTC, 0, ORIGIN | ALPHA),
             ASTC_RGBA_5x4                 = makeTextureCompression(ASTC, 1, ORIGIN | ALPHA),
             ASTC_RGBA_5x5                 = makeTextureCompression(ASTC, 2, ORIGIN | ALPHA),
@@ -187,7 +188,7 @@ namespace image {
             ASTC_SRGB_ALPHA_12x10         = makeTextureCompression(ASTC, 26, ORIGIN | ALPHA | SRGB),
             ASTC_SRGB_ALPHA_12x12         = makeTextureCompression(ASTC, 27, ORIGIN | ALPHA | SRGB),
 
-            // KHR_texture_compression_astc_hdr
+            // OES_texture_compression_astc
             ASTC_RGBA_3x3x3               = makeTextureCompression(ASTC_HDR, 0, ORIGIN | ALPHA),
             ASTC_RGBA_4x3x3               = makeTextureCompression(ASTC_HDR, 1, ORIGIN | ALPHA),
             ASTC_RGBA_4x4x3               = makeTextureCompression(ASTC_HDR, 2, ORIGIN | ALPHA),
@@ -240,17 +241,25 @@ namespace image {
         typedef void (*DecodeFunc)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
         typedef void (*EncodeFunc)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
-        int width; // block width
+        TextureCompression compression; // block format (including flags)
+        u32 dxgi;   // DXGI format
+        u32 gl;     // OpenGL format
+        u32 vk;     // Vulkan format
+
+        int width;  // block width
         int height; // block height
-        int bytes; // block size in bytes
-        Format format; // encode source format / decode target format
+        int bytes;  // block size in bytes
+        Format format; // pixel format for encode/decode
         DecodeFunc decode; // decoding function
         EncodeFunc encode; // encoding function
-        TextureCompression compression; // block format (including flags)
 
         TextureCompressionInfo();
+        TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 gl, u32 vk,
+                               int width, int height, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode);
         TextureCompressionInfo(TextureCompression compression);
-        TextureCompressionInfo(int width, int height, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode, TextureCompression compression);
+        TextureCompressionInfo(DXGI compression);
+        TextureCompressionInfo(GL compression);
+        TextureCompressionInfo(VK compression);
 
         TextureCompressionStatus decompress(const Surface& surface, Memory memory) const;
         TextureCompressionStatus compress(Memory memory, const Surface& surface) const;

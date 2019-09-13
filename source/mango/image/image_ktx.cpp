@@ -2,8 +2,11 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
 #include <cstring>
 #include <mango/core/pointer.hpp>
+#include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
 namespace
@@ -529,21 +532,19 @@ namespace
                 }
             }
 
-#if 0
-            printf("endianness: 0x%x\n", endianness);
-            printf("glType: 0x%x\n", glType);
-            printf("glTypeSize: 0x%x\n", glTypeSize);
-            printf("glFormat: 0x%x\n", glFormat);
-            printf("glInternalFormat: 0x%x\n", glInternalFormat);
-            printf("glBaseInternalFormat: 0x%x\n", glBaseInternalFormat);
-            printf("pixelWidth: %d\n", pixelWidth);
-            printf("pixelHeight: %d\n", pixelHeight);
-            printf("pixelDepth: %d\n", pixelDepth);
-            printf("numberOfArrayElements: %d\n", numberOfArrayElements);
-            printf("numberOfFaces: %d\n", numberOfFaces);
-            printf("numberOfMipmapLevels: %d\n", numberOfMipmapLevels);
-            printf("bytesOfKeyValueData: %d\n", bytesOfKeyValueData);
-#endif
+            debugPrint("endianness: 0x%x\n", endianness);
+            debugPrint("glType: 0x%x\n", glType);
+            debugPrint("glTypeSize: 0x%x\n", glTypeSize);
+            debugPrint("glFormat: 0x%x\n", glFormat);
+            debugPrint("glInternalFormat: 0x%x\n", glInternalFormat);
+            debugPrint("glBaseInternalFormat: 0x%x\n", glBaseInternalFormat);
+            debugPrint("pixelWidth: %d\n", pixelWidth);
+            debugPrint("pixelHeight: %d\n", pixelHeight);
+            debugPrint("pixelDepth: %d\n", pixelDepth);
+            debugPrint("numberOfArrayElements: %d\n", numberOfArrayElements);
+            debugPrint("numberOfFaces: %d\n", numberOfFaces);
+            debugPrint("numberOfMipmapLevels: %d\n", numberOfMipmapLevels);
+            debugPrint("bytesOfKeyValueData: %d\n", bytesOfKeyValueData);
 
             if (numberOfFaces != 1 && numberOfFaces != 6)
             {

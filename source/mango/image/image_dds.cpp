@@ -443,17 +443,19 @@ namespace
             case FOURCC_DXT5:
                 compression = TextureCompression::DXT5;
                 break;
-            case FOURCC_BC4U:
 			case FOURCC_ATI1:
 			case FOURCC_AT1N:
+            case FOURCC_3DC1:
+            case FOURCC_BC4U:
 				compression = TextureCompression::RGTC1_RED;
                 break;
             case FOURCC_BC4S:
                 compression = TextureCompression::RGTC1_SIGNED_RED;
                 break;
-            case FOURCC_BC5U:
 			case FOURCC_ATI2:
 			case FOURCC_AT2N:
+            case FOURCC_3DC2:
+            case FOURCC_BC5U:
 				compression = TextureCompression::RGTC2_RG;
                 break;
             case FOURCC_BC5S:
@@ -465,8 +467,17 @@ namespace
             case FOURCC_BC7U:
                 compression = TextureCompression::BPTC_RGBA_UNORM;
                 break;
-            case FOURCC_PTC2:
+            case FOURCC_PTC1:
                 compression = TextureCompression::PVRTC_RGB_2BPP;
+                break;
+            case FOURCC_PTC2:
+                compression = TextureCompression::PVRTC_RGBA_2BPP;
+                break;
+            case FOURCC_PTC3:
+                compression = TextureCompression::PVRTC_RGB_4BPP;
+                break;
+            case FOURCC_PTC4:
+                compression = TextureCompression::PVRTC_RGBA_4BPP;
                 break;
             case FOURCC_UYVY:
                 compression = TextureCompression::UYVY;
