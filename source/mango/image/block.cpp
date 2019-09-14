@@ -30,6 +30,9 @@ namespace mango
     void decode_block_r11f_g11f_b10f (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_r10f_g11f_b11f (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_pvrtc          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_atc            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_atc_e          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_atc_i          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
     void encode_block_etc1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
@@ -48,7 +51,7 @@ namespace
             0,
             u32(GL::ATC_RGB_AMD),
             0,
-            4, 4,  8, FORMAT_NONE, nullptr, nullptr
+            4, 4,  8, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_atc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -56,7 +59,7 @@ namespace
             0,
             u32(GL::ATC_RGBA_EXPLICIT_ALPHA_AMD),
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_atc_e, nullptr
         ),
 
         TextureCompressionInfo(
@@ -64,7 +67,7 @@ namespace
             0,
             u32(GL::ATC_RGBA_INTERPOLATED_ALPHA_AMD),
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_atc_i, nullptr
         ),
 
         // AMD_compressed_3DC_texture

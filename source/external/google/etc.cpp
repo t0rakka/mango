@@ -39,7 +39,6 @@ namespace
 
     inline u32 getBits (u64 src, int offset, int count)
     {
-        //return (src >> offset) & ((1 << count) - 1);
         return u32(u64_extract_bits(src, offset, count));
     }
 

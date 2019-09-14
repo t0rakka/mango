@@ -183,6 +183,7 @@ namespace mango
     constexpr u16 u16_extend(u16 value, int from, int to)
     {
         return (value << (to - from)) | (value >> (from * 2 - to));
+        //return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
     constexpr s16 s16_extend(s16 value, int from)
@@ -197,6 +198,7 @@ namespace mango
     constexpr u32 u32_extend(u32 value, int from, int to)
     {
         return (value << (to - from)) | (value >> (from * 2 - to));
+        //return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
     constexpr s32 s32_extend(s32 value, int from)

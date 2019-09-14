@@ -226,6 +226,74 @@ namespace
 
 #endif
 
+	void DecodeATC(u8* dest, int stride, const u8* src)
+	{
+		u32 a = uload16le(src + 0);
+		u32 b = uload16le(src + 2);
+        u32 indices = uload32le(src + 4);
+
+        u8 color[16];
+
+		if (a & 0x8000)
+        {
+			color[ 0] = 0;
+			color[ 1] = 0;
+			color[ 2] = 0;
+            color[ 3] = 0xff;
+
+			color[ 8] = u32_extend((a >>  0) & 0x1f, 5, 8);
+			color[ 9] = u32_extend((a >>  5) & 0x1f, 5, 8);
+			color[10] = u32_extend((a >> 10) & 0x1f, 5, 8);
+            color[11] = 0xff;
+
+			color[12] = u32_extend((b >>  0) & 0x1f, 5, 8);
+			color[13] = u32_extend((b >>  5) & 0x3f, 6, 8);
+			color[14] = u32_extend((b >> 11) & 0x1f, 5, 8);
+            color[15] = 0xff;
+
+			color[ 4] = color[ 8] - color[12] / 4;
+			color[ 5] = color[ 9] - color[13] / 4;
+			color[ 6] = color[10] - color[14] / 4;
+            color[ 7] = 0xff;
+        }
+        else
+        {
+			color[ 0] = u32_extend((a >>  0) & 0x1f, 5, 8);
+			color[ 1] = u32_extend((a >>  5) & 0x1f, 5, 8);
+			color[ 2] = u32_extend((a >> 10) & 0x1f, 5, 8);
+            color[ 3] = 0xff;
+
+			color[12] = u32_extend((b >>  0) & 0x1f, 5, 8);
+			color[13] = u32_extend((b >>  5) & 0x3f, 6, 8);
+			color[14] = u32_extend((b >> 11) & 0x1f, 5, 8);
+            color[15] = 0xff;
+
+			color[ 4] = (2 * color[0] + color[12]) / 3;
+			color[ 5] = (2 * color[1] + color[13]) / 3;
+			color[ 6] = (2 * color[2] + color[14]) / 3;
+            color[ 7] = 0xff;
+
+			color[ 8] = (color[0] + 2 * color[12]) / 3;
+			color[ 9] = (color[1] + 2 * color[13]) / 3;
+			color[10] = (color[2] + 2 * color[14]) / 3;
+            color[11] = 0xff;
+        }
+
+        for (int y = 0; y < 4; ++y)
+        {
+            for (int x = 0; x < 4; ++x)
+            {
+                int idx = indices & 3;
+                indices >>= 2;
+                dest[x * 4 + 0] = color[idx * 4 + 0];
+                dest[x * 4 + 1] = color[idx * 4 + 1];
+                dest[x * 4 + 2] = color[idx * 4 + 2];
+                dest[x * 4 + 3] = color[idx * 4 + 3];
+            }
+            dest += stride;
+        }
+	}
+
 } // namespace
 
 namespace mango
@@ -270,6 +338,28 @@ namespace mango
         const DXTAlphaBlock3BitLinear* greenBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear*>(in + 8);
         Decode3BitLinear(out + 0, 2, stride, redBlock);
         Decode3BitLinear(out + 1, 2, stride, greenBlock);
+    }
+
+    void decode_block_atc(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    {
+        MANGO_UNREFERENCED(info);
+        DecodeATC(out + 0, stride, in + 0);
+    }
+
+    void decode_block_atc_e(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    {
+        MANGO_UNREFERENCED(info);
+        const DXTAlphaBlockExplicit* alphaBlock = reinterpret_cast<const DXTAlphaBlockExplicit *>(in + 0);
+        DecodeATC(out + 0, stride, in + 8);
+        DecodeAlphaExplicit(out + 3, stride, alphaBlock);
+    }
+
+    void decode_block_atc_i(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    {
+        MANGO_UNREFERENCED(info);
+        const DXTAlphaBlock3BitLinear* alphaBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear *>(in + 0);
+        DecodeATC(out + 0, stride, in + 8);
+        Decode3BitLinear(out + 3, 4, stride, alphaBlock);
     }
 
 } // namespace mango
