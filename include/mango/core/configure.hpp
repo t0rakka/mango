@@ -69,6 +69,7 @@
     #endif
 
     #include <windows.h>
+    #include <windef.h>
 
 #elif defined(__APPLE__)
 

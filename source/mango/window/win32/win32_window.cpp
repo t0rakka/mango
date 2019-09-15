@@ -577,7 +577,7 @@ namespace mango
 
 		// create window
 		HWND parent = NULL;
-		hwnd = CreateWindowExW(NULL, wndclass.lpszClassName, L"", mask,
+		hwnd = CreateWindowExW(0, wndclass.lpszClassName, L"", mask,
 				x, y, width, height, parent, NULL, hinstance, NULL);
 
 		::BringWindowToTop(hwnd);

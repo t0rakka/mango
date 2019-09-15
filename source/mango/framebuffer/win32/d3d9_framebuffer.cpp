@@ -7,6 +7,14 @@
 
 #include <d3d9.h>
 
+#if !defined(D3D9b_SDK_VERSION)
+  #if defined(D3D_DEBUG_INFO)
+    #define D3D9b_SDK_VERSION (31 | 0x80000000)
+  #else
+    #define D3D9b_SDK_VERSION  31
+  #endif
+#endif
+
 namespace mango {
 namespace framebuffer {
 

@@ -142,7 +142,7 @@ namespace
         {
             bool is = false;
 
-            struct _stati64 s;
+            struct __stat64 s;
 
             if (_wstat64(u16_fromBytes(m_basepath + filename).c_str(), &s) == 0)
             {
@@ -156,7 +156,7 @@ namespace
         {
             std::wstring filespec = u16_fromBytes(m_basepath + pathname + "*");
 
-            _wfinddatai64_t cfile;
+            _wfinddata64_t cfile;
 
             intptr_t hfile = ::_wfindfirst64(filespec.c_str(), &cfile);
 
