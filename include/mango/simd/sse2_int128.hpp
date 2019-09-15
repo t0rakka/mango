@@ -1042,7 +1042,7 @@ namespace detail {
     // u64x2
     // -----------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_SSE4_1)
+#if defined(MANGO_ENABLE_SSE4_1) && defined(MANGO_CPU_64BIT)
 
     template <unsigned int Index>
     static inline u64x2 set_component(u64x2 a, u64 s)
@@ -2338,7 +2338,7 @@ namespace detail {
     // s64x2
     // -----------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_SSE4_1)
+#if defined(MANGO_ENABLE_SSE4_1) && defined(MANGO_CPU_64BIT)
 
     template <unsigned int Index>
     static inline s64x2 set_component(s64x2 a, s64 s)
