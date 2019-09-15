@@ -226,8 +226,8 @@ namespace
 
 #endif
 
-	void DecodeATC(u8* dest, int stride, const u8* src)
-	{
+    void DecodeATC(u8* dest, int stride, const u8* src)
+    {
         u32 a = uload16le(src + 0);
         u32 b = uload16le(src + 2);
         u32 indices = uload32le(src + 4);
