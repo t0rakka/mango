@@ -283,46 +283,46 @@ namespace image {
     namespace opengl
     {
         static inline
-		TextureCompression getTextureCompression(u32 format)
-		{
+        TextureCompression getTextureCompression(u32 format)
+        {
             return TextureCompressionInfo(opengl::TextureFormat(format)).compression;
-		}
+        }
 
         static inline
-		u32 getTextureFormat(TextureCompression compression)
-		{
+        u32 getTextureFormat(TextureCompression compression)
+        {
             return TextureCompressionInfo(compression).gl;
-		}
+        }
     }
 
     namespace vulkan
     {
         static inline
-		TextureCompression getTextureCompression(u32 format)
-		{
+        TextureCompression getTextureCompression(u32 format)
+        {
             return TextureCompressionInfo(vulkan::TextureFormat(format)).compression;
-		}
+        }
 
         static inline
-		u32 getTextureFormat(TextureCompression compression)
-		{
+        u32 getTextureFormat(TextureCompression compression)
+        {
             return TextureCompressionInfo(compression).vk;
-		}
+        }
     }
 
     namespace dxgi
     {
         static inline
-		TextureCompression getTextureCompression(u32 format)
-		{
+        TextureCompression getTextureCompression(u32 format)
+        {
             return TextureCompressionInfo(dxgi::TextureFormat(format)).compression;
-		}
+        }
 
         static inline
-		u32 getTextureFormat(TextureCompression compression)
-		{
+        u32 getTextureFormat(TextureCompression compression)
+        {
             return TextureCompressionInfo(compression).dxgi;
-		}
+        }
     }
 
 } // namespace mango
