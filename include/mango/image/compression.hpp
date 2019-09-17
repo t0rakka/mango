@@ -257,9 +257,9 @@ namespace image {
         TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 gl, u32 vk,
                                int width, int height, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode);
         TextureCompressionInfo(TextureCompression compression);
-        TextureCompressionInfo(DXGI compression);
-        TextureCompressionInfo(GL compression);
-        TextureCompressionInfo(VK compression);
+        TextureCompressionInfo(dxgi::TextureFormat format);
+        TextureCompressionInfo(opengl::TextureFormat format);
+        TextureCompressionInfo(vulkan::TextureFormat format);
 
         TextureCompressionStatus decompress(const Surface& surface, Memory memory) const;
         TextureCompressionStatus compress(Memory memory, const Surface& surface) const;
@@ -282,20 +282,47 @@ namespace image {
 
     namespace opengl
     {
-        TextureCompression getTextureCompression(u32 format);
-        u32 getTextureFormat(TextureCompression compression);
+        static inline
+		TextureCompression getTextureCompression(u32 format)
+		{
+            return TextureCompressionInfo(opengl::TextureFormat(format)).compression;
+		}
+
+        static inline
+		u32 getTextureFormat(TextureCompression compression)
+		{
+            return TextureCompressionInfo(compression).gl;
+		}
     }
 
     namespace vulkan
     {
-        TextureCompression getTextureCompression(u32 format);
-        u32 getTextureFormat(TextureCompression compression);
+        static inline
+		TextureCompression getTextureCompression(u32 format)
+		{
+            return TextureCompressionInfo(vulkan::TextureFormat(format)).compression;
+		}
+
+        static inline
+		u32 getTextureFormat(TextureCompression compression)
+		{
+            return TextureCompressionInfo(compression).vk;
+		}
     }
 
-    namespace directx
+    namespace dxgi
     {
-        TextureCompression getTextureCompression(u32 format);
-        u32 getTextureFormat(TextureCompression compression);
+        static inline
+		TextureCompression getTextureCompression(u32 format)
+		{
+            return TextureCompressionInfo(dxgi::TextureFormat(format)).compression;
+		}
+
+        static inline
+		u32 getTextureFormat(TextureCompression compression)
+		{
+            return TextureCompressionInfo(compression).dxgi;
+		}
     }
 
 } // namespace mango

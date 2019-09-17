@@ -61,9 +61,12 @@ namespace mango
         FOURCC_R8G8B8G8   = u32_mask('R', 'G', 'B', 'G'),
     };
 
+namespace dxgi
+{
+
     // Microsoft DirectX Graphics Infrastructure
 
-    enum class DXGI : u32
+    enum TextureFormat : u32
     {
         FORMAT_UNKNOWN                     = 0,
         FORMAT_R32G32B32A32_TYPELESS       = 1,
@@ -228,9 +231,14 @@ namespace mango
         FORMAT_ASTC_12X12_UNORM_SRGB       = 187,
     };
 
+} // namespace dxgi
+
+namespace opengl
+{
+
     // OpenGL Compressed Texture Formats
 
-    enum class GL : u32
+    enum TextureFormat : u32
     {
         // AMD_compressed_ATC_texture
         ATC_RGB_AMD                                 = 0x8C92,
@@ -354,9 +362,14 @@ namespace mango
         COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES      = 0x93E9,
     };
 
+} // namespace opengl
+
+namespace vulkan
+{
+
     // Vulkan Image Formats
 
-    enum class VK : u32
+    enum TextureFormat : u32
     {
         FORMAT_UNDEFINED = 0,
         FORMAT_R4G4_UNORM_PACK8 = 1,
@@ -635,4 +648,5 @@ namespace mango
         FORMAT_G16_B16_R16_3PLANE_444_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_444_UNORM,
     };
 
+} // namespace vulkan
 } // namespace mango
