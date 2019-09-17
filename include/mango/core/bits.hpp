@@ -71,13 +71,10 @@ namespace mango
 
     static inline u64 byteswap(u64 v)
     {
-        // We could unroll the computation to be done with 64 bits but this approach results in
-        // simpler and more efficient code (has been measured on gcc 5.4 on x86-64 and ARMv7)
-        u32 low = v & 0xffffffff;
-        u32 high = v >> 32;
-        low = byteswap(low);
-        high = byteswap(high);
-        return (u64(low) << 32) | high;
+        v = (v >> 32) | (v << 32);
+        v = ((v & 0xffff0000ffff0000ull) >> 16) | ((v << 16) & 0xffff0000ffff0000ull);
+        v = ((v & 0xff00ff00ff00ff00ull) >>  8) | ((v <<  8) & 0xff00ff00ff00ff00ull);
+        return v;
     }
 
 #endif
