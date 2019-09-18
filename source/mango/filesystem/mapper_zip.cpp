@@ -10,6 +10,8 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
+#ifdef MANGO_ENABLE_ARCHIVE_ZIP
+
 #include "../../external/miniz/miniz.h"
 
 /*
@@ -862,3 +864,5 @@ namespace filesystem {
 
 } // namespace filesystem
 } // namespace mango
+
+#endif // MANGO_ENABLE_ARCHIVE_ZIP

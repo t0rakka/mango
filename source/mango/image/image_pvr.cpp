@@ -9,6 +9,8 @@
 #include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
 
+#ifdef MANGO_ENABLE_IMAGE_PVR
+
 // http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.Legacy.pdf
 // http://cdn.imgtec.com/sdk-documentation/PVR+File+Format.Specification.pdf
 
@@ -691,3 +693,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // MANGO_ENABLE_IMAGE_PVR

@@ -4,6 +4,9 @@
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
+
+#ifdef MANGO_ENABLE_IMAGE_JPG
+
 #include "../jpeg/jpeg.hpp"
 
 #define ID "[ImageDecoder.JPG] "
@@ -88,3 +91,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // MANGO_ENABLE_IMAGE_JPG

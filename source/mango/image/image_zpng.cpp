@@ -4,6 +4,9 @@
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
+
+#ifdef MANGO_ENABLE_IMAGE_ZPNG
+
 #include "../../external/zpng/zpng.h"
 
 namespace
@@ -201,3 +204,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // MANGO_ENABLE_IMAGE_ZPNG

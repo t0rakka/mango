@@ -208,6 +208,31 @@ OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
 OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
 OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 
+OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
+
+OPTION(MANGO_DISABLE_ARCHIVE_ZIP "" OFF)
+OPTION(MANGO_DISABLE_ARCHIVE_MGX "" OFF)
+
+OPTION(MANGO_DISABLE_IMAGE_ASTC "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_ATARI "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_BMP "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_C64 "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_DDS "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_GIF "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_HDR "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_IFF "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_JPG "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_KTX "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PCX "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PKM "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PNG "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PNM "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PVR "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_SGI "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_TGA "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_WEBP "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_ZPNG "" OFF)
+
 # ------------------------------------------------------------------------------
 # configuration
 # ------------------------------------------------------------------------------
@@ -280,6 +305,95 @@ else ()
             target_compile_options(mango PUBLIC "-msse2")
         endif ()
     endif ()
+endif ()
+
+if (MANGO_DISABLE_LICENSE_GPL)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_LICENSE_GPL")
+endif ()
+
+if (MANGO_DISABLE_ARCHIVE_ZIP)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_ZIP")
+endif ()
+
+if (MANGO_DISABLE_ARCHIVE_MGX)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_MGX")
+endif ()
+
+
+if (MANGO_DISABLE_IMAGE_ASTC)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ASTC")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_ATARI)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ATARI")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_BMP)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_BMP")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_C64)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_C64")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_DDS)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_DDS")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_GIF)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_GIF")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_HDR)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_HDR")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_IFF)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_IFF")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_JPG)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_JPG")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_KTX)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_KTX")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_PCX)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PCX")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_PKM)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PKM")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_PNG)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PNG")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_PNM)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PNM")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_PVR)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PVR")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_SGI)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_SGI")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_TGA)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_TGA")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_WEBP)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_WEBP")
+endif ()
+
+if (MANGO_DISABLE_IMAGE_ZPNG)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ZPNG")
 endif ()
 
 # ------------------------------------------------------------------------------

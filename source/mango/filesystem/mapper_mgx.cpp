@@ -7,6 +7,8 @@
 #include <mango/image/fourcc.hpp>
 #include "indexer.hpp"
 
+#ifdef MANGO_ENABLE_ARCHIVE_MGX
+
 namespace
 {
     using namespace mango;
@@ -369,3 +371,5 @@ namespace filesystem {
 
 } // namespace filesystem
 } // namespace mango
+
+#endif // MANGO_ENABLE_ARCHIVE_MGX

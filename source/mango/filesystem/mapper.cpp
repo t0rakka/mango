@@ -15,11 +15,15 @@ namespace filesystem {
     // extension registry
     // -----------------------------------------------------------------
 
+#ifdef MANGO_ENABLE_ARCHIVE_ZIP
     AbstractMapper* createMapperZIP(Memory parent, const std::string& password);
+#endif
 #ifdef MANGO_ENABLE_LICENSE_GPL
     AbstractMapper* createMapperRAR(Memory parent, const std::string& password);
 #endif
+#ifdef MANGO_ENABLE_ARCHIVE_MGX
     AbstractMapper* createMapperMGX(Memory parent, const std::string& password);
+#endif
 
     typedef AbstractMapper* (*CreateMapperFunc)(Memory, const std::string&);
 
@@ -49,13 +53,17 @@ namespace filesystem {
 
     static std::vector<MapperExtension> g_extensions =
     {
+#ifdef MANGO_ENABLE_ARCHIVE_ZIP
         MapperExtension(".zip", createMapperZIP),
         MapperExtension(".cbz", createMapperZIP),
         MapperExtension(".apk", createMapperZIP),
         MapperExtension(".zipx", createMapperZIP),
+#endif
 
+#ifdef MANGO_ENABLE_ARCHIVE_MGX
         MapperExtension(".mgx", createMapperMGX),
         MapperExtension(".snitch", createMapperMGX),
+#endif
 
 #ifdef MANGO_ENABLE_LICENSE_GPL
         MapperExtension(".rar", createMapperRAR),

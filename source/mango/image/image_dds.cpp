@@ -8,6 +8,8 @@
 #include <mango/core/pointer.hpp>
 #include <mango/image/image.hpp>
 
+#ifdef MANGO_ENABLE_IMAGE_DDS
+
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
     Format(bits, Format::type, Format::order, s0, s1, s2, s3)
 
@@ -1071,3 +1073,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // MANGO_ENABLE_IMAGE_DDS
