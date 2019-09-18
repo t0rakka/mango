@@ -451,25 +451,27 @@ namespace mango
 
     void decode_block_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
     {
-        bool is2bpp = false;
+        u8 bpp = 0;
 
-        switch (info.compression) {
-            case TextureCompression::PVRTC_RGB_4BPP:
-            case TextureCompression::PVRTC_RGBA_4BPP:
-            case TextureCompression::PVRTC_SRGB_4BPP:
-            case TextureCompression::PVRTC_SRGB_ALPHA_4BPP:
-                break;
-
+        switch (info.compression)
+        {
             case TextureCompression::PVRTC_RGB_2BPP:
             case TextureCompression::PVRTC_RGBA_2BPP:
             case TextureCompression::PVRTC_SRGB_2BPP:
             case TextureCompression::PVRTC_SRGB_ALPHA_2BPP:
-                is2bpp = true;
+                bpp = 2;
+                break;
+
+            case TextureCompression::PVRTC_RGB_4BPP:
+            case TextureCompression::PVRTC_RGBA_4BPP:
+            case TextureCompression::PVRTC_SRGB_4BPP:
+            case TextureCompression::PVRTC_SRGB_ALPHA_4BPP:
+                bpp = 4;
                 break;
 
             default:
-                // TODO: unsupported compression
-                break;
+                // incorrect compression
+                return;
         }
 
 #if 0
@@ -488,7 +490,7 @@ namespace mango
             return;
         }
 #endif
-        pvrtcDecompress(in, out, stride, info.width, info.height, is2bpp ? 2 : 4);
+        pvrtcDecompress(in, out, stride, info.width, info.height, bpp);
     }
 
 } // namespace mango
