@@ -8,9 +8,6 @@
 #include <mango/core/pointer.hpp>
 #include <mango/image/image.hpp>
 
-#define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
-    Format(bits, Format::type, Format::order, s0, s1, s2, s3)
-
 namespace
 {
     using namespace mango;
@@ -36,16 +33,40 @@ namespace
     enum
     {
         // chunks
-        FOURCC_DDS        = u32_mask('D', 'D', 'S', ' '),
-        FOURCC_DX10       = u32_mask('D', 'X', '1', '0'),
+        FOURCC_DDS          = u32_mask('D', 'D', 'S', ' '),
+        FOURCC_DX10         = u32_mask('D', 'X', '1', '0'),
 
-        // floatint point
-        FOURCC_R16F       = 111,
-        FOURCC_GR16F      = 112,
-        FOURCC_ABGR16F    = 113,
-        FOURCC_R32F       = 114,
-        FOURCC_GR32F      = 115,
-        FOURCC_ABGR32F    = 116,
+        // unorm
+        FOURCC_R8G8B8       = 20,
+        FOURCC_A8R8G8B8     = 21,
+        FOURCC_X8R8G8B8     = 22,
+        FOURCC_R5G6B5       = 23,
+        FOURCC_X1R5G5B5     = 24,
+        FOURCC_A1R5G5B5     = 25,
+        FOURCC_A4R4G4B4     = 26,
+        FOURCC_R3G3B2       = 27,
+        FOURCC_A8           = 28,
+        FOURCC_A8R3G3B2     = 29,
+        FOURCC_X4R4G4B4     = 30,
+        FOURCC_A2B10G10R10  = 31,
+        FOURCC_A8B8G8R8     = 32,
+        FOURCC_X8B8G8R8     = 33,
+        FOURCC_G16R16       = 34,
+        FOURCC_A2R10G10B10  = 35,
+        FOURCC_A16B16G16R16 = 36,
+        FOURCC_L8           = 50,
+        FOURCC_A8L8         = 51,
+        FOURCC_A4L4         = 52,
+
+        // half
+        FOURCC_R16F         = 111,
+        FOURCC_GR16F        = 112,
+        FOURCC_ABGR16F      = 113,
+
+        // float
+        FOURCC_R32F         = 114,
+        FOURCC_GR32F        = 115,
+        FOURCC_ABGR32F      = 116,
     };
 
 	// ------------------------------------------------------------
@@ -225,6 +246,9 @@ namespace
         bool srgb; // NOTE: this is not used anywhere yet
         const char* name;
     };
+
+#define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
+    Format(bits, Format::type, Format::order, s0, s1, s2, s3)
 
     const FormatDXGI g_dxgi_table[] =
     {
@@ -565,53 +589,106 @@ namespace
             ustore32(temp, fourCC);
             debugPrint(".dds fourcc: %c%c%c%c\n", temp[0], temp[1], temp[2], temp[3]);
 
+            bool preserve_fourcc = false;
+
             switch (fourCC)
             {
                 case FOURCC_DX10:
 					format = FORMAT_NONE;
 					compression = TextureCompression::NONE;
+                    preserve_fourcc = true;
 					break;
+
+                case FOURCC_R8G8B8:
+                    format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0);
+                    break;
+                case FOURCC_A8R8G8B8:
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    break;
+                case FOURCC_X8R8G8B8:
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
+                    break;
+                case FOURCC_R5G6B5:
+                    format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0);
+                    break;
+                case FOURCC_X1R5G5B5:
+                    format = Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 0);
+                    break;
+                case FOURCC_A1R5G5B5:
+                    format = Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1);
+                    break;
+                case FOURCC_A4R4G4B4:
+                    format = Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
+                    break;
+                case FOURCC_R3G3B2:
+                    format = Format(8, Format::UNORM, Format::BGR, 2, 3, 3, 0);
+                    break;
+                case FOURCC_A8:
+                    format = Format(8, Format::UNORM, Format::A, 0, 0, 0, 8);
+                    break;
+                case FOURCC_A8R3G3B2:
+                    format = Format(16, Format::UNORM, Format::BGRA, 2, 3, 3, 8);
+                    break;
+                case FOURCC_X4R4G4B4:
+                    format = Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 0);
+                    break;
+                case FOURCC_A2B10G10R10:
+                    format = Format(32, Format::UNORM, Format::RGBA, 10, 10, 10, 2);
+                    break;
+                case FOURCC_A8B8G8R8:
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    break;
+                case FOURCC_X8B8G8R8:
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0);
+                    break;
+                case FOURCC_G16R16:
+                    format = Format(32, Format::UNORM, Format::RG, 16, 16, 0, 0);
+                    break;
+                case FOURCC_A2R10G10B10:
+                    format = Format(32, Format::UNORM, Format::BGRA, 10, 10, 10, 2);
+                    break;
+                case FOURCC_A16B16G16R16:
+                    format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
+                    break;
+                case FOURCC_L8:
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
+                    break;
+                case FOURCC_A8L8:
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
+                    break;
+                case FOURCC_A4L4:
+                    format = LuminanceFormat(8, Format::UNORM, 4, 4);
+                    break;
 
                 case FOURCC_R16F:
                     format = MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0);
                     compression = TextureCompression::NONE;
-                    fourCC = 0;
                     break;
-
                 case FOURCC_GR16F:
                     format = MAKE_FORMAT(32, FLOAT16, RG, 16, 16, 0, 0);
                     compression = TextureCompression::NONE;
-                    fourCC = 0;
                     break;
-
                 case FOURCC_ABGR16F:
                     format = MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16);
                     compression = TextureCompression::NONE;
-                    fourCC = 0;
                     break;
 
                 case FOURCC_R32F:
                     format = MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0);
                     compression = TextureCompression::NONE;
-                    fourCC = 0;
                     break;
-
                 case FOURCC_GR32F:
                     format = MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0);
                     compression = TextureCompression::NONE;
-                    fourCC = 0;
                     break;
-
                 case FOURCC_ABGR32F:
                     format = MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32);
                     compression = TextureCompression::NONE;
-                    fourCC = 0;
                     break;
 
                 case FOURCC_PTC2:
                     format = FORMAT_R8G8B8A8;
                     compression = TextureCompression::PVRTC_RGB_2BPP;
-                    fourCC = 0;
                     break;
 
                 case FOURCC_DXT1:
@@ -624,7 +701,6 @@ namespace
 					{
                         compression = TextureCompression::DXT1;
 					}
-                    fourCC = 0;
                     break;
 
                 case FOURCC_DXT2:
@@ -645,12 +721,18 @@ namespace
                 case FOURCC_R8G8B8G8:
                     format = FORMAT_R8G8B8A8;
                     compression = fourcc_to_compression(fourCC);
-                    fourCC = 0;
                     break;
 
                 default:
+                    preserve_fourcc = true;
                     error = "Unsupported fourcc.";
                     break;
+            }
+
+            if (!preserve_fourcc)
+            {
+                // mark fourcc as consumed (format has been evaluated with it)
+                fourCC = 0;
             }
         }
 
