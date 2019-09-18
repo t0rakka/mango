@@ -634,7 +634,7 @@
 
 #ifndef MANGO_DISABLE_LICENSE_APACHE
     #define MANGO_ENABLE_LICENSE_APACHE
-    // ETC1, ETC2, ASTC texture compression
+    // ETC1, ETC2, ASTC, WebP
 #endif
 
 // -----------------------------------------------------------------------
@@ -725,7 +725,7 @@
     #define MANGO_ENABLE_IMAGE_TGA
 #endif
 
-#ifndef MANGO_DISABLE_IMAGE_WEBP
+#if !defined(MANGO_DISABLE_IMAGE_WEBP) && defined(MANGO_ENABLE_LICENSE_APACHE)
     #define MANGO_ENABLE_IMAGE_WEBP
 #endif
 
