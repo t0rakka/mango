@@ -638,21 +638,24 @@
 #endif
 
 // -----------------------------------------------------------------------
-// Archive
+// archives
 // -----------------------------------------------------------------------
 
 #ifndef MANGO_DISABLE_ARCHIVE_ZIP
     #define MANGO_ENABLE_ARCHIVE_ZIP
 #endif
 
+#if !defined(MANGO_DISABLE_ARCHIVE_RAR) && defined(MANGO_ENABLE_LICENSE_GPL)
+    #define MANGO_ENABLE_ARCHIVE_RAR
+#endif
+
 #ifndef MANGO_DISABLE_ARCHIVE_MGX
     #define MANGO_ENABLE_ARCHIVE_MGX
 #endif
 
-
-
-
-
+// -----------------------------------------------------------------------
+// image codecs
+// -----------------------------------------------------------------------
 
 #ifndef MANGO_DISABLE_IMAGE_ASTC
     #define MANGO_ENABLE_IMAGE_ASTC

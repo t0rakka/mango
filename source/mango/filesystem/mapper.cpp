@@ -18,7 +18,7 @@ namespace filesystem {
 #ifdef MANGO_ENABLE_ARCHIVE_ZIP
     AbstractMapper* createMapperZIP(Memory parent, const std::string& password);
 #endif
-#ifdef MANGO_ENABLE_LICENSE_GPL
+#ifdef MANGO_ENABLE_ARCHIVE_RAR
     AbstractMapper* createMapperRAR(Memory parent, const std::string& password);
 #endif
 #ifdef MANGO_ENABLE_ARCHIVE_MGX
@@ -65,7 +65,7 @@ namespace filesystem {
         MapperExtension(".snitch", createMapperMGX),
 #endif
 
-#ifdef MANGO_ENABLE_LICENSE_GPL
+#ifdef MANGO_ENABLE_ARCHIVE_RAR
         MapperExtension(".rar", createMapperRAR),
         MapperExtension(".cbr", createMapperRAR),
 #endif

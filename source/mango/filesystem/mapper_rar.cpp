@@ -14,7 +14,7 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
-#ifdef MANGO_ENABLE_LICENSE_GPL
+#if defined(MANGO_ENABLE_ARCHIVE_RAR)
 
 #include "../../external/unrar/rar.hpp"
 
@@ -754,4 +754,4 @@ namespace filesystem {
 } // namespace filesystem
 } // namespace mango
 
-#endif // MANGO_ENABLE_LICENSE_GPL
+#endif // MANGO_ENABLE_ARCHIVE_RAR
