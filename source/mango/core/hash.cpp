@@ -27,7 +27,7 @@ namespace mango {
     XX3HASH128 xx3hash128(u64 seed, Memory memory)
     {
         const XXH128_hash_t hash = XXH128(memory.address, memory.size, seed);
-        return { hash.low64, hash.high64 };
+        return {{ hash.low64, hash.high64 }};
     }
 
 } // namespace mango
