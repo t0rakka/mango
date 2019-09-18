@@ -1909,7 +1909,8 @@ namespace jpeg {
                 // enqueue task
                 queue.enqueue([=]
                 {
-                    s16 data[640]; // TODO: alignment
+                    AlignedPointer<s16> data(640);
+
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
 
