@@ -638,6 +638,99 @@
 #endif
 
 // -----------------------------------------------------------------------
+// Archive
+// -----------------------------------------------------------------------
+
+#ifndef MANGO_DISABLE_ARCHIVE_ZIP
+    #define MANGO_ENABLE_ARCHIVE_ZIP
+#endif
+
+#ifndef MANGO_DISABLE_ARCHIVE_MGX
+    #define MANGO_ENABLE_ARCHIVE_MGX
+#endif
+
+
+
+
+
+
+#ifndef MANGO_DISABLE_IMAGE_ASTC
+    #define MANGO_ENABLE_IMAGE_ASTC
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_ATARI
+    #define MANGO_ENABLE_IMAGE_ATARI
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_BMP
+    #define MANGO_ENABLE_IMAGE_BMP
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_C64
+    #define MANGO_ENABLE_IMAGE_C64
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_DDS
+    #define MANGO_ENABLE_IMAGE_DDS
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_GIF
+    #define MANGO_ENABLE_IMAGE_GIF
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_HDR
+    #define MANGO_ENABLE_IMAGE_HDR
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_IFF
+    #define MANGO_ENABLE_IMAGE_IFF
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_JPG
+    #define MANGO_ENABLE_IMAGE_JPG
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_KTX
+    #define MANGO_ENABLE_IMAGE_KTX
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_PCX
+    #define MANGO_ENABLE_IMAGE_PCX
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_PKM
+    #define MANGO_ENABLE_IMAGE_PKM
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_PNG
+    #define MANGO_ENABLE_IMAGE_PNG
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_PNM
+    #define MANGO_ENABLE_IMAGE_PNM
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_PVR
+    #define MANGO_ENABLE_IMAGE_PVR
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_SGI
+    #define MANGO_ENABLE_IMAGE_SGI
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_TGA
+    #define MANGO_ENABLE_IMAGE_TGA
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_WEBP
+    #define MANGO_ENABLE_IMAGE_WEBP
+#endif
+
+#ifndef MANGO_DISABLE_IMAGE_ZPNG
+    #define MANGO_ENABLE_IMAGE_ZPNG
+#endif
+
+// -----------------------------------------------------------------------
 // integer types
 // -----------------------------------------------------------------------
 
