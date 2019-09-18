@@ -12,6 +12,8 @@
 #include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
 
+#ifdef MANGO_ENABLE_IMAGE_PNM
+
 namespace
 {
     using namespace mango;
@@ -554,3 +556,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // MANGO_ENABLE_IMAGE_PNM

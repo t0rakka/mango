@@ -8,6 +8,8 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
+#ifdef MANGO_ENABLE_IMAGE_BMP
+
 namespace
 {
     using namespace mango;
@@ -1199,3 +1201,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // MANGO_ENABLE_IMAGE_BMP
