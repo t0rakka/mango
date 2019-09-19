@@ -442,7 +442,8 @@ namespace mango
     {
         IntersectRange is;
         bool s = is.intersect(ray, box);
-        t0 = std::max(is.t0, 0.0f);
+        if (s)
+            t0 = std::max(is.t0, 0.0f);
         return s;
     }
 
@@ -450,7 +451,8 @@ namespace mango
     {
         IntersectRange is;
         bool s = is.intersect(ray, box);
-        t0 = std::max(is.t0, 0.0f);
+        if (s)
+            t0 = std::max(is.t0, 0.0f);
         return s;
     }
 
@@ -458,7 +460,8 @@ namespace mango
     {
         IntersectRange is;
         bool s = is.intersect(ray, sphere);
-        t0 = std::max(is.t0, 0.0f);
+        if (s)
+            t0 = std::max(is.t0, 0.0f);
         return s;
     }
 
