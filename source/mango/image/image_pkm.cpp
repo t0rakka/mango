@@ -120,13 +120,13 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderPKM m_header;
-        Memory m_data;
+        ConstMemory m_data;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
             BigEndianConstPointer p = memory.address;
             m_header.read(p);
-            m_data = Memory(memory.address + 16, memory.size - 16);
+            m_data = ConstMemory(memory.address + 16, memory.size - 16);
         }
 
         ~Interface()
@@ -138,7 +138,7 @@ namespace
             return m_header.header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -174,7 +174,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

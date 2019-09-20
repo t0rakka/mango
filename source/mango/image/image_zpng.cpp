@@ -11,7 +11,6 @@
 
 namespace
 {
-
     using namespace mango;
 
 	// ------------------------------------------------------------
@@ -66,12 +65,12 @@ namespace
         ZPNG_Buffer m_buffer;
         ImageHeader m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            m_buffer.Data = memory.address;
+            m_buffer.Data = const_cast<u8*>(memory.address);
             m_buffer.Bytes = static_cast<unsigned int>(memory.size);
 
-            zpng_header* zheader = reinterpret_cast<zpng_header *>(memory.address);
+            const zpng_header* zheader = reinterpret_cast<const zpng_header *>(memory.address);
             if (zheader->magic != 0xfbf8)
             {
                 m_header.setError("[ImageDecoder.ZPNG] Incorrect identifier.");
@@ -149,7 +148,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

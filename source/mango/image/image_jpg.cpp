@@ -23,7 +23,7 @@ namespace
     {
         jpeg::Parser m_parser;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_parser(memory)
         {
         }
@@ -59,7 +59,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

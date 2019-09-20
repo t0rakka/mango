@@ -470,7 +470,7 @@ namespace
 
         ImageHeader header;
 
-        HeaderKTX(Memory memory)
+        HeaderKTX(ConstMemory memory)
         {
             const u8 ktxIdentifier[] =
             {
@@ -603,7 +603,7 @@ namespace
             return value;
         }
 
-        Memory getMemory(Memory memory, int level, int depth, int face) const
+        ConstMemory getMemory(ConstMemory memory, int level, int depth, int face) const
         {
             const u8* address = memory.address;
             address += KTX_HEADER_SIZE + bytesOfKeyValueData;
@@ -613,7 +613,7 @@ namespace
 
             MANGO_UNREFERENCED(depth); // TODO
 
-            Memory data;
+            ConstMemory data;
 
             for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
             {
@@ -626,7 +626,7 @@ namespace
                     if (iLevel == level && iFace == face)
                     {
                         // Store selected address
-                        data = Memory(address, imageSizeRounded);
+                        data = ConstMemory(address, imageSizeRounded);
                     }
 
                     address += imageSizeRounded;
@@ -643,10 +643,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderKTX m_ktx_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_ktx_header(memory)
         {
@@ -661,9 +661,9 @@ namespace
             return m_ktx_header.header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
-            Memory data = m_ktx_header.getMemory(m_memory, level, depth, face);
+            ConstMemory data = m_ktx_header.getMemory(m_memory, level, depth, face);
             return data;
         }
 
@@ -680,7 +680,7 @@ namespace
                 return status;
             }
 
-            Memory data = m_ktx_header.getMemory(m_memory, level, depth, face);
+            ConstMemory data = m_ktx_header.getMemory(m_memory, level, depth, face);
 
             Format format = header.format;
             TextureCompressionInfo info = header.compression;
@@ -702,7 +702,8 @@ namespace
                 // KTX format stores data with GL_UNPACK_ALIGNMENT of 4
                 stride = (stride + 3) & ~3;
 
-                Surface source(width, height, format, stride, data.address);
+                u8* image = const_cast<u8*>(data.address);
+                Surface source(width, height, format, stride, image);
                 dest.blit(0, 0, source);
             }
             else
@@ -714,7 +715,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

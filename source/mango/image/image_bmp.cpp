@@ -38,7 +38,7 @@ namespace
         u32 filesize;
         u32 offset;
 
-        FileHeader(Memory memory)
+        FileHeader(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
             magic = p.read16();
@@ -277,7 +277,7 @@ namespace
 
         const char* error = nullptr;
 
-        BitmapHeader(Memory memory, bool isIcon)
+        BitmapHeader(ConstMemory memory, bool isIcon)
         {
             paletteComponents = 0;
 
@@ -632,9 +632,10 @@ namespace
         }
     }
 
-    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, u8* data)
+    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
-        Surface source(header.width, header.height, header.format, stride, data);
+        u8* image = const_cast<u8*>(data);
+        Surface source(header.width, header.height, header.format, stride, image);
         surface.blit(0, 0, source);
     }
 
@@ -658,7 +659,7 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    const char* decodeBitmap(Surface& surface, Memory memory, int offset, bool isIcon, Palette* ptr_palette)
+    const char* decodeBitmap(Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
         if (header.error)
@@ -693,7 +694,7 @@ namespace
         }
 
         const int stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
-        u8* data = memory.address + offset;
+        const u8* data = memory.address + offset;
 
         Surface mirror = surface;
         
@@ -798,7 +799,7 @@ namespace
 	// support for embedded format files
 	// ------------------------------------------------------------
 
-    ImageHeader getHeader(Memory memory, std::string extension)
+    ImageHeader getHeader(ConstMemory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
         ImageHeader header;
@@ -811,7 +812,7 @@ namespace
         return header;
     }
 
-    void getImage(Surface& surface, Memory memory, std::string extension)
+    void getImage(Surface& surface, ConstMemory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
 
@@ -825,7 +826,7 @@ namespace
     // .ico parser
     // ------------------------------------------------------------
 
-    const char* parseIco(ImageHeader* imageHeader, Surface* surface, Memory memory)
+    const char* parseIco(ImageHeader* imageHeader, Surface* surface, ConstMemory memory)
     {
         LittleEndianConstPointer p = memory.address;
 
@@ -904,7 +905,7 @@ namespace
             }
         }
 
-        Memory block = memory.slice(bestOffset, bestSize);
+        ConstMemory block = memory.slice(bestOffset, bestSize);
 
         LittleEndianConstPointer pa = block.address;
 
@@ -975,11 +976,11 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         FileHeader m_file_header;
         ImageHeader m_image_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_file_header(memory)
         {
@@ -994,7 +995,7 @@ namespace
                 case 0x4349: // IC - OS/2 Icon
                 case 0x5450: // PT - OS/2 Pointer
                 {
-                    Memory bitmapMemory = m_memory.slice(14);
+                    ConstMemory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
                     if (bmp_header.error)
                     {
@@ -1113,7 +1114,7 @@ namespace
                     return status;
             }
 
-            Memory block = m_memory.slice(14);
+            ConstMemory block = m_memory.slice(14);
             const char* error = decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
             if (error)
             {
@@ -1124,7 +1125,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

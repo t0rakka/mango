@@ -61,18 +61,18 @@ namespace mango
     using XX3HASH64 = u64;
     using XX3HASH128 = Hash<u64, 2>;
 
-    MD5 md5(Memory memory);
-    SHA1 sha1(Memory memory);
-    SHA2 sha2(Memory memory);
+    MD5 md5(ConstMemory memory);
+    SHA1 sha1(ConstMemory memory);
+    SHA2 sha2(ConstMemory memory);
 
-    u32 xxhash32(u32 seed, Memory memory);
-    u64 xxhash64(u64 seed, Memory memory);
+    u32 xxhash32(u32 seed, ConstMemory memory);
+    u64 xxhash64(u64 seed, ConstMemory memory);
 
     // WARNING!
     // The experimental SIMD enhanced hashing functions are NON-STABLE; the hash values might
     // change when the xx3-hash is upgraded. This notice will be removed after the API is stable.
 
-    XX3HASH64 xx3hash64(u64 seed, Memory memory);
-    XX3HASH128 xx3hash128(u64 seed, Memory memory);
+    XX3HASH64 xx3hash64(u64 seed, ConstMemory memory);
+    XX3HASH128 xx3hash128(u64 seed, ConstMemory memory);
 
 } // namespace mango

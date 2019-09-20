@@ -101,7 +101,7 @@ namespace
 
         ImageHeader header;
 
-        HeaderPNM(Memory memory)
+        HeaderPNM(ConstMemory memory)
             : width(0)
             , height(0)
             , channels(0)
@@ -362,10 +362,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderPNM m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -535,7 +535,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

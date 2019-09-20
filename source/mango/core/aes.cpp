@@ -585,7 +585,7 @@ void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8
     aes_decrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
 }
 
-void AES::ccm_block_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
+void AES::ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
 {
     aes_u32 cipher_length = aes_u32(output.size);
     if (cipher_length & 15)
@@ -600,7 +600,7 @@ void AES::ccm_block_encrypt(Memory output, Memory input, Memory associated, Memo
                     m_schedule->w, m_bits);
 }
 
-void AES::ccm_block_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length)
+void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
 {
     aes_u32 plaintext_length = aes_u32(output.size);
     if (plaintext_length & 15)

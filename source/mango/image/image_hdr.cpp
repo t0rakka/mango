@@ -333,7 +333,7 @@ namespace
         HeaderRAD m_rad_header;
         const u8* m_data;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
             const u8* data = memory.address;
             const u8* end = memory.address + memory.size;
@@ -383,7 +383,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

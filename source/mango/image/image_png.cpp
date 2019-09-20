@@ -495,7 +495,7 @@ namespace
     class ParserPNG
     {
     protected:
-        Memory m_memory;
+        ConstMemory m_memory;
         ImageHeader m_header;
 
         const u8* m_pointer = nullptr;
@@ -599,7 +599,7 @@ namespace
         int getImageBufferSize(int width, int height) const;
 
     public:
-        ParserPNG(Memory memory);
+        ParserPNG(ConstMemory memory);
         ~ParserPNG();
 
         const ImageHeader& getHeader();
@@ -610,7 +610,7 @@ namespace
     // ParserPNG
     // ------------------------------------------------------------
 
-    ParserPNG::ParserPNG(Memory memory)
+    ParserPNG::ParserPNG(ConstMemory memory)
         : m_memory(memory)
         , m_end(memory.address + memory.size)
     {
@@ -1972,7 +1972,7 @@ namespace
     {
         ParserPNG m_parser;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_parser(memory)
         {
         }
@@ -2034,7 +2034,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

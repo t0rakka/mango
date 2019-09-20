@@ -358,7 +358,7 @@ namespace jpeg {
         int ymcu;
         int mcus;
 
-        bool isJPEG(Memory memory) const;
+        bool isJPEG(ConstMemory memory) const;
 
         const u8* stepMarker(const u8* p) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
@@ -381,7 +381,7 @@ namespace jpeg {
         void processDHP(const u8* p);
         void processEXP(const u8* p);
 
-        void parse(Memory memory, bool decode);
+        void parse(ConstMemory memory, bool decode);
 
         void restart();
         bool handleRestart();
@@ -401,11 +401,11 @@ namespace jpeg {
 
     public:
         ImageHeader header;
-        Memory exif_memory; // Exif block, if one is present
-        Memory scan_memory; // Scan block
+        ConstMemory exif_memory; // Exif block, if one is present
+        ConstMemory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(Memory memory);
+        Parser(ConstMemory memory);
         ~Parser();
 
         ImageDecodeStatus decode(Surface& target);

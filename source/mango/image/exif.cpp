@@ -9,7 +9,6 @@
 
 namespace
 {
-
     using namespace mango;
 
     enum
@@ -677,7 +676,7 @@ namespace mango
         initExif(*this);
     }
 
-    Exif::Exif(Memory memory)
+    Exif::Exif(ConstMemory memory)
     {
         initExif(*this);
 

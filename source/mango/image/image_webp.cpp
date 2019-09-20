@@ -32,7 +32,7 @@ namespace
         EncodeFunc encode_func;
         EncodeLosslessFunc encode_lossless_func;
 
-        u8* decode(const Surface& dest, Memory memory) const
+        u8* decode(const Surface& dest, ConstMemory memory) const
         {
             int bytes = dest.height * dest.stride;
             return decode_func(memory.address, memory.size, dest.image, bytes, dest.stride);
@@ -79,10 +79,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         ImageHeader m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
             int width;
@@ -162,7 +162,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

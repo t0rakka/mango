@@ -33,7 +33,7 @@ namespace mango {
         std::memcpy(m_memory.address, source, bytes);
     }
 
-    Buffer::Buffer(Memory memory, Alignment alignment)
+    Buffer::Buffer(ConstMemory memory, Alignment alignment)
         : m_memory(allocate(memory.size, alignment), memory.size)
         , m_capacity(memory.size)
         , m_alignment(alignment)

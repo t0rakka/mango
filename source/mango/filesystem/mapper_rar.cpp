@@ -25,7 +25,7 @@ namespace
     // -----------------------------------------------------------------
 
     using mango::Memory;
-    using mango::Memory;
+    using mango::ConstMemory;
     using mango::VirtualMemory;
     using mango::filesystem::Indexer;
 
@@ -43,7 +43,7 @@ namespace
         VirtualMemoryRAR(const u8* address, const u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
-            m_memory = Memory(address, size);
+            m_memory = ConstMemory(address, size);
         }
 
         ~VirtualMemoryRAR()
@@ -52,7 +52,7 @@ namespace
         }
     };
     
-    bool decompress(u8* output, u8* input, u64 unpacked_size, u64 packed_size, u8 version)
+    bool decompress(u8* output, const u8* input, u64 unpacked_size, u64 packed_size, u8 version)
     {
         ComprDataIO subDataIO;
         subDataIO.Init();
@@ -66,7 +66,7 @@ namespace
 
         subDataIO.UnpackFromMemory = true;
         subDataIO.UnpackFromMemorySize = size_t(packed_size);
-        subDataIO.UnpackFromMemoryAddr = input;
+        subDataIO.UnpackFromMemoryAddr = const_cast<u8*>(input);
 
         subDataIO.UnpPackedSize = packed_size;
         unpack.SetDestSize(unpacked_size);
@@ -359,7 +359,7 @@ namespace
         std::string filename;
 
         bool folder;
-        u8* data;
+        const u8* data;
 
         bool compressed() const
         {
@@ -415,11 +415,11 @@ namespace filesystem {
         Indexer<FileHeader> m_folders;
         bool is_encrypted { false };
 
-        MapperRAR(Memory parent, const std::string& password)
+        MapperRAR(ConstMemory parent, const std::string& password)
             : m_password(password)
         {
-            u8* start = parent.address;
-            u8* end = parent.address + parent.size;
+            const u8* start = parent.address;
+            const u8* end = parent.address + parent.size;
 
             if (start)
             {
@@ -431,9 +431,9 @@ namespace filesystem {
         {
         }
 
-        void parse(u8* start, u8* end)
+        void parse(const u8* start, const u8* end)
         {
-            u8* p = start;
+            const u8* p = start;
 
             const u8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
             const u8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
@@ -468,13 +468,13 @@ namespace filesystem {
             }
         }
 
-        void parse_rar4(u8* start, u8* end)
+        void parse_rar4(const u8* start, const u8* end)
         {
-            u8* p = start;
+            const u8* p = start;
 
             for ( ; p < end; )
             {
-                u8* h = p;
+                const u8* h = p;
                 Header header(p);
                 p = h + header.size;
 
@@ -541,7 +541,7 @@ namespace filesystem {
             return value;
         }
 
-        void parse_rar5_file_header(mango::LittleEndianConstPointer p, Memory compressed_data)
+        void parse_rar5_file_header(mango::LittleEndianConstPointer p, ConstMemory compressed_data)
         {
             u64 flags = vint(p);
             u64 unpacked_size = vint(p);
@@ -649,7 +649,7 @@ namespace filesystem {
                     data_size = vint(p);
                 }
 
-                Memory compressed_data(base + header_size, size_t(data_size));
+                ConstMemory compressed_data(base + header_size, size_t(data_size));
 
                 //printf("crc: %.8x, type: %x, flags: %x, header: %x, extra: %x, data: %x\n", 
                 //    crc, type, flags, (int)header_size, (int)extra_size, (int)data_size);
@@ -745,7 +745,7 @@ namespace filesystem {
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperRAR(Memory parent, const std::string& password)
+    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password)
     {
         AbstractMapper* mapper = new MapperRAR(parent, password);
         return mapper;

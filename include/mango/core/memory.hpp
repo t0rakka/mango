@@ -16,6 +16,45 @@ namespace mango {
     // memory
     // -----------------------------------------------------------------------
 
+    struct ConstMemory
+    {
+        const u8* address;
+        size_t size;
+
+        ConstMemory()
+            : address(nullptr)
+            , size(0)
+        {
+        }
+
+        ConstMemory(const u8* address, size_t bytes)
+            : address(address)
+            , size(bytes)
+        {
+        }
+
+        operator const u8* () const
+        {
+            return address;
+        }
+
+        template <typename T>
+        const T* cast() const
+        {
+            return reinterpret_cast<const T*>(address);
+        }
+
+        ConstMemory slice(size_t slice_offset, size_t slice_size = 0) const
+        {
+            ConstMemory memory(address + slice_offset, size - slice_offset);
+            if (slice_size)
+            {
+                memory.size = std::min(memory.size, slice_size);
+            }
+            return memory;
+        }
+    };
+
     struct Memory
     {
         u8* address;
@@ -33,10 +72,9 @@ namespace mango {
         {
         }
 
-        Memory(const u8* address, size_t bytes)
-            : address(const_cast<u8*>(address))
-            , size(bytes)
+        operator ConstMemory () const
         {
+            return ConstMemory(address, size);
         }
 
         operator u8* () const
@@ -80,18 +118,18 @@ namespace mango {
     class VirtualMemory : private NonCopyable
     {
     protected:
-        Memory m_memory;
+        ConstMemory m_memory;
 
     public:
         VirtualMemory() = default;
         virtual ~VirtualMemory() {}
 
-        const Memory* operator -> () const
+        const ConstMemory* operator -> () const
         {
             return &m_memory;
         }
 
-        operator Memory () const
+        operator ConstMemory () const
         {
             return m_memory;
         }
@@ -127,7 +165,7 @@ namespace mango {
     // -----------------------------------------------------------------------
 
     // ONLY store POD types ; even if we have configurable type for the pointer
-    // it's only for convenience and WILL NOT call constructor / destructor !!!
+    // it's only for convenience and WILL NOT call constructor / destructor for the elements!
 
     template <typename T>
     class AlignedPointer : public NonCopyable

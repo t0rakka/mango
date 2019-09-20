@@ -215,19 +215,19 @@ namespace mango
         return Exif();
     }
 
-    Memory ImageDecoderInterface::memory(int level, int depth, int face)
+    ConstMemory ImageDecoderInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED(level);
         MANGO_UNREFERENCED(depth);
         MANGO_UNREFERENCED(face);
-        return Memory();
+        return ConstMemory();
     }
 
     // ----------------------------------------------------------------------------
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
-    ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
+    ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
     {
         ImageDecoder::CreateDecoderFunc create_decoder_func = g_imageServer.getImageDecoder(filename);
         if (create_decoder_func)
@@ -290,9 +290,9 @@ namespace mango
         return exif;
     }
 
-    Memory ImageDecoder::memory(int level, int depth, int face)
+    ConstMemory ImageDecoder::memory(int level, int depth, int face)
     {
-        Memory memory;
+        ConstMemory memory;
 
         if (m_interface)
         {

@@ -27,9 +27,8 @@ namespace detail {
         {
         }
 
-        template <typename T>
-        Pointer(T* address)
-            : p(reinterpret_cast<P*>(address))
+        Pointer(P* address)
+            : p(address)
         {
         }
 
@@ -96,9 +95,19 @@ namespace detail {
         using Pointer<P>::p;
 
     public:
-        template <typename T>
-        ReadPointer(T* address)
+        ReadPointer(P* address)
             : Pointer<P>(address)
+        {
+        }
+
+        template <typename T>
+        ReadPointer(const T* address)
+            : Pointer<P>(reinterpret_cast<P*>(address))
+        {
+        }
+
+        ReadPointer(ConstMemory memory)
+            : Pointer<P>(memory.address)
         {
         }
 
@@ -170,9 +179,19 @@ namespace detail {
         using Pointer<P>::p;
 
     public:
+        ReadWritePointer(P* address)
+            : ReadPointer<P>(address)
+        {
+        }
+
         template <typename T>
         ReadWritePointer(T* address)
-            : ReadPointer<P>(address)
+            : ReadPointer<P>(reinterpret_cast<P*>(address))
+        {
+        }
+
+        ReadWritePointer(Memory memory)
+            : Pointer<P>(memory.address)
         {
         }
 
@@ -241,9 +260,19 @@ namespace detail {
         using Pointer<P>::p;
 
     public:
-        template <typename T>
-        SwapEndianReadPointer(T* address)
+        SwapEndianReadPointer(P* address)
             : Pointer<P>(address)
+        {
+        }
+
+        template <typename T>
+        SwapEndianReadPointer(const T* address)
+            : Pointer<P>(reinterpret_cast<P*>(address))
+        {
+        }
+
+        SwapEndianReadPointer(ConstMemory memory)
+            : Pointer<P>(memory.address)
         {
         }
 
@@ -315,9 +344,19 @@ namespace detail {
         using Pointer<P>::p;
 
     public:
+        SwapEndianReadWritePointer(P* address)
+            : SwapEndianReadPointer<P>(address)
+        {
+        }
+
         template <typename T>
         SwapEndianReadWritePointer(T* address)
-            : SwapEndianReadPointer<P>(address)
+            : SwapEndianReadPointer<P>(reinterpret_cast<P*>(address))
+        {
+        }
+
+        SwapEndianReadWritePointer(Memory memory)
+            : Pointer<P>(memory.address)
         {
         }
 

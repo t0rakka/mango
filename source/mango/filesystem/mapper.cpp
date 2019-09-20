@@ -16,16 +16,16 @@ namespace filesystem {
     // -----------------------------------------------------------------
 
 #ifdef MANGO_ENABLE_ARCHIVE_ZIP
-    AbstractMapper* createMapperZIP(Memory parent, const std::string& password);
+    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password);
 #endif
 #ifdef MANGO_ENABLE_ARCHIVE_RAR
-    AbstractMapper* createMapperRAR(Memory parent, const std::string& password);
+    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
 #endif
 #ifdef MANGO_ENABLE_ARCHIVE_MGX
-    AbstractMapper* createMapperMGX(Memory parent, const std::string& password);
+    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
 #endif
 
-    typedef AbstractMapper* (*CreateMapperFunc)(Memory, const std::string&);
+    typedef AbstractMapper* (*CreateMapperFunc)(ConstMemory, const std::string&);
 
     struct MapperExtension
     {
@@ -44,7 +44,7 @@ namespace filesystem {
         {
         }
 
-        AbstractMapper* createMapper(Memory memory, const std::string& password) const
+        AbstractMapper* createMapper(ConstMemory memory, const std::string& password) const
         {
             AbstractMapper* mapper = createMapperFunc(memory, password);
             return mapper;
@@ -165,7 +165,7 @@ namespace filesystem {
 #endif
     }
 
-    Mapper::Mapper(const Memory& memory, const std::string& extension, const std::string& password)
+    Mapper::Mapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
         // create mapper to raw memory
         m_mapper = createMemoryMapper(memory, extension, password);
@@ -242,7 +242,7 @@ namespace filesystem {
         return nullptr;
     }
 
-    AbstractMapper* Mapper::createMemoryMapper(Memory memory, const std::string& extension, const std::string& password)
+    AbstractMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
         std::string f = toLower(extension);
 
