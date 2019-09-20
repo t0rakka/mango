@@ -44,7 +44,7 @@ namespace
 
         std::string error;
 
-        const u8* parse(LittleEndianConstPointer& p)
+        u8* parse(LittleEndianPointer& p)
         {
             idfield_length   = p.read8();
             colormap_type    = p.read8();
@@ -186,7 +186,7 @@ namespace
 	// tga code
 	// ------------------------------------------------------------
 
-    void decompressRLE(u8* temp, const u8* p, int width, int height, int bpp)
+    void decompressRLE(u8* temp, u8* p, int width, int height, int bpp)
     {
         int x = 0;
         int y = 0;
@@ -196,7 +196,7 @@ namespace
         {
             u8 sample = *p++;
             int count = (sample & 0x7f) + 1;
-            const u8* color = p;
+            u8* color = p;
 
             if (sample & 0x80)
             {
@@ -252,11 +252,11 @@ namespace
     {
         ImageHeader m_header;
         HeaderTGA m_targa_header;
-        const u8* m_pointer;
+        u8* m_pointer;
 
         Interface(Memory memory)
         {
-            LittleEndianConstPointer p = memory.address;
+            LittleEndianPointer p = memory.address;
             m_pointer = m_targa_header.parse(p);
             if (m_pointer)
             {
@@ -298,7 +298,7 @@ namespace
                 return status;
             }
 
-            LittleEndianConstPointer p = m_pointer;
+            LittleEndianPointer p = m_pointer;
 
             Palette palette;
 
@@ -372,7 +372,7 @@ namespace
             }
 
 		    std::unique_ptr<u8[]> temp;
-            const u8* data = p;
+            u8* data = p;
 
             if (m_targa_header.isRLE())
             {
@@ -388,7 +388,7 @@ namespace
                 case TYPE_RAW_RGB:
                 case TYPE_RLE_RGB:
                 {
-                    dest.blit(0, 0, Surface(width, height, format, width * bpp, const_cast<u8*>(data)));
+                    dest.blit(0, 0, Surface(width, height, format, width * bpp, data));
                     break;
                 }
 
@@ -398,7 +398,7 @@ namespace
                     if (ptr_palette)
                     {
                         *ptr_palette = palette;
-                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, const_cast<u8*>(data)));
+                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, data));
                     }
                     else
                     {

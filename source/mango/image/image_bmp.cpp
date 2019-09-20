@@ -632,10 +632,9 @@ namespace
         }
     }
 
-    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, const u8* data)
+    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, u8* data)
     {
-        u8* image = const_cast<u8*>(data);
-        Surface source(header.width, header.height, header.format, stride, image);
+        Surface source(header.width, header.height, header.format, stride, data);
         surface.blit(0, 0, source);
     }
 
@@ -694,7 +693,7 @@ namespace
         }
 
         const int stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
-        const u8* data = memory.address + offset;
+        u8* data = memory.address + offset;
 
         Surface mirror = surface;
         

@@ -52,7 +52,7 @@ namespace
         }
     };
     
-    bool decompress(u8* output, const u8* input, u64 unpacked_size, u64 packed_size, u8 version)
+    bool decompress(u8* output, u8* input, u64 unpacked_size, u64 packed_size, u8 version)
     {
         ComprDataIO subDataIO;
         subDataIO.Init();
@@ -61,12 +61,12 @@ namespace
         unpack.Init();
 
         subDataIO.UnpackToMemory = true;
-        subDataIO.UnpackToMemorySize = static_cast<size_t>(unpacked_size);
+        subDataIO.UnpackToMemorySize = size_t(unpacked_size);
         subDataIO.UnpackToMemoryAddr = output;
 
         subDataIO.UnpackFromMemory = true;
-        subDataIO.UnpackFromMemorySize = static_cast<size_t>(packed_size);
-        subDataIO.UnpackFromMemoryAddr = const_cast<byte*>(input);
+        subDataIO.UnpackFromMemorySize = size_t(packed_size);
+        subDataIO.UnpackFromMemoryAddr = input;
 
         subDataIO.UnpPackedSize = packed_size;
         unpack.SetDestSize(unpacked_size);
@@ -359,7 +359,7 @@ namespace
         std::string filename;
 
         bool folder;
-        const u8* data;
+        u8* data;
 
         bool compressed() const
         {
@@ -418,8 +418,8 @@ namespace filesystem {
         MapperRAR(Memory parent, const std::string& password)
             : m_password(password)
         {
-            const u8* start = parent.address;
-            const u8* end = parent.address + parent.size;
+            u8* start = parent.address;
+            u8* end = parent.address + parent.size;
 
             if (start)
             {
@@ -431,9 +431,9 @@ namespace filesystem {
         {
         }
 
-        void parse(const u8* start, const u8* end)
+        void parse(u8* start, u8* end)
         {
-            const u8* p = start;
+            u8* p = start;
 
             const u8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
             const u8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
@@ -468,13 +468,13 @@ namespace filesystem {
             }
         }
 
-        void parse_rar4(const u8* start, const u8* end)
+        void parse_rar4(u8* start, u8* end)
         {
-            const u8* p = start;
+            u8* p = start;
 
-            for (; p < end;)
+            for ( ; p < end; )
             {
-                const u8* h = p;
+                u8* h = p;
                 Header header(p);
                 p = h + header.size;
 
