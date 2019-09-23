@@ -677,7 +677,7 @@ namespace framebuffer {
         m_context = new FramebufferContext(width, height);
 
         ((CustomNSWindow *)m_handle->window).window = this;
-        [m_handle->window center];
+        [ (NSWindow*) m_handle->window center];
         m_context->delegate = [[FramebufferDelegate alloc] initWithWindow:this];
         [m_handle->window setDelegate:[m_context->delegate retain]];
         [m_handle->window setAcceptsMouseMovedEvents:YES];

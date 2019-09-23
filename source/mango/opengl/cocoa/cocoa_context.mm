@@ -155,7 +155,7 @@ namespace opengl {
         }
         
         ((CustomNSWindow *)m_handle->window).window = this;
-        [m_handle->window center];
+        [ (NSWindow*) m_handle->window center];
         m_context->delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:this andContextHandle:m_context andWindowHandle:m_handle];
         [m_handle->window setDelegate:[m_context->delegate retain]];
         [m_handle->window setAcceptsMouseMovedEvents:YES];
