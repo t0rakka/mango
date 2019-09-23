@@ -211,6 +211,7 @@ OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
 
 OPTION(MANGO_DISABLE_ARCHIVE_ZIP "" OFF)
+OPTION(MANGO_DISABLE_ARCHIVE_RAR "" OFF)
 OPTION(MANGO_DISABLE_ARCHIVE_MGX "" OFF)
 
 OPTION(MANGO_DISABLE_IMAGE_ASTC "" OFF)
@@ -307,18 +308,27 @@ else ()
     endif ()
 endif ()
 
+# licenses
+
 if (MANGO_DISABLE_LICENSE_GPL)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_LICENSE_GPL")
 endif ()
 
+# archivers
+
 if (MANGO_DISABLE_ARCHIVE_ZIP)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_ZIP")
+endif ()
+
+if (MANGO_DISABLE_ARCHIVE_RAR)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_RAR")
 endif ()
 
 if (MANGO_DISABLE_ARCHIVE_MGX)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_MGX")
 endif ()
 
+# image codecs
 
 if (MANGO_DISABLE_IMAGE_ASTC)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ASTC")
