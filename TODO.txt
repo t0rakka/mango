@@ -32,6 +32,7 @@ mango::image
 [x] GIF encoder
 [-] GIF encoder + animation
 [ ] Blitter Engine v2.0
+[ ] mango::ConstMemory for read-only or read-only intent memory regions
 
 ---------------------------------------------------------------------------------------------
 mango::math
@@ -44,6 +45,8 @@ misc
 ---------------------------------------------------------------------------------------------
 
 [ ] Improve keyboard event handling on macOS
+[ ] cmake: configurable building of "framebuffer", "opengl" and "vulkan"
+           -- perhaps completely separate repositories / libraries
 
 ---------------------------------------------------------------------------------------------
 compressed formats

@@ -770,7 +770,7 @@ XXH3_accumulate(       U64* XXH_RESTRICT acc,
      * The unroll statement seems detrimental for WASM (@aras-p) and ARM though.
      */
 #if defined(__clang__) && !defined(__OPTIMIZE_SIZE__) && !defined(__ARM_ARCH) && !defined(__EMSCRIPTEN__)
-#  pragma clang loop unroll(enable)
+//#  pragma clang loop unroll(enable)
 #endif
 
     for (n = 0; n < nbStripes; n++ ) {

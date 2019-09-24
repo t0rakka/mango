@@ -42,6 +42,49 @@ else()
 endif()
 
 # ------------------------------------------------------------------------------
+# options
+# ------------------------------------------------------------------------------
+
+OPTION(BUILD_FRAMEBUFFER    "Build Framebuffer Library"                 ON)
+OPTION(BUILD_OPENGL         "Build OpenGL Library"                      ON)
+OPTION(BUILD_VULKAN         "Build Vulkan Library"                      ON)
+
+OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    OFF)
+
+OPTION(ENABLE_FAST_MATH     "Use relaxed-precision floating point"      ON)
+OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
+OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
+OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
+OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
+OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
+
+OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
+
+OPTION(MANGO_DISABLE_ARCHIVE_ZIP "" OFF)
+OPTION(MANGO_DISABLE_ARCHIVE_RAR "" OFF)
+OPTION(MANGO_DISABLE_ARCHIVE_MGX "" OFF)
+
+OPTION(MANGO_DISABLE_IMAGE_ASTC "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_ATARI "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_BMP "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_C64 "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_DDS "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_GIF "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_HDR "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_IFF "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_JPG "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_KTX "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PCX "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PKM "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PNG "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PNM "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_PVR "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_SGI "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_TGA "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_WEBP "" OFF)
+OPTION(MANGO_DISABLE_IMAGE_ZPNG "" OFF)
+
+# ------------------------------------------------------------------------------
 # include directories
 # ------------------------------------------------------------------------------
 
@@ -164,24 +207,57 @@ ADD_LIBRARY(mango
     ${LZMA} ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${WEBP} ${ZPNG}
 )
 
-ADD_LIBRARY(mango-opengl
-    ${WINDOW}
-    ${OPENGL}
-)
+if (BUILD_FRAMEBUFFER)
 
-ADD_LIBRARY(mango-vulkan
-    ${WINDOW}
-    ${VULKAN}
-)
+    ADD_LIBRARY(mango-framebuffer
+        ${WINDOW}
+        ${FRAMEBUFFER}
+    )
 
-ADD_LIBRARY(mango-framebuffer
-    ${WINDOW}
-    ${FRAMEBUFFER}
-)
+    target_link_libraries(mango-framebuffer PUBLIC mango)
 
-target_link_libraries(mango-opengl PUBLIC mango)
-target_link_libraries(mango-vulkan PUBLIC mango)
-target_link_libraries(mango-framebuffer PUBLIC mango)
+    if (APPLE)
+        if (BUILD_SHARED_LIBS)
+            target_link_libraries(mango-framebuffer PUBLIC "-framework Cocoa")
+        endif ()
+        target_compile_options(mango-framebuffer PUBLIC "-mmacosx-version-min=10.13")
+    endif ()
+
+endif()
+
+if (BUILD_OPENGL)
+
+    ADD_LIBRARY(mango-opengl
+        ${WINDOW}
+        ${OPENGL}
+    )
+
+    target_link_libraries(mango-opengl PUBLIC mango)
+
+    if (APPLE AND BUILD_SHARED_LIBS)
+        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
+    endif ()
+
+if (APPLE)
+    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
+endif ()
+
+endif()
+
+if (BUILD_VULKAN)
+
+    ADD_LIBRARY(mango-vulkan
+        ${WINDOW}
+        ${VULKAN}
+    )
+
+    target_link_libraries(mango-vulkan PUBLIC mango)
+
+    if (APPLE AND BUILD_SHARED_LIBS)
+        target_link_libraries(mango-vulkan PUBLIC "-framework Cocoa")
+    endif ()
+
+endif()
 
 # add "-lpthreads" linker option when platform has support
 find_package(Threads)
@@ -189,58 +265,12 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
-# link required macOS frameworks
-if (APPLE AND BUILD_SHARED_LIBS)
-    target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
-    target_link_libraries(mango-vulkan PUBLIC "-framework Cocoa")
-    target_link_libraries(mango-framebuffer PUBLIC "-framework Cocoa")
-endif ()
-
-# ------------------------------------------------------------------------------
-# options
-# ------------------------------------------------------------------------------
-
-OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    OFF)
-OPTION(ENABLE_FAST_MATH     "Use relaxed-precision floating point"      ON)
-OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
-OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
-OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
-OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
-OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
-
-OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
-
-OPTION(MANGO_DISABLE_ARCHIVE_ZIP "" OFF)
-OPTION(MANGO_DISABLE_ARCHIVE_MGX "" OFF)
-
-OPTION(MANGO_DISABLE_IMAGE_ASTC "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_ATARI "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_BMP "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_C64 "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_DDS "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_GIF "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_HDR "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_IFF "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_JPG "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_KTX "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PCX "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PKM "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PNG "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PNM "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PVR "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_SGI "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_TGA "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_WEBP "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_ZPNG "" OFF)
-
 # ------------------------------------------------------------------------------
 # configuration
 # ------------------------------------------------------------------------------
 
 if (APPLE)
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
-    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
-    target_compile_options(mango-framebuffer PUBLIC "-mmacosx-version-min=10.13")
 endif ()
 
 if (COMPILER_MSVC)
@@ -307,18 +337,27 @@ else ()
     endif ()
 endif ()
 
+# licenses
+
 if (MANGO_DISABLE_LICENSE_GPL)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_LICENSE_GPL")
 endif ()
 
+# archivers
+
 if (MANGO_DISABLE_ARCHIVE_ZIP)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_ZIP")
+endif ()
+
+if (MANGO_DISABLE_ARCHIVE_RAR)
+  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_RAR")
 endif ()
 
 if (MANGO_DISABLE_ARCHIVE_MGX)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_MGX")
 endif ()
 
+# image codecs
 
 if (MANGO_DISABLE_IMAGE_ASTC)
   target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ASTC")
@@ -401,14 +440,41 @@ endif ()
 # ------------------------------------------------------------------------------
 
 TARGET_INCLUDE_DIRECTORIES(mango PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>
+)
 
-INSTALL(TARGETS mango mango-opengl mango-vulkan mango-framebuffer
+INSTALL(TARGETS mango
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin")
+    RUNTIME DESTINATION "bin"
+)
+
+if (BUILD_FRAMEBUFFER)
+    INSTALL(TARGETS mango-framebuffer
+        LIBRARY DESTINATION "lib"
+        ARCHIVE DESTINATION "lib"
+        RUNTIME DESTINATION "bin"
+    )
+endif()
+
+if (BUILD_OPENGL)
+    INSTALL(TARGETS mango-opengl
+        LIBRARY DESTINATION "lib"
+        ARCHIVE DESTINATION "lib"
+        RUNTIME DESTINATION "bin"
+    )
+endif()
+
+if (BUILD_VULKAN)
+    INSTALL(TARGETS mango-vulkan
+        LIBRARY DESTINATION "lib"
+        ARCHIVE DESTINATION "lib"
+        RUNTIME DESTINATION "bin"
+    )
+endif()
 
 INSTALL(
     DIRECTORY ${CMAKE_SOURCE_DIR}/../include/
     DESTINATION include
-    FILES_MATCHING PATTERN "*.h*")
+    FILES_MATCHING PATTERN "*.h*"
+)
