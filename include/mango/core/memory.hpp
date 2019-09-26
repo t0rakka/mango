@@ -16,48 +16,12 @@ namespace mango {
     // memory
     // -----------------------------------------------------------------------
 
-    struct ConstMemory
-    {
-        const u8* address;
-        size_t size;
+namespace detail {
 
-        ConstMemory()
-            : address(nullptr)
-            , size(0)
-        {
-        }
-
-        ConstMemory(const u8* address, size_t bytes)
-            : address(address)
-            , size(bytes)
-        {
-        }
-
-        operator const u8* () const
-        {
-            return address;
-        }
-
-        template <typename T>
-        const T* cast() const
-        {
-            return reinterpret_cast<const T*>(address);
-        }
-
-        ConstMemory slice(size_t slice_offset, size_t slice_size = 0) const
-        {
-            ConstMemory memory(address + slice_offset, size - slice_offset);
-            if (slice_size)
-            {
-                memory.size = std::min(memory.size, slice_size);
-            }
-            return memory;
-        }
-    };
-
+    template <typename T>
     struct Memory
     {
-        u8* address;
+        T* address;
         size_t size;
 
         Memory()
@@ -66,26 +30,27 @@ namespace mango {
         {
         }
 
-        Memory(u8* address, size_t bytes)
+        Memory(T* address, size_t bytes)
             : address(address)
             , size(bytes)
         {
         }
 
-        operator ConstMemory () const
-        {
-            return ConstMemory(address, size);
-        }
-
-        operator u8* () const
+        operator T* () const
         {
             return address;
         }
 
-        template <typename T>
-        T* cast() const
+        template <typename S>
+        operator Memory<S> () const
         {
-            return reinterpret_cast<T*>(address);
+            return Memory<S>(address, size);
+        }
+
+        template <typename S>
+        S* cast() const
+        {
+            return reinterpret_cast<S*>(address);
         }
 
         Memory slice(size_t slice_offset, size_t slice_size = 0) const
@@ -98,6 +63,11 @@ namespace mango {
             return memory;
         }
     };
+
+} // namespace detail
+
+    using Memory = detail::Memory<u8>;
+    using ConstMemory = detail::Memory<const u8>;
 
     class SharedMemory
     {

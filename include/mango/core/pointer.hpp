@@ -106,7 +106,7 @@ namespace detail {
         {
         }
 
-        ReadPointer(ConstMemory memory)
+        ReadPointer(mango::ConstMemory memory)
             : Pointer<P>(memory.address)
         {
         }
@@ -190,7 +190,7 @@ namespace detail {
         {
         }
 
-        ReadWritePointer(Memory memory)
+        ReadWritePointer(mango::Memory memory)
             : Pointer<P>(memory.address)
         {
         }
@@ -271,7 +271,7 @@ namespace detail {
         {
         }
 
-        SwapEndianReadPointer(ConstMemory memory)
+        SwapEndianReadPointer(mango::ConstMemory memory)
             : Pointer<P>(memory.address)
         {
         }
@@ -355,7 +355,7 @@ namespace detail {
         {
         }
 
-        SwapEndianReadWritePointer(Memory memory)
+        SwapEndianReadWritePointer(mango::Memory memory)
             : Pointer<P>(memory.address)
         {
         }
