@@ -1,11 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
 #include <memory>
+#include <atomic>
 #include "configure.hpp"
 
 namespace mango
@@ -24,7 +25,7 @@ namespace mango
     class RefCounted : private NonCopyable
     {
     protected:
-        int m_count { 1 };
+        std::atomic<int> m_count { 1 };
 
     public:
         RefCounted() = default;
