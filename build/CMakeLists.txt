@@ -95,17 +95,16 @@ include_directories("../source/external/libwebp/")
 # source directories
 # ------------------------------------------------------------------------------
 
-FILE(GLOB CORE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-)
-FILE(GLOB FILESYSTEM
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-)
-IF(WIN32)
-    FILE(GLOB FILESYSTEM_PLATFORM 
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/win32/*.hpp"
+if (WIN32)
+
+    FILE(GLOB CORE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/win32/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp"
     )
     FILE(GLOB WINDOW
@@ -121,9 +120,17 @@ IF(WIN32)
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/win32/*.cpp"
     )
-ELSEIF(APPLE)
-    FILE(GLOB FILESYSTEM_PLATFORM 
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/unix/*.hpp"
+
+elseif (APPLE)
+
+    FILE(GLOB CORE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
     )
     FILE(GLOB WINDOW 
@@ -139,9 +146,17 @@ ELSEIF(APPLE)
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/cocoa/*.mm"
     )
-ELSE()
-    FILE(GLOB FILESYSTEM_PLATFORM
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/unix/*.hpp"
+
+else()
+
+    FILE(GLOB CORE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
     )
     FILE(GLOB WINDOW
@@ -157,7 +172,9 @@ ELSE()
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/xlib/*.cpp"
     )
-ENDIF()
+
+endif()
+
 FILE(GLOB IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
 FILE(GLOB JPEG "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
 FILE(GLOB MATH "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
@@ -165,7 +182,7 @@ FILE(GLOB SIMD "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp" "${CMAK
 FILE(GLOB VULKAN "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/vulkan/*.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/vulkan/*.cpp")
 
 SOURCE_GROUP("core" FILES ${CORE})
-SOURCE_GROUP("filesystem" FILES ${FILESYSTEM} ${FILESYSTEM_PLATFORM})
+SOURCE_GROUP("filesystem" FILES ${FILESYSTEM})
 SOURCE_GROUP("image" FILES ${IMAGE} ${JPEG})
 SOURCE_GROUP("math" FILES ${MATH})
 SOURCE_GROUP("window" FILES ${WINDOW})
@@ -203,8 +220,9 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 ADD_LIBRARY(mango
-    ${CORE} ${FILESYSTEM} ${FILESYSTEM_PLATFORM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
-    ${LZMA} ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4} ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${WEBP} ${ZPNG}
+    ${CORE} ${FILESYSTEM} ${IMAGE} ${JPEG} ${MATH} ${SIMD}
+    ${LZMA} ${AES} ${BC} ${BZIP2} ${CONCURRENT_QUEUE} ${GOOGLE} ${LZ4}
+    ${LZFSE} ${LZO} ${MINIZ} ${UNRAR} ${ZSTD} ${WEBP} ${ZPNG}
 )
 
 if (BUILD_FRAMEBUFFER)
