@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/dynamic_library.hpp>
 #include <mango/core/exception.hpp>
@@ -9,26 +9,54 @@
 namespace mango
 {
 
+    // ----------------------------------------------------------------------------
+    // DynamicLibraryHandle
+    // ----------------------------------------------------------------------------
+
+    struct DynamicLibraryHandle
+    {
+        HMODULE handle;
+
+        DynamicLibraryHandle(const std::string& filename)
+        {
+            u32 mode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+            handle = ::LoadLibraryW(u16_fromBytes(filename).c_str());
+            ::SetErrorMode(mode);
+            if (!handle)
+            {
+                MANGO_EXCEPTION("[DynamicLibrary] WIN32 LoadLibrary() failed.");
+            }
+        }
+
+        ~DynamicLibraryHandle()
+        {
+            ::FreeLibrary(handle);
+        }
+
+        void* address(const std::string& symbol) const
+        {
+            void* ptr = ::GetProcAddress(handle, symbol.c_str());
+            return ptr;
+        }
+    };
+
+    // ----------------------------------------------------------------------------
+    // DynamicLibrary
+    // ----------------------------------------------------------------------------
+
     DynamicLibrary::DynamicLibrary(const std::string& filename)
     {
-        u32 mode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
-        m_handle = ::LoadLibraryW(u16_fromBytes(filename).c_str());
-        ::SetErrorMode(mode);
-        if (!m_handle)
-        {
-            MANGO_EXCEPTION("[DynamicLibrary] WIN32 LoadLibrary() failed.");
-        }
+        m_handle = new DynamicLibraryHandle(filename);
     }
 
     DynamicLibrary::~DynamicLibrary()
     {
-        ::FreeLibrary(m_handle);
+        delete m_handle;
     }
 
     void* DynamicLibrary::address(const std::string& symbol) const
     {
-        void* ptr = ::GetProcAddress(m_handle, symbol.c_str());
-        return ptr;
+        return m_handle->address(symbol);
     }
 
 } // namespace mango
