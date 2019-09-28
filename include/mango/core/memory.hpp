@@ -11,11 +11,6 @@
 #include "object.hpp"
 
 namespace mango {
-
-    // -----------------------------------------------------------------------
-    // memory
-    // -----------------------------------------------------------------------
-
 namespace detail {
 
     template <typename T>
@@ -65,6 +60,10 @@ namespace detail {
     };
 
 } // namespace detail
+
+    // -----------------------------------------------------------------------
+    // memory
+    // -----------------------------------------------------------------------
 
     using Memory = detail::Memory<u8>;
     using ConstMemory = detail::Memory<const u8>;
