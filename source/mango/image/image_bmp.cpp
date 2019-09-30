@@ -634,8 +634,7 @@ namespace
 
     void readRGB(const Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
-        u8* image = const_cast<u8*>(data);
-        Surface source(header.width, header.height, header.format, stride, image);
+        Surface source(header.width, header.height, header.format, stride, data);
         surface.blit(0, 0, source);
     }
 

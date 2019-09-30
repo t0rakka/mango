@@ -702,8 +702,7 @@ namespace
                 // KTX format stores data with GL_UNPACK_ALIGNMENT of 4
                 stride = (stride + 3) & ~3;
 
-                u8* image = const_cast<u8*>(data.address);
-                Surface source(width, height, format, stride, image);
+                Surface source(width, height, format, stride, data.address);
                 dest.blit(0, 0, source);
             }
             else

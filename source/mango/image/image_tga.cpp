@@ -388,8 +388,7 @@ namespace
                 case TYPE_RAW_RGB:
                 case TYPE_RLE_RGB:
                 {
-                    u8* image = const_cast<u8*>(data);
-                    dest.blit(0, 0, Surface(width, height, format, width * bpp, image));
+                    dest.blit(0, 0, Surface(width, height, format, width * bpp, data));
                     break;
                 }
 
@@ -399,8 +398,7 @@ namespace
                     if (ptr_palette)
                     {
                         *ptr_palette = palette;
-                        u8* image = const_cast<u8*>(data);
-                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, image));
+                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, data));
                     }
                     else
                     {

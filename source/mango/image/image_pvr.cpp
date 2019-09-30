@@ -668,8 +668,7 @@ namespace
             else
             {
                 int stride = width * m_pvr_header.m_info.format.bytes();
-                u8* image = const_cast<u8*>(data.address);
-                Surface source(width, height, m_pvr_header.m_info.format, stride, image);
+                Surface source(width, height, m_pvr_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
             }
 

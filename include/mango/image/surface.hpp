@@ -28,7 +28,7 @@ namespace mango
         int     width;
         int     height;
 
-        Surface(int width, int height, const Format& format, int stride, void* image);
+        Surface(int width, int height, const Format& format, int stride, const void* image);
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
 
