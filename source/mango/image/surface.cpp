@@ -523,18 +523,15 @@ namespace mango
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int width_, int height_, const Format& format_, int stride_, u8* image_)
-        : Surface(width_, height_, format_, stride_, image_)
+    Bitmap::Bitmap(int w, int h, const Format& f, int s)
+        : Surface(w, h, f, s, nullptr)
     {
         if (!stride)
         {
             stride = width * format.bytes();
         }
 
-        if (!image)
-        {
-            image = new u8[stride * height];
-        }
+        image = new u8[stride * height];
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension)

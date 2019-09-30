@@ -55,7 +55,7 @@ namespace mango
     class Bitmap : private NonCopyable, public Surface
     {
     public:
-        Bitmap(int width, int height, const Format& format, int stride = 0, u8* image = nullptr);
+        Bitmap(int width, int height, const Format& format, int stride = 0);
         Bitmap(ConstMemory memory, const std::string& extension);
         Bitmap(ConstMemory memory, const std::string& extension, const Format& format);
         Bitmap(const std::string& filename);
