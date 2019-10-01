@@ -376,5 +376,16 @@ namespace math {
                 time * (c3 - a3) + (a + b * ScalarType(4.0) + c)) / ScalarType(6.0);
     }
 
+    template <typename VectorType, typename ScalarType>
+    inline VectorType hermite(VectorType a, VectorType b, VectorType atangent, VectorType btangent, ScalarType time)
+    {
+        ScalarType time2 = time * time;
+        ScalarType time3 = time * time2;
+        return a * (ScalarType(2.0) * time3 - ScalarType(3.0) * time2 + ScalarType(1.0)) -
+               b * (ScalarType(2.0) * time3 - ScalarType(3.0) * time2) +
+               atangent * (time3 - ScalarType(2.0) * time2 + time) +
+               btangent * (time3 - time2);
+    }
+
 } // namespace math
 } // namespace mango
