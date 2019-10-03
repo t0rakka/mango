@@ -100,78 +100,63 @@ if (WIN32)
     FILE(GLOB CORE
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/win32/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/win32/*.cpp")
     FILE(GLOB FILESYSTEM
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp")
     FILE(GLOB WINDOW
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/win32/*.hpp" 
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/win32/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/win32/*.cpp")
     FILE(GLOB OPENGL
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp")
     FILE(GLOB FRAMEBUFFER
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/win32/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/win32/*.cpp")
 
 elseif (APPLE)
 
     FILE(GLOB CORE
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp")
     FILE(GLOB FILESYSTEM
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
     FILE(GLOB WINDOW 
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/cocoa/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/cocoa/*.mm"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/cocoa/*.mm")
     FILE(GLOB OPENGL
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm")
     FILE(GLOB FRAMEBUFFER
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/cocoa/*.mm"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/cocoa/*.mm")
 
 else()
 
     FILE(GLOB CORE
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp")
     FILE(GLOB FILESYSTEM
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
     FILE(GLOB WINDOW
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/xlib/*.hpp" 
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/xlib/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/xlib/*.cpp")
     FILE(GLOB OPENGL
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp" 
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp")
     FILE(GLOB FRAMEBUFFER 
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp" 
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/xlib/*.cpp"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/xlib/*.cpp")
 
 endif()
 
@@ -192,8 +177,8 @@ FILE(GLOB VULKAN
 
 SOURCE_GROUP("core" FILES ${CORE})
 SOURCE_GROUP("filesystem" FILES ${FILESYSTEM})
-SOURCE_GROUP("image" FILES ${IMAGE} ${IMAGE})
-SOURCE_GROUP("jpeg" FILES ${IMAGE} ${JPEG})
+SOURCE_GROUP("image" FILES ${IMAGE})
+SOURCE_GROUP("jpeg" FILES ${JPEG})
 SOURCE_GROUP("math" FILES ${MATH})
 SOURCE_GROUP("simd" FILES ${SIMD})
 SOURCE_GROUP("window" FILES ${WINDOW})
@@ -240,7 +225,7 @@ FILE(GLOB_RECURSE EXTERNAL_ZSTD
 FILE(GLOB_RECURSE EXTERNAL_WEBP 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h" 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c")
-FILE(GLOB_RECURSE EXTERNAL_ZPNG 
+FILE(GLOB EXTERNAL_ZPNG 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h" 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp")
 
