@@ -45,10 +45,6 @@ endif()
 # options
 # ------------------------------------------------------------------------------
 
-OPTION(BUILD_FRAMEBUFFER    "Build Framebuffer Library"                 ON)
-OPTION(BUILD_OPENGL         "Build OpenGL Library"                      ON)
-OPTION(BUILD_VULKAN         "Build Vulkan Library"                      ON)
-
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    OFF)
 
 OPTION(ENABLE_FAST_MATH     "Use relaxed-precision floating point"      ON)
@@ -280,58 +276,36 @@ ADD_LIBRARY(mango
     ${EXTERNAL_ZPNG}
 )
 
-if (BUILD_FRAMEBUFFER)
+ADD_LIBRARY(mango-framebuffer
+    ${WINDOW}
+    ${FRAMEBUFFER}
+)
 
-    ADD_LIBRARY(mango-framebuffer
-        ${WINDOW}
-        ${FRAMEBUFFER}
-    )
+ADD_LIBRARY(mango-opengl
+    ${WINDOW}
+    ${OPENGL}
+)
 
-    target_link_libraries(mango-framebuffer PUBLIC mango)
+ADD_LIBRARY(mango-vulkan
+    ${WINDOW}
+    ${VULKAN}
+)
 
-    if (APPLE)
-        if (BUILD_SHARED_LIBS)
-            target_link_libraries(mango-framebuffer PUBLIC "-framework Cocoa")
-        endif ()
-        target_compile_options(mango-framebuffer PUBLIC "-mmacosx-version-min=10.13")
+target_link_libraries(mango-framebuffer PUBLIC mango)
+target_link_libraries(mango-opengl PUBLIC mango)
+target_link_libraries(mango-vulkan PUBLIC mango)
+
+if (APPLE)
+    if (BUILD_SHARED_LIBS)
+        target_link_libraries(mango-framebuffer PUBLIC "-framework Cocoa")
+        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
+        target_link_libraries(mango-vulkan PUBLIC "-framework Cocoa")
     endif ()
 
-endif()
-
-if (BUILD_OPENGL)
-
-    ADD_LIBRARY(mango-opengl
-        ${WINDOW}
-        ${OPENGL}
-    )
-
-    target_link_libraries(mango-opengl PUBLIC mango)
-
-    if (APPLE)
-        if (BUILD_SHARED_LIBS)
-            target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
-        endif ()
-        target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
-    endif ()
-
-endif()
-
-if (BUILD_VULKAN)
-
-    ADD_LIBRARY(mango-vulkan
-        ${WINDOW}
-        ${VULKAN}
-    )
-
-    target_link_libraries(mango-vulkan PUBLIC mango)
-
-    if (APPLE)
-        if (BUILD_SHARED_LIBS)
-            target_link_libraries(mango-vulkan PUBLIC "-framework Cocoa")
-        endif ()
-    endif ()
-
-endif()
+    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
+    target_compile_options(mango-framebuffer PUBLIC "-mmacosx-version-min=10.13")
+    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
+endif ()
 
 # add "-lpthreads" linker option when platform has support
 find_package(Threads)
@@ -342,10 +316,6 @@ endif ()
 # ------------------------------------------------------------------------------
 # configuration
 # ------------------------------------------------------------------------------
-
-if (APPLE)
-    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
-endif ()
 
 if (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/Gm")
@@ -513,7 +483,8 @@ endif ()
 # install
 # ------------------------------------------------------------------------------
 
-TARGET_INCLUDE_DIRECTORIES(mango PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+TARGET_INCLUDE_DIRECTORIES(mango PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>
 )
 
@@ -523,29 +494,21 @@ INSTALL(TARGETS mango
     RUNTIME DESTINATION "bin"
 )
 
-if (BUILD_FRAMEBUFFER)
-    INSTALL(TARGETS mango-framebuffer
-        LIBRARY DESTINATION "lib"
-        ARCHIVE DESTINATION "lib"
-        RUNTIME DESTINATION "bin"
-    )
-endif()
-
-if (BUILD_OPENGL)
-    INSTALL(TARGETS mango-opengl
-        LIBRARY DESTINATION "lib"
-        ARCHIVE DESTINATION "lib"
-        RUNTIME DESTINATION "bin"
-    )
-endif()
-
-if (BUILD_VULKAN)
-    INSTALL(TARGETS mango-vulkan
-        LIBRARY DESTINATION "lib"
-        ARCHIVE DESTINATION "lib"
-        RUNTIME DESTINATION "bin"
-    )
-endif()
+INSTALL(TARGETS mango-framebuffer
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
+    RUNTIME DESTINATION "bin"
+)
+INSTALL(TARGETS mango-opengl
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
+    RUNTIME DESTINATION "bin"
+)
+INSTALL(TARGETS mango-vulkan
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
+    RUNTIME DESTINATION "bin"
+)
 
 INSTALL(
     DIRECTORY ${CMAKE_SOURCE_DIR}/../include/
