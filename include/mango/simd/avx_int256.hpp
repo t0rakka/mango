@@ -210,6 +210,14 @@ namespace detail {
         return result;
     }
 
+    static inline u8x32 ravg(u8x32 a, u8x32 b)
+    {
+        u8x32 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
+        return result;
+    }
+
     // bitwise
 
     static inline u8x32 bitwise_nand(u8x32 a, u8x32 b)
@@ -421,6 +429,14 @@ namespace detail {
         u16x16 result;
         result.lo = avg(a.lo, b.lo);
         result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
+    static inline u16x16 ravg(u16x16 a, u16x16 b)
+    {
+        u16x16 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
         return result;
     }
 
@@ -706,6 +722,14 @@ namespace detail {
         u32x8 result;
         result.lo = avg(a.lo, b.lo);
         result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
+    static inline u32x8 ravg(u32x8 a, u32x8 b)
+    {
+        u32x8 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
         return result;
     }
 
@@ -1004,6 +1028,14 @@ namespace detail {
         return result;
     }
 
+    static inline u64x4 ravg(u64x4 a, u64x4 b)
+    {
+        u64x4 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
+        return result;
+    }
+
     static inline u64x4 bitwise_nand(u64x4 a, u64x4 b)
     {
         u64x4 result;
@@ -1235,6 +1267,14 @@ namespace detail {
         s8x32 result;
         result.lo = avg(a.lo, b.lo);
         result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s8x32 ravg(s8x32 a, s8x32 b)
+    {
+        s8x32 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
         return result;
     }
 
@@ -1495,6 +1535,14 @@ namespace detail {
         s16x16 result;
         result.lo = avg(a.lo, b.lo);
         result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s16x16 ravg(s16x16 a, s16x16 b)
+    {
+        s16x16 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
         return result;
     }
 
@@ -1831,6 +1879,14 @@ namespace detail {
         return result;
     }
 
+    static inline s32x8 ravg(s32x8 a, s32x8 b)
+    {
+        s32x8 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
+        return result;
+    }
+
     static inline s32x8 mullo(s32x8 a, s32x8 b)
     {
         s32x8 result;
@@ -2123,6 +2179,14 @@ namespace detail {
         s64x4 result;
         result.lo = avg(a.lo, b.lo);
         result.hi = avg(a.hi, b.hi);
+        return result;
+    }
+
+    static inline s64x4 ravg(s64x4 a, s64x4 b)
+    {
+        s64x4 result;
+        result.lo = ravg(a.lo, b.lo);
+        result.hi = ravg(a.hi, b.hi);
         return result;
     }
 

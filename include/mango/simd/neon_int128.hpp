@@ -104,6 +104,11 @@ namespace simd {
         return vhaddq_u8(a, b);
     }
 
+    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    {
+        return vrhaddq_u8(a, b);
+    }
+
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
@@ -269,6 +274,11 @@ namespace simd {
     static inline u16x8 avg(u16x8 a, u16x8 b)
     {
         return vhaddq_u16(a, b);
+    }
+
+    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    {
+        return vrhaddq_u16(a, b);
     }
 
     static inline u16x8 mullo(u16x8 a, u16x8 b)
@@ -502,6 +512,11 @@ namespace simd {
         return vhaddq_u32(a, b);
     }
 
+    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    {
+        return vrhaddq_u32(a, b);
+    }
+
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
         return vmulq_u32(a, b);
@@ -711,6 +726,12 @@ namespace simd {
         int64x2_t axb = veorq_s64(sa, sb);
         int64x2_t temp = vaddq_s64(vandq_s64(sa, sb), vshrq_n_s64(axb, 1));
         return vreinterpretq_u64_s64(temp);
+    }
+
+    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    {
+        a = vaddq_u64(a, vdupq_n_u64(1));
+        return avg(a, b);
     }
 
     // bitwise
@@ -925,6 +946,11 @@ namespace simd {
     static inline s8x16 avg(s8x16 a, s8x16 b)
     {
         return vhaddq_s8(a, b);
+    }
+
+    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    {
+        return vrhaddq_s8(a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1163,6 +1189,11 @@ namespace simd {
     static inline s16x8 avg(s16x8 a, s16x8 b)
     {
         return vhaddq_s16(a, b);
+    }
+
+    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    {
+        return vrhaddq_s16(a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1455,6 +1486,11 @@ namespace simd {
         return vhaddq_s32(a, b);
     }
 
+    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    {
+        return vrhaddq_s32(a, b);
+    }
+
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         return vmulq_s32(a, b);
@@ -1685,6 +1721,12 @@ namespace simd {
         temp = vaddq_s64(temp, vandq_s64(sign, axb));
 
         return temp;
+    }
+
+    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    {
+        a = vaddq_s64(a, vdupq_n_s64(1));
+        return avg(a, b);
     }
 
     // bitwise

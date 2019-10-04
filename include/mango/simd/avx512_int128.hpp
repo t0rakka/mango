@@ -180,6 +180,11 @@ namespace detail
         return temp;
     }
 
+    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    {
+        return _mm_avg_epu8(a, b);
+    }
+
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
@@ -342,6 +347,11 @@ namespace detail
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi16(_mm_and_si128(a, b), _mm_srli_epi16(axb, 1));
         return temp;
+    }
+
+    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    {
+        return _mm_avg_epu16(a, b);
     }
 
     static inline u16x8 mullo(u16x8 a, u16x8 b)
@@ -570,6 +580,12 @@ namespace detail
         return temp;
     }
 
+    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    {
+        a = _mm_add_epi32(a, _mm_set1_epi32(1));
+        return avg(a, b);
+    }
+
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
         return _mm_mullo_epi32(a, b);
@@ -773,6 +789,12 @@ namespace detail
         return temp;
     }
 
+    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    {
+        a = _mm_add_epi64(a, _mm_set1_epi64x(1));
+        return avg(a, b);
+    }
+
     // bitwise
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
@@ -954,6 +976,12 @@ namespace detail
         __m128i temp = _mm_add_epi8(_mm_and_si128(a, b), detail::simd128_srai1_epi8(axb));
         temp = _mm_add_epi8(temp, _mm_and_si128(detail::simd128_srli7_epi8(temp), axb));
         return temp;
+    }
+
+    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    {
+        a = _mm_add_epi8(a, _mm_set1_epi8(1));
+        return avg(a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1149,6 +1177,12 @@ namespace detail
         __m128i temp = _mm_add_epi16(_mm_and_si128(a, b), _mm_srai_epi16(axb, 1));
         temp = _mm_add_epi16(temp, _mm_and_si128(_mm_srli_epi16(temp, 15), axb));
         return temp;
+    }
+
+    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    {
+        a = _mm_add_epi16(a, _mm_set1_epi16(1));
+        return avg(a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1414,6 +1448,12 @@ namespace detail
         return temp;
     }
 
+    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    {
+        a = _mm_add_epi32(a, _mm_set1_epi32(1));
+        return avg(a, b);
+    }
+
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         return _mm_mullo_epi32(a, b);
@@ -1629,6 +1669,12 @@ namespace detail
         __m128i temp = _mm_add_epi64(_mm_and_si128(a, b), _mm_srai_epi64(axb, 1));
         temp = _mm_add_epi64(temp, _mm_and_si128(_mm_srli_epi64(temp, 63), axb));
         return temp;
+    }
+
+    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    {
+        a = _mm_add_epi64(a, _mm_set1_epi64x(1));
+        return avg(a, b);
     }
 
     // bitwise
