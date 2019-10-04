@@ -1147,7 +1147,7 @@ namespace detail
     {
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi16(_mm_and_si128(a, b), _mm_srai_epi16(axb, 1));
-        temp = _mm_add_epi16(temp, _mm_and_si128(_mm_srli_epi16(temp, 7), axb));
+        temp = _mm_add_epi16(temp, _mm_and_si128(_mm_srli_epi16(temp, 15), axb));
         return temp;
     }
 
@@ -1410,7 +1410,7 @@ namespace detail
     {
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi32(_mm_and_si128(a, b), _mm_srai_epi32(axb, 1));
-        temp = _mm_add_epi32(temp, _mm_and_si128(_mm_srli_epi32(temp, 7), axb));
+        temp = _mm_add_epi32(temp, _mm_and_si128(_mm_srli_epi32(temp, 31), axb));
         return temp;
     }
 
@@ -1627,7 +1627,7 @@ namespace detail
     {
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi64(_mm_and_si128(a, b), _mm_srai_epi64(axb, 1));
-        temp = _mm_add_epi64(temp, _mm_and_si128(_mm_srli_epi64(temp, 7), axb));
+        temp = _mm_add_epi64(temp, _mm_and_si128(_mm_srli_epi64(temp, 63), axb));
         return temp;
     }
 

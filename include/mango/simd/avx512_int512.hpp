@@ -903,7 +903,7 @@ namespace detail {
     {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi16(_mm512_and_si512(a, b), _mm512_srai_epi16(axb, 1));
-        temp = _mm512_add_epi16(temp, _mm512_and_si512(_mm512_srli_epi16(temp, 7), axb));
+        temp = _mm512_add_epi16(temp, _mm512_and_si512(_mm512_srli_epi16(temp, 15), axb));
         return temp;
     }
 
@@ -1097,7 +1097,7 @@ namespace detail {
     {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi32(_mm512_and_si512(a, b), _mm512_srai_epi32(axb, 1));
-        temp = _mm512_add_epi32(temp, _mm512_and_si512(_mm512_srli_epi32(temp, 7), axb));
+        temp = _mm512_add_epi32(temp, _mm512_and_si512(_mm512_srli_epi32(temp, 31), axb));
         return temp;
     }
 
@@ -1287,7 +1287,7 @@ namespace detail {
     {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi64(_mm512_and_si512(a, b), detail::simd512_srai1_epi64(axb));
-        temp = _mm512_add_epi64(temp, _mm512_and_si512(_mm512_srli_epi64(temp, 7), axb));
+        temp = _mm512_add_epi64(temp, _mm512_and_si512(_mm512_srli_epi64(temp, 63), axb));
         return temp;
     }
 

@@ -1071,7 +1071,7 @@ namespace detail {
     {
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi16(_mm256_and_si256(a, b), _mm256_srai_epi16(axb, 1));
-        temp = _mm256_add_epi16(temp, _mm256_and_si256(_mm256_srli_epi16(temp, 7), axb));
+        temp = _mm256_add_epi16(temp, _mm256_and_si256(_mm256_srli_epi16(temp, 15), axb));
         return temp;
     }
 
@@ -1306,7 +1306,7 @@ namespace detail {
     {
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi32(_mm256_and_si256(a, b), _mm256_srai_epi32(axb, 1));
-        temp = _mm256_add_epi32(temp, _mm256_and_si256(_mm256_srli_epi32(temp, 7), axb));
+        temp = _mm256_add_epi32(temp, _mm256_and_si256(_mm256_srli_epi32(temp, 31), axb));
         return temp;
     }
 
@@ -1510,7 +1510,7 @@ namespace detail {
     {
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi64(_mm256_and_si256(a, b), detail::simd256_srai1_epi64(axb));
-        temp = _mm256_add_epi64(temp, _mm256_and_si256(_mm256_srli_epi64(temp, 7), axb));
+        temp = _mm256_add_epi64(temp, _mm256_and_si256(_mm256_srli_epi64(temp, 63), axb));
         return temp;
     }
 
