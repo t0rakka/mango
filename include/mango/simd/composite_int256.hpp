@@ -9,11 +9,11 @@
 namespace mango {
 namespace simd {
 
-#define SET_COMPONENT(vec, value, mask, index) \
+#define SIMD_SET_COMPONENT(vec, value, mask, index) \
     if (index <= mask) vec.lo = set_component<index & mask>(vec.lo, value); \
     else               vec.hi = set_component<index & mask>(vec.hi, value)
 
-#define GET_COMPONENT(vec, mask, index) \
+#define SIMD_GET_COMPONENT(vec, mask, index) \
         Index <= mask ? get_component<index & mask>(vec.lo) \
                       : get_component<index & mask>(vec.hi)
 
@@ -52,7 +52,7 @@ namespace simd {
     static inline u8x32 set_component(u8x32 a, u8 b)
     {
         static_assert(Index < 32, "Index out of range.");
-        SET_COMPONENT(a, b, 15, Index);
+        SIMD_SET_COMPONENT(a, b, 15, Index);
         return a;
     }
 
@@ -60,7 +60,7 @@ namespace simd {
     static inline u8 get_component(u8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
-        return GET_COMPONENT(a, 15, Index);
+        return SIMD_GET_COMPONENT(a, 15, Index);
     }
 
     static inline u8x32 u8x32_zero()
@@ -127,7 +127,7 @@ namespace simd {
     static inline u16x16 set_component(u16x16 a, u16 b)
     {
         static_assert(Index < 16, "Index out of range.");
-        SET_COMPONENT(a, b, 7, Index);
+        SIMD_SET_COMPONENT(a, b, 7, Index);
         return a;
     }
 
@@ -135,7 +135,7 @@ namespace simd {
     static inline u16 get_component(u16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
-        return GET_COMPONENT(a, 7, Index);
+        return SIMD_GET_COMPONENT(a, 7, Index);
     }
 
     static inline u16x16 u16x16_zero()
@@ -258,7 +258,7 @@ namespace simd {
     static inline u32x8 set_component(u32x8 a, u32 b)
     {
         static_assert(Index < 8, "Index out of range.");
-        SET_COMPONENT(a, b, 3, Index);
+        SIMD_SET_COMPONENT(a, b, 3, Index);
         return a;
     }
 
@@ -266,7 +266,7 @@ namespace simd {
     static inline u32 get_component(u32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
-        return GET_COMPONENT(a, 3, Index);
+        return SIMD_GET_COMPONENT(a, 3, Index);
     }
 
     static inline u32x8 u32x8_zero()
@@ -423,7 +423,7 @@ namespace simd {
     static inline u64x4 set_component(u64x4 a, u64 b)
     {
         static_assert(Index < 4, "Index out of range.");
-        SET_COMPONENT(a, b, 1, Index);
+        SIMD_SET_COMPONENT(a, b, 1, Index);
         return a;
     }
 
@@ -431,7 +431,7 @@ namespace simd {
     static inline u64 get_component(u64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
-        return GET_COMPONENT(a, 1, Index);
+        return SIMD_GET_COMPONENT(a, 1, Index);
     }
 
     static inline u64x4 u64x4_zero()
@@ -539,7 +539,7 @@ namespace simd {
     static inline s8x32 set_component(s8x32 a, s8 b)
     {
         static_assert(Index < 32, "Index out of range.");
-        SET_COMPONENT(a, b, 15, Index);
+        SIMD_SET_COMPONENT(a, b, 15, Index);
         return a;
     }
 
@@ -547,7 +547,7 @@ namespace simd {
     static inline s8 get_component(s8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
-        return GET_COMPONENT(a, 15, Index);
+        return SIMD_GET_COMPONENT(a, 15, Index);
     }
 
     static inline s8x32 s8x32_zero()
@@ -616,7 +616,7 @@ namespace simd {
     static inline s16x16 set_component(s16x16 a, s16 b)
     {
         static_assert(Index < 16, "Index out of range.");
-        SET_COMPONENT(a, b, 7, Index);
+        SIMD_SET_COMPONENT(a, b, 7, Index);
         return a;
     }
 
@@ -624,7 +624,7 @@ namespace simd {
     static inline s16 get_component(s16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
-        return GET_COMPONENT(a, 7, Index);
+        return SIMD_GET_COMPONENT(a, 7, Index);
     }
 
     static inline s16x16 s16x16_zero()
@@ -753,7 +753,7 @@ namespace simd {
     static inline s32x8 set_component(s32x8 a, s32 b)
     {
         static_assert(Index < 8, "Index out of range.");
-        SET_COMPONENT(a, b, 3, Index);
+        SIMD_SET_COMPONENT(a, b, 3, Index);
         return a;
     }
 
@@ -761,7 +761,7 @@ namespace simd {
     static inline s32 get_component(s32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
-        return GET_COMPONENT(a, 3, Index);
+        return SIMD_GET_COMPONENT(a, 3, Index);
     }
 
     static inline s32x8 s32x8_zero()
@@ -922,7 +922,7 @@ namespace simd {
     static inline s64x4 set_component(s64x4 a, s64 b)
     {
         static_assert(Index < 4, "Index out of range.");
-        SET_COMPONENT(a, b, 1, Index);
+        SIMD_SET_COMPONENT(a, b, 1, Index);
         return a;
     }
 
@@ -930,7 +930,7 @@ namespace simd {
     static inline s64 get_component(s64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
-        return GET_COMPONENT(a, 1, Index);
+        return SIMD_GET_COMPONENT(a, 1, Index);
     }
 
     static inline s64x4 s64x4_zero()
@@ -1258,8 +1258,8 @@ namespace simd {
         return get_mask(a) == 0xf;
     }
 
-#undef SET_COMPONENT
-#undef GET_COMPONENT
+#undef SIMD_SET_COMPONENT
+#undef SIMD_GET_COMPONENT
 #undef SIMD_COMPOSITE_FUNC1
 #undef SIMD_COMPOSITE_FUNC2
 #undef SIMD_COMPOSITE_SELECT
