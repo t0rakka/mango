@@ -260,7 +260,7 @@ namespace detail {
     static inline u16x16 set_component(u16x16 a, u16 b)
     {
         static_assert(Index < 16, "Index out of range.");
-        SET_COMPONENT(a, b, 7, Index);
+        SIMD_SET_COMPONENT(a, b, 7, Index);
         return a;
     }
 
@@ -268,7 +268,7 @@ namespace detail {
     static inline u16 get_component(u16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
-        return GET_COMPONENT(a, 7, Index);
+        return SIMD_GET_COMPONENT(a, 7, Index);
     }
 
     static inline u16x16 u16x16_zero()
