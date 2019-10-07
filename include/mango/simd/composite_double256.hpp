@@ -27,6 +27,15 @@ namespace simd {
         return result; \
     }
 
+#define SIMD_COMPOSITE_FUNC3(R, ABC, FUNC) \
+    static inline R FUNC(ABC a, ABC b, ABC c) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, c.lo); \
+        result.hi = FUNC(a.hi, b.hi, c.hi); \
+        return result; \
+    }
+
     // -----------------------------------------------------------------
     // f64x4
     // -----------------------------------------------------------------
@@ -235,23 +244,8 @@ namespace simd {
 
     SIMD_COMPOSITE_FUNC2(f64x4, f64x4, hadd)
     SIMD_COMPOSITE_FUNC2(f64x4, f64x4, hsub)
-
-    static inline f64x4 madd(f64x4 a, f64x4 b, f64x4 c)
-    {
-        f64x4 result;
-        result.lo = madd(a.lo, b.lo, c.lo);
-        result.hi = madd(a.hi, b.hi, c.hi);
-        return result;
-    }
-
-    static inline f64x4 msub(f64x4 a, f64x4 b, f64x4 c)
-    {
-        f64x4 result;
-        result.lo = msub(a.lo, b.lo, c.lo);
-        result.hi = msub(a.hi, b.hi, c.hi);
-        return result;
-    }
-
+    SIMD_COMPOSITE_FUNC3(f64x4, f64x4, madd)
+    SIMD_COMPOSITE_FUNC3(f64x4, f64x4, msub)
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fast_rcp)
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fast_rsqrt)
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fast_sqrt)
@@ -293,6 +287,7 @@ namespace simd {
 
 #undef SIMD_COMPOSITE_FUNC1
 #undef SIMD_COMPOSITE_FUNC2
+#undef SIMD_COMPOSITE_FUNC3
 
 } // namespace simd
 } // namespace mango

@@ -21,6 +21,15 @@ namespace simd {
         Index <= mask ? get_component<index & mask>(vec.lo) \
                       : get_component<index & mask>(vec.hi)
 
+#define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
+    static inline R FUNC(A a) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo); \
+        result.hi = FUNC(a.hi); \
+        return result; \
+    }
+
 #define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
     static inline R FUNC(AB a, AB b) \
     { \
@@ -171,19 +180,11 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, subs)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, avg)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, ravg)
-
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, bitwise_and)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, bitwise_or)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, bitwise_xor)
-
-    static inline u8x32 bitwise_not(u8x32 a)
-    {
-        u8x32 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(u8x32, u8x32, bitwise_not)
 
     // compare
 
@@ -236,21 +237,8 @@ namespace detail {
         return u8x32(lo, hi);
     }
 
-    static inline u8x32 min(u8x32 a, u8x32 b)
-    {
-        u8x32 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline u8x32 max(u8x32 a, u8x32 b)
-    {
-        u8x32 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(u8x32, u8x32, min)
+    SIMD_COMPOSITE_FUNC2(u8x32, u8x32, max)
 
     // -----------------------------------------------------------------
     // u16x16
@@ -310,19 +298,11 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, avg)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, ravg)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, mullo)
-
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, bitwise_and)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, bitwise_or)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, bitwise_xor)
-
-    static inline u16x16 bitwise_not(u16x16 a)
-    {
-        u16x16 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(u16x16, u16x16, bitwise_not)
 
     // compare
 
@@ -430,21 +410,8 @@ namespace detail {
         return result;
     }
 
-    static inline u16x16 min(u16x16 a, u16x16 b)
-    {
-        u16x16 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline u16x16 max(u16x16 a, u16x16 b)
-    {
-        u16x16 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, min)
+    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, max)
 
     // -----------------------------------------------------------------
     // u32x8
@@ -512,19 +479,11 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, avg)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, ravg)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, mullo)
-
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, bitwise_and)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, bitwise_or)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, bitwise_xor)
-
-    static inline u32x8 bitwise_not(u32x8 a)
-    {
-        u32x8 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(u32x8, u32x8, bitwise_not)
 
     // compare
 
@@ -658,21 +617,8 @@ namespace detail {
         return result;
     }
 
-    static inline u32x8 min(u32x8 a, u32x8 b)
-    {
-        u32x8 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline u32x8 max(u32x8 a, u32x8 b)
-    {
-        u32x8 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, min)
+    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, max)
 
     // -----------------------------------------------------------------
     // u64x4
@@ -737,19 +683,11 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, sub)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, avg)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, ravg)
-
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_and)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_or)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_xor)
-
-    static inline u64x4 bitwise_not(u64x4 a)
-    {
-        u64x4 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(u64x4, u64x4, bitwise_not)
 
     // compare
 
@@ -897,35 +835,13 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, subs)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, avg)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, ravg)
-
-    static inline s8x32 abs(s8x32 a)
-    {
-        s8x32 result;
-        result.lo = abs(a.lo);
-        result.hi = abs(a.hi);
-        return result;
-    }
-
-    static inline s8x32 neg(s8x32 a)
-    {
-        s8x32 result;
-        result.lo = neg(a.lo);
-        result.hi = neg(a.hi);
-        return result;
-    }
-
+    SIMD_COMPOSITE_FUNC1(s8x32, s8x32, abs)
+    SIMD_COMPOSITE_FUNC1(s8x32, s8x32, neg)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_and)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_or)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_xor)
-
-    static inline s8x32 bitwise_not(s8x32 a)
-    {
-        s8x32 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(s8x32, s8x32, bitwise_not)
 
     // compare
 
@@ -978,19 +894,8 @@ namespace detail {
         return s8x32(lo, hi);
     }
 
-    static inline s8x32 min(s8x32 a, s8x32 b)
-    {
-        s8x16 lo = min(a.lo, b.lo);
-        s8x16 hi = min(a.hi, b.hi);
-        return s8x32(lo, hi);
-    }
-
-    static inline s8x32 max(s8x32 a, s8x32 b)
-    {
-        s8x16 lo = max(a.lo, b.lo);
-        s8x16 hi = max(a.hi, b.hi);
-        return s8x32(lo, hi);
-    }
+    SIMD_COMPOSITE_FUNC2(s8x32, s8x32, min)
+    SIMD_COMPOSITE_FUNC2(s8x32, s8x32, max)
 
     // -----------------------------------------------------------------
     // s16x16
@@ -1054,35 +959,13 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, ravg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, mullo)
-
-    static inline s16x16 abs(s16x16 a)
-    {
-        s16x16 result;
-        result.lo = abs(a.lo);
-        result.hi = abs(a.hi);
-        return result;
-    }
-
-    static inline s16x16 neg(s16x16 a)
-    {
-        s16x16 result;
-        result.lo = neg(a.lo);
-        result.hi = neg(a.hi);
-        return result;
-    }
-
+    SIMD_COMPOSITE_FUNC1(s16x16, s16x16, abs)
+    SIMD_COMPOSITE_FUNC1(s16x16, s16x16, neg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_and)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_or)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_xor)
-
-    static inline s16x16 bitwise_not(s16x16 a)
-    {
-        s16x16 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(s16x16, s16x16, bitwise_not)
 
     // compare
 
@@ -1190,21 +1073,8 @@ namespace detail {
         return result;
     }
 
-    static inline s16x16 min(s16x16 a, s16x16 b)
-    {
-        s16x16 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline s16x16 max(s16x16 a, s16x16 b)
-    {
-        s16x16 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, min)
+    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, max)
 
     // -----------------------------------------------------------------
     // s32x8
@@ -1274,35 +1144,13 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, avg)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, ravg)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, mullo)
-
-    static inline s32x8 abs(s32x8 a)
-    {
-        s32x8 result;
-        result.lo = abs(a.lo);
-        result.hi = abs(a.hi);
-        return result;
-    }
-
-    static inline s32x8 neg(s32x8 a)
-    {
-        s32x8 result;
-        result.lo = neg(a.lo);
-        result.hi = neg(a.hi);
-        return result;
-    }
-
+    SIMD_COMPOSITE_FUNC1(s32x8, s32x8, abs)
+    SIMD_COMPOSITE_FUNC1(s32x8, s32x8, neg)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, bitwise_and)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, bitwise_or)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, bitwise_xor)
-
-    static inline s32x8 bitwise_not(s32x8 a)
-    {
-        s32x8 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(s32x8, s32x8, bitwise_not)
 
     // compare
 
@@ -1436,21 +1284,8 @@ namespace detail {
         return result;
     }
 
-    static inline s32x8 min(s32x8 a, s32x8 b)
-    {
-        s32x8 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline s32x8 max(s32x8 a, s32x8 b)
-    {
-        s32x8 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, min)
+    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, max)
 
     // -----------------------------------------------------------------
     // s64x4
@@ -1515,19 +1350,11 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, sub)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, avg)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, ravg)
-
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, bitwise_and)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, bitwise_or)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, bitwise_xor)
-
-    static inline s64x4 bitwise_not(s64x4 a)
-    {
-        s64x4 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(s64x4, s64x4, bitwise_not)
 
     // compare
 
