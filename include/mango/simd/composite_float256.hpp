@@ -9,6 +9,33 @@
 namespace mango {
 namespace simd {
 
+#define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
+    static inline R FUNC(A a) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo); \
+        result.hi = FUNC(a.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
+    static inline R FUNC(AB a, AB b) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo); \
+        result.hi = FUNC(a.hi, b.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_FUNC3(R, ABC, FUNC) \
+    static inline R FUNC(ABC a, ABC b, ABC c) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, c.lo); \
+        result.hi = FUNC(a.hi, b.hi, c.hi); \
+        return result; \
+    }
+
     // -----------------------------------------------------------------
     // f32x8
     // -----------------------------------------------------------------
@@ -51,135 +78,22 @@ namespace simd {
         f32x4_ustore(dest + 4, a.hi);
     }
 
-    static inline f32x8 unpackhi(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = unpackhi(a.lo, b.lo);
-        result.hi = unpackhi(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 unpacklo(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = unpacklo(a.lo, b.lo);
-        result.hi = unpacklo(a.hi, b.hi);
-        return result;
-    }
-
-    // bitwise
-
-    static inline f32x8 bitwise_nand(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = bitwise_nand(a.lo, b.lo);
-        result.hi = bitwise_nand(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 bitwise_and(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = bitwise_and(a.lo, b.lo);
-        result.hi = bitwise_and(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 bitwise_or(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = bitwise_or(a.lo, b.lo);
-        result.hi = bitwise_or(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 bitwise_xor(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = bitwise_xor(a.lo, b.lo);
-        result.hi = bitwise_xor(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 bitwise_not(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
-
-    static inline f32x8 min(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 max(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 abs(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = abs(a.lo);
-        result.hi = abs(a.hi);
-        return result;
-    }
-
-    static inline f32x8 neg(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = neg(a.lo);
-        result.hi = neg(a.hi);
-        return result;
-    }
-
-    static inline f32x8 sign(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = sign(a.lo);
-        result.hi = sign(a.hi);
-        return result;
-    }
-
-    static inline f32x8 add(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = add(a.lo, b.lo);
-        result.hi = add(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 sub(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = sub(a.lo, b.lo);
-        result.hi = sub(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 mul(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = mul(a.lo, b.lo);
-        result.hi = mul(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 div(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = div(a.lo, b.lo);
-        result.hi = div(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, unpackhi)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, unpacklo)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, bitwise_nand)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, bitwise_and)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, bitwise_or)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, bitwise_xor)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, bitwise_not)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, min)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, max)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, abs)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, neg)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, sign)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, add)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, sub)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, mul)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, div)
 
     static inline f32x8 div(f32x8 a, f32 b)
     {
@@ -189,135 +103,25 @@ namespace simd {
         return result;
     }
 
-    static inline f32x8 hadd(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = hadd(a.lo, b.lo);
-        result.hi = hadd(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 hsub(f32x8 a, f32x8 b)
-    {
-        f32x8 result;
-        result.lo = hsub(a.lo, b.lo);
-        result.hi = hsub(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f32x8 madd(f32x8 a, f32x8 b, f32x8 c)
-    {
-        f32x8 result;
-        result.lo = madd(a.lo, b.lo, c.lo);
-        result.hi = madd(a.hi, b.hi, c.hi);
-        return result;
-    }
-
-    static inline f32x8 msub(f32x8 a, f32x8 b, f32x8 c)
-    {
-        f32x8 result;
-        result.lo = msub(a.lo, b.lo, c.lo);
-        result.hi = msub(a.hi, b.hi, c.hi);
-        return result;
-    }
-
-    static inline f32x8 fast_rcp(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = fast_rcp(a.lo);
-        result.hi = fast_rcp(a.hi);
-        return result;
-    }
-
-    static inline f32x8 fast_rsqrt(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = fast_rsqrt(a.lo);
-        result.hi = fast_rsqrt(a.hi);
-        return result;
-    }
-
-    static inline f32x8 fast_sqrt(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = fast_sqrt(a.lo);
-        result.hi = fast_sqrt(a.hi);
-        return result;
-    }
-
-    static inline f32x8 rcp(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = rcp(a.lo);
-        result.hi = rcp(a.hi);
-        return result;
-    }
-
-    static inline f32x8 rsqrt(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = rsqrt(a.lo);
-        result.hi = rsqrt(a.hi);
-        return result;
-    }
-
-    static inline f32x8 sqrt(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = sqrt(a.lo);
-        result.hi = sqrt(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, hadd)
+    SIMD_COMPOSITE_FUNC2(f32x8, f32x8, hsub)
+    SIMD_COMPOSITE_FUNC3(f32x8, f32x8, madd)
+    SIMD_COMPOSITE_FUNC3(f32x8, f32x8, msub)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, fast_rcp)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, fast_rsqrt)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, fast_sqrt)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, rcp)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, rsqrt)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, sqrt)
 
     // compare
 
-    static inline mask32x8 compare_neq(f32x8 a, f32x8 b)
-    {
-        mask32x8 result;
-        result.lo = compare_neq(a.lo, b.lo);
-        result.hi = compare_neq(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask32x8 compare_eq(f32x8 a, f32x8 b)
-    {
-        mask32x8 result;
-        result.lo = compare_eq(a.lo, b.lo);
-        result.hi = compare_eq(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask32x8 compare_lt(f32x8 a, f32x8 b)
-    {
-        mask32x8 result;
-        result.lo = compare_lt(a.lo, b.lo);
-        result.hi = compare_lt(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask32x8 compare_le(f32x8 a, f32x8 b)
-    {
-        mask32x8 result;
-        result.lo = compare_le(a.lo, b.lo);
-        result.hi = compare_le(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask32x8 compare_gt(f32x8 a, f32x8 b)
-    {
-        mask32x8 result;
-        result.lo = compare_gt(a.lo, b.lo);
-        result.hi = compare_gt(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask32x8 compare_ge(f32x8 a, f32x8 b)
-    {
-        mask32x8 result;
-        result.lo = compare_ge(a.lo, b.lo);
-        result.hi = compare_ge(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(mask32x8, f32x8, compare_neq)
+    SIMD_COMPOSITE_FUNC2(mask32x8, f32x8, compare_eq)
+    SIMD_COMPOSITE_FUNC2(mask32x8, f32x8, compare_lt)
+    SIMD_COMPOSITE_FUNC2(mask32x8, f32x8, compare_le)
+    SIMD_COMPOSITE_FUNC2(mask32x8, f32x8, compare_gt)
+    SIMD_COMPOSITE_FUNC2(mask32x8, f32x8, compare_ge)
 
     static inline f32x8 select(mask32x8 mask, f32x8 a, f32x8 b)
     {
@@ -329,45 +133,15 @@ namespace simd {
 
     // rounding
 
-    static inline f32x8 round(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = round(a.lo);
-        result.hi = round(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, round)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, trunc)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, floor)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, ceil)
+    SIMD_COMPOSITE_FUNC1(f32x8, f32x8, fract)
 
-    static inline f32x8 trunc(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = trunc(a.lo);
-        result.hi = trunc(a.hi);
-        return result;
-    }
-
-    static inline f32x8 floor(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = floor(a.lo);
-        result.hi = floor(a.hi);
-        return result;
-    }
-
-    static inline f32x8 ceil(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = ceil(a.lo);
-        result.hi = ceil(a.hi);
-        return result;
-    }
-
-    static inline f32x8 fract(f32x8 a)
-    {
-        f32x8 result;
-        result.lo = fract(a.lo);
-        result.hi = fract(a.hi);
-        return result;
-    }
+#undef SIMD_COMPOSITE_FUNC1
+#undef SIMD_COMPOSITE_FUNC2
+#undef SIMD_COMPOSITE_FUNC3
 
 } // namespace simd
 } // namespace mango

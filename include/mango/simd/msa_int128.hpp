@@ -101,6 +101,12 @@ namespace simd {
         return __msa_ave_u_b(a, b);
     }
 
+    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    {
+        a = add(a, u8x16_set1(1));
+        return avg(a, b);
+    }
+
     // bitwise
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
@@ -264,6 +270,12 @@ namespace simd {
     static inline u16x8 avg(u16x8 a, u16x8 b)
     {
         return __msa_ave_u_h(a, b);
+    }
+
+    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    {
+        a = add(a, u16x8_set1(1));
+        return avg(a, b);
     }
 
     static inline u16x8 mullo(u16x8 a, u16x8 b)
@@ -490,6 +502,12 @@ namespace simd {
         return __msa_ave_u_w(a, b);
     }
 
+    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    {
+        a = add(a, u32x4_set1(1));
+        return avg(a, b);
+    }
+
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
         return (u32x4) __msa_mulv_w((s32x4) a, (s32x4) b);
@@ -694,6 +712,12 @@ namespace simd {
         return __msa_ave_u_d(a, b);
     }
 
+    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    {
+        a = add(a, u64x2_set1(1));
+        return avg(a, b);
+    }
+
     // bitwise
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
@@ -874,6 +898,12 @@ namespace simd {
     static inline s8x16 avg(s8x16 a, s8x16 b)
     {
         return __msa_ave_s_b(a, b);
+    }
+
+    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    {
+        a = add(a, s8x16_set1(1));
+        return avg(a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1094,6 +1124,12 @@ namespace simd {
     static inline s16x8 avg(s16x8 a, s16x8 b)
     {
         return __msa_ave_s_h(a, b);
+    }
+
+    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    {
+        a = add(a, s16x8_set1(1));
+        return avg(a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1360,6 +1396,12 @@ namespace simd {
         return __msa_ave_s_w(a, b);
     }
 
+    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    {
+        a = add(a, s32x4_set1(1));
+        return avg(a, b);
+    }
+
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
         return __msa_mulv_w(a, b);
@@ -1580,6 +1622,12 @@ namespace simd {
     static inline s64x2 avg(s64x2 a, s64x2 b)
     {
         return __msa_ave_s_d(a, b);
+    }
+
+    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    {
+        a = add(a, s64x2_set1(1));
+        return avg(a, b);
     }
 
     // bitwise

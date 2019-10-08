@@ -112,6 +112,11 @@ namespace detail {
         return temp;
     }
 
+    static inline u8x64 ravg(u8x64 a, u8x64 b)
+    {
+        return _mm512_avg_epu8(a, b);
+    }
+
     // bitwise
 
     static inline u8x64 bitwise_nand(u8x64 a, u8x64 b)
@@ -245,6 +250,11 @@ namespace detail {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi16(_mm512_and_si512(a, b), _mm512_srli_epi16(axb, 1));
         return temp;
+    }
+
+    static inline u16x32 ravg(u16x32 a, u16x32 b)
+    {
+        return _mm512_avg_epu16(a, b);
     }
 
     static inline u16x32 mullo(u16x32 a, u16x32 b)
@@ -418,6 +428,12 @@ namespace detail {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi32(_mm512_and_si512(a, b), _mm512_srli_epi32(axb, 1));
         return temp;
+    }
+
+    static inline u32x16 ravg(u32x16 a, u32x16 b)
+    {
+        a = add(a, _mm512_set1_epi32(1));
+        return avg(a, b);
     }
 
     static inline u32x16 mullo(u32x16 a, u32x16 b)
@@ -609,6 +625,12 @@ namespace detail {
         return temp;
     }
 
+    static inline u64x8 ravg(u64x8 a, u64x8 b)
+    {
+        a = add(a, _mm512_set1_epi64(1));
+        return avg(a, b);
+    }
+
     // bitwise
 
     static inline u64x8 bitwise_nand(u64x8 a, u64x8 b)
@@ -761,6 +783,12 @@ namespace detail {
         return temp;
     }
 
+    static inline s8x64 ravg(s8x64 a, s8x64 b)
+    {
+        a = add(a, _mm512_set1_epi8(1));
+        return avg(a, b);
+    }
+
     static inline s8x64 abs(s8x64 a)
     {
         return _mm512_abs_epi8(a);
@@ -903,8 +931,14 @@ namespace detail {
     {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi16(_mm512_and_si512(a, b), _mm512_srai_epi16(axb, 1));
-        temp = _mm512_add_epi16(temp, _mm512_and_si512(_mm512_srli_epi16(temp, 7), axb));
+        temp = _mm512_add_epi16(temp, _mm512_and_si512(_mm512_srli_epi16(temp, 15), axb));
         return temp;
+    }
+
+    static inline s16x32 ravg(s16x32 a, s16x32 b)
+    {
+        a = add(a, _mm512_set1_epi16(1));
+        return avg(a, b);
     }
 
     static inline s16x32 mullo(s16x32 a, s16x32 b)
@@ -1097,8 +1131,14 @@ namespace detail {
     {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi32(_mm512_and_si512(a, b), _mm512_srai_epi32(axb, 1));
-        temp = _mm512_add_epi32(temp, _mm512_and_si512(_mm512_srli_epi32(temp, 7), axb));
+        temp = _mm512_add_epi32(temp, _mm512_and_si512(_mm512_srli_epi32(temp, 31), axb));
         return temp;
+    }
+
+    static inline s32x16 ravg(s32x16 a, s32x16 b)
+    {
+        a = add(a, _mm512_set1_epi32(1));
+        return avg(a, b);
     }
 
     static inline s32x16 mullo(s32x16 a, s32x16 b)
@@ -1287,8 +1327,14 @@ namespace detail {
     {
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_add_epi64(_mm512_and_si512(a, b), detail::simd512_srai1_epi64(axb));
-        temp = _mm512_add_epi64(temp, _mm512_and_si512(_mm512_srli_epi64(temp, 7), axb));
+        temp = _mm512_add_epi64(temp, _mm512_and_si512(_mm512_srli_epi64(temp, 63), axb));
         return temp;
+    }
+
+    static inline s64x8 ravg(s64x8 a, s64x8 b)
+    {
+        a = add(a, _mm512_set1_epi64(1));
+        return avg(a, b);
     }
 
     // bitwise

@@ -9,6 +9,33 @@
 namespace mango {
 namespace simd {
 
+#define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
+    static inline R FUNC(A a) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo); \
+        result.hi = FUNC(a.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
+    static inline R FUNC(AB a, AB b) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo); \
+        result.hi = FUNC(a.hi, b.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_FUNC3(R, ABC, FUNC) \
+    static inline R FUNC(ABC a, ABC b, ABC c) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, c.lo); \
+        result.hi = FUNC(a.hi, b.hi, c.hi); \
+        return result; \
+    }
+
     // -----------------------------------------------------------------
     // f64x4
     // -----------------------------------------------------------------
@@ -167,79 +194,15 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 unpackhi(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = unpackhi(a.lo, b.lo);
-        result.hi = unpackhi(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 unpacklo(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = unpacklo(a.lo, b.lo);
-        result.hi = unpacklo(a.hi, b.hi);
-        return result;
-    }
-
-    // bitwise
-
-    static inline f64x4 bitwise_nand(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = bitwise_nand(a.lo, b.lo);
-        result.hi = bitwise_nand(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 bitwise_and(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = bitwise_and(a.lo, b.lo);
-        result.hi = bitwise_and(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 bitwise_or(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = bitwise_or(a.lo, b.lo);
-        result.hi = bitwise_or(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 bitwise_xor(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = bitwise_xor(a.lo, b.lo);
-        result.hi = bitwise_xor(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 bitwise_not(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = bitwise_not(a.lo);
-        result.hi = bitwise_not(a.hi);
-        return result;
-    }
-
-    static inline f64x4 min(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = min(a.lo, b.lo);
-        result.hi = min(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 max(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = max(a.lo, b.lo);
-        result.hi = max(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, unpackhi)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, unpacklo)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, bitwise_nand)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, bitwise_and)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, bitwise_or)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, bitwise_xor)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, bitwise_not)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, min)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, max)
 
     static inline f64x4 hmin(f64x4 a)
     {
@@ -263,61 +226,13 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 abs(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = abs(a.lo);
-        result.hi = abs(a.hi);
-        return result;
-    }
-
-    static inline f64x4 neg(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = neg(a.lo);
-        result.hi = neg(a.hi);
-        return result;
-    }
-
-    static inline f64x4 sign(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = sign(a.lo);
-        result.hi = sign(a.hi);
-        return result;
-    }
-
-    static inline f64x4 add(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = add(a.lo, b.lo);
-        result.hi = add(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 sub(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = sub(a.lo, b.lo);
-        result.hi = sub(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 mul(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = mul(a.lo, b.lo);
-        result.hi = mul(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 div(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = div(a.lo, b.lo);
-        result.hi = div(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, abs)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, neg)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, sign)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, add)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, sub)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, mul)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, div)
 
     static inline f64x4 div(f64x4 a, f64 b)
     {
@@ -327,85 +242,16 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 hadd(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = hadd(a.lo, b.lo);
-        result.hi = hadd(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 hsub(f64x4 a, f64x4 b)
-    {
-        f64x4 result;
-        result.lo = hsub(a.lo, b.lo);
-        result.hi = hsub(a.hi, b.hi);
-        return result;
-    }
-
-    static inline f64x4 madd(f64x4 a, f64x4 b, f64x4 c)
-    {
-        f64x4 result;
-        result.lo = madd(a.lo, b.lo, c.lo);
-        result.hi = madd(a.hi, b.hi, c.hi);
-        return result;
-    }
-
-    static inline f64x4 msub(f64x4 a, f64x4 b, f64x4 c)
-    {
-        f64x4 result;
-        result.lo = msub(a.lo, b.lo, c.lo);
-        result.hi = msub(a.hi, b.hi, c.hi);
-        return result;
-    }
-
-    static inline f64x4 fast_rcp(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = fast_rcp(a.lo);
-        result.hi = fast_rcp(a.hi);
-        return result;
-    }
-
-    static inline f64x4 fast_rsqrt(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = fast_rsqrt(a.lo);
-        result.hi = fast_rsqrt(a.hi);
-        return result;
-    }
-
-    static inline f64x4 fast_sqrt(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = fast_sqrt(a.lo);
-        result.hi = fast_sqrt(a.hi);
-        return result;
-    }
-
-    static inline f64x4 rcp(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = rcp(a.lo);
-        result.hi = rcp(a.hi);
-        return result;
-    }
-
-    static inline f64x4 rsqrt(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = rsqrt(a.lo);
-        result.hi = rsqrt(a.hi);
-        return result;
-    }
-
-    static inline f64x4 sqrt(f64x4 a)
-    {
-        f64x4 result;
-        result.lo = sqrt(a.lo);
-        result.hi = sqrt(a.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, hadd)
+    SIMD_COMPOSITE_FUNC2(f64x4, f64x4, hsub)
+    SIMD_COMPOSITE_FUNC3(f64x4, f64x4, madd)
+    SIMD_COMPOSITE_FUNC3(f64x4, f64x4, msub)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fast_rcp)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fast_rsqrt)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fast_sqrt)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, rcp)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, rsqrt)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, sqrt)
 
     static inline f64 dot4(f64x4 a, f64x4 b)
     {
@@ -416,53 +262,12 @@ namespace simd {
 
     // compare
 
-    static inline mask64x4 compare_neq(f64x4 a, f64x4 b)
-    {
-        mask64x4 result;
-        result.lo = compare_neq(a.lo, b.lo);
-        result.hi = compare_neq(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask64x4 compare_eq(f64x4 a, f64x4 b)
-    {
-        mask64x4 result;
-        result.lo = compare_eq(a.lo, b.lo);
-        result.hi = compare_eq(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask64x4 compare_lt(f64x4 a, f64x4 b)
-    {
-        mask64x4 result;
-        result.lo = compare_lt(a.lo, b.lo);
-        result.hi = compare_lt(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask64x4 compare_le(f64x4 a, f64x4 b)
-    {
-        mask64x4 result;
-        result.lo = compare_le(a.lo, b.lo);
-        result.hi = compare_le(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask64x4 compare_gt(f64x4 a, f64x4 b)
-    {
-        mask64x4 result;
-        result.lo = compare_gt(a.lo, b.lo);
-        result.hi = compare_gt(a.hi, b.hi);
-        return result;
-    }
-
-    static inline mask64x4 compare_ge(f64x4 a, f64x4 b)
-    {
-        mask64x4 result;
-        result.lo = compare_ge(a.lo, b.lo);
-        result.hi = compare_ge(a.hi, b.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC2(mask64x4, f64x4, compare_neq)
+    SIMD_COMPOSITE_FUNC2(mask64x4, f64x4, compare_eq)
+    SIMD_COMPOSITE_FUNC2(mask64x4, f64x4, compare_lt)
+    SIMD_COMPOSITE_FUNC2(mask64x4, f64x4, compare_le)
+    SIMD_COMPOSITE_FUNC2(mask64x4, f64x4, compare_gt)
+    SIMD_COMPOSITE_FUNC2(mask64x4, f64x4, compare_ge)
 
     static inline f64x4 select(mask64x4 mask, f64x4 a, f64x4 b)
     {
@@ -474,45 +279,15 @@ namespace simd {
 
     // rounding
 
-    static inline f64x4 round(f64x4 s)
-    {
-        f64x4 result;
-        result.lo = round(s.lo);
-        result.hi = round(s.hi);
-        return result;
-    }
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, round)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, trunc)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, floor)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, ceil)
+    SIMD_COMPOSITE_FUNC1(f64x4, f64x4, fract)
 
-    static inline f64x4 trunc(f64x4 s)
-    {
-        f64x4 result;
-        result.lo = trunc(s.lo);
-        result.hi = trunc(s.hi);
-        return result;
-    }
-
-    static inline f64x4 floor(f64x4 s)
-    {
-        f64x4 result;
-        result.lo = floor(s.lo);
-        result.hi = floor(s.hi);
-        return result;
-    }
-
-    static inline f64x4 ceil(f64x4 s)
-    {
-        f64x4 result;
-        result.lo = ceil(s.lo);
-        result.hi = ceil(s.hi);
-        return result;
-    }
-
-    static inline f64x4 fract(f64x4 s)
-    {
-        f64x4 result;
-        result.lo = fract(s.lo);
-        result.hi = fract(s.hi);
-        return result;
-    }
+#undef SIMD_COMPOSITE_FUNC1
+#undef SIMD_COMPOSITE_FUNC2
+#undef SIMD_COMPOSITE_FUNC3
 
 } // namespace simd
 } // namespace mango
