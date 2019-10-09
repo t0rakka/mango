@@ -326,6 +326,16 @@ namespace detail {
         return _mm512_mask_blend_epi16(mask, b, a);
     }
 
+    static inline u16x32 min(u16x32 a, u16x32 b)
+    {
+        return _mm512_min_epu16(a, b);
+    }
+
+    static inline u16x32 max(u16x32 a, u16x32 b)
+    {
+        return _mm512_max_epu16(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -361,16 +371,6 @@ namespace detail {
     static inline u16x32 sra(u16x32 a, int count)
     {
         return _mm512_sra_epi16(a, _mm_cvtsi32_si128(count));
-    }
-
-    static inline u16x32 min(u16x32 a, u16x32 b)
-    {
-        return _mm512_min_epu16(a, b);
-    }
-
-    static inline u16x32 max(u16x32 a, u16x32 b)
-    {
-        return _mm512_max_epu16(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -505,6 +505,16 @@ namespace detail {
         return _mm512_mask_blend_epi32(mask, b, a);
     }
 
+    static inline u32x16 min(u32x16 a, u32x16 b)
+    {
+        return _mm512_min_epu32(a, b);
+    }
+
+    static inline u32x16 max(u32x16 a, u32x16 b)
+    {
+        return _mm512_max_epu32(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -557,16 +567,6 @@ namespace detail {
     static inline u32x16 sra(u32x16 a, u32x16 count)
     {
         return _mm512_srav_epi32(a, count);
-    }
-
-    static inline u32x16 min(u32x16 a, u32x16 b)
-    {
-        return _mm512_min_epu32(a, b);
-    }
-
-    static inline u32x16 max(u32x16 a, u32x16 b)
-    {
-        return _mm512_max_epu32(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1020,6 +1020,16 @@ namespace detail {
         return _mm512_mask_blend_epi16(mask, b, a);
     }
 
+    static inline s16x32 min(s16x32 a, s16x32 b)
+    {
+        return _mm512_min_epi16(a, b);
+    }
+
+    static inline s16x32 max(s16x32 a, s16x32 b)
+    {
+        return _mm512_max_epi16(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1055,16 +1065,6 @@ namespace detail {
     static inline s16x32 sra(s16x32 a, int count)
     {
         return _mm512_sra_epi16(a, _mm_cvtsi32_si128(count));
-    }
-
-    static inline s16x32 min(s16x32 a, s16x32 b)
-    {
-        return _mm512_min_epi16(a, b);
-    }
-
-    static inline s16x32 max(s16x32 a, s16x32 b)
-    {
-        return _mm512_max_epi16(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1210,6 +1210,16 @@ namespace detail {
         return _mm512_mask_blend_epi32(mask, b, a);
     }
 
+    static inline s32x16 min(s32x16 a, s32x16 b)
+    {
+        return _mm512_min_epi32(a, b);
+    }
+
+    static inline s32x16 max(s32x16 a, s32x16 b)
+    {
+        return _mm512_max_epi32(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1262,16 +1272,6 @@ namespace detail {
     static inline s32x16 sra(s32x16 a, u32x16 count)
     {
         return _mm512_srav_epi32(a, count);
-    }
-
-    static inline s32x16 min(s32x16 a, s32x16 b)
-    {
-        return _mm512_min_epi32(a, b);
-    }
-
-    static inline s32x16 max(s32x16 a, s32x16 b)
-    {
-        return _mm512_max_epi32(a, b);
     }
 
     // -----------------------------------------------------------------

@@ -355,6 +355,9 @@ namespace detail {
         return u16x16(lo, hi);
     }
 
+    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, min)
+    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, max)
+
     // shift by constant
 
     template <int Count>
@@ -409,9 +412,6 @@ namespace detail {
         result.hi = sra(a.hi, count);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, min)
-    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, max)
 
     // -----------------------------------------------------------------
     // u32x8
@@ -536,6 +536,9 @@ namespace detail {
         return u32x8(lo, hi);
     }
 
+    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, min)
+    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, max)
+
     // shift by constant
 
     template <int Count>
@@ -616,9 +619,6 @@ namespace detail {
         result.hi = sra(a.hi, count.hi);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, min)
-    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, max)
 
     // -----------------------------------------------------------------
     // u64x4
@@ -1018,6 +1018,9 @@ namespace detail {
         return s16x16(lo, hi);
     }
 
+    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, min)
+    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, max)
+
     // shift by constant
 
     template <int Count>
@@ -1072,9 +1075,6 @@ namespace detail {
         result.hi = sra(a.hi, count);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, min)
-    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, max)
 
     // -----------------------------------------------------------------
     // s32x8
@@ -1203,6 +1203,9 @@ namespace detail {
         return s32x8(lo, hi);
     }
 
+    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, min)
+    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, max)
+
     // shift by constant
 
     template <int Count>
@@ -1283,9 +1286,6 @@ namespace detail {
         result.hi = sra(a.hi, count.hi);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, min)
-    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, max)
 
     // -----------------------------------------------------------------
     // s64x4

@@ -192,6 +192,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask16x16, u16x16, compare_le)
     SIMD_COMPOSITE_SELECT(mask16x16, u16x16, select)
 
+    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, min)
+    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, max)
+
     // shift by constant
 
     template <int Count>
@@ -246,9 +249,6 @@ namespace simd {
         result.hi = sra(a.hi, count);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, min)
-    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, max)
 
     // -----------------------------------------------------------------
     // u32x8
@@ -331,6 +331,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask32x8, u32x8, compare_le)
     SIMD_COMPOSITE_SELECT(mask32x8, u32x8, select)
 
+    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, min)
+    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, max)
+
     // shift by constant
 
     template <int Count>
@@ -411,9 +414,6 @@ namespace simd {
         result.hi = sra(a.hi, count.hi);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, min)
-    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, max)
 
     // -----------------------------------------------------------------
     // u64x4
@@ -687,6 +687,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask16x16, s16x16, compare_le)
     SIMD_COMPOSITE_SELECT(mask16x16, s16x16, select)
 
+    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, min)
+    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, max)
+
     // shift by constant
 
     template <int Count>
@@ -741,9 +744,6 @@ namespace simd {
         result.hi = sra(a.hi, count);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, min)
-    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, max)
 
     // -----------------------------------------------------------------
     // s32x8
@@ -830,6 +830,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask32x8, s32x8, compare_le)
     SIMD_COMPOSITE_SELECT(mask32x8, s32x8, select)
 
+    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, min)
+    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, max)
+
     // shift by constant
 
     template <int Count>
@@ -910,9 +913,6 @@ namespace simd {
         result.hi = sra(a.hi, count.hi);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, min)
-    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, max)
 
     // -----------------------------------------------------------------
     // s64x4

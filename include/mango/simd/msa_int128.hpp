@@ -348,6 +348,16 @@ namespace simd {
         return (v8u16) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
     }
 
+    static inline u16x8 min(u16x8 a, u16x8 b)
+    {
+        return __msa_min_u_h(a, b);
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b)
+    {
+        return __msa_max_u_h(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -383,16 +393,6 @@ namespace simd {
     static inline u16x8 sra(u16x8 a, int count)
     {
         return (v8u16) __msa_sra_h((v8u16) a, (v8i16) __msa_fill_h(count));
-    }
-
-    static inline u16x8 min(u16x8 a, u16x8 b)
-    {
-        return __msa_min_u_h(a, b);
-    }
-
-    static inline u16x8 max(u16x8 a, u16x8 b)
-    {
-        return __msa_max_u_h(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -578,6 +578,16 @@ namespace simd {
         return (v4u32) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
     }
 
+    static inline u32x4 min(u32x4 a, u32x4 b)
+    {
+        return __msa_min_u_w(a, b);
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b)
+    {
+        return __msa_max_u_w(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -630,16 +640,6 @@ namespace simd {
     static inline u32x4 sra(u32x4 a, u32x4 count)
     {
         return (v4u32) __msa_sra_w((v4i32)a, (v4i32)count);
-    }
-
-    static inline u32x4 min(u32x4 a, u32x4 b)
-    {
-        return __msa_min_u_w(a, b);
-    }
-
-    static inline u32x4 max(u32x4 a, u32x4 b)
-    {
-        return __msa_max_u_w(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1213,6 +1213,16 @@ namespace simd {
         return (v8i16) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
     }
 
+    static inline s16x8 min(s16x8 a, s16x8 b)
+    {
+        return __msa_min_s_h(a, b);
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b)
+    {
+        return __msa_max_s_h(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1248,16 +1258,6 @@ namespace simd {
     static inline s16x8 sra(s16x8 a, int count)
     {
         return __msa_sra_h(a, __msa_fill_h(count));
-    }
-
-    static inline s16x8 min(s16x8 a, s16x8 b)
-    {
-        return __msa_min_s_h(a, b);
-    }
-
-    static inline s16x8 max(s16x8 a, s16x8 b)
-    {
-        return __msa_max_s_h(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1472,6 +1472,16 @@ namespace simd {
         return (v4i32) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
     }
 
+    static inline s32x4 min(s32x4 a, s32x4 b)
+    {
+        return __msa_min_s_w(a, b);
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b)
+    {
+        return __msa_max_s_w(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1533,16 +1543,6 @@ namespace simd {
         u32 z = __msa_copy_s_w(s, 2);
         u32 w = __msa_copy_s_w(s, 3);
         return (w << 24) | (z << 16) | (y << 8) | x;
-    }
-
-    static inline s32x4 min(s32x4 a, s32x4 b)
-    {
-        return __msa_min_s_w(a, b);
-    }
-
-    static inline s32x4 max(s32x4 a, s32x4 b)
-    {
-        return __msa_max_s_w(a, b);
     }
 
     static inline s32x4 unpack(u32 s)
