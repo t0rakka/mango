@@ -37,14 +37,14 @@ namespace
             return m_parser.header;
         }
 
-        Exif exif() override
+        Memory icc() override
         {
-            if (m_parser.exif_memory.address)
-            {
-                return Exif(m_parser.exif_memory);
-            }
+            return m_parser.icc_buffer;
+        }
 
-            return Exif();
+        Memory exif() override
+        {
+            return m_parser.exif_memory;
         }
 
         ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override

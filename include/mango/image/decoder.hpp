@@ -61,7 +61,8 @@ namespace mango
 
         // optional
         virtual Memory memory(int level, int depth, int face); // get compressed data
-        virtual Exif exif(); // get exif data
+        virtual Memory icc(); // get ICC data
+        virtual Memory exif(); // get exif data
     };
 
     class ImageDecoder : protected NonCopyable
@@ -75,7 +76,8 @@ namespace mango
         ImageDecodeStatus decode(Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
 
         Memory memory(int level, int depth, int face);
-        Exif exif();
+        Memory icc();
+        Memory exif();
 
         typedef ImageDecoderInterface* (*CreateDecoderFunc)(Memory memory);
 

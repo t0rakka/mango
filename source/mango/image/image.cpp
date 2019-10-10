@@ -210,16 +210,21 @@ namespace mango
     // ImageDecoderInterface
     // ----------------------------------------------------------------------------
 
-    Exif ImageDecoderInterface::exif()
-    {
-        return Exif();
-    }
-
     Memory ImageDecoderInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED(level);
         MANGO_UNREFERENCED(depth);
         MANGO_UNREFERENCED(face);
+        return Memory();
+    }
+
+    Memory ImageDecoderInterface::icc()
+    {
+        return Memory();
+    }
+
+    Memory ImageDecoderInterface::exif()
+    {
         return Memory();
     }
 
@@ -278,18 +283,6 @@ namespace mango
         return status;
     }
 
-    Exif ImageDecoder::exif()
-    {
-        Exif exif;
-
-        if (m_interface)
-        {
-            exif = m_interface->exif();
-        }
-
-        return exif;
-    }
-
     Memory ImageDecoder::memory(int level, int depth, int face)
     {
         Memory memory;
@@ -297,6 +290,30 @@ namespace mango
         if (m_interface)
         {
             memory = m_interface->memory(level, depth, face);
+        }
+
+        return memory;
+    }
+
+    Memory ImageDecoder::icc()
+    {
+        Memory memory;
+
+        if (m_interface)
+        {
+            memory = m_interface->icc();
+        }
+
+        return memory;
+    }
+
+    Memory ImageDecoder::exif()
+    {
+        Memory memory;
+
+        if (m_interface)
+        {
+            memory = m_interface->exif();
         }
 
         return memory;

@@ -98,11 +98,6 @@ namespace
             return m_header;
         }
 
-        Exif exif() override
-        {
-            return Exif();
-        }
-
         ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(palette);

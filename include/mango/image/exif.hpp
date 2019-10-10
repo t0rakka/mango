@@ -8,8 +8,8 @@
 #include "../core/configure.hpp"
 #include "../core/memory.hpp"
 
-namespace mango
-{
+namespace mango {
+namespace image {
 
     struct Exif
     {
@@ -144,4 +144,5 @@ namespace mango
         Exif(Memory memory);
     };
 
+} // namespace image
 } // namespace mango
