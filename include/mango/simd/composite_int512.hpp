@@ -154,6 +154,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask16x32, u16x32, compare_le)
     SIMD_COMPOSITE_SELECT(mask16x32, u16x32, select)
 
+    SIMD_COMPOSITE_FUNC2(u16x32, u16x32, min)
+    SIMD_COMPOSITE_FUNC2(u16x32, u16x32, max)
+
     // shift by constant
 
     template <int Count>
@@ -208,9 +211,6 @@ namespace simd {
         result.hi = sra(a.hi, count);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(u16x32, u16x32, min)
-    SIMD_COMPOSITE_FUNC2(u16x32, u16x32, max)
 
     // -----------------------------------------------------------------
     // u32x16
@@ -276,6 +276,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask32x16, u32x16, compare_ge)
     SIMD_COMPOSITE_FUNC2(mask32x16, u32x16, compare_le)
     SIMD_COMPOSITE_SELECT(mask32x16, u32x16, select)
+
+    SIMD_COMPOSITE_FUNC2(u32x16, u32x16, min)
+    SIMD_COMPOSITE_FUNC2(u32x16, u32x16, max)
 
     // shift by constant
 
@@ -355,9 +358,6 @@ namespace simd {
         return a;
     }
 
-    SIMD_COMPOSITE_FUNC2(u32x16, u32x16, min)
-    SIMD_COMPOSITE_FUNC2(u32x16, u32x16, max)
-
     // -----------------------------------------------------------------
     // u64x8
     // -----------------------------------------------------------------
@@ -420,6 +420,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask64x8, u64x8, compare_ge)
     SIMD_COMPOSITE_FUNC2(mask64x8, u64x8, compare_le)
     SIMD_COMPOSITE_SELECT(mask64x8, u64x8, select)
+
+    SIMD_COMPOSITE_FUNC2(u64x8, u64x8, min)
+    SIMD_COMPOSITE_FUNC2(u64x8, u64x8, max)
 
     // shift by constant
 
@@ -581,6 +584,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask16x32, s16x32, compare_le)
     SIMD_COMPOSITE_SELECT(mask16x32, s16x32, select)
 
+    SIMD_COMPOSITE_FUNC2(s16x32, s16x32, min)
+    SIMD_COMPOSITE_FUNC2(s16x32, s16x32, max)
+
     // shift by constant
 
     template <int Count>
@@ -635,9 +641,6 @@ namespace simd {
         result.hi = sra(a.hi, count);
         return result;
     }
-
-    SIMD_COMPOSITE_FUNC2(s16x32, s16x32, min)
-    SIMD_COMPOSITE_FUNC2(s16x32, s16x32, max)
 
     // -----------------------------------------------------------------
     // s32x16
@@ -705,6 +708,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask32x16, s32x16, compare_ge)
     SIMD_COMPOSITE_FUNC2(mask32x16, s32x16, compare_le)
     SIMD_COMPOSITE_SELECT(mask32x16, s32x16, select)
+
+    SIMD_COMPOSITE_FUNC2(s32x16, s32x16, min)
+    SIMD_COMPOSITE_FUNC2(s32x16, s32x16, max)
 
     // shift by constant
 
@@ -784,9 +790,6 @@ namespace simd {
         return a;
     }
 
-    SIMD_COMPOSITE_FUNC2(s32x16, s32x16, min)
-    SIMD_COMPOSITE_FUNC2(s32x16, s32x16, max)
-
     // -----------------------------------------------------------------
     // s64x8
     // -----------------------------------------------------------------
@@ -849,6 +852,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask64x8, s64x8, compare_ge)
     SIMD_COMPOSITE_FUNC2(mask64x8, s64x8, compare_le)
     SIMD_COMPOSITE_SELECT(mask64x8, s64x8, select)
+
+    SIMD_COMPOSITE_FUNC2(s64x8, s64x8, min)
+    SIMD_COMPOSITE_FUNC2(s64x8, s64x8, max)
 
     // shift by constant
 

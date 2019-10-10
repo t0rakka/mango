@@ -364,6 +364,16 @@ namespace simd {
         return vec_sel(b.data, a.data, mask.data);
     }
 
+    static inline u16x8 min(u16x8 a, u16x8 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b)
+    {
+        return vec_max(a.data, b.data);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -399,16 +409,6 @@ namespace simd {
     static inline u16x8 sra(u16x8 a, int count)
     {
         return vec_sra(a.data, vec_splats(u16(count)));
-    }
-
-    static inline u16x8 min(u16x8 a, u16x8 b)
-    {
-        return vec_min(a.data, b.data);
-    }
-
-    static inline u16x8 max(u16x8 a, u16x8 b)
-    {
-        return vec_max(a.data, b.data);
     }
     
     // -----------------------------------------------------------------
@@ -612,6 +612,16 @@ namespace simd {
         return vec_sel(b.data, a.data, mask.data);
     }
 
+    static inline u32x4 min(u32x4 a, u32x4 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b)
+    {
+        return vec_max(a.data, b.data);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -664,16 +674,6 @@ namespace simd {
     static inline u32x4 sra(u32x4 a, u32x4 count)
     {
         return vec_sra(a.data, count.data);
-    }
-
-    static inline u32x4 min(u32x4 a, u32x4 b)
-    {
-        return vec_min(a.data, b.data);
-    }
-
-    static inline u32x4 max(u32x4 a, u32x4 b)
-    {
-        return vec_max(a.data, b.data);
     }
 
     // -----------------------------------------------------------------
@@ -817,6 +817,16 @@ namespace simd {
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return vec_sel(b.data, a.data, mask.data);
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return vec_max(a.data, b.data);
     }
 
     // shift by constant
@@ -1272,6 +1282,16 @@ namespace simd {
         return vec_sel(b.data, a.data, mask.data);
     }
 
+    static inline s16x8 min(s16x8 a, s16x8 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b)
+    {
+        return vec_max(a.data, b.data);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1307,16 +1327,6 @@ namespace simd {
     static inline s16x8 sra(s16x8 a, int count)
     {
         return vec_sra(a.data, vec_splats(u16(count)));
-    }
-
-    static inline s16x8 min(s16x8 a, s16x8 b)
-    {
-        return vec_min(a.data, b.data);
-    }
-
-    static inline s16x8 max(s16x8 a, s16x8 b)
-    {
-        return vec_max(a.data, b.data);
     }
 
     // -----------------------------------------------------------------
@@ -1548,6 +1558,16 @@ namespace simd {
         return vec_sel(b.data, a.data, mask.data);
     }
 
+    static inline s32x4 min(s32x4 a, s32x4 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b)
+    {
+        return vec_max(a.data, b.data);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1608,16 +1628,6 @@ namespace simd {
         v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
         v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
         return vec_extract(v.data, 0);
-    }
-
-    static inline s32x4 min(s32x4 a, s32x4 b)
-    {
-        return vec_min(a.data, b.data);
-    }
-
-    static inline s32x4 max(s32x4 a, s32x4 b)
-    {
-        return vec_max(a.data, b.data);
     }
 
     static inline s32x4 unpack(u32 s)
@@ -1768,6 +1778,16 @@ namespace simd {
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return vec_sel(b.data, a.data, mask.data);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return vec_max(a.data, b.data);
     }
 
     // shift by constant

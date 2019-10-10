@@ -423,6 +423,16 @@ namespace detail
         return _mm_mask_blend_epi16(mask, b, a);
     }
 
+    static inline u16x8 min(u16x8 a, u16x8 b)
+    {
+        return _mm_min_epu16(a, b);
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b)
+    {
+        return _mm_max_epu16(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -458,16 +468,6 @@ namespace detail
     static inline u16x8 sra(u16x8 a, int count)
     {
         return _mm_sra_epi16(a, _mm_cvtsi32_si128(count));
-    }
-
-    static inline u16x8 min(u16x8 a, u16x8 b)
-    {
-        return _mm_min_epu16(a, b);
-    }
-
-    static inline u16x8 max(u16x8 a, u16x8 b)
-    {
-        return _mm_max_epu16(a, b);
     }
     
     // -----------------------------------------------------------------
@@ -655,6 +655,16 @@ namespace detail
         return _mm_mask_blend_epi32(mask, b, a);
     }
 
+    static inline u32x4 min(u32x4 a, u32x4 b)
+    {
+        return _mm_min_epu32(a, b);
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b)
+    {
+        return _mm_max_epu32(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -707,16 +717,6 @@ namespace detail
     static inline u32x4 sra(u32x4 a, u32x4 count)
     {
         return _mm_srav_epi32(a, count);
-    }
-
-    static inline u32x4 min(u32x4 a, u32x4 b)
-    {
-        return _mm_min_epu32(a, b);
-    }
-
-    static inline u32x4 max(u32x4 a, u32x4 b)
-    {
-        return _mm_max_epu32(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -857,6 +857,16 @@ namespace detail
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return _mm_mask_blend_epi64(mask, b, a);
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return _mm_min_epu64(a, b);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return _mm_max_epu64(a, b);
     }
 
     // shift by constant
@@ -1264,6 +1274,16 @@ namespace detail
         return _mm_mask_blend_epi16(mask, b, a);
     }
 
+    static inline s16x8 min(s16x8 a, s16x8 b)
+    {
+        return _mm_min_epi16(a, b);
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b)
+    {
+        return _mm_max_epi16(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1299,16 +1319,6 @@ namespace detail
     static inline s16x8 sra(s16x8 a, int count)
     {
         return _mm_sra_epi16(a, _mm_cvtsi32_si128(count));
-    }
-
-    static inline s16x8 min(s16x8 a, s16x8 b)
-    {
-        return _mm_min_epi16(a, b);
-    }
-
-    static inline s16x8 max(s16x8 a, s16x8 b)
-    {
-        return _mm_max_epi16(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1523,6 +1533,16 @@ namespace detail
         return _mm_mask_blend_epi32(mask, b, a);
     }
 
+    static inline s32x4 min(s32x4 a, s32x4 b)
+    {
+        return _mm_min_epi32(a, b);
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b)
+    {
+        return _mm_max_epi32(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1582,16 +1602,6 @@ namespace detail
         __m128i s16 = _mm_packs_epi32(s, s);
         __m128i s8 = _mm_packus_epi16(s16, s16);
         return _mm_cvtsi128_si32(s8);
-    }
-
-    static inline s32x4 min(s32x4 a, s32x4 b)
-    {
-        return _mm_min_epi32(a, b);
-    }
-
-    static inline s32x4 max(s32x4 a, s32x4 b)
-    {
-        return _mm_max_epi32(a, b);
     }
 
     static inline s32x4 unpack(u32 s)
@@ -1739,6 +1749,16 @@ namespace detail
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return _mm_mask_blend_epi64(mask, b, a);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return _mm_min_epi64(a, b);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return _mm_max_epi64(a, b);
     }
 
     // shift by constant

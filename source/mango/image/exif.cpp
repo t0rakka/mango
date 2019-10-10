@@ -10,6 +10,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     enum
     {
@@ -618,7 +619,7 @@ namespace
                     //printf(" (%f sec) ", f);
                     break;
                 }
-                    
+
                 case ExposureTime:
                 {
                     const u8* p = base + offset;
@@ -627,7 +628,7 @@ namespace
                     //printf(" (%i/%i sec) ", v0, v1);
                     break;
                 }
-                    
+
                 case ResolutionUnit:
                 {
                     //if (offset == 2) printf(" (inches)");
@@ -668,8 +669,8 @@ namespace
 
 } // namespace
 
-namespace mango
-{
+namespace mango {
+namespace image {
 
     Exif::Exif()
     {
@@ -724,4 +725,5 @@ namespace mango
         parseIFD(*this, p, start, littleEndian);
     }
 
+} // namespace image
 } // namespace mango

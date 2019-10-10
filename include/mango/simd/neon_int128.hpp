@@ -350,6 +350,16 @@ namespace simd {
         return vbslq_u16(mask, a, b);
     }
 
+    static inline u16x8 min(u16x8 a, u16x8 b)
+    {
+        return vminq_u16(a, b);
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b)
+    {
+        return vmaxq_u16(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -387,16 +397,6 @@ namespace simd {
     {
         const s16x8 temp = vshlq_s16(vreinterpretq_s16_u16(a), vdupq_n_s16(-count));
         return vreinterpretq_u16_s16(temp);
-    }
-
-    static inline u16x8 min(u16x8 a, u16x8 b)
-    {
-        return vminq_u16(a, b);
-    }
-
-    static inline u16x8 max(u16x8 a, u16x8 b)
-    {
-        return vmaxq_u16(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -586,6 +586,16 @@ namespace simd {
         return vbslq_u32(mask, a, b);
     }
 
+    static inline u32x4 min(u32x4 a, u32x4 b)
+    {
+        return vminq_u32(a, b);
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b)
+    {
+        return vmaxq_u32(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -642,16 +652,6 @@ namespace simd {
     {
         const s32x4 shift = vnegq_s32(vreinterpretq_s32_u32(count));
         return vreinterpretq_u32_s32(vshlq_s32(vreinterpretq_s32_u32(a), shift));
-    }
-
-    static inline u32x4 min(u32x4 a, u32x4 b)
-    {
-        return vminq_u32(a, b);
-    }
-
-    static inline u32x4 max(u32x4 a, u32x4 b)
-    {
-        return vmaxq_u32(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -825,6 +825,16 @@ namespace simd {
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
         return vbslq_u64(mask, a, b);
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return select(compare_gt(a, b), b, a);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return select(compare_gt(a, b), a, b);
     }
 
     // shift by constant
@@ -1275,6 +1285,16 @@ namespace simd {
         return vbslq_s16(mask, a, b);
     }
 
+    static inline s16x8 min(s16x8 a, s16x8 b)
+    {
+        return vminq_s16(a, b);
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b)
+    {
+        return vmaxq_s16(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1314,16 +1334,6 @@ namespace simd {
     static inline s16x8 sra(s16x8 a, int count)
     {
         return vshlq_s16(a, vdupq_n_s16(-count));
-    }
-
-    static inline s16x8 min(s16x8 a, s16x8 b)
-    {
-        return vminq_s16(a, b);
-    }
-
-    static inline s16x8 max(s16x8 a, s16x8 b)
-    {
-        return vmaxq_s16(a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1560,6 +1570,16 @@ namespace simd {
         return vbslq_s32(mask, a, b);
     }
 
+    static inline s32x4 min(s32x4 a, s32x4 b)
+    {
+        return vminq_s32(a, b);
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b)
+    {
+        return vmaxq_s32(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1618,16 +1638,6 @@ namespace simd {
     {
         const s32x4 shift = vnegq_s32(vreinterpretq_s32_u32(count));
         return vshlq_s32(a, shift);
-    }
-
-    static inline s32x4 min(s32x4 a, s32x4 b)
-    {
-        return vminq_s32(a, b);
-    }
-
-    static inline s32x4 max(s32x4 a, s32x4 b)
-    {
-        return vmaxq_s32(a, b);
     }
 
     static inline u32 pack(s32x4 s)
@@ -1820,6 +1830,16 @@ namespace simd {
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return vbslq_s64(mask, a, b);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return select(compare_gt(a, b), b, a);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return select(compare_gt(a, b), a, b);
     }
 
     // shift by constant
