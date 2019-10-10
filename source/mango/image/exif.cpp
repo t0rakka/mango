@@ -677,7 +677,7 @@ namespace image {
         initExif(*this);
     }
 
-    Exif::Exif(Memory memory)
+    Exif::Exif(ConstMemory memory)
     {
         initExif(*this);
 

@@ -48,14 +48,14 @@ namespace nocompress {
         return size;
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         MANGO_UNREFERENCED(level);
         std::memcpy(dest.address, source.address, source.size);
         return source.size;
     }
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         std::memcpy(dest.address, source.address, source.size);
     }
@@ -74,7 +74,7 @@ namespace miniz {
 		return mz_compressBound(s);
     }
 
-	size_t compress(Memory dest, Memory source, int level)
+	size_t compress(Memory dest, ConstMemory source, int level)
 	{
         level = clamp(level, 0, 10);
 
@@ -90,7 +90,7 @@ namespace miniz {
         return dest_size;
 	}
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         mz_ulong dest_size = mz_ulong(dest.size);
         mz_ulong source_size = mz_ulong(source.size);
@@ -138,7 +138,7 @@ namespace lz4 {
 		return LZ4_compressBound(s);
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         const int source_size = int(source.size);
         const int dest_size = int(dest.size);
@@ -166,7 +166,7 @@ namespace lz4 {
         return written;
 	}
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         int status = LZ4_decompress_safe(source.cast<const char>(), dest.cast<char>(), int(source.size), int(dest.size));
         if (status < 0)
@@ -204,7 +204,7 @@ namespace lz4 {
             return LZ4_compressBound(s);
         }
 
-        size_t encode(Memory dest, Memory source)
+        size_t encode(Memory dest, ConstMemory source)
         {
             size_t written = 0;
 
@@ -256,7 +256,7 @@ namespace lz4 {
             LZ4_freeStreamDecode(m_stream);
         }
 
-        size_t decode(Memory dest, Memory source)
+        size_t decode(Memory dest, ConstMemory source)
         {
             size_t written = 0;
 
@@ -314,7 +314,7 @@ namespace lzo {
         return size + (size / 16) + 128;
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         void* workmem = aligned_malloc(LZO1X_MEM_COMPRESS);
 
@@ -335,7 +335,7 @@ namespace lzo {
         return static_cast<size_t>(dst_len);
 	}
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         lzo_uint dst_len = (lzo_uint)dest.size;
         int x = lzo1x_decompress(
@@ -365,7 +365,7 @@ namespace zstd {
 		return ZSTD_compressBound(size) + turbo;
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         // zstd compress does not support encoding of empty source
         if (!source.size)
@@ -383,7 +383,7 @@ namespace zstd {
         return x;
 	}
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         size_t x = ZSTD_decompress((void*)dest.address, dest.size,
                                    source.address, source.size);
@@ -420,7 +420,7 @@ namespace zstd {
             return ZSTD_compressBound(size) + turbo;
         }
 
-        size_t encode(Memory dest, Memory source)
+        size_t encode(Memory dest, ConstMemory source)
         {
             ZSTD_inBuffer input;
 
@@ -462,7 +462,7 @@ namespace zstd {
             ZSTD_freeDStream(z);
         }
 
-        size_t decode(Memory dest, Memory source)
+        size_t decode(Memory dest, ConstMemory source)
         {
             ZSTD_inBuffer input;
 
@@ -514,7 +514,7 @@ namespace bzip2 {
         return size + (size / 100) + 600;
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         const int blockSize100k = clamp(level, 1, 9);
 
@@ -535,7 +535,7 @@ namespace bzip2 {
 
         unsigned int destLength = static_cast<unsigned int>(dest.size);
 
-        strm.next_in = source.cast<char>();
+        strm.next_in = const_cast<char*>(source.cast<const char>());
         strm.next_out = dest.cast<char>();
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = destLength;
@@ -558,7 +558,7 @@ namespace bzip2 {
         return static_cast<size_t>(destLength);
     }
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         bz_stream strm;
 
@@ -572,7 +572,7 @@ namespace bzip2 {
             MANGO_EXCEPTION("[bzip2] decompression failed.");
         }
 
-        strm.next_in = source.cast<char>();
+        strm.next_in = const_cast<char*>(source.cast<const char>());
         strm.next_out = dest.cast<char>();
         strm.avail_in = static_cast<unsigned int>(source.size);
         strm.avail_out = static_cast<unsigned int>(dest.size);
@@ -606,7 +606,7 @@ namespace lzfse {
         return 1024 + size;
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         MANGO_UNREFERENCED(level);
 
@@ -616,7 +616,7 @@ namespace lzfse {
         return written;
     }
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         const size_t scratch_size = lzfse_decode_scratch_size();
         Buffer scratch(scratch_size);
@@ -659,7 +659,7 @@ namespace lzma
         return (size * 3) / 2 + 1024 * 16;
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         CLzmaEncProps props;
         LzmaEncProps_Init(&props);
@@ -700,7 +700,7 @@ namespace lzma
         return bytes_written;
     }
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         // read props header
         const u8* prop = source.address;
@@ -735,7 +735,7 @@ namespace lzma2
         return lzma::bound(size);
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         CLzma2EncProps props;
         Lzma2EncProps_Init(&props);
@@ -777,7 +777,7 @@ namespace lzma2
         return bytes_written;
     }
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         // read props header
         Byte prop = source.address[0];
@@ -831,10 +831,10 @@ namespace ppmd8
 
     struct InputStreamPPMD8 : IByteIn
     {
-        Memory memory;
+        ConstMemory memory;
         size_t offset;
 
-        InputStreamPPMD8(Memory memory)
+        InputStreamPPMD8(ConstMemory memory)
             : memory(memory)
             , offset(0)
         {
@@ -858,7 +858,7 @@ namespace ppmd8
         return lzma::bound(size);
     }
 
-    size_t compress(Memory dest, Memory source, int level)
+    size_t compress(Memory dest, ConstMemory source, int level)
     {
         u8* start = dest.address;
 
@@ -901,7 +901,7 @@ namespace ppmd8
         return bytes_written;
     }
 
-    void decompress(Memory dest, Memory source)
+    void decompress(Memory dest, ConstMemory source)
     {
         // read 2 byte header
         LittleEndianConstPointer p = source.address;

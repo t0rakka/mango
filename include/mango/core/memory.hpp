@@ -11,14 +11,12 @@
 #include "object.hpp"
 
 namespace mango {
+namespace detail {
 
-    // -----------------------------------------------------------------------
-    // memory
-    // -----------------------------------------------------------------------
-
+    template <typename T>
     struct Memory
     {
-        u8* address;
+        T* address;
         size_t size;
 
         Memory()
@@ -27,27 +25,27 @@ namespace mango {
         {
         }
 
-        Memory(u8* address, size_t bytes)
+        Memory(T* address, size_t bytes)
             : address(address)
             , size(bytes)
         {
         }
 
-        Memory(const u8* address, size_t bytes)
-            : address(const_cast<u8*>(address))
-            , size(bytes)
-        {
-        }
-
-        operator u8* () const
+        operator T* () const
         {
             return address;
         }
 
-        template <typename T>
-        T* cast() const
+        template <typename S>
+        operator Memory<S> () const
         {
-            return reinterpret_cast<T*>(address);
+            return Memory<S>(address, size);
+        }
+
+        template <typename S>
+        S* cast() const
+        {
+            return reinterpret_cast<S*>(address);
         }
 
         Memory slice(size_t slice_offset, size_t slice_size = 0) const
@@ -60,6 +58,15 @@ namespace mango {
             return memory;
         }
     };
+
+} // namespace detail
+
+    // -----------------------------------------------------------------------
+    // memory
+    // -----------------------------------------------------------------------
+
+    using Memory = detail::Memory<u8>;
+    using ConstMemory = detail::Memory<const u8>;
 
     class SharedMemory
     {
@@ -80,18 +87,18 @@ namespace mango {
     class VirtualMemory : private NonCopyable
     {
     protected:
-        Memory m_memory;
+        ConstMemory m_memory;
 
     public:
         VirtualMemory() = default;
         virtual ~VirtualMemory() {}
 
-        const Memory* operator -> () const
+        const ConstMemory* operator -> () const
         {
             return &m_memory;
         }
 
-        operator Memory () const
+        operator ConstMemory () const
         {
             return m_memory;
         }
@@ -127,7 +134,7 @@ namespace mango {
     // -----------------------------------------------------------------------
 
     // ONLY store POD types ; even if we have configurable type for the pointer
-    // it's only for convenience and WILL NOT call constructor / destructor !!!
+    // it's only for convenience and WILL NOT call constructor / destructor for the elements!
 
     template <typename T>
     class AlignedPointer : public NonCopyable

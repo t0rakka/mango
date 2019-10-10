@@ -56,8 +56,8 @@ namespace mango
         void ctr_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
         void ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
 
-        void ccm_block_encrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length);
-        void ccm_block_decrypt(Memory output, Memory input, Memory associated, Memory nonce, int mac_length);
+        void ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length);
+        void ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length);
     
         // aribtrary size buffer encryption
         // input can be any size but last block is automatically zero padded

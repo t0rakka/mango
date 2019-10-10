@@ -897,7 +897,7 @@ namespace
 
     // block decode
 
-    void directBlockDecode(const TextureCompressionInfo& block, const Surface& surface, Memory memory, int xsize, int ysize)
+    void directBlockDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
         const int blockImageSize = block.width * surface.format.bytes();
         const int blockImageStride = block.height * surface.stride;
@@ -939,7 +939,7 @@ namespace
         queue.wait();
     }
 
-    void clipConvertBlockDecode(const TextureCompressionInfo& block, const Surface& surface, Memory memory, int xsize, int ysize)
+    void clipConvertBlockDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
         Blitter blitter(surface.format, block.format);
 
@@ -985,7 +985,7 @@ namespace
 
     // surface decode
 
-    void directSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, Memory memory, int xsize, int ysize)
+    void directSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
         TextureCompressionInfo temp = block;
         temp.width = surface.width;
@@ -993,7 +993,7 @@ namespace
         temp.decode(temp, surface.image, memory.address, surface.stride);
     }
 
-    void clipConvertSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, Memory memory, int xsize, int ysize)
+    void clipConvertSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
         TextureCompressionInfo temp = block;
         temp.width = surface.width;
@@ -1107,7 +1107,7 @@ namespace mango
         *this = *info;
     }
 
-    TextureCompressionStatus TextureCompressionInfo::decompress(const Surface& surface, Memory memory) const
+    TextureCompressionStatus TextureCompressionInfo::decompress(const Surface& surface, ConstMemory memory) const
     {
         TextureCompressionStatus status;
 

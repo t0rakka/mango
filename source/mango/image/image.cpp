@@ -210,29 +210,29 @@ namespace mango
     // ImageDecoderInterface
     // ----------------------------------------------------------------------------
 
-    Memory ImageDecoderInterface::memory(int level, int depth, int face)
+    ConstMemory ImageDecoderInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED(level);
         MANGO_UNREFERENCED(depth);
         MANGO_UNREFERENCED(face);
-        return Memory();
+        return ConstMemory();
     }
 
-    Memory ImageDecoderInterface::icc()
+    ConstMemory ImageDecoderInterface::icc()
     {
-        return Memory();
+        return ConstMemory();
     }
 
-    Memory ImageDecoderInterface::exif()
+    ConstMemory ImageDecoderInterface::exif()
     {
-        return Memory();
+        return ConstMemory();
     }
 
     // ----------------------------------------------------------------------------
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
-    ImageDecoder::ImageDecoder(Memory memory, const std::string& filename)
+    ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
     {
         ImageDecoder::CreateDecoderFunc create_decoder_func = g_imageServer.getImageDecoder(filename);
         if (create_decoder_func)
@@ -283,9 +283,9 @@ namespace mango
         return status;
     }
 
-    Memory ImageDecoder::memory(int level, int depth, int face)
+    ConstMemory ImageDecoder::memory(int level, int depth, int face)
     {
-        Memory memory;
+        ConstMemory memory;
 
         if (m_interface)
         {
@@ -295,9 +295,9 @@ namespace mango
         return memory;
     }
 
-    Memory ImageDecoder::icc()
+    ConstMemory ImageDecoder::icc()
     {
-        Memory memory;
+        ConstMemory memory;
 
         if (m_interface)
         {
@@ -307,9 +307,9 @@ namespace mango
         return memory;
     }
 
-    Memory ImageDecoder::exif()
+    ConstMemory ImageDecoder::exif()
     {
-        Memory memory;
+        ConstMemory memory;
 
         if (m_interface)
         {

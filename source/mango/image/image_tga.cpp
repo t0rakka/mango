@@ -44,7 +44,7 @@ namespace
 
         std::string error;
 
-        u8* parse(LittleEndianPointer& p)
+        const u8* parse(LittleEndianConstPointer& p)
         {
             idfield_length   = p.read8();
             colormap_type    = p.read8();
@@ -186,7 +186,7 @@ namespace
 	// tga code
 	// ------------------------------------------------------------
 
-    void decompressRLE(u8* temp, u8* p, int width, int height, int bpp)
+    void decompressRLE(u8* temp, const u8* p, int width, int height, int bpp)
     {
         int x = 0;
         int y = 0;
@@ -196,7 +196,7 @@ namespace
         {
             u8 sample = *p++;
             int count = (sample & 0x7f) + 1;
-            u8* color = p;
+            const u8* color = p;
 
             if (sample & 0x80)
             {
@@ -252,11 +252,11 @@ namespace
     {
         ImageHeader m_header;
         HeaderTGA m_targa_header;
-        u8* m_pointer;
+        const u8* m_pointer;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
-            LittleEndianPointer p = memory.address;
+            LittleEndianConstPointer p = memory.address;
             m_pointer = m_targa_header.parse(p);
             if (m_pointer)
             {
@@ -298,7 +298,7 @@ namespace
                 return status;
             }
 
-            LittleEndianPointer p = m_pointer;
+            LittleEndianConstPointer p = m_pointer;
 
             Palette palette;
 
@@ -372,7 +372,7 @@ namespace
             }
 
 		    std::unique_ptr<u8[]> temp;
-            u8* data = p;
+            const u8* data = p;
 
             if (m_targa_header.isRLE())
             {
@@ -422,7 +422,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

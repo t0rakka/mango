@@ -106,7 +106,7 @@ namespace
 namespace mango
 {
 
-    MD5 md5(Memory memory)
+    MD5 md5(ConstMemory memory)
     {
         MD5 hash;
         hash.data[0] = 0x67452301;

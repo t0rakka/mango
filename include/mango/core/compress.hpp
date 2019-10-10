@@ -40,7 +40,7 @@ namespace mango
         StreamEncoder() {}
         virtual ~StreamEncoder() {}
         virtual size_t bound(size_t size) const = 0;
-        virtual size_t encode(Memory dest, Memory source) = 0;
+        virtual size_t encode(Memory dest, ConstMemory source) = 0;
     };
 
     class StreamDecoder : public RefCounted
@@ -48,7 +48,7 @@ namespace mango
     public:
         StreamDecoder() {}
         virtual ~StreamDecoder() {}
-        virtual size_t decode(Memory dest, Memory source) = 0;
+        virtual size_t decode(Memory dest, ConstMemory source) = 0;
     };
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
@@ -83,15 +83,15 @@ namespace mango
     namespace nocompress
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     namespace miniz
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
@@ -99,22 +99,22 @@ namespace mango
     namespace lz4
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     namespace lzo
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     namespace zstd
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
 #endif
@@ -124,15 +124,15 @@ namespace mango
     namespace bzip2
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     namespace lzfse
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
 #endif
@@ -140,22 +140,22 @@ namespace mango
     namespace lzma
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     namespace lzma2
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     namespace ppmd8
     {
         size_t bound(size_t size);
-        size_t compress(Memory dest, Memory source, int level = 6);
-        void decompress(Memory dest, Memory source);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
     }
 
     // -----------------------------------------------------------------------
@@ -183,8 +183,8 @@ namespace mango
         std::string name;
 
         size_t (*bound)(size_t size);
-        size_t (*compress)(Memory dest, Memory source, int level);
-        void (*decompress)(Memory dest, Memory source);
+        size_t (*compress)(Memory dest, ConstMemory source, int level);
+        void (*decompress)(Memory dest, ConstMemory source);
     };
 
     std::vector<Compressor> getCompressors();

@@ -175,7 +175,7 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    Surface load_surface(Memory memory, const std::string& extension, const Format* format)
+    Surface load_surface(ConstMemory memory, const std::string& extension, const Format* format)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
 
@@ -206,7 +206,7 @@ namespace
         return surface;
     }
 
-    Surface load_palette_surface(Memory memory, const std::string& extension, Palette& palette)
+    Surface load_palette_surface(ConstMemory memory, const std::string& extension, Palette& palette)
     {
         Surface surface(0, 0, Format(), 0, nullptr);
         palette.size = 0;
@@ -264,9 +264,9 @@ namespace mango
     {
     }
 
-    Surface::Surface(int width, int height, const Format& format, int stride, void* image)
+    Surface::Surface(int width, int height, const Format& format, int stride, const void* image)
         : format(format)
-        , image(reinterpret_cast<u8*>(image))
+        , image(const_cast<u8*>(reinterpret_cast<const u8*>(image)))
         , stride(stride)
         , width(width)
         , height(height)
@@ -523,26 +523,23 @@ namespace mango
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int width_, int height_, const Format& format_, int stride_, u8* image_)
-        : Surface(width_, height_, format_, stride_, image_)
+    Bitmap::Bitmap(int w, int h, const Format& f, int s)
+        : Surface(w, h, f, s, nullptr)
     {
         if (!stride)
         {
             stride = width * format.bytes();
         }
 
-        if (!image)
-        {
-            image = new u8[stride * height];
-        }
+        image = new u8[stride * height];
     }
 
-    Bitmap::Bitmap(Memory memory, const std::string& extension)
+    Bitmap::Bitmap(ConstMemory memory, const std::string& extension)
         : Surface(load_surface(memory, extension, nullptr))
     {
     }
 
-    Bitmap::Bitmap(Memory memory, const std::string& extension, const Format& format)
+    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format)
         : Surface(load_surface(memory, extension, &format))
     {
     }
@@ -557,7 +554,7 @@ namespace mango
     {
     }
 
-    Bitmap::Bitmap(Memory memory, const std::string& extension, Palette& palette)
+    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, Palette& palette)
         : Surface(load_palette_surface(memory, extension, palette))
     {
     }

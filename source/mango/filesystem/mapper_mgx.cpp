@@ -59,11 +59,11 @@ namespace
 
     struct HeaderMGX
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
 
-        HeaderMGX(Memory memory)
+        HeaderMGX(ConstMemory memory)
             : m_memory(memory)
         {
             if (!memory.address)
@@ -197,7 +197,7 @@ namespace filesystem {
         VirtualMemoryMGX(const u8* address, const u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
-            m_memory = Memory(address, size);
+            m_memory = ConstMemory(address, size);
         }
 
         ~VirtualMemoryMGX()
@@ -217,7 +217,7 @@ namespace filesystem {
         std::string m_password;
 
     public:
-        MapperMGX(Memory parent, const std::string& password)
+        MapperMGX(ConstMemory parent, const std::string& password)
             : m_header(parent)
             , m_password(password)
         {
@@ -326,7 +326,7 @@ namespace filesystem {
                 if (block.method)
                 {
                     Compressor compressor = getCompressor(Compressor::Method(block.method));
-                    Memory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
+                    ConstMemory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
 
                     q.enqueue([=, &block, &segment] {
                         if (block.uncompressed == segment.size && segment.offset == 0)
@@ -363,7 +363,7 @@ namespace filesystem {
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperMGX(Memory parent, const std::string& password)
+    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password)
     {
         AbstractMapper* mapper = new MapperMGX(parent, password);
         return mapper;

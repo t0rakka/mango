@@ -105,13 +105,13 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         HeaderASTC m_header;
-        Memory m_data;
+        ConstMemory m_data;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
             m_header.read(p);
-            m_data = Memory(p, memory.address + memory.size - p);
+            m_data = ConstMemory(p, memory.address + memory.size - p);
         }
 
         ~Interface()
@@ -123,7 +123,7 @@ namespace
             return m_header.header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -162,7 +162,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

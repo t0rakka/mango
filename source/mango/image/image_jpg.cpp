@@ -23,7 +23,7 @@ namespace
     {
         jpeg::Parser m_parser;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_parser(memory)
         {
         }
@@ -37,12 +37,12 @@ namespace
             return m_parser.header;
         }
 
-        Memory icc() override
+        ConstMemory icc() override
         {
-            return m_parser.icc_buffer;
+            return Memory(m_parser.icc_buffer);
         }
 
-        Memory exif() override
+        ConstMemory exif() override
         {
             return m_parser.exif_memory;
         }
@@ -59,7 +59,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

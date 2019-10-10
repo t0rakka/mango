@@ -141,7 +141,7 @@ namespace image {
         std::string	LenseName;
 
         Exif();
-        Exif(Memory memory);
+        Exif(ConstMemory memory);
     };
 
 } // namespace image

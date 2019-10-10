@@ -308,7 +308,7 @@ namespace
 		u64	dirStartOffset;    // offset of the start of central directory on the disk
 		u16	commentLen;        // zip file comment length
 
-		DirEndRecord(Memory memory)
+		DirEndRecord(ConstMemory memory)
 		{
             std::memset(this, 0, sizeof(DirEndRecord));
 
@@ -552,7 +552,7 @@ namespace filesystem {
         VirtualMemoryZIP(const u8* address, const u8* delete_address, size_t size)
             : m_delete_address(delete_address)
         {
-            m_memory = Memory(address, size);
+            m_memory = ConstMemory(address, size);
         }
 
         ~VirtualMemoryZIP()
@@ -568,11 +568,11 @@ namespace filesystem {
     class MapperZIP : public AbstractMapper
     {
     public:
-        Memory m_parent_memory;
+        ConstMemory m_parent_memory;
         std::string m_password;
         Indexer<FileHeader> m_folders;
 
-        MapperZIP(Memory parent, const std::string& password)
+        MapperZIP(ConstMemory parent, const std::string& password)
             : m_parent_memory(parent)
             , m_password(password)
         {
@@ -731,7 +731,8 @@ namespace filesystem {
                     address = p;
                     u64 compressed_size = header.compressedSize - 4;
 
-                    lzma::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(compressed_size)));
+                    lzma::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)),
+                                     ConstMemory(address, size_t(compressed_size)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -747,7 +748,8 @@ namespace filesystem {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
                     u8* uncompressed_buffer = new u8[uncompressed_size];
 
-                    ppmd8::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
+                    ppmd8::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)),
+                                      ConstMemory(address, size_t(header.compressedSize)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -763,7 +765,8 @@ namespace filesystem {
                     const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
                     u8* uncompressed_buffer = new u8[uncompressed_size];
 
-                    bzip2::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)), Memory(address, size_t(header.compressedSize)));
+                    bzip2::decompress(Memory(uncompressed_buffer, size_t(header.uncompressedSize)),
+                                      ConstMemory(address, size_t(header.compressedSize)));
 
                     delete[] buffer;
                     buffer = uncompressed_buffer;
@@ -856,7 +859,7 @@ namespace filesystem {
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperZIP(Memory parent, const std::string& password)
+    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password)
     {
         AbstractMapper* mapper = new MapperZIP(parent, password);
         return mapper;

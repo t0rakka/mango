@@ -201,7 +201,7 @@ namespace
         TextureCompressionInfo m_info;
         ImageHeader header;
 
-        void read(Memory memory)
+        void read(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
 
@@ -236,7 +236,7 @@ namespace
             header.compression = m_info.compression;
         }
 
-        void parse_legacy(Memory memory)
+        void parse_legacy(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
 
@@ -472,7 +472,7 @@ namespace
             m_info.format = format;
         }
 
-        void parse_version3(Memory memory, bool swap_header)
+        void parse_version3(ConstMemory memory, bool swap_header)
         {
             pvr_header3_t pvr;
             std::memcpy(&pvr, memory.address, sizeof(pvr));
@@ -569,11 +569,11 @@ namespace
             m_data_offset = sizeof(pvr_header3_t) + pvr.metadatasize - 4;
         }
 
-        Memory getMemory(Memory memory, int level, int depth, u32 face) const
+        ConstMemory getMemory(ConstMemory memory, int level, int depth, u32 face) const
         {
             const u8* p = memory.address + m_data_offset;
 
-            Memory data;
+            ConstMemory data;
 
             for (int iLevel = 0; iLevel < m_mipmaps; ++iLevel)
             {
@@ -597,7 +597,7 @@ namespace
                             if (iLevel == level && iDepth == depth && iFace == int(face) && iSurface == 0)
                             {
                                 // Store selected address
-                                data = Memory(p, size);
+                                data = ConstMemory(p, size);
                             }
 
                             p += size;
@@ -616,10 +616,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderPVR m_pvr_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
             m_pvr_header.read(memory);
@@ -634,7 +634,7 @@ namespace
             return m_pvr_header.header;
         }
 
-        Memory memory(int level, int depth, int face) override
+        ConstMemory memory(int level, int depth, int face) override
         {
             return m_pvr_header.getMemory(m_memory, level, depth, face);
         }
@@ -652,7 +652,7 @@ namespace
                 return status;
             }
 
-            Memory data = m_pvr_header.getMemory(m_memory, level, depth, face);
+            ConstMemory data = m_pvr_header.getMemory(m_memory, level, depth, face);
 
             int width = std::max(1, m_pvr_header.m_width >> level);
             int height = std::max(1, m_pvr_header.m_height >> level);
@@ -676,7 +676,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

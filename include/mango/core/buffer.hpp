@@ -23,7 +23,7 @@ namespace mango
         Buffer(Alignment alignment = Alignment());
         Buffer(size_t bytes, Alignment alignment = Alignment());
         Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
-        Buffer(Memory memory, Alignment alignment = Alignment());
+        Buffer(ConstMemory memory, Alignment alignment = Alignment());
         ~Buffer();
 
         operator Memory () const;

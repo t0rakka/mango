@@ -261,7 +261,7 @@ namespace image {
         TextureCompressionInfo(opengl::TextureFormat format);
         TextureCompressionInfo(vulkan::TextureFormat format);
 
-        TextureCompressionStatus decompress(const Surface& surface, Memory memory) const;
+        TextureCompressionStatus decompress(const Surface& surface, ConstMemory memory) const;
         TextureCompressionStatus compress(Memory memory, const Surface& surface) const;
 
         CompressionFormat getCompressionFormat() const

@@ -40,7 +40,7 @@ namespace
         bool isPaletteMarker = false;
         ImageHeader header;
 
-        HeaderPCX(Memory memory)
+        HeaderPCX(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
 
@@ -228,10 +228,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         HeaderPCX m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
             , m_header(memory)
         {
@@ -402,7 +402,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(Memory memory)
+    ImageDecoderInterface* createInterface(ConstMemory memory)
     {
         ImageDecoderInterface* x = new Interface(memory);
         return x;

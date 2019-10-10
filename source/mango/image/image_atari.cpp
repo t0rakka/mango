@@ -23,10 +23,10 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        Memory m_memory;
+        ConstMemory m_memory;
         ImageHeader m_header;
 
-        Interface(Memory memory)
+        Interface(ConstMemory memory)
             : m_memory(memory)
         {
         }
@@ -266,7 +266,7 @@ namespace
         header_degas m_degas_header;
         const u8* m_data;
 
-        InterfaceDEGAS(Memory memory)
+        InterfaceDEGAS(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -306,7 +306,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDEGAS(Memory memory)
+    ImageDecoderInterface* createInterfaceDEGAS(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceDEGAS(memory);
         return x;
@@ -435,7 +435,7 @@ namespace
         header_neo m_neo_header;
         const u8* m_data;
 
-        InterfaceNEO(Memory memory)
+        InterfaceNEO(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -463,7 +463,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceNEO(Memory memory)
+    ImageDecoderInterface* createInterfaceNEO(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceNEO(memory);
         return x;
@@ -702,7 +702,7 @@ namespace
         header_spu m_spu_header;
         const u8* m_data;
 
-        InterfaceSPU(Memory memory)
+        InterfaceSPU(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -731,7 +731,7 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSPU(Memory memory)
+    ImageDecoderInterface* createInterfaceSPU(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceSPU(memory);
         return x;
@@ -1031,7 +1031,7 @@ namespace
         header_ca m_ca_header;
         const u8* m_data;
 
-        InterfaceCA(Memory memory)
+        InterfaceCA(ConstMemory memory)
             : Interface(memory)
             , m_data(nullptr)
         {
@@ -1058,7 +1058,7 @@ namespace
 		}
     };
 
-    ImageDecoderInterface* createInterfaceCA(Memory memory)
+    ImageDecoderInterface* createInterfaceCA(ConstMemory memory)
     {
         ImageDecoderInterface* x = new InterfaceCA(memory);
         return x;
