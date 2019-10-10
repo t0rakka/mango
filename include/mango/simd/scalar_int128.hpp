@@ -1151,6 +1151,16 @@ namespace detail {
         return detail::scalar_select(mask, a, b);
     }
 
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_unroll(detail::scalar_min, a, b);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return detail::scalar_unroll(detail::scalar_max, a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -2080,6 +2090,16 @@ namespace detail {
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return detail::scalar_select(mask, a, b);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_unroll(detail::scalar_min, a, b);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
     // shift by constant

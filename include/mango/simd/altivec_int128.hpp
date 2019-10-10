@@ -819,6 +819,16 @@ namespace simd {
         return vec_sel(b.data, a.data, mask.data);
     }
 
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return vec_max(a.data, b.data);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1768,6 +1778,16 @@ namespace simd {
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return vec_sel(b.data, a.data, mask.data);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return vec_min(a.data, b.data);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return vec_max(a.data, b.data);
     }
 
     // shift by constant

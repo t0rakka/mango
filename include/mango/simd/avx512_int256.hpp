@@ -737,6 +737,16 @@ namespace detail {
         return _mm256_mask_blend_epi64(mask, b, a);
     }
 
+    static inline u64x4 min(u64x4 a, u64x4 b)
+    {
+        return _mm256_min_epu64(a, b);
+    }
+
+    static inline u64x4 max(u64x4 a, u64x4 b)
+    {
+        return _mm256_max_epu64(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1514,6 +1524,16 @@ namespace detail {
     static inline s64x4 select(mask64x4 mask, s64x4 a, s64x4 b)
     {
         return _mm256_mask_blend_epi64(mask, b, a);
+    }
+
+    static inline s64x4 min(s64x4 a, s64x4 b)
+    {
+        return _mm256_min_epi64(a, b);
+    }
+
+    static inline s64x4 max(s64x4 a, s64x4 b)
+    {
+        return _mm256_max_epi64(a, b);
     }
 
     // shift by constant

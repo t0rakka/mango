@@ -421,6 +421,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask64x8, u64x8, compare_le)
     SIMD_COMPOSITE_SELECT(mask64x8, u64x8, select)
 
+    SIMD_COMPOSITE_FUNC2(u64x8, u64x8, min)
+    SIMD_COMPOSITE_FUNC2(u64x8, u64x8, max)
+
     // shift by constant
 
     template <int Count>
@@ -849,6 +852,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(mask64x8, s64x8, compare_ge)
     SIMD_COMPOSITE_FUNC2(mask64x8, s64x8, compare_le)
     SIMD_COMPOSITE_SELECT(mask64x8, s64x8, select)
+
+    SIMD_COMPOSITE_FUNC2(s64x8, s64x8, min)
+    SIMD_COMPOSITE_FUNC2(s64x8, s64x8, max)
 
     // shift by constant
 

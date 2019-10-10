@@ -827,6 +827,16 @@ namespace simd {
         return vbslq_u64(mask, a, b);
     }
 
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return select(compare_gt(a, b), b, a);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return select(compare_gt(a, b), a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1820,6 +1830,16 @@ namespace simd {
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return vbslq_s64(mask, a, b);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return select(compare_gt(a, b), b, a);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return select(compare_gt(a, b), a, b);
     }
 
     // shift by constant

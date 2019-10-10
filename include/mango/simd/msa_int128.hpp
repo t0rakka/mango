@@ -782,6 +782,16 @@ namespace simd {
         return (v2u64) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
     }
 
+    static inline u64x2 min(u64x2 a, u64x2 b)
+    {
+        return __msa_min_u_d(a, b);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b)
+    {
+        return __msa_max_u_d(a, b);
+    }
+
     // shift by constant
 
     template <int Count>
@@ -1692,6 +1702,16 @@ namespace simd {
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
         return (v2i64) __msa_bsel_v((v16u8) mask, (v16u8) a, (v16u8) b);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b)
+    {
+        return __msa_min_s_d(a, b);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b)
+    {
+        return __msa_max_s_d(a, b);
     }
 
     // shift by constant

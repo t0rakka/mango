@@ -162,6 +162,16 @@ namespace mango
         return simd::unpackhi(a, b);
     }
 
+    static inline Vector<u64, 2> min(Vector<u64, 2> a, Vector<u64, 2> b)
+    {
+        return simd::min(a, b);
+    }
+
+    static inline Vector<u64, 2> max(Vector<u64, 2> a, Vector<u64, 2> b)
+    {
+        return simd::max(a, b);
+    }
+
     // ------------------------------------------------------------------
 	// bitwise operators
     // ------------------------------------------------------------------

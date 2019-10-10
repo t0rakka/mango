@@ -740,6 +740,9 @@ namespace detail {
         return u64x4(lo, hi);
     }
 
+    SIMD_COMPOSITE_FUNC2(u64x4, u64x4, min)
+    SIMD_COMPOSITE_FUNC2(u64x4, u64x4, max)
+
     // shift by constant
 
     template <int Count>
@@ -1406,6 +1409,9 @@ namespace detail {
         s64x2 hi = select(detail::get_high(mask), a.hi, b.hi);
         return s64x4(lo, hi);
     }
+
+    SIMD_COMPOSITE_FUNC2(s64x4, s64x4, min)
+    SIMD_COMPOSITE_FUNC2(s64x4, s64x4, max)
 
     // shift by constant
 
