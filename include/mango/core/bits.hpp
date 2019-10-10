@@ -177,14 +177,21 @@ namespace mango
     // 16 bits
     // ----------------------------------------------------------------------------
 
+    constexpr u16 u16_scale(u16 value, int from, int to)
+    {
+        // scale value "from" bits "to" bits
+        return value * ((1 << to) - 1) / ((1 << from) - 1);
+    }
+
     constexpr u16 u16_extend(u16 value, int from, int to)
     {
+        // bit-pattern replicating scaling (can at most double the bits)
         return (value << (to - from)) | (value >> (from * 2 - to));
-        //return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
     constexpr s16 s16_extend(s16 value, int from)
     {
+        // sign-extend "from" bits to full s16
         return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
     }
 
@@ -192,14 +199,21 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
+    constexpr u32 u32_scale(u32 value, int from, int to)
+    {
+        // scale value "from" bits "to" bits
+        return value * ((1 << to) - 1) / ((1 << from) - 1);
+    }
+
     constexpr u32 u32_extend(u32 value, int from, int to)
     {
+        // bit-pattern replicating scaling (can at most double the bits)
         return (value << (to - from)) | (value >> (from * 2 - to));
-        //return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
     constexpr s32 s32_extend(s32 value, int from)
     {
+        // sign-extend "from" bits to full s32
         return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
     }
 
@@ -500,13 +514,21 @@ namespace mango
     // 64 bits
     // ----------------------------------------------------------------------------
 
+    constexpr u64 u64_scale(u64 value, int from, int to)
+    {
+        // scale value "from" bits "to" bits
+        return value * ((1 << to) - 1) / ((1 << from) - 1);
+    }
+
     constexpr u64 u64_extend(u64 value, int from, int to)
     {
+        // bit-pattern replicating scaling (can at most double the bits)
         return (value << (to - from)) | (value >> (from * 2 - to));
     }
 
     constexpr s64 s64_extend(s64 value, int from, int to)
     {
+        // sign-extend "from" bits to full s64
         return value | (value & (1ull << (from - 1)) ? ~((1ull << from) - 1) : 0);
     }
 
