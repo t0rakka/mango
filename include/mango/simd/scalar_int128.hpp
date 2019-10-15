@@ -140,7 +140,7 @@ namespace detail {
     {
         ScalarType v = (a & b) + ((a ^ b) >> 1);
         using UnsignedType = typename std::make_unsigned<ScalarType>::type;
-        return v + (UnsignedType(v) >> (sizeof(UnsignedType) * 8 - 1)) & (a ^ b);
+        return v + ((UnsignedType(v) >> (sizeof(UnsignedType) * 8 - 1)) & (a ^ b));
     }
 
     template <typename ScalarType>
