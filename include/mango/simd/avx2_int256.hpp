@@ -941,7 +941,7 @@ namespace detail {
 
     static inline s8x32 ravg(s8x32 a, s8x32 b)
     {
-        const __m256i sign = _mm256_set1_epi8(0x80);
+        const __m256i sign = _mm256_set1_epi8(0x80u);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         // unsigned average
@@ -1131,7 +1131,7 @@ namespace detail {
 
     static inline s16x16 ravg(s16x16 a, s16x16 b)
     {
-        const __m256i sign = _mm256_set1_epi16(0x8000);
+        const __m256i sign = _mm256_set1_epi16(0x8000u);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
         // unsigned average

@@ -804,7 +804,7 @@ namespace detail {
 
     static inline s8x64 ravg(s8x64 a, s8x64 b)
     {
-        const __m512i sign = _mm512_set1_epi8(0x80);
+        const __m512i sign = _mm512_set1_epi8(0x80u);
         a = _mm512_xor_si512(a, sign);
         b = _mm512_xor_si512(b, sign);
         // unsigned average
@@ -960,7 +960,7 @@ namespace detail {
 
     static inline s16x32 ravg(s16x32 a, s16x32 b)
     {
-        const __m512i sign = _mm512_set1_epi16(0x8000);
+        const __m512i sign = _mm512_set1_epi16(0x8000u);
         a = _mm512_xor_si512(a, sign);
         b = _mm512_xor_si512(b, sign);
         // unsigned average
