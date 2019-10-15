@@ -19,7 +19,7 @@ namespace simd {
     {
         static_assert(sizeof(scalar_vector<S0, S1>) == sizeof(D), "Vectors must be same size.");
         D temp;
-        std::memcpy(&temp, &s, sizeof(D));
+        std::memcpy(reinterpret_cast<void*>(&temp), &s, sizeof(D));
         return temp;
     }
 
@@ -28,7 +28,7 @@ namespace simd {
     {
         static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
         D temp;
-        std::memcpy(&temp, &s, sizeof(D));
+        std::memcpy(reinterpret_cast<void*>(&temp), &s, sizeof(D));
         return temp;
     }
 
