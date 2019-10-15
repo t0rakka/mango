@@ -34,8 +34,6 @@ namespace simd {
     template <int ScalarBits, int VectorSize, typename MaskType>
     struct hardware_mask
     {
-        using vector = MaskType;
-
         MaskType data;
 
         hardware_mask() = default;
