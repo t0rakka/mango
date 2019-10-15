@@ -351,6 +351,7 @@ else ()
     endif ()
 
     if (ARM OR AARCH64)
+        message(STATUS "SIMD: NEON")
         add_definitions (-mfpu=neon -mfloat-abi=hard)
         set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
     endif ()
