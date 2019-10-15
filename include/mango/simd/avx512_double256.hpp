@@ -118,12 +118,12 @@ namespace simd {
         return _mm256_setzero_pd();
     }
 
-    static inline f64x4 f64x4_set1(f64 s)
+    static inline f64x4 f64x4_set(f64 s)
     {
         return _mm256_set1_pd(s);
     }
 
-    static inline f64x4 f64x4_set4(f64 x, f64 y, f64 z, f64 w)
+    static inline f64x4 f64x4_set(f64 x, f64 y, f64 z, f64 w)
     {
         return _mm256_setr_pd(x, y, z, w);
     }

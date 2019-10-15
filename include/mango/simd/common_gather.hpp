@@ -17,7 +17,7 @@ namespace simd {
         auto s1 = address[get_component<1>(offset)];
         auto s2 = address[get_component<2>(offset)];
         auto s3 = address[get_component<3>(offset)];
-        return f32x4_set4(s0, s1, s2, s3);
+        return f32x4_set(s0, s1, s2, s3);
     }
 
     static inline f64x2 gather2(const f64* address, s32x4 offset)
@@ -33,7 +33,7 @@ namespace simd {
         auto s1 = address[get_component<1>(offset)];
         auto s2 = address[get_component<2>(offset)];
         auto s3 = address[get_component<3>(offset)];
-        return u32x4_set4(s0, s1, s2, s3);
+        return u32x4_set(s0, s1, s2, s3);
     }
 
     static inline s32x4 gather4(const s32* address, s32x4 offset)
@@ -42,7 +42,7 @@ namespace simd {
         auto s1 = address[get_component<1>(offset)];
         auto s2 = address[get_component<2>(offset)];
         auto s3 = address[get_component<3>(offset)];
-        return s32x4_set4(s0, s1, s2, s3);
+        return s32x4_set(s0, s1, s2, s3);
     }
 
     static inline u64x2 gather2(const u64* address, s32x4 offset)
@@ -74,7 +74,7 @@ namespace simd {
         auto s1 = address[get_component<1>(offset)];
         auto s2 = address[get_component<2>(offset)];
         auto s3 = address[get_component<3>(offset)];
-        return f64x4_set4(s0, s1, s2, s3);
+        return f64x4_set(s0, s1, s2, s3);
     }
 
     static inline u32x8 gather8(const u32* address, s32x8 offset)
@@ -97,7 +97,7 @@ namespace simd {
         auto s1 = address[get_component<1>(offset)];
         auto s2 = address[get_component<2>(offset)];
         auto s3 = address[get_component<3>(offset)];
-        return u64x4_set4(s0, s1, s2, s3);
+        return u64x4_set(s0, s1, s2, s3);
     }
 
     static inline s64x4 gather4(const s64* address, s32x4 offset)
@@ -106,7 +106,7 @@ namespace simd {
         auto s1 = address[get_component<1>(offset)];
         auto s2 = address[get_component<2>(offset)];
         auto s3 = address[get_component<3>(offset)];
-        return s64x4_set4(s0, s1, s2, s3);
+        return s64x4_set(s0, s1, s2, s3);
     }
 
     // 512 bit gather

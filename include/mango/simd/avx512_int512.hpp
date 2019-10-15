@@ -60,7 +60,7 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline u8x64 u8x64_set1(u8 s)
+    static inline u8x64 u8x64_set(u8 s)
     {
         return _mm512_set1_epi8(s);
     }
@@ -200,7 +200,7 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline u16x32 u16x32_set1(u16 s)
+    static inline u16x32 u16x32_set(u16 s)
     {
         return _mm512_set1_epi16(s);
     }
@@ -382,12 +382,13 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline u32x16 u32x16_set1(u32 s)
+    static inline u32x16 u32x16_set(u32 s)
     {
         return _mm512_set1_epi32(s);
     }
 
-    static inline u32x16 u32x16_set16(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7,
+    static inline u32x16 u32x16_set(
+        u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7,
         u32 s8, u32 s9, u32 s10, u32 s11, u32 s12, u32 s13, u32 s14, u32 s15)
     {
         return _mm512_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
@@ -578,12 +579,12 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline u64x8 u64x8_set1(u64 s)
+    static inline u64x8 u64x8_set(u64 s)
     {
         return _mm512_set1_epi64(s);
     }
 
-    static inline u64x8 u64x8_set8(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
+    static inline u64x8 u64x8_set(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
     {
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }
@@ -740,7 +741,7 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline s8x64 s8x64_set1(s8 s)
+    static inline s8x64 s8x64_set(s8 s)
     {
         return _mm512_set1_epi8(s);
     }
@@ -892,7 +893,7 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline s16x32 s16x32_set1(s16 s)
+    static inline s16x32 s16x32_set(s16 s)
     {
         return _mm512_set1_epi16(s);
     }
@@ -1086,12 +1087,13 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline s32x16 s32x16_set1(s32 s)
+    static inline s32x16 s32x16_set(s32 s)
     {
         return _mm512_set1_epi32(s);
     }
 
-    static inline s32x16 s32x16_set16(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
+    static inline s32x16 s32x16_set(
+        s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
         s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
     {
         return _mm512_setr_epi32(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
@@ -1293,12 +1295,12 @@ namespace detail {
         return _mm512_setzero_si512();
     }
 
-    static inline s64x8 s64x8_set1(s64 s)
+    static inline s64x8 s64x8_set(s64 s)
     {
         return _mm512_set1_epi64(s);
     }
 
-    static inline s64x8 s64x8_set8(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
+    static inline s64x8 s64x8_set(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
     {
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }

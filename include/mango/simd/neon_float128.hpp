@@ -168,12 +168,12 @@ namespace simd {
         return vdupq_n_f32(0.0f);
     }
 
-    static inline f32x4 f32x4_set1(f32 s)
+    static inline f32x4 f32x4_set(f32 s)
     {
         return vdupq_n_f32(s);
     }
 
-    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
+    static inline f32x4 f32x4_set(f32 x, f32 y, f32 z, f32 w)
     {
         float32x4_t temp = { x, y, z, w };
         return temp;

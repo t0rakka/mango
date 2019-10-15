@@ -58,19 +58,19 @@ namespace simd {
         return {{ 0.0f, 0.0f, 0.0f, 0.0f }};
     }
 
-    static inline f32x4 f32x4_set1(f32 s)
+    static inline f32x4 f32x4_set(f32 s)
     {
         return {{ s, s, s, s }};
     }
 
-    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
+    static inline f32x4 f32x4_set(f32 x, f32 y, f32 z, f32 w)
     {
         return {{ x, y, z, w }};
     }
 
     static inline f32x4 f32x4_uload(const f32* source)
     {
-        return f32x4_set4(source[0], source[1], source[2], source[3]);
+        return f32x4_set(source[0], source[1], source[2], source[3]);
     }
 
     static inline void f32x4_ustore(f32* dest, f32x4 a)
@@ -83,22 +83,22 @@ namespace simd {
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)
     {
-        return f32x4_set4(a[0], a[1], b[0], b[1]);
+        return f32x4_set(a[0], a[1], b[0], b[1]);
     }
 
     static inline f32x4 movehl(f32x4 a, f32x4 b)
     {
-        return f32x4_set4(b[2], b[3], a[2], a[3]);
+        return f32x4_set(b[2], b[3], a[2], a[3]);
     }
 
     static inline f32x4 unpacklo(f32x4 a, f32x4 b)
     {
-        return f32x4_set4(a[0], b[0], a[1], b[1]);
+        return f32x4_set(a[0], b[0], a[1], b[1]);
     }
 
     static inline f32x4 unpackhi(f32x4 a, f32x4 b)
     {
-        return f32x4_set4(a[2], b[2], a[3], b[3]);
+        return f32x4_set(a[2], b[2], a[3], b[3]);
     }
 
     // bitwise
@@ -109,7 +109,7 @@ namespace simd {
         const Float y(~Float(a[1]).u & Float(b[1]).u);
         const Float z(~Float(a[2]).u & Float(b[2]).u);
         const Float w(~Float(a[3]).u & Float(b[3]).u);
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     static inline f32x4 bitwise_and(f32x4 a, f32x4 b)
@@ -118,7 +118,7 @@ namespace simd {
         const Float y(Float(a[1]).u & Float(b[1]).u);
         const Float z(Float(a[2]).u & Float(b[2]).u);
         const Float w(Float(a[3]).u & Float(b[3]).u);
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     static inline f32x4 bitwise_or(f32x4 a, f32x4 b)
@@ -127,7 +127,7 @@ namespace simd {
         const Float y(Float(a[1]).u | Float(b[1]).u);
         const Float z(Float(a[2]).u | Float(b[2]).u);
         const Float w(Float(a[3]).u | Float(b[3]).u);
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     static inline f32x4 bitwise_xor(f32x4 a, f32x4 b)
@@ -136,7 +136,7 @@ namespace simd {
         const Float y(Float(a[1]).u ^ Float(b[1]).u);
         const Float z(Float(a[2]).u ^ Float(b[2]).u);
         const Float w(Float(a[3]).u ^ Float(b[3]).u);
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     static inline f32x4 bitwise_not(f32x4 a)
@@ -145,7 +145,7 @@ namespace simd {
         const Float y(~Float(a[1]).u);
         const Float z(~Float(a[2]).u);
         const Float w(~Float(a[3]).u);
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     static inline f32x4 min(f32x4 a, f32x4 b)
@@ -173,7 +173,7 @@ namespace simd {
         f32 l = std::min(a[0], a[1]);
         f32 h = std::min(a[2], a[3]);
         f32 s = std::min(l, h);
-        return f32x4_set1(s);
+        return f32x4_set(s);
     }
 
     static inline f32x4 hmax(f32x4 a)
@@ -181,7 +181,7 @@ namespace simd {
         f32 l = std::max(a[0], a[1]);
         f32 h = std::max(a[2], a[3]);
         f32 s = std::max(l, h);
-        return f32x4_set1(s);
+        return f32x4_set(s);
     }
 
     static inline f32x4 abs(f32x4 a)
@@ -196,7 +196,7 @@ namespace simd {
 
     static inline f32x4 neg(f32x4 a)
     {
-        return f32x4_set4(-a[0], -a[1], -a[2], -a[3]);
+        return f32x4_set(-a[0], -a[1], -a[2], -a[3]);
     }
 
     static inline f32x4 sign(f32x4 a)

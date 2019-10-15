@@ -199,12 +199,12 @@ namespace simd {
 
     static inline f32x4 radians(f32x4 a)
     {
-        return mul(a, f32x4_set1(0.01745329251f));
+        return mul(a, f32x4_set(0.01745329251f));
     }
 
     static inline f32x4 degrees(f32x4 a)
     {
-        return mul(a, f32x4_set1(57.2957795131f));
+        return mul(a, f32x4_set(57.2957795131f));
     }
 
     static inline f32 square(f32x4 a)
@@ -219,7 +219,7 @@ namespace simd {
 
     static inline f32x4 normalize(f32x4 a)
     {
-        return mul(a, rsqrt(f32x4_set1(square(a))));
+        return mul(a, rsqrt(f32x4_set(square(a))));
     }
 
     // ------------------------------------------------------------------
@@ -238,12 +238,12 @@ namespace simd {
 
     static inline f32x8 radians(f32x8 a)
     {
-        return mul(a, f32x8_set1(0.01745329251f));
+        return mul(a, f32x8_set(0.01745329251f));
     }
 
     static inline f32x8 degrees(f32x8 a)
     {
-        return mul(a, f32x8_set1(57.2957795131f));
+        return mul(a, f32x8_set(57.2957795131f));
     }
 
     // ------------------------------------------------------------------
@@ -262,12 +262,12 @@ namespace simd {
 
     static inline f32x16 radians(f32x16 a)
     {
-        return mul(a, f32x16_set1(0.01745329251f));
+        return mul(a, f32x16_set(0.01745329251f));
     }
 
     static inline f32x16 degrees(f32x16 a)
     {
-        return mul(a, f32x16_set1(57.2957795131f));
+        return mul(a, f32x16_set(57.2957795131f));
     }
 
     // ------------------------------------------------------------------
@@ -286,12 +286,12 @@ namespace simd {
 
     static inline f64x2 radians(f64x2 a)
     {
-        return mul(a, f64x2_set1(0.01745329251));
+        return mul(a, f64x2_set(0.01745329251));
     }
 
     static inline f64x2 degrees(f64x2 a)
     {
-        return mul(a, f64x2_set1(57.2957795131));
+        return mul(a, f64x2_set(57.2957795131));
     }
 
     static inline f64 square(f64x2 a)
@@ -306,7 +306,7 @@ namespace simd {
 
     static inline f64x2 normalize(f64x2 a)
     {
-        return mul(a, rsqrt(f64x2_set1(square(a))));
+        return mul(a, rsqrt(f64x2_set(square(a))));
     }
 
     // ------------------------------------------------------------------
@@ -325,12 +325,12 @@ namespace simd {
 
     static inline f64x4 radians(f64x4 a)
     {
-        return mul(a, f64x4_set1(0.01745329251));
+        return mul(a, f64x4_set(0.01745329251));
     }
 
     static inline f64x4 degrees(f64x4 a)
     {
-        return mul(a, f64x4_set1(57.2957795131));
+        return mul(a, f64x4_set(57.2957795131));
     }
 
     static inline f64 square(f64x4 a)
@@ -345,7 +345,7 @@ namespace simd {
 
     static inline f64x4 normalize(f64x4 a)
     {
-        f64x4 v = f64x4_set1(square(a));
+        f64x4 v = f64x4_set(square(a));
         return mul(a, rsqrt(v));
     }
 
@@ -365,12 +365,12 @@ namespace simd {
 
     static inline f64x8 radians(f64x8 a)
     {
-        return mul(a, f64x8_set1(0.01745329251));
+        return mul(a, f64x8_set(0.01745329251));
     }
 
     static inline f64x8 degrees(f64x8 a)
     {
-        return mul(a, f64x8_set1(57.2957795131));
+        return mul(a, f64x8_set(57.2957795131));
     }
 
     // ------------------------------------------------------------------

@@ -78,42 +78,42 @@ namespace mango
         explicit Vector() {}
 
         Vector(float s)
-            : m(simd::f32x4_set1(s))
+            : m(simd::f32x4_set(s))
         {
         }
 
         explicit Vector(float x, float y, float z, float w)
-            : m(simd::f32x4_set4(x, y, z, w))
+            : m(simd::f32x4_set(x, y, z, w))
         {
         }
 
         explicit Vector(const Vector<float, 2>& v, float z, float w)
-            : m(simd::f32x4_set4(v.x, v.y, z, w))
+            : m(simd::f32x4_set(v.x, v.y, z, w))
         {
         }
 
         explicit Vector(float x, float y, const Vector<float, 2>& v)
-            : m(simd::f32x4_set4(x, y, v.x, v.y))
+            : m(simd::f32x4_set(x, y, v.x, v.y))
         {
         }
 
         explicit Vector(float x, const Vector<float, 2>& v, float w)
-            :m(simd::f32x4_set4(x, v.x, v.y, w))
+            :m(simd::f32x4_set(x, v.x, v.y, w))
         {
         }
 
         explicit Vector(const Vector<float, 2>& xy, const Vector<float, 2>& zw)
-            : m(simd::f32x4_set4(xy.x, xy.y, zw.x, zw.y))
+            : m(simd::f32x4_set(xy.x, xy.y, zw.x, zw.y))
         {
         }
 
         explicit Vector(const Vector<float, 3>& v, float w)
-            : m(simd::f32x4_set4(v.x, v.y, v.z, w))
+            : m(simd::f32x4_set(v.x, v.y, v.z, w))
         {
         }
 
         explicit Vector(float x, const Vector<float, 3>& v)
-            : m(simd::f32x4_set4(x, v.x, v.y, v.z))
+            : m(simd::f32x4_set(x, v.x, v.y, v.z))
         {
         }
 
@@ -143,7 +143,7 @@ namespace mango
 
         Vector& operator = (float s)
         {
-            m = simd::f32x4_set1(s);
+            m = simd::f32x4_set(s);
             return *this;
         }
 

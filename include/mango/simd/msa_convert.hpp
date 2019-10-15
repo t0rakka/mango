@@ -557,7 +557,7 @@ namespace detail {
         f64 y = f64(get_component<1>(s));
         f64 z = f64(get_component<2>(s));
         f64 w = f64(get_component<3>(s));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     template <>
@@ -567,7 +567,7 @@ namespace detail {
         f64 y = f64(get_component<1>(ui));
         f64 z = f64(get_component<2>(ui));
         f64 w = f64(get_component<3>(ui));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     template <>
@@ -577,7 +577,7 @@ namespace detail {
         f64 y = f64(get_component<1>(s));
         f64 z = f64(get_component<2>(s));
         f64 w = f64(get_component<3>(s));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     // 128 <- 256
@@ -591,7 +591,7 @@ namespace detail {
         s32 y = s32(get_component<1>(lo));
         s32 z = s32(get_component<0>(hi));
         s32 w = s32(get_component<1>(hi));
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -601,7 +601,7 @@ namespace detail {
         s32 y = s32(get_component<1>(s));
         s32 z = s32(get_component<2>(s));
         s32 w = s32(get_component<3>(s));
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -611,7 +611,7 @@ namespace detail {
         u32 y = u32(get_component<1>(d));
         u32 z = u32(get_component<2>(d));
         u32 w = u32(get_component<3>(d));
-        return u32x4_set4(x, y, z, w);
+        return u32x4_set(x, y, z, w);
     }
 
     template <>
@@ -621,7 +621,7 @@ namespace detail {
         f32 y = f32(get_component<1>(s));
         f32 z = f32(get_component<2>(s));
         f32 w = f32(get_component<3>(s));
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     // 128 <- 128
@@ -773,7 +773,7 @@ namespace detail {
         f32 y = s[1];
         f32 z = s[2];
         f32 w = s[3];
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     template <>

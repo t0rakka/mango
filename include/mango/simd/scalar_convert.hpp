@@ -517,7 +517,7 @@ namespace simd {
         s32 y = s32(s.lo[1]);
         s32 z = s32(s.hi[0]);
         s32 w = s32(s.hi[1]);
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -527,7 +527,7 @@ namespace simd {
         s32 y = s32(s.lo[1] + 0.5);
         s32 z = s32(s.hi[0] + 0.5);
         s32 w = s32(s.hi[1] + 0.5);
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -537,7 +537,7 @@ namespace simd {
         u32 y = doubleToUnsignedInt(d.lo[1]);
         u32 z = doubleToUnsignedInt(d.hi[0]);
         u32 w = doubleToUnsignedInt(d.hi[1]);
-        return u32x4_set4(x, y, z, w);
+        return u32x4_set(x, y, z, w);
     }
 
     template <>
@@ -547,7 +547,7 @@ namespace simd {
         f32 y = f32(s.lo[1]);
         f32 z = f32(s.hi[0]);
         f32 w = f32(s.hi[1]);
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     // 128 <- 128

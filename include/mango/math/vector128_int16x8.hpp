@@ -43,12 +43,12 @@ namespace mango
         explicit Vector() {}
 
         Vector(s16 s)
-            : m(simd::s16x8_set1(s))
+            : m(simd::s16x8_set(s))
         {
         }
 
         Vector(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
-            : m(simd::s16x8_set8(s0, s1, s2, s3, s4, s5, s6, s7))
+            : m(simd::s16x8_set(s0, s1, s2, s3, s4, s5, s6, s7))
         {
         }
 
@@ -78,7 +78,7 @@ namespace mango
 
         Vector& operator = (s16 s)
         {
-            m = simd::s16x8_set1(s);
+            m = simd::s16x8_set(s);
             return *this;
         }
 

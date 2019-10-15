@@ -71,11 +71,11 @@ namespace simd {
         return result;
     }
 
-    static inline u8x32 u8x32_set1(u8 s)
+    static inline u8x32 u8x32_set(u8 s)
     {
         u8x32 result;
-        result.lo = u8x16_set1(s);
-        result.hi = u8x16_set1(s);
+        result.lo = u8x16_set(s);
+        result.hi = u8x16_set(s);
         return result;
     }
 
@@ -146,11 +146,11 @@ namespace simd {
         return result;
     }
 
-    static inline u16x16 u16x16_set1(u16 s)
+    static inline u16x16 u16x16_set(u16 s)
     {
         u16x16 result;
-        result.lo = u16x8_set1(s);
-        result.hi = u16x8_set1(s);
+        result.lo = u16x8_set(s);
+        result.hi = u16x8_set(s);
         return result;
     }
 
@@ -277,19 +277,19 @@ namespace simd {
         return result;
     }
 
-    static inline u32x8 u32x8_set1(u32 s)
+    static inline u32x8 u32x8_set(u32 s)
     {
         u32x8 result;
-        result.lo = u32x4_set1(s);
-        result.hi = u32x4_set1(s);
+        result.lo = u32x4_set(s);
+        result.hi = u32x4_set(s);
         return result;
     }
 
-    static inline u32x8 u32x8_set8(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
+    static inline u32x8 u32x8_set(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
     {
         u32x8 result;
-        result.lo = u32x4_set4(s0, s1, s2, s3);
-        result.hi = u32x4_set4(s4, s5, s6, s7);
+        result.lo = u32x4_set(s0, s1, s2, s3);
+        result.hi = u32x4_set(s4, s5, s6, s7);
         return result;
     }
 
@@ -442,15 +442,15 @@ namespace simd {
         return result;
     }
 
-    static inline u64x4 u64x4_set1(u64 s)
+    static inline u64x4 u64x4_set(u64 s)
     {
         u64x4 result;
-        result.lo = u64x2_set1(s);
-        result.hi = u64x2_set1(s);
+        result.lo = u64x2_set(s);
+        result.hi = u64x2_set(s);
         return result;
     }
 
-    static inline u64x4 u64x4_set4(u64 x, u64 y, u64 z, u64 w)
+    static inline u64x4 u64x4_set(u64 x, u64 y, u64 z, u64 w)
     {
         u64x4 result;
         result.lo = u64x2_set2(x, y);
@@ -561,11 +561,11 @@ namespace simd {
         return result;
     }
 
-    static inline s8x32 s8x32_set1(s8 s)
+    static inline s8x32 s8x32_set(s8 s)
     {
         s8x32 result;
-        result.lo = s8x16_set1(s);
-        result.hi = s8x16_set1(s);
+        result.lo = s8x16_set(s);
+        result.hi = s8x16_set(s);
         return result;
     }
 
@@ -638,11 +638,11 @@ namespace simd {
         return result;
     }
 
-    static inline s16x16 s16x16_set1(s16 s)
+    static inline s16x16 s16x16_set(s16 s)
     {
         s16x16 result;
-        result.lo = s16x8_set1(s);
-        result.hi = s16x8_set1(s);
+        result.lo = s16x8_set(s);
+        result.hi = s16x8_set(s);
         return result;
     }
 
@@ -775,19 +775,19 @@ namespace simd {
         return result;
     }
 
-    static inline s32x8 s32x8_set1(s32 s)
+    static inline s32x8 s32x8_set(s32 s)
     {
         s32x8 result;
-        result.lo = s32x4_set1(s);
-        result.hi = s32x4_set1(s);
+        result.lo = s32x4_set(s);
+        result.hi = s32x4_set(s);
         return result;
     }
 
-    static inline s32x8 s32x8_set8(s32 s0, s32 s1, s32 s2, s32 s3, s32 s4, s32 s5, s32 s6, s32 s7)
+    static inline s32x8 s32x8_set(s32 s0, s32 s1, s32 s2, s32 s3, s32 s4, s32 s5, s32 s6, s32 s7)
     {
         s32x8 result;
-        result.lo = s32x4_set4(s0, s1, s2, s3);
-        result.hi = s32x4_set4(s4, s5, s6, s7);
+        result.lo = s32x4_set(s0, s1, s2, s3);
+        result.hi = s32x4_set(s4, s5, s6, s7);
         return result;
     }
 
@@ -944,15 +944,15 @@ namespace simd {
         return result;
     }
 
-    static inline s64x4 s64x4_set1(s64 s)
+    static inline s64x4 s64x4_set(s64 s)
     {
         s64x4 result;
-        result.lo = s64x2_set1(s);
-        result.hi = s64x2_set1(s);
+        result.lo = s64x2_set(s);
+        result.hi = s64x2_set(s);
         return result;
     }
 
-    static inline s64x4 s64x4_set4(s64 x, s64 y, s64 z, s64 w)
+    static inline s64x4 s64x4_set(s64 x, s64 y, s64 z, s64 w)
     {
         s64x4 result;
         result.lo = s64x2_set2(x, y);

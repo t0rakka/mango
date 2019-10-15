@@ -55,7 +55,7 @@ namespace simd {
         return (v2f64) { 0.0, 0.0 };
     }
 
-    static inline f64x2 f64x2_set1(f64 s)
+    static inline f64x2 f64x2_set(f64 s)
     {
         return (v2f64) { s, s };
     }
@@ -134,10 +134,10 @@ namespace simd {
 
     static inline f64x2 sign(f64x2 a)
     {
-        v16u8 sign_mask = (v16u8) f64x2_set1(-0.0);
+        v16u8 sign_mask = (v16u8) f64x2_set(-0.0);
         v16u8 value_mask = (v16u8) __msa_fcune_d(a, f64x2_zero());
         v16u8 sign_bits = __msa_and_v((v16u8) a, sign_mask);
-        v16u8 value_bits = __msa_and_v(value_mask, (v16u8) f64x2_set1(1.0));
+        v16u8 value_bits = __msa_and_v(value_mask, (v16u8) f64x2_set(1.0));
         return (v2f64) __msa_or_v(value_bits, sign_bits);
     }
 
@@ -163,7 +163,7 @@ namespace simd {
 
     static inline f64x2 div(f64x2 a, f64 b)
     {
-        return __msa_fdiv_d(a, f64x2_set1(b));
+        return __msa_fdiv_d(a, f64x2_set(b));
     }
 
     static inline f64x2 hadd(f64x2 a, f64x2 b)
@@ -205,15 +205,15 @@ namespace simd {
     {
         auto estimate = __msa_frcp_d(a);
         auto temp = __msa_fmul_d(a, estimate);
-        return __msa_fmul_d(estimate, __msa_fsub_d(f64x2_set1(2.0), temp));
+        return __msa_fmul_d(estimate, __msa_fsub_d(f64x2_set(2.0), temp));
     }
 
     static inline f64x2 rsqrt(f64x2 a)
     {
         auto n = __msa_frsqrt_d(a);
         auto e = __msa_fmul_d(__msa_fmul_d(n, n), a);
-        n = __msa_fmul_d(f64x2_set1(0.5), n);
-        e = __msa_fsub_d(f64x2_set1(3.0), e);
+        n = __msa_fmul_d(f64x2_set(0.5), n);
+        e = __msa_fsub_d(f64x2_set(3.0), e);
         return __msa_fmul_d(n, e);
     }
 

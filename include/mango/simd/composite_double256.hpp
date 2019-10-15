@@ -148,15 +148,15 @@ namespace simd {
         return result;
     }
 
-    static inline f64x4 f64x4_set1(f64 s)
+    static inline f64x4 f64x4_set(f64 s)
     {
         f64x4 result;
-        result.lo = f64x2_set1(s);
-        result.hi = f64x2_set1(s);
+        result.lo = f64x2_set(s);
+        result.hi = f64x2_set(s);
         return result;
     }
 
-    static inline f64x4 f64x4_set4(f64 x, f64 y, f64 z, f64 w)
+    static inline f64x4 f64x4_set(f64 x, f64 y, f64 z, f64 w)
     {
         f64x4 result;
         result.lo = f64x2_set2(x, y);

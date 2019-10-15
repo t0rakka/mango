@@ -64,12 +64,12 @@ namespace simd {
         return (v4f32) { 0.0f, 0.0f, 0.0f, 0.0f };
     }
 
-    static inline f32x4 f32x4_set1(f32 s)
+    static inline f32x4 f32x4_set(f32 s)
     {
         return (v4f32) { s, s, s, s };
     }
 
-    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
+    static inline f32x4 f32x4_set(f32 x, f32 y, f32 z, f32 w)
     {
         return (v4f32) { x, y, z, w };
     }
@@ -165,10 +165,10 @@ namespace simd {
 
     static inline f32x4 sign(f32x4 a)
     {
-        v16u8 sign_mask = (v16u8) f32x4_set1(-0.0f);
+        v16u8 sign_mask = (v16u8) f32x4_set(-0.0f);
         v16u8 value_mask = (v16u8) __msa_fcune_w(a, f32x4_zero());
         v16u8 sign_bits = __msa_and_v((v16u8) a, sign_mask);
-        v16u8 value_bits = __msa_and_v(value_mask, (v16u8) f32x4_set1(1.0f));
+        v16u8 value_bits = __msa_and_v(value_mask, (v16u8) f32x4_set(1.0f));
         return (v4f32) __msa_or_v(value_bits, sign_bits);
     }
 
@@ -194,7 +194,7 @@ namespace simd {
 
     static inline f32x4 div(f32x4 a, f32 b)
     {
-        return __msa_fdiv_w(a, f32x4_set1(b));
+        return __msa_fdiv_w(a, f32x4_set(b));
     }
 
     static inline f32x4 hadd(f32x4 a, f32x4 b)
@@ -238,15 +238,15 @@ namespace simd {
     {
         auto estimate = __msa_frcp_w(a);
         auto temp = __msa_fmul_w(a, estimate);
-        return __msa_fmul_w(estimate, __msa_fsub_w(f32x4_set1(2.0f), temp));
+        return __msa_fmul_w(estimate, __msa_fsub_w(f32x4_set(2.0f), temp));
     }
 
     static inline f32x4 rsqrt(f32x4 a)
     {
         f32x4 n = __msa_frsqrt_w(a);
         f32x4 e = __msa_fmul_w(__msa_fmul_w(n, n), a);
-        n = __msa_fmul_w(f32x4_set1(0.5f), n);
-        e = __msa_fsub_w(f32x4_set1(3.0f), e);
+        n = __msa_fmul_w(f32x4_set(0.5f), n);
+        e = __msa_fsub_w(f32x4_set(3.0f), e);
         return __msa_fmul_w(n, e);
     }
 

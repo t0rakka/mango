@@ -726,7 +726,7 @@ namespace detail {
         f64 y = f64(get_component<1>(s));
         f64 z = f64(get_component<2>(s));
         f64 w = f64(get_component<3>(s));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     template <>
@@ -736,7 +736,7 @@ namespace detail {
         f64 y = unsignedIntToDouble(get_component<1>(s));
         f64 z = unsignedIntToDouble(get_component<2>(s));
         f64 w = unsignedIntToDouble(get_component<3>(s));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     template <>
@@ -746,7 +746,7 @@ namespace detail {
         f64 y = f64(get_component<1>(s));
         f64 z = f64(get_component<2>(s));
         f64 w = f64(get_component<3>(s));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     // 128 <- 256
@@ -758,7 +758,7 @@ namespace detail {
         s32 y = s32(get_component<1>(s.lo));
         s32 z = s32(get_component<0>(s.hi));
         s32 w = s32(get_component<1>(s.hi));
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -768,7 +768,7 @@ namespace detail {
         s32 y = s32(get_component<1>(s.lo) + 0.5);
         s32 z = s32(get_component<0>(s.hi) + 0.5);
         s32 w = s32(get_component<1>(s.hi) + 0.5);
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -778,7 +778,7 @@ namespace detail {
         u32 y = doubleToUnsignedInt(get_component<1>(d.lo));
         u32 z = doubleToUnsignedInt(get_component<0>(d.hi));
         u32 w = doubleToUnsignedInt(get_component<1>(d.hi));
-        return u32x4_set4(x, y, z, w);
+        return u32x4_set(x, y, z, w);
     }
 
     template <>
@@ -788,7 +788,7 @@ namespace detail {
         f32 y = f32(get_component<1>(s.lo));
         f32 z = f32(get_component<0>(s.hi));
         f32 w = f32(get_component<1>(s.hi));
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     // 128 <- 128
@@ -972,7 +972,7 @@ namespace detail {
         f32 y = s[1];
         f32 z = s[2];
         f32 w = s[3];
-        return f32x4_set4(x, y, z, w);
+        return f32x4_set(x, y, z, w);
     }
 
     template <>

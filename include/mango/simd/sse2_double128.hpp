@@ -67,7 +67,7 @@ namespace simd {
         return _mm_setzero_pd();
     }
 
-    static inline f64x2 f64x2_set1(f64 s)
+    static inline f64x2 f64x2_set(f64 s)
     {
         return _mm_set1_pd(s);
     }

@@ -749,7 +749,7 @@ namespace detail {
         s64 y = s64(get_component<1>(v) + 0.5);
         s64 z = s64(get_component<2>(v) + 0.5);
         s64 w = s64(get_component<3>(v) + 0.5);
-        return s64x4_set4(x, y, z, w);
+        return s64x4_set(x, y, z, w);
     }
 
     template <>
@@ -759,7 +759,7 @@ namespace detail {
         u64 y = u64(get_component<1>(v) + 0.5);
         u64 z = u64(get_component<2>(v) + 0.5);
         u64 w = u64(get_component<3>(v) + 0.5);
-        return u64x4_set4(x, y, z, w);
+        return u64x4_set(x, y, z, w);
     }
 
     template <>
@@ -770,7 +770,7 @@ namespace detail {
         s64 y = s64(get_component<1>(v));
         s64 z = s64(get_component<2>(v));
         s64 w = s64(get_component<3>(v));
-        return s64x4_set4(x, y, z, w);
+        return s64x4_set(x, y, z, w);
     }
 
     template <>
@@ -781,7 +781,7 @@ namespace detail {
         u64 y = u64(get_component<1>(v));
         u64 z = u64(get_component<2>(v));
         u64 w = u64(get_component<3>(v));
-        return u64x4_set4(x, y, z, w);
+        return u64x4_set(x, y, z, w);
     }
 
     template <>
@@ -791,7 +791,7 @@ namespace detail {
         f64 y = f64(get_component<1>(v));
         f64 z = f64(get_component<2>(v));
         f64 w = f64(get_component<3>(v));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     template <>
@@ -801,7 +801,7 @@ namespace detail {
         f64 y = f64(get_component<1>(v));
         f64 z = f64(get_component<2>(v));
         f64 w = f64(get_component<3>(v));
-        return f64x4_set4(x, y, z, w);
+        return f64x4_set(x, y, z, w);
     }
 
     // 512 <- 512
@@ -884,22 +884,22 @@ namespace detail {
         const __m128i* p = reinterpret_cast<const __m128i *>(&h);
         const s32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
 
-        s32x4 no_sign  = bitwise_and(u, s32x4_set1(0x7fff));
-        s32x4 sign     = bitwise_and(u, s32x4_set1(0x8000));
-        s32x4 exponent = bitwise_and(u, s32x4_set1(0x7c00));
-        s32x4 mantissa = bitwise_and(u, s32x4_set1(0x03ff));
+        s32x4 no_sign  = bitwise_and(u, s32x4_set(0x7fff));
+        s32x4 sign     = bitwise_and(u, s32x4_set(0x8000));
+        s32x4 exponent = bitwise_and(u, s32x4_set(0x7c00));
+        s32x4 mantissa = bitwise_and(u, s32x4_set(0x03ff));
 
         // NaN or Inf
-        s32x4 a = bitwise_or(s32x4_set1(0x7f800000), slli(mantissa, 13));
+        s32x4 a = bitwise_or(s32x4_set(0x7f800000), slli(mantissa, 13));
 
         // Zero or Denormal
-        const s32x4 magic = s32x4_set1(0x3f000000);
+        const s32x4 magic = s32x4_set(0x3f000000);
         s32x4 b;
         b = add(magic, mantissa);
         b = reinterpret<s32x4>(sub(reinterpret<f32x4>(b), reinterpret<f32x4>(magic)));
 
         // Numeric Value
-        s32x4 c = add(s32x4_set1(0x38000000), slli(no_sign, 13));
+        s32x4 c = add(s32x4_set(0x38000000), slli(no_sign, 13));
 
         // Select a, b, or c based on exponent
         mask32x4 mask;
@@ -908,7 +908,7 @@ namespace detail {
         mask = compare_eq(exponent, s32x4_zero());
         result = select(mask, b, c);
 
-        mask = compare_eq(exponent, s32x4_set1(0x7c00));
+        mask = compare_eq(exponent, s32x4_set(0x7c00));
         result = select(mask, a, result);
 
         // Sign
@@ -920,24 +920,24 @@ namespace detail {
     template <>
     inline f16x4 convert<f16x4>(f32x4 f)
     {
-        const f32x4 magic = f32x4_set1(Float(0, 15, 0).f);
-        const s32x4 vinf = s32x4_set1(31 << 23);
+        const f32x4 magic = f32x4_set(Float(0, 15, 0).f);
+        const s32x4 vinf = s32x4_set(31 << 23);
 
         const s32x4 u = reinterpret<s32x4>(f);
-        const s32x4 sign = srli(bitwise_and(u, s32x4_set1(0x80000000)), 16);
+        const s32x4 sign = srli(bitwise_and(u, s32x4_set(0x80000000)), 16);
 
-        const s32x4 vexponent = s32x4_set1(0x7f800000);
+        const s32x4 vexponent = s32x4_set(0x7f800000);
 
         // Inf / NaN
         const mask32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
-        s32x4 mantissa = bitwise_and(u, s32x4_set1(0x007fffff));
+        s32x4 mantissa = bitwise_and(u, s32x4_set(0x007fffff));
         mask32x4 x0 = compare_eq(mantissa, s32x4_zero());
         mantissa = select(x0, s32x4_zero(), srai(mantissa, 13));
-        const s32x4 v0 = bitwise_or(s32x4_set1(0x7c00), mantissa);
+        const s32x4 v0 = bitwise_or(s32x4_set(0x7c00), mantissa);
 
-        s32x4 v1 = bitwise_and(u, s32x4_set1(0x7ffff000));
+        s32x4 v1 = bitwise_and(u, s32x4_set(0x7ffff000));
         v1 = reinterpret<s32x4>(mul(reinterpret<f32x4>(v1), magic));
-        v1 = add(v1, s32x4_set1(0x1000));
+        v1 = add(v1, s32x4_set(0x1000));
 
         v1 = _mm_min_epi32(v1, vinf);
         v1 = srai(v1, 13);

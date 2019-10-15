@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <mango/core/string.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/half.hpp>
-#include <mango/simd/simd.hpp>
+#include <mango/math/vector.hpp>
 #include <mango/image/image.hpp>
 
 namespace
@@ -69,11 +69,11 @@ namespace
 #if defined(MANGO_ENABLE_SIMD)
 		if (count >= 32)
 		{
-			// 128 bit fill
-			u16 value16 = static_cast<u16>(color);
-			u32 value32 = (color << 16) | color;
-			simd::u32x4 value128 = simd::u32x4_set1(value32);
-			fill_aligned(dest, value16, value128, count);
+            // 128 bit fill
+            u16 value16 = static_cast<u16>(color);
+            u32 value32 = (color << 16) | color;
+            uint32x4 value128(value32);
+            fill_aligned(dest, value16, value128, count);
 		}
 #else
 		if (count >= 16)
@@ -109,9 +109,9 @@ namespace
 #if defined(MANGO_ENABLE_SIMD)
 		if (count >= 16)
 		{
-			// 128 bit fill
-			simd::u32x4 value128 = simd::u32x4_set1(color);
-			fill_aligned(dest, color, value128, count);
+            // 128 bit fill
+            uint32x4 value128(color);
+            fill_aligned(dest, color, value128, count);
 		}
 		else
 #else

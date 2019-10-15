@@ -18,12 +18,12 @@ namespace simd {
         return _mm256_setzero_ps();
     }
 
-    static inline f32x8 f32x8_set1(f32 s)
+    static inline f32x8 f32x8_set(f32 s)
     {
         return _mm256_set1_ps(s);
     }
 
-    static inline f32x8 f32x8_set8(f32 s0, f32 s1, f32 s2, f32 s3, f32 s4, f32 s5, f32 s6, f32 s7)
+    static inline f32x8 f32x8_set(f32 s0, f32 s1, f32 s2, f32 s3, f32 s4, f32 s5, f32 s6, f32 s7)
     {
         return _mm256_setr_ps(s0, s1, s2, s3, s4, s5, s6, s7);
     }

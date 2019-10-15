@@ -114,12 +114,12 @@ namespace simd {
         return _mm_setzero_ps();
     }
 
-    static inline f32x4 f32x4_set1(f32 s)
+    static inline f32x4 f32x4_set(f32 s)
     {
         return _mm_set1_ps(s);
     }
 
-    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
+    static inline f32x4 f32x4_set(f32 x, f32 y, f32 z, f32 w)
     {
         return _mm_setr_ps(x, y, z, w);
     }

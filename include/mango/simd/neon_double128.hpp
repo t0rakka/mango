@@ -76,7 +76,7 @@ namespace simd {
         return vdupq_n_f64(0.0);
     }
 
-    static inline f64x2 f64x2_set1(f64 s)
+    static inline f64x2 f64x2_set(f64 s)
     {
         return vdupq_n_f64(s);
     }
@@ -359,7 +359,7 @@ namespace simd {
         return {{ 0.0, 0.0 }};
     }
 
-    static inline f64x2 f64x2_set1(f64 s)
+    static inline f64x2 f64x2_set(f64 s)
     {
         return {{ s, s }};
     }

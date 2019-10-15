@@ -95,12 +95,12 @@ namespace simd {
         return vec_splats(0.0f);
     }
 
-    static inline f32x4 f32x4_set1(f32 s)
+    static inline f32x4 f32x4_set(f32 s)
     {
         return vec_splats(s);
     }
 
-    static inline f32x4 f32x4_set4(f32 x, f32 y, f32 z, f32 w)
+    static inline f32x4 f32x4_set(f32 x, f32 y, f32 z, f32 w)
     {
         return (f32x4::vector) { x, y, z, w };
     }

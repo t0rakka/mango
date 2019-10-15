@@ -77,7 +77,7 @@ namespace simd {
         return vec_splats(0.0);
     }
 
-    static inline f64x2 f64x2_set1(f64 s)
+    static inline f64x2 f64x2_set(f64 s)
     {
         return vec_splats(s);
     }

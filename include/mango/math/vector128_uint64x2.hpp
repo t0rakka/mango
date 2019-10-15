@@ -55,7 +55,7 @@ namespace mango
         explicit Vector() {}
 
         Vector(u64 s)
-            : m(simd::u64x2_set1(s))
+            : m(simd::u64x2_set(s))
         {
         }
 
@@ -103,7 +103,7 @@ namespace mango
 
         Vector& operator = (u64 s)
         {
-            m = simd::u64x2_set1(s);
+            m = simd::u64x2_set(s);
             return *this;
         }
 

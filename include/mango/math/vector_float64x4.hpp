@@ -77,27 +77,27 @@ namespace mango
         explicit Vector() {}
 
         Vector(double s)
-            : m(simd::f64x4_set1(s))
+            : m(simd::f64x4_set(s))
         {
         }
 
         explicit Vector(double s0, double s1, double s2, double s3)
-            : m(simd::f64x4_set4(s0, s1, s2, s3))
+            : m(simd::f64x4_set(s0, s1, s2, s3))
         {
         }
 
         explicit Vector(const Vector<double, 2>& v, double s0, double s1)
-            : m(simd::f64x4_set4(v.x, v.y, s0, s1))
+            : m(simd::f64x4_set(v.x, v.y, s0, s1))
         {
         }
 
         explicit Vector(double s0, double s1, const Vector<double, 2>& v)
-            : m(simd::f64x4_set4(s0, s1, v.x, v.y))
+            : m(simd::f64x4_set(s0, s1, v.x, v.y))
         {
         }
 
         explicit Vector(double s0, const Vector<double, 2>& v, double s1)
-            : m(simd::f64x4_set4(s0, v.x, v.y, s1))
+            : m(simd::f64x4_set(s0, v.x, v.y, s1))
         {
         }
 
@@ -107,12 +107,12 @@ namespace mango
         }
 
         explicit Vector(const Vector<double, 3>& v, double s)
-            : m(simd::f64x4_set4(v.x, v.y, v.z, s))
+            : m(simd::f64x4_set(v.x, v.y, v.z, s))
         {
         }
 
         explicit Vector(double s, const Vector<double, 3>& v)
-            : m(simd::f64x4_set4(s, v.x, v.y, v.z))
+            : m(simd::f64x4_set(s, v.x, v.y, v.z))
         {
         }
 
@@ -142,7 +142,7 @@ namespace mango
 
         Vector& operator = (double s)
         {
-            m = simd::f64x4_set1(s);
+            m = simd::f64x4_set(s);
             return *this;
         }
 

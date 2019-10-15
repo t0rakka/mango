@@ -32,12 +32,12 @@ namespace simd {
         return (v16u8) __msa_fill_b(0);
     }
 
-    static inline u8x16 u8x16_set1(u8 s)
+    static inline u8x16 u8x16_set(u8 s)
     {
         return (v16u8) __msa_fill_b(s);
     }
 
-    static inline u8x16 u8x16_set16(
+    static inline u8x16 u8x16_set(
         u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
         u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
@@ -103,7 +103,7 @@ namespace simd {
 
     static inline u8x16 ravg(u8x16 a, u8x16 b)
     {
-        a = add(a, u8x16_set1(1));
+        a = add(a, u8x16_set(1));
         return avg(a, b);
     }
 
@@ -205,12 +205,12 @@ namespace simd {
         return (v8u16) __msa_fill_h(0);
     }
 
-    static inline u16x8 u16x8_set1(u16 s)
+    static inline u16x8 u16x8_set(u16 s)
     {
         return (v8u16) __msa_fill_h(s);
     }
 
-    static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
+    static inline u16x8 u16x8_set(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return (v8u16) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
@@ -274,7 +274,7 @@ namespace simd {
 
     static inline u16x8 ravg(u16x8 a, u16x8 b)
     {
-        a = add(a, u16x8_set1(1));
+        a = add(a, u16x8_set(1));
         return avg(a, b);
     }
 
@@ -437,12 +437,12 @@ namespace simd {
         return (v4u32) __msa_fill_w(0);
     }
 
-    static inline u32x4 u32x4_set1(u32 s)
+    static inline u32x4 u32x4_set(u32 s)
     {
         return (v4u32) __msa_fill_w(s);
     }
 
-    static inline u32x4 u32x4_set4(u32 x, u32 y, u32 z, u32 w)
+    static inline u32x4 u32x4_set(u32 x, u32 y, u32 z, u32 w)
     {
         return (v4u32) { x, y, z, w };
     }
@@ -504,7 +504,7 @@ namespace simd {
 
     static inline u32x4 ravg(u32x4 a, u32x4 b)
     {
-        a = add(a, u32x4_set1(1));
+        a = add(a, u32x4_set(1));
         return avg(a, b);
     }
 
@@ -665,7 +665,7 @@ namespace simd {
         return (v2u64) __msa_fill_d(0);
     }
 
-    static inline u64x2 u64x2_set1(u64 s)
+    static inline u64x2 u64x2_set(u64 s)
     {
         return (v2u64) __msa_fill_d(s);
     }
@@ -714,7 +714,7 @@ namespace simd {
 
     static inline u64x2 ravg(u64x2 a, u64x2 b)
     {
-        a = add(a, u64x2_set1(1));
+        a = add(a, u64x2_set(1));
         return avg(a, b);
     }
 
@@ -841,12 +841,12 @@ namespace simd {
         return __msa_fill_b(0);
     }
 
-    static inline s8x16 s8x16_set1(s8 s)
+    static inline s8x16 s8x16_set(s8 s)
     {
         return __msa_fill_b(s);
     }
 
-    static inline s8x16 s8x16_set16(
+    static inline s8x16 s8x16_set(
         s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
@@ -912,7 +912,7 @@ namespace simd {
 
     static inline s8x16 ravg(s8x16 a, s8x16 b)
     {
-        a = add(a, s8x16_set1(1));
+        a = add(a, s8x16_set(1));
         return avg(a, b);
     }
 
@@ -1025,12 +1025,12 @@ namespace simd {
         return __msa_fill_h(0);
     }
 
-    static inline s16x8 s16x8_set1(s16 s)
+    static inline s16x8 s16x8_set(s16 s)
     {
         return __msa_fill_h(s);
     }
 
-    static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
+    static inline s16x8 s16x8_set(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return (v8i16) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
@@ -1138,7 +1138,7 @@ namespace simd {
 
     static inline s16x8 ravg(s16x8 a, s16x8 b)
     {
-        a = add(a, s16x8_set1(1));
+        a = add(a, s16x8_set(1));
         return avg(a, b);
     }
 
@@ -1312,12 +1312,12 @@ namespace simd {
         return __msa_fill_w(0);
     }
 
-    static inline s32x4 s32x4_set1(s32 s)
+    static inline s32x4 s32x4_set(s32 s)
     {
         return __msa_fill_w(s);
     }
 
-    static inline s32x4 s32x4_set4(s32 x, s32 y, s32 z, s32 w)
+    static inline s32x4 s32x4_set(s32 x, s32 y, s32 z, s32 w)
     {
         return (v4i32) { x, y, z, w };
     }
@@ -1408,7 +1408,7 @@ namespace simd {
 
     static inline s32x4 ravg(s32x4 a, s32x4 b)
     {
-        a = add(a, s32x4_set1(1));
+        a = add(a, s32x4_set(1));
         return avg(a, b);
     }
 
@@ -1561,7 +1561,7 @@ namespace simd {
         s32 y = (s >> 8) & 0xff;
         s32 z = (s >> 16) & 0xff;
         s32 w = (s >> 24) & 0xff;
-        return s32x4_set4(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     // -----------------------------------------------------------------
@@ -1587,7 +1587,7 @@ namespace simd {
         return __msa_fill_d(0);
     }
 
-    static inline s64x2 s64x2_set1(s64 s)
+    static inline s64x2 s64x2_set(s64 s)
     {
         return __msa_fill_d(s);
     }
@@ -1636,7 +1636,7 @@ namespace simd {
 
     static inline s64x2 ravg(s64x2 a, s64x2 b)
     {
-        a = add(a, s64x2_set1(1));
+        a = add(a, s64x2_set(1));
         return avg(a, b);
     }
 

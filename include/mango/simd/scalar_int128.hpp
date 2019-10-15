@@ -395,12 +395,12 @@ namespace detail {
         return detail::scalar_set<u8, 16>(0);
     }
 
-    static inline u8x16 u8x16_set1(u8 s)
+    static inline u8x16 u8x16_set(u8 s)
     {
         return detail::scalar_set<u8, 16>(s);
     }
 
-    static inline u8x16 u8x16_set16(
+    static inline u8x16 u8x16_set(
         u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
         u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
@@ -409,7 +409,7 @@ namespace detail {
 
     static inline u8x16 u8x16_uload(const u8* s)
     {
-        return u8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
+        return u8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
     }
 
     static inline void u8x16_ustore(u8* dest, u8x16 a)
@@ -422,7 +422,7 @@ namespace detail {
 
     static inline u8x16 u8x16_load_low(const u8* s)
     {
-        return u8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
+        return u8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     static inline void u8x16_store_low(u8* dest, u8x16 a)
@@ -571,19 +571,19 @@ namespace detail {
         return detail::scalar_set<u16, 8>(0);
     }
 
-    static inline u16x8 u16x8_set1(u16 s)
+    static inline u16x8 u16x8_set(u16 s)
     {
         return detail::scalar_set<u16, 8>(s);
     }
 
-    static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
+    static inline u16x8 u16x8_set(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
     static inline u16x8 u16x8_uload(const u16* s)
     {
-        return u16x8_set8(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
+        return u16x8_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
     }
 
     static inline void u16x8_ustore(u16* dest, u16x8 a)
@@ -596,7 +596,7 @@ namespace detail {
 
     static inline u16x8 u16x8_load_low(const u16* s)
     {
-        return u16x8_set8(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
+        return u16x8_set(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
     }
 
     static inline void u16x8_store_low(u16* dest, u16x8 a)
@@ -805,19 +805,19 @@ namespace detail {
         return {{ 0, 0, 0, 0 }};
     }
 
-    static inline u32x4 u32x4_set1(u32 s)
+    static inline u32x4 u32x4_set(u32 s)
     {
         return {{ s, s, s, s }};
     }
 
-    static inline u32x4 u32x4_set4(u32 x, u32 y, u32 z, u32 w)
+    static inline u32x4 u32x4_set(u32 x, u32 y, u32 z, u32 w)
     {
         return {{ x, y, z, w }};
     }
 
     static inline u32x4 u32x4_uload(const u32* s)
     {
-        return u32x4_set4(s[0], s[1], s[2], s[3]);
+        return u32x4_set(s[0], s[1], s[2], s[3]);
     }
 
     static inline void u32x4_ustore(u32* dest, u32x4 a)
@@ -830,7 +830,7 @@ namespace detail {
 
     static inline u32x4 u32x4_load_low(const u32* s)
     {
-        return u32x4_set4(s[0], s[1], 0, 0);
+        return u32x4_set(s[0], s[1], 0, 0);
     }
 
     static inline void u32x4_store_low(u32* dest, u32x4 a)
@@ -1036,7 +1036,7 @@ namespace detail {
         return detail::scalar_set<u64, 2>(0);
     }
 
-    static inline u64x2 u64x2_set1(u64 s)
+    static inline u64x2 u64x2_set(u64 s)
     {
         return detail::scalar_set<u64, 2>(s);
     }
@@ -1211,12 +1211,12 @@ namespace detail {
         return detail::scalar_set<s8, 16>(0);
     }
 
-    static inline s8x16 s8x16_set1(s8 s)
+    static inline s8x16 s8x16_set(s8 s)
     {
         return detail::scalar_set<s8, 16>(s);
     }
 
-    static inline s8x16 s8x16_set16(
+    static inline s8x16 s8x16_set(
         s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
@@ -1225,7 +1225,7 @@ namespace detail {
 
     static inline s8x16 s8x16_uload(const s8* s)
     {
-        return s8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
+        return s8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
     }
 
     static inline void s8x16_ustore(s8* dest, s8x16 a)
@@ -1238,7 +1238,7 @@ namespace detail {
 
     static inline s8x16 s8x16_load_low(const s8* s)
     {
-        return s8x16_set16(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
+        return s8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     static inline void s8x16_store_low(s8* dest, s8x16 a)
@@ -1397,19 +1397,19 @@ namespace detail {
         return detail::scalar_set<s16, 8>(0);
     }
 
-    static inline s16x8 s16x8_set1(s16 s)
+    static inline s16x8 s16x8_set(s16 s)
     {
         return detail::scalar_set<s16, 8>(s);
     }
 
-    static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
+    static inline s16x8 s16x8_set(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
     static inline s16x8 s16x8_uload(const s16* s)
     {
-        return s16x8_set8(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
+        return s16x8_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
     }
 
     static inline void s16x8_ustore(s16* dest, s16x8 a)
@@ -1422,7 +1422,7 @@ namespace detail {
 
     static inline s16x8 s16x8_load_low(const s16* s)
     {
-        return s16x8_set8(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
+        return s16x8_set(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
     }
 
     static inline void s16x8_store_low(s16* dest, s16x8 a)
@@ -1697,19 +1697,19 @@ namespace detail {
         return {{ 0, 0, 0, 0 }};
     }
 
-    static inline s32x4 s32x4_set1(s32 s)
+    static inline s32x4 s32x4_set(s32 s)
     {
         return {{ s, s, s, s }};
     }
 
-    static inline s32x4 s32x4_set4(s32 x, s32 y, s32 z, s32 w)
+    static inline s32x4 s32x4_set(s32 x, s32 y, s32 z, s32 w)
     {
         return {{ x, y, z, w }};
     }
 
     static inline s32x4 s32x4_uload(const s32* s)
     {
-        return s32x4_set4(s[0], s[1], s[2], s[3]);
+        return s32x4_set(s[0], s[1], s[2], s[3]);
     }
 
     static inline void s32x4_ustore(s32* dest, s32x4 a)
@@ -1722,7 +1722,7 @@ namespace detail {
 
     static inline s32x4 s32x4_load_low(const s32* s)
     {
-        return s32x4_set4(s[0], s[1], 0, 0);
+        return s32x4_set(s[0], s[1], 0, 0);
     }
 
     static inline void s32x4_store_low(s32* dest, s32x4 a)
@@ -1977,7 +1977,7 @@ namespace detail {
         return detail::scalar_set<s64, 2>(0);
     }
 
-    static inline s64x2 s64x2_set1(s64 s)
+    static inline s64x2 s64x2_set(s64 s)
     {
         return detail::scalar_set<s64, 2>(s);
     }

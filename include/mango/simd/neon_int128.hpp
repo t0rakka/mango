@@ -32,12 +32,12 @@ namespace simd {
         return vdupq_n_u8(0);
     }
 
-    static inline u8x16 u8x16_set1(u8 s)
+    static inline u8x16 u8x16_set(u8 s)
     {
         return vdupq_n_u8(s);
     }
 
-    static inline u8x16 u8x16_set16(
+    static inline u8x16 u8x16_set(
         u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
         u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
     {
@@ -206,12 +206,12 @@ namespace simd {
         return vdupq_n_u16(0);
     }
 
-    static inline u16x8 u16x8_set1(u16 s)
+    static inline u16x8 u16x8_set(u16 s)
     {
         return vdupq_n_u16(s);
     }
 
-    static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
+    static inline u16x8 u16x8_set(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         uint16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
@@ -442,12 +442,12 @@ namespace simd {
         return vdupq_n_u32(0);
     }
 
-    static inline u32x4 u32x4_set1(u32 s)
+    static inline u32x4 u32x4_set(u32 s)
     {
         return vdupq_n_u32(s);
     }
 
-    static inline u32x4 u32x4_set4(u32 x, u32 y, u32 z, u32 w)
+    static inline u32x4 u32x4_set(u32 x, u32 y, u32 z, u32 w)
     {
         uint32x4_t temp = { x, y, z, w };
         return temp;
@@ -677,7 +677,7 @@ namespace simd {
         return vdupq_n_u64(0);
     }
 
-    static inline u64x2 u64x2_set1(u64 s)
+    static inline u64x2 u64x2_set(u64 s)
     {
         return vdupq_n_u64(s);
     }
@@ -886,12 +886,12 @@ namespace simd {
         return vdupq_n_s8(0);
     }
 
-    static inline s8x16 s8x16_set1(s8 s)
+    static inline s8x16 s8x16_set(s8 s)
     {
         return vdupq_n_s8(s);
     }
 
-    static inline s8x16 s8x16_set16(
+    static inline s8x16 s8x16_set(
         s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
@@ -1070,12 +1070,12 @@ namespace simd {
         return vdupq_n_s16(0);
     }
 
-    static inline s16x8 s16x8_set1(s16 s)
+    static inline s16x8 s16x8_set(s16 s)
     {
         return vdupq_n_s16(s);
     }
 
-    static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
+    static inline s16x8 s16x8_set(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         int16x8_t temp = { s0, s1, s2, s3, s4, s5, s6, s7 };
         return temp;
@@ -1381,12 +1381,12 @@ namespace simd {
         return vdupq_n_s32(0);
     }
 
-    static inline s32x4 s32x4_set1(s32 s)
+    static inline s32x4 s32x4_set(s32 s)
     {
         return vdupq_n_s32(s);
     }
 
-    static inline s32x4 s32x4_set4(s32 x, s32 y, s32 z, s32 w)
+    static inline s32x4 s32x4_set(s32 x, s32 y, s32 z, s32 w)
     {
         int32x4_t temp = { x, y, z, w };
         return temp;
@@ -1679,7 +1679,7 @@ namespace simd {
         return vdupq_n_s64(0);
     }
 
-    static inline s64x2 s64x2_set1(s64 s)
+    static inline s64x2 s64x2_set(s64 s)
     {
         return vdupq_n_s64(s);
     }

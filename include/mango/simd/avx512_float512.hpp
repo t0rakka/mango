@@ -18,13 +18,14 @@ namespace simd {
         return _mm512_setzero_ps();
     }
 
-    static inline f32x16 f32x16_set1(f32 s)
+    static inline f32x16 f32x16_set(f32 s)
     {
         return _mm512_set1_ps(s);
     }
 
-    static inline f32x16 f32x16_set16(f32 s0, f32 s1, f32 s2, f32 s3, f32 s4, f32 s5,
-        f32 s6, f32 s7, f32 s8, f32 s9, f32 s10, f32 s11, f32 s12, f32 s13, f32 s14, f32 s15)
+    static inline f32x16 f32x16_set(
+        f32 s0, f32 s1, f32 s2, f32 s3, f32 s4, f32 s5, f32 s6, f32 s7,
+        f32 s8, f32 s9, f32 s10, f32 s11, f32 s12, f32 s13, f32 s14, f32 s15)
     {
         return _mm512_setr_ps(s0, s1, s2, s3, s4, s5, s6, s7,
             s8, s9, s10, s11, s12, s13, s14, s15);

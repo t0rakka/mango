@@ -32,12 +32,12 @@ namespace simd {
         return vec_splats(u8(0));
     }
 
-    static inline u8x16 u8x16_set1(u8 s)
+    static inline u8x16 u8x16_set(u8 s)
     {
         return vec_splats(s);
     }
 
-    static inline u8x16 u8x16_set16(
+    static inline u8x16 u8x16_set(
         u8 v0, u8 v1, u8 v2, u8 v3, u8 v4, u8 v5, u8 v6, u8 v7,
         u8 v8, u8 v9, u8 v10, u8 v11, u8 v12, u8 v13, u8 v14, u8 v15)
     {
@@ -111,7 +111,7 @@ namespace simd {
 
     static inline u8x16 ravg(u8x16 a, u8x16 b)
     {
-        a = add(a, u8x16_set1(1));
+        a = add(a, u8x16_set(1));
         return avg(a, b);
     }
 
@@ -215,12 +215,12 @@ namespace simd {
         return vec_splats(u16(0));
     }
 
-    static inline u16x8 u16x8_set1(u16 s)
+    static inline u16x8 u16x8_set(u16 s)
     {
         return vec_splats(s);
     }
 
-    static inline u16x8 u16x8_set8(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
+    static inline u16x8 u16x8_set(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
     {
         return (u16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
@@ -293,7 +293,7 @@ namespace simd {
 
     static inline u16x8 ravg(u16x8 a, u16x8 b)
     {
-        a = add(a, u16x8_set1(1));
+        a = add(a, u16x8_set(1));
         return avg(a, b);
     }
 
@@ -461,12 +461,12 @@ namespace simd {
         return vec_splats(u32(0));
     }
 
-    static inline u32x4 u32x4_set1(u32 s)
+    static inline u32x4 u32x4_set(u32 s)
     {
         return vec_splats(s);
     }
 
-    static inline u32x4 u32x4_set4(u32 x, u32 y, u32 z, u32 w)
+    static inline u32x4 u32x4_set(u32 x, u32 y, u32 z, u32 w)
     {
         return (u32x4::vector) { x, y, z, w };
     }
@@ -541,7 +541,7 @@ namespace simd {
 
     static inline u32x4 ravg(u32x4 a, u32x4 b)
     {
-        a = add(a, u32x4_set1(1));
+        a = add(a, u32x4_set(1));
         return avg(a, b);
     }
 
@@ -699,7 +699,7 @@ namespace simd {
         return vec_splats(u64(0));
     }
 
-    static inline u64x2 u64x2_set1(u64 s)
+    static inline u64x2 u64x2_set(u64 s)
     {
         return vec_splats(s);
     }
@@ -748,7 +748,7 @@ namespace simd {
 
     static inline u64x2 ravg(u64x2 a, u64x2 b)
     {
-        a = add(a, u64x2_set1(1));
+        a = add(a, u64x2_set(1));
         return avg(a, b);
     }
 
@@ -886,12 +886,12 @@ namespace simd {
         return vec_splats(s8(0));
     }
 
-    static inline s8x16 s8x16_set1(s8 s)
+    static inline s8x16 s8x16_set(s8 s)
     {
         return vec_splats(s);
     }
 
-    static inline s8x16 s8x16_set16(
+    static inline s8x16 s8x16_set(
         s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
@@ -965,7 +965,7 @@ namespace simd {
 
     static inline s8x16 ravg(s8x16 a, s8x16 b)
     {
-        a = add(a, s8x16_set1(1));
+        a = add(a, s8x16_set(1));
         return avg(a, b);
     }
 
@@ -1079,12 +1079,12 @@ namespace simd {
         return vec_splats(s16(0));
     }
 
-    static inline s16x8 s16x8_set1(s16 s)
+    static inline s16x8 s16x8_set(s16 s)
     {
         return vec_splats(s);
     }
 
-    static inline s16x8 s16x8_set8(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
+    static inline s16x8 s16x8_set(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
     {
         return (s16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
@@ -1196,7 +1196,7 @@ namespace simd {
 
     static inline s16x8 ravg(s16x8 a, s16x8 b)
     {
-        a = add(a, s16x8_set1(1));
+        a = add(a, s16x8_set(1));
         return avg(a, b);
     }
 
@@ -1379,12 +1379,12 @@ namespace simd {
         return vec_splats(s32(0));
     }
 
-    static inline s32x4 s32x4_set1(s32 s)
+    static inline s32x4 s32x4_set(s32 s)
     {
         return vec_splats(s);
     }
 
-    static inline s32x4 s32x4_set4(s32 x, s32 y, s32 z, s32 w)
+    static inline s32x4 s32x4_set(s32 x, s32 y, s32 z, s32 w)
     {
         return (s32x4::vector) { x, y, z, w };
     }
@@ -1480,7 +1480,7 @@ namespace simd {
 
     static inline s32x4 ravg(s32x4 a, s32x4 b)
     {
-        a = add(a, s32x4_set1(1));
+        a = add(a, s32x4_set(1));
         return avg(a, b);
     }
 
@@ -1660,7 +1660,7 @@ namespace simd {
         return vec_splats(s64(0));
     }
 
-    static inline s64x2 s64x2_set1(s64 s)
+    static inline s64x2 s64x2_set(s64 s)
     {
         return vec_splats(s);
     }
@@ -1709,7 +1709,7 @@ namespace simd {
 
     static inline s64x2 ravg(s64x2 a, s64x2 b)
     {
-        a = add(a, s64x2_set1(1));
+        a = add(a, s64x2_set(1));
         return avg(a, b);
     }
 
