@@ -144,6 +144,21 @@ namespace detail {
     }
 
     template <typename ScalarType>
+    static inline ScalarType scalar_unsigned_rounded_average(ScalarType a, ScalarType b)
+    {
+        ScalarType v = (a & b) + ((a ^ b) >> 1) + (a ^ b) & 1;
+        return v;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_signed_rounded_average(ScalarType a, ScalarType b)
+    {
+        ScalarType v = (a & b) + ((a ^ b) >> 1) + (a ^ b) & 1;
+        using UnsignedType = typename std::make_unsigned<ScalarType>::type;
+        return v + (UnsignedType(v) >> (sizeof(UnsignedType) * 8 - 1)) & (a ^ b);
+    }
+
+    template <typename ScalarType>
     static inline ScalarType scalar_mullo(ScalarType a, ScalarType b)
     {
         return ScalarType(a * b);
@@ -470,7 +485,7 @@ namespace detail {
 
     static inline u8x16 ravg(u8x16 a, u8x16 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
 
     // bitwise
@@ -644,7 +659,7 @@ namespace detail {
 
     static inline u16x8 ravg(u16x8 a, u16x8 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
 
     static inline u16x8 mullo(u16x8 a, u16x8 b)
@@ -876,7 +891,7 @@ namespace detail {
 
     static inline u32x4 ravg(u32x4 a, u32x4 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
 
     static inline u32x4 mullo(u32x4 a, u32x4 b)
@@ -1084,7 +1099,7 @@ namespace detail {
 
     static inline u64x2 ravg(u64x2 a, u64x2 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
 
     // bitwise
@@ -1286,7 +1301,7 @@ namespace detail {
 
     static inline s8x16 ravg(s8x16 a, s8x16 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1526,7 +1541,7 @@ namespace detail {
 
     static inline s16x8 ravg(s16x8 a, s16x8 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1798,7 +1813,7 @@ namespace detail {
 
     static inline s32x4 ravg(s32x4 a, s32x4 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
@@ -2025,7 +2040,7 @@ namespace detail {
 
     static inline s64x2 ravg(s64x2 a, s64x2 b)
     {
-        return avg(a + 1, b);
+        return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
 
     // bitwise

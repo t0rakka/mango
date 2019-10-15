@@ -106,13 +106,15 @@ namespace simd {
 
     static inline u8x16 avg(u8x16 a, u8x16 b)
     {
-        return vec_avg(a, b);
+        auto one = vec_splats(u8(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        return temp;
     }
 
     static inline u8x16 ravg(u8x16 a, u8x16 b)
     {
-        a = add(a, u8x16_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     // bitwise
@@ -288,13 +290,15 @@ namespace simd {
 
     static inline u16x8 avg(u16x8 a, u16x8 b)
     {
-        return vec_avg(a, b);
+        auto one = vec_splats(u16(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        return temp;
     }
 
     static inline u16x8 ravg(u16x8 a, u16x8 b)
     {
-        a = add(a, u16x8_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     // bitwise
@@ -536,13 +540,15 @@ namespace simd {
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
     {
-        return vec_avg(a, b);
+        auto one = vec_splats(u32(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        return temp;
     }
 
     static inline u32x4 ravg(u32x4 a, u32x4 b)
     {
-        a = add(a, u32x4_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     // bitwise
@@ -743,13 +749,15 @@ namespace simd {
 
     static inline u64x2 avg(u64x2 a, u64x2 b)
     {
-        return vec_avg(a, b);
+        auto one = vec_splats(u64(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        return temp;
     }
 
     static inline u64x2 ravg(u64x2 a, u64x2 b)
     {
-        a = add(a, u64x2_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     // bitwise
@@ -960,13 +968,17 @@ namespace simd {
 
     static inline s8x16 avg(s8x16 a, s8x16 b)
     {
-        return vec_avg(a, b);
+        auto n = vec_splats(u8(7));
+        auto one = vec_splats(u8(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        temp = vec_add(temp, vec_and(vec_sr(temp, n), axb));
+        return temp;
     }
 
     static inline s8x16 ravg(s8x16 a, s8x16 b)
     {
-        a = add(a, s8x16_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1191,13 +1203,17 @@ namespace simd {
 
     static inline s16x8 avg(s16x8 a, s16x8 b)
     {
-        return vec_avg(a, b);
+        auto n = vec_splats(u16(15));
+        auto one = vec_splats(u16(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        temp = vec_add(temp, vec_and(vec_sr(temp, n), axb));
+        return temp;
     }
 
     static inline s16x8 ravg(s16x8 a, s16x8 b)
     {
-        a = add(a, s16x8_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1475,13 +1491,17 @@ namespace simd {
 
     static inline s32x4 avg(s32x4 a, s32x4 b)
     {
-        return vec_avg(a, b);
+        auto n = vec_splats(u32(31));
+        auto one = vec_splats(u32(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        temp = vec_add(temp, vec_and(vec_sr(temp, n), axb));
+        return temp;
     }
 
     static inline s32x4 ravg(s32x4 a, s32x4 b)
     {
-        a = add(a, s32x4_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     static inline s32x4 mullo(s32x4 a, s32x4 b)
@@ -1704,13 +1724,17 @@ namespace simd {
 
     static inline s64x2 avg(s64x2 a, s64x2 b)
     {
-        return vec_avg(a, b);
+        auto n = vec_splats(u64(63));
+        auto one = vec_splats(u64(1));
+        auto axb = vec_xor(a.data, b.data);
+        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, one));
+        temp = vec_add(temp, vec_and(vec_sr(temp, n), axb));
+        return temp;
     }
 
     static inline s64x2 ravg(s64x2 a, s64x2 b)
     {
-        a = add(a, s64x2_set(1));
-        return avg(a, b);
+        return vec_avg(a, b);
     }
 
     // bitwise

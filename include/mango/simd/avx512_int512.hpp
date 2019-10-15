@@ -433,8 +433,12 @@ namespace detail {
 
     static inline u32x16 ravg(u32x16 a, u32x16 b)
     {
-        a = add(a, _mm512_set1_epi32(1));
-        return avg(a, b);
+        __m512i one = _mm512_set1_epi32(1);
+        __m512i axb = _mm512_xor_si512(a, b);
+        __m512i temp = _mm512_and_si512(a, b);
+        temp = _mm512_add_epi32(temp, _mm512_srli_epi32(axb, 1));
+        temp = _mm512_add_epi32(temp, _mm512_and_si512(axb, one));
+        return temp;
     }
 
     static inline u32x16 mullo(u32x16 a, u32x16 b)
@@ -628,8 +632,12 @@ namespace detail {
 
     static inline u64x8 ravg(u64x8 a, u64x8 b)
     {
-        a = add(a, _mm512_set1_epi64(1));
-        return avg(a, b);
+        __m512i one = _mm512_set1_epi64(1);
+        __m512i axb = _mm512_xor_si512(a, b);
+        __m512i temp = _mm512_and_si512(a, b);
+        temp = _mm512_add_epi64(temp, _mm512_srli_epi64(axb, 1));
+        temp = _mm512_add_epi64(temp, _mm512_and_si512(axb, one));
+        return temp;
     }
 
     // bitwise
@@ -796,8 +804,12 @@ namespace detail {
 
     static inline s8x64 ravg(s8x64 a, s8x64 b)
     {
-        a = add(a, _mm512_set1_epi8(1));
-        return avg(a, b);
+        const __m512i sign = _mm512_set1_epi8(0x80);
+        a = _mm512_xor_si512(a, sign);
+        b = _mm512_xor_si512(b, sign);
+        // unsigned average
+        __m512i temp = _mm512_avg_epu8(a, b);
+        return _mm512_xor_si512(temp, sign);
     }
 
     static inline s8x64 abs(s8x64 a)
@@ -948,8 +960,12 @@ namespace detail {
 
     static inline s16x32 ravg(s16x32 a, s16x32 b)
     {
-        a = add(a, _mm512_set1_epi16(1));
-        return avg(a, b);
+        const __m512i sign = _mm512_set1_epi16(0x8000);
+        a = _mm512_xor_si512(a, sign);
+        b = _mm512_xor_si512(b, sign);
+        // unsigned average
+        __m512i temp = _mm512_avg_epu16(a, b);
+        return _mm512_xor_si512(temp, sign);
     }
 
     static inline s16x32 mullo(s16x32 a, s16x32 b)
@@ -1149,8 +1165,16 @@ namespace detail {
 
     static inline s32x16 ravg(s32x16 a, s32x16 b)
     {
-        a = add(a, _mm512_set1_epi32(1));
-        return avg(a, b);
+        const __m512i sign = _mm512_set1_epi32(0x80000000);
+        a = _mm512_xor_si512(a, sign);
+        b = _mm512_xor_si512(b, sign);
+        // unsigned average
+        __m512i one = _mm512_set1_epi32(1);
+        __m512i axb = _mm512_xor_si512(a, b);
+        __m512i temp = _mm512_and_si512(a, b);
+        temp = _mm512_add_epi32(temp, _mm512_srli_epi32(axb, 1));
+        temp = _mm512_add_epi32(temp, _mm512_and_si512(axb, one));
+        return _mm512_xor_si512(temp, sign);
     }
 
     static inline s32x16 mullo(s32x16 a, s32x16 b)
@@ -1345,8 +1369,16 @@ namespace detail {
 
     static inline s64x8 ravg(s64x8 a, s64x8 b)
     {
-        a = add(a, _mm512_set1_epi64(1));
-        return avg(a, b);
+        const __m512i sign = _mm512_set1_epi64(0x8000000000000000ull);
+        a = _mm512_xor_si512(a, sign);
+        b = _mm512_xor_si512(b, sign);
+        // unsigned average
+        __m512i one = _mm512_set1_epi64(1);
+        __m512i axb = _mm512_xor_si512(a, b);
+        __m512i temp = _mm512_and_si512(a, b);
+        temp = _mm512_add_epi64(temp, _mm512_srli_epi64(axb, 1));
+        temp = _mm512_add_epi64(temp, _mm512_and_si512(axb, one));
+        return _mm512_xor_si512(temp, sign);
     }
 
     // bitwise

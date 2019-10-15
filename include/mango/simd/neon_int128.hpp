@@ -730,8 +730,13 @@ namespace simd {
 
     static inline u64x2 ravg(u64x2 a, u64x2 b)
     {
-        a = vaddq_u64(a, vdupq_n_u64(1));
-        return avg(a, b);
+        // unsigned rounded average
+        uint64x2_t one = vdupq_n_u64(1);
+        uint64x2_t axb = veorq_u64(a, b);
+        uint64x2_t temp = vandq_u64(a, b);
+        temp = vaddq_u64(temp, vshrq_n_u64(axb, 1));
+        temp = vaddq_u64(temp, vandq_u64(axb, one));
+        return temp;
     }
 
     // bitwise
@@ -1733,10 +1738,23 @@ namespace simd {
         return temp;
     }
 
-    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    static inline s64x2 ravg(s64x2 sa, s64x2 sb)
     {
-        a = vaddq_s64(a, vdupq_n_s64(1));
-        return avg(a, b);
+        uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
+        uint64x2_t a = vreinterpretq_u64_s64(sa);
+        uint64x2_t b = vreinterpretq_u64_s64(sb);
+        a = veorq_u64(a, sign);
+        b = veorq_u64(b, sign);
+
+        // unsigned rounded average
+        uint64x2_t one = vdupq_n_u64(1);
+        uint64x2_t axb = veorq_u64(a, b);
+        uint64x2_t temp = vandq_u64(a, b);
+        temp = vaddq_u64(temp, vshrq_n_u64(axb, 1));
+        temp = vaddq_u64(temp, vandq_u64(axb, one));
+
+        temp = veorq_u64(temp, sign);
+        return vreinterpretq_s64_u64(temp);
     }
 
     // bitwise
