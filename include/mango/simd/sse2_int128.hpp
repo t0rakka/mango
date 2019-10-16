@@ -110,11 +110,13 @@ namespace detail {
         return _mm_and_si128(a, _mm_set1_epi32(0x7f7f7f7f));
     }
 
+#if 0
     static inline __m128i simd128_srli7_epi8(__m128i a)
     {
         a = _mm_srli_epi16(a, 7);
         return _mm_and_si128(a, _mm_set1_epi32(0x01010101));
     }
+#endif
 
     static inline __m128i simd128_srai1_epi8(__m128i a)
     {
@@ -1455,9 +1457,15 @@ namespace detail {
 
     static inline s8x16 avg(s8x16 a, s8x16 b)
     {
+		const __m128i sign = _mm_set1_epi8(0x80u);
+        a = _mm_xor_si128(a, sign);
+        b = _mm_xor_si128(b, sign);
+
+        // unsigned average
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi8(_mm_and_si128(a, b), detail::simd128_srai1_epi8(axb));
-        temp = _mm_add_epi8(temp, _mm_and_si128(detail::simd128_srli7_epi8(temp), axb));
+
+        temp = _mm_xor_si128(temp, sign);
         return temp;
     }
 
@@ -1466,9 +1474,16 @@ namespace detail {
 		const __m128i sign = _mm_set1_epi8(0x80u);
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
-        // unsigned average
-        __m128i temp = _mm_avg_epu8(a, b);
-        return _mm_xor_si128(temp, sign);
+
+        // unsigned rounded average
+        __m128i one = _mm_set1_epi8(1);
+        __m128i axb = _mm_xor_si128(a, b);
+        __m128i temp = _mm_and_si128(a, b);
+        temp = _mm_add_epi8(temp, detail::simd128_srai1_epi8(axb));
+        temp = _mm_add_epi8(temp, _mm_and_si128(axb, one));
+
+        temp = _mm_xor_si128(temp, sign);
+        return temp;
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1767,9 +1782,15 @@ namespace detail {
 
     static inline s16x8 avg(s16x8 a, s16x8 b)
     {
+        const __m128i sign = _mm_set1_epi16(0x8000u);
+        a = _mm_xor_si128(a, sign);
+        b = _mm_xor_si128(b, sign);
+
+        // unsigned average
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi16(_mm_and_si128(a, b), _mm_srai_epi16(axb, 1));
-        temp = _mm_add_epi16(temp, _mm_and_si128(_mm_srli_epi16(temp, 15), axb));
+
+        temp = _mm_xor_si128(temp, sign);
         return temp;
     }
 
@@ -1778,9 +1799,16 @@ namespace detail {
         const __m128i sign = _mm_set1_epi16(0x8000u);
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
-        // unsigned average
-        __m128i temp = _mm_avg_epu16(a, b);
-        return _mm_xor_si128(temp, sign);
+
+        // unsigned rounded average
+        __m128i one = _mm_set1_epi16(1);
+        __m128i axb = _mm_xor_si128(a, b);
+        __m128i temp = _mm_and_si128(a, b);
+        temp = _mm_add_epi16(temp, _mm_srli_epi16(axb, 1));
+        temp = _mm_add_epi16(temp, _mm_and_si128(axb, one));
+
+        temp = _mm_xor_si128(temp, sign);
+        return temp;
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -2174,9 +2202,15 @@ namespace detail {
 
     static inline s32x4 avg(s32x4 a, s32x4 b)
     {
+        const __m128i sign = _mm_set1_epi32(0x80000000);
+        a = _mm_xor_si128(a, sign);
+        b = _mm_xor_si128(b, sign);
+
+        // unsigned average
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi32(_mm_and_si128(a, b), _mm_srai_epi32(axb, 1));
-        temp = _mm_add_epi32(temp, _mm_and_si128(_mm_srli_epi32(temp, 31), axb));
+
+        temp = _mm_xor_si128(temp, sign);
         return temp;
     }
 
@@ -2185,13 +2219,16 @@ namespace detail {
         const __m128i sign = _mm_set1_epi32(0x80000000);
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
-        // unsigned average
+
+        // unsigned rounded average
         __m128i one = _mm_set1_epi32(1);
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_and_si128(a, b);
         temp = _mm_add_epi32(temp, _mm_srli_epi32(axb, 1));
         temp = _mm_add_epi32(temp, _mm_and_si128(axb, one));
-        return _mm_xor_si128(temp, sign);
+
+        temp = _mm_xor_si128(temp, sign);
+        return temp;
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
@@ -2551,9 +2588,15 @@ namespace detail {
 
     static inline s64x2 avg(s64x2 a, s64x2 b)
     {
+        const __m128i sign = _mm_set1_epi64x(0x8000000000000000ull);
+        a = _mm_xor_si128(a, sign);
+        b = _mm_xor_si128(b, sign);
+
+        // unsigned average
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_add_epi64(_mm_and_si128(a, b), detail::simd128_srai1_epi64(axb));
-        temp = _mm_add_epi64(temp, _mm_and_si128(_mm_srli_epi64(temp, 63), axb));
+
+        temp = _mm_xor_si128(temp, sign);
         return temp;
     }
 
@@ -2562,13 +2605,16 @@ namespace detail {
         const __m128i sign = _mm_set1_epi64x(0x8000000000000000ull);
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
-        // unsigned average
+
+        // unsigned rounded average
         __m128i one = _mm_set1_epi64x(1);
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_and_si128(a, b);
         temp = _mm_add_epi64(temp, _mm_srli_epi64(axb, 1));
         temp = _mm_add_epi64(temp, _mm_and_si128(axb, one));
-        return _mm_xor_si128(temp, sign);
+
+        temp = _mm_xor_si128(temp, sign);
+        return temp;
     }
 
     // bitwise

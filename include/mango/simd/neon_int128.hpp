@@ -720,17 +720,13 @@ namespace simd {
 
     static inline u64x2 avg(u64x2 a, u64x2 b)
     {
-        // unsigned average
-        int64x2_t sa = vreinterpretq_s64_u64(a);
-        int64x2_t sb = vreinterpretq_s64_u64(b);
-        int64x2_t axb = veorq_s64(sa, sb);
-        int64x2_t temp = vaddq_s64(vandq_s64(sa, sb), vshrq_n_s64(axb, 1));
-        return vreinterpretq_u64_s64(temp);
+        uint64x2_t axb = veorq_u64(a, b);
+        uint64x2_t temp = vaddq_u64(vandq_u64(a, b), vshrq_n_u64(axb, 1));
+        return temp;
     }
 
     static inline u64x2 ravg(u64x2 a, u64x2 b)
     {
-        // unsigned rounded average
         uint64x2_t one = vdupq_n_u64(1);
         uint64x2_t axb = veorq_u64(a, b);
         uint64x2_t temp = vandq_u64(a, b);
@@ -1725,26 +1721,25 @@ namespace simd {
         return vsubq_s64(a, b);
     }
 
-    static inline s64x2 avg(s64x2 a, s64x2 b)
+    static inline s64x2 avg(s64x2 sa, s64x2 sb)
     {
+        uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
+        uint64x2_t a = veorq_u64(vreinterpretq_u64_s64(sa), sign);
+        uint64x2_t b = veorq_u64(vreinterpretq_u64_s64(sb), sign);
+
         // unsigned average
-        int64x2_t axb = veorq_s64(a, b);
-        int64x2_t temp = vaddq_s64(vandq_s64(a, b), vshrq_n_s64(axb, 1));
+        uint64x2_t axb = veorq_u64(a, b);
+        uint64x2_t temp = vaddq_u64(vandq_u64(a, b), vshrq_n_u64(axb, 1));
 
-        // signed rounding
-        int64x2_t sign = vshrq_n_s64(temp, 63);
-        temp = vaddq_s64(temp, vandq_s64(sign, axb));
-
-        return temp;
+        temp = veorq_u64(temp, sign);
+        return vreinterpretq_s64_u64(temp);
     }
 
     static inline s64x2 ravg(s64x2 sa, s64x2 sb)
     {
         uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
-        uint64x2_t a = vreinterpretq_u64_s64(sa);
-        uint64x2_t b = vreinterpretq_u64_s64(sb);
-        a = veorq_u64(a, sign);
-        b = veorq_u64(b, sign);
+        uint64x2_t a = veorq_u64(vreinterpretq_u64_s64(sa), sign);
+        uint64x2_t b = veorq_u64(vreinterpretq_u64_s64(sb), sign);
 
         // unsigned rounded average
         uint64x2_t one = vdupq_n_u64(1);

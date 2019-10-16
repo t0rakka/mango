@@ -31,11 +31,13 @@ namespace detail {
         return _mm256_and_si256(a, _mm256_set1_epi32(0x7f7f7f7f));
     }
 
+#if 0
     static inline __m256i simd256_srli7_epi8(__m256i a)
     {
         a = _mm256_srli_epi16(a, 7);
         return _mm256_and_si256(a, _mm256_set1_epi32(0x01010101));
     }
+#endif
 
     static inline __m256i simd256_srai1_epi8(__m256i a)
     {
@@ -933,20 +935,33 @@ namespace detail {
 
     static inline s8x32 avg(s8x32 a, s8x32 b)
     {
+		const __m256i sign = _mm256_set1_epi8(0x80u);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+
+        // unsigned average
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi8(_mm256_and_si256(a, b), detail::simd256_srai1_epi8(axb));
-        temp = _mm256_add_epi8(temp, _mm256_and_si256(detail::simd256_srli7_epi8(temp), axb));
+
+        temp = _mm256_xor_si256(temp, sign);
         return temp;
     }
 
     static inline s8x32 ravg(s8x32 a, s8x32 b)
     {
-        const __m256i sign = _mm256_set1_epi8(0x80u);
+		const __m256i sign = _mm256_set1_epi8(0x80u);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
-        // unsigned average
-        __m256i temp = _mm256_avg_epu8(a, b);
-        return _mm256_xor_si256(temp, sign);
+
+        // unsigned rounded average
+        __m256i one = _mm256_set1_epi8(1);
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_and_si256(a, b);
+        temp = _mm256_add_epi8(temp, detail::simd256_srai1_epi8(axb));
+        temp = _mm256_add_epi8(temp, _mm256_and_si256(axb, one));
+
+        temp = _mm256_xor_si256(temp, sign);
+        return temp;
     }
 
     static inline s8x32 abs(s8x32 a)
@@ -1123,9 +1138,15 @@ namespace detail {
 
     static inline s16x16 avg(s16x16 a, s16x16 b)
     {
+        const __m256i sign = _mm256_set1_epi16(0x8000u);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+
+        // unsigned average
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi16(_mm256_and_si256(a, b), _mm256_srai_epi16(axb, 1));
-        temp = _mm256_add_epi16(temp, _mm256_and_si256(_mm256_srli_epi16(temp, 15), axb));
+
+        temp = _mm256_xor_si256(temp, sign);
         return temp;
     }
 
@@ -1134,9 +1155,16 @@ namespace detail {
         const __m256i sign = _mm256_set1_epi16(0x8000u);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
-        // unsigned average
-        __m256i temp = _mm256_avg_epu16(a, b);
-        return _mm256_xor_si256(temp, sign);
+
+        // unsigned rounded average
+        __m256i one = _mm256_set1_epi16(1);
+        __m256i axb = _mm256_xor_si256(a, b);
+        __m256i temp = _mm256_and_si256(a, b);
+        temp = _mm256_add_epi16(temp, _mm256_srli_epi16(axb, 1));
+        temp = _mm256_add_epi16(temp, _mm256_and_si256(axb, one));
+
+        temp = _mm256_xor_si256(temp, sign);
+        return temp;
     }
 
     static inline s16x16 mullo(s16x16 a, s16x16 b)
@@ -1368,9 +1396,15 @@ namespace detail {
 
     static inline s32x8 avg(s32x8 a, s32x8 b)
     {
+        const __m256i sign = _mm256_set1_epi32(0x80000000);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+
+        // unsigned average
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi32(_mm256_and_si256(a, b), _mm256_srai_epi32(axb, 1));
-        temp = _mm256_add_epi32(temp, _mm256_and_si256(_mm256_srli_epi32(temp, 31), axb));
+
+        temp = _mm256_xor_si256(temp, sign);
         return temp;
     }
 
@@ -1379,13 +1413,16 @@ namespace detail {
         const __m256i sign = _mm256_set1_epi32(0x80000000);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
-        // unsigned average
+
+        // unsigned rounded average
         __m256i one = _mm256_set1_epi32(1);
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_and_si256(a, b);
         temp = _mm256_add_epi32(temp, _mm256_srli_epi32(axb, 1));
         temp = _mm256_add_epi32(temp, _mm256_and_si256(axb, one));
-        return _mm256_xor_si256(temp, sign);
+
+        temp = _mm256_xor_si256(temp, sign);
+        return temp;
     }
 
     static inline s32x8 mullo(s32x8 a, s32x8 b)
@@ -1586,9 +1623,15 @@ namespace detail {
 
     static inline s64x4 avg(s64x4 a, s64x4 b)
     {
+        const __m256i sign = _mm256_set1_epi64x(0x8000000000000000ull);
+        a = _mm256_xor_si256(a, sign);
+        b = _mm256_xor_si256(b, sign);
+
+        // unsigned average
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_add_epi64(_mm256_and_si256(a, b), detail::simd256_srai1_epi64(axb));
-        temp = _mm256_add_epi64(temp, _mm256_and_si256(_mm256_srli_epi64(temp, 63), axb));
+
+        temp = _mm256_xor_si256(temp, sign);
         return temp;
     }
 
@@ -1597,13 +1640,16 @@ namespace detail {
         const __m256i sign = _mm256_set1_epi64x(0x8000000000000000ull);
         a = _mm256_xor_si256(a, sign);
         b = _mm256_xor_si256(b, sign);
-        // unsigned average
+
+        // unsigned rounded average
         __m256i one = _mm256_set1_epi64x(1);
         __m256i axb = _mm256_xor_si256(a, b);
         __m256i temp = _mm256_and_si256(a, b);
         temp = _mm256_add_epi64(temp, _mm256_srli_epi64(axb, 1));
         temp = _mm256_add_epi64(temp, _mm256_and_si256(axb, one));
-        return _mm256_xor_si256(temp, sign);
+
+        temp = _mm256_xor_si256(temp, sign);
+        return temp;
     }
 
     // bitwise
