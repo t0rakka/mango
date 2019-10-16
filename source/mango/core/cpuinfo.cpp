@@ -213,6 +213,14 @@ namespace
             flags |= CPU_ARM_NEON;
         }
 
+#if 0   // TODO: more hwcaps - need __aarch64__ ARM / Linux for testing
+        // defined(__aarch64__) || defined(MANGO_CPU_64BIT)
+        if (hwcaps & HWCAP_AES)
+        if (hwcaps & HWCAP_CRC32)
+        if (hwcaps & HWCAP_SHA1)
+        if (hwcaps & HWCAP_SHA2)
+#endif
+
         return flags;
     }
 
