@@ -136,18 +136,19 @@ namespace detail {
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_signed_average(ScalarType a, ScalarType b)
-    {
-        ScalarType v = (a & b) + ((a ^ b) >> 1);
-        using UnsignedType = typename std::make_unsigned<ScalarType>::type;
-        return v + ((UnsignedType(v) >> (sizeof(UnsignedType) * 8 - 1)) & (a ^ b));
-    }
-
-    template <typename ScalarType>
     static inline ScalarType scalar_unsigned_rounded_average(ScalarType a, ScalarType b)
     {
         ScalarType v = (a & b) + ((a ^ b) >> 1) + ((a ^ b) & 1);
         return v;
+    }
+
+    template <typename ScalarType>
+    static inline ScalarType scalar_signed_average(ScalarType a, ScalarType b)
+    {
+        using UnsignedType = typename std::make_unsigned<ScalarType>::type;
+
+        constexpr UnsignedType sign = UnsignedType(1) << (sizeof(UnsignedType) * 8 - 1);
+        return scalar_unsigned_average<UnsignedType>(a ^ sign, b ^ sign) ^ sign;
     }
 
     template <typename ScalarType>
@@ -156,11 +157,7 @@ namespace detail {
         using UnsignedType = typename std::make_unsigned<ScalarType>::type;
 
         constexpr UnsignedType sign = UnsignedType(1) << (sizeof(UnsignedType) * 8 - 1);
-
-        UnsignedType x = a ^ sign;
-        UnsignedType y = b ^ sign;
-        UnsignedType s = scalar_unsigned_rounded_average(x, y);
-        return s ^ sign;
+        return scalar_unsigned_rounded_average<UnsignedType>(a ^ sign, b ^ sign) ^ sign;
     }
 
     template <typename ScalarType>
