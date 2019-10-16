@@ -1201,7 +1201,7 @@ namespace simd {
         return subs(temp_a, temp_b);
     }
 
-    static inline s16x8 avg(s16x8 a, s16x8 b)
+    static inline s16x8 avg(s16x8 sa, s16x8 sb)
     {
         u16x8::vector sign = vec_splats(u16(0x8000));
         u16x8::vector a = vec_xor(u16x8::vector(sa.data), sign);
@@ -1493,7 +1493,7 @@ namespace simd {
         return sub(a, b);
     }
 
-    static inline s32x4 avg(s32x4 a, s32x4 b)
+    static inline s32x4 avg(s32x4 sa, s32x4 sb)
     {
         u32x4::vector sign = vec_splats(u32(0x80000000));
         u32x4::vector a = vec_xor(u32x4::vector(sa.data), sign);
@@ -1730,7 +1730,7 @@ namespace simd {
         return vec_sub(a.data, b.data);
     }
 
-    static inline s64x2 avg(s64x2 a, s64x2 b)
+    static inline s64x2 avg(s64x2 sa, s64x2 sb)
     {
         u64x2::vector sign = vec_splats(u64(0x8000000000000000ull));
         u64x2::vector a = vec_xor(u64x2::vector(sa.data), sign);
