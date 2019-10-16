@@ -5,7 +5,7 @@ PROJECT(mango CXX C)
 # compiler
 # ------------------------------------------------------------------------------
 
-message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set(COMPILER_MSVC 1)
@@ -23,7 +23,7 @@ endif()
 # processor
 # ------------------------------------------------------------------------------
 
-message(STATUS "Processor is ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
     set(X86_64 1)
@@ -40,6 +40,16 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
 else()
     message(STATUS "Processor is not supported!")
 endif()
+
+# ------------------------------------------------------------------------------
+# build
+# ------------------------------------------------------------------------------
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
 
 # ------------------------------------------------------------------------------
 # options
@@ -249,10 +259,6 @@ SOURCE_GROUP("external" FILES
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
 
 ADD_LIBRARY(mango
     ${CORE} 
