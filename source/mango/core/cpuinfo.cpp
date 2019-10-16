@@ -45,26 +45,26 @@ namespace
 
 #endif
 
-	// ----------------------------------------------------------------------------
-	// getCPUFlagsInternal()
-	// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
+    // getCPUFlagsInternal()
+    // ----------------------------------------------------------------------------
 
     u64 getCPUFlagsInternal()
     {
         u64 flags = 0;
 
-		int cpuInfo[4] = { 0, 0, 0, 0 };
+        int cpuInfo[4] = { 0, 0, 0, 0 };
 
-		// Get CPU information
-		cpuid(cpuInfo, 0);
-		unsigned int nIds = cpuInfo[0];
+        // Get CPU information
+        cpuid(cpuInfo, 0);
+        unsigned int nIds = cpuInfo[0];
 
-		for (unsigned int i = 0; i <= nIds; ++i)
-		{
+        for (unsigned int i = 0; i <= nIds; ++i)
+        {
             cpuid(cpuInfo, i);
-            
-			switch (i)
-			{
+
+            switch (i)
+            {
                 case 1:
                     // edx
                     if ((cpuInfo[3] & 0x00800000) != 0) flags |= CPU_MMX;
@@ -102,15 +102,15 @@ namespace
                     if ((cpuInfo[1] & 0x40000000) != 0) flags |= CPU_AVX512BW;
                     if ((cpuInfo[1] & 0x80000000) != 0) flags |= CPU_AVX512VL;
                     break;
-			}
-		}
+            }
+        }
 
-		// Get extended CPU information
-		cpuid(cpuInfo, 0x80000000);
-		unsigned int nExtIds = cpuInfo[0];
+        // Get extended CPU information
+        cpuid(cpuInfo, 0x80000000);
+        unsigned int nExtIds = cpuInfo[0];
 
-		for (unsigned int i = 0x80000000; i <= nExtIds; ++i)
-		{
+        for (unsigned int i = 0x80000000; i <= nExtIds; ++i)
+        {
             if (i == 0x80000001)
             {
                 cpuid(cpuInfo, i);
@@ -127,8 +127,8 @@ namespace
             }
         }
 
-		return flags;
-	}
+        return flags;
+    }
 
 #elif defined(MANGO_CPU_ARM) && defined(MANGO_PLATFORM_ANDROID)
 
@@ -144,7 +144,7 @@ namespace
 
             if ((features & ANDROID_CPU_ARM_FEATURE_NEON) != 0)
             {
-                flags |= CPU_NEON;
+                flags |= CPU_ARM_NEON;
             }
 
             if ((features & ANDROID_CPU_ARM_FEATURE_AES) != 0)
@@ -171,7 +171,7 @@ namespace
         {
             uint64_t features = android_getCpuFeatures();
 
-            flags |= CPU_NEON; // default for ARM64
+            flags |= CPU_ARM_NEON; // default for ARM64
 
             if ((features & ANDROID_CPU_ARM64_FEATURE_AES) != 0)
             {
@@ -192,6 +192,25 @@ namespace
             {
                 flags |= CPU_ARM_CRC32;
             }
+        }
+
+        return flags;
+    }
+
+#elif defined(MANGO_CPU_ARM) && defined(MANGO_PLATFORM_LINUX)
+
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+
+    u64 getCPUFlagsInternal()
+    {
+        u64 flags = 0;
+
+        long hwcaps = getauxval(AT_HWCAP);
+
+        if (hwcaps & HWCAP_NEON)
+        {
+            flags |= CPU_ARM_NEON;
         }
 
         return flags;

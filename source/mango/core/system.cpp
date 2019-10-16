@@ -52,7 +52,7 @@ namespace mango
         if (flags & CPU_3DNOW_EXT) info << "3DNOW+ ";
         if (flags & CPU_AVX) info << "AVX ";
         if (flags & CPU_AVX2) info << "AVX2 ";
-        if (flags & CPU_NEON) info << "NEON ";
+        if (flags & CPU_ARM_NEON) info << "NEON ";
         if (flags & CPU_AES) info << "AES ";
         if (flags & CPU_CLMUL) info << "CLMUL ";
         if (flags & CPU_FMA3) info << "FMA3 ";
