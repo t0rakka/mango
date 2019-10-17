@@ -273,8 +273,15 @@ static WEBP_INLINE void Store4x16_NEON(const uint8x16_t p1, const uint8x16_t p0,
 
 static WEBP_INLINE void Store16x2_NEON(const uint8x16_t p0, const uint8x16_t q0,
                                        uint8_t* const dst, int stride) {
+#if !defined(__clang__) && defined(__GNUC__)
+  // GCC does not generate relaxed alignment encoding for vst1q_u8 intrinsic so we need
+  // a work-around so that we can store to addresses which are not multiples of 16 bytes (128 bits)
+  memcpy(dst - stride, &p0, 16);
+  memcpy(dst, &q0, 16);
+#else
   vst1q_u8(dst - stride, p0);
   vst1q_u8(dst, q0);
+#endif
 }
 
 static WEBP_INLINE void Store16x4_NEON(const uint8x16_t p1, const uint8x16_t p0,
