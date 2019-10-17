@@ -13,6 +13,8 @@
 #include "../../external/libwebp/src/webp/decode.h"
 #include "../../external/libwebp/src/webp/encode.h"
 
+// https://developers.google.com/speed/webp/docs/api
+
 namespace
 {
     using namespace mango;
