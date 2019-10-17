@@ -63,7 +63,7 @@ OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
 OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
 OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
 OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
-OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              OFF)
+OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 
 OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
 
@@ -357,7 +357,6 @@ else ()
         target_compile_options(mango PUBLIC "-ffast-math")
     endif ()
 
-    # conservative: ONLY generate NEON instructions for ARM64 or specifically requested
     if (ENABLE_NEON OR AARCH64)
         message(STATUS "SIMD: NEON")
         add_definitions (-mfpu=neon -mfloat-abi=hard)
