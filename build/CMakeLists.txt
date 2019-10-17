@@ -357,7 +357,7 @@ else ()
         target_compile_options(mango PUBLIC "-ffast-math")
     endif ()
 
-    if (ENABLE_NEON OR AARCH64)
+    if ((ARM AND ENABLE_NEON) OR AARCH64)
         message(STATUS "SIMD: NEON")
         add_definitions (-mfpu=neon -mfloat-abi=hard)
         set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
