@@ -46,6 +46,11 @@ namespace mango {
         free(m_memory.address);
     }
 
+    Buffer::operator ConstMemory () const
+    {
+        return m_memory;
+    }
+
     Buffer::operator Memory () const
     {
         return m_memory;
@@ -147,6 +152,11 @@ namespace mango {
 
     MemoryStream::~MemoryStream()
     {
+    }
+
+    MemoryStream::operator ConstMemory () const
+    {
+        return m_buffer;
     }
 
     MemoryStream::operator Memory () const

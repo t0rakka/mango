@@ -26,6 +26,7 @@ namespace mango
         Buffer(ConstMemory memory, Alignment alignment = Alignment());
         ~Buffer();
 
+        operator ConstMemory () const;
         operator Memory () const;
         operator u8* () const;
         u8* data() const;
@@ -55,6 +56,7 @@ namespace mango
         MemoryStream(Memory memory);
         ~MemoryStream();
 
+        operator ConstMemory () const;
         operator Memory () const;
         operator u8* () const;
         u8* data() const;
