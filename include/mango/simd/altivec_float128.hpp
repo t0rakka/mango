@@ -139,7 +139,7 @@ namespace simd {
 
     static inline f32x4 bitwise_nand(f32x4 a, f32x4 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline f32x4 bitwise_and(f32x4 a, f32x4 b)

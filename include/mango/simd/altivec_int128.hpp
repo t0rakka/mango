@@ -120,7 +120,7 @@ namespace simd {
 
     static inline u8x16 bitwise_nand(u8x16 a, u8x16 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline u8x16 bitwise_and(u8x16 a, u8x16 b)
@@ -303,7 +303,7 @@ namespace simd {
 
     static inline u16x8 bitwise_nand(u16x8 a, u16x8 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline u16x8 bitwise_and(u16x8 a, u16x8 b)
@@ -552,7 +552,7 @@ namespace simd {
 
     static inline u32x4 bitwise_nand(u32x4 a, u32x4 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline u32x4 bitwise_and(u32x4 a, u32x4 b)
@@ -760,7 +760,7 @@ namespace simd {
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline u64x2 bitwise_and(u64x2 a, u64x2 b)
@@ -995,7 +995,7 @@ namespace simd {
 
     static inline s8x16 bitwise_nand(s8x16 a, s8x16 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline s8x16 bitwise_and(s8x16 a, s8x16 b)
@@ -1239,7 +1239,7 @@ namespace simd {
 
     static inline s16x8 bitwise_nand(s16x8 a, s16x8 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline s16x8 bitwise_and(s16x8 a, s16x8 b)
@@ -1523,7 +1523,7 @@ namespace simd {
 
     static inline s32x4 bitwise_nand(s32x4 a, s32x4 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline s32x4 bitwise_and(s32x4 a, s32x4 b)
@@ -1753,7 +1753,7 @@ namespace simd {
 
     static inline s64x2 bitwise_nand(s64x2 a, s64x2 b)
     {
-        return vec_nand(a.data, b.data);
+        return vec_andc(b.data, a.data);
     }
 
     static inline s64x2 bitwise_and(s64x2 a, s64x2 b)
