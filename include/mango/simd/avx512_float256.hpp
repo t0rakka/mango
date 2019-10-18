@@ -72,7 +72,8 @@ namespace simd {
 
     static inline f32x8 bitwise_not(f32x8 a)
     {
-         return _mm256_xor_ps(a, _mm256_cmp_ps(a, a, _CMP_EQ_OQ));
+        const __m256i s = _mm256_castps_si256(a);
+        return _mm256_castsi256_ps(_mm256_ternarylogic_epi32(s, s, s, 0x01));
     }
 
     static inline f32x8 min(f32x8 a, f32x8 b)

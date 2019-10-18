@@ -141,7 +141,8 @@ namespace simd {
 
     static inline f32x4 bitwise_not(f32x4 a)
     {
-        return _mm_xor_ps(a, _mm_cmpeq_ps(a, a));
+        const __m128i s = _mm_castps_si128(a);
+        return _mm_castsi128_ps(_mm_ternarylogic_epi32(s, s, s, 0x01));
     }
 
     static inline f32x4 min(f32x4 a, f32x4 b)

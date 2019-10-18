@@ -17,7 +17,8 @@ namespace detail {
 
     static inline __m512i simd512_not(__m512i a)
     {
-        return _mm512_xor_si512(a, _mm512_set1_epi32(0xffffffff));
+        // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
+        return _mm512_ternarylogic_epi32(a, a, a, 0x01);
     }
 
     static inline __m512i simd512_srli1_epi8(__m512i a)

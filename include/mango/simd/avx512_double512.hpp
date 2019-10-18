@@ -72,8 +72,8 @@ namespace simd {
 
     static inline f64x8 bitwise_not(f64x8 a)
     {
-        __m512d mask = _mm512_castsi512_pd(_mm512_set1_epi64(0xffffffffffffffffull));
-        return _mm512_xor_pd(a, mask);
+        const __m512i s = _mm512_castpd_si512(a);
+        return _mm512_castsi512_pd(_mm512_ternarylogic_epi64(s, s, s, 0x01));
     }
 
     static inline f64x8 min(f64x8 a, f64x8 b)

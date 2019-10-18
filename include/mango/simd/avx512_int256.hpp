@@ -17,7 +17,8 @@ namespace detail {
 
     static inline __m256i simd256_not_si256(__m256i a)
     {
-        return _mm256_xor_si256(a, _mm256_cmpeq_epi8(a, a));
+        // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
+        return _mm256_ternarylogic_epi32(a, a, a, 0x01);
     }
 
     static inline __m256i simd256_select_si256(__m256i mask, __m256i a, __m256i b)

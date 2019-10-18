@@ -24,7 +24,8 @@ namespace detail
 
     static inline __m128i simd128_not_si128(__m128i a)
     {
-        return _mm_xor_si128(a, _mm_cmpeq_epi8(a, a));
+        // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
+        return _mm_ternarylogic_epi32(a, a, a, 0x01);
     }
 
     static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
