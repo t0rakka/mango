@@ -351,7 +351,6 @@ namespace
 #endif
 #if defined(MANGO_ENABLE_NEON__todo)
 #endif
-
                     break;
                 case 4:
 #if defined(MANGO_ENABLE_SSE2)
