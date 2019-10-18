@@ -544,9 +544,6 @@ namespace mango
 		HINSTANCE hinstance = ::GetModuleHandle(NULL);
 
 		// register window class
-		WNDCLASSEX wndclass;
-		std::memset(&wndclass, 0, sizeof(wndclass));
-
 		wndclass.cbSize = sizeof(wndclass);
 		wndclass.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS | CS_OWNDC;
 		wndclass.lpfnWndProc = WindowProc;
@@ -571,14 +568,14 @@ namespace mango
 
 		// adjust window rect
 		RECT rect = { 0, 0, width - 1, height - 1 };
-		AdjustWindowRectEx(&rect, mask, FALSE, 0);
+		::AdjustWindowRectEx(&rect, mask, FALSE, 0);
 		width = rect.right - rect.left + 1;
 		height = rect.bottom - rect.top + 1;
 
 		// create window
 		HWND parent = NULL;
-		hwnd = CreateWindowExW(0, wndclass.lpszClassName, L"", mask,
-				x, y, width, height, parent, NULL, hinstance, NULL);
+		hwnd = ::CreateWindowExW(0, wndclass.lpszClassName, L"", 
+			mask, x, y, width, height, parent, NULL, hinstance, NULL);
 
 		::BringWindowToTop(hwnd);
 		::SetForegroundWindow(hwnd);
@@ -597,7 +594,7 @@ namespace mango
 		{
 			HINSTANCE hinstance = ::GetModuleHandle(NULL);
 			::DestroyWindow(hwnd);
-			::UnregisterClass(L"class::mango::window", hinstance);
+			::UnregisterClass(wndclass.lpszClassName, wndclass.hInstance);
 		}
 	}
 

@@ -11,6 +11,7 @@ namespace mango
 
     struct WindowHandle
     {
+        WNDCLASSEX wndclass { 0 };
 		HWND hwnd { NULL };
         HICON icon { NULL };
 		bool looping { false };
