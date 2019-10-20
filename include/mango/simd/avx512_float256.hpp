@@ -248,16 +248,19 @@ namespace simd {
 
     static inline f32x8 trunc(f32x8 s)
     {
+        //return _mm256_roundscale_ps(s, 0x13);
         return _mm256_round_ps(s, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
     }
 
     static inline f32x8 floor(f32x8 s)
     {
+        //return _mm256_roundscale_ps(s, 0x11);
         return _mm256_round_ps(s, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
     }
 
     static inline f32x8 ceil(f32x8 s)
     {
+        //return _mm256_roundscale_ps(s, 0x12);
         return _mm256_round_ps(s, _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC);
     }
 

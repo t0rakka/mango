@@ -233,16 +233,19 @@ namespace simd {
 
     static inline f64x8 trunc(f64x8 s)
     {
+        //return _mm512_roundscale_pd(s, 0x13);
         return _mm512_add_round_pd(s, _mm512_setzero_pd(), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
     }
 
     static inline f64x8 floor(f64x8 s)
     {
+        //return _mm512_roundscale_pd(s, 0x11);
         return _mm512_add_round_pd(s, _mm512_setzero_pd(), _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
     }
 
     static inline f64x8 ceil(f64x8 s)
     {
+        //return _mm512_roundscale_pd(s, 0x12);
         return _mm512_add_round_pd(s, _mm512_setzero_pd(), _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC);
     }
 
