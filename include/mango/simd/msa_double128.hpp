@@ -67,11 +67,13 @@ namespace simd {
 
     static inline f64x2 f64x2_uload(const f64* source)
     {
+        //return v2f64(__msa_ld_d(source, 0));
         return reinterpret_cast<const v2f64 *>(source)[0];
     }
 
     static inline void f64x2_ustore(f64* dest, f64x2 a)
     {
+        //__msa_st_d(v2i64(a), dest, 0);
         reinterpret_cast<v2f64 *>(dest)[0] = a;
     }
 

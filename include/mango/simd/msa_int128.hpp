@@ -46,6 +46,7 @@ namespace simd {
 
     static inline u8x16 u8x16_uload(const u8* source)
     {
+        //return v16u8(__msa_ld_b(source, 0));
         u8x16 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
@@ -53,6 +54,7 @@ namespace simd {
 
     static inline void u8x16_ustore(u8* dest, u8x16 a)
     {
+        //__msa_st_b(v16i8(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
     }
 
@@ -216,6 +218,7 @@ namespace simd {
 
     static inline u16x8 u16x8_uload(const u16* source)
     {
+        //return v8u16(__msa_ld_h(source, 0));
         u16x8 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
@@ -223,6 +226,7 @@ namespace simd {
 
     static inline void u16x8_ustore(u16* dest, u16x8 a)
     {
+        //__msa_st_h(v8i16(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
     }
 
@@ -447,11 +451,13 @@ namespace simd {
 
     static inline u32x4 u32x4_uload(const u32* source)
     {
+        //return v4u32(__msa_ld_w(source, 0));
         return reinterpret_cast<const v4u32 *>(source)[0];
     }
 
     static inline void u32x4_ustore(u32* dest, u32x4 a)
     {
+        //__msa_st_w(v4i32(a), dest, 0);
         reinterpret_cast<v4u32 *>(dest)[0] = a;
     }
 
@@ -674,6 +680,7 @@ namespace simd {
 
     static inline u64x2 u64x2_uload(const u64* source)
     {
+        //return v2u64(__msa_ld_d(source, 0));
         u64x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
@@ -681,6 +688,7 @@ namespace simd {
 
     static inline void u64x2_ustore(u64* dest, u64x2 a)
     {
+        //__msa_st_d(v2i64(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
     }
 
@@ -851,6 +859,7 @@ namespace simd {
 
     static inline s8x16 s8x16_uload(const s8* source)
     {
+        //return v16u8(__msa_ld_b(source, 0));
         s8x16 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
@@ -858,6 +867,7 @@ namespace simd {
 
     static inline void s8x16_ustore(s8* dest, s8x16 a)
     {
+        //__msa_st_b(v16i8(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
     }
 
@@ -1032,6 +1042,7 @@ namespace simd {
 
     static inline s16x8 s16x8_uload(const s16* source)
     {
+        //return v8u16(__msa_ld_h(source, 0));
         s16x8 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
@@ -1039,6 +1050,7 @@ namespace simd {
 
     static inline void s16x8_ustore(s16* dest, s16x8 a)
     {
+        //__msa_st_h(v8i16(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
     }
 
@@ -1318,11 +1330,13 @@ namespace simd {
 
     static inline s32x4 s32x4_uload(const s32* source)
     {
+        //return v4u32(__msa_ld_w(source, 0));
         return reinterpret_cast<const v4i32 *>(source)[0];
     }
 
     static inline void s32x4_ustore(s32* dest, s32x4 a)
     {
+        //__msa_st_w(v4i32(a), dest, 0);
         reinterpret_cast<v4i32 *>(dest)[0] = a;
     }
 
@@ -1592,6 +1606,7 @@ namespace simd {
 
     static inline s64x2 s64x2_uload(const s64* source)
     {
+        //return v2u64(__msa_ld_d(source, 0));
         s64x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
@@ -1599,6 +1614,7 @@ namespace simd {
 
     static inline void s64x2_ustore(s64* dest, s64x2 a)
     {
+        //__msa_st_d(v2i64(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
     }
 

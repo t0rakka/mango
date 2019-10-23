@@ -76,11 +76,13 @@ namespace simd {
 
     static inline f32x4 f32x4_uload(const f32* source)
     {
+        //return v4f32(__msa_ld_w(source, 0));
         return reinterpret_cast<const v4f32 *>(source)[0];
     }
 
     static inline void f32x4_ustore(f32* dest, f32x4 a)
     {
+        //__msa_st_w(v4i32(a), dest, 0);
         reinterpret_cast<v4f32 *>(dest)[0] = a;
     }
 
