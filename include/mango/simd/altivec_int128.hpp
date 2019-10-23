@@ -46,14 +46,12 @@ namespace simd {
 
     static inline u8x16 u8x16_uload(const u8* source)
     {
-        u8x16 temp;
-        std::memcpy(&temp, source, sizeof(temp));
-        return temp;
+        return vec_xl(0, source);
     }
 
     static inline void u8x16_ustore(u8* dest, u8x16 a)
     {
-        std::memcpy(dest, &a, sizeof(a));
+        vec_xst(a.data, 0, dest);
     }
 
     static inline u8x16 u8x16_load_low(const u8* source)
@@ -228,14 +226,12 @@ namespace simd {
 
     static inline u16x8 u16x8_uload(const u16* source)
     {
-        u16x8 temp;
-        std::memcpy(&temp, source, sizeof(temp));
-        return temp;
+        return vec_xl(0, source);
     }
 
     static inline void u16x8_ustore(u16* dest, u16x8 a)
     {
-        std::memcpy(dest, &a, sizeof(a));
+        vec_xst(a.data, 0, dest);
     }
 
     static inline u16x8 u16x8_load_low(const u16* source)
@@ -473,17 +469,14 @@ namespace simd {
         return (u32x4::vector) { x, y, z, w };
     }
 
-    static inline u32x4 u32x4_uload(const u32* s)
+    static inline u32x4 u32x4_uload(const u32* source)
     {
-        return (u32x4::vector) { s[0], s[1], s[2], s[3] };
+        return vec_xl(0, source);
     }
 
     static inline void u32x4_ustore(u32* dest, u32x4 a)
     {
-        dest[0] = vec_extract(a.data, 0);
-        dest[1] = vec_extract(a.data, 1);
-        dest[2] = vec_extract(a.data, 2);
-        dest[3] = vec_extract(a.data, 3);
+        vec_xst(a.data, 0, dest);
     }
 
     static inline u32x4 u32x4_load_low(const u32* source)
@@ -714,14 +707,12 @@ namespace simd {
 
     static inline u64x2 u64x2_uload(const u64* source)
     {
-        u64x2 temp;
-        std::memcpy(&temp, source, sizeof(temp));
-        return temp;
+        return vec_xl(0, source);
     }
 
     static inline void u64x2_ustore(u64* dest, u64x2 a)
     {
-        std::memcpy(dest, &a, sizeof(a));
+        vec_xst(a.data, 0, dest);
     }
 
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
@@ -904,14 +895,12 @@ namespace simd {
 
     static inline s8x16 s8x16_uload(const s8* source)
     {
-        s8x16 temp;
-        std::memcpy(&temp, source, sizeof(temp));
-        return temp;
+        return vec_xl(0, source);
     }
 
     static inline void s8x16_ustore(s8* dest, s8x16 a)
     {
-        std::memcpy(dest, &a, sizeof(a));
+        vec_xst(a.data, 0, dest);
     }
 
     static inline s8x16 s8x16_load_low(const s8* source)
@@ -1103,14 +1092,12 @@ namespace simd {
 
     static inline s16x8 s16x8_uload(const s16* source)
     {
-        s16x8 temp;
-        std::memcpy(&temp, source, sizeof(temp));
-        return temp;
+        return vec_xl(0, source);
     }
 
     static inline void s16x8_ustore(s16* dest, s16x8 a)
     {
-        std::memcpy(dest, &a, sizeof(a));
+        vec_xst(a.data, 0, dest);
     }
 
     static inline s16x8 s16x8_load_low(const s16* source)
@@ -1409,17 +1396,14 @@ namespace simd {
         return (s32x4::vector) { x, y, z, w };
     }
 
-    static inline s32x4 s32x4_uload(const s32* s)
+    static inline s32x4 s32x4_uload(const s32* source)
     {
-        return (s32x4::vector) { s[0], s[1], s[2], s[3] };
+        return vec_xl(0, source);
     }
 
     static inline void s32x4_ustore(s32* dest, s32x4 a)
     {
-        dest[0] = vec_extract(a.data, 0);
-        dest[1] = vec_extract(a.data, 1);
-        dest[2] = vec_extract(a.data, 2);
-        dest[3] = vec_extract(a.data, 3);
+        vec_xst(a.data, 0, dest);
     }
 
     static inline s32x4 s32x4_load_low(const s32* source)
@@ -1700,14 +1684,12 @@ namespace simd {
 
     static inline s64x2 s64x2_uload(const s64* source)
     {
-        s64x2 temp;
-        std::memcpy(&temp, source, sizeof(temp));
-        return temp;
+        return vec_xl(0, source);
     }
 
     static inline void s64x2_ustore(s64* dest, s64x2 a)
     {
-        std::memcpy(dest, &a, sizeof(a));
+        vec_xst(a.data, 0, dest);
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)
