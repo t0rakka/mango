@@ -87,6 +87,22 @@ namespace simd {
         return temp;
     }
 
+#if defined(MANGO_COMPILER_GCC)
+
+    static inline f64x2 f64x2_uload(const f64* source)
+    {
+        f64x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void f64x2_ustore(f64* dest, f64x2 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
+    }
+
+#else
+
     static inline f64x2 f64x2_uload(const f64* source)
     {
         return vld1q_f64(source);
@@ -96,6 +112,8 @@ namespace simd {
     {
         vst1q_f64(dest, a);
     }
+
+#endif        
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)
     {

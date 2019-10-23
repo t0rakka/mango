@@ -179,6 +179,22 @@ namespace simd {
         return temp;
     }
 
+#if defined(MANGO_COMPILER_GCC)
+
+    static inline f32x4 f32x4_uload(const f32* source)
+    {
+        f32x4 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
+    }
+
+    static inline void f32x4_ustore(f32* dest, f32x4 a)
+    {
+        std::memcpy(dest, &a, sizeof(a));
+    }
+
+#else
+
     static inline f32x4 f32x4_uload(const f32* source)
     {
         return vld1q_f32(source);
@@ -188,6 +204,8 @@ namespace simd {
     {
         vst1q_f32(dest, a);
     }
+
+#endif
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)
     {
