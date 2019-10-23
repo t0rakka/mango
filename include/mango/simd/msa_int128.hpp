@@ -103,7 +103,7 @@ namespace simd {
         return __msa_ave_u_b(a, b);
     }
 
-    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return __msa_aver_u_b(a, b);
     }
@@ -275,7 +275,7 @@ namespace simd {
         return __msa_ave_u_h(a, b);
     }
 
-    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return __msa_aver_u_h(a, b);
     }
@@ -506,7 +506,7 @@ namespace simd {
         return __msa_ave_u_w(a, b);
     }
 
-    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    static inline u32x4 avg_round(u32x4 a, u32x4 b)
     {
         return __msa_aver_u_w(a, b);
     }
@@ -717,7 +717,7 @@ namespace simd {
         return __msa_ave_u_d(a, b);
     }
 
-    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    static inline u64x2 avg_round(u64x2 a, u64x2 b)
     {
         return __msa_aver_u_d(a, b);
     }
@@ -916,7 +916,7 @@ namespace simd {
         return __msa_ave_s_b(a, b);
     }
 
-    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    static inline s8x16 avg_round(s8x16 a, s8x16 b)
     {
         return __msa_aver_s_b(a, b);
     }
@@ -1143,7 +1143,7 @@ namespace simd {
         return __msa_ave_s_h(a, b);
     }
 
-    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         return __msa_aver_s_h(a, b);
     }
@@ -1414,7 +1414,7 @@ namespace simd {
         return __msa_ave_s_w(a, b);
     }
 
-    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    static inline s32x4 avg_round(s32x4 a, s32x4 b)
     {
         return __msa_aver_s_w(a, b);
     }
@@ -1643,7 +1643,7 @@ namespace simd {
         return __msa_ave_s_d(a, b);
     }
 
-    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    static inline s64x2 avg_round(s64x2 a, s64x2 b)
     {
         return __msa_aver_s_d(a, b);
     }

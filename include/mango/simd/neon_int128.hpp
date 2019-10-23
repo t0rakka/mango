@@ -122,7 +122,7 @@ namespace simd {
         return vhaddq_u8(a, b);
     }
 
-    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return vrhaddq_u8(a, b);
     }
@@ -312,7 +312,7 @@ namespace simd {
         return vhaddq_u16(a, b);
     }
 
-    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return vrhaddq_u16(a, b);
     }
@@ -566,7 +566,7 @@ namespace simd {
         return vhaddq_u32(a, b);
     }
 
-    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    static inline u32x4 avg_round(u32x4 a, u32x4 b)
     {
         return vrhaddq_u32(a, b);
     }
@@ -797,7 +797,7 @@ namespace simd {
         return temp;
     }
 
-    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    static inline u64x2 avg_round(u64x2 a, u64x2 b)
     {
         uint64x2_t one = vdupq_n_u64(1);
         uint64x2_t axb = veorq_u64(a, b);
@@ -1049,7 +1049,7 @@ namespace simd {
         return vhaddq_s8(a, b);
     }
 
-    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    static inline s8x16 avg_round(s8x16 a, s8x16 b)
     {
         return vrhaddq_s8(a, b);
     }
@@ -1310,7 +1310,7 @@ namespace simd {
         return vhaddq_s16(a, b);
     }
 
-    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         return vrhaddq_s16(a, b);
     }
@@ -1623,7 +1623,7 @@ namespace simd {
         return vhaddq_s32(a, b);
     }
 
-    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    static inline s32x4 avg_round(s32x4 a, s32x4 b)
     {
         return vrhaddq_s32(a, b);
     }
@@ -1879,7 +1879,7 @@ namespace simd {
         return vreinterpretq_s64_u64(temp);
     }
 
-    static inline s64x2 ravg(s64x2 sa, s64x2 sb)
+    static inline s64x2 avg_round(s64x2 sa, s64x2 sb)
     {
         uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
         uint64x2_t a = veorq_u64(vreinterpretq_u64_s64(sa), sign);

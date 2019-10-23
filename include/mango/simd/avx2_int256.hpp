@@ -133,7 +133,7 @@ namespace detail {
         return temp;
     }
 
-    static inline u8x32 ravg(u8x32 a, u8x32 b)
+    static inline u8x32 avg_round(u8x32 a, u8x32 b)
     {
         return _mm256_avg_epu8(a, b);
     }
@@ -299,7 +299,7 @@ namespace detail {
         return temp;
     }
 
-    static inline u16x16 ravg(u16x16 a, u16x16 b)
+    static inline u16x16 avg_round(u16x16 a, u16x16 b)
     {
         return _mm256_avg_epu16(a, b);
     }
@@ -514,7 +514,7 @@ namespace detail {
         return temp;
     }
 
-    static inline u32x8 ravg(u32x8 a, u32x8 b)
+    static inline u32x8 avg_round(u32x8 a, u32x8 b)
     {
         __m256i one = _mm256_set1_epi32(1);
         __m256i axb = _mm256_xor_si256(a, b);
@@ -739,7 +739,7 @@ namespace detail {
         return temp;
     }
 
-    static inline u64x4 ravg(u64x4 a, u64x4 b)
+    static inline u64x4 avg_round(u64x4 a, u64x4 b)
     {
         __m256i one = _mm256_set1_epi64x(1);
         __m256i axb = _mm256_xor_si256(a, b);
@@ -947,7 +947,7 @@ namespace detail {
         return temp;
     }
 
-    static inline s8x32 ravg(s8x32 a, s8x32 b)
+    static inline s8x32 avg_round(s8x32 a, s8x32 b)
     {
 		const __m256i sign = _mm256_set1_epi8(0x80u);
         a = _mm256_xor_si256(a, sign);
@@ -1150,7 +1150,7 @@ namespace detail {
         return temp;
     }
 
-    static inline s16x16 ravg(s16x16 a, s16x16 b)
+    static inline s16x16 avg_round(s16x16 a, s16x16 b)
     {
         const __m256i sign = _mm256_set1_epi16(0x8000u);
         a = _mm256_xor_si256(a, sign);
@@ -1408,7 +1408,7 @@ namespace detail {
         return temp;
     }
 
-    static inline s32x8 ravg(s32x8 a, s32x8 b)
+    static inline s32x8 avg_round(s32x8 a, s32x8 b)
     {
         const __m256i sign = _mm256_set1_epi32(0x80000000);
         a = _mm256_xor_si256(a, sign);
@@ -1635,7 +1635,7 @@ namespace detail {
         return temp;
     }
 
-    static inline s64x4 ravg(s64x4 a, s64x4 b)
+    static inline s64x4 avg_round(s64x4 a, s64x4 b)
     {
         const __m256i sign = _mm256_set1_epi64x(0x8000000000000000ull);
         a = _mm256_xor_si256(a, sign);

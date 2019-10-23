@@ -190,7 +190,7 @@ namespace detail
         return temp;
     }
 
-    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return _mm_avg_epu8(a, b);
     }
@@ -359,7 +359,7 @@ namespace detail
         return temp;
     }
 
-    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return _mm_avg_epu16(a, b);
     }
@@ -590,7 +590,7 @@ namespace detail
         return temp;
     }
 
-    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    static inline u32x4 avg_round(u32x4 a, u32x4 b)
     {
         __m128i one = _mm_set1_epi32(1);
         __m128i axb = _mm_xor_si128(a, b);
@@ -803,7 +803,7 @@ namespace detail
         return temp;
     }
 
-    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    static inline u64x2 avg_round(u64x2 a, u64x2 b)
     {
         __m128i one = _mm_set1_epi64x(1);
         __m128i axb = _mm_xor_si128(a, b);
@@ -1012,7 +1012,7 @@ namespace detail
         return temp;
     }
 
-    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    static inline s8x16 avg_round(s8x16 a, s8x16 b)
     {
 		const __m128i sign = _mm_set1_epi8(0x80u);
         a = _mm_xor_si128(a, sign);
@@ -1230,7 +1230,7 @@ namespace detail
         return temp;
     }
 
-    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         const __m128i sign = _mm_set1_epi16(0x8000u);
         a = _mm_xor_si128(a, sign);
@@ -1516,7 +1516,7 @@ namespace detail
         return temp;
     }
 
-    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    static inline s32x4 avg_round(s32x4 a, s32x4 b)
     {
         const __m128i sign = _mm_set1_epi32(0x80000000);
         a = _mm_xor_si128(a, sign);
@@ -1756,7 +1756,7 @@ namespace detail
         return temp;
     }
 
-    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    static inline s64x2 avg_round(s64x2 a, s64x2 b)
     {
         const __m128i sign = _mm_set1_epi64x(0x8000000000000000ull);
         a = _mm_xor_si128(a, sign);

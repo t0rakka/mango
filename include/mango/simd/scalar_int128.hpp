@@ -485,7 +485,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
     }
 
-    static inline u8x16 ravg(u8x16 a, u8x16 b)
+    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
@@ -659,7 +659,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
     }
 
-    static inline u16x8 ravg(u16x8 a, u16x8 b)
+    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
@@ -891,7 +891,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
     }
 
-    static inline u32x4 ravg(u32x4 a, u32x4 b)
+    static inline u32x4 avg_round(u32x4 a, u32x4 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
@@ -1099,7 +1099,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
     }
 
-    static inline u64x2 ravg(u64x2 a, u64x2 b)
+    static inline u64x2 avg_round(u64x2 a, u64x2 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
@@ -1301,7 +1301,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_signed_average, a, b);
     }
 
-    static inline s8x16 ravg(s8x16 a, s8x16 b)
+    static inline s8x16 avg_round(s8x16 a, s8x16 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
@@ -1541,7 +1541,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_signed_average, a, b);
     }
 
-    static inline s16x8 ravg(s16x8 a, s16x8 b)
+    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
@@ -1813,7 +1813,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_signed_average, a, b);
     }
 
-    static inline s32x4 ravg(s32x4 a, s32x4 b)
+    static inline s32x4 avg_round(s32x4 a, s32x4 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
@@ -2040,7 +2040,7 @@ namespace detail {
         return detail::scalar_unroll(detail::scalar_signed_average, a, b);
     }
 
-    static inline s64x2 ravg(s64x2 a, s64x2 b)
+    static inline s64x2 avg_round(s64x2 a, s64x2 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
