@@ -622,6 +622,7 @@ namespace simd {
 #elif defined(MANGO_ENABLE_ALTIVEC) && defined(MANGO_ENABLE_VSX)
 
 #include <altivec.h>
+//#include <builtins.h>
 
 namespace mango {
 namespace simd {
@@ -630,7 +631,6 @@ namespace simd {
     // Altivec / VSX
     // --------------------------------------------------------------
 
-    // https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.cbcpx01/vectorbltin.htm
     // https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.cbcpx01/vectorbltin.htm
 
     #define MANGO_ENABLE_SIMD

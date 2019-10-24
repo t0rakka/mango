@@ -164,6 +164,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask8x16 compare_le(u8x16 a, u8x16 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask8x16 compare_ge(u8x16 a, u8x16 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask8x16 compare_le(u8x16 a, u8x16 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -175,6 +189,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+
+#endif
 
     static inline u8x16 select(mask8x16 mask, u8x16 a, u8x16 b)
     {
@@ -335,6 +351,30 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+    static inline mask16x8 compare_eq(u16x8 a, u16x8 b)
+    {
+        return vec_cmpeq(a.data, b.data);
+    }
+
+    static inline mask16x8 compare_gt(u16x8 a, u16x8 b)
+    {
+        return vec_cmpgt(a.data, b.data);
+    }
+
+#if 0
+
+    static inline mask16x8 compare_le(u16x8 a, u16x8 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask16x8 compare_ge(u16x8 a, u16x8 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask16x8 compare_le(u16x8 a, u16x8 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -347,15 +387,7 @@ namespace simd {
         return vec_nor(mask, mask);
     }
 
-    static inline mask16x8 compare_eq(u16x8 a, u16x8 b)
-    {
-        return vec_cmpeq(a.data, b.data);
-    }
-
-    static inline mask16x8 compare_gt(u16x8 a, u16x8 b)
-    {
-        return vec_cmpgt(a.data, b.data);
-    }
+#endif
 
     static inline u16x8 select(mask16x8 mask, u16x8 a, u16x8 b)
     {
@@ -591,6 +623,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask32x4 compare_le(u32x4 a, u32x4 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask32x4 compare_ge(u32x4 a, u32x4 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask32x4 compare_le(u32x4 a, u32x4 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -602,6 +648,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+    
+    #endif
 
     static inline u32x4 select(mask32x4 mask, u32x4 a, u32x4 b)
     {
@@ -797,6 +845,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask64x2 compare_le(u64x2 a, u64x2 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -808,6 +870,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+    
+#endif
 
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
@@ -1030,6 +1094,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask8x16 compare_le(s8x16 a, s8x16 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask8x16 compare_ge(s8x16 a, s8x16 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask8x16 compare_le(s8x16 a, s8x16 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -1041,6 +1119,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+
+#endif
 
     static inline s8x16 select(mask8x16 mask, s8x16 a, s8x16 b)
     {
@@ -1272,6 +1352,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask16x8 compare_le(s16x8 a, s16x8 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask16x8 compare_ge(s16x8 a, s16x8 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask16x8 compare_le(s16x8 a, s16x8 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -1283,6 +1377,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+
+#endif
 
     static inline s16x8 select(mask16x8 mask, s16x8 a, s16x8 b)
     {
@@ -1553,6 +1649,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask32x4 compare_le(s32x4 a, s32x4 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask32x4 compare_ge(s32x4 a, s32x4 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask32x4 compare_le(s32x4 a, s32x4 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -1564,6 +1674,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+
+#endif
 
     static inline s32x4 select(mask32x4 mask, s32x4 a, s32x4 b)
     {
@@ -1781,6 +1893,20 @@ namespace simd {
         return vec_cmplt(a.data, b.data);
     }
 
+#if 0
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        return vec_cmple(a.data, b.data);
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        return vec_cmpge(a.data, b.data);
+    }
+
+#else
+
     static inline mask64x2 compare_le(s64x2 a, s64x2 b)
     {
         auto mask = vec_cmpgt(a.data, b.data);
@@ -1792,6 +1918,8 @@ namespace simd {
         auto mask = vec_cmplt(a.data, b.data);
         return vec_nor(mask, mask);
     }
+
+#endif
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
