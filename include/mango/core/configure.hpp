@@ -534,7 +534,7 @@
         #define MANGO_ENABLE_ALTIVEC
         #define MANGO_ENABLE_VSX
 
-    #if defined(_ARCH_PWR9)
+    #elif defined(_ARCH_PWR9)
 
         // VMX 3 (Power ISA v3.0, 2017)
         #define MANGO_ENABLE_ALTIVEC
