@@ -836,14 +836,44 @@ namespace simd {
         return veorq_u64(a, vceqq_u64(a, a));
     }
 
+    // compare
+
+    static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
+    {
+        return vceqq_u64(a, b);
+    }
+
+    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    {
+        return vcgtq_u64(a, b);
+    }
+
+    static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
+    {
+        return veorq_u64(vceqq_u64(a, b), vceqq_u64(a, a));
+    }
+
+    static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
+    {
+        return vcltq_u64(a, b);
+    }
+
+    static inline mask64x2 compare_le(u64x2 a, u64x2 b)
+    {
+        return vcleq_u64(a, b);
+    }
+
+    static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
+    {
+        return vcgeq_u64(a, b);
+    }
+
 #else
 
     static inline u64x2 bitwise_not(u64x2 a)
     {
         return veorq_u64(a, vdupq_n_u64(0xffffffffffffffffull));
     }
-
-#endif
 
     // compare
 
@@ -894,6 +924,8 @@ namespace simd {
         uint64x2_t temp = { x, y };
         return temp;
     }
+
+#endif
 
     static inline u64x2 select(mask64x2 mask, u64x2 a, u64x2 b)
     {
@@ -1925,14 +1957,44 @@ namespace simd {
         return veorq_s64(a, vreinterpretq_s64_u64(vceqq_s64(a, a)));
     }
 
+    // compare
+
+    static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
+    {
+        return vceqq_s64(a, b);
+    }
+
+    static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
+    {
+        return vcgtq_s64(a, b);
+    }
+
+    static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
+    {
+        return veorq_s64(vceqq_s64(a, b), vceqq_s64(a, a));
+    }
+
+    static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
+    {
+        return vcltq_s64(a, b);
+    }
+
+    static inline mask64x2 compare_le(s64x2 a, s64x2 b)
+    {
+        return vcleq_s64(a, b);
+    }
+
+    static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
+    {
+        return vcgeq_s64(a, b);
+    }
+
 #else
 
     static inline s64x2 bitwise_not(s64x2 a)
     {
         return veorq_s64(a, vdupq_n_s64(0xffffffffffffffffull));
     }
-
-#endif
 
     // compare
 
@@ -1983,6 +2045,8 @@ namespace simd {
         uint64x2_t temp = { x, y };
         return temp;
     }
+
+#endif
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
