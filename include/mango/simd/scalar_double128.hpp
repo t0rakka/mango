@@ -226,7 +226,7 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 fast_rcp(f64x2 a)
+    static inline f64x2 rcp(f64x2 a)
     {
         f64x2 v;
         v[0] = 1.0 / a[0];
@@ -234,7 +234,7 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 fast_rsqrt(f64x2 a)
+    static inline f64x2 rsqrt(f64x2 a)
     {
         f64x2 v;
         v[0] = 1.0 / std::sqrt(a[0]);
@@ -242,27 +242,12 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 fast_sqrt(f64x2 a)
+    static inline f64x2 sqrt(f64x2 a)
     {
         f64x2 v;
         v[0] = std::sqrt(a[0]);
         v[1] = std::sqrt(a[1]);
         return v;
-    }
-
-    static inline f64x2 rcp(f64x2 a)
-    {
-        return fast_rcp(a);
-    }
-
-    static inline f64x2 rsqrt(f64x2 a)
-    {
-        return fast_rsqrt(a);
-    }
-
-    static inline f64x2 sqrt(f64x2 a)
-    {
-        return fast_sqrt(a);
     }
 
     static inline f64 dot2(f64x2 a, f64x2 b)

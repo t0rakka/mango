@@ -209,21 +209,6 @@ namespace simd {
         return neg(vec_nmsub(b.data, c.data, a.data));
     }
 
-    static inline f64x2 fast_rcp(f64x2 a)
-    {
-        return vec_re(a.data);
-    }
-
-    static inline f64x2 fast_rsqrt(f64x2 a)
-    {
-        return vec_rsqrte(a.data);
-    }
-
-    static inline f64x2 fast_sqrt(f64x2 a)
-    {
-        return vec_sqrt(a.data);
-    }
-
     static inline f64x2 rcp(f64x2 a)
     {
         return vec_re(a.data);

@@ -228,24 +228,23 @@ namespace simd {
         return vmlsq_f64(a, b, c);
     }
 
-    static inline f64x2 fast_rcp(f64x2 a)
+#if defined(MANGO_FAST_MATH)
+
+    static inline f64x2 rcp(f64x2 a)
     {
         f64x2 e = vrecpeq_f64(a);
         e = vmulq_f64(vrecpsq_f64(a, e), e);
         return e;
     }
 
-    static inline f64x2 fast_rsqrt(f64x2 a)
+    static inline f64x2 rsqrt(f64x2 a)
     {
         f64x2 e = vrsqrteq_f64(a);
         e = vmulq_f64(vrsqrtsq_f64(vmulq_f64(a, e), e), e);
         return e;
     }
 
-    static inline f64x2 fast_sqrt(f64x2 a)
-    {
-        return vsqrtq_f64(a);
-    }
+#else
 
     static inline f64x2 rcp(f64x2 a)
     {
@@ -262,6 +261,8 @@ namespace simd {
         e = vmulq_f64(vrsqrtsq_f64(vmulq_f64(a, e), e), e);
         return e;
     }
+
+#endif
 
     static inline f64x2 sqrt(f64x2 a)
     {
@@ -554,7 +555,7 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 fast_rcp(f64x2 a)
+    static inline f64x2 rcp(f64x2 a)
     {
         f64x2 v;
         v.data[0] = 1.0 / a.data[0];
@@ -562,7 +563,7 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 fast_rsqrt(f64x2 a)
+    static inline f64x2 rsqrt(f64x2 a)
     {
         f64x2 v;
         v.data[0] = 1.0 / std::sqrt(a.data[0]);
@@ -570,27 +571,12 @@ namespace simd {
         return v;
     }
 
-    static inline f64x2 fast_sqrt(f64x2 a)
+    static inline f64x2 sqrt(f64x2 a)
     {
         f64x2 v;
         v.data[0] = std::sqrt(a.data[0]);
         v.data[1] = std::sqrt(a.data[1]);
         return v;
-    }
-
-    static inline f64x2 rcp(f64x2 a)
-    {
-        return fast_rcp(a);
-    }
-
-    static inline f64x2 rsqrt(f64x2 a)
-    {
-        return fast_rsqrt(a);
-    }
-
-    static inline f64x2 sqrt(f64x2 a)
-    {
-        return fast_sqrt(a);
     }
 
     static inline f64 dot2(f64x2 a, f64x2 b)

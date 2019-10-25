@@ -157,20 +157,19 @@ namespace simd {
 
 #endif
 
-    static inline f64x8 fast_rcp(f64x8 a)
+#if defined(MANGO_FAST_MATH)
+
+    static inline f64x8 rcp(f64x8 a)
     {
         return _mm512_rcp14_pd(a);
     }
 
-    static inline f64x8 fast_rsqrt(f64x8 a)
+    static inline f64x8 rsqrt(f64x8 a)
     {
         return _mm512_rsqrt14_pd(a);
     }
 
-    static inline f64x8 fast_sqrt(f64x8 a)
-    {
-        return _mm512_sqrt_pd(a);
-    }
+#else
 
     static inline f64x8 rcp(f64x8 a)
     {
@@ -181,6 +180,8 @@ namespace simd {
     {
         return _mm512_rsqrt28_pd(a);
     }
+
+#endif
 
     static inline f64x8 sqrt(f64x8 a)
     {

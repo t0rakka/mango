@@ -402,14 +402,16 @@ namespace simd {
         return vmlsq_f32(a, b, c);
     }
 
-    static inline f32x4 fast_rcp(f32x4 a)
+#if defined(MANGO_FAST_MATH)
+
+    static inline f32x4 rcp(f32x4 a)
     {
         f32x4 e = vrecpeq_f32(a);
         e = vmulq_f32(vrecpsq_f32(a, e), e);
         return e;
     }
 
-    static inline f32x4 fast_rsqrt(f32x4 a)
+    static inline f32x4 rsqrt(f32x4 a)
     {
         f32x4 e = vrsqrteq_f32(a);
         e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
@@ -418,14 +420,14 @@ namespace simd {
 
 #ifdef __aarch64__
 
-    static inline f32x4 fast_sqrt(f32x4 a)
+    static inline f32x4 sqrt(f32x4 a)
     {
         return vsqrtq_f32(a);
     }
 
 #else
 
-    static inline f32x4 fast_sqrt(f32x4 a)
+    static inline f32x4 sqrt(f32x4 a)
     {
         f32x4 e = vrsqrteq_f32(a);
         e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, e), e), e);
@@ -433,6 +435,8 @@ namespace simd {
     }
 
 #endif
+
+#else // MANGO_FAST_MATH
 
     static inline f32x4 rcp(f32x4 a)
     {
@@ -468,6 +472,8 @@ namespace simd {
     }
 
 #endif
+
+#endif // MANGO_FAST_MATH
 
     static inline f32 dot3(f32x4 a, f32x4 b)
     {

@@ -215,25 +215,21 @@ namespace simd {
 
 #endif
 
-    static inline f64x2 fast_rcp(f64x2 a)
+#if defined(MANGO_FAST_MATH)
+
+    static inline f64x2 rcp(f64x2 a)
     {
         return _mm_rcp14_pd(a);
     }
 
-    static inline f64x2 fast_rsqrt(f64x2 a)
-    {
-        return _mm_div_pd(_mm_set1_pd(1.0), _mm_sqrt_pd(a));
-    }
-
-    static inline f64x2 fast_sqrt(f64x2 a)
-    {
-        return _mm_sqrt_pd(a);
-    }
+#else
 
     static inline f64x2 rcp(f64x2 a)
     {
         return _mm_div_pd(_mm_set1_pd(1.0), a);
     }
+
+#endif
 
     static inline f64x2 rsqrt(f64x2 a)
     {

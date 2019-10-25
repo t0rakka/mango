@@ -350,23 +350,6 @@ namespace simd {
 
 #endif
 
-    static inline f64x4 fast_rcp(f64x4 a)
-    {
-        const __m256d one = _mm256_set1_pd(1.0);
-        return _mm256_div_pd(one, a);
-    }
-
-    static inline f64x4 fast_rsqrt(f64x4 a)
-    {
-        const __m256d one = _mm256_set1_pd(1.0);
-        return _mm256_div_pd(one, _mm256_sqrt_pd(a));
-    }
-
-    static inline f64x4 fast_sqrt(f64x4 a)
-    {
-        return _mm256_sqrt_pd(a);
-    }
-
     static inline f64x4 rcp(f64x4 a)
     {
         const __m256d one = _mm256_set1_pd(1.0);

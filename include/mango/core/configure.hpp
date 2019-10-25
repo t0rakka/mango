@@ -591,6 +591,10 @@
     // C++17
 #endif
 
+#if defined(__FAST_MATH__) || defined(_M_FP_FAST)
+    #define MANGO_FAST_MATH
+#endif
+
 #define MANGO_UNREFERENCED(x) (void) x
 #define MANGO_DEFAULT_ALIGNMENT 64
 

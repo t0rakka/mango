@@ -188,20 +188,19 @@ namespace simd {
         return __msa_fmsub_d(a, b, c);
     }
 
-    static inline f64x2 fast_rcp(f64x2 a)
+#if defined(MANGO_FAST_MATH)
+
+    static inline f64x2 rcp(f64x2 a)
     {
         return __msa_frcp_d(a);
     }
 
-    static inline f64x2 fast_rsqrt(f64x2 a)
+    static inline f64x2 rsqrt(f64x2 a)
     {
         return __msa_frsqrt_d(a);
     }
 
-    static inline f64x2 fast_sqrt(f64x2 a)
-    {
-        return __msa_fsqrt_d(a);
-    }
+#else
 
     static inline f64x2 rcp(f64x2 a)
     {
@@ -218,6 +217,8 @@ namespace simd {
         e = __msa_fsub_d(f64x2_set(3.0), e);
         return __msa_fmul_d(n, e);
     }
+
+#endif
 
     static inline f64x2 sqrt(f64x2 a)
     {

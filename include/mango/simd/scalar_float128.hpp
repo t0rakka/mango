@@ -299,7 +299,7 @@ namespace simd {
         return v;
     }
 
-    static inline f32x4 fast_rcp(f32x4 a)
+    static inline f32x4 rcp(f32x4 a)
     {
         f32x4 v;
         v[0] = 1.0f / a[0];
@@ -309,7 +309,7 @@ namespace simd {
         return v;
     }
 
-    static inline f32x4 fast_rsqrt(f32x4 a)
+    static inline f32x4 rsqrt(f32x4 a)
     {
         f32x4 v;
         v[0] = 1.0f / f32(std::sqrt(a[0]));
@@ -319,7 +319,7 @@ namespace simd {
         return v;
     }
 
-    static inline f32x4 fast_sqrt(f32x4 a)
+    static inline f32x4 sqrt(f32x4 a)
     {
         f32x4 v;
         v[0] = f32(std::sqrt(a[0]));
@@ -327,21 +327,6 @@ namespace simd {
         v[2] = f32(std::sqrt(a[2]));
         v[3] = f32(std::sqrt(a[3]));
         return v;
-    }
-
-    static inline f32x4 rcp(f32x4 a)
-    {
-        return fast_rcp(a);
-    }
-
-    static inline f32x4 rsqrt(f32x4 a)
-    {
-        return fast_rsqrt(a);
-    }
-
-    static inline f32x4 sqrt(f32x4 a)
-    {
-        return fast_sqrt(a);
     }
 
     static inline f32 dot3(f32x4 a, f32x4 b)
