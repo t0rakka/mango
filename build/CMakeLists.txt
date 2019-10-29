@@ -67,29 +67,15 @@ OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 
 OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
 
-OPTION(MANGO_DISABLE_ARCHIVE_ZIP "" OFF)
-OPTION(MANGO_DISABLE_ARCHIVE_RAR "" OFF)
-OPTION(MANGO_DISABLE_ARCHIVE_MGX "" OFF)
+set(MANGO_ALL_ARCHIVE_FORMATS ZIP; RAR; MGX)
+foreach(format ${MANGO_ALL_ARCHIVE_FORMATS})
+  OPTION(MANGO_DISABLE_ARCHIVE_${format} "" OFF)
+endforeach()
 
-OPTION(MANGO_DISABLE_IMAGE_ASTC "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_ATARI "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_BMP "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_C64 "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_DDS "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_GIF "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_HDR "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_IFF "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_JPG "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_KTX "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PCX "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PKM "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PNG "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PNM "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_PVR "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_SGI "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_TGA "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_WEBP "" OFF)
-OPTION(MANGO_DISABLE_IMAGE_ZPNG "" OFF)
+set(MANGO_ALL_IMAGE_FORMATS ASTC; ATARI; BMP; C64; DDS; GIF; HDR; IFF; JPG; KTX; PCX; PKM; PNG; PNM; PVR; SGI; TGA; WEBP; ZPNG)
+foreach(format ${MANGO_ALL_IMAGE_FORMATS})
+  OPTION(MANGO_DISABLE_IMAGE_${format} "" OFF)
+endforeach()
 
 # ------------------------------------------------------------------------------
 # include directories
@@ -397,95 +383,19 @@ endif ()
 
 # archivers
 
-if (MANGO_DISABLE_ARCHIVE_ZIP)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_ZIP")
-endif ()
-
-if (MANGO_DISABLE_ARCHIVE_RAR)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_RAR")
-endif ()
-
-if (MANGO_DISABLE_ARCHIVE_MGX)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_MGX")
-endif ()
+foreach(format ${MANGO_ALL_ARCHIVE_FORMATS})
+  if(MANGO_DISABLE_ARCHIVE_${format})
+    target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_${format}")
+  endif()
+endforeach()
 
 # image codecs
 
-if (MANGO_DISABLE_IMAGE_ASTC)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ASTC")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_ATARI)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ATARI")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_BMP)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_BMP")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_C64)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_C64")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_DDS)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_DDS")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_GIF)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_GIF")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_HDR)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_HDR")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_IFF)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_IFF")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_JPG)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_JPG")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_KTX)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_KTX")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_PCX)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PCX")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_PKM)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PKM")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_PNG)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PNG")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_PNM)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PNM")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_PVR)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_PVR")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_SGI)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_SGI")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_TGA)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_TGA")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_WEBP)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_WEBP")
-endif ()
-
-if (MANGO_DISABLE_IMAGE_ZPNG)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_ZPNG")
-endif ()
+foreach(format ${MANGO_ALL_IMAGE_FORMATS})
+  if(MANGO_DISABLE_IMAGE_${format})
+    target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_${format}")
+  endif()
+endforeach()
 
 # ------------------------------------------------------------------------------
 # install
