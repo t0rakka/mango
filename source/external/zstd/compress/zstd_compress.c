@@ -3719,8 +3719,9 @@ static size_t ZSTD_compressStream_generic(ZSTD_CStream* zcs,
                 unsigned const lastBlock = (flushMode == ZSTD_e_end) && (ip==iend);
                 if (oSize >= ZSTD_compressBound(iSize))
                     cDst = op;   /* compress into output buffer, to skip flush stage */
-                else
-                    cDst = zcs->outBuff, oSize = zcs->outBuffSize;
+                else {
+                    cDst = zcs->outBuff; oSize = zcs->outBuffSize;
+                }
                 cSize = lastBlock ?
                         ZSTD_compressEnd(zcs, cDst, oSize,
                                     zcs->inBuff + zcs->inToCompress, iSize) :
@@ -3730,8 +3731,9 @@ static size_t ZSTD_compressStream_generic(ZSTD_CStream* zcs,
                 zcs->frameEnded = lastBlock;
                 /* prepare next block */
                 zcs->inBuffTarget = zcs->inBuffPos + zcs->blockSize;
-                if (zcs->inBuffTarget > zcs->inBuffSize)
-                    zcs->inBuffPos = 0, zcs->inBuffTarget = zcs->blockSize;
+                if (zcs->inBuffTarget > zcs->inBuffSize) {
+                    zcs->inBuffPos = 0; zcs->inBuffTarget = zcs->blockSize;
+                }
                 DEBUGLOG(5, "inBuffTarget:%u / inBuffSize:%u",
                          (unsigned)zcs->inBuffTarget, (unsigned)zcs->inBuffSize);
                 if (!lastBlock)
