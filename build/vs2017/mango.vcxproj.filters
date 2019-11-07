@@ -1092,6 +1092,9 @@
     <ClInclude Include="..\..\source\external\libwebp\src\webp\types.h">
       <Filter>external\webp\webp</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_cwksp.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">

@@ -1095,6 +1095,9 @@
     <ClInclude Include="..\..\source\external\libwebp\src\dec\webpi_dec.h">
       <Filter>external\webp\dec</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_cwksp.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
