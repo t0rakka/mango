@@ -3,8 +3,8 @@
 mango::core
 ---------------------------------------------------------------------------------------------
 
-[ ] Improve SIMD compile-time feature detection
-[ ] Improve CPU feature runtime detection (esp. Android)
+[x] Improve SIMD compile-time feature detection
+[x] Improve CPU feature runtime detection (esp. Android)
 [x] Configurable alignment for aligned_malloc/free (currently defaults to 16 bytes)
 [ ] Unify stream offset type (size_t vs. u64)
 [ ] should the seek offset by signed? u64 -> s64
@@ -32,7 +32,7 @@ mango::image
 [x] GIF encoder
 [-] GIF encoder + animation
 [ ] Blitter Engine v2.0
-[ ] mango::ConstMemory for read-only or read-only intent memory regions
+[x] mango::ConstMemory for read-only or read-only intent memory regions
 
 ---------------------------------------------------------------------------------------------
 mango::math
