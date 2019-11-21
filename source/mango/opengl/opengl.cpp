@@ -1,33 +1,25 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/opengl/opengl.hpp>
 
-// Enable this for validating extension mask -- WARNING: compiling will slow down
-//#define ENABLE_CONTEXT_VALIDATE
-
 /* TODO: (type, format) mapping to Format, example:
 
     glTexImage2D(..., GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, ...)
-    { 0x8032, "UNSIGNED_BYTE_3_3_2" },
-    { 0x8362, "UNSIGNED_BYTE_2_3_3_REV" },
-    { 0x8363, "UNSIGNED_SHORT_5_6_5" },
-    { 0x8364, "UNSIGNED_SHORT_5_6_5_REV" },
-    { 0x8033, "UNSIGNED_SHORT_4_4_4_4" },
-    { 0x8365, "UNSIGNED_SHORT_4_4_4_4_REV" },
-    { 0x8034, "UNSIGNED_SHORT_5_5_5_1" },
-    { 0x8366, "UNSIGNED_SHORT_1_5_5_5_REV" },
-    { 0x8035, "UNSIGNED_INT_8_8_8_8" },
-    { 0x8367, "UNSIGNED_INT_8_8_8_8_REV" },
-    { 0x8036, "UNSIGNED_INT_10_10_10_2" },
-    { 0x8368, "UNSIGNED_INT_2_10_10_10_REV" },
-
-    { 0x1907, "RGB" },
-    { 0x1908, "RGBA" },
-    { 0x80E0, "BGR" },
-    { 0x80E1, "BGRA" },
+        { 0x8032, "UNSIGNED_BYTE_3_3_2" },
+        { 0x8362, "UNSIGNED_BYTE_2_3_3_REV" },
+        { 0x8363, "UNSIGNED_SHORT_5_6_5" },
+        { 0x8364, "UNSIGNED_SHORT_5_6_5_REV" },
+        { 0x8033, "UNSIGNED_SHORT_4_4_4_4" },
+        { 0x8365, "UNSIGNED_SHORT_4_4_4_4_REV" },
+        { 0x8034, "UNSIGNED_SHORT_5_5_5_1" },
+        { 0x8366, "UNSIGNED_SHORT_1_5_5_5_REV" },
+        { 0x8035, "UNSIGNED_INT_8_8_8_8" },
+        { 0x8367, "UNSIGNED_INT_8_8_8_8_REV" },
+        { 0x8036, "UNSIGNED_INT_10_10_10_2" },
+        { 0x8368, "UNSIGNED_INT_2_10_10_10_REV" },
 */
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
@@ -40,24 +32,15 @@ namespace
 
     const InternalFormat g_formatTable[] =
     {
-        { 0x803B, MAKE_FORMAT(  8, UNORM,   A,  4, 0, 0, 0), false, "ALPHA4" },
-        { 0x803C, MAKE_FORMAT(  8, UNORM,   A,  8, 0, 0, 0), false, "ALPHA8" },
-        { 0x803D, MAKE_FORMAT( 16, UNORM,   A, 12, 0, 0, 0), false, "ALPHA12" },
-        { 0x803D, MAKE_FORMAT( 16, UNORM,   A, 16, 0, 0, 0), false, "ALPHA16" },
-        { 0x8D90, MAKE_FORMAT(  8, SINT,    A,  8, 0, 0, 0), false, "ALPHA8I" },
-        { 0x8D7E, MAKE_FORMAT(  8, UINT,    A,  8, 0, 0, 0), false, "ALPHA8UI" },
-        { 0x8D8A, MAKE_FORMAT( 16, SINT,    A, 16, 0, 0, 0), false, "ALPHA16I" },
-        { 0x8D78, MAKE_FORMAT( 16, UINT,    A, 16, 0, 0, 0), false, "ALPHA16UI" },
-        { 0x881C, MAKE_FORMAT( 16, FLOAT16, A, 16, 0, 0, 0), false, "ALPHA16F" },
-        { 0x8D84, MAKE_FORMAT( 32, SINT,    A, 32, 0, 0, 0), false, "ALPHA32I" },
-        { 0x8D72, MAKE_FORMAT( 32, UINT,    A, 32, 0, 0, 0), false, "ALPHA32UI" },
-        { 0x8816, MAKE_FORMAT( 32, FLOAT32, A, 32, 0, 0, 0), false, "ALPHA32F" },
+        // 1.0
+        { 0x1903, MAKE_FORMAT(  8, UNORM,    R,  8, 0, 0, 0), false, "RED" },
+        { 0x1904, MAKE_FORMAT(  8, UNORM,    G,  8, 0, 0, 0), false, "GREEN" },
+        { 0x1905, MAKE_FORMAT(  8, UNORM,    B,  8, 0, 0, 0), false, "BLUE" },
+        { 0x1906, MAKE_FORMAT(  8, UNORM,    A,  8, 0, 0, 0), false, "ALPHA" },
+        { 0x1907, MAKE_FORMAT( 24, UNORM,  RGB,  8, 8, 8, 0), false, "RGB" },
+        { 0x1908, MAKE_FORMAT( 32, UNORM, RGBA,  8, 8, 8, 8), false, "RGBA" },
 
-        { 0x8229, MAKE_FORMAT(  8, UNORM, R,     8,  0,  0,  0), false, "R8" },
-        { 0x822A, MAKE_FORMAT( 16, UNORM, R,    16,  0,  0,  0), false, "R16" },
-        { 0x8227, MAKE_FORMAT( 16, UNORM, RG,    8,  8,  0,  0), false, "RG" },
-        { 0x822B, MAKE_FORMAT( 16, UNORM, RG,    8,  8,  0,  0), false, "RG8" },
-        { 0x822C, MAKE_FORMAT( 32, UNORM, RG,   16, 16,  0,  0), false, "RG16" },
+        // 1.1
         { 0x2A10, MAKE_FORMAT(  8, UNORM, RGB,   3,  3,  2,  0), false, "R3_G3_B2" },
         { 0x804F, MAKE_FORMAT( 16, UNORM, RGB,   4,  4,  4,  0), false, "RGB4" },
         { 0x8050, MAKE_FORMAT( 16, UNORM, RGB,   5,  5,  5,  0), false, "RGB5" },
@@ -65,70 +48,113 @@ namespace
         { 0x8052, MAKE_FORMAT( 32, UNORM, RGB,  10, 10, 10,  0), false, "RGB10" },
         { 0x8053, MAKE_FORMAT( 48, UNORM, RGB,  12, 12, 12,  0), false, "RGB12" },
         { 0x8054, MAKE_FORMAT( 48, UNORM, RGB,  16, 16, 16,  0), false, "RGB16" },
-        { 0x8C40, MAKE_FORMAT( 24, UNORM, RGB,   8,  8,  8,  0),  true, "SRGB" },
-        { 0x8C41, MAKE_FORMAT( 24, UNORM, RGB,   8,  8,  8,  0),  true, "SRGB8" },
-        { 0x8D62, MAKE_FORMAT( 16, UNORM, RGB,   5,  6,  5,  0), false, "RGB565" },
         { 0x8055, MAKE_FORMAT(  8, UNORM, RGBA,  2,  2,  2,  2), false, "RGBA2" },
         { 0x8056, MAKE_FORMAT( 16, UNORM, RGBA,  4,  4,  4,  4), false, "RGBA4" },
         { 0x8057, MAKE_FORMAT( 16, UNORM, RGBA,  5,  5,  5,  1), false, "RGB5_A1" },
         { 0x8058, MAKE_FORMAT( 32, UNORM, RGBA,  8,  8,  8,  8), false, "RGBA8" },
         { 0x8059, MAKE_FORMAT( 32, UNORM, RGBA, 10, 10, 10,  2), false, "RGB10_A2" },
-        { 0x8C42, MAKE_FORMAT( 32, UNORM, RGBA,  8,  8,  8,  8),  true, "SRGB_ALPHA" },
-        { 0x8C43, MAKE_FORMAT( 32, UNORM, RGBA,  8,  8,  8,  8),  true, "SRGB8_ALPHA8" },
         { 0x805A, MAKE_FORMAT( 48, UNORM, RGBA, 12, 12, 12, 12), false, "RGBA12" },
         { 0x805B, MAKE_FORMAT( 64, UNORM, RGBA, 16, 16, 16, 16), false, "RGBA16" },
 
+        // 1.2
+        { 0x8032, MAKE_FORMAT(  8, UNORM,  BGR, 2, 3, 3, 0), false, "UNSIGNED_BYTE_3_3_2" },
+        { 0x8033, MAKE_FORMAT( 16, UNORM, ABGR, 4, 4, 4, 4), false, "UNSIGNED_SHORT_4_4_4_4" },
+        { 0x8034, MAKE_FORMAT( 16, UNORM, ABGR, 1, 5, 5, 5), false, "UNSIGNED_SHORT_5_5_5_1" },
+        { 0x8035, MAKE_FORMAT( 32, UNORM, ABGR, 8, 8, 8, 8), false, "UNSIGNED_INT_8_8_8_8" },
+        { 0x8036, MAKE_FORMAT( 32, UNORM, ABGR, 2, 10, 10, 10), false, "UNSIGNED_INT_10_10_10_2" },
+        { 0x8362, MAKE_FORMAT(  8, UNORM,  RGB, 3, 3, 2, 0), false, "UNSIGNED_BYTE_2_3_3_REV" },
+        { 0x8363, MAKE_FORMAT( 16, UNORM,  BGR, 5, 6, 5, 0), false, "UNSIGNED_SHORT_5_6_5" },
+        { 0x8364, MAKE_FORMAT( 16, UNORM,  RGB, 5, 6, 5, 0), false, "UNSIGNED_SHORT_5_6_5_REV" },
+        { 0x8365, MAKE_FORMAT( 16, UNORM, RGBA, 4, 4, 4, 4), false, "UNSIGNED_SHORT_4_4_4_4_REV" },
+        { 0x8366, MAKE_FORMAT( 16, UNORM, RGBA, 5, 5, 5, 1), false, "UNSIGNED_SHORT_1_5_5_5_REV" },
+        { 0x8367, MAKE_FORMAT( 32, UNORM, RGBA, 8, 8, 8, 8), false, "UNSIGNED_INT_8_8_8_8_REV" },
+        { 0x8368, MAKE_FORMAT( 32, UNORM, RGBA, 10, 10, 10, 2), false, "UNSIGNED_INT_2_10_10_10_REV" },
+        { 0x80E0, MAKE_FORMAT( 24, UNORM,  BGR,  8, 8, 8, 0), false, "BGR" },
+        { 0x80E1, MAKE_FORMAT( 32, UNORM, BGRA,  8, 8, 8, 8), false, "BGRA" },
+
+        // 2.1
+        { 0x8C40, MAKE_FORMAT( 24, UNORM, RGB,   8,  8,  8,  0),  true, "SRGB" },
+        { 0x8C41, MAKE_FORMAT( 24, UNORM, RGB,   8,  8,  8,  0),  true, "SRGB8" },
+        { 0x8C42, MAKE_FORMAT( 32, UNORM, RGBA,  8,  8,  8,  8),  true, "SRGB_ALPHA" },
+        { 0x8C43, MAKE_FORMAT( 32, UNORM, RGBA,  8,  8,  8,  8),  true, "SRGB8_ALPHA8" },
+
+        // 3.0
+        { 0x8814, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "RGBA32F" },
+        { 0x8815, MAKE_FORMAT( 96, FLOAT32, RGB,  32, 32, 32,  0), false, "RGB32F" },
+        { 0x881A, MAKE_FORMAT( 64, FLOAT16, RGBA, 16, 16, 16, 16), false, "RGBA16F" },
+        { 0x881B, MAKE_FORMAT( 48, FLOAT16, RGB,  16, 16, 16,  0), false, "RGB16F" },
+        //{ 0x8C3A, MAKE_FORMAT(), false, "R11F_G11F_B10F" },
+        //{ 0x8C3B, MAKE_FORMAT(), false, "UNSIGNED_INT_10F_11F_11F_REV" },
+        //{ 0x8C3D, MAKE_FORMAT(), false, "RGB9_E5" },
+        { 0x8C3E, MAKE_FORMAT( 32, UNORM, RGBA, 9, 9, 9, 5), false, "UNSIGNED_INT_5_9_9_9_REV" },
+        { 0x8D70, MAKE_FORMAT(128, UINT,  RGBA, 32, 32, 32, 32), false, "RGBA32UI" },
+        { 0x8D71, MAKE_FORMAT( 96, UINT,  RGB,  32, 32, 32,  0), false, "RGB32UI" },
+        { 0x8D76, MAKE_FORMAT( 64, UINT,  RGBA, 16, 16, 16, 16), false, "RGBA16UI" },
+        { 0x8D77, MAKE_FORMAT( 48, UINT,  RGB,  16, 16, 16,  0), false, "RGB16UI" },
+        { 0x8D7C, MAKE_FORMAT( 32, UINT,  RGBA,  8,  8,  8,  8), false, "RGBA8UI" },
+        { 0x8D7D, MAKE_FORMAT( 24, UINT,  RGB,   8,  8,  8,  0), false, "RGB8UI" },
+        { 0x8D82, MAKE_FORMAT(128, SINT,  RGBA, 32, 32, 32, 32), false, "RGBA32I" },
+        { 0x8D83, MAKE_FORMAT( 96, SINT,  RGB,  32, 32, 32,  0), false, "RGB32I" },
+        { 0x8D88, MAKE_FORMAT( 64, SINT,  RGBA, 16, 16, 16, 16), false, "RGBA16I" },
+        { 0x8D89, MAKE_FORMAT( 48, SINT,  RGB,  16, 16, 16,  0), false, "RGB16I" },
+        { 0x8D8E, MAKE_FORMAT( 32, SINT,  RGBA,  8,  8,  8,  8), false, "RGBA8I" },
+        { 0x8D8F, MAKE_FORMAT( 24, SINT,  RGB,   8,  8,  8,  0), false, "RGB8I" },
+        { 0x8227, MAKE_FORMAT( 16, UNORM, RG,    8,  8,  0,  0), false, "RG" },
+        { 0x8229, MAKE_FORMAT(  8, UNORM, R,     8,  0,  0,  0), false, "R8" },
+        { 0x822A, MAKE_FORMAT( 16, UNORM, R,    16,  0,  0,  0), false, "R16" },
+        { 0x822B, MAKE_FORMAT( 16, UNORM, RG,    8,  8,  0,  0), false, "RG8" },
+        { 0x822C, MAKE_FORMAT( 32, UNORM, RG,   16, 16,  0,  0), false, "RG16" },
+        { 0x822D, MAKE_FORMAT( 16, FLOAT16, R,    16,  0,  0,  0), false, "R16F" },
+        { 0x822E, MAKE_FORMAT( 32, FLOAT32, R,    32,  0,  0,  0), false, "R32F" },
+        { 0x822F, MAKE_FORMAT( 32, FLOAT16, RG,   16, 16,  0,  0), false, "RG16F" },
+        { 0x8230, MAKE_FORMAT( 64, FLOAT32, RG,   32, 32,  0,  0), false, "RG32F" },
+        { 0x8231, MAKE_FORMAT(  8, SINT,  R,     8,  0,  0,  0), false, "R8I" },
+        { 0x8232, MAKE_FORMAT(  8, UINT,  R,     8,  0,  0,  0), false, "R8UI" },
+        { 0x8233, MAKE_FORMAT( 16, SINT,  R,    16,  0,  0,  0), false, "R16I" },
+        { 0x8234, MAKE_FORMAT( 16, UINT,  R,    16,  0,  0,  0), false, "R16UI" },
+        { 0x8235, MAKE_FORMAT( 32, SINT,  R,    32,  0,  0,  0), false, "R32I" },
+        { 0x8236, MAKE_FORMAT( 32, UINT,  R,    32,  0,  0,  0), false, "R32UI" },
+        { 0x8237, MAKE_FORMAT( 16, SINT,  RG,    8,  8,  0,  0), false, "RG8I" },
+        { 0x8238, MAKE_FORMAT( 16, UINT,  RG,    8,  8,  0,  0), false, "RG8UI" },
+        { 0x8239, MAKE_FORMAT( 32, SINT,  RG,   16, 16,  0,  0), false, "RG16I" },
+        { 0x823A, MAKE_FORMAT( 32, UINT,  RG,   16, 16,  0,  0), false, "RG16UI" },
+        { 0x823B, MAKE_FORMAT( 64, SINT,  RG,   32, 32,  0,  0), false, "RG32I" },
+        { 0x823C, MAKE_FORMAT( 64, UINT,  RG,   32, 32,  0,  0), false, "RG32UI" },
+
+        // 3.1
         { 0x8F94, MAKE_FORMAT(  8, SNORM, R,     8,  0,  0,  0), false, "R8_SNORM" },
         { 0x8F95, MAKE_FORMAT( 16, SNORM, RG,    8,  8,  0,  0), false, "RG8_SNORM" },
         { 0x8F96, MAKE_FORMAT( 24, SNORM, RGB,   8,  8,  8,  0), false, "RGB8_SNORM" },
         { 0x8F97, MAKE_FORMAT( 32, SNORM, RGBA,  8,  8,  8,  8), false, "RGBA8_SNORM" },
-
         { 0x8F98, MAKE_FORMAT( 16, SNORM, R,    16,  0,  0,  0), false, "R16_SNORM" },
         { 0x8F99, MAKE_FORMAT( 32, SNORM, RG,   16, 16,  0,  0), false, "RG16_SNORM" },
         { 0x8F9A, MAKE_FORMAT( 48, SNORM, RGB,  16, 16, 16,  0), false, "RGB16_SNORM" },
         { 0x8F9B, MAKE_FORMAT( 64, SNORM, RGBA, 16, 16, 16, 16), false, "RGBA16_SNORM" },
 
-        { 0x8232, MAKE_FORMAT(  8, UINT,  R,     8,  0,  0,  0), false, "R8UI" },
-        { 0x8238, MAKE_FORMAT( 16, UINT,  RG,    8,  8,  0,  0), false, "RG8UI" },
-        { 0x8D7D, MAKE_FORMAT( 24, UINT,  RGB,   8,  8,  8,  0), false, "RGB8UI" },
-        { 0x8D7C, MAKE_FORMAT( 32, UINT,  RGBA,  8,  8,  8,  8), false, "RGBA8UI" },
-
-        { 0x8234, MAKE_FORMAT( 16, UINT,  R,    16,  0,  0,  0), false, "R16UI" },
-        { 0x823A, MAKE_FORMAT( 32, UINT,  RG,   16, 16,  0,  0), false, "RG16UI" },
-        { 0x8D77, MAKE_FORMAT( 48, UINT,  RGB,  16, 16, 16,  0), false, "RGB16UI" },
-        { 0x8D76, MAKE_FORMAT( 64, UINT,  RGBA, 16, 16, 16, 16), false, "RGBA16UI" },
-
-        { 0x8236, MAKE_FORMAT( 32, UINT,  R,    32,  0,  0,  0), false, "R32UI" },
-        { 0x823C, MAKE_FORMAT( 64, UINT,  RG,   32, 32,  0,  0), false, "RG32UI" },
-        { 0x8D71, MAKE_FORMAT( 96, UINT,  RGB,  32, 32, 32,  0), false, "RGB32UI" },
-        { 0x8D70, MAKE_FORMAT(128, UINT,  RGBA, 32, 32, 32, 32), false, "RGBA32UI" },
-
+        // 3.3
         { 0x906F, MAKE_FORMAT( 32, UINT,  RGBA, 10, 10, 10,  2), false, "RGB10_A2UI" },
+        { 0x8D9F, MAKE_FORMAT( 32, UNORM, RGBA, 10, 10, 10,  2), false, "INT_2_10_10_10_REV" },
 
-        { 0x8231, MAKE_FORMAT(  8, SINT,  R,     8,  0,  0,  0), false, "R8I" },
-        { 0x8237, MAKE_FORMAT( 16, SINT,  RG,    8,  8,  0,  0), false, "RG8I" },
-        { 0x8D8F, MAKE_FORMAT( 24, SINT,  RGB,   8,  8,  8,  0), false, "RGB8I" },
-        { 0x8D8E, MAKE_FORMAT( 32, SINT,  RGBA,  8,  8,  8,  8), false, "RGBA8I" },
+        // 4.1
+        { 0x8D62, MAKE_FORMAT( 16, UNORM, RGB,   5,  6,  5,  0), false, "RGB565" },
 
-        { 0x8233, MAKE_FORMAT( 16, SINT,  R,    16,  0,  0,  0), false, "R16I" },
-        { 0x8239, MAKE_FORMAT( 32, SINT,  RG,   16, 16,  0,  0), false, "RG16I" },
-        { 0x8D89, MAKE_FORMAT( 48, SINT,  RGB,  16, 16, 16,  0), false, "RGB16I" },
-        { 0x8D88, MAKE_FORMAT( 64, SINT,  RGBA, 16, 16, 16, 16), false, "RGBA16I" },
+        // GL_EXT_texture
+        { 0x803B, MAKE_FORMAT(  8, UNORM,   A,  4, 0, 0, 0), false, "ALPHA4" },
+        { 0x803C, MAKE_FORMAT(  8, UNORM,   A,  8, 0, 0, 0), false, "ALPHA8" },
+        { 0x803D, MAKE_FORMAT( 16, UNORM,   A, 12, 0, 0, 0), false, "ALPHA12" },
+        { 0x803D, MAKE_FORMAT( 16, UNORM,   A, 16, 0, 0, 0), false, "ALPHA16" },
 
-        { 0x8235, MAKE_FORMAT( 32, SINT,  R,    32,  0,  0,  0), false, "R32I" },
-        { 0x823B, MAKE_FORMAT( 64, SINT,  RG,   32, 32,  0,  0), false, "RG32I" },
-        { 0x8D83, MAKE_FORMAT( 96, SINT,  RGB,  32, 32, 32,  0), false, "RGB32I" },
-        { 0x8D82, MAKE_FORMAT(128, SINT,  RGBA, 32, 32, 32, 32), false, "RGBA32I" },
+        // GL_EXT_texture_integer
+        { 0x8D90, MAKE_FORMAT(  8, SINT,    A,  8, 0, 0, 0), false, "ALPHA8I" },
+        { 0x8D7E, MAKE_FORMAT(  8, UINT,    A,  8, 0, 0, 0), false, "ALPHA8UI" },
+        { 0x8D8A, MAKE_FORMAT( 16, SINT,    A, 16, 0, 0, 0), false, "ALPHA16I" },
+        { 0x8D78, MAKE_FORMAT( 16, UINT,    A, 16, 0, 0, 0), false, "ALPHA16UI" },
+        { 0x8D84, MAKE_FORMAT( 32, SINT,    A, 32, 0, 0, 0), false, "ALPHA32I" },
+        { 0x8D72, MAKE_FORMAT( 32, UINT,    A, 32, 0, 0, 0), false, "ALPHA32UI" },
 
-        { 0x822D, MAKE_FORMAT( 16, FLOAT16, R,    16,  0,  0,  0), false, "R16F" },
-        { 0x822F, MAKE_FORMAT( 32, FLOAT16, RG,   16, 16,  0,  0), false, "RG16F" },
-        { 0x881B, MAKE_FORMAT( 48, FLOAT16, RGB,  16, 16, 16,  0), false, "RGB16F" },
-        { 0x881A, MAKE_FORMAT( 64, FLOAT16, RGBA, 16, 16, 16, 16), false, "RGBA16F" },
-
-        { 0x822E, MAKE_FORMAT( 32, FLOAT32, R,    32,  0,  0,  0), false, "R32F" },
-        { 0x8230, MAKE_FORMAT( 64, FLOAT32, RG,   32, 32,  0,  0), false, "RG32F" },
-        { 0x8815, MAKE_FORMAT( 96, FLOAT32, RGB,  32, 32, 32,  0), false, "RGB32F" },
-        { 0x8814, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "RGBA32F" },
+        // GL_{ATI,ARB,APPLE}_texture_float
+        { 0x881C, MAKE_FORMAT( 16, FLOAT16, A, 16, 0, 0, 0), false, "ALPHA16F" },
+        { 0x8816, MAKE_FORMAT( 32, FLOAT32, A, 32, 0, 0, 0), false, "ALPHA32F" },
     };
 
 } // namespace
@@ -141,18 +167,6 @@ namespace opengl {
     // -----------------------------------------------------------------------
 
     glExtensionMask glext;
-
-#ifdef ENABLE_CONTEXT_VALIDATE
-    static void check(u32 mask, bool is, const char* name)
-    {
-        bool isMask = mask != 0;
-        printf("Feature: %s --> %s (%d)\n", name, isMask == is ? "OK" : "FAIL", is);
-        if (isMask != is)
-        {
-            MANGO_EXCEPTION("[OpenGL] ExtensionMask check failed.");
-        }
-    }
-#endif
 
     static void init_glext(Context& context)
     {
@@ -174,13 +188,6 @@ namespace opengl {
                 mask[i / 32] |= (1 << (i % 32));
             }
         }
-
-#ifdef ENABLE_CONTEXT_VALIDATE
-        printf("Validating glext mask...\n");
-#define GL_EXTENSION(Name) check(glext.Name, context.isExtension("GL_"#Name), "GL_"#Name);
-#include <mango/opengl/func/glext.hpp>
-#undef GL_EXTENSION
-#endif
     }
 
     coreExtensionMask core;
