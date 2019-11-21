@@ -622,25 +622,28 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(s32x4 s)
     {
-        float64x2_t lo = vcvtq_f64_s64(vmovl_s32(vget_low_s32(s)));
-        float64x2_t hi = vcvtq_f64_s64(vmovl_s32(vget_high_s32(s)));
-        return { lo, hi };
+        f64x4 result;
+        result.lo = vcvtq_f64_s64(vmovl_s32(vget_low_s32(s)));
+        result.hi = vcvtq_f64_s64(vmovl_s32(vget_high_s32(s)));
+        return result;
     }
 
     template <>
     inline f64x4 convert<f64x4>(u32x4 s)
     {
-        float64x2_t lo = vcvtq_f64_u64(vmovl_u32(vget_low_u32(s)));
-        float64x2_t hi = vcvtq_f64_u64(vmovl_u32(vget_high_u32(s)));
-        return { lo, hi };
+        f64x4 result;
+        result.lo = vcvtq_f64_u64(vmovl_u32(vget_low_u32(s)));
+        result.hi = vcvtq_f64_u64(vmovl_u32(vget_high_u32(s)));
+        return result;
     }
 
     template <>
     inline f64x4 convert<f64x4>(f32x4 s)
     {
-        float64x2_t lo = vcvt_f64_f32(vget_low_f32(s));
-        float64x2_t hi = vcvt_f64_f32(vget_high_f32(s));
-        return { lo, hi };
+        f64x4 result;
+        result.lo = vcvt_f64_f32(vget_low_f32(s));
+        result.hi = vcvt_high_f64_f32(s);
+        return result;
     }
 
     // 128 <- 256

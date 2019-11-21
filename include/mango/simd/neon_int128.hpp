@@ -87,14 +87,12 @@ namespace simd {
 
     static inline u8x16 unpacklo(u8x16 a, u8x16 b)
     {
-	    const uint8x8x2_t temp = vzip_u8(vget_low_u8(a), vget_low_u8(b));
-	    return vcombine_u8(temp.val[0], temp.val[1]);
+        return vzipq_u8(a, b).val[0];
     }
 
     static inline u8x16 unpackhi(u8x16 a, u8x16 b)
     {
-	    const uint8x8x2_t temp = vzip_u8(vget_high_u8(a), vget_high_u8(b));
-	    return vcombine_u8(temp.val[0], temp.val[1]);
+        return vzipq_u8(a, b).val[1];
     }
 
     static inline u8x16 add(u8x16 a, u8x16 b)
@@ -277,14 +275,12 @@ namespace simd {
 
     static inline u16x8 unpacklo(u16x8 a, u16x8 b)
     {
-	    const uint16x4x2_t temp = vzip_u16(vget_low_u16(a), vget_low_u16(b));
-	    return vcombine_u16(temp.val[0], temp.val[1]);
+        return vzipq_u16(a, b).val[0];
     }
 
     static inline u16x8 unpackhi(u16x8 a, u16x8 b)
     {
-	    const uint16x4x2_t temp = vzip_u16(vget_high_u16(a), vget_high_u16(b));
-	    return vcombine_u16(temp.val[0], temp.val[1]);
+        return vzipq_u16(a, b).val[1];
     }
 
     static inline u16x8 add(u16x8 a, u16x8 b)
@@ -531,14 +527,12 @@ namespace simd {
 
     static inline u32x4 unpacklo(u32x4 a, u32x4 b)
     {
-	    const uint32x2x2_t temp = vzip_u32(vget_low_u32(a), vget_low_u32(b));
-	    return vcombine_u32(temp.val[0], temp.val[1]);
+        return vzipq_u32(a, b).val[0];
     }
 
     static inline u32x4 unpackhi(u32x4 a, u32x4 b)
     {
-	    const uint32x2x2_t temp = vzip_u32(vget_high_u32(a), vget_high_u32(b));
-	    return vcombine_u32(temp.val[0], temp.val[1]);
+        return vzipq_u32(a, b).val[1];
     }
 
     static inline u32x4 add(u32x4 a, u32x4 b)
@@ -1046,14 +1040,12 @@ namespace simd {
 
     static inline s8x16 unpacklo(s8x16 a, s8x16 b)
     {
-	    const int8x8x2_t temp = vzip_s8(vget_low_s8(a), vget_low_s8(b));
-	    return vcombine_s8(temp.val[0], temp.val[1]);
+        return vzipq_s8(a, b).val[0];
     }
 
     static inline s8x16 unpackhi(s8x16 a, s8x16 b)
     {
-	    const int8x8x2_t temp = vzip_s8(vget_high_s8(a), vget_high_s8(b));
-	    return vcombine_s8(temp.val[0], temp.val[1]);
+        return vzipq_s8(a, b).val[1];
     }
 
     static inline s8x16 add(s8x16 a, s8x16 b)
@@ -1246,14 +1238,12 @@ namespace simd {
 
     static inline s16x8 unpacklo(s16x8 a, s16x8 b)
     {
-	    const int16x4x2_t temp = vzip_s16(vget_low_s16(a), vget_low_s16(b));
-	    return vcombine_s16(temp.val[0], temp.val[1]);
+        return vzipq_s16(a, b).val[0];
     }
 
     static inline s16x8 unpackhi(s16x8 a, s16x8 b)
     {
-	    const int16x4x2_t temp = vzip_s16(vget_high_s16(a), vget_high_s16(b));
-	    return vcombine_s16(temp.val[0], temp.val[1]);
+        return vzipq_s16(a, b).val[1];
     }
 
     static inline s16x8 add(s16x8 a, s16x8 b)
@@ -1575,14 +1565,12 @@ namespace simd {
 
     static inline s32x4 unpacklo(s32x4 a, s32x4 b)
     {
-	    const int32x2x2_t temp = vzip_s32(vget_low_s32(a), vget_low_s32(b));
-	    return vcombine_s32(temp.val[0], temp.val[1]);
+        return vzipq_s32(a, b).val[0];
     }
 
     static inline s32x4 unpackhi(s32x4 a, s32x4 b)
     {
-	    const int32x2x2_t temp = vzip_s32(vget_high_s32(a), vget_high_s32(b));
-	    return vcombine_s32(temp.val[0], temp.val[1]);
+        return vzipq_s32(a, b).val[1];
     }
 
     static inline s32x4 abs(s32x4 a)

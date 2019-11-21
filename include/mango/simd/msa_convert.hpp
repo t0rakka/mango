@@ -573,11 +573,10 @@ namespace detail {
     template <>
     inline f64x4 convert<f64x4>(f32x4 s)
     {
-        f64 x = f64(get_component<0>(s));
-        f64 y = f64(get_component<1>(s));
-        f64 z = f64(get_component<2>(s));
-        f64 w = f64(get_component<3>(s));
-        return f64x4_set(x, y, z, w);
+        f64x4 result;
+        result.lo = __msa_fexupr_d(s);
+        result.hi = __msa_fexupl_d(s);
+        return result;
     }
 
     // 128 <- 256
@@ -617,11 +616,7 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(f64x4 s)
     {
-        f32 x = f32(get_component<0>(s));
-        f32 y = f32(get_component<1>(s));
-        f32 z = f32(get_component<2>(s));
-        f32 w = f32(get_component<3>(s));
-        return f32x4_set(x, y, z, w);
+        return __msa_fexdo_w(s.lo, s.hi);
     }
 
     // 128 <- 128
