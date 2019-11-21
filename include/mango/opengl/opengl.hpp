@@ -26,7 +26,7 @@
 
     #define GLEXT_PROC(proc, name) extern proc name
 
-#ifdef MANGO_CORE_PROFILE
+    #ifdef MANGO_CORE_PROFILE
         #include "khronos/GL/glcorearb.h"
         #include "func/glcorearb.hpp"
     #else

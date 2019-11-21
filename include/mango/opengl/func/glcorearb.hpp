@@ -1526,6 +1526,14 @@ GLEXT_PROC(PFNGLGETPERFMONITORCOUNTERDATAAMDPROC, glGetPerfMonitorCounterDataAMD
 GLEXT_PROC(PFNGLRENDERBUFFERSTORAGEMULTISAMPLEADVANCEDAMDPROC, glRenderbufferStorageMultisampleAdvancedAMD);
 GLEXT_PROC(PFNGLNAMEDRENDERBUFFERSTORAGEMULTISAMPLEADVANCEDAMDPROC, glNamedRenderbufferStorageMultisampleAdvancedAMD);
 
+// ---------------------------------------------------------------------------------
+// MESA
+// ---------------------------------------------------------------------------------
+
+// GL_MESA_framebuffer_flip_y
+GLEXT_PROC(PFNGLFRAMEBUFFERPARAMETERIMESAPROC, glFramebufferParameteriMESA);
+GLEXT_PROC(PFNGLGETFRAMEBUFFERPARAMETERIVMESAPROC, glGetFramebufferParameterivMESA);
+
 #endif // GLEXT_PROC
 
 // ---------------------------------------------------------------------------------
