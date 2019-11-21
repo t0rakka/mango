@@ -730,7 +730,7 @@ namespace simd {
         return vdupq_n_u64(s);
     }
 
-    static inline u64x2 u64x2_set2(u64 x, u64 y)
+    static inline u64x2 u64x2_set(u64 x, u64 y)
     {
         uint64x2_t temp = { x, y };
         return temp;
@@ -1831,7 +1831,7 @@ namespace simd {
         return vdupq_n_s64(s);
     }
 
-    static inline s64x2 s64x2_set2(s64 x, s64 y)
+    static inline s64x2 s64x2_set(s64 x, s64 y)
     {
         int64x2_t temp = { x, y };
         return temp;

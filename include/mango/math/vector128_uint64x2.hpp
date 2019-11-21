@@ -60,7 +60,7 @@ namespace mango
         }
 
         explicit Vector(u64 x, u64 y)
-            : m(simd::u64x2_set2(x, y))
+            : m(simd::u64x2_set(x, y))
         {
         }
 

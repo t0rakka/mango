@@ -1158,7 +1158,7 @@ namespace detail {
         return _mm_set1_epi64x(s);
     }
 
-    static inline u64x2 u64x2_set2(u64 x, u64 y)
+    static inline u64x2 u64x2_set(u64 x, u64 y)
     {
         return _mm_set_epi64x(y, x);
     }
@@ -2551,7 +2551,7 @@ namespace detail {
         return _mm_set1_epi64x(s);
     }
 
-    static inline s64x2 s64x2_set2(s64 x, s64 y)
+    static inline s64x2 s64x2_set(s64 x, s64 y)
     {
         return _mm_set_epi64x(y, x);
     }

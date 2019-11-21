@@ -748,7 +748,7 @@ namespace simd {
         return vec_splats(s);
     }
 
-    static inline u64x2 u64x2_set2(u64 x, u64 y)
+    static inline u64x2 u64x2_set(u64 x, u64 y)
     {
         return (u64x2::vector) { x, y };
     }
@@ -1789,7 +1789,7 @@ namespace simd {
         return vec_splats(s);
     }
 
-    static inline s64x2 s64x2_set2(s64 x, s64 y)
+    static inline s64x2 s64x2_set(s64 x, s64 y)
     {
         return (s64x2::vector) { x, y };
     }

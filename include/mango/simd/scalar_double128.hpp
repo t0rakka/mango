@@ -54,14 +54,14 @@ namespace simd {
         return {{ s, s }};
     }
 
-    static inline f64x2 f64x2_set2(f64 x, f64 y)
+    static inline f64x2 f64x2_set(f64 x, f64 y)
     {
         return {{ x, y }};
     }
 
     static inline f64x2 f64x2_uload(const f64* source)
     {
-        return f64x2_set2(source[0], source[1]);
+        return f64x2_set(source[0], source[1]);
     }
 
     static inline void f64x2_ustore(f64* dest, f64x2 a)
@@ -72,12 +72,12 @@ namespace simd {
 
     static inline f64x2 unpacklo(f64x2 a, f64x2 b)
     {
-        return f64x2_set2(a[0], b[0]);
+        return f64x2_set(a[0], b[0]);
     }
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)
     {
-        return f64x2_set2(a[1], b[1]);
+        return f64x2_set(a[1], b[1]);
     }
 
     // bitwise
@@ -86,35 +86,35 @@ namespace simd {
     {
         const Double x(~Double(a[0]).u & Double(b[0]).u);
         const Double y(~Double(a[1]).u & Double(b[1]).u);
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     static inline f64x2 bitwise_and(f64x2 a, f64x2 b)
     {
         const Double x(Double(a[0]).u & Double(b[0]).u);
         const Double y(Double(a[1]).u & Double(b[1]).u);
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     static inline f64x2 bitwise_or(f64x2 a, f64x2 b)
     {
         const Double x(Double(a[0]).u | Double(b[0]).u);
         const Double y(Double(a[1]).u | Double(b[1]).u);
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     static inline f64x2 bitwise_xor(f64x2 a, f64x2 b)
     {
         const Double x(Double(a[0]).u ^ Double(b[0]).u);
         const Double y(Double(a[1]).u ^ Double(b[1]).u);
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     static inline f64x2 bitwise_not(f64x2 a)
     {
         const Double x(~Double(a[0]).u);
         const Double y(~Double(a[1]).u);
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     static inline f64x2 min(f64x2 a, f64x2 b)
@@ -143,7 +143,7 @@ namespace simd {
 
     static inline f64x2 neg(f64x2 a)
     {
-        return f64x2_set2(-a[0], -a[1]);
+        return f64x2_set(-a[0], -a[1]);
     }
 
     static inline f64x2 sign(f64x2 a)

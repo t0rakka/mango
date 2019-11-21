@@ -673,7 +673,7 @@ namespace simd {
         return (v2u64) __msa_fill_d(s);
     }
 
-    static inline u64x2 u64x2_set2(u64 x, u64 y)
+    static inline u64x2 u64x2_set(u64 x, u64 y)
     {
         return (v2u64) { x, y };
     }
@@ -1599,7 +1599,7 @@ namespace simd {
         return __msa_fill_d(s);
     }
 
-    static inline s64x2 s64x2_set2(s64 x, s64 y)
+    static inline s64x2 s64x2_set(s64 x, s64 y)
     {
         return (v2i64) { x, y };
     }

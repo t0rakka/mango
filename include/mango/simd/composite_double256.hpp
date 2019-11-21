@@ -159,8 +159,8 @@ namespace simd {
     static inline f64x4 f64x4_set(f64 x, f64 y, f64 z, f64 w)
     {
         f64x4 result;
-        result.lo = f64x2_set2(x, y);
-        result.hi = f64x2_set2(z, w);
+        result.lo = f64x2_set(x, y);
+        result.hi = f64x2_set(z, w);
         return result;
     }
 

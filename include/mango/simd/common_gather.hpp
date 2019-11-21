@@ -24,7 +24,7 @@ namespace simd {
     {
         auto s0 = address[get_component<0>(offset)];
         auto s1 = address[get_component<1>(offset)];
-        return f64x2_set2(s0, s1);
+        return f64x2_set(s0, s1);
     }
 
     static inline u32x4 gather4(const u32* address, s32x4 offset)
@@ -49,14 +49,14 @@ namespace simd {
     {
         auto s0 = address[get_component<0>(offset)];
         auto s1 = address[get_component<1>(offset)];
-        return u64x2_set2(s0, s1);
+        return u64x2_set(s0, s1);
     }
 
     static inline s64x2 gather2(const s64* address, s32x4 offset)
     {
         auto s0 = address[get_component<0>(offset)];
         auto s1 = address[get_component<1>(offset)];
-        return s64x2_set2(s0, s1);
+        return s64x2_set(s0, s1);
     }
 
     // 256 bit gather

@@ -453,8 +453,8 @@ namespace simd {
     static inline u64x4 u64x4_set(u64 x, u64 y, u64 z, u64 w)
     {
         u64x4 result;
-        result.lo = u64x2_set2(x, y);
-        result.hi = u64x2_set2(z, w);
+        result.lo = u64x2_set(x, y);
+        result.hi = u64x2_set(z, w);
         return result;
     }
 
@@ -955,8 +955,8 @@ namespace simd {
     static inline s64x4 s64x4_set(s64 x, s64 y, s64 z, s64 w)
     {
         s64x4 result;
-        result.lo = s64x2_set2(x, y);
-        result.hi = s64x2_set2(z, w);
+        result.lo = s64x2_set(x, y);
+        result.hi = s64x2_set(z, w);
         return result;
     }
 

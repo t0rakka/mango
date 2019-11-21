@@ -619,6 +619,26 @@ namespace detail {
         return __msa_fexdo_w(s.lo, s.hi);
     }
 
+    template <>
+    inline f32x4 convert<f32x4>(s64x4 s)
+    {
+        f32 x = f32(get_component<0>(s));
+        f32 y = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
+        return f32x4_set(x, y, z, w);
+    }
+
+    template <>
+    inline f32x4 convert<f32x4>(u64x4 s)
+    {
+        f32 x = f32(get_component<0>(s));
+        f32 y = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
+        return f32x4_set(x, y, z, w);
+    }
+
     // 128 <- 128
 
     template <>

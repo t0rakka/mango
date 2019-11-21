@@ -618,6 +618,26 @@ namespace detail {
         return f32x4_set(x, y, z, w);
     }
 
+    template <>
+    inline f32x4 convert<f32x4>(s64x4 s)
+    {
+        f32 x = f32(get_component<0>(s));
+        f32 y = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
+        return f32x4_set(x, y, z, w);
+    }
+
+    template <>
+    inline f32x4 convert<f32x4>(u64x4 s)
+    {
+        f32 x = f32(get_component<0>(s));
+        f32 y = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
+        return f32x4_set(x, y, z, w);
+    }
+
     // 128 <- 128
 
     template <>
@@ -625,7 +645,7 @@ namespace detail {
     {
         s64 x = s64(get_component<0>(v) + 0.5);
         s64 y = s64(get_component<1>(v) + 0.5);
-        return s64x2_set2(x, y);
+        return s64x2_set(x, y);
     }
 
     template <>
@@ -633,7 +653,7 @@ namespace detail {
     {
         u64 x = u64(get_component<0>(v) + 0.5);
         u64 y = u64(get_component<1>(v) + 0.5);
-        return u64x2_set2(x, y);
+        return u64x2_set(x, y);
     }
 
     template <>
@@ -642,7 +662,7 @@ namespace detail {
         v = trunc(v);
         s64 x = s64(get_component<0>(v));
         s64 y = s64(get_component<1>(v));
-        return s64x2_set2(x, y);
+        return s64x2_set(x, y);
     }
 
     template <>
@@ -651,7 +671,7 @@ namespace detail {
         v = trunc(v);
         u64 x = u64(get_component<0>(v));
         u64 y = u64(get_component<1>(v));
-        return u64x2_set2(x, y);
+        return u64x2_set(x, y);
     }
 
     template <>
@@ -659,7 +679,7 @@ namespace detail {
     {
         f64 x = f64(get_component<0>(v));
         f64 y = f64(get_component<1>(v));
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     template <>
@@ -667,7 +687,7 @@ namespace detail {
     {
         f64 x = f64(get_component<0>(v));
         f64 y = f64(get_component<1>(v));
-        return f64x2_set2(x, y);
+        return f64x2_set(x, y);
     }
 
     // 256 <- 256

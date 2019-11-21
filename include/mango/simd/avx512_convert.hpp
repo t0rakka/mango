@@ -527,6 +527,18 @@ namespace detail {
         return _mm256_cvtpd_ps(s);
     }
 
+    template <>
+    inline f32x4 convert<f32x4>(s64x4 s)
+    {
+        return _mm256_cvtepi64_ps(s);
+    }
+
+    template <>
+    inline f32x4 convert<f32x4>(u64x4 s)
+    {
+        return _mm256_cvtepu64_ps(s);
+    }
+
     // 128 <- 128
 
     template <>

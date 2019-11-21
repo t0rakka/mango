@@ -1058,14 +1058,14 @@ namespace detail {
         return detail::scalar_set<u64, 2>(s);
     }
 
-    static inline u64x2 u64x2_set2(u64 x, u64 y)
+    static inline u64x2 u64x2_set(u64 x, u64 y)
     {
         return {{ x, y }};
     }
 
     static inline u64x2 u64x2_uload(const u64* s)
     {
-        return u64x2_set2(s[0], s[1]);
+        return u64x2_set(s[0], s[1]);
     }
 
     static inline void u64x2_ustore(u64* dest, u64x2 a)
@@ -1999,14 +1999,14 @@ namespace detail {
         return detail::scalar_set<s64, 2>(s);
     }
 
-    static inline s64x2 s64x2_set2(s64 x, s64 y)
+    static inline s64x2 s64x2_set(s64 x, s64 y)
     {
         return {{ x, y }};
     }
 
     static inline s64x2 s64x2_uload(const s64* s)
     {
-        return s64x2_set2(s[0], s[1]);
+        return s64x2_set(s[0], s[1]);
     }
 
     static inline void s64x2_ustore(s64* dest, s64x2 a)
