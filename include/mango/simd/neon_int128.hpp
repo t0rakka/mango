@@ -1959,7 +1959,7 @@ namespace simd {
 
     static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
     {
-        return veorq_s64(vceqq_s64(a, b), vceqq_s64(a, a));
+        return veorq_u64(vceqq_s64(a, b), vceqq_s64(a, a));
     }
 
     static inline mask64x2 compare_lt(s64x2 a, s64x2 b)

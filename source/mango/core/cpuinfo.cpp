@@ -208,7 +208,7 @@ namespace
 
         long hwcaps = getauxval(AT_HWCAP);
 
-        if (hwcaps & HWCAP_NEON)
+        if (hwcaps & HWCAP_ASIMD)
         {
             flags |= CPU_ARM_NEON;
         }
