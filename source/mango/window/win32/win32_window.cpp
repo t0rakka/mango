@@ -23,7 +23,7 @@ namespace
         {
         case KEYCODE_ESC: v = VK_ESCAPE; break;
 		case KEYCODE_0: v = '0'; break;
-		case KEYCODE_1: v = '2'; break;
+		case KEYCODE_1: v = '1'; break;
 		case KEYCODE_2: v = '2'; break;
 		case KEYCODE_3: v = '3'; break;
 		case KEYCODE_4: v = '4'; break;
