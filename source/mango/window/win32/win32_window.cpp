@@ -592,7 +592,6 @@ namespace mango
 
 		if (hwnd)
 		{
-			HINSTANCE hinstance = ::GetModuleHandle(NULL);
 			::DestroyWindow(hwnd);
 			::UnregisterClass(wndclass.lpszClassName, wndclass.hInstance);
 		}
