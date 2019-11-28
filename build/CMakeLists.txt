@@ -64,6 +64,7 @@ OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
 OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
 OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
+OPTION(ENABLE_F16C          "Enable F16C conversion instructions"       OFF)
 
 OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
 
@@ -352,6 +353,12 @@ else ()
     if (X86 OR X86_64)
         # enable AES (2008) by default
         target_compile_options(mango PUBLIC "-maes")
+
+        # half conversion instructions
+        if (ENABLE_F16C)
+            message(STATUS "F16C: half conversion enabled (2012)")
+            target_compile_options(mango PUBLIC "-mf16c")
+        endif ()
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)

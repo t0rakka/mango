@@ -52,7 +52,6 @@ namespace mango
         if (flags & CPU_3DNOW_EXT) info << "3DNOW+ ";
         if (flags & CPU_AVX) info << "AVX ";
         if (flags & CPU_AVX2) info << "AVX2 ";
-        if (flags & CPU_ARM_NEON) info << "NEON ";
         if (flags & CPU_AES) info << "AES ";
         if (flags & CPU_CLMUL) info << "CLMUL ";
         if (flags & CPU_FMA3) info << "FMA3 ";
@@ -75,10 +74,17 @@ namespace mango
         if (flags & CPU_AVX512DQ) info << "AVX512DQ ";
         if (flags & CPU_AVX512IFMA) info << "AVX512IFMA ";
         if (flags & CPU_AVX512VBMI) info << "AVX512VBMI ";
+        if (flags & CPU_ARM_NEON) info << "NEON ";
+        if (flags & CPU_ARM_AES) info << "AES ";
+        if (flags & CPU_ARM_SHA1) info << "SHA1 ";
+        if (flags & CPU_ARM_SHA2) info << "SHA2 ";
+        if (flags & CPU_ARM_CRC32) info << "CRC32 ";
         info << std::endl;
 
         info << "Compiled SIMD Features: ";
+
 #if defined(MANGO_ENABLE_SIMD)
+
     #if defined(MANGO_ENABLE_SSE)
         info << "SSE ";
     #endif
@@ -131,12 +137,32 @@ namespace mango
         info << "F16C ";
     #endif
 
+    #if defined(MANGO_ENABLE_AES)
+        info << "AES ";
+    #endif
+
+    #if defined(MANGO_ENABLE_SHA)
+        info << "SHA ";
+    #endif
+
     #if defined(MANGO_ENABLE_NEON)
         info << "NEON ";
     #endif
+
+    #if defined(__ARM_FEATURE_CRYPTO)
+        info << "SHA1 SHA2 ";
+    #endif
+
+    #if defined(__ARM_FEATURE_CRC32)
+        info << "CRC32 ";
+    #endif
+
 #else
+
         info << "N/A";
+
 #endif
+
         info << std::endl;
 
         info << "Hardware threads: " << std::thread::hardware_concurrency() << std::endl;
