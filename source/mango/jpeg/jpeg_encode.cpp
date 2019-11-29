@@ -33,7 +33,6 @@
 // enable different implementations...
 #define TABLE_SYMBOL
 #define UNROLL_STUFF
-#define MODERN_PUTBITS
 
 namespace
 {
@@ -387,31 +386,20 @@ namespace
         int ldc[3];
 
         DataType code;
-#ifdef MODERN_PUTBITS
         int space;
-#else
-        int bitindex;
-#endif
 
         HuffmanEncoder()
         {
             ldc[0] = 0;
             ldc[1] = 0;
             ldc[2] = 0;
-#ifdef MODERN_PUTBITS
             code = 0;
             space = JPEG_REGISTER_BITS;
-#else
-            code = 0;
-            bitindex = 0;
-#endif
         }
 
         ~HuffmanEncoder()
         {
         }
-
-#ifdef MODERN_PUTBITS
 
         u8* putbits(u8* output, DataType data, int numbits)
         {
@@ -437,36 +425,6 @@ namespace
             output = write_stuffed_bytes(output, code, count);
             return output;
         }
-
-#else
-
-        u8* putbits(u8* output, DataType data, int numbits)
-        {
-            int bits_in_next_word = bitindex + numbits - JPEG_REGISTER_BITS;
-            if (bits_in_next_word < 0)
-            {
-                code = (code << numbits) | data;
-                bitindex += numbits;
-            }
-            else
-            {
-                code = (code << (JPEG_REGISTER_BITS - bitindex)) | (data >> bits_in_next_word);
-                output = write_stuff(output, code);
-                code = data;
-                bitindex = bits_in_next_word;
-            }
-            return output;
-        }
-
-        u8* flush(u8* output)
-        {
-            int count = (bitindex + 7) >> 3;
-            code <<= (JPEG_REGISTER_BITS - bitindex);
-            output = write_stuffed_bytes(output, code, count);
-            return output;
-        }
-
-#endif
 
         u8* encode(u8* p, int component, const s16* input)
         {
