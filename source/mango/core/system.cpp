@@ -137,6 +137,18 @@ namespace mango
         info << "F16C ";
     #endif
 
+    #if defined(MANGO_ENABLE_BMI)
+        info << "BMI ";
+    #endif
+
+    #if defined(MANGO_ENABLE_BMI2)
+        info << "BMI2 ";
+    #endif
+
+    #if defined(MANGO_ENABLE_LZCNT)
+        info << "LZCNT ";
+    #endif
+
     #if defined(MANGO_ENABLE_AES)
         info << "AES ";
     #endif
