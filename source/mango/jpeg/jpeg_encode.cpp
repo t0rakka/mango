@@ -475,7 +475,7 @@ namespace
             const u16* acCodeTable;
             const u16* acSizeTable;
 
-            if (component == 1)
+            if (!component)
             {
                 dcCodeTable = g_luminance_dc_code_table;
                 dcSizeTable = g_luminance_dc_size_table;
@@ -491,8 +491,8 @@ namespace
             }
 
             int coeff = input[0];
-            int lastDc = ldc[component - 1];
-            ldc[component - 1] = coeff;
+            int lastDc = ldc[component];
+            ldc[component] = coeff;
 
             coeff -= lastDc;
 
@@ -1941,7 +1941,7 @@ namespace
                         s16 temp[BLOCK_SIZE];
                         fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 
-                        ptr = huffman.encode(ptr, jp.channel[i].component, temp);
+                        ptr = huffman.encode(ptr, jp.channel[i].component - 1, temp);
                     }
 
                     // flush encoding buffer
