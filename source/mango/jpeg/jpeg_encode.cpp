@@ -30,8 +30,7 @@
 #include "jpeg.hpp"
 #include <cstring>
 
-// enable different implementations...
-#define TABLE_SYMBOL
+// choose different implementation...
 #define UNROLL_STUFF
 
 namespace
@@ -228,7 +227,15 @@ namespace
         99, 99, 99, 99, 99, 99, 99, 99
     };
 
-#ifdef TABLE_SYMBOL
+#if defined(MANGO_ENABLE_LZCNT)
+
+    static inline
+    int getSymbolSize(int value)
+    {
+        return u32_log2(value) + 1;
+    }
+
+#else
 
     const u8 g_log2_table [] =
     {
@@ -253,21 +260,8 @@ namespace
     static inline
     int getSymbolSize(int value)
     {
-        int base = 0;
-        if (value >> 8)
-        {
-            value >>= 8;
-            base += 8;
-        }
-        return g_log2_table[value] + base;
-    }
-
-#else
-
-    static inline
-    int getSymbolSize(int value)
-    {
-        return u32_log2(value) + 1;
+        int base = 8 * !!(value >> 8);
+        return g_log2_table[value >> base] + base;
     }
 
 #endif
