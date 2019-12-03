@@ -717,13 +717,13 @@ namespace detail {
     template <>
     inline s64x2 truncate<s64x2>(f64x2 v)
     {
-        return vcvtnq_s64_f64(trunc(v));
+        return vcvtq_s64_f64(v);
     }
 
     template <>
     inline u64x2 truncate<u64x2>(f64x2 v)
     {
-        return vcvtnq_u64_f64(trunc(v));
+        return vcvtq_u64_f64(v);
     }
 
     template <>
