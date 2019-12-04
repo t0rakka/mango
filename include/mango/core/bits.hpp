@@ -623,13 +623,13 @@ namespace mango
     static inline int u64_tzcnt(u64 value)
     {
 		// NOTE: value 0 is undefined
-        return _tzcnt_u64(value);
+        return int(_tzcnt_u64(value));
     }
 
     static inline int u64_index_of_lsb(u64 value)
     {
 		// NOTE: value 0 is undefined
-        return _tzcnt_u64(value);
+        return int(_tzcnt_u64(value));
     }
 
 #else
@@ -655,13 +655,13 @@ namespace mango
     static inline int u64_lzcnt(u64 value)
     {
 		// NOTE: value 0 is undefined
-        return _lzcnt_u64(value);
+        return int(_lzcnt_u64(value));
     }
 
     static inline int u64_index_of_msb(u64 value)
     {
 		// NOTE: value 0 is undefined
-        return 63 - _lzcnt_u64(value);
+        return int(63 - _lzcnt_u64(value));
     }
 
     static inline u64 u64_msb(u64 value)
