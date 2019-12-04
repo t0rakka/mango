@@ -74,6 +74,7 @@ namespace mango
         if (flags & CPU_AVX512DQ) info << "AVX512DQ ";
         if (flags & CPU_AVX512IFMA) info << "AVX512IFMA ";
         if (flags & CPU_AVX512VBMI) info << "AVX512VBMI ";
+        if (flags & CPU_LZCNT) info << "LZCNT ";
         if (flags & CPU_ARM_NEON) info << "NEON ";
         if (flags & CPU_ARM_AES) info << "AES ";
         if (flags & CPU_ARM_SHA1) info << "SHA1 ";
@@ -81,6 +82,8 @@ namespace mango
         if (flags & CPU_ARM_CRC32) info << "CRC32 ";
         info << std::endl;
 
+        // NOTE: These are flags used to compile the mango library and have no relevance to
+        //       compiler settings used in the client application code. 
         info << "Compiled SIMD Features: ";
 
 #if defined(MANGO_ENABLE_SIMD)

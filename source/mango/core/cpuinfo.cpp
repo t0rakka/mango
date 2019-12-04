@@ -89,7 +89,7 @@ namespace
                 case 7:
                     // ebx
                     if ((cpuInfo[1] & 0x00000002) != 0) flags |= CPU_AVX512VBMI;
-                    if ((cpuInfo[1] & 0x00000008) != 0) flags |= CPU_BMI1;
+                    if ((cpuInfo[1] & 0x00000008) != 0) flags |= (CPU_BMI1 | CPU_LZCNT);
                     if ((cpuInfo[1] & 0x00000020) != 0) flags |= CPU_AVX2;
                     if ((cpuInfo[1] & 0x00000100) != 0) flags |= CPU_BMI2;
                     if ((cpuInfo[1] & 0x00010000) != 0) flags |= CPU_AVX512F;
@@ -116,6 +116,7 @@ namespace
                 cpuid(cpuInfo, i);
 
                 // ecx
+                if ((cpuInfo[2] & 0x00000020) != 0) flags |= (CPU_POPCNT | CPU_LZCNT); // ABM
                 if ((cpuInfo[2] & 0x00000040) != 0) flags |= CPU_SSE4A;
                 if ((cpuInfo[2] & 0x00010000) != 0) flags |= CPU_FMA4;
                 if ((cpuInfo[2] & 0x00000800) != 0) flags |= CPU_XOP;
