@@ -346,13 +346,13 @@ namespace mango
     static inline u32 u32_msb(u32 value)
     {
 		// NOTE: value 0 is undefined
-        return 1u << u32_index_of_msb(value);
+        return 1u << (31 - _lzcnt_u32(value));
     }
 
     static inline int u32_log2(u32 value)
     {
 		// NOTE: value 0 is undefined
-        return u32_index_of_msb(value);
+        return 31 - _lzcnt_u32(value);
     }
 
 #else
@@ -387,8 +387,7 @@ namespace mango
     static inline int u32_log2(u32 value)
     {
 		// NOTE: value 0 is undefined
-        const u32 mask = u32_expand_msb(value);
-        return u32_index_of_expanded_bit(mask);
+        return u32_index_of_msb(value);
     }
 
 #endif
