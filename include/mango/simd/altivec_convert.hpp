@@ -202,58 +202,191 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline u16x8 extend16x8(u8x16 s)
     {
-        return (u16x8::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
+        return (u16x8::vector) vec_mergel(vec_xor(s.data, s.data), s.data);
     }
 
     static inline u32x4 extend32x4(u8x16 s)
     {
-        auto temp = vec_mergeh(s.data, vec_xor(s.data, s.data));
-        return (u32x4::vector) vec_mergeh(temp, vec_xor(temp, temp));
+        auto temp16x8 = vec_mergel(vec_xor(s.data, s.data), s.data);
+        return (u32x4::vector) vec_mergel(vec_xor(temp16x8, temp16x8), temp16x8);
+    }
+
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        auto temp16x8 = vec_mergel(vec_xor(s.data, s.data), s.data);
+        auto temp32x4 = vec_mergel(vec_xor(temp16x8, temp16x8), temp16x8);
+        return (u64x2::vector) vec_mergel(vec_xor(temp32x4, temp32x4), temp32x4);
     }
 
     static inline u32x4 extend32x4(u16x8 s)
     {
-        return (u32x4::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
+        return (u32x4::vector) vec_mergel(vec_xor(s.data, s.data), s.data);
+    }
+
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        auto temp32x4 = vec_mergel(vec_xor(s.data, s.data), s.data);
+        return (u64x2::vector) vec_mergel(vec_xor(temp32x4, temp32x4), temp32x4);
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        return (u64x2::vector) vec_mergel(vec_xor(s.data, s.data), s.data);
+    }
+
+    // 256 <- 128
+
+    static inline u16x16 extend16x16(u8x16 s)
+    {
+        u16x16 result;
+        result.lo = vec_mergel(vec_xor(s.data, s.data), s.data);
+        result.hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
+        return result;
+    }
+
+    static inline u32x8 extend32x8(u8x16 s)
+    {
+        u32x8 result;
+        result.lo = vec_mergel(vec_xor(s.data, s.data), s.data);
+        result.hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u8x16 s)
+    {
+        auto temp16x8 = vec_mergel(vec_xor(s.data, s.data), s.data);
+        auto temp32x4 = vec_mergel(vec_xor(temp16x8, temp16x8), temp16x8);
+
+        // NOTE: _ARCH_PWR8 required
+        u64x4 result;
+        result.lo = vec_mergel(vec_xor(temp32x4, temp32x4), temp32x4);
+        result.hi = vec_mergeh(vec_xor(temp32x4, temp32x4), temp32x4);
+        return result;
     }
 
     static inline u32x8 extend32x8(u16x8 s)
     {
-        u16x8 s_high = (u16x8::vector) vec_insert(vec_extract(s.data, 1), s.data, 0);
-        u32x8 v;
-        v.lo = extend32x4(s);
-        v.hi = extend32x4(s_high);
-        return v;
+        u32x8 result;
+        result.lo = vec_mergel(vec_xor(s.data, s.data), s.data);
+        result.hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u16x8 s)
+    {
+        auto temp32x4 = vec_mergel(vec_xor(s.data, s.data), s.data);
+
+        // NOTE: _ARCH_PWR8 required
+        u64x4 result;
+        result.lo = vec_mergel(vec_xor(temp32x4, temp32x4), temp32x4);
+        result.hi = vec_mergeh(vec_xor(temp32x4, temp32x4), temp32x4);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u32x4 s)
+    {
+        // NOTE: _ARCH_PWR8 required
+        u64x4 result;
+        result.lo = vec_mergel(vec_xor(s.data, s.data), s.data);
+        result.hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
+        return result;
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline s16x8 extend16x8(s8x16 s)
     {
-        return (s16x8::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
+        return vec_unpackl(s.data);
     }
 
     static inline s32x4 extend32x4(s8x16 s)
     {
-        auto temp = vec_mergeh(s.data, vec_xor(s.data, s.data));
-        return (s32x4::vector) vec_mergeh(temp, vec_xor(temp, temp));
+        return vec_unpackl(vec_unpackl(s.data));
+    }
+
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        return vec_unpackl(vec_unpackl(vec_unpackl(s.data)));
     }
 
     static inline s32x4 extend32x4(s16x8 s)
     {
-        return (s32x4::vector) vec_mergeh(s.data, vec_xor(s.data, s.data));
+        return vec_unpackl(s.data);
+    }
+
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        return vec_unpackl(vec_unpackl(s.data));
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        return vec_unpackl(s.data);
+    }
+
+    // 256 <- 128
+
+    static inline s16x16 extend16x16(s8x16 s)
+    {
+        s16x16 result;
+        result.lo = vec_unpackl(s.data);
+        result.hi = vec_unpackh(s.data);
+        return result;
+    }
+
+    static inline s32x8 extend32x8(s8x16 s)
+    {
+        const auto temp16x8 = vec_unpackl(s.data);
+
+        s32x8 result;
+        result.lo = vec_unpackl(temp16x8);
+        result.hi = vec_unpackh(temp16x8);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s8x16 s)
+    {
+        const auto temp16x8 = vec_unpackl(s.data);
+        const auto temp32x4 = vec_unpackl(temp16x8);
+
+        s64x4 result;
+        result.lo = vec_unpackl(temp32x4);
+        result.hi = vec_unpackh(temp32x4);
+        return result;
     }
 
     static inline s32x8 extend32x8(s16x8 s)
     {
-        s16x8 s_high = (s16x8::vector) vec_insert(vec_extract(s.data, 1), s.data, 0);
-        s32x8 v;
-        v.lo = extend32x4(s);
-        v.hi = extend32x4(s_high);
-        return v;
+        s32x8 result;
+        result.lo = vec_unpackl(s.data);
+        result.hi = vec_unpackh(s.data);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s16x8 s)
+    {
+        const auto temp32x4 = vec_unpackl(s.data);
+
+        s64x4 result;
+        result.lo = vec_unpackl(temp32x4);
+        result.hi = vec_unpackh(temp32x4);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s32x4 s)
+    {
+        s64x4 result;
+        result.lo = vec_unpackl(s.data);
+        result.hi = vec_unpackh(s.data);
+        return result;
     }
 
     // -----------------------------------------------------------------

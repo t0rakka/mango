@@ -195,6 +195,8 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline u16x8 extend16x8(u8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
@@ -205,9 +207,41 @@ namespace detail {
         return _mm_cvtepu8_epi32(s);
     }
 
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        return _mm_cvtepu8_epi64(s);
+    }
+
     static inline u32x4 extend32x4(u16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
+    }
+
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        return _mm_cvtepu16_epi64(s);
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        return _mm_cvtepu32_epi64(s);
+    }
+
+    // 256 <- 128
+
+    static inline u16x16 extend16x16(u8x16 s)
+    {
+        return _mm256_cvtepu8_epi16(s);
+    }
+
+    static inline u32x8 extend32x8(u8x16 s)
+    {
+        return _mm256_cvtepu8_epi32(s);
+    }
+
+    static inline u64x4 extend64x4(u8x16 s)
+    {
+        return _mm256_cvtepu8_epi64(s);
     }
 
     static inline u32x8 extend32x8(u16x8 s)
@@ -215,9 +249,21 @@ namespace detail {
         return  _mm256_cvtepu16_epi32(s);
     }
 
+    static inline u64x4 extend64x4(u16x8 s)
+    {
+        return _mm256_cvtepu16_epi64(s);
+    }
+
+    static inline u64x4 extend64x4(u32x4 s)
+    {
+        return _mm256_cvtepu32_epi64(s);
+    }
+
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
+
+    // 128 <- 128
 
     static inline s16x8 extend16x8(s8x16 s)
     {
@@ -229,14 +275,56 @@ namespace detail {
         return _mm_cvtepi8_epi32(s);
     }
 
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        return _mm_cvtepi8_epi64(s);
+    }
+
     static inline s32x4 extend32x4(s16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
     }
 
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        return _mm_cvtepi16_epi64(s);
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        return _mm_cvtepi32_epi64(s);
+    }
+
+    // 256 <- 128
+
+    static inline s16x16 extend16x16(s8x16 s)
+    {
+        return _mm256_cvtepi8_epi16(s);
+    }
+
+    static inline s32x8 extend32x8(s8x16 s)
+    {
+        return _mm256_cvtepi8_epi32(s);
+    }
+
+    static inline s64x4 extend64x4(s8x16 s)
+    {
+        return _mm256_cvtepi8_epi64(s);
+    }
+
     static inline s32x8 extend32x8(s16x8 s)
     {
         return _mm256_cvtepi16_epi32(s);
+    }
+
+    static inline s64x4 extend64x4(s16x8 s)
+    {
+        return _mm256_cvtepi16_epi64(s);
+    }
+
+    static inline s64x4 extend64x4(s32x4 s)
+    {
+        return _mm256_cvtepi32_epi64(s);
     }
 
     // -----------------------------------------------------------------

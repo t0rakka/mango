@@ -202,6 +202,8 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline u16x8 extend16x8(u8x16 s)
     {
         return (v16u8) __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
@@ -209,8 +211,15 @@ namespace detail {
 
     static inline u32x4 extend32x4(u8x16 s)
     {
-        v16u8 temp16 = __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
-        return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)temp16);
+        v8u16 temp16x8 = __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
+        return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)temp16x8);
+    }
+
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        v8u16 temp16x8 = __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
+        v4u32 temp32x4 = __msa_ilvr_h(__msa_fill_h(0), (v8i16)temp16x8);
+        return (v2u64) __msa_ilvr_w(__msa_fill_w(0), (v4i32)temp32x4);
     }
 
     static inline u32x4 extend32x4(u16x8 s)
@@ -218,18 +227,73 @@ namespace detail {
         return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)s);
     }
 
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        v4u32 temp32x4 = __msa_ilvr_h(__msa_fill_h(0), (v8i16)s);
+        return (v2u64) __msa_ilvr_w(__msa_fill_w(0), (v4i32)temp32x4);
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        return (v2u64) __msa_ilvr_w(__msa_fill_w(0), (v4i32)s);
+    }
+
+    // 256 <- 128
+
+    static inline u16x16 extend16x16(u8x16 s)
+    {
+        u8x16 high = (v16u8) __msa_ilvl_d((v2i64)s, (v2i64)s);
+
+        u16x16 result;
+        result.lo = extend16x8(s);
+        result.hi = extend16x8(high);
+        return result;
+    }
+
     static inline u32x8 extend32x8(u16x8 s)
     {
-        u16x8 s_high = (v8u16) __msa_ilvl_d((v2i64)s, (v2i64)s);
-        u32x8 v;
-        v.lo = extend32x4(s);
-        v.hi = extend32x4(s_high);
-        return v;
+        u16x8 high = (v8u16) __msa_ilvl_d((v2i64)s, (v2i64)s);
+
+        u32x8 result;
+        result.lo = extend32x4(s);
+        result.hi = extend32x4(high);
+        return result;
+    }
+
+    static inline u32x8 extend32x8(u8x16 s)
+    {
+        const u16x8 temp = extend16x8(s);
+        return extend32x8(temp);
+    }
+
+    static inline u64x4 extend64x4(u32x4 s)
+    {
+        u32x4 high = (v4u32) __msa_ilvl_d((v2i64)s, (v2i64)s);
+
+        u64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u16x8 s)
+    {
+        const u32x4 temp = extend32x4(s);
+        return extend64x4(temp);
+    }
+
+    static inline u64x4 extend64x4(u8x16 s)
+    {
+        const u16x8 temp16x8 = extend16x8(s);
+        const u32x4 temp32x4 = extend32x4(temp16x8);
+        return extend64x4(temp32x4);
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
+
+    // 128 <- 128
 
     static inline s16x8 extend16x8(s8x16 s)
     {
@@ -239,8 +303,16 @@ namespace detail {
 
     static inline s32x4 extend32x4(s8x16 s)
     {
-        v16i8 temp16 = __msa_ilvr_b(__msa_clt_s_b(s, __msa_fill_b(0)), (v16i8)s);
-        return (v4i32) __msa_ilvr_h(__msa_clt_s_h(s, __msa_fill_h(0)), (v8i16)temp16);
+        v16i8 temp16x8 = __msa_ilvr_b(__msa_clt_s_b(s, __msa_fill_b(0)), (v16i8)s);
+        return (v4i32) __msa_ilvr_h(__msa_clt_s_h(s, __msa_fill_h(0)), (v8i16)temp16x8);
+    }
+
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        v16i8 sign = __msa_clt_s_h(s, __msa_fill_b(0));
+        const auto temp16x8 = (v8i16) __msa_ilvr_b(sign, (v16i8)s);
+        const auto temp32x4 = (v4i32) __msa_ilvr_h((v8i16)sign, temp16x8);
+        return (v2i64) __msa_ilvr_w((v4i32)sign, temp32x4);
     }
 
     static inline s32x4 extend32x4(s16x8 s)
@@ -249,13 +321,68 @@ namespace detail {
         return (v4i32) __msa_ilvr_h(sign, (v8i16)s);
     }
 
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        v8i16 sign = __msa_clt_s_h(s, __msa_fill_h(0));
+        const auto temp32x4 = (v4i32) __msa_ilvr_h(sign, (v8i16)s);
+        return (v2i64) __msa_ilvr_w((v4i32)sign, temp32x4);
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        v4i32 sign = __msa_clt_s_w(s, __msa_fill_w(0));
+        return (v2i64) __msa_ilvr_w(sign, (v4i32)s);
+    }
+
+    // 256 <- 128
+
+    static inline s16x16 extend16x16(s8x16 s)
+    {
+        s8x16 high = (v16i8) __msa_ilvl_d((v2i64)s, (v2i64)s);
+
+        s16x16 result;
+        result.lo = extend16x8(s);
+        result.hi = extend16x8(high);
+        return result;
+    }
+
     static inline s32x8 extend32x8(s16x8 s)
     {
-        s16x8 s_high = (v8i16) __msa_ilvl_d((v2i64)s, (v2i64)s);
-        s32x8 v;
-        v.lo = extend32x4(s);
-        v.hi = extend32x4(s_high);
-        return v;
+        s16x8 high = (v8i16) __msa_ilvl_d((v2i64)s, (v2i64)s);
+
+        s32x8 result;
+        result.lo = extend32x4(s);
+        result.hi = extend32x4(high);
+        return result;
+    }
+
+    static inline s32x8 extend32x8(s8x16 s)
+    {
+        const s16x8 temp = extend16x8(s);
+        return extend32x8(temp);
+    }
+
+    static inline s64x4 extend64x4(s32x4 s)
+    {
+        s32x4 high = (v4i32) __msa_ilvl_d((v2i64)s, (v2i64)s);
+
+        s64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s16x8 s)
+    {
+        const s32x4 temp = extend32x4(s);
+        return extend64x4(temp);
+    }
+
+    static inline s64x4 extend64x4(s8x16 s)
+    {
+        const s16x8 temp16x8 = extend16x8(s);
+        const s32x4 temp32x4 = extend32x4(temp16x8);
+        return extend64x4(temp32x4);
     }
 
     // -----------------------------------------------------------------

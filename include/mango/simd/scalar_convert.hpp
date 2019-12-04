@@ -9,6 +9,33 @@
 
 namespace mango {
 namespace simd {
+namespace detail {
+
+    template <typename D, typename S>
+    inline D extend(S s)
+    {
+        D temp;
+        for (int i = 0; i < D::size; ++i)
+        {
+            temp[i] = s[i];
+        }
+        return temp;
+    }
+
+    template <typename D, typename S>
+    inline D extend_composite(S s)
+    {
+        constexpr int halfsize = D::size / 2;
+        D temp;
+        for (int i = 0; i < halfsize; ++i)
+        {
+            temp.lo[i] = s[i + 0];
+            temp.hi[i] = s[i + halfsize];
+        }
+        return temp;
+    }
+
+} // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -52,90 +79,136 @@ namespace simd {
     // zero extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline u16x8 extend16x8(u8x16 s)
     {
-        u16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = s[i];
-        }
-        return v;
+        return detail::extend<u16x8, u8x16>(s);
     }
 
     static inline u32x4 extend32x4(u8x16 s)
     {
-        u32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = s[i];
-        }
-        return v;
+        return detail::extend<u32x4, u8x16>(s);
+    }
+
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        return detail::extend<u64x2, u8x16>(s);
     }
 
     static inline u32x4 extend32x4(u16x8 s)
     {
-        u32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = s[i];
-        }
-        return v;
+        return detail::extend<u32x4, u16x8>(s);
+    }
+
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        return detail::extend<u64x2, u16x8>(s);
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        return detail::extend<u64x2, u32x4>(s);
+    }
+
+    // 256 <- 128
+
+    static inline u16x16 extend16x16(u8x16 s)
+    {
+        return detail::extend_composite<u16x16, u8x16>(s);
+    }
+
+    static inline u32x8 extend32x8(u8x16 s)
+    {
+        return detail::extend_composite<u32x8, u8x16>(s);
+    }
+
+    static inline u64x4 extend64x4(u8x16 s)
+    {
+        return detail::extend_composite<u64x4, u8x16>(s);
     }
 
     static inline u32x8 extend32x8(u16x8 s)
     {
-        u32x8 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v.lo[i] = s[i + 0];
-            v.hi[i] = s[i + 4];
-        }
-        return v;
+        return detail::extend_composite<u32x8, u16x8>(s);
+    }
+
+    static inline u64x4 extend64x4(u16x8 s)
+    {
+        return detail::extend_composite<u64x4, u16x8>(s);
+    }
+
+    static inline u64x4 extend64x4(u32x4 s)
+    {
+        return detail::extend_composite<u64x4, u32x4>(s);
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline s16x8 extend16x8(s8x16 s)
     {
-        s16x8 v;
-        for (int i = 0; i < 8; ++i)
-        {
-            v[i] = s[i];
-        }
-        return v;
+        return detail::extend<s16x8, s8x16>(s);
     }
 
     static inline s32x4 extend32x4(s8x16 s)
     {
-        s32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = s[i];
-        }
-        return v;
+        return detail::extend<s32x4, s8x16>(s);
+    }
+
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        return detail::extend<s64x2, s8x16>(s);
     }
 
     static inline s32x4 extend32x4(s16x8 s)
     {
-        s32x4 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v[i] = s[i];
-        }
-        return v;
+        return detail::extend<s32x4, s16x8>(s);
+    }
+
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        return detail::extend<s64x2, s16x8>(s);
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        return detail::extend<s64x2, s32x4>(s);
+    }
+
+    // 256 <- 128
+
+    static inline s16x16 extend16x16(s8x16 s)
+    {
+        return detail::extend_composite<s16x16, s8x16>(s);
+    }
+
+    static inline s32x8 extend32x8(s8x16 s)
+    {
+        return detail::extend_composite<s32x8, s8x16>(s);
+    }
+
+    static inline s64x4 extend64x4(s8x16 s)
+    {
+        return detail::extend_composite<s64x4, s8x16>(s);
     }
 
     static inline s32x8 extend32x8(s16x8 s)
     {
-        s32x8 v;
-        for (int i = 0; i < 4; ++i)
-        {
-            v.lo[i] = s[i + 0];
-            v.hi[i] = s[i + 4];
-        }
-        return v;
+        return detail::extend_composite<s32x8, s16x8>(s);
+    }
+
+    static inline s64x4 extend64x4(s16x8 s)
+    {
+        return detail::extend_composite<s64x4, s16x8>(s);
+    }
+
+    static inline s64x4 extend64x4(s32x4 s)
+    {
+        return detail::extend_composite<s64x4, s32x4>(s);
     }
 
     // -----------------------------------------------------------------

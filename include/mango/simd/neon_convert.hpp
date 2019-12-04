@@ -262,6 +262,8 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
     static inline u16x8 extend16x8(u8x16 s)
     {
         return vmovl_u8(vget_low_u8(s));
@@ -269,8 +271,15 @@ namespace detail {
 
     static inline u32x4 extend32x4(u8x16 s)
     {
-        auto temp = vmovl_u8(vget_low_u8(s));
-        return vmovl_u16(vget_low_u16(temp));
+        const auto temp16 = vmovl_u8(vget_low_u8(s));
+        return vmovl_u16(vget_low_u16(temp16));
+    }
+
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        const auto temp16 = vmovl_u8(vget_low_u8(s));
+        const auto temp32 = vmovl_u16(vget_low_u16(temp16));
+        return vmovl_u32(vget_low_u32(temp32));
     }
 
     static inline u32x4 extend32x4(u16x8 s)
@@ -278,17 +287,76 @@ namespace detail {
         return vmovl_u16(vget_low_u16(s));
     }
 
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        const auto temp32 = vmovl_u16(vget_low_u16(s));
+        return vmovl_u32(vget_low_u32(temp32));
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        return vmovl_u32(vget_low_u32(s));
+    }
+
+    // 256 <- 128
+
+    static inline u16x16 extend16x16(u8x16 s)
+    {
+        u16x16 result;
+        result.lo = vmovl_u8(vget_low_u8(s));
+        result.hi = vmovl_u8(vget_high_u8(s));
+        return result;
+    }
+
+    static inline u32x8 extend32x8(u8x16 s)
+    {
+        const auto temp16x8 = vmovl_u8(vget_low_u8(s));
+        u32x8 result;
+        result.lo = vmovl_u16(vget_low_u16(temp16x8));
+        result.hi = vmovl_u16(vget_high_u16(temp16x8));
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u8x16 s)
+    {
+        const auto temp16x8 = vmovl_u8(vget_low_u8(s));
+        const auto temp32x4 = vmovl_u16(vget_low_u16(temp16x8));
+        u64x4 result;
+        result.lo = vmovl_u32(vget_low_u32(temp32x4));
+        result.hi = vmovl_u32(vget_high_u32(temp32x4));
+        return result;
+    }
+
     static inline u32x8 extend32x8(u16x8 s)
     {
-        u32x8 v;
-        v.lo = vmovl_u16(vget_low_u16(s));
-        v.hi = vmovl_u16(vget_high_u16(s));
-        return v;
+        u32x8 result;
+        result.lo = vmovl_u16(vget_low_u16(s));
+        result.hi = vmovl_u16(vget_high_u16(s));
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u16x8 s)
+    {
+        const auto temp32x4 = vmovl_u16(vget_low_u16(s));
+        u64x4 result;
+        result.lo = vmovl_u32(vget_low_u32(temp32x4));
+        result.hi = vmovl_u32(vget_high_u32(temp32x4));
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u32x4 s)
+    {
+        u64x4 result;
+        result.lo = vmovl_u32(vget_low_u32(s));
+        result.hi = vmovl_u32(vget_high_u32(s));
+        return result;
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
+
+    // 128 <- 128
 
     static inline s16x8 extend16x8(s8x16 s)
     {
@@ -297,8 +365,15 @@ namespace detail {
 
     static inline s32x4 extend32x4(s8x16 s)
     {
-        auto temp = vmovl_s8(vget_low_s8(s));
-        return vmovl_s16(vget_low_s16(temp));
+        const auto temp16 = vmovl_s8(vget_low_s8(s));
+        return vmovl_s16(vget_low_s16(temp16));
+    }
+
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        const auto temp16 = vmovl_s8(vget_low_s8(s));
+        const auto temp32 = vmovl_s16(vget_low_s16(temp16));
+        return vmovl_s32(vget_low_s32(temp32));
     }
 
     static inline s32x4 extend32x4(s16x8 s)
@@ -306,12 +381,69 @@ namespace detail {
         return vmovl_s16(vget_low_s16(s));
     }
 
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        const auto temp32 = vmovl_s16(vget_low_s16(s));
+        return vmovl_s32(vget_low_s32(temp32));
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        return vmovl_s32(vget_low_s32(s));
+    }
+
+    // 256 <- 128
+
+    static inline s16x16 extend16x16(s8x16 s)
+    {
+        s16x16 result;
+        result.lo = vmovl_s8(vget_low_s8(s));
+        result.hi = vmovl_s8(vget_high_s8(s));
+        return result;
+    }
+
+    static inline s32x8 extend32x8(s8x16 s)
+    {
+        const auto temp16x8 = vmovl_s8(vget_low_s8(s));
+        s32x8 result;
+        result.lo = vmovl_s16(vget_low_s16(temp16x8));
+        result.hi = vmovl_s16(vget_high_s16(temp16x8));
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s8x16 s)
+    {
+        const auto temp16x8 = vmovl_s8(vget_low_s8(s));
+        const auto temp32x4 = vmovl_s16(vget_low_s16(temp16x8));
+        s64x4 result;
+        result.lo = vmovl_s32(vget_low_s32(temp32x4));
+        result.hi = vmovl_s32(vget_high_s32(temp32x4));
+        return result;
+    }
+
     static inline s32x8 extend32x8(s16x8 s)
     {
-        s32x8 v;
-        v.lo = vmovl_s16(vget_low_s16(s));
-        v.hi = vmovl_s16(vget_high_s16(s));
-        return v;
+        s32x8 result;
+        result.lo = vmovl_s16(vget_low_s16(s));
+        result.hi = vmovl_s16(vget_high_s16(s));
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s16x8 s)
+    {
+        const auto temp32x4 = vmovl_s16(vget_low_s16(s));
+        s64x4 result;
+        result.lo = vmovl_s32(vget_low_s32(temp32x4));
+        result.hi = vmovl_s32(vget_high_s32(temp32x4));
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s32x4 s)
+    {
+        s64x4 result;
+        result.lo = vmovl_s32(vget_low_s32(s));
+        result.hi = vmovl_s32(vget_high_s32(s));
+        return result;
     }
 
     // -----------------------------------------------------------------

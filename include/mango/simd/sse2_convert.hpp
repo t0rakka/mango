@@ -133,6 +133,8 @@ namespace detail {
     // zero extend
     // -----------------------------------------------------------------
 
+    // 128 <- 128
+
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static inline u16x8 extend16x8(u8x16 s)
@@ -145,43 +147,127 @@ namespace detail {
         return _mm_cvtepu8_epi32(s);
     }
 
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        return _mm_cvtepu8_epi64(s);
+    }
+
     static inline u32x4 extend32x4(u16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
+    }
+
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        return _mm_cvtepu16_epi64(s);
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        return _mm_cvtepu32_epi64(s);
     }
 
 #else
 
     static inline u16x8 extend16x8(u8x16 s)
     {
-        return _mm_unpacklo_epi8(s, _mm_setzero_si128());
+        const __m128i zero = _mm_setzero_si128();
+        return _mm_unpacklo_epi8(s, zero);
     }
 
     static inline u32x4 extend32x4(u8x16 s)
     {
-        const __m128i temp = _mm_unpacklo_epi8(s, _mm_setzero_si128());
-        return _mm_unpacklo_epi16(temp, _mm_setzero_si128());
+        const __m128i zero = _mm_setzero_si128();
+        return _mm_unpacklo_epi16(_mm_unpacklo_epi8(s, zero), zero);
+    }
+
+    static inline u64x2 extend64x2(u8x16 s)
+    {
+        const __m128i zero = _mm_setzero_si128();
+        return _mm_unpacklo_epi32(_mm_unpacklo_epi16(_mm_unpacklo_epi8(s, zero), zero), zero);
     }
 
     static inline u32x4 extend32x4(u16x8 s)
     {
-        return _mm_unpacklo_epi16(s, _mm_setzero_si128());
+        const __m128i zero = _mm_setzero_si128();
+        return _mm_unpacklo_epi16(s, zero);
+    }
+
+    static inline u64x2 extend64x2(u16x8 s)
+    {
+        const __m128i zero = _mm_setzero_si128();
+        return _mm_unpacklo_epi32(_mm_unpacklo_epi16(s, zero), zero);
+    }
+
+    static inline u64x2 extend64x2(u32x4 s)
+    {
+        const __m128i zero = _mm_setzero_si128();
+        return _mm_unpacklo_epi32(s, zero);
     }
 
 #endif
 
+    // 256 <- 128
+
+    static inline u16x16 extend16x16(u8x16 s)
+    {
+        u8x16 high = _mm_unpackhi_epi64(s, s);
+        u16x16 result;
+        result.lo = extend16x8(s);
+        result.hi = extend16x8(high);
+        return result;
+    }
+
+    static inline u32x8 extend32x8(u8x16 s)
+    {
+        u8x16 high = _mm_unpackhi_epi64(s, s);
+        u32x8 result;
+        result.lo = extend32x4(s);
+        result.hi = extend32x4(high);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u8x16 s)
+    {
+        u8x16 high = _mm_unpackhi_epi64(s, s);
+        u64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
+    }
+
     static inline u32x8 extend32x8(u16x8 s)
     {
-        u16x8 s_high = _mm_unpackhi_epi64(s, s);
-        u32x8 v;
-        v.lo = extend32x4(s);
-        v.hi = extend32x4(s_high);
-        return v;
+        u16x8 high = _mm_unpackhi_epi64(s, s);
+        u32x8 result;
+        result.lo = extend32x4(s);
+        result.hi = extend32x4(high);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u16x8 s)
+    {
+        u16x8 high = _mm_unpackhi_epi64(s, s);
+        u64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
+    }
+
+    static inline u64x4 extend64x4(u32x4 s)
+    {
+        u32x4 high = _mm_unpackhi_epi64(s, s);
+        u64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
     }
 
     // -----------------------------------------------------------------
     // sign extend
     // -----------------------------------------------------------------
+
+    // 128 <- 128
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
@@ -195,9 +281,24 @@ namespace detail {
         return _mm_cvtepi8_epi32(s);
     }
 
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        return _mm_cvtepi8_epi64(s);
+    }
+
     static inline s32x4 extend32x4(s16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
+    }
+
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        return _mm_cvtepi16_epi64(s);
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        return _mm_cvtepi32_epi64(s);
     }
 
 #else
@@ -210,8 +311,14 @@ namespace detail {
 
     static inline s32x4 extend32x4(s8x16 s)
     {
-        const __m128i temp = _mm_unpacklo_epi8(s, _mm_cmpgt_epi8(_mm_setzero_si128(), s));
-        return _mm_unpacklo_epi16(temp, _mm_cmpgt_epi16(_mm_setzero_si128(), temp));
+        const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
+        return _mm_unpacklo_epi16(_mm_unpacklo_epi8(s, sign), sign);
+    }
+
+    static inline s64x2 extend64x2(s8x16 s)
+    {
+        const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
+        return _mm_unpacklo_epi32(_mm_unpacklo_epi16(_mm_unpacklo_epi8(s, sign), sign), sign);
     }
 
     static inline s32x4 extend32x4(s16x8 s)
@@ -220,15 +327,74 @@ namespace detail {
         return _mm_unpacklo_epi16(s, sign);
     }
 
+    static inline s64x2 extend64x2(s16x8 s)
+    {
+        const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
+        return _mm_unpacklo_epi32(_mm_unpacklo_epi16(s, sign), sign);
+    }
+
+    static inline s64x2 extend64x2(s32x4 s)
+    {
+        const __m128i sign = _mm_cmpgt_epi32(_mm_setzero_si128(), s);
+        return _mm_unpacklo_epi32(s, sign);
+    }
+
 #endif
+
+    // 256 <- 128
+
+    static inline s16x16 extend16x16(s8x16 s)
+    {
+        s8x16 high = _mm_unpackhi_epi64(s, s);
+        s16x16 result;
+        result.lo = extend16x8(s);
+        result.hi = extend16x8(high);
+        return result;
+    }
+
+    static inline s32x8 extend32x8(s8x16 s)
+    {
+        s8x16 high = _mm_unpackhi_epi64(s, s);
+        s32x8 result;
+        result.lo = extend32x4(s);
+        result.hi = extend32x4(high);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s8x16 s)
+    {
+        s8x16 high = _mm_unpackhi_epi64(s, s);
+        s64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
+    }
 
     static inline s32x8 extend32x8(s16x8 s)
     {
-        s16x8 s_high = _mm_unpackhi_epi64(s, s);
-        s32x8 v;
-        v.lo = extend32x4(s);
-        v.hi = extend32x4(s_high);
-        return v;
+        s16x8 high = _mm_unpackhi_epi64(s, s);
+        s32x8 result;
+        result.lo = extend32x4(s);
+        result.hi = extend32x4(high);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s16x8 s)
+    {
+        s16x8 high = _mm_unpackhi_epi64(s, s);
+        s64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
+    }
+
+    static inline s64x4 extend64x4(s32x4 s)
+    {
+        s32x4 high = _mm_unpackhi_epi64(s, s);
+        s64x4 result;
+        result.lo = extend64x2(s);
+        result.hi = extend64x2(high);
+        return result;
     }
 
     // -----------------------------------------------------------------
