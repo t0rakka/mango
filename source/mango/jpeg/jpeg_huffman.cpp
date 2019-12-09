@@ -9,95 +9,43 @@ namespace mango {
 namespace jpeg {
 
     // ----------------------------------------------------------------------------
-    // bextr()
+    // huffman functions
     // ----------------------------------------------------------------------------
 
-	#ifdef MANGO_CPU_64BIT
-	    #define bextr mango::u64_extract_bits
-	#else
-	    #define bextr mango::u32_extract_bits
-	#endif
-
-    // ----------------------------------------------------------------------------
-    // huffman decoder macros
-    // ----------------------------------------------------------------------------
-
-    constexpr int huff_extend(int v, int nbits)
+    constexpr
+    int huff_extend(int v, int nbits)
     {
         return v - ((((v + v) >> nbits) - 1) & ((1 << nbits) - 1));
     }
 
-#if 0
-
-    static inline int GET_BITS(jpegBuffer &buffer, int nbits)
+    static inline
+    int huff_receive(jpegBuffer& buffer, int nbits)
     {
-        return int(bextr(buffer.data, buffer.remain -= nbits, nbits));
+        buffer.ensure16();
+        int value = buffer.getBits(nbits);
+        return huff_extend(value, nbits);
     }
 
-    static inline int PEEK_BITS(jpegBuffer &buffer, int nbits)
+    static inline
+    int huff_decode(jpegBuffer& buffer, const HuffTable* h)
     {
-        return int(bextr(buffer.data, buffer.remain - nbits, nbits));
+        buffer.ensure16();
+        int v = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+        int symbol = h->lookupValue[v];
+        int size = h->lookupSize[v];
+        if (size == JPEG_HUFF_LOOKUP_BITS + 1)
+        {
+            DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+            while (x > h->maxcode[size])
+            {
+                size++;
+            }
+            v = int(x >> (JPEG_REGISTER_BITS - size));
+            symbol = h->valueAddress[size][v];
+        }
+        buffer.remain -= size;
+        return symbol;
     }
-
-#else
-
-    #define GET_BITS(buffer, nbits) \
-        int(bextr(buffer.data, buffer.remain -= nbits, nbits))
-
-    #define PEEK_BITS(buffer, nbits) \
-        int(bextr(buffer.data, buffer.remain - nbits, nbits))
-
-#endif
-
-    #define HUFF_RECEIVE(buffer, nbits) \
-    { \
-        buffer.ensure16(); \
-        s = huff_extend(GET_BITS(buffer, nbits), nbits); \
-    }
-
-#ifndef JPEG_ENABLE_MODERN_HUFFMAN
-
-    constexpr int LOOKAHEAD_MASK0 = ((1 << JPEG_HUFF_LOOKUP_BITS) - 1);
-    constexpr int LOOKAHEAD_MASK1 = ((2 << JPEG_HUFF_LOOKUP_BITS) - 1);
-
-    #define HUFF_DECODE(symbol, h) \
-    {                                                              \
-        buffer.ensure16();                                         \
-        symbol = PEEK_BITS(buffer, JPEG_HUFF_LOOKUP_BITS);         \
-        symbol = h->lookup[symbol];                                \
-        int size = symbol >> JPEG_HUFF_LOOKUP_BITS;                \
-        buffer.remain -= size;                                     \
-        symbol = symbol & LOOKAHEAD_MASK0;                         \
-        if (size == JPEG_HUFF_LOOKUP_BITS + 1) {                   \
-            symbol = (buffer.data >> buffer.remain) & LOOKAHEAD_MASK1; \
-            while (symbol > h->maxcode[size++]) {                  \
-                symbol += symbol;                                  \
-                symbol |= GET_BITS(buffer, 1);                     \
-            }                                                      \
-            symbol = h->value[ symbol + h->valoffset[size] ];      \
-        }                                                          \
-    }
-
-#else
-
-    #define HUFF_DECODE(symbol, h) \
-    { \
-        buffer.ensure16(); \
-        int v = PEEK_BITS(buffer, JPEG_HUFF_LOOKUP_BITS); \
-        symbol = h->lookupValue[v]; \
-        int size = h->lookupSize[v]; \
-        if (size == JPEG_HUFF_LOOKUP_BITS + 1) { \
-            DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain)); \
-            while (x > h->maxcode[size]) { \
-                size++; \
-            }  \
-            v = int(x >> (JPEG_REGISTER_BITS - size)); \
-            symbol = h->valueAddress[size][v]; \
-        } \
-        buffer.remain -= size; \
-    }
-
-#endif
 
     // ----------------------------------------------------------------------------
     // huffman decoder
@@ -113,11 +61,10 @@ namespace jpeg {
             const DecodeBlock* block = state->block + j;
             const HuffTable* dc_table = block->table.dc;
 
-            int s;
-            HUFF_DECODE(s, dc_table);
+            int s = huff_decode(buffer, dc_table);
             if (s)
             {
-                HUFF_RECEIVE(buffer, s);
+                s = huff_receive(buffer, s);
             }
 
             s += huffman.last_dc_value[block->pred];
@@ -141,11 +88,10 @@ namespace jpeg {
             const HuffTable* ac_table = block->table.ac;
 
             // DC
-            int s;
-            HUFF_DECODE(s, dc_table);
+            int s = huff_decode(buffer, dc_table);
             if (s)
             {
-                HUFF_RECEIVE(buffer, s);
+                s = huff_receive(buffer, s);
             }
 
             s += huffman.last_dc_value[block->pred];
@@ -156,16 +102,15 @@ namespace jpeg {
             // AC
             for (int i = 1; i < 64; )
             {
-                int s;
-                HUFF_DECODE(s, ac_table);
+                int s = huff_decode(buffer, ac_table);
 
                 int r = s >> 4;
                 s &= 15;
-                
+
                 if (s)
                 {
                     i += r;
-                    HUFF_RECEIVE(buffer, s);
+                    s = huff_receive(buffer, s);
                     output[zigzagTable[i++]] = s16(s);
                 }
                 else
@@ -193,11 +138,10 @@ namespace jpeg {
             
             std::memset(dest, 0, 64 * sizeof(s16));
 
-            int s;
-            HUFF_DECODE(s, dc_table);
+            int s = huff_decode(buffer, dc_table);
             if (s)
             {
-                HUFF_RECEIVE(buffer, s);
+                s = huff_receive(buffer, s);
             }
 
             s += huffman.last_dc_value[block->pred];
@@ -216,10 +160,10 @@ namespace jpeg {
         for (int j = 0; j < state->blocks; ++j)
         {
             s16* dest = output + state->block[j].offset;
-            dest[0] |= (GET_BITS(buffer, 1) << state->successiveLow);
+            dest[0] |= (buffer.getBits(1) << state->successiveLow);
         }
     }
-    
+
     void huff_decode_ac_first(s16* output, DecodeState* state)
     {
         const u8* zigzagTable = state->zigzagTable;
@@ -239,8 +183,7 @@ namespace jpeg {
         {
             for (int i = start; i <= end; ++i)
             {
-                int s;
-                HUFF_DECODE(s, ac_table);
+                int s = huff_decode(buffer, ac_table);
 
                 int r = s >> 4;
                 s &= 15;
@@ -249,7 +192,7 @@ namespace jpeg {
 
                 if (s)
                 {
-                    HUFF_RECEIVE(buffer, s);
+                    s = huff_receive(buffer, s);
                     output[zigzagTable[i]] = s16(s << state->successiveLow);
                 }
                 else
@@ -260,9 +203,9 @@ namespace jpeg {
                         if (r)
                         {
                             buffer.ensure16();
-                            huffman.eob_run += GET_BITS(buffer, r);
+                            huffman.eob_run += buffer.getBits(r);
                         }
-                        
+
                         --huffman.eob_run;
                         break;
                     }
@@ -291,8 +234,7 @@ namespace jpeg {
         {
             for (; k <= end; k++)
             {
-                int s;
-                HUFF_DECODE(s, ac_table);
+                int s = huff_decode(buffer, ac_table);
 
                 int r = s >> 4;
                 s &= 15;
@@ -300,7 +242,7 @@ namespace jpeg {
                 if (s)
                 {
                     buffer.ensure16();
-                    if (GET_BITS(buffer, 1))
+                    if (buffer.getBits(1))
                         s = p1;
                     else
                         s = m1;
@@ -314,7 +256,7 @@ namespace jpeg {
                         if (r)
                         {
                             buffer.ensure16();
-                            huffman.eob_run += GET_BITS(buffer, r);
+                            huffman.eob_run += buffer.getBits(r);
                         }
 
                         break;
@@ -327,7 +269,7 @@ namespace jpeg {
                     if (*coef != 0)
                     {
                         buffer.ensure16();
-                        if (GET_BITS(buffer, 1))
+                        if (buffer.getBits(1))
                         {
                             if ((*coef & p1) == 0)
                             {
@@ -344,7 +286,7 @@ namespace jpeg {
 
                     k++;
                 } while (k <= end);
-                
+
                 if ((s) && (k < 64))
                 {
                     output[zigzagTable[k]] = s16(s);
@@ -357,11 +299,11 @@ namespace jpeg {
             for ( ; k <= end; k++)
             {
                 s16* coef = output + zigzagTable[k];
-                
+
                 if (*coef != 0)
                 {
                     buffer.ensure16();
-                    if (GET_BITS(buffer, 1))
+                    if (buffer.getBits(1))
                     {
                         if ((*coef & p1) == 0)
                         {
@@ -393,86 +335,6 @@ namespace jpeg {
     // ----------------------------------------------------------------------------
     // HuffTable
     // ----------------------------------------------------------------------------
-
-#ifndef JPEG_ENABLE_MODERN_HUFFMAN
-
-    void HuffTable::configure()
-    {
-        char huffsize[257];
-        u32 huffcode[257];
-
-        // Figure C.1: make table of Huffman code length for each symbol
-        int p = 0;
-        for (int l = 1; l <= 16; l++)
-        {
-            int i = int(size[l]);
-            while (i--)
-                huffsize[p++] = char(l);
-        }
-        huffsize[p] = 0;
-
-        // Figure C.2: generate the codes themselves
-        u32 code = 0;
-        int si = huffsize[0];
-        p = 0;
-        while (huffsize[p])
-        {
-            while (((int) huffsize[p]) == si)
-            {
-                huffcode[p++] = code;
-                code++;
-            }
-            code <<= 1;
-            si++;
-        }
-
-        // Figure F.15: generate decoding tables for bit-sequential decoding
-        p = 0;
-        for (int l = 1; l <= 16; l++)
-        {
-            if (size[l])
-            {
-                valoffset[l+1] = (int) p - (int) huffcode[p];
-                p += size[l];
-                maxcode[l] = huffcode[p-1]; // maximum code of length l
-            }
-            else
-            {
-                maxcode[l] = -1; // -1 if no codes of this length
-            }
-        }
-        valoffset[17+1] = 0;
-        maxcode[17] = 0xfffff; // ensures jpeg_huff_decode terminates
-
-        // Compute lookahead tables to speed up decoding.
-        // First we set all the table entries to 0, indicating "too long";
-        // then we iterate through the Huffman codes that are short enough and
-        // fill in all the entries that correspond to bit sequences starting
-        // with that code.
-
-        for (int i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
-        {
-            lookup[i] = (JPEG_HUFF_LOOKUP_BITS + 1) << JPEG_HUFF_LOOKUP_BITS;
-        }
-        
-        p = 0;
-        for (int l = 1; l <= JPEG_HUFF_LOOKUP_BITS; l++)
-        {
-            for (int i = 1; i <= (int) size[l]; i++, p++)
-            {
-                // l = current code's length, p = its index in huffcode[] & huffval[].
-                // Generate left-justified code followed by all possible bit sequences
-                int lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
-                for (int ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--)
-                {
-                    lookup[lookbits] = (l << JPEG_HUFF_LOOKUP_BITS) | value[p];
-                    lookbits++;
-                }
-            }
-        }
-    }
-
-#else
 
     void HuffTable::configure()
     {
@@ -557,8 +419,6 @@ namespace jpeg {
             }
         }
     }
-
-#endif
     
 } // namespace jpeg
 } // namespace mango

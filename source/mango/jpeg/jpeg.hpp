@@ -8,7 +8,6 @@
 
 #define JPEG_ENABLE_THREAD
 #define JPEG_ENABLE_SIMD
-#define JPEG_ENABLE_MODERN_HUFFMAN
 
 #include <vector>
 #include <string>
@@ -67,11 +66,13 @@ namespace jpeg {
 
     using DataType = u64;
     #define JPEG_REGISTER_BITS 64
+	#define bextr mango::u64_extract_bits
 
 #else
 
     using DataType = u32;
     #define JPEG_REGISTER_BITS 32
+	#define bextr mango::u32_extract_bits
 
 #endif
 
@@ -104,22 +105,6 @@ namespace jpeg {
         int  bits;   // Quantization table precision (8 or 16 bits)
     };
 
-#ifndef JPEG_ENABLE_MODERN_HUFFMAN
-
-    struct HuffTable
-    {
-        u8  size[17];
-        u8  value[256];
-
-        int maxcode[18];
-        int valoffset[18+1];
-        int lookup[JPEG_HUFF_LOOKUP_SIZE];
-
-        void configure();
-    };
-
-#else
-
     struct HuffTable
     {
         u8 size[17];
@@ -134,8 +119,6 @@ namespace jpeg {
         void configure();
     };
 
-#endif
-
     struct jpegBuffer
     {
         const u8* ptr;
@@ -147,6 +130,16 @@ namespace jpeg {
 
         void restart();
         DataType bytes(int count);
+
+        int getBits(int nbits)
+        {
+            return int(bextr(data, remain -= nbits, nbits));
+        }
+
+        int peekBits(int nbits)
+        {
+            return int(bextr(data, remain - nbits, nbits));
+        }
 
 #ifdef MANGO_CPU_64BIT
 
