@@ -129,7 +129,16 @@ namespace jpeg {
         int remain;
 
         void restart();
+        void ensure();
         DataType bytes(int count);
+
+        void ensure16()
+        {
+            if (remain < 16)
+            {
+                ensure();
+            }
+        }
 
         int getBits(int nbits)
         {
@@ -140,56 +149,6 @@ namespace jpeg {
         {
             return int(bextr(data, remain - nbits, nbits));
         }
-
-#ifdef MANGO_CPU_64BIT
-
-        // 64 bit register
-        void ensure16()
-        {
-            if (remain < 16)
-            {
-                remain += 48;
-                DataType temp;
-
-                if (ptr + 8 < nextFF)
-                {
-                    temp = mango::uload64be(ptr) >> 16;
-                    ptr += 6;
-                }
-                else
-                {
-                    temp = bytes(6);
-                }
-
-                data = (data << 48) | temp;
-            }
-        }
-
-#else
-
-        // 32 bit register
-        void ensure16()
-        {
-            if (remain < 16)
-            {
-                remain += 16;
-                DataType temp;
-
-                if (ptr + 2 < nextFF)
-                {
-                    temp = mango::uload16be(ptr);
-                    ptr += 2;
-                }
-                else
-                {
-                    temp = bytes(2);
-                }
-
-                data = (data << 16) | temp;
-            }
-        }
-
-#endif
     };
 
     struct Huffman

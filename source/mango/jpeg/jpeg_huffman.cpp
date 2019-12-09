@@ -123,7 +123,7 @@ namespace jpeg {
             output += 64;
         }
     }
-    
+
     void huff_decode_dc_first(s16* output, DecodeState* state)
     {
         Huffman& huffman = state->huffman;

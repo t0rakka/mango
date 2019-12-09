@@ -186,6 +186,7 @@ namespace jpeg {
                     a = 0;
                 }
             }
+
             temp = (temp << 8) | a;
         }
 
@@ -196,11 +197,55 @@ namespace jpeg {
         // do know the stream is corrupted we want to guard every read against EOF condition.
         if (nextFF)
         {
+            // WARNING: this would be called for every iteration but the fast-path in ensure() will
+            //          consume the generated range
             nextFF = jpeg_memchr(ptr, 0xff, end - ptr);
         }
 
         return temp;
     }
+
+#ifdef MANGO_CPU_64BIT
+
+    void jpegBuffer::ensure()
+    {
+        remain += 48;
+        DataType temp;
+
+        if (ptr + 8 < nextFF)
+        {
+            temp = mango::uload64be(ptr) >> 16;
+            ptr += 6;
+        }
+        else
+        {
+            temp = bytes(6);
+        }
+
+        data = (data << 48) | temp;
+    }
+
+#else
+
+    void jpegBuffer::ensure()
+    {
+        remain += 16;
+        DataType temp;
+
+        if (ptr + 2 < nextFF)
+        {
+            temp = mango::uload16be(ptr);
+            ptr += 2;
+        }
+        else
+        {
+            temp = bytes(2);
+        }
+
+        data = (data << 16) | temp;
+    }
+
+#endif
 
     // ----------------------------------------------------------------------------
     // Parser
