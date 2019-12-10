@@ -107,19 +107,17 @@ namespace jpeg {
             for (int i = 1; i < 64; )
             {
                 int s = huff_decode(buffer, ac_table);
+                int x = s & 15;
 
-                int r = s >> 4;
-                s &= 15;
-
-                if (s)
+                if (x)
                 {
-                    i += r;
-                    s = huff_receive(buffer, s);
+                    i += (s >> 4);
+                    s = huff_receive(buffer, x);
                     output[zigzagTable[i++]] = s16(s);
                 }
                 else
                 {
-                    if (!r) break;
+                    if (s < 16) break;
                     i += 16;
                 }
             }
