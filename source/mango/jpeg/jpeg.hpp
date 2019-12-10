@@ -123,22 +123,36 @@ namespace jpeg {
     {
         const u8* ptr;
         const u8* end;
-        const u8* nextFF;
 
         DataType data;
         int remain;
 
         void restart();
-        void ensure();
         DataType bytes(int count);
+
+#ifdef MANGO_CPU_64BIT
 
         void ensure16()
         {
             if (remain < 16)
             {
-                ensure();
+                remain += 48;
+                data = (data << 48) | bytes(6);
             }
         }
+
+#else
+
+        void ensure16()
+        {
+            if (remain < 16)
+            {
+                remain += 16;
+                data = (data << 16) | bytes(2);
+            }
+        }
+
+#endif
 
         int getBits(int nbits)
         {

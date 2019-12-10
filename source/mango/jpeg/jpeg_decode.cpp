@@ -114,51 +114,6 @@ namespace jpeg {
     };
 
     // ----------------------------------------------------------------------------
-    // jpeg_memchr()
-    // ----------------------------------------------------------------------------
-
-#if defined(JPEG_ENABLE_SSE2)
-
-    static inline const u8* jpeg_memchr(const u8* p, u8 value, size_t count)
-    {
-        __m128i ref = _mm_set1_epi8(value);
-        while (count >= 16)
-        {
-            __m128i v = _mm_loadu_si128(reinterpret_cast<__m128i const *>(p));
-            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(v, ref));
-            if (mask)
-            {
-                int index = u32_tzcnt(mask);
-                for (int i = index; i < 16; ++i)
-                {
-                    if (p[i] == value)
-                        return p + i;
-                }
-            }
-            count -= 16;
-            p += 16;
-        }
-        
-        for (size_t i = 0; i < count; ++i)
-        {
-            if (p[i] == value)
-                return p + i;
-        }
-        
-        return p;
-    }
-
-#else
-
-    static inline const u8* jpeg_memchr(const u8* p, u8 value, size_t count)
-    {
-        p = reinterpret_cast<const u8 *>(std::memchr(p, value, count));
-        return p ? p : p + count;
-    }
-
-#endif
-
-    // ----------------------------------------------------------------------------
     // jpegBuffer
     // ----------------------------------------------------------------------------
 
@@ -166,7 +121,6 @@ namespace jpeg {
     {
         data = 0;
         remain = 0;
-        nextFF = reinterpret_cast<const u8*>(std::memchr(ptr, 0xff, end - ptr));
     }
 
     DataType jpegBuffer::bytes(int count)
@@ -175,6 +129,8 @@ namespace jpeg {
 
         for (int i = 0; i < count; ++i)
         {
+            const u8* x = ptr;
+
             int a = ptr < end ? *ptr++ : 0;
             if (a == 0xff)
             {
@@ -182,7 +138,7 @@ namespace jpeg {
                 if (b)
                 {
                     // Found a marker; keep returning zero until it has been processed
-                    ptr -= 2;
+                    ptr = x;
                     a = 0;
                 }
             }
@@ -190,62 +146,8 @@ namespace jpeg {
             temp = (temp << 8) | a;
         }
 
-        // When nextFF is NULL that means no 0xff bytes left in the stream which means corruted jpeg
-        // because the EOI marker should always be present. NULL would prohibit fast path from running
-        // and the slow path would re-scan for nextFF for ALL remaining bytes in the jpeg. This check
-        // simply puts the decoder into slow path permanently. Fast path would be nicer but since we already
-        // do know the stream is corrupted we want to guard every read against EOF condition.
-        if (nextFF)
-        {
-            // WARNING: this would be called for every iteration but the fast-path in ensure() will
-            //          consume the generated range
-            nextFF = jpeg_memchr(ptr, 0xff, end - ptr);
-        }
-
         return temp;
     }
-
-#ifdef MANGO_CPU_64BIT
-
-    void jpegBuffer::ensure()
-    {
-        remain += 48;
-        DataType temp;
-
-        if (ptr + 8 < nextFF)
-        {
-            temp = mango::uload64be(ptr) >> 16;
-            ptr += 6;
-        }
-        else
-        {
-            temp = bytes(6);
-        }
-
-        data = (data << 48) | temp;
-    }
-
-#else
-
-    void jpegBuffer::ensure()
-    {
-        remain += 16;
-        DataType temp;
-
-        if (ptr + 2 < nextFF)
-        {
-            temp = mango::uload16be(ptr);
-            ptr += 2;
-        }
-        else
-        {
-            temp = bytes(2);
-        }
-
-        data = (data << 16) | temp;
-    }
-
-#endif
 
     // ----------------------------------------------------------------------------
     // Parser
@@ -345,7 +247,7 @@ namespace jpeg {
 
         while (p < end)
         {
-            p = jpeg_memchr(p, 0xff, end - p);
+            p = mango::memchr(p, 0xff, end - p);
             if (p[1])
             {
                 return p; // found a marker

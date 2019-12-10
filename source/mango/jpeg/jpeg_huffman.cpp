@@ -30,9 +30,11 @@ namespace jpeg {
     int huff_decode(jpegBuffer& buffer, const HuffTable* h)
     {
         buffer.ensure16();
+
         int v = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
         int symbol = h->lookupValue[v];
         int size = h->lookupSize[v];
+
         if (size == JPEG_HUFF_LOOKUP_BITS + 1)
         {
             DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
@@ -40,9 +42,11 @@ namespace jpeg {
             {
                 size++;
             }
+
             v = int(x >> (JPEG_REGISTER_BITS - size));
             symbol = h->valueAddress[size][v];
         }
+
         buffer.remain -= size;
         return symbol;
     }
