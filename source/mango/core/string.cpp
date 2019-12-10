@@ -1,11 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cctype>
 #include <algorithm>
 #include <locale>
+#include <cstring>
 #include <mango/core/string.hpp>
+#include <mango/core/bits.hpp>
 
 namespace
 {
@@ -516,5 +518,50 @@ namespace mango
 
         return buffer;
     }
+
+    // ----------------------------------------------------------------------------
+    // memchr()
+    // ----------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE2)
+
+    const u8* memchr(const u8* p, u8 value, size_t count)
+    {
+        __m128i ref = _mm_set1_epi8(value);
+        while (count >= 16)
+        {
+            __m128i v = _mm_loadu_si128(reinterpret_cast<__m128i const *>(p));
+            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(v, ref));
+            if (mask)
+            {
+                int index = u32_tzcnt(mask);
+                for (int i = index; i < 16; ++i)
+                {
+                    if (p[i] == value)
+                        return p + i;
+                }
+            }
+            count -= 16;
+            p += 16;
+        }
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            if (p[i] == value)
+                return p + i;
+        }
+
+        return p;
+    }
+
+#else
+
+    const u8* memchr(const u8* p, u8 value, size_t count)
+    {
+        p = reinterpret_cast<const u8 *>(std::memchr(p, value, count));
+        return p ? p : p + count;
+    }
+
+#endif
 
 } // namespace mango
