@@ -125,6 +125,21 @@ namespace jpeg {
 
     DataType jpegBuffer::bytes(int count)
     {
+#if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
+        if (ptr + 8 < end)
+        {
+            const __m128i ref = _mm_set1_epi8(0xff);
+            __m128i value = _mm_loadu_si64(reinterpret_cast<const __m128i *>(ptr));
+            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(value, ref)) & 0x3f; // mask 6 first samples
+            if (!mask)
+            {
+                ptr += 6;
+                DataType data = _mm_cvtsi128_si64(value);
+                return byteswap(data) >> 16;
+            }
+        }
+#endif
+
         DataType temp = 0;
 
         for (int i = 0; i < count; ++i)
