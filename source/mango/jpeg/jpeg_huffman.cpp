@@ -31,11 +31,16 @@ namespace jpeg {
     {
         buffer.ensure16();
 
-        int v = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-        int symbol = h->lookupValue[v];
-        int size = h->lookupSize[v];
+        int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+        int size = h->lookupSize[index];
 
-        if (size == JPEG_HUFF_LOOKUP_BITS + 1)
+        int symbol;
+
+        if (size <= JPEG_HUFF_LOOKUP_BITS)
+        {
+            symbol = h->lookupValue[index];
+        }
+        else
         {
             DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
             while (x > h->maxcode[size])
@@ -43,8 +48,7 @@ namespace jpeg {
                 size++;
             }
 
-            v = int(x >> (JPEG_REGISTER_BITS - size));
-            symbol = h->valueAddress[size][v];
+            symbol = h->valueAddress[size][x >> (JPEG_REGISTER_BITS - size)];
         }
 
         buffer.remain -= size;
