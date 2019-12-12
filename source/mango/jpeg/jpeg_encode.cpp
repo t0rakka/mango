@@ -375,6 +375,33 @@ namespace
         std::atomic<bool> ready { false };
     };
 
+    struct HuffmanTable
+    {
+        struct
+        {
+            const u16* code;
+            const u16* size;
+        } dc, ac;
+
+        HuffmanTable(bool is_chroma)
+        {
+            if (is_chroma)
+            {
+                dc.code = g_chrominance_dc_code_table;
+                dc.size = g_chrominance_dc_size_table;
+                ac.code = g_chrominance_ac_code_table;
+                ac.size = g_chrominance_ac_size_table;
+            }
+            else
+            {
+                dc.code = g_luminance_dc_code_table;
+                dc.size = g_luminance_dc_size_table;
+                ac.code = g_luminance_ac_code_table;
+                ac.size = g_luminance_ac_size_table;
+            }
+        }
+    };
+
     struct HuffmanEncoder
     {
         int ldc[3];
@@ -422,25 +449,7 @@ namespace
 
         u8* encode(u8* p, int component, const s16* input)
         {
-            const u16* dcCodeTable;
-            const u16* dcSizeTable;
-            const u16* acCodeTable;
-            const u16* acSizeTable;
-
-            if (!component)
-            {
-                dcCodeTable = g_luminance_dc_code_table;
-                dcSizeTable = g_luminance_dc_size_table;
-                acCodeTable = g_luminance_ac_code_table;
-                acSizeTable = g_luminance_ac_size_table;
-            }
-            else
-            {
-                dcCodeTable = g_chrominance_dc_code_table;
-                dcSizeTable = g_chrominance_dc_size_table;
-                acCodeTable = g_chrominance_ac_code_table;
-                acSizeTable = g_chrominance_ac_size_table;
-            }
+            HuffmanTable table(component != 0);
 
             int coeff = input[0];
             int lastDc = ldc[component];
@@ -452,7 +461,7 @@ namespace
             int dataSize = getSymbolSize(absCoeff);
             int dataMask = (1 << dataSize) - 1;
 
-            p = putbits(p, dcCodeTable[dataSize], dcSizeTable[dataSize]);
+            p = putbits(p, table.dc.code[dataSize], table.dc.size[dataSize]);
             p = putbits(p, coeff & dataMask, dataSize);
 
             int runLength = 0;
@@ -465,7 +474,7 @@ namespace
                     while (runLength > 15)
                     {
                         runLength -= 16;
-                        p = putbits(p, acCodeTable[161], acSizeTable[161]);
+                        p = putbits(p, table.ac.code[161], table.ac.size[161]);
                     }
 
                     int absCoeff = (coeff < 0) ? -coeff-- : coeff;
@@ -473,7 +482,7 @@ namespace
                     int dataMask = (1 << dataSize) - 1;
 
                     int index = runLength * 10 + dataSize;
-                    p = putbits(p, acCodeTable[index], acSizeTable[index]);
+                    p = putbits(p, table.ac.code[index], table.ac.size[index]);
                     p = putbits(p, coeff & dataMask, dataSize);
 
                     runLength = 0;
@@ -486,7 +495,7 @@ namespace
 
             if (runLength != 0)
             {
-                p = putbits(p, acCodeTable[0], acSizeTable[0]);
+                p = putbits(p, table.ac.code[0], table.ac.size[0]);
             }
 
             return p;
