@@ -9,308 +9,6 @@ namespace mango {
 namespace jpeg {
 
     // ----------------------------------------------------------------------------
-    // huffman functions
-    // ----------------------------------------------------------------------------
-
-    static inline
-    int huff_decode(jpegBuffer& buffer, const HuffTable* h)
-    {
-        buffer.ensure16();
-
-        int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-        int size = h->lookupSize[index];
-
-        int symbol;
-
-        if (size <= JPEG_HUFF_LOOKUP_BITS)
-        {
-            symbol = h->lookupValue[index];
-        }
-        else
-        {
-            DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
-            while (x > h->maxcode[size])
-            {
-                size++;
-            }
-
-            symbol = h->valueAddress[size][x >> (JPEG_REGISTER_BITS - size)];
-        }
-
-        buffer.remain -= size;
-        return symbol;
-    }
-
-    // ----------------------------------------------------------------------------
-    // huffman decoder
-    // ----------------------------------------------------------------------------
-
-    void huff_decode_mcu_lossless(s16* output, DecodeState* state)
-    {
-        Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
-
-        for (int j = 0; j < state->blocks; ++j)
-        {
-            const DecodeBlock* block = state->block + j;
-            const HuffTable* dc_table = block->table.dc;
-
-            int s = huff_decode(buffer, dc_table);
-            if (s)
-            {
-                s = buffer.receive(s);
-            }
-
-            s += huffman.last_dc_value[block->pred];
-            output[j] = s;
-        }
-    }
-
-    void huff_decode_mcu(s16* output, DecodeState* state)
-    {
-        const u8* zigzagTable = state->zigzagTable;
-        Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
-
-        std::memset(output, 0, state->blocks * 64 * sizeof(s16));
-
-        for (int j = 0; j < state->blocks; ++j)
-        {
-            const DecodeBlock* block = state->block + j;
-
-            const HuffTable* dc_table = block->table.dc;
-            const HuffTable* ac_table = block->table.ac;
-
-            // DC
-            int s = huff_decode(buffer, dc_table);
-            if (s)
-            {
-                s = buffer.receive(s);
-            }
-
-            s += huffman.last_dc_value[block->pred];
-            huffman.last_dc_value[block->pred] = s;
-
-            output[0] = s16(s);
-
-            // AC
-            for (int i = 1; i < 64; )
-            {
-                int s = huff_decode(buffer, ac_table);
-                int x = s & 15;
-
-                if (x)
-                {
-                    i += (s >> 4);
-                    s = buffer.receive(x);
-                    output[zigzagTable[i++]] = s16(s);
-                }
-                else
-                {
-                    if (s < 16) break;
-                    i += 16;
-                }
-            }
-
-            output += 64;
-        }
-    }
-
-    void huff_decode_dc_first(s16* output, DecodeState* state)
-    {
-        Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
-
-        for (int j = 0; j < state->blocks; ++j)
-        {
-            const DecodeBlock* block = state->block + j;
-
-            s16* dest = output + block->offset;
-            const HuffTable* dc_table = block->table.dc;
-            
-            std::memset(dest, 0, 64 * sizeof(s16));
-
-            int s = huff_decode(buffer, dc_table);
-            if (s)
-            {
-                s = buffer.receive(s);
-            }
-
-            s += huffman.last_dc_value[block->pred];
-            huffman.last_dc_value[block->pred] = s;
-
-            dest[0] = s16(s << state->successiveLow);
-        }
-    }
-
-    void huff_decode_dc_refine(s16* output, DecodeState* state)
-    {
-        jpegBuffer& buffer = state->buffer;
-
-        buffer.ensure16();
-
-        for (int j = 0; j < state->blocks; ++j)
-        {
-            s16* dest = output + state->block[j].offset;
-            dest[0] |= (buffer.getBits(1) << state->successiveLow);
-        }
-    }
-
-    void huff_decode_ac_first(s16* output, DecodeState* state)
-    {
-        const u8* zigzagTable = state->zigzagTable;
-        Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
-
-        const HuffTable* ac_table = state->block[0].table.ac;
-
-        const int start = state->spectralStart;
-        const int end = state->spectralEnd;
-
-        if (huffman.eob_run)
-        {
-            --huffman.eob_run;
-        }
-        else
-        {
-            for (int i = start; i <= end; ++i)
-            {
-                int s = huff_decode(buffer, ac_table);
-
-                int r = s >> 4;
-                s &= 15;
-
-                i += r;
-
-                if (s)
-                {
-                    s = buffer.receive(s);
-                    output[zigzagTable[i]] = s16(s << state->successiveLow);
-                }
-                else
-                {
-                    if (r != 15)
-                    {
-                        huffman.eob_run = 1 << r;
-                        if (r)
-                        {
-                            buffer.ensure16();
-                            huffman.eob_run += buffer.getBits(r);
-                        }
-
-                        --huffman.eob_run;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    void huff_decode_ac_refine(s16* output, DecodeState* state)
-    {
-        const u8* zigzagTable = state->zigzagTable;
-        Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
-
-        const HuffTable* ac_table = state->block[0].table.ac;
-
-        const int start = state->spectralStart;
-        const int end = state->spectralEnd;
-
-        const int p1 = 1 << state->successiveLow;
-        const int m1 = (-1) << state->successiveLow;
-
-        int k = start;
-        
-        if (!huffman.eob_run)
-        {
-            for (; k <= end; k++)
-            {
-                int s = huff_decode(buffer, ac_table);
-
-                int r = s >> 4;
-                s &= 15;
-
-                if (s)
-                {
-                    buffer.ensure16();
-                    if (buffer.getBits(1))
-                        s = p1;
-                    else
-                        s = m1;
-                }
-                else
-                {
-                    if (r != 15)
-                    {
-                        huffman.eob_run = 1 << r;
-
-                        if (r)
-                        {
-                            buffer.ensure16();
-                            huffman.eob_run += buffer.getBits(r);
-                        }
-
-                        break;
-                    }
-                }
-
-                do
-                {
-                    s16* coef = output + zigzagTable[k];
-                    if (*coef != 0)
-                    {
-                        buffer.ensure16();
-                        if (buffer.getBits(1))
-                        {
-                            if ((*coef & p1) == 0)
-                            {
-                                const int d = *coef >= 0 ? p1 : m1;
-                                *coef += s16(d);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (--r < 0)
-                            break;
-                    }
-
-                    k++;
-                } while (k <= end);
-
-                if ((s) && (k < 64))
-                {
-                    output[zigzagTable[k]] = s16(s);
-                }
-            }
-        }
-
-        if (huffman.eob_run > 0)
-        {
-            for ( ; k <= end; k++)
-            {
-                s16* coef = output + zigzagTable[k];
-
-                if (*coef != 0)
-                {
-                    buffer.ensure16();
-                    if (buffer.getBits(1))
-                    {
-                        if ((*coef & p1) == 0)
-                        {
-                            const int d = *coef >= 0 ? p1 : m1;
-                            *coef += s16(d);
-                        }
-                    }
-                }
-            }
-
-            --huffman.eob_run;
-        }
-    }
-
-    // ----------------------------------------------------------------------------
     // Huffman
     // ----------------------------------------------------------------------------
 
@@ -411,6 +109,301 @@ namespace jpeg {
             }
         }
     }
-    
+
+    int HuffTable::decode(jpegBuffer& buffer) const
+    {
+        buffer.ensure16();
+
+        int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+        int size = lookupSize[index];
+
+        int symbol;
+
+        if (size <= JPEG_HUFF_LOOKUP_BITS)
+        {
+            symbol = lookupValue[index];
+        }
+        else
+        {
+            DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+            while (x > maxcode[size])
+            {
+                size++;
+            }
+
+            symbol = valueAddress[size][x >> (JPEG_REGISTER_BITS - size)];
+        }
+
+        buffer.remain -= size;
+        return symbol;
+    }
+
+    // ----------------------------------------------------------------------------
+    // huffman decoding functions
+    // ----------------------------------------------------------------------------
+
+    void huff_decode_mcu_lossless(s16* output, DecodeState* state)
+    {
+        Huffman& huffman = state->huffman;
+        jpegBuffer& buffer = state->buffer;
+
+        for (int j = 0; j < state->blocks; ++j)
+        {
+            const DecodeBlock* block = state->block + j;
+            const HuffTable* dc = block->table.dc;
+
+            int s = dc->decode(buffer);
+            if (s)
+            {
+                s = buffer.receive(s);
+            }
+
+            s += huffman.last_dc_value[block->pred];
+            output[j] = s;
+        }
+    }
+
+    void huff_decode_mcu(s16* output, DecodeState* state)
+    {
+        const u8* zigzagTable = state->zigzagTable;
+        Huffman& huffman = state->huffman;
+        jpegBuffer& buffer = state->buffer;
+
+        std::memset(output, 0, state->blocks * 64 * sizeof(s16));
+
+        for (int j = 0; j < state->blocks; ++j)
+        {
+            const DecodeBlock* block = state->block + j;
+
+            const HuffTable* dc = block->table.dc;
+            const HuffTable* ac = block->table.ac;
+
+            // DC
+            int s = dc->decode(buffer);
+            if (s)
+            {
+                s = buffer.receive(s);
+            }
+
+            s += huffman.last_dc_value[block->pred];
+            huffman.last_dc_value[block->pred] = s;
+
+            output[0] = s16(s);
+
+            // AC
+            for (int i = 1; i < 64; )
+            {
+                int s = ac->decode(buffer);
+                int x = s & 15;
+
+                if (x)
+                {
+                    i += (s >> 4);
+                    s = buffer.receive(x);
+                    output[zigzagTable[i++]] = s16(s);
+                }
+                else
+                {
+                    if (s < 16) break;
+                    i += 16;
+                }
+            }
+
+            output += 64;
+        }
+    }
+
+    void huff_decode_dc_first(s16* output, DecodeState* state)
+    {
+        Huffman& huffman = state->huffman;
+        jpegBuffer& buffer = state->buffer;
+
+        for (int j = 0; j < state->blocks; ++j)
+        {
+            const DecodeBlock* block = state->block + j;
+
+            s16* dest = output + block->offset;
+            const HuffTable* dc = block->table.dc;
+
+            std::memset(dest, 0, 64 * sizeof(s16));
+
+            int s = dc->decode(buffer);
+            if (s)
+            {
+                s = buffer.receive(s);
+            }
+
+            s += huffman.last_dc_value[block->pred];
+            huffman.last_dc_value[block->pred] = s;
+
+            dest[0] = s16(s << state->successiveLow);
+        }
+    }
+
+    void huff_decode_dc_refine(s16* output, DecodeState* state)
+    {
+        jpegBuffer& buffer = state->buffer;
+
+        buffer.ensure16();
+
+        for (int j = 0; j < state->blocks; ++j)
+        {
+            s16* dest = output + state->block[j].offset;
+            dest[0] |= (buffer.getBits(1) << state->successiveLow);
+        }
+    }
+
+    void huff_decode_ac_first(s16* output, DecodeState* state)
+    {
+        const u8* zigzagTable = state->zigzagTable;
+        Huffman& huffman = state->huffman;
+        jpegBuffer& buffer = state->buffer;
+
+        const HuffTable* ac = state->block[0].table.ac;
+
+        const int start = state->spectralStart;
+        const int end = state->spectralEnd;
+
+        if (huffman.eob_run)
+        {
+            --huffman.eob_run;
+        }
+        else
+        {
+            for (int i = start; i <= end; ++i)
+            {
+                int s = ac->decode(buffer);
+                int r = s >> 4;
+                s &= 15;
+
+                i += r;
+
+                if (s)
+                {
+                    s = buffer.receive(s);
+                    output[zigzagTable[i]] = s16(s << state->successiveLow);
+                }
+                else
+                {
+                    if (r != 15)
+                    {
+                        huffman.eob_run = 1 << r;
+                        if (r)
+                        {
+                            buffer.ensure16();
+                            huffman.eob_run += buffer.getBits(r);
+                        }
+
+                        --huffman.eob_run;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    void huff_decode_ac_refine(s16* output, DecodeState* state)
+    {
+        const u8* zigzagTable = state->zigzagTable;
+        Huffman& huffman = state->huffman;
+        jpegBuffer& buffer = state->buffer;
+
+        const HuffTable* ac = state->block[0].table.ac;
+
+        const int start = state->spectralStart;
+        const int end = state->spectralEnd;
+
+        const int p1 = 1 << state->successiveLow;
+        const int m1 = (-1) << state->successiveLow;
+
+        int k = start;
+
+        if (!huffman.eob_run)
+        {
+            for (; k <= end; k++)
+            {
+                int s = ac->decode(buffer);
+                int r = s >> 4;
+                s &= 15;
+
+                if (s)
+                {
+                    buffer.ensure16();
+                    if (buffer.getBits(1))
+                        s = p1;
+                    else
+                        s = m1;
+                }
+                else
+                {
+                    if (r != 15)
+                    {
+                        huffman.eob_run = 1 << r;
+
+                        if (r)
+                        {
+                            buffer.ensure16();
+                            huffman.eob_run += buffer.getBits(r);
+                        }
+
+                        break;
+                    }
+                }
+
+                do
+                {
+                    s16* coef = output + zigzagTable[k];
+                    if (*coef != 0)
+                    {
+                        buffer.ensure16();
+                        if (buffer.getBits(1))
+                        {
+                            if ((*coef & p1) == 0)
+                            {
+                                const int d = *coef >= 0 ? p1 : m1;
+                                *coef += s16(d);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (--r < 0)
+                            break;
+                    }
+
+                    k++;
+                } while (k <= end);
+
+                if ((s) && (k < 64))
+                {
+                    output[zigzagTable[k]] = s16(s);
+                }
+            }
+        }
+
+        if (huffman.eob_run > 0)
+        {
+            for ( ; k <= end; k++)
+            {
+                s16* coef = output + zigzagTable[k];
+
+                if (*coef != 0)
+                {
+                    buffer.ensure16();
+                    if (buffer.getBits(1))
+                    {
+                        if ((*coef & p1) == 0)
+                        {
+                            const int d = *coef >= 0 ? p1 : m1;
+                            *coef += s16(d);
+                        }
+                    }
+                }
+            }
+
+            --huffman.eob_run;
+        }
+    }
+
 } // namespace jpeg
 } // namespace mango

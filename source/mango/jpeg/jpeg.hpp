@@ -107,20 +107,6 @@ namespace jpeg {
         int  bits;   // Quantization table precision (8 or 16 bits)
     };
 
-    struct HuffTable
-    {
-        u8 size[17];
-        u8 value[256];
-
-        // acceleration tables
-        DataType maxcode[18];
-        u8* valueAddress[19];
-        u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
-        u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
-
-        void configure();
-    };
-
     struct jpegBuffer
     {
         const u8* ptr;
@@ -161,6 +147,21 @@ namespace jpeg {
             int value = getBits(nbits);
             return extend(value, nbits);
         }
+    };
+
+    struct HuffTable
+    {
+        u8 size[17];
+        u8 value[256];
+
+        // acceleration tables
+        DataType maxcode[18];
+        u8* valueAddress[19];
+        u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
+        u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+
+        void configure();
+        int decode(jpegBuffer& buffer) const;
     };
 
     struct Huffman
