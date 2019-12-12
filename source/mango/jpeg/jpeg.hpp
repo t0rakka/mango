@@ -132,29 +132,14 @@ namespace jpeg {
         void restart();
         DataType fill();
 
-#ifdef MANGO_CPU_64BIT
-
         void ensure16()
         {
             if (remain < 16)
             {
-                remain += 48;
-                data = (data << 48) | fill();
+                remain += (JPEG_REGISTER_FILL * 8);
+                data = (data << (JPEG_REGISTER_FILL * 8)) | fill();
             }
         }
-
-#else
-
-        void ensure16()
-        {
-            if (remain < 16)
-            {
-                remain += 16;
-                data = (data << 16) | fill();
-            }
-        }
-
-#endif
 
         int getBits(int nbits)
         {
