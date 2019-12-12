@@ -66,12 +66,14 @@ namespace jpeg {
 
     using DataType = u64;
     #define JPEG_REGISTER_BITS 64
+    #define JPEG_REGISTER_FILL 6
 	#define bextr mango::u64_extract_bits
 
 #else
 
     using DataType = u32;
     #define JPEG_REGISTER_BITS 32
+    #define JPEG_REGISTER_FILL 2
 	#define bextr mango::u32_extract_bits
 
 #endif
@@ -128,7 +130,7 @@ namespace jpeg {
         int remain;
 
         void restart();
-        DataType bytes(int count);
+        DataType fill();
 
 #ifdef MANGO_CPU_64BIT
 
@@ -137,7 +139,7 @@ namespace jpeg {
             if (remain < 16)
             {
                 remain += 48;
-                data = (data << 48) | bytes(6);
+                data = (data << 48) | fill();
             }
         }
 
@@ -148,7 +150,7 @@ namespace jpeg {
             if (remain < 16)
             {
                 remain += 16;
-                data = (data << 16) | bytes(2);
+                data = (data << 16) | fill();
             }
         }
 

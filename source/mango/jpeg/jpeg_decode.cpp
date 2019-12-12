@@ -123,7 +123,7 @@ namespace jpeg {
         remain = 0;
     }
 
-    DataType jpegBuffer::bytes(int count)
+    DataType jpegBuffer::fill()
     {
 #if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
         if (ptr + 8 < end)
@@ -142,7 +142,7 @@ namespace jpeg {
 
         DataType temp = 0;
 
-        for (int i = 0; i < count; ++i)
+        for (int i = 0; i < JPEG_REGISTER_FILL; ++i)
         {
             const u8* x = ptr;
 
