@@ -12,20 +12,6 @@ namespace jpeg {
     // huffman functions
     // ----------------------------------------------------------------------------
 
-    constexpr
-    int huff_extend(int v, int nbits)
-    {
-        return v - ((((v + v) >> nbits) - 1) & ((1 << nbits) - 1));
-    }
-
-    static inline
-    int huff_receive(jpegBuffer& buffer, int nbits)
-    {
-        buffer.ensure16();
-        int value = buffer.getBits(nbits);
-        return huff_extend(value, nbits);
-    }
-
     static inline
     int huff_decode(jpegBuffer& buffer, const HuffTable* h)
     {
@@ -72,7 +58,7 @@ namespace jpeg {
             int s = huff_decode(buffer, dc_table);
             if (s)
             {
-                s = huff_receive(buffer, s);
+                s = buffer.receive(s);
             }
 
             s += huffman.last_dc_value[block->pred];
@@ -99,7 +85,7 @@ namespace jpeg {
             int s = huff_decode(buffer, dc_table);
             if (s)
             {
-                s = huff_receive(buffer, s);
+                s = buffer.receive(s);
             }
 
             s += huffman.last_dc_value[block->pred];
@@ -116,7 +102,7 @@ namespace jpeg {
                 if (x)
                 {
                     i += (s >> 4);
-                    s = huff_receive(buffer, x);
+                    s = buffer.receive(x);
                     output[zigzagTable[i++]] = s16(s);
                 }
                 else
@@ -147,7 +133,7 @@ namespace jpeg {
             int s = huff_decode(buffer, dc_table);
             if (s)
             {
-                s = huff_receive(buffer, s);
+                s = buffer.receive(s);
             }
 
             s += huffman.last_dc_value[block->pred];
@@ -198,7 +184,7 @@ namespace jpeg {
 
                 if (s)
                 {
-                    s = huff_receive(buffer, s);
+                    s = buffer.receive(s);
                     output[zigzagTable[i]] = s16(s << state->successiveLow);
                 }
                 else
