@@ -130,14 +130,13 @@ namespace jpeg {
         int remain;
 
         void restart();
-        DataType fill();
+        void fill();
 
         void ensure16()
         {
             if (remain < 16)
             {
-                remain += (JPEG_REGISTER_FILL * 8);
-                data = (data << (JPEG_REGISTER_FILL * 8)) | fill();
+                fill();
             }
         }
 

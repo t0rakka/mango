@@ -123,7 +123,7 @@ namespace jpeg {
         remain = 0;
     }
 
-    DataType jpegBuffer::fill()
+    void jpegBuffer::fill()
     {
 #if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
         if (ptr + 8 < end)
@@ -133,14 +133,15 @@ namespace jpeg {
             u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(value, ref)) & 0x3f; // mask 6 first samples
             if (!mask)
             {
+                DataType x = _mm_cvtsi128_si64(value);
+                x = byteswap(x) >> 16; // source data is big endian
+                data = (data << 48) | x;
+                remain += 48;
                 ptr += 6;
-                DataType data = _mm_cvtsi128_si64(value);
-                return byteswap(data) >> 16;
+                return;
             }
         }
 #endif
-
-        DataType temp = 0;
 
         for (int i = 0; i < JPEG_REGISTER_FILL; ++i)
         {
@@ -158,10 +159,9 @@ namespace jpeg {
                 }
             }
 
-            temp = (temp << 8) | a;
+            remain += 8;
+            data = (data << 8) | a;
         }
-
-        return temp;
     }
 
     // ----------------------------------------------------------------------------
