@@ -307,6 +307,7 @@ namespace detail {
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi8(s, sign);
+        //return _mm_srai_epi16(_mm_unpacklo_epi8(s, s), 8);
     }
 
     static inline s32x4 extend32x4(s8x16 s)
@@ -325,6 +326,7 @@ namespace detail {
     {
         const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi16(s, sign);
+        //return _mm_srai_epi32(_mm_unpacklo_epi16(s, s), 16);
     }
 
     static inline s64x2 extend64x2(s16x8 s)
