@@ -11,7 +11,7 @@
 namespace mango {
 namespace jpeg {
 
-    static const u8 g_zigzag_table [] =
+    static const u8 g_zigzag_table_inverse [] =
     {
          0,  1,  8, 16,  9,  2,  3, 10,
         17, 24, 32, 25, 18, 11,  4,  5,
@@ -753,7 +753,7 @@ namespace jpeg {
         bool dc_scan = (decodeState.spectralStart == 0);
         bool refine_scan = (decodeState.successiveHigh != 0);
 
-        decodeState.zigzagTable = g_zigzag_table;
+        decodeState.zigzagTable = g_zigzag_table_inverse;
 
         restartCounter = restartInterval;
 
@@ -912,14 +912,14 @@ namespace jpeg {
                 case 0:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[g_zigzag_table[i]] = *p++;
+                        table.table[g_zigzag_table_inverse[i]] = *p++;
                     }
                     break;
 
                 case 1:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[g_zigzag_table[i]] = uload16be(p);
+                        table.table[g_zigzag_table_inverse[i]] = uload16be(p);
                         p += 2;
                     }
                     break;
