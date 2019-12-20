@@ -65,15 +65,17 @@ namespace jpeg {
 #ifdef MANGO_CPU_64BIT
 
     using DataType = u64;
-    #define JPEG_REGISTER_BITS 64
-    #define JPEG_REGISTER_FILL 6
+    #define JPEG_REGISTER_BITS  64
+    #define JPEG_REGISTER_BYTES 8
+    #define JPEG_REGISTER_FILL  6
 	#define bextr mango::u64_extract_bits
 
 #else
 
     using DataType = u32;
-    #define JPEG_REGISTER_BITS 32
-    #define JPEG_REGISTER_FILL 2
+    #define JPEG_REGISTER_BITS  32
+    #define JPEG_REGISTER_BYTES 4
+    #define JPEG_REGISTER_FILL  2
 	#define bextr mango::u32_extract_bits
 
 #endif

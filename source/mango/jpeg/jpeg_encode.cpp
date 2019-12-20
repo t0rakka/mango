@@ -30,9 +30,6 @@
 #include "jpeg.hpp"
 #include <cstring>
 
-// choose different implementation...
-#define UNROLL_STUFF
-
 namespace
 {
     using namespace mango;
@@ -293,45 +290,6 @@ namespace
         return output;
     }
 
-#define STUFF(x) \
-    output[0] = u8(code >> x); \
-    output[1] = 0; \
-    output += (1 + (output[0] == 0xff));
-
-#if defined(MANGO_CPU_64BIT)
-
-    static inline
-    u8* write_stuff(u8* output, u64 code)
-    {
-#ifdef UNROLL_STUFF
-        STUFF(56);
-        STUFF(48);
-        STUFF(40);
-        STUFF(32);
-        STUFF(24);
-        STUFF(16);
-        STUFF(8);
-        STUFF(0);
-#else
-        output = write_stuffed_bytes(output, code, 8);
-#endif
-        return output;
-    }
-
-#else
-
-    static inline
-    u8* write_stuff(u8* output, u32 code)
-    {
-        STUFF(24);
-        STUFF(16);
-        STUFF(8);
-        STUFF(0);
-        return output;
-    }
-
-#endif
-
     struct jpeg_chan
     {
         int     component;
@@ -422,7 +380,7 @@ namespace
         {
         }
 
-        u8* putbits(u8* output, DataType data, int numbits)
+        u8* putBits(u8* output, DataType data, int numbits)
         {
             if (space >= numbits)
             {
@@ -433,7 +391,7 @@ namespace
             {
                 int overflow = numbits - space;
                 code |= (data >> overflow);
-                output = write_stuff(output, code);
+                output = write_stuffed_bytes(output, code, JPEG_REGISTER_BYTES);
                 space = JPEG_REGISTER_BITS - overflow;
                 code = data << space;
             }
@@ -461,8 +419,8 @@ namespace
             int dataSize = getSymbolSize(absCoeff);
             int dataMask = (1 << dataSize) - 1;
 
-            p = putbits(p, table.dc.code[dataSize], table.dc.size[dataSize]);
-            p = putbits(p, coeff & dataMask, dataSize);
+            p = putBits(p, table.dc.code[dataSize], table.dc.size[dataSize]);
+            p = putBits(p, coeff & dataMask, dataSize);
 
             int runLength = 0;
 
@@ -474,7 +432,7 @@ namespace
                     while (runLength > 15)
                     {
                         runLength -= 16;
-                        p = putbits(p, table.ac.code[161], table.ac.size[161]);
+                        p = putBits(p, table.ac.code[161], table.ac.size[161]);
                     }
 
                     int absCoeff = (coeff < 0) ? -coeff-- : coeff;
@@ -482,8 +440,8 @@ namespace
                     int dataMask = (1 << dataSize) - 1;
 
                     int index = runLength * 10 + dataSize;
-                    p = putbits(p, table.ac.code[index], table.ac.size[index]);
-                    p = putbits(p, coeff & dataMask, dataSize);
+                    p = putBits(p, table.ac.code[index], table.ac.size[index]);
+                    p = putBits(p, coeff & dataMask, dataSize);
 
                     runLength = 0;
                 }
@@ -495,7 +453,7 @@ namespace
 
             if (runLength != 0)
             {
-                p = putbits(p, table.ac.code[0], table.ac.size[0]);
+                p = putBits(p, table.ac.code[0], table.ac.size[0]);
             }
 
             return p;
