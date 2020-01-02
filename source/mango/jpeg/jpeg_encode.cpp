@@ -362,16 +362,16 @@ namespace
 
     struct HuffmanEncoder
     {
-        int ldc[3];
+        int last_dc_value[3];
 
         DataType code;
         int space;
 
         HuffmanEncoder()
         {
-            ldc[0] = 0;
-            ldc[1] = 0;
-            ldc[2] = 0;
+            last_dc_value[0] = 0;
+            last_dc_value[1] = 0;
+            last_dc_value[2] = 0;
             code = 0;
             space = JPEG_REGISTER_BITS;
         }
@@ -409,11 +409,8 @@ namespace
         {
             HuffmanTable table(component != 0);
 
-            int coeff = input[0];
-            int lastDc = ldc[component];
-            ldc[component] = coeff;
-
-            coeff -= lastDc;
+            int coeff = input[0] - last_dc_value[component];
+            last_dc_value[component] = input[0];
 
             int absCoeff = (coeff < 0) ? -coeff-- : coeff;
             int dataSize = getSymbolSize(absCoeff);
