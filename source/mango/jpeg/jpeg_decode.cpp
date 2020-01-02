@@ -129,7 +129,15 @@ namespace jpeg {
         if (ptr + 8 < end)
         {
             const __m128i ref = _mm_set1_epi8(0xff);
+
+#if defined(MANGO_COMPILER_GCC) && __GNUC__ < 9
+            // Work-around; generates inferior code with some compilers (ICC, MSVC)
+            __m128i value = _mm_set_epi64x(0, uload64(ptr));
+#else
+            // This intrinsic was broken until GCC 9
             __m128i value = _mm_loadu_si64(reinterpret_cast<const __m128i *>(ptr));
+#endif
+
             u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(value, ref)) & 0x3f; // mask 6 first samples
             if (!mask)
             {
