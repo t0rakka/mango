@@ -22,35 +22,6 @@ namespace
     constexpr int NETSIZE = 256; // number of colors used
     constexpr int INITRAD = NETSIZE >> 3;
 
-    #define prime1		499
-    #define prime2		491
-    #define prime3		487
-    #define prime4		503
-
-    #define netbiasshift	4
-    #define ncycles			100
-
-    #define intbiasshift    16
-    #define intbias			(((int) 1) << intbiasshift)
-    #define gammashift  	10
-    #define gamma   		(((int) 1) << gammashift)
-    #define betashift  		10
-    #define beta			(intbias >> betashift)
-    #define betagamma		(intbias << (gammashift-betashift))
-
-    #define radiusbiasshift	6
-    #define radiusbias		(((int) 1) << radiusbiasshift)
-    #define initradius		(INITRAD * radiusbias)
-    #define radiusdec		30
-
-    #define alphabiasshift	10
-    #define initalpha		(((int) 1) << alphabiasshift)
-
-    #define radbiasshift	8
-    #define radbias			(((int) 1) << radbiasshift)
-    #define alpharadbshift  (alphabiasshift + radbiasshift)
-    #define alpharadbias    (((int) 1) << alpharadbshift)
-
     class NeuQuant
     {
     protected:
@@ -80,6 +51,35 @@ namespace
         void alterNeigh(int rad, int i, int r, int g, int b);
         void learn();
     };
+
+    #define prime1		    499
+    #define prime2		    491
+    #define prime3		    487
+    #define prime4		    503
+
+    #define netbiasshift	4
+    #define ncycles			100
+
+    #define intbiasshift    16
+    #define intbias			(((int) 1) << intbiasshift)
+    #define gammashift  	10
+    #define gamma   		(((int) 1) << gammashift)
+    #define betashift  		10
+    #define beta			(intbias >> betashift)
+    #define betagamma		(intbias << (gammashift-betashift))
+
+    #define radiusbiasshift	6
+    #define radiusbias		(((int) 1) << radiusbiasshift)
+    #define initradius		(INITRAD * radiusbias)
+    #define radiusdec		30
+
+    #define alphabiasshift	10
+    #define initalpha		(((int) 1) << alphabiasshift)
+
+    #define radbiasshift	8
+    #define radbias			(((int) 1) << radbiasshift)
+    #define alpharadbshift  (alphabiasshift + radbiasshift)
+    #define alpharadbias    (((int) 1) << alpharadbshift)
 
     NeuQuant::NeuQuant(u8* image, int length, int sample)
     {
@@ -194,14 +194,10 @@ namespace
                 {
                     ++i;
                     if (dist < 0) dist = -dist;
-                    int a = p[0] - b;
-                    if (a < 0) a = -a;
-                    dist += a;
+                    dist += std::abs(p[0] - b);
                     if (dist < bestd)
                     {
-                        a = p[2] - r;
-                        if (a < 0) a = -a;
-                        dist += a;
+                        dist += std::abs(p[2] - r);
                         if (dist < bestd)
                         {
                             bestd = dist;
@@ -223,14 +219,10 @@ namespace
                 {
                     j--;
                     if (dist < 0) dist = -dist;
-                    int a = p[0] - b;
-                    if (a < 0) a = -a;
-                    dist += a;
+                    dist += std::abs(p[0] - b);
                     if (dist < bestd)
                     {
-                        a = p[2] - r;
-                        if (a < 0) a = -a;
-                        dist += a;
+                        dist += std::abs(p[2] - r);
                         if (dist < bestd)
                         {
                             bestd = dist;
@@ -253,42 +245,31 @@ namespace
         int* p = bias;
         int* f = freq;
 
-        Sample* pnet = m_network;
         for (int i = 0; i < NETSIZE; ++i)
         {
-            int dist;
-            int a;
-            int biasdist;
-            int betafreq;
-            int* n = (int*)pnet++;
-
-            dist = n[0] - b;
-            if (dist < 0) dist = -dist;
-
-            a = n[1] - g;
-            if (a < 0) dist -= a;
-            else       dist += a;
-
-            a = n[2] - r;
-            if (a < 0) dist -= a;
-            else       dist += a;
+            const int* n = m_network[i];
+            int dist = std::abs(n[0] - b) +
+                       std::abs(n[1] - g) +
+                       std::abs(n[2] - r);
 
             if (dist < bestd)
             {
-                bestd=dist;
+                bestd = dist;
                 bestpos = i;
             }
-            biasdist = dist - ((*p) >> (intbiasshift - netbiasshift));
+
+            int biasdist = dist - ((*p) >> (intbiasshift - netbiasshift));
             if (biasdist < bestbiasd)
             {
                 bestbiasd = biasdist;
                 bestbiaspos = i;
             }
 
-            betafreq = (*f >> betashift);
+            int betafreq = (*f >> betashift);
             *f++ -= betafreq;
             *p++ +=(betafreq << gammashift);
         }
+
         freq[bestpos] += beta;
         bias[bestpos] -= betagamma;
 
@@ -310,7 +291,7 @@ namespace
         int	j = i + 1;
         int	k = i - 1;
 
-        int* q = radpower;
+        const int* q = radpower;
         while ((j < hi) || (k > lo))
         {
             int* p;
@@ -422,9 +403,9 @@ namespace
                     int	adder = 1;
                     int	bigalpha = (alpha << radbiasshift) / radrad;
 
-                    for (int jj=0; jj < rad; jj++)
+                    for (int k = 0; k < rad; ++k)
                     {
-                        radpower[jj] = bigalpha * radrad;
+                        radpower[k] = bigalpha * radrad;
                         radrad -= adder;
                         adder += 2;
                     }
