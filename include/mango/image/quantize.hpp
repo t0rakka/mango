@@ -10,17 +10,19 @@
 namespace mango {
 namespace image {
 
-    struct ColorQuantizeOptions
-    {
-        float quality = 0.90f;
-        bool dithering = true;
-    };
-
     struct ColorQuantizer
     {
-        Palette palette;
+        struct ColorQuantizerContext* context;
 
-        void quantize(const Surface& dest, const Surface& source, const ColorQuantizeOptions& options);
+        // Initialize quantization network and generate palette (from the colors in source surface)
+        ColorQuantizer(const Surface& source, float quality = 0.90f);
+        ~ColorQuantizer();
+
+        // Get generated palette
+        Palette getPalette() const;
+
+        // Quantize ANY image with the quantization network (the original color image is recommended)
+        void quantize(const Surface& dest, const Surface& source, bool dithering = true);
     };
 
 } // namespace image

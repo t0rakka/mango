@@ -864,14 +864,10 @@ namespace
 		{
     		Bitmap temp(surface.width, surface.height, IndexedFormat(8));
 
-			image::ColorQuantizeOptions quantize_options;
-			quantize_options.dithering = options.dithering;
-			quantize_options.quality = options.quality;
+			image::ColorQuantizer quantizer(surface, options.quality);
+			quantizer.quantize(temp, surface, options.dithering);
 
-			image::ColorQuantizer quantizer;
-			quantizer.quantize(temp, surface, quantize_options);
-
-			gif_encode_file(stream, temp, quantizer.palette);
+			gif_encode_file(stream, temp, quantizer.getPalette());
 		}
 
         return status;

@@ -39,9 +39,10 @@ namespace
         int radpower[INITRAD];
 
     public:
-        NeuQuant(u8* image, int length, int sample);
+        NeuQuant();
         ~NeuQuant();
 
+        void init(u8* image, int length, int sample_factor);
         void unbias();
         void getPalette(Palette& palette) const;
         void buildIndex();
@@ -81,11 +82,22 @@ namespace
     #define alpharadbshift  (alphabiasshift + radbiasshift)
     #define alpharadbias    (((int) 1) << alpharadbshift)
 
-    NeuQuant::NeuQuant(u8* image, int length, int sample)
+    NeuQuant::NeuQuant()
+    {
+        m_image = nullptr;
+        m_length_count = 0;
+        m_sample_factor = 1;
+    }
+
+    NeuQuant::~NeuQuant()
+    {
+    }
+
+    void NeuQuant::init(u8* image, int length, int sample_factor)
     {
         m_image = image;
         m_length_count = length;
-        m_sample_factor = sample;
+        m_sample_factor = sample_factor;
 
         for (int i = 0; i < NETSIZE; ++i)
         {
@@ -94,10 +106,6 @@ namespace
             freq[i] = intbias / NETSIZE;
             bias[i] = 0;
         }
-    }
-
-    NeuQuant::~NeuQuant()
-    {
     }
 
     void NeuQuant::unbias()
@@ -423,13 +431,47 @@ namespace
 namespace mango {
 namespace image {
 
-    void ColorQuantizer::quantize(const Surface& dest, const Surface& source, const ColorQuantizeOptions& options)
+    struct ColorQuantizerContext
     {
-        float quality = clamp(options.quality, 0.0f, 1.0f);
+        NeuQuant nq;
+        Palette palette;
 
-        int width = source.width;
-        int height = source.height;
+        ColorQuantizerContext(const Surface& source, float quality)
+        {
+            quality = clamp(quality, 0.0f, 1.0f);
+            int sample_factor = std::max(1, 30 - int(quality * 29.0f + 1.0f));
 
+            int width = source.width;
+            int height = source.height;
+
+            Bitmap temp(width, height, FORMAT_B8G8R8A8);
+            temp.blit(0, 0, source);
+
+            nq.init(temp.image, width * height * 4, sample_factor);
+            nq.learn();
+            nq.unbias();
+            nq.getPalette(palette);
+            nq.buildIndex();
+        }
+    };
+
+    ColorQuantizer::ColorQuantizer(const Surface& source, float quality)
+    {
+        context = new ColorQuantizerContext(source, quality);
+    }
+
+    ColorQuantizer::~ColorQuantizer()
+    {
+        delete context;
+    }
+
+    Palette ColorQuantizer::getPalette() const
+    {
+        return context->palette;
+    }
+
+    void ColorQuantizer::quantize(const Surface& dest, const Surface& source, bool dithering)
+    {
         if (!dest.format.isIndexed())
         {
             MANGO_EXCEPTION("[ColorQuantizer] The destination surface must have indexed format.");
@@ -440,19 +482,13 @@ namespace image {
             MANGO_EXCEPTION("[ColorQuantizer] The destination and source dimensions must be identical.");
         }
 
-        // NOTE: Don't try to "optimize" this even if the source is already in correct format;
-        //       we need the storage to be continuous w/o padding for the NeuQuant.
-        //       The dithering will also modify this temporary buffer.
+        int width = source.width;
+        int height = source.height;
+
+        Palette palette = getPalette();
+
         Bitmap temp(width, height, FORMAT_B8G8R8A8);
         temp.blit(0, 0, source);
-
-        int sample = std::max(1, 30 - int(quality * 29.0f + 1.0f));
-        NeuQuant nq(temp.image, width * height * 4, sample);
-
-        nq.learn();
-        nq.unbias();
-        nq.getPalette(palette);
-        nq.buildIndex();
 
         for (int y = 0; y < height; ++y)
         {
@@ -465,10 +501,10 @@ namespace image {
                 int r = s[x].r;
                 int g = s[x].g;
                 int b = s[x].b;
-                u8 index = nq.getIndex(r, g, b);
+                u8 index = context->nq.getIndex(r, g, b);
                 d[x] = index;
 
-                if (options.dithering)
+                if (dithering)
                 {
                     // quantization error
                     r -= palette[index].r;
