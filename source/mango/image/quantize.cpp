@@ -76,8 +76,8 @@ namespace
         void buildIndex();
         int getIndex(int r, int g, int b) const;
         int contest(int b, int g, int r);
-        void alter_single(int alpha, int i, int r, int g, int b);
-        void alter_neigh(int rad, int i, int r, int g, int b);
+        void alterSingle(int alpha, int i, int r, int g, int b);
+        void alterNeigh(int rad, int i, int r, int g, int b);
         void learn();
     };
 
@@ -295,7 +295,7 @@ namespace
         return bestbiaspos;
     }
 
-    void NeuQuant::alter_single(int alpha, int i, int r, int g, int b)
+    void NeuQuant::alterSingle(int alpha, int i, int r, int g, int b)
     {
         int* n = m_network[i];
         n[0] -= (alpha * (n[0] - b)) >> alphabiasshift;
@@ -303,7 +303,7 @@ namespace
         n[2] -= (alpha * (n[2] - r)) >> alphabiasshift;
     }
 
-    void NeuQuant::alter_neigh(int rad, int i, int r, int g, int b)
+    void NeuQuant::alterNeigh(int rad, int i, int r, int g, int b)
     {
         const int lo = std::max(i - rad, -1);
         const int hi = std::min(i + rad, NETSIZE);
@@ -396,10 +396,10 @@ namespace
             r = p[2] << netbiasshift;
             j = contest(b, g, r);
 
-            alter_single(alpha, j, r, g, b);
+            alterSingle(alpha, j, r, g, b);
             if (rad)
             {
-                alter_neigh(rad, j, r, g, b);
+                alterNeigh(rad, j, r, g, b);
             }
 
             p += step;
