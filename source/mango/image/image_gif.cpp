@@ -819,22 +819,25 @@ namespace
 		// TODO: write graphics_control_extension to disable translucent color
 		// TODO: support the extension in decoder so that we don't have one index being invisible
 
-		// image descriptor
-		s.write8(0x2c);
+		// TODO: gif animations will repeat this section
+		{
+			// image descriptor
+			s.write8(GIF_IMAGE);
 
-		s.write16(0);
-		s.write16(0);
-		s.write16(width);
-		s.write16(height);
+			s.write16(0);
+			s.write16(0);
+			s.write16(width);
+			s.write16(height);
 
-		// local palette
-		u8 field = 0;
-		s.write8(field);
+			// local palette
+			u8 field = 0;
+			s.write8(field);
 
-		gif_encode_image_block(s, 8, width, height, stride, image);
+			gif_encode_image_block(s, 8, width, height, stride, image);
+		}
 
 		// end of file
-		s.write8(0x3b);
+		s.write8(GIF_TERMINATE);
 	}
 
     ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
