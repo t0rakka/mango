@@ -103,8 +103,7 @@ namespace mango
     // ------------------------------------------------------------
 
     ThreadPool::ThreadPool(size_t size)
-        : m_queue_cache(32)
-        , m_queues(nullptr)
+        : m_queues(nullptr)
         , m_threads(size)
     {
         m_queues = new TaskQueue[3];
@@ -256,7 +255,7 @@ namespace mango
 
     ThreadPool::Queue* ThreadPool::createQueue(const std::string& name, int priority)
     {
-        Queue* queue = m_queue_cache.acquire();
+        Queue* queue = new Queue();
 
         queue->pool = this;
         queue->priority = priority;
@@ -270,7 +269,7 @@ namespace mango
 
     void ThreadPool::deleteQueue(Queue* queue)
     {
-        m_queue_cache.discard(queue);
+        delete queue;
     }
 
     // ------------------------------------------------------------

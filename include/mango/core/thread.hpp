@@ -19,68 +19,6 @@
 namespace mango
 {
 
-    // TODO: use lock-free MPMC queue for free objects and only lock
-    //       when running out of objects in the queue
-    template <typename T>
-    class ObjectCache
-    {
-    protected:
-        int m_block_size;
-        std::vector<T*> m_blocks;
-        T** m_stack { nullptr };
-        int m_stack_capacity { 0 };
-        int m_stack_size { 0 };
-        SpinLock m_lock;
-
-    public:
-        ObjectCache(int block_size)
-            : m_block_size(block_size)
-        {
-        }
-
-        ~ObjectCache()
-        {
-            for (auto block : m_blocks) {
-                delete[] block;
-            }
-
-            delete[] m_stack;
-        }
-
-        T* acquire()
-        {
-            SpinLockGuard guard(m_lock);
-            if (!m_stack_size)
-            {
-                // reallocate stack
-                delete[] m_stack;
-                m_stack_capacity += m_block_size;
-                m_stack = new T*[m_stack_capacity];
-
-                // allocate more objects
-                T* block = new T[m_block_size];
-                m_blocks.push_back(block);
-
-                // put the allocated objects in the stack
-                for (int i = 0; i < m_block_size; ++i)
-                {
-                    m_stack[i] = block + i;
-                }
-
-                m_stack_size = m_block_size;
-            }
-
-            T* object = m_stack[--m_stack_size];
-            return object;
-        }
-
-        void discard(T* object)
-        {
-            SpinLockGuard guard(m_lock);
-            m_stack[m_stack_size++] = object;
-        }
-    };
-
     struct TaskQueue;
 
     class ThreadPool : private NonCopyable
@@ -138,7 +76,6 @@ namespace mango
         void wait(Queue* queue);
 
     private:
-        alignas(64) ObjectCache<Queue> m_queue_cache;
         alignas(64) TaskQueue* m_queues;
 
         std::atomic<bool> m_stop { false };
@@ -170,7 +107,8 @@ namespace mango
         ConcurrentQueue q;
 
         // submit work into the queue
-        q.enqueue([] {
+        q.enqueue([]
+        {
             // TODO: do your stuff here..
         });
 
@@ -215,7 +153,8 @@ namespace mango
         SerialQueue s;
 
         // submit work into the queue
-        s.enqueue([] {
+        s.enqueue([]
+        {
             // TODO: do your stuff here..
         });
 
