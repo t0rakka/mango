@@ -275,6 +275,7 @@ namespace mango
 
     void ConcurrentQueue::steal()
     {
+        m_pool.dequeue_and_process();
     }
 
     void ConcurrentQueue::cancel()
