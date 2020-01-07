@@ -13,7 +13,7 @@ namespace mango
     /* WARNING!
        Atomic locks are implemented as busy loops which consume significant
        amounts of CPU time if the locks are congested and held for a long
-       period of time.
+       period of time. The lock duration is non-deterministic to a highest degree.
     */
 
     // ----------------------------------------------------------------------------
