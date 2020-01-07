@@ -26,16 +26,22 @@ namespace mango
     private:
         friend struct TaskQueue;
         friend class ConcurrentQueue;
-        friend class SerialQueue;
 
         struct Queue
         {
             ThreadPool* pool;
             int priority;
-            std::atomic<int> task_input_count;
-            std::atomic<int> task_complete_count;
-            std::atomic<int> stamp_cancel;
+            std::atomic<int> task_input_count { 0 };
+            std::atomic<int> task_complete_count { 0 };
+            std::atomic<int> stamp_cancel { -1 };
             std::string name;
+
+            Queue(ThreadPool* pool, int priority, const std::string& name)
+                : pool(pool)
+                , priority(priority)
+                , name(name)
+            {
+            }
 
             bool empty() const
             {
@@ -61,14 +67,11 @@ namespace mango
 
         void enqueue(std::function<void()>&& func)
         {
-            enqueue(m_static_queue, std::move(func));
+            enqueue(&m_static_queue, std::move(func));
         }
 
     protected:
         void thread(size_t threadID);
-
-        Queue* createQueue(const std::string& name, int priority);
-        void deleteQueue(Queue* queue);
 
         void enqueue(Queue* queue, std::function<void()>&& func);
         bool dequeue_and_process();
@@ -83,7 +86,7 @@ namespace mango
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
 
-        Queue* m_static_queue;
+        Queue m_static_queue;
         std::vector<std::thread> m_threads;
     };
 
@@ -121,7 +124,7 @@ namespace mango
     {
     protected:
         ThreadPool& m_pool;
-        ThreadPool::Queue* m_queue;
+        ThreadPool::Queue m_queue;
 
     public:
         ConcurrentQueue();
@@ -131,7 +134,7 @@ namespace mango
         template <class F, class... Args>
         void enqueue(F&& f, Args&&... args)
         {
-            m_pool.enqueue(m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+            m_pool.enqueue(&m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
 
         void steal();

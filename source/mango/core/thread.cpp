@@ -104,10 +104,10 @@ namespace mango
 
     ThreadPool::ThreadPool(size_t size)
         : m_queues(nullptr)
+        , m_static_queue(this, int(Priority::NORMAL), "static")
         , m_threads(size)
     {
         m_queues = new TaskQueue[3];
-        m_static_queue = createQueue("static", int(Priority::NORMAL));
 
         // NOTE: let OS scheduler shuffle tasks as it sees fit
         //       this gives better performance overall UNTIL we have some practical
@@ -142,7 +142,6 @@ namespace mango
             thread.join();
         }
 
-        deleteQueue(m_static_queue);
         delete[] m_queues;
     }
 
@@ -253,60 +252,39 @@ namespace mango
         queue->stamp_cancel = queue->task_input_count.load() - 1;
     }
 
-    ThreadPool::Queue* ThreadPool::createQueue(const std::string& name, int priority)
-    {
-        Queue* queue = new Queue();
-
-        queue->pool = this;
-        queue->priority = priority;
-        queue->task_input_count = 0;
-        queue->task_complete_count = 0;
-        queue->stamp_cancel = -1;
-        queue->name = name;
-
-        return queue;
-    }
-
-    void ThreadPool::deleteQueue(Queue* queue)
-    {
-        delete queue;
-    }
-
     // ------------------------------------------------------------
     // ConcurrentQueue
     // ------------------------------------------------------------
 
     ConcurrentQueue::ConcurrentQueue()
         : m_pool(ThreadPool::getInstance())
+        , m_queue(&m_pool, int(Priority::NORMAL), "concurrent.default")
     {
-        m_queue = m_pool.createQueue("concurrent.default", int(Priority::NORMAL));
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name, Priority priority)
         : m_pool(ThreadPool::getInstance())
+        , m_queue(&m_pool, int(priority), name)
     {
-        m_queue = m_pool.createQueue(name, int(priority));
     }
 
     ConcurrentQueue::~ConcurrentQueue()
     {
         wait();
-        m_pool.deleteQueue(m_queue);
     }
 
     void ConcurrentQueue::steal()
     {
-        m_pool.dequeue_and_process();
     }
 
     void ConcurrentQueue::cancel()
     {
-        m_pool.cancel(m_queue);
+        m_pool.cancel(&m_queue);
     }
 
     void ConcurrentQueue::wait()
     {
-        m_pool.wait(m_queue);
+        m_pool.wait(&m_queue);
     }
 
     // ------------------------------------------------------------
