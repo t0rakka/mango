@@ -264,7 +264,7 @@ namespace
 #endif
 
     static inline
-    u8* write_stuffed_bytes(u8* output, DataType code, int count)
+    u8* writeStuffedBytes(u8* output, DataType code, int count)
     {
         code = byteswap(code);
         for (int i = 0; i < count; ++i)
@@ -391,7 +391,7 @@ namespace
             {
                 int overflow = numbits - space;
                 code |= (data >> overflow);
-                output = write_stuffed_bytes(output, code, JPEG_REGISTER_BYTES);
+                output = writeStuffedBytes(output, code, JPEG_REGISTER_BYTES);
                 space = JPEG_REGISTER_BITS - overflow;
                 code = data << space;
             }
@@ -401,7 +401,7 @@ namespace
         u8* flush(u8* output)
         {
             int count = ((JPEG_REGISTER_BITS - space) + 7) >> 3;
-            output = write_stuffed_bytes(output, code, count);
+            output = writeStuffedBytes(output, code, count);
             return output;
         }
 
@@ -412,9 +412,9 @@ namespace
             int coeff = input[0] - last_dc_value[component];
             last_dc_value[component] = input[0];
 
-            int absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            int dataSize = getSymbolSize(absCoeff);
-            int dataMask = (1 << dataSize) - 1;
+            u32 absCoeff = std::abs(coeff);
+            u32 dataSize = getSymbolSize(absCoeff);
+            u32 dataMask = (1 << dataSize) - 1;
 
             p = putBits(p, table.dc.code[dataSize], table.dc.size[dataSize]);
             p = putBits(p, coeff & dataMask, dataSize);
@@ -432,9 +432,9 @@ namespace
                         p = putBits(p, table.ac.code[161], table.ac.size[161]);
                     }
 
-                    int absCoeff = (coeff < 0) ? -coeff-- : coeff;
-                    int dataSize = getSymbolSize(absCoeff);
-                    int dataMask = (1 << dataSize) - 1;
+                    u32 absCoeff = std::abs(coeff);
+                    u32 dataSize = getSymbolSize(absCoeff);
+                    u32 dataMask = (1 << dataSize) - 1;
 
                     int index = runLength * 10 + dataSize;
                     p = putBits(p, table.ac.code[index], table.ac.size[index]);
