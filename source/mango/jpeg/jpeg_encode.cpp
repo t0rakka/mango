@@ -227,7 +227,7 @@ namespace
 #if defined(MANGO_ENABLE_LZCNT)
 
     static inline
-    int getSymbolSize(int value)
+    u32 getSymbolSize(int value)
     {
         return u32_log2(value) + 1;
     }
@@ -255,9 +255,9 @@ namespace
     };
 
     static inline
-    int getSymbolSize(int value)
+    u32 getSymbolSize(u32 value)
     {
-        int base = 8 * !!(value >> 8);
+        u32 base = 8 * !!(value >> 8);
         return g_log2_table[value >> base] + base;
     }
 
