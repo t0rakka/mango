@@ -412,7 +412,7 @@ namespace
             int coeff = input[0] - last_dc_value[component];
             last_dc_value[component] = input[0];
 
-            u32 absCoeff = std::abs(coeff);
+            u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
             u32 dataSize = getSymbolSize(absCoeff);
             u32 dataMask = (1 << dataSize) - 1;
 
@@ -432,7 +432,7 @@ namespace
                         p = putBits(p, table.ac.code[161], table.ac.size[161]);
                     }
 
-                    u32 absCoeff = std::abs(coeff);
+                    u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
                     u32 dataSize = getSymbolSize(absCoeff);
                     u32 dataMask = (1 << dataSize) - 1;
 
