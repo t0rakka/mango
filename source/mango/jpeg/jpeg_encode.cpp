@@ -257,7 +257,7 @@ namespace
     static inline
     u32 getSymbolSize(u32 value)
     {
-        u32 base = 8 * !!(value >> 8);
+        u32 base = 8 * (value > 255);
         return g_log2_table[value >> base] + base;
     }
 
