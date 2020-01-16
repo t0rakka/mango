@@ -445,7 +445,7 @@ namespace mango
         return result;
     }
 
-    namespace matrix {
+namespace matrix {
 
     float4x4 identity()
     {
@@ -609,18 +609,18 @@ namespace mango
         return result;
     }
 
-    } // namespace matrix
+} // namespace matrix
 
-	namespace opengl {
+namespace opengl {
 
     float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
         float x = 2.0f / (right - left);
         float y = 2.0f / (top - bottom);
         float z = -2.0f / (zfar - znear);
-        float a = -(right + left) / (right - left);
-        float b = -(top + bottom) / (top - bottom);
-        float c = -(zfar + znear) / (zfar - znear);
+        float a = -(left + right) / (right - left);
+        float b = -(bottom + top) / (top - bottom);
+        float c = -(znear + zfar) / (zfar - znear);
 
         float4x4 result;
 
@@ -682,9 +682,9 @@ namespace mango
         return p;
     }
 
-	} // namespace opengl
+} // namespace opengl
 
-	namespace vulkan {
+namespace vulkan {
 
     float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
@@ -751,9 +751,9 @@ namespace mango
         return p * to_vk;
     }
 
-	} // namespace vulkan
+} // namespace vulkan
 
-	namespace directx {
+namespace directx {
 
     // left-handed
 
@@ -765,8 +765,8 @@ namespace mango
 
         const float w = 2.0f * x;
         const float h = 2.0f * y;
-        const float a = -x * (right + left);
-        const float b = -y * (top + bottom);
+        const float a = -x * (left + right);
+        const float b = -y * (bottom + top);
         const float c = -z * znear;
 
         float4x4 result;
@@ -787,10 +787,10 @@ namespace mango
 
         const float w = x * znear * 2.0f;
         const float h = y * znear * 2.0f;
-        const float a = -x * (right + left);
-        const float b = -y * (top + bottom);
+        const float a = -x * (left + right);
+        const float b = -y * (bottom + top);
         const float c = z * zfar;
-        const float d = z * znear * -zfar;
+        const float d = z * zfar * -znear;
 
         float4x4 result;
 
@@ -842,7 +842,7 @@ namespace mango
         return p;
     }
 
-	} // namespace directx
+} // namespace directx
 
     // ------------------------------------------------------------------------
     // AngleAxis
