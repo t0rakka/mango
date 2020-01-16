@@ -488,10 +488,10 @@ namespace simd {
 
     static inline f32 dot4(f32x4 a, f32x4 b)
     {
-        const float32x4_t prod = vmulq_f32(a, b);
-        float32x4_t sum = vpaddq_f32(prod, prod);
-        sum = vpaddq_f32(sum, sum);
-        return vgetq_lane_f32(sum, 0);
+        float32x4_t prod = vmulq_f32(a, b);
+        prod = vpaddq_f32(prod, prod);
+        prod = vpaddq_f32(prod, prod);
+        return vgetq_lane_f32(prod, 0);
     }
 
 #else
@@ -499,11 +499,8 @@ namespace simd {
     static inline f32 dot4(f32x4 a, f32x4 b)
     {
         const float32x4_t prod = vmulq_f32(a, b);
-        const float32x2_t xy = vget_low_f32(prod);
-        const float32x2_t zw = vget_high_f32(prod);
-        float32x2_t s = vpadd_f32(xy, zw);
-        s = vpadd_f32(s, s);
-        return vget_lane_f32(s, 0);
+        float32x2_t s = vpadd_f32(vget_low_f32(prod), vget_high_f32(prod));
+        return vget_lane_f32(vpadd_f32(s, s), 0);
     }
 
 #endif
