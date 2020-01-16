@@ -518,14 +518,13 @@ namespace matrix {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        float4x4 result;
-
-        result[0] = float4(1, 0, 0, 0);
-        result[1] = float4(0, c, s, 0);
-        result[2] = float4(0, -s, c, 0);
-        result[3] = float4(0, 0, 0, 1);
-
-        return result;
+        return float4x4
+        {
+            float4(1, 0, 0, 0),
+            float4(0, c, s, 0),
+            float4(0,-s, c, 0),
+            float4(0, 0, 0, 1)
+        };
     }
 
     float4x4 rotateY(float angle)
@@ -533,14 +532,13 @@ namespace matrix {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        float4x4 result;
-
-        result[0] = float4(c, 0, -s, 0);
-        result[1] = float4(0, 1, 0, 0);
-        result[2] = float4(s, 0, c, 0);
-        result[3] = float4(0, 0, 0, 1);
-
-        return result;
+        return float4x4
+        {
+            float4(c, 0,-s, 0),
+            float4(0, 1, 0, 0),
+            float4(s, 0, c, 0),
+            float4(0, 0, 0, 1)
+        };
      }
 
     float4x4 rotateZ(float angle)
@@ -548,14 +546,13 @@ namespace matrix {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        float4x4 result;
-
-        result[0] = float4(c, s, 0, 0);
-        result[1] = float4(-s, c, 0, 0);
-        result[2] = float4(0, 0, 1, 0);
-        result[3] = float4(0, 0, 0, 1);
-
-        return result;
+        return float4x4
+        {
+            float4( c, s, 0, 0),
+            float4(-s, c, 0, 0),
+            float4( 0, 0, 1, 0),
+            float4( 0, 0, 0, 1)
+        };
     }
 
     float4x4 rotateXYZ(float x, float y, float z)
@@ -583,14 +580,13 @@ namespace matrix {
         const float m21 = sz * sycx - cz * sx;
         const float m22 = cy * cx;
 
-        float4x4 result;
-
-        result[0] = float4(m00, m01, m02, 0);
-        result[1] = float4(m10, m11, m12, 0);
-        result[2] = float4(m20, m21, m22, 0);
-        result[3] = float4(0, 0, 0, 1);
-
-        return result;
+        return float4x4
+        {
+            float4(m00, m01, m02, 0),
+            float4(m10, m11, m12, 0),
+            float4(m20, m21, m22, 0),
+            float4(0, 0, 0, 1)
+        };
     }
 
     float4x4 lookat(const float3& target, const float3& viewer, const float3& up)
@@ -598,15 +594,14 @@ namespace matrix {
         const float3 zaxis = normalize(target - viewer);
         const float3 xaxis = normalize(cross(up, zaxis));
         const float3 yaxis = cross(zaxis, xaxis);
-            
-        float4x4 result;
-            
-        result[0] = float4(xaxis.x, yaxis.x, zaxis.x, 0);
-        result[1] = float4(xaxis.y, yaxis.y, zaxis.y, 0);
-        result[2] = float4(xaxis.z, yaxis.z, zaxis.z, 0);
-        result[3] = float4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f);
-            
-        return result;
+
+        return float4x4
+        {
+            float4(xaxis.x, yaxis.x, zaxis.x, 0),
+            float4(xaxis.y, yaxis.y, zaxis.y, 0),
+            float4(xaxis.z, yaxis.z, zaxis.z, 0),
+            float4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f)
+        };
     }
 
 } // namespace matrix
@@ -622,14 +617,13 @@ namespace opengl {
         float b = -(bottom + top) / (top - bottom);
         float c = -(znear + zfar) / (zfar - znear);
 
-        float4x4 result;
-
-        result[0] = float4(x, 0, 0, 0);
-        result[1] = float4(0, y, 0, 0);
-        result[2] = float4(0, 0, z, 0);
-        result[3] = float4(a, b, c, 1);
-
-        return result;
+        return float4x4
+        {
+            float4(x, 0, 0, 0),
+            float4(0, y, 0, 0),
+            float4(0, 0, z, 0),
+            float4(a, b, c, 1)
+        };
     }
 
     float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
@@ -642,14 +636,13 @@ namespace opengl {
         float y = (2.0f * znear) / (top - bottom);
         float z = -1.0f;
 
-        float4x4 result;
-
-        result[0] = float4(x, 0, 0, 0);
-        result[1] = float4(0, y, 0, 0);
-        result[2] = float4(a, b, c, z);
-        result[3] = float4(0, 0, d, 0);
-
-        return result;
+        return float4x4
+        {
+            float4(x, 0, 0, 0),
+            float4(0, y, 0, 0),
+            float4(a, b, c, z),
+            float4(0, 0, d, 0)
+        };
     }
 
     float4x4 perspective(float xfov, float yfov, float znear, float zfar)
@@ -695,14 +688,13 @@ namespace vulkan {
         float b = (top + bottom) / (top - bottom);
         float c = (zfar + znear) / (zfar - znear) * -0.5f;
 
-        float4x4 result;
-
-        result[0] = float4(x, 0, 0, 0);
-        result[1] = float4(0, y, 0, 0);
-        result[2] = float4(0, 0, z, z);
-        result[3] = float4(a, b, c, c + 1.0f);
-
-        return result;
+        return float4x4
+        {
+            float4(x, 0, 0, 0),
+            float4(0, y, 0, 0),
+            float4(0, 0, z, z),
+            float4(a, b, c, c + 1.0f)
+        };
     }
 
     float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
@@ -714,14 +706,13 @@ namespace vulkan {
         float x = (2.0f * znear) / (right - left);
         float y = (2.0f * znear) / (bottom - top);
 
-        float4x4 result;
-
-        result[0] = float4(x, 0, 0, 0);
-        result[1] = float4(0, y, 0, 0);
-        result[2] = float4(a, b, c, c - 1.0f);
-        result[3] = float4(0, 0, d, d);
-
-        return result;
+        return float4x4
+        {
+            float4(x, 0, 0, 0),
+            float4(0, y, 0, 0),
+            float4(a, b, c, c - 1.0f),
+            float4(0, 0, d, d)
+        };
     }
 
     float4x4 perspective(float xfov, float yfov, float znear, float zfar)
@@ -733,20 +724,25 @@ namespace vulkan {
 
     float4x4 oblique(const float4x4& proj, const float4& nearclip)
     {
-        float4x4 to_vk; // conversion from GL to VK matrix format
-        to_vk[0] = float4(1.0f, 0.0f, 0.0f, 0.0f);
-        to_vk[1] = float4(0.0f,-1.0f, 0.0f, 0.0f);
-        to_vk[2] = float4(0.0f, 0.0f, 0.5f, 0.5f);
-        to_vk[3] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        // conversion from GL to VK matrix format
+        const float4x4 to_vk
+        {
+            float4(1.0f, 0.0f, 0.0f, 0.0f),
+            float4(0.0f,-1.0f, 0.0f, 0.0f),
+            float4(0.0f, 0.0f, 0.5f, 0.5f),
+            float4(0.0f, 0.0f, 0.0f, 1.0f)
+        };
 
-        float4x4 from_vk; // inverse of to_vk matrix
-        from_vk[0] = float4(1.0f, 0.0f, 0.0f, 0.0f);
-        from_vk[1] = float4(0.0f,-1.0f, 0.0f, 0.0f);
-        from_vk[2] = float4(0.0f, 0.0f, 2.0f,-1.0f);
-        from_vk[3] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        // inverse of to_vk matrix
+        const float4x4 from_vk
+        {
+            float4(1.0f, 0.0f, 0.0f, 0.0f),
+            float4(0.0f,-1.0f, 0.0f, 0.0f),
+            float4(0.0f, 0.0f, 2.0f,-1.0f),
+            float4(0.0f, 0.0f, 0.0f, 1.0f)
+        };
 
-        // NOTE: using the existing GL matrix modifying transformation requires
-        //       a round-trip to GL matrix format. :(
+        // NOTE: using the existing OpenGL function requires a round-trip to it's matrix format. :(
         float4x4 p = opengl::oblique(proj * from_vk, nearclip);
         return p * to_vk;
     }
@@ -769,14 +765,13 @@ namespace directx {
         const float b = -y * (bottom + top);
         const float c = -z * znear;
 
-        float4x4 result;
-
-        result[0] = float4(w, 0, 0, 0);
-        result[1] = float4(0, h, 0, 0);
-        result[2] = float4(0, 0, z, 0);
-        result[3] = float4(a, b, c, 1);
-
-        return result;
+        return float4x4
+        {
+            float4(w, 0, 0, 0),
+            float4(0, h, 0, 0),
+            float4(0, 0, z, 0),
+            float4(a, b, c, 1)
+        };
     }
 
     float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
@@ -792,14 +787,13 @@ namespace directx {
         const float c = z * zfar;
         const float d = z * zfar * -znear;
 
-        float4x4 result;
-
-        result[0] = float4(w, 0, 0, 0);
-        result[1] = float4(0, h, 0, 0);
-        result[2] = float4(a, b, c, 1);
-        result[3] = float4(0, 0, d, 0);
-
-        return result;
+        return float4x4
+        {
+            float4(w, 0, 0, 0),
+            float4(0, h, 0, 0),
+            float4(a, b, c, 1),
+            float4(0, 0, d, 0)
+        };
     }
 
     float4x4 perspective(float xfov, float yfov, float znear, float zfar)
@@ -809,14 +803,13 @@ namespace directx {
         const float a = zfar / (zfar - znear);
         const float b = -a * znear;
 
-        float4x4 result;
-
-        result[0] = float4(w, 0, 0, 0);
-        result[1] = float4(0, h, 0, 0);
-        result[2] = float4(0, 0, a, 1);
-        result[3] = float4(0, 0, b, 0);
-
-        return result;
+        return float4x4
+        {
+            float4(w, 0, 0, 0),
+            float4(0, h, 0, 0),
+            float4(0, 0, a, 1),
+            float4(0, 0, b, 0)
+        };
     }
 
     float4x4 oblique(const float4x4& proj, const float4& nearclip)
@@ -1134,15 +1127,13 @@ namespace directx {
     float linear_to_srgb(float n)
     {
         float s = clamp(n, 0.0f, 1.0f);
-        s = (s < 0.0031308f) ? 12.92f * s
-            : 1.055f * std::pow(s, 0.41666f) - 0.055f;
+        s = (s < 0.0031308f) ? 12.92f * s : 1.055f * std::pow(s, 0.41666f) - 0.055f;
         return s;
     }
 
     float srgb_to_linear(float s)
     {
-        return (s <= 0.04045f) ? s * (1.0f / 12.92f) 
-            : std::pow(((s + 0.055f) * (1.0f / 1.055f)), 2.4f);
+        return (s <= 0.04045f) ? s * (1.0f / 12.92f) : std::pow(((s + 0.055f) * (1.0f / 1.055f)), 2.4f);
     }
 
     static inline float32x4 pow24(float32x4 v)
