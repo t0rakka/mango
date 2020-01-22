@@ -19,8 +19,6 @@
 namespace mango
 {
 
-    struct TaskQueue;
-
     class ThreadPool : private NonCopyable
     {
     private:
@@ -79,7 +77,7 @@ namespace mango
         void wait(Queue* queue);
 
     private:
-        alignas(64) TaskQueue* m_queues;
+        alignas(64) struct TaskQueue* m_queues;
 
         std::atomic<bool> m_stop { false };
         std::atomic<int> m_sleep_count { 0 };

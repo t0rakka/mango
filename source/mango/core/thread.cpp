@@ -324,7 +324,7 @@ namespace mango
             std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
             if (!m_task_queue.empty())
             {
-                auto task = m_task_queue.front();
+                auto task = std::move(m_task_queue.front());
                 m_task_queue.pop_front();
                 queue_lock.unlock();
 
