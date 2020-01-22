@@ -295,7 +295,8 @@ namespace mango
     SerialQueue::SerialQueue()
         : m_name("serial.default")
     {
-        m_thread = std::thread([this] {
+        m_thread = std::thread([this]
+        {
             thread();
         });
     }
@@ -303,7 +304,8 @@ namespace mango
     SerialQueue::SerialQueue(const std::string& name)
         : m_name(name)
     {
-        m_thread = std::thread([this] {
+        m_thread = std::thread([this]
+        {
             thread();
         });
     }
@@ -322,17 +324,21 @@ namespace mango
         while (!m_stop.load(std::memory_order_relaxed))
         {
             std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
-            if (!m_task_queue.empty())
+            m_running = true;
+
+            if (!m_task_queue.empty() && !m_waiting.load(std::memory_order_relaxed))
             {
                 auto task = std::move(m_task_queue.front());
                 m_task_queue.pop_front();
                 queue_lock.unlock();
 
                 task();
-                --m_task_counter;
+                m_running = false;
+                m_condition.notify_one();
             }
             else
             {
+                m_running = false;
                 m_condition.wait_for(queue_lock, milliseconds(32));
             }
         }
@@ -341,20 +347,36 @@ namespace mango
     void SerialQueue::cancel()
     {
         std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
-        m_task_counter -= u32(m_task_queue.size());
         m_task_queue.clear();
     }
 
     void SerialQueue::wait()
     {
+        m_waiting = true;
+
+        // steal tasks for the current thread
+        std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+        auto temp = std::move(m_task_queue);
+        queue_lock.unlock();
+
+        // wait until worker thread has completed any task it may have running
         for (;;)
         {
-            if (!m_task_counter.load(std::memory_order_relaxed))
+            std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+
+            if (!m_running.load(std::memory_order_relaxed))
                 break;
 
-            // NOTE: we are wasting CPU here and we know it
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
+            m_condition.wait_for(queue_lock, milliseconds(32));
         }
+
+        // execute the stolen tasks in the current thread
+        for (auto& task : temp)
+        {
+            task();
+        }
+
+        m_waiting = false;
     }
 
 } // namespace mango
