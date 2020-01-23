@@ -324,21 +324,21 @@ namespace mango
         while (!m_stop.load(std::memory_order_relaxed))
         {
             std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
-            m_running = true;
-
             if (!m_task_queue.empty() && !m_waiting.load(std::memory_order_relaxed))
             {
+                m_running = true;
+
                 auto task = std::move(m_task_queue.front());
                 m_task_queue.pop_front();
                 queue_lock.unlock();
 
                 task();
+
                 m_running = false;
-                m_condition.notify_one();
             }
             else
             {
-                m_running = false;
+                m_condition.notify_one();
                 m_condition.wait_for(queue_lock, milliseconds(32));
             }
         }
@@ -357,18 +357,10 @@ namespace mango
         // steal tasks for the current thread
         std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
         auto temp = std::move(m_task_queue);
-        queue_lock.unlock();
 
         // wait until worker thread has completed any task it may have running
-        for (;;)
-        {
-            std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
-
-            if (!m_running.load(std::memory_order_relaxed))
-                break;
-
-            m_condition.wait_for(queue_lock, milliseconds(32));
-        }
+        m_condition.wait(queue_lock, [this] { return !m_running.load(std::memory_order_relaxed); });
+        queue_lock.unlock();
 
         // execute the stolen tasks in the current thread
         for (auto& task : temp)
