@@ -172,12 +172,13 @@ namespace mango
         std::string m_name;
         std::thread m_thread;
         std::atomic<bool> m_stop { false };
-        std::atomic<bool> m_waiting { false };
-        std::atomic<bool> m_running { false };
+        std::atomic<int> m_task_counter { 0 };
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
-        std::condition_variable m_condition;
+        std::mutex m_wait_mutex;
+        std::condition_variable m_task_condition;
+        std::condition_variable m_wait_condition;
 
         void thread();
 
@@ -191,7 +192,8 @@ namespace mango
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
             m_task_queue.emplace_back(f, (args)...);
-            m_condition.notify_one();
+            ++m_task_counter;
+            m_task_condition.notify_one();
         }
 
         void cancel();
