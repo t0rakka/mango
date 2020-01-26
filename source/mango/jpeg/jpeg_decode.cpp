@@ -128,7 +128,7 @@ namespace jpeg {
 #if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
         if (ptr + 8 < end)
         {
-            const __m128i ref = _mm_set1_epi8(0xff);
+            const __m128i ref = _mm_set1_epi8(0xffu);
 
 #if defined(MANGO_COMPILER_GCC) && __GNUC__ < 9
             // Work-around; generates inferior code with some compilers (ICC, MSVC)
