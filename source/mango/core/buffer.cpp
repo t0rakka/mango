@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
@@ -39,6 +39,15 @@ namespace mango {
         , m_alignment(alignment)
     {
         std::memcpy(m_memory.address, memory.address, memory.size);
+    }
+
+    Buffer::Buffer(Stream& stream, Alignment alignment)
+        : m_memory(allocate(stream.size(), alignment), stream.size())
+        , m_capacity(m_memory.size)
+        , m_alignment(alignment)
+    {
+        stream.seek(0, Stream::BEGIN);
+        stream.read(m_memory.address, m_memory.size);
     }
 
     Buffer::~Buffer()

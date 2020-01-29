@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -24,6 +24,7 @@ namespace mango
         Buffer(size_t bytes, Alignment alignment = Alignment());
         Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
         Buffer(ConstMemory memory, Alignment alignment = Alignment());
+        Buffer(Stream& stream, Alignment alignment = Alignment());
         ~Buffer();
 
         operator ConstMemory () const;
