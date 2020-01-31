@@ -54,7 +54,7 @@ namespace mango
     public:
         MemoryStream();
         MemoryStream(const u8* source, size_t bytes);
-        MemoryStream(Memory memory);
+        MemoryStream(ConstMemory memory);
         ~MemoryStream();
 
         operator ConstMemory () const;

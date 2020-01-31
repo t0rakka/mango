@@ -153,7 +153,7 @@ namespace mango {
     {
     }
 
-    MemoryStream::MemoryStream(Memory memory)
+    MemoryStream::MemoryStream(ConstMemory memory)
         : m_buffer(memory)
         , m_offset(memory.size)
     {
