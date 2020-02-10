@@ -114,7 +114,7 @@ namespace mango
         });
 
         // wait until the queue is drained
-        q.wait();
+        q.wait(); // cooperative, blocking (helps pool until all tasks are complete)
 
     */
 
@@ -160,7 +160,7 @@ namespace mango
         });
 
         // wait until the queue is drained
-        s.wait(); // non-cooperative, CPU-sink
+        s.wait(); // non-cooperative, blocking (CPU sleeps until queue is drained)
 
     */
 
