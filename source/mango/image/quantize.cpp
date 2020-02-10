@@ -114,7 +114,8 @@ namespace
         {
             for (int j = 0; j < 3; ++j)
             {
-                m_network[i][j] >>= netbiasshift;
+                constexpr int bias = 1 << (netbiasshift - 1);
+                m_network[i][j] = clamp((m_network[i][j] + bias) >> netbiasshift, 0, 255);
             }
             m_network[i][3] = i;
         }
