@@ -31,7 +31,7 @@ namespace mango
             int priority;
             std::atomic<int> task_input_count { 0 };
             std::atomic<int> task_complete_count { 0 };
-            std::atomic<int> stamp_cancel { -1 };
+            std::atomic<bool> cancelled { false };
             std::string name;
 
             Queue(ThreadPool* pool, int priority, const std::string& name)
@@ -50,7 +50,6 @@ namespace mango
         struct Task
         {
             Queue* queue;
-            int stamp; // TODO: use 64 bit counter or use a queue.cancel flag
             std::function<void()> func;
         };
 

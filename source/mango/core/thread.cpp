@@ -199,9 +199,9 @@ namespace mango
     {
         Task task;
         task.queue = queue;
-        task.stamp = queue->task_input_count++;
         task.func = std::move(func);
 
+        queue->task_input_count++;
         m_queues[queue->priority].tasks.enqueue(std::move(task));
 
         if (m_sleep_count > 0)
@@ -221,7 +221,7 @@ namespace mango
                 Queue* queue = task.queue;
 
                 // check if the task is cancelled
-                if (task.stamp > queue->stamp_cancel)
+                if (!queue->cancelled)
                 {
                     // process task
                     task.func();
@@ -249,7 +249,9 @@ namespace mango
 
     void ThreadPool::cancel(Queue* queue)
     {
-        queue->stamp_cancel = queue->task_input_count.load() - 1;
+        queue->cancelled = true;
+        wait(queue);
+        queue->cancelled = false;
     }
 
     // ------------------------------------------------------------
