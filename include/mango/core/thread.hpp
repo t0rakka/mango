@@ -50,7 +50,7 @@ namespace mango
         struct Task
         {
             Queue* queue;
-            int stamp;
+            int stamp; // TODO: use 64 bit counter or use a queue.cancel flag
             std::function<void()> func;
         };
 
