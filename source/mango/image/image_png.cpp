@@ -1917,11 +1917,11 @@ namespace
 
         z.next_out = buffer;
 
-        for (int y = 0; y < surface.height; ++y)
-        {
-            bool last_scan = (y == surface.height - 1);
+        const int ymax = surface.height - 1;
 
-            // compress filler byte
+        for (int y = 0; y <= ymax; ++y)
+        {
+            // compress filter byte
             u8 zero = 0;
             z.avail_in = 1;
             z.next_in = &zero;
@@ -1929,8 +1929,8 @@ namespace
 
             // compress scanline
             z.avail_in = bytesPerLine;
-            z.next_in = surface.address<u8>(0, y);
-            deflate(&z, last_scan ? Z_FINISH : Z_NO_FLUSH);
+            z.next_in = surface.image + y * surface.stride;
+            deflate(&z, y < ymax ? Z_NO_FLUSH : Z_FINISH);
         }
 
         // compressed size includes chunkID
