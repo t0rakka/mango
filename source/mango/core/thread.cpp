@@ -314,7 +314,10 @@ namespace mango
     {
         wait();
 
+        std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
         m_stop = true;
+        queue_lock.unlock();
+
         m_task_condition.notify_one();
         m_thread.join();
     }
@@ -324,19 +327,21 @@ namespace mango
         while (!m_stop.load(std::memory_order_relaxed))
         {
             std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
-            if (!m_task_queue.empty())
+            if (m_task_counter > 0)
             {
                 auto task = std::move(m_task_queue.front());
                 m_task_queue.pop_front();
                 queue_lock.unlock();
 
                 task();
+
+                std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
                 --m_task_counter;
             }
             else
             {
-                m_wait_condition.notify_one();
-                m_task_condition.wait_for(queue_lock, milliseconds(4));
+                m_wait_condition.notify_all();
+                m_task_condition.wait(queue_lock, [this] { return m_stop || m_task_counter; });
             }
         }
     }
@@ -352,7 +357,6 @@ namespace mango
     {
         std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
         m_wait_condition.wait(wait_lock, [this] { return !m_task_counter.load(std::memory_order_relaxed); });
-        m_task_condition.notify_one();
     }
 
 } // namespace mango
