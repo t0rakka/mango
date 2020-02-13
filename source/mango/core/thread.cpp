@@ -183,7 +183,7 @@ namespace mango
                     // sleep but check what's happening after a while unless signaled
                     ++m_sleep_count;
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(200));
+                    m_condition.wait_for(lock, milliseconds(20));
                     --m_sleep_count;
                 }
                 else
