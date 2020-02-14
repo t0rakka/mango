@@ -237,8 +237,9 @@ namespace mango {
     #define FORMAT_ABGR_EXT_UNSIGNED_SHORT_5_5_5_1       Format(16, mango::Format::UNORM, mango::Format::RGBA, 1, 5, 5, 5)
     #define FORMAT_ABGR_EXT_UNSIGNED_SHORT_1_5_5_5_REV   Format(16, mango::Format::UNORM, mango::Format::ABGR, 5, 5, 5, 1)
 
-    // FLOAT / HALF
+    // float
     #define FORMAT_RGBA16F                               Format(64,  mango::Format::FLOAT16, mango::Format::RGBA, 16, 16, 16, 16)
     #define FORMAT_RGBA32F                               Format(128, mango::Format::FLOAT32, mango::Format::RGBA, 32, 32, 32, 32)
+    #define FORMAT_RGBA64F                               Format(256, mango::Format::FLOAT64, mango::Format::RGBA, 64, 64, 64, 64)
 
 } // namespace mango
