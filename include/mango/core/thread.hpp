@@ -391,34 +391,11 @@ namespace mango
             SharedTask task;
 
         public:
-            Ticket()
-                : task(std::make_shared<Task>())
-            {
-            }
+            Ticket();
+            ~Ticket();
 
-            Ticket(const Ticket& ticket)
-            {
-                task = ticket.task;
-                task->count++;
-            }
-
-            const Ticket& operator = (const Ticket& ticket)
-            {
-                task = ticket.task;
-                task->count++;
-                return *this;
-            }
-
-            ~Ticket()
-            {
-                if (!--task->count)
-                {
-                    if (!task->ready)
-                    {
-                        task->promise.set_value();
-                    }
-                }
-            }
+            Ticket(const Ticket& ticket);
+            const Ticket& operator = (const Ticket& ticket);
 
             template <class F, class... Args>
             void consume(F&& f, Args&&... args) const

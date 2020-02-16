@@ -361,6 +361,39 @@ namespace mango
     }
 
     // ------------------------------------------------------------
+    // TicketQueue::Ticket
+    // ------------------------------------------------------------
+
+    TicketQueue::Ticket::Ticket()
+        : task(std::make_shared<Task>())
+    {
+    }
+
+    TicketQueue::Ticket::~Ticket()
+    {
+        if (!--task->count)
+        {
+            if (!task->ready)
+            {
+                task->promise.set_value();
+            }
+        }
+    }
+
+    TicketQueue::Ticket::Ticket(const Ticket& ticket)
+    {
+        task = ticket.task;
+        task->count++;
+    }
+
+    const TicketQueue::Ticket& TicketQueue::Ticket::operator = (const Ticket& ticket)
+    {
+        task = ticket.task;
+        task->count++;
+        return *this;
+    }
+
+    // ------------------------------------------------------------
     // TicketQueue
     // ------------------------------------------------------------
 
