@@ -375,7 +375,6 @@ namespace mango
         struct Task
         {
             std::atomic<int> count { 1 };
-            std::atomic<bool> ready { false };
             std::function<void()> func;
             std::promise<void> promise;
         };
@@ -401,7 +400,6 @@ namespace mango
             void consume(F&& f, Args&&... args) const
             {
                 task->func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-                task->ready = true;
                 task->promise.set_value();
             }
         };

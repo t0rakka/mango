@@ -373,7 +373,7 @@ namespace mango
     {
         if (!--task->count)
         {
-            if (!task->ready)
+            if (!task->func)
             {
                 task->promise.set_value();
             }
@@ -443,7 +443,7 @@ namespace mango
             std::future<void> future = task->promise.get_future();
             future.wait();
 
-            if (task->ready)
+            if (task->func)
             {
                 task->func();
             }
