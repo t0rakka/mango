@@ -203,6 +203,28 @@ namespace
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
 
+// patch missing macros in some (older) implementations
+
+#ifndef HWCAP_ASIMD
+#define HWCAP_ASIMD		(1 << 1)
+#endif
+
+#ifndef HWCAP_AES
+#define HWCAP_AES		(1 << 3)
+#endif
+
+#ifndef HWCAP_CRC32
+#define HWCAP_CRC32		(1 << 7)
+#endif
+
+#ifndef HWCAP_SHA1
+#define HWCAP_SHA1		(1 << 5)
+#endif
+
+#ifndef HWCAP_SHA2
+#define HWCAP_SHA2		(1 << 6)
+#endif
+
     u64 getCPUFlagsInternal()
     {
         u64 flags = 0;
