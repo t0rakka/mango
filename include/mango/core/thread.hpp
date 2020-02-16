@@ -19,6 +19,10 @@
 namespace mango
 {
 
+    // ----------------------------------------------------------------------------------
+    // ThreadPool
+    // ----------------------------------------------------------------------------------
+
     class ThreadPool : private NonCopyable
     {
     private:
@@ -94,6 +98,10 @@ namespace mango
         LOW = 2
     };
 
+    // ----------------------------------------------------------------------------------
+    // ConcurrentQueue
+    // ----------------------------------------------------------------------------------
+
     /*
         ConcurrentQueue is API to submit work into the ThreadPool. The tasks have no
         dependency to each other and can be executed in any order. Any number of queues
@@ -138,6 +146,10 @@ namespace mango
         void cancel();
         void wait();
     };
+
+    // ----------------------------------------------------------------------------------
+    // SerialQueue
+    // ----------------------------------------------------------------------------------
 
     /*
         SerialQueue is API to serialize tasks to be executed after previous task
@@ -199,6 +211,10 @@ namespace mango
         void wait();
     };
 
+    // ----------------------------------------------------------------------------------
+    // Task
+    // ----------------------------------------------------------------------------------
+
     /*
         Task is a simple queue-less convenience object to enqueue work into the ThreadPool.
         Synchronization must be done manually.
@@ -214,6 +230,10 @@ namespace mango
             pool.enqueue(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
     };
+
+    // ----------------------------------------------------------------------------------
+    // FutureTask
+    // ----------------------------------------------------------------------------------
 
     /*
         FutureTask is an asynchronous API to submit tasks into the ThreadPool.
@@ -307,6 +327,128 @@ namespace mango
         {
             m_future.wait();
         }
+    };
+
+    // ----------------------------------------------------------------------------------
+    // TicketQueue
+    // ----------------------------------------------------------------------------------
+
+    /*
+        TicketQueue is a non-blocking serialization mechanism which allows to schedule work
+        from ANY thread with deterministic order. The order is determined by a ticket based
+        system; tickets are consumed in the same order they are acquired.
+
+        Usage example:
+
+        ConcurrentQueue q;
+        TicketQueue tk;
+
+        for (int i = 0; i < 10; ++i)
+        {
+            auto ticket = tk.acquire();
+
+            q.enqueue([ticket]
+            {
+                // do your heavy calculation here..
+
+                ticket.consume([]
+                {
+                    // this work is serialized and executed in the order the tickets were acquired
+                });
+            });
+        }
+
+        // wait until the queue is drained
+        q.wait();
+
+        // we know all workes have completed -> no more tickets will be consumed
+        // now we wait until ticket queue is finished
+        tk.wait();
+
+    */
+
+    class TicketQueue : private NonCopyable
+    {
+    protected:
+        friend struct TaskQueue2;
+
+        struct Task
+        {
+            std::atomic<int> count { 1 };
+            std::atomic<bool> ready { false };
+            std::function<void()> func;
+            std::promise<void> promise;
+        };
+
+        using SharedTask = std::shared_ptr<Task>;
+
+    public:
+        class Ticket
+        {
+        protected:
+            friend class TicketQueue;
+
+            SharedTask task;
+
+        public:
+            Ticket()
+                : task(std::make_shared<Task>())
+            {
+            }
+
+            Ticket(const Ticket& ticket)
+            {
+                task = ticket.task;
+                task->count++;
+            }
+
+            const Ticket& operator = (const Ticket& ticket)
+            {
+                task = ticket.task;
+                task->count++;
+                return *this;
+            }
+
+            ~Ticket()
+            {
+                if (!--task->count)
+                {
+                    if (!task->ready)
+                    {
+                        task->promise.set_value();
+                    }
+                }
+            }
+
+            template <class F, class... Args>
+            void consume(F&& f, Args&&... args) const
+            {
+                task->func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+                task->ready = true;
+                task->promise.set_value();
+            }
+        };
+
+        TicketQueue();
+        ~TicketQueue();
+
+        Ticket acquire();
+        void wait();
+
+    protected:
+        std::atomic<bool> m_stop { false };
+        std::thread m_thread;
+
+        std::atomic<int> m_ticket_counter { 0 };
+
+        std::mutex m_wait_mutex;
+        std::mutex m_consume_mutex;
+        std::condition_variable m_wait_condition;
+        std::condition_variable m_consume_condition;
+
+        alignas(64) struct TaskQueue2* m_queue;
+
+        bool dequeue_and_process();
     };
 
 } // namespace mango

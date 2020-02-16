@@ -5,6 +5,7 @@
 #include <chrono>
 #include <mango/core/thread.hpp>
 #include "../../external/concurrentqueue/concurrentqueue.h"
+#include "../../external/concurrentqueue/readerwriterqueue.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
@@ -357,6 +358,89 @@ namespace mango
     {
         std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
         m_wait_condition.wait(wait_lock, [this] { return !m_task_counter.load(std::memory_order_relaxed); });
+    }
+
+    // ------------------------------------------------------------
+    // TicketQueue
+    // ------------------------------------------------------------
+
+    struct TaskQueue2
+    {
+        using Task = TicketQueue::SharedTask;
+        moodycamel::ReaderWriterQueue<Task> tasks;
+    };
+
+    TicketQueue::TicketQueue()
+        : m_queue(nullptr)
+    {
+        m_queue = new TaskQueue2();
+        m_thread = std::thread([this]
+        {
+            while (!m_stop.load(std::memory_order_relaxed))
+            {
+                if (!dequeue_and_process())
+                {
+                    std::unique_lock<std::mutex> lock(m_consume_mutex);
+                    m_consume_condition.wait(lock, [this] { return m_stop || m_queue->tasks.peek(); });
+                }
+            }
+        });
+    }
+
+    TicketQueue::~TicketQueue()
+    {
+        wait();
+
+        std::unique_lock<std::mutex> lock(m_consume_mutex);
+        m_stop = true;
+        lock.unlock();
+        m_consume_condition.notify_one();
+
+        m_thread.join();
+        delete m_queue;
+    }
+
+    bool TicketQueue::dequeue_and_process()
+    {
+        bool processed = false;
+
+        SharedTask task;
+        if (m_queue->tasks.try_dequeue(task))
+        {
+            std::future<void> future = task->promise.get_future();
+            future.wait();
+
+            if (task->ready)
+            {
+                task->func();
+            }
+
+            std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+            if (!--m_ticket_counter)
+            {
+                m_wait_condition.notify_one();
+            }
+
+            processed = true;
+        }
+
+        return processed;
+    }
+
+    TicketQueue::Ticket TicketQueue::acquire()
+    {
+        std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+        ++m_ticket_counter;
+        Ticket ticket;
+        m_queue->tasks.enqueue(ticket.task);
+        m_consume_condition.notify_one();
+        return ticket;
+    }
+
+    void TicketQueue::wait()
+    {
+        std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+        m_wait_condition.wait(wait_lock, [this] { return !m_ticket_counter.load(std::memory_order_relaxed); });
     }
 
 } // namespace mango
