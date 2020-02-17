@@ -237,14 +237,14 @@ namespace mango
         {
         }
 
-        explicit Half(u16 sign, u16 exponent, u16 mantissa)
+        Half(u16 sign, u16 exponent, u16 mantissa)
             : mantissa(mantissa)
             , exponent(exponent)
             , sign(sign)
         {
         }
 
-        explicit Half(u16 bits)
+        Half(u16 bits)
             : u(bits)
         {
         }
@@ -252,6 +252,11 @@ namespace mango
         Half(float s)
         {
             *this = s;
+        }
+
+        Half(double s)
+        {
+            *this = float(s);
         }
 
         ~Half()
@@ -264,9 +269,20 @@ namespace mango
             return *this;
         }
 
+        Half& operator = (double s)
+        {
+            u = u16(Float::pack<SIGN, EXPONENT, MANTISSA>(float(s)));
+            return *this;
+        }
+
         operator float () const
         {
             return Float::unpack<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa);
+        }
+
+        operator double () const
+        {
+            return double(Float::unpack<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa));
         }
     };
 

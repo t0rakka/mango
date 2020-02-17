@@ -482,10 +482,22 @@ namespace
             {
                 switch (components)
                 {
-                    case 4: dst[3] = *input[3]; input[3] += stride[3];
-                    case 3: dst[2] = *input[2]; input[2] += stride[2];
-                    case 2: dst[1] = *input[1]; input[1] += stride[1];
-                    case 1: dst[0] = *input[0]; input[0] += stride[0];
+                    case 4:
+                        dst[3] = DestType(*input[3]);
+                        input[3] += stride[3];
+                        // fall-through
+                    case 3:
+                        dst[2] = DestType(*input[2]);
+                        input[2] += stride[2];
+                        // fall-through
+                    case 2:
+                        dst[1] = DestType(*input[1]);
+                        input[1] += stride[1];
+                        // fall-through
+                    case 1:
+                        dst[0] = DestType(*input[0]);
+                        input[0] += stride[0];
+                        // fall-through
                 }
                 dst += components;
             }
