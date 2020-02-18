@@ -26,7 +26,6 @@ namespace mango
     class ThreadPool : private NonCopyable
     {
     private:
-        friend struct TaskQueue;
         friend class ConcurrentQueue;
 
         struct Queue
@@ -80,7 +79,8 @@ namespace mango
         void wait(Queue* queue);
 
     private:
-        alignas(64) struct TaskQueue* m_queues;
+        struct TaskQueue;
+        alignas(64) TaskQueue* m_queues;
 
         std::atomic<bool> m_stop { false };
         std::atomic<int> m_sleep_count { 0 };
@@ -252,8 +252,6 @@ namespace mango
     class TicketQueue : private NonCopyable
     {
     protected:
-        friend struct TaskQueue2;
-
         struct Task
         {
             std::atomic<int> count { 1 };
@@ -261,9 +259,9 @@ namespace mango
             std::promise<void> promise;
         };
 
+    public:
         using SharedTask = std::shared_ptr<Task>;
 
-    public:
         class Ticket
         {
         protected:
@@ -303,7 +301,8 @@ namespace mango
         std::condition_variable m_wait_condition;
         std::condition_variable m_consume_condition;
 
-        alignas(64) struct TaskQueue2* m_queue;
+        struct TaskQueue;
+        alignas(64) TaskQueue* m_queue;
 
         bool dequeue_and_process();
     };

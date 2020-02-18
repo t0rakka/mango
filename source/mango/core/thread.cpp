@@ -90,18 +90,14 @@ namespace mango
 {
 
     // ------------------------------------------------------------
-    // TaskQueue
+    // ThreadPool
     // ------------------------------------------------------------
 
-    struct TaskQueue
+    struct ThreadPool::TaskQueue
     {
         using Task = ThreadPool::Task;
         moodycamel::ConcurrentQueue<Task> tasks;
     };
-
-    // ------------------------------------------------------------
-    // ThreadPool
-    // ------------------------------------------------------------
 
     ThreadPool::ThreadPool(size_t size)
         : m_queues(nullptr)
@@ -397,7 +393,7 @@ namespace mango
     // TicketQueue
     // ------------------------------------------------------------
 
-    struct TaskQueue2
+    struct TicketQueue::TaskQueue
     {
         using Task = TicketQueue::SharedTask;
         moodycamel::ReaderWriterQueue<Task> tasks;
@@ -406,7 +402,7 @@ namespace mango
     TicketQueue::TicketQueue()
         : m_queue(nullptr)
     {
-        m_queue = new TaskQueue2();
+        m_queue = new TaskQueue();
         m_thread = std::thread([this]
         {
             while (!m_stop.load(std::memory_order_relaxed))
