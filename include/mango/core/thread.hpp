@@ -212,6 +212,103 @@ namespace mango
     };
 
     // ----------------------------------------------------------------------------------
+    // TicketQueue
+    // ----------------------------------------------------------------------------------
+
+    /*
+        TicketQueue is a non-blocking serialization mechanism which allows to schedule work
+        from ANY thread with deterministic order. The order is determined by a ticket based
+        system; tickets are consumed in the same order they are acquired.
+
+        Usage example:
+
+        ConcurrentQueue q;
+        TicketQueue tk;
+
+        for (int i = 0; i < 10; ++i)
+        {
+            auto ticket = tk.acquire();
+
+            q.enqueue([ticket]
+            {
+                // do your heavy calculation here..
+
+                ticket.consume([]
+                {
+                    // this work is serialized and executed in the order the tickets were acquired
+                });
+            });
+        }
+
+        // wait until the queue is drained
+        q.wait();
+
+        // we know all workers have completed -> no more tickets will be consumed
+        // now we wait until ticket queue is finished
+        tk.wait();
+
+    */
+
+    class TicketQueue : private NonCopyable
+    {
+    protected:
+        friend struct TaskQueue2;
+
+        struct Task
+        {
+            std::atomic<int> count { 1 };
+            std::function<void()> func;
+            std::promise<void> promise;
+        };
+
+        using SharedTask = std::shared_ptr<Task>;
+
+    public:
+        class Ticket
+        {
+        protected:
+            friend class TicketQueue;
+
+            SharedTask task;
+
+        public:
+            Ticket();
+            ~Ticket();
+
+            Ticket(const Ticket& ticket);
+            const Ticket& operator = (const Ticket& ticket);
+
+            template <class F, class... Args>
+            void consume(F&& f, Args&&... args) const
+            {
+                task->func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+                task->promise.set_value();
+            }
+        };
+
+        TicketQueue();
+        ~TicketQueue();
+
+        Ticket acquire();
+        void wait();
+
+    protected:
+        std::atomic<bool> m_stop { false };
+        std::thread m_thread;
+
+        std::atomic<int> m_ticket_counter { 0 };
+
+        std::mutex m_wait_mutex;
+        std::mutex m_consume_mutex;
+        std::condition_variable m_wait_condition;
+        std::condition_variable m_consume_condition;
+
+        alignas(64) struct TaskQueue2* m_queue;
+
+        bool dequeue_and_process();
+    };
+
+    // ----------------------------------------------------------------------------------
     // Task
     // ----------------------------------------------------------------------------------
 
@@ -327,103 +424,6 @@ namespace mango
         {
             m_future.wait();
         }
-    };
-
-    // ----------------------------------------------------------------------------------
-    // TicketQueue
-    // ----------------------------------------------------------------------------------
-
-    /*
-        TicketQueue is a non-blocking serialization mechanism which allows to schedule work
-        from ANY thread with deterministic order. The order is determined by a ticket based
-        system; tickets are consumed in the same order they are acquired.
-
-        Usage example:
-
-        ConcurrentQueue q;
-        TicketQueue tk;
-
-        for (int i = 0; i < 10; ++i)
-        {
-            auto ticket = tk.acquire();
-
-            q.enqueue([ticket]
-            {
-                // do your heavy calculation here..
-
-                ticket.consume([]
-                {
-                    // this work is serialized and executed in the order the tickets were acquired
-                });
-            });
-        }
-
-        // wait until the queue is drained
-        q.wait();
-
-        // we know all workes have completed -> no more tickets will be consumed
-        // now we wait until ticket queue is finished
-        tk.wait();
-
-    */
-
-    class TicketQueue : private NonCopyable
-    {
-    protected:
-        friend struct TaskQueue2;
-
-        struct Task
-        {
-            std::atomic<int> count { 1 };
-            std::function<void()> func;
-            std::promise<void> promise;
-        };
-
-        using SharedTask = std::shared_ptr<Task>;
-
-    public:
-        class Ticket
-        {
-        protected:
-            friend class TicketQueue;
-
-            SharedTask task;
-
-        public:
-            Ticket();
-            ~Ticket();
-
-            Ticket(const Ticket& ticket);
-            const Ticket& operator = (const Ticket& ticket);
-
-            template <class F, class... Args>
-            void consume(F&& f, Args&&... args) const
-            {
-                task->func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-                task->promise.set_value();
-            }
-        };
-
-        TicketQueue();
-        ~TicketQueue();
-
-        Ticket acquire();
-        void wait();
-
-    protected:
-        std::atomic<bool> m_stop { false };
-        std::thread m_thread;
-
-        std::atomic<int> m_ticket_counter { 0 };
-
-        std::mutex m_wait_mutex;
-        std::mutex m_consume_mutex;
-        std::condition_variable m_wait_condition;
-        std::condition_variable m_consume_condition;
-
-        alignas(64) struct TaskQueue2* m_queue;
-
-        bool dequeue_and_process();
     };
 
 } // namespace mango
