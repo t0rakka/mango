@@ -32,9 +32,9 @@ namespace mango
         {
             ThreadPool* pool;
             int priority;
-            std::atomic<int> task_input_count { 0 };
-            std::atomic<int> task_complete_count { 0 };
-            std::atomic<bool> cancelled { false };
+            alignas(64) std::atomic<int> task_input_count { 0 };
+            alignas(64) std::atomic<int> task_complete_count { 0 };
+            alignas(64) std::atomic<bool> cancelled { false };
             std::string name;
 
             Queue(ThreadPool* pool, int priority, const std::string& name)
@@ -82,8 +82,8 @@ namespace mango
         struct TaskQueue;
         alignas(64) TaskQueue* m_queues;
 
-        std::atomic<bool> m_stop { false };
-        std::atomic<int> m_sleep_count { 0 };
+        alignas(64) std::atomic<bool> m_stop { false };
+        alignas(64) std::atomic<int> m_sleep_count { 0 };
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
 
@@ -182,8 +182,8 @@ namespace mango
 
         std::string m_name;
         std::thread m_thread;
-        std::atomic<bool> m_stop { false };
-        std::atomic<int> m_task_counter { 0 };
+        alignas(64) std::atomic<bool> m_stop { false };
+        alignas(64) std::atomic<int> m_task_counter { 0 };
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
@@ -291,10 +291,10 @@ namespace mango
         void wait();
 
     protected:
-        std::atomic<bool> m_stop { false };
         std::thread m_thread;
 
-        std::atomic<int> m_ticket_counter { 0 };
+        alignas(64) std::atomic<bool> m_stop { false };
+        alignas(64) std::atomic<int> m_ticket_counter { 0 };
 
         std::mutex m_wait_mutex;
         std::mutex m_consume_mutex;
