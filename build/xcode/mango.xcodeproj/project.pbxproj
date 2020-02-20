@@ -297,6 +297,8 @@
 		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
 		A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD2BD4209B3958000B0EF8 /* zpng.h */; };
 		A6CD2BD8209B3BA7000B0EF8 /* image_zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */; };
+		A6DD288923FF09680085E6EE /* zstd_compress_superblock.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */; };
+		A6DD288A23FF09680085E6EE /* zstd_compress_superblock.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */; };
 		A6EC3E612308589900B17F21 /* zstd_compress_sequences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */; };
 		A6EC3E622308589900B17F21 /* zstd_compress_literals.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */; };
 		A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */; };
@@ -756,6 +758,8 @@
 		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
 		A6CD2BD4209B3958000B0EF8 /* zpng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpng.h; path = external/zpng/zpng.h; sourceTree = "<group>"; };
 		A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_zpng.cpp; path = image/image_zpng.cpp; sourceTree = "<group>"; };
+		A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_superblock.c; path = external/zstd/compress/zstd_compress_superblock.c; sourceTree = "<group>"; };
+		A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_superblock.h; path = external/zstd/compress/zstd_compress_superblock.h; sourceTree = "<group>"; };
 		A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_sequences.h; path = external/zstd/compress/zstd_compress_sequences.h; sourceTree = "<group>"; };
 		A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_literals.c; path = external/zstd/compress/zstd_compress_literals.c; sourceTree = "<group>"; };
 		A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_literals.h; path = external/zstd/compress/zstd_compress_literals.h; sourceTree = "<group>"; };
@@ -1690,6 +1694,8 @@
 		A6FCC3A01E8122F30037C15F /* compress */ = {
 			isa = PBXGroup;
 			children = (
+				A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */,
+				A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */,
 				A6F0A5A0237247370015944D /* zstd_cwksp.h */,
 				A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */,
 				A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */,
@@ -1836,6 +1842,7 @@
 				A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */,
 				A003D309192B9998009FED25 /* opengl in Headers */,
 				A642438E21852AEF0044B763 /* 7zVersion.h in Headers */,
+				A6DD288A23FF09680085E6EE /* zstd_compress_superblock.h in Headers */,
 				A6EC3FA9230D7C6100B17F21 /* format_constants.h in Headers */,
 				A6EC3F98230D7C4D00B17F21 /* endian_inl_utils.h in Headers */,
 				A645DD5A214154F400EC714B /* zstd_internal.h in Headers */,
@@ -2213,6 +2220,7 @@
 				A00559C11C93329A00A6D963 /* block_dxt.cpp in Sources */,
 				A6EC3F49230D7C2E00B17F21 /* picture_psnr_enc.c in Sources */,
 				A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */,
+				A6DD288923FF09680085E6EE /* zstd_compress_superblock.c in Sources */,
 				A00559C01C93329A00A6D963 /* blitter.cpp in Sources */,
 				A642437021852AEF0044B763 /* Ppmd7.c in Sources */,
 				A6EC3F17230D7C1500B17F21 /* cost_neon.c in Sources */,

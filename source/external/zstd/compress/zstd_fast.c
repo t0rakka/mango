@@ -74,8 +74,7 @@ ZSTD_compressBlock_fast_generic(
     DEBUGLOG(5, "ZSTD_compressBlock_fast_generic");
     ip0 += (ip0 == prefixStart);
     ip1 = ip0 + 1;
-    {
-        U32 const maxRep = (U32)(ip0 - prefixStart);
+    {   U32 const maxRep = (U32)(ip0 - prefixStart);
         if (offset_2 > maxRep) { offsetSaved = offset_2; offset_2 = 0; }
         if (offset_1 > maxRep) { offsetSaved = offset_1; offset_1 = 0; }
     }
