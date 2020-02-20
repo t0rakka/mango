@@ -583,6 +583,20 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
+#if 0
+        const __m128i c00 = _mm_setr_epi16(c2, c6, c6, -c2, c7, -c5, c3, -c1);
+        const __m128i c01 = _mm_setr_epi16(c5, -c1, c7, c3, c3, -c7, c1, c5);
+        __m128i c26p = _mm_shuffle_epi32(c00, 0x00);
+        __m128i c62n = _mm_shuffle_epi32(c00, 0x55);
+        __m128i c75n = _mm_shuffle_epi32(c00, 0xaa);
+        __m128i c31n = _mm_shuffle_epi32(c00, 0xff);
+        __m128i c51n = _mm_shuffle_epi32(c01, 0x00);
+        __m128i c73p = _mm_shuffle_epi32(c01, 0x55);
+        __m128i c37n = _mm_shuffle_epi32(c01, 0xaa);
+        __m128i c15p = _mm_shuffle_epi32(c01, 0xff);
+        __m128i c13p = JPEG_CONST16(c1, c3);
+        __m128i c57p = JPEG_CONST16(c5, c7);
+#else
         __m128i c26p = JPEG_CONST16(c2, c6);
         __m128i c62n = JPEG_CONST16(c6,-c2);
         __m128i c75n = JPEG_CONST16(c7,-c5);
@@ -593,6 +607,7 @@ namespace
         __m128i c15p = JPEG_CONST16(c1, c5);
         __m128i c13p = JPEG_CONST16(c1, c3);
         __m128i c57p = JPEG_CONST16(c5, c7);
+#endif
 
         // load
 
