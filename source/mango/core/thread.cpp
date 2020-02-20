@@ -122,6 +122,9 @@ namespace mango
                 thread(i);
             });
 
+            // TODO: support more than one Processor Group in Windows
+            // NOTE: requires a CPU with more than 64 logical processors for testing
+
 			if (affinity)
             {
                 set_thread_affinity(get_native_handle(m_threads[i]), int(i + 1));
