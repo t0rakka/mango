@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#define WEBP_ENCODER_ABI_VERSION 0x020e    // MAJOR(8b) + MINOR(8b)
+#define WEBP_ENCODER_ABI_VERSION 0x0210    // MAJOR(8b) + MINOR(8b)
 
 // Note: forward declaring enumerations is not allowed in (strict) C and C++,
 // the types are left here for reference.
@@ -79,9 +79,6 @@ WEBP_EXTERN size_t WebPEncodeLosslessBGRA(const uint8_t* bgra,
                                           int width, int height, int stride,
                                           uint8_t** output);
 
-// Releases memory returned by the WebPEncode*() functions above.
-WEBP_EXTERN void WebPFree(void* ptr);
-
 //------------------------------------------------------------------------------
 // Coding parameters
 
@@ -124,6 +121,8 @@ struct WebPConfig {
   int alpha_quality;      // Between 0 (smallest size) and 100 (lossless).
                           // Default is 100.
   int pass;               // number of entropy-analysis passes (in [1..10]).
+  int qmin;               // minimum permissible quality factor
+  int qmax;               // maximum permissible quality factor
 
   int show_compressed;    // if true, export the compressed picture back.
                           // In-loop filtering is not applied.
