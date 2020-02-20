@@ -398,10 +398,12 @@ static size_t ZSTD_compressSubBlock_sequences(const ZSTD_fseCTables_t* fseTables
                     dstSize_tooSmall);
     if (nbSeq < 0x7F)
         *op++ = (BYTE)nbSeq;
-    else if (nbSeq < LONGNBSEQ)
-        op[0] = (BYTE)((nbSeq>>8) + 0x80), op[1] = (BYTE)nbSeq, op+=2;
-    else
-        op[0]=0xFF, MEM_writeLE16(op+1, (U16)(nbSeq - LONGNBSEQ)), op+=3;
+    else if (nbSeq < LONGNBSEQ) {
+        op[0] = (BYTE)((nbSeq>>8) + 0x80); op[1] = (BYTE)nbSeq; op+=2;
+    }
+    else {
+        op[0]=0xFF; MEM_writeLE16(op+1, (U16)(nbSeq - LONGNBSEQ)); op+=3;
+    }
     if (writeEntropy && nbSeq == 0) {
         return 0;
     }
