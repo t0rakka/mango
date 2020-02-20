@@ -1095,6 +1095,9 @@
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_cwksp.h">
       <Filter>external\zstd\compress</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_superblock.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1957,6 +1960,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\libwebp\src\utils\utils.c">
       <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_superblock.c">
+      <Filter>external\zstd\compress</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
