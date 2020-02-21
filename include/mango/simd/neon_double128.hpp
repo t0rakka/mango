@@ -272,8 +272,7 @@ namespace simd {
     static inline f64 dot2(f64x2 a, f64x2 b)
     {
         const float64x2_t prod = vmulq_f64(a, b);
-        float64x2_t sum = vpaddq_f64(prod, prod);
-        return vgetq_lane_f64(sum, 0);
+        return vaddvq_f64(prod);
     }
 
     // compare

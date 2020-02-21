@@ -489,9 +489,7 @@ namespace simd {
     static inline f32 dot4(f32x4 a, f32x4 b)
     {
         float32x4_t prod = vmulq_f32(a, b);
-        prod = vpaddq_f32(prod, prod);
-        prod = vpaddq_f32(prod, prod);
-        return vgetq_lane_f32(prod, 0);
+        return vaddvq_f32(prod);
     }
 
 #else
