@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 //#define MANGO_ENABLE_DEBUG_PRINT
 
@@ -1063,7 +1063,7 @@ namespace
                     break;
 
                 default:
-                    debugPrint("UNKNOWN CHUNK: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+                    debugPrint("  # UNKNOWN: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
                     break;
             }
 
@@ -1528,9 +1528,9 @@ namespace
                 u16 green = (src[2] << 8) | src[3];
                 u16 blue  = (src[4] << 8) | src[5];
                 u16 alpha = (src[6] << 8) | src[7];
-                d[0] = blue;
+                d[0] = red;
                 d[1] = green;
-                d[2] = red;
+                d[2] = blue;
                 d[3] = alpha;
                 d += 4;
                 src += 8;
@@ -1814,7 +1814,8 @@ namespace
                 1);
             if (buffer)
             {
-                debugPrint("  # total_out: %d \n", raw_len);
+                debugPrint("  buffer bytes: %d\n", buffer_size);
+                debugPrint("  # total_out:  %d\n", raw_len);
 
                 // process image
                 process(image, width, height, stride, buffer, ptr_palette);
@@ -1849,7 +1850,7 @@ namespace
                 // TODO: error
             }
 
-            debugPrint("  # total_out: %d \n", int(stream.total_out));
+            debugPrint("  # total_out:  %d\n", int(stream.total_out));
             status = mz_inflateEnd(&stream);
 
             // process image
