@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -14,7 +14,8 @@
 // OpenGL API
 // -----------------------------------------------------------------------
 
-//#define MANGO_CORE_PROFILE
+//#define MANGO_OPENGL_LEGACY_PROFILE
+//#define MANGO_OPENGL_CORE_PROFILE
 
 #if defined(MANGO_PLATFORM_WINDOWS)
 
@@ -22,11 +23,11 @@
     // WGL
     // -----------------------------------------------------------------------
 
-    #define MANGO_CONTEXT_WGL
+    #define MANGO_OPENGL_CONTEXT_WGL
 
     #define GLEXT_PROC(proc, name) extern proc name
 
-    #ifdef MANGO_CORE_PROFILE
+    #ifdef MANGO_OPENGL_CORE_PROFILE
         #include "khronos/GL/glcorearb.h"
         #include "func/glcorearb.hpp"
     #else
@@ -47,14 +48,20 @@
     // Cocoa
     // -----------------------------------------------------------------------
 
-    #define MANGO_CONTEXT_COCOA
+    #define MANGO_OPENGL_CONTEXT_COCOA
 
     #define GL_SILENCE_DEPRECATION /* macOS 10.14 deprecated OpenGL API */
-    #include "OpenGL/gl3.h"
-    #include "OpenGL/gl3ext.h"
 
-    #define GL_GLEXT_PROTOTYPES
-    #include "khronos/GL/glext.h"
+    #if defined(MANGO_OPENGL_LEGACY_PROFILE)
+        #include <OpenGL/gl.h>
+        #include <OpenGL/glext.h>
+    #else
+        #include "OpenGL/gl3.h"
+        #include "OpenGL/gl3ext.h"
+
+        #define GL_GLEXT_PROTOTYPES
+        #include "khronos/GL/glext.h"
+    #endif
 
 #elif defined(MANGO_PLATFORM_IOS)
 
@@ -62,7 +69,7 @@
     // EGL
     // -----------------------------------------------------------------------
 
-    #define MANGO_CONTEXT_EGL
+    #define MANGO_OPENGL_CONTEXT_EGL
 
     //#include <OpenGLES/ES1/gl.h>
     //#include <OpenGLES/ES1/glext.h>
@@ -75,7 +82,7 @@
     // EGL
     // -----------------------------------------------------------------------
 
-    #define MANGO_CONTEXT_EGL
+    #define MANGO_OPENGL_CONTEXT_EGL
 
     //#include <GLES/gl.h>
     //#include <GLES/glext.h>
@@ -90,9 +97,9 @@
     // GLX
     // -----------------------------------------------------------------------
 
-    #define MANGO_CONTEXT_GLX
+    #define MANGO_OPENGL_CONTEXT_GLX
 
-    #ifdef MANGO_CORE_PROFILE
+    #ifdef MANGO_OPENGL_CORE_PROFILE
         #define GL_GLEXT_PROTOTYPES
         #include "khronos/GL/glcorearb.h"
     #else
@@ -118,6 +125,8 @@ namespace opengl {
 
     struct ContextAttribute
     {
+        u32 version  = 0;
+
         u32 red      = 8;
         u32 green    = 8;
         u32 blue     = 8;
@@ -193,7 +202,7 @@ namespace opengl {
 	// wglext
 	// -------------------------------------------------------------------
 
-#ifdef MANGO_CONTEXT_WGL
+#ifdef MANGO_OPENGL_CONTEXT_WGL
 
     struct wglExtensionMask
     {
@@ -210,7 +219,7 @@ namespace opengl {
 	// glxext
 	// -------------------------------------------------------------------
 
-#ifdef MANGO_CONTEXT_GLX
+#ifdef MANGO_OPENGL_CONTEXT_GLX
 
     struct glxExtensionMask
     {

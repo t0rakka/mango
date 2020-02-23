@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifdef GLEXT_PROC
 
@@ -1313,7 +1313,7 @@ GLEXT_PROC(PFNGLSTENCILSTROKEPATHNVPROC, glStencilStrokePathNV);
 GLEXT_PROC(PFNGLSTENCILFILLPATHINSTANCEDNVPROC, glStencilFillPathInstancedNV);
 GLEXT_PROC(PFNGLSTENCILSTROKEPATHINSTANCEDNVPROC, glStencilStrokePathInstancedNV);
 GLEXT_PROC(PFNGLPATHCOVERDEPTHFUNCNVPROC, glPathCoverDepthFuncNV);
-#if defined(MANGO_CORE_PROFILE) && defined(MANGO_CONTEXT_WGL)
+#if defined(MANGO_OPENGL_CORE_PROFILE) && defined(MANGO_OPENGL_CONTEXT_WGL)
     // The following declarations are not available in Core Profile in Windows (and we don't care why)
 #else
     GLEXT_PROC(PFNGLPATHCOLORGENNVPROC, glPathColorGenNV);

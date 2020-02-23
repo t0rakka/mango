@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -251,7 +251,7 @@ namespace opengl {
         {
             int context_attribs[] =
             {
-#ifdef MANGO_CORE_PROFILE
+#ifdef MANGO_OPENGL_CORE_PROFILE
                 //GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
                 //GLX_CONTEXT_MINOR_VERSION_ARB, 0,
                 GLX_CONTEXT_PROFILE_MASK_ARB,  GLX_CONTEXT_CORE_PROFILE_BIT_ARB,

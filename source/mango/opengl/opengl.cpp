@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -214,7 +214,7 @@ namespace opengl {
         }
     }
 
-#ifdef MANGO_CONTEXT_WGL
+#ifdef MANGO_OPENGL_CONTEXT_WGL
     wglExtensionMask wglext;
 
     static void init_wglext(Context& context)
@@ -240,7 +240,7 @@ namespace opengl {
     }
 #endif
 
-#ifdef MANGO_CONTEXT_GLX
+#ifdef MANGO_OPENGL_CONTEXT_GLX
     glxExtensionMask glxext;
 
     static void init_glxext(Context& context)
@@ -280,11 +280,11 @@ namespace opengl {
         init_glext(*this);
         init_core(version);
 
-#ifdef MANGO_CONTEXT_WGL
+#ifdef MANGO_OPENGL_CONTEXT_WGL
         init_wglext(*this);
 #endif
 
-#ifdef MANGO_CONTEXT_GLX
+#ifdef MANGO_OPENGL_CONTEXT_GLX
         init_glxext(*this);
 #endif
 

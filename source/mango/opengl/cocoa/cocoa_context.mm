@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -194,8 +194,11 @@ namespace opengl {
 
         std::vector<NSOpenGLPixelFormatAttribute> attribs;
 
-        attribs.push_back(NSOpenGLPFAOpenGLProfile);
-        attribs.push_back(NSOpenGLProfileVersion4_1Core);
+        if (!attrib.version || attrib.version >= 4)
+        {
+            attribs.push_back(NSOpenGLPFAOpenGLProfile);
+            attribs.push_back(NSOpenGLProfileVersion4_1Core);
+        }
 
         attribs.push_back(NSOpenGLPFAAccelerated);
         attribs.push_back(NSOpenGLPFADoubleBuffer);
@@ -259,7 +262,7 @@ namespace opengl {
         m_context->modifiers = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
 
         // parse extension string
-#ifdef MANGO_CORE_PROFILE
+#ifdef MANGO_OPENGL_CORE_PROFILE
         GLint numExtensions;
         glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
         for (int i = 0; i < numExtensions; ++i)
