@@ -95,6 +95,11 @@ namespace filesystem {
     {
     }
 
+    const Path& File::path() const
+    {
+        return *m_path;
+    }
+
     const std::string& File::filename() const
     {
         return m_filename;

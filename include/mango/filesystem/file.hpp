@@ -30,6 +30,7 @@ namespace filesystem {
         File(ConstMemory memory, const std::string& extension, const std::string& filename);
         ~File();
 
+        const Path& path() const;
         const std::string& filename() const;
         const std::string& pathname() const;
 
