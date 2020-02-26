@@ -137,10 +137,10 @@ namespace opengl {
 
         m_context = new ContextHandle();
         m_context->view = nil;
-        
+
         unsigned int styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
             NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
-        
+
         NSRect frame = NSMakeRect(0, 0, width, height);
 
         m_handle->window = [[CustomNSWindow alloc]
@@ -153,7 +153,7 @@ namespace opengl {
             printf("NSWindow initWithContentRect failed.\n");
             return;
         }
-        
+
         ((CustomNSWindow *)m_handle->window).window = this;
         [ (NSWindow*) m_handle->window center];
         m_context->delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:this andContextHandle:m_context andWindowHandle:m_handle];
@@ -161,15 +161,15 @@ namespace opengl {
         [m_handle->window setAcceptsMouseMovedEvents:YES];
         [m_handle->window setTitle:@"OpenGL"];
         [m_handle->window setReleasedWhenClosed:NO];
-        
-        m_context->view = [[CustomView alloc] initWithFrame:[m_handle->window frame]andCustomWindow:this];
+
+        m_context->view = [[CustomView alloc] initWithFrame:[m_handle->window frame] andCustomWindow:this];
         if (!m_context->view)
         {
             printf("NSView initWithFrame failed.\n");
             // TODO: delete window
             return;
         }
-        
+
         m_context->view = [m_context->view retain];
 #if 0
         [m_handle->window setContentView:m_view];
@@ -183,7 +183,7 @@ namespace opengl {
 
         // Create menu
         [m_handle->window createMenu];
-        
+
         // configure attributes
         ContextAttribute attrib;
         if (contextAttribute)
@@ -238,7 +238,7 @@ namespace opengl {
             // TODO: delete window
             return;
         }
-        
+
         m_context->ctx = [[NSOpenGLContext alloc]
                   initWithFormat:pixelFormat
                   shareContext: shared ? shared->m_context->ctx : nil];
