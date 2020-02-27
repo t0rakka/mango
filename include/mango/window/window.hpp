@@ -147,9 +147,9 @@ namespace mango
         void setIcon(const Surface& icon);
         void setVisible(bool enable);
 
-        int2 getWindowSize() const;
-		int2 getCursorPosition() const;
-        bool isKeyPressed(Keycode code) const;
+        virtual int2 getWindowSize() const;
+		virtual int2 getCursorPosition() const;
+        virtual bool isKeyPressed(Keycode code) const;
 
 #ifdef MANGO_PLATFORM_WINDOWS
 		operator HWND () const;
