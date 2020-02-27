@@ -263,24 +263,6 @@ namespace
         return bits;
     }
 
-    /*
-    template <typename FloatType>
-    inline u32 floatToByte(FloatType sample)
-    {
-        float v = float(sample);
-        v = clamp(v, 0.0f, 1.0f);
-        return u32(v * 255.0f + 0.5f);
-    }
-    */
-
-    inline u32 packFloat(u32 mask, float v)
-    {
-        v = clamp(v, 0.0f, 1.0f);
-        const u32 lsb = mask ^ (mask - 1);
-        const float bias = lsb * 0.5f; // The rounding bias should be precomputed
-        return u32(v * mask + bias) & mask;
-    }
-
     // ----------------------------------------------------------------------------
     // debug print
     // ----------------------------------------------------------------------------
@@ -326,10 +308,18 @@ namespace
                 u32 v = blitter.initMask | (s & blitter.copyMask);
                 switch (blitter.components)
                 {
-                    case 4: v |= blitter.component[3].computePack(s);
-                    case 3: v |= blitter.component[2].computePack(s);
-                    case 2: v |= blitter.component[1].computePack(s);
-                    case 1: v |= blitter.component[0].computePack(s);
+                    case 4:
+                        v |= blitter.component[3].computePack(s);
+                        // fall-through
+                    case 3:
+                        v |= blitter.component[2].computePack(s);
+                        // fall-through
+                    case 2:
+                        v |= blitter.component[1].computePack(s);
+                        // fall-through
+                    case 1:
+                        v |= blitter.component[0].computePack(s);
+                        // fall-through
                 }
                 dst[x] = DestType(v);
             }
@@ -371,6 +361,15 @@ namespace
         if (sf.isAlpha())
             alphaMask = 0;
 
+        const float scale0 = mask[0];
+        const float scale1 = mask[1];
+        const float scale2 = mask[2];
+        const float scale3 = mask[3];
+        const float bias0 = float(mask[0] ^ (mask[0] - 1)) * 0.5f; // least-significant-bit * 0.5
+        const float bias1 = float(mask[1] ^ (mask[1] - 1)) * 0.5f;
+        const float bias2 = float(mask[2] ^ (mask[2] - 1)) * 0.5f;
+        const float bias3 = float(mask[3] ^ (mask[3] - 1)) * 0.5f;
+
         for (int y = 0; y < rect.height; ++y)
         {
             const SourceType* src = reinterpret_cast<const SourceType*>(source);
@@ -382,10 +381,19 @@ namespace
 
                 switch (components)
                 {
-                    case 4: v |= packFloat(mask[3], src[offset[3]]);
-                    case 3: v |= packFloat(mask[2], src[offset[2]]);
-                    case 2: v |= packFloat(mask[1], src[offset[1]]);
-                    case 1: v |= packFloat(mask[0], src[offset[0]]);
+                    case 4:
+                        
+                        v |= u32(clamp(float(src[offset[3]]), 0.0f, 1.0f) * scale3 + bias3) & mask[3];
+                        // fall-through
+                    case 3:
+                        v |= u32(clamp(float(src[offset[2]]), 0.0f, 1.0f) * scale2 + bias2) & mask[2];
+                        // fall-through
+                    case 2:
+                        v |= u32(clamp(float(src[offset[1]]), 0.0f, 1.0f) * scale1 + bias1) & mask[1];
+                        // fall-through
+                    case 1:
+                        v |= u32(clamp(float(src[offset[0]]), 0.0f, 1.0f) * scale0 + bias0) & mask[0];
+                        // fall-through
                 }
 
                 src += components;
