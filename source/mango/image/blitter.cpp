@@ -361,10 +361,10 @@ namespace
         if (sf.isAlpha())
             alphaMask = 0;
 
-        const float scale0 = mask[0];
-        const float scale1 = mask[1];
-        const float scale2 = mask[2];
-        const float scale3 = mask[3];
+        const float scale0 = float(mask[0]);
+        const float scale1 = float(mask[1]);
+        const float scale2 = float(mask[2]);
+        const float scale3 = float(mask[3]);
         const float bias0 = float(mask[0] ^ (mask[0] - 1)) * 0.5f; // least-significant-bit * 0.5
         const float bias1 = float(mask[1] ^ (mask[1] - 1)) * 0.5f;
         const float bias2 = float(mask[2] ^ (mask[2] - 1)) * 0.5f;
