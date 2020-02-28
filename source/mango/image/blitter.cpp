@@ -382,7 +382,6 @@ namespace
                 switch (components)
                 {
                     case 4:
-                        
                         v |= u32(clamp(float(src[offset[3]]), 0.0f, 1.0f) * scale3 + bias3) & mask[3];
                         // fall-through
                     case 3:
