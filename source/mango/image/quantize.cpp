@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Original NeuQuant implementation (C) 1994 Anthony Becker
@@ -16,16 +16,50 @@ namespace
     using namespace mango;
 
     // ------------------------------------------------------------
-    // NeuQuant
+    // constants
     // ------------------------------------------------------------
 
-    constexpr int NETSIZE = 256; // number of colors used
-    constexpr int INITRAD = NETSIZE >> 3;
+    enum
+    {
+        NETSIZE = 256,
+        INITRAD = NETSIZE >> 3
+    };
+
+    #define prime1		    499
+    #define prime2		    491
+    #define prime3		    487
+    #define prime4		    503
+
+    #define netbiasshift	4
+    #define ncycles			100
+
+    #define intbiasshift    16
+    #define intbias			(((int) 1) << intbiasshift)
+    #define gammashift  	10
+    #define gamma   		(((int) 1) << gammashift)
+    #define betashift  		10
+    #define beta			(intbias >> betashift)
+    #define betagamma		(intbias << (gammashift - betashift))
+
+    #define radiusbiasshift	6
+    #define radiusbias		(((int) 1) << radiusbiasshift)
+    #define initradius		(INITRAD * radiusbias)
+    #define radiusdec		30
+
+    #define alphabiasshift	10
+    #define initalpha		(((int) 1) << alphabiasshift)
+
+    #define radbiasshift	8
+    #define alpharadbshift  (alphabiasshift + radbiasshift)
+
+    // ------------------------------------------------------------
+    // NeuQuant
+    // ------------------------------------------------------------
 
     class NeuQuant
     {
     protected:
-        typedef int Sample[4];
+        using Sample = int[4];
 
         u8* m_image;
         int m_length_count;
@@ -47,40 +81,11 @@ namespace
         void getPalette(Palette& palette) const;
         void buildIndex();
         int getIndex(int r, int g, int b) const;
-        int contest(int b, int g, int r);
+        int contest(int r, int g, int b);
         void alterSingle(int alpha, int i, int r, int g, int b);
         void alterNeigh(int rad, int i, int r, int g, int b);
         void learn();
     };
-
-    #define prime1		    499
-    #define prime2		    491
-    #define prime3		    487
-    #define prime4		    503
-
-    #define netbiasshift	4
-    #define ncycles			100
-
-    #define intbiasshift    16
-    #define intbias			(((int) 1) << intbiasshift)
-    #define gammashift  	10
-    #define gamma   		(((int) 1) << gammashift)
-    #define betashift  		10
-    #define beta			(intbias >> betashift)
-    #define betagamma		(intbias << (gammashift-betashift))
-
-    #define radiusbiasshift	6
-    #define radiusbias		(((int) 1) << radiusbiasshift)
-    #define initradius		(INITRAD * radiusbias)
-    #define radiusdec		30
-
-    #define alphabiasshift	10
-    #define initalpha		(((int) 1) << alphabiasshift)
-
-    #define radbiasshift	8
-    #define radbias			(((int) 1) << radbiasshift)
-    #define alpharadbshift  (alphabiasshift + radbiasshift)
-    #define alpharadbias    (((int) 1) << alpharadbshift)
 
     NeuQuant::NeuQuant()
     {
@@ -175,6 +180,7 @@ namespace
                 startpos = i;
             }
         }
+
         netindex[previouscol] = (startpos + (NETSIZE - 1)) >> 1;
         for (int j = previouscol + 1; j < 256; ++j)
         {
@@ -226,7 +232,7 @@ namespace
                 }
                 else
                 {
-                    j--;
+                    --j;
                     if (dist < 0) dist = -dist;
                     dist += std::abs(p[0] - b);
                     if (dist < bestd)
@@ -245,7 +251,7 @@ namespace
         return best;
     }
 
-    int NeuQuant::contest(int b, int g, int r)
+    int NeuQuant::contest(int r, int g, int b)
     {
         int	bestd = ~(((int)1) << 31);
         int	bestbiasd = bestd;
@@ -296,7 +302,7 @@ namespace
     void NeuQuant::alterNeigh(int rad, int i, int r, int g, int b)
     {
         const int lo = std::max(i - rad, -1);
-        const int hi = std::min(i + rad, NETSIZE);
+        const int hi = std::min(i + rad, int(NETSIZE));
         int	j = i + 1;
         int	k = i - 1;
 
@@ -384,7 +390,7 @@ namespace
             b = p[0] << netbiasshift;
             g = p[1] << netbiasshift;
             r = p[2] << netbiasshift;
-            j = contest(b, g, r);
+            j = contest(r, g, b);
 
             alterSingle(alpha, j, r, g, b);
             if (rad)
@@ -488,8 +494,7 @@ namespace image {
 
         Palette palette = getPalette();
 
-        Bitmap temp(width, height, FORMAT_B8G8R8A8);
-        temp.blit(0, 0, source);
+        Bitmap temp(source, FORMAT_B8G8R8A8);
 
         for (int y = 0; y < height; ++y)
         {
