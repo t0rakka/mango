@@ -534,6 +534,14 @@ namespace mango
         image = new u8[stride * height];
     }
 
+    Bitmap::Bitmap(const Surface& source, const Format& format)
+        : Surface(source.width, source.height, format, 0, nullptr)
+    {
+        stride = width * format.bytes();
+        image = new u8[stride * height];
+        blit(0, 0, source);
+    }
+
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension)
         : Surface(load_surface(memory, extension, nullptr))
     {

@@ -56,6 +56,7 @@ namespace mango
     {
     public:
         Bitmap(int width, int height, const Format& format, int stride = 0);
+        Bitmap(const Surface& source, const Format& format);
         Bitmap(ConstMemory memory, const std::string& extension);
         Bitmap(ConstMemory memory, const std::string& extension, const Format& format);
         Bitmap(const std::string& filename);
