@@ -53,92 +53,24 @@ namespace
     #define alpharadbshift  (alphabiasshift + radbiasshift)
 
     // ------------------------------------------------------------
-    // NeuQuant
+    // ColorMapper
     // ------------------------------------------------------------
 
-    class NeuQuant
+    class ColorMapper
     {
     protected:
         using Sample = int[4];
 
-        u8* m_image;
-        int m_length_count;
-        int m_sample_factor; // 1..30
-
         Sample m_network[NETSIZE];
-
-        int netindex[256];
-        int bias[NETSIZE];
-        int freq[NETSIZE];
-        int radpower[INITRAD];
+        int m_netindex[256];
 
     public:
-        NeuQuant();
-        ~NeuQuant();
-
-        void init(u8* image, int length, int sample_factor);
-        void unbias();
-        void getPalette(Palette& palette) const;
         void buildIndex();
         int getIndex(int r, int g, int b) const;
-        int contest(int r, int g, int b);
-        void alterSingle(int alpha, int i, int r, int g, int b);
-        void alterNeigh(int rad, int i, int r, int g, int b);
-        void learn();
+        void getPalette(Palette& palette) const;
     };
 
-    NeuQuant::NeuQuant()
-    {
-        m_image = nullptr;
-        m_length_count = 0;
-        m_sample_factor = 1;
-    }
-
-    NeuQuant::~NeuQuant()
-    {
-    }
-
-    void NeuQuant::init(u8* image, int length, int sample_factor)
-    {
-        m_image = image;
-        m_length_count = length;
-        m_sample_factor = sample_factor;
-
-        for (int i = 0; i < NETSIZE; ++i)
-        {
-            int* p = m_network[i];
-            p[0] = p[1] = p[2] = (i << (netbiasshift + 8)) / NETSIZE;
-            freq[i] = intbias / NETSIZE;
-            bias[i] = 0;
-        }
-    }
-
-    void NeuQuant::unbias()
-    {
-        for (int i = 0; i < NETSIZE; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                constexpr int bias = 1 << (netbiasshift - 1);
-                m_network[i][j] = clamp((m_network[i][j] + bias) >> netbiasshift, 0, 255);
-            }
-            m_network[i][3] = i;
-        }
-    }
-
-    void NeuQuant::getPalette(Palette& palette) const
-    {
-        palette.size = NETSIZE;
-        for (int i = 0; i < NETSIZE; ++i)
-        {
-            palette.color[i].b = m_network[i][0];
-            palette.color[i].g = m_network[i][1];
-            palette.color[i].r = m_network[i][2];
-            palette.color[i].a = 0xff;
-        }
-    }
-
-    void NeuQuant::buildIndex()
+    void ColorMapper::buildIndex()
     {
         int previouscol = 0;
         int startpos = 0;
@@ -171,28 +103,28 @@ namespace
 
             if (smallval != previouscol)
             {
-                netindex[previouscol] = (startpos + i) >> 1;
+                m_netindex[previouscol] = (startpos + i) >> 1;
                 for (int j = previouscol + 1; j < smallval; ++j)
                 {
-                    netindex[j] = i;
+                    m_netindex[j] = i;
                 }
                 previouscol = smallval;
                 startpos = i;
             }
         }
 
-        netindex[previouscol] = (startpos + (NETSIZE - 1)) >> 1;
+        m_netindex[previouscol] = (startpos + (NETSIZE - 1)) >> 1;
         for (int j = previouscol + 1; j < 256; ++j)
         {
-            netindex[j] = NETSIZE - 1;
+            m_netindex[j] = NETSIZE - 1;
         }
     }
 
-    int NeuQuant::getIndex(int r, int g, int b) const
+    int ColorMapper::getIndex(int r, int g, int b) const
     {
         int	bestd = 1000;
         int	best = -1;
-        int	i = netindex[g];
+        int	i = m_netindex[g];
         int	j = i - 1;
 
         while ((i < NETSIZE) || (j >= 0))
@@ -249,6 +181,84 @@ namespace
         }
 
         return best;
+    }
+
+    void ColorMapper::getPalette(Palette& palette) const
+    {
+        palette.size = NETSIZE;
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            palette.color[i].b = m_network[i][0];
+            palette.color[i].g = m_network[i][1];
+            palette.color[i].r = m_network[i][2];
+            palette.color[i].a = 0xff;
+        }
+    }
+
+    // ------------------------------------------------------------
+    // NeuQuant
+    // ------------------------------------------------------------
+
+    class NeuQuant : public ColorMapper
+    {
+    protected:
+        u8* m_image;
+        int m_length_count;
+        int m_sample_factor; // 1..30
+
+        int bias[NETSIZE];
+        int freq[NETSIZE];
+        int radpower[INITRAD];
+
+    public:
+        NeuQuant();
+        ~NeuQuant();
+
+        void init(u8* image, int length, int sample_factor);
+        void unbias();
+        int contest(int r, int g, int b);
+        void alterSingle(int alpha, int i, int r, int g, int b);
+        void alterNeigh(int rad, int i, int r, int g, int b);
+        void learn();
+    };
+
+    NeuQuant::NeuQuant()
+    {
+        m_image = nullptr;
+        m_length_count = 0;
+        m_sample_factor = 1;
+    }
+
+    NeuQuant::~NeuQuant()
+    {
+    }
+
+    void NeuQuant::init(u8* image, int length, int sample_factor)
+    {
+        m_image = image;
+        m_length_count = length;
+        m_sample_factor = sample_factor;
+
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            int* p = m_network[i];
+            p[0] = p[1] = p[2] = (i << (netbiasshift + 8)) / NETSIZE;
+            freq[i] = intbias / NETSIZE;
+            bias[i] = 0;
+        }
+    }
+
+    void NeuQuant::unbias()
+    {
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                constexpr int bias = 1 << (netbiasshift - 1);
+                m_network[i][j] = clamp((m_network[i][j] + bias) >> netbiasshift, 0, 255);
+            }
+            m_network[i][3] = i;
+        }
     }
 
     int NeuQuant::contest(int r, int g, int b)
