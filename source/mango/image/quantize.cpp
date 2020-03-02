@@ -53,187 +53,31 @@ namespace
     #define alpharadbshift  (alphabiasshift + radbiasshift)
 
     // ------------------------------------------------------------
-    // ColorMapper
-    // ------------------------------------------------------------
-
-    class ColorMapper
-    {
-    protected:
-        using Sample = int[4];
-
-        Sample m_network[NETSIZE];
-        int m_netindex[256];
-
-    public:
-        void buildIndex();
-        int getIndex(int r, int g, int b) const;
-        void getPalette(Palette& palette) const;
-    };
-
-    void ColorMapper::buildIndex()
-    {
-        int previouscol = 0;
-        int startpos = 0;
-
-        for (int i = 0; i < NETSIZE; ++i)
-        {
-            int* p = m_network[i];
-            int smallpos = i;
-            int smallval = p[1];
-
-            int* q;
-            for (int j = i + 1; j < NETSIZE; ++j)
-            {
-                q = m_network[j];
-                if (q[1] < smallval)
-                {
-                    smallpos = j;
-                    smallval = q[1];
-                }
-            }
-            q = m_network[smallpos];
-
-            if (i != smallpos)
-            {
-                std::swap(q[0], p[0]);
-                std::swap(q[1], p[1]);
-                std::swap(q[2], p[2]);
-                std::swap(q[3], p[3]);
-            }
-
-            if (smallval != previouscol)
-            {
-                m_netindex[previouscol] = (startpos + i) >> 1;
-                for (int j = previouscol + 1; j < smallval; ++j)
-                {
-                    m_netindex[j] = i;
-                }
-                previouscol = smallval;
-                startpos = i;
-            }
-        }
-
-        m_netindex[previouscol] = (startpos + (NETSIZE - 1)) >> 1;
-        for (int j = previouscol + 1; j < 256; ++j)
-        {
-            m_netindex[j] = NETSIZE - 1;
-        }
-    }
-
-    int ColorMapper::getIndex(int r, int g, int b) const
-    {
-        int	bestd = 1000;
-        int	best = -1;
-        int	i = m_netindex[g];
-        int	j = i - 1;
-
-        while ((i < NETSIZE) || (j >= 0))
-        {
-            if (i < NETSIZE)
-            {
-                const int* p = m_network[i];
-                int dist = p[1] - g;
-                if (dist >= bestd)
-                {
-                    i = NETSIZE;
-                }
-                else
-                {
-                    ++i;
-                    if (dist < 0) dist = -dist;
-                    dist += std::abs(p[0] - b);
-                    if (dist < bestd)
-                    {
-                        dist += std::abs(p[2] - r);
-                        if (dist < bestd)
-                        {
-                            bestd = dist;
-                            best = p[3];
-                        }
-                    }
-                }
-            }
-
-            if (j >= 0)
-            {
-                const int* p = m_network[j];
-                int dist = g - p[1];
-                if (dist >= bestd)
-                {
-                    j = -1;
-                }
-                else
-                {
-                    --j;
-                    if (dist < 0) dist = -dist;
-                    dist += std::abs(p[0] - b);
-                    if (dist < bestd)
-                    {
-                        dist += std::abs(p[2] - r);
-                        if (dist < bestd)
-                        {
-                            bestd = dist;
-                            best = p[3];
-                        }
-                    }
-                }
-            }
-        }
-
-        return best;
-    }
-
-    void ColorMapper::getPalette(Palette& palette) const
-    {
-        palette.size = NETSIZE;
-        for (int i = 0; i < NETSIZE; ++i)
-        {
-            palette.color[i].b = m_network[i][0];
-            palette.color[i].g = m_network[i][1];
-            palette.color[i].r = m_network[i][2];
-            palette.color[i].a = 0xff;
-        }
-    }
-
-    // ------------------------------------------------------------
     // NeuQuant
     // ------------------------------------------------------------
 
-    class NeuQuant : public ColorMapper
+    struct NeuQuant
     {
-    protected:
         u8* m_image;
         int m_length_count;
         int m_sample_factor; // 1..30
 
+        int network[NETSIZE][4];
         int bias[NETSIZE];
         int freq[NETSIZE];
         int radpower[INITRAD];
 
-    public:
-        NeuQuant();
+        NeuQuant(u8* image, int length, int sample_factor);
         ~NeuQuant();
 
-        void init(u8* image, int length, int sample_factor);
-        void unbias();
         int contest(int r, int g, int b);
         void alterSingle(int alpha, int i, int r, int g, int b);
         void alterNeigh(int rad, int i, int r, int g, int b);
         void learn();
+        void unbias();
     };
 
-    NeuQuant::NeuQuant()
-    {
-        m_image = nullptr;
-        m_length_count = 0;
-        m_sample_factor = 1;
-    }
-
-    NeuQuant::~NeuQuant()
-    {
-    }
-
-    void NeuQuant::init(u8* image, int length, int sample_factor)
+    NeuQuant::NeuQuant(u8* image, int length, int sample_factor)
     {
         m_image = image;
         m_length_count = length;
@@ -241,24 +85,18 @@ namespace
 
         for (int i = 0; i < NETSIZE; ++i)
         {
-            int* p = m_network[i];
+            int* p = network[i];
             p[0] = p[1] = p[2] = (i << (netbiasshift + 8)) / NETSIZE;
             freq[i] = intbias / NETSIZE;
             bias[i] = 0;
         }
+
+        learn();
+        unbias();
     }
 
-    void NeuQuant::unbias()
+    NeuQuant::~NeuQuant()
     {
-        for (int i = 0; i < NETSIZE; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                constexpr int bias = 1 << (netbiasshift - 1);
-                m_network[i][j] = clamp((m_network[i][j] + bias) >> netbiasshift, 0, 255);
-            }
-            m_network[i][3] = i;
-        }
     }
 
     int NeuQuant::contest(int r, int g, int b)
@@ -272,7 +110,7 @@ namespace
 
         for (int i = 0; i < NETSIZE; ++i)
         {
-            const int* n = m_network[i];
+            const int* n = network[i];
             int dist = std::abs(n[0] - b) +
                        std::abs(n[1] - g) +
                        std::abs(n[2] - r);
@@ -303,7 +141,7 @@ namespace
 
     void NeuQuant::alterSingle(int alpha, int i, int r, int g, int b)
     {
-        int* n = m_network[i];
+        int* n = network[i];
         n[0] -= (alpha * (n[0] - b)) >> alphabiasshift;
         n[1] -= (alpha * (n[1] - g)) >> alphabiasshift;
         n[2] -= (alpha * (n[2] - r)) >> alphabiasshift;
@@ -324,14 +162,14 @@ namespace
 
             if (j < hi)
             {
-                p = m_network[j++];
+                p = network[j++];
                 p[0] -= (a * (p[0] - b)) >> alpharadbshift;
                 p[1] -= (a * (p[1] - g)) >> alpharadbshift;
                 p[2] -= (a * (p[2] - r)) >> alpharadbshift;
             }
             if (k > lo)
             {
-                p = m_network[k--];
+                p = network[k--];
                 p[0] -= (a * (p[0] - b)) >> alpharadbshift;
                 p[1] -= (a * (p[1] - g)) >> alpharadbshift;
                 p[2] -= (a * (p[2] - r)) >> alpharadbshift;
@@ -342,6 +180,7 @@ namespace
     void NeuQuant::learn()
     {
         const int alphadec = 30 + ((m_sample_factor - 1) / 3);
+
         u8*	p = m_image;
         u8*	lim = m_image + m_length_count;
         int samplepixels = m_length_count / (4 * m_sample_factor);
@@ -443,48 +282,73 @@ namespace
         }
     }
 
+    void NeuQuant::unbias()
+    {
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                constexpr int bias = 1 << (netbiasshift - 1);
+                network[i][j] = clamp((network[i][j] + bias) >> netbiasshift, 0, 255);
+            }
+
+            network[i][3] = i;
+        }
+    }
+
 } // namespace
 
 namespace mango {
 namespace image {
 
-    struct ColorQuantizerContext
-    {
-        NeuQuant nq;
-        Palette palette;
-
-        ColorQuantizerContext(const Surface& source, float quality)
-        {
-            quality = clamp(quality, 0.0f, 1.0f);
-            int sample_factor = std::max(1, 30 - int(quality * 29.0f + 1.0f));
-
-            int width = source.width;
-            int height = source.height;
-
-            Bitmap temp(width, height, FORMAT_B8G8R8A8);
-            temp.blit(0, 0, source);
-
-            nq.init(temp.image, width * height * 4, sample_factor);
-            nq.learn();
-            nq.unbias();
-            nq.getPalette(palette);
-            nq.buildIndex();
-        }
-    };
-
     ColorQuantizer::ColorQuantizer(const Surface& source, float quality)
     {
-        context = new ColorQuantizerContext(source, quality);
+        quality = clamp(quality, 0.0f, 1.0f);
+        int sample_factor = std::max(1, 30 - int(quality * 29.0f + 1.0f));
+
+        Bitmap temp(source, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
+        NeuQuant nq(temp.image, temp.width * temp.height * 4, sample_factor);
+
+        m_palette.size = NETSIZE;
+
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            m_palette.color[i].b = nq.network[i][0];
+            m_palette.color[i].g = nq.network[i][1];
+            m_palette.color[i].r = nq.network[i][2];
+            m_palette.color[i].a = 0xff;
+
+            m_network[i][0] = nq.network[i][0];
+            m_network[i][1] = nq.network[i][1];
+            m_network[i][2] = nq.network[i][2];
+            m_network[i][3] = nq.network[i][3];
+        }
+
+        buildIndex();
+    }
+
+    ColorQuantizer::ColorQuantizer(const Palette& palette)
+    {
+        m_palette = palette;
+
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            m_network[i][0] = palette[i].b;
+            m_network[i][1] = palette[i].g;
+            m_network[i][2] = palette[i].r;
+            m_network[i][3] = i;
+        }
+
+        buildIndex();
     }
 
     ColorQuantizer::~ColorQuantizer()
     {
-        delete context;
     }
 
     Palette ColorQuantizer::getPalette() const
     {
-        return context->palette;
+        return m_palette;
     }
 
     void ColorQuantizer::quantize(const Surface& dest, const Surface& source, bool dithering)
@@ -499,12 +363,10 @@ namespace image {
             MANGO_EXCEPTION("[ColorQuantizer] The destination and source dimensions must be identical.");
         }
 
-        int width = source.width;
-        int height = source.height;
+        Bitmap temp(source, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
-        Palette palette = getPalette();
-
-        Bitmap temp(source, FORMAT_B8G8R8A8);
+        int width = temp.width;
+        int height = temp.height;
 
         for (int y = 0; y < height; ++y)
         {
@@ -517,15 +379,15 @@ namespace image {
                 int r = s[x].r;
                 int g = s[x].g;
                 int b = s[x].b;
-                u8 index = context->nq.getIndex(r, g, b);
+                u8 index = getIndex(r, g, b);
                 d[x] = index;
 
                 if (dithering)
                 {
                     // quantization error
-                    r -= palette[index].r;
-                    g -= palette[index].g;
-                    b -= palette[index].b;
+                    r -= m_palette[index].r;
+                    g -= m_palette[index].g;
+                    b -= m_palette[index].b;
 
                     // distribute the error to neighbouring pixels with Floyd-Steinberg weights
                     if (x < width - 1)
@@ -555,6 +417,119 @@ namespace image {
                 }
             }
         }
+    }
+
+    void ColorQuantizer::buildIndex()
+    {
+        int previouscol = 0;
+        int startpos = 0;
+
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            int* p = m_network[i];
+            int smallpos = i;
+            int smallval = p[1];
+
+            int* q;
+            for (int j = i + 1; j < NETSIZE; ++j)
+            {
+                q = m_network[j];
+                if (q[1] < smallval)
+                {
+                    smallpos = j;
+                    smallval = q[1];
+                }
+            }
+            q = m_network[smallpos];
+
+            if (i != smallpos)
+            {
+                std::swap(q[0], p[0]);
+                std::swap(q[1], p[1]);
+                std::swap(q[2], p[2]);
+                std::swap(q[3], p[3]);
+            }
+
+            if (smallval != previouscol)
+            {
+                m_netindex[previouscol] = (startpos + i) >> 1;
+                for (int j = previouscol + 1; j < smallval; ++j)
+                {
+                    m_netindex[j] = i;
+                }
+                previouscol = smallval;
+                startpos = i;
+            }
+        }
+
+        m_netindex[previouscol] = (startpos + (NETSIZE - 1)) >> 1;
+        for (int j = previouscol + 1; j < 256; ++j)
+        {
+            m_netindex[j] = NETSIZE - 1;
+        }
+    }
+
+    int ColorQuantizer::getIndex(int r, int g, int b) const
+    {
+        int	bestd = 1000;
+        int	best = -1;
+        int	i = m_netindex[g];
+        int	j = i - 1;
+
+        while ((i < NETSIZE) || (j >= 0))
+        {
+            if (i < NETSIZE)
+            {
+                const int* p = m_network[i];
+                int dist = p[1] - g;
+                if (dist >= bestd)
+                {
+                    i = NETSIZE;
+                }
+                else
+                {
+                    ++i;
+                    if (dist < 0) dist = -dist;
+                    dist += std::abs(p[0] - b);
+                    if (dist < bestd)
+                    {
+                        dist += std::abs(p[2] - r);
+                        if (dist < bestd)
+                        {
+                            bestd = dist;
+                            best = p[3];
+                        }
+                    }
+                }
+            }
+
+            if (j >= 0)
+            {
+                const int* p = m_network[j];
+                int dist = g - p[1];
+                if (dist >= bestd)
+                {
+                    j = -1;
+                }
+                else
+                {
+                    --j;
+                    if (dist < 0) dist = -dist;
+                    dist += std::abs(p[0] - b);
+                    if (dist < bestd)
+                    {
+                        dist += std::abs(p[2] - r);
+                        if (dist < bestd)
+                        {
+                            bestd = dist;
+                            best = p[3];
+                        }
+                    }
+                }
+            }
+        }
+
+        return best;
     }
 
 } // namespace image
