@@ -146,8 +146,19 @@ namespace moodycamel { namespace details {
 	typedef std::uintptr_t thread_id_t;
 	static const thread_id_t invalid_thread_id  = 0;		// Address can't be nullptr
 	static const thread_id_t invalid_thread_id2 = 1;		// Member accesses off a null pointer are also generally invalid. Plus it's not aligned.
-	static inline thread_id_t thread_id() { static MOODYCAMEL_THREADLOCAL int x; return reinterpret_cast<thread_id_t>(&x); }
+	inline thread_id_t thread_id() { static MOODYCAMEL_THREADLOCAL int x; return reinterpret_cast<thread_id_t>(&x); }
 } }
+#endif
+
+// Constexpr if
+#ifndef MOODYCAMEL_CONSTEXPR_IF
+#if (defined(_MSC_VER) && defined(_HAS_CXX17) && _HAS_CXX17) || __cplusplus > 201402L
+#define MOODYCAMEL_CONSTEXPR_IF if constexpr
+#define MOODYCAMEL_MAYBE_UNUSED [[maybe_unused]]
+#else
+#define MOODYCAMEL_CONSTEXPR_IF if
+#define MOODYCAMEL_MAYBE_UNUSED
+#endif
 #endif
 
 // Exceptions
@@ -162,8 +173,8 @@ namespace moodycamel { namespace details {
 #define MOODYCAMEL_RETHROW throw
 #define MOODYCAMEL_THROW(expr) throw (expr)
 #else
-#define MOODYCAMEL_TRY if (true)
-#define MOODYCAMEL_CATCH(...) else if (false)
+#define MOODYCAMEL_TRY MOODYCAMEL_CONSTEXPR_IF (true)
+#define MOODYCAMEL_CATCH(...) else MOODYCAMEL_CONSTEXPR_IF (false)
 #define MOODYCAMEL_RETHROW
 #define MOODYCAMEL_THROW(expr)
 #endif
@@ -213,6 +224,19 @@ namespace moodycamel { namespace details {
 #define MOODYCAMEL_DELETE_FUNCTION = delete
 #endif
 #endif
+
+#ifndef MOODYCAMEL_ALIGNAS
+// VS2013 doesn't support alignas or alignof
+#if defined(_MSC_VER) && _MSC_VER <= 1800
+#define MOODYCAMEL_ALIGNAS(alignment) __declspec(align(alignment))
+#define MOODYCAMEL_ALIGNOF(obj) __alignof(obj)
+#else
+#define MOODYCAMEL_ALIGNAS(alignment) alignas(alignment)
+#define MOODYCAMEL_ALIGNOF(obj) alignof(obj)
+#endif
+#endif
+
+
 
 // Compiler-specific likely/unlikely hints
 namespace moodycamel { namespace details {
@@ -785,7 +809,7 @@ public:
 		}
 		
 		// Destroy implicit producer hash tables
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE != 0) {
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE != 0) {
 			auto hash = implicitProducerHash.load(std::memory_order_relaxed);
 			while (hash != nullptr) {
 				auto prev = hash->prev;
@@ -910,8 +934,8 @@ public:
 	// Thread-safe.
 	inline bool enqueue(T const& item)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
-		return inner_enqueue<CanAlloc>(item);
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
+		else return inner_enqueue<CanAlloc>(item);
 	}
 	
 	// Enqueues a single item (by moving it, if possible).
@@ -921,8 +945,8 @@ public:
 	// Thread-safe.
 	inline bool enqueue(T&& item)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
-		return inner_enqueue<CanAlloc>(std::move(item));
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
+		else return inner_enqueue<CanAlloc>(std::move(item));
 	}
 	
 	// Enqueues a single item (by copying it) using an explicit producer token.
@@ -952,8 +976,8 @@ public:
 	template<typename It>
 	bool enqueue_bulk(It itemFirst, size_t count)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
-		return inner_enqueue_bulk<CanAlloc>(itemFirst, count);
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
+		else return inner_enqueue_bulk<CanAlloc>(itemFirst, count);
 	}
 	
 	// Enqueues several items using an explicit producer token.
@@ -975,8 +999,8 @@ public:
 	// Thread-safe.
 	inline bool try_enqueue(T const& item)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
-		return inner_enqueue<CannotAlloc>(item);
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
+		else return inner_enqueue<CannotAlloc>(item);
 	}
 	
 	// Enqueues a single item (by moving it, if possible).
@@ -986,8 +1010,8 @@ public:
 	// Thread-safe.
 	inline bool try_enqueue(T&& item)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
-		return inner_enqueue<CannotAlloc>(std::move(item));
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
+		else return inner_enqueue<CannotAlloc>(std::move(item));
 	}
 	
 	// Enqueues a single item (by copying it) using an explicit producer token.
@@ -1016,8 +1040,8 @@ public:
 	template<typename It>
 	bool try_enqueue_bulk(It itemFirst, size_t count)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
-		return inner_enqueue_bulk<CannotAlloc>(itemFirst, count);
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return false;
+		else return inner_enqueue_bulk<CannotAlloc>(itemFirst, count);
 	}
 	
 	// Enqueues several items using an explicit producer token.
@@ -1485,7 +1509,7 @@ private:
 		template<InnerQueueContext context>
 		inline bool is_empty() const
 		{
-			if (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
+			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Check flags
 				for (size_t i = 0; i < BLOCK_SIZE; ++i) {
 					if (!emptyFlags[i].load(std::memory_order_relaxed)) {
@@ -1510,9 +1534,9 @@ private:
 		
 		// Returns true if the block is now empty (does not apply in explicit context)
 		template<InnerQueueContext context>
-		inline bool set_empty(index_t i)
+		inline bool set_empty(MOODYCAMEL_MAYBE_UNUSED index_t i)
 		{
-			if (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
+			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Set flag
 				assert(!emptyFlags[BLOCK_SIZE - 1 - static_cast<size_t>(i & static_cast<index_t>(BLOCK_SIZE - 1))].load(std::memory_order_relaxed));
 				emptyFlags[BLOCK_SIZE - 1 - static_cast<size_t>(i & static_cast<index_t>(BLOCK_SIZE - 1))].store(true, std::memory_order_release);
@@ -1529,9 +1553,9 @@ private:
 		// Sets multiple contiguous item statuses to 'empty' (assumes no wrapping and count > 0).
 		// Returns true if the block is now empty (does not apply in explicit context).
 		template<InnerQueueContext context>
-		inline bool set_many_empty(index_t i, size_t count)
+		inline bool set_many_empty(MOODYCAMEL_MAYBE_UNUSED index_t i, size_t count)
 		{
-			if (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
+			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Set flags
 				std::atomic_thread_fence(std::memory_order_release);
 				i = BLOCK_SIZE - 1 - static_cast<size_t>(i & static_cast<index_t>(BLOCK_SIZE - 1)) - count + 1;
@@ -1552,7 +1576,7 @@ private:
 		template<InnerQueueContext context>
 		inline void set_all_empty()
 		{
-			if (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
+			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Set all flags
 				for (size_t i = 0; i != BLOCK_SIZE; ++i) {
 					emptyFlags[i].store(true, std::memory_order_relaxed);
@@ -1567,7 +1591,7 @@ private:
 		template<InnerQueueContext context>
 		inline void reset_empty()
 		{
-			if (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
+			MOODYCAMEL_CONSTEXPR_IF (context == explicit_context && BLOCK_SIZE <= EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD) {
 				// Reset flags
 				for (size_t i = 0; i != BLOCK_SIZE; ++i) {
 					emptyFlags[i].store(false, std::memory_order_relaxed);
@@ -1583,20 +1607,8 @@ private:
 		inline T const* operator[](index_t idx) const MOODYCAMEL_NOEXCEPT { return static_cast<T const*>(static_cast<void const*>(elements)) + static_cast<size_t>(idx & static_cast<index_t>(BLOCK_SIZE - 1)); }
 		
 	private:
-		// IMPORTANT: This must be the first member in Block, so that if T depends on the alignment of
-		// addresses returned by malloc, that alignment will be preserved. Apparently clang actually
-		// generates code that uses this assumption for AVX instructions in some cases. Ideally, we
-		// should also align Block to the alignment of T in case it's higher than malloc's 16-byte
-		// alignment, but this is hard to do in a cross-platform way. Assert for this case:
-		static_assert(std::alignment_of<T>::value <= std::alignment_of<details::max_align_t>::value, "The queue does not support super-aligned types at this time");
-		// Additionally, we need the alignment of Block itself to be a multiple of max_align_t since
-		// otherwise the appropriate padding will not be added at the end of Block in order to make
-		// arrays of Blocks all be properly aligned (not just the first one). We use a union to force
-		// this.
-		union {
-			char elements[sizeof(T) * BLOCK_SIZE];
-			details::max_align_t dummy;
-		};
+		static_assert(std::alignment_of<T>::value <= sizeof(T), "The queue does not support types with an alignment greater than their size at this time");
+		MOODYCAMEL_ALIGNAS(MOODYCAMEL_ALIGNOF(T)) char elements[sizeof(T) * BLOCK_SIZE];
 	public:
 		Block* next;
 		std::atomic<size_t> elementsCompletelyDequeued;
@@ -1611,7 +1623,7 @@ private:
 		void* owner;
 #endif
 	};
-	static_assert(std::alignment_of<Block>::value >= std::alignment_of<details::max_align_t>::value, "Internal error: Blocks must be at least as aligned as the type they are wrapping");
+	static_assert(std::alignment_of<Block>::value >= std::alignment_of<T>::value, "Internal error: Blocks must be at least as aligned as the type they are wrapping");
 
 
 #ifdef MCDBGQ_TRACKMEM
@@ -1697,8 +1709,8 @@ private:
 		
 	struct ExplicitProducer : public ProducerBase
 	{
-		explicit ExplicitProducer(ConcurrentQueue* parent) :
-			ProducerBase(parent, true),
+		explicit ExplicitProducer(ConcurrentQueue* parent_) :
+			ProducerBase(parent_, true),
 			blockIndex(nullptr),
 			pr_blockIndexSlotsUsed(0),
 			pr_blockIndexSize(EXPLICIT_INITIAL_INDEX_SIZE >> 1),
@@ -1706,7 +1718,7 @@ private:
 			pr_blockIndexEntries(nullptr),
 			pr_blockIndexRaw(nullptr)
 		{
-			size_t poolBasedIndexSize = details::ceil_to_pow_2(parent->initialBlockPoolSize) >> 1;
+			size_t poolBasedIndexSize = details::ceil_to_pow_2(parent_->initialBlockPoolSize) >> 1;
 			if (poolBasedIndexSize > pr_blockIndexSize) {
 				pr_blockIndexSize = poolBasedIndexSize;
 			}
@@ -1818,7 +1830,10 @@ private:
 						// to allocate a new index. Note pr_blockIndexRaw can only be nullptr if
 						// the initial allocation failed in the constructor.
 						
-						if (allocMode == CannotAlloc || !new_block_index(pr_blockIndexSlotsUsed)) {
+						MOODYCAMEL_CONSTEXPR_IF (allocMode == CannotAlloc) {
+							return false;
+						}
+						else if (!new_block_index(pr_blockIndexSlotsUsed)) {
 							return false;
 						}
 					}
@@ -2022,7 +2037,14 @@ private:
 					assert(!details::circular_less_than<index_t>(currentTailIndex, head));
 					bool full = !details::circular_less_than<index_t>(head, currentTailIndex + BLOCK_SIZE) || (MAX_SUBQUEUE_SIZE != details::const_numeric_max<size_t>::value && (MAX_SUBQUEUE_SIZE == 0 || MAX_SUBQUEUE_SIZE - BLOCK_SIZE < currentTailIndex - head));
 					if (pr_blockIndexRaw == nullptr || pr_blockIndexSlotsUsed == pr_blockIndexSize || full) {
-						if (allocMode == CannotAlloc || full || !new_block_index(originalBlockIndexSlotsUsed)) {
+						MOODYCAMEL_CONSTEXPR_IF (allocMode == CannotAlloc) {
+							// Failed to allocate, undo changes (but keep injected blocks)
+							pr_blockIndexFront = originalBlockIndexFront;
+							pr_blockIndexSlotsUsed = originalBlockIndexSlotsUsed;
+							this->tailBlock = startBlock == nullptr ? firstAllocatedBlock : startBlock;
+							return false;
+						}
+						else if (full || !new_block_index(originalBlockIndexSlotsUsed)) {
 							// Failed to allocate, undo changes (but keep injected blocks)
 							pr_blockIndexFront = originalBlockIndexFront;
 							pr_blockIndexSlotsUsed = originalBlockIndexSlotsUsed;
@@ -2343,8 +2365,8 @@ private:
 	
 	struct ImplicitProducer : public ProducerBase
 	{			
-		ImplicitProducer(ConcurrentQueue* parent) :
-			ProducerBase(parent, false),
+		ImplicitProducer(ConcurrentQueue* parent_) :
+			ProducerBase(parent_, false),
 			nextBlockIndexCapacity(IMPLICIT_INITIAL_INDEX_SIZE),
 			blockIndex(nullptr)
 		{
@@ -2830,7 +2852,10 @@ private:
 			}
 			
 			// No room in the old block index, try to allocate another one!
-			if (allocMode == CannotAlloc || !new_block_index()) {
+			MOODYCAMEL_CONSTEXPR_IF (allocMode == CannotAlloc) {
+				return false;
+			}
+			else if (!new_block_index()) {
 				return false;
 			}
 			localBlockIndex = blockIndex.load(std::memory_order_relaxed);
@@ -3010,11 +3035,12 @@ private:
 			return block;
 		}
 		
-		if (canAlloc == CanAlloc) {
+		MOODYCAMEL_CONSTEXPR_IF (canAlloc == CanAlloc) {
 			return create<Block>();
 		}
-		
-		return nullptr;
+		else {
+			return nullptr;
+		}
 	}
 	
 
@@ -3243,50 +3269,56 @@ private:
 	
 	inline void populate_initial_implicit_producer_hash()
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return;
-		
-		implicitProducerHashCount.store(0, std::memory_order_relaxed);
-		auto hash = &initialImplicitProducerHash;
-		hash->capacity = INITIAL_IMPLICIT_PRODUCER_HASH_SIZE;
-		hash->entries = &initialImplicitProducerHashEntries[0];
-		for (size_t i = 0; i != INITIAL_IMPLICIT_PRODUCER_HASH_SIZE; ++i) {
-			initialImplicitProducerHashEntries[i].key.store(details::invalid_thread_id, std::memory_order_relaxed);
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) {
+			return;
 		}
-		hash->prev = nullptr;
-		implicitProducerHash.store(hash, std::memory_order_relaxed);
+		else {
+			implicitProducerHashCount.store(0, std::memory_order_relaxed);
+			auto hash = &initialImplicitProducerHash;
+			hash->capacity = INITIAL_IMPLICIT_PRODUCER_HASH_SIZE;
+			hash->entries = &initialImplicitProducerHashEntries[0];
+			for (size_t i = 0; i != INITIAL_IMPLICIT_PRODUCER_HASH_SIZE; ++i) {
+				initialImplicitProducerHashEntries[i].key.store(details::invalid_thread_id, std::memory_order_relaxed);
+			}
+			hash->prev = nullptr;
+			implicitProducerHash.store(hash, std::memory_order_relaxed);
+		}
 	}
 	
 	void swap_implicit_producer_hashes(ConcurrentQueue& other)
 	{
-		if (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) return;
-		
-		// Swap (assumes our implicit producer hash is initialized)
-		initialImplicitProducerHashEntries.swap(other.initialImplicitProducerHashEntries);
-		initialImplicitProducerHash.entries = &initialImplicitProducerHashEntries[0];
-		other.initialImplicitProducerHash.entries = &other.initialImplicitProducerHashEntries[0];
-		
-		details::swap_relaxed(implicitProducerHashCount, other.implicitProducerHashCount);
-		
-		details::swap_relaxed(implicitProducerHash, other.implicitProducerHash);
-		if (implicitProducerHash.load(std::memory_order_relaxed) == &other.initialImplicitProducerHash) {
-			implicitProducerHash.store(&initialImplicitProducerHash, std::memory_order_relaxed);
+		MOODYCAMEL_CONSTEXPR_IF (INITIAL_IMPLICIT_PRODUCER_HASH_SIZE == 0) {
+			return;
 		}
 		else {
-			ImplicitProducerHash* hash;
-			for (hash = implicitProducerHash.load(std::memory_order_relaxed); hash->prev != &other.initialImplicitProducerHash; hash = hash->prev) {
-				continue;
+			// Swap (assumes our implicit producer hash is initialized)
+			initialImplicitProducerHashEntries.swap(other.initialImplicitProducerHashEntries);
+			initialImplicitProducerHash.entries = &initialImplicitProducerHashEntries[0];
+			other.initialImplicitProducerHash.entries = &other.initialImplicitProducerHashEntries[0];
+			
+			details::swap_relaxed(implicitProducerHashCount, other.implicitProducerHashCount);
+			
+			details::swap_relaxed(implicitProducerHash, other.implicitProducerHash);
+			if (implicitProducerHash.load(std::memory_order_relaxed) == &other.initialImplicitProducerHash) {
+				implicitProducerHash.store(&initialImplicitProducerHash, std::memory_order_relaxed);
 			}
-			hash->prev = &initialImplicitProducerHash;
-		}
-		if (other.implicitProducerHash.load(std::memory_order_relaxed) == &initialImplicitProducerHash) {
-			other.implicitProducerHash.store(&other.initialImplicitProducerHash, std::memory_order_relaxed);
-		}
-		else {
-			ImplicitProducerHash* hash;
-			for (hash = other.implicitProducerHash.load(std::memory_order_relaxed); hash->prev != &initialImplicitProducerHash; hash = hash->prev) {
-				continue;
+			else {
+				ImplicitProducerHash* hash;
+				for (hash = implicitProducerHash.load(std::memory_order_relaxed); hash->prev != &other.initialImplicitProducerHash; hash = hash->prev) {
+					continue;
+				}
+				hash->prev = &initialImplicitProducerHash;
 			}
-			hash->prev = &other.initialImplicitProducerHash;
+			if (other.implicitProducerHash.load(std::memory_order_relaxed) == &initialImplicitProducerHash) {
+				other.implicitProducerHash.store(&other.initialImplicitProducerHash, std::memory_order_relaxed);
+			}
+			else {
+				ImplicitProducerHash* hash;
+				for (hash = other.implicitProducerHash.load(std::memory_order_relaxed); hash->prev != &initialImplicitProducerHash; hash = hash->prev) {
+					continue;
+				}
+				hash->prev = &other.initialImplicitProducerHash;
+			}
 		}
 	}
 	
@@ -3311,6 +3343,7 @@ private:
 		auto hashedId = details::hash_thread_id(id);
 		
 		auto mainHash = implicitProducerHash.load(std::memory_order_acquire);
+		assert(mainHash != nullptr);  // silence clang-tidy and MSVC warnings (hash cannot be null)
 		for (auto hash = mainHash; hash != nullptr; hash = hash->prev) {
 			// Look for the id in this hash
 			auto index = hashedId;
@@ -3488,55 +3521,73 @@ private:
 	//////////////////////////////////
 	// Utility functions
 	//////////////////////////////////
-	
+
+	template<typename TAlign>
+	static inline void* aligned_malloc(size_t size)
+	{
+		if (std::alignment_of<TAlign>::value <= std::alignment_of<details::max_align_t>::value)
+			return (Traits::malloc)(size);
+		size_t alignment = std::alignment_of<TAlign>::value;
+		void* raw = (Traits::malloc)(size + alignment - 1 + sizeof(void*));
+		if (!raw)
+			return nullptr;
+		char* ptr = details::align_for<TAlign>(reinterpret_cast<char*>(raw) + sizeof(void*));
+		*(reinterpret_cast<void**>(ptr) - 1) = raw;
+		return ptr;
+	}
+
+	template<typename TAlign>
+	static inline void aligned_free(void* ptr)
+	{
+		if (std::alignment_of<TAlign>::value <= std::alignment_of<details::max_align_t>::value)
+			return (Traits::free)(ptr);
+		(Traits::free)(ptr ? *(reinterpret_cast<void**>(ptr) - 1) : nullptr);
+	}
+
 	template<typename U>
 	static inline U* create_array(size_t count)
 	{
 		assert(count > 0);
-		auto p = static_cast<U*>((Traits::malloc)(sizeof(U) * count));
-		if (p == nullptr) {
+		U* p = static_cast<U*>(aligned_malloc<U>(sizeof(U) * count));
+		if (p == nullptr)
 			return nullptr;
-		}
-		
-		for (size_t i = 0; i != count; ++i) {
+
+		for (size_t i = 0; i != count; ++i)
 			new (p + i) U();
-		}
 		return p;
 	}
-	
+
 	template<typename U>
 	static inline void destroy_array(U* p, size_t count)
 	{
 		if (p != nullptr) {
 			assert(count > 0);
-			for (size_t i = count; i != 0; ) {
+			for (size_t i = count; i != 0; )
 				(p + --i)->~U();
-			}
-			(Traits::free)(p);
 		}
+		aligned_free<U>(p);
 	}
-	
+
 	template<typename U>
 	static inline U* create()
 	{
-		auto p = (Traits::malloc)(sizeof(U));
+		void* p = aligned_malloc<U>(sizeof(U));
 		return p != nullptr ? new (p) U : nullptr;
 	}
-	
+
 	template<typename U, typename A1>
 	static inline U* create(A1&& a1)
 	{
-		auto p = (Traits::malloc)(sizeof(U));
+		void* p = aligned_malloc<U>(sizeof(U));
 		return p != nullptr ? new (p) U(std::forward<A1>(a1)) : nullptr;
 	}
-	
+
 	template<typename U>
 	static inline void destroy(U* p)
 	{
-		if (p != nullptr) {
+		if (p != nullptr)
 			p->~U();
-		}
-		(Traits::free)(p);
+		aligned_free<U>(p);
 	}
 
 private:
@@ -3547,7 +3598,7 @@ private:
 	Block* initialBlockPool;
 	size_t initialBlockPoolSize;
 	
-#if !MCDBGQ_USEDEBUGFREELIST
+#ifndef MCDBGQ_USEDEBUGFREELIST
 	FreeList<Block> freeList;
 #else
 	debug::DebugFreeList<Block> freeList;
