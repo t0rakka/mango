@@ -609,6 +609,85 @@ namespace
         }
     }
 
+    void readRLE24(const Surface& surface, const BitmapHeader& header, const u8* data)
+    {
+        int x = 0;
+        int y = 0;
+
+        while (y < header.height)
+        {
+            u8* image = surface.address<u8>(0, y);
+
+            if (x >= header.width)
+            {
+                x = 0;
+            }
+
+            u8 n = data[0];
+            ++data;
+
+            if (n)
+            {
+                u8 r = data[0];
+                u8 g = data[1];
+                u8 b = data[2];
+                data += 3;
+
+                // RLE run
+                while (n--)
+                {
+                    image[x * 3 + 0] = b;
+                    image[x * 3 + 1] = g;
+                    image[x * 3 + 2] = r;
+                    ++x;
+                }
+            }
+            else
+            {
+                n = data[0];
+                ++data;
+
+                switch (n)
+                {
+                    case 0:
+                        // end of scanline
+                        x = 0;
+                        ++y;
+                        break;
+
+                    case 1:
+                        // end of image
+                        y = header.height;
+                        break;
+
+                    case 2:
+                    {
+                        // position delta
+                        x += data[0];
+                        y += data[1];
+                        data += 2;
+                        break;
+                    }
+
+                    default:
+                    {
+                        // linear imagedata
+                        for (int i = 0; i < n; ++i)
+                        {
+                            image[x * 3 + 0] = data[2];
+                            image[x * 3 + 1] = data[1];
+                            image[x * 3 + 2] = data[0];
+                            data += 3;
+                            ++x;
+                        }
+                        data += ((n * 3) & 1); // skip padding byte
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     void readIndexed(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
     {
         const int bits = header.bitsPerPixel;
@@ -717,8 +796,8 @@ namespace
 
             if (header.compression == BIC_JPEG)
             {
-                // TODO
-                return "[ImageDecoder.BMP] Unsupported compression (OS2 RLE24).";
+                readRLE24(mirror, header, data);
+                return nullptr;
             }
         }
 
