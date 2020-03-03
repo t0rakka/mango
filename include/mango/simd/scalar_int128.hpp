@@ -95,10 +95,10 @@ namespace detail {
     template <typename ScalarType>
     static inline ScalarType scalar_signed_adds(ScalarType a, ScalarType b)
     {
-      	typedef typename std::make_unsigned<ScalarType>::type UnsignedScalarType;
+        using UnsignedScalarType = typename std::make_unsigned<ScalarType>::type;
         UnsignedScalarType x = a;
-		UnsignedScalarType y = b;
-		UnsignedScalarType v = x + y;
+        UnsignedScalarType y = b;
+        UnsignedScalarType v = x + y;
 
   	    // overflow
 	    x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
@@ -113,7 +113,7 @@ namespace detail {
     template <typename ScalarType>
     static inline ScalarType scalar_signed_subs(ScalarType a, ScalarType b)
     {
-      	typedef typename std::make_unsigned<ScalarType>::type UnsignedScalarType;
+        using UnsignedScalarType = typename std::make_unsigned<ScalarType>::type;
         UnsignedScalarType x = a;
         UnsignedScalarType y = b;
         UnsignedScalarType v = x - y;

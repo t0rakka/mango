@@ -99,15 +99,13 @@ namespace
     class Block128
     {
     private:
-        typedef u64 Word;
-        
         enum
         {
-            WORD_BYTES	= sizeof(Word),
+            WORD_BYTES	= sizeof(u64),
             WORD_BITS	= 8 * WORD_BYTES,
             NUM_WORDS	= 128 / WORD_BITS
         };
-        
+
     public:
         Block128 (const u8* src)
         {
@@ -115,15 +113,15 @@ namespace
             {
                 m_words[wordNdx] = 0;
                 for (int byteNdx = 0; byteNdx < WORD_BYTES; byteNdx++)
-                    m_words[wordNdx] |= (Word)src[wordNdx*WORD_BYTES + byteNdx] << (8*byteNdx);
+                    m_words[wordNdx] |= (u64)src[wordNdx*WORD_BYTES + byteNdx] << (8*byteNdx);
             }
         }
-        
+
         u32 getBit (int ndx) const
         {
             return (m_words[ndx / WORD_BITS] >> (ndx % WORD_BITS)) & 1;
         }
-        
+
         u32 getBits (int low, int high) const
         {
             if (high-low+1 == 0)
@@ -134,13 +132,13 @@ namespace
             
             if (word0Ndx == word1Ndx)
             {
-                u64 temp = (m_words[word0Ndx] & ((((Word)1 << high%WORD_BITS << 1) - 1))) >> ((Word)low % WORD_BITS);
+                u64 temp = (m_words[word0Ndx] & ((((u64)1 << high%WORD_BITS << 1) - 1))) >> ((u64)low % WORD_BITS);
                 return u32(temp);
             }
             else
             {
                 return (u32)(m_words[word0Ndx] >> (low%WORD_BITS)) |
-                       (u32)((m_words[word1Ndx] & (((Word)1 << high%WORD_BITS << 1) - 1)) << (high-low - high%WORD_BITS));
+                       (u32)((m_words[word1Ndx] & (((u64)1 << high%WORD_BITS << 1) - 1)) << (high-low - high%WORD_BITS));
             }
         }
         
@@ -150,7 +148,7 @@ namespace
         }
         
     private:
-        Word m_words[NUM_WORDS];
+        u64 m_words[NUM_WORDS];
     };
     
     // A helper for sequential access into a Block128.

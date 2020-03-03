@@ -1046,7 +1046,7 @@ namespace
         { FORMAT_RGBA32F,  FORMAT_RGBA16F,    0, blit_rgba32f_from_rgba16f },
     };
 
-    typedef std::map< std::pair<Format, Format>, Blitter::FastFunc > FastConversionMap;
+    using FastConversionMap = std::map< std::pair<Format, Format>, Blitter::FastFunc >;
 
     // initialize map of custom conversion functions
     FastConversionMap g_custom_func_map = [] {

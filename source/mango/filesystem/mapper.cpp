@@ -25,7 +25,7 @@ namespace filesystem {
     AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
 #endif
 
-    typedef AbstractMapper* (*CreateMapperFunc)(ConstMemory, const std::string&);
+    using CreateMapperFunc = AbstractMapper* (*)(ConstMemory, const std::string&);
 
     struct MapperExtension
     {

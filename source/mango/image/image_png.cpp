@@ -69,7 +69,7 @@ namespace
         FILTER_PAETH   = 4,
     };
 
-    typedef void (*FilterFunc)(u8* scan, const u8* prev, int bytes, int bpp);
+    using FilterFunc = void (*)(u8* scan, const u8* prev, int bytes, int bpp);
 
     void filter_sub(u8* scan, const u8* prev, int bytes, int bpp)
     {

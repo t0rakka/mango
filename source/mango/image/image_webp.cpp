@@ -25,9 +25,9 @@ namespace
 
     struct WebPFormat
     {
-        typedef uint8_t* (*DecodeFunc)(const uint8_t*, size_t, uint8_t*, size_t, int);
-        typedef size_t (*EncodeFunc)(const uint8_t* image, int width, int height, int stride, float quality_factor, uint8_t** output);
-        typedef size_t (*EncodeLosslessFunc)(const uint8_t* image, int width, int height, int stride, uint8_t** output);
+        using DecodeFunc = uint8_t* (*)(const uint8_t*, size_t, uint8_t*, size_t, int);
+        using EncodeFunc = size_t (*)(const uint8_t* image, int width, int height, int stride, float quality_factor, uint8_t** output);
+        using EncodeLosslessFunc = size_t (*)(const uint8_t* image, int width, int height, int stride, uint8_t** output);
 
         Format format;
         DecodeFunc decode_func;

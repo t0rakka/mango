@@ -61,8 +61,8 @@ namespace mango
         __m128i sseShiftMask;
 #endif
 
-        typedef void (*FastFunc)(u8 *, const u8 *, int);
-        typedef void (*ConvertFunc)(const Blitter& blitter, const BlitRect& rect);
+        using FastFunc = void (*)(u8 *, const u8 *, int);
+        using ConvertFunc = void (*)(const Blitter& blitter, const BlitRect& rect);
 
         FastFunc custom;
         ConvertFunc convertFunc;

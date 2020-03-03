@@ -47,7 +47,7 @@ namespace mango {
 namespace jpeg {
 
     // ----------------------------------------------------------------------------
-    // typedefs
+    // types
     // ----------------------------------------------------------------------------
 
     using mango::u8;
@@ -382,7 +382,7 @@ namespace jpeg {
     // functions
     // ----------------------------------------------------------------------------
 
-    typedef void (*ProcessFunc)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    using ProcessFunc = void (*)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
 
     void huff_decode_mcu_lossless   (s16* output, DecodeState* state);
     void huff_decode_mcu            (s16* output, DecodeState* state);

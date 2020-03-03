@@ -79,7 +79,7 @@ namespace mango
         ConstMemory icc();
         ConstMemory exif();
 
-        typedef ImageDecoderInterface* (*CreateDecoderFunc)(ConstMemory memory);
+        using CreateDecoderFunc = ImageDecoderInterface* (*)(ConstMemory memory);
 
     protected:
         std::unique_ptr<ImageDecoderInterface> m_interface;

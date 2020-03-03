@@ -37,7 +37,7 @@ namespace mango
         bool isEncoder() const;
         ImageEncodeStatus encode(Stream& output, const Surface& source, const ImageEncodeOptions& options);
 
-        typedef ImageEncodeStatus (*EncodeFunc)(Stream& output, const Surface& source, const ImageEncodeOptions& options);
+        using EncodeFunc = ImageEncodeStatus (*)(Stream& output, const Surface& source, const ImageEncodeOptions& options);
 
     protected:
         EncodeFunc m_encode_func;

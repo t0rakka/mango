@@ -229,7 +229,7 @@ namespace mango
     Quaternion squad(const Quaternion& p, const Quaternion& a, const Quaternion& b, const Quaternion& q, float time);
 
     // ------------------------------------------------------------------
-    // typedefs
+    // types
     // ------------------------------------------------------------------
 
     using quat = Quaternion;
