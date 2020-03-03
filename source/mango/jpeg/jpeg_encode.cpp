@@ -1961,8 +1961,7 @@ namespace jpeg {
         else
         {
             // convert source surface to format supported in the encoder
-            Bitmap temp(surface.width, surface.height, sf.format);
-            temp.blit(0, 0, surface);
+            Bitmap temp(surface, sf.format);
             encodeJPEG(status, temp, stream, iq, sf.sample);
         }
 

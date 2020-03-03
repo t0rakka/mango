@@ -2112,8 +2112,7 @@ namespace
         }
         else
         {
-            Bitmap temp(surface.width, surface.height, format);
-            temp.blit(0, 0, surface);
+            Bitmap temp(surface, format);
             writePNG(stream, temp, color_bits, color_type);
         }
 

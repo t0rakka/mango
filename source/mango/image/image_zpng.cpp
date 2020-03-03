@@ -133,9 +133,8 @@ namespace
                 */
 
                 Surface temp(z.WidthPixels, z.HeightPixels, format, z.StrideBytes, z.Buffer.Data);
-                
                 dest.blit(0, 0, temp);
-                
+
                 ZPNG_Free(&z.Buffer);
             }
 

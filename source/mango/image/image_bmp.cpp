@@ -1174,8 +1174,7 @@ namespace
         s.write32(0x000000ff);  // blue mask
         s.write32(0xff000000);  // alpha mask
 
-        Bitmap temp(width, height, format);
-        temp.blit(0, 0, surface);
+        Bitmap temp(surface, format);
 
         for (int y = 0; y < temp.height; ++y)
         {

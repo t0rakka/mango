@@ -455,9 +455,9 @@ namespace
         header.colormap_bits    = 0;
         header.image_origin_x   = 0;
         header.image_origin_y   = 0;
-        header.image_width      = static_cast<u16>(width);
-        header.image_height     = static_cast<u16>(height);
-        header.pixel_size       = static_cast<u8>(format.bits);
+        header.image_width      = u16(width);
+        header.image_height     = u16(height);
+        header.pixel_size       = u8(format.bits);
         header.descriptor       = 0x20 | (isalpha ? 8 : 0);
 
         // write header
@@ -466,8 +466,7 @@ namespace
         // write image
         if (format != surface.format)
         {
-            Bitmap temp(width, height, format);
-            temp.blit(0, 0, surface);
+            Bitmap temp(surface, format);
             stream.write(temp.image, width * height * format.bytes());
         }
         else

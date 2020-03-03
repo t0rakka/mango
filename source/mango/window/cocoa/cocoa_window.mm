@@ -73,25 +73,21 @@ namespace mango
 
     void Window::setIcon(const Surface& icon)
     {
-        const int width = icon.width;
-        const int height = icon.height;
-
-        Bitmap bitmap(width, height, FORMAT_R8G8B8A8);
-        bitmap.blit(0, 0, icon);
+        Bitmap bitmap(icon, FORMAT_R8G8B8A8);
 
         NSBitmapImageRep* bitmapImage = [[NSBitmapImageRep alloc]
                                          initWithBitmapDataPlanes:&bitmap.image
-                                         pixelsWide:width
-                                         pixelsHigh:height
+                                         pixelsWide:icon.width
+                                         pixelsHigh:icon.height
                                          bitsPerSample:8
                                          samplesPerPixel:4
                                          hasAlpha:YES
                                          isPlanar:NO
                                          colorSpaceName:NSCalibratedRGBColorSpace
-                                         bytesPerRow:width * 4
+                                         bytesPerRow:icon.width * 4
                                          bitsPerPixel:32];
 
-        NSImage* iconImage = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+        NSImage* iconImage = [[NSImage alloc] initWithSize:NSMakeSize(icon.width, icon.height)];
         [iconImage addRepresentation:bitmapImage];
 
         [[NSApplication sharedApplication] setApplicationIconImage:iconImage];

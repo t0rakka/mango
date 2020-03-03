@@ -195,8 +195,7 @@ namespace
         else
         {
             // Color conversion encoding
-            Bitmap temp(surface.width, surface.height, wpformat.format);
-            temp.blit(0, 0, surface);
+            Bitmap temp(surface, wpformat.format);
             bytes = wpformat.encode(&output, temp, quality, lossless);
         }
 

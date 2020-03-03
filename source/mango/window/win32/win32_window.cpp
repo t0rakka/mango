@@ -640,14 +640,10 @@ namespace mango
 
     void Window::setIcon(const Surface& icon)
     {
-        const int width = icon.width;
-        const int height = icon.height;
-
-        Bitmap bitmap(width, height, FORMAT_B8G8R8A8);
-        bitmap.blit(0, 0, icon);
+        Bitmap bitmap(icon, FORMAT_B8G8R8A8);
 
         HINSTANCE hinstance = ::GetModuleHandle(NULL);
-        HICON hicon = ::CreateIcon(hinstance, width, height, 1, 32, NULL, bitmap.image);
+        HICON hicon = ::CreateIcon(hinstance, icon.width, icon.height, 1, 32, NULL, bitmap.image);
         if (hicon)
         {
             if (m_handle->icon)
