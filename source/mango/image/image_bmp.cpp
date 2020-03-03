@@ -23,8 +23,8 @@ namespace
         BIC_RGB = 0,
         BIC_RLE8 = 1,
         BIC_RLE4 = 2,
-        BIC_BITFIELDS = 3,
-        BIC_JPEG = 4,
+        BIC_BITFIELDS = 3, // Huffman with OS2 header
+        BIC_JPEG = 4, // RLE24 with OS2 header
         BIC_PNG = 5,
         BIC_ALPHABITFIELDS = 6,
         BIC_CMYK = 11,
@@ -274,6 +274,7 @@ namespace
         int paletteComponents;
         const u8* palette;
         bool yflip;
+        bool os2 = false;
 
         const char* error = nullptr;
 
@@ -293,6 +294,7 @@ namespace
                 {
                     OS2BitmapHeader1(p, headerSize);
                     paletteComponents = 3;
+                    os2 = true;
                     break;
                 }
 
@@ -301,6 +303,7 @@ namespace
                     OS2BitmapHeader1(p, headerSize);
                     OS2BitmapHeader2(p);
                     paletteComponents = 4;
+                    os2 = true;
                     break;
                 }
 
@@ -309,6 +312,7 @@ namespace
                     WinBitmapHeader1(p);
                     OS2BitmapHeader2(p);
                     paletteComponents = 4;
+                    os2 = true;
                     break;
                 }
 
@@ -701,6 +705,21 @@ namespace
         {
             mirror.image += (header.height - 1) * surface.stride;
             mirror.stride = -surface.stride;
+        }
+
+        if (header.os2)
+        {
+            if (header.compression == BIC_BITFIELDS)
+            {
+                // TODO
+                return "[ImageDecoder.BMP] Unsupported compression (OS2 Huffman).";
+            }
+
+            if (header.compression == BIC_JPEG)
+            {
+                // TODO
+                return "[ImageDecoder.BMP] Unsupported compression (OS2 RLE24).";
+            }
         }
 
         switch (header.compression)
