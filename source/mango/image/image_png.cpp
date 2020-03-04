@@ -17,9 +17,6 @@
 // TODO: check that animations starting with "IDAT" and "fdAT" work correctly
 // TODO: SIMD blending (not critical)
 
-static
-constexpr int FILTER_BYTE = 1;
-
 // ------------------------------------------------------------
 // miniz
 // ------------------------------------------------------------
@@ -55,6 +52,9 @@ constexpr int FILTER_BYTE = 1;
 namespace
 {
     using namespace mango;
+
+    constexpr int PNG_FILTER_BYTE = 1;
+    constexpr u64 PNG_HEADER_MAGIC = 0x89504e470d0a1a0a;
 
     // ------------------------------------------------------------
     // Filter
@@ -617,7 +617,7 @@ namespace
 
         // read header magic
         const u64 magic = p.read64();
-        if (magic != 0x89504e470d0a1a0a)
+        if (magic != PNG_HEADER_MAGIC)
         {
             setError("Incorrect header magic.");
             return;
@@ -1113,16 +1113,16 @@ namespace
             AdamInterleave adam(pass, width, height);
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
-            const int bw = FILTER_BYTE + ((adam.w + mask) >> shift);
-            filter(p, bw - FILTER_BYTE, adam.h);
+            const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
+            filter(p, bw - PNG_FILTER_BYTE, adam.h);
 
             if (adam.w && adam.h)
             {
                 for (int y = 0; y < adam.h; ++y)
                 {
                     const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + FILTER_BYTE;
-                    u8* src = p + y * bw + FILTER_BYTE;
+                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                    u8* src = p + y * bw + PNG_FILTER_BYTE;
 
                     for (int x = 0; x < adam.w; ++x)
                     {
@@ -1151,18 +1151,18 @@ namespace
             AdamInterleave adam(pass, width, height);
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
-            const int bw = FILTER_BYTE + adam.w * size;
-            filter(p, bw - FILTER_BYTE, adam.h);
+            const int bw = PNG_FILTER_BYTE + adam.w * size;
+            filter(p, bw - PNG_FILTER_BYTE, adam.h);
 
             if (adam.w && adam.h)
             {
-                const int ps = adam.w * size + FILTER_BYTE;
+                const int ps = adam.w * size + PNG_FILTER_BYTE;
 
                 for (int y = 0; y < adam.h; ++y)
                 {
                     const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + FILTER_BYTE;
-                    u8* src = p + y * ps + FILTER_BYTE;
+                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                    u8* src = p + y * ps + PNG_FILTER_BYTE;
 
                     dest += adam.xorig * size;
                     const int xmax = (adam.w * size) << adam.xspc;
@@ -1544,7 +1544,7 @@ namespace
 
         if (m_interlace)
         {
-            const int stride = FILTER_BYTE + getBytesPerLine(width);
+            const int stride = PNG_FILTER_BYTE + getBytesPerLine(width);
 
             temp.resize(height * stride);
             std::memset(temp, 0, height * stride);
@@ -1737,13 +1737,13 @@ namespace
                 AdamInterleave adam(pass, width, height);
                 if (adam.w && adam.h)
                 {
-                    buffer_size += (FILTER_BYTE + getBytesPerLine(adam.w)) * adam.h;
+                    buffer_size += (PNG_FILTER_BYTE + getBytesPerLine(adam.w)) * adam.h;
                 }
             }
         }
         else
         {
-            buffer_size = (FILTER_BYTE + getBytesPerLine(width)) * height;
+            buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(width)) * height;
         }
 
         return buffer_size;
@@ -1908,7 +1908,7 @@ namespace
     void write_IDAT(Stream& stream, const Surface& surface)
     {
         const int bytesPerLine = surface.width * surface.format.bytes();
-        const int bytes = (FILTER_BYTE + bytesPerLine) * surface.height;
+        const int bytes = (PNG_FILTER_BYTE + bytesPerLine) * surface.height;
 
         z_stream z = { 0 };
         deflateInit(&z, -1);
@@ -1945,15 +1945,10 @@ namespace
 
     void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
-        static const u8 magic[] =
-        {
-            0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
-        };
-
         BigEndianStream s(stream);
 
         // write magic
-        s.write(magic, 8);
+        s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
         write_IDAT(stream, surface);
