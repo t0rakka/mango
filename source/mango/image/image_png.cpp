@@ -450,10 +450,9 @@ namespace
 
     struct ColorState
     {
-        using Function = void (*)(const ColorState& state, int width, const u8* src);
+        using Function = void (*)(const ColorState& state, int width, u8* dst, const u8* src);
 
         Function func = nullptr;
-        u8* dest;
         int bits;
 
         // tRNS
@@ -464,9 +463,9 @@ namespace
         ColorBGRA* palette;
     };
 
-    void process_i1to4(const ColorState& state, int width, const u8* src)
+    void process_i1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u8* dest = state.dest;
+        u8* dest = dst;
 
         const bool transparent_enable = state.transparent_enable;
         const u16 transparent_sample = state.transparent_sample[0];
@@ -499,9 +498,9 @@ namespace
         }
     }
 
-    void process_i8(const ColorState& state, int width, const u8* src)
+    void process_i8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(state.dest);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
         if (state.transparent_enable)
         {
@@ -519,9 +518,9 @@ namespace
         }
     }
 
-    void process_rgb8(const ColorState& state, int width, const u8* src)
+    void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u32* dest = reinterpret_cast<u32*>(state.dest);
+        u32* dest = reinterpret_cast<u32*>(dst);
 
         if (state.transparent_enable)
         {
@@ -548,7 +547,7 @@ namespace
         }
     }
 
-    void process_pal1to4(const ColorState& state, int width, const u8* src)
+    void process_pal1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
         ColorBGRA* palette = state.palette;
 
@@ -557,7 +556,7 @@ namespace
 
         if (palette)
         {
-            u32* dest = reinterpret_cast<u32*>(state.dest);
+            u32* dest = reinterpret_cast<u32*>(dst);
 
             u32 data = 0;
             int offset = -1;
@@ -576,7 +575,7 @@ namespace
         }
         else
         {
-            u8* dest = state.dest;
+            u8* dest = dst;
 
             u32 data = 0;
             int offset = -1;
@@ -595,13 +594,13 @@ namespace
         }
     }
 
-    void process_pal8(const ColorState& state, int width, const u8* src)
+    void process_pal8(const ColorState& state, int width, u8* dst, const u8* src)
     {
         ColorBGRA* palette = state.palette;
 
         if (palette)
         {
-            u32* dest = reinterpret_cast<u32*>(state.dest);
+            u32* dest = reinterpret_cast<u32*>(dst);
 
             for (int x = 0; x < width; ++x)
             {
@@ -610,13 +609,13 @@ namespace
         }
         else
         {
-            std::memcpy(state.dest, src, width);
+            std::memcpy(dst, src, width);
         }
     }
 
-    void process_ia8(const ColorState& state, int width, const u8* src)
+    void process_ia8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(state.dest);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
         {
@@ -625,9 +624,9 @@ namespace
         }
     }
 
-    void process_rgba8(const ColorState& state, int width, const u8* src)
+    void process_rgba8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u32* dest = reinterpret_cast<u32*>(state.dest);
+        u32* dest = reinterpret_cast<u32*>(dst);
 
         for (int x = 0; x < width; ++x)
         {
@@ -636,9 +635,9 @@ namespace
         }
     }
 
-    void process_i16(const ColorState& state, int width, const u8* src)
+    void process_i16(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(state.dest);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
         if (state.transparent_enable)
         {
@@ -664,9 +663,9 @@ namespace
         }
     }
 
-    void process_rgb16(const ColorState& state, int width, const u8* src)
+    void process_rgb16(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(state.dest);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
         if (state.transparent_enable)
         {
@@ -705,9 +704,9 @@ namespace
         }
     }
 
-    void process_ia16(const ColorState& state, int width, const u8* src)
+    void process_ia16(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(state.dest);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
         {
@@ -718,9 +717,9 @@ namespace
         }
     }
 
-    void process_rgba16(const ColorState& state, int width, const u8* src)
+    void process_rgba16(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(state.dest);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
         {
@@ -1689,8 +1688,6 @@ namespace
             return;
         }
 
-        m_color_state.dest = image;
-
         int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
 
         Buffer temp;
@@ -1712,8 +1709,8 @@ namespace
             // color conversion
             for (int y = 0; y < height; ++y)
             {
-                m_color_state.func(m_color_state, width, buffer + 1);
-                m_color_state.dest += stride;
+                m_color_state.func(m_color_state, width, image, buffer + 1);
+                image += stride;
                 buffer += bytes_per_line;
             }
         }
@@ -1735,8 +1732,8 @@ namespace
                 dispatcher(buffer, prev, bytes_per_line);
 
                 // color conversion
-                m_color_state.func(m_color_state, width, buffer + PNG_FILTER_BYTE);
-                m_color_state.dest += stride;
+                m_color_state.func(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+                image += stride;
 
                 prev = buffer;
                 buffer += bytes_per_line;
