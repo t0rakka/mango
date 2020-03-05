@@ -57,6 +57,15 @@ namespace
     constexpr int PNG_FILTER_BYTE = 1;
     constexpr u64 PNG_HEADER_MAGIC = 0x89504e470d0a1a0a;
 
+    enum ColorType
+    {
+        COLOR_TYPE_I       = 0,
+        COLOR_TYPE_RGB     = 2,
+        COLOR_TYPE_PALETTE = 3,
+        COLOR_TYPE_IA      = 4,
+        COLOR_TYPE_RGBA    = 6,
+    };
+
     // ------------------------------------------------------------
     // Filter
     // ------------------------------------------------------------
@@ -362,8 +371,10 @@ namespace
         FilterFunc up = filter_up;
         FilterFunc average = filter_average;
         FilterFunc paeth = filter_paeth;
+        int bpp = 0;
 
         FilterDispatcher(int bpp)
+            : bpp(bpp)
         {
             switch (bpp)
             {
@@ -398,9 +409,16 @@ namespace
 #endif
         }
 
-        void operator () (FilterType method, u8* scan, const u8* prev, int bytes, int bpp)
+        void operator () (u8* scan, const u8* prev, int bytes)
         {
+            FilterType method = FilterType(scan[0]);
             //printf("%d", method);
+
+            // skip filter byte
+            ++scan;
+            ++prev;
+            --bytes;
+
             switch (method)
             {
                 case FILTER_NONE:
@@ -425,6 +443,355 @@ namespace
             }
         }
     };
+
+    // ------------------------------------------------------------
+    // color conversion
+    // ------------------------------------------------------------
+
+    struct ColorState
+    {
+        using Function = void (*)(const ColorState& state, int width, const u8* src);
+
+        Function func = nullptr;
+        u8* dest;
+        int bits;
+
+        // tRNS
+        bool transparent_enable = false;
+        u16 transparent_sample[3];
+        ColorBGRA transparent_color;
+
+        ColorBGRA* palette;
+    };
+
+    void process_i1to4(const ColorState& state, int width, const u8* src)
+    {
+        u8* dest = state.dest;
+
+        const bool transparent_enable = state.transparent_enable;
+        const u16 transparent_sample = state.transparent_sample[0];
+        const int bits = state.bits;
+
+        const int maxValue = (1 << bits) - 1;
+        const int scale = (255 / maxValue) * 0x010101;
+        const u32 mask = (1 << bits) - 1;
+
+        u32 data = 0;
+        int offset = -1;
+
+        for (int x = 0; x < width; ++x)
+        {
+            if (offset < 0)
+            {
+                offset = 8 - bits;
+                data = *src++;
+            }
+
+            int value = (data >> offset) & mask;
+            *dest++ = value * scale;
+
+            if (transparent_enable)
+            {
+                *dest++ = (value == transparent_sample) ? 0 : 0xff;
+            }
+
+            offset -= bits;
+        }
+    }
+
+    void process_i8(const ColorState& state, int width, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(state.dest);
+
+        const bool transparent_enable = state.transparent_enable;
+        const u16 transparent_sample = state.transparent_sample[0];
+
+        if (transparent_enable)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                const u16 alpha = transparent_sample == src[x] ? 0 : 0xff00;
+                dest[x] = alpha | src[x];
+            }
+        }
+        else
+        {
+            std::memcpy(dest, src, width);
+        }
+    }
+
+    void process_rgb8(const ColorState& state, int width, const u8* src)
+    {
+        u32* dest = reinterpret_cast<u32*>(state.dest);
+
+        const bool transparent_enable = state.transparent_enable;
+        const ColorBGRA transparent_color = state.transparent_color;
+
+        if (transparent_enable)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                ColorBGRA color(src[0], src[1], src[2], 0xff);
+                if (color == transparent_color)
+                {
+                    color.a = 0;
+                }
+                dest[x] = color;
+                src += 3;
+            }
+        }
+        else
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                dest[x] = ColorBGRA(src[0], src[1], src[2], 0xff);
+                src += 3;
+            }
+        }
+    }
+
+    void process_pal1to4(const ColorState& state, int width, const u8* src)
+    {
+        ColorBGRA* palette = state.palette;
+
+        const int bits = state.bits;
+        const u32 mask = (1 << bits) - 1;
+
+        if (palette)
+        {
+            u32* dest = reinterpret_cast<u32*>(state.dest);
+
+            u32 data = 0;
+            int offset = -1;
+
+            for (int x = 0; x < width; ++x)
+            {
+                if (offset < 0)
+                {
+                    offset = 8 - bits;
+                    data = *src++;
+                }
+
+                dest[x] = palette[(data >> offset) & mask];
+                offset -= bits;
+            }
+        }
+        else
+        {
+            u8* dest = state.dest;
+
+            u32 data = 0;
+            int offset = -1;
+
+            for (int x = 0; x < width; ++x)
+            {
+                if (offset < 0)
+                {
+                    offset = 8 - bits;
+                    data = *src++;
+                }
+
+                *dest++ = (data >> offset) & mask;
+                offset -= bits;
+            }
+        }
+    }
+
+    void process_pal8(const ColorState& state, int width, const u8* src)
+    {
+        ColorBGRA* palette = state.palette;
+
+        if (palette)
+        {
+            u32* dest = reinterpret_cast<u32*>(state.dest);
+
+            for (int x = 0; x < width; ++x)
+            {
+                dest[x] = palette[*src++];
+            }
+        }
+        else
+        {
+            u8* dest = state.dest;
+            std::memcpy(dest, src, width);
+        }
+    }
+
+    void process_ia8(const ColorState& state, int width, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(state.dest);
+
+        for (int x = 0; x < width; ++x)
+        {
+            *dest++ = (src[1] << 8) | src[0];
+            src += 2;
+        }
+    }
+
+    void process_rgba8(const ColorState& state, int width, const u8* src)
+    {
+        u32* dest = reinterpret_cast<u32*>(state.dest);
+
+        for (int x = 0; x < width; ++x)
+        {
+            *dest++ = ColorBGRA(src[0], src[1], src[2], src[3]);
+            src += 4;
+        }
+    }
+
+    void process_i16(const ColorState& state, int width, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(state.dest);
+
+        const bool transparent_enable = state.transparent_enable;
+        const u16 transparent_sample = state.transparent_sample[0];
+
+        if (transparent_enable)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                u16 gray = (src[0] << 8) | src[1];
+                u16 alpha = transparent_sample == src[0] ? 0 : 0xffff;
+                dest[0] = gray;
+                dest[1] = alpha;
+                dest += 2;
+                src += 2;
+            }
+        }
+        else
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                *dest++ = (src[0] << 8) | src[1];
+                src += 2;
+            }
+        }
+    }
+
+    void process_rgb16(const ColorState& state, int width, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(state.dest);
+
+        const bool transparent_enable = state.transparent_enable;
+        const u16 transparent_sample0 = state.transparent_sample[0];
+        const u16 transparent_sample1 = state.transparent_sample[1];
+        const u16 transparent_sample2 = state.transparent_sample[2];
+
+        if (transparent_enable)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                u16 red   = (src[0] << 8) | src[1];
+                u16 green = (src[2] << 8) | src[3];
+                u16 blue  = (src[4] << 8) | src[5];
+                u16 alpha = 0xffff;
+                if (transparent_sample0 == red &&
+                    transparent_sample1 == green &&
+                    transparent_sample2 == blue) alpha = 0;
+                dest[0] = red;
+                dest[1] = green;
+                dest[2] = blue;
+                dest[3] = alpha;
+                dest += 4;
+                src += 6;
+            }
+        }
+        else
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                u16 red   = (src[0] << 8) | src[1];
+                u16 green = (src[2] << 8) | src[3];
+                u16 blue  = (src[4] << 8) | src[5];
+                u16 alpha = 0xffff;
+                dest[0] = red;
+                dest[1] = green;
+                dest[2] = blue;
+                dest[3] = alpha;
+                dest += 4;
+                src += 6;
+            }
+        }
+    }
+
+    void process_ia16(const ColorState& state, int width, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(state.dest);
+
+        for (int x = 0; x < width; ++x)
+        {
+            u16 gray  = (src[0] << 8) | src[1];
+            u16 alpha = (src[2] << 8) | src[3];
+            dest[0] = gray;
+            dest[1] = alpha;
+            dest += 2;
+            src += 4;
+        }
+    }
+
+    void process_rgba16(const ColorState& state, int width, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(state.dest);
+
+        for (int x = 0; x < width; ++x)
+        {
+            u16 red   = (src[0] << 8) | src[1];
+            u16 green = (src[2] << 8) | src[3];
+            u16 blue  = (src[4] << 8) | src[5];
+            u16 alpha = (src[6] << 8) | src[7];
+            dest[0] = red;
+            dest[1] = green;
+            dest[2] = blue;
+            dest[3] = alpha;
+            dest += 4;
+            src += 8;
+        }
+    }
+
+    ColorState::Function getColorFunction(int color_type, int bit_depth)
+    {
+        ColorState::Function function = nullptr;
+
+        if (color_type == COLOR_TYPE_I)
+        {
+            if (bit_depth < 8)
+                function = process_i1to4;
+            else if (bit_depth == 8)
+                function = process_i8;
+            else
+                function = process_i16;
+        }
+        else if (color_type == COLOR_TYPE_PALETTE)
+        {
+            if (bit_depth < 8)
+                function = process_pal1to4;
+            else
+                function = process_pal8;
+        }
+        else if (color_type == COLOR_TYPE_IA)
+        {
+            if (bit_depth == 8)
+                function = process_ia8;
+            else
+                function = process_ia16;
+        }
+        else if (color_type == COLOR_TYPE_RGB)
+        {
+            if (bit_depth == 8)
+                function = process_rgb8;
+            else
+                function = process_rgb16;
+        }
+        else if (color_type == COLOR_TYPE_RGBA)
+        {
+            if (bit_depth == 8)
+                function = process_rgba8;
+            else
+                function = process_rgba16;
+        }
+
+        return function;
+    }
 
     // ------------------------------------------------------------
     // AdamInterleave
@@ -458,15 +825,6 @@ namespace
     // ------------------------------------------------------------
     // ParserPNG
     // ------------------------------------------------------------
-
-    enum ColorType
-    {
-        COLOR_TYPE_I       = 0,
-        COLOR_TYPE_RGB     = 2,
-        COLOR_TYPE_PALETTE = 3,
-        COLOR_TYPE_IA      = 4,
-        COLOR_TYPE_RGBA    = 6,
-    };
 
     struct Chromaticity
     {
@@ -533,6 +891,8 @@ namespace
 
         Buffer m_compressed;
 
+        ColorState m_color_state;
+
         // IHDR
         int m_width;
         int m_height;
@@ -546,11 +906,6 @@ namespace
 
         // PLTE
         Palette m_palette;
-
-        // tRNS
-        bool m_transparent_enable = false;
-        u16 m_transparent_sample[3];
-        ColorBGRA m_transparent_color;
 
         // cHRM
         Chromaticity m_chromaticity;
@@ -587,29 +942,17 @@ namespace
         void read_fdAT(BigEndianConstPointer p, u32 size);
 
         void parse();
-        void filter(u8* buffer, int bytes, int height);
-        void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
-        void deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer);
-
-        void process_i1to4   (u8* dest, int width, int height, int stride, const u8* src);
-        void process_i8      (u8* dest, int width, int height, int stride, const u8* src);
-        void process_rgb8    (u8* dest, int width, int height, int stride, const u8* src);
-        void process_pal1to4 (u8* dest, int width, int height, int stride, const u8* src, Palette* palette);
-        void process_pal8    (u8* dest, int width, int height, int stride, const u8* src, Palette* palette);
-        void process_ia8     (u8* dest, int width, int height, int stride, const u8* src);
-        void process_rgba8   (u8* dest, int width, int height, int stride, const u8* src);
-        void process_i16     (u8* dest, int width, int height, int stride, const u8* src);
-        void process_rgb16   (u8* dest, int width, int height, int stride, const u8* src);
-        void process_ia16    (u8* dest, int width, int height, int stride, const u8* src);
-        void process_rgba16  (u8* dest, int width, int height, int stride, const u8* src);
-
-        void process(u8* dest, int width, int height, int stride, u8* buffer, Palette* palette);
 
         void blend_ia8      (u8* dest, const u8* src, int width);
         void blend_ia16     (u8* dest, const u8* src, int width);
         void blend_bgra8    (u8* dest, const u8* src, int width);
         void blend_rgba16   (u8* dest, const u8* src, int width);
         void blend_indexed  (u8* dest, const u8* src, int width);
+
+        void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
+        void deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer);
+        void filter(u8* buffer, int bytes, int height);
+        void process(u8* dest, int width, int height, int stride, u8* buffer, Palette* palette);
 
         void blend(Surface& d, Surface& s, Palette* palette);
 
@@ -688,7 +1031,7 @@ namespace
 
             // force alpha channel on when transparency is enabled
             int color_type = m_color_type;
-            if (m_transparent_enable && color_type != COLOR_TYPE_PALETTE)
+            if (m_color_state.transparent_enable && color_type != COLOR_TYPE_PALETTE)
             {
                 color_type |= 4;
             }
@@ -764,7 +1107,7 @@ namespace
             switch (id)
             {
                 case u32_mask_rev('t', 'R', 'N', 'S'):
-                    m_transparent_enable = true;
+                    m_color_state.transparent_enable = true;
                     break;
             }
             p += (size + 4);
@@ -817,6 +1160,9 @@ namespace
             m_scale_bits[i] = m_bit_depth;
         }
 
+        m_color_state.bits = m_bit_depth;
+        m_color_state.func = getColorFunction(m_color_type, m_bit_depth);
+
         debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
         debugPrint("  Color:       %d\n", m_color_type);
         debugPrint("  Compression: %d\n", m_compression);
@@ -861,8 +1207,8 @@ namespace
                 return;
             }
 
-            m_transparent_enable = true;
-            m_transparent_sample[0] = p.read16();
+            m_color_state.transparent_enable = true;
+            m_color_state.transparent_sample[0] = p.read16();
         }
         else if (m_color_type == COLOR_TYPE_RGB)
         {
@@ -872,13 +1218,13 @@ namespace
                 return;
             }
 
-            m_transparent_enable = true;
-            m_transparent_sample[0] = p.read16();
-            m_transparent_sample[1] = p.read16();
-            m_transparent_sample[2] = p.read16();
-            m_transparent_color = ColorBGRA(m_transparent_sample[0] & 0xff,
-                                            m_transparent_sample[1] & 0xff,
-                                            m_transparent_sample[2] & 0xff, 0xff);
+            m_color_state.transparent_enable = true;
+            m_color_state.transparent_sample[0] = p.read16();
+            m_color_state.transparent_sample[1] = p.read16();
+            m_color_state.transparent_sample[2] = p.read16();
+            m_color_state.transparent_color = ColorBGRA(m_color_state.transparent_sample[0] & 0xff,
+                                                        m_color_state.transparent_sample[1] & 0xff,
+                                                        m_color_state.transparent_sample[2] & 0xff, 0xff);
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
@@ -1107,537 +1453,6 @@ namespace
         }
     }
 
-    void ParserPNG::filter(u8* buffer, int bytes, int height)
-    {
-        const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
-        if (bpp > 8)
-            return;
-
-        FilterDispatcher dispatcher(bpp);
-
-        // zero scanline
-        std::vector<u8> zeros(bytes, 0);
-        const u8* prev = zeros.data();
-
-        for (int y = 0; y < height; ++y)
-        {
-            FilterType method = FilterType(*buffer++);
-            dispatcher(method, buffer, prev, bytes, bpp);
-            prev = buffer;
-            buffer += bytes;
-        }
-    }
-
-    void ParserPNG::deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer)
-    {
-        u8* p = buffer;
-
-        const int samples = 8 / m_bit_depth;
-        const int mask = samples - 1;
-        const int shift = u32_log2(samples);
-        const int valueShift = u32_log2(m_bit_depth);
-        const int valueMask = (1 << m_bit_depth) - 1;
-
-        for (int pass = 0; pass < 7; ++pass)
-        {
-            AdamInterleave adam(pass, width, height);
-            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
-
-            const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
-            filter(p, bw - PNG_FILTER_BYTE, adam.h);
-
-            if (adam.w && adam.h)
-            {
-                for (int y = 0; y < adam.h; ++y)
-                {
-                    const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = p + y * bw + PNG_FILTER_BYTE;
-
-                    for (int x = 0; x < adam.w; ++x)
-                    {
-                        const int xoffset = (x << adam.xspc) + adam.xorig;
-                        u8 v = src[x >> shift];
-                        int a = (mask - (x & mask)) << valueShift;
-                        int b = (mask - (xoffset & mask)) << valueShift;
-                        v = ((v >> a) & valueMask) << b;
-                        dest[xoffset >> shift] |= v;
-                    }
-                }
-
-                // next pass
-                p += bw * adam.h;
-            }
-        }
-    }
-
-    void ParserPNG::deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer)
-    {
-        u8* p = buffer;
-        const int size = getBytesPerLine(width) / width;
-
-        for (int pass = 0; pass < 7; ++pass)
-        {
-            AdamInterleave adam(pass, width, height);
-            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
-
-            const int bw = PNG_FILTER_BYTE + adam.w * size;
-            filter(p, bw - PNG_FILTER_BYTE, adam.h);
-
-            if (adam.w && adam.h)
-            {
-                const int ps = adam.w * size + PNG_FILTER_BYTE;
-
-                for (int y = 0; y < adam.h; ++y)
-                {
-                    const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = p + y * ps + PNG_FILTER_BYTE;
-
-                    dest += adam.xorig * size;
-                    const int xmax = (adam.w * size) << adam.xspc;
-                    const int xstep = size << adam.xspc;
-
-                    for (int x = 0; x < xmax; x += xstep)
-                    {
-                        std::memcpy(dest + x, src, size);
-                        src += size;
-                    }
-                }
-
-                // next pass
-                p += bw * adam.h;
-            }
-        }
-    }
-
-    void ParserPNG::process_i1to4(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        const int bits = m_bit_depth;
-
-        const int maxValue = (1 << bits) - 1;
-        const int scale = (255 / maxValue) * 0x010101;
-        const u32 mask = (1 << bits) - 1;
-
-        for (int y = 0; y < height; ++y)
-        {
-            u8* d = dest;
-            dest += stride;
-            ++src; // skip filter byte
-
-            u32 data = 0;
-            int offset = -1;
-
-            for (int x = 0; x < width; ++x)
-            {
-                if (offset < 0)
-                {
-                    offset = 8 - bits;
-                    data = *src++;
-                }
-                int value = (data >> offset) & mask;
-                *d++ = value * scale;
-                if (m_transparent_enable)
-                {
-                    *d++ = value == m_transparent_sample[0] ? 0 : 0xff;
-                }
-                offset -= bits;
-            }
-        }
-    }
-
-    void ParserPNG::process_i8(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        if (m_transparent_enable)
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    const u16 alpha = m_transparent_sample[0] == src[x] ? 0 : 0xff00;
-                    d[x] = alpha | src[x];
-                }
-                src += width;
-            }
-        }
-        else
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                ++src; // skip filter byte
-                std::memcpy(dest, src, width);
-                src += width;
-                dest += stride;
-            }
-        }
-    }
-
-    void ParserPNG::process_rgb8(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        if (m_transparent_enable)
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u32* d = reinterpret_cast<u32*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    ColorBGRA color(src[0], src[1], src[2], 0xff);
-                    if (color == m_transparent_color)
-                    {
-                        color.a = 0;
-                    }
-                    d[x] = color;
-                    src += 3;
-                }
-            }
-        }
-        else
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u32* d = reinterpret_cast<u32*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    d[x] = ColorBGRA(src[0], src[1], src[2], 0xff);
-                    src += 3;
-                }
-            }
-        }
-    }
-
-    void ParserPNG::process_pal1to4(u8* dest, int width, int height, int stride, const u8* src, Palette* ptr_palette)
-    {
-        const int bits = m_bit_depth;
-
-        const u32 mask = (1 << bits) - 1;
-
-        if (ptr_palette)
-        {
-            *ptr_palette = m_palette;
-
-            for (int y = 0; y < height; ++y)
-            {
-                u8* d = reinterpret_cast<u8*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                u32 data = 0;
-                int offset = -1;
-
-                for (int x = 0; x < width; ++x)
-                {
-                    if (offset < 0)
-                    {
-                        offset = 8 - bits;
-                        data = *src++;
-                    }
-                    *d++ = (data >> offset) & mask;
-                    offset -= bits;
-                }
-            }
-        }
-        else
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u32* d = reinterpret_cast<u32*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                u32 data = 0;
-                int offset = -1;
-
-                for (int x = 0; x < width; ++x)
-                {
-                    if (offset < 0)
-                    {
-                        offset = 8 - bits;
-                        data = *src++;
-                    }
-                    d[x] = m_palette[(data >> offset) & mask];
-                    offset -= bits;
-                }
-            }
-        }
-    }
-
-    void ParserPNG::process_pal8(u8* dest, int width, int height, int stride, const u8* src, Palette* ptr_palette)
-    {
-        if (ptr_palette)
-        {
-            *ptr_palette = m_palette;
-
-            for (int y = 0; y < height; ++y)
-            {
-                ++src; // skip filter byte
-                std::memcpy(dest, src, width);
-                src += width;
-                dest += stride;
-            }
-        }
-        else
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u32* d = reinterpret_cast<u32*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    d[x] = m_palette[*src++];
-                }
-            }
-        }
-    }
-
-    void ParserPNG::process_ia8(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        for (int y = 0; y < height; ++y)
-        {
-            u16* d = reinterpret_cast<u16*>(dest);
-            dest += stride;
-            ++src; // skip filter byte
-
-            for (int x = 0; x < width; ++x)
-            {
-                *d++ = (src[1] << 8) | src[0];
-                src += 2;
-            }
-        }
-    }
-
-    void ParserPNG::process_rgba8(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        for (int y = 0; y < height; ++y)
-        {
-            u32* d = reinterpret_cast<u32*>(dest);
-            dest += stride;
-            ++src; // skip filter byte
-
-            for (int x = 0; x < width; ++x)
-            {
-                *d++ = ColorBGRA(src[0], src[1], src[2], src[3]);
-                src += 4;
-            }
-        }
-    }
-
-    void ParserPNG::process_i16(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        if (m_transparent_enable)
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    u16 gray = (src[0] << 8) | src[1];
-                    u16 alpha = m_transparent_sample[0] == src[0] ? 0 : 0xffff;
-                    d[0] = gray;
-                    d[1] = alpha;
-                    d += 2;
-                    src += 2;
-                }
-            }
-        }
-        else
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    *d++ = (src[0] << 8) | src[1];
-                    src += 2;
-                }
-            }
-        }
-    }
-
-    void ParserPNG::process_rgb16(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        if (m_transparent_enable)
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    u16 red   = (src[0] << 8) | src[1];
-                    u16 green = (src[2] << 8) | src[3];
-                    u16 blue  = (src[4] << 8) | src[5];
-                    u16 alpha = 0xffff;
-                    if (m_transparent_sample[0] == red &&
-                        m_transparent_sample[1] == green &&
-                        m_transparent_sample[1] == blue) alpha = 0;
-                    d[0] = red;
-                    d[1] = green;
-                    d[2] = blue;
-                    d[3] = alpha;
-                    d += 4;
-                    src += 6;
-                }
-            }
-        }
-        else
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                dest += stride;
-                ++src; // skip filter byte
-
-                for (int x = 0; x < width; ++x)
-                {
-                    u16 red   = (src[0] << 8) | src[1];
-                    u16 green = (src[2] << 8) | src[3];
-                    u16 blue  = (src[4] << 8) | src[5];
-                    u16 alpha = 0xffff;
-                    d[0] = red;
-                    d[1] = green;
-                    d[2] = blue;
-                    d[3] = alpha;
-                    d += 4;
-                    src += 6;
-                }
-            }
-        }
-    }
-
-    void ParserPNG::process_ia16(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        for (int y = 0; y < height; ++y)
-        {
-            u16* d = reinterpret_cast<u16*>(dest);
-            dest += stride;
-            ++src; // skip filter byte
-
-            for (int x = 0; x < width; ++x)
-            {
-                u16 gray  = (src[0] << 8) | src[1];
-                u16 alpha = (src[2] << 8) | src[3];
-                d[0] = gray;
-                d[1] = alpha;
-                d += 2;
-                src += 4;
-            }
-        }
-    }
-
-    void ParserPNG::process_rgba16(u8* dest, int width, int height, int stride, const u8* src)
-    {
-        for (int y = 0; y < height; ++y)
-        {
-            u16* d = reinterpret_cast<u16*>(dest);
-            dest += stride;
-            ++src; // skip filter byte
-
-            for (int x = 0; x < width; ++x)
-            {
-                u16 red   = (src[0] << 8) | src[1];
-                u16 green = (src[2] << 8) | src[3];
-                u16 blue  = (src[4] << 8) | src[5];
-                u16 alpha = (src[6] << 8) | src[7];
-                d[0] = red;
-                d[1] = green;
-                d[2] = blue;
-                d[3] = alpha;
-                d += 4;
-                src += 8;
-            }
-        }
-    }
-
-    void ParserPNG::process(u8* image, int width, int height, int stride, u8* buffer, Palette* ptr_palette)
-    {
-        Buffer temp;
-
-        if (m_interlace)
-        {
-            const int stride = PNG_FILTER_BYTE + getBytesPerLine(width);
-
-            temp.resize(height * stride);
-            std::memset(temp, 0, height * stride);
-
-            // deinterlace does filter for each pass
-            if (m_bit_depth < 8)
-                deinterlace1to4(temp, width, height, stride, buffer);
-            else
-                deinterlace8to16(temp, width, height, stride, buffer);
-
-            // use de-interlaced temp buffer as processing source
-            buffer = temp;
-        }
-        else
-        {
-            // filter the whole image in single pass
-            filter(buffer, getBytesPerLine(width), height);
-        }
-
-        if (m_error)
-        {
-            return;
-        }
-
-        if (m_color_type == COLOR_TYPE_I)
-        {
-            if (m_bit_depth < 8)
-                process_i1to4(image, width, height, stride, buffer);
-            else if (m_bit_depth == 8)
-                process_i8(image, width, height, stride, buffer);
-            else
-                process_i16(image, width, height, stride, buffer);
-        }
-        else if (m_color_type == COLOR_TYPE_RGB)
-        {
-            if (m_bit_depth == 8)
-                process_rgb8(image, width, height, stride, buffer);
-            else
-                process_rgb16(image, width, height, stride, buffer);
-        }
-        else if (m_color_type == COLOR_TYPE_PALETTE)
-        {
-            if (m_bit_depth < 8)
-                process_pal1to4(image, width, height, stride, buffer, ptr_palette);
-            else
-                process_pal8(image, width, height, stride, buffer, ptr_palette);
-        }
-        else if (m_color_type == COLOR_TYPE_IA)
-        {
-            if (m_bit_depth == 8)
-                process_ia8(image, width, height, stride, buffer);
-            else
-                process_ia16(image, width, height, stride, buffer);
-        }
-        else if (m_color_type == COLOR_TYPE_RGBA)
-        {
-            if (m_bit_depth == 8)
-                process_rgba8(image, width, height, stride, buffer);
-            else
-                process_rgba16(image, width, height, stride, buffer);
-        }
-    }
-
     void ParserPNG::blend_ia8(u8* dest, const u8* src, int width)
     {
         for (int x = 0; x < width; ++x)
@@ -1777,6 +1592,183 @@ namespace
         }
 
         return buffer_size;
+    }
+
+    void ParserPNG::deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer)
+    {
+        u8* p = buffer;
+
+        const int samples = 8 / m_bit_depth;
+        const int mask = samples - 1;
+        const int shift = u32_log2(samples);
+        const int valueShift = u32_log2(m_bit_depth);
+        const int valueMask = (1 << m_bit_depth) - 1;
+
+        for (int pass = 0; pass < 7; ++pass)
+        {
+            AdamInterleave adam(pass, width, height);
+            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+
+            const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
+            filter(p, bw, adam.h);
+
+            if (adam.w && adam.h)
+            {
+                for (int y = 0; y < adam.h; ++y)
+                {
+                    const int yoffset = (y << adam.yspc) + adam.yorig;
+                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                    u8* src = p + y * bw + PNG_FILTER_BYTE;
+
+                    for (int x = 0; x < adam.w; ++x)
+                    {
+                        const int xoffset = (x << adam.xspc) + adam.xorig;
+                        u8 v = src[x >> shift];
+                        int a = (mask - (x & mask)) << valueShift;
+                        int b = (mask - (xoffset & mask)) << valueShift;
+                        v = ((v >> a) & valueMask) << b;
+                        dest[xoffset >> shift] |= v;
+                    }
+                }
+
+                // next pass
+                p += bw * adam.h;
+            }
+        }
+    }
+
+    void ParserPNG::deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer)
+    {
+        u8* p = buffer;
+        const int size = getBytesPerLine(width) / width;
+
+        for (int pass = 0; pass < 7; ++pass)
+        {
+            AdamInterleave adam(pass, width, height);
+            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+
+            const int bw = PNG_FILTER_BYTE + adam.w * size;
+            filter(p, bw, adam.h);
+
+            if (adam.w && adam.h)
+            {
+                const int ps = adam.w * size + PNG_FILTER_BYTE;
+
+                for (int y = 0; y < adam.h; ++y)
+                {
+                    const int yoffset = (y << adam.yspc) + adam.yorig;
+                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                    u8* src = p + y * ps + PNG_FILTER_BYTE;
+
+                    dest += adam.xorig * size;
+                    const int xmax = (adam.w * size) << adam.xspc;
+                    const int xstep = size << adam.xspc;
+
+                    for (int x = 0; x < xmax; x += xstep)
+                    {
+                        std::memcpy(dest + x, src, size);
+                        src += size;
+                    }
+                }
+
+                // next pass
+                p += bw * adam.h;
+            }
+        }
+    }
+
+    void ParserPNG::filter(u8* buffer, int bytes, int height)
+    {
+        const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
+        if (bpp > 8)
+            return;
+
+        FilterDispatcher dispatcher(bpp);
+
+        // zero scanline
+        std::vector<u8> zeros(bytes, 0);
+        const u8* prev = zeros.data();
+
+        for (int y = 0; y < height; ++y)
+        {
+            dispatcher(buffer, prev, bytes);
+            prev = buffer;
+            buffer += bytes;
+        }
+    }
+
+    void ParserPNG::process(u8* image, int width, int height, int stride, u8* buffer, Palette* ptr_palette)
+    {
+        if (m_error)
+        {
+            return;
+        }
+
+        m_color_state.dest = image;
+
+        if (ptr_palette)
+        {
+            // caller requests palette; give it and decode u8 indices
+            *ptr_palette = m_palette;
+            m_color_state.palette = nullptr;
+        }
+        else
+        {
+            // caller doesn't want palette; lookup RGBA colors from palette
+            m_color_state.palette = m_palette.color;
+        }
+
+        int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+
+        Buffer temp;
+
+        if (m_interlace)
+        {
+            temp.resize(height * bytes_per_line);
+            std::memset(temp, 0, height * bytes_per_line);
+
+            // deinterlace does filter for each pass
+            if (m_bit_depth < 8)
+                deinterlace1to4(temp, width, height, bytes_per_line, buffer);
+            else
+                deinterlace8to16(temp, width, height, bytes_per_line, buffer);
+
+            // use de-interlaced temp buffer as processing source
+            buffer = temp;
+
+            // color conversion
+            for (int y = 0; y < height; ++y)
+            {
+                m_color_state.func(m_color_state, width, buffer + 1);
+                m_color_state.dest += stride;
+                buffer += bytes_per_line;
+            }
+        }
+        else
+        {
+            const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
+            if (bpp > 8)
+                return;
+
+            FilterDispatcher dispatcher(bpp);
+
+            // zero scanline
+            std::vector<u8> zeros(bytes_per_line, 0);
+            const u8* prev = zeros.data();
+
+            for (int y = 0; y < height; ++y)
+            {
+                // filtering
+                dispatcher(buffer, prev, bytes_per_line);
+
+                // color conversion
+                m_color_state.func(m_color_state, width, buffer + PNG_FILTER_BYTE);
+                m_color_state.dest += stride;
+
+                prev = buffer;
+                buffer += bytes_per_line;
+            }
+        }
     }
 
     ImageDecodeStatus ParserPNG::decode(Surface& dest, Palette* ptr_palette)
