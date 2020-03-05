@@ -470,8 +470,8 @@ namespace
 
         const bool transparent_enable = state.transparent_enable;
         const u16 transparent_sample = state.transparent_sample[0];
-        const int bits = state.bits;
 
+        const int bits = state.bits;
         const int maxValue = (1 << bits) - 1;
         const int scale = (255 / maxValue) * 0x010101;
         const u32 mask = (1 << bits) - 1;
@@ -503,11 +503,10 @@ namespace
     {
         u16* dest = reinterpret_cast<u16*>(state.dest);
 
-        const bool transparent_enable = state.transparent_enable;
-        const u16 transparent_sample = state.transparent_sample[0];
-
-        if (transparent_enable)
+        if (state.transparent_enable)
         {
+            const u16 transparent_sample = state.transparent_sample[0];
+
             for (int x = 0; x < width; ++x)
             {
                 const u16 alpha = transparent_sample == src[x] ? 0 : 0xff00;
@@ -524,11 +523,10 @@ namespace
     {
         u32* dest = reinterpret_cast<u32*>(state.dest);
 
-        const bool transparent_enable = state.transparent_enable;
-        const ColorBGRA transparent_color = state.transparent_color;
-
-        if (transparent_enable)
+        if (state.transparent_enable)
         {
+            const ColorBGRA transparent_color = state.transparent_color;
+
             for (int x = 0; x < width; ++x)
             {
                 ColorBGRA color(src[0], src[1], src[2], 0xff);
@@ -607,13 +605,12 @@ namespace
 
             for (int x = 0; x < width; ++x)
             {
-                dest[x] = palette[*src++];
+                dest[x] = palette[src[x]];
             }
         }
         else
         {
-            u8* dest = state.dest;
-            std::memcpy(dest, src, width);
+            std::memcpy(state.dest, src, width);
         }
     }
 
@@ -623,7 +620,7 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            *dest++ = (src[1] << 8) | src[0];
+            dest[x] = uload16be(src);
             src += 2;
         }
     }
@@ -634,7 +631,7 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            *dest++ = ColorBGRA(src[0], src[1], src[2], src[3]);
+            dest[x] = ColorBGRA(src[0], src[1], src[2], src[3]);
             src += 4;
         }
     }
@@ -643,15 +640,14 @@ namespace
     {
         u16* dest = reinterpret_cast<u16*>(state.dest);
 
-        const bool transparent_enable = state.transparent_enable;
-        const u16 transparent_sample = state.transparent_sample[0];
-
-        if (transparent_enable)
+        if (state.transparent_enable)
         {
+            const u16 transparent_sample = state.transparent_sample[0];
+
             for (int x = 0; x < width; ++x)
             {
-                u16 gray = (src[0] << 8) | src[1];
-                u16 alpha = transparent_sample == src[0] ? 0 : 0xffff;
+                u16 gray = uload16be(src);
+                u16 alpha = (transparent_sample == gray) ? 0 : 0xffff;
                 dest[0] = gray;
                 dest[1] = alpha;
                 dest += 2;
@@ -662,7 +658,7 @@ namespace
         {
             for (int x = 0; x < width; ++x)
             {
-                *dest++ = (src[0] << 8) | src[1];
+                dest[x] = uload16be(src);
                 src += 2;
             }
         }
@@ -672,18 +668,17 @@ namespace
     {
         u16* dest = reinterpret_cast<u16*>(state.dest);
 
-        const bool transparent_enable = state.transparent_enable;
-        const u16 transparent_sample0 = state.transparent_sample[0];
-        const u16 transparent_sample1 = state.transparent_sample[1];
-        const u16 transparent_sample2 = state.transparent_sample[2];
-
-        if (transparent_enable)
+        if (state.transparent_enable)
         {
+            const u16 transparent_sample0 = state.transparent_sample[0];
+            const u16 transparent_sample1 = state.transparent_sample[1];
+            const u16 transparent_sample2 = state.transparent_sample[2];
+
             for (int x = 0; x < width; ++x)
             {
-                u16 red   = (src[0] << 8) | src[1];
-                u16 green = (src[2] << 8) | src[3];
-                u16 blue  = (src[4] << 8) | src[5];
+                u16 red   = uload16be(src + 0);
+                u16 green = uload16be(src + 2);
+                u16 blue  = uload16be(src + 4);
                 u16 alpha = 0xffff;
                 if (transparent_sample0 == red &&
                     transparent_sample1 == green &&
@@ -700,14 +695,10 @@ namespace
         {
             for (int x = 0; x < width; ++x)
             {
-                u16 red   = (src[0] << 8) | src[1];
-                u16 green = (src[2] << 8) | src[3];
-                u16 blue  = (src[4] << 8) | src[5];
-                u16 alpha = 0xffff;
-                dest[0] = red;
-                dest[1] = green;
-                dest[2] = blue;
-                dest[3] = alpha;
+                dest[0] = uload16be(src + 0);
+                dest[1] = uload16be(src + 2);
+                dest[2] = uload16be(src + 4);
+                dest[3] = 0xffff;
                 dest += 4;
                 src += 6;
             }
@@ -720,10 +711,8 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            u16 gray  = (src[0] << 8) | src[1];
-            u16 alpha = (src[2] << 8) | src[3];
-            dest[0] = gray;
-            dest[1] = alpha;
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
             dest += 2;
             src += 4;
         }
@@ -735,14 +724,10 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            u16 red   = (src[0] << 8) | src[1];
-            u16 green = (src[2] << 8) | src[3];
-            u16 blue  = (src[4] << 8) | src[5];
-            u16 alpha = (src[6] << 8) | src[7];
-            dest[0] = red;
-            dest[1] = green;
-            dest[2] = blue;
-            dest[3] = alpha;
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
+            dest[2] = uload16be(src + 4);
+            dest[3] = uload16be(src + 6);
             dest += 4;
             src += 8;
         }
