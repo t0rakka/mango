@@ -17,6 +17,9 @@
 // TODO: check that animations starting with "IDAT" and "fdAT" work correctly
 // TODO: SIMD blending (not critical)
 
+// TODO: process at the same time we are inflating
+// TODO: SIMD color conversions
+
 // ------------------------------------------------------------
 // miniz
 // ------------------------------------------------------------
