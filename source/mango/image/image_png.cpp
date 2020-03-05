@@ -937,7 +937,7 @@ namespace
         void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
         void deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
-        void process(u8* dest, int width, int height, int stride, u8* buffer, Palette* palette);
+        void process(u8* dest, int width, int height, int stride, u8* buffer);
 
         void blend(Surface& d, Surface& s, Palette* palette);
 
@@ -1682,7 +1682,7 @@ namespace
         }
     }
 
-    void ParserPNG::process(u8* image, int width, int height, int stride, u8* buffer, Palette* ptr_palette)
+    void ParserPNG::process(u8* image, int width, int height, int stride, u8* buffer)
     {
         if (m_error)
         {
@@ -1690,18 +1690,6 @@ namespace
         }
 
         m_color_state.dest = image;
-
-        if (ptr_palette)
-        {
-            // caller requests palette; give it and decode u8 indices
-            *ptr_palette = m_palette;
-            m_color_state.palette = nullptr;
-        }
-        else
-        {
-            // caller doesn't want palette; lookup RGBA colors from palette
-            m_color_state.palette = m_palette.color;
-        }
 
         int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
 
@@ -1776,6 +1764,18 @@ namespace
             return status;
         }
 
+        if (ptr_palette)
+        {
+            // caller requests palette; give it and decode u8 indices
+            *ptr_palette = m_palette;
+            m_color_state.palette = nullptr;
+        }
+        else
+        {
+            // caller doesn't want palette; lookup RGBA colors from palette
+            m_color_state.palette = m_palette.color;
+        }
+
         // default: main image from "IHDR" chunk
         int width = m_width;
         int height = m_height;
@@ -1825,7 +1825,7 @@ namespace
                 debugPrint("  # total_out:  %d\n", raw_len);
 
                 // process image
-                process(image, width, height, stride, buffer, ptr_palette);
+                process(image, width, height, stride, buffer);
                 STBI_FREE(buffer);
             }
         }
@@ -1841,9 +1841,9 @@ namespace
             memset(&stream, 0, sizeof(stream));
 
             stream.next_in   = m_compressed;
-            stream.avail_in  = (unsigned int)m_compressed.size();
+            stream.avail_in  = u32(m_compressed.size());
             stream.next_out  = buffer;
-            stream.avail_out = (unsigned int)buffer_size;
+            stream.avail_out = u32(buffer_size);
 
             status = mz_inflateInit(&stream);
             if (status != MZ_OK)
@@ -1861,7 +1861,7 @@ namespace
             status = mz_inflateEnd(&stream);
 
             // process image
-            process(image, width, height, stride, buffer, ptr_palette);
+            process(image, width, height, stride, buffer);
         }
 
         if (m_number_of_frames > 0)
