@@ -1809,7 +1809,7 @@ namespace
 
         int buffer_size = getImageBufferSize(width, height);
 
-        if (m_compressed.size() <= 128 * 1024)
+        if (m_compressed.size() <= 256 * 1024)
         {
             Memory mem = m_compressed;
             int raw_len = buffer_size;
