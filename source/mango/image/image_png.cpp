@@ -53,6 +53,7 @@ namespace
 {
     using namespace mango;
 
+    constexpr int PNG_SIMD_PADDING = 16;
     constexpr int PNG_FILTER_BYTE = 1;
     constexpr u64 PNG_HEADER_MAGIC = 0x89504e470d0a1a0a;
 
@@ -177,10 +178,10 @@ namespace
     // SSE2 Filters
     // -----------------------------------------------------------------------------------
 
-    inline int8x16 load4(const void* p)
+    inline __m128i load4(const void* p)
     {
         u32 temp = uload32(p);
-        return int8x16(_mm_cvtsi32_si128(temp));
+        return _mm_cvtsi32_si128(temp);
     }
 
     inline void store4(void* p, __m128i v)
@@ -189,11 +190,16 @@ namespace
         ustore32(p, temp);
     }
 
-    inline int8x16 load3(const void* p)
+    inline __m128i load3(const void* p)
     {
+#if 1
+        // NOTE: we have PNG_SIMD_PADDING for overflow guardband
+        u32 temp = uload32(p);
+#else
         u32 temp = 0;
         std::memcpy(&temp, p, 3);
-        return int8x16(_mm_cvtsi32_si128(temp));
+#endif
+        return _mm_cvtsi32_si128(temp);
     }
 
     inline void store3(void* p, __m128i v)
@@ -1809,7 +1815,7 @@ namespace
             u8 *buffer = (u8*) stbi_zlib_decode_malloc_guesssize_headerflag(
                 reinterpret_cast<const char *>(mem.address),
                 int(mem.size),
-                raw_len,
+                raw_len + PNG_SIMD_PADDING,
                 &raw_len,
                 1);
             if (buffer)
@@ -1826,7 +1832,7 @@ namespace
         {
             // allocate output buffer
             debugPrint("  buffer bytes: %d\n", buffer_size);
-            Buffer buffer(buffer_size);
+            Buffer buffer(buffer_size + PNG_SIMD_PADDING);
 
             // decompress stream
             mz_stream stream;
