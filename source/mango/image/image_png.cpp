@@ -257,6 +257,27 @@ namespace
         }
     }
 
+    void filter_up_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(bpp);
+
+        while (bytes >= 16)
+        {
+            __m128i a = _mm_loadu_si128(reinterpret_cast<__m128i*>(scan));
+            __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(prev));
+            a = _mm_add_epi8(a, b);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(scan), a);
+            scan += 16;
+            prev += 16;
+            bytes -= 16;
+        }
+
+        for (int x = 0; x < bytes; ++x)
+        {
+            scan[x] += prev[x];
+        }
+    }
+
     void filter_average_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         __m128i d = _mm_setzero_si128();
@@ -369,6 +390,9 @@ namespace
                     break;
             }
 
+#if defined(MANGO_ENABLE_SSE2)
+            up = filter_up_sse2;
+#endif
 #if defined(MANGO_ENABLE_NEON__todo)
             up = filter_up_neon;
 #endif
