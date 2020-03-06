@@ -1849,7 +1849,7 @@ namespace
         writeChunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
-    void write_IDAT(Stream& stream, const Surface& surface)
+    void write_IDAT(Stream& stream, const Surface& surface, int level)
     {
         // create data to compress
         Buffer temp;
@@ -1866,7 +1866,7 @@ namespace
         }
 
         // compress
-        int level = 4;
+        level = clamp(level, 1, 12);
         libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
 
         size_t bound = libdeflate_zlib_compress_bound(compressor, temp.size());
@@ -1880,7 +1880,7 @@ namespace
         writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(buffer, bytes_out));
     }
 
-    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
+    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, int level)
     {
         BigEndianStream s(stream);
 
@@ -1888,7 +1888,7 @@ namespace
         s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
-        write_IDAT(stream, surface);
+        write_IDAT(stream, surface, level);
 
         // write IEND
         s.write32(0);
@@ -2040,12 +2040,12 @@ namespace
 
         if (surface.format == format)
         {
-            writePNG(stream, surface, color_bits, color_type);
+            writePNG(stream, surface, color_bits, color_type, options.compression);
         }
         else
         {
             Bitmap temp(surface, format);
-            writePNG(stream, temp, color_bits, color_type);
+            writePNG(stream, temp, color_bits, color_type, options.compression);
         }
 
         return status;
