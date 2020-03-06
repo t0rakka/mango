@@ -158,6 +158,13 @@ namespace mango
         void decompress(Memory dest, ConstMemory source);
     }
 
+    namespace deflate
+    {
+        size_t bound(size_t size);
+        size_t compress(Memory dest, ConstMemory source, int level = 6);
+        void decompress(Memory dest, ConstMemory source);
+    }
+
     // -----------------------------------------------------------------------
     // Compressor
     // -----------------------------------------------------------------------
@@ -179,6 +186,7 @@ namespace mango
             LZMA,
             LZMA2,
             PPMD8,
+            DEFLATE,
         } method;
         std::string name;
 

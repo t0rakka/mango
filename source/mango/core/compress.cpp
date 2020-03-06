@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <vector>
@@ -34,6 +34,8 @@
 #include "../../external/lzma/Lzma2Dec.h"
 #include "../../external/lzma/Lzma2Enc.h"
 #include "../../external/lzma/Ppmd8.h"
+
+#include "../../external/libdeflate/libdeflate.h"
 
 namespace mango {
 
@@ -941,6 +943,63 @@ namespace ppmd8
 
 } // namespace ppmd
 
+// ----------------------------------------------------------------------------
+// deflate
+// ----------------------------------------------------------------------------
+
+namespace deflate {
+
+    size_t bound(size_t size)
+    {
+        return libdeflate_zlib_compress_bound(nullptr, size);
+    }
+
+    size_t compress(Memory dest, ConstMemory source, int level)
+    {
+        level = clamp(level, 1, 10);
+        if (level >= 8) level = (level * 12) / 10;
+
+        libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
+        size_t bytes_out = libdeflate_zlib_compress(compressor, source, source.size, dest, dest.size);
+        libdeflate_free_compressor(compressor);
+
+        return bytes_out;
+    }
+
+    void decompress(Memory dest, ConstMemory source)
+    {
+        libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
+
+        size_t bytes_out = 0;
+        libdeflate_result result = libdeflate_zlib_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
+
+        const char* error = nullptr;
+        switch (result)
+        {
+            default:
+            case LIBDEFLATE_SUCCESS:
+                break;
+            case LIBDEFLATE_BAD_DATA:
+                error = "Bad data";
+                break;
+            case LIBDEFLATE_SHORT_OUTPUT:
+                error = "Short output";
+                break;
+            case LIBDEFLATE_INSUFFICIENT_SPACE:
+                error = "Insufficient space";
+                break;
+        }
+
+        if (error)
+        {
+            MANGO_EXCEPTION("[deflate] %s.", error);
+        }
+
+        libdeflate_free_decompressor(decompressor);
+    }
+
+} // namespace deflate
+
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,  "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
@@ -953,6 +1012,7 @@ namespace ppmd8
         { Compressor::LZMA,  "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
         { Compressor::LZMA2, "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
         { Compressor::PPMD8, "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
+        { Compressor::DEFLATE, "deflate", deflate::bound, deflate::compress, deflate::decompress },
     };
 
     std::vector<Compressor> getCompressors()
