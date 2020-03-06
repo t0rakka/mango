@@ -525,7 +525,7 @@ namespace mango
         return (value << (to - from)) | (value >> (from * 2 - to));
     }
 
-    constexpr s64 s64_extend(s64 value, int from, int to)
+    constexpr s64 s64_extend(s64 value, int from)
     {
         // sign-extend "from" bits to full s64
         return value | (value & (1ull << (from - 1)) ? ~((1ull << from) - 1) : 0);
