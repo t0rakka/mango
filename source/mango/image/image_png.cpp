@@ -164,6 +164,8 @@ namespace
     // SSE2 Filters
     // -----------------------------------------------------------------------------------
 
+    // helper functions
+
     inline __m128i load4(const void* p)
     {
         u32 temp = uload32(p);
@@ -217,9 +219,12 @@ namespace
         return d;
     }
 
+    // filters
+
     void filter_sub_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(prev);
+        MANGO_UNREFERENCED(bpp);
 
         __m128i d = _mm_setzero_si128();
 
@@ -233,6 +238,7 @@ namespace
     void filter_sub_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(prev);
+        MANGO_UNREFERENCED(bpp);
 
         __m128i d = _mm_setzero_si128();
 
@@ -266,6 +272,8 @@ namespace
 
     void filter_average_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
+        MANGO_UNREFERENCED(bpp);
+
         __m128i d = _mm_setzero_si128();
 
         for (int x = 0; x < bytes; x += 3)
@@ -277,6 +285,8 @@ namespace
 
     void filter_average_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
+        MANGO_UNREFERENCED(bpp);
+
         __m128i d = _mm_setzero_si128();
 
         for (int x = 0; x < bytes; x += 4)
@@ -288,6 +298,8 @@ namespace
 
     void filter_paeth_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
+        MANGO_UNREFERENCED(bpp);
+
         int8x16 zero = 0;
         int16x8 b = 0;
         int16x8 d = 0;
@@ -305,6 +317,8 @@ namespace
 
     void filter_paeth_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
+        MANGO_UNREFERENCED(bpp);
+
         int8x16 zero = 0;
         int16x8 b = 0;
         int16x8 d = 0;
