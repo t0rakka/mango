@@ -87,13 +87,6 @@ namespace mango
         void decompress(Memory dest, ConstMemory source);
     }
 
-    namespace miniz
-    {
-        size_t bound(size_t size);
-        size_t compress(Memory dest, ConstMemory source, int level = 6);
-        void decompress(Memory dest, ConstMemory source);
-    }
-
 #ifdef MANGO_ENABLE_LICENSE_BSD
 
     namespace lz4
@@ -177,7 +170,6 @@ namespace mango
         enum Method
         {
             NONE = 0,
-            MINIZ,
             BZIP2,
             LZ4,
             LZO,

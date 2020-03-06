@@ -209,9 +209,6 @@ FILE(GLOB EXTERNAL_LZFSE
 FILE(GLOB EXTERNAL_LZO 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.h" 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c")
-FILE(GLOB EXTERNAL_MINIZ 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/miniz/*.h" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/miniz/*.c")
 FILE(GLOB EXTERNAL_DEFLATE 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/*.h" 
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/common/*.h" 
@@ -244,7 +241,6 @@ SOURCE_GROUP("external" FILES
     ${EXTERNAL_LZ4} 
     ${EXTERNAL_LZFSE} 
     ${EXTERNAL_LZO} 
-    ${EXTERNAL_MINIZ} 
     ${EXTERNAL_DEFLATE} 
     ${EXTERNAL_UNRAR} 
     ${EXTERNAL_ZSTD} 
@@ -275,7 +271,6 @@ ADD_LIBRARY(mango
     ${EXTERNAL_LZ4}
     ${EXTERNAL_LZFSE} 
     ${EXTERNAL_LZO} 
-    ${EXTERNAL_MINIZ} 
     ${EXTERNAL_DEFLATE} 
     ${EXTERNAL_UNRAR} 
     ${EXTERNAL_ZSTD} 

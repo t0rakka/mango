@@ -36,7 +36,6 @@ SOURCE_DIRS := mango/core \
                external/unrar \
                external/bc \
                external/google \
-               external/miniz \
                external/libdeflate/lib \
                external/libdeflate/lib/x86 \
                external/libdeflate/lib/arm \

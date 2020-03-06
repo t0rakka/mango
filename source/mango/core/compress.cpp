@@ -13,9 +13,6 @@
 #include <mango/core/pointer.hpp>
 #include <mango/math/math.hpp>
 
-#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
-#include "../../external/miniz/miniz.h"
-
 #ifdef MANGO_ENABLE_LICENSE_BSD
 #include "../../external/lz4/lz4.h"
 #include "../../external/lz4/lz4hc.h"
@@ -63,68 +60,6 @@ namespace nocompress {
     }
 
 } // namespace nocompress
-
-// ----------------------------------------------------------------------------
-// miniz
-// ----------------------------------------------------------------------------
-
-namespace miniz {
-
-    size_t bound(size_t size)
-    {
-        const mz_ulong s = static_cast<mz_ulong>(size);
-		return mz_compressBound(s);
-    }
-
-	size_t compress(Memory dest, ConstMemory source, int level)
-	{
-        level = clamp(level, 0, 10);
-
-        mz_ulong dest_size = mz_ulong(dest.size);
-        mz_ulong source_size = mz_ulong(source.size);
-
-        int status = mz_compress2(dest, &dest_size, source, source_size, level);
-        if (status != MZ_OK)
-        {
-            MANGO_EXCEPTION("[miniz] compression failed.");
-        }
-
-        return dest_size;
-	}
-
-    void decompress(Memory dest, ConstMemory source)
-    {
-        mz_ulong dest_size = mz_ulong(dest.size);
-        mz_ulong source_size = mz_ulong(source.size);
-
-        int status = mz_uncompress(dest, &dest_size, source, source_size);
-        if (status != MZ_OK)
-        {
-            const char* msg = nullptr;
-            switch (status)
-            {
-                case MZ_MEM_ERROR:
-                    msg = "[miniz] not enough memory.";
-                    break;
-                case MZ_BUF_ERROR:
-                    msg = "[miniz] not enough room in the output buffer.";
-                    break;
-                case MZ_DATA_ERROR:
-                    msg = "[miniz] corrupted input data.";
-                    break;
-                default:
-                    msg = "[miniz] undefined error.";
-                    break;
-            }
-
-            if (msg)
-            {
-                MANGO_EXCEPTION(msg);
-            }
-        }
-    }
-
-} // namespace miniz
 
 #ifdef MANGO_ENABLE_LICENSE_BSD
 
@@ -1002,7 +937,6 @@ namespace deflate {
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,  "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
-        { Compressor::MINIZ, "miniz", miniz::bound, miniz::compress, miniz::decompress },
         { Compressor::BZIP2, "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
         { Compressor::LZ4,   "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
         { Compressor::LZO,   "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },

@@ -1345,7 +1345,7 @@ deflate_compute_precode_items(const u8 lens[restrict],
 		}
 	} while (run_start != num_lens);
 
-	return itemptr - precode_items;
+	return (u32)(itemptr - precode_items);
 }
 
 /*
@@ -1955,7 +1955,7 @@ should_end_block(struct block_split_stats *stats,
 	    in_end - in_next < MIN_BLOCK_LENGTH)
 		return false;
 
-	return do_end_block_check(stats, in_next - in_block_begin);
+	return do_end_block_check(stats, (u32)(in_next - in_block_begin));
 }
 
 /******************************************************************************/
@@ -1998,7 +1998,7 @@ deflate_compress_greedy(struct libdeflate_compressor * restrict c,
 			/* Decrease the maximum and nice match lengths if we're
 			 * approaching the end of the input buffer.  */
 			if (unlikely(max_len > in_end - in_next)) {
-				max_len = in_end - in_next;
+				max_len = (u32)(in_end - in_next);
 				nice_len = MIN(nice_len, max_len);
 			}
 
@@ -2036,7 +2036,7 @@ deflate_compress_greedy(struct libdeflate_compressor * restrict c,
 
 		deflate_finish_sequence(next_seq, litrunlen);
 		deflate_flush_block(c, &os, in_block_begin,
-				    in_next - in_block_begin,
+				    (u32)(in_next - in_block_begin),
 				    in_next == in_end, false);
 	} while (in_next != in_end);
 
@@ -2083,7 +2083,7 @@ deflate_compress_lazy(struct libdeflate_compressor * restrict c,
 			unsigned next_offset;
 
 			if (unlikely(in_end - in_next < DEFLATE_MAX_MATCH_LEN)) {
-				max_len = in_end - in_next;
+				max_len = (u32)(in_end - in_next);
 				nice_len = MIN(nice_len, max_len);
 			}
 
@@ -2142,7 +2142,7 @@ deflate_compress_lazy(struct libdeflate_compressor * restrict c,
 			 * each.
 			 */
 			if (unlikely(in_end - in_next < DEFLATE_MAX_MATCH_LEN)) {
-				max_len = in_end - in_next;
+				max_len = (u32)(in_end - in_next);
 				nice_len = MIN(nice_len, max_len);
 			}
 			next_len = hc_matchfinder_longest_match(&c->p.g.hc_mf,
@@ -2183,7 +2183,7 @@ deflate_compress_lazy(struct libdeflate_compressor * restrict c,
 
 		deflate_finish_sequence(next_seq, litrunlen);
 		deflate_flush_block(c, &os, in_block_begin,
-				    in_next - in_block_begin,
+				    (u32)(in_next - in_block_begin),
 				    in_next == in_end, false);
 	} while (in_next != in_end);
 
@@ -2529,7 +2529,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 			/* Decrease the maximum and nice match lengths if we're
 			 * approaching the end of the input buffer.  */
 			if (unlikely(max_len > in_end - in_next)) {
-				max_len = in_end - in_next;
+				max_len = (u32)(in_end - in_next);
 				nice_len = MIN(nice_len, max_len);
 			}
 
@@ -2601,7 +2601,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 									      MATCHFINDER_WINDOW_SIZE);
 					}
 					if (unlikely(max_len > in_end - in_next)) {
-						max_len = in_end - in_next;
+						max_len = (u32)(in_end - in_next);
 						nice_len = MIN(nice_len, max_len);
 					}
 					if (max_len >= BT_MATCHFINDER_REQUIRED_NBYTES) {
@@ -2624,9 +2624,9 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 
 		/* All the matches for this block have been cached.  Now choose
 		 * the sequence of items to output and flush the block.  */
-		deflate_optimize_block(c, in_next - in_block_begin, cache_ptr,
+		deflate_optimize_block(c, (u32)(in_next - in_block_begin), cache_ptr,
 				       in_block_begin == in);
-		deflate_flush_block(c, &os, in_block_begin, in_next - in_block_begin,
+		deflate_flush_block(c, &os, in_block_begin, (u32)(in_next - in_block_begin),
 				    in_next == in_end, true);
 	} while (in_next != in_end);
 

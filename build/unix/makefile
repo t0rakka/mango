@@ -90,7 +90,6 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/bc \
                      external/google \
                      external/unrar \
-                     external/miniz \
                      external/libdeflate/lib \
                      external/libdeflate/lib/x86 \
                      external/libdeflate/lib/arm \
