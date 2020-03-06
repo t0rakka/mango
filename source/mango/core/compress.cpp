@@ -951,7 +951,7 @@ namespace deflate {
 
     size_t bound(size_t size)
     {
-        return libdeflate_zlib_compress_bound(nullptr, size);
+        return libdeflate_deflate_compress_bound(nullptr, size);
     }
 
     size_t compress(Memory dest, ConstMemory source, int level)
@@ -960,7 +960,7 @@ namespace deflate {
         if (level >= 8) level = (level * 12) / 10;
 
         libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
-        size_t bytes_out = libdeflate_zlib_compress(compressor, source, source.size, dest, dest.size);
+        size_t bytes_out = libdeflate_deflate_compress(compressor, source, source.size, dest, dest.size);
         libdeflate_free_compressor(compressor);
 
         return bytes_out;
@@ -971,7 +971,8 @@ namespace deflate {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
         size_t bytes_out = 0;
-        libdeflate_result result = libdeflate_zlib_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
+        libdeflate_result result = libdeflate_deflate_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
+        libdeflate_free_decompressor(decompressor);
 
         const char* error = nullptr;
         switch (result)
@@ -994,8 +995,6 @@ namespace deflate {
         {
             MANGO_EXCEPTION("[deflate] %s.", error);
         }
-
-        libdeflate_free_decompressor(decompressor);
     }
 
 } // namespace deflate

@@ -12,7 +12,7 @@
 
 #ifdef MANGO_ENABLE_ARCHIVE_ZIP
 
-#include "../../external/miniz/miniz.h"
+#include "../../external/libdeflate/libdeflate.h"
 
 /*
 https://courses.cs.ut.ee/MTAT.07.022/2015_fall/uploads/Main/dmitri-report-f15-16.pdf
@@ -490,48 +490,38 @@ namespace
 
 	u64 zip_decompress(const u8* compressed, u8* uncompressed, u64 compressedLen, u64 uncompressedLen)
 	{
-		z_stream zstream;
-		std::memset(&zstream, 0, sizeof(zstream));
+        libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
-		zstream.next_in  = compressed;
-		zstream.avail_in = uInt(compressedLen); // TODO: upgrade to support 64 bit files
+        size_t bytes_out = 0;
+        libdeflate_result result = libdeflate_deflate_decompress(decompressor,
+            compressed, compressedLen,
+            uncompressed, uncompressedLen, &bytes_out);
 
-        if (inflateInit2(&zstream, -MAX_WBITS) != Z_OK)
-		{
-            MANGO_EXCEPTION("[mapper.zip] InflateInit failed.");
-		}
+        libdeflate_free_decompressor(decompressor);
 
-    	// decompression
-		zstream.next_out  = uncompressed;
-	    zstream.avail_out = uInt(uncompressedLen); // TODO: upgrade to support 64 bit files
-
-    	int zcode = inflate(&zstream, Z_FINISH);
-		if (zcode != Z_STREAM_END)
+        const char* error = nullptr;
+        switch (result)
         {
-            const char* msg = "[mapper.zip] Internal error.";
-            switch (zcode)
-            {
-                case Z_MEM_ERROR:
-                    msg = "[mapper.zip] Memory error.";
-                    break;
-
-                case Z_BUF_ERROR:
-                    msg = "[mapper.zip] Buffer error.";
-                    break;
-
-                case Z_DATA_ERROR:
-                    msg = "[mapper.zip] Data error.";
-                    break;
-            }
-            MANGO_EXCEPTION(msg);
+            default:
+            case LIBDEFLATE_SUCCESS:
+                break;
+            case LIBDEFLATE_BAD_DATA:
+                error = "Bad data";
+                break;
+            case LIBDEFLATE_SHORT_OUTPUT:
+                error = "Short output";
+                break;
+            case LIBDEFLATE_INSUFFICIENT_SPACE:
+                error = "Insufficient space";
+                break;
         }
 
-		if (inflateEnd(&zstream) != Z_OK)
-	    {
-            MANGO_EXCEPTION("[mapper.zip] Inflate failed.");
-		}
+        if (error)
+        {
+            MANGO_EXCEPTION("[mapper.zip] %s.", error);
+        }
 
-		return zstream.total_out;
+        return bytes_out;
     }
 
 } // namespace
