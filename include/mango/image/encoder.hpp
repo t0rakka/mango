@@ -23,9 +23,10 @@ namespace mango
     struct ImageEncodeOptions
     {
         Palette palette;
-        float quality = 0.90f;
-        bool dithering = true;
-        bool lossless = false;
+        float quality = 0.90f; // jpeg: [0.0, 1.0]
+        int compression = 5; // png: [1, 12]
+        bool dithering = true; // gif
+        bool lossless = false; // webp
     };
 
     class ImageEncoder : protected NonCopyable

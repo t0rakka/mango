@@ -1,7 +1,7 @@
 # -------------------------------------------------------------
 # mango Android.mk
 #
-# Copyright (C) 2012-2018 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2020 Twilight 3D Finland Oy Ltd.
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
@@ -36,7 +36,9 @@ SOURCE_DIRS := mango/core \
                external/unrar \
                external/bc \
                external/google \
-               external/miniz \
+               external/libdeflate/lib \
+               external/libdeflate/lib/x86 \
+               external/libdeflate/lib/arm \
                external/lz4 \
                external/lzo \
                external/bzip2 \
