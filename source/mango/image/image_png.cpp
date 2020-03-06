@@ -21,36 +21,10 @@
 // TODO: SIMD color conversions
 
 // ------------------------------------------------------------
-// miniz
+// libdeflate
 // ------------------------------------------------------------
 
-#include "../../external/miniz/miniz.h"
-#undef crc32 // fix miniz pollution
-
-// ------------------------------------------------------------
-// stb zlib
-// ------------------------------------------------------------
-
-#define STBI_NO_STDIO
-#define STBI_NO_JPEG
-#define STBI_NO_BMP
-#define STBI_NO_PSD
-#define STBI_NO_PIC
-#define STBI_NO_TGA
-#define STBI_NO_GIF
-#define STBI_NO_PNM
-//#define STBI_NO_PNG
-//#define STBI_NO_HDR
-
-#define STBI_SUPPORT_ZLIB
-
-#define STBI_MALLOC(sz)           malloc(sz)
-#define STBI_REALLOC(p,newsz)     realloc(p,newsz)
-#define STBI_FREE(p)              free(p)
-
-#define STB_IMAGE_IMPLEMENTATION
-
-#include "../../external/stb/stb_image.h"
+#include "../../external/libdeflate/libdeflate.h"
 
 namespace
 {
@@ -1803,66 +1777,29 @@ namespace
             }
         }
 
-        // decompression
-        // - use STB for small buffers
-        // - use MINIZ for large buffers
-
         int buffer_size = getImageBufferSize(width, height);
 
-        if (m_compressed.size() <= 256 * 1024)
-        {
-            Memory mem = m_compressed;
-            int raw_len = buffer_size;
-            u8 *buffer = (u8*) stbi_zlib_decode_malloc_guesssize_headerflag(
-                reinterpret_cast<const char *>(mem.address),
-                int(mem.size),
-                raw_len + PNG_SIMD_PADDING,
-                &raw_len,
-                1);
-            if (buffer)
-            {
-                debugPrint("  buffer bytes: %d\n", buffer_size);
-                debugPrint("  # total_out:  %d\n", raw_len);
+        // allocate output buffer
+        debugPrint("  buffer bytes: %d\n", buffer_size);
+        Buffer buffer(buffer_size + PNG_SIMD_PADDING);
 
-                // process image
-                process(image, width, height, stride, buffer);
-                STBI_FREE(buffer);
-            }
-        }
-        else
-        {
-            // allocate output buffer
-            debugPrint("  buffer bytes: %d\n", buffer_size);
-            Buffer buffer(buffer_size + PNG_SIMD_PADDING);
+        libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
-            // decompress stream
-            mz_stream stream;
-            int status;
-            memset(&stream, 0, sizeof(stream));
+        Memory memory = m_compressed;
 
-            stream.next_in   = m_compressed;
-            stream.avail_in  = u32(m_compressed.size());
-            stream.next_out  = buffer;
-            stream.avail_out = u32(buffer_size);
+        size_t bytes_out = 0;
+        libdeflate_result result = libdeflate_zlib_decompress(decompressor,
+            memory.address, memory.size,
+            buffer, buffer.size(),
+            &bytes_out);
+        (void) result; // xxx
 
-            status = mz_inflateInit(&stream);
-            if (status != MZ_OK)
-            {
-                // TODO: error
-            }
+        debugPrint("  # total_out:  %d\n", int(bytes_out));
 
-            status = mz_inflate(&stream, MZ_FINISH);
-            if (status != MZ_STREAM_END)
-            {
-                // TODO: error
-            }
+        // process image
+        process(image, width, height, stride, buffer);
 
-            debugPrint("  # total_out:  %d\n", int(stream.total_out));
-            status = mz_inflateEnd(&stream);
-
-            // process image
-            process(image, width, height, stride, buffer);
-        }
+        libdeflate_free_decompressor(decompressor);
 
         if (m_number_of_frames > 0)
         {
@@ -1914,40 +1851,33 @@ namespace
 
     void write_IDAT(Stream& stream, const Surface& surface)
     {
-        const int bytesPerLine = surface.width * surface.format.bytes();
-        const int bytes = (PNG_FILTER_BYTE + bytesPerLine) * surface.height;
+        // create data to compress
+        Buffer temp;
 
-        z_stream z = { 0 };
-        deflateInit(&z, -1);
+        u8* image = surface.image;
+        int bytes_per_scan = surface.width * surface.format.bytes();
 
-        z.avail_out = (unsigned int)deflateBound(&z, bytes);
-        Buffer buffer(z.avail_out);
-
-        z.next_out = buffer;
-
-        const int ymax = surface.height - 1;
-
-        for (int y = 0; y <= ymax; ++y)
+        for (int y = 0; y < surface.height; ++y)
         {
-            // compress filter byte
-            u8 zero = 0;
-            z.avail_in = 1;
-            z.next_in = &zero;
-            deflate(&z, Z_NO_FLUSH);
-
-            // compress scanline
-            z.avail_in = bytesPerLine;
-            z.next_in = surface.image + y * surface.stride;
-            deflate(&z, y < ymax ? Z_NO_FLUSH : Z_FINISH);
+            u8 filter = 0;
+            temp.append(&filter, 1);
+            temp.append(image, bytes_per_scan);
+            image += surface.stride;
         }
 
-        // compressed size includes chunkID
-        const size_t compressed_size = int(z.next_out - buffer);
+        // compress
+        int level = 4;
+        libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
 
-        deflateEnd(&z);
+        size_t bound = libdeflate_zlib_compress_bound(compressor, temp.size());
+        Buffer buffer(bound);
+
+        size_t bytes_out = libdeflate_zlib_compress(compressor, temp, temp.size(), buffer, bound);
+
+        libdeflate_free_compressor(compressor);
 
         // write chunkdID + compressed data
-        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(buffer, compressed_size));
+        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(buffer, bytes_out));
     }
 
     void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)

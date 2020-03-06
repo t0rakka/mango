@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # mango makefile
 #
-# Copyright (C) 2012-2019 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2020 Twilight 3D Finland Oy Ltd.
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -91,6 +91,9 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/google \
                      external/unrar \
                      external/miniz \
+                     external/libdeflate/lib \
+                     external/libdeflate/lib/x86 \
+                     external/libdeflate/lib/arm \
                      external/lz4 \
                      external/lzo \
                      external/bzip2 \
@@ -260,8 +263,8 @@ ifeq (Darwin, $(OS))
   LIBRARY_VULKAN =
   LIBRARY_FRAMEBUFFER = lib$(LIBNAME_FRAMEBUFFER).dylib
   PLATFORM = x86-64
-  CC  = clang $(OPTIONS) $(OPTIONS_X86) $(CC_STD) -mmacosx-version-min=10.13
-  CPP = clang++ $(OPTIONS) $(OPTIONS_X86) $(CPP_STD) -mmacosx-version-min=10.13 $(STD) -stdlib=libc++
+  CC  = cc  $(OPTIONS) $(OPTIONS_X86) $(CC_STD) -mmacosx-version-min=10.13
+  CPP = c++ $(OPTIONS) $(OPTIONS_X86) $(CPP_STD) -mmacosx-version-min=10.13 $(STD) -stdlib=libc++
   LINK_MANGO  = ld -o $(LIBRARY_MANGO)  -dylib -undefined dynamic_lookup -macosx_version_min 10.13
   LINK_OPENGL = ld -o $(LIBRARY_OPENGL) -dylib -undefined dynamic_lookup -macosx_version_min 10.13
   LINK_VULKAN = ld -o $(LIBRARY_VULKAN) -dylib -undefined dynamic_lookup -macosx_version_min 10.13
