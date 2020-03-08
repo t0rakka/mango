@@ -648,6 +648,21 @@ namespace
         }
         else
         {
+#if 1
+            while (width >= 4)
+            {
+                u32 v0 = uload32(src + 0); // r1 b0 g0 r0
+                u32 v1 = uload32(src + 4); // g2 r2 b1 g1
+                u32 v2 = uload32(src + 8); // b3 g3 r3 b2
+                dest[0] = 0xff000000 | v0;
+                dest[1] = 0xff000000 | (v0 >> 24) | (v1 << 8);
+                dest[2] = 0xff000000 | (v1 >> 16) | (v2 << 16);
+                dest[3] = 0xff000000 | v2 >> 8;
+                src += 12;
+                dest += 4;
+                width -= 4;
+            }
+#endif
             for (int x = 0; x < width; ++x)
             {
                 dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
