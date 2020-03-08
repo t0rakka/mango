@@ -17,8 +17,8 @@
 // TODO: check that animations starting with "IDAT" and "fdAT" work correctly
 // TODO: SIMD blending (not critical)
 
-// TODO: process at the same time we are inflating
 // TODO: SIMD color conversions
+// TODO: single-pass processing
 
 // ------------------------------------------------------------
 // libdeflate
@@ -648,6 +648,33 @@ namespace
         }
         else
         {
+#if 0
+            // TODO: requires SSSE3 ; use dispatcher to invoke
+            __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
+            __m128i alpha = _mm_set1_epi32(0xff000000);
+
+            while (width >= 16)
+            {
+                __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0 * 16));
+                __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 1 * 16));
+                __m128i v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 2 * 16));
+                __m128i color0 = _mm_shuffle_epi8(v0, mask);
+                __m128i color1 = _mm_shuffle_epi8(_mm_alignr_epi8(v1, v0, 12), mask);
+                __m128i color2 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v1,  8), mask);
+                __m128i color3 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v2,  4), mask);
+                color0 = _mm_or_si128(color0, alpha);
+                color1 = _mm_or_si128(color1, alpha);
+                color2 = _mm_or_si128(color2, alpha);
+                color3 = _mm_or_si128(color3, alpha);
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), color0);
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  4), color1);
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  8), color2);
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 12), color3);
+                src += 48;
+                dest += 16;
+                width -= 16;
+            }
+#endif
 #if 1
             while (width >= 4)
             {
