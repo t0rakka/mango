@@ -449,94 +449,10 @@ namespace
         // tRNS
         bool transparent_enable = false;
         u16 transparent_sample[3];
-        ColorBGRA transparent_color;
+        ColorRGBA transparent_color;
 
         ColorBGRA* palette;
     };
-
-    void process_i1to4(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        u8* dest = dst;
-
-        const bool transparent_enable = state.transparent_enable;
-        const u16 transparent_sample = state.transparent_sample[0];
-
-        const int bits = state.bits;
-        const int maxValue = (1 << bits) - 1;
-        const int scale = (255 / maxValue) * 0x010101;
-        const u32 mask = (1 << bits) - 1;
-
-        u32 data = 0;
-        int offset = -1;
-
-        for (int x = 0; x < width; ++x)
-        {
-            if (offset < 0)
-            {
-                offset = 8 - bits;
-                data = *src++;
-            }
-
-            int value = (data >> offset) & mask;
-            *dest++ = value * scale;
-
-            if (transparent_enable)
-            {
-                *dest++ = (value == transparent_sample) ? 0 : 0xff;
-            }
-
-            offset -= bits;
-        }
-    }
-
-    void process_i8(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        u16* dest = reinterpret_cast<u16*>(dst);
-
-        if (state.transparent_enable)
-        {
-            const u16 transparent_sample = state.transparent_sample[0];
-
-            for (int x = 0; x < width; ++x)
-            {
-                const u16 alpha = transparent_sample == src[x] ? 0 : 0xff00;
-                dest[x] = alpha | src[x];
-            }
-        }
-        else
-        {
-            std::memcpy(dest, src, width);
-        }
-    }
-
-    void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        u32* dest = reinterpret_cast<u32*>(dst);
-
-        if (state.transparent_enable)
-        {
-            const ColorBGRA transparent_color = state.transparent_color;
-
-            for (int x = 0; x < width; ++x)
-            {
-                ColorBGRA color(src[0], src[1], src[2], 0xff);
-                if (color == transparent_color)
-                {
-                    color.a = 0;
-                }
-                dest[x] = color;
-                src += 3;
-            }
-        }
-        else
-        {
-            for (int x = 0; x < width; ++x)
-            {
-                dest[x] = ColorBGRA(src[0], src[1], src[2], 0xff);
-                src += 3;
-            }
-        }
-    }
 
     void process_pal1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
@@ -604,25 +520,58 @@ namespace
         }
     }
 
-    void process_ia8(const ColorState& state, int width, u8* dst, const u8* src)
+    void process_i1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(dst);
+        u8* dest = dst;
+
+        const bool transparent_enable = state.transparent_enable;
+        const u16 transparent_sample = state.transparent_sample[0];
+
+        const int bits = state.bits;
+        const int maxValue = (1 << bits) - 1;
+        const int scale = (255 / maxValue) * 0x010101;
+        const u32 mask = (1 << bits) - 1;
+
+        u32 data = 0;
+        int offset = -1;
 
         for (int x = 0; x < width; ++x)
         {
-            dest[x] = uload16be(src);
-            src += 2;
+            if (offset < 0)
+            {
+                offset = 8 - bits;
+                data = *src++;
+            }
+
+            int value = (data >> offset) & mask;
+            *dest++ = value * scale;
+
+            if (transparent_enable)
+            {
+                *dest++ = (value == transparent_sample) ? 0 : 0xff;
+            }
+
+            offset -= bits;
         }
     }
 
-    void process_rgba8(const ColorState& state, int width, u8* dst, const u8* src)
+    void process_i8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u32* dest = reinterpret_cast<u32*>(dst);
+        u16* dest = reinterpret_cast<u16*>(dst);
 
-        for (int x = 0; x < width; ++x)
+        if (state.transparent_enable)
         {
-            dest[x] = ColorBGRA(src[0], src[1], src[2], src[3]);
-            src += 4;
+            const u16 transparent_sample = state.transparent_sample[0];
+
+            for (int x = 0; x < width; ++x)
+            {
+                const u16 alpha = transparent_sample == src[x] ? 0 : 0xff00;
+                dest[x] = alpha | src[x];
+            }
+        }
+        else
+        {
+            std::memcpy(dest, src, width);
         }
     }
 
@@ -650,6 +599,59 @@ namespace
             {
                 dest[x] = uload16be(src);
                 src += 2;
+            }
+        }
+    }
+
+    void process_ia8(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        for (int x = 0; x < width; ++x)
+        {
+            dest[x] = uload16be(src);
+            src += 2;
+        }
+    }
+
+    void process_ia16(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        for (int x = 0; x < width; ++x)
+        {
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
+            dest += 2;
+            src += 4;
+        }
+    }
+
+    void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u32* dest = reinterpret_cast<u32*>(dst);
+
+        if (state.transparent_enable)
+        {
+            const ColorRGBA transparent_color = state.transparent_color;
+
+            for (int x = 0; x < width; ++x)
+            {
+                ColorRGBA color(src[0], src[1], src[2], 0xff);
+                if (color == transparent_color)
+                {
+                    color.a = 0;
+                }
+                dest[x] = color;
+                src += 3;
+            }
+        }
+        else
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
+                src += 3;
             }
         }
     }
@@ -695,17 +697,9 @@ namespace
         }
     }
 
-    void process_ia16(const ColorState& state, int width, u8* dst, const u8* src)
+    void process_rgba8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        u16* dest = reinterpret_cast<u16*>(dst);
-
-        for (int x = 0; x < width; ++x)
-        {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
-            dest += 2;
-            src += 4;
-        }
+        std::memcpy(dst, src, width * 4);
     }
 
     void process_rgba16(const ColorState& state, int width, u8* dst, const u8* src)
@@ -727,7 +721,14 @@ namespace
     {
         ColorState::Function function = nullptr;
 
-        if (color_type == COLOR_TYPE_I)
+        if (color_type == COLOR_TYPE_PALETTE)
+        {
+            if (bit_depth < 8)
+                function = process_pal1to4;
+            else
+                function = process_pal8;
+        }
+        else if (color_type == COLOR_TYPE_I)
         {
             if (bit_depth < 8)
                 function = process_i1to4;
@@ -735,13 +736,6 @@ namespace
                 function = process_i8;
             else
                 function = process_i16;
-        }
-        else if (color_type == COLOR_TYPE_PALETTE)
-        {
-            if (bit_depth < 8)
-                function = process_pal1to4;
-            else
-                function = process_pal8;
         }
         else if (color_type == COLOR_TYPE_IA)
         {
@@ -1012,30 +1006,26 @@ namespace
             }
 
             // select decoding format
+            int bits = m_bit_depth <= 8 ? 8 : 16;
             switch (color_type)
             {
                 case COLOR_TYPE_I:
-                    m_header.format = m_bit_depth <= 8 ?
-                        LuminanceFormat(8, Format::UNORM, 8, 0) :
-                        LuminanceFormat(16, Format::UNORM, 16, 0);
+                    m_header.format = LuminanceFormat(bits, Format::UNORM, bits, 0);
                     break;
 
                 case COLOR_TYPE_IA:
-                    m_header.format = m_bit_depth <= 8 ?
-                        LuminanceFormat(16, Format::UNORM, 8, 8) :
-                        LuminanceFormat(32, Format::UNORM, 16, 16);
+                    m_header.format = LuminanceFormat(bits * 2, Format::UNORM, bits, bits);
                     break;
 
                 case COLOR_TYPE_PALETTE:
-                    m_header.palette = true;
+                    // NOTE: palette formats decode to BGRA (same format as the palette)
                     m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.palette = true;
                     break;
 
                 case COLOR_TYPE_RGB:
                 case COLOR_TYPE_RGBA:
-                    m_header.format = m_bit_depth <= 8 ?
-                        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) :
-                        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); // NOTE: RGBA is not an error here!
+                    m_header.format = Format(bits * 4, Format::UNORM, Format::RGBA, bits, bits, bits, bits);
                     break;
             }
         }
@@ -1197,7 +1187,7 @@ namespace
             m_color_state.transparent_sample[0] = p.read16();
             m_color_state.transparent_sample[1] = p.read16();
             m_color_state.transparent_sample[2] = p.read16();
-            m_color_state.transparent_color = ColorBGRA(m_color_state.transparent_sample[0] & 0xff,
+            m_color_state.transparent_color = ColorRGBA(m_color_state.transparent_sample[0] & 0xff,
                                                         m_color_state.transparent_sample[1] & 0xff,
                                                         m_color_state.transparent_sample[2] & 0xff, 0xff);
         }
