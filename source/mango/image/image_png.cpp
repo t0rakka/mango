@@ -657,7 +657,7 @@ namespace
                 dest[0] = 0xff000000 | v0;
                 dest[1] = 0xff000000 | (v0 >> 24) | (v1 << 8);
                 dest[2] = 0xff000000 | (v1 >> 16) | (v2 << 16);
-                dest[3] = 0xff000000 | v2 >> 8;
+                dest[3] = 0xff000000 | (v2 >> 8);
                 src += 12;
                 dest += 4;
                 width -= 4;
