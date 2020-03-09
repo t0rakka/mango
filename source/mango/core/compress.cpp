@@ -54,9 +54,10 @@ namespace nocompress {
         return source.size;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         std::memcpy(dest.address, source.address, source.size);
+        return source.size;
     }
 
 } // namespace nocompress
@@ -103,13 +104,15 @@ namespace lz4 {
         return written;
 	}
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         int status = LZ4_decompress_safe(source.cast<const char>(), dest.cast<char>(), int(source.size), int(dest.size));
         if (status < 0)
         {
             MANGO_EXCEPTION("[lz4] decompression failed.");
         }
+
+        return dest.size;
     }
 
     // stream
@@ -272,7 +275,7 @@ namespace lzo {
         return static_cast<size_t>(dst_len);
 	}
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         lzo_uint dst_len = (lzo_uint)dest.size;
         int x = lzo1x_decompress(
@@ -285,6 +288,8 @@ namespace lzo {
         {
             MANGO_EXCEPTION("[lzo] decompression failed.");
         }
+
+        return dest.size;
     }
 
 } // namespace lzo
@@ -320,7 +325,7 @@ namespace zstd {
         return x;
 	}
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         size_t x = ZSTD_decompress((void*)dest.address, dest.size,
                                    source.address, source.size);
@@ -328,6 +333,8 @@ namespace zstd {
         {
             MANGO_EXCEPTION("[zstd] %s", ZSTD_getErrorName(x));
         }
+
+        return dest.size;
     }
 
     // stream
@@ -495,7 +502,7 @@ namespace bzip2 {
         return static_cast<size_t>(destLength);
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         bz_stream strm;
 
@@ -527,6 +534,7 @@ namespace bzip2 {
         }
 
         BZ2_bzDecompressEnd(&strm);
+        return size_t(strm.next_out - dest.cast<char>());
     }
 
 } // namespace bzip2
@@ -553,12 +561,12 @@ namespace lzfse {
         return written;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         const size_t scratch_size = lzfse_decode_scratch_size();
         Buffer scratch(scratch_size);
         size_t written = lzfse_decode_buffer(dest.address, dest.size, source, source.size, scratch);
-        MANGO_UNREFERENCED(written);
+        return written;
     }
 
 } // namespace lzfse
@@ -637,7 +645,7 @@ namespace lzma
         return bytes_written;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         // read props header
         const u8* prop = source.address;
@@ -656,6 +664,8 @@ namespace lzma
         {
             MANGO_EXCEPTION("[lzma] %s", error);
         }
+
+        return dest.size;
     }
 
 } // namespace lzma
@@ -714,7 +724,7 @@ namespace lzma2
         return bytes_written;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         // read props header
         Byte prop = source.address[0];
@@ -733,6 +743,8 @@ namespace lzma2
         {
             MANGO_EXCEPTION("[lzma2] %s", error);
         }
+
+        return dest.size;
     }
 
 } // namespace lzma2
@@ -838,7 +850,7 @@ namespace ppmd8
         return bytes_written;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         // read 2 byte header
         LittleEndianConstPointer p = source.address;
@@ -874,6 +886,8 @@ namespace ppmd8
         {
             MANGO_EXCEPTION("[PPMd] decoding error.");
         }
+
+        return dest.size;
     }
 
 } // namespace ppmd
@@ -884,7 +898,7 @@ namespace ppmd8
 
 namespace deflate {
 
-    const char* getErrorString(libdeflate_result result)
+    const char* get_error_string(libdeflate_result result)
     {
         const char* error = nullptr; // default: no error
         switch (result)
@@ -922,7 +936,7 @@ namespace deflate {
         return bytes_out;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
@@ -930,11 +944,13 @@ namespace deflate {
         libdeflate_result result = libdeflate_deflate_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
-        const char* error = deflate::getErrorString(result);
+        const char* error = deflate::get_error_string(result);
         if (error)
         {
             MANGO_EXCEPTION("[deflate] %s.", error);
         }
+
+        return bytes_out;
     }
 
 } // namespace deflate
@@ -962,7 +978,7 @@ namespace zlib {
         return bytes_out;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
@@ -970,11 +986,13 @@ namespace zlib {
         libdeflate_result result = libdeflate_zlib_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
-        const char* error = deflate::getErrorString(result);
+        const char* error = deflate::get_error_string(result);
         if (error)
         {
             MANGO_EXCEPTION("[zlib] %s.", error);
         }
+
+        return bytes_out;
     }
 
 } // namespace zlib
@@ -1002,7 +1020,7 @@ namespace gzip {
         return bytes_out;
     }
 
-    void decompress(Memory dest, ConstMemory source)
+    size_t decompress(Memory dest, ConstMemory source)
     {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
@@ -1010,11 +1028,13 @@ namespace gzip {
         libdeflate_result result = libdeflate_gzip_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
-        const char* error = deflate::getErrorString(result);
+        const char* error = deflate::get_error_string(result);
         if (error)
         {
             MANGO_EXCEPTION("[gzip] %s.", error);
         }
+
+        return bytes_out;
     }
 
 } // namespace gzip
