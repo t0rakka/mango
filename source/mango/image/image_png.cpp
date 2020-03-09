@@ -16,15 +16,7 @@
 // TODO: discard modes (requires us to keep a copy of main image)
 // TODO: check that animations starting with "IDAT" and "fdAT" work correctly
 // TODO: SIMD blending (not critical)
-
 // TODO: SIMD color conversions
-// TODO: single-pass processing
-
-// ------------------------------------------------------------
-// libdeflate
-// ------------------------------------------------------------
-
-#include "../../external/libdeflate/libdeflate.h"
 
 namespace
 {
@@ -1861,26 +1853,15 @@ namespace
         int buffer_size = getImageBufferSize(width, height);
 
         // allocate output buffer
-        debugPrint("  buffer bytes: %d\n", buffer_size);
         Buffer buffer(buffer_size + PNG_SIMD_PADDING);
+        debugPrint("  buffer bytes: %d\n", buffer_size);
 
-        libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
-
-        Memory memory = m_compressed;
-
-        size_t bytes_out = 0;
-        libdeflate_result result = libdeflate_zlib_decompress(decompressor,
-            memory.address, memory.size,
-            buffer, buffer.size(),
-            &bytes_out);
-        (void) result; // xxx
-
+        size_t bytes_out = zlib::decompress(buffer, m_compressed);
         debugPrint("  # total_out:  %d\n", int(bytes_out));
+        MANGO_UNREFERENCED(bytes_out);
 
         // process image
         process(image, width, height, stride, buffer);
-
-        libdeflate_free_decompressor(decompressor);
 
         if (m_number_of_frames > 0)
         {
@@ -1947,15 +1928,9 @@ namespace
         }
 
         // compress
-        level = clamp(level, 1, 12);
-        libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
-
-        size_t bound = libdeflate_zlib_compress_bound(compressor, temp.size());
+        size_t bound = zlib::bound(temp.size());
         Buffer buffer(bound);
-
-        size_t bytes_out = libdeflate_zlib_compress(compressor, temp, temp.size(), buffer, bound);
-
-        libdeflate_free_compressor(compressor);
+        size_t bytes_out = zlib::compress(buffer, temp, level);
 
         // write chunkdID + compressed data
         writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(buffer, bytes_out));
