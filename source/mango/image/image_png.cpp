@@ -961,7 +961,8 @@ namespace
         void blend_indexed  (u8* dest, const u8* src, int width);
 
         void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
-        void deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer);
+        void deinterlace8(u8* output, int width, int height, int stride, u8* buffer);
+        void deinterlace16(u8* output, int width, int height, int stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
         void process(u8* dest, int width, int height, int stride, u8* buffer);
 
@@ -1603,8 +1604,6 @@ namespace
 
     void ParserPNG::deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer)
     {
-        u8* p = buffer;
-
         const int samples = 8 / m_bit_depth;
         const int mask = samples - 1;
         const int shift = u32_log2(samples);
@@ -1617,7 +1616,7 @@ namespace
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
             const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
-            filter(p, bw, adam.h);
+            filter(buffer, bw, adam.h);
 
             if (adam.w && adam.h)
             {
@@ -1625,7 +1624,7 @@ namespace
                 {
                     const int yoffset = (y << adam.yspc) + adam.yorig;
                     u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = p + y * bw + PNG_FILTER_BYTE;
+                    u8* src = buffer + y * bw + PNG_FILTER_BYTE;
 
                     for (int x = 0; x < adam.w; ++x)
                     {
@@ -1639,47 +1638,81 @@ namespace
                 }
 
                 // next pass
-                p += bw * adam.h;
+                buffer += bw * adam.h;
             }
         }
     }
 
-    void ParserPNG::deinterlace8to16(u8* output, int width, int height, int stride, u8* buffer)
+    void ParserPNG::deinterlace8(u8* output, int width, int height, int stride, u8* buffer)
     {
-        u8* p = buffer;
-        const int size = getBytesPerLine(width) / width;
-
         for (int pass = 0; pass < 7; ++pass)
         {
             AdamInterleave adam(pass, width, height);
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
-            const int bw = PNG_FILTER_BYTE + adam.w * size;
-            filter(p, bw, adam.h);
+            const int bw = PNG_FILTER_BYTE + adam.w;
+            filter(buffer, bw, adam.h);
 
             if (adam.w && adam.h)
             {
-                const int ps = adam.w * size + PNG_FILTER_BYTE;
+                const int ps = adam.w + PNG_FILTER_BYTE;
 
                 for (int y = 0; y < adam.h; ++y)
                 {
                     const int yoffset = (y << adam.yspc) + adam.yorig;
                     u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = p + y * ps + PNG_FILTER_BYTE;
+                    u8* src = buffer + y * ps + PNG_FILTER_BYTE;
 
-                    dest += adam.xorig * size;
-                    const int xmax = (adam.w * size) << adam.xspc;
-                    const int xstep = size << adam.xspc;
+                    dest += adam.xorig;
+                    const int xmax = adam.w << adam.xspc;
+                    const int xstep = 1 << adam.xspc;
 
                     for (int x = 0; x < xmax; x += xstep)
                     {
-                        std::memcpy(dest + x, src, size);
-                        src += size;
+                        dest[x] = *src++;
                     }
                 }
 
                 // next pass
-                p += bw * adam.h;
+                buffer += bw * adam.h;
+            }
+        }
+    }
+
+    void ParserPNG::deinterlace16(u8* output, int width, int height, int stride, u8* buffer)
+    {
+        for (int pass = 0; pass < 7; ++pass)
+        {
+            AdamInterleave adam(pass, width, height);
+            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+
+            const int bw = PNG_FILTER_BYTE + adam.w * 2;
+            filter(buffer, bw, adam.h);
+
+            if (adam.w && adam.h)
+            {
+                const int ps = adam.w * 2 + PNG_FILTER_BYTE;
+
+                for (int y = 0; y < adam.h; ++y)
+                {
+                    const int yoffset = (y << adam.yspc) + adam.yorig;
+                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                    u8* src = buffer + y * ps + PNG_FILTER_BYTE;
+
+                    dest += adam.xorig * 2;
+                    const int xmax = (adam.w * 2) << adam.xspc;
+                    const int xstep = 2 << adam.xspc;
+
+                    for (int x = 0; x < xmax; x += xstep)
+                    {
+                        dest[x + 0] = src[0];
+                        dest[x + 1] = src[1];
+                        src += 2;
+                    }
+                }
+
+                // next pass
+                buffer += bw * adam.h;
             }
         }
     }
@@ -1723,8 +1756,10 @@ namespace
             // deinterlace does filter for each pass
             if (m_bit_depth < 8)
                 deinterlace1to4(temp, width, height, bytes_per_line, buffer);
+            else if (m_bit_depth < 16)
+                deinterlace8(temp, width, height, bytes_per_line, buffer);
             else
-                deinterlace8to16(temp, width, height, bytes_per_line, buffer);
+                deinterlace16(temp, width, height, bytes_per_line, buffer);
 
             // use de-interlaced temp buffer as processing source
             buffer = temp;
