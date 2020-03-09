@@ -884,6 +884,27 @@ namespace ppmd8
 
 namespace deflate {
 
+    const char* getErrorString(libdeflate_result result)
+    {
+        const char* error = nullptr; // default: no error
+        switch (result)
+        {
+            default:
+            case LIBDEFLATE_SUCCESS:
+                break;
+            case LIBDEFLATE_BAD_DATA:
+                error = "Bad data";
+                break;
+            case LIBDEFLATE_SHORT_OUTPUT:
+                error = "Short output";
+                break;
+            case LIBDEFLATE_INSUFFICIENT_SPACE:
+                error = "Insufficient space";
+                break;
+        }
+        return error;
+    }
+
     size_t bound(size_t size)
     {
         return libdeflate_deflate_compress_bound(nullptr, size);
@@ -909,23 +930,7 @@ namespace deflate {
         libdeflate_result result = libdeflate_deflate_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
-        const char* error = nullptr;
-        switch (result)
-        {
-            default:
-            case LIBDEFLATE_SUCCESS:
-                break;
-            case LIBDEFLATE_BAD_DATA:
-                error = "Bad data";
-                break;
-            case LIBDEFLATE_SHORT_OUTPUT:
-                error = "Short output";
-                break;
-            case LIBDEFLATE_INSUFFICIENT_SPACE:
-                error = "Insufficient space";
-                break;
-        }
-
+        const char* error = deflate::getErrorString(result);
         if (error)
         {
             MANGO_EXCEPTION("[deflate] %s.", error);
@@ -965,23 +970,7 @@ namespace zlib {
         libdeflate_result result = libdeflate_zlib_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
-        const char* error = nullptr;
-        switch (result)
-        {
-            default:
-            case LIBDEFLATE_SUCCESS:
-                break;
-            case LIBDEFLATE_BAD_DATA:
-                error = "Bad data";
-                break;
-            case LIBDEFLATE_SHORT_OUTPUT:
-                error = "Short output";
-                break;
-            case LIBDEFLATE_INSUFFICIENT_SPACE:
-                error = "Insufficient space";
-                break;
-        }
-
+        const char* error = deflate::getErrorString(result);
         if (error)
         {
             MANGO_EXCEPTION("[zlib] %s.", error);
@@ -1021,23 +1010,7 @@ namespace gzip {
         libdeflate_result result = libdeflate_gzip_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
-        const char* error = nullptr;
-        switch (result)
-        {
-            default:
-            case LIBDEFLATE_SUCCESS:
-                break;
-            case LIBDEFLATE_BAD_DATA:
-                error = "Bad data";
-                break;
-            case LIBDEFLATE_SHORT_OUTPUT:
-                error = "Short output";
-                break;
-            case LIBDEFLATE_INSUFFICIENT_SPACE:
-                error = "Insufficient space";
-                break;
-        }
-
+        const char* error = deflate::getErrorString(result);
         if (error)
         {
             MANGO_EXCEPTION("[gzip] %s.", error);
