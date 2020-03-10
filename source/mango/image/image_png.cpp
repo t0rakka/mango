@@ -35,6 +35,37 @@ namespace
         COLOR_TYPE_RGBA    = 6,
     };
 
+#if defined(MANGO_ENABLE_DEBUG_PRINT)
+
+    inline
+    const char* get_string(ColorType type)
+    {
+        const char* text = "INVALID";
+        switch (type)
+        {
+            case COLOR_TYPE_I:
+                text = "I";
+                break;
+            case COLOR_TYPE_RGB:
+                text = "RGB";
+                break;
+            case COLOR_TYPE_PALETTE:
+                text = "PALETTE";
+                break;
+            case COLOR_TYPE_IA:
+                text = "IA";
+                break;
+            case COLOR_TYPE_RGBA:
+                text = "RGBA";
+                break;
+            default:
+                break;
+        }
+        return text;
+    }
+
+#endif // MANGO_ENABLE_DEBUG_PRINT
+
     // ------------------------------------------------------------
     // Filter
     // ------------------------------------------------------------
@@ -50,7 +81,7 @@ namespace
 
     using FilterFunc = void (*)(u8* scan, const u8* prev, int bytes, int bpp);
 
-    void filter_sub(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter1_sub(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(prev);
 
@@ -60,7 +91,7 @@ namespace
         }
     }
 
-    void filter_up(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter2_up(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -70,7 +101,7 @@ namespace
         }
     }
 
-    void filter_average(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter3_average(u8* scan, const u8* prev, int bytes, int bpp)
     {
         for (int x = 0; x < bpp; ++x)
         {
@@ -83,7 +114,7 @@ namespace
         }
     }
 
-    void filter_paeth(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter4_paeth(u8* scan, const u8* prev, int bytes, int bpp)
     {
         for (int x = 0; x < bpp; ++x)
         {
@@ -117,7 +148,7 @@ namespace
         }
     }
 
-    void filter_paeth_8bit(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter4_paeth_8bit(u8* scan, const u8* prev, int bytes, int bpp)
     {
         int c = prev[0];
         int a = (scan[0] + c) & 0xff;
@@ -172,13 +203,8 @@ namespace
 
     inline __m128i load3(const void* p)
     {
-#if 1
         // NOTE: we have PNG_SIMD_PADDING for overflow guardband
         u32 temp = uload32(p);
-#else
-        u32 temp = 0;
-        std::memcpy(&temp, p, 3);
-#endif
         return _mm_cvtsi32_si128(temp);
     }
 
@@ -213,7 +239,7 @@ namespace
 
     // filters
 
-    void filter_sub_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter1_sub_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(prev);
         MANGO_UNREFERENCED(bpp);
@@ -227,21 +253,36 @@ namespace
         }
     }
 
-    void filter_sub_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter1_sub_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(prev);
         MANGO_UNREFERENCED(bpp);
 
         __m128i d = _mm_setzero_si128();
 
-        for (int x = 0; x < bytes; x += 4)
+        while (bytes >= 16)
         {
-            d = _mm_add_epi8(load4(scan + x), d);
-            store4(scan + x, d);
+            __m128i b = _mm_loadu_si128(reinterpret_cast<__m128i*>(scan));
+            d = _mm_add_epi8(d, b);
+            d = _mm_add_epi8(d, _mm_bslli_si128(b, 4));
+            d = _mm_add_epi8(d, _mm_bslli_si128(b, 8));
+            d = _mm_add_epi8(d, _mm_bslli_si128(b, 12));
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(scan), d);
+            d = _mm_shuffle_epi32(d, 0xff);
+            scan += 16;
+            bytes -= 16;
+        }
+
+        while (bytes >= 4)
+        {
+            d = _mm_add_epi8(load4(scan), d);
+            store4(scan, d);
+            scan += 4;
+            bytes -= 4;
         }
     }
 
-    void filter_up_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter2_up_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -262,7 +303,7 @@ namespace
         }
     }
 
-    void filter_average_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter3_average_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -275,7 +316,7 @@ namespace
         }
     }
 
-    void filter_average_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter3_average_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -288,7 +329,7 @@ namespace
         }
     }
 
-    void filter_paeth_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter4_paeth_24bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -307,7 +348,7 @@ namespace
         }
     }
 
-    void filter_paeth_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter4_paeth_32bit_sse2(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -334,7 +375,7 @@ namespace
     // NEON Filters
     // -----------------------------------------------------------------------------------
 
-    void filter_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    void filter2_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
 
@@ -350,10 +391,10 @@ namespace
 
     struct FilterDispatcher
     {
-        FilterFunc sub = filter_sub;
-        FilterFunc up = filter_up;
-        FilterFunc average = filter_average;
-        FilterFunc paeth = filter_paeth;
+        FilterFunc sub = filter1_sub;
+        FilterFunc up = filter2_up;
+        FilterFunc average = filter3_average;
+        FilterFunc paeth = filter4_paeth;
         int bpp = 0;
 
         FilterDispatcher(int bpp)
@@ -362,22 +403,22 @@ namespace
             switch (bpp)
             {
                 case 1:
-                    paeth = filter_paeth_8bit;
+                    paeth = filter4_paeth_8bit;
                     break;
                 case 3:
 #if defined(MANGO_ENABLE_SSE2)
-                    sub = filter_sub_24bit_sse2;
-                    average = filter_average_24bit_sse2;
-                    paeth = filter_paeth_24bit_sse2;
+                    sub = filter1_sub_24bit_sse2;
+                    average = filter3_average_24bit_sse2;
+                    paeth = filter4_paeth_24bit_sse2;
 #endif
 #if defined(MANGO_ENABLE_NEON__todo)
 #endif
                     break;
                 case 4:
 #if defined(MANGO_ENABLE_SSE2)
-                    sub = filter_sub_32bit_sse2;
-                    average = filter_average_32bit_sse2;
-                    paeth = filter_paeth_32bit_sse2;
+                    sub = filter1_sub_32bit_sse2;
+                    average = filter3_average_32bit_sse2;
+                    paeth = filter4_paeth_32bit_sse2;
 #endif
 #if defined(MANGO_ENABLE_NEON__todo)
 #endif
@@ -385,10 +426,10 @@ namespace
             }
 
 #if defined(MANGO_ENABLE_SSE2)
-            up = filter_up_sse2;
+            up = filter2_up_sse2;
 #endif
 #if defined(MANGO_ENABLE_NEON__todo)
-            up = filter_up_neon;
+            up = filter2_up_neon;
 #endif
         }
 
@@ -1164,7 +1205,7 @@ namespace
         m_color_state.func = getColorFunction(m_color_type, m_bit_depth);
 
         debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
-        debugPrint("  Color:       %d\n", m_color_type);
+        debugPrint("  Color:       %s\n", get_string(ColorType(m_color_type)));
         debugPrint("  Compression: %d\n", m_compression);
         debugPrint("  Filter:      %d\n", m_filter);
         debugPrint("  Interlace:   %d\n", m_interlace);
@@ -1715,7 +1756,7 @@ namespace
         if (bpp > 8)
             return;
 
-        FilterDispatcher dispatcher(bpp);
+        FilterDispatcher filter(bpp);
 
         // zero scanline
         std::vector<u8> zeros(bytes, 0);
@@ -1723,7 +1764,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            dispatcher(buffer, prev, bytes);
+            filter(buffer, prev, bytes);
             prev = buffer;
             buffer += bytes;
         }
@@ -1770,7 +1811,7 @@ namespace
             if (bpp > 8)
                 return;
 
-            FilterDispatcher dispatcher(bpp);
+            FilterDispatcher filter(bpp);
 
             // zero scanline
             std::vector<u8> zeros(bytes_per_line, 0);
@@ -1779,7 +1820,7 @@ namespace
             for (int y = 0; y < height; ++y)
             {
                 // filtering
-                dispatcher(buffer, prev, bytes_per_line);
+                filter(buffer, prev, bytes_per_line);
 
                 // color conversion
                 m_color_state.func(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
