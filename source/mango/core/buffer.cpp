@@ -25,6 +25,14 @@ namespace mango {
     {
     }
 
+    Buffer::Buffer(size_t bytes, u8 value, Alignment alignment)
+        : m_memory(allocate(bytes, alignment), bytes)
+        , m_capacity(bytes)
+        , m_alignment(alignment)
+    {
+        std::memset(m_memory.address, value, bytes);
+    }
+
     Buffer::Buffer(const u8* source, size_t bytes, Alignment alignment)
         : m_memory(allocate(bytes, alignment), bytes)
         , m_capacity(bytes)

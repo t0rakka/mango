@@ -20,11 +20,12 @@ namespace mango
         Alignment m_alignment;
 
     public:
-        Buffer(Alignment alignment = Alignment());
-        Buffer(size_t bytes, Alignment alignment = Alignment());
-        Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
-        Buffer(ConstMemory memory, Alignment alignment = Alignment());
-        Buffer(Stream& stream, Alignment alignment = Alignment());
+        explicit Buffer(Alignment alignment = Alignment());
+        explicit Buffer(size_t bytes, Alignment alignment = Alignment());
+        explicit Buffer(size_t bytes, u8 value, Alignment alignment = Alignment());
+        explicit Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
+        explicit Buffer(ConstMemory memory, Alignment alignment = Alignment());
+        explicit Buffer(Stream& stream, Alignment alignment = Alignment());
         ~Buffer();
 
         operator ConstMemory () const;
