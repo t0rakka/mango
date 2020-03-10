@@ -369,6 +369,92 @@ namespace
 
 #endif // MANGO_ENABLE_SSE2
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // -----------------------------------------------------------------------------------
+    // SSE4.1 Filters
+    // -----------------------------------------------------------------------------------
+
+    void filter1_sub_24bit_sse41(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(prev);
+        MANGO_UNREFERENCED(bpp);
+
+        __m128i d = _mm_setzero_si128();
+
+        __m128i shuf0 = _mm_set_epi8(-1, -1, -1, -1, 14, 13, 12, 10, 9, 8, 6, 5, 4, 2, 1, 0);
+        __m128i shuf1 = _mm_set_epi8(4, 2, 1, 0, -1, -1, -1, -1, 14, 13, 12, 10, 9, 8, 6, 5);
+        __m128i shuf2 = _mm_set_epi8(9, 8, 6, 5, 4, 2, 1, 0, -1, -1, -1, -1, 14, 13, 12, 10);
+        __m128i shuf3 = _mm_set_epi8(14, 13, 12, 10, 9, 8, 6, 5, 4, 2, 1, 0, -1, -1, -1, -1);
+        __m128i shuf4 = _mm_set_epi8(-1, 11, 10, 9, -1, 8, 7, 6, -1, 5, 4, 3, -1, 2, 1, 0);
+        __m128i mask0 = _mm_set_epi32(0, -1, -1, -1);
+        __m128i mask1 = _mm_set_epi32(0,  0, -1, -1);
+        __m128i mask2 = _mm_set_epi32(0,  0,  0, -1);
+
+        while (bytes >= 48)
+        {
+            // load
+            __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(scan + 0 * 16));
+            __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(scan + 1 * 16));
+            __m128i v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(scan + 2 * 16));
+
+            // unpack
+            __m128i color0 = _mm_shuffle_epi8(v0, shuf4);
+            __m128i color1 = _mm_shuffle_epi8(_mm_alignr_epi8(v1, v0, 12), shuf4);
+            __m128i color2 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v1,  8), shuf4);
+            __m128i color3 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v2,  4), shuf4);
+
+            d = _mm_add_epi8(d, color0);
+            d = _mm_add_epi8(d, _mm_bslli_si128(color0, 4));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color0, 8));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color0, 12));
+            color0 = _mm_shuffle_epi8(d, shuf0);
+            d = _mm_shuffle_epi32(d, 0xff);
+
+            d = _mm_add_epi8(d, color1);
+            d = _mm_add_epi8(d, _mm_bslli_si128(color1, 4));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color1, 8));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color1, 12));
+            color1 = _mm_shuffle_epi8(d, shuf1);
+            d = _mm_shuffle_epi32(d, 0xff);
+
+            d = _mm_add_epi8(d, color2);
+            d = _mm_add_epi8(d, _mm_bslli_si128(color2, 4));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color2, 8));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color2, 12));
+            color2 = _mm_shuffle_epi8(d, shuf2);
+            d = _mm_shuffle_epi32(d, 0xff);
+
+            d = _mm_add_epi8(d, color3);
+            d = _mm_add_epi8(d, _mm_bslli_si128(color3, 4));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color3, 8));
+            d = _mm_add_epi8(d, _mm_bslli_si128(color3, 12));
+            color3 = _mm_shuffle_epi8(d, shuf3);
+            d = _mm_shuffle_epi32(d, 0xff);
+
+            // pack
+            v0 = _mm_blendv_epi8(color1, color0, mask0);
+            v1 = _mm_blendv_epi8(color2, color1, mask1);
+            v2 = _mm_blendv_epi8(color3, color2, mask2);
+
+            // store
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(scan + 0 * 16), v0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(scan + 1 * 16), v1);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(scan + 2 * 16), v2);
+
+            scan += 48;
+            bytes -= 48;
+        }
+
+        for (int x = 0; x < bytes; x += 3)
+        {
+            d = _mm_add_epi8(load3(scan + x), d);
+            store3(scan + x, d);
+        }
+    }
+
+#endif // MANGO_ENABLE_SSE4_1
+
 #if defined(MANGO_ENABLE_NEON__todo)
 
     // -----------------------------------------------------------------------------------
@@ -400,6 +486,7 @@ namespace
         FilterDispatcher(int bpp)
             : bpp(bpp)
         {
+            u64 features = getCPUFlags();
             switch (bpp)
             {
                 case 1:
@@ -411,7 +498,13 @@ namespace
                     average = filter3_average_24bit_sse2;
                     paeth = filter4_paeth_24bit_sse2;
 #endif
-#if defined(MANGO_ENABLE_NEON__todo)
+#if defined(MANGO_ENABLE_SSE4_1)
+                    if (features & CPU_SSE4_1)
+                    {
+                        sub = filter1_sub_24bit_sse41;
+                    }
+#endif
+#if defined(MANGO_ENABLE_NEON)
 #endif
                     break;
                 case 4:
@@ -420,7 +513,7 @@ namespace
                     average = filter3_average_32bit_sse2;
                     paeth = filter4_paeth_32bit_sse2;
 #endif
-#if defined(MANGO_ENABLE_NEON__todo)
+#if defined(MANGO_ENABLE_NEON)
 #endif
                     break;
             }
@@ -428,8 +521,8 @@ namespace
 #if defined(MANGO_ENABLE_SSE2)
             up = filter2_up_sse2;
 #endif
-#if defined(MANGO_ENABLE_NEON__todo)
-            up = filter2_up_neon;
+#if defined(MANGO_ENABLE_NEON)
+            //up = filter2_up_neon;
 #endif
         }
 
@@ -681,8 +774,8 @@ namespace
         }
         else
         {
-#if 0
-            // TODO: requires SSSE3 ; use dispatcher to invoke
+#if defined(MANGO_ENABLE_SSSE3)
+            // TODO: add runtime CPU feature flag check
             __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
             __m128i alpha = _mm_set1_epi32(0xff000000);
 
