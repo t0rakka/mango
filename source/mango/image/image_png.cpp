@@ -569,7 +569,6 @@ namespace
     {
         using Function = void (*)(const ColorState& state, int width, u8* dst, const u8* src);
 
-        Function func = nullptr;
         int bits;
 
         // tRNS
@@ -577,7 +576,7 @@ namespace
         u16 transparent_sample[3];
         ColorRGBA transparent_color;
 
-        ColorBGRA* palette;
+        ColorBGRA* palette = nullptr;
     };
 
     void process_pal1to4_indx(const ColorState& state, int width, u8* dst, const u8* src)
@@ -596,7 +595,8 @@ namespace
                 data = *src++;
             }
 
-            dst[x] = (data >> offset) & mask;
+            u32 index = (data >> offset) & mask;
+            dst[x] = index;
             offset -= bits;
         }
     }
@@ -621,7 +621,8 @@ namespace
                 data = *src++;
             }
 
-            dest[x] = palette[(data >> offset) & mask];
+            u32 index = (data >> offset) & mask;
+            dest[x] = palette[index];
             offset -= bits;
         }
     }
@@ -773,46 +774,6 @@ namespace
         }
     }
 
-#if defined(MANGO_ENABLE_SSSE3)
-
-    void process_rgb8_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        u32* dest = reinterpret_cast<u32*>(dst);
-
-        __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
-        __m128i alpha = _mm_set1_epi32(0xff000000);
-
-        while (width >= 16)
-        {
-            __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0 * 16));
-            __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 1 * 16));
-            __m128i v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 2 * 16));
-            __m128i color0 = _mm_shuffle_epi8(v0, mask);
-            __m128i color1 = _mm_shuffle_epi8(_mm_alignr_epi8(v1, v0, 12), mask);
-            __m128i color2 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v1,  8), mask);
-            __m128i color3 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v2,  4), mask);
-            color0 = _mm_or_si128(color0, alpha);
-            color1 = _mm_or_si128(color1, alpha);
-            color2 = _mm_or_si128(color2, alpha);
-            color3 = _mm_or_si128(color3, alpha);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), color0);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  4), color1);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  8), color2);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 12), color3);
-            src += 48;
-            dest += 16;
-            width -= 16;
-        }
-
-        for (int x = 0; x < width; ++x)
-        {
-            dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
-            src += 3;
-        }
-    }
-
-#endif // MANGO_ENABLE_SSSE3
-
     void process_rgb8_trns(const ColorState& state, int width, u8* dst, const u8* src)
     {
         u32* dest = reinterpret_cast<u32*>(dst);
@@ -892,6 +853,112 @@ namespace
         }
     }
 
+#if defined(MANGO_ENABLE_SSE2)
+
+    void process_rgba16_sse2(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        while (width >= 4)
+        {
+            __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0));
+            __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 16));
+            __m128i a0 = _mm_slli_epi16(v0, 8);
+            __m128i b0 = _mm_srli_epi16(v0, 8);
+            __m128i a1 = _mm_slli_epi16(v1, 8);
+            __m128i b1 = _mm_srli_epi16(v1, 8);
+            v0 = _mm_or_si128(a0, b0);
+            v1 = _mm_or_si128(a1, b1);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 0), v0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 8), v1);
+            src += 32;
+            dest += 16;
+            width -= 4;
+        }
+
+        for (int x = 0; x < width; ++x)
+        {
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
+            dest[2] = uload16be(src + 4);
+            dest[3] = uload16be(src + 6);
+            dest += 4;
+            src += 8;
+        }
+    }
+
+#endif // MANGO_ENABLE_SSE2
+
+#if defined(MANGO_ENABLE_SSSE3)
+
+    void process_rgba16_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        __m128i mask = _mm_setr_epi8(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14);
+
+        while (width >= 4)
+        {
+            __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0));
+            __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 16));
+            v0 = _mm_shuffle_epi8(v0, mask);
+            v1 = _mm_shuffle_epi8(v1, mask);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 0), v0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 8), v1);
+            src += 32;
+            dest += 16;
+            width -= 4;
+        }
+
+        for (int x = 0; x < width; ++x)
+        {
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
+            dest[2] = uload16be(src + 4);
+            dest[3] = uload16be(src + 6);
+            dest += 4;
+            src += 8;
+        }
+    }
+
+    void process_rgb8_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u32* dest = reinterpret_cast<u32*>(dst);
+
+        __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
+        __m128i alpha = _mm_set1_epi32(0xff000000);
+
+        while (width >= 16)
+        {
+            __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0 * 16));
+            __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 1 * 16));
+            __m128i v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 2 * 16));
+            __m128i color0 = _mm_shuffle_epi8(v0, mask);
+            __m128i color1 = _mm_shuffle_epi8(_mm_alignr_epi8(v1, v0, 12), mask);
+            __m128i color2 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v1,  8), mask);
+            __m128i color3 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v2,  4), mask);
+            color0 = _mm_or_si128(color0, alpha);
+            color1 = _mm_or_si128(color1, alpha);
+            color2 = _mm_or_si128(color2, alpha);
+            color3 = _mm_or_si128(color3, alpha);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), color0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  4), color1);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  8), color2);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 12), color3);
+            src += 48;
+            dest += 16;
+            width -= 16;
+        }
+
+        for (int x = 0; x < width; ++x)
+        {
+            dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
+            src += 3;
+        }
+    }
+
+#endif // MANGO_ENABLE_SSSE3
+
     ColorState::Function getColorFunction(const ColorState& state, int color_type, int bit_depth)
     {
         ColorState::Function function = nullptr;
@@ -902,16 +969,24 @@ namespace
             if (bit_depth < 8)
             {
                 if (state.palette)
+                {
                     function = process_pal1to4;
+                }
                 else
+                {
                     function = process_pal1to4_indx;
+                }
             }
             else
             {
                 if (state.palette)
+                {
                     function = process_pal8;
+                }
                 else
+                {
                     function = process_pal8_indx;
+                }
             }
         }
         else if (color_type == COLOR_TYPE_I)
@@ -923,24 +998,36 @@ namespace
             else if (bit_depth == 8)
             {
                 if (state.transparent_enable)
+                {
                     function = process_i8_trns;
+                }
                 else
+                {
                     function = process_i8;
+                }
             }
             else
             {
                 if (state.transparent_enable)
+                {
                     function = process_i16_trns;
+                }
                 else
+                {
                     function = process_i16;
+                }
             }
         }
         else if (color_type == COLOR_TYPE_IA)
         {
             if (bit_depth == 8)
+            {
                 function = process_ia8;
+            }
             else
+            {
                 function = process_ia16;
+            }
         }
         else if (color_type == COLOR_TYPE_RGB)
         {
@@ -964,17 +1051,37 @@ namespace
             else
             {
                 if (state.transparent_enable)
+                {
                     function = process_rgb16_trns;
+                }
                 else
+                {
                     function = process_rgb16;
+                }
             }
         }
         else if (color_type == COLOR_TYPE_RGBA)
         {
             if (bit_depth == 8)
+            {
                 function = process_rgba8;
+            }
             else
+            {
                 function = process_rgba16;
+#if defined(MANGO_ENABLE_SSE2)
+                if (features & CPU_SSE2)
+                {
+                    function = process_rgba16_sse2;
+                }
+#endif
+#if defined(MANGO_ENABLE_SSE2)
+                if (features & CPU_SSSE3)
+                {
+                    function = process_rgba16_ssse3;
+                }
+#endif
+            }
         }
 
         return function;
@@ -1083,7 +1190,6 @@ namespace
         // IHDR
         int m_width;
         int m_height;
-        int m_bit_depth;
         int m_color_type;
         int m_compression;
         int m_filter;
@@ -1146,7 +1252,7 @@ namespace
 
         int getBytesPerLine(int width) const
         {
-            return m_channels * ((m_bit_depth * width + 7) / 8);
+            return m_channels * ((m_color_state.bits * width + 7) / 8);
         }
 
         void setError(const std::string& error)
@@ -1225,7 +1331,7 @@ namespace
             }
 
             // select decoding format
-            int bits = m_bit_depth <= 8 ? 8 : 16;
+            int bits = m_color_state.bits <= 8 ? 8 : 16;
             switch (color_type)
             {
                 case COLOR_TYPE_I:
@@ -1264,7 +1370,7 @@ namespace
 
         m_width = p.read32();
         m_height = p.read32();
-        m_bit_depth = p.read8();
+        m_color_state.bits = p.read8();
         m_color_type = p.read8();
         m_compression = p.read8();
         m_filter = p.read8();
@@ -1276,7 +1382,7 @@ namespace
             return;
         }
 
-        if (!u32_is_power_of_two(m_bit_depth))
+        if (!u32_is_power_of_two(m_color_state.bits))
         {
             setError("Incorrect bit depth.");
             return;
@@ -1331,7 +1437,7 @@ namespace
                 return;
         }
 
-        const int log2bits = u32_log2(m_bit_depth);
+        const int log2bits = u32_log2(m_color_state.bits);
         if (log2bits < minBits || log2bits > maxBits)
         {
             setError("Unsupported bit depth for color type.");
@@ -1341,13 +1447,10 @@ namespace
         // load default scaling values (override from sBIT chunk)
         for (int i = 0; i < m_channels; ++i)
         {
-            m_scale_bits[i] = m_bit_depth;
+            m_scale_bits[i] = m_color_state.bits;
         }
 
-        m_color_state.bits = m_bit_depth;
-        m_color_state.func = getColorFunction(m_color_state, m_color_type, m_bit_depth);
-
-        debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
+        debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_color_state.bits);
         debugPrint("  Color:       %s\n", get_string(ColorType(m_color_type)));
         debugPrint("  Compression: %d\n", m_compression);
         debugPrint("  Filter:      %d\n", m_filter);
@@ -1780,11 +1883,11 @@ namespace
 
     void ParserPNG::deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer)
     {
-        const int samples = 8 / m_bit_depth;
+        const int samples = 8 / m_color_state.bits;
         const int mask = samples - 1;
         const int shift = u32_log2(samples);
-        const int valueShift = u32_log2(m_bit_depth);
-        const int valueMask = (1 << m_bit_depth) - 1;
+        const int valueShift = u32_log2(m_color_state.bits);
+        const int valueMask = (1 << m_color_state.bits) - 1;
 
         for (int pass = 0; pass < 7; ++pass)
         {
@@ -1895,7 +1998,7 @@ namespace
 
     void ParserPNG::filter(u8* buffer, int bytes, int height)
     {
-        const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
+        const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
         if (bpp > 8)
             return;
 
@@ -1922,6 +2025,8 @@ namespace
 
         int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
 
+        ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
+
         Buffer temp;
 
         if (m_interlace)
@@ -1930,9 +2035,9 @@ namespace
             std::memset(temp, 0, height * bytes_per_line);
 
             // deinterlace does filter for each pass
-            if (m_bit_depth < 8)
+            if (m_color_state.bits < 8)
                 deinterlace1to4(temp, width, height, bytes_per_line, buffer);
-            else if (m_bit_depth < 16)
+            else if (m_color_state.bits < 16)
                 deinterlace8(temp, width, height, bytes_per_line, buffer);
             else
                 deinterlace16(temp, width, height, bytes_per_line, buffer);
@@ -1943,14 +2048,14 @@ namespace
             // color conversion
             for (int y = 0; y < height; ++y)
             {
-                m_color_state.func(m_color_state, width, image, buffer + 1);
+                convert(m_color_state, width, image, buffer + 1);
                 image += stride;
                 buffer += bytes_per_line;
             }
         }
         else
         {
-            const int bpp = (m_bit_depth < 8) ? 1 : m_channels * m_bit_depth / 8;
+            const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
             if (bpp > 8)
                 return;
 
@@ -1966,7 +2071,7 @@ namespace
                 filter(buffer, prev, bytes_per_line);
 
                 // color conversion
-                m_color_state.func(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+                convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
                 image += stride;
 
                 prev = buffer;
@@ -2064,6 +2169,14 @@ namespace
     // writePNG()
     // ------------------------------------------------------------
 
+    void applyFilterSUB(u8* data, int bytes, int bpp)
+    {
+        for (int x = bytes - 1; x > bpp - 1; --x)
+        {
+            data[x] -= data[x - bpp];
+        }
+    }
+
     void writeChunk(Stream& stream, u32 chunkid, Memory memory)
     {
         BigEndianStream s(stream);
@@ -2103,11 +2216,20 @@ namespace
         u8* image = surface.image;
         int bytes_per_scan = surface.width * surface.format.bytes();
 
+        int bpp = surface.format.bytes();
+        int offset = 0;
+        //u8 filter = FILTER_NONE;
+        u8 filter = FILTER_SUB;
+
         for (int y = 0; y < surface.height; ++y)
         {
-            u8 filter = 0;
             temp.append(&filter, 1);
             temp.append(image, bytes_per_scan);
+            if (filter == FILTER_SUB)
+            {
+                applyFilterSUB(temp + offset + 1, bytes_per_scan, bpp);
+                offset += bytes_per_scan + 1;
+            }
             image += surface.stride;
         }
 
