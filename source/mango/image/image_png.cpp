@@ -580,69 +580,66 @@ namespace
         ColorBGRA* palette;
     };
 
+    void process_pal1to4_indx(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        const int bits = state.bits;
+        const u32 mask = (1 << bits) - 1;
+
+        u32 data = 0;
+        int offset = -1;
+
+        for (int x = 0; x < width; ++x)
+        {
+            if (offset < 0)
+            {
+                offset = 8 - bits;
+                data = *src++;
+            }
+
+            dst[x] = (data >> offset) & mask;
+            offset -= bits;
+        }
+    }
+
     void process_pal1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        u32* dest = reinterpret_cast<u32*>(dst);
+
         ColorBGRA* palette = state.palette;
 
         const int bits = state.bits;
         const u32 mask = (1 << bits) - 1;
 
-        if (palette)
+        u32 data = 0;
+        int offset = -1;
+
+        for (int x = 0; x < width; ++x)
         {
-            u32* dest = reinterpret_cast<u32*>(dst);
-
-            u32 data = 0;
-            int offset = -1;
-
-            for (int x = 0; x < width; ++x)
+            if (offset < 0)
             {
-                if (offset < 0)
-                {
-                    offset = 8 - bits;
-                    data = *src++;
-                }
-
-                dest[x] = palette[(data >> offset) & mask];
-                offset -= bits;
+                offset = 8 - bits;
+                data = *src++;
             }
+
+            dest[x] = palette[(data >> offset) & mask];
+            offset -= bits;
         }
-        else
-        {
-            u8* dest = dst;
+    }
 
-            u32 data = 0;
-            int offset = -1;
-
-            for (int x = 0; x < width; ++x)
-            {
-                if (offset < 0)
-                {
-                    offset = 8 - bits;
-                    data = *src++;
-                }
-
-                *dest++ = (data >> offset) & mask;
-                offset -= bits;
-            }
-        }
+    void process_pal8_indx(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        std::memcpy(dst, src, width);
     }
 
     void process_pal8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        u32* dest = reinterpret_cast<u32*>(dst);
+
         ColorBGRA* palette = state.palette;
 
-        if (palette)
+        for (int x = 0; x < width; ++x)
         {
-            u32* dest = reinterpret_cast<u32*>(dst);
-
-            for (int x = 0; x < width; ++x)
-            {
-                dest[x] = palette[src[x]];
-            }
-        }
-        else
-        {
-            std::memcpy(dst, src, width);
+            dest[x] = palette[src[x]];
         }
     }
 
@@ -683,21 +680,19 @@ namespace
 
     void process_i8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        std::memcpy(dst, src, width);
+    }
+
+    void process_i8_trns(const ColorState& state, int width, u8* dst, const u8* src)
+    {
         u16* dest = reinterpret_cast<u16*>(dst);
 
-        if (state.transparent_enable)
-        {
-            const u16 transparent_sample = state.transparent_sample[0];
+        const u16 transparent_sample = state.transparent_sample[0];
 
-            for (int x = 0; x < width; ++x)
-            {
-                const u16 alpha = transparent_sample == src[x] ? 0 : 0xff00;
-                dest[x] = alpha | src[x];
-            }
-        }
-        else
+        for (int x = 0; x < width; ++x)
         {
-            std::memcpy(dest, src, width);
+            const u16 alpha = transparent_sample == src[x] ? 0 : 0xff00;
+            dest[x] = alpha | src[x];
         }
     }
 
@@ -705,27 +700,27 @@ namespace
     {
         u16* dest = reinterpret_cast<u16*>(dst);
 
-        if (state.transparent_enable)
+        for (int x = 0; x < width; ++x)
         {
-            const u16 transparent_sample = state.transparent_sample[0];
-
-            for (int x = 0; x < width; ++x)
-            {
-                u16 gray = uload16be(src);
-                u16 alpha = (transparent_sample == gray) ? 0 : 0xffff;
-                dest[0] = gray;
-                dest[1] = alpha;
-                dest += 2;
-                src += 2;
-            }
+            dest[x] = uload16be(src);
+            src += 2;
         }
-        else
+    }
+
+    void process_i16_trns(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        const u16 transparent_sample = state.transparent_sample[0];
+
+        for (int x = 0; x < width; ++x)
         {
-            for (int x = 0; x < width; ++x)
-            {
-                dest[x] = uload16be(src);
-                src += 2;
-            }
+            u16 gray = uload16be(src);
+            u16 alpha = (transparent_sample == gray) ? 0 : 0xffff;
+            dest[0] = gray;
+            dest[1] = alpha;
+            dest += 2;
+            src += 2;
         }
     }
 
@@ -757,70 +752,82 @@ namespace
     {
         u32* dest = reinterpret_cast<u32*>(dst);
 
-        if (state.transparent_enable)
+        while (width >= 4)
         {
-            const ColorRGBA transparent_color = state.transparent_color;
-
-            for (int x = 0; x < width; ++x)
-            {
-                ColorRGBA color(src[0], src[1], src[2], 0xff);
-                if (color == transparent_color)
-                {
-                    color.a = 0;
-                }
-                dest[x] = color;
-                src += 3;
-            }
+            u32 v0 = uload32(src + 0); // r1 b0 g0 r0
+            u32 v1 = uload32(src + 4); // g2 r2 b1 g1
+            u32 v2 = uload32(src + 8); // b3 g3 r3 b2
+            dest[0] = 0xff000000 | v0;
+            dest[1] = 0xff000000 | (v0 >> 24) | (v1 << 8);
+            dest[2] = 0xff000000 | (v1 >> 16) | (v2 << 16);
+            dest[3] = 0xff000000 | (v2 >> 8);
+            src += 12;
+            dest += 4;
+            width -= 4;
         }
-        else
-        {
-#if defined(MANGO_ENABLE_SSSE3)
-            // TODO: add runtime CPU feature flag check
-            __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
-            __m128i alpha = _mm_set1_epi32(0xff000000);
 
-            while (width >= 16)
+        for (int x = 0; x < width; ++x)
+        {
+            dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
+            src += 3;
+        }
+    }
+
+#if defined(MANGO_ENABLE_SSSE3)
+
+    void process_rgb8_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u32* dest = reinterpret_cast<u32*>(dst);
+
+        __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
+        __m128i alpha = _mm_set1_epi32(0xff000000);
+
+        while (width >= 16)
+        {
+            __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0 * 16));
+            __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 1 * 16));
+            __m128i v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 2 * 16));
+            __m128i color0 = _mm_shuffle_epi8(v0, mask);
+            __m128i color1 = _mm_shuffle_epi8(_mm_alignr_epi8(v1, v0, 12), mask);
+            __m128i color2 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v1,  8), mask);
+            __m128i color3 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v2,  4), mask);
+            color0 = _mm_or_si128(color0, alpha);
+            color1 = _mm_or_si128(color1, alpha);
+            color2 = _mm_or_si128(color2, alpha);
+            color3 = _mm_or_si128(color3, alpha);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), color0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  4), color1);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  8), color2);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 12), color3);
+            src += 48;
+            dest += 16;
+            width -= 16;
+        }
+
+        for (int x = 0; x < width; ++x)
+        {
+            dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
+            src += 3;
+        }
+    }
+
+#endif // MANGO_ENABLE_SSSE3
+
+    void process_rgb8_trns(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u32* dest = reinterpret_cast<u32*>(dst);
+
+        const ColorRGBA transparent_color = state.transparent_color;
+
+        for (int x = 0; x < width; ++x)
+        {
+            ColorRGBA color(src[0], src[1], src[2], 0xff);
+            if (color == transparent_color)
             {
-                __m128i v0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 0 * 16));
-                __m128i v1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 1 * 16));
-                __m128i v2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src + 2 * 16));
-                __m128i color0 = _mm_shuffle_epi8(v0, mask);
-                __m128i color1 = _mm_shuffle_epi8(_mm_alignr_epi8(v1, v0, 12), mask);
-                __m128i color2 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v1,  8), mask);
-                __m128i color3 = _mm_shuffle_epi8(_mm_alignr_epi8(v2, v2,  4), mask);
-                color0 = _mm_or_si128(color0, alpha);
-                color1 = _mm_or_si128(color1, alpha);
-                color2 = _mm_or_si128(color2, alpha);
-                color3 = _mm_or_si128(color3, alpha);
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  0), color0);
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  4), color1);
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  8), color2);
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 12), color3);
-                src += 48;
-                dest += 16;
-                width -= 16;
+                color.a = 0;
             }
-#endif
-#if 1
-            while (width >= 4)
-            {
-                u32 v0 = uload32(src + 0); // r1 b0 g0 r0
-                u32 v1 = uload32(src + 4); // g2 r2 b1 g1
-                u32 v2 = uload32(src + 8); // b3 g3 r3 b2
-                dest[0] = 0xff000000 | v0;
-                dest[1] = 0xff000000 | (v0 >> 24) | (v1 << 8);
-                dest[2] = 0xff000000 | (v1 >> 16) | (v2 << 16);
-                dest[3] = 0xff000000 | (v2 >> 8);
-                src += 12;
-                dest += 4;
-                width -= 4;
-            }
-#endif
-            for (int x = 0; x < width; ++x)
-            {
-                dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
-                src += 3;
-            }
+            dest[x] = color;
+            src += 3;
         }
     }
 
@@ -828,40 +835,40 @@ namespace
     {
         u16* dest = reinterpret_cast<u16*>(dst);
 
-        if (state.transparent_enable)
+        for (int x = 0; x < width; ++x)
         {
-            const u16 transparent_sample0 = state.transparent_sample[0];
-            const u16 transparent_sample1 = state.transparent_sample[1];
-            const u16 transparent_sample2 = state.transparent_sample[2];
-
-            for (int x = 0; x < width; ++x)
-            {
-                u16 red   = uload16be(src + 0);
-                u16 green = uload16be(src + 2);
-                u16 blue  = uload16be(src + 4);
-                u16 alpha = 0xffff;
-                if (transparent_sample0 == red &&
-                    transparent_sample1 == green &&
-                    transparent_sample2 == blue) alpha = 0;
-                dest[0] = red;
-                dest[1] = green;
-                dest[2] = blue;
-                dest[3] = alpha;
-                dest += 4;
-                src += 6;
-            }
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
+            dest[2] = uload16be(src + 4);
+            dest[3] = 0xffff;
+            dest += 4;
+            src += 6;
         }
-        else
+    }
+
+    void process_rgb16_trns(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        const u16 transparent_sample0 = state.transparent_sample[0];
+        const u16 transparent_sample1 = state.transparent_sample[1];
+        const u16 transparent_sample2 = state.transparent_sample[2];
+
+        for (int x = 0; x < width; ++x)
         {
-            for (int x = 0; x < width; ++x)
-            {
-                dest[0] = uload16be(src + 0);
-                dest[1] = uload16be(src + 2);
-                dest[2] = uload16be(src + 4);
-                dest[3] = 0xffff;
-                dest += 4;
-                src += 6;
-            }
+            u16 red   = uload16be(src + 0);
+            u16 green = uload16be(src + 2);
+            u16 blue  = uload16be(src + 4);
+            u16 alpha = 0xffff;
+            if (transparent_sample0 == red &&
+                transparent_sample1 == green &&
+                transparent_sample2 == blue) alpha = 0;
+            dest[0] = red;
+            dest[1] = green;
+            dest[2] = blue;
+            dest[3] = alpha;
+            dest += 4;
+            src += 6;
         }
     }
 
@@ -885,25 +892,48 @@ namespace
         }
     }
 
-    ColorState::Function getColorFunction(int color_type, int bit_depth)
+    ColorState::Function getColorFunction(const ColorState& state, int color_type, int bit_depth)
     {
         ColorState::Function function = nullptr;
+        u64 features = getCPUFlags();
 
         if (color_type == COLOR_TYPE_PALETTE)
         {
             if (bit_depth < 8)
-                function = process_pal1to4;
+            {
+                if (state.palette)
+                    function = process_pal1to4;
+                else
+                    function = process_pal1to4_indx;
+            }
             else
-                function = process_pal8;
+            {
+                if (state.palette)
+                    function = process_pal8;
+                else
+                    function = process_pal8_indx;
+            }
         }
         else if (color_type == COLOR_TYPE_I)
         {
             if (bit_depth < 8)
+            {
                 function = process_i1to4;
+            }
             else if (bit_depth == 8)
-                function = process_i8;
+            {
+                if (state.transparent_enable)
+                    function = process_i8_trns;
+                else
+                    function = process_i8;
+            }
             else
-                function = process_i16;
+            {
+                if (state.transparent_enable)
+                    function = process_i16_trns;
+                else
+                    function = process_i16;
+            }
         }
         else if (color_type == COLOR_TYPE_IA)
         {
@@ -915,9 +945,29 @@ namespace
         else if (color_type == COLOR_TYPE_RGB)
         {
             if (bit_depth == 8)
-                function = process_rgb8;
+            {
+                if (state.transparent_enable)
+                {
+                    function = process_rgb8_trns;
+                }
+                else
+                {
+                    function = process_rgb8;
+#if defined(MANGO_ENABLE_SSSE3)
+                    if (features & CPU_SSSE3)
+                    {
+                        function = process_rgb8_ssse3;
+                    }
+#endif
+                }
+            }
             else
-                function = process_rgb16;
+            {
+                if (state.transparent_enable)
+                    function = process_rgb16_trns;
+                else
+                    function = process_rgb16;
+            }
         }
         else if (color_type == COLOR_TYPE_RGBA)
         {
@@ -1295,7 +1345,7 @@ namespace
         }
 
         m_color_state.bits = m_bit_depth;
-        m_color_state.func = getColorFunction(m_color_type, m_bit_depth);
+        m_color_state.func = getColorFunction(m_color_state, m_color_type, m_bit_depth);
 
         debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_bit_depth);
         debugPrint("  Color:       %s\n", get_string(ColorType(m_color_type)));
