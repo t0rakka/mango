@@ -28,9 +28,12 @@ namespace mango
         int     width;
         int     height;
 
+        Surface(const Surface& surface);
         Surface(int width, int height, const Format& format, int stride, const void* image);
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
+
+        Surface& operator = (const Surface& surface);
 
         u8* address(int x = 0, int y = 0) const
         {

@@ -175,10 +175,8 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    Surface load_surface(ConstMemory memory, const std::string& extension, const Format* format)
+    void load_surface(Surface& surface, ConstMemory memory, const std::string& extension, const Format* format)
     {
-        Surface surface(0, 0, Format(), 0, nullptr);
-
         ImageDecoder decoder(memory, extension);
         if (decoder.isDecoder())
         {
@@ -195,20 +193,16 @@ namespace
             ImageDecodeStatus status = decoder.decode(surface);
             MANGO_UNREFERENCED(status);
         }
-
-        return surface;
     }
 
-    Surface load_surface(const std::string& filename, const Format* format)
+    void load_surface(Surface& surface, const std::string& filename, const Format* format)
     {
         filesystem::File file(filename);
-        Surface surface = load_surface(file, filesystem::getExtension(filename), format);
-        return surface;
+        load_surface(surface, file, filesystem::getExtension(filename), format);
     }
 
-    Surface load_palette_surface(ConstMemory memory, const std::string& extension, Palette& palette)
+    void load_palette_surface(Surface& surface, ConstMemory memory, const std::string& extension, Palette& palette)
     {
-        Surface surface(0, 0, Format(), 0, nullptr);
         palette.size = 0;
 
         ImageDecoder decoder(memory, extension);
@@ -232,18 +226,15 @@ namespace
             else
             {
                 // fallback: client requests a palette but image doesn't have one
-                surface = load_surface(memory, extension, nullptr);
+                load_surface(surface, memory, extension, nullptr);
             }
         }
-
-        return surface;
     }
 
-    Surface load_palette_surface(const std::string& filename, Palette& palette)
+    void load_palette_surface(Surface& surface, const std::string& filename, Palette& palette)
     {
         filesystem::File file(filename);
-        Surface surface = load_palette_surface(file, filesystem::getExtension(filename), palette);
-        return surface;
+        load_palette_surface(surface, file, filesystem::getExtension(filename), palette);
     }
 
 } // namespace
@@ -261,6 +252,15 @@ namespace mango
         , stride(0)
         , width(0)
         , height(0)
+    {
+    }
+
+    Surface::Surface(const Surface& surface)
+        : format(surface.format)
+        , image(surface.image)
+        , stride(surface.stride)
+        , width(surface.width)
+        , height(surface.height)
     {
     }
 
@@ -291,6 +291,16 @@ namespace mango
 
     Surface::~Surface()
     {
+    }
+
+    Surface& Surface::operator = (const Surface& surface)
+    {
+        format = surface.format;
+        image = surface.image;
+        stride = surface.stride;
+        width = surface.width;
+        height = surface.height;
+        return *this;
     }
 
     void Surface::save(const std::string& filename, const ImageEncodeOptions& options) const
@@ -543,33 +553,33 @@ namespace mango
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension)
-        : Surface(load_surface(memory, extension, nullptr))
     {
+        load_surface(*this, memory, extension, nullptr);
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format)
-        : Surface(load_surface(memory, extension, &format))
     {
+        load_surface(*this, memory, extension, &format);
     }
 
     Bitmap::Bitmap(const std::string& filename)
-        : Surface(load_surface(filename, nullptr))
     {
+        load_surface(*this, filename, nullptr);
     }
 
     Bitmap::Bitmap(const std::string& filename, const Format& format)
-        : Surface(load_surface(filename, &format))
     {
+        load_surface(*this, filename, &format);
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, Palette& palette)
-        : Surface(load_palette_surface(memory, extension, palette))
     {
+        load_palette_surface(*this, memory, extension, palette);
     }
 
     Bitmap::Bitmap(const std::string& filename, Palette& palette)
-        : Surface(load_palette_surface(filename, palette))
     {
+        load_palette_surface(*this, filename, palette);
     }
 
     Bitmap::Bitmap(Bitmap&& bitmap)
