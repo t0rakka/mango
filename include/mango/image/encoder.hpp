@@ -24,7 +24,8 @@ namespace mango
     {
         Palette palette;
         float quality = 0.90f; // jpeg: [0.0, 1.0]
-        int compression = 4; // png: [0, 10]
+        int compression = 5; // png: [0, 10]
+        bool filtering = true; // png
         bool dithering = true; // gif
         bool lossless = false; // webp
     };

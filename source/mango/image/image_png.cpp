@@ -2169,12 +2169,109 @@ namespace
     // writePNG()
     // ------------------------------------------------------------
 
-    void applyFilterSUB(u8* data, int bytes, int bpp)
+    static size_t
+    write_filter_sub(u8* dest, const u8* scan, int bpp, size_t bytes, size_t best)
     {
-        for (int x = bytes - 1; x > bpp - 1; --x)
+        size_t sum = 0;
+
+        for (size_t i = 0; i < bpp; ++i)
         {
-            data[x] -= data[x - bpp];
+            s32 v = dest[i] = scan[i];
+            sum += 128 - abs(v - 128);
         }
+
+        bytes -= bpp;
+        dest += bpp;
+
+        for (size_t i = 0; i < bytes; ++i)
+        {
+            s32 v = dest[i] = u8(scan[i + bpp] - scan[i]);
+            sum += 128 - abs(v - 128);
+            if (sum > best)
+                break;
+        }
+
+        return sum;
+    }
+
+    static size_t
+    write_filter_up(u8* dest, const u8* scan, const u8* prev, size_t bytes, size_t best)
+    {
+        size_t sum = 0;
+
+        for (size_t i = 0; i < bytes; ++i)
+        {
+            s32 v = dest[i] = u8(scan[i] - prev[i]);
+            sum += 128 - abs(v - 128);
+            if (sum > best)
+                break;
+        }
+
+        return sum;
+    }
+
+    static size_t
+    write_filter_average(u8* dest, const u8* scan, const u8* prev, int bpp, size_t bytes, size_t best)
+    {
+        size_t sum = 0;
+
+        for (int i = 0; i < bpp; ++i)
+        {
+            s32 v = dest[i] = u8(scan[i] - (prev[i] / 2));
+            sum += 128 - abs(v - 128);
+        }
+
+        bytes -= bpp;
+        dest += bpp;
+        prev += bpp;
+
+        for (size_t i = 0; i < bytes; ++i)
+        {
+            s32 v = dest[i] = u8(scan[i + bpp] - ((prev[i] + scan[i]) / 2));
+            sum += 128 - abs(v - 128);
+            if (sum > best)
+                break;
+        }
+
+        return sum;
+    }
+
+    static size_t
+    write_filter_paeth(u8* dest, const u8* scan, const u8* prev, int bpp, size_t bytes, size_t best)
+    {
+        size_t sum = 0;
+
+        for (size_t i = 0; i < bpp; ++i)
+        {
+            s32 v = dest[i] = u8(scan[i] - prev[i]);
+            sum += 128 - abs(v - 128);
+        }
+
+        bytes -= bpp;
+        dest += bpp;
+
+        for (size_t i = 0; i < bytes; ++i)
+        {
+            int b = prev[i + bpp];
+            int c = prev[i];
+            int a = scan[i];
+
+            int p = b - c;
+            int q = a - c;
+
+            int pa = abs(p);
+            int pb = abs(q);
+            int pc = abs(p + q);
+
+            p = (pa <= pb && pa <=pc) ? a : (pb <= pc) ? b : c;
+
+            s32 v = dest[i] = u8(scan[i + bpp] - p);
+            sum += 128 - abs(v - 128);
+            if (sum > best)
+                break;
+        }
+
+        return sum;
     }
 
     void writeChunk(Stream& stream, u32 chunkid, Memory memory)
@@ -2208,41 +2305,100 @@ namespace
         writeChunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
-    void write_IDAT(Stream& stream, const Surface& surface, int level)
+    void write_IDAT(Stream& stream, const Surface& surface, int level, bool filtering)
     {
-        // create data to compress
-        Buffer temp;
+        // data to compress
+        Buffer buffer;
 
         u8* image = surface.image;
-        int bytes_per_scan = surface.width * surface.format.bytes();
-
         int bpp = surface.format.bytes();
-        int offset = 0;
-        //u8 filter = FILTER_NONE;
-        u8 filter = FILTER_SUB;
+        int bytes_per_scan = surface.width * bpp;
 
-        for (int y = 0; y < surface.height; ++y)
+        Buffer zero(bytes_per_scan, 0);
+        u8* prev = zero;
+
+        if (filtering)
         {
-            temp.append(&filter, 1);
-            temp.append(image, bytes_per_scan);
-            if (filter == FILTER_SUB)
+            Buffer temp_none(bytes_per_scan + PNG_FILTER_BYTE);
+            Buffer temp_sub(bytes_per_scan + PNG_FILTER_BYTE);
+            Buffer temp_up(bytes_per_scan + PNG_FILTER_BYTE);
+            Buffer temp_average(bytes_per_scan + PNG_FILTER_BYTE);
+            Buffer temp_paeth(bytes_per_scan + PNG_FILTER_BYTE);
+
+            for (int y = 0; y < surface.height; ++y)
             {
-                applyFilterSUB(temp + offset + 1, bytes_per_scan, bpp);
-                offset += bytes_per_scan + 1;
+                // start with default (no filtering)
+                temp_none[0] = FILTER_NONE;
+                std::memcpy(temp_none + 1, image, bytes_per_scan);
+                size_t best = ~0;
+                Buffer* best_buffer = &temp_none;
+                const char* s = "0"; // selected filter debug string
+
+                size_t score;
+
+                temp_sub[0] = FILTER_SUB;
+                score = write_filter_sub(temp_sub + 1, image, bpp, bytes_per_scan, best);
+                if (score < best)
+                {
+                    best = score;
+                    best_buffer = &temp_sub;
+                    s = "1";
+                }
+
+                temp_up[0] = FILTER_UP;
+                score = write_filter_up(temp_up + 1, image, prev, bytes_per_scan, best);
+                if (score < best)
+                {
+                    best = score;
+                    best_buffer = &temp_up;
+                    s = "2";
+                }
+
+                temp_average[0] = FILTER_AVERAGE;
+                score = write_filter_average(temp_average + 1, image, prev, bpp, bytes_per_scan, best);
+                if (score < best)
+                {
+                    best = score;
+                    best_buffer = &temp_average;
+                    s = "3";
+                }
+
+                temp_paeth[0] = FILTER_PAETH;
+                score = write_filter_paeth(temp_paeth + 1, image, prev, bpp, bytes_per_scan, best);
+                if (score < best)
+                {
+                    best = score;
+                    best_buffer = &temp_paeth;
+                }
+
+                buffer.append(*best_buffer, bytes_per_scan + PNG_FILTER_BYTE);
+                //printf("%s", s);
+
+                prev = image;
+                image += surface.stride;
             }
-            image += surface.stride;
+        }
+        else
+        {
+            for (int y = 0; y < surface.height; ++y)
+            {
+                u8 filter = FILTER_NONE;
+                buffer.append(&filter, PNG_FILTER_BYTE);
+                buffer.append(image, bytes_per_scan);
+                image += surface.stride;
+            }
         }
 
         // compress
-        size_t bound = zlib::bound(temp.size());
-        Buffer buffer(bound);
-        size_t bytes_out = zlib::compress(buffer, temp, level);
+        size_t bound = zlib::bound(buffer.size());
+        Buffer compressed(bound);
+        size_t bytes_out = zlib::compress(compressed, buffer, level);
 
         // write chunkdID + compressed data
-        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(buffer, bytes_out));
+        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(compressed, bytes_out));
     }
 
-    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, int level)
+    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, int level, bool filtering)
     {
         BigEndianStream s(stream);
 
@@ -2250,7 +2406,7 @@ namespace
         s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
-        write_IDAT(stream, surface, level);
+        write_IDAT(stream, surface, level, filtering);
 
         // write IEND
         s.write32(0);
@@ -2402,12 +2558,12 @@ namespace
 
         if (surface.format == format)
         {
-            writePNG(stream, surface, color_bits, color_type, options.compression);
+            writePNG(stream, surface, color_bits, color_type, options.compression, options.filtering);
         }
         else
         {
             Bitmap temp(surface, format);
-            writePNG(stream, temp, color_bits, color_type, options.compression);
+            writePNG(stream, temp, color_bits, color_type, options.compression, options.filtering);
         }
 
         return status;
