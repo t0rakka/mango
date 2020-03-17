@@ -487,6 +487,7 @@ namespace
             : bpp(bpp)
         {
             u64 features = getCPUFlags();
+
             switch (bpp)
             {
                 case 1:
@@ -524,6 +525,8 @@ namespace
 #if defined(MANGO_ENABLE_NEON)
             //up = filter2_up_neon;
 #endif
+
+            MANGO_UNREFERENCED(features);
         }
 
         void operator () (u8* scan, const u8* prev, int bytes)
@@ -1084,6 +1087,7 @@ namespace
             }
         }
 
+        MANGO_UNREFERENCED(features);
         return function;
     }
 
