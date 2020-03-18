@@ -500,7 +500,7 @@ namespace
                     paeth = filter4_paeth_24bit_sse2;
 #endif
 #if defined(MANGO_ENABLE_SSE4_1)
-                    if (features & CPU_SSE4_1)
+                    if (features & INTEL_SSE4_1)
                     {
                         sub = filter1_sub_24bit_sse41;
                     }
@@ -1044,7 +1044,7 @@ namespace
                 {
                     function = process_rgb8;
 #if defined(MANGO_ENABLE_SSSE3)
-                    if (features & CPU_SSSE3)
+                    if (features & INTEL_SSSE3)
                     {
                         function = process_rgb8_ssse3;
                     }
@@ -1073,13 +1073,13 @@ namespace
             {
                 function = process_rgba16;
 #if defined(MANGO_ENABLE_SSE2)
-                if (features & CPU_SSE2)
+                if (features & INTEL_SSE2)
                 {
                     function = process_rgba16_sse2;
                 }
 #endif
 #if defined(MANGO_ENABLE_SSE2)
-                if (features & CPU_SSSE3)
+                if (features & INTEL_SSSE3)
                 {
                     function = process_rgba16_ssse3;
                 }

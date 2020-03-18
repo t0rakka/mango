@@ -1568,8 +1568,8 @@ namespace
 
         read_8x8 = nullptr;
 
-        u64 cpu_flags = getCPUFlags();
-        MANGO_UNREFERENCED(cpu_flags);
+        u64 flags = getCPUFlags();
+        MANGO_UNREFERENCED(flags);
 
         const char* sampler_name = nullptr;
 
@@ -1577,7 +1577,7 @@ namespace
         {
             case JPEG_U8_Y:
 #if defined(JPEG_ENABLE_SSE2)
-                if (cpu_flags & CPU_SSE2)
+                if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_y_format_sse2;
                     sampler_name = "SSE2 Y 8x8";
@@ -1590,7 +1590,7 @@ namespace
 
             case JPEG_U8_BGR:
 #if defined(JPEG_ENABLE_SSE4)
-				if (cpu_flags & CPU_SSSE3)
+				if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_bgr_format_ssse3;
                     sampler_name = "SSSE3 BGR 8x8";
@@ -1603,7 +1603,7 @@ namespace
 
             case JPEG_U8_RGB:
 #if defined(JPEG_ENABLE_SSE4)
-                if (cpu_flags & CPU_SSSE3)
+                if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_rgb_format_ssse3;
                     sampler_name = "SSSE3 RGB 8x8";
@@ -1616,7 +1616,7 @@ namespace
 
             case JPEG_U8_BGRA:
 #if defined(JPEG_ENABLE_SSE2)
-                if (cpu_flags & CPU_SSE2)
+                if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_bgra_format_sse2;
                     sampler_name = "SSE2 BGRA 8x8";
@@ -1629,7 +1629,7 @@ namespace
 
             case JPEG_U8_RGBA:
 #if defined(JPEG_ENABLE_SSE2)
-                if (cpu_flags & CPU_SSE2)
+                if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_rgba_format_sse2;
                     sampler_name = "SSE2 RGBA 8x8";

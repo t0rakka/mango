@@ -468,7 +468,7 @@ AES::AES(const u8* key, int bits)
     }
 
 #if defined(MANGO_ENABLE_AES)
-    m_schedule->aes_supported = (getCPUFlags() & CPU_AES) != 0;
+    m_schedule->aes_supported = (getCPUFlags() & INTEL_AES) != 0;
     if (m_schedule->aes_supported)
     {
         aesni_key_expand(m_schedule->schedule, key, bits);

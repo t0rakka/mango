@@ -1216,7 +1216,7 @@ namespace mango
         }
 
         u64 cpuFlags = getCPUFlags();
-        bool sse2 = (cpuFlags & CPU_SSE2) != 0;
+        bool sse2 = (cpuFlags & INTEL_SSE2) != 0;
 
         if (components < 2)
         {

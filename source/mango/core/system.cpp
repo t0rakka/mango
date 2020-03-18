@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
@@ -38,48 +38,48 @@ namespace mango
 
         info << "Detected CPU Features: ";
         if (!flags) info << "N/A";
-        if (flags & CPU_MMX) info << "MMX ";
-        if (flags & CPU_MMX_PLUS) info << "MMX+ ";
-        if (flags & CPU_SSE) info << "SSE ";
-        if (flags & CPU_SSE2) info << "SSE2 ";
-        if (flags & CPU_SSE3) info << "SSE3 ";
-        if (flags & CPU_SSSE3) info << "SSSE3 ";
-        if (flags & CPU_SSE4_1) info << "SSE4.1 ";
-        if (flags & CPU_SSE4_2) info << "SSE4.2 ";
-        if (flags & CPU_SSE4A) info << "SSE4A ";
-        if (flags & CPU_XOP) info << "XOP ";
-        if (flags & CPU_3DNOW) info << "3DNOW ";
-        if (flags & CPU_3DNOW_EXT) info << "3DNOW+ ";
-        if (flags & CPU_AVX) info << "AVX ";
-        if (flags & CPU_AVX2) info << "AVX2 ";
-        if (flags & CPU_AES) info << "AES ";
-        if (flags & CPU_CLMUL) info << "CLMUL ";
-        if (flags & CPU_FMA3) info << "FMA3 ";
-        if (flags & CPU_MOVBE) info << "MOVBE ";
-        if (flags & CPU_POPCNT) info << "POPCNT ";
-        if (flags & CPU_F16C) info << "F16C ";
-        if (flags & CPU_RDRAND) info << "RDRAND ";
-        if (flags & CPU_CMOV) info << "CMOV ";
-        if (flags & CPU_CMPXCHG16B) info << "CMPXCHG16B ";
-        if (flags & CPU_FMA4) info << "FMA4 ";
-        if (flags & CPU_BMI1) info << "BMI1 ";
-        if (flags & CPU_BMI2) info << "BMI2 ";
-        if (flags & CPU_SHA) info << "SHA ";
-        if (flags & CPU_AVX512F) info << "AVX512F ";
-        if (flags & CPU_AVX512PFI) info << "AVX512PFI ";
-        if (flags & CPU_AVX512ERI) info << "AVX512ERI ";
-        if (flags & CPU_AVX512CDI) info << "AVX512CDI ";
-        if (flags & CPU_AVX512BW) info << "AVX512BW ";
-        if (flags & CPU_AVX512VL) info << "AVX512VL ";
-        if (flags & CPU_AVX512DQ) info << "AVX512DQ ";
-        if (flags & CPU_AVX512IFMA) info << "AVX512IFMA ";
-        if (flags & CPU_AVX512VBMI) info << "AVX512VBMI ";
-        if (flags & CPU_LZCNT) info << "LZCNT ";
-        if (flags & CPU_ARM_NEON) info << "NEON ";
-        if (flags & CPU_ARM_AES) info << "AES ";
-        if (flags & CPU_ARM_SHA1) info << "SHA1 ";
-        if (flags & CPU_ARM_SHA2) info << "SHA2 ";
-        if (flags & CPU_ARM_CRC32) info << "CRC32 ";
+        if (flags & INTEL_MMX) info << "MMX ";
+        if (flags & INTEL_MMX_PLUS) info << "MMX+ ";
+        if (flags & INTEL_SSE) info << "SSE ";
+        if (flags & INTEL_SSE2) info << "SSE2 ";
+        if (flags & INTEL_SSE3) info << "SSE3 ";
+        if (flags & INTEL_SSSE3) info << "SSSE3 ";
+        if (flags & INTEL_SSE4_1) info << "SSE4.1 ";
+        if (flags & INTEL_SSE4_2) info << "SSE4.2 ";
+        if (flags & INTEL_SSE4A) info << "SSE4A ";
+        if (flags & INTEL_XOP) info << "XOP ";
+        if (flags & INTEL_3DNOW) info << "3DNOW ";
+        if (flags & INTEL_3DNOW_EXT) info << "3DNOW+ ";
+        if (flags & INTEL_AVX) info << "AVX ";
+        if (flags & INTEL_AVX2) info << "AVX2 ";
+        if (flags & INTEL_AES) info << "AES ";
+        if (flags & INTEL_CLMUL) info << "CLMUL ";
+        if (flags & INTEL_FMA3) info << "FMA3 ";
+        if (flags & INTEL_MOVBE) info << "MOVBE ";
+        if (flags & INTEL_POPCNT) info << "POPCNT ";
+        if (flags & INTEL_F16C) info << "F16C ";
+        if (flags & INTEL_RDRAND) info << "RDRAND ";
+        if (flags & INTEL_CMOV) info << "CMOV ";
+        if (flags & INTEL_CMPXCHG16B) info << "CMPXCHG16B ";
+        if (flags & INTEL_FMA4) info << "FMA4 ";
+        if (flags & INTEL_BMI1) info << "BMI1 ";
+        if (flags & INTEL_BMI2) info << "BMI2 ";
+        if (flags & INTEL_SHA) info << "SHA ";
+        if (flags & INTEL_AVX512F) info << "AVX512F ";
+        if (flags & INTEL_AVX512PFI) info << "AVX512PFI ";
+        if (flags & INTEL_AVX512ERI) info << "AVX512ERI ";
+        if (flags & INTEL_AVX512CDI) info << "AVX512CDI ";
+        if (flags & INTEL_AVX512BW) info << "AVX512BW ";
+        if (flags & INTEL_AVX512VL) info << "AVX512VL ";
+        if (flags & INTEL_AVX512DQ) info << "AVX512DQ ";
+        if (flags & INTEL_AVX512IFMA) info << "AVX512IFMA ";
+        if (flags & INTEL_AVX512VBMI) info << "AVX512VBMI ";
+        if (flags & INTEL_LZCNT) info << "LZCNT ";
+        if (flags & ARM_NEON) info << "NEON ";
+        if (flags & ARM_AES) info << "AES ";
+        if (flags & ARM_SHA1) info << "SHA1 ";
+        if (flags & ARM_SHA2) info << "SHA2 ";
+        if (flags & ARM_CRC32) info << "CRC32 ";
         info << std::endl;
 
         // NOTE: These are flags used to compile the mango library and have no relevance to

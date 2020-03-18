@@ -190,7 +190,8 @@ namespace jpeg {
 
         m_surface = nullptr;
 
-        cpu_flags = getCPUFlags();
+        u64 flags = getCPUFlags();
+        MANGO_UNREFERENCED(flags);
 
         // configure default implementation
         processState.idct = idct8;
@@ -202,7 +203,7 @@ namespace jpeg {
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
-        if (cpu_flags & CPU_SSE2)
+        if (flags & INTEL_SSE2)
         {
             processState.idct = idct_sse2;
         m_idct_name = "SSE2 iDCT";
@@ -1303,6 +1304,9 @@ namespace jpeg {
     {
         const char* simd = "";
 
+        u64 flags = getCPUFlags();
+        MANGO_UNREFERENCED(flags);
+
         // configure default implementation
         switch (sample)
         {
@@ -1352,45 +1356,49 @@ namespace jpeg {
         processState.process_cmyk = process_cmyk_bgra;
 
 #if defined(JPEG_ENABLE_NEON)
-        // NEON is built-in; no runtime check in this version
-        switch (sample)
+
+        if (flags & ARM_NEON)
         {
-            case JPEG_U8_Y:
-                break;
-            case JPEG_U8_BGR:
-                processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
-                processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
-                processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
-                processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
-                simd = "NEON";
-                break;
-            case JPEG_U8_RGB:
-                processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
-                processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
-                processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
-                processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
-                simd = "NEON";
-                break;
-            case JPEG_U8_BGRA:
-                processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
-                processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
-                processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
-                processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
-                simd = "NEON";
-                break;
-            case JPEG_U8_RGBA:
-                processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
-                processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
-                processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
-                processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
-                simd = "NEON";
-                break;
+            switch (sample)
+            {
+                case JPEG_U8_Y:
+                    break;
+                case JPEG_U8_BGR:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
+                    simd = "NEON";
+                    break;
+                case JPEG_U8_RGB:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
+                    simd = "NEON";
+                    break;
+                case JPEG_U8_BGRA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
+                    simd = "NEON";
+                    break;
+                case JPEG_U8_RGBA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
+                    simd = "NEON";
+                    break;
+            }
         }
+
 #endif
 
 #if defined(JPEG_ENABLE_SSE2)
 
-        if (cpu_flags & CPU_SSE2)
+        if (flags & INTEL_SSE2)
         {
             switch (sample)
             {
@@ -1421,7 +1429,7 @@ namespace jpeg {
 
 #if defined(JPEG_ENABLE_SSE4)
 
-        if (cpu_flags & CPU_SSSE3)
+        if (flags & INTEL_SSSE3)
         {
             switch (sample)
             {

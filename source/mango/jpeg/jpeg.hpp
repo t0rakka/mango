@@ -301,7 +301,6 @@ namespace jpeg {
         std::string m_ycbcr_name;
 
         Surface* m_surface;
-        u64 cpu_flags;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
