@@ -455,7 +455,7 @@ namespace
 
 #endif // MANGO_ENABLE_SSE4_1
 
-#if defined(MANGO_ENABLE_NEON__todo)
+#if defined(MANGO_ENABLE_NEON)
 
     // -----------------------------------------------------------------------------------
     // NEON Filters
@@ -523,7 +523,10 @@ namespace
             up = filter2_up_sse2;
 #endif
 #if defined(MANGO_ENABLE_NEON)
-            //up = filter2_up_neon;
+            if (features & ARM_NEON)
+            {
+                up = filter2_up_neon;
+            }
 #endif
 
             MANGO_UNREFERENCED(features);
