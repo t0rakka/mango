@@ -153,7 +153,7 @@ namespace
         {
             uint64_t features = android_getCpuFeatures();
 
-            flags |= ARM_NEON; // default for ARM64
+            flags |= (ARM_NEON | ARM_FP16); // default for ARM64
             if ((features & ANDROID_CPU_ARM64_FEATURE_AES) != 0) flags |= ARM_AES;
             if ((features & ANDROID_CPU_ARM64_FEATURE_SHA1) != 0) flags |= ARM_SHA1;
             if ((features & ANDROID_CPU_ARM64_FEATURE_SHA2) != 0) flags |= ARM_SHA2;
