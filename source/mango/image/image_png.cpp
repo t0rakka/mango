@@ -2174,7 +2174,7 @@ namespace
     // ------------------------------------------------------------
 
     static size_t
-    write_filter_sub(u8* dest, const u8* scan, int bpp, size_t bytes, size_t best)
+    write_filter_sub(u8* dest, const u8* scan, size_t bpp, size_t bytes, size_t best)
     {
         size_t sum = 0;
 
@@ -2215,11 +2215,11 @@ namespace
     }
 
     static size_t
-    write_filter_average(u8* dest, const u8* scan, const u8* prev, int bpp, size_t bytes, size_t best)
+    write_filter_average(u8* dest, const u8* scan, const u8* prev, size_t bpp, size_t bytes, size_t best)
     {
         size_t sum = 0;
 
-        for (int i = 0; i < bpp; ++i)
+        for (size_t i = 0; i < bpp; ++i)
         {
             s32 v = dest[i] = u8(scan[i] - (prev[i] / 2));
             sum += 128 - abs(v - 128);
@@ -2241,7 +2241,7 @@ namespace
     }
 
     static size_t
-    write_filter_paeth(u8* dest, const u8* scan, const u8* prev, int bpp, size_t bytes, size_t best)
+    write_filter_paeth(u8* dest, const u8* scan, const u8* prev, size_t bpp, size_t bytes, size_t best)
     {
         size_t sum = 0;
 
@@ -2336,6 +2336,7 @@ namespace
                 std::memcpy(temp_none + 1, image, bytes_per_scan);
                 size_t best = ~0;
                 Buffer* best_buffer = &temp_none;
+
                 const char* s = "0"; // selected filter debug string
 
                 size_t score;
@@ -2376,7 +2377,9 @@ namespace
                 }
 
                 buffer.append(*best_buffer, bytes_per_scan + PNG_FILTER_BYTE);
+
                 //printf("%s", s);
+                MANGO_UNREFERENCED(s);
 
                 prev = image;
                 image += surface.stride;
