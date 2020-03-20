@@ -461,6 +461,20 @@ namespace
     // NEON Filters
     // -----------------------------------------------------------------------------------
 
+    /*
+    void filter1_sub_24bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(prev);
+        MANGO_UNREFERENCED(bpp);
+    }
+
+    void filter1_sub_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(prev);
+        MANGO_UNREFERENCED(bpp);
+    }
+    */
+
     void filter2_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
         MANGO_UNREFERENCED(bpp);
@@ -472,6 +486,28 @@ namespace
             vst1q_u8(scan + x, vaddq_u8(a, b));
         }
     }
+
+    /*
+    void filter3_average_24bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(bpp);
+    }
+
+    void filter3_average_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(bpp);
+    }
+
+    void filter4_paeth_24bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(bpp);
+    }
+
+    void filter4_paeth_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        MANGO_UNREFERENCED(bpp);
+    }
+    */
 
 #endif // MANGO_ENABLE_NEON
 
