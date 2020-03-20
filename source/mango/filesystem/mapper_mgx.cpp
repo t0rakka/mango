@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
@@ -13,8 +13,6 @@ namespace
 {
     using namespace mango;
     namespace fs = mango::filesystem;
-
-    using mango::filesystem::Indexer;
 
     constexpr u64 mgx_header_size = 24;
 
@@ -60,7 +58,7 @@ namespace
     struct HeaderMGX
     {
         ConstMemory m_memory;
-        Indexer<FileHeader> m_folders;
+        fs::Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
 
         HeaderMGX(ConstMemory memory)
@@ -235,7 +233,7 @@ namespace filesystem {
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.getFolder(pathname);
+            const fs::Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.getFolder(pathname);
             if (ptrFolder)
             {
                 for (auto i : ptrFolder->headers)
@@ -328,7 +326,8 @@ namespace filesystem {
                     Compressor compressor = getCompressor(Compressor::Method(block.method));
                     ConstMemory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
 
-                    q.enqueue([=, &block, &segment] {
+                    q.enqueue([=, &block, &segment]
+                    {
                         if (block.uncompressed == segment.size && segment.offset == 0)
                         {
                             // segment is full-block so we can decode directly w/o intermediate buffer
@@ -342,14 +341,17 @@ namespace filesystem {
                             std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
                         }
                     });
-
-                    x += segment.size;
                 }
                 else
                 {
-                    std::memcpy(x, m_header.m_memory.address + block.offset + segment.offset, segment.size);
-                    x += segment.size;
+                    q.enqueue([=, &block, &segment]
+                    {
+                        // no compression
+                        std::memcpy(x, m_header.m_memory.address + block.offset + segment.offset, segment.size);
+                    });
                 }
+
+                x += segment.size;
             }
 
             q.wait();
