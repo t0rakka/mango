@@ -57,7 +57,8 @@ namespace mango
         ARM_AES           = 0x0002000000000000,
         ARM_SHA1          = 0x0004000000000000,
         ARM_SHA2          = 0x0008000000000000,
-        ARM_CRC32         = 0x0010000000000000
+        ARM_CRC32         = 0x0010000000000000,
+        ARM_FP16          = 0x0020000000000000,
     };
 
 	u64 getCPUFlags();
