@@ -125,9 +125,9 @@ namespace
             if (isPalette())
             {
                 // palette
-                if (colormap_length > 256)
+                if (colormap_origin + colormap_length > 256)
                 {
-                    error = makeString("[ImageDecoder.TGA] Invalid colormap length.", colormap_length);
+                    error = makeString("[ImageDecoder.TGA] Invalid colormap (origin: %d, length: %d).", colormap_origin, colormap_length);
                     return nullptr;
                 }
 
@@ -362,11 +362,14 @@ namespace
                 case IMAGETYPE_RLE_PALETTE:
                 {
                     // read palette
-                    palette.size = u32(m_targa_header.colormap_length);
+                    u32 origin = u32(m_targa_header.colormap_origin);
+                    u32 length = u32(m_targa_header.colormap_length);
+
+                    palette.size = origin + length;
 
                     if (m_targa_header.colormap_bits == 15 || m_targa_header.colormap_bits == 16)
                     {
-                        for (u32 i = 0; i < palette.size; ++i)
+                        for (u32 i = 0; i < length; ++i)
                         {
                             u16 color = uload16le(p);
                             u32 r = (color >> 0) & 0x1f;
@@ -375,23 +378,23 @@ namespace
                             r = (r * 255) / 31;
                             g = (g * 255) / 31;
                             b = (b * 255) / 31;
-                            palette[i] = ColorBGRA(r, g, b, 0xff);
+                            palette[origin + i] = ColorBGRA(r, g, b, 0xff);
                             p += 2;
                         }
                     }
                     else if (m_targa_header.colormap_bits == 24)
                     {
-                        for (u32 i = 0; i < palette.size; ++i)
+                        for (u32 i = 0; i < length; ++i)
                         {
-                            palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
+                            palette[origin + i] = ColorBGRA(p[2], p[1], p[0], 0xff);
                             p += 3;
                         }
                     }
                     else if (m_targa_header.colormap_bits == 32)
                     {
-                        for (u32 i = 0; i < palette.size; ++i)
+                        for (u32 i = 0; i < length; ++i)
                         {
-                            palette[i] = ColorBGRA(p[2], p[1], p[0], p[3]);
+                            palette[origin + i] = ColorBGRA(p[2], p[1], p[0], p[3]);
                             p += 4;
                         }
                     }
