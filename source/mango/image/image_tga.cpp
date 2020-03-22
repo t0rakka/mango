@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -8,6 +8,9 @@
 #include <mango/image/image.hpp>
 
 #ifdef MANGO_ENABLE_IMAGE_TGA
+
+// Specification:
+// https://www.fileformat.info/format/tga/egff.htm
 
 namespace
 {
