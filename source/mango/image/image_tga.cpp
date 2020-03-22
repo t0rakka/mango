@@ -20,28 +20,37 @@ namespace
 	// header
 	// ------------------------------------------------------------
 
-    enum
+    enum : u8
     {
-        TYPE_RAW_PALETTE   = 1,
-        TYPE_RAW_RGB       = 2,
-        TYPE_RAW_BW        = 3,
-        TYPE_RLE_PALETTE   = 9,
-        TYPE_RLE_RGB       = 10,
-        TYPE_RLE_BW        = 11,
+        IMAGETYPE_NONE            = 0,
+        IMAGETYPE_PALETTE         = 1,
+        IMAGETYPE_TRUECOLOR       = 2,
+        IMAGETYPE_MONOCHROME      = 3,
+        IMAGETYPE_RLE_PALETTE     = 9,
+        IMAGETYPE_RLE_TRUECOLOR   = 10,
+        IMAGETYPE_RLE_MONOCHROME  = 11,
+    };
+
+    enum : u8
+    {
+        DESCRIPTOR_OVERLAY   = 0x04,
+        DESCRIPTOR_ALPHA     = 0x08,
+        DESCRIPTOR_ORIGIN_X  = 0x10,
+        DESCRIPTOR_ORIGIN_Y  = 0x20,
     };
 
     struct HeaderTGA
     {
-        u8   idfield_length;
+        u8   id_length;
         u8   colormap_type;
-        u8   data_type;
+        u8   image_type;
         u16  colormap_origin;
         u16  colormap_length;
         u8   colormap_bits;
-        u16  image_origin_x;
-        u16  image_origin_y;
-        u16  image_width;
-        u16  image_height;
+        u16  xoffset;
+        u16  yoffset;
+        u16  width;
+        u16  height;
         u8   pixel_size;
         u8   descriptor;
 
@@ -49,30 +58,31 @@ namespace
 
         const u8* parse(LittleEndianConstPointer& p)
         {
-            idfield_length   = p.read8();
+            id_length        = p.read8();
             colormap_type    = p.read8();
-            data_type        = p.read8();
+            image_type       = p.read8();
             colormap_origin  = p.read16();
             colormap_length  = p.read16();
             colormap_bits    = p.read8();
-            image_origin_x   = p.read16();
-            image_origin_y   = p.read16();
-            image_width      = p.read16();
-            image_height     = p.read16();
+            xoffset          = p.read16();
+            yoffset          = p.read16();
+            width            = p.read16();
+            height           = p.read16();
             pixel_size       = p.read8();
             descriptor       = p.read8();
 
-            switch (data_type)
+            switch (image_type)
             {
-                case TYPE_RAW_PALETTE:
-                case TYPE_RAW_RGB:
-                case TYPE_RAW_BW:
-                case TYPE_RLE_PALETTE:
-                case TYPE_RLE_RGB:
-                case TYPE_RLE_BW:
+                case IMAGETYPE_NONE:
+                case IMAGETYPE_PALETTE:
+                case IMAGETYPE_TRUECOLOR:
+                case IMAGETYPE_MONOCHROME:
+                case IMAGETYPE_RLE_PALETTE:
+                case IMAGETYPE_RLE_TRUECOLOR:
+                case IMAGETYPE_RLE_MONOCHROME:
                     break;
                 default:
-                    error = makeString("[ImageDecoder.TGA] Invalid data type (%d).", data_type);
+                    error = makeString("[ImageDecoder.TGA] Invalid data type (%d).", image_type);
                     return nullptr;
             }
 
@@ -88,13 +98,22 @@ namespace
                     return nullptr;
             }
 
-            if (colormap_type > 1)
+            if (!colormap_type)
             {
+                if (colormap_origin || colormap_length || colormap_bits)
+                {
+                    error = makeString("[ImageDecoder.TGA] Incorrect colormap.");
+                    return nullptr;
+                }
+            }
+            else if (colormap_type > 1)
+            {
+                // NOTE: This is allowed to be > 1 but we don't know how to read such custom type anyway
                 error = makeString("[ImageDecoder.TGA] Invalid colormap type (%d).", colormap_type);
                 return nullptr;
             }
 
-            if (data_type == TYPE_RAW_PALETTE || data_type == TYPE_RLE_PALETTE)
+            if (isPalette())
             {
                 // palette
                 if (colormap_length > 256)
@@ -110,8 +129,16 @@ namespace
                 }
             }
 
+            /* This is one part of specification we will not enforce
+            if (width > 512 || height > 482)
+            {
+                error = makeString("[ImageDecoder.TGA] Incorrect image dimensions: %d x %d (maximum: 512 x 482).", width, height);
+                return nullptr;
+            }
+            */
+
             // skip idfield
-            p += idfield_length;
+            p += id_length;
 
             return p;
         }
@@ -120,28 +147,28 @@ namespace
         {
             LittleEndianStream s(file);
 
-            s.write8(idfield_length);
+            s.write8(id_length);
             s.write8(colormap_type);
-            s.write8(data_type);
+            s.write8(image_type);
             s.write16(colormap_origin);
             s.write16(colormap_length);
             s.write8(colormap_bits);
-            s.write16(image_origin_x);
-            s.write16(image_origin_y);
-            s.write16(image_width);
-            s.write16(image_height);
+            s.write16(xoffset);
+            s.write16(yoffset);
+            s.write16(width);
+            s.write16(height);
             s.write8(pixel_size);
             s.write8(descriptor);
         }
 
         bool isPalette() const
         {
-            return (data_type & 3) == 1;
+            return (image_type & 3) == 1;
         }
 
         bool isRLE() const
         {
-            return (data_type & 8) != 0;
+            return (image_type & 8) != 0;
         }
 
         int getBytesPerPixel() const
@@ -263,8 +290,8 @@ namespace
             m_pointer = m_targa_header.parse(p);
             if (m_pointer)
             {
-                m_header.width   = m_targa_header.image_width;
-                m_header.height  = m_targa_header.image_height;
+                m_header.width   = m_targa_header.width;
+                m_header.height  = m_targa_header.height;
                 m_header.depth   = 0;
                 m_header.levels  = 0;
                 m_header.faces   = 0;
@@ -305,22 +332,28 @@ namespace
 
             Palette palette;
 
-            switch (m_targa_header.data_type)
+            switch (m_targa_header.image_type)
             {
-                case TYPE_RAW_BW:
-                case TYPE_RLE_BW:
+                case IMAGETYPE_NONE:
+                {
+                    status.setError("[ImageDecoder.TGA] No image data.");
+                    return status;
+                }
+
+                case IMAGETYPE_MONOCHROME:
+                case IMAGETYPE_RLE_MONOCHROME:
                 {
                     // grayscale
                     break;
                 }
 
-                case TYPE_RAW_PALETTE:
-                case TYPE_RLE_PALETTE:
+                case IMAGETYPE_PALETTE:
+                case IMAGETYPE_RLE_PALETTE:
                 {
                     // read palette
                     palette.size = u32(m_targa_header.colormap_length);
 
-                    if (m_targa_header.colormap_bits == 16)
+                    if (m_targa_header.colormap_bits == 15 || m_targa_header.colormap_bits == 16)
                     {
                         for (u32 i = 0; i < palette.size; ++i)
                         {
@@ -343,11 +376,19 @@ namespace
                             p += 3;
                         }
                     }
+                    else if (m_targa_header.colormap_bits == 32)
+                    {
+                        for (u32 i = 0; i < palette.size; ++i)
+                        {
+                            palette[i] = ColorBGRA(p[2], p[1], p[0], p[3]);
+                            p += 4;
+                        }
+                    }
                     break;
                 }
 
-                case TYPE_RAW_RGB:
-                case TYPE_RLE_RGB:
+                case IMAGETYPE_TRUECOLOR:
+                case IMAGETYPE_RLE_TRUECOLOR:
                 {
                     p += m_targa_header.colormap_length * ((m_targa_header.colormap_bits + 1) >> 3);
                     break;
@@ -356,20 +397,21 @@ namespace
 
             Format format = m_targa_header.getFormat();
 
-            const int width = m_targa_header.image_width;
-            const int height = m_targa_header.image_height;
+            const int width = m_targa_header.width;
+            const int height = m_targa_header.height;
             const int bpp = m_targa_header.getBytesPerPixel();
 
             Surface dest(surface, 0, 0, width, height);
 
-            if (m_targa_header.descriptor & 0x20)
+            if (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_Y)
             {
+                // image origin is at the top
                 dest.image = surface.image;
                 dest.stride = surface.stride;
             }
             else
             {
-                // flip the image upside down
+                // image origin is at the bottom
                 dest.image = surface.image + (height - 1) * surface.stride;
                 dest.stride = -surface.stride;
             }
@@ -384,19 +426,19 @@ namespace
                 data = temp.get();
             }
 
-            switch (m_targa_header.data_type)
+            switch (m_targa_header.image_type)
             {
-                case TYPE_RAW_BW:
-                case TYPE_RLE_BW:
-                case TYPE_RAW_RGB:
-                case TYPE_RLE_RGB:
+                case IMAGETYPE_MONOCHROME:
+                case IMAGETYPE_RLE_MONOCHROME:
+                case IMAGETYPE_TRUECOLOR:
+                case IMAGETYPE_RLE_TRUECOLOR:
                 {
                     dest.blit(0, 0, Surface(width, height, format, width * bpp, data));
                     break;
                 }
 
-                case TYPE_RAW_PALETTE:
-                case TYPE_RLE_PALETTE:
+                case IMAGETYPE_PALETTE:
+                case IMAGETYPE_RLE_PALETTE:
                 {
                     if (ptr_palette)
                     {
@@ -419,6 +461,12 @@ namespace
                     }
                     break;
                 }
+            }
+
+            if (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_X)
+            {
+                // image origin is at the right
+                dest.xflip();
             }
 
             return status;
@@ -450,18 +498,18 @@ namespace
         // configure header
         HeaderTGA header;
 
-        header.idfield_length   = 0;
+        header.id_length        = 0;
         header.colormap_type    = 0;
-        header.data_type        = 2;
+        header.image_type       = IMAGETYPE_TRUECOLOR;
         header.colormap_origin  = 0;
         header.colormap_length  = 0;
         header.colormap_bits    = 0;
-        header.image_origin_x   = 0;
-        header.image_origin_y   = 0;
-        header.image_width      = u16(width);
-        header.image_height     = u16(height);
+        header.xoffset          = 0;
+        header.yoffset          = 0;
+        header.width            = u16(width);
+        header.height           = u16(height);
         header.pixel_size       = u8(format.bits);
-        header.descriptor       = 0x20 | (isalpha ? 8 : 0);
+        header.descriptor       = DESCRIPTOR_ORIGIN_Y | (isalpha ? DESCRIPTOR_ALPHA : 0);
 
         // write header
         header.write(stream);
