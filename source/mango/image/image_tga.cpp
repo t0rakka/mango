@@ -122,9 +122,11 @@ namespace
                     return nullptr;
                 }
 
-                if (colormap_bits != 16 && colormap_bits != 24)
+                if (colormap_bits != 16 && 
+                    colormap_bits != 24 &&
+                    colormap_bits != 32)
                 {
-                    error = makeString("[ImageDecoder.TGA] Invalid colormap size.", colormap_bits);
+                    error = makeString("[ImageDecoder.TGA] Invalid colormap bits (%d).", colormap_bits);
                     return nullptr;
                 }
             }
