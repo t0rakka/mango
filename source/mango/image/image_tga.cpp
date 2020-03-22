@@ -2,6 +2,9 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+//#define MANGO_ENABLE_DEBUG_PRINT
+
+#include <mango/core/core.hpp>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/string.hpp>
@@ -70,6 +73,12 @@ namespace
             height           = p.read16();
             pixel_size       = p.read8();
             descriptor       = p.read8();
+
+            debugPrint("  image_type:    %d\n", image_type);
+            debugPrint("  colormap_type: %d\n", colormap_type);
+            debugPrint("  colormap_bits: %d\n", colormap_bits);
+            debugPrint("  colormap:      [%d, %d]\n", colormap_origin, colormap_origin + colormap_length);
+            debugPrint("  descriptor:    %x\n", descriptor);
 
             switch (image_type)
             {
@@ -198,7 +207,7 @@ namespace
                     break;
 
                 case 16:
-                    format = FORMAT_B5G5R5X1;
+                    format = (descriptor & DESCRIPTOR_ALPHA) ? FORMAT_L8A8 : FORMAT_B5G5R5X1;
                     break;
 
                 case 24:
