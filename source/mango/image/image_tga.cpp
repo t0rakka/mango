@@ -59,7 +59,7 @@ namespace
 
         std::string error;
 
-        const u8* parse(LittleEndianConstPointer& p)
+        const u8* parse(LittleEndianConstPointer p)
         {
             id_length        = p.read8();
             colormap_type    = p.read8();
@@ -223,18 +223,17 @@ namespace
         }
     };
 
-	// ------------------------------------------------------------
-	// tga code
-	// ------------------------------------------------------------
-
-    void decompressRLE(u8* temp, const u8* p, int width, int height, int bpp)
+    bool tga_decompress_RLE(u8* dest, const u8* p, const u8* end, int width, int height, int bpp)
     {
         int x = 0;
         int y = 0;
-        u8* buffer = temp;
+        u8* scan = dest;
 
-        for (; y < height;)
+        for ( ; y < height; )
         {
+            if (p >= end)
+                return false;
+
             u8 sample = *p++;
             int count = (sample & 0x7f) + 1;
             const u8* color = p;
@@ -247,27 +246,34 @@ namespace
             for ( ; count > 0; )
             {
                 // clip to right edge
-                const int left = width - x;
-                const int size = std::min(count, left);
+                const int size = std::min(count, width - x);
+                if (!size)
+                    return false;
 
                 if (sample & 0x80)
                 {
+                    if (color + size * bpp >= end)
+                        return false;
+
                     // repeat color
                     for (int i = 0; i < size; ++i)
                     {
                         for (int j = 0; j < bpp; ++j)
                         {
-                            buffer[j] = color[j];
+                            scan[j] = color[j]; // <-- read
                         }
-                        buffer += bpp;
+                        scan += bpp;
                     }
                 }
                 else
                 {
                     int bytes = size * bpp;
-                    std::memcpy(buffer, color, bytes);
+                    if (color + bytes >= end)
+                        return false;
+
+                    std::memcpy(scan, color, bytes);
                     p += bytes;
-                    buffer += bytes;
+                    scan += bytes;
                     color += bytes;
                 }
 
@@ -278,11 +284,13 @@ namespace
                 {
                     ++y;
                     x = 0;
-                    temp += width * bpp;
-                    buffer = temp;
+                    dest += width * bpp;
+                    scan = dest;
                 }
             }
         }
+
+        return true;
     }
 
     // ------------------------------------------------------------
@@ -291,14 +299,15 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
+        ConstMemory m_memory;
         ImageHeader m_header;
         HeaderTGA m_targa_header;
         const u8* m_pointer;
 
         Interface(ConstMemory memory)
+            : m_memory(memory)
         {
-            LittleEndianConstPointer p = memory.address;
-            m_pointer = m_targa_header.parse(p);
+            m_pointer = m_targa_header.parse(memory.address);
             if (m_pointer)
             {
                 m_header.width   = m_targa_header.width;
@@ -432,11 +441,16 @@ namespace
 
 		    std::unique_ptr<u8[]> temp;
             const u8* data = p;
+            const u8* end = m_memory.address + m_memory.size;
 
             if (m_targa_header.isRLE())
             {
                 temp.reset(new u8[width * height * bpp]);
-                decompressRLE(temp.get(), p, width, height, bpp);
+                if (!tga_decompress_RLE(temp.get(), p, end, width, height, bpp))
+                {
+                    status.setError("[ImageDecoder.TGA] RLE decoding error.");
+                    return status;
+                }
                 data = temp.get();
             }
 
@@ -462,6 +476,7 @@ namespace
                     else
                     {
                         Bitmap bitmap(width, height, FORMAT_B8G8R8A8);
+
                         for (int y = 0; y < height; ++y)
                         {
                             ColorBGRA* d = bitmap.address<ColorBGRA>(0, y);
@@ -471,6 +486,7 @@ namespace
                                 d[x] = palette[s[x]];
                             }
                         }
+
                         dest.blit(0, 0, bitmap);
                     }
                     break;
