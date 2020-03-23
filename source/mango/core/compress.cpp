@@ -229,13 +229,13 @@ namespace lz4 {
         }
     };
 
-    StreamEncoder* createStreamEncoder(int level)
+    SharedObject<StreamEncoder> createStreamEncoder(int level)
     {
         StreamEncoder* encoder = new StreamEncoderLZ4(level);
         return encoder;
     }
 
-    StreamDecoder* createStreamDecoder()
+    SharedObject<StreamDecoder> createStreamDecoder()
     {
         StreamDecoder* decoder = new StreamDecoderLZ4();
         return decoder;
@@ -429,13 +429,13 @@ namespace zstd {
         }
     };
 
-    StreamEncoder* createStreamEncoder(int level)
+    SharedObject<StreamEncoder> createStreamEncoder(int level)
     {
         StreamEncoder* encoder = new StreamEncoderZSTD(level);
         return encoder;
     }
 
-    StreamDecoder* createStreamDecoder()
+    SharedObject<StreamDecoder> createStreamDecoder()
     {
         StreamDecoder* decoder = new StreamDecoderZSTD();
         return decoder;

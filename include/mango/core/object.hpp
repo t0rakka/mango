@@ -22,20 +22,6 @@ namespace mango
         NonCopyable& operator = (const NonCopyable&) = delete;
     };
 
-    class RefCounted : private NonCopyable
-    {
-    protected:
-        std::atomic<int> m_count { 1 };
-
-    public:
-        RefCounted() = default;
-        virtual ~RefCounted() = default;
-
-        int retain();
-        int release();
-        int count() const;
-    };
-
     template <typename T>
     class SharedObject : public std::shared_ptr<T>
     {

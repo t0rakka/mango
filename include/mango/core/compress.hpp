@@ -34,7 +34,7 @@ namespace mango
     // This API is useful for transmitting compressed realtime data stream over high latency,
     // low bandwidth connection.
 
-    class StreamEncoder : public RefCounted
+    class StreamEncoder
     {
     public:
         StreamEncoder() {}
@@ -43,7 +43,7 @@ namespace mango
         virtual size_t encode(Memory dest, ConstMemory source) = 0;
     };
 
-    class StreamDecoder : public RefCounted
+    class StreamDecoder
     {
     public:
         StreamDecoder() {}
@@ -55,14 +55,14 @@ namespace mango
 
     namespace lz4
     {
-        StreamEncoder* createStreamEncoder(int level);
-        StreamDecoder* createStreamDecoder();
+        SharedObject<StreamEncoder> createStreamEncoder(int level = 4);
+        SharedObject<StreamDecoder> createStreamDecoder();
     }
 
     namespace zstd
     {
-        StreamEncoder* createStreamEncoder(int level);
-        StreamDecoder* createStreamDecoder();
+        SharedObject<StreamEncoder> createStreamEncoder(int level = 4);
+        SharedObject<StreamDecoder> createStreamDecoder();
     }
 
 #endif
