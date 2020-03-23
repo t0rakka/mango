@@ -255,10 +255,17 @@ namespace jpeg {
 #endif
     }
 
-    const u8* Parser::stepMarker(const u8* p) const
+    const u8* Parser::stepMarker(const u8* p, const u8* end) const
     {
+        if (p + 2 > end)
+            return end;
+
         u16 size = uload16be(p);
         p += size;
+
+        if (p + 1 > end)
+            return end;
+
         p += (p[1] == 0xff); // HACK: some really ancient jpeg encoders encode markers sometimes as
                              // (0xff, 0xff, ID) ; this will skip to the "correct" 0xff (the second one)
         return p;
@@ -950,7 +957,7 @@ namespace jpeg {
         p += 2;
         Lh -= 2;
 
-        for (; Lh > 0;)
+        for ( ; Lh > 0; )
         {
             u8 x = *p++;
             u8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table.
@@ -1111,52 +1118,52 @@ namespace jpeg {
 
                 case MARKER_DHT:
                     processDHT(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_DAC:
                     processDAC(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_DQT:
                     processDQT(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_DNL:
                     processDNL(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_DRI:
                     processDRI(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_DHP:
                     processDHP(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_EXP:
                     processEXP(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_COM:
                     processCOM(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_TEM:
                     processTEM(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_RES:
                     processRES(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_APP0:
@@ -1176,12 +1183,12 @@ namespace jpeg {
                 case MARKER_APP14:
                 case MARKER_APP15:
                     processAPP(p, marker);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_JPG:
                     processJPG(p);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_JPG0:
@@ -1199,7 +1206,7 @@ namespace jpeg {
                 case MARKER_JPG12:
                 case MARKER_JPG13:
                     processJPG(p, marker);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     break;
 
                 case MARKER_SOF0:
@@ -1216,7 +1223,7 @@ namespace jpeg {
                 case MARKER_SOF14:
                 case MARKER_SOF15:
                     processSOF(p, marker);
-                    p = stepMarker(p);
+                    p = stepMarker(p, end);
                     if (!decode)
                     {
                         // parse header mode (no decoding)
