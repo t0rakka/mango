@@ -597,7 +597,6 @@
     <ClCompile Include="..\..\source\mango\core\hash.cpp" />
     <ClCompile Include="..\..\source\mango\core\md5.cpp" />
     <ClCompile Include="..\..\source\mango\core\memory.cpp" />
-    <ClCompile Include="..\..\source\mango\core\object.cpp" />
     <ClCompile Include="..\..\source\mango\core\sha1.cpp" />
     <ClCompile Include="..\..\source\mango\core\sha2.cpp" />
     <ClCompile Include="..\..\source\mango\core\string.cpp" />

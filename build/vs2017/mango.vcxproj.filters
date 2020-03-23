@@ -1208,9 +1208,6 @@
     <ClCompile Include="..\..\source\mango\core\memory.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\mango\core\object.cpp">
-      <Filter>mango\source\core</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\mango\core\string.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
