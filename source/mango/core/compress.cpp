@@ -259,12 +259,8 @@ namespace lzo {
         void* workmem = aligned_malloc(LZO1X_MEM_COMPRESS);
 
         lzo_uint dst_len = (lzo_uint)dest.size;
-        int x = lzo1x_1_compress(
-            source.address,
-            static_cast<lzo_uint>(source.size),
-            dest.address,
-            &dst_len,
-            workmem);
+        int x = lzo1x_1_compress(source.address, lzo_uint(source.size),
+            dest.address, &dst_len, workmem);
 
         aligned_free(workmem);
         if (x != LZO_E_OK)
@@ -272,18 +268,14 @@ namespace lzo {
             MANGO_EXCEPTION("[lzo] compression failed.");
         }
 
-        return static_cast<size_t>(dst_len);
+        return size_t(dst_len);
 	}
 
     size_t decompress(Memory dest, ConstMemory source)
     {
         lzo_uint dst_len = (lzo_uint)dest.size;
-        int x = lzo1x_decompress(
-            source.address,
-            static_cast<lzo_uint>(source.size),
-            dest.address,
-            &dst_len,
-            NULL);
+        int x = lzo1x_decompress(source.address, lzo_uint(source.size),
+            dest.address, &dst_len, nullptr);
         if (x != LZO_E_OK)
         {
             MANGO_EXCEPTION("[lzo] decompression failed.");
@@ -499,7 +491,7 @@ namespace bzip2 {
         destLength -= strm.avail_out;
         BZ2_bzCompressEnd(&strm);
 
-        return static_cast<size_t>(destLength);
+        return size_t(destLength);
     }
 
     size_t decompress(Memory dest, ConstMemory source)
