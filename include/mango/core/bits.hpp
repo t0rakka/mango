@@ -173,6 +173,16 @@ namespace mango
         return grid ? std::floor(0.5f + value / grid) * grid : value;
     }
 
+    constexpr u32 wang_hash(u32 seed)
+    {
+        seed = (seed ^ 61) ^ (seed >> 16);
+        seed *= 9;
+        seed = seed ^ (seed >> 4);
+        seed *= 0x27d4eb2d;
+        seed = seed ^ (seed >> 15);
+        return seed;
+    }
+
     // ----------------------------------------------------------------------------
     // 16 bits
     // ----------------------------------------------------------------------------
