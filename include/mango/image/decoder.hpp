@@ -1,11 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
 #include "../core/object.hpp"
+#include "../core/exception.hpp"
 #include "format.hpp"
 #include "compression.hpp"
 #include "exif.hpp"
@@ -14,7 +15,7 @@ namespace mango
 {
     class Surface;
 
-    struct ImageHeader : image::Status
+    struct ImageHeader : Status
     {
         int     width = 0;   // width
         int     height = 0;  // height
@@ -26,7 +27,7 @@ namespace mango
         TextureCompression compression = TextureCompression::NONE;
     };
 
-    struct ImageDecodeStatus : image::Status
+    struct ImageDecodeStatus : Status
     {
         bool direct = false;
 

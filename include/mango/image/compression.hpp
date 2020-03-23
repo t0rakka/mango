@@ -1,45 +1,17 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include "../core/memory.hpp"
 #include "../core/string.hpp"
+#include "../core/exception.hpp"
 #include "format.hpp"
 #include "fourcc.hpp"
 
-namespace mango {
-namespace image {
-
-    struct Status
-    {
-        std::string info;
-        bool success = true;
-
-        operator bool () const
-        {
-            return success;
-        }
-
-        void setError(const std::string& error)
-        {
-            info = error;
-            success = false;
-        }
-
-        void setError(const char* format, ...)
-        {
-            va_list args;
-            va_start(args, format);
-            info = makeString(format, args);
-            success = false;
-            va_end(args);
-        }
-    };
-
-} // namespace image
-
+namespace mango
+{
     class Surface;
 
     constexpr u32 makeTextureCompression(u32 format, u32 index, u32 flags) noexcept
@@ -47,7 +19,7 @@ namespace image {
         return flags | (index << 8) | format;
     }
 
-    struct TextureCompressionStatus : image::Status
+    struct TextureCompressionStatus : Status
     {
         bool direct = false;
     };
