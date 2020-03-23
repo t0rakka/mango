@@ -14,7 +14,6 @@
 		A00559951C93324E00A6D963 /* compress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A005598C1C93324E00A6D963 /* compress.cpp */; };
 		A00559961C93324E00A6D963 /* cpuinfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A005598D1C93324E00A6D963 /* cpuinfo.cpp */; };
 		A00559971C93324E00A6D963 /* memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A005598E1C93324E00A6D963 /* memory.cpp */; };
-		A00559981C93324E00A6D963 /* object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A005598F1C93324E00A6D963 /* object.cpp */; };
 		A00559991C93324E00A6D963 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A00559901C93324E00A6D963 /* string.cpp */; };
 		A005599A1C93324E00A6D963 /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A00559911C93324E00A6D963 /* system.cpp */; };
 		A005599B1C93324E00A6D963 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A00559921C93324E00A6D963 /* thread.cpp */; };
@@ -507,7 +506,6 @@
 		A005598C1C93324E00A6D963 /* compress.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = compress.cpp; path = core/compress.cpp; sourceTree = "<group>"; };
 		A005598D1C93324E00A6D963 /* cpuinfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cpuinfo.cpp; path = core/cpuinfo.cpp; sourceTree = "<group>"; };
 		A005598E1C93324E00A6D963 /* memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = memory.cpp; path = core/memory.cpp; sourceTree = "<group>"; };
-		A005598F1C93324E00A6D963 /* object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = object.cpp; path = core/object.cpp; sourceTree = "<group>"; };
 		A00559901C93324E00A6D963 /* string.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = string.cpp; path = core/string.cpp; sourceTree = "<group>"; };
 		A00559911C93324E00A6D963 /* system.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = system.cpp; path = core/system.cpp; sourceTree = "<group>"; };
 		A00559921C93324E00A6D963 /* thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = thread.cpp; path = core/thread.cpp; sourceTree = "<group>"; };
@@ -1036,7 +1034,6 @@
 				A005598C1C93324E00A6D963 /* compress.cpp */,
 				A005598D1C93324E00A6D963 /* cpuinfo.cpp */,
 				A005598E1C93324E00A6D963 /* memory.cpp */,
-				A005598F1C93324E00A6D963 /* object.cpp */,
 				A00559901C93324E00A6D963 /* string.cpp */,
 				A00559911C93324E00A6D963 /* system.cpp */,
 				A00559921C93324E00A6D963 /* thread.cpp */,
@@ -2137,7 +2134,6 @@
 				A6EC3E92230D7C0200B17F21 /* demux.c in Sources */,
 				A6EC3F02230D7C1500B17F21 /* filters_neon.c in Sources */,
 				A63DD7701E706EF100D4D499 /* lzfse_encode_base.c in Sources */,
-				A00559981C93324E00A6D963 /* object.cpp in Sources */,
 				A6EC3EEE230D7C1500B17F21 /* dec_msa.c in Sources */,
 				A6EC3F85230D7C4D00B17F21 /* quant_levels_utils.c in Sources */,
 				A00559A51C93327800A6D963 /* mapper_mgx.cpp in Sources */,
