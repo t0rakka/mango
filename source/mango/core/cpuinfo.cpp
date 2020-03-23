@@ -205,9 +205,9 @@ namespace
 
     u64 getCPUFlagsInternal()
     {
-        long hwcaps = getauxval(AT_HWCAP);
-
         u64 flags = ARM_FP16 | ARM_NEON; // default for ARM64
+
+        long hwcaps = getauxval(AT_HWCAP);
 
         if (hwcaps & AARCH64_HWCAP_AES) flags |= ARM_AES;
         if (hwcaps & AARCH64_HWCAP_CRC32) flags |= ARM_CRC32;
@@ -241,6 +241,7 @@ namespace
     #define ARM_HWCAP_VFPD32 (1UL << 19)
     #define ARM_HWCAP_LPAE (1UL << 20)
     #define ARM_HWCAP_EVTSTRM (1UL << 21)
+
     #define ARM_HWCAP2_AES (1UL << 0)
     #define ARM_HWCAP2_PMULL (1UL << 1)
     #define ARM_HWCAP2_SHA1 (1UL << 2)
@@ -249,16 +250,19 @@ namespace
 
     u64 getCPUFlagsInternal()
     {
-        long hwcaps = getauxval(AT_HWCAP);
-
         u64 flags = 0;
+
+        long hwcaps = getauxval(AT_HWCAP);
 
         if (hwcaps & ARM_HWCAP_VFPV4) flags |= ARM_FP16;
         if (hwcaps & ARM_HWCAP_NEON) flags |= ARM_NEON;
-        if (hwcaps & ARM_HWCAP2_AES) flags |= ARM_AES;
-        if (hwcaps & ARM_HWCAP2_CRC32) flags |= ARM_CRC32;
-        if (hwcaps & ARM_HWCAP2_SHA1) flags |= ARM_SHA1;
-        if (hwcaps & ARM_HWCAP2_SHA2) flags |= ARM_SHA2;
+
+        long hwcaps2 = getauxval(AT_HWCAP2);
+
+        if (hwcaps2 & ARM_HWCAP2_AES) flags |= ARM_AES;
+        if (hwcaps2 & ARM_HWCAP2_CRC32) flags |= ARM_CRC32;
+        if (hwcaps2 & ARM_HWCAP2_SHA1) flags |= ARM_SHA1;
+        if (hwcaps2 & ARM_HWCAP2_SHA2) flags |= ARM_SHA2;
 
         return flags;
     }
