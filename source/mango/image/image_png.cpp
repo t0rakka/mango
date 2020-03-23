@@ -1419,15 +1419,21 @@ namespace
         m_filter = p.read8();
         m_interlace = p.read8();
 
+        if (m_width <= 0 || m_height <= 0)
+        {
+            setError(makeString("Incorrect dimensions (%d x %d).", m_width, m_height));
+            return;
+        }
+
         if (m_width > 0x8000 || m_height > 0x8000)
         {
-            setError("Too large image.");
+            setError(makeString("Too large image (%d x %d).", m_width, m_height));
             return;
         }
 
         if (!u32_is_power_of_two(m_color_state.bits))
         {
-            setError("Incorrect bit depth.");
+            setError(makeString("Incorrect bit depth (%d).", m_color_state.bits));
             return;
         }
 
@@ -1476,14 +1482,14 @@ namespace
                 m_channels = 4;
                 break;
             default:
-                setError("Incorrect color type.");
+                setError(makeString("Incorrect color type (%d).", m_color_type));
                 return;
         }
 
         const int log2bits = u32_log2(m_color_state.bits);
         if (log2bits < minBits || log2bits > maxBits)
         {
-            setError("Unsupported bit depth for color type.");
+            setError(makeString("Unsupported bit depth for color type (%d).", m_color_state.bits));
             return;
         }
 
@@ -2133,7 +2139,7 @@ namespace
 
         if (!m_compressed.size())
         {
-            setError("No compressed data.");
+            status.setError("No compressed data.");
             return status;
         }
 
@@ -2188,9 +2194,17 @@ namespace
         Buffer buffer(buffer_size + PNG_SIMD_PADDING);
         debugPrint("  buffer bytes: %d\n", buffer_size);
 
-        size_t bytes_out = zlib::decompress(buffer, m_compressed);
-        debugPrint("  # total_out:  %d\n", int(bytes_out));
-        MANGO_UNREFERENCED(bytes_out);
+        try
+        {
+            size_t bytes_out = zlib::decompress(buffer, m_compressed);
+            debugPrint("  # total_out:  %d\n", int(bytes_out));
+            MANGO_UNREFERENCED(bytes_out);
+        }
+        catch (Exception& exception)
+        {
+            status.setError(exception.what());
+            return status;
+        }
 
         // process image
         process(image, width, height, stride, buffer);
