@@ -2200,7 +2200,7 @@ namespace
             debugPrint("  # total_out:  %d\n", int(bytes_out));
             MANGO_UNREFERENCED(bytes_out);
         }
-        catch (Exception& exception)
+        catch (const Exception& exception)
         {
             status.setError(exception.what());
             return status;
