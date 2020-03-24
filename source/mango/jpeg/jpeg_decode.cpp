@@ -905,7 +905,7 @@ namespace jpeg {
         p += 2;
         Lq -= 2;
 
-        for (; Lq > 0;)
+        for ( ; Lq > 0; )
         {
             u8 x = *p++;
             u8 Pq = (x >> 4) & 0xf; // Quantization table element precision (0 = 8 bits, 1 = 16 bits)
@@ -913,6 +913,12 @@ namespace jpeg {
 
             const int bits = (Pq + 1) * 8;
             debugPrint("  Quantization table #%i element precision: %i bits\n", Tq, bits);
+
+            if (Pq > 1)
+            {
+                header.setError("Incorrect quantization table element precision (%d bits)", Pq);
+                return;
+            }
 
             if (Tq >= JPEG_MAX_COMPS_IN_SCAN)
             {
@@ -941,8 +947,7 @@ namespace jpeg {
                     break;
 
                 default:
-                    header.setError("Incorrect quantization table element precision (%d)", Pq);
-                    return;
+                    break;
             }
 
             Lq -= (1 + (Pq + 1) * 64);
@@ -959,7 +964,7 @@ namespace jpeg {
 
         for ( ; Lh > 0; )
         {
-            u8 x = *p++;
+            u8 x = p[0];
             u8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table.
             u8 Th = (x >> 0) & 0xf; // Huffman table identifier
 
@@ -984,21 +989,33 @@ namespace jpeg {
 
             for (int i = 1; i <= 16; ++i)
             {
-                u8 L = *p++; // Number of Huffman codes of length i bits
+                u8 L = p[i]; // Number of Huffman codes of length i bits
                 table.size[i] = L;
                 count += L;
                 debugPrint("%i ", L);
             }
 
+            p += 17;
             Lh -= 17;
-            debugPrint("\n");
 
-            for (int i = 0; i < count; ++i)
+            if (Lh < 0 || count > 256)
             {
-                table.value[i] = *p++;
+                header.setError("Incorrect huffman table data.");
+                return;
             }
 
+            debugPrint("\n");
+
+            std::memcpy(table.value, p, count);
+            p += count;
             Lh -= count;
+
+            if (Lh < 0)
+            {
+                header.setError("Incorrect huffman table data.");
+                return;
+            }
+
             table.configure();
         }
     }
@@ -1013,6 +1030,12 @@ namespace jpeg {
         int n = (La - 2) / 2;
 
         debugPrint("  n: %i\n", n);
+
+        if (n > 32)
+        {
+            header.setError("Too many DAC entries (%d).", n);
+            return;
+        }
 
         for (int i = 0; i < n; ++i)
         {
@@ -1034,6 +1057,10 @@ namespace jpeg {
                     // AC table
                     decodeState.arithmetic.ac_K[Tb] = Cs;
                     break;
+
+                default:
+                    header.setError("Incorrect Arithmetic table class (%d).", Tc);
+                    return;
             }
 
             debugPrint("  Tc: %i, Tb: %i, Cs: %i\n", Tc, Tb, Cs);
