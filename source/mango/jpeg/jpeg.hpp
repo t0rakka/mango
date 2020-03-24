@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -158,7 +158,7 @@ namespace jpeg {
 
         // acceleration tables
         DataType maxcode[18];
-        u8* valueAddress[19];
+        DataType valueOffset[19];
         u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
         u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 

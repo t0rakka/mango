@@ -1819,9 +1819,8 @@ namespace jpeg {
         const int stride = m_surface->stride;
         const int xstride = m_surface->format.bytes() * xblock;
         const int ystride = stride * yblock;
-        u8* image = m_surface->address<u8>(0, 0);
 
-        s16 data[640];
+        u8* image = m_surface->image;
 
         for (int y = 0; y < ymcu; ++y)
         {
@@ -1839,6 +1838,8 @@ namespace jpeg {
 
             for (int x = 0; x < xmcu; ++x)
             {
+                s16 data[640];
+
                 decodeState.decode(data, &decodeState);
                 handleRestart();
 

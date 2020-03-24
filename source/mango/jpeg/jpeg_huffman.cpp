@@ -64,8 +64,7 @@ namespace jpeg {
         {
             if (size[j])
             {
-                int offset = p - int(huffcode[p]);
-                valueAddress[j] = value + offset;
+                valueOffset[j] = p - int(huffcode[p]);
                 p += size[j];
                 maxcode[j] = huffcode[p - 1]; // maximum code of length j
                 maxcode[j] <<= (JPEG_REGISTER_BITS - j); // left justify
@@ -76,7 +75,7 @@ namespace jpeg {
                 maxcode[j] = 0; // TODO: should be -1 if no codes of this length
             }
         }
-        valueAddress[18] = value + 0;
+        valueOffset[18] = 0;
         maxcode[17] = ~DataType(0);//0xfffff; // ensures jpeg_huff_decode terminates
 
         // Compute lookahead tables to speed up decoding.
@@ -128,10 +127,13 @@ namespace jpeg {
             DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
             while (x > maxcode[size])
             {
-                size++;
+                ++size;
             }
 
-            symbol = valueAddress[size][x >> (JPEG_REGISTER_BITS - size)];
+            DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + valueOffset[size];
+            if (offset > 255)
+                return 0; // decoding error
+            symbol = value[offset];
         }
 
         buffer.remain -= size;
