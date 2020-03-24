@@ -1278,7 +1278,8 @@ namespace jpeg {
 
                 default:
                     debugPrint("[ 0x%x ]\n", marker);
-                    p = seekMarker(p, end);
+                    header.setError("Incorrect JPEG data.");
+                    p = end; // terminate parsing
                     break;
             }
 
@@ -1567,9 +1568,9 @@ namespace jpeg {
         status.success = true;
         status.direct = true;
 
-        if (!scan_memory.address)
+        if (!scan_memory.address || !header)
         {
-            status.success = false;
+            status.setError(header.info);
             return status;
         }
 
