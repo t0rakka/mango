@@ -962,6 +962,8 @@ namespace jpeg {
         p += 2;
         Lh -= 2;
 
+        std::vector<HuffTable*> tables;
+
         for ( ; Lh > 0; )
         {
             u8 x = p[0];
@@ -1016,7 +1018,19 @@ namespace jpeg {
                 return;
             }
 
-            table.configure();
+            tables.push_back(&table);
+        }
+
+        if (Lh != 0)
+        {
+            header.setError("Corrupted DHT data.");
+            return;
+        }
+
+        // configure tables only after the data is determined to be correct
+        for (HuffTable* table : tables)
+        {
+            table->configure();
         }
     }
 
