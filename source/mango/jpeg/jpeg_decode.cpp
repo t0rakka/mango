@@ -283,7 +283,7 @@ namespace jpeg {
             {
                 return p; // found a marker
             }
-            p += 2;
+            p += 2; // skip: 0xff, 0x00
         }
 
         //if (*p != 0xff)
@@ -890,9 +890,8 @@ namespace jpeg {
             }
         }
 
-        // TODO: we should sync here since the decoder has prefetched more bytes that it could consume
-        p = decodeState.buffer.ptr;
-        p -= 8; // hack
+        // HACK: the decoder may have prefetched more bytes that it could consume
+        p = seekMarker(decodeState.buffer.ptr - 8, end);
 
         return p;
     }
@@ -1579,9 +1578,6 @@ namespace jpeg {
     {
         ImageDecodeStatus status;
 
-        status.success = true;
-        status.direct = true;
-
         if (!scan_memory.address || !header)
         {
             status.setError(header.info);
@@ -1618,6 +1614,8 @@ namespace jpeg {
             sf.sample = JPEG_U8_BGRA;
             sf.format = FORMAT_B8G8R8A8;
         }
+
+        status.direct = true;
 
         // target surface size has to match (clipping isn't yet supported)
         if (target.width != xsize || target.height != ysize)
