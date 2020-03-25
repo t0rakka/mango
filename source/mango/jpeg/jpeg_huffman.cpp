@@ -28,17 +28,17 @@ namespace jpeg {
 
     void HuffTable::configure()
     {
-        char huffsize[257];
+        u8 huffsize[257];
         u32 huffcode[257];
 
         // Figure C.1: make table of Huffman code length for each symbol
         int p = 0;
-        for (int j = 1; j <= 16; j++)
+        for (int j = 1; j <= 16; ++j)
         {
-            int i = int(size[j]);
-            while (i--)
+            int count = int(size[j]);
+            while (count-- > 0)
             {
-                huffsize[p++] = char(j);
+                huffsize[p++] = u8(j);
             }
         }
         huffsize[p] = 0;
