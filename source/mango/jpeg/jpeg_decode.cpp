@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -126,7 +126,7 @@ namespace jpeg {
     void jpegBuffer::fill()
     {
 #if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
-        if (ptr + 8 < end)
+        if (ptr + 8 <= end)
         {
             const __m128i ref = _mm_set1_epi8(0xffu);
 
@@ -567,6 +567,12 @@ namespace jpeg {
 
         for (int i = 0; i < components; ++i)
         {
+            if (offset >= JPEG_MAX_BLOCKS_IN_MCU)
+            {
+                header.setError("Incorrect blocks offset (%d >= %d).", offset, JPEG_MAX_BLOCKS_IN_MCU);
+                return;
+            }
+
             Frame& frame = processState.frame[i];
 
             frame.compid = p[0];
@@ -594,6 +600,18 @@ namespace jpeg {
             Vmax = std::max(Vmax, frame.Vsf);
             blocks_in_mcu += frame.Hsf * frame.Vsf;
 
+            if (frame.Hsf < 0 || frame.Hsf > 8 || frame.Vsf < 0 || frame.Vsf > 8)
+            {
+                header.setError(makeString("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf));
+                return;
+            }
+
+            if (blocks_in_mcu >= JPEG_MAX_BLOCKS_IN_MCU)
+            {
+                header.setError(makeString("Incorrect number of blocks in MCU (%d >= %d).", blocks_in_mcu, JPEG_MAX_BLOCKS_IN_MCU));
+                return;
+            }
+
             for (int y = 0; y < frame.Vsf; ++y)
             {
                 for (int x = 0; x < frame.Hsf; ++x)
@@ -617,12 +635,6 @@ namespace jpeg {
 
             debugPrint("  Frame: %d, compid: %d%s, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
                 i, frame.compid, compid_name.c_str(), frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
-
-            if (frame.Hsf > 8 || frame.Vsf > 8)
-            {
-                header.setError("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf);
-                return;
-            }
 
             frames.push_back(frame);
         }
@@ -709,7 +721,11 @@ namespace jpeg {
             int dc = (x >> 4) & 0xf; // DC entropy coding table destination selector
             int ac = (x >> 0) & 0xf; // AC entropy coding table destination selector
 
-            int compid = cs; // ...
+            if (dc > 1 || ac > 1)
+            {
+                header.setError(makeString("Incorrect coding table selector (DC: %d, AC: %d).", dc, ac));
+                return p;
+            }
 
             // find frame
             Frame* frame = nullptr;
@@ -717,7 +733,7 @@ namespace jpeg {
 
             for (int j = 0; j < int(frames.size()); ++j)
             {
-                if (frames[j].compid == compid)
+                if (frames[j].compid == cs)
                 {
                     frameIndex = j;
                     frame = &frames[j];
@@ -726,7 +742,7 @@ namespace jpeg {
 
             if (!frame)
             {
-                header.setError("Incorrect scan component selector (%d)", compid);
+                header.setError("Incorrect scan component selector (%d)", cs);
                 return p;
             }
 
@@ -746,6 +762,12 @@ namespace jpeg {
 
             for (int j = 0; j < size; ++j)
             {
+                if (offset >= JPEG_MAX_BLOCKS_IN_MCU)
+                {
+                    header.setError("Incorrect number of blocks in MCU (%d >= %d).", offset, JPEG_MAX_BLOCKS_IN_MCU);
+                    return p;
+                }
+
                 DecodeBlock& block = decodeState.block[decodeState.blocks];
 
                 if (is_arithmetic)
