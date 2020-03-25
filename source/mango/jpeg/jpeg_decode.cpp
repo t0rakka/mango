@@ -577,6 +577,12 @@ namespace jpeg {
             frame.offset = offset;
             p += 3;
 
+            if (frame.Tq > 4)
+            {
+                header.setError("Incorrect quantization table index (%d)", frame.Tq);
+                return;
+            }
+
             if (components == 1)
             {
                 // Optimization: force block size to 8x8 with grayscale images
@@ -593,6 +599,12 @@ namespace jpeg {
                 for (int x = 0; x < frame.Hsf; ++x)
                 {
                     processState.block[offset].qt = quantTable[frame.Tq].table;
+                    if (!processState.block[offset].qt)
+                    {
+                        header.setError("No quantization table for index (%d)", frame.Tq);
+                        return;
+                    }
+
                     ++offset;
                 }
             }
@@ -925,9 +937,9 @@ namespace jpeg {
                 return;
             }
 
-            if (Tq >= JPEG_MAX_COMPS_IN_SCAN)
+            if (Tq >= 4)
             {
-                header.setError("Incorrect quantization table (Tq: %d >= %d)", Tq, JPEG_MAX_COMPS_IN_SCAN);
+                header.setError("Incorrect quantization table (%d)", Tq);
                 return;
             }
 
