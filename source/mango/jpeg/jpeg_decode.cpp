@@ -712,6 +712,12 @@ namespace jpeg {
                 }
             }
 
+            if (!frame)
+            {
+                header.setError("Incorrect scan component selector (%d)", compid);
+                return p;
+            }
+
             scanFrame = frame;
 
             const int size = frame->Hsf * frame->Vsf;
