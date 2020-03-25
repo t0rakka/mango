@@ -1014,6 +1014,8 @@ namespace jpeg {
                 debugPrint("%i ", L);
             }
 
+            debugPrint("\n");
+
             p += 17;
             Lh -= 17;
 
@@ -1022,8 +1024,6 @@ namespace jpeg {
                 header.setError("Incorrect huffman table data.");
                 return;
             }
-
-            debugPrint("\n");
 
             std::memcpy(table.value, p, count);
             p += count;
@@ -1152,7 +1152,7 @@ namespace jpeg {
 
         for ( ; p < end; )
         {
-            if (!header.success)
+            if (!header)
             {
                 // we are in error state -> abort parsing
                 break;
@@ -1652,7 +1652,7 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
-            if (!header.success)
+            if (!header)
             {
                 status.setError(header.info);
                 return status;
@@ -1670,7 +1670,7 @@ namespace jpeg {
 
             parse(scan_memory, true);
 
-            if (!header.success)
+            if (!header)
             {
                 status.setError(header.info);
                 return status;
