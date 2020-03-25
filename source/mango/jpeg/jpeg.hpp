@@ -162,7 +162,7 @@ namespace jpeg {
         u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
         u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
-        void configure();
+        bool configure();
         int decode(jpegBuffer& buffer) const;
     };
 

@@ -1047,7 +1047,11 @@ namespace jpeg {
         // configure tables only after the data is determined to be correct
         for (HuffTable* table : tables)
         {
-            table->configure();
+            if (!table->configure())
+            {
+                header.setError("Corrupted DHT - Huffman table generation failed.");
+                return;
+            }
         }
     }
 

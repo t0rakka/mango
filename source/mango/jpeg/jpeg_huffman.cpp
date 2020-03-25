@@ -26,7 +26,7 @@ namespace jpeg {
     // HuffTable
     // ----------------------------------------------------------------------------
 
-    void HuffTable::configure()
+    bool HuffTable::configure()
     {
         u8 huffsize[257];
         u32 huffcode[257];
@@ -94,19 +94,26 @@ namespace jpeg {
         for (int j = 1; j <= JPEG_HUFF_LOOKUP_BITS; j++)
         {
             int jshift = JPEG_HUFF_LOOKUP_BITS - j;
-            for (int i = 1; i <= int(size[j]); i++, p++)
+            for (int i = 1; i <= int(size[j]); ++i, ++p)
             {
                 // j = current code's length, p = its index in huffcode[] & huffval[].
                 // Generate left-justified code followed by all possible bit sequences
                 int lookbits = huffcode[p] << jshift;
-                for (int ctr = 1 << jshift; ctr > 0; ctr--)
+                for (int ctr = 1 << jshift; ctr > 0; --ctr)
                 {
+                    if (lookbits >= JPEG_HUFF_LOOKUP_SIZE)
+                    {
+                        // overflow
+                        return false;
+                    }
                     lookupSize[lookbits] = u8(j);
                     lookupValue[lookbits] = value[p];
                     lookbits++;
                 }
             }
         }
+
+        return true;
     }
 
     int HuffTable::decode(jpegBuffer& buffer) const
