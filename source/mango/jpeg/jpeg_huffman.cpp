@@ -91,24 +91,33 @@ namespace jpeg {
         }
 
         p = 0;
-        for (int j = 1; j <= JPEG_HUFF_LOOKUP_BITS; j++)
+
+        for (int bits = 1; bits <= JPEG_HUFF_LOOKUP_BITS; ++bits)
         {
-            int jshift = JPEG_HUFF_LOOKUP_BITS - j;
-            for (int i = 1; i <= int(size[j]); ++i, ++p)
+            int ishift = JPEG_HUFF_LOOKUP_BITS - bits;
+            int isize = size[bits];
+
+            u8 current_size = u8(bits);
+
+            for (int i = 1; i <= isize; ++i)
             {
-                // j = current code's length, p = its index in huffcode[] & huffval[].
+                u8 current_value = value[p];
+                int lookbits = huffcode[p] << ishift;
+                ++p;
+
                 // Generate left-justified code followed by all possible bit sequences
-                int lookbits = huffcode[p] << jshift;
-                for (int ctr = 1 << jshift; ctr > 0; --ctr)
+                int count = 1 << ishift;
+                for (int mask = 0; mask < count; ++mask)
                 {
-                    if (lookbits >= JPEG_HUFF_LOOKUP_SIZE)
+                    int x = lookbits | mask;
+                    if (x >= JPEG_HUFF_LOOKUP_SIZE)
                     {
                         // overflow
                         return false;
                     }
-                    lookupSize[lookbits] = u8(j);
-                    lookupValue[lookbits] = value[p];
-                    lookbits++;
+
+                    lookupSize[x] = current_size;
+                    lookupValue[x] = current_value;
                 }
             }
         }
