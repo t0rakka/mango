@@ -33,11 +33,26 @@ namespace mango
             ThreadPool* pool;
             int priority;
 
+#if 0 // __cplusplus >= 201703L
+
+            // NOTE: When the minimum requirement is C++17 we will use this form so that
+            //       the heap allocations will be properly aligned. We won't compile both versions
+            //       based on the _ cplusplus macro as that would break binary compatibility between
+            //       code compiled against different C++ standard version.
+
+            alignas(64) std::atomic<int> task_input_count { 0 };
+            alignas(64) std::atomic<int> task_complete_count { 0 };
+            alignas(64) std::atomic<bool> cancelled { false };
+
+#else
+
             std::atomic<int> task_input_count { 0 };
             u8 padding0[64];
             std::atomic<int> task_complete_count { 0 };
             u8 padding1[64];
             std::atomic<bool> cancelled { false };
+
+#endif
 
             std::string name;
 
@@ -187,9 +202,23 @@ namespace mango
         std::string m_name;
         std::thread m_thread;
 
+#if 0 // __cplusplus >= 201703L
+
+        // NOTE: When the minimum requirement is C++17 we will use this form so that
+        //       the heap allocations will be properly aligned. We won't compile both versions
+        //       based on the _ cplusplus macro as that would break binary compatibility between
+        //       code compiled against different C++ standard version.
+
+        alignas(64) std::atomic<bool> m_stop { false };
+        alignas(64) std::atomic<int> m_task_counter { 0 };
+
+#else
+
         std::atomic<bool> m_stop { false };
         u8 padding0[64];
         std::atomic<int> m_task_counter { 0 };
+
+#endif
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
