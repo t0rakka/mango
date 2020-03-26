@@ -1063,16 +1063,21 @@ namespace jpeg {
             const int bits = (Pq + 1) * 8;
             debugPrint("  Quantization table #%i element precision: %i bits\n", Tq, bits);
 
-            if (Pq > 1)
+            if (!is_lossless)
             {
-                header.setError("Incorrect quantization table element precision (%d bits)", Pq);
-                return;
-            }
+                u8 max_pq = is_baseline ? 0 : 1;
 
-            if (Tq >= 4)
-            {
-                header.setError("Incorrect quantization table (%d)", Tq);
-                return;
+                if (Pq > max_pq)
+                {
+                    header.setError("Incorrect quantization table element precision (%d bits)", Pq);
+                    return;
+                }
+
+                if (Tq > 3)
+                {
+                    header.setError("Incorrect quantization table (%d)", Tq);
+                    return;
+                }
             }
 
             QuantTable& table = quantTable[Tq];
@@ -1119,15 +1124,18 @@ namespace jpeg {
             u8 Tc = (x >> 4) & 0xf; // Table class - 0 = DC table or lossless table, 1 = AC table.
             u8 Th = (x >> 0) & 0xf; // Huffman table identifier
 
-            if (Tc >= 2)
+            u8 max_tc = is_lossless ? 0 : 1; 
+            u8 max_th = is_baseline ? 1 : 3;
+
+            if (Tc > max_tc)
             {
-                header.setError("Incorrect huffman table class (%d)", Tc);
+                header.setError(makeString("Incorrect huffman table class (%d)", Tc));
                 return;
             }
 
-            if (Th >= JPEG_MAX_COMPS_IN_SCAN)
+            if (Th > max_th)
             {
-                header.setError("Incorrect huffman table identifier (%d)", Th);
+                header.setError(makeString("Incorrect huffman table identifier (%d)", Th));
                 return;
             }
 
@@ -1194,6 +1202,12 @@ namespace jpeg {
         u16 La = uload16be(p); // Arithmetic coding conditioning definition length
         p += 2;
 
+        if (is_baseline)
+        {
+            header.setError("BaselineDCT does not support Arithmetic Coding tables.");
+            return;
+        }
+
         int n = (La - 2) / 2;
 
         debugPrint("  n: %i\n", n);
@@ -1211,6 +1225,23 @@ namespace jpeg {
             u8 Tb = (x >> 0) & 0xf; // Arithmetic coding conditioning table destination identifier
             u8 Cs = p[1]; // Conditioning table value
             p += 2;
+
+            u8 max_tc = is_lossless ? 0 : 1;
+            u8 max_tb = 3;
+            u8 min_cs = (Tc == 0 || is_lossless) ? 0 : 1;
+            u8 max_cs = (Tc == 0 || is_lossless) ? 255 : 63;
+
+            if (Tc > max_tc || Tb > max_tb)
+            {
+                header.setError(makeString("Incorrect Arithmetic table selector (Tc: %d, Tb: %d).", Tc, Tb));
+                return;
+            }
+
+            if (Cs < min_cs || Cs > max_cs)
+            {
+                header.setError(makeString("Incorrect Arithmetic conditioning table (%d).", Cs));
+                return;
+            }
 
             switch (Tc)
             {
@@ -1240,7 +1271,7 @@ namespace jpeg {
 
         u16 Ld = uload16be(p + 0); // Define number of lines segment length
         u16 NL = uload16be(p + 2); // Number of lines
-        MANGO_UNREFERENCED(NL); // TODO: ysize = NL
+        MANGO_UNREFERENCED(NL); // TODO: ysize = NL, no files to test with found yet..
         MANGO_UNREFERENCED(Ld);
     }
 
