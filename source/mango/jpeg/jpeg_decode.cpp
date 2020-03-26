@@ -1769,8 +1769,12 @@ namespace jpeg {
             return status;
         }
 
+        // determine if we need a full-surface temporary storage
+        bool require_vector = is_progressive || is_multiscan;
+        size_t vector_bytes = require_vector ? mcus * blocks_in_mcu * 64 : 0;
+
         // allocate blocks
-        AlignedPointer<s16> tempBlockVector(mcus * blocks_in_mcu * 64);
+        AlignedPointer<s16> tempBlockVector(vector_bytes);
         blockVector = tempBlockVector.data();
 
         // find best matching format
@@ -1989,6 +1993,7 @@ namespace jpeg {
 #else
         const int count = 1;
 #endif
+
         if (count > 1)
         {
             decodeSequentialMT();
@@ -2053,13 +2058,12 @@ namespace jpeg {
 
         if (!restartInterval)
         {
-            s16* data = blockVector;
             const int mcu_data_size = blocks_in_mcu * 64;
 
-            const int pool_size = ThreadPool::getInstanceSize();
+            const int threads = ThreadPool::getInstanceSize();
 
-            const int S = pool_size > 1 ? 4 * pool_size : 1;
-            const int N = std::max(ymcu / S, pool_size);
+            const int S = threads > 1 ? 4 * threads : 1;
+            const int N = std::max(ymcu / S, threads);
 
             // use threadpool to process blocks
             for (int y = 0; y < ymcu; y += N)
@@ -2069,21 +2073,23 @@ namespace jpeg {
                 const int count = (y1 - y0) * xmcu;
                 debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
-                s16* idata = data + y * (xmcu * mcu_data_size);
+                void* aligned_ptr = aligned_malloc(count * mcu_data_size * sizeof(s16));
+                s16* data = reinterpret_cast<s16*>(aligned_ptr);
 
                 for (int i = 0; i < count; ++i)
                 {
-                    decodeState.decode(idata + i * mcu_data_size, &decodeState);
+                    decodeState.decode(data + i * mcu_data_size, &decodeState);
                     handleRestart();
                 }
 
                 // enqueue task
                 queue.enqueue([=]
                 {
+                    s16* source = data;
+
                     for (int y = y0; y < y1; ++y)
                     {
                         u8* dest = image + y * ystride;
-                        s16* source = data + y * xmcu * mcu_data_size;
 
                         ProcessFunc process = processState.process;
                         int width = xblock;
@@ -2108,6 +2114,8 @@ namespace jpeg {
                             dest += xstride;
                         }
                     }
+
+                    aligned_free(data);
                 });
             }
         }
