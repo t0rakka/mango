@@ -893,6 +893,7 @@ namespace jpeg {
         }
 
         if (Ss < min_ss || Ss > max_ss ||
+            Se < min_se || Se > max_se ||
             Ah < min_ah || Ah > max_ah ||
             Al < min_al || Al > max_al)
         {
