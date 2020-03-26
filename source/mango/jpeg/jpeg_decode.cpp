@@ -481,6 +481,7 @@ namespace jpeg {
     {
         debugPrint("[ SOF%d ]\n", int(marker - MARKER_SOF0));
 
+        is_baseline = (marker == MARKER_SOF0);
         is_progressive = false;
         is_multiscan = false;
         is_arithmetic = false;
@@ -496,14 +497,24 @@ namespace jpeg {
 
         debugPrint("  Image: %d x %d x %d\n", xsize, ysize, precision);
 
-        if (xsize <= 0 || ysize <= 0)
+        u16 correct_length = 8 + 3 * components;
+        if (length != correct_length)
         {
+            header.setError("Incorrect chunk length (%d, should be %d).", length, correct_length);
+            return;
+        }
+
+        if (xsize <= 0 || ysize <= 0 || xsize > 65535 || ysize > 65535)
+        {
+            // NOTE: ysize of 0 is allowed in the specs but we won't
             header.setError("Incorrect dimensions (%d x %d)", xsize, ysize);
             return;
         }
 
         if (components < 1 || components > 4)
         {
+            // NOTE: only progressive is required to have 1..4 components,
+            //       other modes allow 1..255 but we are extra strict here :)
             header.setError("Incorrect number of components (%d)", components);
             return;
         }
@@ -558,6 +569,31 @@ namespace jpeg {
                 break;
         }
 
+        if (is_baseline)
+        {
+            if (precision != 8)
+            {
+                header.setError(makeString("Incorrect precision (%d, allowed: 8)", precision));
+                return;
+            }
+        }
+        else if (is_lossless)
+        {
+            if (precision < 2 && precision > 16)
+            {
+                header.setError(makeString("Incorrect precision (%d, allowed: 2..16)", precision));
+                return;
+            }
+        }
+        else
+        {
+            if (precision != 8 && precision != 12)
+            {
+                header.setError(makeString("Incorrect precision (%d, allowed: 8, 12)", precision));
+                return;
+            }
+        }
+
         Hmax = 0;
         Vmax = 0;
         blocks_in_mcu = 0;
@@ -583,10 +619,21 @@ namespace jpeg {
             frame.offset = offset;
             p += 3;
 
-            if (frame.Tq > 4)
+            if (is_lossless)
             {
-                header.setError("Incorrect quantization table index (%d)", frame.Tq);
-                return;
+                if (frame.Tq != 0)
+                {
+                    header.setError("Incorrect quantization table index (%d)", frame.Tq);
+                    return;
+                }
+            }
+            else
+            {
+                if (frame.Tq > 3)
+                {
+                    header.setError("Incorrect quantization table index (%d)", frame.Tq);
+                    return;
+                }
             }
 
             if (components == 1)
@@ -600,7 +647,7 @@ namespace jpeg {
             Vmax = std::max(Vmax, frame.Vsf);
             blocks_in_mcu += frame.Hsf * frame.Vsf;
 
-            if (frame.Hsf < 0 || frame.Hsf > 8 || frame.Vsf < 0 || frame.Vsf > 8)
+            if (frame.Hsf < 1 || frame.Hsf > 4 || frame.Vsf < 1 || frame.Vsf > 4)
             {
                 header.setError(makeString("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf));
                 return;
@@ -699,21 +746,35 @@ namespace jpeg {
         debugPrint("[ SOS ]\n");
 
         u16 length = uload16be(p);
-        decodeState.comps_in_scan = p[2]; // Ns
+        u8 components = p[2]; // Ns
         p += 3;
 
-        if (decodeState.comps_in_scan != processState.frames && !is_progressive)
+        u16 correct_length = 6 + 2 * components;
+        if (length != correct_length)
+        {
+            header.setError("Incorrect chunk length (%d, should be %d).", length, correct_length);
+            return p;
+        }
+
+        if (components < 1 || components > 4)
+        {
+            header.setError("Incorrect number of components (%d).", components);
+            return p;
+        }
+
+        if (components != processState.frames && !is_progressive)
         {
             is_multiscan = true;
         }
 
-        debugPrint("  components: %i%s\n", 
-            decodeState.comps_in_scan, is_multiscan ? " (MultiScan)" : "");
+        decodeState.comps_in_scan = components;
+
+        debugPrint("  components: %i%s\n", components, is_multiscan ? " (MultiScan)" : "");
         MANGO_UNREFERENCED(length);
 
         decodeState.blocks = 0;
 
-        for (int i = 0; i < decodeState.comps_in_scan; ++i)
+        for (int i = 0; i < components; ++i)
         {
             u8 cs = p[0]; // Scan component selector
             u8 x = p[1];
@@ -721,7 +782,21 @@ namespace jpeg {
             int dc = (x >> 4) & 0xf; // DC entropy coding table destination selector
             int ac = (x >> 0) & 0xf; // AC entropy coding table destination selector
 
-            if (dc > 1 || ac > 1)
+            // default limits
+            int max_dc = 3;
+            int max_ac = 3;
+
+            if (is_baseline)
+            {
+                max_dc = 1;
+                max_ac = 1;
+            }
+            else if (is_lossless)
+            {
+                max_ac = 0;
+            }
+
+            if (dc > max_dc || ac > max_ac)
             {
                 header.setError(makeString("Incorrect coding table selector (DC: %d, AC: %d).", dc, ac));
                 return p;
@@ -805,6 +880,41 @@ namespace jpeg {
         decodeState.successiveHigh = Ah;
 
         debugPrint("  Spectral range: (%d, %d)\n", Ss, Se);
+
+        // default limits
+        int min_ss = 0;
+        int max_ss = 0;
+
+        int min_se = 63;
+        int max_se = 63;
+
+        int min_ah = 0;
+        int max_ah = 0;
+
+        int min_al = 0;
+        int max_al = 0;
+
+        if (is_progressive)
+        {
+            max_ss = 63;
+            min_se = Ss;
+            max_ah = 13;
+            max_al = 13;
+        }
+        else if (is_lossless)
+        {
+            min_ss = 1; max_ss = 7;
+            min_se = 0; max_se = 0;
+            max_al = 15;
+        }
+
+        if (Ss < min_ss || Ss > max_ss ||
+            Ah < min_ah || Ah > max_ah ||
+            Al < min_al || Al > max_al)
+        {
+            header.setError("Incorrect spectral range.");
+            return p;
+        }
 
         bool dc_scan = (decodeState.spectralStart == 0);
         bool refine_scan = (decodeState.successiveHigh != 0);

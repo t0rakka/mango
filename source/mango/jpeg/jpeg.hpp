@@ -47,6 +47,12 @@ namespace mango {
 namespace jpeg {
 
     // ----------------------------------------------------------------------------
+    // Specifications
+    // ----------------------------------------------------------------------------
+
+    // https://www.w3.org/Graphics/JPEG/itu-t81.pdf
+
+    // ----------------------------------------------------------------------------
     // types
     // ----------------------------------------------------------------------------
 
@@ -310,6 +316,7 @@ namespace jpeg {
         int yclip;
         int precision; // 8 or 12 bits
         int components; // 1..4
+        bool is_baseline;
         bool is_progressive;
         bool is_multiscan;
         bool is_arithmetic;
