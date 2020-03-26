@@ -619,21 +619,11 @@ namespace jpeg {
             frame.offset = offset;
             p += 3;
 
-            if (is_lossless)
+            u8 max_tq = is_lossless ? 0 : 3;
+            if (frame.Tq > max_tq)
             {
-                if (frame.Tq != 0)
-                {
-                    header.setError("Incorrect quantization table index (%d)", frame.Tq);
-                    return;
-                }
-            }
-            else
-            {
-                if (frame.Tq > 3)
-                {
-                    header.setError("Incorrect quantization table index (%d)", frame.Tq);
-                    return;
-                }
+                header.setError("Incorrect quantization table index (%d)", frame.Tq);
+                return;
             }
 
             if (components == 1)
@@ -674,14 +664,8 @@ namespace jpeg {
                 }
             }
 
-            std::string compid_name;
-            if (frame.compid >= 32 && frame.compid < 128)
-            {
-                compid_name = makeString(" (%c)", char(frame.compid));
-            }
-
-            debugPrint("  Frame: %d, compid: %d%s, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
-                i, frame.compid, compid_name.c_str(), frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
+            debugPrint("  Frame: %d, compid: %d, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
+                i, frame.compid, frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
 
             frames.push_back(frame);
         }

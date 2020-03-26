@@ -293,7 +293,7 @@ namespace jpeg {
         s16* blockVector;
 
         std::vector<Frame> frames;
-        Frame* scanFrame; // current Progressive AC scan frame
+        Frame* scanFrame = nullptr; // current Progressive AC scan frame
 
         DecodeState decodeState;
         ProcessState processState;
