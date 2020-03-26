@@ -32,9 +32,9 @@ namespace mango
         {
             ThreadPool* pool;
             int priority;
-            alignas(64) std::atomic<int> task_input_count { 0 };
-            alignas(64) std::atomic<int> task_complete_count { 0 };
-            alignas(64) std::atomic<bool> cancelled { false };
+            std::atomic<int> task_input_count { 0 };
+            std::atomic<int> task_complete_count { 0 };
+            std::atomic<bool> cancelled { false };
             std::string name;
 
             Queue(ThreadPool* pool, int priority, const std::string& name)
@@ -182,8 +182,8 @@ namespace mango
 
         std::string m_name;
         std::thread m_thread;
-        alignas(64) std::atomic<bool> m_stop { false };
-        alignas(64) std::atomic<int> m_task_counter { 0 };
+        std::atomic<bool> m_stop { false };
+        std::atomic<int> m_task_counter { 0 };
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
