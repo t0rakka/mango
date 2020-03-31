@@ -40,6 +40,9 @@ namespace mango
         };
 
         Double()
+            : mantissa(0)
+            , exponent(0)
+            , sign(0)
         {
         }
 
@@ -100,6 +103,9 @@ namespace mango
         };
 
         Float()
+            : mantissa(0)
+            , exponent(0)
+            , sign(0)
         {
         }
 
@@ -234,6 +240,9 @@ namespace mango
         };
 
         Half()
+            : mantissa(0)
+            , exponent(0)
+            , sign(0)
         {
         }
 
@@ -295,6 +304,7 @@ namespace mango
         u8 data[3];
 
         UnsignedInt24()
+            : data { 0 }
         {
         }
 

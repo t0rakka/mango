@@ -526,7 +526,7 @@ namespace mango
     constexpr u64 u64_scale(u64 value, int from, int to)
     {
         // scale value "from" bits "to" bits
-        return value * ((1 << to) - 1) / ((1 << from) - 1);
+        return value * ((1ull << to) - 1) / ((1ull << from) - 1);
     }
 
     constexpr u64 u64_extend(u64 value, int from, int to)
@@ -774,7 +774,7 @@ namespace mango
 
     constexpr u64 u64_extract_bits(u64 value, int offset, int size)
     {
-        return (value >> offset) & ((1 << size) - 1);
+        return (value >> offset) & ((1ull << size) - 1);
     }
 
 #endif
