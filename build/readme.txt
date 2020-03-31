@@ -75,14 +75,20 @@ Then use the resulting library files in your cool/awesome Android projects.
 Troubleshooting!
 
 Error:
-"In file included from /root/temp/mango/source/mango/image/image_ktx.cpp:9:0:
-/root/temp/mango/build/../include/mango/opengl/opengl.hpp:80:23: fatal error: GL/gl.h: No such file or directory
+  "In file included from /root/temp/mango/source/mango/image/image_ktx.cpp:9:0:
+  /root/temp/mango/build/../include/mango/opengl/opengl.hpp:80:23: fatal error: GL/gl.h: No such file or directory
      #include <GL/gl.h>"
 
 Solution:
-Install OpenGL headers. On Linux distributions you get these with "mesa":
+  Install OpenGL headers. On Linux distributions you get these with "mesa":
+  apt-get install mesa-common-dev
 
-apt-get install mesa-common-dev
+
+Error:
+  /usr/bin/ld: cannot find -lGL
+
+Solution:
+  apt install libgl1-mesa-dev
 
 ------------------------------------------------------------------------------------------------
 
