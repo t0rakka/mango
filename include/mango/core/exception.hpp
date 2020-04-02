@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include <cstdarg>
 #include <string>
 #include <exception>
 #include "configure.hpp"
@@ -34,11 +35,16 @@ namespace mango
 
         void setError(const char* format, ...)
         {
+            constexpr size_t max_length = 512;
+            char buffer[max_length];
+
             va_list args;
             va_start(args, format);
-            info = makeString(format, args);
-            success = false;
+            std::vsnprintf(buffer, max_length, format, args);
             va_end(args);
+
+            info = buffer;
+            success = false;
         }
     };
 

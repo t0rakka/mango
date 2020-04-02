@@ -48,43 +48,43 @@ namespace
         }
     };
 
-    struct Header
+    struct Header : mango::Status
     {
         // HeaderSize
-        u32 headerSize;
+        u32 headerSize = 0;
 
         // WinBitmapHeader1
-        int width;
-        int height;
-        int numPlanes;
-        int bitsPerPixel;
-        int compression;
-        int imageDataSize;
-        int xResolution;
-        int yResolution;
-        int paletteSize;
-        int importantColorCount;
+        int width = 0;
+        int height = 0;
+        int numPlanes = 0;
+        int bitsPerPixel = 0;
+        int compression = 0;
+        int imageDataSize = 0;
+        int xResolution = 0;
+        int yResolution = 0;
+        int paletteSize = 0;
+        int importantColorCount = 0;
 
         // WinBitmapHeader2
-        u32 redMask;
-        u32 greenMask;
-        u32 blueMask;
+        u32 redMask = 0;
+        u32 greenMask = 0;
+        u32 blueMask = 0;
 
         // WinBitmapHeader3
-        u32 alphaMask;
+        u32 alphaMask = 0;
 
         // WinBitmapHeader4
-        u32 csType;
-        u32 endpoints[9];
-        u32 gammaRed;
-        u32 gammaGreen;
-        u32 gammaBlue;
+        u32 csType = 0;
+        u32 endpoints[9] = { 0 };
+        u32 gammaRed = 0;
+        u32 gammaGreen = 0;
+        u32 gammaBlue = 0;
 
         // WinBitmapHeader5
-        u32 intent;
-        u32 profileData;
-        u32 profileSize;
-        u32 reserved3;
+        u32 intent = 0;
+        u32 profileData = 0;
+        u32 profileSize = 0;
+        u32 reserved3 = 0;
 
         // OS2BitmapHeader1
         /*
@@ -95,59 +95,14 @@ namespace
         */
 
         // OS2BitmapHeader2
-        u16 units;
-        u16 reserved;
-        u16 recording;
-        u16 rendering;
-        u32 size1;
-        u32 size2;
-        u32 colorEncoding;
-        u32 identifier;
-
-        Header()
-        {
-            headerSize = 0;
-
-            width = 0;
-            height = 0;
-            numPlanes = 0;
-            bitsPerPixel = 0;
-            compression = 0;
-            imageDataSize = 0;
-            xResolution = 0;
-            yResolution = 0;
-            paletteSize = 0;
-            importantColorCount = 0;
-
-            redMask = 0;
-            greenMask = 0;
-            blueMask = 0;
-
-            alphaMask = 0;
-
-            csType = 0;
-            for (int i = 0; i < 9; ++i)
-            {
-                endpoints[i] = 0;
-            }
-            gammaRed = 0;
-            gammaGreen = 0;
-            gammaBlue = 0;
-
-            intent = 0;
-            profileData = 0;
-            profileSize = 0;
-            reserved3 = 0;
-
-            units         = 0;
-            reserved      = 0;
-            recording     = 0;
-            rendering     = 0;
-            size1         = 0;
-            size2         = 0;
-            colorEncoding = 0;
-            identifier    = 0;
-        }
+        u16 units = 0;
+        u16 reserved = 0;
+        u16 recording = 0;
+        u16 rendering = 0;
+        u32 size1 = 0;
+        u32 size2 = 0;
+        u32 colorEncoding = 0;
+        u32 identifier = 0;
 
         void parseHeaderSize(LittleEndianConstPointer& p)
         {
@@ -166,6 +121,12 @@ namespace
             yResolution = p.read32();
             paletteSize = p.read32();
             importantColorCount = p.read32();
+
+            if (width < 0 || height < 0 || width > 65535 || height > 65535)
+            {
+                setError("Incorrect image dimensions (%d x %d)", width, height);
+                return;
+            }
 
             if (compression == BIC_BITFIELDS || compression == BIC_ALPHABITFIELDS)
             {
@@ -276,8 +237,6 @@ namespace
         bool yflip;
         bool os2 = false;
 
-        const char* error = nullptr;
-
         BitmapHeader(ConstMemory memory, bool isIcon)
         {
             paletteComponents = 0;
@@ -358,7 +317,7 @@ namespace
                 }
 
                 default:
-                    error = "[ImageDecoder.BMP] Incorrect header size.";
+                    setError("[ImageDecoder.BMP] Incorrect header size (%d).", headerSize);
                     return;
             }
 
@@ -367,7 +326,7 @@ namespace
 
             if (numPlanes != 1)
             {
-                error = "[ImageDecoder.BMP] Incorrect number of planes.";
+                setError("[ImageDecoder.BMP] Incorrect number of planes (%d).", numPlanes);
                 return;
             }
 
@@ -437,7 +396,7 @@ namespace
                             format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
-                            error = "[ImageDecoder.BMP] Incorrect number of color bits.";
+                            setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", bitsPerPixel);
                             return;
                     }
                 }
@@ -741,12 +700,12 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    const char* decodeBitmap(Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
+    mango::Status decodeBitmap(Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
-        if (header.error)
+        if (!header)
         {
-            return header.error;
+            return header;
         }
 
         Palette palette;
@@ -779,7 +738,7 @@ namespace
         const u8* data = memory.address + offset;
 
         Surface mirror = surface;
-        
+
         if (header.yflip)
         {
             mirror.image += (header.height - 1) * surface.stride;
@@ -790,14 +749,14 @@ namespace
         {
             if (header.compression == BIC_BITFIELDS)
             {
-                // TODO
-                return "[ImageDecoder.BMP] Unsupported compression (OS2 Huffman).";
+                header.setError("[ImageDecoder.BMP] Unsupported compression (OS2 Huffman).");
+                return header;
             }
 
             if (header.compression == BIC_JPEG)
             {
                 readRLE24(mirror, header, data);
-                return nullptr;
+                return header;
             }
         }
 
@@ -837,7 +796,10 @@ namespace
                     }
 
                     default:
-                        return "[ImageDecoder.BMP] Incorrect number of color bits.";
+                    {
+                        header.setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", header.bitsPerPixel);
+                        return header;
+                    }
                 }
                 break;
             }
@@ -883,13 +845,19 @@ namespace
             case BIC_CMYK:
             case BIC_CMYKRLE8:
             case BIC_CMYKRLE4:
-                return "[ImageDecoder.BMP] Unsupported compression.";
+            {
+                header.setError("[ImageDecoder.BMP] Unsupported compression (%d).", header.compression);
+                return header;
+            }
 
             default:
-                return "[ImageDecoder.BMP] Incorrect compression.";
+            {
+                header.setError("[ImageDecoder.BMP] Incorrect compression (%d).", header.compression);
+                return header;
+            }
         }
 
-        return nullptr;
+        return header;
     }
 
 	// ------------------------------------------------------------
@@ -1019,9 +987,9 @@ namespace
             case 0x28:
             {
                 BitmapHeader header(block, true);
-                if (header.error)
+                if (!header)
                 {
-                    return header.error;
+                    return "[ImageDecoder.BMP] Incorrect ICO/CUR header.";
                 }
 
                 if (imageHeader)
@@ -1038,10 +1006,10 @@ namespace
 
                 if (surface)
                 {
-                    const char* error = decodeBitmap(*surface, block, headersize + palettesize * 4, true, nullptr);
-                    if (error)
+                    mango::Status status = decodeBitmap(*surface, block, headersize + palettesize * 4, true, nullptr);
+                    if (!status)
                     {
-                        return error;
+                        return "[ImageDecoder.BMP] ICO/CUR decoding failed.";
                     }
                 }
 
@@ -1094,9 +1062,9 @@ namespace
                 {
                     ConstMemory bitmapMemory = m_memory.slice(14);
                     BitmapHeader bmp_header(bitmapMemory, false);
-                    if (bmp_header.error)
+                    if (!bmp_header)
                     {
-                        m_image_header.setError(bmp_header.error);
+                        m_image_header.setError(bmp_header.info);
                         return;
                     }
 
@@ -1212,10 +1180,10 @@ namespace
             }
 
             ConstMemory block = m_memory.slice(14);
-            const char* error = decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
-            if (error)
+            mango::Status result = decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
+            if (!result)
             {
-                status.setError(error);
+                status.setError(result.info);
             }
 
             return status;
