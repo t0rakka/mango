@@ -705,7 +705,7 @@ namespace
         BitmapHeader header(memory, isIcon);
         if (!header)
         {
-            return header;
+            return std::move(header);
         }
 
         Palette palette;
@@ -750,13 +750,13 @@ namespace
             if (header.compression == BIC_BITFIELDS)
             {
                 header.setError("[ImageDecoder.BMP] Unsupported compression (OS2 Huffman).");
-                return header;
+                return std::move(header);
             }
 
             if (header.compression == BIC_JPEG)
             {
                 readRLE24(mirror, header, data);
-                return header;
+                return std::move(header);
             }
         }
 
@@ -798,7 +798,7 @@ namespace
                     default:
                     {
                         header.setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", header.bitsPerPixel);
-                        return header;
+                        return std::move(header);
                     }
                 }
                 break;
@@ -847,17 +847,17 @@ namespace
             case BIC_CMYKRLE4:
             {
                 header.setError("[ImageDecoder.BMP] Unsupported compression (%d).", header.compression);
-                return header;
+                return std::move(header);
             }
 
             default:
             {
                 header.setError("[ImageDecoder.BMP] Incorrect compression (%d).", header.compression);
-                return header;
+                return std::move(header);
             }
         }
 
-        return header;
+        return std::move(header);
     }
 
 	// ------------------------------------------------------------
