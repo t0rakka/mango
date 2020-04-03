@@ -124,7 +124,7 @@ namespace
             paletteSize = p.read32();
             importantColorCount = p.read32();
 
-            if (width < 0 || height < 0 || width > 65535 || height > 65535)
+            if (width < 0 || height < -65535 || width > 65535 || height > 65535)
             {
                 setError("Incorrect image dimensions (%d x %d)", width, height);
                 return;
