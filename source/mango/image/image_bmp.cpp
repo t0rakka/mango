@@ -62,8 +62,8 @@ namespace
         int imageDataSize = 0;
         int xResolution = 0;
         int yResolution = 0;
-        int paletteSize = 0;
-        int importantColorCount = 0;
+        u32 paletteSize = 0;
+        u32 importantColorCount = 0;
 
         // WinBitmapHeader2
         u32 redMask = 0;
@@ -134,6 +134,24 @@ namespace
             {
                 setError("Incorrect bits per pixel (%d)", bitsPerPixel);
                 return;
+            }
+
+            if (paletteSize > 0)
+            {
+                if (paletteSize > 256 || !u32_is_power_of_two(paletteSize))
+                {
+                    setError("Incorrect palette size (%d)", paletteSize);
+                    return;
+                }
+            }
+
+            if (importantColorCount > 0)
+            {
+                if (importantColorCount > 256 || !u32_is_power_of_two(importantColorCount))
+                {
+                    setError("Incorrect palette size (%d)", importantColorCount);
+                    return;
+                }
             }
 
             switch (compression)
@@ -271,9 +289,9 @@ namespace
     struct BitmapHeader : Header
     {
         Format format;
-        int paletteComponents;
-        const u8* palette;
-        bool yflip;
+        int paletteComponents = 0;
+        const u8* palette = nullptr;
+        bool yflip = false;
         bool os2 = false;
 
         BitmapHeader(ConstMemory memory, bool isIcon)
