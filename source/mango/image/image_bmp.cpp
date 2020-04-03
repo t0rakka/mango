@@ -10,6 +10,10 @@
 
 #ifdef MANGO_ENABLE_IMAGE_BMP
 
+// Specification:
+// https://en.wikipedia.org/wiki/BMP_file_format
+// https://www.digicamsoft.com/bmp/bmp.html
+
 namespace
 {
     using namespace mango;
