@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 //#define MANGO_ENABLE_DEBUG_PRINT
 
@@ -20,16 +20,16 @@ namespace
 
     enum Compression
     {
-        BIC_RGB = 0,
-        BIC_RLE8 = 1,
-        BIC_RLE4 = 2,
-        BIC_BITFIELDS = 3, // Huffman with OS2 header
-        BIC_JPEG = 4, // RLE24 with OS2 header
-        BIC_PNG = 5,
+        BIC_RGB            = 0,
+        BIC_RLE8           = 1,
+        BIC_RLE4           = 2,
+        BIC_BITFIELDS      = 3, // Huffman with OS2 header
+        BIC_JPEG           = 4, // RLE24 with OS2 header
+        BIC_PNG            = 5,
         BIC_ALPHABITFIELDS = 6,
-        BIC_CMYK = 11,
-        BIC_CMYKRLE8 = 12,
-        BIC_CMYKRLE4 = 13
+        BIC_CMYK           = 11,
+        BIC_CMYKRLE8       = 12,
+        BIC_CMYKRLE4       = 13
     };
 
     struct FileHeader
@@ -111,6 +111,8 @@ namespace
 
         void WinBitmapHeader1(LittleEndianConstPointer& p)
         {
+            debugPrint("[WinBitmapHeader1]\n");
+
             width = p.read32();
             height = p.read32();
             numPlanes = p.read16();
@@ -128,6 +130,38 @@ namespace
                 return;
             }
 
+            if (bitsPerPixel < 1 || bitsPerPixel > 32)
+            {
+                setError("Incorrect bits per pixel (%d)", bitsPerPixel);
+                return;
+            }
+
+            switch (compression)
+            {
+                case BIC_RGB:
+                case BIC_RLE8:
+                case BIC_RLE4:
+                case BIC_BITFIELDS:
+                case BIC_ALPHABITFIELDS:
+                    break;
+
+                case BIC_JPEG:
+                case BIC_PNG:
+                case BIC_CMYK:
+                case BIC_CMYKRLE8:
+                case BIC_CMYKRLE4:
+                {
+                    setError("[ImageDecoder.BMP] Unsupported compression (%d).", compression);
+                    return;
+                }
+
+                default:
+                {
+                    setError("[ImageDecoder.BMP] Incorrect compression (%d).", compression);
+                    return;
+                }
+            }
+
             if (compression == BIC_BITFIELDS || compression == BIC_ALPHABITFIELDS)
             {
                 if (bitsPerPixel == 16 || bitsPerPixel == 32)
@@ -143,7 +177,6 @@ namespace
                 }
             }
 
-            debugPrint("[WinBitmapHeader1]\n");
             debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
             debugPrint("  compression: %d, imageDataSize: %d\n", compression, imageDataSize);
             debugPrint("  resolution: %d x %d\n", xResolution, yResolution);
@@ -152,24 +185,28 @@ namespace
 
         void WinBitmapHeader2(LittleEndianConstPointer& p)
         {
+            debugPrint("[WinBitmapHeader2]\n");
+
             redMask = p.read32();
             greenMask = p.read32();
             blueMask = p.read32();
 
-            debugPrint("[WinBitmapHeader2]\n");
             debugPrint("  redMask: 0x%x, greenMask: 0x%x, blueMask: 0x%x\n", redMask, greenMask, blueMask);
         }
 
         void WinBitmapHeader3(LittleEndianConstPointer& p)
         {
+            debugPrint("[WinBitmapHeader3]\n");
+
             alphaMask = p.read32();
 
-            debugPrint("[WinBitmapHeader3]\n");
             debugPrint("  alphaMask: 0x%x\n", alphaMask);
         }
 
         void WinBitmapHeader4(LittleEndianConstPointer& p)
         {
+            debugPrint("[WinBitmapHeader4]\n");
+
             csType = p.read32();
             for (int i = 0; i < 9; ++i)
             {
@@ -179,24 +216,26 @@ namespace
             gammaGreen = p.read32();
             gammaBlue = p.read32();
 
-            debugPrint("[WinBitmapHeader4]\n");
             debugPrint("  gamma: %d %d %d\n", gammaRed, gammaGreen, gammaBlue);
         }
 
         void WinBitmapHeader5(LittleEndianConstPointer& p)
         {
+            debugPrint("[WinBitmapHeader5]\n");
+
             intent = p.read32();
             profileData = p.read32();
             profileSize = p.read32();
             reserved3 = p.read32();
 
-            debugPrint("[WinBitmapHeader5]\n");
             debugPrint("  intent: %d\n", intent);
             debugPrint("  profile data: %d, size: %d\n", profileData, profileSize);
         }
 
         void OS2BitmapHeader1(LittleEndianConstPointer& p, int headerSize)
         {
+            debugPrint("[OS2BitmapHeader1]\n");
+
             if (headerSize == 16)
             {
                 width    = p.read32();
@@ -207,15 +246,17 @@ namespace
                 width    = p.read16();
                 height   = p.read16();
             }
+
             numPlanes    = p.read16();
             bitsPerPixel = p.read16();
 
-            debugPrint("[OS2BitmapHeader1]\n");
             debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
         }
 
         void OS2BitmapHeader2(LittleEndianConstPointer& p)
         {
+            debugPrint("[OS2BitmapHeader2]\n");
+
             units         = p.read16();
             reserved      = p.read16();
             recording     = p.read16();
@@ -224,8 +265,6 @@ namespace
             size2         = p.read32();
             colorEncoding = p.read32();
             identifier    = p.read32();
-
-            debugPrint("[OS2BitmapHeader2]\n");
         }
     };
 
@@ -319,6 +358,12 @@ namespace
                 default:
                     setError("[ImageDecoder.BMP] Incorrect header size (%d).", headerSize);
                     return;
+            }
+
+            if (!success)
+            {
+                // parsing headers failed
+                return;
             }
 
             debugPrint("  numPlanes: %d\n", numPlanes);
@@ -840,21 +885,14 @@ namespace
                 break;
             }
 
+            // These are checked when header is parsed
             case BIC_JPEG:
             case BIC_PNG:
             case BIC_CMYK:
             case BIC_CMYKRLE8:
             case BIC_CMYKRLE4:
-            {
-                header.setError("[ImageDecoder.BMP] Unsupported compression (%d).", header.compression);
-                return std::move(header);
-            }
-
             default:
-            {
-                header.setError("[ImageDecoder.BMP] Incorrect compression (%d).", header.compression);
-                return std::move(header);
-            }
+                break;
         }
 
         return std::move(header);
@@ -1077,9 +1115,27 @@ namespace
                     m_image_header.format  = bmp_header.format;
                     m_image_header.compression = TextureCompression::NONE;
 
-                    debugPrint("[header]\n");
-                    debugPrint("  image: %d x %d, bits: %d\n", 
-                        m_image_header.width, m_image_header.height, m_image_header.format.bits);
+                    debugPrint("[Header]\n");
+                    debugPrint("  image: %d x %d, bits: %d\n",
+                        m_image_header.width,
+                        m_image_header.height,
+                        m_image_header.format.bits);
+                    debugPrint("[Format]\n");
+                    debugPrint("  bits: %d, bytes: %d, type: 0x%x, flags: 0x%x\n",
+                        m_image_header.format.bits,
+                        m_image_header.format.bytes(),
+                        m_image_header.format.type,
+                        m_image_header.format.flags);
+                    debugPrint("  size: %d %d %d %d\n",
+                        m_image_header.format.size.r,
+                        m_image_header.format.size.g,
+                        m_image_header.format.size.b,
+                        m_image_header.format.size.a);
+                    debugPrint("  offset: %d %d %d %d\n",
+                        m_image_header.format.offset.r,
+                        m_image_header.format.offset.g,
+                        m_image_header.format.offset.b,
+                        m_image_header.format.offset.a);
                     break;
                 }
 
@@ -1132,7 +1188,7 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_image_header.success)
+            if (!m_image_header)
             {
                 status.setError(m_image_header.info);
                 return status;
