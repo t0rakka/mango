@@ -136,22 +136,16 @@ namespace
                 return;
             }
 
-            if (paletteSize > 0)
+            if (paletteSize > 256)
             {
-                if (paletteSize > 256 || !u32_is_power_of_two(paletteSize))
-                {
-                    setError("Incorrect palette size (%d)", paletteSize);
-                    return;
-                }
+                setError("Incorrect palette size (%d)", paletteSize);
+                return;
             }
 
-            if (importantColorCount > 0)
+            if (importantColorCount > 256)
             {
-                if (importantColorCount > 256 || !u32_is_power_of_two(importantColorCount))
-                {
-                    setError("Incorrect palette size (%d)", importantColorCount);
-                    return;
-                }
+                setError("Incorrect palette size (%d)", importantColorCount);
+                return;
             }
 
             switch (compression)
