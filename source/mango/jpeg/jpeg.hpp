@@ -61,12 +61,12 @@ namespace jpeg {
     using mango::u32;
     using mango::u64;
     using mango::s16;
-    using mango::Memory;
-    using mango::Memory;
     using mango::Format;
     using mango::Surface;
 	using mango::Stream;
     using mango::ThreadPool;
+    using mango::Memory;
+    using mango::ConstMemory;
 
 #ifdef MANGO_CPU_64BIT
 
@@ -87,7 +87,7 @@ namespace jpeg {
 #endif
 
     // supported external data formats (encode from, decode to)
-    enum Sample
+    enum SampleType
     {
         JPEG_U8_Y,
         JPEG_U8_BGR,
@@ -105,7 +105,7 @@ namespace jpeg {
 
     struct SampleFormat
     {
-        Sample sample;
+        SampleType sample;
         Format format;
     };
 
@@ -115,7 +115,7 @@ namespace jpeg {
         int  bits;   // Quantization table precision (8 or 16 bits)
     };
 
-    struct jpegBuffer
+    struct BitBuffer
     {
         const u8* ptr;
         const u8* end;
@@ -169,7 +169,7 @@ namespace jpeg {
         u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
         bool configure();
-        int decode(jpegBuffer& buffer) const;
+        int decode(BitBuffer& buffer) const;
     };
 
     struct Huffman
@@ -200,7 +200,7 @@ namespace jpeg {
         Arithmetic();
         ~Arithmetic();
 
-        void restart(jpegBuffer& buffer);
+        void restart(BitBuffer& buffer);
     };
 
     struct Frame
@@ -233,7 +233,7 @@ namespace jpeg {
 
     struct DecodeState
     {
-        jpegBuffer buffer;
+        BitBuffer buffer;
         Huffman huffman;
         Arithmetic arithmetic;
 
@@ -369,7 +369,7 @@ namespace jpeg {
         void finishProgressiveST();
         void finishProgressiveMT();
 
-        void configureCPU(Sample sample);
+        void configureCPU(SampleType sample);
         std::string getInfo() const;
 
     public:

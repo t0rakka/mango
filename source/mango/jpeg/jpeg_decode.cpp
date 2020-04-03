@@ -114,16 +114,16 @@ namespace jpeg {
     };
 
     // ----------------------------------------------------------------------------
-    // jpegBuffer
+    // BitBuffer
     // ----------------------------------------------------------------------------
 
-    void jpegBuffer::restart()
+    void BitBuffer::restart()
     {
         data = 0;
         remain = 0;
     }
 
-    void jpegBuffer::fill()
+    void BitBuffer::fill()
     {
 #if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
         if (ptr + 8 <= end)
@@ -1518,7 +1518,7 @@ namespace jpeg {
         return false;
     }
 
-    void Parser::configureCPU(Sample sample)
+    void Parser::configureCPU(SampleType sample)
     {
         const char* simd = "";
 

@@ -125,7 +125,7 @@ namespace jpeg {
         return true;
     }
 
-    int HuffTable::decode(jpegBuffer& buffer) const
+    int HuffTable::decode(BitBuffer& buffer) const
     {
         buffer.ensure16();
 
@@ -163,7 +163,7 @@ namespace jpeg {
     void huff_decode_mcu_lossless(s16* output, DecodeState* state)
     {
         Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         for (int j = 0; j < state->blocks; ++j)
         {
@@ -185,7 +185,7 @@ namespace jpeg {
     {
         const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         std::memset(output, 0, state->blocks * 64 * sizeof(s16));
 
@@ -234,7 +234,7 @@ namespace jpeg {
     void huff_decode_dc_first(s16* output, DecodeState* state)
     {
         Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         for (int j = 0; j < state->blocks; ++j)
         {
@@ -260,7 +260,7 @@ namespace jpeg {
 
     void huff_decode_dc_refine(s16* output, DecodeState* state)
     {
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         buffer.ensure16();
 
@@ -275,7 +275,7 @@ namespace jpeg {
     {
         const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         const HuffTable* ac = state->block[0].table.ac;
 
@@ -324,7 +324,7 @@ namespace jpeg {
     {
         const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         const HuffTable* ac = state->block[0].table.ac;
 

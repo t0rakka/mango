@@ -56,7 +56,7 @@ namespace
         0x55976d6e, 0x504f6b6f, 0x5a106fee, 0x55226d70, 0x59eb6ff0, 0x5a1d7171
     };
 
-    inline u8 get_byte(jpegBuffer& buffer)
+    inline u8 get_byte(BitBuffer& buffer)
     {
         // guard against corrupted bit-streams
         if (buffer.ptr >= buffer.end)
@@ -72,7 +72,7 @@ namespace
         return value;
     }
 
-    int arith_decode(Arithmetic& e, jpegBuffer& buffer, u8* st)
+    int arith_decode(Arithmetic& e, BitBuffer& buffer, u8* st)
     {
         while (e.a < 0x8000L)
         {
@@ -148,7 +148,7 @@ namespace jpeg {
     void arith_decode_mcu_lossless(s16* output, DecodeState* state)
     {
         Arithmetic& arithmetic = state->arithmetic;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
         for (int j = 0; j < state->blocks; ++j)
@@ -219,7 +219,7 @@ namespace jpeg {
     {
         const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
         std::memset(output, 0, state->blocks * 64 * sizeof(s16));
@@ -349,7 +349,7 @@ namespace jpeg {
     void arith_decode_dc_first(s16* output, DecodeState* state)
     {
         Arithmetic& arithmetic = state->arithmetic;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
         for (int j = 0; j < state->blocks; ++j)
@@ -423,7 +423,7 @@ namespace jpeg {
     void arith_decode_dc_refine(s16* output, DecodeState* state)
     {
         Arithmetic& arithmetic = state->arithmetic;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
         u8* st = arithmetic.fixed_bin;
 
         for (int j = 0; j < state->blocks; ++j)
@@ -442,7 +442,7 @@ namespace jpeg {
     {
         const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
@@ -508,7 +508,7 @@ namespace jpeg {
     {
         const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
-        jpegBuffer& buffer = state->buffer;
+        BitBuffer& buffer = state->buffer;
 
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
@@ -586,7 +586,7 @@ namespace jpeg {
     {
     }
 
-    void Arithmetic::restart(jpegBuffer& buffer)
+    void Arithmetic::restart(BitBuffer& buffer)
     {
         u8 v0 = get_byte(buffer);
         u8 v1 = get_byte(buffer);
@@ -621,7 +621,7 @@ namespace jpeg
     {
     }
     
-    void Arithmetic::restart(jpegBuffer& buffer)
+    void Arithmetic::restart(BitBuffer& buffer)
     {
     }
 } // namespace jpeg

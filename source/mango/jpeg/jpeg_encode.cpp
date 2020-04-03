@@ -315,11 +315,11 @@ namespace
         void (*read_8x8) (s16* block, const u8* input, int stride, int rows, int cols);
         void (*read)     (s16* block, const u8* input, int stride, int rows, int cols);
 
-        jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality);
+        jpeg_encode(SampleType sample, u32 width, u32 height, u32 stride, u32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(u32 quality);
-        void write_markers(BigEndianStream& p, Sample sample, u32 width, u32 height);
+        void write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
     };
 
     struct EncodeBuffer : Buffer
@@ -1549,7 +1549,7 @@ namespace
     // jpeg_encode
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(Sample sample, u32 width, u32 height, u32 stride, u32 quality)
+    jpeg_encode::jpeg_encode(SampleType sample, u32 width, u32 height, u32 stride, u32 quality)
         : ILqt(64)
         , ICqt(64)
     {
@@ -1706,7 +1706,7 @@ namespace
         }
     }
 
-    void jpeg_encode::write_markers(BigEndianStream& p, Sample sample, u32 width, u32 height)
+    void jpeg_encode::write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height)
     {
         // Start of image marker
         p.write16(0xffd8);
@@ -1795,7 +1795,7 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, Sample sample)
+    void encodeJPEG(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample)
     {
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
