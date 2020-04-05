@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -281,6 +281,7 @@ namespace simd {
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
+        // a + b * c
         f32x4 v;
         v[0] = a[0] + b[0] * c[0];
         v[1] = a[1] + b[1] * c[1];
@@ -291,11 +292,34 @@ namespace simd {
 
     static inline f32x4 msub(f32x4 a, f32x4 b, f32x4 c)
     {
+        // b * c - a
+        f32x4 v;
+        v[0] = b[0] * c[0] - a[0];
+        v[1] = b[1] * c[1] - a[1];
+        v[2] = b[2] * c[2] - a[2];
+        v[3] = b[3] * c[3] - a[3];
+        return v;
+    }
+
+    static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
+    {
+        // a - b * c
         f32x4 v;
         v[0] = a[0] - b[0] * c[0];
         v[1] = a[1] - b[1] * c[1];
         v[2] = a[2] - b[2] * c[2];
         v[3] = a[3] - b[3] * c[3];
+        return v;
+    }
+
+    static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
+    {
+        // -(a + b * c)
+        f32x4 v;
+        v[0] = -(a[0] + b[0] * c[0]);
+        v[1] = -(a[1] + b[1] * c[1]);
+        v[2] = -(a[2] + b[2] * c[2]);
+        v[3] = -(a[3] + b[3] * c[3]);
         return v;
     }
 

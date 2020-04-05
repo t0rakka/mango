@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -294,6 +294,16 @@ namespace mango
     static inline Vector<float, 8> msub(Vector<float, 8> a, Vector<float, 8> b, Vector<float, 8> c)
     {
         return simd::msub(a, b, c);
+    }
+
+    static inline Vector<float, 8> nmadd(Vector<float, 8> a, Vector<float, 8> b, Vector<float, 8> c)
+    {
+        return simd::nmadd(a, b, c);
+    }
+
+    static inline Vector<float, 8> nmsub(Vector<float, 8> a, Vector<float, 8> b, Vector<float, 8> c)
+    {
+        return simd::nmsub(a, b, c);
     }
 
     static inline Vector<float, 8> lerp(Vector<float, 8> a, Vector<float, 8> b, float factor)

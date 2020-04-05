@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -201,12 +201,26 @@ namespace simd {
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
+        // a + b * c
         return vec_madd(b.data, c.data, a.data);
     }
 
     static inline f64x2 msub(f64x2 a, f64x2 b, f64x2 c)
     {
-        return neg(vec_nmsub(b.data, c.data, a.data));
+        // b * c - a
+        return vec_msub(b.data, c.data, a.data);
+    }
+
+    static inline f64x2 nmadd(f64x2 a, f64x2 b, f64x2 c)
+    {
+        // a - b * c
+        return vec_nmsub(b.data, c.data, a.data);
+    }
+
+    static inline f64x2 nmsub(f64x2 a, f64x2 b, f64x2 c)
+    {
+        // -(a + b * c)
+        return vec_nmadd(b.data, c.data, a.data);
     }
 
     static inline f64x2 rcp(f64x2 a)

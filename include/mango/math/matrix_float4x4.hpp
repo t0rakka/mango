@@ -266,26 +266,26 @@ namespace mango
         const float32x4 m2yxxx = m2.yxxx;
         const float32x4 m3yxxx = m3.yxxx;
 
-        const float32x4 v0 = msub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
-        const float32x4 v1 = msub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);
-        const float32x4 v2 = msub(m0wzwy * m3zwyz, m0zwyz, m3wzwy);
-        const float32x4 v3 = msub(m1wzwy * m2zwyz, m1zwyz, m2wzwy);
-        const float32x4 v4 = msub(m1zwyz * m3wzwy, m1wzwy, m3zwyz);
-        const float32x4 v5 = msub(m2zwyz * m3wzwy, m2wzwy, m3zwyz);
-        const float32x4 v6 = msub(m2wzwy * m3zwyz, m2zwyz, m3wzwy);
+        const float32x4 v0 = nmsub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
+        const float32x4 v1 = nmsub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);
+        const float32x4 v2 = nmsub(m0wzwy * m3zwyz, m0zwyz, m3wzwy);
+        const float32x4 v3 = nmsub(m1wzwy * m2zwyz, m1zwyz, m2wzwy);
+        const float32x4 v4 = nmsub(m1zwyz * m3wzwy, m1wzwy, m3zwyz);
+        const float32x4 v5 = nmsub(m2zwyz * m3wzwy, m2wzwy, m3zwyz);
+        const float32x4 v6 = nmsub(m2wzwy * m3zwyz, m2zwyz, m3wzwy);
 
         float32x4 a = m1yxxx * v5;
         float32x4 b = m0yxxx * v6;
         float32x4 c = m0yxxx * v4;
         float32x4 d = m0yxxx * v3;
-        a = msub(a, m2yxxx, v4);
-        a = msub(a, m3yxxx, v3);
-        b = msub(b, m2yxxx, v2);
-        b = msub(b, m3yxxx, v1);
-        c = madd(c, m1yxxx, v2);
-        c = msub(c, m3yxxx, v0);
-        d = madd(d, m1yxxx, v1);
-        d = madd(d, m2yxxx, v0);
+        a = nmsub(a, m2yxxx, v4);
+        a = nmsub(a, m3yxxx, v3);
+        b = nmsub(b, m2yxxx, v2);
+        b = nmsub(b, m3yxxx, v1);
+        c =  madd(c, m1yxxx, v2);
+        c = nmsub(c, m3yxxx, v0);
+        d =  madd(d, m1yxxx, v1);
+        d =  madd(d, m2yxxx, v0);
 
         float32x4 det = 1.0f / dot(m0, a);
         return float4x4(a * det, b * det, c * det, d * det);

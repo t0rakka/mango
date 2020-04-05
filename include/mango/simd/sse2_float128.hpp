@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -285,23 +285,21 @@ namespace simd {
 
     static inline f32x4 msub(f32x4 a, f32x4 b, f32x4 c)
     {
+        // b * c - a
+        return _mm_fmsub_ps(b, c, a);
+    }
+
+    static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
+    {
         // a - b * c
         return _mm_fnmadd_ps(b, c, a);
     }
 
-    /*
-    static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
+    static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
     {
         // -(a + b * c)
         return _mm_fnmsub_ps(b, c, a);
     }
-
-    static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
-    {
-        // -(a - b * c)
-        return _mm_fmsub_ps(b, c, a);
-    }
-    */
 
 #elif defined(MANGO_ENABLE_FMA4)
 
@@ -312,20 +310,18 @@ namespace simd {
 
     static inline f32x4 msub(f32x4 a, f32x4 b, f32x4 c)
     {
-        return _mm_nmacc_ps(b, c, a);
+        return _mm_msub_ps(b, c, a);
     }
 
-    /*
     static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
     {
-        return _mm_nmsub_ps(b, c, a);
+        return _mm_nmacc_ps(b, c, a);
     }
 
     static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
     {
-        return _mm_msub_ps(b, c, a);
+        return _mm_nmsub_ps(b, c, a);
     }
-    */
 
 #else
 
@@ -336,20 +332,18 @@ namespace simd {
 
     static inline f32x4 msub(f32x4 a, f32x4 b, f32x4 c)
     {
-        return _mm_sub_ps(a, _mm_mul_ps(b, c));
+        return _mm_sub_ps(_mm_mul_ps(b, c), a);
     }
 
-    /*
     static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
     {
-        return _mm_sub_ps(_mm_setzero_ps(), _mm_add_ps(a, _mm_mul_ps(b, c)));
+        return _mm_sub_ps(a, _mm_mul_ps(b, c));
     }
 
     static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
     {
-        return _mm_sub_ps(_mm_mul_ps(b, c), a);
+        return _mm_sub_ps(_mm_setzero_ps(), _mm_add_ps(a, _mm_mul_ps(b, c)));
     }
-    */
 
 #endif
 

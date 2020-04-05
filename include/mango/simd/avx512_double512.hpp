@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -135,12 +135,26 @@ namespace simd {
 
     static inline f64x8 madd(f64x8 a, f64x8 b, f64x8 c)
     {
+        // a + b * c
         return _mm512_fmadd_pd(b, c, a);
     }
 
     static inline f64x8 msub(f64x8 a, f64x8 b, f64x8 c)
     {
+        // b * c - a
+        return _mm512_fmsub_pd(b, c, a);
+    }
+
+    static inline f64x8 nmadd(f64x8 a, f64x8 b, f64x8 c)
+    {
+        // a - b * c
         return _mm512_fnmadd_pd(b, c, a);
+    }
+
+    static inline f64x8 nmsub(f64x8 a, f64x8 b, f64x8 c)
+    {
+        // -(a + b * c)
+        return _mm512_fnmsub_pd(b, c, a);
     }
 
 #else
@@ -152,7 +166,17 @@ namespace simd {
 
     static inline f64x8 msub(f64x8 a, f64x8 b, f64x8 c)
     {
+        return _mm512_sub_pd(_mm_mul512_pd(b, c), a);
+    }
+
+    static inline f64x8 nmadd(f64x8 a, f64x8 b, f64x8 c)
+    {
         return _mm512_sub_pd(a, _mm512_mul_pd(b, c));
+    }
+
+    static inline f64x8 nmsub(f64x8 a, f64x8 b, f64x8 c)
+    {
+        return _mm512_sub_pd(_mm512_setzero_pd(), _mm512_add_pd(a, _mm512_mul_pd(b, c)));
     }
 
 #endif

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -107,6 +107,8 @@ namespace simd {
 
     SIMD_COMPOSITE_FUNC3(f32x16, f32x16, madd)
     SIMD_COMPOSITE_FUNC3(f32x16, f32x16, msub)
+    SIMD_COMPOSITE_FUNC3(f32x16, f32x16, nmadd)
+    SIMD_COMPOSITE_FUNC3(f32x16, f32x16, nmsub)
     SIMD_COMPOSITE_FUNC1(f32x16, f32x16, rcp)
     SIMD_COMPOSITE_FUNC1(f32x16, f32x16, rsqrt)
     SIMD_COMPOSITE_FUNC1(f32x16, f32x16, sqrt)

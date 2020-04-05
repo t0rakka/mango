@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -213,12 +213,26 @@ namespace simd {
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
+        // a + b * c
         return __msa_fmadd_w(a, b, c);
     }
 
     static inline f32x4 msub(f32x4 a, f32x4 b, f32x4 c)
     {
+        // b * c - a
+        return __msa_fsub_w(f32x4_zero(), __msa_fmsub_w(a, b, c));
+    }
+
+    static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
+    {
+        // a - b * c
         return __msa_fmsub_w(a, b, c);
+    }
+
+    static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
+    {
+        // -(a + b * c)
+        return __msa_fsub_w(f32x4_zero(), __msa_fmadd_w(a, b, c));
     }
 
 #if defined(MANGO_FAST_MATH)

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -220,12 +220,26 @@ namespace simd {
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
+        // a + b * c
         return vmlaq_f64(a, b, c);
     }
 
     static inline f64x2 msub(f64x2 a, f64x2 b, f64x2 c)
     {
+        // b * c - a
+        return vnegq_f64(vmlsq_f64(a, b, c));
+    }
+
+    static inline f64x2 nmadd(f64x2 a, f64x2 b, f64x2 c)
+    {
+        // a - b * c
         return vmlsq_f64(a, b, c);
+    }
+
+    static inline f64x2 nmsub(f64x2 a, f64x2 b, f64x2 c)
+    {
+        // -(a + b * c)
+        return vnegq_f64(vmlaq_f64(a, b, c));
     }
 
 #if defined(MANGO_FAST_MATH)
@@ -540,6 +554,7 @@ namespace simd {
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
+        // a + b * c
         f64x2 v;
         v.data[0] = a.data[0] + b.data[0] * c.data[0];
         v.data[1] = a.data[1] + b.data[1] * c.data[1];
@@ -548,9 +563,28 @@ namespace simd {
 
     static inline f64x2 msub(f64x2 a, f64x2 b, f64x2 c)
     {
+        // b * c - a
+        f64x2 v;
+        v.data[0] = b.data[0] * c.data[0] - a.data[0];
+        v.data[1] = b.data[1] * c.data[1] - a.data[1];
+        return v;
+    }
+
+    static inline f64x2 nmadd(f64x2 a, f64x2 b, f64x2 c)
+    {
+        // a - b * c
         f64x2 v;
         v.data[0] = a.data[0] - b.data[0] * c.data[0];
         v.data[1] = a.data[1] - b.data[1] * c.data[1];
+        return v;
+    }
+
+    static inline f64x2 nmsub(f64x2 a, f64x2 b, f64x2 c)
+    {
+        // -(a + b * c)
+        f64x2 v;
+        v.data[0] = -(a.data[0] + b.data[0] * c.data[0]);
+        v.data[1] = -(a.data[1] + b.data[1] * c.data[1]);
         return v;
     }
 
