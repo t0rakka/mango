@@ -323,6 +323,13 @@ namespace simd {
         return v;
     }
 
+    static inline f32x4 lerp(f32x4 a, f32x4 b, f32x4 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
+    }
+
     static inline f32x4 rcp(f32x4 a)
     {
         f32x4 v;

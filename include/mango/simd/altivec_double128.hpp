@@ -223,6 +223,13 @@ namespace simd {
         return vec_nmadd(b.data, c.data, a.data);
     }
 
+    static inline f64x2 lerp(f64x2 a, f64x2 b, f64x2 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
+    }
+
     static inline f64x2 rcp(f64x2 a)
     {
         return vec_re(a.data);

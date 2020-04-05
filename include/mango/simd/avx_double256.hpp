@@ -384,6 +384,13 @@ namespace simd {
 
 #endif
 
+    static inline f64x4 lerp(f64x4 a, f64x4 b, f64x4 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
+    }
+
     static inline f64x4 rcp(f64x4 a)
     {
         const __m256d one = _mm256_set1_pd(1.0);

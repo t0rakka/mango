@@ -322,12 +322,13 @@ namespace mango
 
     static inline Vector<double, 2> lerp(Vector<double, 2> a, Vector<double, 2> b, double factor)
     {
-        return a + (b - a) * factor;
+        Vector<double, 2> s(factor);
+        return simd::lerp(a, b, s);
     }
 
     static inline Vector<double, 2> lerp(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> factor)
     {
-        return a + (b - a) * factor;
+        return simd::lerp(a, b, factor);
     }
 
     template <int x, int y>

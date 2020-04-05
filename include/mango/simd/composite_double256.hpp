@@ -248,6 +248,7 @@ namespace simd {
     SIMD_COMPOSITE_FUNC3(f64x4, f64x4, msub)
     SIMD_COMPOSITE_FUNC3(f64x4, f64x4, nmadd)
     SIMD_COMPOSITE_FUNC3(f64x4, f64x4, nmsub)
+    SIMD_COMPOSITE_FUNC3(f64x4, f64x4, lerp)
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, rcp)
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, rsqrt)
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, sqrt)

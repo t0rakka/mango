@@ -242,6 +242,13 @@ namespace simd {
         return vnegq_f64(vmlaq_f64(a, b, c));
     }
 
+    static inline f64x2 lerp(f64x2 a, f64x2 b, f64x2 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
+    }
+
 #if defined(MANGO_FAST_MATH)
 
     static inline f64x2 rcp(f64x2 a)
@@ -586,6 +593,13 @@ namespace simd {
         v.data[0] = -(a.data[0] + b.data[0] * c.data[0]);
         v.data[1] = -(a.data[1] + b.data[1] * c.data[1]);
         return v;
+    }
+
+    static inline f64x2 lerp(f64x2 a, f64x2 b, f64x2 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
     }
 
     static inline f64x2 rcp(f64x2 a)

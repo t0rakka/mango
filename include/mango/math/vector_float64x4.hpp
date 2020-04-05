@@ -377,12 +377,13 @@ namespace mango
 
     static inline Vector<double, 4> lerp(Vector<double, 4> a, Vector<double, 4> b, double factor)
     {
-        return a + (b - a) * factor;
+        Vector<double, 4> s(factor);
+        return simd::lerp(a, b, s);
     }
 
     static inline Vector<double, 4> lerp(Vector<double, 4> a, Vector<double, 4> b, Vector<double, 4> factor)
     {
-        return a + (b - a) * factor;
+        return simd::lerp(a, b, factor);
     }
 
     static inline Vector<double, 4> hmin(Vector<double, 4> v)

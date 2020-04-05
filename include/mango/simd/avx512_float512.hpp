@@ -182,6 +182,13 @@ namespace simd {
 
 #endif
 
+    static inline f32x16 lerp(f32x16 a, f32x16 b, f32x16 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
+    }
+
 #if defined(MANGO_FAST_MATH)
 
     static inline f32x16 rcp(f32x16 a)

@@ -276,6 +276,13 @@ namespace simd {
 
 #endif
 
+    static inline f64x2 lerp(f64x2 a, f64x2 b, f64x2 s)
+    {
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
+    }
+
     static inline f64x2 rcp(f64x2 a)
     {
         return _mm_div_pd(_mm_set1_pd(1.0), a);

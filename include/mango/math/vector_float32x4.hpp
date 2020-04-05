@@ -393,9 +393,15 @@ namespace mango
         return simd::nmsub(a, b, c);
     }
 
+    static inline Vector<float, 4> lerp(Vector<float, 4> a, Vector<float, 4> b, float factor)
+    {
+        Vector<float, 4> s(factor);
+        return simd::lerp(a, b, s);
+    }
+
     static inline Vector<float, 4> lerp(Vector<float, 4> a, Vector<float, 4> b, Vector<float, 4> factor)
     {
-        return a + (b - a) * factor;
+        return simd::lerp(a, b, factor);
     }
 
     static inline Vector<float, 4> hmin(Vector<float, 4> v)
