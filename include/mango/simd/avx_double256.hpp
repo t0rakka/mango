@@ -369,7 +369,7 @@ namespace simd {
 
     static inline f64x4 msub(f64x4 a, f64x4 b, f64x4 c)
     {
-        return _mm256_sub_pd(_mm_mul256_pd(b, c), a);
+        return _mm256_sub_pd(_mm256_mul_pd(b, c), a);
     }
 
     static inline f64x4 nmadd(f64x4 a, f64x4 b, f64x4 c)
