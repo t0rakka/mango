@@ -300,6 +300,8 @@ namespace jpeg {
         int restartInterval;
         int restartCounter;
 
+        int m_hardware_concurrency;
+
         std::string m_encoding;
         std::string m_compression;
         std::string m_idct_name;
@@ -361,13 +363,14 @@ namespace jpeg {
         void decodeLossless();
         void decodeSequential();
         void decodeSequentialST();
-        void decodeSequentialMT();
+        void decodeSequentialMT(int N);
         void decodeMultiScan();
         void decodeProgressive();
         void finishProgressive();
         void finishProgressiveST();
-        void finishProgressiveMT();
+        void finishProgressiveMT(int N);
 
+        int getTaskSize(int count) const;
         void configureCPU(SampleType sample);
         std::string getInfo() const;
 

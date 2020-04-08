@@ -183,6 +183,12 @@ namespace jpeg {
         restartInterval = 0;
         restartCounter = 0;
 
+#ifdef JPEG_ENABLE_THREAD
+        m_hardware_concurrency = ThreadPool::getInstanceSize();
+#else
+        m_hardware_concurrency = 1;
+#endif
+
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
             quantTable[i].table = quantTableVector.data() + i * 64;
@@ -1865,6 +1871,30 @@ namespace jpeg {
         return info;
     }
 
+    int Parser::getTaskSize(int count) const
+    {
+        int threads = m_hardware_concurrency;
+        if (threads == 1)
+        {
+            //printf("Scheduling: %d in %d threads.\n", count, threads);
+            return count;
+        }
+
+        // adjust the number of threads:
+        // - large thread count is fine as-is; we don't want too much overhead
+        // - small thread count needs finer-grained granularity so that cpu cores have enough work
+        if (threads < 16)
+        {
+            threads *= 2;
+        }
+
+        const int N = (count / threads) + 1;
+
+        //printf("Scheduling: %d scans in %d threads.\n", count, threads);
+        //printf("  size: %d, tasks: %d\n", N, (count + N - 1) / N);
+        return N;
+    }
+
     void Parser::decodeLossless()
     {
         int predictor = decodeState.spectralStart;
@@ -1970,20 +2000,11 @@ namespace jpeg {
 
     void Parser::decodeSequential()
     {
-#ifdef JPEG_ENABLE_THREAD
-        const int count = ThreadPool::getInstanceSize();
-#else
-        const int count = 1;
-#endif
-
-        if (count > 1)
-        {
-            decodeSequentialMT();
-        }
-        else
-        {
+        int n = getTaskSize(ymcu);
+        if (n == ymcu)
             decodeSequentialST();
-        }
+        else
+            decodeSequentialMT(n);
     }
 
     void Parser::decodeSequentialST()
@@ -2042,7 +2063,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::decodeSequentialMT()
+    void Parser::decodeSequentialMT(int N)
     {
         const int stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
@@ -2055,11 +2076,6 @@ namespace jpeg {
         if (!restartInterval)
         {
             const int mcu_data_size = blocks_in_mcu * 64;
-
-            const int threads = ThreadPool::getInstanceSize();
-
-            const int S = threads > 1 ? 4 * threads : 1;
-            const int N = std::max(ymcu / S, threads);
 
             // use threadpool to process blocks
             for (int y = 0; y < ymcu; y += N)
@@ -2272,19 +2288,11 @@ namespace jpeg {
 
     void Parser::finishProgressive()
     {
-#ifdef JPEG_ENABLE_THREAD
-        const int count = ThreadPool::getInstanceSize();
-#else
-        const int count = 1;
-#endif
-        if (count > 1)
-        {
-            finishProgressiveMT();
-        }
-        else
-        {
+        int n = getTaskSize(ymcu);
+        if (n == ymcu)
             finishProgressiveST();
-        }
+        else
+            finishProgressiveMT(n);
     }
 
     void Parser::finishProgressiveST()
@@ -2339,7 +2347,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::finishProgressiveMT()
+    void Parser::finishProgressiveMT(int N)
     {
         const int stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
@@ -2351,10 +2359,6 @@ namespace jpeg {
         s16* data = blockVector;
 
         ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
-        const int pool_size = ThreadPool::getInstanceSize();
-
-        const int S = pool_size > 1 ? 4 * pool_size : 1;
-        const int N = std::max(ymcu / S, pool_size);
 
         // use threadpool to process blocks
         for (int y = 0; y < ymcu; y += N)
