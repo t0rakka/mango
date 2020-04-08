@@ -2192,9 +2192,6 @@ namespace jpeg {
 
             decodeState.buffer.ptr = p;
         }
-
-        // synchronize
-        queue.wait();
     }
 
     void Parser::decodeMultiScan()
@@ -2311,21 +2308,31 @@ namespace jpeg {
 
             if (yclip && y == ymcu - 1)
             {
-                //process = processState.clipped;
                 height = yclip;
-                continue;
             }
 
             for (int x = 0; x < xmcu; ++x)
             {
                 if (xclip && x == xmcu - 1)
                 {
-                    //process = processState.clipped;
                     width = xclip;
-                    continue;
                 }
 
-                process(dest, stride, data, &processState, width, height);
+                if (width != xblock || height != yblock)
+                {
+                    // clipping
+                    u8 temp[640 * 4];
+                    process(temp, xblock * 4, data, &processState, width, height);
+                    for (int i = 0; i < height; ++i)
+                    {
+                        std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
+                    }
+                }
+                else
+                {
+                    process(dest, stride, data, &processState, width, height);
+                }
+
                 data += mcu_data_size;
                 dest += xstride;
             }
@@ -2401,9 +2408,6 @@ namespace jpeg {
                 }
             });
         }
-
-        // synchronize
-        queue.wait();
     }
 
 } // namespace jpeg
