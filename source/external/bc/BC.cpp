@@ -404,7 +404,12 @@ static void EncodeBC1(D3DX_BC1 *pBC, const HDRColorA *pColor,
     HDRColorA Error[NUM_PIXELS_PER_BLOCK];
 
     if (flags & BC_FLAGS_DITHER_RGB)
-        memset(Error, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(HDRColorA));
+    {
+        for (auto& color : Error)
+        {
+            color = HDRColorA(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
 
     size_t i;
     for(i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -584,7 +589,12 @@ static void EncodeBC1(D3DX_BC1 *pBC, const HDRColorA *pColor,
     // Encode colors
     uint32_t dw = 0;
     if (flags & BC_FLAGS_DITHER_RGB)
-        memset(Error, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(HDRColorA));
+    {
+        for (auto& color : Error)
+        {
+            color = HDRColorA(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
 
     for(i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
