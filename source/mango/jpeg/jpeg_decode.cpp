@@ -1683,13 +1683,11 @@ namespace jpeg {
         {
             case 1:
                 processState.process = processState.process_y;
-                processState.clipped = processState.process_y;
                 id = "Y";
                 break;
 
             case 3:
                 processState.process = processState.process_ycbcr;
-                processState.clipped = processState.process_ycbcr;
                 id = "YCbCr";
 
                 // detect optimized cases
@@ -1735,7 +1733,6 @@ namespace jpeg {
 
             case 4:
                 processState.process = processState.process_cmyk;
-                processState.clipped = processState.process_cmyk;
                 id = "CMYK";
                 break;
         }
@@ -1992,7 +1989,8 @@ namespace jpeg {
     void Parser::decodeSequentialST()
     {
         const int stride = m_surface->stride;
-        const int xstride = m_surface->format.bytes() * xblock;
+        const int bytes_per_pixel = m_surface->format.bytes();
+        const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
 
         u8* image = m_surface->image;
@@ -2007,7 +2005,6 @@ namespace jpeg {
 
             if (yclip && y == ymcu - 1)
             {
-                process = processState.clipped;
                 height = yclip;
             }
 
@@ -2020,11 +2017,24 @@ namespace jpeg {
 
                 if (xclip && x == xmcu - 1)
                 {
-                    process = processState.clipped;
                     width = xclip;
                 }
 
-                process(dest, stride, data, &processState, width, height);
+                if (width != xblock || height != yblock)
+                {
+                    // clipping
+                    u8 temp[640 * 4];
+                    process(temp, xblock * 4, data, &processState, width, height);
+                    for (int i = 0; i < height; ++i)
+                    {
+                        std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
+                    }
+                }
+                else
+                {
+                    process(dest, stride, data, &processState, width, height);
+                }
+
                 dest += xstride;
             }
 
@@ -2035,7 +2045,8 @@ namespace jpeg {
     void Parser::decodeSequentialMT()
     {
         const int stride = m_surface->stride;
-        const int xstride = m_surface->format.bytes() * xblock;
+        const int bytes_per_pixel = m_surface->format.bytes();
+        const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
         u8* image = m_surface->address<u8>(0, 0);
 
@@ -2082,7 +2093,6 @@ namespace jpeg {
 
                         if (yclip && y == ymcu - 1)
                         {
-                            process = processState.clipped;
                             height = yclip;
                         }
 
@@ -2090,11 +2100,24 @@ namespace jpeg {
                         {
                             if (xclip && x == xmcu - 1)
                             {
-                                process = processState.clipped;
                                 width = xclip;
                             }
 
-                            process(dest, stride, source, &processState, width, height);
+                            if (width != xblock || height != yblock)
+                            {
+                                // clipping
+                                u8 temp[640 * 4];
+                                process(temp, xblock * 4, source, &processState, width, height);
+                                for (int i = 0; i < height; ++i)
+                                {
+                                    std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
+                                }
+                            }
+                            else
+                            {
+                                process(dest, stride, source, &processState, width, height);
+                            }
+
                             source += mcu_data_size;
                             dest += xstride;
                         }
@@ -2137,17 +2160,28 @@ namespace jpeg {
 
                         if (xclip && x == xmcu - 1)
                         {
-                            process = processState.clipped;
                             width = xclip;
                         }
 
                         if (yclip && y == ymcu - 1)
                         {
-                            process = processState.clipped;
                             height = yclip;
                         }
 
-                        process(dest, stride, data, &processState, width, height);
+                        if (width != xblock || height != yblock)
+                        {
+                            // clipping
+                            u8 temp[640 * 4];
+                            process(temp, xblock * 4, data, &processState, width, height);
+                            for (int i = 0; i < height; ++i)
+                            {
+                                std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
+                            }
+                        }
+                        else
+                        {
+                            process(dest, stride, data, &processState, width, height);
+                        }
                     }
                 });
 
@@ -2259,7 +2293,8 @@ namespace jpeg {
     void Parser::finishProgressiveST()
     {
         const int stride = m_surface->stride;
-        const int xstride = m_surface->format.bytes() * xblock;
+        const int bytes_per_pixel = m_surface->format.bytes();
+        const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
         u8* image = m_surface->address<u8>(0, 0);
 
@@ -2276,16 +2311,18 @@ namespace jpeg {
 
             if (yclip && y == ymcu - 1)
             {
-                process = processState.clipped;
+                //process = processState.clipped;
                 height = yclip;
+                continue;
             }
 
             for (int x = 0; x < xmcu; ++x)
             {
                 if (xclip && x == xmcu - 1)
                 {
-                    process = processState.clipped;
+                    //process = processState.clipped;
                     width = xclip;
+                    continue;
                 }
 
                 process(dest, stride, data, &processState, width, height);
@@ -2298,7 +2335,8 @@ namespace jpeg {
     void Parser::finishProgressiveMT()
     {
         const int stride = m_surface->stride;
-        const int xstride = m_surface->format.bytes() * xblock;
+        const int bytes_per_pixel = m_surface->format.bytes();
+        const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
         u8* image = m_surface->address<u8>(0, 0);
 
@@ -2332,7 +2370,6 @@ namespace jpeg {
 
                     if (yclip && y == ymcu - 1)
                     {
-                        process = processState.clipped;
                         height = yclip;
                     }
 
@@ -2340,11 +2377,24 @@ namespace jpeg {
                     {
                         if (xclip && x == xmcu - 1)
                         {
-                            process = processState.clipped;
                             width = xclip;
                         }
 
-                        process(dest, stride, source, &processState, width, height);
+                        if (width != xblock || height != yblock)
+                        {
+                            // clipping
+                            u8 temp[640 * 4];
+                            process(temp, xblock * 4, source, &processState, width, height);
+                            for (int i = 0; i < height; ++i)
+                            {
+                                std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
+                            }
+                        }
+                        else
+                        {
+                            process(dest, stride, source, &processState, width, height);
+                        }
+
                         source += mcu_data_size;
                         dest += xstride;
                     }

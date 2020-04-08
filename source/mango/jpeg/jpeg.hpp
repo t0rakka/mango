@@ -269,7 +269,6 @@ namespace jpeg {
 	    void (*idct) (u8* dest, const s16* data, const s16* qt);
 
         void (*process            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*clipped            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
         void (*process_y          ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
         void (*process_cmyk       ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
         void (*process_ycbcr      ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
