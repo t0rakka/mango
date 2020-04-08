@@ -1122,7 +1122,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, int stride) const
         //assert(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aDesc));
         const ModeInfo& info = ms_aInfo[ms_aModeToInfo[uMode]];
 
-        INTEndPntPair aEndPts[BC6H_MAX_REGIONS] = { INTColor(0, 0, 0) };
+        INTEndPntPair aEndPts[BC6H_MAX_REGIONS] = { {INTColor(0, 0, 0)} };
         uint32_t uShape = 0;
 
         // Read header
