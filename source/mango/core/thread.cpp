@@ -93,6 +93,11 @@ namespace mango
     // ThreadPool
     // ------------------------------------------------------------
 
+    static const
+    size_t concurrency = std::max(std::thread::hardware_concurrency() - 0, 1U);
+
+    ThreadPool ThreadPool::m_static_instance(concurrency);
+
     struct ThreadPool::TaskQueue
     {
         using Task = ThreadPool::Task;
@@ -147,14 +152,12 @@ namespace mango
 
     ThreadPool& ThreadPool::getInstance()
     {
-        static ThreadPool instance(std::max(std::thread::hardware_concurrency() - 0, 1U));
-        return instance;
+        return m_static_instance;
     }
 
     int ThreadPool::getInstanceSize()
     {
-        ThreadPool& pool = getInstance();
-        return pool.size();
+        return m_static_instance.size();
     }
 
     int ThreadPool::size() const
