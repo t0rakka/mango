@@ -2283,44 +2283,45 @@ namespace jpeg {
         const int bytes_per_pixel = m_surface->format.bytes();
         const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
+
         u8* image = m_surface->address<u8>(0, 0);
 
         const int mcu_data_size = blocks_in_mcu * 64;
         s16* data = blockVector;
 
-        for (int y = 0; y < ymcu; ++y)
+        ProcessFunc process = processState.process;
+
+        const int xmcu_last = xmcu - 1;
+        const int ymcu_last = ymcu - 1;
+
+        for (int y = 0; y < ymcu_last; ++y)
         {
-            u8* dest = image + y * ystride;
+            u8* dest = image;
+            image += ystride;
 
-            ProcessFunc process = processState.process;
-            int width = xblock;
-            int height = yblock;
-
-            if (yclip && y == ymcu - 1)
+            for (int x = 0; x < xmcu_last; ++x)
             {
-                height = yclip;
-            }
-
-            for (int x = 0; x < xmcu; ++x)
-            {
-                if (xclip && x == xmcu - 1)
-                {
-                    width = xclip;
-                }
-
-                if (width != xblock || height != yblock)
-                {
-                    process_and_clip(dest, stride, data, width, height);
-                }
-                else
-                {
-                    process(dest, stride, data, &processState, width, height);
-                }
-
+                process(dest, stride, data, &processState, xblock, yblock);
                 data += mcu_data_size;
                 dest += xstride;
             }
+
+            // last column
+            process_and_clip(dest, stride, data, xclip, yblock);
+            data += mcu_data_size;
+            dest += xstride;
         }
+
+        // last row
+        for (int x = 0; x < xmcu_last; ++x)
+        {
+            process_and_clip(image, stride, data, xblock, yclip);
+            data += mcu_data_size;
+            image += xstride;
+        }
+
+        // last mcu
+        process_and_clip(image, stride, data, xclip, yclip);
     }
 
     void Parser::finishProgressiveMT(int N)
