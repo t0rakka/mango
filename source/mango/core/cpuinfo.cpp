@@ -278,6 +278,9 @@ namespace
 
 #endif
 
+    // cache the flags
+    static u64 g_cpu_flags = getCPUFlagsInternal();
+
 } // namespace
 
 namespace mango
@@ -285,8 +288,7 @@ namespace mango
 
     u64 getCPUFlags()
     {
-        static u64 flags = getCPUFlagsInternal(); // cache the value
-        return flags;
+        return g_cpu_flags;
     }
 
 } // namespace mango
