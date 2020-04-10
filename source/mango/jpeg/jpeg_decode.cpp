@@ -2387,19 +2387,28 @@ namespace jpeg {
 
     void Parser::process_and_clip(u8* dest, int stride, const s16* data, int width, int height)
     {
-        u8 temp[640 * 4];
-
-        const int bytes_per_scan = width * m_surface->format.bytes();
-        const int block_stride = xblock * 4;
-        u8* src = temp;
-
-        processState.process(temp, block_stride, data, &processState, width, height);
-
-        for (int y = 0; y < height; ++y)
+        if (xblock != width || yblock != height)
         {
-            std::memcpy(dest, src, bytes_per_scan);
-            src += block_stride;
-            dest += stride;
+            u8 temp[640 * 4];
+
+            const int bytes_per_scan = width * m_surface->format.bytes();
+            const int block_stride = xblock * 4;
+            u8* src = temp;
+
+            processState.process(temp, block_stride, data, &processState, width, height);
+
+            // clipping
+            for (int y = 0; y < height; ++y)
+            {
+                std::memcpy(dest, src, bytes_per_scan);
+                src += block_stride;
+                dest += stride;
+            }
+        }
+        else
+        {
+            // fast-path (no clipping required)
+            processState.process(dest, stride, data, &processState, width, height);
         }
     }
 
