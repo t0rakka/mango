@@ -2043,13 +2043,7 @@ namespace jpeg {
 
                 if (width != xblock || height != yblock)
                 {
-                    // clipping
-                    u8 temp[640 * 4];
-                    process(temp, xblock * 4, data, &processState, width, height);
-                    for (int i = 0; i < height; ++i)
-                    {
-                        std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
-                    }
+                    process_and_clip(dest, stride, data, width, height);
                 }
                 else
                 {
@@ -2121,13 +2115,7 @@ namespace jpeg {
 
                             if (width != xblock || height != yblock)
                             {
-                                // clipping
-                                u8 temp[640 * 4];
-                                process(temp, xblock * 4, source, &processState, width, height);
-                                for (int i = 0; i < height; ++i)
-                                {
-                                    std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
-                                }
+                                process_and_clip(dest, stride, source, width, height);
                             }
                             else
                             {
@@ -2186,13 +2174,7 @@ namespace jpeg {
 
                         if (width != xblock || height != yblock)
                         {
-                            // clipping
-                            u8 temp[640 * 4];
-                            process(temp, xblock * 4, data, &processState, width, height);
-                            for (int i = 0; i < height; ++i)
-                            {
-                                std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
-                            }
+                            process_and_clip(dest, stride, data, width, height);
                         }
                         else
                         {
@@ -2328,13 +2310,7 @@ namespace jpeg {
 
                 if (width != xblock || height != yblock)
                 {
-                    // clipping
-                    u8 temp[640 * 4];
-                    process(temp, xblock * 4, data, &processState, width, height);
-                    for (int i = 0; i < height; ++i)
-                    {
-                        std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
-                    }
+                    process_and_clip(dest, stride, data, width, height);
                 }
                 else
                 {
@@ -2393,13 +2369,7 @@ namespace jpeg {
 
                         if (width != xblock || height != yblock)
                         {
-                            // clipping
-                            u8 temp[640 * 4];
-                            process(temp, xblock * 4, source, &processState, width, height);
-                            for (int i = 0; i < height; ++i)
-                            {
-                                std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
-                            }
+                            process_and_clip(dest, stride, source, width, height);
                         }
                         else
                         {
@@ -2411,6 +2381,19 @@ namespace jpeg {
                     }
                 }
             });
+        }
+    }
+
+    void Parser::process_and_clip(u8* dest, int stride, const s16* data, int width, int height)
+    {
+        const int bytes_per_pixel = m_surface->format.bytes();
+
+        // clipping
+        u8 temp[640 * 4];
+        processState.process(temp, xblock * 4, data, &processState, width, height);
+        for (int i = 0; i < height; ++i)
+        {
+            std::memcpy(dest + i * stride, temp + i * xblock * 4, width * bytes_per_pixel);
         }
     }
 
