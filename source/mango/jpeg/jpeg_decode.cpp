@@ -2016,45 +2016,46 @@ namespace jpeg {
 
         u8* image = m_surface->image;
 
-        for (int y = 0; y < ymcu; ++y)
+        ProcessFunc process = processState.process;
+
+        const int xmcu_last = xmcu - 1;
+        const int ymcu_last = ymcu - 1;
+
+        s16 data[640];
+
+        for (int y = 0; y < ymcu_last; ++y)
         {
             u8* dest = image;
+            image += ystride;
 
-            ProcessFunc process = processState.process;
-            int width = xblock;
-            int height = yblock;
-
-            if (yclip && y == ymcu - 1)
+            for (int x = 0; x < xmcu_last; ++x)
             {
-                height = yclip;
-            }
-
-            for (int x = 0; x < xmcu; ++x)
-            {
-                s16 data[640];
-
                 decodeState.decode(data, &decodeState);
                 handleRestart();
-
-                if (xclip && x == xmcu - 1)
-                {
-                    width = xclip;
-                }
-
-                if (width != xblock || height != yblock)
-                {
-                    process_and_clip(dest, stride, data, width, height);
-                }
-                else
-                {
-                    process(dest, stride, data, &processState, width, height);
-                }
-
+                process(dest, stride, data, &processState, xblock, yblock);
                 dest += xstride;
             }
 
-            image += ystride;
+            // last column
+            decodeState.decode(data, &decodeState);
+            handleRestart();
+            process_and_clip(dest, stride, data, xclip, yblock);
+            dest += xstride;
         }
+
+        // last row
+        for (int x = 0; x < xmcu_last; ++x)
+        {
+            decodeState.decode(data, &decodeState);
+            handleRestart();
+            process_and_clip(image, stride, data, xblock, yclip);
+            image += xstride;
+        }
+
+        // last mcu
+        decodeState.decode(data, &decodeState);
+        handleRestart();
+        process_and_clip(image, stride, data, xclip, yclip);
     }
 
     void Parser::decodeSequentialMT(int N)
@@ -2093,6 +2094,9 @@ namespace jpeg {
                 {
                     s16* source = data;
 
+                    const int xmcu_last = xmcu - 1;
+                    const int ymcu_last = ymcu - 1;
+
                     for (int y = y0; y < y1; ++y)
                     {
                         u8* dest = image + y * ystride;
@@ -2101,14 +2105,14 @@ namespace jpeg {
                         int width = xblock;
                         int height = yblock;
 
-                        if (yclip && y == ymcu - 1)
+                        if (yclip && y == ymcu_last)
                         {
                             height = yclip;
                         }
 
                         for (int x = 0; x < xmcu; ++x)
                         {
-                            if (xclip && x == xmcu - 1)
+                            if (xclip && x == xmcu_last)
                             {
                                 width = xclip;
                             }
@@ -2147,6 +2151,9 @@ namespace jpeg {
 
                     const int left = std::min(restartInterval, mcus - i);
 
+                    const int xmcu_last = xmcu - 1;
+                    const int ymcu_last = ymcu - 1;
+
                     for (int j = 0; j < left; ++j)
                     {
                         int n = i + j;
@@ -2162,12 +2169,12 @@ namespace jpeg {
                         int width = xblock;
                         int height = yblock;
 
-                        if (xclip && x == xmcu - 1)
+                        if (xclip && x == xmcu_last)
                         {
                             width = xclip;
                         }
 
-                        if (yclip && y == ymcu - 1)
+                        if (yclip && y == ymcu_last)
                         {
                             height = yclip;
                         }
@@ -2347,6 +2354,9 @@ namespace jpeg {
             // enqueue task
             queue.enqueue([=]
             {
+                const int xmcu_last = xmcu - 1;
+                const int ymcu_last = ymcu - 1;
+
                 for (int y = y0; y < y1; ++y)
                 {
                     u8* dest = image + y * ystride;
@@ -2356,14 +2366,14 @@ namespace jpeg {
                     int width = xblock;
                     int height = yblock;
 
-                    if (yclip && y == ymcu - 1)
+                    if (yclip && y == ymcu_last)
                     {
                         height = yclip;
                     }
 
                     for (int x = 0; x < xmcu; ++x)
                     {
-                        if (xclip && x == xmcu - 1)
+                        if (xclip && x == xmcu_last)
                         {
                             width = xclip;
                         }
