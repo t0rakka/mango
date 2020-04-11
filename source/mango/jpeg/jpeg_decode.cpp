@@ -2020,6 +2020,8 @@ namespace jpeg {
 
         const int xmcu_last = xmcu - 1;
         const int ymcu_last = ymcu - 1;
+        const int xblock_last = xclip ? xclip : xblock;
+        const int yblock_last = yclip ? yclip : yblock;
 
         s16 data[640];
 
@@ -2039,7 +2041,7 @@ namespace jpeg {
             // last column
             decodeState.decode(data, &decodeState);
             handleRestart();
-            process_and_clip(dest, stride, data, xclip, yblock);
+            process_and_clip(dest, stride, data, xblock_last, yblock);
             dest += xstride;
         }
 
@@ -2048,14 +2050,14 @@ namespace jpeg {
         {
             decodeState.decode(data, &decodeState);
             handleRestart();
-            process_and_clip(image, stride, data, xblock, yclip);
+            process_and_clip(image, stride, data, xblock, yblock_last);
             image += xstride;
         }
 
         // last mcu
         decodeState.decode(data, &decodeState);
         handleRestart();
-        process_and_clip(image, stride, data, xclip, yclip);
+        process_and_clip(image, stride, data, xblock_last, yblock_last);
     }
 
     void Parser::decodeSequentialMT(int N)
@@ -2300,6 +2302,8 @@ namespace jpeg {
 
         const int xmcu_last = xmcu - 1;
         const int ymcu_last = ymcu - 1;
+        const int xblock_last = xclip ? xclip : xblock;
+        const int yblock_last = yclip ? yclip : yblock;
 
         for (int y = 0; y < ymcu_last; ++y)
         {
@@ -2314,7 +2318,7 @@ namespace jpeg {
             }
 
             // last column
-            process_and_clip(dest, stride, data, xclip, yblock);
+            process_and_clip(dest, stride, data, xblock_last, yblock);
             data += mcu_data_size;
             dest += xstride;
         }
@@ -2322,13 +2326,13 @@ namespace jpeg {
         // last row
         for (int x = 0; x < xmcu_last; ++x)
         {
-            process_and_clip(image, stride, data, xblock, yclip);
+            process_and_clip(image, stride, data, xblock, yblock_last);
             data += mcu_data_size;
             image += xstride;
         }
 
         // last mcu
-        process_and_clip(image, stride, data, xclip, yclip);
+        process_and_clip(image, stride, data, xblock_last, yblock_last);
     }
 
     void Parser::finishProgressiveMT(int N)
