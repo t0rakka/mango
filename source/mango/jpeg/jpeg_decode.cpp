@@ -2096,28 +2096,22 @@ namespace jpeg {
                 {
                     s16* source = data;
 
+                    ProcessFunc process = processState.process;
+
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
+                    const int xblock_last = xclip ? xclip : xblock;
+                    const int yblock_last = yclip ? yclip : yblock;
 
                     for (int y = y0; y < y1; ++y)
                     {
                         u8* dest = image + y * ystride;
 
-                        ProcessFunc process = processState.process;
-                        int width = xblock;
-                        int height = yblock;
-
-                        if (yclip && y == ymcu_last)
-                        {
-                            height = yclip;
-                        }
+                        int height = y == ymcu_last ? yblock_last : yblock;
 
                         for (int x = 0; x < xmcu; ++x)
                         {
-                            if (xclip && x == xmcu_last)
-                            {
-                                width = xclip;
-                            }
+                            int width = x == xmcu_last ? xblock_last : xblock;
 
                             if (width != xblock || height != yblock)
                             {
@@ -2151,10 +2145,14 @@ namespace jpeg {
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
 
+                    ProcessFunc process = processState.process;
+
                     const int left = std::min(restartInterval, mcus - i);
 
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
+                    const int xblock_last = xclip ? xclip : xblock;
+                    const int yblock_last = yclip ? yclip : yblock;
 
                     for (int j = 0; j < left; ++j)
                     {
@@ -2167,19 +2165,8 @@ namespace jpeg {
 
                         u8* dest = image + y * ystride + x * xstride;
 
-                        ProcessFunc process = processState.process;
-                        int width = xblock;
-                        int height = yblock;
-
-                        if (xclip && x == xmcu_last)
-                        {
-                            width = xclip;
-                        }
-
-                        if (yclip && y == ymcu_last)
-                        {
-                            height = yclip;
-                        }
+                        int width = x == xmcu_last ? xblock_last : xblock;
+                        int height = y == ymcu_last ? yblock_last : yblock;
 
                         if (width != xblock || height != yblock)
                         {
@@ -2358,29 +2345,23 @@ namespace jpeg {
             // enqueue task
             queue.enqueue([=]
             {
+                ProcessFunc process = processState.process;
+
                 const int xmcu_last = xmcu - 1;
                 const int ymcu_last = ymcu - 1;
+                const int xblock_last = xclip ? xclip : xblock;
+                const int yblock_last = yclip ? yclip : yblock;
 
                 for (int y = y0; y < y1; ++y)
                 {
                     u8* dest = image + y * ystride;
                     s16* source = data + y * xmcu * mcu_data_size;
 
-                    ProcessFunc process = processState.process;
-                    int width = xblock;
-                    int height = yblock;
-
-                    if (yclip && y == ymcu_last)
-                    {
-                        height = yclip;
-                    }
+                    int height = y == ymcu_last ? yblock_last : yblock;
 
                     for (int x = 0; x < xmcu; ++x)
                     {
-                        if (xclip && x == xmcu_last)
-                        {
-                            width = xclip;
-                        }
+                        int width = x == xmcu_last ? xblock_last : xblock;
 
                         if (width != xblock || height != yblock)
                         {
