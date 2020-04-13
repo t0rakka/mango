@@ -2023,7 +2023,7 @@ namespace jpeg {
         const int xblock_last = xclip ? xclip : xblock;
         const int yblock_last = yclip ? yclip : yblock;
 
-        s16 data[640];
+        s16 data[JPEG_MAX_SAMPLES_IN_MCU];
 
         for (int y = 0; y < ymcu_last; ++y)
         {
@@ -2140,7 +2140,7 @@ namespace jpeg {
                 // enqueue task
                 queue.enqueue([=]
                 {
-                    AlignedPointer<s16> data(640);
+                    AlignedPointer<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2384,7 +2384,7 @@ namespace jpeg {
     {
         if (xblock != width || yblock != height)
         {
-            u8 temp[640 * 4];
+            u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
             const int bytes_per_scan = width * m_surface->format.bytes();
             const int block_stride = xblock * 4;

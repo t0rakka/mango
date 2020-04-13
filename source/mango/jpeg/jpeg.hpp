@@ -16,6 +16,7 @@
 #include <mango/math/math.hpp>
 
 #define JPEG_MAX_BLOCKS_IN_MCU   10  // Maximum # of blocks per MCU in the JPEG specification
+#define JPEG_MAX_SAMPLES_IN_MCU  640
 #define JPEG_MAX_COMPS_IN_SCAN   4   // JPEG limit on # of components in one scan
 #define JPEG_NUM_ARITH_TBLS      16  // Arith-coding tables are numbered 0..15
 #define JPEG_DC_STAT_BINS        64  // ...
