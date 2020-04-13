@@ -1,12 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #ifdef FUNCTION_GENERIC
 void FUNCTION_GENERIC(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
-    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
 
     for (int i = 0; i < state->blocks; ++i)
     {

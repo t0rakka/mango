@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -91,7 +91,7 @@ void process_y_32bit(u8* dest, int stride, const s16* data, ProcessState* state,
 
 void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
-    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
 
     for (int i = 0; i < state->blocks; ++i)
     {
@@ -212,7 +212,7 @@ void process_cmyk_bgra(u8* dest, int stride, const s16* data, ProcessState* stat
 
 void process_ycbcr_8bit(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
 {
-    u8 result[64 * JPEG_MAX_BLOCKS_IN_MCU];
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
 
     const int luma_blocks = state->blocks - 2; // don't idct two last blocks (Cb, Cr)
     for (int i = 0; i < luma_blocks; ++i)

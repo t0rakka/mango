@@ -15,15 +15,6 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
-#define JPEG_MAX_BLOCKS_IN_MCU   10  // Maximum # of blocks per MCU in the JPEG specification
-#define JPEG_MAX_SAMPLES_IN_MCU  640
-#define JPEG_MAX_COMPS_IN_SCAN   4   // JPEG limit on # of components in one scan
-#define JPEG_NUM_ARITH_TBLS      16  // Arith-coding tables are numbered 0..15
-#define JPEG_DC_STAT_BINS        64  // ...
-#define JPEG_AC_STAT_BINS        256 // ...
-#define JPEG_HUFF_LOOKUP_BITS    8   // Huffman look-ahead table log2 size
-#define JPEG_HUFF_LOOKUP_SIZE    (1 << JPEG_HUFF_LOOKUP_BITS)
-
 #ifdef JPEG_ENABLE_SIMD
 
     #if defined(MANGO_ENABLE_SSE2)
@@ -86,6 +77,15 @@ namespace jpeg {
 	#define bextr mango::u32_extract_bits
 
 #endif
+
+    constexpr int JPEG_MAX_BLOCKS_IN_MCU  = 10;  // Maximum # of blocks per MCU in the JPEG specification
+    constexpr int JPEG_MAX_SAMPLES_IN_MCU = 64 * JPEG_MAX_BLOCKS_IN_MCU;
+    constexpr int JPEG_MAX_COMPS_IN_SCAN  = 4;   // JPEG limit on # of components in one scan
+    constexpr int JPEG_NUM_ARITH_TBLS     = 16;  // Arith-coding tables are numbered 0..15
+    constexpr int JPEG_DC_STAT_BINS       = 64;  // ...
+    constexpr int JPEG_AC_STAT_BINS       = 256; // ...
+    constexpr int JPEG_HUFF_LOOKUP_BITS   = 8;   // Huffman look-ahead table log2 size
+    constexpr int JPEG_HUFF_LOOKUP_SIZE   = (1 << JPEG_HUFF_LOOKUP_BITS);
 
     // supported external data formats (encode from, decode to)
     enum SampleType
