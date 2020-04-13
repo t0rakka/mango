@@ -371,6 +371,7 @@ namespace jpeg {
         void finishProgressiveST();
         void finishProgressiveMT(int N);
 
+        void process_range(int y0, int y1, const s16* data);
         void process_and_clip(u8* dest, int stride, const s16* data, int width, int height);
 
         int getTaskSize(int count) const;

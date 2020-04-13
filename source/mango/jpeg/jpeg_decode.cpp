@@ -2062,19 +2062,13 @@ namespace jpeg {
 
     void Parser::decodeSequentialMT(int N)
     {
-        const int stride = m_surface->stride;
-        const int bytes_per_pixel = m_surface->format.bytes();
-        const int xstride = bytes_per_pixel * xblock;
-        const int ystride = stride * yblock;
-        u8* image = m_surface->address<u8>(0, 0);
-
+        // use threadpool to process blocks
         ConcurrentQueue queue("jpeg.sequential", Priority::HIGH);
 
         if (!restartInterval)
         {
             const int mcu_data_size = blocks_in_mcu * 64;
 
-            // use threadpool to process blocks
             for (int y = 0; y < ymcu; y += N)
             {
                 const int y0 = y;
@@ -2094,39 +2088,7 @@ namespace jpeg {
                 // enqueue task
                 queue.enqueue([=]
                 {
-                    s16* source = data;
-
-                    ProcessFunc process = processState.process;
-
-                    const int xmcu_last = xmcu - 1;
-                    const int ymcu_last = ymcu - 1;
-                    const int xblock_last = xclip ? xclip : xblock;
-                    const int yblock_last = yclip ? yclip : yblock;
-
-                    for (int y = y0; y < y1; ++y)
-                    {
-                        u8* dest = image + y * ystride;
-
-                        int height = y == ymcu_last ? yblock_last : yblock;
-
-                        for (int x = 0; x < xmcu; ++x)
-                        {
-                            int width = x == xmcu_last ? xblock_last : xblock;
-
-                            if (width != xblock || height != yblock)
-                            {
-                                process_and_clip(dest, stride, source, width, height);
-                            }
-                            else
-                            {
-                                process(dest, stride, source, &processState, width, height);
-                            }
-
-                            source += mcu_data_size;
-                            dest += xstride;
-                        }
-                    }
-
+                    process_range(y0, y1, data);
                     aligned_free(data);
                 });
             }
@@ -2134,6 +2096,12 @@ namespace jpeg {
         else
         {
             const u8* p = decodeState.buffer.ptr;
+
+            const int stride = m_surface->stride;
+            const int bytes_per_pixel = m_surface->format.bytes();
+            const int xstride = bytes_per_pixel * xblock;
+            const int ystride = stride * yblock;
+            u8* image = m_surface->address<u8>(0, 0);
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
@@ -2324,70 +2292,77 @@ namespace jpeg {
 
     void Parser::finishProgressiveMT(int N)
     {
-        const int stride = m_surface->stride;
-        const int bytes_per_pixel = m_surface->format.bytes();
-        const int xstride = bytes_per_pixel * xblock;
-        const int ystride = stride * yblock;
-        u8* image = m_surface->address<u8>(0, 0);
-
-        const int mcu_data_size = blocks_in_mcu * 64;
-        s16* data = blockVector;
-
+        // use threadpool to process blocks
         ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
 
-        // use threadpool to process blocks
         for (int y = 0; y < ymcu; y += N)
         {
             const int y0 = y;
             const int y1 = std::min(y + N, ymcu);
             debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
+            s16* data = blockVector + y0 * xmcu * (blocks_in_mcu * 64);
+
             // enqueue task
             queue.enqueue([=]
             {
-                const int xmcu_last = xmcu - 1;
-                const int ymcu_last = ymcu - 1;
-                const int xblock_last = xclip ? xclip : xblock;
-                const int yblock_last = yclip ? yclip : yblock;
-
-                ProcessFunc process = processState.process;
-
-                s16* source = data + y0 * xmcu * mcu_data_size;
-
-                for (int y = y0; y < y1; ++y)
-                {
-                    u8* dest = image + y * ystride;
-
-                    if (y == ymcu_last)
-                    {
-                        for (int x = 0; x < xmcu_last; ++x)
-                        {
-                            process_and_clip(dest, stride, source, xblock, yblock_last);
-                            source += mcu_data_size;
-                            dest += xstride;
-                        }
-
-                        // last column
-                        process_and_clip(dest, stride, source, xblock_last, yblock_last);
-                        source += mcu_data_size;
-                        dest += xstride;
-                    }
-                    else
-                    {
-                        for (int x = 0; x < xmcu_last; ++x)
-                        {
-                            process(dest, stride, source, &processState, xblock, yblock);
-                            source += mcu_data_size;
-                            dest += xstride;
-                        }
-
-                        // last column
-                        process_and_clip(dest, stride, source, xblock_last, yblock);
-                        source += mcu_data_size;
-                        dest += xstride;
-                    }
-                }
+                process_range(y0, y1, data);
             });
+        }
+    }
+
+    void Parser::process_range(int y0, int y1, const s16* data)
+    {
+        const int xmcu_last = xmcu - 1;
+        const int ymcu_last = ymcu - 1;
+        const int xblock_last = xclip ? xclip : xblock;
+        const int yblock_last = yclip ? yclip : yblock;
+
+        const int stride = m_surface->stride;
+        const int bytes_per_pixel = m_surface->format.bytes();
+        const int xstride = bytes_per_pixel * xblock;
+        const int ystride = stride * yblock;
+
+        u8* image = m_surface->address<u8>(0, 0);
+
+        const int mcu_data_size = blocks_in_mcu * 64;
+
+        ProcessFunc process = processState.process;
+
+        const s16* source = data;
+
+        for (int y = y0; y < y1; ++y)
+        {
+            u8* dest = image + y * ystride;
+
+            if (y == ymcu_last)
+            {
+                for (int x = 0; x < xmcu_last; ++x)
+                {
+                    process_and_clip(dest, stride, source, xblock, yblock_last);
+                    source += mcu_data_size;
+                    dest += xstride;
+                }
+
+                // last column
+                process_and_clip(dest, stride, source, xblock_last, yblock_last);
+                source += mcu_data_size;
+                dest += xstride;
+            }
+            else
+            {
+                for (int x = 0; x < xmcu_last; ++x)
+                {
+                    process(dest, stride, source, &processState, xblock, yblock);
+                    source += mcu_data_size;
+                    dest += xstride;
+                }
+
+                // last column
+                process_and_clip(dest, stride, source, xblock_last, yblock);
+                source += mcu_data_size;
+                dest += xstride;
+            }
         }
     }
 
