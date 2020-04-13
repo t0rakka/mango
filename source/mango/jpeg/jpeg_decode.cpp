@@ -2345,33 +2345,44 @@ namespace jpeg {
             // enqueue task
             queue.enqueue([=]
             {
-                ProcessFunc process = processState.process;
-
                 const int xmcu_last = xmcu - 1;
                 const int ymcu_last = ymcu - 1;
                 const int xblock_last = xclip ? xclip : xblock;
                 const int yblock_last = yclip ? yclip : yblock;
 
+                ProcessFunc process = processState.process;
+
+                s16* source = data + y0 * xmcu * mcu_data_size;
+
                 for (int y = y0; y < y1; ++y)
                 {
                     u8* dest = image + y * ystride;
-                    s16* source = data + y * xmcu * mcu_data_size;
 
-                    int height = y == ymcu_last ? yblock_last : yblock;
-
-                    for (int x = 0; x < xmcu; ++x)
+                    if (y == ymcu_last)
                     {
-                        int width = x == xmcu_last ? xblock_last : xblock;
-
-                        if (width != xblock || height != yblock)
+                        for (int x = 0; x < xmcu_last; ++x)
                         {
-                            process_and_clip(dest, stride, source, width, height);
-                        }
-                        else
-                        {
-                            process(dest, stride, source, &processState, width, height);
+                            process_and_clip(dest, stride, source, xblock, yblock_last);
+                            source += mcu_data_size;
+                            dest += xstride;
                         }
 
+                        // last column
+                        process_and_clip(dest, stride, source, xblock_last, yblock_last);
+                        source += mcu_data_size;
+                        dest += xstride;
+                    }
+                    else
+                    {
+                        for (int x = 0; x < xmcu_last; ++x)
+                        {
+                            process(dest, stride, source, &processState, xblock, yblock);
+                            source += mcu_data_size;
+                            dest += xstride;
+                        }
+
+                        // last column
+                        process_and_clip(dest, stride, source, xblock_last, yblock);
                         source += mcu_data_size;
                         dest += xstride;
                     }
