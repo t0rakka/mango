@@ -127,15 +127,17 @@ namespace mango
                 thread(i);
             });
 
-            // TODO: support more than one Processor Group in Windows
-            // NOTE: requires a CPU with more than 64 logical processors for testing
-#if 0 // defined(MANGO_PLATFORM_WINDOWS)
-            GROUP_AFFINITY group {};
-            group.Mask = (KAFFINITY) - 1;
-            group.Group = i & 1;
+#if defined(MANGO_PLATFORM_WINDOWS)
+            if (concurrency > 64)
+            {
+                // HACK: work around Windows 64 logical processor per ProcessorGroup limitation
+                GROUP_AFFINITY group{};
+                group.Mask = KAFFINITY(~0);
+                group.Group = WORD(i & 1);
 
-            auto handle = get_native_handle(m_threads[i]);
-            BOOL r = SetThreadGroupAffinity(handle, &group, nullptr);
+                auto handle = get_native_handle(m_threads[i]);
+                BOOL r = SetThreadGroupAffinity(handle, &group, nullptr);
+            }
 #endif
 
 			if (affinity)
