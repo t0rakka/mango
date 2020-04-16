@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -606,13 +606,9 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(u32x4 s)
     {
-        const __m128i mask = _mm_set1_epi32(0x0000ffff);
-        const __m128i onep39 = _mm_set1_epi32(0x53000000);
-        const __m128i x0 = _mm_or_si128(_mm_srli_epi32(s, 16), onep39);
-        const __m128i x1 = _mm_and_si128(s, mask);
-        const __m128 f1 = _mm_cvtepi32_ps(x1);
-        const __m128 f0 = _mm_sub_ps(_mm_castsi128_ps(x0), _mm_castsi128_ps(onep39));
-        return _mm_add_ps(f0, f1);
+        const __m128 lo = _mm_cvtepi32_ps(_mm_and_si128(s, _mm_set1_epi32(0xffff)));
+        const __m128 hi = _mm_cvtepi32_ps(_mm_srli_epi32(s, 16));
+        return _mm_add_ps(lo, _mm_mul_ps(hi, _mm_set1_ps(65536.0f)));
     }
 
     template <>

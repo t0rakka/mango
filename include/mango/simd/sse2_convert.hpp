@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -545,15 +545,9 @@ namespace detail {
     template <>
     inline f32x4 convert<f32x4>(u32x4 s)
     {
-        // conversion could be done by subtracting 0x80000000 from the value before signed conversion and
-        // adding float(0x80000000) to the result after conversion but this would reduce precision on the LSBs.
-        const __m128i mask = _mm_set1_epi32(0x0000ffff);
-        const __m128i onep39 = _mm_set1_epi32(0x53000000);
-        const __m128i x0 = _mm_or_si128(_mm_srli_epi32(s, 16), onep39);
-        const __m128i x1 = _mm_and_si128(s, mask);
-        const __m128 f1 = _mm_cvtepi32_ps(x1);
-        const __m128 f0 = _mm_sub_ps(_mm_castsi128_ps(x0), _mm_castsi128_ps(onep39));
-        return _mm_add_ps(f0, f1);
+        const __m128 lo = _mm_cvtepi32_ps(_mm_and_si128(s, _mm_set1_epi32(0xffff)));
+        const __m128 hi = _mm_cvtepi32_ps(_mm_srli_epi32(s, 16));
+        return _mm_add_ps(lo, _mm_mul_ps(hi, _mm_set1_ps(65536.0f)));
     }
 
     template <>
@@ -565,8 +559,6 @@ namespace detail {
     template <>
     inline u32x4 convert<u32x4>(f32x4 s)
     {
-        // conversion could be done by subtracting float(0x80000000) from the value before signed conversion and
-        // adding 0x80000000 to the result after conversion but this would reduce precision on the LSBs.
 	    __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
 	    __m128 x1 = _mm_cmple_ps(x2, s);
   	    __m128i x0 = _mm_cvtps_epi32(_mm_sub_ps(s, _mm_and_ps(x2, x1)));
