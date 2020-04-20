@@ -905,11 +905,13 @@ namespace directx {
 
         *this = q * (0.5f / std::sqrt(t));
         return *this;
-#else
+#endif
+#if 0
         Quaternion q;
 
         const float det = m(0,0) + m(1,1) + m(2,2);
-        if (det > 0) {
+        if (det > 0)
+        {
             float s = std::sqrt(det + 1.0f);
             q.w = s * 0.5f;
             s = 0.5f / s;
@@ -917,7 +919,8 @@ namespace directx {
             q[1] = (m(2,0) - m(0,2)) * s;
             q[2] = (m(0,1) - m(1,0)) * s;
         }
-        else {
+        else
+        {
             int i = 0;
             if (m(1,1) > m(0,0)) i = 1;
             if (m(2,2) > m(i,i)) i = 2;

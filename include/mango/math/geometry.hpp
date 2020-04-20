@@ -5,10 +5,35 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include "math.hpp"
 
 namespace mango
 {
+
+    // ------------------------------------------------------------------
+    // Quadratic
+    // ------------------------------------------------------------------
+
+    struct Quadratic
+    {
+        float t0;
+        float t1;
+
+        Quadratic(float a, float b, float c)
+        {
+            float x = std::sqrt(solve(b, b, 4.0f * a, c));
+            float y = b < 0 ? b - x : b + x;
+            t0 = (-2.0f * c) / y;
+            t1 = y / (-2.0f * a);
+        }
+
+        float solve(float a, float b, float c, float d) const
+        {
+            float t = c * d;
+            return std::fma(a, b, -t) - std::fma(c, d, -t);
+        }
+    };
 
     // ------------------------------------------------------------------
     // LineSegment

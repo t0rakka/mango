@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -27,17 +27,20 @@ namespace mango
         }
 
         explicit Quaternion(float x, float y, float z, float w)
-            : xyz(x, y, z), w(w)
+            : xyz(x, y, z)
+            , w(w)
         {
         }
 
         Quaternion(const Quaternion& q)
-            : xyz(q.xyz), w(q.w)
+            : xyz(q.xyz)
+            , w(q.w)
         {
         }
 
         Quaternion(const Vector<float, 3>& v, float w)
-            : xyz(v), w(w)
+            : xyz(v)
+            , w(w)
         {
         }
 
@@ -109,14 +112,14 @@ namespace mango
     		return Quaternion(-xyz, -w);
         }
 
-        operator float32x4 () const
+        operator Vector<float, 4> () const
         {
-            return float32x4(xyz, w);
+            return Vector<float, 4>(xyz, w);
         }
 
         static Quaternion identity();
         static Quaternion rotateXYZ(float xangle, float yangle, float zangle);
-        static Quaternion rotate(const float3& from, const float3& to);
+        static Quaternion rotate(const Vector<float, 3>& from, const Vector<float, 3>& to);
     };
 
     // ------------------------------------------------------------------
@@ -126,12 +129,13 @@ namespace mango
     struct AngleAxis
     {
         float angle;
-        float3 axis;
+        Vector<float, 3> axis;
 
         AngleAxis() = default;
 
-        AngleAxis(float Angle, const float3& Axis)
-        : angle(Angle), axis(Axis)
+        AngleAxis(float Angle, const Vector<float, 3>& Axis)
+            : angle(Angle)
+            , axis(Axis)
         {
         }
 
@@ -166,14 +170,14 @@ namespace mango
 
     static inline Quaternion operator * (const Quaternion& a, const Quaternion& b)
     {
-		const float3 xyz = a.w * b.xyz + b.w * a.xyz + cross(a.xyz, b.xyz);
+		const Vector<float, 3> xyz = a.w * b.xyz + b.w * a.xyz + cross(a.xyz, b.xyz);
 		const float w = a.w * b.w - dot(a.xyz, b.xyz);
         return Quaternion(xyz, w);
     }
 
     static inline Vector<float, 3> operator * (const Vector<float, 3>& v3, const Quaternion& q)
     {
-        const float32x3 n = cross(q.xyz, v3);
+        const Vector<float, 3> n = cross(q.xyz, v3);
         return v3 + 2.0f * (q.w * n + cross(q.xyz, n));
     }
 
