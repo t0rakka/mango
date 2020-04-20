@@ -22,16 +22,16 @@ namespace mango
 
         Quadratic(float a, float b, float c)
         {
-            float x = std::sqrt(solve(b, b, 4.0f * a, c));
-            float y = b < 0 ? b - x : b + x;
-            t0 = (-2.0f * c) / y;
-            t1 = y / (-2.0f * a);
+            float x = std::sqrt(solve(a * 4.0f, b, c));
+            x = b + b < 0 ? -x : x;
+            t0 = (-2.0f * c) / x;
+            t1 = x / (-2.0f * a);
         }
 
-        float solve(float a, float b, float c, float d) const
+        float solve(float a, float b, float c) const
         {
-            float t = c * d;
-            return std::fma(a, b, -t) - std::fma(c, d, -t);
+            float t = a * c;
+            return (b * b - t) - (a * c - t);
         }
     };
 
