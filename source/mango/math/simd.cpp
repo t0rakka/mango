@@ -353,35 +353,15 @@ namespace fp64 {
 
     // constants
 
-    //constexpr double double_pi    = 3.14159265358979323846;
-    //constexpr double double_pi_2  = 1.57079632679489661923;
-    //constexpr double double_pi_4  = 0.785398163397448309616;
     constexpr double double_1_pi  = 0.318309886183790671538;
     constexpr double double_2_pi  = 0.636619772367581343076;
     constexpr double double_pi4_a = 0.78539816290140151978;
     constexpr double double_pi4_b = 4.9604678871439933374e-10;
     constexpr double double_pi4_c = 1.1258708853173288931e-18;
     constexpr double double_pi4_d = 1.7607799325916000908e-27;
-    //constexpr double double_r_ln2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
     constexpr double double_r_inf = double(std::numeric_limits<double>::infinity());
-    //constexpr double double_l2u   = 0.693145751953125;
-    //constexpr double double_l2l   = 1.428606765330187045e-06;
 
     // utility functions
-
-    /*
-    template <typename F>
-    inline F signbit(F f)
-    {
-        return f & F(-0.0f);
-    }
-
-    template <typename F>
-    inline F mulsign(F x, F y)
-    {
-        return x ^ signbit(y);
-    }
-    */
 
     template <typename F, typename I>
     inline F is_nan(F d)
@@ -396,74 +376,6 @@ namespace fp64 {
         const auto mask = abs(d) == F(double_r_inf);
         return select(mask, reinterpret<F>(I(0xffffffffffffffff)), F(0.0));
     }
-
-    /*
-    template <typename F, typename I>
-    inline F is_inf2(F d, F m)
-    {
-        return is_inf<F, I>(d) & (signbit(d) | m);
-    }
-
-    template <typename F, typename I>
-    inline F is_negative_inf(F d)
-    {
-        const auto mask = d == F(-float_r_inf);
-        return select(mask, reinterpret<F>(I(0xffffffff)), F(0.0f));
-    }
-
-    template <typename F>
-    inline F signed_one(F f)
-    {
-        return F(1.0f) | signbit(f);
-    }
-
-    template <typename F, typename I>
-    inline F ldexp(F x, I q)
-    {
-        I m = simd::srai(q, 31);
-        m = simd::slli(simd::srai(m + q, 6) - m, 4);
-        q = q - simd::slli(m, 2);
-        m = m + 0x7f;
-
-        m = max(m, I(0));
-        m = min(m, I(0xff));
-
-        F u;
-        u = reinterpret<F>(simd::slli(m, 23));
-        x = x * u * u * u * u;
-        u = reinterpret<F>(simd::slli(q + 0x7f, 23));
-        return x * u;
-    }
-
-    template <typename F, typename I>
-    inline F atan2kf(F b, F a)
-    {
-        I q = select(a < 0.0f, I(-2), I(0));
-        F x = abs(a);
-        F y = b;
-
-        q = select(x < y, q + 1, q);
-        F s = select(x < y, -x, y);
-        F t = max(x, y);
-
-        s = s / t;
-        t = s * s;
-
-        F u(0.00282363896258175373077393f);
-        u = madd(-0.0159569028764963150024414f, u, t);
-        u = madd( 0.0425049886107444763183594f, u, t);
-        u = madd(-0.0748900920152664184570312f, u, t);
-        u = madd( 0.106347933411598205566406f, u, t);
-        u = madd(-0.142027363181114196777344f, u, t);
-        u = madd( 0.199926957488059997558594f, u, t);
-        u = madd(-0.333331018686294555664062f, u, t);
-
-        t = madd(s, s, t * u);
-        t = madd(t, convert<F>(q), F(float_pi_2));
-
-        return t;
-    }
-    */
 
     // API
 
@@ -521,45 +433,6 @@ namespace fp64 {
         u = madd(-0.166666666666666657414808, u, s);
 
         u = madd(d, s, u * d);
-        u = is_inf<F, I>(d) | u;
-        return u;
-    }
-
-    // NOTE: don't use.. doesn't work..
-    // TODO: fixme
-    template <typename F, typename I>
-    F tan(F d)
-    {
-        F u = round(d * double_2_pi);
-        I q = convert<I>(u);
-
-        F x = d;
-        x = madd(x, u, -2.0 * double_pi4_a);
-        x = madd(x, u, -2.0 * double_pi4_b);
-        x = madd(x, u, -2.0 * double_pi4_c);
-        x = madd(x, u, -2.0 * double_pi4_d);
-
-        const F s = x * x;
-        const auto mask = reinterpret<F>(q & I(1)) != 0;
-        x = select(mask, -x, x);
-
-        u = F(1.01419718511083373224408e-05);
-        u = madd(-2.59519791585924697698614e-05, u, s);
-        u = madd(5.23388081915899855325186e-05, u, s);
-        u = madd(-3.05033014433946488225616e-05, u, s);
-        u = madd(7.14707504084242744267497e-05, u, s);
-        u = madd(8.09674518280159187045078e-05, u, s);
-        u = madd(0.000244884931879331847054404, u, s);
-        u = madd(0.000588505168743587154904506, u, s);
-        u = madd(0.00145612788922812427978848, u, s);
-        u = madd(0.00359208743836906619142924, u, s);
-        u = madd(0.00886323944362401618113356, u, s);
-        u = madd(0.0218694882853846389592078, u, s);
-        u = madd(0.0539682539781298417636002, u, s);
-        u = madd(0.133333333333125941821962, u, s);
-        u = madd(0.333333333333334980164153, u, s);
-        u = madd(x, s, u * x);
-        u = select(mask, 1.0 / u, u);
         u = is_inf<F, I>(d) | u;
         return u;
     }
@@ -776,11 +649,6 @@ namespace fp64 {
         return fp64::cos<float64x2, int64x2>(v);
     }
 
-    float64x2 tan(float64x2 v)
-    {
-        return fp64::tan<float64x2, int64x2>(v);
-    }
-
     // ------------------------------------------------------------------------
     // float64x4
     // ------------------------------------------------------------------------
@@ -795,11 +663,6 @@ namespace fp64 {
         return fp64::cos<float64x4, int64x4>(v);
     }
 
-    float64x4 tan(float64x4 v)
-    {
-        return fp64::tan<float64x4, int64x4>(v);
-    }
-
     // ------------------------------------------------------------------------
     // float64x8
     // ------------------------------------------------------------------------
@@ -812,11 +675,6 @@ namespace fp64 {
     float64x8 cos(float64x8 v)
     {
         return fp64::cos<float64x8, int64x8>(v);
-    }
-
-    float64x8 tan(float64x8 v)
-    {
-        return fp64::tan<float64x8, int64x8>(v);
     }
 
 #endif
