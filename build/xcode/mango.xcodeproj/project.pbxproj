@@ -284,6 +284,7 @@
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
 		A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A6872D082270546C008F0D1A /* jpeg_process_func.hpp */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
+		A6966E032457D863000C1970 /* libd_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = A6966E022457D863000C1970 /* libd_utils.c */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
 		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
 		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
@@ -301,10 +302,8 @@
 		A6DD28A424125F080085E6EE /* crc32_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD289F24125F080085E6EE /* crc32_impl.h */; };
 		A6DD28A524125F080085E6EE /* cpu_features.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD28A024125F080085E6EE /* cpu_features.h */; };
 		A6DD28A724125F080085E6EE /* adler32_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD28A224125F080085E6EE /* adler32_impl.h */; };
-		A6DD28BF24125F1A0085E6EE /* aligned_malloc.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28A824125F190085E6EE /* aligned_malloc.c */; };
 		A6DD28C024125F1A0085E6EE /* gzip_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28A924125F190085E6EE /* gzip_decompress.c */; };
 		A6DD28C124125F1A0085E6EE /* adler32_vec_template.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD28AA24125F190085E6EE /* adler32_vec_template.h */; };
-		A6DD28C224125F1A0085E6EE /* aligned_malloc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD28AB24125F190085E6EE /* aligned_malloc.h */; };
 		A6DD28C324125F1A0085E6EE /* bt_matchfinder.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD28AC24125F190085E6EE /* bt_matchfinder.h */; };
 		A6DD28C424125F1A0085E6EE /* unaligned.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD28AD24125F190085E6EE /* unaligned.h */; };
 		A6DD28C524125F1A0085E6EE /* deflate_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28AE24125F190085E6EE /* deflate_compress.c */; };
@@ -776,6 +775,7 @@
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
 		A6872D082270546C008F0D1A /* jpeg_process_func.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_func.hpp; path = jpeg/jpeg_process_func.hpp; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
+		A6966E022457D863000C1970 /* libd_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libd_utils.c; path = external/libdeflate/lib/libd_utils.c; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
 		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
 		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
@@ -793,10 +793,8 @@
 		A6DD289F24125F080085E6EE /* crc32_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = crc32_impl.h; path = external/libdeflate/lib/arm/crc32_impl.h; sourceTree = "<group>"; };
 		A6DD28A024125F080085E6EE /* cpu_features.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_features.h; path = external/libdeflate/lib/arm/cpu_features.h; sourceTree = "<group>"; };
 		A6DD28A224125F080085E6EE /* adler32_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = adler32_impl.h; path = external/libdeflate/lib/arm/adler32_impl.h; sourceTree = "<group>"; };
-		A6DD28A824125F190085E6EE /* aligned_malloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aligned_malloc.c; path = external/libdeflate/lib/aligned_malloc.c; sourceTree = "<group>"; };
 		A6DD28A924125F190085E6EE /* gzip_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gzip_decompress.c; path = external/libdeflate/lib/gzip_decompress.c; sourceTree = "<group>"; };
 		A6DD28AA24125F190085E6EE /* adler32_vec_template.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = adler32_vec_template.h; path = external/libdeflate/lib/adler32_vec_template.h; sourceTree = "<group>"; };
-		A6DD28AB24125F190085E6EE /* aligned_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aligned_malloc.h; path = external/libdeflate/lib/aligned_malloc.h; sourceTree = "<group>"; };
 		A6DD28AC24125F190085E6EE /* bt_matchfinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bt_matchfinder.h; path = external/libdeflate/lib/bt_matchfinder.h; sourceTree = "<group>"; };
 		A6DD28AD24125F190085E6EE /* unaligned.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unaligned.h; path = external/libdeflate/lib/unaligned.h; sourceTree = "<group>"; };
 		A6DD28AE24125F190085E6EE /* deflate_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate_compress.c; path = external/libdeflate/lib/deflate_compress.c; sourceTree = "<group>"; };
@@ -1502,9 +1500,8 @@
 			children = (
 				A6DD28DF24129F8E0085E6EE /* libd_adler32.c */,
 				A6DD28DE24129F8E0085E6EE /* libd_crc32.c */,
+				A6966E022457D863000C1970 /* libd_utils.c */,
 				A6DD28AA24125F190085E6EE /* adler32_vec_template.h */,
-				A6DD28A824125F190085E6EE /* aligned_malloc.c */,
-				A6DD28AB24125F190085E6EE /* aligned_malloc.h */,
 				A6DD28AC24125F190085E6EE /* bt_matchfinder.h */,
 				A6DD28B824125F190085E6EE /* crc32_table.h */,
 				A6DD28B924125F190085E6EE /* crc32_vec_template.h */,
@@ -2024,7 +2021,6 @@
 				A63DD7091E706DFA00D4D499 /* lz4hc.h in Headers */,
 				A6EC3EF9230D7C1500B17F21 /* lossless_common.h in Headers */,
 				A6DD28C124125F1A0085E6EE /* adler32_vec_template.h in Headers */,
-				A6DD28C224125F1A0085E6EE /* aligned_malloc.h in Headers */,
 				A6FCC37A1E8122D40037C15F /* zstd.h in Headers */,
 				A642435B21852AEF0044B763 /* Delta.h in Headers */,
 				A63DD74B1E706EB200D4D499 /* compress.hpp in Headers */,
@@ -2264,7 +2260,6 @@
 				A6EC3EED230D7C1500B17F21 /* upsampling.c in Sources */,
 				A6DD28C824125F1A0085E6EE /* gzip_compress.c in Sources */,
 				A645DD742141551200EC714B /* huf_compress.c in Sources */,
-				A6DD28BF24125F1A0085E6EE /* aligned_malloc.c in Sources */,
 				A6EC3F1C230D7C1500B17F21 /* dec_neon.c in Sources */,
 				A6EC3F47230D7C2E00B17F21 /* picture_enc.c in Sources */,
 				A645DD6E2141551200EC714B /* zstd_lazy.c in Sources */,
@@ -2320,6 +2315,7 @@
 				A00559A41C93327800A6D963 /* file.cpp in Sources */,
 				A6EC3E7E230D7BB800B17F21 /* tree_dec.c in Sources */,
 				A0F21EDA1CA062EA0084302D /* file_observer.cpp in Sources */,
+				A6966E032457D863000C1970 /* libd_utils.c in Sources */,
 				A642435E21852AEF0044B763 /* 7zBuf.c in Sources */,
 				A63DD78C1E706F3400D4D499 /* bz_decompress.c in Sources */,
 				A6EC3E80230D7BB800B17F21 /* idec_dec.c in Sources */,
