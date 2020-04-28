@@ -131,7 +131,8 @@
 #endif
 
 #if defined(__x86_64__) || defined(__i386__) || defined(__ARM_FEATURE_UNALIGNED) || defined(__powerpc64__)
-#  define UNALIGNED_ACCESS_IS_FAST 1
+// NOTE: disabled for now (breaks code generation with gcc 10)
+//#  define UNALIGNED_ACCESS_IS_FAST 1
 #endif
 
 /* With gcc, we can access unaligned memory through 'packed' structures. */
