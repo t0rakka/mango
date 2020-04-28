@@ -150,8 +150,7 @@ namespace detail {
         AlignedStorage(size_t size, Alignment alignment = Alignment())
             : m_size(size)
         {
-            void* ptr = aligned_malloc(size * sizeof(T), alignment);
-            m_data = reinterpret_cast<T*>(ptr);
+            m_data = aligned_alloc<T>(size, alignment);
         }
 
         ~AlignedStorage()
