@@ -381,7 +381,7 @@
     <ClCompile Include="..\..\source\external\libdeflate\lib\gzip_decompress.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_adler32.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_crc32.c" />
-    <ClCompile Include="..\..\source\external\libdeflate\lib\utils.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\libd_utils.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\x86\cpu_x86_features.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\zlib_compress.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\zlib_decompress.c" />

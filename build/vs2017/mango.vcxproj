@@ -193,7 +193,6 @@
     <ClInclude Include="..\..\source\external\libdeflate\common\compiler_msc.h" />
     <ClInclude Include="..\..\source\external\libdeflate\libdeflate.h" />
     <ClInclude Include="..\..\source\external\libdeflate\lib\adler32_vec_template.h" />
-    <ClInclude Include="..\..\source\external\libdeflate\lib\aligned_malloc.h" />
     <ClInclude Include="..\..\source\external\libdeflate\lib\arm\adler32_impl.h" />
     <ClInclude Include="..\..\source\external\libdeflate\lib\arm\cpu_features.h" />
     <ClInclude Include="..\..\source\external\libdeflate\lib\arm\crc32_impl.h" />
@@ -374,7 +373,6 @@
     <ClCompile Include="..\..\source\external\google\astc.cpp" />
     <ClCompile Include="..\..\source\external\google\etc.cpp" />
     <ClCompile Include="..\..\source\external\google\etc1.cpp" />
-    <ClCompile Include="..\..\source\external\libdeflate\lib\aligned_malloc.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\arm\cpu_arm_features.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\deflate_compress.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\deflate_decompress.c" />
@@ -382,6 +380,7 @@
     <ClCompile Include="..\..\source\external\libdeflate\lib\gzip_decompress.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_adler32.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_crc32.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\libd_utils.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\x86\cpu_x86_features.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\zlib_compress.c" />
     <ClCompile Include="..\..\source\external\libdeflate\lib\zlib_decompress.c" />

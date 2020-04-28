@@ -2066,7 +2066,7 @@
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_crc32.c">
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\external\libdeflate\lib\utils.c">
+    <ClCompile Include="..\..\source\external\libdeflate\lib\libd_utils.c">
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
   </ItemGroup>
