@@ -130,6 +130,15 @@ namespace mango
     // misc
     // ----------------------------------------------------------------------------
 
+    template <typename D, typename S>
+    D reinterpret_bits(const S& s)
+    {
+        static_assert(sizeof(D) == sizeof(S), "Incompatible types.");
+        D d;
+        std::memcpy(&d, &s, sizeof(S));
+        return d;
+    }
+
 #if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_CLANG)
 
     static inline u32 byteclamp(s32 v)
