@@ -57,6 +57,11 @@ namespace filesystem {
         void seek(u64 distance, SeekMode mode);
         void read(void* dest, size_t size);
         void write(const void* data, size_t size);
+
+        void write(ConstMemory memory)
+        {
+            Stream::write(memory);
+        }
     };
 
 } // namespace filesystem

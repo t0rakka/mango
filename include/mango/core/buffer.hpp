@@ -68,6 +68,11 @@ namespace mango
         void seek(u64 distance, SeekMode mode);
         void read(void* dest, size_t bytes);
         void write(const void* source, size_t bytes);
+
+        void write(ConstMemory memory)
+        {
+            Stream::write(memory);
+        }
     };
 
 } // namespace mango
