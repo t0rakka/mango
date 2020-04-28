@@ -152,7 +152,7 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const restrict mf,
 {
 	const u8 *in_next = in_base + cur_pos;
 	u32 depth_remaining = max_search_depth;
-	const s32 cutoff = (s32)(cur_pos - MATCHFINDER_WINDOW_SIZE);
+	const s32 cutoff = cur_pos - MATCHFINDER_WINDOW_SIZE;
 	u32 next_hashseq;
 	u32 hash3;
 	u32 hash4;
@@ -206,8 +206,8 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const restrict mf,
 	cur_node = mf->hash4_tab[hash4];
 	mf->hash4_tab[hash4] = cur_pos;
 
-	pending_lt_ptr = bt_left_child(mf, (s32)cur_pos);
-	pending_gt_ptr = bt_right_child(mf, (s32)cur_pos);
+	pending_lt_ptr = bt_left_child(mf, cur_pos);
+	pending_gt_ptr = bt_right_child(mf, cur_pos);
 
 	if (cur_node <= cutoff) {
 		*pending_lt_ptr = MATCHFINDER_INITVAL;

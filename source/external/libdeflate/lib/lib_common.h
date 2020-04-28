@@ -15,9 +15,9 @@
 #include "../common/common_defs.h"
 
 /*
- * Prefix with "_libdeflate_" all global symbols which are not part of the API.
- * This avoids exposing overly generic names when libdeflate is built as a
- * static library.
+ * Prefix with "_libdeflate_" all global symbols which are not part of the API
+ * and don't already have a "libdeflate" prefix.  This avoids exposing overly
+ * generic names when libdeflate is built as a static library.
  *
  * Note that the chosen prefix is not really important and can be changed
  * without breaking library users.  It was just chosen so that the resulting
@@ -26,10 +26,23 @@
  * shared library, since these symbols are not exported.
  */
 #define SYM_FIXUP(sym)			_libdeflate_##sym
-#define aligned_malloc			SYM_FIXUP(aligned_malloc)
-#define aligned_free			SYM_FIXUP(aligned_free)
 #define deflate_get_compression_level	SYM_FIXUP(deflate_get_compression_level)
 #define _cpu_features			SYM_FIXUP(_cpu_features)
 #define setup_cpu_features		SYM_FIXUP(setup_cpu_features)
+
+void *libdeflate_malloc(size_t size);
+void libdeflate_free(void *ptr);
+
+void *libdeflate_aligned_malloc(size_t alignment, size_t size);
+void libdeflate_aligned_free(void *ptr);
+
+#ifdef FREESTANDING
+void *memset(void *s, int c, size_t n);
+void *memcpy(void *dest, const void *src, size_t n);
+void *memmove(void *dest, const void *src, size_t n);
+int memcmp(const void *s1, const void *s2, size_t n);
+#else
+#include <string.h>
+#endif
 
 #endif /* LIB_LIB_COMMON_H */
