@@ -1146,9 +1146,6 @@
     <ClInclude Include="..\..\source\external\libdeflate\lib\adler32_vec_template.h">
       <Filter>external\libdeflate\lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\external\libdeflate\lib\aligned_malloc.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\libdeflate\lib\bt_matchfinder.h">
       <Filter>external\libdeflate\lib</Filter>
     </ClInclude>
@@ -2039,9 +2036,6 @@
     <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_superblock.c">
       <Filter>external\zstd\compress</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\external\libdeflate\lib\aligned_malloc.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\external\libdeflate\lib\deflate_compress.c">
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
@@ -2070,6 +2064,9 @@
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_crc32.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\libdeflate\lib\utils.c">
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
   </ItemGroup>
