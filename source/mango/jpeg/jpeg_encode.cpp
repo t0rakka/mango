@@ -303,8 +303,8 @@ namespace
 
         u8      Lqt [BLOCK_SIZE];
         u8      Cqt [BLOCK_SIZE];
-        AlignedPointer<s16> ILqt;
-        AlignedPointer<s16> ICqt;
+        AlignedStorage<s16> ILqt;
+        AlignedStorage<s16> ICqt;
 
         // MCU configuration
         jpeg_chan   channel[3];

@@ -130,28 +130,25 @@ namespace detail {
     void aligned_free(void* aligned);
 
     // -----------------------------------------------------------------------
-    // AlignedPointer
+    // AlignedStorage
     // -----------------------------------------------------------------------
 
-    // ONLY store POD types ; even if we have configurable type for the pointer
-    // it's only for convenience and WILL NOT call constructor / destructor for the elements!
-
     template <typename T>
-    class AlignedPointer : public NonCopyable
+    class AlignedStorage : public NonCopyable
     {
     private:
         T* m_data;
         size_t m_size;
 
     public:
-        AlignedPointer(size_t size, Alignment alignment = Alignment())
+        AlignedStorage(size_t size, Alignment alignment = Alignment())
             : m_size(size)
         {
             void* ptr = aligned_malloc(size * sizeof(T), alignment);
             m_data = reinterpret_cast<T*>(ptr);
         }
 
-        ~AlignedPointer()
+        ~AlignedStorage()
         {
             aligned_free(m_data);
         }

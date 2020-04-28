@@ -289,7 +289,7 @@ namespace jpeg {
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
         HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
-        AlignedPointer<s16> quantTableVector;
+        AlignedStorage<s16> quantTableVector;
         s16* blockVector;
 
         std::vector<Frame> frames;

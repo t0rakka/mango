@@ -1762,7 +1762,7 @@ namespace jpeg {
         size_t vector_bytes = require_vector ? mcus * blocks_in_mcu * 64 : 0;
 
         // allocate blocks
-        AlignedPointer<s16> tempBlockVector(vector_bytes);
+        AlignedStorage<s16> tempBlockVector(vector_bytes);
         blockVector = tempBlockVector.data();
 
         // find best matching format
@@ -2108,7 +2108,7 @@ namespace jpeg {
                 // enqueue task
                 queue.enqueue([=]
                 {
-                    AlignedPointer<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
+                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
