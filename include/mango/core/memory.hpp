@@ -129,6 +129,12 @@ namespace detail {
     void* aligned_malloc(size_t bytes, Alignment alignment = Alignment());
     void aligned_free(void* aligned);
 
+    template <typename T>
+    T* aligned_alloc(size_t size, u32 alignment)
+    {
+        return reinterpret_cast<T*>(aligned_malloc(size * sizeof(T), Alignment(alignment)));
+    }
+
     // -----------------------------------------------------------------------
     // AlignedStorage
     // -----------------------------------------------------------------------
