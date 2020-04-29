@@ -214,7 +214,7 @@ namespace mango
         task.queue = queue;
         task.func = std::move(func);
 
-        queue->task_input_count++;
+        ++queue->task_counter;
         m_queues[queue->priority].tasks.enqueue(std::move(task));
 
         if (m_sleep_count > 0)
@@ -240,7 +240,7 @@ namespace mango
                     task.func();
                 }
 
-                ++queue->task_complete_count;
+                --queue->task_counter;
                 return true;
             }
         }
@@ -250,13 +250,9 @@ namespace mango
 
     void ThreadPool::wait(Queue* queue)
     {
-        // NOTE: we might be waiting here a while if other threads keep enqueuing tasks
-        while (queue->task_complete_count < queue->task_input_count)
+        while (queue->task_counter > 0)
         {
-            if (!dequeue_and_process())
-            {
-                std::this_thread::yield();
-            }
+            dequeue_and_process();
         }
     }
 

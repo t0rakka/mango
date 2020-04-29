@@ -27,11 +27,13 @@ namespace mango
     {
     private:
         friend class ConcurrentQueue;
+        using CacheLine = u8[64];
 
         struct Queue
         {
             ThreadPool* pool;
             int priority;
+            std::string name;
 
 #if 0 // __cplusplus >= 201703L
 
@@ -40,32 +42,22 @@ namespace mango
             //       based on the _ cplusplus macro as that would break binary compatibility between
             //       code compiled against different C++ standard version.
 
-            alignas(64) std::atomic<int> task_input_count { 0 };
-            alignas(64) std::atomic<int> task_complete_count { 0 };
+            alignas(64) std::atomic<int> task_counter { 0 };
             alignas(64) std::atomic<bool> cancelled { false };
 
 #else
 
-            std::atomic<int> task_input_count { 0 };
-            u8 padding0[64];
-            std::atomic<int> task_complete_count { 0 };
-            u8 padding1[64];
+            std::atomic<int> task_counter { 0 };
+            CacheLine padding;
             std::atomic<bool> cancelled { false };
 
 #endif
-
-            std::string name;
 
             Queue(ThreadPool* pool, int priority, const std::string& name)
                 : pool(pool)
                 , priority(priority)
                 , name(name)
             {
-            }
-
-            bool empty() const
-            {
-                return task_input_count.load() == task_complete_count.load();
             }
         };
 
@@ -200,6 +192,7 @@ namespace mango
     {
     protected:
         using Task = std::function<void()>;
+        using CacheLine = u8[64];
 
         std::string m_name;
         std::thread m_thread;
@@ -217,7 +210,7 @@ namespace mango
 #else
 
         std::atomic<bool> m_stop { false };
-        u8 padding0[64];
+        CacheLine padding;
         std::atomic<int> m_task_counter { 0 };
 
 #endif
