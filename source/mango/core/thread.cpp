@@ -9,6 +9,7 @@
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
+using std::chrono::microseconds;
 using std::chrono::milliseconds;
 
 // ------------------------------------------------------------
@@ -100,7 +101,7 @@ namespace mango
 
     struct ThreadPool::TaskQueue
     {
-        enum { N = 8 };
+        enum { N = 1 };
         moodycamel::ConcurrentQueue<ThreadPool::Task> tasks[N];
 
         moodycamel::ConcurrentQueue<ThreadPool::Task>& get()
@@ -197,12 +198,12 @@ namespace mango
                 // don't be too eager to sleep
                 auto time1 = high_resolution_clock::now();
                 auto elapsed = duration_cast<milliseconds>(time1 - time0).count();
-                if (elapsed >= milliseconds(2).count())
+                if (elapsed >= microseconds(1200).count())
                 {
                     // sleep but check what's happening after a while unless signaled
                     ++m_sleep_count;
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(20));
+                    m_condition.wait_for(lock, milliseconds(120));
                     --m_sleep_count;
                 }
                 else
