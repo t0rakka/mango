@@ -626,7 +626,10 @@ void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
     {
         u8 temp[16] = { 0 };
         std::memcpy(temp, input + blocks * 16, left);
-        ecb_block_encrypt(output + blocks * 16, temp, 16);
+
+        u8 result[16];
+        ecb_block_encrypt(result, temp, 16);
+        std::memcpy(output + blocks * 16, result, left);
     }
 }
 
@@ -639,7 +642,10 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
     {
         u8 temp[16] = { 0 };
         std::memcpy(temp, input + blocks * 16, left);
-        ecb_block_decrypt(output + blocks * 16, temp, 16);
+
+        u8 result[16];
+        ecb_block_decrypt(result, temp, 16);
+        std::memcpy(output + blocks * 16, result, left);
     }
 }
 
