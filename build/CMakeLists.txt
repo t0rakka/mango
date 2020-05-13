@@ -67,6 +67,7 @@ OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 OPTION(ENABLE_F16C          "Enable F16C conversion instructions"       OFF)
 OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
+OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 
 OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
 
@@ -379,6 +380,12 @@ else ()
         if (ENABLE_BMI2)
             message(STATUS "BMI2: enabled (2013)")
             target_compile_options(mango PUBLIC "-mbmi2")
+        endif ()
+
+        # fused multiply-add
+        if (ENABLE_FMA)
+            message(STATUS "FMA: enabled (2013)")
+            target_compile_options(mango PUBLIC "-mfma")
         endif ()
 
         # enable only one (the most recent) SIMD extension
