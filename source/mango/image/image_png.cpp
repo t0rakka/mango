@@ -1117,7 +1117,7 @@ namespace
                     function = process_rgba16_sse2;
                 }
 #endif
-#if defined(MANGO_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSSE3)
                 if (features & INTEL_SSSE3)
                 {
                     function = process_rgba16_ssse3;
