@@ -399,13 +399,14 @@ namespace simd {
 
     static inline f32 dot3(f32x4 a, f32x4 b)
     {
-        f32x4 s;
 #if defined(MANGO_ENABLE_SSE4_1)
-        s = _mm_dp_ps(a, b, 0x7f);
+        f32x4 s = _mm_dp_ps(a, b, 0x7f);
 #else
-        s = _mm_mul_ps(a, b);
-        s = _mm_add_ps(shuffle<0, 0, 0, 0>(s),
-            _mm_add_ps(shuffle<1, 1, 1, 1>(s), shuffle<2, 2, 2, 2>(s)));
+        f32x4 s = _mm_mul_ps(a, b);
+        f32x4 x = shuffle<0, 0, 0, 0>(s);
+        f32x4 y = shuffle<1, 1, 1, 1>(s);
+        f32x4 z = shuffle<2, 2, 2, 2>(s);
+        s = _mm_add_ps(x, _mm_add_ps(y, z));
 #endif
         return get_component<0>(s);
     }
@@ -429,8 +430,9 @@ namespace simd {
 
     static inline f32x4 cross3(f32x4 a, f32x4 b)
     {
-        f32x4 c = _mm_sub_ps(_mm_mul_ps(a, shuffle<1, 2, 0, 3>(b)),
-                                 _mm_mul_ps(b, shuffle<1, 2, 0, 3>(a)));
+        f32x4 u = _mm_mul_ps(a, shuffle<1, 2, 0, 3>(b));
+        f32x4 v = _mm_mul_ps(b, shuffle<1, 2, 0, 3>(a));
+        f32x4 c = _mm_sub_ps(u, v);
         return shuffle<1, 2, 0, 3>(c);
     }
 
