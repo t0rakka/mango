@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -2155,6 +2155,40 @@ namespace simd {
     static inline bool all_of(mask64x2 a)
     {
         return get_mask(a) == 0x3;
+    }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline s8x16 abs(s8x16 a, mask8x16 mask)
+    {
+        return select(mask, abs(a), s8x16_zero());
+    }
+
+    static inline s16x8 abs(s16x8 a, mask16x8 mask)
+    {
+        return select(mask, abs(a), s16x8_zero());
+    }
+
+    static inline s32x4 abs(s32x4 a, mask32x4 mask)
+    {
+        return select(mask, abs(a), s32x4_zero());
+    }
+
+    static inline s8x16 abs(s8x16 a, mask8x16 mask, s8x16 value)
+    {
+        return select(mask, abs(a), value);
+    }
+
+    static inline s16x8 abs(s16x8 a, mask16x8 mask, s16x8 value)
+    {
+        return select(mask, abs(a), value);
+    }
+
+    static inline s32x4 abs(s32x4 a, mask32x4 mask, s32x4 value)
+    {
+        return select(mask, abs(a), value);
     }
 
 } // namespace simd

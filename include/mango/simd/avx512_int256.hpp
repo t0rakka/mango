@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -878,6 +878,16 @@ namespace detail {
         return _mm256_abs_epi8(a);
     }
 
+    static inline s8x32 abs(s8x32 a, mask8x32 mask)
+    {
+        return _mm256_maskz_abs_epi8(mask, a);
+    }
+
+    static inline s8x32 abs(s8x32 a, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_abs_epi8(value, mask, a);
+    }
+
     static inline s8x32 neg(s8x32 a)
     {
         return _mm256_sub_epi8(_mm256_setzero_si256(), a);
@@ -1076,6 +1086,16 @@ namespace detail {
         return _mm256_abs_epi16(a);
     }
 
+    static inline s16x16 abs(s16x16 a, mask16x16 mask)
+    {
+        return _mm256_maskz_abs_epi16(mask, a);
+    }
+
+    static inline s16x16 abs(s16x16 a, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_abs_epi16(value, mask, a);
+    }
+
     static inline s16x16 neg(s16x16 a)
     {
         return _mm256_sub_epi16(_mm256_setzero_si256(), a);
@@ -1248,6 +1268,16 @@ namespace detail {
     static inline s32x8 abs(s32x8 a)
     {
         return _mm256_abs_epi32(a);
+    }
+
+    static inline s32x8 abs(s32x8 a, mask32x8 mask)
+    {
+        return _mm256_maskz_abs_epi32(mask, a);
+    }
+
+    static inline s32x8 abs(s32x8 a, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_abs_epi32(value, mask, a);
     }
 
     static inline s32x8 neg(s32x8 a)

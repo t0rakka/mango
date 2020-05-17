@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -24,6 +24,24 @@ namespace simd {
         R result; \
         result.lo = FUNC(a.lo, b.lo); \
         result.hi = FUNC(a.hi, b.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_ZEROMASK_FUNC1(R, A, MASK, FUNC) \
+    static inline R FUNC(A a, MASK mask) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, mask.lo); \
+        result.hi = FUNC(a.hi, mask.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_MASK_FUNC1(R, A, MASK, FUNC) \
+    static inline R FUNC(A a, MASK mask, A value) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, mask.lo, value.lo); \
+        result.hi = FUNC(a.hi, mask.hi, value.hi); \
         return result; \
     }
 
@@ -506,6 +524,8 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(s8x64, s8x64, avg)
     SIMD_COMPOSITE_FUNC2(s8x64, s8x64, avg_round)
     SIMD_COMPOSITE_FUNC1(s8x64, s8x64, abs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC1(s8x64, s8x64, mask8x64, abs)
+    SIMD_COMPOSITE_MASK_FUNC1(s8x64, s8x64, mask8x64, abs)
     SIMD_COMPOSITE_FUNC1(s8x64, s8x64, neg)
 
     SIMD_COMPOSITE_FUNC2(s8x64, s8x64, bitwise_nand)
@@ -569,6 +589,8 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(s16x32, s16x32, avg)
     SIMD_COMPOSITE_FUNC2(s16x32, s16x32, avg_round)
     SIMD_COMPOSITE_FUNC1(s16x32, s16x32, abs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC1(s16x32, s16x32, mask16x32, abs)
+    SIMD_COMPOSITE_MASK_FUNC1(s16x32, s16x32, mask16x32, abs)
     SIMD_COMPOSITE_FUNC1(s16x32, s16x32, neg)
 
     SIMD_COMPOSITE_FUNC2(s16x32, s16x32, bitwise_nand)
@@ -1126,6 +1148,8 @@ namespace simd {
 
 #undef SIMD_COMPOSITE_FUNC1
 #undef SIMD_COMPOSITE_FUNC2
+#undef SIMD_COMPOSITE_ZEROMASK_FUNC1
+#undef SIMD_COMPOSITE_MASK_FUNC1
 #undef SIMD_COMPOSITE_SELECT
 
 } // namespace simd
