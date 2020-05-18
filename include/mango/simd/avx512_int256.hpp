@@ -102,6 +102,16 @@ namespace detail {
         return _mm256_add_epi8(a, b);
     }
 
+    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_add_epi8(mask, a, b);
+    }
+
+    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_add_epi8(value, mask, a, b);
+    }
+
     static inline u8x32 sub(u8x32 a, u8x32 b)
     {
         return _mm256_sub_epi8(a, b);
@@ -244,6 +254,16 @@ namespace detail {
     static inline u16x16 add(u16x16 a, u16x16 b)
     {
         return _mm256_add_epi16(a, b);
+    }
+
+    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_add_epi16(mask, a, b);
+    }
+
+    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_add_epi16(value, mask, a, b);
     }
 
     static inline u16x16 sub(u16x16 a, u16x16 b)
@@ -445,6 +465,16 @@ namespace detail {
     static inline u32x8 add(u32x8 a, u32x8 b)
     {
         return _mm256_add_epi32(a, b);
+    }
+
+    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_add_epi32(mask, a, b);
+    }
+
+    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_add_epi32(value, mask, a, b);
     }
 
     static inline u32x8 sub(u32x8 a, u32x8 b)
@@ -662,6 +692,16 @@ namespace detail {
         return _mm256_add_epi64(a, b);
     }
 
+    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_add_epi64(mask, a, b);
+    }
+
+    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return _mm256_mask_add_epi64(value, mask, a, b);
+    }
+
     static inline u64x4 sub(u64x4 a, u64x4 b)
     {
         return _mm256_sub_epi64(a, b);
@@ -825,6 +865,16 @@ namespace detail {
     static inline s8x32 add(s8x32 a, s8x32 b)
     {
         return _mm256_add_epi8(a, b);
+    }
+
+    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_add_epi8(mask, a, b);
+    }
+
+    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_add_epi8(value, mask, a, b);
     }
 
     static inline s8x32 sub(s8x32 a, s8x32 b)
@@ -1008,6 +1058,16 @@ namespace detail {
     static inline s16x16 add(s16x16 a, s16x16 b)
     {
         return _mm256_add_epi16(a, b);
+    }
+
+    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_add_epi16(mask, a, b);
+    }
+
+    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_add_epi16(value, mask, a, b);
     }
 
     static inline s16x16 sub(s16x16 a, s16x16 b)
@@ -1290,6 +1350,16 @@ namespace detail {
         return _mm256_add_epi32(a, b);
     }
 
+    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_add_epi32(mask, a, b);
+    }
+
+    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_add_epi32(value, mask, a, b);
+    }
+
     static inline s32x8 sub(s32x8 a, s32x8 b)
     {
         return _mm256_sub_epi32(a, b);
@@ -1533,6 +1603,16 @@ namespace detail {
     static inline s64x4 add(s64x4 a, s64x4 b)
     {
         return _mm256_add_epi64(a, b);
+    }
+
+    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_add_epi64(mask, a, b);
+    }
+
+    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return _mm256_mask_add_epi64(value, mask, a, b);
     }
 
     static inline s64x4 sub(s64x4 a, s64x4 b)
