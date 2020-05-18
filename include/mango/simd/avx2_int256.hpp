@@ -1912,7 +1912,6 @@ namespace detail {
     static inline u32 get_mask(mask64x4 a)
     {
         return _mm256_movemask_pd(_mm256_castsi256_pd(a));
-        
     }
 
     static inline bool none_of(mask64x4 a)
