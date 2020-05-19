@@ -39,6 +39,12 @@ mango::math
 ---------------------------------------------------------------------------------------------
 
 [ ] expose ALL mango::simd functionality in mango::math::Vector
+[ ] complete the 64 bit simd types (u32x2, s32x2, f32x2) and use them in mango::Vector front-end
+[ ] implement NEON 64 bit simd types (see above)
+[ ] clean up the gather() to use the simd 64 bit types as offsets directly (currently wrapped with *_set())
+[ ] clean the simd *_is_hardware_vector macros and their usage
+[ ] expose all of the masked simd functions in mango::Vector
+[ ] implement the generic masked simd functions in one header (= CODE SHARING IS CARING)
 
 ---------------------------------------------------------------------------------------------
 misc
