@@ -181,6 +181,9 @@ namespace simd {
     #define float512_is_hardware_vector
 
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -240,6 +243,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "avx512_float128.hpp"
 #include "avx512_float256.hpp"
 #include "avx512_float512.hpp"
@@ -269,6 +274,9 @@ namespace simd {
     #define float256_is_hardware_vector
 
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -328,6 +336,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "sse2_int128.hpp"
 #include "sse2_float128.hpp"
 #include "sse2_double128.hpp"
@@ -356,6 +366,9 @@ namespace simd {
     #define float256_is_hardware_vector
     
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -415,6 +428,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "sse2_int128.hpp"
 #include "sse2_float128.hpp"
 #include "sse2_double128.hpp"
@@ -442,6 +457,9 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -501,6 +519,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "sse2_int128.hpp"
 #include "sse2_float128.hpp"
 #include "sse2_double128.hpp"
@@ -544,6 +564,10 @@ namespace simd {
 #endif
 
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
+
 #ifdef MANGO_ENABLE_FP16
     using f16x4   = hardware_vector<f16, 4, float16x4_t>;
 #else
@@ -607,6 +631,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "neon_int128.hpp"
 #include "neon_float128.hpp"
 #include "neon_double128.hpp"
@@ -640,6 +666,9 @@ namespace simd {
     #define float128_is_hardware_vector
 
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -707,6 +736,8 @@ namespace simd {
 #undef __vector
 #undef __pixel
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "altivec_int128.hpp"
 #include "altivec_float128.hpp"
 #include "altivec_double128.hpp"
@@ -734,6 +765,9 @@ namespace simd {
     #define float128_is_hardware_vector
     
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -793,6 +827,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "msa_int128.hpp"
 #include "msa_float128.hpp"
 #include "msa_double128.hpp"
@@ -815,6 +851,9 @@ namespace simd {
     // --------------------------------------------------------------
 
     // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
     using f16x4   = scalar_vector<f16, 4>;
 
     // 128 bit vector
@@ -874,6 +913,8 @@ namespace simd {
 } // namespace simd
 } // namespace mango
 
+#include "scalar_int64.hpp"
+#include "scalar_float64.hpp"
 #include "scalar_int128.hpp"
 #include "scalar_float128.hpp"
 #include "scalar_double128.hpp"
