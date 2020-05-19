@@ -1524,6 +1524,10 @@ namespace mango
     // named vector types
     // ------------------------------------------------------------------
 
+    // 64 bit integer vectors
+    using int32x2  = Vector<s32, 2>;
+    using uint32x2 = Vector<u32, 2>;
+
     // 128 bit integer vectors
     using int8x16  = Vector<s8, 16>;
     using int16x8  = Vector<s16, 8>;
