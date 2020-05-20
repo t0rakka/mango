@@ -159,6 +159,16 @@ namespace simd {
         return _mm_add_pd(a, b);
     }
 
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return _mm_maskz_add_pd(mask, a, b);
+    }
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return _mm_mask_add_pd(value, mask, a, b);
+    }
+
     static inline f64x2 sub(f64x2 a, f64x2 b)
     {
         return _mm_sub_pd(a, b);
@@ -260,7 +270,7 @@ namespace simd {
         return _mm_div_pd(_mm_set1_pd(1.0), a);
     }
 
-#endif
+#endif // MANGO_FAST_MATH
 
     static inline f64x2 rsqrt(f64x2 a)
     {
@@ -326,19 +336,16 @@ namespace simd {
 
     static inline f64x2 trunc(f64x2 s)
     {
-        //return _mm_roundscale_pd(s, 0x13);
         return _mm_round_pd(s, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
     }
 
     static inline f64x2 floor(f64x2 s)
     {
-        //return _mm_roundscale_pd(s, 0x11);
         return _mm_round_pd(s, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
     }
 
     static inline f64x2 ceil(f64x2 s)
     {
-        //return _mm_roundscale_pd(s, 0x12);
         return _mm_round_pd(s, _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC);
     }
 

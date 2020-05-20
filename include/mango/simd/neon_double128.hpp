@@ -53,7 +53,7 @@ namespace simd {
         return result;
     }
 
-#endif
+#endif // MANGO_COMPILER_CLANG
 
     // indexed access
 
@@ -113,7 +113,7 @@ namespace simd {
         vst1q_f64(dest, a);
     }
 
-#endif        
+#endif // MANGO_COMPILER_GCC   
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)
     {
@@ -180,7 +180,7 @@ namespace simd {
         y = y < 0 ? -1.0 : (y > 0 ? 1.0 : 0.0);
         return f64x2_set(x, y);
     }
-    
+
     static inline f64x2 add(f64x2 a, f64x2 b)
     {
         return vaddq_f64(a, b);
@@ -283,7 +283,7 @@ namespace simd {
         return e;
     }
 
-#endif
+#endif // MANGO_FAST_MATH
 
     static inline f64x2 sqrt(f64x2 a)
     {
@@ -358,6 +358,20 @@ namespace simd {
     static inline f64x2 fract(f64x2 s)
     {
         return sub(s, floor(s));
+    }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(add(a, b))));
+    }
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return select(mask, add(a, b), value);
     }
 
 #else
@@ -731,7 +745,21 @@ namespace simd {
         return v;
     }
 
-#endif
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return select(mask, add(a, b), f64x2_zero());
+    }
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return select(mask, add(a, b), value);
+    }
+
+#endif // __aarch64__
 
 } // namespace simd
 } // namespace mango

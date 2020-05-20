@@ -1863,7 +1863,7 @@ namespace simd {
         vst1q_s64(dest, a);
     }
 
-#endif
+#endif // MANGO_COMPILER_GCC
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)
     {
@@ -2034,7 +2034,7 @@ namespace simd {
         return temp;
     }
 
-#endif
+#endif // __aarch64__
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
@@ -2161,7 +2161,7 @@ namespace simd {
         return vget_lane_u8(vpmin_u8(b, b), 0) != 0;
     }
 
-#endif
+#endif // __aarch64__
 
     // -----------------------------------------------------------------
     // mask16x8
@@ -2244,7 +2244,7 @@ namespace simd {
         return vget_lane_u16(vpmin_u16(b, b), 0) != 0;
     }
 
-#endif
+#endif // __aarch64__
 
     // -----------------------------------------------------------------
     // mask32x4
@@ -2325,7 +2325,7 @@ namespace simd {
         return vget_lane_u32(vpmin_u32(b, b), 0) != 0;
     }
 
-#endif
+#endif // __aarch64__
 
     // -----------------------------------------------------------------
     // mask64x2
@@ -2372,7 +2372,7 @@ namespace simd {
         return vget_lane_u32(b, 0);
     }
 
-#endif
+#endif // __aarch64__
 
     static inline bool none_of(mask64x2 a)
     {

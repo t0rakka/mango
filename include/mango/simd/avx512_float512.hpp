@@ -112,6 +112,16 @@ namespace simd {
         return _mm512_add_ps(a, b);
     }
 
+    static inline f32x16 add(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_add_ps(mask, a, b);
+    }
+
+    static inline f32x16 add(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_add_ps(value, mask, a, b);
+    }
+
     static inline f32x16 sub(f32x16 a, f32x16 b)
     {
         return _mm512_sub_ps(a, b);

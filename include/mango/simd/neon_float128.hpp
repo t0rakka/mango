@@ -633,5 +633,19 @@ namespace simd {
         return sub(s, floor(s));
     }
 
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return vreinterpretq_f32_s32(vandq_u32(mask, vreinterpretq_u32_f32(add(a, b))));
+    }
+
+    static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return select(mask, add(a, b), value);
+    }
+
 } // namespace simd
 } // namespace mango

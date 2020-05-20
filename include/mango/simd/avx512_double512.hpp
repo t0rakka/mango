@@ -89,6 +89,7 @@ namespace simd {
     static inline f64x8 abs(f64x8 a)
     {
         // gcc 7.1 compiler bug: expects __m512 argument
+        // TODO: test which gcc version fixes this and add guard
         //return _mm512_abs_pd(a);
         return _mm512_max_pd(a, _mm512_sub_pd(_mm512_setzero_pd(), a));
     }
@@ -109,6 +110,16 @@ namespace simd {
     static inline f64x8 add(f64x8 a, f64x8 b)
     {
         return _mm512_add_pd(a, b);
+    }
+
+    static inline f64x8 add(f64x8 a, f64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_add_pd(mask, a, b);
+    }
+
+    static inline f64x8 add(f64x8 a, f64x8 b, mask64x8 mask, f64x8 value)
+    {
+        return _mm512_mask_add_pd(value, mask, a, b);
     }
 
     static inline f64x8 sub(f64x8 a, f64x8 b)
@@ -212,7 +223,7 @@ namespace simd {
         return _mm512_rsqrt28_pd(a);
     }
 
-#endif
+#endif // MANGO_FAST_MATH
 
     static inline f64x8 sqrt(f64x8 a)
     {
@@ -265,19 +276,16 @@ namespace simd {
 
     static inline f64x8 trunc(f64x8 s)
     {
-        //return _mm512_roundscale_pd(s, 0x13);
         return _mm512_add_round_pd(s, _mm512_setzero_pd(), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
     }
 
     static inline f64x8 floor(f64x8 s)
     {
-        //return _mm512_roundscale_pd(s, 0x11);
         return _mm512_add_round_pd(s, _mm512_setzero_pd(), _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC);
     }
 
     static inline f64x8 ceil(f64x8 s)
     {
-        //return _mm512_roundscale_pd(s, 0x12);
         return _mm512_add_round_pd(s, _mm512_setzero_pd(), _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC);
     }
 

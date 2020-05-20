@@ -71,50 +71,6 @@ compressed formats
 simd
 ---------------------------------------------------------------------------------------------
 
-__m128d _mm_add_pd (__m128d a, __m128d b)
-__m128d _mm_mask_add_pd (__m128d src, __mmask8 k, __m128d a, __m128d b)
-__m128d _mm_maskz_add_pd (__mmask8 k, __m128d a, __m128d b)
-
-__m256d _mm256_add_pd (__m256d a, __m256d b)
-__m256d _mm256_mask_add_pd (__m256d src, __mmask8 k, __m256d a, __m256d b)
-__m256d _mm256_maskz_add_pd (__mmask8 k, __m256d a, __m256d b)
-
-__m512d _mm512_add_pd (__m512d a, __m512d b)
-__m512d _mm512_mask_add_pd (__m512d src, __mmask8 k, __m512d a, __m512d b)
-__m512d _mm512_maskz_add_pd (__mmask8 k, __m512d a, __m512d b)
-
-__m128 _mm_add_ps (__m128 a, __m128 b)
-__m128 _mm_mask_add_ps (__m128 src, __mmask8 k, __m128 a, __m128 b)
-__m128 _mm_maskz_add_ps (__mmask8 k, __m128 a, __m128 b)
-
-__m256 _mm256_add_ps (__m256 a, __m256 b)
-__m256 _mm256_mask_add_ps (__m256 src, __mmask8 k, __m256 a, __m256 b)
-__m256 _mm256_maskz_add_ps (__mmask8 k, __m256 a, __m256 b)
-
-__m512 _mm512_add_ps (__m512 a, __m512 b)
-__m512 _mm512_mask_add_ps (__m512 src, __mmask16 k, __m512 a, __m512 b)
-__m512 _mm512_maskz_add_ps (__mmask16 k, __m512 a, __m512 b)
-
-__m512d _mm512_add_round_pd (__m512d a, __m512d b, int rounding)
-__m512d _mm512_mask_add_round_pd (__m512d src, __mmask8 k, __m512d a, __m512d b, int rounding)
-__m512d _mm512_maskz_add_round_pd (__mmask8 k, __m512d a, __m512d b, int rounding)
-__m512 _mm512_add_round_ps (__m512 a, __m512 b, int rounding)
-__m512 _mm512_mask_add_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
-__m512 _mm512_maskz_add_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
-
-__m128d _mm_add_round_sd (__m128d a, __m128d b, int rounding)
-__m128d _mm_mask_add_round_sd (__m128d src, __mmask8 k, __m128d a, __m128d b, int rounding)
-__m128d _mm_maskz_add_round_sd (__mmask8 k, __m128d a, __m128d b, int rounding)
-__m128 _mm_add_round_ss (__m128 a, __m128 b, int rounding)
-__m128 _mm_mask_add_round_ss (__m128 src, __mmask8 k, __m128 a, __m128 b, int rounding)
-__m128 _mm_maskz_add_round_ss (__mmask8 k, __m128 a, __m128 b, int rounding)
-__m128d _mm_add_sd (__m128d a, __m128d b)
-__m128d _mm_mask_add_sd (__m128d src, __mmask8 k, __m128d a, __m128d b)
-__m128d _mm_maskz_add_sd (__mmask8 k, __m128d a, __m128d b)
-__m128 _mm_add_ss (__m128 a, __m128 b)
-__m128 _mm_mask_add_ss (__m128 src, __mmask8 k, __m128 a, __m128 b)
-__m128 _mm_maskz_add_ss (__mmask8 k, __m128 a, __m128 b)
-
 unsigned char _addcarry_u32 (unsigned char c_in, unsigned int a, unsigned int b, unsigned int * out)
 unsigned char _addcarry_u64 (unsigned char c_in, unsigned __int64 a, unsigned __int64 b, unsigned __int64 * out)
 unsigned char _addcarryx_u32 (unsigned char c_in, unsigned int a, unsigned int b, unsigned int * out)
@@ -1689,3 +1645,23 @@ __m512 _mm512_mask_abs_ps (__m512 src, __mmask16 k, __m512 v2)
 
 __m512i _mm512_adc_epi32 (__m512i v2, __mmask16 k2, __m512i v3, __mmask16 * k2_res)
 __m512i _mm512_mask_adc_epi32 (__m512i v2, __mmask16 k1, __mmask16 k2, __m512i v3, __mmask16 * k2_res)
+
+__m512d _mm512_add_round_pd (__m512d a, __m512d b, int rounding)
+__m512d _mm512_mask_add_round_pd (__m512d src, __mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_maskz_add_round_pd (__mmask8 k, __m512d a, __m512d b, int rounding)
+__m512 _mm512_add_round_ps (__m512 a, __m512 b, int rounding)
+__m512 _mm512_mask_add_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_maskz_add_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
+
+__m128d _mm_add_round_sd (__m128d a, __m128d b, int rounding)
+__m128d _mm_mask_add_round_sd (__m128d src, __mmask8 k, __m128d a, __m128d b, int rounding)
+__m128d _mm_maskz_add_round_sd (__mmask8 k, __m128d a, __m128d b, int rounding)
+__m128 _mm_add_round_ss (__m128 a, __m128 b, int rounding)
+__m128 _mm_mask_add_round_ss (__m128 src, __mmask8 k, __m128 a, __m128 b, int rounding)
+__m128 _mm_maskz_add_round_ss (__mmask8 k, __m128 a, __m128 b, int rounding)
+__m128d _mm_add_sd (__m128d a, __m128d b)
+__m128d _mm_mask_add_sd (__m128d src, __mmask8 k, __m128d a, __m128d b)
+__m128d _mm_maskz_add_sd (__mmask8 k, __m128d a, __m128d b)
+__m128 _mm_add_ss (__m128 a, __m128 b)
+__m128 _mm_mask_add_ss (__m128 src, __mmask8 k, __m128 a, __m128 b)
+__m128 _mm_maskz_add_ss (__mmask8 k, __m128 a, __m128 b)

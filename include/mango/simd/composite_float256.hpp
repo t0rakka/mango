@@ -36,6 +36,24 @@ namespace simd {
         return result; \
     }
 
+#define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
+    static inline R FUNC(AB a, AB b, MASK mask) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, mask.lo); \
+        result.hi = FUNC(a.hi, b.hi, mask.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
+    static inline R FUNC(AB a, AB b, MASK mask, AB value) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, mask.lo, value.lo); \
+        result.hi = FUNC(a.hi, b.hi, mask.hi, value.hi); \
+        return result; \
+    }
+
     // -----------------------------------------------------------------
     // f32x8
     // -----------------------------------------------------------------
@@ -95,6 +113,9 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(f32x8, f32x8, mul)
     SIMD_COMPOSITE_FUNC2(f32x8, f32x8, div)
 
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f32x8, f32x8, mask32x8, add)
+    SIMD_COMPOSITE_MASK_FUNC2(f32x8, f32x8, mask32x8, add)
+
     static inline f32x8 div(f32x8 a, f32 b)
     {
         f32x8 result;
@@ -142,6 +163,8 @@ namespace simd {
 #undef SIMD_COMPOSITE_FUNC1
 #undef SIMD_COMPOSITE_FUNC2
 #undef SIMD_COMPOSITE_FUNC3
+#undef SIMD_COMPOSITE_ZEROMASK_FUNC2
+#undef SIMD_COMPOSITE_MASK_FUNC2
 
 } // namespace simd
 } // namespace mango

@@ -191,6 +191,16 @@ namespace simd {
         return _mm_add_ps(a, b);
     }
 
+    static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_maskz_add_ps(mask, a, b);
+    }
+
+    static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return _mm_mask_add_ps(value, mask, a, b);
+    }
+
     static inline f32x4 sub(f32x4 a, f32x4 b)
     {
         return _mm_sub_ps(a, b);

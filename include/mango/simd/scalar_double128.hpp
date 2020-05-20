@@ -382,5 +382,19 @@ namespace simd {
         return v;
     }
 
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return select(mask, add(a, b), f64x2_zero());
+    }
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return select(mask, add(a, b), value);
+    }
+
 } // namespace simd
 } // namespace mango

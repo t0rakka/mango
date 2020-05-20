@@ -69,7 +69,7 @@ namespace simd {
         return _mm256_permute_pd(zwzw, 0xf);
     }
 
-#endif
+#endif // MANGO_ENABLE_AVX2
 
     template <>
     inline f64x4 shuffle<0, 1, 2, 3>(f64x4 v)
@@ -479,6 +479,20 @@ namespace simd {
     static inline f64x4 fract(f64x4 s)
     {
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
+    }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f64x4 add(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), add(a, b));
+    }
+
+    static inline f64x4 add(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, add(a, b), value);
     }
 
 } // namespace simd

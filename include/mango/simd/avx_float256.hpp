@@ -302,5 +302,19 @@ namespace simd {
         return _mm256_sub_ps(s, floor(s));
     }
 
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_ps(_mm256_castsi256_ps(mask), add(a, b));
+    }
+
+    static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return select(mask, add(a, b), value);
+    }
+
 } // namespace simd
 } // namespace mango
