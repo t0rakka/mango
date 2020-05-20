@@ -642,9 +642,39 @@ namespace simd {
         return vreinterpretq_f32_s32(vandq_u32(mask, vreinterpretq_u32_f32(add(a, b))));
     }
 
+    static inline f32x4 sub(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return vreinterpretq_f32_s32(vandq_u32(mask, vreinterpretq_u32_f32(sub(a, b))));
+    }
+
+    static inline f32x4 mul(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return vreinterpretq_f32_s32(vandq_u32(mask, vreinterpretq_u32_f32(mul(a, b))));
+    }
+
+    static inline f32x4 div(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return vreinterpretq_f32_s32(vandq_u32(mask, vreinterpretq_u32_f32(div(a, b))));
+    }
+
     static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
     {
         return select(mask, add(a, b), value);
+    }
+
+    static inline f32x4 sub(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return select(mask, sub(a, b), value);
+    }
+
+    static inline f32x4 mul(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return select(mask, mul(a, b), value);
+    }
+
+    static inline f32x4 div(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return select(mask, div(a, b), value);
     }
 
 } // namespace simd

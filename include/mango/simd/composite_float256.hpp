@@ -114,7 +114,13 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(f32x8, f32x8, div)
 
     SIMD_COMPOSITE_ZEROMASK_FUNC2(f32x8, f32x8, mask32x8, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f32x8, f32x8, mask32x8, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f32x8, f32x8, mask32x8, mul)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f32x8, f32x8, mask32x8, div)
     SIMD_COMPOSITE_MASK_FUNC2(f32x8, f32x8, mask32x8, add)
+    SIMD_COMPOSITE_MASK_FUNC2(f32x8, f32x8, mask32x8, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(f32x8, f32x8, mask32x8, mul)
+    SIMD_COMPOSITE_MASK_FUNC2(f32x8, f32x8, mask32x8, div)
 
     static inline f32x8 div(f32x8 a, f32 b)
     {

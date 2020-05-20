@@ -127,14 +127,44 @@ namespace simd {
         return _mm512_sub_ps(a, b);
     }
 
+    static inline f32x16 sub(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_sub_ps(mask, a, b);
+    }
+
+    static inline f32x16 sub(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_sub_ps(value, mask, a, b);
+    }
+
     static inline f32x16 mul(f32x16 a, f32x16 b)
     {
         return _mm512_mul_ps(a, b);
     }
 
+    static inline f32x16 mul(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_mul_ps(mask, a, b);
+    }
+
+    static inline f32x16 mul(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_mul_ps(value, mask, a, b);
+    }
+
     static inline f32x16 div(f32x16 a, f32x16 b)
     {
         return _mm512_div_ps(a, b);
+    }
+
+    static inline f32x16 div(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_div_ps(mask, a, b);
+    }
+
+    static inline f32x16 div(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_div_ps(value, mask, a, b);
     }
 
     static inline f32x16 div(f32x16 a, f32 b)

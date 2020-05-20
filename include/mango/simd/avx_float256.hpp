@@ -311,9 +311,39 @@ namespace simd {
         return _mm256_and_ps(_mm256_castsi256_ps(mask), add(a, b));
     }
 
+    static inline f32x8 sub(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_ps(_mm256_castsi256_ps(mask), sub(a, b));
+    }
+
+    static inline f32x8 mul(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_ps(_mm256_castsi256_ps(mask), mul(a, b));
+    }
+
+    static inline f32x8 div(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_ps(_mm256_castsi256_ps(mask), div(a, b));
+    }
+
     static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
     {
         return select(mask, add(a, b), value);
+    }
+
+    static inline f32x8 sub(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return select(mask, sub(a, b), value);
+    }
+
+    static inline f32x8 mul(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return select(mask, mul(a, b), value);
+    }
+
+    static inline f32x8 div(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return select(mask, div(a, b), value);
     }
 
 } // namespace simd
