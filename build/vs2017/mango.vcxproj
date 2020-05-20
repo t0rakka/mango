@@ -167,9 +167,12 @@
     <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\neon_int128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\scalar_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_detail.hpp" />
     <ClInclude Include="..\..\include\mango\simd\scalar_double128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\scalar_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_float64.hpp" />
     <ClInclude Include="..\..\include\mango\simd\scalar_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_int64.hpp" />
     <ClInclude Include="..\..\include\mango\simd\simd.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse2_convert.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse2_double128.hpp" />
