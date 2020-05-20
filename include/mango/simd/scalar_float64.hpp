@@ -46,7 +46,7 @@ namespace simd {
 
     static inline f32x2 f32x2_zero()
     {
-        return {{ 0.0, 0.0 }};
+        return {{ 0.0f, 0.0f }};
     }
 
     static inline f32x2 f32x2_set(f32 s)
@@ -149,8 +149,8 @@ namespace simd {
     static inline f32x2 sign(f32x2 a)
     {
         f32x2 v;
-        v[0] = a[0] < 0 ? -1.0 : (a[0] > 0 ? 1.0 : 0.0);
-        v[1] = a[1] < 0 ? -1.0 : (a[1] > 0 ? 1.0 : 0.0);
+        v[0] = a[0] < 0 ? -1.0f : (a[0] > 0 ? 1.0f : 0.0f);
+        v[1] = a[1] < 0 ? -1.0f : (a[1] > 0 ? 1.0f : 0.0f);
         return v;
     }
 
@@ -256,16 +256,16 @@ namespace simd {
     static inline f32x2 rcp(f32x2 a)
     {
         f32x2 v;
-        v[0] = 1.0 / a[0];
-        v[1] = 1.0 / a[1];
+        v[0] = 1.0f / a[0];
+        v[1] = 1.0f / a[1];
         return v;
     }
 
     static inline f32x2 rsqrt(f32x2 a)
     {
         f32x2 v;
-        v[0] = 1.0 / std::sqrt(a[0]);
-        v[1] = 1.0 / std::sqrt(a[1]);
+        v[0] = 1.0f / std::sqrt(a[0]);
+        v[1] = 1.0f / std::sqrt(a[1]);
         return v;
     }
 

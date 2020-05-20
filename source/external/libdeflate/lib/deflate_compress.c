@@ -529,7 +529,7 @@ deflate_flush_bits(struct deflate_output_bitstream *os)
 		/* Flush a whole word (branchlessly).  */
 		put_unaligned_leword(os->bitbuf, os->next);
 		os->bitbuf >>= os->bitcount & ~7;
-		os->next += MIN(os->end - os->next, os->bitcount >> 3);
+		os->next += MIN((unsigned int)(os->end - os->next), os->bitcount >> 3);
 		os->bitcount &= 7;
 	} else {
 		/* Flush a byte at a time.  */
@@ -1661,7 +1661,7 @@ deflate_write_uncompressed_block(struct deflate_output_bitstream *os,
 				   DEFLATE_BLOCKTYPE_UNCOMPRESSED);
 	deflate_align_bitstream(os);
 
-	if (4 + (u32)len >= os->end - os->next) {
+	if (4 + (u32)len >= (size_t)(os->end - os->next)) {
 		os->next = os->end;
 		return;
 	}
@@ -1993,7 +1993,7 @@ deflate_compress_greedy(struct libdeflate_compressor * restrict c,
 
 			/* Decrease the maximum and nice match lengths if we're
 			 * approaching the end of the input buffer.  */
-			if (unlikely(max_len > in_end - in_next)) {
+			if (unlikely(max_len > (size_t)(in_end - in_next))) {
 				max_len = (unsigned int)(in_end - in_next);
 				nice_len = MIN(nice_len, max_len);
 			}
@@ -2524,7 +2524,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 
 			/* Decrease the maximum and nice match lengths if we're
 			 * approaching the end of the input buffer.  */
-			if (unlikely(max_len > in_end - in_next)) {
+			if (unlikely(max_len > (size_t)(in_end - in_next))) {
 				max_len = (unsigned int)(in_end - in_next);
 				nice_len = MIN(nice_len, max_len);
 			}
@@ -2596,7 +2596,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 						in_next_slide = in_next + MIN(in_end - in_next,
 									      MATCHFINDER_WINDOW_SIZE);
 					}
-					if (unlikely(max_len > in_end - in_next)) {
+					if (unlikely(max_len > (size_t)(in_end - in_next))) {
 						max_len = (unsigned int)(in_end - in_next);
 						nice_len = MIN(nice_len, max_len);
 					}

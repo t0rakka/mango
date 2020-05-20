@@ -50,7 +50,7 @@ namespace mango {
     }
 
     Buffer::Buffer(Stream& stream, Alignment alignment)
-        : m_memory(allocate(stream.size(), alignment), stream.size())
+        : m_memory(allocate(size_t(stream.size()), alignment), size_t(stream.size()))
         , m_capacity(m_memory.size)
         , m_alignment(alignment)
     {
