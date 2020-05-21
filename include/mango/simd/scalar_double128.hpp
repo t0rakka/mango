@@ -386,45 +386,11 @@ namespace simd {
     // masked functions
     // -----------------------------------------------------------------
 
-    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
-    {
-        return select(mask, add(a, b), f64x2_zero());
-    }
-
-    static inline f64x2 sub(f64x2 a, f64x2 b, mask64x2 mask)
-    {
-        return select(mask, sub(a, b), f64x2_zero());
-    }
-
-    static inline f64x2 mul(f64x2 a, f64x2 b, mask64x2 mask)
-    {
-        return select(mask, mul(a, b), f64x2_zero());
-    }
-
-    static inline f64x2 div(f64x2 a, f64x2 b, mask64x2 mask)
-    {
-        return select(mask, div(a, b), f64x2_zero());
-    }
-
-    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline f64x2 sub(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
-    {
-        return select(mask, sub(a, b), value);
-    }
-
-    static inline f64x2 mul(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
-    {
-        return select(mask, mul(a, b), value);
-    }
-
-    static inline f64x2 div(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
-    {
-        return select(mask, div(a, b), value);
-    }
+#define SIMD_ZEROMASK_DOUBLE128
+#define SIMD_MASK_DOUBLE128
+#include "common_mask.hpp"
+#undef SIMD_ZEROMASK_DOUBLE128
+#undef SIMD_MASK_DOUBLE128
 
 } // namespace simd
 } // namespace mango

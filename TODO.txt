@@ -71,49 +71,15 @@ compressed formats
 simd
 ---------------------------------------------------------------------------------------------
 
-__m128i _mm_sign_epi16 (__m128i a, __m128i b)
-__m256i _mm256_sign_epi16 (__m256i a, __m256i b)
-__m128i _mm_sign_epi32 (__m128i a, __m128i b)
-__m256i _mm256_sign_epi32 (__m256i a, __m256i b)
-__m128i _mm_sign_epi8 (__m128i a, __m128i b)
-__m256i _mm256_sign_epi8 (__m256i a, __m256i b)
-
-__m128i _mm_mask_sub_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
-__m128i _mm_maskz_sub_epi16 (__mmask8 k, __m128i a, __m128i b)
-__m128i _mm_sub_epi16 (__m128i a, __m128i b)
-__m256i _mm256_mask_sub_epi16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
-__m256i _mm256_maskz_sub_epi16 (__mmask16 k, __m256i a, __m256i b)
-__m256i _mm256_sub_epi16 (__m256i a, __m256i b)
-__m512i _mm512_mask_sub_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
-__m512i _mm512_maskz_sub_epi16 (__mmask32 k, __m512i a, __m512i b)
-__m512i _mm512_sub_epi16 (__m512i a, __m512i b)
-__m128i _mm_mask_sub_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
-__m128i _mm_maskz_sub_epi32 (__mmask8 k, __m128i a, __m128i b)
-__m128i _mm_sub_epi32 (__m128i a, __m128i b)
-__m256i _mm256_mask_sub_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
-__m256i _mm256_maskz_sub_epi32 (__mmask8 k, __m256i a, __m256i b)
-__m256i _mm256_sub_epi32 (__m256i a, __m256i b)
-__m512i _mm512_mask_sub_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
-__m512i _mm512_maskz_sub_epi32 (__mmask16 k, __m512i a, __m512i b)
-__m512i _mm512_sub_epi32 (__m512i a, __m512i b)
-__m128i _mm_mask_sub_epi64 (__m128i src, __mmask8 k, __m128i a, __m128i b)
-__m128i _mm_maskz_sub_epi64 (__mmask8 k, __m128i a, __m128i b)
-__m128i _mm_sub_epi64 (__m128i a, __m128i b)
-__m256i _mm256_mask_sub_epi64 (__m256i src, __mmask8 k, __m256i a, __m256i b)
-__m256i _mm256_maskz_sub_epi64 (__mmask8 k, __m256i a, __m256i b)
-__m256i _mm256_sub_epi64 (__m256i a, __m256i b)
-__m512i _mm512_mask_sub_epi64 (__m512i src, __mmask8 k, __m512i a, __m512i b)
-__m512i _mm512_maskz_sub_epi64 (__mmask8 k, __m512i a, __m512i b)
-__m512i _mm512_sub_epi64 (__m512i a, __m512i b)
-__m128i _mm_mask_sub_epi8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
-__m128i _mm_maskz_sub_epi8 (__mmask16 k, __m128i a, __m128i b)
-__m128i _mm_sub_epi8 (__m128i a, __m128i b)
-__m256i _mm256_mask_sub_epi8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
-__m256i _mm256_maskz_sub_epi8 (__mmask32 k, __m256i a, __m256i b)
-__m256i _mm256_sub_epi8 (__m256i a, __m256i b)
-__m512i _mm512_mask_sub_epi8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
-__m512i _mm512_maskz_sub_epi8 (__mmask64 k, __m512i a, __m512i b)
-__m512i _mm512_sub_epi8 (__m512i a, __m512i b)
+__m128i _mm_adds_epi8 (__m128i a, __m128i b)
+__m128i _mm_mask_adds_epi8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
+__m128i _mm_maskz_adds_epi8 (__mmask16 k, __m128i a, __m128i b)
+__m256i _mm256_adds_epi8 (__m256i a, __m256i b)
+__m256i _mm256_mask_adds_epi8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_adds_epi8 (__mmask32 k, __m256i a, __m256i b)
+__m512i _mm512_adds_epi8 (__m512i a, __m512i b)
+__m512i _mm512_mask_adds_epi8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_adds_epi8 (__mmask64 k, __m512i a, __m512i b)
 
 __m128i _mm_adds_epi16 (__m128i a, __m128i b)
 __m128i _mm_mask_adds_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
@@ -125,17 +91,16 @@ __m512i _mm512_adds_epi16 (__m512i a, __m512i b)
 __m512i _mm512_mask_adds_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_adds_epi16 (__mmask32 k, __m512i a, __m512i b)
 
-__m128i _mm_adds_epi8 (__m128i a, __m128i b)
-__m128i _mm_mask_adds_epi8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
-__m128i _mm_maskz_adds_epi8 (__mmask16 k, __m128i a, __m128i b)
-__m256i _mm256_adds_epi8 (__m256i a, __m256i b)
-__m256i _mm256_mask_adds_epi8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
-__m256i _mm256_maskz_adds_epi8 (__mmask32 k, __m256i a, __m256i b)
-__m512i _mm512_adds_epi8 (__m512i a, __m512i b)
-__m512i _mm512_mask_adds_epi8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
-__m512i _mm512_maskz_adds_epi8 (__mmask64 k, __m512i a, __m512i b)
-
 -
+
+__m128i _mm_mask_adds_epu8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
+__m128i _mm_maskz_adds_epu8 (__mmask16 k, __m128i a, __m128i b)
+__m256i _mm256_adds_epu8 (__m256i a, __m256i b)
+__m256i _mm256_mask_adds_epu8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_adds_epu8 (__mmask32 k, __m256i a, __m256i b)
+__m512i _mm512_adds_epu8 (__m512i a, __m512i b)
+__m512i _mm512_mask_adds_epu8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_adds_epu8 (__mmask64 k, __m512i a, __m512i b)
 
 __m128i _mm_adds_epu16 (__m128i a, __m128i b)
 __m128i _mm_mask_adds_epu16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
@@ -148,15 +113,6 @@ __m512i _mm512_mask_adds_epu16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_adds_epu16 (__mmask32 k, __m512i a, __m512i b)
 __m128i _mm_adds_epu8 (__m128i a, __m128i b)
 
-__m128i _mm_mask_adds_epu8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
-__m128i _mm_maskz_adds_epu8 (__mmask16 k, __m128i a, __m128i b)
-__m256i _mm256_adds_epu8 (__m256i a, __m256i b)
-__m256i _mm256_mask_adds_epu8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
-__m256i _mm256_maskz_adds_epu8 (__mmask32 k, __m256i a, __m256i b)
-__m512i _mm512_adds_epu8 (__m512i a, __m512i b)
-__m512i _mm512_mask_adds_epu8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
-__m512i _mm512_maskz_adds_epu8 (__mmask64 k, __m512i a, __m512i b)
-
 --
 
 __m128i _mm_mask_subs_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
@@ -168,6 +124,7 @@ __m256i _mm256_subs_epi16 (__m256i a, __m256i b)
 __m512i _mm512_mask_subs_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_subs_epi16 (__mmask32 k, __m512i a, __m512i b)
 __m512i _mm512_subs_epi16 (__m512i a, __m512i b)
+
 __m128i _mm_mask_subs_epi8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
 __m128i _mm_maskz_subs_epi8 (__mmask16 k, __m128i a, __m128i b)
 __m128i _mm_subs_epi8 (__m128i a, __m128i b)
@@ -178,6 +135,8 @@ __m512i _mm512_mask_subs_epi8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_subs_epi8 (__mmask64 k, __m512i a, __m512i b)
 __m512i _mm512_subs_epi8 (__m512i a, __m512i b)
 
+-
+
 __m128i _mm_mask_subs_epu16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
 __m128i _mm_maskz_subs_epu16 (__mmask8 k, __m128i a, __m128i b)
 __m128i _mm_subs_epu16 (__m128i a, __m128i b)
@@ -187,6 +146,7 @@ __m256i _mm256_subs_epu16 (__m256i a, __m256i b)
 __m512i _mm512_mask_subs_epu16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_subs_epu16 (__mmask32 k, __m512i a, __m512i b)
 __m512i _mm512_subs_epu16 (__m512i a, __m512i b)
+
 __m128i _mm_mask_subs_epu8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
 __m128i _mm_maskz_subs_epu8 (__mmask16 k, __m128i a, __m128i b)
 __m128i _mm_subs_epu8 (__m128i a, __m128i b)
@@ -196,6 +156,8 @@ __m256i _mm256_subs_epu8 (__m256i a, __m256i b)
 __m512i _mm512_mask_subs_epu8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_subs_epu8 (__mmask64 k, __m512i a, __m512i b)
 __m512i _mm512_subs_epu8 (__m512i a, __m512i b)
+
+-
 
 __m128i _mm_div_epi16 (__m128i a, __m128i b)
 __m256i _mm256_div_epi16 (__m256i a, __m256i b)
@@ -231,19 +193,6 @@ __m512d _mm512_maskz_div_round_pd (__mmask8 k, __m512d a, __m512d b, int roundin
 __m512 _mm512_div_round_ps (__m512 a, __m512 b, int rounding)
 __m512 _mm512_mask_div_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
 __m512 _mm512_maskz_div_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
-__m128d _mm_div_round_sd (__m128d a, __m128d b, int rounding)
-__m128d _mm_mask_div_round_sd (__m128d src, __mmask8 k, __m128d a, __m128d b, int rounding)
-__m128d _mm_maskz_div_round_sd (__mmask8 k, __m128d a, __m128d b, int rounding)
-__m128 _mm_div_round_ss (__m128 a, __m128 b, int rounding)
-__m128 _mm_mask_div_round_ss (__m128 src, __mmask8 k, __m128 a, __m128 b, int rounding)
-__m128 _mm_maskz_div_round_ss (__mmask8 k, __m128 a, __m128 b, int rounding)
-
-__m128d _mm_div_sd (__m128d a, __m128d b)
-__m128d _mm_mask_div_sd (__m128d src, __mmask8 k, __m128d a, __m128d b)
-__m128d _mm_maskz_div_sd (__mmask8 k, __m128d a, __m128d b)
-__m128 _mm_div_ss (__m128 a, __m128 b)
-__m128 _mm_mask_div_ss (__m128 src, __mmask8 k, __m128 a, __m128 b)
-__m128 _mm_maskz_div_ss (__mmask8 k, __m128 a, __m128 b)
 
 __m128d _mm_dp_pd (__m128d a, __m128d b, const int imm8)
 __m128 _mm_dp_ps (__m128 a, __m128 b, const int imm8)
@@ -379,38 +328,6 @@ vfmadd132ps,...
 __m512 _mm512_mask3_fmadd_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
 vfmadd132ps,...
 __m512 _mm512_maskz_fmadd_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
-vfmadd132sd,...
-__m128d _mm_fmadd_round_sd (__m128d a, __m128d b, __m128d c, int rounding)
-vfmadd132sd,...
-__m128d _mm_mask_fmadd_round_sd (__m128d a, __mmask8 k, __m128d b, __m128d c, int rounding)
-vfmadd132sd,...
-__m128d _mm_mask3_fmadd_round_sd (__m128d a, __m128d b, __m128d c, __mmask8 k, int rounding)
-vfmadd132sd,...
-__m128d _mm_maskz_fmadd_round_sd (__mmask8 k, __m128d a, __m128d b, __m128d c, int rounding)
-vfmadd132ss,...
-__m128 _mm_fmadd_round_ss (__m128 a, __m128 b, __m128 c, int rounding)
-vfmadd132ss,...
-__m128 _mm_mask_fmadd_round_ss (__m128 a, __mmask8 k, __m128 b, __m128 c, int rounding)
-vfmadd132ss,...
-__m128 _mm_mask3_fmadd_round_ss (__m128 a, __m128 b, __m128 c, __mmask8 k, int rounding)
-vfmadd132ss,...
-__m128 _mm_maskz_fmadd_round_ss (__mmask8 k, __m128 a, __m128 b, __m128 c, int rounding)
-vfmadd132sd,...
-__m128d _mm_fmadd_sd (__m128d a, __m128d b, __m128d c)
-vfmadd132sd,...
-__m128d _mm_mask_fmadd_sd (__m128d a, __mmask8 k, __m128d b, __m128d c)
-vfmadd132sd,...
-__m128d _mm_mask3_fmadd_sd (__m128d a, __m128d b, __m128d c, __mmask8 k)
-vfmadd132sd,...
-__m128d _mm_maskz_fmadd_sd (__mmask8 k, __m128d a, __m128d b, __m128d c)
-vfmadd132ss,...
-__m128 _mm_fmadd_ss (__m128 a, __m128 b, __m128 c)
-vfmadd132ss,...
-__m128 _mm_mask_fmadd_ss (__m128 a, __mmask8 k, __m128 b, __m128 c)
-vfmadd132ss,...
-__m128 _mm_mask3_fmadd_ss (__m128 a, __m128 b, __m128 c, __mmask8 k)
-vfmadd132ss,...
-__m128 _mm_maskz_fmadd_ss (__mmask8 k, __m128 a, __m128 b, __m128 c)
 vpmadd233d
 __m512i _mm512_fmadd233_epi32 (__m512i a, __m512i b)
 vpmadd233d
@@ -528,38 +445,7 @@ vfmsub132ps,...
 __m512 _mm512_mask3_fmsub_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
 vfmsub132ps,...
 __m512 _mm512_maskz_fmsub_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
-vfmsub132sd,...
-__m128d _mm_fmsub_round_sd (__m128d a, __m128d b, __m128d c, int rounding)
-vfmsub132sd,...
-__m128d _mm_mask_fmsub_round_sd (__m128d a, __mmask8 k, __m128d b, __m128d c, int rounding)
-vfmsub132sd,...
-__m128d _mm_mask3_fmsub_round_sd (__m128d a, __m128d b, __m128d c, __mmask8 k, int rounding)
-vfmsub132sd,...
-__m128d _mm_maskz_fmsub_round_sd (__mmask8 k, __m128d a, __m128d b, __m128d c, int rounding)
 vfmsub132ss,...
-__m128 _mm_fmsub_round_ss (__m128 a, __m128 b, __m128 c, int rounding)
-vfmsub132ss,...
-__m128 _mm_mask_fmsub_round_ss (__m128 a, __mmask8 k, __m128 b, __m128 c, int rounding)
-vfmsub132ss,...
-__m128 _mm_mask3_fmsub_round_ss (__m128 a, __m128 b, __m128 c, __mmask8 k, int rounding)
-vfmsub132ss,...
-__m128 _mm_maskz_fmsub_round_ss (__mmask8 k, __m128 a, __m128 b, __m128 c, int rounding)
-vfmsub132sd,...
-__m128d _mm_fmsub_sd (__m128d a, __m128d b, __m128d c)
-vfmsub132sd,...
-__m128d _mm_mask_fmsub_sd (__m128d a, __mmask8 k, __m128d b, __m128d c)
-vfmsub132sd,...
-__m128d _mm_mask3_fmsub_sd (__m128d a, __m128d b, __m128d c, __mmask8 k)
-vfmsub132sd,...
-__m128d _mm_maskz_fmsub_sd (__mmask8 k, __m128d a, __m128d b, __m128d c)
-vfmsub132ss,...
-__m128 _mm_fmsub_ss (__m128 a, __m128 b, __m128 c)
-vfmsub132ss,...
-__m128 _mm_mask_fmsub_ss (__m128 a, __mmask8 k, __m128 b, __m128 c)
-vfmsub132ss,...
-__m128 _mm_mask3_fmsub_ss (__m128 a, __m128 b, __m128 c, __mmask8 k)
-vfmsub132ss,...
-__m128 _mm_maskz_fmsub_ss (__mmask8 k, __m128 a, __m128 b, __m128 c)
 vfmsubadd132pd,...
 __m128d _mm_fmsubadd_pd (__m128d a, __m128d b, __m128d c)
 vfmsubadd132pd,...
@@ -688,38 +574,6 @@ vfnmadd132ps,...
 __m512 _mm512_mask3_fnmadd_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
 vfnmadd132ps,...
 __m512 _mm512_maskz_fnmadd_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
-vfnmadd132sd,...
-__m128d _mm_fnmadd_round_sd (__m128d a, __m128d b, __m128d c, int rounding)
-vfnmadd132sd,...
-__m128d _mm_mask_fnmadd_round_sd (__m128d a, __mmask8 k, __m128d b, __m128d c, int rounding)
-vfnmadd132sd,...
-__m128d _mm_mask3_fnmadd_round_sd (__m128d a, __m128d b, __m128d c, __mmask8 k, int rounding)
-vfnmadd132sd,...
-__m128d _mm_maskz_fnmadd_round_sd (__mmask8 k, __m128d a, __m128d b, __m128d c, int rounding)
-vfnmadd132ss,...
-__m128 _mm_fnmadd_round_ss (__m128 a, __m128 b, __m128 c, int rounding)
-vfnmadd132ss,...
-__m128 _mm_mask_fnmadd_round_ss (__m128 a, __mmask8 k, __m128 b, __m128 c, int rounding)
-vfnmadd132ss,...
-__m128 _mm_mask3_fnmadd_round_ss (__m128 a, __m128 b, __m128 c, __mmask8 k, int rounding)
-vfnmadd132ss,...
-__m128 _mm_maskz_fnmadd_round_ss (__mmask8 k, __m128 a, __m128 b, __m128 c, int rounding)
-vfnmadd132sd,...
-__m128d _mm_fnmadd_sd (__m128d a, __m128d b, __m128d c)
-vfnmadd132sd,...
-__m128d _mm_mask_fnmadd_sd (__m128d a, __mmask8 k, __m128d b, __m128d c)
-vfnmadd132sd,...
-__m128d _mm_mask3_fnmadd_sd (__m128d a, __m128d b, __m128d c, __mmask8 k)
-vfnmadd213sd,...
-__m128d _mm_maskz_fnmadd_sd (__mmask8 k, __m128d a, __m128d b, __m128d c)
-vfnmadd132ss,...
-__m128 _mm_fnmadd_ss (__m128 a, __m128 b, __m128 c)
-vfnmadd132ss,...
-__m128 _mm_mask_fnmadd_ss (__m128 a, __mmask8 k, __m128 b, __m128 c)
-vfnmadd132ss,...
-__m128 _mm_mask3_fnmadd_ss (__m128 a, __m128 b, __m128 c, __mmask8 k)
-vfnmadd132ss,...
-__m128 _mm_maskz_fnmadd_ss (__mmask8 k, __m128 a, __m128 b, __m128 c)
 vfnmsub132pd,...
 __m128d _mm_fnmsub_pd (__m128d a, __m128d b, __m128d c)
 vfnmsub132pd,...
@@ -784,38 +638,6 @@ vfnmsub132ps,...
 __m512 _mm512_mask3_fnmsub_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
 vfnmsub132ps,...
 __m512 _mm512_maskz_fnmsub_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
-vfnmsub132sd,...
-__m128d _mm_fnmsub_round_sd (__m128d a, __m128d b, __m128d c, int rounding)
-vfnmsub132sd,...
-__m128d _mm_mask_fnmsub_round_sd (__m128d a, __mmask8 k, __m128d b, __m128d c, int rounding)
-vfnmsub132sd,...
-__m128d _mm_mask3_fnmsub_round_sd (__m128d a, __m128d b, __m128d c, __mmask8 k, int rounding)
-vfnmsub132sd,...
-__m128d _mm_maskz_fnmsub_round_sd (__mmask8 k, __m128d a, __m128d b, __m128d c, int rounding)
-vfnmsub132ss,...
-__m128 _mm_fnmsub_round_ss (__m128 a, __m128 b, __m128 c, int rounding)
-vfnmsub132ss,...
-__m128 _mm_mask_fnmsub_round_ss (__m128 a, __mmask8 k, __m128 b, __m128 c, int rounding)
-vfnmsub132ss,...
-__m128 _mm_mask3_fnmsub_round_ss (__m128 a, __m128 b, __m128 c, __mmask8 k, int rounding)
-vfnmsub132ss,...
-__m128 _mm_maskz_fnmsub_round_ss (__mmask8 k, __m128 a, __m128 b, __m128 c, int rounding)
-vfnmsub132sd,...
-__m128d _mm_fnmsub_sd (__m128d a, __m128d b, __m128d c)
-vfnmsub132sd,...
-__m128d _mm_mask_fnmsub_sd (__m128d a, __mmask8 k, __m128d b, __m128d c)
-vfnmsub132sd,...
-__m128d _mm_mask3_fnmsub_sd (__m128d a, __m128d b, __m128d c, __mmask8 k)
-vfnmsub132sd,...
-__m128d _mm_maskz_fnmsub_sd (__mmask8 k, __m128d a, __m128d b, __m128d c)
-vfnmsub132ss,...
-__m128 _mm_fnmsub_ss (__m128 a, __m128 b, __m128 c)
-vfnmsub132ss,...
-__m128 _mm_mask_fnmsub_ss (__m128 a, __mmask8 k, __m128 b, __m128 c)
-vfnmsub132ss,...
-__m128 _mm_mask3_fnmsub_ss (__m128 a, __m128 b, __m128 c, __mmask8 k)
-vfnmsub132ss,...
-__m128 _mm_maskz_fnmsub_ss (__mmask8 k, __m128 a, __m128 b, __m128 c)
 
 __m128i _mm_gf2p8affine_epi64_epi8 (__m128i x, __m128i A, int b)
 __m128i _mm_mask_gf2p8affine_epi64_epi8 (__m128i src, __mmask16 k, __m128i x, __m128i A, int b)
@@ -1067,19 +889,7 @@ __m512d _mm512_mul_round_pd (__m512d a, __m512d b, int rounding)
 __m512 _mm512_mask_mul_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
 __m512 _mm512_maskz_mul_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
 __m512 _mm512_mul_round_ps (__m512 a, __m512 b, int rounding)
-__m128d _mm_mask_mul_round_sd (__m128d src, __mmask8 k, __m128d a, __m128d b, int rounding)
-__m128d _mm_maskz_mul_round_sd (__mmask8 k, __m128d a, __m128d b, int rounding)
-__m128d _mm_mul_round_sd (__m128d a, __m128d b, int rounding)
-__m128 _mm_mask_mul_round_ss (__m128 src, __mmask8 k, __m128 a, __m128 b, int rounding)
-__m128 _mm_maskz_mul_round_ss (__mmask8 k, __m128 a, __m128 b, int rounding)
-__m128 _mm_mul_round_ss (__m128 a, __m128 b, int rounding)
 
-__m128d _mm_mask_mul_sd (__m128d src, __mmask8 k, __m128d a, __m128d b)
-__m128d _mm_maskz_mul_sd (__mmask8 k, __m128d a, __m128d b)
-__m128d _mm_mul_sd (__m128d a, __m128d b)
-__m128 _mm_mask_mul_ss (__m128 src, __mmask8 k, __m128 a, __m128 b)
-__m128 _mm_maskz_mul_ss (__mmask8 k, __m128 a, __m128 b)
-__m128 _mm_mul_ss (__m128 a, __m128 b)
 __m64 _mm_mul_su32 (__m64 a, __m64 b)
 __m128i _mm_mask_mulhi_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
 __m128i _mm_maskz_mulhi_epi16 (__mmask8 k, __m128i a, __m128i b)
@@ -1236,32 +1046,8 @@ __m512 _mm512_mask_sub_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, in
 __m512 _mm512_maskz_sub_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
 vsubps
 __m512 _mm512_sub_round_ps (__m512 a, __m512 b, int rounding)
-vsubsd
-__m128d _mm_mask_sub_round_sd (__m128d src, __mmask8 k, __m128d a, __m128d b, int rounding)
-vsubsd
-__m128d _mm_maskz_sub_round_sd (__mmask8 k, __m128d a, __m128d b, int rounding)
-vsubsd
-__m128d _mm_sub_round_sd (__m128d a, __m128d b, int rounding)
-vsubss
-__m128 _mm_mask_sub_round_ss (__m128 src, __mmask8 k, __m128 a, __m128 b, int rounding)
-vsubss
-__m128 _mm_maskz_sub_round_ss (__mmask8 k, __m128 a, __m128 b, int rounding)
-vsubss
-__m128 _mm_sub_round_ss (__m128 a, __m128 b, int rounding)
-vsubsd
-__m128d _mm_mask_sub_sd (__m128d src, __mmask8 k, __m128d a, __m128d b)
-vsubsd
-__m128d _mm_maskz_sub_sd (__mmask8 k, __m128d a, __m128d b)
-subsd
-__m128d _mm_sub_sd (__m128d a, __m128d b)
 psubq
 __m64 _mm_sub_si64 (__m64 a, __m64 b)
-vsubss
-__m128 _mm_mask_sub_ss (__m128 src, __mmask8 k, __m128 a, __m128 b)
-vsubss
-__m128 _mm_maskz_sub_ss (__mmask8 k, __m128 a, __m128 b)
-subss
-__m128 _mm_sub_ss (__m128 a, __m128 b)
 sbb
 unsigned char _subborrow_u32 (unsigned char c_in, unsigned int a, unsigned int b, unsigned int * out)
 sbb
@@ -1319,19 +1105,6 @@ __m512 _mm512_add_round_ps (__m512 a, __m512 b, int rounding)
 __m512 _mm512_mask_add_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
 __m512 _mm512_maskz_add_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
 
-__m128d _mm_add_round_sd (__m128d a, __m128d b, int rounding)
-__m128d _mm_mask_add_round_sd (__m128d src, __mmask8 k, __m128d a, __m128d b, int rounding)
-__m128d _mm_maskz_add_round_sd (__mmask8 k, __m128d a, __m128d b, int rounding)
-__m128 _mm_add_round_ss (__m128 a, __m128 b, int rounding)
-__m128 _mm_mask_add_round_ss (__m128 src, __mmask8 k, __m128 a, __m128 b, int rounding)
-__m128 _mm_maskz_add_round_ss (__mmask8 k, __m128 a, __m128 b, int rounding)
-__m128d _mm_add_sd (__m128d a, __m128d b)
-__m128d _mm_mask_add_sd (__m128d src, __mmask8 k, __m128d a, __m128d b)
-__m128d _mm_maskz_add_sd (__mmask8 k, __m128d a, __m128d b)
-__m128 _mm_add_ss (__m128 a, __m128 b)
-__m128 _mm_mask_add_ss (__m128 src, __mmask8 k, __m128 a, __m128 b)
-__m128 _mm_maskz_add_ss (__mmask8 k, __m128 a, __m128 b)
-
 __m512d _mm512_addn_pd (__m512d v2, __m512d v3)
 __m512d _mm512_mask_addn_pd (__m512d src, __mmask8 k, __m512d v2, __m512d v3)
 __m512 _mm512_addn_ps (__m512 v2, __m512 v3)
@@ -1369,3 +1142,10 @@ __m256i _mm256_maskz_avg_epu8 (__mmask32 k, __m256i a, __m256i b)
 __m512i _mm512_avg_epu8 (__m512i a, __m512i b)
 __m512i _mm512_mask_avg_epu8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
 __m512i _mm512_maskz_avg_epu8 (__mmask64 k, __m512i a, __m512i b)
+
+__m128i _mm_sign_epi16 (__m128i a, __m128i b)
+__m256i _mm256_sign_epi16 (__m256i a, __m256i b)
+__m128i _mm_sign_epi32 (__m128i a, __m128i b)
+__m256i _mm256_sign_epi32 (__m256i a, __m256i b)
+__m128i _mm_sign_epi8 (__m128i a, __m128i b)
+__m256i _mm256_sign_epi8 (__m256i a, __m256i b)

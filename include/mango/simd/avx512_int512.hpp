@@ -108,6 +108,16 @@ namespace detail {
         return _mm512_sub_epi8(a, b);
     }
 
+    static inline u8x64 sub(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_sub_epi8(mask, a, b);
+    }
+
+    static inline u8x64 sub(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_sub_epi8(value, mask, a, b);
+    }
+
     static inline u8x64 adds(u8x64 a, u8x64 b)
     {
         return _mm512_adds_epu8(a, b);
@@ -256,6 +266,16 @@ namespace detail {
     static inline u16x32 sub(u16x32 a, u16x32 b)
     {
         return _mm512_sub_epi16(a, b);
+    }
+
+    static inline u16x32 sub(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_sub_epi16(mask, a, b);
+    }
+
+    static inline u16x32 sub(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_sub_epi16(value, mask, a, b);
     }
 
     static inline u16x32 adds(u16x32 a, u16x32 b)
@@ -455,6 +475,16 @@ namespace detail {
     static inline u32x16 sub(u32x16 a, u32x16 b)
     {
         return _mm512_sub_epi32(a, b);
+    }
+
+    static inline u32x16 sub(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_sub_epi32(mask, a, b);
+    }
+
+    static inline u32x16 sub(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_sub_epi32(value, mask, a, b);
     }
 
     static inline u32x16 avg(u32x16 a, u32x16 b)
@@ -666,6 +696,16 @@ namespace detail {
         return _mm512_sub_epi64(a, b);
     }
 
+    static inline u64x8 sub(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_sub_epi64(mask, a, b);
+    }
+
+    static inline u64x8 sub(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_sub_epi64(value, mask, a, b);
+    }
+
     static inline u64x8 avg(u64x8 a, u64x8 b)
     {
         __m512i axb = _mm512_xor_si512(a, b);
@@ -835,6 +875,16 @@ namespace detail {
     static inline s8x64 sub(s8x64 a, s8x64 b)
     {
         return _mm512_sub_epi8(a, b);
+    }
+
+    static inline s8x64 sub(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_sub_epi8(mask, a, b);
+    }
+
+    static inline s8x64 sub(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_sub_epi8(value, mask, a, b);
     }
 
     static inline s8x64 adds(s8x64 a, s8x64 b)
@@ -1024,6 +1074,16 @@ namespace detail {
     static inline s16x32 sub(s16x32 a, s16x32 b)
     {
         return _mm512_sub_epi16(a, b);
+    }
+
+    static inline s16x32 sub(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_sub_epi16(mask, a, b);
+    }
+
+    static inline s16x32 sub(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_sub_epi16(value, mask, a, b);
     }
 
     static inline s16x32 adds(s16x32 a, s16x32 b)
@@ -1274,6 +1334,16 @@ namespace detail {
         return _mm512_sub_epi32(a, b);
     }
 
+    static inline s32x16 sub(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_sub_epi32(mask, a, b);
+    }
+
+    static inline s32x16 sub(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_sub_epi32(value, mask, a, b);
+    }
+
     static inline s32x16 avg(s32x16 a, s32x16 b)
     {
         const __m512i sign = _mm512_set1_epi32(0x80000000);
@@ -1495,6 +1565,16 @@ namespace detail {
     static inline s64x8 sub(s64x8 a, s64x8 b)
     {
         return _mm512_sub_epi64(a, b);
+    }
+
+    static inline s64x8 sub(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_sub_epi64(mask, a, b);
+    }
+
+    static inline s64x8 sub(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_sub_epi64(value, mask, a, b);
     }
 
     static inline s64x8 avg(s64x8 a, s64x8 b)

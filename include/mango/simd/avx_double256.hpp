@@ -485,6 +485,8 @@ namespace simd {
     // masked functions
     // -----------------------------------------------------------------
 
+    // zeromask
+
     static inline f64x4 add(f64x4 a, f64x4 b, mask64x4 mask)
     {
         return _mm256_and_pd(_mm256_castsi256_pd(mask), add(a, b));
@@ -504,6 +506,8 @@ namespace simd {
     {
         return _mm256_and_pd(_mm256_castsi256_pd(mask), div(a, b));
     }
+
+    // mask
 
     static inline f64x4 add(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
     {

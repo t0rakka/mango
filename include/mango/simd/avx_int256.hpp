@@ -1634,6 +1634,8 @@ namespace detail {
     // masked functions
     // -----------------------------------------------------------------
 
+    // add
+
     static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask)
     {
         return select(mask, add(a, b), u8x32_zero());
@@ -1674,6 +1676,50 @@ namespace detail {
         return select(mask, add(a, b), s64x4_zero());
     }
 
+    // sub
+
+    static inline u8x32 sub(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, sub(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 sub(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, sub(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 sub(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, sub(a, b), u32x8_zero());
+    }
+
+    static inline u64x4 sub(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return select(mask, sub(a, b), u64x4_zero());
+    }
+
+    static inline s8x32 sub(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, sub(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 sub(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, sub(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 sub(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, sub(a, b), s32x8_zero());
+    }
+
+    static inline s64x4 sub(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return select(mask, sub(a, b), s64x4_zero());
+    }
+
+    // abs
+
     static inline s8x32 abs(s8x32 a, mask8x32 mask)
     {
         return select(mask, abs(a), s8x32_zero());
@@ -1689,60 +1735,9 @@ namespace detail {
         return select(mask, abs(a), s32x8_zero());
     }
 
-    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
-    {
-        return select(mask, add(a, b), value);
-    }
-
-    static inline s8x32 abs(s8x32 a, mask8x32 mask, s8x32 value)
-    {
-        return select(mask, abs(a), value);
-    }
-
-    static inline s16x16 abs(s16x16 a, mask16x16 mask, s16x16 value)
-    {
-        return select(mask, abs(a), value);
-    }
-
-    static inline s32x8 abs(s32x8 a, mask32x8 mask, s32x8 value)
-    {
-        return select(mask, abs(a), value);
-    }
+#define SIMD_MASK_INT256
+#include "common_mask.hpp"
+#undef SIMD_MASK_INT256
 
 #undef SIMD_SET_COMPONENT
 #undef SIMD_GET_COMPONENT
