@@ -1188,6 +1188,9 @@
     <ClInclude Include="..\..\include\mango\simd\scalar_int64.hpp">
       <Filter>mango\include\simd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\simd\common_mask.hpp">
+      <Filter>mango\include\simd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
