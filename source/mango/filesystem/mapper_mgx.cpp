@@ -284,6 +284,7 @@ namespace filesystem {
                         // cache the decompressed buffers
 
                         // TODO: decompression cache for small-file blocks
+                        // NOTE: this will fall-through into the generic compression case for now
 #if 0
                         // simulate almost-zero-cost (AZC) decompression
                         u8* ptr = new u8[file.size];
