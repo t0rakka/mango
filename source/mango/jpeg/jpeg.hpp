@@ -318,12 +318,14 @@ namespace jpeg {
         int yclip;
         int precision; // 8 or 12 bits
         int components; // 1..4
-        bool is_baseline;
-        bool is_progressive;
-        bool is_multiscan;
-        bool is_arithmetic;
-        bool is_lossless;
-        bool is_differential;
+
+        bool is_baseline = true;
+        bool is_progressive = false;
+        bool is_multiscan = false;
+        bool is_arithmetic = false;
+        bool is_lossless = false;
+        bool is_differential = false;
+
         int Hmax;
         int Vmax;
         int blocks_in_mcu;
