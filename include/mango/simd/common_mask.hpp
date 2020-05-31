@@ -514,6 +514,16 @@
 
 #ifdef SIMD_ZEROMASK_FLOAT128
 
+    static inline f32x4 min(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return select(mask, min(a, b), f32x4_zero());
+    }
+
+    static inline f32x4 max(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return select(mask, max(a, b), f32x4_zero());
+    }
+
     static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask)
     {
         return select(mask, add(a, b), f32x4_zero());
@@ -539,6 +549,16 @@
 // -----------------------------------------------------------------
 
 #ifdef SIMD_MASK_FLOAT128
+
+    static inline f32x4 min(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline f32x4 max(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
+    {
+        return select(mask, max(a, b), value);
+    }
 
     static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask, f32x4 value)
     {
@@ -566,6 +586,16 @@
 
 #ifdef SIMD_ZEROMASK_DOUBLE128
 
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return select(mask, min(a, b), f64x2_zero());
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return select(mask, max(a, b), f64x2_zero());
+    }
+
     static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
     {
         return select(mask, add(a, b), f64x2_zero());
@@ -591,6 +621,16 @@
 // -----------------------------------------------------------------
 
 #ifdef SIMD_MASK_DOUBLE128
+
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return select(mask, max(a, b), value);
+    }
 
     static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
     {

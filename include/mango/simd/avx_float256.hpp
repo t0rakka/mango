@@ -308,6 +308,16 @@ namespace simd {
 
     // zeromask
 
+    static inline f32x8 min(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_ps(_mm256_castsi256_ps(mask), min(a, b));
+    }
+
+    static inline f32x8 max(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_ps(_mm256_castsi256_ps(mask), max(a, b));
+    }
+
     static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask)
     {
         return _mm256_and_ps(_mm256_castsi256_ps(mask), add(a, b));
@@ -329,6 +339,16 @@ namespace simd {
     }
 
     // mask
+
+    static inline f32x8 min(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline f32x8 max(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return select(mask, max(a, b), value);
+    }
 
     static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
     {

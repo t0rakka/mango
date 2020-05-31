@@ -81,18 +81,47 @@ namespace simd {
         return _mm512_min_pd(a, b);
     }
 
+    static inline f64x8 min(f64x8 a, f64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_min_pd(mask, a, b);
+    }
+
+    static inline f64x8 min(f64x8 a, f64x8 b, mask64x8 mask, f64x8 value)
+    {
+        return _mm512_mask_min_pd(value, mask, a, b);
+    }
+
     static inline f64x8 max(f64x8 a, f64x8 b)
     {
         return _mm512_max_pd(a, b);
     }
 
+    static inline f64x8 max(f64x8 a, f64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_max_pd(mask, a, b);
+    }
+
+    static inline f64x8 max(f64x8 a, f64x8 b, mask64x8 mask, f64x8 value)
+    {
+        return _mm512_mask_max_pd(value, mask, a, b);
+    }
+
+#if 1 // __GNUC__ < 8
+
     static inline f64x8 abs(f64x8 a)
     {
-        // gcc 7.1 compiler bug: expects __m512 argument
-        // TODO: test which gcc version fixes this and add guard
-        //return _mm512_abs_pd(a);
+        // gcc 7.1 compiler bug: "expects __m512 argument"
         return _mm512_max_pd(a, _mm512_sub_pd(_mm512_setzero_pd(), a));
     }
+
+#else
+
+    static inline f64x8 abs(f64x8 a)
+    {
+        return _mm512_abs_pd(a);
+    }
+
+#endif
 
     static inline f64x8 neg(f64x8 a)
     {

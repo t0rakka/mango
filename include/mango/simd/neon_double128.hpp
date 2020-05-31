@@ -364,6 +364,16 @@ namespace simd {
     // masked functions
     // -----------------------------------------------------------------
 
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(min(a, b))));
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(max(a, b))));
+    }
+
     static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
     {
         return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(add(a, b))));

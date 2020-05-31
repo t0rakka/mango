@@ -415,6 +415,16 @@ namespace simd {
     // masked functions
     // -----------------------------------------------------------------
 
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return _mm_and_pd(_mm_castsi128_pd(mask), min(a, b));
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return _mm_and_pd(_mm_castsi128_pd(mask), max(a, b));
+    }
+
     static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
     {
         return _mm_and_pd(_mm_castsi128_pd(mask), add(a, b));

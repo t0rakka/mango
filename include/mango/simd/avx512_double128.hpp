@@ -130,9 +130,29 @@ namespace simd {
         return _mm_min_pd(a, b);
     }
 
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return _mm_maskz_min_pd(mask, a, b);
+    }
+
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return _mm_mask_min_pd(value, mask, a, b);
+    }
+
     static inline f64x2 max(f64x2 a, f64x2 b)
     {
         return _mm_max_pd(a, b);
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return _mm_maskz_max_pd(mask, a, b);
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask, f64x2 value)
+    {
+        return _mm_mask_max_pd(value, mask, a, b);
     }
 
     static inline f64x2 abs(f64x2 a)
