@@ -2483,6 +2483,70 @@ namespace simd {
         return vandq_s64(vreinterpretq_s64_u64(mask), sub(a, b));
     }
 
+    // adds
+
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, adds(a, b));
+    }
+
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, adds(a, b));
+    }
+
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, adds(a, b));
+    }
+
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), adds(a, b));
+    }
+
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), adds(a, b));
+    }
+
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), adds(a, b));
+    }
+
+    // subs
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, subs(a, b));
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, subs(a, b));
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, subs(a, b));
+    }
+
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), subs(a, b));
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), subs(a, b));
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), subs(a, b));
+    }
+
     // abs
 
     static inline s8x16 abs(s8x16 a, mask8x16 mask)

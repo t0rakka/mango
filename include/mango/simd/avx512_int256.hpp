@@ -132,9 +132,29 @@ namespace detail {
         return _mm256_adds_epu8(a, b);
     }
 
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_adds_epu8(mask, a, b);
+    }
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_adds_epu8(value, mask, a, b);
+    }
+
     static inline u8x32 subs(u8x32 a, u8x32 b)
     {
         return _mm256_subs_epu8(a, b);
+    }
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_subs_epu8(mask, a, b);
+    }
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_subs_epu8(value, mask, a, b);
     }
 
     static inline u8x32 avg(u8x32 a, u8x32 b)
@@ -296,9 +316,29 @@ namespace detail {
         return _mm256_adds_epu16(a, b);
     }
 
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_adds_epu16(mask, a, b);
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_adds_epu16(value, mask, a, b);
+    }
+
     static inline u16x16 subs(u16x16 a, u16x16 b)
     {
         return _mm256_subs_epu16(a, b);
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_subs_epu16(mask, a, b);
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_subs_epu16(value, mask, a, b);
     }
 
     static inline u16x16 avg(u16x16 a, u16x16 b)
@@ -518,10 +558,30 @@ namespace detail {
   	    return _mm256_or_si256(temp, _mm256_cmpgt_epi32(a, temp));
     }
 
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
     static inline u32x8 subs(u32x8 a, u32x8 b)
     {
   	    const __m256i temp = _mm256_sub_epi32(a, b);
   	    return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline u32x8 avg(u32x8 a, u32x8 b)
@@ -937,9 +997,29 @@ namespace detail {
         return _mm256_adds_epi8(a, b);
     }
 
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_adds_epi8(mask, a, b);
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_adds_epi8(value, mask, a, b);
+    }
+
     static inline s8x32 subs(s8x32 a, s8x32 b)
     {
         return _mm256_subs_epi8(a, b);
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_subs_epi8(mask, a, b);
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_subs_epi8(value, mask, a, b);
     }
 
     static inline s8x32 avg(s8x32 a, s8x32 b)
@@ -1140,9 +1220,29 @@ namespace detail {
         return _mm256_adds_epi16(a, b);
     }
 
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_adds_epi16(mask, a, b);
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_adds_epi16(value, mask, a, b);
+    }
+
     static inline s16x16 subs(s16x16 a, s16x16 b)
     {
         return _mm256_subs_epi16(a, b);
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_subs_epi16(mask, a, b);
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_subs_epi16(value, mask, a, b);
     }
 
     static inline s16x16 hadd(s16x16 a, s16x16 b)
@@ -1445,12 +1545,32 @@ namespace detail {
         return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), v, a);
     }
 
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
     static inline s32x8 subs(s32x8 a, s32x8 b)
     {
         const __m256i v = _mm256_sub_epi32(a, b);
         a = _mm256_srai_epi32(a, 31);
         __m256i temp = _mm256_and_si256(_mm256_xor_si256(a, b), _mm256_xor_si256(a, v));
         return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), a, v);
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline s32x8 hadd(s32x8 a, s32x8 b)

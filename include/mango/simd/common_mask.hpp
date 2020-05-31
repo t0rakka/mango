@@ -85,6 +85,70 @@
         return select(mask, sub(a, b), s64x2_zero());
     }
 
+    // adds
+
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return select(mask, adds(a, b), u8x16_zero());
+    }
+
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return select(mask, adds(a, b), u16x8_zero());
+    }
+
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return select(mask, adds(a, b), u32x4_zero());
+    }
+
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return select(mask, adds(a, b), s8x16_zero());
+    }
+
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return select(mask, adds(a, b), s16x8_zero());
+    }
+
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return select(mask, adds(a, b), s32x4_zero());
+    }
+
+    // subs
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return select(mask, subs(a, b), u8x16_zero());
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return select(mask, subs(a, b), u16x8_zero());
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return select(mask, subs(a, b), u32x4_zero());
+    }
+
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return select(mask, subs(a, b), s8x16_zero());
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return select(mask, subs(a, b), s16x8_zero());
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return select(mask, subs(a, b), s32x4_zero());
+    }
+
     // abs
 
     static inline s8x16 abs(s8x16 a, mask8x16 mask)
@@ -192,6 +256,70 @@
         return select(mask, sub(a, b), value);
     }
 
+    // adds
+
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask, u16x8 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask, u32x4 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask, s16x8 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask, s32x4 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    // subs
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask, u16x8 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask, u32x4 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask, s16x8 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask, s32x4 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
     // abs
 
     static inline s8x16 abs(s8x16 a, mask8x16 mask, s8x16 value)
@@ -297,6 +425,70 @@
     static inline s64x4 sub(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
     {
         return select(mask, sub(a, b), value);
+    }
+
+    // adds
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return select(mask, adds(a, b), value);
+    }
+
+    // subs
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return select(mask, subs(a, b), value);
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return select(mask, subs(a, b), value);
     }
 
     // abs

@@ -3093,6 +3093,70 @@ namespace detail {
         return _mm_and_si128(mask, sub(a, b));
     }
 
+    // adds
+
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, adds(a, b));
+    }
+
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, adds(a, b));
+    }
+
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, adds(a, b));
+    }
+
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, adds(a, b));
+    }
+
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, adds(a, b));
+    }
+
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, adds(a, b));
+    }
+
+    // subs
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, subs(a, b));
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, subs(a, b));
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, subs(a, b));
+    }
+
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, subs(a, b));
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, subs(a, b));
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, subs(a, b));
+    }
+
     // abs
 
     static inline s8x16 abs(s8x16 a, mask8x16 mask)

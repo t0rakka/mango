@@ -2017,6 +2017,70 @@ namespace detail {
         return _mm256_and_si256(mask, sub(a, b));
     }
 
+    // adds
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    // subs
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
     // abs
 
     static inline s8x32 abs(s8x32 a, mask8x32 mask)

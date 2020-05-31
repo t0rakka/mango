@@ -1718,6 +1718,70 @@ namespace detail {
         return select(mask, sub(a, b), s64x4_zero());
     }
 
+    // adds
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, adds(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, adds(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, adds(a, b), u32x8_zero());
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, adds(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, adds(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, adds(a, b), s32x8_zero());
+    }
+
+    // subs
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, subs(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, subs(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, subs(a, b), u32x8_zero());
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, subs(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, subs(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, subs(a, b), s32x8_zero());
+    }
+
     // abs
 
     static inline s8x32 abs(s8x32 a, mask8x32 mask)

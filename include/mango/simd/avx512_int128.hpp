@@ -198,9 +198,29 @@ namespace detail
         return _mm_adds_epu8(a, b);
     }
 
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_maskz_adds_epu8(mask, a, b);
+    }
+
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
+    {
+        return _mm_mask_adds_epu8(value, mask, a, b);
+    }
+
     static inline u8x16 subs(u8x16 a, u8x16 b)
     {
         return _mm_subs_epu8(a, b);
+    }
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_maskz_subs_epu8(mask, a, b);
+    }
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
+    {
+        return _mm_mask_subs_epu8(value, mask, a, b);
     }
 
     static inline u8x16 avg(u8x16 a, u8x16 b)
@@ -387,9 +407,29 @@ namespace detail
         return _mm_adds_epu16(a, b);
     }
 
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return _mm_maskz_adds_epu16(mask, a, b);
+    }
+
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask, u16x8 value)
+    {
+        return _mm_mask_adds_epu16(value, mask, a, b);
+    }
+
     static inline u16x8 subs(u16x8 a, u16x8 b)
     {
         return _mm_subs_epu16(a, b);
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return _mm_maskz_subs_epu16(mask, a, b);
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask, u16x8 value)
+    {
+        return _mm_mask_subs_epu16(value, mask, a, b);
     }
 
     static inline u16x8 avg(u16x8 a, u16x8 b)
@@ -637,10 +677,30 @@ namespace detail
   	    return _mm_or_si128(temp, _mm_cmplt_epi32(temp, a));
     }
 
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return _mm_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask, u32x4 value)
+    {
+        return _mm_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
   	    const __m128i temp = _mm_sub_epi32(a, b);
   	    return _mm_and_si128(temp, _mm_cmpgt_epi32(a, temp));
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return _mm_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask, u32x4 value)
+    {
+        return _mm_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
@@ -1093,9 +1153,29 @@ namespace detail
         return _mm_adds_epi8(a, b);
     }
 
+    static inline s8x16 adds(s8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_maskz_adds_epi8(mask, a, b);
+    }
+
+    static inline s8x16 adds(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    {
+        return _mm_mask_adds_epi8(value, mask, a, b);
+    }
+
     static inline s8x16 subs(s8x16 a, s8x16 b)
     {
         return _mm_subs_epi8(a, b);
+    }
+
+    static inline s8x16 subs(s8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_maskz_subs_epi8(mask, a, b);
+    }
+
+    static inline s8x16 subs(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    {
+        return _mm_mask_subs_epi8(value, mask, a, b);
     }
 
     static inline s8x16 avg(s8x16 a, s8x16 b)
@@ -1321,9 +1401,29 @@ namespace detail
         return _mm_adds_epi16(a, b);
     }
 
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return _mm_maskz_adds_epi16(mask, a, b);
+    }
+
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask, s16x8 value)
+    {
+        return _mm_mask_adds_epi16(value, mask, a, b);
+    }
+
     static inline s16x8 subs(s16x8 a, s16x8 b)
     {
         return _mm_subs_epi16(a, b);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return _mm_maskz_subs_epi16(mask, a, b);
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask, s16x8 value)
+    {
+        return _mm_mask_subs_epi16(value, mask, a, b);
     }
 
     static inline s16x8 hadd(s16x8 a, s16x8 b)
@@ -1654,12 +1754,32 @@ namespace detail
         return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), v, a);
     }
 
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return _mm_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask, s32x4 value)
+    {
+        return _mm_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
     static inline s32x4 subs(s32x4 a, s32x4 b)
     {
         const __m128i v = _mm_sub_epi32(a, b);
         a = _mm_srai_epi32(a, 31);
         __m128i temp = _mm_and_si128(_mm_xor_si128(a, b), _mm_xor_si128(a, v));
         return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return _mm_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask, s32x4 value)
+    {
+        return _mm_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline s32x4 hadd(s32x4 a, s32x4 b)
