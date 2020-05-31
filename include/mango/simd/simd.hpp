@@ -657,6 +657,7 @@ namespace simd {
     // Altivec / VSX
     // --------------------------------------------------------------
 
+    // https://www.nxp.com/docs/en/reference-manual/ALTIVECPIM.pdf
     // https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.cbcpx01/vectorbltin.htm
     // https://www.ibm.com/support/knowledgecenter/SSGH2K_13.1.2/com.ibm.xlc131.aix.doc/compiler_ref/vec_intrin_cpp.html
 
