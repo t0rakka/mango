@@ -3009,6 +3009,90 @@ namespace detail {
     // masked functions
     // -----------------------------------------------------------------
 
+    // min
+
+    static inline u8x16 min(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline u16x8 min(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline u32x4 min(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline s8x16 min(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline s16x8 min(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline s32x4 min(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return _mm_and_si128(mask, min(a, b));
+    }
+
+    // max
+
+    static inline u8x16 max(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline s8x16 max(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return _mm_and_si128(mask, max(a, b));
+    }
+
     // add
 
     static inline u8x16 add(u8x16 a, u8x16 b, mask8x16 mask)

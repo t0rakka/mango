@@ -1,6 +1,90 @@
 
 #ifdef SIMD_ZEROMASK_INT128
 
+    // min
+
+    static inline u8x16 min(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return select(mask, min(a, b), u8x16_zero());
+    }
+
+    static inline u16x8 min(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return select(mask, min(a, b), u16x8_zero());
+    }
+
+    static inline u32x4 min(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return select(mask, min(a, b), u32x4_zero());
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return select(mask, min(a, b), u64x2_zero());
+    }
+
+    static inline s8x16 min(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return select(mask, min(a, b), s8x16_zero());
+    }
+
+    static inline s16x8 min(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return select(mask, min(a, b), s16x8_zero());
+    }
+
+    static inline s32x4 min(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return select(mask, min(a, b), s32x4_zero());
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return select(mask, min(a, b), s64x2_zero());
+    }
+
+    // max
+
+    static inline u8x16 max(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return select(mask, max(a, b), u8x16_zero());
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return select(mask, max(a, b), u16x8_zero());
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return select(mask, max(a, b), u32x4_zero());
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return select(mask, max(a, b), u64x2_zero());
+    }
+
+    static inline s8x16 max(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return select(mask, max(a, b), s8x16_zero());
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return select(mask, max(a, b), s16x8_zero());
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return select(mask, max(a, b), s32x4_zero());
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return select(mask, max(a, b), s64x2_zero());
+    }
+
     // add
 
     static inline u8x16 add(u8x16 a, u8x16 b, mask8x16 mask)
@@ -172,6 +256,90 @@
 
 #ifdef SIMD_MASK_INT128
 
+    // min
+
+    static inline u8x16 min(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline u16x8 min(u16x8 a, u16x8 b, mask16x8 mask, u16x8 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline u32x4 min(u32x4 a, u32x4 b, mask32x4 mask, u32x4 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b, mask64x2 mask, u64x2 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s8x16 min(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s16x8 min(s16x8 a, s16x8 b, mask16x8 mask, s16x8 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s32x4 min(s32x4 a, s32x4 b, mask32x4 mask, s32x4 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b, mask64x2 mask, s64x2 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    // max
+
+    static inline u8x16 max(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b, mask16x8 mask, u16x8 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b, mask32x4 mask, u32x4 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b, mask64x2 mask, u64x2 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s8x16 max(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b, mask16x8 mask, s16x8 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b, mask32x4 mask, s32x4 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b, mask64x2 mask, s64x2 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
     // add
 
     static inline u8x16 add(u8x16 a, u8x16 b, mask8x16 mask, u8x16 value)
@@ -342,6 +510,90 @@
 // -----------------------------------------------------------------
 
 #ifdef SIMD_MASK_INT256
+
+    // min
+
+    static inline u8x32 min(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline u16x16 min(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline u32x8 min(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline u64x4 min(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s8x32 min(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s16x16 min(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s32x8 min(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline s64x4 min(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    // max
+
+    static inline u8x32 max(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline u16x16 max(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline u32x8 max(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline u64x4 max(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s8x32 max(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s16x16 max(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s32x8 max(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline s64x4 max(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return select(mask, max(a, b), value);
+    }
 
     // add
 

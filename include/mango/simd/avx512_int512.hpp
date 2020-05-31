@@ -229,9 +229,29 @@ namespace detail {
         return _mm512_min_epu8(a, b);
     }
 
+    static inline u8x64 min(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_min_epu8(mask, a, b);
+    }
+
+    static inline u8x64 min(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_min_epu8(value, mask, a, b);
+    }
+
     static inline u8x64 max(u8x64 a, u8x64 b)
     {
         return _mm512_max_epu8(a, b);
+    }
+
+    static inline u8x64 max(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_max_epu8(mask, a, b);
+    }
+
+    static inline u8x64 max(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_max_epu8(value, mask, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -414,9 +434,29 @@ namespace detail {
         return _mm512_min_epu16(a, b);
     }
 
+    static inline u16x32 min(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_min_epu16(mask, a, b);
+    }
+
+    static inline u16x32 min(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_min_epu16(value, mask, a, b);
+    }
+
     static inline u16x32 max(u16x32 a, u16x32 b)
     {
         return _mm512_max_epu16(a, b);
+    }
+
+    static inline u16x32 max(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_max_epu16(mask, a, b);
+    }
+
+    static inline u16x32 max(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_max_epu16(value, mask, a, b);
     }
 
     // shift by constant
@@ -650,9 +690,29 @@ namespace detail {
         return _mm512_min_epu32(a, b);
     }
 
+    static inline u32x16 min(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_min_epu32(mask, a, b);
+    }
+
+    static inline u32x16 min(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_min_epu32(value, mask, a, b);
+    }
+
     static inline u32x16 max(u32x16 a, u32x16 b)
     {
         return _mm512_max_epu32(a, b);
+    }
+
+    static inline u32x16 max(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_max_epu32(mask, a, b);
+    }
+
+    static inline u32x16 max(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_max_epu32(value, mask, a, b);
     }
 
     // shift by constant
@@ -864,9 +924,29 @@ namespace detail {
         return _mm512_min_epu64(a, b);
     }
 
+    static inline u64x8 min(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_min_epu64(mask, a, b);
+    }
+
+    static inline u64x8 min(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_min_epu64(value, mask, a, b);
+    }
+
     static inline u64x8 max(u64x8 a, u64x8 b)
     {
         return _mm512_max_epu64(a, b);
+    }
+
+    static inline u64x8 max(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_max_epu64(mask, a, b);
+    }
+
+    static inline u64x8 max(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_max_epu64(value, mask, a, b);
     }
 
     // shift by constant
@@ -1109,9 +1189,29 @@ namespace detail {
         return _mm512_min_epi8(a, b);
     }
 
+    static inline s8x64 min(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_min_epi8(mask, a, b);
+    }
+
+    static inline s8x64 min(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_min_epi8(value, mask, a, b);
+    }
+
     static inline s8x64 max(s8x64 a, s8x64 b)
     {
         return _mm512_max_epi8(a, b);
+    }
+
+    static inline s8x64 max(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_max_epi8(mask, a, b);
+    }
+
+    static inline s8x64 max(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_max_epi8(value, mask, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1333,9 +1433,29 @@ namespace detail {
         return _mm512_min_epi16(a, b);
     }
 
+    static inline s16x32 min(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_min_epi16(mask, a, b);
+    }
+
+    static inline s16x32 min(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_min_epi16(value, mask, a, b);
+    }
+
     static inline s16x32 max(s16x32 a, s16x32 b)
     {
         return _mm512_max_epi16(a, b);
+    }
+
+    static inline s16x32 max(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_max_epi16(mask, a, b);
+    }
+
+    static inline s16x32 max(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_max_epi16(value, mask, a, b);
     }
 
     // shift by constant
@@ -1599,9 +1719,29 @@ namespace detail {
         return _mm512_min_epi32(a, b);
     }
 
+    static inline s32x16 min(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_min_epi32(mask, a, b);
+    }
+
+    static inline s32x16 min(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_min_epi32(value, mask, a, b);
+    }
+
     static inline s32x16 max(s32x16 a, s32x16 b)
     {
         return _mm512_max_epi32(a, b);
+    }
+
+    static inline s32x16 max(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_max_epi32(mask, a, b);
+    }
+
+    static inline s32x16 max(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_max_epi32(value, mask, a, b);
     }
 
     // shift by constant
@@ -1827,9 +1967,29 @@ namespace detail {
         return _mm512_min_epi64(a, b);
     }
 
+    static inline s64x8 min(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_min_epi64(mask, a, b);
+    }
+
+    static inline s64x8 min(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_min_epi64(value, mask, a, b);
+    }
+
     static inline s64x8 max(s64x8 a, s64x8 b)
     {
         return _mm512_max_epi64(a, b);
+    }
+
+    static inline s64x8 max(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_max_epi64(mask, a, b);
+    }
+
+    static inline s64x8 max(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_max_epi64(value, mask, a, b);
     }
 
     // shift by constant
