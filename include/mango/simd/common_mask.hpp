@@ -233,6 +233,13 @@
         return select(mask, subs(a, b), s32x4_zero());
     }
 
+    // madd
+
+    static inline s32x4 madd(s16x8 a, s16x8 b, mask32x4 mask)
+    {
+        return select(mask, madd(a, b), s32x4_zero());
+    }
+
     // abs
 
     static inline s8x16 abs(s8x16 a, mask8x16 mask)
@@ -488,6 +495,13 @@
         return select(mask, subs(a, b), value);
     }
 
+    // madd
+
+    static inline s32x4 madd(s16x8 a, s16x8 b, mask32x4 mask, s32x4 value)
+    {
+        return select(mask, madd(a, b), value);
+    }
+
     // abs
 
     static inline s8x16 abs(s8x16 a, mask8x16 mask, s8x16 value)
@@ -741,6 +755,13 @@
     static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
     {
         return select(mask, subs(a, b), value);
+    }
+
+    // madd
+
+    static inline s32x8 madd(s16x16 a, s16x16 b, mask32x8 mask, s32x8 value)
+    {
+        return select(mask, madd(a, b), value);
     }
 
     // abs

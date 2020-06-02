@@ -1292,6 +1292,22 @@ namespace simd {
         return vec_mladd(a.data, b.data, vec_xor(a.data, a.data));
     }
 
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        s16 a[8];
+        std::memcpy(a, &va, 16);
+
+        s16 b[8];
+        std::memcpy(b, &vb, 16);
+
+        s32 x = s32(a[0]) * s32(b[0]) + s32(a[1]) * s32(b[1]);
+        s32 y = s32(a[2]) * s32(b[2]) + s32(a[3]) * s32(b[3]);
+        s32 z = s32(a[4]) * s32(b[4]) + s32(a[5]) * s32(b[5]);
+        s32 w = s32(a[6]) * s32(b[6]) + s32(a[7]) * s32(b[7]);
+
+        return (s32x4::vector) { x, y, z, w };
+    }
+
     static inline s16x8 abs(s16x8 a)
     {
         return vec_abs(a.data);

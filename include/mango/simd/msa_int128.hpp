@@ -1153,6 +1153,22 @@ namespace simd {
         return __msa_mulv_h(a, b);
     }
 
+    static inline s32x4 madd(s16x8 va, s16x8 vb)
+    {
+        s16 a[8];
+        std::memcpy(a, &va, 16);
+
+        s16 b[8];
+        std::memcpy(b, &vb, 16);
+
+        s32 x = s32(a[0]) * s32(b[0]) + s32(a[1]) * s32(b[1]);
+        s32 y = s32(a[2]) * s32(b[2]) + s32(a[3]) * s32(b[3]);
+        s32 z = s32(a[4]) * s32(b[4]) + s32(a[5]) * s32(b[5]);
+        s32 w = s32(a[6]) * s32(b[6]) + s32(a[7]) * s32(b[7]);
+
+        return (v4i32) { x, y, z, w };
+    }
+
     static inline s16x8 abs(s16x8 a)
     {
         return __msa_add_a_h(a, (v8i16) __msa_xor_v((v16u8) a, (v16u8) a));

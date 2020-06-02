@@ -1342,6 +1342,28 @@ namespace simd {
         return vmulq_s16(a, b);
     }
 
+#if defined(__aarch64__)
+
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        int32x4_t m0 = vmull_s16(vget_low_s16(a),  vget_low_s16(b));
+        int32x4_t m1 = vmull_s16(vget_high_s16(a), vget_high_s16(b));
+        return vpaddq_s32(m0, m1);
+    }
+
+#else
+
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        int32x4_t m0 = vmull_s16(vget_low_s16(a),  vget_low_s16(b));
+        int32x4_t m1 = vmull_s16(vget_high_s16(a), vget_high_s16(b));
+        int32x2_t s0 = vpadd_s32(vget_low_s32(m0), vget_high_s32(m0));
+        int32x2_t s1 = vpadd_s32(vget_low_s32(m1), vget_high_s32(m1));
+        return vcombine_s32(s0, s1);
+    }
+
+#endif
+
     static inline s16x8 abs(s16x8 a)
     {
         return vabsq_s16(a);
@@ -2629,6 +2651,13 @@ namespace simd {
     static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
     {
         return vandq_s32(vreinterpretq_s32_u32(mask), subs(a, b));
+    }
+
+    // madd
+
+    static inline s32x4 madd(s16x8 a, s16x8 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), madd(a, b));
     }
 
     // abs

@@ -1816,6 +1816,11 @@ namespace detail {
         return _mm_mullo_epi16(a, b);
     }
 
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        return _mm_madd_epi16(a, b);
+    }
+
     static inline s16x8 abs(s16x8 a)
     {
 #if defined(MANGO_ENABLE_SSSE3)
@@ -3239,6 +3244,13 @@ namespace detail {
     static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
     {
         return _mm_and_si128(mask, subs(a, b));
+    }
+
+    // madd
+
+    static inline s32x4 madd(s16x8 a, s16x8 b, mask32x4 mask)
+    {
+        return _mm_and_si128(mask, madd(a, b));
     }
 
     // abs

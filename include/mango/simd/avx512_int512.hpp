@@ -1344,6 +1344,21 @@ namespace detail {
         return _mm512_mullo_epi16(a, b);
     }
 
+    static inline s32x16 madd(s16x32 a, s16x32 b)
+    {
+        return _mm512_madd_epi16(a, b);
+    }
+
+    static inline s32x16 madd(s16x32 a, s16x32 b, mask32x16 mask)
+    {
+        return _mm512_maskz_madd_epi16(mask, a, b);
+    }
+
+    static inline s32x16 madd(s16x32 a, s16x32 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_madd_epi16(value, mask, a, b);
+    }
+
     static inline s16x32 abs(s16x32 a)
     {
         return _mm512_abs_epi16(a);

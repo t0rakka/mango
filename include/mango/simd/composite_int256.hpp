@@ -63,7 +63,7 @@ namespace simd {
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC1(R, A, MASK, FUNC) \
-    static inline R FUNC(A a, MASK mask, A value) \
+    static inline R FUNC(A a, MASK mask, R value) \
     { \
         R result; \
         result.lo = FUNC(a.lo, mask.lo, value.lo); \
@@ -72,7 +72,7 @@ namespace simd {
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
-    static inline R FUNC(AB a, AB b, MASK mask, AB value) \
+    static inline R FUNC(AB a, AB b, MASK mask, R value) \
     { \
         R result; \
         result.lo = FUNC(a.lo, b.lo, mask.lo, value.lo); \
@@ -772,6 +772,7 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg_round)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, mullo)
+    SIMD_COMPOSITE_FUNC2(s32x8, s16x16, madd)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, abs)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, neg)
 
@@ -782,6 +783,7 @@ namespace simd {
     SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, sub)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, adds)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, subs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s16x16, mask32x8, madd)
     SIMD_COMPOSITE_MASK_FUNC1(s16x16, s16x16, mask16x16, abs)
     SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, min)
     SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, max)
@@ -789,6 +791,7 @@ namespace simd {
     SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, sub)
     SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, adds)
     SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, subs)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s16x16, mask32x8, madd)
 
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_and)

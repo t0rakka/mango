@@ -962,6 +962,7 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg_round)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, mullo)
+    SIMD_COMPOSITE_FUNC2(s32x8, s16x16, madd)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, abs)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, neg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_nand)
@@ -1864,6 +1865,13 @@ namespace detail {
     static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
     {
         return select(mask, subs(a, b), s32x8_zero());
+    }
+
+    // madd
+
+    static inline s32x8 madd(s16x16 a, s16x16 b, mask32x8 mask)
+    {
+        return select(mask, madd(a, b), s32x8_zero());
     }
 
     // abs

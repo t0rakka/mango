@@ -543,6 +543,7 @@ namespace simd {
     // --------------------------------------------------------------
 
     // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0491f/BABDFJCI.html
+    // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0073a/IHI0073A_arm_neon_intrinsics_ref.pdf
     // http://kib.kiev.ua/x86docs/ARMARM/DDI0487A_e_armv8_arm.pdf
 
     #define MANGO_ENABLE_SIMD

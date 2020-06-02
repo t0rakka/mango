@@ -1172,6 +1172,16 @@ namespace simd {
         return detail::scalar_unroll(detail::scalar_mullo, a, b);
     }
 
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        s32x4 dest;
+        dest[0] = s32(a[0]) * s32(b[0]) + s32(a[1]) * s32(b[1]);
+        dest[1] = s32(a[2]) * s32(b[2]) + s32(a[3]) * s32(b[3]);
+        dest[2] = s32(a[4]) * s32(b[4]) + s32(a[5]) * s32(b[5]);
+        dest[3] = s32(a[6]) * s32(b[6]) + s32(a[7]) * s32(b[7]);
+        return dest;
+    }
+
     static inline s16x8 abs(s16x8 a)
     {
         return detail::scalar_unroll(detail::scalar_abs, a);
