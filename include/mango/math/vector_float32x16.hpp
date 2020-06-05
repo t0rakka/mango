@@ -188,6 +188,46 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
+    static inline Vector<float, 16> add(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask)
+    {
+        return simd::add(a, b, mask);
+    }
+
+    static inline Vector<float, 16> add(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask, Vector<float, 16> value)
+    {
+        return simd::add(a, b, mask, value);
+    }
+
+    static inline Vector<float, 16> sub(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask)
+    {
+        return simd::sub(a, b, mask);
+    }
+
+    static inline Vector<float, 16> sub(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask, Vector<float, 16> value)
+    {
+        return simd::sub(a, b, mask, value);
+    }
+
+    static inline Vector<float, 16> mul(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask)
+    {
+        return simd::mul(a, b, mask);
+    }
+
+    static inline Vector<float, 16> mul(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask, Vector<float, 16> value)
+    {
+        return simd::mul(a, b, mask, value);
+    }
+
+    static inline Vector<float, 16> div(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask)
+    {
+        return simd::div(a, b, mask);
+    }
+
+    static inline Vector<float, 16> div(Vector<float, 16> a, Vector<float, 16> b, mask32x16 mask, Vector<float, 16> value)
+    {
+        return simd::div(a, b, mask, value);
+    }
+
     static inline Vector<float, 16> abs(Vector<float, 16> a)
     {
         return simd::abs(a);

@@ -163,6 +163,26 @@ namespace mango
         return simd::unpackhi(a, b);
     }
 
+    static inline Vector<u64, 4> add(Vector<u64, 4> a, Vector<u64, 4> b, mask64x4 mask)
+    {
+        return simd::add(a, b, mask);
+    }
+
+    static inline Vector<u64, 4> add(Vector<u64, 4> a, Vector<u64, 4> b, mask64x4 mask, Vector<u64, 4> value)
+    {
+        return simd::add(a, b, mask, value);
+    }
+
+    static inline Vector<u64, 4> sub(Vector<u64, 4> a, Vector<u64, 4> b, mask64x4 mask)
+    {
+        return simd::sub(a, b, mask);
+    }
+
+    static inline Vector<u64, 4> sub(Vector<u64, 4> a, Vector<u64, 4> b, mask64x4 mask, Vector<u64, 4> value)
+    {
+        return simd::sub(a, b, mask, value);
+    }
+
     static inline Vector<u64, 4> min(Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::min(a, b);

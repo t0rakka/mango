@@ -132,14 +132,54 @@ namespace mango
         return simd::unpackhi(a, b);
     }
 
+    static inline Vector<u8, 64> add(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask)
+    {
+        return simd::add(a, b, mask);
+    }
+
+    static inline Vector<u8, 64> add(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask, Vector<u8, 64> value)
+    {
+        return simd::add(a, b, mask, value);
+    }
+
+    static inline Vector<u8, 64> sub(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask)
+    {
+        return simd::sub(a, b, mask);
+    }
+
+    static inline Vector<u8, 64> sub(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask, Vector<u8, 64> value)
+    {
+        return simd::sub(a, b, mask, value);
+    }
+
     static inline Vector<u8, 64> adds(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::adds(a, b);
     }
 
+    static inline Vector<u8, 64> adds(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask)
+    {
+        return simd::adds(a, b, mask);
+    }
+
+    static inline Vector<u8, 64> adds(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask, Vector<u8, 64> value)
+    {
+        return simd::adds(a, b, mask, value);
+    }
+
     static inline Vector<u8, 64> subs(Vector<u8, 64> a, Vector<u8, 64> b)
     {
         return simd::subs(a, b);
+    }
+
+    static inline Vector<u8, 64> subs(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask)
+    {
+        return simd::subs(a, b, mask);
+    }
+
+    static inline Vector<u8, 64> subs(Vector<u8, 64> a, Vector<u8, 64> b, mask8x64 mask, Vector<u8, 64> value)
+    {
+        return simd::subs(a, b, mask, value);
     }
 
     static inline Vector<u8, 64> min(Vector<u8, 64> a, Vector<u8, 64> b)
