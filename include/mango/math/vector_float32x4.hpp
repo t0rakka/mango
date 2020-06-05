@@ -348,9 +348,29 @@ namespace mango
         return simd::min(a, b);
     }
 
+    static inline Vector<float, 4> min(Vector<float, 4> a, Vector<float, 4> b, mask32x4 mask)
+    {
+        return simd::min(a, b, mask);
+    }
+
+    static inline Vector<float, 4> min(Vector<float, 4> a, Vector<float, 4> b, mask32x4 mask, Vector<float, 4> value)
+    {
+        return simd::min(a, b, mask, value);
+    }
+
     static inline Vector<float, 4> max(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::max(a, b);
+    }
+
+    static inline Vector<float, 4> max(Vector<float, 4> a, Vector<float, 4> b, mask32x4 mask)
+    {
+        return simd::max(a, b, mask);
+    }
+
+    static inline Vector<float, 4> max(Vector<float, 4> a, Vector<float, 4> b, mask32x4 mask, Vector<float, 4> value)
+    {
+        return simd::max(a, b, mask, value);
     }
 
     static inline float dot(Vector<float, 4> a, Vector<float, 4> b)

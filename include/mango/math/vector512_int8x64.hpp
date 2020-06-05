@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -152,9 +152,29 @@ namespace mango
         return simd::min(a, b);
     }
 
+    static inline Vector<s8, 64> min(Vector<s8, 64> a, Vector<s8, 64> b, mask8x64 mask)
+    {
+        return simd::min(a, b, mask);
+    }
+
+    static inline Vector<s8, 64> min(Vector<s8, 64> a, Vector<s8, 64> b, mask8x64 mask, Vector<s8, 64> value)
+    {
+        return simd::min(a, b, mask, value);
+    }
+
     static inline Vector<s8, 64> max(Vector<s8, 64> a, Vector<s8, 64> b)
     {
         return simd::max(a, b);
+    }
+
+    static inline Vector<s8, 64> max(Vector<s8, 64> a, Vector<s8, 64> b, mask8x64 mask)
+    {
+        return simd::max(a, b, mask);
+    }
+
+    static inline Vector<s8, 64> max(Vector<s8, 64> a, Vector<s8, 64> b, mask8x64 mask, Vector<s8, 64> value)
+    {
+        return simd::max(a, b, mask, value);
     }
 
     static inline Vector<s8, 64> clamp(Vector<s8, 64> a, Vector<s8, 64> low, Vector<s8, 64> high)
