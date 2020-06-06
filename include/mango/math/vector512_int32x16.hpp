@@ -143,16 +143,6 @@ namespace mango
         return simd::abs(a);
     }
 
-    static inline Vector<s32, 16> abs(Vector<s32, 16> a, mask32x16 mask)
-    {
-        return simd::abs(a, mask);
-    }
-
-    static inline Vector<s32, 16> abs(Vector<s32, 16> a, mask32x16 mask, Vector<s32, 16> value)
-    {
-        return simd::abs(a, mask, value);
-    }
-
     static inline Vector<s32, 16> add(Vector<s32, 16> a, Vector<s32, 16> b, mask32x16 mask)
     {
         return simd::add(a, b, mask);

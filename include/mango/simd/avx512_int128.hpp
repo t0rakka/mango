@@ -1203,12 +1203,12 @@ namespace detail
         return _mm_add_epi8(a, b);
     }
 
-    static inline s8x16 add(s8x16 a, u8x16 b, mask8x16 mask)
+    static inline s8x16 add(s8x16 a, s8x16 b, mask8x16 mask)
     {
         return _mm_maskz_add_epi8(mask, a, b);
     }
 
-    static inline s8x16 add(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    static inline s8x16 add(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
     {
         return _mm_mask_add_epi8(value, mask, a, b);
     }
@@ -1218,12 +1218,12 @@ namespace detail
         return _mm_sub_epi8(a, b);
     }
 
-    static inline s8x16 sub(s8x16 a, u8x16 b, mask8x16 mask)
+    static inline s8x16 sub(s8x16 a, s8x16 b, mask8x16 mask)
     {
         return _mm_maskz_sub_epi8(mask, a, b);
     }
 
-    static inline s8x16 sub(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    static inline s8x16 sub(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
     {
         return _mm_mask_sub_epi8(value, mask, a, b);
     }
@@ -1233,12 +1233,12 @@ namespace detail
         return _mm_adds_epi8(a, b);
     }
 
-    static inline s8x16 adds(s8x16 a, u8x16 b, mask8x16 mask)
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask)
     {
         return _mm_maskz_adds_epi8(mask, a, b);
     }
 
-    static inline s8x16 adds(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
     {
         return _mm_mask_adds_epi8(value, mask, a, b);
     }
@@ -1248,12 +1248,12 @@ namespace detail
         return _mm_subs_epi8(a, b);
     }
 
-    static inline s8x16 subs(s8x16 a, u8x16 b, mask8x16 mask)
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask)
     {
         return _mm_maskz_subs_epi8(mask, a, b);
     }
 
-    static inline s8x16 subs(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
     {
         return _mm_mask_subs_epi8(value, mask, a, b);
     }
@@ -1378,12 +1378,12 @@ namespace detail
         return _mm_min_epi8(a, b);
     }
 
-    static inline s8x16 min(s8x16 a, u8x16 b, mask8x16 mask)
+    static inline s8x16 min(s8x16 a, s8x16 b, mask8x16 mask)
     {
         return _mm_maskz_min_epi8(mask, a, b);
     }
 
-    static inline s8x16 min(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    static inline s8x16 min(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
     {
         return _mm_mask_min_epi8(value, mask, a, b);
     }
@@ -1393,12 +1393,12 @@ namespace detail
         return _mm_max_epi8(a, b);
     }
 
-    static inline s8x16 max(s8x16 a, u8x16 b, mask8x16 mask)
+    static inline s8x16 max(s8x16 a, s8x16 b, mask8x16 mask)
     {
         return _mm_maskz_max_epi8(mask, a, b);
     }
 
-    static inline s8x16 max(s8x16 a, u8x16 b, mask8x16 mask, s8x16 value)
+    static inline s8x16 max(s8x16 a, s8x16 b, mask8x16 mask, s8x16 value)
     {
         return _mm_mask_max_epi8(value, mask, a, b);
     }
