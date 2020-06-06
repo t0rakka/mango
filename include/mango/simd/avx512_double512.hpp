@@ -106,7 +106,7 @@ namespace simd {
         return _mm512_mask_max_pd(value, mask, a, b);
     }
 
-#if 1 // __GNUC__ < 8
+#if __GNUC__ < 8
 
     static inline f64x8 abs(f64x8 a)
     {
