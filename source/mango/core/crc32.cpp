@@ -7,14 +7,18 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
-#if defined(MANGO_ENABLE_SSE4_2)
-
-    #define MANGO_HARDWARE_CRC32C
-
-#elif defined(__ARM_FEATURE_CRC32)
+#if defined(__ARM_FEATURE_CRC32)
 
     #define MANGO_HARDWARE_CRC32
     #define MANGO_HARDWARE_CRC32C
+
+#elif defined(MANGO_ENABLE_SSE4_2)
+
+    #define MANGO_HARDWARE_CRC32C
+
+    #if defined(__PCLMUL__)
+        #define MANGO_HARDWARE_CRC32
+    #endif
 
 #endif
 
@@ -22,7 +26,7 @@ namespace
 {
     using namespace mango;
 
-#if !defined(MANGO_HARDWARE_CRC32)
+#if !defined(MANGO_HARDWARE_CRC32) || defined(__PCLMUL__)
 
     // //////////////////////////////////////////////////////////
     // Copyright (c) 2014 Stephan Brumme. All rights reserved.
@@ -298,6 +302,8 @@ namespace
         0x2c8e0fff,0xe0240f61,0x6eab0882,0xa201081c,0xa8c40105,0x646e019b,0xeae10678,0x264b06e6,
     };
 
+#if !defined(__PCLMUL__)
+
     inline u32 u8_crc32(u32 crc, u8 data)
     {
         crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
@@ -349,6 +355,7 @@ namespace
     }
 
 #endif // MANGO_CPU_64BIT
+#endif // __PCLMUL__
 #endif // MANGO_HARDWARE_CRC32
 
 #if !defined(MANGO_HARDWARE_CRC32C)
@@ -706,6 +713,31 @@ namespace
     }
 
 #endif // MANGO_CPU_64BIT
+
+    #if defined(__PCLMUL__)
+
+    inline u32 u8_crc32(u32 crc, u8 data)
+    {
+        crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
+        return crc;
+    }
+
+    inline u32 u64_crc32(u32 crc, const u8* data)
+    {
+        u64 value = *reinterpret_cast<const u64 *>(data);
+
+        // https://merrymage.com/lab/crc32/
+        // Enabled with -mpclmul compiler switch (clang, gcc)
+
+        __m128i xmm_const = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
+        __m128i xmm_value = _mm_set_epi64x(0, value ^ crc);
+
+        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x00);
+        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x10);
+        return _mm_extract_epi32(xmm_value, 2);
+    }
+
+    #endif
 
 #elif defined(__ARM_FEATURE_CRC32)
 

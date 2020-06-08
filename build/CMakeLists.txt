@@ -363,6 +363,9 @@ else ()
         # enable AES (2008) by default
         target_compile_options(mango PUBLIC "-maes")
 
+        # enable CLMUL (2008) by default
+        target_compile_options(mango PUBLIC "-mpclmul")
+
         # half conversion instructions
         if (ENABLE_F16C)
             message(STATUS "F16C: half conversion enabled (2012)")
