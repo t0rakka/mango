@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
@@ -112,15 +112,55 @@ namespace
 	}
 
     // ------------------------------------------------------------
+    // encoder
+    // ------------------------------------------------------------
+
+	struct rgbe
+	{
+		u8 r, g, b, e;
+	};
+
+	/*
+	rgbe create_rgbe(float r, float g, float b)
+	{
+		float maxf = r > g ? r : g;
+		maxf = maxf > b ? maxf : b;
+	
+		rgbe color;
+
+		if (maxf <= 1e-32f)
+		{
+			color.r = 0;
+			color.g = 0;
+			color.b = 0;
+			color.e = 0;
+		}
+		else
+		{
+			int exponent;
+			std::frexpf(maxf, &exponent);
+			float scale = std::ldexpf(1.0f, 8 - exponent);
+
+			color.r = u8(r * scale);
+			color.g = u8(g * scale);
+			color.b = u8(b * scale);
+			color.e = u8(exponent + 128);
+		}
+
+		return color;
+	}
+	*/
+
+    // ------------------------------------------------------------
     // decoder
     // ------------------------------------------------------------
 
-	void write_rgbe(float* buffer, u8 r, u8 g, u8 b, u8 e)
+	void write_rgbe(float* buffer, rgbe color)
 	{
-		float v = e ? std::ldexp(1.0f, e - 136) : 0;
-		buffer[0] = r * v;
-		buffer[1] = g * v;
-		buffer[2] = b * v;
+		float scale = color.e ? std::ldexp(1.0f, color.e - 136) : 0;
+		buffer[0] = color.r * scale;
+		buffer[1] = color.g * scale;
+		buffer[2] = color.b * scale;
 		buffer[3] = 1.0f;
 	}
 
@@ -314,11 +354,13 @@ namespace
 
 			for (int x = 0; x < surface.width; ++x)
 			{
-				u8 r = buffer[x + surface.width * 0];
-				u8 g = buffer[x + surface.width * 1];
-				u8 b = buffer[x + surface.width * 2];
-				u8 e = buffer[x + surface.width * 3];
-				write_rgbe(image, r, g, b, e);
+				rgbe color;
+				color.r = buffer[x + surface.width * 0];
+				color.g = buffer[x + surface.width * 1];
+				color.b = buffer[x + surface.width * 2];
+				color.e = buffer[x + surface.width * 3];
+
+				write_rgbe(image, color);
 				image += 4;
 			}
 		}
