@@ -39,6 +39,12 @@ mango::math
 ---------------------------------------------------------------------------------------------
 
 [ ] expose ALL mango::simd functionality in mango::math::Vector
+[ ] complete the 64 bit simd types (u32x2, s32x2, f32x2) and use them in mango::Vector front-end
+[ ] implement NEON 64 bit simd types (see above)
+[ ] clean up the gather() to use the simd 64 bit types as offsets directly (currently wrapped with *_set())
+[ ] clean the simd *_is_hardware_vector macros and their usage
+[ ] expose all of the masked simd functions in mango::Vector
+[ ] implement the generic masked simd functions in one header (= CODE SHARING IS CARING)
 
 ---------------------------------------------------------------------------------------------
 misc
@@ -60,3 +66,648 @@ compressed formats
 [ ] FOURCC -> CompressedFormat (.dds)
 [ ] DXGI -> CompressedFormat (.dds)
 [ ] GL -> CompressedFormat (.ktx)
+
+---------------------------------------------------------------------------------------------
+simd
+---------------------------------------------------------------------------------------------
+
+__m128d _mm_fmadd_pd (__m128d a, __m128d b, __m128d c)
+    a * b + c
+
+__m128d _mm_mask_fmadd_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+    k ? a * b + c : a
+
+__m128d _mm_mask3_fmadd_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+    k ? a * b + c : c
+
+__m128d _mm_maskz_fmadd_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+    k ? a * b + c : 0
+
+
+
+__m128d _mm_fmadd_pd (__m128d a, __m128d b, __m128d c)
+__m128d _mm_mask_fmadd_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+__m128d _mm_mask3_fmadd_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+__m128d _mm_maskz_fmadd_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+__m256d _mm256_fmadd_pd (__m256d a, __m256d b, __m256d c)
+__m256d _mm256_mask_fmadd_pd (__m256d a, __mmask8 k, __m256d b, __m256d c)
+__m256d _mm256_mask3_fmadd_pd (__m256d a, __m256d b, __m256d c, __mmask8 k)
+__m256d _mm256_maskz_fmadd_pd (__mmask8 k, __m256d a, __m256d b, __m256d c)
+__m512d _mm512_fmadd_pd (__m512d a, __m512d b, __m512d c)
+__m512d _mm512_mask_fmadd_pd (__m512d a, __mmask8 k, __m512d b, __m512d c)
+__m512d _mm512_mask3_fmadd_pd (__m512d a, __m512d b, __m512d c, __mmask8 k)
+__m512d _mm512_maskz_fmadd_pd (__mmask8 k, __m512d a, __m512d b, __m512d c)
+
+__m128 _mm_fmadd_ps (__m128 a, __m128 b, __m128 c)
+__m128 _mm_mask_fmadd_ps (__m128 a, __mmask8 k, __m128 b, __m128 c)
+__m128 _mm_mask3_fmadd_ps (__m128 a, __m128 b, __m128 c, __mmask8 k)
+__m128 _mm_maskz_fmadd_ps (__mmask8 k, __m128 a, __m128 b, __m128 c)
+__m256 _mm256_fmadd_ps (__m256 a, __m256 b, __m256 c)
+__m256 _mm256_mask_fmadd_ps (__m256 a, __mmask8 k, __m256 b, __m256 c)
+__m256 _mm256_mask3_fmadd_ps (__m256 a, __m256 b, __m256 c, __mmask8 k)
+__m256 _mm256_maskz_fmadd_ps (__mmask8 k, __m256 a, __m256 b, __m256 c)
+__m512 _mm512_fmadd_ps (__m512 a, __m512 b, __m512 c)
+__m512 _mm512_mask_fmadd_ps (__m512 a, __mmask16 k, __m512 b, __m512 c)
+__m512 _mm512_mask3_fmadd_ps (__m512 a, __m512 b, __m512 c, __mmask16 k)
+__m512 _mm512_maskz_fmadd_ps (__mmask16 k, __m512 a, __m512 b, __m512 c)
+
+__m512d _mm512_fmadd_round_pd (__m512d a, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask_fmadd_round_pd (__m512d a, __mmask8 k, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask3_fmadd_round_pd (__m512d a, __m512d b, __m512d c, __mmask8 k, int rounding)
+__m512d _mm512_maskz_fmadd_round_pd (__mmask8 k, __m512d a, __m512d b, __m512d c, const int rounding)
+
+__m512 _mm512_fmadd_round_ps (__m512 a, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask_fmadd_round_ps (__m512 a, __mmask16 k, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask3_fmadd_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
+__m512 _mm512_maskz_fmadd_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
+
+__m512i _mm512_fmadd233_epi32 (__m512i a, __m512i b)
+__m512i _mm512_mask_fmadd233_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+
+__m512 _mm512_fmadd233_ps (__m512 a, __m512 b)
+__m512 _mm512_mask_fmadd233_ps (__m512 src, __mmask16 k, __m512 a, __m512 b)
+__m512 _mm512_fmadd233_round_ps (__m512 a, __m512 b, int rounding)
+__m512 _mm512_mask_fmadd233_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
+
+--
+
+__m128d _mm_fmaddsub_pd (__m128d a, __m128d b, __m128d c)
+__m128d _mm_mask_fmaddsub_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+__m128d _mm_mask3_fmaddsub_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+__m128d _mm_maskz_fmaddsub_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+__m256d _mm256_fmaddsub_pd (__m256d a, __m256d b, __m256d c)
+__m256d _mm256_mask_fmaddsub_pd (__m256d a, __mmask8 k, __m256d b, __m256d c)
+__m256d _mm256_mask3_fmaddsub_pd (__m256d a, __m256d b, __m256d c, __mmask8 k)
+__m256d _mm256_maskz_fmaddsub_pd (__mmask8 k, __m256d a, __m256d b, __m256d c)
+__m512d _mm512_fmaddsub_pd (__m512d a, __m512d b, __m512d c)
+__m512d _mm512_mask_fmaddsub_pd (__m512d a, __mmask8 k, __m512d b, __m512d c)
+__m512d _mm512_mask3_fmaddsub_pd (__m512d a, __m512d b, __m512d c, __mmask8 k)
+__m512d _mm512_maskz_fmaddsub_pd (__mmask8 k, __m512d a, __m512d b, __m512d c)
+
+__m128 _mm_fmaddsub_ps (__m128 a, __m128 b, __m128 c)
+__m128 _mm_mask_fmaddsub_ps (__m128 a, __mmask8 k, __m128 b, __m128 c)
+__m128 _mm_mask3_fmaddsub_ps (__m128 a, __m128 b, __m128 c, __mmask8 k)
+__m128 _mm_maskz_fmaddsub_ps (__mmask8 k, __m128 a, __m128 b, __m128 c)
+__m256 _mm256_fmaddsub_ps (__m256 a, __m256 b, __m256 c)
+__m256 _mm256_mask_fmaddsub_ps (__m256 a, __mmask8 k, __m256 b, __m256 c)
+__m256 _mm256_mask3_fmaddsub_ps (__m256 a, __m256 b, __m256 c, __mmask8 k)
+__m256 _mm256_maskz_fmaddsub_ps (__mmask8 k, __m256 a, __m256 b, __m256 c)
+__m512 _mm512_fmaddsub_ps (__m512 a, __m512 b, __m512 c)
+__m512 _mm512_mask_fmaddsub_ps (__m512 a, __mmask16 k, __m512 b, __m512 c)
+__m512 _mm512_mask3_fmaddsub_ps (__m512 a, __m512 b, __m512 c, __mmask16 k)
+__m512 _mm512_maskz_fmaddsub_ps (__mmask16 k, __m512 a, __m512 b, __m512 c)
+
+__m512d _mm512_fmaddsub_round_pd (__m512d a, __m512d b, __m512d c, const int rounding)
+__m512d _mm512_mask_fmaddsub_round_pd (__m512d a, __mmask8 k, __m512d b, __m512d c, const int rounding)
+__m512d _mm512_mask3_fmaddsub_round_pd (__m512d a, __m512d b, __m512d c, __mmask8 k, const int rounding)
+__m512d _mm512_maskz_fmaddsub_round_pd (__mmask8 k, __m512d a, __m512d b, __m512d c, const int rounding)
+__m512 _mm512_fmaddsub_round_ps (__m512 a, __m512 b, __m512 c, const int rounding)
+__m512 _mm512_mask_fmaddsub_round_ps (__m512 a, __mmask16 k, __m512 b, __m512 c, const int rounding)
+__m512 _mm512_mask3_fmaddsub_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, const int rounding)
+__m512 _mm512_maskz_fmaddsub_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
+
+__m128d _mm_fmsub_pd (__m128d a, __m128d b, __m128d c)
+__m128d _mm_mask_fmsub_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+__m128d _mm_mask3_fmsub_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+__m128d _mm_maskz_fmsub_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+__m256d _mm256_fmsub_pd (__m256d a, __m256d b, __m256d c)
+__m256d _mm256_mask_fmsub_pd (__m256d a, __mmask8 k, __m256d b, __m256d c)
+__m256d _mm256_mask3_fmsub_pd (__m256d a, __m256d b, __m256d c, __mmask8 k)
+__m256d _mm256_maskz_fmsub_pd (__mmask8 k, __m256d a, __m256d b, __m256d c)
+__m512d _mm512_fmsub_pd (__m512d a, __m512d b, __m512d c)
+__m512d _mm512_mask_fmsub_pd (__m512d a, __mmask8 k, __m512d b, __m512d c)
+__m512d _mm512_mask3_fmsub_pd (__m512d a, __m512d b, __m512d c, __mmask8 k)
+__m512d _mm512_maskz_fmsub_pd (__mmask8 k, __m512d a, __m512d b, __m512d c)
+
+__m128 _mm_fmsub_ps (__m128 a, __m128 b, __m128 c)
+__m128 _mm_mask_fmsub_ps (__m128 a, __mmask8 k, __m128 b, __m128 c)
+__m128 _mm_mask3_fmsub_ps (__m128 a, __m128 b, __m128 c, __mmask8 k)
+__m128 _mm_maskz_fmsub_ps (__mmask8 k, __m128 a, __m128 b, __m128 c)
+__m256 _mm256_fmsub_ps (__m256 a, __m256 b, __m256 c)
+__m256 _mm256_mask_fmsub_ps (__m256 a, __mmask8 k, __m256 b, __m256 c)
+__m256 _mm256_mask3_fmsub_ps (__m256 a, __m256 b, __m256 c, __mmask8 k)
+__m256 _mm256_maskz_fmsub_ps (__mmask8 k, __m256 a, __m256 b, __m256 c)
+__m512 _mm512_fmsub_ps (__m512 a, __m512 b, __m512 c)
+__m512 _mm512_mask_fmsub_ps (__m512 a, __mmask16 k, __m512 b, __m512 c)
+__m512 _mm512_mask3_fmsub_ps (__m512 a, __m512 b, __m512 c, __mmask16 k)
+__m512 _mm512_maskz_fmsub_ps (__mmask16 k, __m512 a, __m512 b, __m512 c)
+
+__m512d _mm512_fmsub_round_pd (__m512d a, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask_fmsub_round_pd (__m512d a, __mmask8 k, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask3_fmsub_round_pd (__m512d a, __m512d b, __m512d c, __mmask8 k, int rounding)
+__m512d _mm512_maskz_fmsub_round_pd (__mmask8 k, __m512d a, __m512d b, __m512d c, const int rounding)
+__m512 _mm512_fmsub_round_ps (__m512 a, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask_fmsub_round_ps (__m512 a, __mmask16 k, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask3_fmsub_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
+__m512 _mm512_maskz_fmsub_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
+
+__m128d _mm_fmsubadd_pd (__m128d a, __m128d b, __m128d c)
+__m128d _mm_mask_fmsubadd_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+__m128d _mm_mask3_fmsubadd_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+__m128d _mm_maskz_fmsubadd_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+__m256d _mm256_fmsubadd_pd (__m256d a, __m256d b, __m256d c)
+__m256d _mm256_mask_fmsubadd_pd (__m256d a, __mmask8 k, __m256d b, __m256d c)
+__m256d _mm256_mask3_fmsubadd_pd (__m256d a, __m256d b, __m256d c, __mmask8 k)
+__m256d _mm256_maskz_fmsubadd_pd (__mmask8 k, __m256d a, __m256d b, __m256d c)
+__m512d _mm512_fmsubadd_pd (__m512d a, __m512d b, __m512d c)
+__m512d _mm512_mask_fmsubadd_pd (__m512d a, __mmask8 k, __m512d b, __m512d c)
+__m512d _mm512_mask3_fmsubadd_pd (__m512d a, __m512d b, __m512d c, __mmask8 k)
+__m512d _mm512_maskz_fmsubadd_pd (__mmask8 k, __m512d a, __m512d b, __m512d c)
+
+__m128 _mm_fmsubadd_ps (__m128 a, __m128 b, __m128 c)
+__m128 _mm_mask_fmsubadd_ps (__m128 a, __mmask8 k, __m128 b, __m128 c)
+__m128 _mm_mask3_fmsubadd_ps (__m128 a, __m128 b, __m128 c, __mmask8 k)
+__m128 _mm_maskz_fmsubadd_ps (__mmask8 k, __m128 a, __m128 b, __m128 c)
+__m256 _mm256_fmsubadd_ps (__m256 a, __m256 b, __m256 c)
+__m256 _mm256_mask_fmsubadd_ps (__m256 a, __mmask8 k, __m256 b, __m256 c)
+__m256 _mm256_mask3_fmsubadd_ps (__m256 a, __m256 b, __m256 c, __mmask8 k)
+__m256 _mm256_maskz_fmsubadd_ps (__mmask8 k, __m256 a, __m256 b, __m256 c)
+__m512 _mm512_fmsubadd_ps (__m512 a, __m512 b, __m512 c)
+__m512 _mm512_mask_fmsubadd_ps (__m512 a, __mmask16 k, __m512 b, __m512 c)
+__m512 _mm512_mask3_fmsubadd_ps (__m512 a, __m512 b, __m512 c, __mmask16 k)
+__m512 _mm512_maskz_fmsubadd_ps (__mmask16 k, __m512 a, __m512 b, __m512 c)
+
+__m512d _mm512_fmsubadd_round_pd (__m512d a, __m512d b, __m512d c, const int rounding)
+__m512d _mm512_mask_fmsubadd_round_pd (__m512d a, __mmask8 k, __m512d b, __m512d c, const int rounding)
+__m512d _mm512_mask3_fmsubadd_round_pd (__m512d a, __m512d b, __m512d c, __mmask8 k, const int rounding)
+__m512d _mm512_maskz_fmsubadd_round_pd (__mmask8 k, __m512d a, __m512d b, __m512d c, const int rounding)
+__m512 _mm512_fmsubadd_round_ps (__m512 a, __m512 b, __m512 c, const int rounding)
+__m512 _mm512_mask_fmsubadd_round_ps (__m512 a, __mmask16 k, __m512 b, __m512 c, const int rounding)
+__m512 _mm512_mask3_fmsubadd_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, const int rounding)
+__m512 _mm512_maskz_fmsubadd_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
+
+__m128d _mm_fnmadd_pd (__m128d a, __m128d b, __m128d c)
+__m128d _mm_mask_fnmadd_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+__m128d _mm_mask3_fnmadd_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+__m128d _mm_maskz_fnmadd_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+__m256d _mm256_fnmadd_pd (__m256d a, __m256d b, __m256d c)
+__m256d _mm256_mask_fnmadd_pd (__m256d a, __mmask8 k, __m256d b, __m256d c)
+__m256d _mm256_mask3_fnmadd_pd (__m256d a, __m256d b, __m256d c, __mmask8 k)
+__m256d _mm256_maskz_fnmadd_pd (__mmask8 k, __m256d a, __m256d b, __m256d c)
+__m512d _mm512_fnmadd_pd (__m512d a, __m512d b, __m512d c)
+__m512d _mm512_mask_fnmadd_pd (__m512d a, __mmask8 k, __m512d b, __m512d c)
+__m512d _mm512_mask3_fnmadd_pd (__m512d a, __m512d b, __m512d c, __mmask8 k)
+__m512d _mm512_maskz_fnmadd_pd (__mmask8 k, __m512d a, __m512d b, __m512d c)
+
+__m128 _mm_fnmadd_ps (__m128 a, __m128 b, __m128 c)
+__m128 _mm_mask_fnmadd_ps (__m128 a, __mmask8 k, __m128 b, __m128 c)
+__m128 _mm_mask3_fnmadd_ps (__m128 a, __m128 b, __m128 c, __mmask8 k)
+__m128 _mm_maskz_fnmadd_ps (__mmask8 k, __m128 a, __m128 b, __m128 c)
+__m256 _mm256_fnmadd_ps (__m256 a, __m256 b, __m256 c)
+__m256 _mm256_mask_fnmadd_ps (__m256 a, __mmask8 k, __m256 b, __m256 c)
+__m256 _mm256_mask3_fnmadd_ps (__m256 a, __m256 b, __m256 c, __mmask8 k)
+__m256 _mm256_maskz_fnmadd_ps (__mmask8 k, __m256 a, __m256 b, __m256 c)
+__m512 _mm512_fnmadd_ps (__m512 a, __m512 b, __m512 c)
+__m512 _mm512_mask_fnmadd_ps (__m512 a, __mmask16 k, __m512 b, __m512 c)
+__m512 _mm512_mask3_fnmadd_ps (__m512 a, __m512 b, __m512 c, __mmask16 k)
+__m512 _mm512_maskz_fnmadd_ps (__mmask16 k, __m512 a, __m512 b, __m512 c)
+
+__m512d _mm512_fnmadd_round_pd (__m512d a, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask_fnmadd_round_pd (__m512d a, __mmask8 k, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask3_fnmadd_round_pd (__m512d a, __m512d b, __m512d c, __mmask8 k, int rounding)
+__m512d _mm512_maskz_fnmadd_round_pd (__mmask8 k, __m512d a, __m512d b, __m512d c, const int rounding)
+__m512 _mm512_fnmadd_round_ps (__m512 a, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask_fnmadd_round_ps (__m512 a, __mmask16 k, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask3_fnmadd_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
+__m512 _mm512_maskz_fnmadd_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
+
+__m128d _mm_fnmsub_pd (__m128d a, __m128d b, __m128d c)
+__m128d _mm_mask_fnmsub_pd (__m128d a, __mmask8 k, __m128d b, __m128d c)
+__m128d _mm_mask3_fnmsub_pd (__m128d a, __m128d b, __m128d c, __mmask8 k)
+__m128d _mm_maskz_fnmsub_pd (__mmask8 k, __m128d a, __m128d b, __m128d c)
+__m256d _mm256_fnmsub_pd (__m256d a, __m256d b, __m256d c)
+__m256d _mm256_mask_fnmsub_pd (__m256d a, __mmask8 k, __m256d b, __m256d c)
+__m256d _mm256_mask3_fnmsub_pd (__m256d a, __m256d b, __m256d c, __mmask8 k)
+__m256d _mm256_maskz_fnmsub_pd (__mmask8 k, __m256d a, __m256d b, __m256d c)
+__m512d _mm512_fnmsub_pd (__m512d a, __m512d b, __m512d c)
+__m512d _mm512_mask_fnmsub_pd (__m512d a, __mmask8 k, __m512d b, __m512d c)
+__m512d _mm512_mask3_fnmsub_pd (__m512d a, __m512d b, __m512d c, __mmask8 k)
+__m512d _mm512_maskz_fnmsub_pd (__mmask8 k, __m512d a, __m512d b, __m512d c)
+
+__m128 _mm_fnmsub_ps (__m128 a, __m128 b, __m128 c)
+__m128 _mm_mask_fnmsub_ps (__m128 a, __mmask8 k, __m128 b, __m128 c)
+__m128 _mm_mask3_fnmsub_ps (__m128 a, __m128 b, __m128 c, __mmask8 k)
+__m128 _mm_maskz_fnmsub_ps (__mmask8 k, __m128 a, __m128 b, __m128 c)
+__m256 _mm256_fnmsub_ps (__m256 a, __m256 b, __m256 c)
+__m256 _mm256_mask_fnmsub_ps (__m256 a, __mmask8 k, __m256 b, __m256 c)
+__m256 _mm256_mask3_fnmsub_ps (__m256 a, __m256 b, __m256 c, __mmask8 k)
+__m256 _mm256_maskz_fnmsub_ps (__mmask8 k, __m256 a, __m256 b, __m256 c)
+__m512 _mm512_fnmsub_ps (__m512 a, __m512 b, __m512 c)
+__m512 _mm512_mask_fnmsub_ps (__m512 a, __mmask16 k, __m512 b, __m512 c)
+__m512 _mm512_mask3_fnmsub_ps (__m512 a, __m512 b, __m512 c, __mmask16 k)
+__m512 _mm512_maskz_fnmsub_ps (__mmask16 k, __m512 a, __m512 b, __m512 c)
+
+__m512d _mm512_fnmsub_round_pd (__m512d a, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask_fnmsub_round_pd (__m512d a, __mmask8 k, __m512d b, __m512d c, int rounding)
+__m512d _mm512_mask3_fnmsub_round_pd (__m512d a, __m512d b, __m512d c, __mmask8 k, int rounding)
+__m512d _mm512_maskz_fnmsub_round_pd (__mmask8 k, __m512d a, __m512d b, __m512d c, const int rounding)
+__m512 _mm512_fnmsub_round_ps (__m512 a, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask_fnmsub_round_ps (__m512 a, __mmask16 k, __m512 b, __m512 c, int rounding)
+__m512 _mm512_mask3_fnmsub_round_ps (__m512 a, __m512 b, __m512 c, __mmask16 k, int rounding)
+__m512 _mm512_maskz_fnmsub_round_ps (__mmask16 k, __m512 a, __m512 b, __m512 c, const int rounding)
+
+--
+
+__m128i _mm_madd52hi_epu64 (__m128i a, __m128i b, __m128i c)
+__m128i _mm_mask_madd52hi_epu64 (__m128i a, __mmask8 k, __m128i b, __m128i c)
+__m128i _mm_maskz_madd52hi_epu64 (__mmask8 k, __m128i a, __m128i b, __m128i c)
+
+__m256i _mm256_madd52hi_epu64 (__m256i a, __m256i b, __m256i c)
+__m256i _mm256_mask_madd52hi_epu64 (__m256i a, __mmask8 k, __m256i b, __m256i c)
+__m256i _mm256_maskz_madd52hi_epu64 (__mmask8 k, __m256i a, __m256i b, __m256i c)
+
+__m512i _mm512_madd52hi_epu64 (__m512i a, __m512i b, __m512i c)
+__m512i _mm512_mask_madd52hi_epu64 (__m512i a, __mmask8 k, __m512i b, __m512i c)
+__m512i _mm512_maskz_madd52hi_epu64 (__mmask8 k, __m512i a, __m512i b, __m512i c)
+
+--
+
+__m128i _mm_madd52lo_epu64 (__m128i a, __m128i b, __m128i c)
+__m128i _mm_mask_madd52lo_epu64 (__m128i a, __mmask8 k, __m128i b, __m128i c)
+__m128i _mm_maskz_madd52lo_epu64 (__mmask8 k, __m128i a, __m128i b, __m128i c)
+__m256i _mm256_madd52lo_epu64 (__m256i a, __m256i b, __m256i c)
+__m256i _mm256_mask_madd52lo_epu64 (__m256i a, __mmask8 k, __m256i b, __m256i c)
+__m256i _mm256_maskz_madd52lo_epu64 (__mmask8 k, __m256i a, __m256i b, __m256i c)
+__m512i _mm512_madd52lo_epu64 (__m512i a, __m512i b, __m512i c)
+__m512i _mm512_mask_madd52lo_epu64 (__m512i a, __mmask8 k, __m512i b, __m512i c)
+__m512i _mm512_maskz_madd52lo_epu64 (__mmask8 k, __m512i a, __m512i b, __m512i c)
+
+__m128i _mm_maddubs_epi16 (__m128i a, __m128i b)
+__m128i _mm_mask_maddubs_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_maddubs_epi16 (__mmask8 k, __m128i a, __m128i b)
+__m256i _mm256_maddubs_epi16 (__m256i a, __m256i b)
+__m256i _mm256_mask_maddubs_epi16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_maddubs_epi16 (__mmask16 k, __m256i a, __m256i b)
+__m512i _mm512_maddubs_epi16 (__m512i a, __m512i b)
+__m512i _mm512_mask_maddubs_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_maddubs_epi16 (__mmask32 k, __m512i a, __m512i b)
+
+--
+
+__m128i _mm_mpsadbw_epu8 (__m128i a, __m128i b, const int imm8)
+
+__m128i _mm_mask_mul_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mul_epi32 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mul_epi32 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mul_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mul_epi32 (__mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_mul_epi32 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mul_epi32 (__m512i src, __mmask8 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mul_epi32 (__mmask8 k, __m512i a, __m512i b)
+__m512i _mm512_mul_epi32 (__m512i a, __m512i b)
+
+__m128i _mm_mask_mul_epu32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mul_epu32 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mul_epu32 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mul_epu32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mul_epu32 (__mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_mul_epu32 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mul_epu32 (__m512i src, __mmask8 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mul_epu32 (__mmask8 k, __m512i a, __m512i b)
+__m512i _mm512_mul_epu32 (__m512i a, __m512i b)
+
+__m512d _mm512_mask_mul_round_pd (__m512d src, __mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_maskz_mul_round_pd (__mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_mul_round_pd (__m512d a, __m512d b, int rounding)
+
+__m512 _mm512_mask_mul_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_maskz_mul_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_mul_round_ps (__m512 a, __m512 b, int rounding)
+
+--
+
+__m128i _mm_mask_mullo_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mullo_epi16 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mullo_epi16 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mullo_epi16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mullo_epi16 (__mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_mullo_epi16 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mullo_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mullo_epi16 (__mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_mullo_epi16 (__m512i a, __m512i b)
+
+__m128i _mm_mask_mullo_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mullo_epi32 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mullo_epi32 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mullo_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mullo_epi32 (__mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_mullo_epi32 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mullo_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mullo_epi32 (__mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_mullo_epi32 (__m512i a, __m512i b)
+
+__m128i _mm_mask_mullo_epi64 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mullo_epi64 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mullo_epi64 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mullo_epi64 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mullo_epi64 (__mmask8 k, __m256i a, __m256i b)vpmullq
+__m256i _mm256_mullo_epi64 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mullo_epi64 (__m512i src, __mmask8 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mullo_epi64 (__mmask8 k, __m512i a, __m512i b)
+__m512i _mm512_mullo_epi64 (__m512i a, __m512i b)
+
+--
+
+__m128i _mm_mask_mulhi_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mulhi_epi16 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mulhi_epi16 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mulhi_epi16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mulhi_epi16 (__mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_mulhi_epi16 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mulhi_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mulhi_epi16 (__mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_mulhi_epi16 (__m512i a, __m512i b)
+
+__m512i _mm512_mask_mulhi_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_mulhi_epi32 (__m512i a, __m512i b)
+
+__m128i _mm_mask_mulhi_epu16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mulhi_epu16 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mulhi_epu16 (__m128i a, __m128i b)
+
+__m256i _mm256_mask_mulhi_epu16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mulhi_epu16 (__mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_mulhi_epu16 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_mulhi_epu16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mulhi_epu16 (__mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_mulhi_epu16 (__m512i a, __m512i b)
+
+__m512i _mm512_mask_mulhi_epu32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_mulhi_epu32 (__m512i a, __m512i b)
+
+--
+
+__m128i _mm_mask_mulhrs_epi16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_mulhrs_epi16 (__mmask8 k, __m128i a, __m128i b)
+__m128i _mm_mulhrs_epi16 (__m128i a, __m128i b)
+__m256i _mm256_mask_mulhrs_epi16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_mulhrs_epi16 (__mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_mulhrs_epi16 (__m256i a, __m256i b)
+__m512i _mm512_mask_mulhrs_epi16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_mulhrs_epi16 (__mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_mulhrs_epi16 (__m512i a, __m512i b)
+
+--
+
+unsigned int _mulx_u32 (unsigned int a, unsigned int b, unsigned int* hi)
+unsigned __int64 _mulx_u64 (unsigned __int64 a, unsigned __int64 b, unsigned __int64* hi)
+
+--
+
+__m128d _mm_mask_rcp14_pd (__m128d src, __mmask8 k, __m128d a)
+__m128d _mm_maskz_rcp14_pd (__mmask8 k, __m128d a)
+__m128d _mm_rcp14_pd (__m128d a)
+
+__m256d _mm256_mask_rcp14_pd (__m256d src, __mmask8 k, __m256d a)
+__m256d _mm256_maskz_rcp14_pd (__mmask8 k, __m256d a)
+__m256d _mm256_rcp14_pd (__m256d a)
+
+__m128 _mm_mask_rcp14_ps (__m128 src, __mmask8 k, __m128 a)
+__m128 _mm_maskz_rcp14_ps (__mmask8 k, __m128 a)
+__m128 _mm_rcp14_ps (__m128 a)
+
+__m256 _mm256_mask_rcp14_ps (__m256 src, __mmask8 k, __m256 a)
+__m256 _mm256_maskz_rcp14_ps (__mmask8 k, __m256 a)
+__m256 _mm256_rcp14_ps (__m256 a)
+
+--
+
+int _mm512_mask_reduce_add_epi32 (__mmask16 k, __m512i a)
+int _mm512_reduce_add_epi32 (__m512i a)
+
+__int64 _mm512_mask_reduce_add_epi64 (__mmask8 k, __m512i a)
+__int64 _mm512_reduce_add_epi64 (__m512i a)
+
+double _mm512_mask_reduce_add_pd (__mmask8 k, __m512d a)
+double _mm512_reduce_add_pd (__m512d a)
+
+float _mm512_mask_reduce_add_ps (__mmask16 k, __m512 a)
+float _mm512_reduce_add_ps (__m512 a)
+
+--
+
+int _mm512_mask_reduce_mul_epi32 (__mmask16 k, __m512i a)
+int _mm512_reduce_mul_epi32 (__m512i a)
+__int64 _mm512_mask_reduce_mul_epi64 (__mmask8 k, __m512i a)
+__int64 _mm512_reduce_mul_epi64 (__m512i a)
+double _mm512_mask_reduce_mul_pd (__mmask8 k, __m512d a)
+double _mm512_reduce_mul_pd (__m512d a)
+float _mm512_mask_reduce_mul_ps (__mmask16 k, __m512 a)
+float _mm512_reduce_mul_ps (__m512 a)
+
+__m128d _mm_mask_rsqrt14_pd (__m128d src, __mmask8 k, __m128d a)
+__m128d _mm_maskz_rsqrt14_pd (__mmask8 k, __m128d a)
+__m256d _mm256_mask_rsqrt14_pd (__m256d src, __mmask8 k, __m256d a)
+__m256d _mm256_maskz_rsqrt14_pd (__mmask8 k, __m256d a)
+__m128 _mm_mask_rsqrt14_ps (__m128 src, __mmask8 k, __m128 a)
+__m128 _mm_maskz_rsqrt14_ps (__mmask8 k, __m128 a)
+__m256 _mm256_mask_rsqrt14_ps (__m256 src, __mmask8 k, __m256 a)
+__m256 _mm256_maskz_rsqrt14_ps (__mmask8 k, __m256 a)
+
+__m128i _mm_sad_epu8 (__m128i a, __m128i b)
+__m256i _mm256_sad_epu8 (__m256i a, __m256i b)
+
+__m512i _mm512_mask_sbb_epi32 (__m512i v2, __mmask16 k1, __mmask16 k2, __m512i v3, __mmask16 * borrow)
+__m512i _mm512_sbb_epi32 (__m512i v2, __mmask16 k, __m512i v3, __mmask16 * borrow)
+__m512i _mm512_mask_sbbr_epi32 (__m512i v2, __mmask16 k1, __mmask16 k2, __m512i v3, __mmask16 * borrow)
+__m512i _mm512_sbbr_epi32 (__m512i v2, __mmask16 k, __m512i v3, __mmask16 * borrow)
+
+__m512 _mm512_mask_scale_ps (__m512 src, __mmask16 k, __m512 a, __m512i b)
+__m512 _mm512_scale_ps (__m512 a, __m512i b)
+__m512 _mm512_mask_scale_round_ps (__m512 src, __mmask16 k, __m512 a, __m512i b, int rounding)
+__m512 _mm512_scale_round_ps (__m512 a, __m512i b, int rounding)
+
+
+__m512d _mm512_mask_sub_round_pd (__m512d src, __mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_maskz_sub_round_pd (__mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_sub_round_pd (__m512d a, __m512d b, int rounding)
+__m512 _mm512_mask_sub_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_maskz_sub_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_sub_round_ps (__m512 a, __m512 b, int rounding)
+unsigned char _subborrow_u32 (unsigned char c_in, unsigned int a, unsigned int b, unsigned int * out)
+unsigned char _subborrow_u64 (unsigned char c_in, unsigned __int64 a, unsigned __int64 b, unsigned __int64 * out)
+__m512i _mm512_mask_subr_epi32 (__m512i src, __mmask16 k, __m512i v2, __m512i v3)
+__m512i _mm512_subr_epi32 (__m512i v2, __m512i v3)
+__m512d _mm512_mask_subr_pd (__m512d src, __mmask8 k, __m512d v2, __m512d v3)
+__m512d _mm512_subr_pd (__m512d v2, __m512d v3)
+__m512 _mm512_mask_subr_ps (__m512 src, __mmask16 k, __m512 v2, __m512 v3)
+__m512 _mm512_subr_ps (__m512 v2, __m512 v3)
+__m512d _mm512_mask_subr_round_pd (__m512d src, __mmask8 k, __m512d v2, __m512d v3, int rounding)
+__m512d _mm512_subr_round_pd (__m512d v2, __m512d v3, int rounding)
+__m512 _mm512_mask_subr_round_ps (__m512 src, __mmask16 k, __m512 v2, __m512 v3, int rounding)
+__m512 _mm512_subr_round_ps (__m512 v2, __m512 v3, int rounding)
+__m512i _mm512_subrsetb_epi32 (__m512i v2, __m512i v3, __mmask16 * borrow)
+
+
+-- xxx --
+-- xxx --
+-- xxx --
+
+__m128i _mm_abs_epi64 (__m128i a)
+__m128i _mm_mask_abs_epi64 (__m128i src, __mmask8 k, __m128i a)
+__m128i _mm_maskz_abs_epi64 (__mmask8 k, __m128i a)
+__m256i _mm256_abs_epi64 (__m256i a)
+__m256i _mm256_mask_abs_epi64 (__m256i src, __mmask8 k, __m256i a)
+__m256i _mm256_maskz_abs_epi64 (__mmask8 k, __m256i a)
+
+__m512d _mm512_abs_pd (__m512d v2)
+__m512d _mm512_mask_abs_pd (__m512d src, __mmask8 k, __m512d v2)
+
+__m512 _mm512_abs_ps (__m512 v2)
+__m512 _mm512_mask_abs_ps (__m512 src, __mmask16 k, __m512 v2)
+
+__m512i _mm512_adc_epi32 (__m512i v2, __mmask16 k2, __m512i v3, __mmask16 * k2_res)
+__m512i _mm512_mask_adc_epi32 (__m512i v2, __mmask16 k1, __mmask16 k2, __m512i v3, __mmask16 * k2_res)
+
+__m512d _mm512_add_round_pd (__m512d a, __m512d b, int rounding)
+__m512d _mm512_mask_add_round_pd (__m512d src, __mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_maskz_add_round_pd (__mmask8 k, __m512d a, __m512d b, int rounding)
+__m512 _mm512_add_round_ps (__m512 a, __m512 b, int rounding)
+__m512 _mm512_mask_add_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_maskz_add_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
+
+__m512d _mm512_addn_pd (__m512d v2, __m512d v3)
+__m512d _mm512_mask_addn_pd (__m512d src, __mmask8 k, __m512d v2, __m512d v3)
+__m512 _mm512_addn_ps (__m512 v2, __m512 v3)
+__m512 _mm512_mask_addn_ps (__m512 src, __mmask16 k, __m512 v2, __m512 v3)
+__m512d _mm512_addn_round_pd (__m512d v2, __m512d v3, int rounding)
+__m512d _mm512_mask_addn_round_pd (__m512d src, __mmask8 k, __m512d v2, __m512d v3, int rounding)
+__m512 _mm512_addn_round_ps (__m512 v2, __m512 v3, int rounding)
+__m512 _mm512_mask_addn_round_ps (__m512 src, __mmask16 k, __m512 v2, __m512 v3, int rounding)
+
+__m512i _mm512_addsetc_epi32 (__m512i v2, __m512i v3, __mmask16 * k2_res)
+__m512i _mm512_mask_addsetc_epi32 (__m512i v2, __mmask16 k, __mmask16 k_old, __m512i v3, __mmask16 * k2_res)
+__m512i _mm512_addsets_epi32 (__m512i v2, __m512i v3, __mmask16 * sign)
+__m512i _mm512_mask_addsets_epi32 (__m512i src, __mmask16 k, __m512i v2, __m512i v3, __mmask16 * sign)
+__m512 _mm512_addsets_ps (__m512 v2, __m512 v3, __mmask16 * sign)
+__m512 _mm512_mask_addsets_ps (__m512 src, __mmask16 k, __m512 v2, __m512 v3, __mmask16 * sign)
+__m512 _mm512_addsets_round_ps (__m512 v2, __m512 v3, __mmask16 * sign, int rounding)
+__m512 _mm512_mask_addsets_round_ps (__m512 src, __mmask16 k, __m512 v2, __m512 v3, __mmask16 * sign, int rounding)
+
+__m128d _mm_addsub_pd (__m128d a, __m128d b)
+__m256d _mm256_addsub_pd (__m256d a, __m256d b)
+__m128 _mm_addsub_ps (__m128 a, __m128 b)
+__m256 _mm256_addsub_ps (__m256 a, __m256 b)
+
+__m128i _mm_mask_avg_epu16 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_avg_epu16 (__mmask8 k, __m128i a, __m128i b)
+__m256i _mm256_mask_avg_epu16 (__m256i src, __mmask16 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_avg_epu16 (__mmask16 k, __m256i a, __m256i b)
+__m512i _mm512_avg_epu16 (__m512i a, __m512i b)
+__m512i _mm512_mask_avg_epu16 (__m512i src, __mmask32 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_avg_epu16 (__mmask32 k, __m512i a, __m512i b)
+__m128i _mm_mask_avg_epu8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
+__m128i _mm_maskz_avg_epu8 (__mmask16 k, __m128i a, __m128i b)
+__m256i _mm256_mask_avg_epu8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_avg_epu8 (__mmask32 k, __m256i a, __m256i b)
+__m512i _mm512_avg_epu8 (__m512i a, __m512i b)
+__m512i _mm512_mask_avg_epu8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_avg_epu8 (__mmask64 k, __m512i a, __m512i b)
+
+__m128i _mm_sign_epi16 (__m128i a, __m128i b)
+__m256i _mm256_sign_epi16 (__m256i a, __m256i b)
+__m128i _mm_sign_epi32 (__m128i a, __m128i b)
+__m256i _mm256_sign_epi32 (__m256i a, __m256i b)
+__m128i _mm_sign_epi8 (__m128i a, __m128i b)
+__m256i _mm256_sign_epi8 (__m256i a, __m256i b)
+
+__m512d _mm512_div_round_pd (__m512d a, __m512d b, int rounding)
+__m512d _mm512_mask_div_round_pd (__m512d src, __mmask8 k, __m512d a, __m512d b, int rounding)
+__m512d _mm512_maskz_div_round_pd (__mmask8 k, __m512d a, __m512d b, int rounding)
+
+__m512 _mm512_div_round_ps (__m512 a, __m512 b, int rounding)
+__m512 _mm512_mask_div_round_ps (__m512 src, __mmask16 k, __m512 a, __m512 b, int rounding)
+__m512 _mm512_maskz_div_round_ps (__mmask16 k, __m512 a, __m512 b, int rounding)
+
+__m128d _mm_dp_pd (__m128d a, __m128d b, const int imm8)
+__m128 _mm_dp_ps (__m128 a, __m128 b, const int imm8)
+__m256 _mm256_dp_ps (__m256 a, __m256 b, const int imm8)
+
+__m128 _mm_dpbf16_ps (__m128 src, __m128bh a, __m128bh b)
+__m128 _mm_mask_dpbf16_ps (__m128 src, __mmask8 k, __m128bh a, __m128bh b)
+__m128 _mm_maskz_dpbf16_ps (__mmask8 k, __m128 src, __m128bh a, __m128bh b)
+__m256 _mm256_dpbf16_ps (__m256 src, __m256bh a, __m256bh b)
+__m256 _mm256_mask_dpbf16_ps (__m256 src, __mmask8 k, __m256bh a, __m256bh b)
+__m256 _mm256_maskz_dpbf16_ps (__mmask8 k, __m256 src, __m256bh a, __m256bh b)
+__m512 _mm512_dpbf16_ps (__m512 src, __m512bh a, __m512bh b)
+__m512 _mm512_mask_dpbf16_ps (__m512 src, __mmask16 k, __m512bh a, __m512bh b)
+__m512 _mm512_maskz_dpbf16_ps (__mmask16 k, __m512 src, __m512bh a, __m512bh b)
+
+__m128i _mm_dpbusd_epi32 (__m128i src, __m128i a, __m128i b)
+__m128i _mm_mask_dpbusd_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_dpbusd_epi32 (__mmask8 k, __m128i src, __m128i a, __m128i b)
+__m256i _mm256_dpbusd_epi32 (__m256i src, __m256i a, __m256i b)
+__m256i _mm256_mask_dpbusd_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_dpbusd_epi32 (__mmask8 k, __m256i src, __m256i a, __m256i b)
+__m512i _mm512_dpbusd_epi32 (__m512i src, __m512i a, __m512i b)
+__m512i _mm512_mask_dpbusd_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_dpbusd_epi32 (__mmask16 k, __m512i src, __m512i a, __m512i b)
+__m128i _mm_dpbusds_epi32 (__m128i src, __m128i a, __m128i b)
+__m128i _mm_mask_dpbusds_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_dpbusds_epi32 (__mmask8 k, __m128i src, __m128i a, __m128i b)
+__m256i _mm256_dpbusds_epi32 (__m256i src, __m256i a, __m256i b)
+__m256i _mm256_mask_dpbusds_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_dpbusds_epi32 (__mmask8 k, __m256i src, __m256i a, __m256i b)
+__m512i _mm512_dpbusds_epi32 (__m512i src, __m512i a, __m512i b)
+__m512i _mm512_mask_dpbusds_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_dpbusds_epi32 (__mmask16 k, __m512i src, __m512i a, __m512i b)
+__m128i _mm_dpwssd_epi32 (__m128i src, __m128i a, __m128i b)
+__m128i _mm_mask_dpwssd_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_dpwssd_epi32 (__mmask8 k, __m128i src, __m128i a, __m128i b)
+__m256i _mm256_dpwssd_epi32 (__m256i src, __m256i a, __m256i b)
+__m256i _mm256_mask_dpwssd_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_dpwssd_epi32 (__mmask8 k, __m256i src, __m256i a, __m256i b)
+__m512i _mm512_dpwssd_epi32 (__m512i src, __m512i a, __m512i b)
+__m512i _mm512_mask_dpwssd_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_dpwssd_epi32 (__mmask16 k, __m512i src, __m512i a, __m512i b)
+__m128i _mm_dpwssds_epi32 (__m128i src, __m128i a, __m128i b)
+__m128i _mm_mask_dpwssds_epi32 (__m128i src, __mmask8 k, __m128i a, __m128i b)
+__m128i _mm_maskz_dpwssds_epi32 (__mmask8 k, __m128i src, __m128i a, __m128i b)
+__m256i _mm256_dpwssds_epi32 (__m256i src, __m256i a, __m256i b)
+__m256i _mm256_mask_dpwssds_epi32 (__m256i src, __mmask8 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_dpwssds_epi32 (__mmask8 k, __m256i src, __m256i a, __m256i b)
+__m512i _mm512_dpwssds_epi32 (__m512i src, __m512i a, __m512i b)
+__m512i _mm512_mask_dpwssds_epi32 (__m512i src, __mmask16 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_dpwssds_epi32 (__mmask16 k, __m512i src, __m512i a, __m512i b)
+
+__m128i _mm_gf2p8affine_epi64_epi8 (__m128i x, __m128i A, int b)
+__m128i _mm_mask_gf2p8affine_epi64_epi8 (__m128i src, __mmask16 k, __m128i x, __m128i A, int b)
+__m128i _mm_maskz_gf2p8affine_epi64_epi8 (__mmask16 k, __m128i x, __m128i A, int b)
+__m256i _mm256_gf2p8affine_epi64_epi8 (__m256i x, __m256i A, int b)
+__m256i _mm256_mask_gf2p8affine_epi64_epi8 (__m256i src, __mmask32 k, __m256i x, __m256i A, int b)
+__m256i _mm256_maskz_gf2p8affine_epi64_epi8 (__mmask32 k, __m256i x, __m256i A, int b)
+__m512i _mm512_gf2p8affine_epi64_epi8 (__m512i x, __m512i A, int b)
+__m512i _mm512_mask_gf2p8affine_epi64_epi8 (__m512i src, __mmask64 k, __m512i x, __m512i A, int b)
+__m512i _mm512_maskz_gf2p8affine_epi64_epi8 (__mmask64 k, __m512i x, __m512i A, int b)
+__m128i _mm_gf2p8affineinv_epi64_epi8 (__m128i x, __m128i A, int b)
+__m128i _mm_mask_gf2p8affineinv_epi64_epi8 (__m128i src, __mmask16 k, __m128i x, __m128i A, int b)
+__m128i _mm_maskz_gf2p8affineinv_epi64_epi8 (__mmask16 k, __m128i x, __m128i A, int b)
+__m256i _mm256_gf2p8affineinv_epi64_epi8 (__m256i x, __m256i A, int b)
+__m256i _mm256_mask_gf2p8affineinv_epi64_epi8 (__m256i src, __mmask32 k, __m256i x, __m256i A, int b)
+__m256i _mm256_maskz_gf2p8affineinv_epi64_epi8 (__mmask32 k, __m256i x, __m256i A, int b)
+__m512i _mm512_gf2p8affineinv_epi64_epi8 (__m512i x, __m512i A, int b)
+__m512i _mm512_mask_gf2p8affineinv_epi64_epi8 (__m512i src, __mmask64 k, __m512i x, __m512i A, int b)
+__m512i _mm512_maskz_gf2p8affineinv_epi64_epi8 (__mmask64 k, __m512i x, __m512i A, int b)
+
+__m128i _mm_gf2p8mul_epi8 (__m128i a, __m128i b)
+__m128i _mm_mask_gf2p8mul_epi8 (__m128i src, __mmask16 k, __m128i a, __m128i b)
+__m128i _mm_maskz_gf2p8mul_epi8 (__mmask16 k, __m128i a, __m128i b)
+__m256i _mm256_gf2p8mul_epi8 (__m256i a, __m256i b)
+__m256i _mm256_mask_gf2p8mul_epi8 (__m256i src, __mmask32 k, __m256i a, __m256i b)
+__m256i _mm256_maskz_gf2p8mul_epi8 (__mmask32 k, __m256i a, __m256i b)
+__m512i _mm512_gf2p8mul_epi8 (__m512i a, __m512i b)
+__m512i _mm512_mask_gf2p8mul_epi8 (__m512i src, __mmask64 k, __m512i a, __m512i b)
+__m512i _mm512_maskz_gf2p8mul_epi8 (__mmask64 k, __m512i a, __m512i b)

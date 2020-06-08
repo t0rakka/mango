@@ -69,7 +69,7 @@ namespace simd {
         return _mm256_permute_pd(zwzw, 0xf);
     }
 
-#endif
+#endif // MANGO_ENABLE_AVX2
 
     template <>
     inline f64x4 shuffle<0, 1, 2, 3>(f64x4 v)
@@ -479,6 +479,74 @@ namespace simd {
     static inline f64x4 fract(f64x4 s)
     {
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
+    }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    // zeromask
+
+    static inline f64x4 min(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), min(a, b));
+    }
+
+    static inline f64x4 max(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), max(a, b));
+    }
+
+    static inline f64x4 add(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), add(a, b));
+    }
+
+    static inline f64x4 sub(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), sub(a, b));
+    }
+
+    static inline f64x4 mul(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), mul(a, b));
+    }
+
+    static inline f64x4 div(f64x4 a, f64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_pd(_mm256_castsi256_pd(mask), div(a, b));
+    }
+
+    // mask
+
+    static inline f64x4 min(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, min(a, b), value);
+    }
+
+    static inline f64x4 max(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, max(a, b), value);
+    }
+
+    static inline f64x4 add(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, add(a, b), value);
+    }
+
+    static inline f64x4 sub(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, sub(a, b), value);
+    }
+
+    static inline f64x4 mul(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, mul(a, b), value);
+    }
+
+    static inline f64x4 div(f64x4 a, f64x4 b, mask64x4 mask, f64x4 value)
+    {
+        return select(mask, div(a, b), value);
     }
 
 } // namespace simd

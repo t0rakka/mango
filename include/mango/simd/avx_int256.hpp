@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -962,6 +962,7 @@ namespace detail {
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg_round)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, mullo)
+    SIMD_COMPOSITE_FUNC2(s32x8, s16x16, madd)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, abs)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, neg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_nand)
@@ -1629,6 +1630,270 @@ namespace detail {
     {
         return _mm256_testc_si256(a, _mm256_set1_epi32(-1)) != 0;
     }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    // min
+
+    static inline u8x32 min(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, min(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 min(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, min(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 min(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, min(a, b), u32x8_zero());
+    }
+
+    static inline u64x4 min(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return select(mask, min(a, b), u64x4_zero());
+    }
+
+    static inline s8x32 min(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, min(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 min(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, min(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 min(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, min(a, b), s32x8_zero());
+    }
+
+    static inline s64x4 min(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return select(mask, min(a, b), s64x4_zero());
+    }
+
+    // max
+
+    static inline u8x32 max(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, max(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 max(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, max(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 max(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, max(a, b), u32x8_zero());
+    }
+
+    static inline u64x4 max(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return select(mask, max(a, b), u64x4_zero());
+    }
+
+    static inline s8x32 max(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, max(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 max(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, max(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 max(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, max(a, b), s32x8_zero());
+    }
+
+    static inline s64x4 max(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return select(mask, max(a, b), s64x4_zero());
+    }
+
+    // add
+
+    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, add(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, add(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, add(a, b), u32x8_zero());
+    }
+
+    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return select(mask, add(a, b), u64x4_zero());
+    }
+
+    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, add(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, add(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, add(a, b), s32x8_zero());
+    }
+
+    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return select(mask, add(a, b), s64x4_zero());
+    }
+
+    // sub
+
+    static inline u8x32 sub(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, sub(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 sub(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, sub(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 sub(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, sub(a, b), u32x8_zero());
+    }
+
+    static inline u64x4 sub(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return select(mask, sub(a, b), u64x4_zero());
+    }
+
+    static inline s8x32 sub(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, sub(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 sub(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, sub(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 sub(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, sub(a, b), s32x8_zero());
+    }
+
+    static inline s64x4 sub(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return select(mask, sub(a, b), s64x4_zero());
+    }
+
+    // adds
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, adds(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, adds(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, adds(a, b), u32x8_zero());
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, adds(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, adds(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, adds(a, b), s32x8_zero());
+    }
+
+    // subs
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return select(mask, subs(a, b), u8x32_zero());
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return select(mask, subs(a, b), u16x16_zero());
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return select(mask, subs(a, b), u32x8_zero());
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return select(mask, subs(a, b), s8x32_zero());
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return select(mask, subs(a, b), s16x16_zero());
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return select(mask, subs(a, b), s32x8_zero());
+    }
+
+    // madd
+
+    static inline s32x8 madd(s16x16 a, s16x16 b, mask32x8 mask)
+    {
+        return select(mask, madd(a, b), s32x8_zero());
+    }
+
+    // abs
+
+    static inline s8x32 abs(s8x32 a, mask8x32 mask)
+    {
+        return select(mask, abs(a), s8x32_zero());
+    }
+
+    static inline s16x16 abs(s16x16 a, mask16x16 mask)
+    {
+        return select(mask, abs(a), s16x16_zero());
+    }
+
+    static inline s32x8 abs(s32x8 a, mask32x8 mask)
+    {
+        return select(mask, abs(a), s32x8_zero());
+    }
+
+#define SIMD_MASK_INT256
+#include "common_mask.hpp"
+#undef SIMD_MASK_INT256
 
 #undef SIMD_SET_COMPONENT
 #undef SIMD_GET_COMPONENT

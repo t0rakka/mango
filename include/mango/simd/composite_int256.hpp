@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -41,6 +41,42 @@ namespace simd {
         AB result; \
         result.lo = select(mask.lo, a.lo, b.lo); \
         result.hi = select(mask.hi, a.hi, b.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_ZEROMASK_FUNC1(R, A, MASK, FUNC) \
+    static inline R FUNC(A a, MASK mask) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, mask.lo); \
+        result.hi = FUNC(a.hi, mask.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
+    static inline R FUNC(AB a, AB b, MASK mask) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, mask.lo); \
+        result.hi = FUNC(a.hi, b.hi, mask.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_MASK_FUNC1(R, A, MASK, FUNC) \
+    static inline R FUNC(A a, MASK mask, R value) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, mask.lo, value.lo); \
+        result.hi = FUNC(a.hi, mask.hi, value.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
+    static inline R FUNC(AB a, AB b, MASK mask, R value) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, mask.lo, value.lo); \
+        result.hi = FUNC(a.hi, b.hi, mask.hi, value.hi); \
         return result; \
     }
 
@@ -101,6 +137,19 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, subs)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, avg)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, avg_round)
+
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, adds)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, subs)
+    SIMD_COMPOSITE_MASK_FUNC2(u8x32, u8x32, mask8x32, min)
+    SIMD_COMPOSITE_MASK_FUNC2(u8x32, u8x32, mask8x32, max)
+    SIMD_COMPOSITE_MASK_FUNC2(u8x32, u8x32, mask8x32, add)
+    SIMD_COMPOSITE_MASK_FUNC2(u8x32, u8x32, mask8x32, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(u8x32, u8x32, mask8x32, adds)
+    SIMD_COMPOSITE_MASK_FUNC2(u8x32, u8x32, mask8x32, subs)
 
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, bitwise_and)
@@ -177,6 +226,19 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, subs)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, avg)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, avg_round)
+
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, adds)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, subs)
+    SIMD_COMPOSITE_MASK_FUNC2(u16x16, u16x16, mask16x16, min)
+    SIMD_COMPOSITE_MASK_FUNC2(u16x16, u16x16, mask16x16, max)
+    SIMD_COMPOSITE_MASK_FUNC2(u16x16, u16x16, mask16x16, add)
+    SIMD_COMPOSITE_MASK_FUNC2(u16x16, u16x16, mask16x16, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(u16x16, u16x16, mask16x16, adds)
+    SIMD_COMPOSITE_MASK_FUNC2(u16x16, u16x16, mask16x16, subs)
 
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, bitwise_and)
@@ -316,6 +378,19 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, subs)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, avg)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, avg_round)
+
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, adds)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, subs)
+    SIMD_COMPOSITE_MASK_FUNC2(u32x8, u32x8, mask32x8, min)
+    SIMD_COMPOSITE_MASK_FUNC2(u32x8, u32x8, mask32x8, max)
+    SIMD_COMPOSITE_MASK_FUNC2(u32x8, u32x8, mask32x8, add)
+    SIMD_COMPOSITE_MASK_FUNC2(u32x8, u32x8, mask32x8, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(u32x8, u32x8, mask32x8, adds)
+    SIMD_COMPOSITE_MASK_FUNC2(u32x8, u32x8, mask32x8, subs)
 
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, bitwise_and)
@@ -479,6 +554,15 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, avg)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, avg_round)
 
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(u64x4, u64x4, mask64x4, min)
+    SIMD_COMPOSITE_MASK_FUNC2(u64x4, u64x4, mask64x4, max)
+    SIMD_COMPOSITE_MASK_FUNC2(u64x4, u64x4, mask64x4, add)
+    SIMD_COMPOSITE_MASK_FUNC2(u64x4, u64x4, mask64x4, sub)
+
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_and)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, bitwise_or)
@@ -594,6 +678,21 @@ namespace simd {
     SIMD_COMPOSITE_FUNC1(s8x32, s8x32, abs)
     SIMD_COMPOSITE_FUNC1(s8x32, s8x32, neg)
 
+    SIMD_COMPOSITE_ZEROMASK_FUNC1(s8x32, s8x32, mask8x32, abs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s8x32, s8x32, mask8x32, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s8x32, s8x32, mask8x32, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s8x32, s8x32, mask8x32, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s8x32, s8x32, mask8x32, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s8x32, s8x32, mask8x32, adds)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s8x32, s8x32, mask8x32, subs)
+    SIMD_COMPOSITE_MASK_FUNC1(s8x32, s8x32, mask8x32, abs)
+    SIMD_COMPOSITE_MASK_FUNC2(s8x32, s8x32, mask8x32, min)
+    SIMD_COMPOSITE_MASK_FUNC2(s8x32, s8x32, mask8x32, max)
+    SIMD_COMPOSITE_MASK_FUNC2(s8x32, s8x32, mask8x32, add)
+    SIMD_COMPOSITE_MASK_FUNC2(s8x32, s8x32, mask8x32, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(s8x32, s8x32, mask8x32, adds)
+    SIMD_COMPOSITE_MASK_FUNC2(s8x32, s8x32, mask8x32, subs)
+
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_and)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, bitwise_or)
@@ -673,8 +772,26 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg_round)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, mullo)
+    SIMD_COMPOSITE_FUNC2(s32x8, s16x16, madd)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, abs)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, neg)
+
+    SIMD_COMPOSITE_ZEROMASK_FUNC1(s16x16, s16x16, mask16x16, abs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, adds)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s16x16, s16x16, mask16x16, subs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s16x16, mask32x8, madd)
+    SIMD_COMPOSITE_MASK_FUNC1(s16x16, s16x16, mask16x16, abs)
+    SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, min)
+    SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, max)
+    SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, add)
+    SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, adds)
+    SIMD_COMPOSITE_MASK_FUNC2(s16x16, s16x16, mask16x16, subs)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s16x16, mask32x8, madd)
 
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, bitwise_and)
@@ -818,6 +935,21 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, mullo)
     SIMD_COMPOSITE_FUNC1(s32x8, s32x8, abs)
     SIMD_COMPOSITE_FUNC1(s32x8, s32x8, neg)
+
+    SIMD_COMPOSITE_ZEROMASK_FUNC1(s32x8, s32x8, mask32x8, abs)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s32x8, mask32x8, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s32x8, mask32x8, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s32x8, mask32x8, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s32x8, mask32x8, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s32x8, mask32x8, adds)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s32x8, s32x8, mask32x8, subs)
+    SIMD_COMPOSITE_MASK_FUNC1(s32x8, s32x8, mask32x8, abs)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s32x8, mask32x8, min)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s32x8, mask32x8, max)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s32x8, mask32x8, add)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s32x8, mask32x8, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s32x8, mask32x8, adds)
+    SIMD_COMPOSITE_MASK_FUNC2(s32x8, s32x8, mask32x8, subs)
 
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, bitwise_and)
@@ -980,6 +1112,15 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, sub)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, avg)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, avg_round)
+
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s64x4, s64x4, mask64x4, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s64x4, s64x4, mask64x4, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s64x4, s64x4, mask64x4, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(s64x4, s64x4, mask64x4, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(s64x4, s64x4, mask64x4, min)
+    SIMD_COMPOSITE_MASK_FUNC2(s64x4, s64x4, mask64x4, max)
+    SIMD_COMPOSITE_MASK_FUNC2(s64x4, s64x4, mask64x4, add)
+    SIMD_COMPOSITE_MASK_FUNC2(s64x4, s64x4, mask64x4, sub)
 
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, bitwise_nand)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, bitwise_and)
@@ -1269,6 +1410,10 @@ namespace simd {
 #undef SIMD_COMPOSITE_FUNC1
 #undef SIMD_COMPOSITE_FUNC2
 #undef SIMD_COMPOSITE_SELECT
+#undef SIMD_COMPOSITE_ZEROMASK_FUNC1
+#undef SIMD_COMPOSITE_ZEROMASK_FUNC2
+#undef SIMD_COMPOSITE_MASK_FUNC1
+#undef SIMD_COMPOSITE_MASK_FUNC2
 
 } // namespace simd
 } // namespace mango

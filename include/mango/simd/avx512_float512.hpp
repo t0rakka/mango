@@ -84,9 +84,29 @@ namespace simd {
         return _mm512_min_ps(a, b);
     }
 
+    static inline f32x16 min(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_min_ps(mask, a, b);
+    }
+
+    static inline f32x16 min(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_min_ps(value, mask, a, b);
+    }
+
     static inline f32x16 max(f32x16 a, f32x16 b)
     {
         return _mm512_max_ps(a, b);
+    }
+
+    static inline f32x16 max(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_max_ps(mask, a, b);
+    }
+
+    static inline f32x16 max(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_max_ps(value, mask, a, b);
     }
 
     static inline f32x16 abs(f32x16 a)
@@ -112,9 +132,29 @@ namespace simd {
         return _mm512_add_ps(a, b);
     }
 
+    static inline f32x16 add(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_add_ps(mask, a, b);
+    }
+
+    static inline f32x16 add(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_add_ps(value, mask, a, b);
+    }
+
     static inline f32x16 sub(f32x16 a, f32x16 b)
     {
         return _mm512_sub_ps(a, b);
+    }
+
+    static inline f32x16 sub(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_sub_ps(mask, a, b);
+    }
+
+    static inline f32x16 sub(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_sub_ps(value, mask, a, b);
     }
 
     static inline f32x16 mul(f32x16 a, f32x16 b)
@@ -122,9 +162,29 @@ namespace simd {
         return _mm512_mul_ps(a, b);
     }
 
+    static inline f32x16 mul(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_mul_ps(mask, a, b);
+    }
+
+    static inline f32x16 mul(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_mul_ps(value, mask, a, b);
+    }
+
     static inline f32x16 div(f32x16 a, f32x16 b)
     {
         return _mm512_div_ps(a, b);
+    }
+
+    static inline f32x16 div(f32x16 a, f32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_div_ps(mask, a, b);
+    }
+
+    static inline f32x16 div(f32x16 a, f32x16 b, mask32x16 mask, f32x16 value)
+    {
+        return _mm512_mask_div_ps(value, mask, a, b);
     }
 
     static inline f32x16 div(f32x16 a, f32 b)

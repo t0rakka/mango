@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -93,9 +93,29 @@ namespace detail {
         return _mm512_add_epi8(a, b);
     }
 
+    static inline u8x64 add(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_add_epi8(mask, a, b);
+    }
+
+    static inline u8x64 add(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_add_epi8(value, mask, a, b);
+    }
+
     static inline u8x64 sub(u8x64 a, u8x64 b)
     {
         return _mm512_sub_epi8(a, b);
+    }
+
+    static inline u8x64 sub(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_sub_epi8(mask, a, b);
+    }
+
+    static inline u8x64 sub(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_sub_epi8(value, mask, a, b);
     }
 
     static inline u8x64 adds(u8x64 a, u8x64 b)
@@ -103,9 +123,29 @@ namespace detail {
         return _mm512_adds_epu8(a, b);
     }
 
+    static inline u8x64 adds(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_adds_epu8(mask, a, b);
+    }
+
+    static inline u8x64 adds(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_adds_epu8(value, mask, a, b);
+    }
+
     static inline u8x64 subs(u8x64 a, u8x64 b)
     {
         return _mm512_subs_epu8(a, b);
+    }
+
+    static inline u8x64 subs(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_subs_epu8(mask, a, b);
+    }
+
+    static inline u8x64 subs(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_subs_epu8(value, mask, a, b);
     }
 
     static inline u8x64 avg(u8x64 a, u8x64 b)
@@ -189,9 +229,29 @@ namespace detail {
         return _mm512_min_epu8(a, b);
     }
 
+    static inline u8x64 min(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_min_epu8(mask, a, b);
+    }
+
+    static inline u8x64 min(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_min_epu8(value, mask, a, b);
+    }
+
     static inline u8x64 max(u8x64 a, u8x64 b)
     {
         return _mm512_max_epu8(a, b);
+    }
+
+    static inline u8x64 max(u8x64 a, u8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_max_epu8(mask, a, b);
+    }
+
+    static inline u8x64 max(u8x64 a, u8x64 b, mask8x64 mask, u8x64 value)
+    {
+        return _mm512_mask_max_epu8(value, mask, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -233,9 +293,29 @@ namespace detail {
         return _mm512_add_epi16(a, b);
     }
 
+    static inline u16x32 add(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_add_epi16(mask, a, b);
+    }
+
+    static inline u16x32 add(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_add_epi16(value, mask, a, b);
+    }
+
     static inline u16x32 sub(u16x32 a, u16x32 b)
     {
         return _mm512_sub_epi16(a, b);
+    }
+
+    static inline u16x32 sub(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_sub_epi16(mask, a, b);
+    }
+
+    static inline u16x32 sub(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_sub_epi16(value, mask, a, b);
     }
 
     static inline u16x32 adds(u16x32 a, u16x32 b)
@@ -243,9 +323,29 @@ namespace detail {
         return _mm512_adds_epu16(a, b);
     }
 
+    static inline u16x32 adds(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_adds_epu16(mask, a, b);
+    }
+
+    static inline u16x32 adds(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_adds_epu16(value, mask, a, b);
+    }
+
     static inline u16x32 subs(u16x32 a, u16x32 b)
     {
         return _mm512_subs_epu16(a, b);
+    }
+
+    static inline u16x32 subs(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_subs_epu16(mask, a, b);
+    }
+
+    static inline u16x32 subs(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_subs_epu16(value, mask, a, b);
     }
 
     static inline u16x32 avg(u16x32 a, u16x32 b)
@@ -334,9 +434,29 @@ namespace detail {
         return _mm512_min_epu16(a, b);
     }
 
+    static inline u16x32 min(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_min_epu16(mask, a, b);
+    }
+
+    static inline u16x32 min(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_min_epu16(value, mask, a, b);
+    }
+
     static inline u16x32 max(u16x32 a, u16x32 b)
     {
         return _mm512_max_epu16(a, b);
+    }
+
+    static inline u16x32 max(u16x32 a, u16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_max_epu16(mask, a, b);
+    }
+
+    static inline u16x32 max(u16x32 a, u16x32 b, mask16x32 mask, u16x32 value)
+    {
+        return _mm512_mask_max_epu16(value, mask, a, b);
     }
 
     // shift by constant
@@ -422,9 +542,61 @@ namespace detail {
         return _mm512_add_epi32(a, b);
     }
 
+    static inline u32x16 add(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_add_epi32(mask, a, b);
+    }
+
+    static inline u32x16 add(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_add_epi32(value, mask, a, b);
+    }
+
     static inline u32x16 sub(u32x16 a, u32x16 b)
     {
         return _mm512_sub_epi32(a, b);
+    }
+
+    static inline u32x16 sub(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_sub_epi32(mask, a, b);
+    }
+
+    static inline u32x16 sub(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_sub_epi32(value, mask, a, b);
+    }
+
+    static inline u32x16 adds(u32x16 a, u32x16 b)
+    {
+  	    const __m512i temp = _mm512_add_epi32(a, b);
+  	    return _mm512_or_si512(temp, _mm512_movm_epi32(_mm512_cmpgt_epi32_mask(a, temp)));
+    }
+
+    static inline u32x16 adds(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline u32x16 adds(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
+    static inline u32x16 subs(u32x16 a, u32x16 b)
+    {
+  	    const __m512i temp = _mm512_sub_epi32(a, b);
+        return _mm512_maskz_mov_epi32(_mm512_cmpgt_epi32_mask(a, temp), temp);
+    }
+
+    static inline u32x16 subs(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline u32x16 subs(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline u32x16 avg(u32x16 a, u32x16 b)
@@ -518,9 +690,29 @@ namespace detail {
         return _mm512_min_epu32(a, b);
     }
 
+    static inline u32x16 min(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_min_epu32(mask, a, b);
+    }
+
+    static inline u32x16 min(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_min_epu32(value, mask, a, b);
+    }
+
     static inline u32x16 max(u32x16 a, u32x16 b)
     {
         return _mm512_max_epu32(a, b);
+    }
+
+    static inline u32x16 max(u32x16 a, u32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_max_epu32(mask, a, b);
+    }
+
+    static inline u32x16 max(u32x16 a, u32x16 b, mask32x16 mask, u32x16 value)
+    {
+        return _mm512_mask_max_epu32(value, mask, a, b);
     }
 
     // shift by constant
@@ -621,9 +813,29 @@ namespace detail {
         return _mm512_add_epi64(a, b);
     }
 
+    static inline u64x8 add(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_add_epi64(mask, a, b);
+    }
+
+    static inline u64x8 add(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_add_epi64(value, mask, a, b);
+    }
+
     static inline u64x8 sub(u64x8 a, u64x8 b)
     {
         return _mm512_sub_epi64(a, b);
+    }
+
+    static inline u64x8 sub(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_sub_epi64(mask, a, b);
+    }
+
+    static inline u64x8 sub(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_sub_epi64(value, mask, a, b);
     }
 
     static inline u64x8 avg(u64x8 a, u64x8 b)
@@ -712,9 +924,29 @@ namespace detail {
         return _mm512_min_epu64(a, b);
     }
 
+    static inline u64x8 min(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_min_epu64(mask, a, b);
+    }
+
+    static inline u64x8 min(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_min_epu64(value, mask, a, b);
+    }
+
     static inline u64x8 max(u64x8 a, u64x8 b)
     {
         return _mm512_max_epu64(a, b);
+    }
+
+    static inline u64x8 max(u64x8 a, u64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_max_epu64(mask, a, b);
+    }
+
+    static inline u64x8 max(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
+    {
+        return _mm512_mask_max_epu64(value, mask, a, b);
     }
 
     // shift by constant
@@ -782,9 +1014,29 @@ namespace detail {
         return _mm512_add_epi8(a, b);
     }
 
+    static inline s8x64 add(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_add_epi8(mask, a, b);
+    }
+
+    static inline s8x64 add(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_add_epi8(value, mask, a, b);
+    }
+
     static inline s8x64 sub(s8x64 a, s8x64 b)
     {
         return _mm512_sub_epi8(a, b);
+    }
+
+    static inline s8x64 sub(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_sub_epi8(mask, a, b);
+    }
+
+    static inline s8x64 sub(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_sub_epi8(value, mask, a, b);
     }
 
     static inline s8x64 adds(s8x64 a, s8x64 b)
@@ -792,9 +1044,29 @@ namespace detail {
         return _mm512_adds_epi8(a, b);
     }
 
+    static inline s8x64 adds(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_adds_epi8(mask, a, b);
+    }
+
+    static inline s8x64 adds(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_adds_epi8(value, mask, a, b);
+    }
+
     static inline s8x64 subs(s8x64 a, s8x64 b)
     {
         return _mm512_subs_epi8(a, b);
+    }
+
+    static inline s8x64 subs(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_subs_epi8(mask, a, b);
+    }
+
+    static inline s8x64 subs(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_subs_epi8(value, mask, a, b);
     }
 
     static inline s8x64 avg(s8x64 a, s8x64 b)
@@ -831,6 +1103,16 @@ namespace detail {
     static inline s8x64 abs(s8x64 a)
     {
         return _mm512_abs_epi8(a);
+    }
+
+    static inline s8x64 abs(s8x64 a, mask8x64 mask)
+    {
+        return _mm512_maskz_abs_epi8(mask, a);
+    }
+
+    static inline s8x64 abs(s8x64 a, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_abs_epi8(value, mask, a);
     }
 
     static inline s8x64 neg(s8x64 a)
@@ -907,9 +1189,29 @@ namespace detail {
         return _mm512_min_epi8(a, b);
     }
 
+    static inline s8x64 min(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_min_epi8(mask, a, b);
+    }
+
+    static inline s8x64 min(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_min_epi8(value, mask, a, b);
+    }
+
     static inline s8x64 max(s8x64 a, s8x64 b)
     {
         return _mm512_max_epi8(a, b);
+    }
+
+    static inline s8x64 max(s8x64 a, s8x64 b, mask8x64 mask)
+    {
+        return _mm512_maskz_max_epi8(mask, a, b);
+    }
+
+    static inline s8x64 max(s8x64 a, s8x64 b, mask8x64 mask, s8x64 value)
+    {
+        return _mm512_mask_max_epi8(value, mask, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -951,9 +1253,29 @@ namespace detail {
         return _mm512_add_epi16(a, b);
     }
 
+    static inline s16x32 add(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_add_epi16(mask, a, b);
+    }
+
+    static inline s16x32 add(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_add_epi16(value, mask, a, b);
+    }
+
     static inline s16x32 sub(s16x32 a, s16x32 b)
     {
         return _mm512_sub_epi16(a, b);
+    }
+
+    static inline s16x32 sub(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_sub_epi16(mask, a, b);
+    }
+
+    static inline s16x32 sub(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_sub_epi16(value, mask, a, b);
     }
 
     static inline s16x32 adds(s16x32 a, s16x32 b)
@@ -961,9 +1283,29 @@ namespace detail {
         return _mm512_adds_epi16(a, b);
     }
 
+    static inline s16x32 adds(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_adds_epi16(mask, a, b);
+    }
+
+    static inline s16x32 adds(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_adds_epi16(value, mask, a, b);
+    }
+
     static inline s16x32 subs(s16x32 a, s16x32 b)
     {
         return _mm512_subs_epi16(a, b);
+    }
+
+    static inline s16x32 subs(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_subs_epi16(mask, a, b);
+    }
+
+    static inline s16x32 subs(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_subs_epi16(value, mask, a, b);
     }
 
     static inline s16x32 avg(s16x32 a, s16x32 b)
@@ -1002,9 +1344,34 @@ namespace detail {
         return _mm512_mullo_epi16(a, b);
     }
 
+    static inline s32x16 madd(s16x32 a, s16x32 b)
+    {
+        return _mm512_madd_epi16(a, b);
+    }
+
+    static inline s32x16 madd(s16x32 a, s16x32 b, mask32x16 mask)
+    {
+        return _mm512_maskz_madd_epi16(mask, a, b);
+    }
+
+    static inline s32x16 madd(s16x32 a, s16x32 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_madd_epi16(value, mask, a, b);
+    }
+
     static inline s16x32 abs(s16x32 a)
     {
         return _mm512_abs_epi16(a);
+    }
+
+    static inline s16x32 abs(s16x32 a, mask16x32 mask)
+    {
+        return _mm512_maskz_abs_epi16(mask, a);
+    }
+
+    static inline s16x32 abs(s16x32 a, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_abs_epi16(value, mask, a);
     }
 
     static inline s16x32 neg(s16x32 a)
@@ -1081,9 +1448,29 @@ namespace detail {
         return _mm512_min_epi16(a, b);
     }
 
+    static inline s16x32 min(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_min_epi16(mask, a, b);
+    }
+
+    static inline s16x32 min(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_min_epi16(value, mask, a, b);
+    }
+
     static inline s16x32 max(s16x32 a, s16x32 b)
     {
         return _mm512_max_epi16(a, b);
+    }
+
+    static inline s16x32 max(s16x32 a, s16x32 b, mask16x32 mask)
+    {
+        return _mm512_maskz_max_epi16(mask, a, b);
+    }
+
+    static inline s16x32 max(s16x32 a, s16x32 b, mask16x32 mask, s16x32 value)
+    {
+        return _mm512_mask_max_epi16(value, mask, a, b);
     }
 
     // shift by constant
@@ -1179,9 +1566,67 @@ namespace detail {
         return _mm512_add_epi32(a, b);
     }
 
+    static inline s32x16 add(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_add_epi32(mask, a, b);
+    }
+
+    static inline s32x16 add(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_add_epi32(value, mask, a, b);
+    }
+
     static inline s32x16 sub(s32x16 a, s32x16 b)
     {
         return _mm512_sub_epi32(a, b);
+    }
+
+    static inline s32x16 sub(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_sub_epi32(mask, a, b);
+    }
+
+    static inline s32x16 sub(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_sub_epi32(value, mask, a, b);
+    }
+
+    static inline s32x16 adds(s32x16 a, s32x16 b)
+    {
+        const __m512i v = _mm512_add_epi32(a, b);
+        a = _mm512_srai_epi32(a, 31);
+        __m512i temp = _mm512_xor_si512(b, v);
+        temp = _mm512_xor_si512(temp, _mm512_movm_epi32(_mm512_cmpeq_epi32_mask(temp, temp)));
+        temp = _mm512_or_si512(temp, _mm512_xor_si512(a, b));
+        return _mm512_mask_mov_epi32(a, _mm512_cmpgt_epi32_mask(_mm512_setzero_si512(), temp), v);
+    }
+
+    static inline s32x16 adds(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline s32x16 adds(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
+    static inline s32x16 subs(s32x16 a, s32x16 b)
+    {
+        const __m512i v = _mm512_sub_epi32(a, b);
+        a = _mm512_srai_epi32(a, 31);
+        __m512i temp = _mm512_and_si512(_mm512_xor_si512(a, b), _mm512_xor_si512(a, v));
+        return _mm512_mask_mov_epi32(v, _mm512_cmpgt_epi32_mask(_mm512_setzero_si512(), temp), a);
+    }
+
+    static inline s32x16 subs(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline s32x16 subs(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline s32x16 avg(s32x16 a, s32x16 b)
@@ -1289,9 +1734,29 @@ namespace detail {
         return _mm512_min_epi32(a, b);
     }
 
+    static inline s32x16 min(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_min_epi32(mask, a, b);
+    }
+
+    static inline s32x16 min(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_min_epi32(value, mask, a, b);
+    }
+
     static inline s32x16 max(s32x16 a, s32x16 b)
     {
         return _mm512_max_epi32(a, b);
+    }
+
+    static inline s32x16 max(s32x16 a, s32x16 b, mask32x16 mask)
+    {
+        return _mm512_maskz_max_epi32(mask, a, b);
+    }
+
+    static inline s32x16 max(s32x16 a, s32x16 b, mask32x16 mask, s32x16 value)
+    {
+        return _mm512_mask_max_epi32(value, mask, a, b);
     }
 
     // shift by constant
@@ -1392,9 +1857,29 @@ namespace detail {
         return _mm512_add_epi64(a, b);
     }
 
+    static inline s64x8 add(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_add_epi64(mask, a, b);
+    }
+
+    static inline s64x8 add(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_add_epi64(value, mask, a, b);
+    }
+
     static inline s64x8 sub(s64x8 a, s64x8 b)
     {
         return _mm512_sub_epi64(a, b);
+    }
+
+    static inline s64x8 sub(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_sub_epi64(mask, a, b);
+    }
+
+    static inline s64x8 sub(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_sub_epi64(value, mask, a, b);
     }
 
     static inline s64x8 avg(s64x8 a, s64x8 b)
@@ -1497,9 +1982,29 @@ namespace detail {
         return _mm512_min_epi64(a, b);
     }
 
+    static inline s64x8 min(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_min_epi64(mask, a, b);
+    }
+
+    static inline s64x8 min(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_min_epi64(value, mask, a, b);
+    }
+
     static inline s64x8 max(s64x8 a, s64x8 b)
     {
         return _mm512_max_epi64(a, b);
+    }
+
+    static inline s64x8 max(s64x8 a, s64x8 b, mask64x8 mask)
+    {
+        return _mm512_maskz_max_epi64(mask, a, b);
+    }
+
+    static inline s64x8 max(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
+    {
+        return _mm512_mask_max_epi64(value, mask, a, b);
     }
 
     // shift by constant

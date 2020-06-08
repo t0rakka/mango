@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -102,9 +102,29 @@ namespace detail {
         return _mm256_add_epi8(a, b);
     }
 
+    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_add_epi8(mask, a, b);
+    }
+
+    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_add_epi8(value, mask, a, b);
+    }
+
     static inline u8x32 sub(u8x32 a, u8x32 b)
     {
         return _mm256_sub_epi8(a, b);
+    }
+
+    static inline u8x32 sub(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_sub_epi8(mask, a, b);
+    }
+
+    static inline u8x32 sub(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_sub_epi8(value, mask, a, b);
     }
 
     static inline u8x32 adds(u8x32 a, u8x32 b)
@@ -112,9 +132,29 @@ namespace detail {
         return _mm256_adds_epu8(a, b);
     }
 
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_adds_epu8(mask, a, b);
+    }
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_adds_epu8(value, mask, a, b);
+    }
+
     static inline u8x32 subs(u8x32 a, u8x32 b)
     {
         return _mm256_subs_epu8(a, b);
+    }
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_subs_epu8(mask, a, b);
+    }
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_subs_epu8(value, mask, a, b);
     }
 
     static inline u8x32 avg(u8x32 a, u8x32 b)
@@ -198,9 +238,29 @@ namespace detail {
         return _mm256_min_epu8(a, b);
     }
 
+    static inline u8x32 min(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_min_epu8(mask, a, b);
+    }
+
+    static inline u8x32 min(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_min_epu8(value, mask, a, b);
+    }
+
     static inline u8x32 max(u8x32 a, u8x32 b)
     {
         return _mm256_max_epu8(a, b);
+    }
+
+    static inline u8x32 max(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_max_epu8(mask, a, b);
+    }
+
+    static inline u8x32 max(u8x32 a, u8x32 b, mask8x32 mask, u8x32 value)
+    {
+        return _mm256_mask_max_epu8(value, mask, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -246,9 +306,29 @@ namespace detail {
         return _mm256_add_epi16(a, b);
     }
 
+    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_add_epi16(mask, a, b);
+    }
+
+    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_add_epi16(value, mask, a, b);
+    }
+
     static inline u16x16 sub(u16x16 a, u16x16 b)
     {
         return _mm256_sub_epi16(a, b);
+    }
+
+    static inline u16x16 sub(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_sub_epi16(mask, a, b);
+    }
+
+    static inline u16x16 sub(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_sub_epi16(value, mask, a, b);
     }
 
     static inline u16x16 adds(u16x16 a, u16x16 b)
@@ -256,9 +336,29 @@ namespace detail {
         return _mm256_adds_epu16(a, b);
     }
 
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_adds_epu16(mask, a, b);
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_adds_epu16(value, mask, a, b);
+    }
+
     static inline u16x16 subs(u16x16 a, u16x16 b)
     {
         return _mm256_subs_epu16(a, b);
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_subs_epu16(mask, a, b);
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_subs_epu16(value, mask, a, b);
     }
 
     static inline u16x16 avg(u16x16 a, u16x16 b)
@@ -347,9 +447,29 @@ namespace detail {
         return _mm256_min_epu16(a, b);
     }
 
+    static inline u16x16 min(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_min_epu16(mask, a, b);
+    }
+
+    static inline u16x16 min(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_min_epu16(value, mask, a, b);
+    }
+
     static inline u16x16 max(u16x16 a, u16x16 b)
     {
         return _mm256_max_epu16(a, b);
+    }
+
+    static inline u16x16 max(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_max_epu16(mask, a, b);
+    }
+
+    static inline u16x16 max(u16x16 a, u16x16 b, mask16x16 mask, u16x16 value)
+    {
+        return _mm256_mask_max_epu16(value, mask, a, b);
     }
 
     // shift by constant
@@ -447,9 +567,29 @@ namespace detail {
         return _mm256_add_epi32(a, b);
     }
 
+    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_add_epi32(mask, a, b);
+    }
+
+    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_add_epi32(value, mask, a, b);
+    }
+
     static inline u32x8 sub(u32x8 a, u32x8 b)
     {
         return _mm256_sub_epi32(a, b);
+    }
+
+    static inline u32x8 sub(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_sub_epi32(mask, a, b);
+    }
+
+    static inline u32x8 sub(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_sub_epi32(value, mask, a, b);
     }
 
     static inline u32x8 adds(u32x8 a, u32x8 b)
@@ -458,10 +598,30 @@ namespace detail {
   	    return _mm256_or_si256(temp, _mm256_cmpgt_epi32(a, temp));
     }
 
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
     static inline u32x8 subs(u32x8 a, u32x8 b)
     {
   	    const __m256i temp = _mm256_sub_epi32(a, b);
   	    return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline u32x8 avg(u32x8 a, u32x8 b)
@@ -555,9 +715,29 @@ namespace detail {
         return _mm256_min_epu32(a, b);
     }
 
+    static inline u32x8 min(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_min_epu32(mask, a, b);
+    }
+
+    static inline u32x8 min(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_min_epu32(value, mask, a, b);
+    }
+
     static inline u32x8 max(u32x8 a, u32x8 b)
     {
         return _mm256_max_epu32(a, b);
+    }
+
+    static inline u32x8 max(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_max_epu32(mask, a, b);
+    }
+
+    static inline u32x8 max(u32x8 a, u32x8 b, mask32x8 mask, u32x8 value)
+    {
+        return _mm256_mask_max_epu32(value, mask, a, b);
     }
 
     // shift by constant
@@ -662,9 +842,29 @@ namespace detail {
         return _mm256_add_epi64(a, b);
     }
 
+    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_add_epi64(mask, a, b);
+    }
+
+    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return _mm256_mask_add_epi64(value, mask, a, b);
+    }
+
     static inline u64x4 sub(u64x4 a, u64x4 b)
     {
         return _mm256_sub_epi64(a, b);
+    }
+
+    static inline u64x4 sub(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_sub_epi64(mask, a, b);
+    }
+
+    static inline u64x4 sub(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return _mm256_mask_sub_epi64(value, mask, a, b);
     }
 
     static inline u64x4 avg(u64x4 a, u64x4 b)
@@ -753,9 +953,29 @@ namespace detail {
         return _mm256_min_epu64(a, b);
     }
 
+    static inline u64x4 min(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_min_epu64(mask, a, b);
+    }
+
+    static inline u64x4 min(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return _mm256_mask_min_epu64(value, mask, a, b);
+    }
+
     static inline u64x4 max(u64x4 a, u64x4 b)
     {
         return _mm256_max_epu64(a, b);
+    }
+
+    static inline u64x4 max(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_max_epu64(mask, a, b);
+    }
+
+    static inline u64x4 max(u64x4 a, u64x4 b, mask64x4 mask, u64x4 value)
+    {
+        return _mm256_mask_max_epu64(value, mask, a, b);
     }
 
     // shift by constant
@@ -827,9 +1047,29 @@ namespace detail {
         return _mm256_add_epi8(a, b);
     }
 
+    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_add_epi8(mask, a, b);
+    }
+
+    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_add_epi8(value, mask, a, b);
+    }
+
     static inline s8x32 sub(s8x32 a, s8x32 b)
     {
         return _mm256_sub_epi8(a, b);
+    }
+
+    static inline s8x32 sub(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_sub_epi8(mask, a, b);
+    }
+
+    static inline s8x32 sub(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_sub_epi8(value, mask, a, b);
     }
 
     static inline s8x32 adds(s8x32 a, s8x32 b)
@@ -837,9 +1077,29 @@ namespace detail {
         return _mm256_adds_epi8(a, b);
     }
 
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_adds_epi8(mask, a, b);
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_adds_epi8(value, mask, a, b);
+    }
+
     static inline s8x32 subs(s8x32 a, s8x32 b)
     {
         return _mm256_subs_epi8(a, b);
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_subs_epi8(mask, a, b);
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_subs_epi8(value, mask, a, b);
     }
 
     static inline s8x32 avg(s8x32 a, s8x32 b)
@@ -876,6 +1136,16 @@ namespace detail {
     static inline s8x32 abs(s8x32 a)
     {
         return _mm256_abs_epi8(a);
+    }
+
+    static inline s8x32 abs(s8x32 a, mask8x32 mask)
+    {
+        return _mm256_maskz_abs_epi8(mask, a);
+    }
+
+    static inline s8x32 abs(s8x32 a, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_abs_epi8(value, mask, a);
     }
 
     static inline s8x32 neg(s8x32 a)
@@ -952,9 +1222,29 @@ namespace detail {
         return _mm256_min_epi8(a, b);
     }
 
+    static inline s8x32 min(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_min_epi8(mask, a, b);
+    }
+
+    static inline s8x32 min(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_min_epi8(value, mask, a, b);
+    }
+
     static inline s8x32 max(s8x32 a, s8x32 b)
     {
         return _mm256_max_epi8(a, b);
+    }
+
+    static inline s8x32 max(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_maskz_max_epi8(mask, a, b);
+    }
+
+    static inline s8x32 max(s8x32 a, s8x32 b, mask8x32 mask, s8x32 value)
+    {
+        return _mm256_mask_max_epi8(value, mask, a, b);
     }
 
     // -----------------------------------------------------------------
@@ -1000,9 +1290,29 @@ namespace detail {
         return _mm256_add_epi16(a, b);
     }
 
+    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_add_epi16(mask, a, b);
+    }
+
+    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_add_epi16(value, mask, a, b);
+    }
+
     static inline s16x16 sub(s16x16 a, s16x16 b)
     {
         return _mm256_sub_epi16(a, b);
+    }
+
+    static inline s16x16 sub(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_sub_epi16(mask, a, b);
+    }
+
+    static inline s16x16 sub(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_sub_epi16(value, mask, a, b);
     }
 
     static inline s16x16 adds(s16x16 a, s16x16 b)
@@ -1010,9 +1320,29 @@ namespace detail {
         return _mm256_adds_epi16(a, b);
     }
 
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_adds_epi16(mask, a, b);
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_adds_epi16(value, mask, a, b);
+    }
+
     static inline s16x16 subs(s16x16 a, s16x16 b)
     {
         return _mm256_subs_epi16(a, b);
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_subs_epi16(mask, a, b);
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_subs_epi16(value, mask, a, b);
     }
 
     static inline s16x16 hadd(s16x16 a, s16x16 b)
@@ -1071,9 +1401,34 @@ namespace detail {
         return _mm256_mullo_epi16(a, b);
     }
 
+    static inline s32x8 madd(s16x16 a, s16x16 b)
+    {
+        return _mm256_madd_epi16(a, b);
+    }
+
+    static inline s32x8 madd(s16x16 a, s16x16 b, mask32x8 mask)
+    {
+        return _mm256_maskz_madd_epi16(mask, a, b);
+    }
+
+    static inline s32x8 madd(s16x16 a, s16x16 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_madd_epi16(value, mask, a, b);
+    }
+
     static inline s16x16 abs(s16x16 a)
     {
         return _mm256_abs_epi16(a);
+    }
+
+    static inline s16x16 abs(s16x16 a, mask16x16 mask)
+    {
+        return _mm256_maskz_abs_epi16(mask, a);
+    }
+
+    static inline s16x16 abs(s16x16 a, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_abs_epi16(value, mask, a);
     }
 
     static inline s16x16 neg(s16x16 a)
@@ -1150,9 +1505,29 @@ namespace detail {
         return _mm256_min_epi16(a, b);
     }
 
+    static inline s16x16 min(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_min_epi16(mask, a, b);
+    }
+
+    static inline s16x16 min(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_min_epi16(value, mask, a, b);
+    }
+
     static inline s16x16 max(s16x16 a, s16x16 b)
     {
         return _mm256_max_epi16(a, b);
+    }
+
+    static inline s16x16 max(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_maskz_max_epi16(mask, a, b);
+    }
+
+    static inline s16x16 max(s16x16 a, s16x16 b, mask16x16 mask, s16x16 value)
+    {
+        return _mm256_mask_max_epi16(value, mask, a, b);
     }
 
     // shift by scalar
@@ -1250,6 +1625,16 @@ namespace detail {
         return _mm256_abs_epi32(a);
     }
 
+    static inline s32x8 abs(s32x8 a, mask32x8 mask)
+    {
+        return _mm256_maskz_abs_epi32(mask, a);
+    }
+
+    static inline s32x8 abs(s32x8 a, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_abs_epi32(value, mask, a);
+    }
+
     static inline s32x8 neg(s32x8 a)
     {
         return _mm256_sub_epi32(_mm256_setzero_si256(), a);
@@ -1260,9 +1645,29 @@ namespace detail {
         return _mm256_add_epi32(a, b);
     }
 
+    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_add_epi32(mask, a, b);
+    }
+
+    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_add_epi32(value, mask, a, b);
+    }
+
     static inline s32x8 sub(s32x8 a, s32x8 b)
     {
         return _mm256_sub_epi32(a, b);
+    }
+
+    static inline s32x8 sub(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_sub_epi32(mask, a, b);
+    }
+
+    static inline s32x8 sub(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_sub_epi32(value, mask, a, b);
     }
 
     static inline s32x8 adds(s32x8 a, s32x8 b)
@@ -1275,12 +1680,32 @@ namespace detail {
         return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), v, a);
     }
 
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, adds(a, b));
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, adds(a, b));
+    }
+
     static inline s32x8 subs(s32x8 a, s32x8 b)
     {
         const __m256i v = _mm256_sub_epi32(a, b);
         a = _mm256_srai_epi32(a, 31);
         __m256i temp = _mm256_and_si256(_mm256_xor_si256(a, b), _mm256_xor_si256(a, v));
         return detail::simd256_select_si256(_mm256_cmpgt_epi32(_mm256_setzero_si256(), temp), a, v);
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mov_epi32(mask, subs(a, b));
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_mov_epi32(value, mask, subs(a, b));
     }
 
     static inline s32x8 hadd(s32x8 a, s32x8 b)
@@ -1398,9 +1823,29 @@ namespace detail {
         return _mm256_min_epi32(a, b);
     }
 
+    static inline s32x8 min(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_min_epi32(mask, a, b);
+    }
+
+    static inline s32x8 min(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_min_epi32(value, mask, a, b);
+    }
+
     static inline s32x8 max(s32x8 a, s32x8 b)
     {
         return _mm256_max_epi32(a, b);
+    }
+
+    static inline s32x8 max(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_max_epi32(mask, a, b);
+    }
+
+    static inline s32x8 max(s32x8 a, s32x8 b, mask32x8 mask, s32x8 value)
+    {
+        return _mm256_mask_max_epi32(value, mask, a, b);
     }
 
     // shift by constant
@@ -1505,9 +1950,29 @@ namespace detail {
         return _mm256_add_epi64(a, b);
     }
 
+    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_add_epi64(mask, a, b);
+    }
+
+    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return _mm256_mask_add_epi64(value, mask, a, b);
+    }
+
     static inline s64x4 sub(s64x4 a, s64x4 b)
     {
         return _mm256_sub_epi64(a, b);
+    }
+
+    static inline s64x4 sub(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_sub_epi64(mask, a, b);
+    }
+
+    static inline s64x4 sub(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return _mm256_mask_sub_epi64(value, mask, a, b);
     }
 
     static inline s64x4 avg(s64x4 a, s64x4 b)
@@ -1610,9 +2075,29 @@ namespace detail {
         return _mm256_min_epi64(a, b);
     }
 
+    static inline s64x4 min(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_min_epi64(mask, a, b);
+    }
+
+    static inline s64x4 min(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return _mm256_mask_min_epi64(value, mask, a, b);
+    }
+
     static inline s64x4 max(s64x4 a, s64x4 b)
     {
         return _mm256_max_epi64(a, b);
+    }
+
+    static inline s64x4 max(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_maskz_max_epi64(mask, a, b);
+    }
+
+    static inline s64x4 max(s64x4 a, s64x4 b, mask64x4 mask, s64x4 value)
+    {
+        return _mm256_mask_max_epi64(value, mask, a, b);
     }
 
     // shift by constant

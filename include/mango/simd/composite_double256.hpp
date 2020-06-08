@@ -36,6 +36,24 @@ namespace simd {
         return result; \
     }
 
+#define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
+    static inline R FUNC(AB a, AB b, MASK mask) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, mask.lo); \
+        result.hi = FUNC(a.hi, b.hi, mask.hi); \
+        return result; \
+    }
+
+#define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
+    static inline R FUNC(AB a, AB b, MASK mask, AB value) \
+    { \
+        R result; \
+        result.lo = FUNC(a.lo, b.lo, mask.lo, value.lo); \
+        result.hi = FUNC(a.hi, b.hi, mask.hi, value.hi); \
+        return result; \
+    }
+
     // -----------------------------------------------------------------
     // f64x4
     // -----------------------------------------------------------------
@@ -234,6 +252,19 @@ namespace simd {
     SIMD_COMPOSITE_FUNC2(f64x4, f64x4, mul)
     SIMD_COMPOSITE_FUNC2(f64x4, f64x4, div)
 
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f64x4, f64x4, mask64x4, min)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f64x4, f64x4, mask64x4, max)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f64x4, f64x4, mask64x4, add)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f64x4, f64x4, mask64x4, sub)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f64x4, f64x4, mask64x4, mul)
+    SIMD_COMPOSITE_ZEROMASK_FUNC2(f64x4, f64x4, mask64x4, div)
+    SIMD_COMPOSITE_MASK_FUNC2(f64x4, f64x4, mask64x4, min)
+    SIMD_COMPOSITE_MASK_FUNC2(f64x4, f64x4, mask64x4, max)
+    SIMD_COMPOSITE_MASK_FUNC2(f64x4, f64x4, mask64x4, add)
+    SIMD_COMPOSITE_MASK_FUNC2(f64x4, f64x4, mask64x4, sub)
+    SIMD_COMPOSITE_MASK_FUNC2(f64x4, f64x4, mask64x4, mul)
+    SIMD_COMPOSITE_MASK_FUNC2(f64x4, f64x4, mask64x4, div)
+
     static inline f64x4 div(f64x4 a, f64 b)
     {
         f64x4 result;
@@ -288,6 +319,8 @@ namespace simd {
 #undef SIMD_COMPOSITE_FUNC1
 #undef SIMD_COMPOSITE_FUNC2
 #undef SIMD_COMPOSITE_FUNC3
+#undef SIMD_COMPOSITE_ZEROMASK_FUNC2
+#undef SIMD_COMPOSITE_MASK_FUNC2
 
 } // namespace simd
 } // namespace mango

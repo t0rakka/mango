@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -1172,6 +1172,11 @@ namespace detail {
         return _mm256_mullo_epi16(a, b);
     }
 
+    static inline s32x8 madd(s16x16 a, s16x16 b)
+    {
+        return _mm256_madd_epi16(a, b);
+    }
+
     static inline s16x16 abs(s16x16 a)
     {
         return _mm256_abs_epi16(a);
@@ -1912,7 +1917,6 @@ namespace detail {
     static inline u32 get_mask(mask64x4 a)
     {
         return _mm256_movemask_pd(_mm256_castsi256_pd(a));
-        
     }
 
     static inline bool none_of(mask64x4 a)
@@ -1929,6 +1933,270 @@ namespace detail {
     {
         return _mm256_testc_si256(a, _mm256_cmpeq_epi64(a, a));
     }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    // min
+
+    static inline u8x32 min(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline u16x16 min(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline u32x8 min(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline u64x4 min(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline s8x32 min(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline s16x16 min(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline s32x8 min(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    static inline s64x4 min(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, min(a, b));
+    }
+
+    // max
+
+    static inline u8x32 max(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline u16x16 max(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline u32x8 max(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline u64x4 max(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline s8x32 max(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline s16x16 max(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline s32x8 max(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    static inline s64x4 max(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, max(a, b));
+    }
+
+    // add
+
+    static inline u8x32 add(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline u16x16 add(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline u32x8 add(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline u64x4 add(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline s8x32 add(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline s16x16 add(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline s32x8 add(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    static inline s64x4 add(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, add(a, b));
+    }
+
+    // sub
+
+    static inline u8x32 sub(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline u16x16 sub(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline u32x8 sub(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline u64x4 sub(u64x4 a, u64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline s8x32 sub(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline s16x16 sub(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline s32x8 sub(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    static inline s64x4 sub(s64x4 a, s64x4 b, mask64x4 mask)
+    {
+        return _mm256_and_si256(mask, sub(a, b));
+    }
+
+    // adds
+
+    static inline u8x32 adds(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline u16x16 adds(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline s8x32 adds(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline s16x16 adds(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    static inline s32x8 adds(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, adds(a, b));
+    }
+
+    // subs
+
+    static inline u8x32 subs(u8x32 a, u8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline u16x16 subs(u16x16 a, u16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline s8x32 subs(s8x32 a, s8x32 b, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline s16x16 subs(s16x16 a, s16x16 b, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    static inline s32x8 subs(s32x8 a, s32x8 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, subs(a, b));
+    }
+
+    // madd
+
+    static inline s32x8 madd(s16x16 a, s16x16 b, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, madd(a, b));
+    }
+
+    // abs
+
+    static inline s8x32 abs(s8x32 a, mask8x32 mask)
+    {
+        return _mm256_and_si256(mask, abs(a));
+    }
+
+    static inline s16x16 abs(s16x16 a, mask16x16 mask)
+    {
+        return _mm256_and_si256(mask, abs(a));
+    }
+
+    static inline s32x8 abs(s32x8 a, mask32x8 mask)
+    {
+        return _mm256_and_si256(mask, abs(a));
+    }
+
+#define SIMD_MASK_INT256
+#include "common_mask.hpp"
+#undef SIMD_MASK_INT256
 
 } // namespace simd
 } // namespace mango

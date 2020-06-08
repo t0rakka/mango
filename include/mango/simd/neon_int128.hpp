@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -1342,6 +1342,28 @@ namespace simd {
         return vmulq_s16(a, b);
     }
 
+#if defined(__aarch64__)
+
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        int32x4_t m0 = vmull_s16(vget_low_s16(a),  vget_low_s16(b));
+        int32x4_t m1 = vmull_s16(vget_high_s16(a), vget_high_s16(b));
+        return vpaddq_s32(m0, m1);
+    }
+
+#else
+
+    static inline s32x4 madd(s16x8 a, s16x8 b)
+    {
+        int32x4_t m0 = vmull_s16(vget_low_s16(a),  vget_low_s16(b));
+        int32x4_t m1 = vmull_s16(vget_high_s16(a), vget_high_s16(b));
+        int32x2_t s0 = vpadd_s32(vget_low_s32(m0), vget_high_s32(m0));
+        int32x2_t s1 = vpadd_s32(vget_low_s32(m1), vget_high_s32(m1));
+        return vcombine_s32(s0, s1);
+    }
+
+#endif
+
     static inline s16x8 abs(s16x8 a)
     {
         return vabsq_s16(a);
@@ -1863,7 +1885,7 @@ namespace simd {
         vst1q_s64(dest, a);
     }
 
-#endif
+#endif // MANGO_COMPILER_GCC
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)
     {
@@ -2034,7 +2056,7 @@ namespace simd {
         return temp;
     }
 
-#endif
+#endif // __aarch64__
 
     static inline s64x2 select(mask64x2 mask, s64x2 a, s64x2 b)
     {
@@ -2161,7 +2183,7 @@ namespace simd {
         return vget_lane_u8(vpmin_u8(b, b), 0) != 0;
     }
 
-#endif
+#endif // __aarch64__
 
     // -----------------------------------------------------------------
     // mask16x8
@@ -2244,7 +2266,7 @@ namespace simd {
         return vget_lane_u16(vpmin_u16(b, b), 0) != 0;
     }
 
-#endif
+#endif // __aarch64__
 
     // -----------------------------------------------------------------
     // mask32x4
@@ -2325,7 +2347,7 @@ namespace simd {
         return vget_lane_u32(vpmin_u32(b, b), 0) != 0;
     }
 
-#endif
+#endif // __aarch64__
 
     // -----------------------------------------------------------------
     // mask64x2
@@ -2372,7 +2394,7 @@ namespace simd {
         return vget_lane_u32(b, 0);
     }
 
-#endif
+#endif // __aarch64__
 
     static inline bool none_of(mask64x2 a)
     {
@@ -2394,6 +2416,270 @@ namespace simd {
         b = vpmin_u32(b, b);
         return vget_lane_u32(b, 0) != 0;
     }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    // min
+
+    static inline u8x16 min(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, min(a, b));
+    }
+
+    static inline u16x8 min(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, min(a, b));
+    }
+
+    static inline u32x4 min(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, min(a, b));
+    }
+
+    static inline u64x2 min(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return vandq_u64(mask, min(a, b));
+    }
+
+    static inline s8x16 min(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), min(a, b));
+    }
+
+    static inline s16x8 min(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), min(a, b));
+    }
+
+    static inline s32x4 min(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), min(a, b));
+    }
+
+    static inline s64x2 min(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return vandq_s64(vreinterpretq_s64_u64(mask), min(a, b));
+    }
+
+    // max
+
+    static inline u8x16 max(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, max(a, b));
+    }
+
+    static inline u16x8 max(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, max(a, b));
+    }
+
+    static inline u32x4 max(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, max(a, b));
+    }
+
+    static inline u64x2 max(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return vandq_u64(mask, max(a, b));
+    }
+
+    static inline s8x16 max(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), max(a, b));
+    }
+
+    static inline s16x8 max(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), max(a, b));
+    }
+
+    static inline s32x4 max(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), max(a, b));
+    }
+
+    static inline s64x2 max(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return vandq_s64(vreinterpretq_s64_u64(mask), max(a, b));
+    }
+
+    // add
+
+    static inline u8x16 add(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, add(a, b));
+    }
+
+    static inline u16x8 add(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, add(a, b));
+    }
+
+    static inline u32x4 add(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, add(a, b));
+    }
+
+    static inline u64x2 add(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return vandq_u64(mask, add(a, b));
+    }
+
+    static inline s8x16 add(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), add(a, b));
+    }
+
+    static inline s16x8 add(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), add(a, b));
+    }
+
+    static inline s32x4 add(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), add(a, b));
+    }
+
+    static inline s64x2 add(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return vandq_s64(vreinterpretq_s64_u64(mask), add(a, b));
+    }
+
+    // sub
+
+    static inline u8x16 sub(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, sub(a, b));
+    }
+
+    static inline u16x8 sub(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, sub(a, b));
+    }
+
+    static inline u32x4 sub(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, sub(a, b));
+    }
+
+    static inline u64x2 sub(u64x2 a, u64x2 b, mask64x2 mask)
+    {
+        return vandq_u64(mask, sub(a, b));
+    }
+
+    static inline s8x16 sub(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), sub(a, b));
+    }
+
+    static inline s16x8 sub(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), sub(a, b));
+    }
+
+    static inline s32x4 sub(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), sub(a, b));
+    }
+
+    static inline s64x2 sub(s64x2 a, s64x2 b, mask64x2 mask)
+    {
+        return vandq_s64(vreinterpretq_s64_u64(mask), sub(a, b));
+    }
+
+    // adds
+
+    static inline u8x16 adds(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, adds(a, b));
+    }
+
+    static inline u16x8 adds(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, adds(a, b));
+    }
+
+    static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, adds(a, b));
+    }
+
+    static inline s8x16 adds(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), adds(a, b));
+    }
+
+    static inline s16x8 adds(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), adds(a, b));
+    }
+
+    static inline s32x4 adds(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), adds(a, b));
+    }
+
+    // subs
+
+    static inline u8x16 subs(u8x16 a, u8x16 b, mask8x16 mask)
+    {
+        return vandq_u8(mask, subs(a, b));
+    }
+
+    static inline u16x8 subs(u16x8 a, u16x8 b, mask16x8 mask)
+    {
+        return vandq_u16(mask, subs(a, b));
+    }
+
+    static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask)
+    {
+        return vandq_u32(mask, subs(a, b));
+    }
+
+    static inline s8x16 subs(s8x16 a, s8x16 b, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), subs(a, b));
+    }
+
+    static inline s16x8 subs(s16x8 a, s16x8 b, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), subs(a, b));
+    }
+
+    static inline s32x4 subs(s32x4 a, s32x4 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), subs(a, b));
+    }
+
+    // madd
+
+    static inline s32x4 madd(s16x8 a, s16x8 b, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), madd(a, b));
+    }
+
+    // abs
+
+    static inline s8x16 abs(s8x16 a, mask8x16 mask)
+    {
+        return vandq_s8(vreinterpretq_s8_u8(mask), abs(a));
+    }
+
+    static inline s16x8 abs(s16x8 a, mask16x8 mask)
+    {
+        return vandq_s16(vreinterpretq_s16_u16(mask), abs(a));
+    }
+
+    static inline s32x4 abs(s32x4 a, mask32x4 mask)
+    {
+        return vandq_s32(vreinterpretq_s32_u32(mask), abs(a));
+    }
+
+#define SIMD_MASK_INT128
+#include "common_mask.hpp"
+#undef SIMD_MASK_INT128
 
 } // namespace simd
 } // namespace mango

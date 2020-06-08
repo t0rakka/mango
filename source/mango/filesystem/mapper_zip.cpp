@@ -494,8 +494,8 @@ namespace
 
         size_t bytes_out = 0;
         libdeflate_result result = libdeflate_deflate_decompress(decompressor,
-            compressed, compressedLen,
-            uncompressed, uncompressedLen, &bytes_out);
+            compressed, size_t(compressedLen),
+            uncompressed, size_t(uncompressedLen), &bytes_out);
 
         libdeflate_free_decompressor(decompressor);
 

@@ -545,5 +545,43 @@ namespace simd {
         return sub(s, floor(s));
     }
 
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f32x4 min(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_and_ps(_mm_castsi128_ps(mask), min(a, b));
+    }
+
+    static inline f32x4 max(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_and_ps(_mm_castsi128_ps(mask), max(a, b));
+    }
+
+    static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_and_ps(_mm_castsi128_ps(mask), add(a, b));
+    }
+
+    static inline f32x4 sub(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_and_ps(_mm_castsi128_ps(mask), sub(a, b));
+    }
+
+    static inline f32x4 mul(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_and_ps(_mm_castsi128_ps(mask), mul(a, b));
+    }
+
+    static inline f32x4 div(f32x4 a, f32x4 b, mask32x4 mask)
+    {
+        return _mm_and_ps(_mm_castsi128_ps(mask), div(a, b));
+    }
+
+#define SIMD_MASK_FLOAT128
+#include "common_mask.hpp"
+#undef SIMD_MASK_FLOAT128
+
 } // namespace simd
 } // namespace mango

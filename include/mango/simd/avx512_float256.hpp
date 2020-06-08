@@ -81,9 +81,29 @@ namespace simd {
         return _mm256_min_ps(a, b);
     }
 
+    static inline f32x8 min(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_min_ps(mask, a, b);
+    }
+
+    static inline f32x8 min(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return _mm256_mask_min_ps(value, mask, a, b);
+    }
+
     static inline f32x8 max(f32x8 a, f32x8 b)
     {
         return _mm256_max_ps(a, b);
+    }
+
+    static inline f32x8 max(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_max_ps(mask, a, b);
+    }
+
+    static inline f32x8 max(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return _mm256_mask_max_ps(value, mask, a, b);
     }
 
     static inline f32x8 abs(f32x8 a)
@@ -110,9 +130,29 @@ namespace simd {
         return _mm256_add_ps(a, b);
     }
 
+    static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_add_ps(mask, a, b);
+    }
+
+    static inline f32x8 add(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return _mm256_mask_add_ps(value, mask, a, b);
+    }
+
     static inline f32x8 sub(f32x8 a, f32x8 b)
     {
         return _mm256_sub_ps(a, b);
+    }
+
+    static inline f32x8 sub(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_sub_ps(mask, a, b);
+    }
+
+    static inline f32x8 sub(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return _mm256_mask_sub_ps(value, mask, a, b);
     }
 
     static inline f32x8 mul(f32x8 a, f32x8 b)
@@ -120,9 +160,29 @@ namespace simd {
         return _mm256_mul_ps(a, b);
     }
 
+    static inline f32x8 mul(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_mul_ps(mask, a, b);
+    }
+
+    static inline f32x8 mul(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return _mm256_mask_mul_ps(value, mask, a, b);
+    }
+
     static inline f32x8 div(f32x8 a, f32x8 b)
     {
         return _mm256_div_ps(a, b);
+    }
+
+    static inline f32x8 div(f32x8 a, f32x8 b, mask32x8 mask)
+    {
+        return _mm256_maskz_div_ps(mask, a, b);
+    }
+
+    static inline f32x8 div(f32x8 a, f32x8 b, mask32x8 mask, f32x8 value)
+    {
+        return _mm256_mask_div_ps(value, mask, a, b);
     }
 
     static inline f32x8 div(f32x8 a, f32 b)

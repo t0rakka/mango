@@ -53,7 +53,7 @@ namespace simd {
         return result;
     }
 
-#endif
+#endif // MANGO_COMPILER_CLANG
 
     // indexed access
 
@@ -113,7 +113,7 @@ namespace simd {
         vst1q_f64(dest, a);
     }
 
-#endif        
+#endif // MANGO_COMPILER_GCC   
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)
     {
@@ -180,7 +180,7 @@ namespace simd {
         y = y < 0 ? -1.0 : (y > 0 ? 1.0 : 0.0);
         return f64x2_set(x, y);
     }
-    
+
     static inline f64x2 add(f64x2 a, f64x2 b)
     {
         return vaddq_f64(a, b);
@@ -283,7 +283,7 @@ namespace simd {
         return e;
     }
 
-#endif
+#endif // MANGO_FAST_MATH
 
     static inline f64x2 sqrt(f64x2 a)
     {
@@ -359,6 +359,44 @@ namespace simd {
     {
         return sub(s, floor(s));
     }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(min(a, b))));
+    }
+
+    static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(max(a, b))));
+    }
+
+    static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(add(a, b))));
+    }
+
+    static inline f64x2 sub(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(sub(a, b))));
+    }
+
+    static inline f64x2 mul(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(mul(a, b))));
+    }
+
+    static inline f64x2 div(f64x2 a, f64x2 b, mask64x2 mask)
+    {
+        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(div(a, b))));
+    }
+
+#define SIMD_MASK_DOUBLE128
+#include "common_mask.hpp"
+#undef SIMD_MASK_DOUBLE128
 
 #else
 
@@ -731,7 +769,17 @@ namespace simd {
         return v;
     }
 
-#endif
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+#define SIMD_ZEROMASK_DOUBLE128
+#define SIMD_MASK_DOUBLE128
+#include "common_mask.hpp"
+#undef SIMD_ZEROMASK_DOUBLE128
+#undef SIMD_MASK_DOUBLE128
+
+#endif // __aarch64__
 
 } // namespace simd
 } // namespace mango

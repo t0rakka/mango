@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/crc32.hpp>
 #include <mango/core/exception.hpp>
@@ -743,6 +743,38 @@ namespace
             while (alignment--)
             {
                 crc = u8_func(crc, *memory.address++);
+            }
+
+            bool enable_unrolling = false;
+
+            if (u8_func == u8_crc32)
+            {
+#ifdef MANGO_HARDWARE_CRC32
+                enable_unrolling = true;
+#endif
+            }
+            else
+            {
+#ifdef MANGO_HARDWARE_CRC32C
+                enable_unrolling = true;
+#endif
+            }
+
+            if (enable_unrolling)
+            {
+                while (memory.size >= 64)
+                {
+                    crc = u64_func(crc, memory.address + 8 * 0);
+                    crc = u64_func(crc, memory.address + 8 * 1);
+                    crc = u64_func(crc, memory.address + 8 * 2);
+                    crc = u64_func(crc, memory.address + 8 * 3);
+                    crc = u64_func(crc, memory.address + 8 * 4);
+                    crc = u64_func(crc, memory.address + 8 * 5);
+                    crc = u64_func(crc, memory.address + 8 * 6);
+                    crc = u64_func(crc, memory.address + 8 * 7);
+                    memory.address += 64;
+                    memory.size -= 64;
+                }
             }
 
             while (memory.size >= 8)

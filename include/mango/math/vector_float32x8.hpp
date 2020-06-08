@@ -196,6 +196,46 @@ namespace mango
     // functions
     // ------------------------------------------------------------------
 
+    static inline Vector<float, 8> add(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask)
+    {
+        return simd::add(a, b, mask);
+    }
+
+    static inline Vector<float, 8> add(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask, Vector<float, 8> value)
+    {
+        return simd::add(a, b, mask, value);
+    }
+
+    static inline Vector<float, 8> sub(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask)
+    {
+        return simd::sub(a, b, mask);
+    }
+
+    static inline Vector<float, 8> sub(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask, Vector<float, 8> value)
+    {
+        return simd::sub(a, b, mask, value);
+    }
+
+    static inline Vector<float, 8> mul(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask)
+    {
+        return simd::mul(a, b, mask);
+    }
+
+    static inline Vector<float, 8> mul(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask, Vector<float, 8> value)
+    {
+        return simd::mul(a, b, mask, value);
+    }
+
+    static inline Vector<float, 8> div(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask)
+    {
+        return simd::div(a, b, mask);
+    }
+
+    static inline Vector<float, 8> div(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask, Vector<float, 8> value)
+    {
+        return simd::div(a, b, mask, value);
+    }
+
     static inline Vector<float, 8> abs(Vector<float, 8> a)
     {
         return simd::abs(a);
@@ -271,9 +311,29 @@ namespace mango
         return simd::min(a, b);
     }
 
+    static inline Vector<float, 8> min(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask)
+    {
+        return simd::min(a, b, mask);
+    }
+
+    static inline Vector<float, 8> min(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask, Vector<float, 8> value)
+    {
+        return simd::min(a, b, mask, value);
+    }
+
     static inline Vector<float, 8> max(Vector<float, 8> a, Vector<float, 8> b)
     {
         return simd::max(a, b);
+    }
+
+    static inline Vector<float, 8> max(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask)
+    {
+        return simd::max(a, b, mask);
+    }
+
+    static inline Vector<float, 8> max(Vector<float, 8> a, Vector<float, 8> b, mask32x8 mask, Vector<float, 8> value)
+    {
+        return simd::max(a, b, mask, value);
     }
 
     static inline Vector<float, 8> mod(Vector<float, 8> a, Vector<float, 8> b)
