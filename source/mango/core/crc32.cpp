@@ -763,68 +763,6 @@ namespace
 
 #endif
 
-    template <typename F8, typename F64>
-    inline u32 crc_template(u32 crc, ConstMemory memory, F8 u8_func, F64 u64_func)
-    {
-        crc = ~crc;
-
-        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(memory.address)) & 7;
-        if (alignment <= memory.size)
-        {
-            memory.size -= alignment;
-            while (alignment--)
-            {
-                crc = u8_func(crc, *memory.address++);
-            }
-
-            bool enable_unrolling = false;
-
-            if (u8_func == u8_crc32)
-            {
-#ifdef MANGO_HARDWARE_CRC32
-                enable_unrolling = true;
-#endif
-            }
-            else
-            {
-#ifdef MANGO_HARDWARE_CRC32C
-                enable_unrolling = true;
-#endif
-            }
-
-            if (enable_unrolling)
-            {
-                while (memory.size >= 64)
-                {
-                    crc = u64_func(crc, memory.address + 8 * 0);
-                    crc = u64_func(crc, memory.address + 8 * 1);
-                    crc = u64_func(crc, memory.address + 8 * 2);
-                    crc = u64_func(crc, memory.address + 8 * 3);
-                    crc = u64_func(crc, memory.address + 8 * 4);
-                    crc = u64_func(crc, memory.address + 8 * 5);
-                    crc = u64_func(crc, memory.address + 8 * 6);
-                    crc = u64_func(crc, memory.address + 8 * 7);
-                    memory.address += 64;
-                    memory.size -= 64;
-                }
-            }
-
-            while (memory.size >= 8)
-            {
-                crc = u64_func(crc, memory.address);
-                memory.address += 8;
-                memory.size -= 8;
-            }
-        }
-
-        while (memory.size--)
-        {
-            crc = u8_func(crc, *memory.address++);
-        }
-
-        return ~crc;
-    }
-
 } // namespace
 
 namespace mango
@@ -832,12 +770,92 @@ namespace mango
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        return crc_template(crc, memory, u8_crc32, u64_crc32);
+        crc = ~crc;
+
+        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(memory.address)) & 7;
+        if (alignment + 8 < memory.size)
+        {
+            memory.size -= alignment;
+            while (alignment-- > 0)
+            {
+                crc = u8_crc32(crc, *memory.address++);
+            }
+
+#ifdef MANGO_HARDWARE_CRC32
+            while (memory.size >= 64)
+            {
+                crc = u64_crc32(crc, memory.address + 8 * 0);
+                crc = u64_crc32(crc, memory.address + 8 * 1);
+                crc = u64_crc32(crc, memory.address + 8 * 2);
+                crc = u64_crc32(crc, memory.address + 8 * 3);
+                crc = u64_crc32(crc, memory.address + 8 * 4);
+                crc = u64_crc32(crc, memory.address + 8 * 5);
+                crc = u64_crc32(crc, memory.address + 8 * 6);
+                crc = u64_crc32(crc, memory.address + 8 * 7);
+                memory.address += 64;
+                memory.size -= 64;
+            }
+#endif
+
+            while (memory.size >= 8)
+            {
+                crc = u64_crc32(crc, memory.address);
+                memory.address += 8;
+                memory.size -= 8;
+            }
+        }
+
+        while (memory.size-- > 0)
+        {
+            crc = u8_crc32(crc, *memory.address++);
+        }
+
+        return ~crc;
     }
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        return crc_template(crc, memory, u8_crc32c, u64_crc32c);
+        crc = ~crc;
+
+        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(memory.address)) & 7;
+        if (alignment + 8 < memory.size)
+        {
+            memory.size -= alignment;
+            while (alignment-- > 0)
+            {
+                crc = u8_crc32c(crc, *memory.address++);
+            }
+
+#ifdef MANGO_HARDWARE_CRC32C
+            while (memory.size >= 64)
+            {
+                crc = u64_crc32c(crc, memory.address + 8 * 0);
+                crc = u64_crc32c(crc, memory.address + 8 * 1);
+                crc = u64_crc32c(crc, memory.address + 8 * 2);
+                crc = u64_crc32c(crc, memory.address + 8 * 3);
+                crc = u64_crc32c(crc, memory.address + 8 * 4);
+                crc = u64_crc32c(crc, memory.address + 8 * 5);
+                crc = u64_crc32c(crc, memory.address + 8 * 6);
+                crc = u64_crc32c(crc, memory.address + 8 * 7);
+                memory.address += 64;
+                memory.size -= 64;
+            }
+#endif
+
+            while (memory.size >= 8)
+            {
+                crc = u64_crc32c(crc, memory.address);
+                memory.address += 8;
+                memory.size -= 8;
+            }
+        }
+
+        while (memory.size-- > 0)
+        {
+            crc = u8_crc32c(crc, *memory.address++);
+        }
+
+        return ~crc;
     }
 
 } // namespace mango
