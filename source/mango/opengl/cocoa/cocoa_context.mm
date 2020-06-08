@@ -119,8 +119,8 @@ namespace opengl {
     // Context
     // -----------------------------------------------------------------------
 
-    Context::Context(int width, int height, const ContextAttribute* contextAttribute, Context* shared)
-	    : Window(width, height)
+    Context::Context(int width, int height, u32 flags, const ContextAttribute* contextAttribute, Context* shared)
+	    : Window(width, height, flags)
         , m_context(nullptr)
     {
         [NSApplication sharedApplication];

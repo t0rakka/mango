@@ -69,13 +69,14 @@ namespace opengl {
     // Context
     // -----------------------------------------------------------------------
 
-    Context::Context(int width, int height, const ContextAttribute* contextAttribute, Context* shared)
-	    : Window(width, height)
+    Context::Context(int width, int height, u32 flags, const ContextAttribute* contextAttribute, Context* shared)
+	    : Window(width, height, flags)
     {
         m_context = new ContextHandle();
 
         // TODO
-        if (shared) {
+        if (shared)
+        {
             MANGO_EXCEPTION("[GLX Context] Shared context is not implemented yet.");
         }
 

@@ -30,7 +30,7 @@ namespace
     using namespace mango;
     using namespace mango::opengl;
 
-    const InternalFormat g_formatTable[] =
+    const InternalFormat g_format_table[] =
     {
         // 1.0
         { 0x1903, MAKE_FORMAT(  8, UNORM,    R,  8, 0, 0, 0), false, "RED" },
@@ -517,9 +517,9 @@ namespace opengl {
 
     const InternalFormat* getInternalFormat(GLenum internalFormat)
     {
-        for (auto& node : g_formatTable)
+        for (auto& node : g_format_table)
         {
-            if (node.internalFormat == internalFormat)
+            if (node.internal_format == internalFormat)
                 return &node;
         }
 

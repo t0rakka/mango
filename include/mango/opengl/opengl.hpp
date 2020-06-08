@@ -149,7 +149,7 @@ namespace opengl {
         void initExtensionMask();
 
     public:
-        Context(int width, int height, const ContextAttribute* attrib = nullptr, Context* shared = nullptr);
+        Context(int width, int height, u32 flags = 0, const ContextAttribute* attrib = nullptr, Context* shared = nullptr);
         ~Context();
 
         bool isExtension(const std::string& name) const;
@@ -239,7 +239,7 @@ namespace opengl {
 
     struct InternalFormat
     {
-        GLenum internalFormat;
+        GLenum internal_format;
         Format format;
         bool srgb;
         const char* name;
