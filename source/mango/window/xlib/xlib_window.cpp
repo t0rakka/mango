@@ -572,9 +572,10 @@ namespace mango
         {
             XSizeHints hints;
 
-            hints.flags = PPosition | PMinSize | PMaxSize;
-            hints.x = 0;
-            hints.y = 0;
+            //hints.flags = PPosition | PMinSize | PMaxSize;
+            hints.flags = PMinSize | PMaxSize;
+            //hints.x = 0;
+            //hints.y = 0;
             hints.min_width = width;
             hints.max_width = width;
             hints.min_height = height;
