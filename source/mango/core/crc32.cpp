@@ -7,26 +7,35 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 
+    // ----------------------------------------------------------------------------------------
+    // configuration
+    // ----------------------------------------------------------------------------------------
+
 #if defined(__ARM_FEATURE_CRC32)
+    #define HARDWARE_U8_CRC32
+    #define HARDWARE_U8_CRC32C
+    #define HARDWARE_U64_CRC32
+    #define HARDWARE_U64_CRC32C
+#endif
 
-    #define MANGO_HARDWARE_CRC32
-    #define MANGO_HARDWARE_CRC32C
+#if defined(__PCLMUL__)
+    #define HARDWARE_U64_CRC32
+#endif
 
-#elif defined(MANGO_ENABLE_SSE4_2)
-
-    #define MANGO_HARDWARE_CRC32C
-
-    #if defined(__PCLMUL__)
-        #define MANGO_HARDWARE_CRC32
-    #endif
-
+#if defined(MANGO_ENABLE_SSE4_2)
+    #define HARDWARE_U8_CRC32C
+    #define HARDWARE_U64_CRC32C
 #endif
 
 namespace
 {
     using namespace mango;
 
-#if !defined(MANGO_HARDWARE_CRC32) || defined(__PCLMUL__)
+    // ----------------------------------------------------------------------------------------
+    // tables
+    // ----------------------------------------------------------------------------------------
+
+#if !defined(HARDWARE_U8_CRC32) || !defined(HARDWARE_U64_CRC32)
 
     // //////////////////////////////////////////////////////////
     // Copyright (c) 2014 Stephan Brumme. All rights reserved.
@@ -302,64 +311,10 @@ namespace
         0x2c8e0fff,0xe0240f61,0x6eab0882,0xa201081c,0xa8c40105,0x646e019b,0xeae10678,0x264b06e6,
     };
 
-#if !defined(__PCLMUL__)
+#endif // !defined(HARDWARE_U8_CRC32) || !defined(HARDWARE_U64_CRC32)
 
-    inline u32 u8_crc32(u32 crc, u8 data)
-    {
-        crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
-        return crc;
-    }
+#if !defined(HARDWARE_U8_CRC32C) || !defined(HARDWARE_U64_CRC32C)
 
-#ifdef MANGO_CPU_64BIT
-
-    // 64 bit crc32 (generic)
-
-    inline u32 u64_crc32(u32 crc, const u8* ptr)
-    {
-        u64 data = *reinterpret_cast<const u64le *>(ptr);
-        data = data ^ u64(crc);
-        crc = g_crc32_table[((data>>56) & 0xff) + 0x000] ^
-              g_crc32_table[((data>>48) & 0xff) + 0x100] ^
-              g_crc32_table[((data>>40) & 0xff) + 0x200] ^
-              g_crc32_table[((data>>32) & 0xff) + 0x300] ^
-              g_crc32_table[((data>>24) & 0xff) + 0x400] ^
-              g_crc32_table[((data>>16) & 0xff) + 0x500] ^
-              g_crc32_table[((data>> 8) & 0xff) + 0x600] ^
-              g_crc32_table[((data>> 0) & 0xff) + 0x700];
-        return crc;
-    }
-
-#else
-
-    // 32 bit crc32 (generic)
-
-    inline u32 u64_crc32(u32 crc, const u8* ptr)
-    {
-        const u32le* p = reinterpret_cast<const u32le *>(ptr);
-#ifdef MANGO_LITTLE_ENDIAN
-        u32 one = p[0] ^ crc;
-        u32 two = p[1];
-#else
-        u32 one = p[1] ^ crc;
-        u32 two = p[0];
-#endif
-        crc = g_crc32_table[((two>>24) & 0xff) + 0x000] ^
-              g_crc32_table[((two>>16) & 0xff) + 0x100] ^
-              g_crc32_table[((two>> 8) & 0xff) + 0x200] ^
-              g_crc32_table[((two>> 0) & 0xff) + 0x300] ^
-              g_crc32_table[((one>>24) & 0xff) + 0x400] ^
-              g_crc32_table[((one>>16) & 0xff) + 0x500] ^
-              g_crc32_table[((one>> 8) & 0xff) + 0x600] ^
-              g_crc32_table[((one>> 0) & 0xff) + 0x700];
-        return crc;
-    }
-
-#endif // MANGO_CPU_64BIT
-#endif // __PCLMUL__
-#endif // MANGO_HARDWARE_CRC32
-
-#if !defined(MANGO_HARDWARE_CRC32C)
-    
     constexpr u32 g_crc32c_table[] =
     {
         0x00000000,0xf26b8303,0xe13b70f7,0x1350f3f4,0xc79a971f,0x35f1141c,0x26a1e7e8,0xd4ca64eb,
@@ -627,62 +582,157 @@ namespace
         0xe54c35a1,0xac704886,0x7734cfef,0x3e08b2c8,0xc451b7cc,0x8d6dcaeb,0x56294d82,0x1f1530a5,
     };
 
-    // NOTE: This code is identical to the version above. The only difference is the lookup table
-    // for different polynomial. The code is a macro spaghetti enough already so we just repeat the
-    // code here to keep things simple.
+#endif // !defined(HARDWARE_U8_CRC32C) || !defined(HARDWARE_U64_CRC32C)
 
-    inline u32 u8_crc32c(u32 crc, u8 data)
+    // ----------------------------------------------------------------------------------------
+    // templates
+    // ----------------------------------------------------------------------------------------
+
+    template <const u32* table>
+    u32 u8_crc(u32 crc, u8 data)
     {
-        crc = (crc >> 8) ^ g_crc32c_table[(crc & 0xff) ^ data];
+        crc = (crc >> 8) ^ table[(crc & 0xff) ^ data];
         return crc;
     }
 
 #ifdef MANGO_CPU_64BIT
 
-    // 64 bit crc32c (generic)
-
-    inline u32 u64_crc32c(u32 crc, const u8* ptr)
+    template <const u32* table>
+    u32 u64_crc(u32 crc, const u8* ptr)
     {
         u64 data = *reinterpret_cast<const u64le *>(ptr);
         data = data ^ u64(crc);
-        crc = g_crc32c_table[((data>>56) & 0xff) + 0x000] ^
-              g_crc32c_table[((data>>48) & 0xff) + 0x100] ^
-              g_crc32c_table[((data>>40) & 0xff) + 0x200] ^
-              g_crc32c_table[((data>>32) & 0xff) + 0x300] ^
-              g_crc32c_table[((data>>24) & 0xff) + 0x400] ^
-              g_crc32c_table[((data>>16) & 0xff) + 0x500] ^
-              g_crc32c_table[((data>> 8) & 0xff) + 0x600] ^
-              g_crc32c_table[((data>> 0) & 0xff) + 0x700];
+        crc = table[((data>>56) & 0xff) + 0x000] ^
+              table[((data>>48) & 0xff) + 0x100] ^
+              table[((data>>40) & 0xff) + 0x200] ^
+              table[((data>>32) & 0xff) + 0x300] ^
+              table[((data>>24) & 0xff) + 0x400] ^
+              table[((data>>16) & 0xff) + 0x500] ^
+              table[((data>> 8) & 0xff) + 0x600] ^
+              table[((data>> 0) & 0xff) + 0x700];
         return crc;
     }
 
 #else
 
-    // 32 bit crc32c (generic)
-
-    inline u32 u64_crc32c(u32 crc, const u8* ptr)
+    template <const u32* table>
+    u32 u64_crc(u32 crc, const u8* ptr)
     {
         const u32le* p = reinterpret_cast<const u32le *>(ptr);
-#ifdef MANGO_LITTLE_ENDIAN
+    #ifdef MANGO_LITTLE_ENDIAN
         u32 one = p[0] ^ crc;
         u32 two = p[1];
-#else
+    #else
         u32 one = p[1] ^ crc;
         u32 two = p[0];
-#endif
-        crc = g_crc32c_table[((two>>24) & 0xff) + 0x000] ^
-              g_crc32c_table[((two>>16) & 0xff) + 0x100] ^
-              g_crc32c_table[((two>> 8) & 0xff) + 0x200] ^
-              g_crc32c_table[((two>> 0) & 0xff) + 0x300] ^
-              g_crc32c_table[((one>>24) & 0xff) + 0x400] ^
-              g_crc32c_table[((one>>16) & 0xff) + 0x500] ^
-              g_crc32c_table[((one>> 8) & 0xff) + 0x600] ^
-              g_crc32c_table[((one>> 0) & 0xff) + 0x700];
+    #endif
+        crc = table[((two>>24) & 0xff) + 0x000] ^
+              table[((two>>16) & 0xff) + 0x100] ^
+              table[((two>> 8) & 0xff) + 0x200] ^
+              table[((two>> 0) & 0xff) + 0x300] ^
+              table[((one>>24) & 0xff) + 0x400] ^
+              table[((one>>16) & 0xff) + 0x500] ^
+              table[((one>> 8) & 0xff) + 0x600] ^
+              table[((one>> 0) & 0xff) + 0x700];
         return crc;
     }
 
 #endif // MANGO_CPU_64BIT
-#endif // MANGO_HARDWARE_CRC32C
+
+    // ----------------------------------------------------------------------------------------
+    // generic software implementation
+    // ----------------------------------------------------------------------------------------
+
+#if !defined(HARDWARE_U8_CRC32)
+
+    inline u32 u8_crc32(u32 crc, u8 data)
+    {
+        return u8_crc<g_crc32_table>(crc, data);
+    }
+
+#endif
+
+#if !defined(HARDWARE_U64_CRC32)
+
+    inline u32 u64_crc32(u32 crc, const u8* data)
+    {
+        return u64_crc<g_crc32_table>(crc, data);
+    }
+
+#endif
+
+#if !defined(HARDWARE_U8_CRC32C)
+
+    inline u32 u8_crc32c(u32 crc, u8 data)
+    {
+        return u8_crc<g_crc32c_table>(crc, data);
+    }
+
+#endif
+
+#if !defined(HARDWARE_U64_CRC32C)
+
+    inline u32 u64_crc32c(u32 crc, const u8* data)
+    {
+        return u64_crc<g_crc32c_table>(crc, data);
+    }
+
+#endif
+
+    // ----------------------------------------------------------------------------------------
+    // ARMv8 Crypto ISA implementation
+    // ----------------------------------------------------------------------------------------
+
+#if defined(__ARM_FEATURE_CRC32)
+
+    inline u32 u8_crc32(u32 crc, u8 data)
+    {
+        return __crc32b(crc, data);
+    }
+
+    inline u32 u64_crc32(u32 crc, const u8* data)
+    {
+        return __crc32d(crc, *reinterpret_cast<const u64 *>(data));
+    }
+
+    inline u32 u8_crc32c(u32 crc, u8 data)
+    {
+        return __crc32cb(crc, data);
+    }
+
+    inline u32 u64_crc32c(u32 crc, const u8* data)
+    {
+        return __crc32cd(crc, *reinterpret_cast<const u64 *>(data));
+    }
+
+#endif // defined(__ARM_FEATURE_CRC32)
+
+    // ----------------------------------------------------------------------------------------
+    // Intel CLMUL implementation
+    // ----------------------------------------------------------------------------------------
+
+#if defined(__PCLMUL__)
+
+    inline u32 u64_crc32(u32 crc, const u8* data)
+    {
+        u64 value = *reinterpret_cast<const u64 *>(data);
+
+        // https://merrymage.com/lab/crc32/
+        // Enabled with -mpclmul compiler switch (clang, gcc)
+
+        __m128i xmm_const = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
+        __m128i xmm_value = _mm_set_epi64x(0, value ^ crc);
+
+        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x00);
+        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x10);
+        return _mm_extract_epi32(xmm_value, 2);
+    }
+
+#endif // defined(__PCLMUL__)
+
+    // ----------------------------------------------------------------------------------------
+    // Intel SSE4.2 implementation
+    // ----------------------------------------------------------------------------------------
 
 #if defined(MANGO_ENABLE_SSE4_2)
 
@@ -714,54 +764,7 @@ namespace
 
 #endif // MANGO_CPU_64BIT
 
-    #if defined(__PCLMUL__)
-
-    inline u32 u8_crc32(u32 crc, u8 data)
-    {
-        crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
-        return crc;
-    }
-
-    inline u32 u64_crc32(u32 crc, const u8* data)
-    {
-        u64 value = *reinterpret_cast<const u64 *>(data);
-
-        // https://merrymage.com/lab/crc32/
-        // Enabled with -mpclmul compiler switch (clang, gcc)
-
-        __m128i xmm_const = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
-        __m128i xmm_value = _mm_set_epi64x(0, value ^ crc);
-
-        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x00);
-        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x10);
-        return _mm_extract_epi32(xmm_value, 2);
-    }
-
-    #endif
-
-#elif defined(__ARM_FEATURE_CRC32)
-
-    inline u32 u8_crc32(u32 crc, u8 data)
-    {
-        return __crc32b(crc, data);
-    }
-
-    inline u32 u64_crc32(u32 crc, const u8* data)
-    {
-        return __crc32d(crc, *reinterpret_cast<const u64 *>(data));
-    }
-
-    inline u32 u8_crc32c(u32 crc, u8 data)
-    {
-        return __crc32cb(crc, data);
-    }
-
-    inline u32 u64_crc32c(u32 crc, const u8* data)
-    {
-        return __crc32cd(crc, *reinterpret_cast<const u64 *>(data));
-    }
-
-#endif
+#endif // MANGO_ENABLE_SSE4_2
 
 } // namespace
 
@@ -781,7 +784,7 @@ namespace mango
                 crc = u8_crc32(crc, *memory.address++);
             }
 
-#ifdef MANGO_HARDWARE_CRC32
+#ifdef HARDWARE_U64_CRC32
             while (memory.size >= 64)
             {
                 crc = u64_crc32(crc, memory.address + 8 * 0);
@@ -826,7 +829,7 @@ namespace mango
                 crc = u8_crc32c(crc, *memory.address++);
             }
 
-#ifdef MANGO_HARDWARE_CRC32C
+#ifdef HARDWARE_U64_CRC32C
             while (memory.size >= 64)
             {
                 crc = u64_crc32c(crc, memory.address + 8 * 0);
