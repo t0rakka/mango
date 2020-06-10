@@ -18,14 +18,14 @@ namespace
     // tokenizer
     // ------------------------------------------------------------
 
-	std::string readline(const u8*& buffer, const u8* end)
+	std::string readline(const u8*& data, const u8* end)
 	{
-		const u8* p = buffer;
+		const u8* p = data;
 
 		int endsize = 1;
 
 		// scan for endline
-		for ( ; buffer < end; )
+		for ( ; data < end; )
 		{
 			u8 v = *p++;
 
@@ -47,10 +47,10 @@ namespace
 			}
 		}
 
-		int size = int(p - buffer) - endsize;
-		std::string msg(reinterpret_cast<const char*>(buffer), size);
+		int size = int(p - data) - endsize;
+		std::string msg(reinterpret_cast<const char*>(data), size);
 
-		buffer = p;
+		data = p;
 
 		return msg;
 	}
@@ -170,33 +170,31 @@ namespace
 		{
 			rad_rle_rgbe,
 			rad_unsupported
-		} format;
+		} format = rad_unsupported;
 
-		int width;
-		int height;
-		bool xflip;
-		bool yflip;
-		float exposure;
+		int width = 0;
+		int height = 0;
+		float exposure = 1.0f;
+		bool xflip = false;
+		bool yflip = false;
 
         ImageHeader header;
 
-		void parse(const u8*& buffer, const u8* end)
+		const u8* parse(ConstMemory memory)
 		{
-			format   = rad_unsupported;
-			width    = 0;
-			height   = 0;
-			exposure = 1.0f;
+			const u8* data = memory.address;
+			const u8* end = memory.address + memory.size;
 
-            std::string id = readline(buffer, end);
+            std::string id = readline(data, end);
 			if (id != "#?RADIANCE")
 			{
 				header.setError("[ImageDecoder.HDR] Incorrect radiance header.");
-				return;
+				return nullptr;
 			}
 
 			for ( ;; )
 			{
-                std::string ln = readline(buffer, end);
+                std::string ln = readline(data, end);
 				if (ln.empty())
 					break;
 
@@ -207,7 +205,7 @@ namespace
 					if (tokens.size() != 2)
 					{
 						header.setError("[ImageDecoder.HDR] Incorrect radiance header (format).");
-						return;
+						return nullptr;
 					}
 
 					if (tokens[1] == "32-bit_rle_rgbe")
@@ -218,7 +216,7 @@ namespace
 					if (tokens.size() != 2)
 					{
 						header.setError("[ImageDecoder.HDR] Incorrect radiance header (exposure).");
-						return;
+						return nullptr;
 					}
 
 					exposure = float(std::atof(tokens[1].c_str()));
@@ -228,16 +226,16 @@ namespace
 			if (format == rad_unsupported)
 			{
 				header.setError("[ImageDecoder.HDR] Incorrect or unsupported format.");
-				return;
+				return nullptr;
 			}
 
-            std::string dims = readline(buffer, end);
+            std::string dims = readline(data, end);
 			std::vector<std::string> tokens = tokenize(dims);
 
 			if (tokens.size() != 4)
 			{
 				header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
-				return;
+				return nullptr;
 			}
 
 			for (int i = 0; i < 2; ++i)
@@ -266,14 +264,14 @@ namespace
 				else
 				{
 					header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
-					return;
+					return nullptr;
 				}
 			}
 
 			if (!width || !height)
 			{
 				header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
-				return;
+				return nullptr;
 			}
 
             header.width   = width;
@@ -284,6 +282,8 @@ namespace
 			header.palette = false;
             header.format  = FORMAT_RGBA32F;
             header.compression = TextureCompression::NONE;
+
+			return data;
 		}
 	};
 
@@ -371,10 +371,7 @@ namespace
 
         Interface(ConstMemory memory)
         {
-            const u8* data = memory.address;
-            const u8* end = memory.address + memory.size;
-            m_rad_header.parse(data, end);
-            m_data = data;
+            m_data = m_rad_header.parse(memory);
         }
 
         ~Interface()
