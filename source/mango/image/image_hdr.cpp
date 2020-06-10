@@ -306,46 +306,40 @@ namespace
 			}
 
 			data += 4;
-			u8* p = buffer;
 
-			for (int i = 0; i < 4; ++i)
+			for (int channel = 0; channel < 4; ++channel)
 			{
-				u8* end = buffer + (i + 1) * surface.width;
+				u8* dest = buffer + surface.width * channel;
+				u8* end = dest + surface.width;
 
-				while (p < end)
+				while (dest < end)
 				{
-					int count = data[0];
-					int value = data[1];
-                    data += 2;
+					int count = *data++;
 
 					if (count > 128)
 					{
 						count -= 128;
-						if (!count || count > (end - p))
+						if (!count || dest + count > end)
 						{
 							status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (rle count).");
 							return;
 						}
 
-						std::memset(p, value, count);
-						p += count;
+						u8 value = *data++;
+						std::memset(dest, value, count);
+						dest += count;
 					}
 					else
 					{
-						if (!count || count > (end - p))
+						if (!count || dest + count > end)
 						{
 							status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (rle count).");
 							return;
 						}
 
-						*p++ = u8(value);
-
-						if (--count > 0)
-						{
-							std::memcpy(p, data, count);
-							data += count;
-							p += count;
-						}
+						std::memcpy(dest, data, count);
+						dest += count;
+						data += count;
 					}
 				}
 			}
