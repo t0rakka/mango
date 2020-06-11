@@ -600,16 +600,16 @@ namespace
     template <const u32* table>
     u32 u64_crc(u32 crc, const u8* ptr)
     {
-        u64 data = *reinterpret_cast<const u64le *>(ptr);
+        u64 data = uload64le(ptr);
         data = data ^ u64(crc);
-        crc = table[((data>>56) & 0xff) + 0x000] ^
-              table[((data>>48) & 0xff) + 0x100] ^
-              table[((data>>40) & 0xff) + 0x200] ^
-              table[((data>>32) & 0xff) + 0x300] ^
-              table[((data>>24) & 0xff) + 0x400] ^
-              table[((data>>16) & 0xff) + 0x500] ^
-              table[((data>> 8) & 0xff) + 0x600] ^
-              table[((data>> 0) & 0xff) + 0x700];
+        crc = table[((data >> 56) & 0xff) + 0x000] ^
+              table[((data >> 48) & 0xff) + 0x100] ^
+              table[((data >> 40) & 0xff) + 0x200] ^
+              table[((data >> 32) & 0xff) + 0x300] ^
+              table[((data >> 24) & 0xff) + 0x400] ^
+              table[((data >> 16) & 0xff) + 0x500] ^
+              table[((data >>  8) & 0xff) + 0x600] ^
+              table[((data >>  0) & 0xff) + 0x700];
         return crc;
     }
 
@@ -618,22 +618,21 @@ namespace
     template <const u32* table>
     u32 u64_crc(u32 crc, const u8* ptr)
     {
-        const u32le* p = reinterpret_cast<const u32le *>(ptr);
     #ifdef MANGO_LITTLE_ENDIAN
-        u32 one = p[0] ^ crc;
-        u32 two = p[1];
+        u32 one = uload32le(ptr + 0) ^ crc;
+        u32 two = uload32le(ptr + 4);
     #else
-        u32 one = p[1] ^ crc;
-        u32 two = p[0];
+        u32 one = uload32le(ptr + 4) ^ crc;
+        u32 two = uload32le(ptr + 0);
     #endif
-        crc = table[((two>>24) & 0xff) + 0x000] ^
-              table[((two>>16) & 0xff) + 0x100] ^
-              table[((two>> 8) & 0xff) + 0x200] ^
-              table[((two>> 0) & 0xff) + 0x300] ^
-              table[((one>>24) & 0xff) + 0x400] ^
-              table[((one>>16) & 0xff) + 0x500] ^
-              table[((one>> 8) & 0xff) + 0x600] ^
-              table[((one>> 0) & 0xff) + 0x700];
+        crc = table[((two >> 24) & 0xff) + 0x000] ^
+              table[((two >> 16) & 0xff) + 0x100] ^
+              table[((two >>  8) & 0xff) + 0x200] ^
+              table[((two >>  0) & 0xff) + 0x300] ^
+              table[((one >> 24) & 0xff) + 0x400] ^
+              table[((one >> 16) & 0xff) + 0x500] ^
+              table[((one >>  8) & 0xff) + 0x600] ^
+              table[((one >>  0) & 0xff) + 0x700];
         return crc;
     }
 
@@ -692,7 +691,7 @@ namespace
 
     inline u32 u64_crc32(u32 crc, const u8* data)
     {
-        return __crc32d(crc, *reinterpret_cast<const u64 *>(data));
+        return __crc32d(crc, uload64(data));
     }
 
     inline u32 u8_crc32c(u32 crc, u8 data)
@@ -702,7 +701,7 @@ namespace
 
     inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        return __crc32cd(crc, *reinterpret_cast<const u64 *>(data));
+        return __crc32cd(crc, uload64(data));
     }
 
 #endif // defined(__ARM_FEATURE_CRC32)
@@ -715,7 +714,7 @@ namespace
 
     inline u32 u64_crc32(u32 crc, const u8* data)
     {
-        u64 value = *reinterpret_cast<const u64 *>(data);
+        u64 value = uload64(data);
 
         // https://merrymage.com/lab/crc32/
         // Enabled with -mpclmul compiler switch (clang, gcc)
@@ -725,7 +724,7 @@ namespace
 
         xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x00);
         xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x10);
-        return _mm_extract_epi32(xmm_value, 2);
+        return _mm_extract_epi32(xmm_value, 2); // requires SSE4.1
     }
 
 #endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
@@ -747,7 +746,7 @@ namespace
 
     inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        return u32(_mm_crc32_u64(crc, *reinterpret_cast<const u64 *>(data)));
+        return u32(_mm_crc32_u64(crc, uload64(data)));
     }
 
 #else
@@ -757,8 +756,8 @@ namespace
 
     inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        crc = _mm_crc32_u32(crc, *reinterpret_cast<const u32 *>(data + 0));
-        crc = _mm_crc32_u32(crc, *reinterpret_cast<const u32 *>(data + 4));
+        crc = _mm_crc32_u32(crc, uload32(data + 0));
+        crc = _mm_crc32_u32(crc, uload32(data + 4));
         return crc;
     }
 
