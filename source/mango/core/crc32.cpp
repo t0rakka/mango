@@ -18,7 +18,7 @@
     #define HARDWARE_U64_CRC32C
 #endif
 
-#if defined(__PCLMUL__)
+#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
     #define HARDWARE_U64_CRC32
 #endif
 
@@ -711,7 +711,7 @@ namespace
     // Intel CLMUL implementation
     // ----------------------------------------------------------------------------------------
 
-#if defined(__PCLMUL__)
+#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
     inline u32 u64_crc32(u32 crc, const u8* data)
     {
@@ -728,7 +728,7 @@ namespace
         return _mm_extract_epi32(xmm_value, 2);
     }
 
-#endif // defined(__PCLMUL__)
+#endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
     // ----------------------------------------------------------------------------------------
     // Intel SSE4.2 implementation
