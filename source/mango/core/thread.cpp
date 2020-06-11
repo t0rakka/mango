@@ -167,14 +167,14 @@ namespace mango
         delete[] m_queues;
     }
 
+    int ThreadPool::getHardwareConcurrency()
+    {
+        return int(std::thread::hardware_concurrency());
+    }
+
     ThreadPool& ThreadPool::getInstance()
     {
         return m_static_instance;
-    }
-
-    int ThreadPool::getInstanceSize()
-    {
-        return m_static_instance.size();
     }
 
     int ThreadPool::size() const

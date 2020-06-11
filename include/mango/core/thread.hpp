@@ -71,8 +71,8 @@ namespace mango
         ThreadPool(size_t size);
         ~ThreadPool();
 
+        static int getHardwareConcurrency();
         static ThreadPool& getInstance();
-        static int getInstanceSize();
 
         int size() const;
 

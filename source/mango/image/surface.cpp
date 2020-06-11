@@ -418,7 +418,7 @@ namespace mango
 
         Blitter blitter(dest.format, source.format);
 
-        const int threads = ThreadPool::getInstanceSize();
+        const int threads = ThreadPool::getHardwareConcurrency();
         const int tasksize = (rect.width * rect.height) / threads;
 
         const bool fast = dest.format == source.format;

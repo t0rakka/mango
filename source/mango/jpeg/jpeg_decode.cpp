@@ -184,7 +184,7 @@ namespace jpeg {
         restartCounter = 0;
 
 #ifdef JPEG_ENABLE_THREAD
-        m_hardware_concurrency = ThreadPool::getInstanceSize();
+        m_hardware_concurrency = ThreadPool::getHardwareConcurrency();
 #else
         m_hardware_concurrency = 1;
 #endif
