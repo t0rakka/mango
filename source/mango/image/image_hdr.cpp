@@ -409,11 +409,11 @@ namespace
             }
             else
             {
-                Bitmap temp(header.width, header.height, header.format);
-                hdr_decode(status, temp, m_data);
+				Bitmap temp(header.width, header.height, header.format);
+				hdr_decode(status, temp, m_data);
 				if (status)
 				{
-                	dest.blit(0, 0, temp);
+					dest.blit(0, 0, temp);
 				}
             }
 
