@@ -399,7 +399,9 @@ namespace
                 return status;
             }
 
-			status.direct = dest.format == header.format;
+			status.direct = dest.format == header.format &&
+			                dest.width == header.width &&
+							dest.height == header.height;
 
             if (status.direct)
             {
@@ -409,7 +411,10 @@ namespace
             {
                 Bitmap temp(header.width, header.height, header.format);
                 hdr_decode(status, temp, m_data);
-                dest.blit(0, 0, temp);
+				if (status)
+				{
+                	dest.blit(0, 0, temp);
+				}
             }
 
             return status;
