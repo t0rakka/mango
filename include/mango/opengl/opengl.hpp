@@ -108,7 +108,9 @@
         #include <GL/glext.h>
     #endif
 
+    #define GLX_GLXEXT_PROTOTYPES
     #include <GL/glx.h>
+    #include <GL/glxext.h>
 
 #else
 

@@ -370,7 +370,8 @@ namespace opengl {
 
     void Context::swapInterval(int interval)
     {
-        // TODO: detect extension, then use it
+        glXSwapIntervalEXT(m_handle->display, m_handle->window, interval);
+
     }
 
     void Context::toggleFullscreen()
