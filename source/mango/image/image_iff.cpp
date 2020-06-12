@@ -12,144 +12,144 @@ namespace
 {
     using namespace mango;
 
-	// ------------------------------------------------------------
-	// iff
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // iff
+    // ------------------------------------------------------------
 
-	void unpackBits(u8* buffer, const u8* input, int scansize, int insize)
-	{
-		u8* buffer_end = buffer + scansize;
-		const u8* input_end = input + insize;
+    void unpackBits(u8* buffer, const u8* input, int scansize, int insize)
+    {
+        u8* buffer_end = buffer + scansize;
+        const u8* input_end = input + insize;
 
-		for (; buffer < buffer_end && input < input_end;)
-		{
-			u8 v = *input++;
+        for (; buffer < buffer_end && input < input_end;)
+        {
+            u8 v = *input++;
 
-			if (v > 128)
-			{
-				const int n = 257 - v;
-				std::memset(buffer, *input++, n);
-				buffer += n;
-			}
-			else if (v < 128)
-			{
-				const int n = v + 1;
-				std::memcpy(buffer, input, n);
-				input += n;
-				buffer += n;
-			}
-			else
-			{
-				// 0x80
-				break;
-			}
-		}
-	}
+            if (v > 128)
+            {
+                const int n = 257 - v;
+                std::memset(buffer, *input++, n);
+                buffer += n;
+            }
+            else if (v < 128)
+            {
+                const int n = v + 1;
+                std::memcpy(buffer, input, n);
+                input += n;
+                buffer += n;
+            }
+            else
+            {
+                // 0x80
+                break;
+            }
+        }
+    }
 
-	void p2c_raw(u8* image, const u8* temp, int xsize, int ysize, int nplanes, int mask)
-	{
-		const int bpp = (nplanes + 7) >> 3;
-		const int scansize = xsize * bpp;
-		const int planesize = ((xsize + 15) & ~15) / 8;
+    void p2c_raw(u8* image, const u8* temp, int xsize, int ysize, int nplanes, int mask)
+    {
+        const int bpp = (nplanes + 7) >> 3;
+        const int scansize = xsize * bpp;
+        const int planesize = ((xsize + 15) & ~15) / 8;
         const int mplanes = nplanes + (mask == 1);
 
-		for (int y = 0; y < ysize; ++y)
-		{
-			std::memset(image, 0, scansize);
+        for (int y = 0; y < ysize; ++y)
+        {
+            std::memset(image, 0, scansize);
 
-			for (int x = 0; x < xsize; ++x)
-			{
-				const int shift = ((x ^ 7) & 7);
+            for (int x = 0; x < xsize; ++x)
+            {
+                const int shift = ((x ^ 7) & 7);
 
-				const u8* src = temp + x / 8;
-				u8* dest = image + x * bpp;
+                const u8* src = temp + x / 8;
+                u8* dest = image + x * bpp;
 
-				for (int n = 0; n < nplanes; ++n)
-				{
-					int v = src[n * planesize] >> shift;
-					dest[n / 8] |= (v & 1) << (n & 7);
-				}
-			}
+                for (int n = 0; n < nplanes; ++n)
+                {
+                    int v = src[n * planesize] >> shift;
+                    dest[n / 8] |= (v & 1) << (n & 7);
+                }
+            }
 
-			image += scansize;
-			temp += planesize * mplanes;
-		}
-	}
+            image += scansize;
+            temp += planesize * mplanes;
+        }
+    }
 
-	void p2c_ham(u8* dest, const u8* workptr, int width, int height, int nplanes, const Palette& palette)
-	{
-		bool hamcode2b = (nplanes == 6 || nplanes == 8);
-		int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
-		//int ham_mask = (1 << ham_shift) - 1;
+    void p2c_ham(u8* dest, const u8* workptr, int width, int height, int nplanes, const Palette& palette)
+    {
+        bool hamcode2b = (nplanes == 6 || nplanes == 8);
+        int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
+        //int ham_mask = (1 << ham_shift) - 1;
 
-		int lineskip = ((width + 15) >> 4) << 1;
+        int lineskip = ((width + 15) >> 4) << 1;
 
-		for (int y = 0; y < height; ++y)
-		{
-			u32 r = palette[0].r;
-			u32 g = palette[0].g;
-			u32 b = palette[0].b;
+        for (int y = 0; y < height; ++y)
+        {
+            u32 r = palette[0].r;
+            u32 g = palette[0].g;
+            u32 b = palette[0].b;
 
-			u32 bitmask = 0x80;
-			const u8* workptr2 = workptr;
+            u32 bitmask = 0x80;
+            const u8* workptr2 = workptr;
 
-			for (int x = 0; x < width; ++x)
-			{
-				const u8* workptr3 = workptr2;
+            for (int x = 0; x < width; ++x)
+            {
+                const u8* workptr3 = workptr2;
 
-				// read value
-				u32 v = 0;
-				u32 colorbit = 1;
+                // read value
+                u32 v = 0;
+                u32 colorbit = 1;
 
-				for (int plane = 2; plane < nplanes; ++plane)
-				{
-					if (*workptr3 & bitmask)
-					{
-						v |= colorbit;
-					}
-					workptr3 += lineskip;
-					colorbit += colorbit;
-				}
+                for (int plane = 2; plane < nplanes; ++plane)
+                {
+                    if (*workptr3 & bitmask)
+                    {
+                        v |= colorbit;
+                    }
+                    workptr3 += lineskip;
+                    colorbit += colorbit;
+                }
 
-				// read hamcode
-				u32 hamcode = 0;
+                // read hamcode
+                u32 hamcode = 0;
 
-				if (*workptr3 & bitmask)
-				{
-					hamcode = 1;
-				}
-				workptr3 += lineskip;
+                if (*workptr3 & bitmask)
+                {
+                    hamcode = 1;
+                }
+                workptr3 += lineskip;
 
-				if (hamcode2b)
-				{
-					if (*workptr3 & bitmask)
-					{
-						hamcode |= 2;
-					}
-					workptr3 += lineskip;
-				}
+                if (hamcode2b)
+                {
+                    if (*workptr3 & bitmask)
+                    {
+                        hamcode |= 2;
+                    }
+                    workptr3 += lineskip;
+                }
 
-				// hold-and-modify
-				switch (hamcode)
-				{
-					case 0:
-						r = palette[v].r;
-						g = palette[v].g;
-						b = palette[v].b;
-						break;
+                // hold-and-modify
+                switch (hamcode)
+                {
+                    case 0:
+                        r = palette[v].r;
+                        g = palette[v].g;
+                        b = palette[v].b;
+                        break;
 
-					case 1:
+                    case 1:
                         b = v << ham_shift;
                         break;
 
-					case 2:
+                    case 2:
                         r = v << ham_shift;
                         break;
 
-					case 3:
+                    case 3:
                         g = v << ham_shift;
                         break;
-				}
+                }
 
                 dest[0] = u8(b);
                 dest[1] = u8(g);
@@ -157,18 +157,18 @@ namespace
                 dest[3] = 0xff;
                 dest += 4;
 
-				bitmask >>= 1;
+                bitmask >>= 1;
 
-				if (!bitmask)
-				{
-					bitmask = 0x80;
-					++workptr2;
-				}
-			}
+                if (!bitmask)
+                {
+                    bitmask = 0x80;
+                    ++workptr2;
+                }
+            }
 
-			workptr += lineskip * nplanes;
-		}
-	}
+            workptr += lineskip * nplanes;
+        }
+    }
 
     void expand_palette(u8* dest, const u8* src, int xsize, int ysize, const Palette& palette)
     {
@@ -192,16 +192,16 @@ namespace
     {
         BigEndianConstPointer p = data;
 
-		u32 v0 = p.read32(); p += 4;
-		u32 v1 = p.read32();
+        u32 v0 = p.read32(); p += 4;
+        u32 v1 = p.read32();
         data = p;
 
-		if (v0 != u32_mask_rev('F','O','R','M'))
+        if (v0 != u32_mask_rev('F','O','R','M'))
         {
             return SIGNATURE_ERROR;
         }
 
-		if (v1 != u32_mask_rev('I','L','B','M') && v1 != u32_mask_rev('P','B','M',' '))
+        if (v1 != u32_mask_rev('I','L','B','M') && v1 != u32_mask_rev('P','B','M',' '))
         {
             return SIGNATURE_ERROR;
         }
@@ -328,7 +328,7 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
-			ImageDecodeStatus status;
+            ImageDecodeStatus status;
 
             if (!m_header.success)
             {
@@ -344,7 +344,7 @@ namespace
 
             Palette palette;
 
-		    std::unique_ptr<u8[]> allocation;
+            std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;
 
             bool ham = false;
@@ -527,7 +527,7 @@ namespace
                     }
                 }
 
-			    // NOTE: we could directly decode into dest if the formats match.
+                // NOTE: we could directly decode into dest if the formats match.
                 dest.blit(0, 0, temp);
             }
 
