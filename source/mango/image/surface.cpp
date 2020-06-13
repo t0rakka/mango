@@ -12,6 +12,8 @@
 #include <mango/math/vector.hpp>
 #include <mango/image/image.hpp>
 
+#include <mango/core/timer.hpp>
+
 namespace
 {
     using namespace mango;
@@ -414,58 +416,35 @@ namespace mango
         rect.width = dest.width;
         rect.height = dest.height;
 
-        ConcurrentQueue queue("blit", Priority::HIGH);
-
         Blitter blitter(dest.format, source.format);
 
-        const int threads = ThreadPool::getHardwareConcurrency();
-        const int tasksize = (rect.width * rect.height) / threads;
+        const int slice = 96;
 
-        const bool fast = dest.format == source.format;
-
-        // don't use thread pool for:
-        // - really small tasks
-        // - when the pixel formats are identical ("fast mode")
-        const int N = (tasksize < 8192) || fast ? 1 : threads;
-        const int section = rect.height / N;
-
-        int ypos = 0;
-
-        // queue conversion tasks
-        for (int i = 0; i < N; ++i)
+        if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
         {
-            const bool last = (i == (N - 1));
-            const int ycount = last ? rect.height - ypos : section;
+            ConcurrentQueue queue("blit", Priority::HIGH);
 
-            if (N == 1)
-            {
-                // execute on main thread
-                BlitRect temp = rect;
-
-                temp.dest.address += ypos * rect.dest.stride;
-                temp.src.address += ypos * rect.src.stride;
-                temp.height = ycount;
-
-                blitter.convert(temp);
-            }
-            else
+            for (int y = 0; y < rect.height; y += slice)
             {
                 queue.enqueue([=, &blitter]
                 {
+                    int y0 = y;
+                    int y1 = std::min(y + slice, rect.height);
+
                     BlitRect temp = rect;
 
-                    temp.dest.address += ypos * rect.dest.stride;
-                    temp.src.address += ypos * rect.src.stride;
-                    temp.height = ycount;
+                    temp.dest.address += y0 * rect.dest.stride;
+                    temp.src.address += y0 * rect.src.stride;
+                    temp.height = y1 - y0;
 
                     blitter.convert(temp);
                 });
             }
-
-            ypos += section;
         }
-
-        queue.wait();
+        else
+        {
+            blitter.convert(rect);
+        }
     }
 
     void Surface::xflip() const
