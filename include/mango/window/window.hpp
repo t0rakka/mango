@@ -142,6 +142,7 @@ namespace mango
         Window(int width, int height, u32 flags = 0);
         virtual ~Window();
 
+        void setWindowPosition(int x, int y);
         void setWindowSize(int width, int height);
         void setTitle(const std::string& title);
         void setIcon(const Surface& icon);

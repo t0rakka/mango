@@ -615,6 +615,13 @@ namespace mango
         delete m_handle;
     }
 
+    void Window::setWindowPosition(int x, int y)
+    {
+        // TODO
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+    }
+
     void Window::setWindowSize(int width, int height)
     {
         RECT rect;

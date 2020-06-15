@@ -635,6 +635,11 @@ namespace mango
 		delete m_handle;
     }
 
+    void Window::setWindowPosition(int x, int y)
+    {
+        XMoveWindow(m_handle->display, m_handle->window, x, y);
+    }
+
     void Window::setWindowSize(int width, int height)
     {
         XResizeWindow(m_handle->display, m_handle->window, width, height);
