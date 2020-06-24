@@ -184,6 +184,8 @@ namespace mango
 
     void ThreadPool::thread(size_t threadID)
     {
+        MANGO_UNREFERENCED(threadID);
+
         auto time0 = high_resolution_clock::now();
 
         while (!m_stop.load(std::memory_order_relaxed))

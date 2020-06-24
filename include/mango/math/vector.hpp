@@ -1214,6 +1214,8 @@ namespace mango
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize> load_low(const ScalarType *source)
     {
+        MANGO_UNREFERENCED(source);
+
         // load_low() is not available by default
 		Vector<ScalarType, VectorSize>::undefined_operation();
     }

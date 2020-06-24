@@ -941,6 +941,9 @@ namespace
 
     void clipConvertBlockDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
+        MANGO_UNREFERENCED(xsize);
+        MANGO_UNREFERENCED(ysize);
+
         Blitter blitter(surface.format, block.format);
 
         const bool origin = (block.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
@@ -987,6 +990,9 @@ namespace
 
     void directSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
+        MANGO_UNREFERENCED(xsize);
+        MANGO_UNREFERENCED(ysize);
+
         TextureCompressionInfo temp = block;
         temp.width = surface.width;
         temp.height = surface.height;
@@ -995,6 +1001,9 @@ namespace
 
     void clipConvertSurfaceDecode(const TextureCompressionInfo& block, const Surface& surface, ConstMemory memory, int xsize, int ysize)
     {
+        MANGO_UNREFERENCED(xsize);
+        MANGO_UNREFERENCED(ysize);
+
         TextureCompressionInfo temp = block;
         temp.width = surface.width;
         temp.height = surface.height;
