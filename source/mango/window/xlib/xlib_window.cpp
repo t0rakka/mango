@@ -507,6 +507,9 @@ namespace mango
     WindowHandle::WindowHandle(int width, int height, u32 flags)
         : flags(flags)
     {
+        MANGO_UNREFERENCED(width);
+        MANGO_UNREFERENCED(height);
+
         display = XOpenDisplay(NULL);
         if (!display)
         {

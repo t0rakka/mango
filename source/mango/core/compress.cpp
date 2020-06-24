@@ -256,6 +256,8 @@ namespace lzo {
 
     size_t compress(Memory dest, ConstMemory source, int level)
     {
+        MANGO_UNREFERENCED(level);
+
         void* workmem = aligned_malloc(LZO1X_MEM_COMPRESS);
 
         lzo_uint dst_len = (lzo_uint)dest.size;

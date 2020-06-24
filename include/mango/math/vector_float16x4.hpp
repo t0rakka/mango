@@ -76,6 +76,8 @@ namespace mango
             return *this;
         }
 
+        Vector(const Vector& v) = default;
+
         Vector& operator = (const Vector& v)
         {
             m = v.m;

@@ -44,6 +44,8 @@ namespace filesystem {
             // launch inotify handler in it's own thread
             m_thread = std::thread([] (FileObserver* observer, int notify, int watch)
             {
+                MANGO_UNREFERENCED(watch);
+
                 for (;;)
                 {
                     char buffer[BUFFER_SIZE];

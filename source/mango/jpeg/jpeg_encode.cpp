@@ -1553,6 +1553,8 @@ namespace
         : ILqt(64)
         , ICqt(64)
     {
+        MANGO_UNREFERENCED(stride);
+
         int bytes_per_pixel = 0;
 
         channel_count = 0;

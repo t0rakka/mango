@@ -228,6 +228,8 @@ public:
         return *this;
     }
 
+    HDRColorA& operator = (const HDRColorA& c) = default;
+
     HDRColorA& operator = (const LDRColorA& c)
     {
         r = (float) c.r;
@@ -318,6 +320,8 @@ public:
     INTColor() {}
     INTColor(int nr, int ng, int nb) {r = nr; g = ng; b = nb;}
     INTColor(const INTColor& c) {r = c.r; g = c.g; b = c.b;}
+
+    INTColor& operator = ( const INTColor& c ) = default;
 
     INTColor operator - ( const INTColor& c ) const
     {

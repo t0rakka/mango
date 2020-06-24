@@ -150,6 +150,8 @@ namespace
 
     void filter4_paeth_8bit(u8* scan, const u8* prev, int bytes, int bpp)
     {
+        MANGO_UNREFERENCED(bpp);
+
         int c = prev[0];
         int a = (scan[0] + c) & 0xff;
         scan[0] = u8(a);
@@ -224,6 +226,10 @@ namespace
 
     inline int16x8 nearest_sse2(u8* scan, const u8* prev, __m128i zero, int16x8 a, int16x8 b, int16x8 c, int16x8 d)
     {
+        MANGO_UNREFERENCED(scan);
+        MANGO_UNREFERENCED(prev);
+        MANGO_UNREFERENCED(zero);
+
         int16x8 pa = b - c;
         int16x8 pb = a - c;
         int16x8 pc = pa + pb;
@@ -645,6 +651,8 @@ namespace
 
     void process_pal1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u32* dest = reinterpret_cast<u32*>(dst);
 
         ColorBGRA* palette = state.palette;
@@ -671,6 +679,8 @@ namespace
 
     void process_pal8_indx(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         std::memcpy(dst, src, width);
     }
 
@@ -688,6 +698,8 @@ namespace
 
     void process_i1to4(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u8* dest = dst;
 
         const bool transparent_enable = state.transparent_enable;
@@ -723,11 +735,15 @@ namespace
 
     void process_i8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         std::memcpy(dst, src, width);
     }
 
     void process_i8_trns(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         const u16 transparent_sample = state.transparent_sample[0];
@@ -741,6 +757,8 @@ namespace
 
     void process_i16(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
@@ -752,6 +770,8 @@ namespace
 
     void process_i16_trns(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         const u16 transparent_sample = state.transparent_sample[0];
@@ -769,6 +789,8 @@ namespace
 
     void process_ia8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
@@ -780,6 +802,8 @@ namespace
 
     void process_ia16(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
@@ -793,6 +817,8 @@ namespace
 
     void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u32* dest = reinterpret_cast<u32*>(dst);
 
         while (width >= 4)
@@ -818,6 +844,8 @@ namespace
 
     void process_rgb8_trns(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u32* dest = reinterpret_cast<u32*>(dst);
 
         const ColorRGBA transparent_color = state.transparent_color;
@@ -836,6 +864,8 @@ namespace
 
     void process_rgb16(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
@@ -851,6 +881,8 @@ namespace
 
     void process_rgb16_trns(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         const u16 transparent_sample0 = state.transparent_sample[0];
@@ -877,11 +909,15 @@ namespace
 
     void process_rgba8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         std::memcpy(dst, src, width * 4);
     }
 
     void process_rgba16(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         for (int x = 0; x < width; ++x)
@@ -899,6 +935,8 @@ namespace
 
     void process_rgba16_sse2(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         while (width >= 4)
@@ -935,6 +973,8 @@ namespace
 
     void process_rgba16_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u16* dest = reinterpret_cast<u16*>(dst);
 
         __m128i mask = _mm_setr_epi8(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14);
@@ -965,6 +1005,8 @@ namespace
 
     void process_rgb8_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        MANGO_UNREFERENCED(state);
+
         u32* dest = reinterpret_cast<u32*>(dst);
 
         __m128i mask = _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1);
