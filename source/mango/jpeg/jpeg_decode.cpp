@@ -585,7 +585,7 @@ namespace jpeg {
         }
         else if (is_lossless)
         {
-            if (precision < 2 && precision > 16)
+            if (precision < 2 || precision > 16)
             {
                 header.setError(makeString("Incorrect precision (%d, allowed: 2..16)", precision));
                 return;
