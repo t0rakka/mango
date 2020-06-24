@@ -228,14 +228,21 @@ public:
         return *this;
     }
 
-    HDRColorA& operator = (const HDRColorA& c) = default;
+    HDRColorA& operator = (const HDRColorA& c)
+    {
+        r = c.r;
+        g = c.g;
+        b = c.b;
+        a = c.a;
+        return *this;
+    }
 
     HDRColorA& operator = (const LDRColorA& c)
     {
-        r = (float) c.r;
-        g = (float) c.g;
-        b = (float) c.b;
-        a = (float) c.a;
+        r = float(c.r);
+        g = float(c.g);
+        b = float(c.b);
+        a = float(c.a);
         return *this;
     }
 
@@ -250,7 +257,10 @@ public:
 
     LDRColorA ToLDRColorA() const
     {
-        return LDRColorA((uint8_t) (r + 0.01f), (uint8_t) (g + 0.01f), (uint8_t) (b + 0.01f), (uint8_t) (a + 0.01f));
+        return LDRColorA(uint8_t(r + 0.01f), 
+                         uint8_t(g + 0.01f), 
+                         uint8_t(b + 0.01f), 
+                         uint8_t(a + 0.01f));
     }
 };
 
@@ -321,7 +331,13 @@ public:
     INTColor(int nr, int ng, int nb) {r = nr; g = ng; b = nb;}
     INTColor(const INTColor& c) {r = c.r; g = c.g; b = c.b;}
 
-    INTColor& operator = ( const INTColor& c ) = default;
+    INTColor& operator = ( const INTColor& c )
+    {
+        r = c.r;
+        g = c.g;
+        b = c.b;
+        return *this;
+    }
 
     INTColor operator - ( const INTColor& c ) const
     {
