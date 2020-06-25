@@ -60,20 +60,20 @@ static void init_wgl_extensions()
     #include <mango/opengl/func/wglext.hpp>
 }
 
-static void init_glext_extensions()
-{
-    #ifndef MANGO_OPENGL_CORE_PROFILE
-        #include <mango/opengl/func/glext.hpp>
-    #endif
-}
+#if defined(MANGO_OPENGL_CORE_PROFILE)
 
-#if 0
 static void init_glcorearb_extensions()
 {
-    #ifdef MANGO_OPENGL_CORE_PROFILE
-        #include <mango/opengl/glcorearb.hpp>
-    #endif
+#include <mango/opengl/func/glcorearb.hpp>
 }
+
+#else
+
+static void init_glext_extensions()
+{
+    #include <mango/opengl/func/glext.hpp>
+}
+
 #endif
 
 #undef GLEXT_PROC
@@ -267,10 +267,18 @@ namespace opengl {
 		    //::wglShareLists(m_context->hrc, shared->m_context->hrc);
 		}
 
+#ifdef MANGO_OPENGL_CORE_PROFILE
+		init_glcorearb_extensions();
+#else
 		init_glext_extensions();
-		//init_glcorearb_extensions();
+#endif
 
 		// parse extension string
+		if (glGetString == nullptr)
+		{
+			MANGO_EXCEPTION("[WGL Context] Context creation failed, no GL functions.");
+		}
+
 		const GLubyte* extensions = glGetString(GL_EXTENSIONS);
 		if (extensions)
 		{
