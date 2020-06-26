@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -428,6 +428,22 @@ namespace mango
 		return _mm_popcnt_u32(value);
     }
 
+#elif defined(__aarch64__)
+
+    static inline int u32_count_bits(u32 value)
+    {
+        uint8x8_t count8x8 = vcnt_u8(vcreate_u8(u64(value)));
+        return int(vaddlv_u8(count8x8));
+    }
+
+#elif defined(MANGO_ENABLE_NEON)
+
+    static inline int u32_count_bits(u32 value)
+    {
+        uint8x8_t count8x8 = vcnt_u8(vcreate_u8(u64(value)));
+        return int(vget_lane_u32(vpaddl_u16(vpaddl_u8(count8x8)), 0));
+    }
+
 #else
 
     static inline int u32_count_bits(u32 value)
@@ -757,6 +773,22 @@ namespace mango
         u32 high = value >> 32;
         return _mm_popcnt_u32(low) + _mm_popcnt_u32(high);
     #endif
+    }
+
+#elif defined(__aarch64__)
+
+    static inline int u64_count_bits(u64 value)
+    {
+        uint8x8_t count8x8 = vcnt_u8(vcreate_u8(value));
+        return int(vaddlv_u8(count8x8));
+    }
+
+#elif defined(MANGO_ENABLE_NEON)
+
+    static inline int u64_count_bits(u64 value)
+    {
+        uint8x8_t count8x8 = vcnt_u8(vcreate_u8(value));
+        return int(vget_lane_u64(vpaddl_u32(vpaddl_u16(vpaddl_u8(count8x8))), 0));
     }
 
 #else
