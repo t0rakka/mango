@@ -879,6 +879,7 @@ namespace simd {
 
     static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
     {
+        // TODO: optimize
         u64 x = 0 - (vgetq_lane_u64(a, 0) > vgetq_lane_u64(b, 0));
         u64 y = 0 - (vgetq_lane_u64(a, 1) > vgetq_lane_u64(b, 1));
         uint64x2_t temp = { x, y };
@@ -893,26 +894,17 @@ namespace simd {
 
     static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
     {
-        u64 x = 0 - (vgetq_lane_u64(a, 0) < vgetq_lane_u64(b, 0));
-        u64 y = 0 - (vgetq_lane_u64(a, 1) < vgetq_lane_u64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        return compare_gt(b, a);
     }
 
     static inline mask64x2 compare_le(u64x2 a, u64x2 b)
     {
-        u64 x = 0 - (vgetq_lane_u64(a, 0) <= vgetq_lane_u64(b, 0));
-        u64 y = 0 - (vgetq_lane_u64(a, 1) <= vgetq_lane_u64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
     {
-        u64 x = 0 - (vgetq_lane_u64(a, 0) >= vgetq_lane_u64(b, 0));
-        u64 y = 0 - (vgetq_lane_u64(a, 1) >= vgetq_lane_u64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif
@@ -2012,6 +2004,7 @@ namespace simd {
 
     static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
     {
+        // TODO: optimize
         u64 x = 0 - (vgetq_lane_s64(a, 0) > vgetq_lane_s64(b, 0));
         u64 y = 0 - (vgetq_lane_s64(a, 1) > vgetq_lane_s64(b, 1));
         uint64x2_t temp = { x, y };
@@ -2026,26 +2019,17 @@ namespace simd {
 
     static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
     {
-        u64 x = 0 - (vgetq_lane_s64(a, 0) < vgetq_lane_s64(b, 0));
-        u64 y = 0 - (vgetq_lane_s64(a, 1) < vgetq_lane_s64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        return compare_gt(b, a);
     }
 
     static inline mask64x2 compare_le(s64x2 a, s64x2 b)
     {
-        u64 x = 0 - (vgetq_lane_s64(a, 0) <= vgetq_lane_s64(b, 0));
-        u64 y = 0 - (vgetq_lane_s64(a, 1) <= vgetq_lane_s64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        return bitwise_not(compare_gt(a, b));
     }
 
     static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
     {
-        u64 x = 0 - (vgetq_lane_s64(a, 0) >= vgetq_lane_s64(b, 0));
-        u64 y = 0 - (vgetq_lane_s64(a, 1) >= vgetq_lane_s64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        return bitwise_not(compare_gt(b, a));
     }
 
 #endif // __aarch64__
