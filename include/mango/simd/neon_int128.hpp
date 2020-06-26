@@ -2129,21 +2129,16 @@ namespace simd {
 
     static inline u32 get_mask(mask8x16 a)
     {
-        const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-
-        uint8x8_t lo = vget_low_u8(a);
-        lo = vand_u8(lo, weights);
-        lo = vpadd_u8(lo, lo);
-        lo = vpadd_u8(lo, lo);
-        lo = vpadd_u8(lo, lo);
-
-        uint8x8_t hi = vget_high_u8(a);
-        hi = vand_u8(hi, weights);
-        hi = vpadd_u8(hi, hi);
-        hi = vpadd_u8(hi, hi);
-        hi = vpadd_u8(hi, hi);
-
-        return vget_lane_u8(lo, 0) | (vget_lane_u8(hi, 0) << 8);
+        // a:  11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+        // b:  00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001
+        // v2: 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011
+        // v4: 00000000 00000000 00000000 00001111 00000000 00000000 00000000 00001111 00000000 00000000 00000000 00001111 00000000 00000000 00000000 00001111
+        // v8: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11111111 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11111111
+        uint16x8_t b = vreinterpretq_u16_u8(vshrq_n_u8(a, 7));
+        uint32x4_t v2 = vreinterpretq_u32_u16(vsraq_n_u16(b, b, 7));
+        uint64x2_t v4 = vreinterpretq_u64_u32(vsraq_n_u32(v2, v2, 14));
+        uint8x16_t v8 = vreinterpretq_u8_u64(vsraq_n_u64(v4, v4, 28));
+        return vgetq_lane_u32(v8, 0) | (vgetq_lane_u32(v8, 2) << 8);
     }
 
 #ifdef __aarch64__
@@ -2209,17 +2204,19 @@ namespace simd {
         return bitwise_not(u16x8(a)).data;
     }
 
-#ifdef __aarch64__
-
     static inline u32 get_mask(mask16x8 a)
     {
-        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-        a = vandq_u16(a, weights);
-        a = vpaddq_u16(a, a);
-        a = vpaddq_u16(a, a);
-        a = vpaddq_u16(a, a);
-        return vgetq_lane_u16(a, 0);;
+        // a:  1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111
+        // b:  0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001
+        // v2: 0000000000000000 0000000000000011 0000000000000000 0000000000000011 0000000000000000 0000000000000011 0000000000000000 0000000000000011
+        // v4: 0000000000000000 0000000000000000 0000000000000000 0000000000001111 0000000000000000 0000000000000000 0000000000000000 0000000000001111
+        uint32x4_t b = vreinterpretq_u32_u16(vshrq_n_u16(a, 15));
+        uint64x2_t v2 = vreinterpretq_u64_u32(vsraq_n_u32(b, b, 15));
+        uint8x16_t v4 = vreinterpretq_u8_u64(vsraq_n_u64(v2, v2, 30));
+        return vgetq_lane_u32(v4, 0) | (vgetq_lane_u32(v4, 2) << 4);
     }
+
+#ifdef __aarch64__
 
     static inline bool none_of(mask16x8 a)
     {
@@ -2237,16 +2234,6 @@ namespace simd {
     }
 
 #else
-
-    static inline u32 get_mask(mask16x8 a)
-    {
-        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-        a = vandq_u16(a, weights);
-        uint16x4_t b = vpadd_u16(vget_low_u16(a), vget_high_u16(a));
-        b = vpadd_u16(b, b);
-        b = vpadd_u16(b, b);
-        return vget_lane_u16(b, 0);
-    }
 
     static inline bool none_of(mask16x8 a)
     {
@@ -2292,16 +2279,17 @@ namespace simd {
         return bitwise_not(u32x4(a)).data;
     }
 
-#ifdef __aarch64__
-
     static inline u32 get_mask(mask32x4 a)
     {
-        const uint32x4_t weights = { 1, 2, 4, 8 };
-        a = vandq_u32(a, weights);
-        a = vpaddq_u32(a, a);
-        a = vpaddq_u32(a, a);
-        return vgetq_lane_u32(a, 0);
+        // a:  11111111111111111111111111111111 11111111111111111111111111111111 11111111111111111111111111111111 11111111111111111111111111111111
+        // b:  00000000000000000000000000000001 00000000000000000000000000000001 00000000000000000000000000000001 00000000000000000000000000000001
+        // v2: 00000000000000000000000000000000 00000000000000000000000000000011 00000000000000000000000000000000 00000000000000000000000000000011
+        uint64x2_t b = vreinterpretq_u64_u32(vshrq_n_u32(a, 31));
+        uint8x16_t v2 = vreinterpretq_u8_u64(vsraq_n_u64(b, b, 31));
+        return vgetq_lane_u32(v2, 0) | (vgetq_lane_u32(v2, 2) << 2);
     }
+
+#ifdef __aarch64__
 
     static inline bool none_of(mask32x4 a)
     {
@@ -2319,15 +2307,6 @@ namespace simd {
     }
 
 #else
-
-    static inline u32 get_mask(mask32x4 a)
-    {
-        const uint32x4_t weights = { 1, 2, 4, 8 };
-        a = vandq_u32(a, weights);
-        uint32x2_t b = vpadd_u32(vget_low_u32(a), vget_high_u32(a));
-        b = vpadd_u32(b, b);
-        return vget_lane_u32(b, 0);
-    }
 
     static inline bool none_of(mask32x4 a)
     {
@@ -2373,28 +2352,13 @@ namespace simd {
         return bitwise_not(u64x2(a)).data;
     }
 
-#ifdef __aarch64__
-
     static inline u32 get_mask(mask64x2 a)
     {
-        const uint64x2_t weights = { 1, 2 };
-        a = vandq_u64(a, weights);
-        a = vpaddq_u64(a, a);
-        return u32(vgetq_lane_u64(a, 0));
+        // a:  1111111111111111111111111111111111111111111111111111111111111111 1111111111111111111111111111111111111111111111111111111111111111
+        // b:  0000000000000000000000000000000000000000000000000000000000000001 0000000000000000000000000000000000000000000000000000000000000001
+        uint64x2_t b = vshrq_n_u64(a, 63);
+        return vgetq_lane_u32(b, 0) | (vgetq_lane_u32(b, 2) << 1);
     }
-
-#else
-
-    static inline u32 get_mask(mask64x2 a)
-    {
-        const uint32x2_t weights = { 1, 2 };
-        uint32x2_t b = vmovn_u64(a);
-        b = vand_u32(b, weights);
-        b = vpadd_u32(b, b);
-        return vget_lane_u32(b, 0);
-    }
-
-#endif // __aarch64__
 
     static inline bool none_of(mask64x2 a)
     {
