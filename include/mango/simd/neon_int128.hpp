@@ -441,7 +441,6 @@ namespace simd {
     static inline u32x4 shuffle(u32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        // TODO: optimize
         const u32 *temp = reinterpret_cast<const u32 *>(&v);
         return (uint32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
@@ -823,12 +822,12 @@ namespace simd {
         return veorq_u64(a, b);
     }
 
-#ifdef __aarch64__
-
     static inline u64x2 bitwise_not(u64x2 a)
     {
-        return veorq_u64(a, vceqq_u64(a, a));
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(a)));
     }
+
+#ifdef __aarch64__
 
     // compare
 
@@ -864,11 +863,6 @@ namespace simd {
 
 #else
 
-    static inline u64x2 bitwise_not(u64x2 a)
-    {
-        return veorq_u64(a, vdupq_n_u64(0xffffffffffffffffull));
-    }
-
     // compare
 
     static inline mask64x2 compare_eq(u64x2 a, u64x2 b)
@@ -877,19 +871,22 @@ namespace simd {
         return vreinterpretq_u64_u32(vandq_u32(mask, vrev64q_u32(mask)));
     }
 
-    static inline mask64x2 compare_gt(u64x2 a, u64x2 b)
+    static inline mask64x2 compare_gt(u64x2 ua, u64x2 ub)
     {
-        // TODO: optimize
-        u64 x = 0 - (vgetq_lane_u64(a, 0) > vgetq_lane_u64(b, 0));
-        u64 y = 0 - (vgetq_lane_u64(a, 1) > vgetq_lane_u64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        const uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
+        const int64x2_t a = vreinterpretq_s64_u64(veorq_u64(ua, sign));
+        const int64x2_t b = vreinterpretq_s64_u64(veorq_u64(ub, sign));
+        // signed compare
+        int64x2_t diff = vsubq_s64(a, b);
+        int64x2_t flip = veorq_s64(b, a);
+        int64x2_t mask = vorrq_s64(vbicq_s64(b, a), vbicq_s64(diff, flip));
+        return vshrq_n_s64(mask, 63);
     }
 
     static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
     {
-        uint32x4_t mask = vmvnq_u32(vceqq_u32(vreinterpretq_u32_u64(a), vreinterpretq_u32_u64(b)));
-        return vreinterpretq_u64_u32(vandq_u32(mask, vrev64q_u32(mask)));
+        uint64x2_t mask = compare_eq(a, b);
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(mask)));
     }
 
     static inline mask64x2 compare_lt(u64x2 a, u64x2 b)
@@ -899,12 +896,14 @@ namespace simd {
 
     static inline mask64x2 compare_le(u64x2 a, u64x2 b)
     {
-        return bitwise_not(compare_gt(a, b));
+        uint64x2_t mask = compare_gt(a, b);
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(mask)));
     }
 
     static inline mask64x2 compare_ge(u64x2 a, u64x2 b)
     {
-        return bitwise_not(compare_gt(b, a));
+        uint64x2_t mask = compare_gt(b, a);
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(mask)));
     }
 
 #endif
@@ -1487,7 +1486,6 @@ namespace simd {
     static inline s32x4 shuffle(s32x4 v)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        // TODO: optimize
         const s32* temp = reinterpret_cast<const s32 *>(&v);
         return (int32x4_t) { temp[x], temp[y], temp[z], temp[w] };
     }
@@ -1948,12 +1946,12 @@ namespace simd {
         return veorq_s64(a, b);
     }
 
-#ifdef __aarch64__
-
     static inline s64x2 bitwise_not(s64x2 a)
     {
-        return veorq_s64(a, vreinterpretq_s64_u64(vceqq_s64(a, a)));
+        return vreinterpretq_s64_s32(vmvnq_s32(vreinterpretq_s32_s64(a)));
     }
+
+#ifdef __aarch64__
 
     // compare
 
@@ -1989,11 +1987,6 @@ namespace simd {
 
 #else
 
-    static inline s64x2 bitwise_not(s64x2 a)
-    {
-        return veorq_s64(a, vdupq_n_s64(0xffffffffffffffffull));
-    }
-
     // compare
 
     static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
@@ -2001,20 +1994,19 @@ namespace simd {
         uint32x4_t mask = vceqq_u32(vreinterpretq_u32_s64(a), vreinterpretq_u32_s64(b));
         return vreinterpretq_s64_u32(vandq_u32(mask, vrev64q_u32(mask)));
     }
-
+ 
     static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
     {
-        // TODO: optimize
-        u64 x = 0 - (vgetq_lane_s64(a, 0) > vgetq_lane_s64(b, 0));
-        u64 y = 0 - (vgetq_lane_s64(a, 1) > vgetq_lane_s64(b, 1));
-        uint64x2_t temp = { x, y };
-        return temp;
+        int64x2_t diff = vsubq_s64(a, b);
+        int64x2_t flip = veorq_s64(b, a);
+        int64x2_t mask = vorrq_s64(vbicq_s64(b, a), vbicq_s64(diff, flip));
+        return vshrq_n_s64(mask, 63);
     }
 
     static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
     {
-        uint32x4_t mask = vmvnq_u32(vceqq_u32(vreinterpretq_u32_s64(a), vreinterpretq_u32_s64(b)));
-        return vreinterpretq_s64_u32(vandq_u32(mask, vrev64q_u32(mask)));
+        uint64x2_t mask = compare_eq(a, b);
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(mask)));
     }
 
     static inline mask64x2 compare_lt(s64x2 a, s64x2 b)
@@ -2024,12 +2016,14 @@ namespace simd {
 
     static inline mask64x2 compare_le(s64x2 a, s64x2 b)
     {
-        return bitwise_not(compare_gt(a, b));
+        uint64x2_t mask = compare_gt(a, b);
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(mask)));
     }
 
     static inline mask64x2 compare_ge(s64x2 a, s64x2 b)
     {
-        return bitwise_not(compare_gt(b, a));
+        uint64x2_t mask = compare_gt(b, a);
+        return vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(mask)));
     }
 
 #endif // __aarch64__
