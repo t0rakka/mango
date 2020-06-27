@@ -1270,48 +1270,32 @@ namespace simd {
 
     static inline s16x8 hadd(s16x8 a, s16x8 b)
     {
-        s16x8 temp_a = unpacklo(a, b);
-        s16x8 temp_b = unpackhi(a, b);
-        a = unpacklo(temp_a, temp_b);
-        b = unpackhi(temp_a, temp_b);
-        temp_a = unpacklo(a, b);
-        temp_b = unpackhi(a, b);
-        return add(temp_a, temp_b);
+        s16x8 ab0246 = vuzpq_s16(a, b).val[0];
+        s16x8 ab1357 = vuzpq_s16(a, b).val[1];
+        return vaddq_s16(ab0246, ab1357);
     }
 
     static inline s16x8 hsub(s16x8 a, s16x8 b)
     {
-        s16x8 temp_a = unpacklo(a, b);
-        s16x8 temp_b = unpackhi(a, b);
-        a = unpacklo(temp_a, temp_b);
-        b = unpackhi(temp_a, temp_b);
-        temp_a = unpacklo(a, b);
-        temp_b = unpackhi(a, b);
-        return sub(temp_a, temp_b);
+        s16x8 ab0246 = vuzpq_s16(a, b).val[0];
+        s16x8 ab1357 = vuzpq_s16(a, b).val[1];
+        return vsubq_s16(ab0246, ab1357);
     }
 
 #endif
 
     static inline s16x8 hadds(s16x8 a, s16x8 b)
     {
-        s16x8 temp_a = unpacklo(a, b);
-        s16x8 temp_b = unpackhi(a, b);
-        a = unpacklo(temp_a, temp_b);
-        b = unpackhi(temp_a, temp_b);
-        temp_a = unpacklo(a, b);
-        temp_b = unpackhi(a, b);
-        return adds(temp_a, temp_b);
+        s16x8 ab0246 = vuzpq_s16(a, b).val[0];
+        s16x8 ab1357 = vuzpq_s16(a, b).val[1];
+        return vqaddq_s16(ab0246, ab1357);
     }
 
     static inline s16x8 hsubs(s16x8 a, s16x8 b)
     {
-        s16x8 temp_a = unpacklo(a, b);
-        s16x8 temp_b = unpackhi(a, b);
-        a = unpacklo(temp_a, temp_b);
-        b = unpackhi(temp_a, temp_b);
-        temp_a = unpacklo(a, b);
-        temp_b = unpackhi(a, b);
-        return subs(temp_a, temp_b);
+        s16x8 ab0246 = vuzpq_s16(a, b).val[0];
+        s16x8 ab1357 = vuzpq_s16(a, b).val[1];
+        return vqsubq_s16(ab0246, ab1357);
     }
 
     static inline s16x8 avg(s16x8 a, s16x8 b)
@@ -1628,20 +1612,16 @@ namespace simd {
 
     static inline s32x4 hadd(s32x4 a, s32x4 b)
     {
-        s32x4 temp_a = unpacklo(a, b);
-        s32x4 temp_b = unpackhi(a, b);
-        a = unpacklo(temp_a, temp_b);
-        b = unpackhi(temp_a, temp_b);
-        return add(a, b);
+        s32x4 ab02 = vuzpq_s32(a, b).val[0];
+        s32x4 ab13 = vuzpq_s32(a, b).val[1];
+        return vaddq_s32(ab02, ab13);
     }
 
     static inline s32x4 hsub(s32x4 a, s32x4 b)
     {
-        s32x4 temp_a = unpacklo(a, b);
-        s32x4 temp_b = unpackhi(a, b);
-        a = unpacklo(temp_a, temp_b);
-        b = unpackhi(temp_a, temp_b);
-        return sub(a, b);
+        s32x4 ab02 = vuzpq_s32(a, b).val[0];
+        s32x4 ab13 = vuzpq_s32(a, b).val[1];
+        return vsubq_s32(ab02, ab13);
     }
 
 #endif
