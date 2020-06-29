@@ -649,7 +649,7 @@ namespace simd {
 
     static inline f32x4 add(f32x4 a, f32x4 b, mask32x4 mask)
     {
-        return vreinterpretq_u32_s32(vandq_u32(mask, vreinterpretq_u32_f32(add(a, b))));
+        return vreinterpretq_f32_u32(vandq_u32(mask, vreinterpretq_u32_f32(add(a, b))));
     }
 
     static inline f32x4 sub(f32x4 a, f32x4 b, mask32x4 mask)
