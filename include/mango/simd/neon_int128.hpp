@@ -880,7 +880,7 @@ namespace simd {
         int64x2_t diff = vsubq_s64(a, b);
         int64x2_t flip = veorq_s64(b, a);
         int64x2_t mask = vorrq_s64(vbicq_s64(b, a), vbicq_s64(diff, flip));
-        return vshrq_n_s64(mask, 63);
+        return vreinterpretq_u64_s64(vshrq_n_s64(mask, 63));
     }
 
     static inline mask64x2 compare_neq(u64x2 a, u64x2 b)
@@ -1972,7 +1972,7 @@ namespace simd {
     static inline mask64x2 compare_eq(s64x2 a, s64x2 b)
     {
         uint32x4_t mask = vceqq_u32(vreinterpretq_u32_s64(a), vreinterpretq_u32_s64(b));
-        return vreinterpretq_s64_u32(vandq_u32(mask, vrev64q_u32(mask)));
+        return vreinterpretq_u64_u32(vandq_u32(mask, vrev64q_u32(mask)));
     }
  
     static inline mask64x2 compare_gt(s64x2 a, s64x2 b)
@@ -1980,7 +1980,7 @@ namespace simd {
         int64x2_t diff = vsubq_s64(a, b);
         int64x2_t flip = veorq_s64(b, a);
         int64x2_t mask = vorrq_s64(vbicq_s64(b, a), vbicq_s64(diff, flip));
-        return vshrq_n_s64(mask, 63);
+        return vreinterpretq_u64_s64(vshrq_n_s64(mask, 63));
     }
 
     static inline mask64x2 compare_neq(s64x2 a, s64x2 b)
@@ -2087,7 +2087,7 @@ namespace simd {
         uint16x8_t b = vreinterpretq_u16_u8(vshrq_n_u8(a, 7));
         uint32x4_t v2 = vreinterpretq_u32_u16(vsraq_n_u16(b, b, 7));
         uint64x2_t v4 = vreinterpretq_u64_u32(vsraq_n_u32(v2, v2, 14));
-        uint8x16_t v8 = vreinterpretq_u8_u64(vsraq_n_u64(v4, v4, 28));
+        uint32x4_t v8 = vreinterpretq_u32_u64(vsraq_n_u64(v4, v4, 28));
         return vgetq_lane_u32(v8, 0) | (vgetq_lane_u32(v8, 2) << 8);
     }
 
@@ -2162,7 +2162,7 @@ namespace simd {
         // v4: 0000000000000000 0000000000000000 0000000000000000 0000000000001111 0000000000000000 0000000000000000 0000000000000000 0000000000001111
         uint32x4_t b = vreinterpretq_u32_u16(vshrq_n_u16(a, 15));
         uint64x2_t v2 = vreinterpretq_u64_u32(vsraq_n_u32(b, b, 15));
-        uint8x16_t v4 = vreinterpretq_u8_u64(vsraq_n_u64(v2, v2, 30));
+        uint32x4_t v4 = vreinterpretq_u32_u64(vsraq_n_u64(v2, v2, 30));
         return vgetq_lane_u32(v4, 0) | (vgetq_lane_u32(v4, 2) << 4);
     }
 
@@ -2235,7 +2235,7 @@ namespace simd {
         // b:  00000000000000000000000000000001 00000000000000000000000000000001 00000000000000000000000000000001 00000000000000000000000000000001
         // v2: 00000000000000000000000000000000 00000000000000000000000000000011 00000000000000000000000000000000 00000000000000000000000000000011
         uint64x2_t b = vreinterpretq_u64_u32(vshrq_n_u32(a, 31));
-        uint8x16_t v2 = vreinterpretq_u8_u64(vsraq_n_u64(b, b, 31));
+        uint32x4_t v2 = vreinterpretq_u32_u64(vsraq_n_u64(b, b, 31));
         return vgetq_lane_u32(v2, 0) | (vgetq_lane_u32(v2, 2) << 2);
     }
 
@@ -2306,7 +2306,7 @@ namespace simd {
     {
         // a:  1111111111111111111111111111111111111111111111111111111111111111 1111111111111111111111111111111111111111111111111111111111111111
         // b:  0000000000000000000000000000000000000000000000000000000000000001 0000000000000000000000000000000000000000000000000000000000000001
-        uint64x2_t b = vshrq_n_u64(a, 63);
+        uint32x4_t b = vreinterpretq_u32_u64(vshrq_n_u64(a, 63));
         return vgetq_lane_u32(b, 0) | (vgetq_lane_u32(b, 2) << 1);
     }
 
