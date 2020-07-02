@@ -7,12 +7,12 @@
 #include <set>
 #include <string>
 #include "../core/configure.hpp"
-#include "../image/compression.hpp"
-#include "../window/window.hpp"
 
 // -----------------------------------------------------------------------
 // OpenGL API
 // -----------------------------------------------------------------------
+
+//#define MANGO_OPENGL_DISABLE_API
 
 //#define MANGO_OPENGL_LEGACY_PROFILE
 //#define MANGO_OPENGL_CORE_PROFILE
@@ -36,9 +36,11 @@
         #include "func/glext.hpp"
     #endif
 
-    #include "khronos/GL/wgl.h"
-    #include "khronos/GL/wglext.h"
-    #include "func/wglext.hpp"
+    #ifndef MANGO_OPENGL_DISABLE_API
+        #include "khronos/GL/wgl.h"
+        #include "khronos/GL/wglext.h"
+        #include "func/wglext.hpp"
+    #endif
 
     #undef GLEXT_PROC
 
@@ -108,15 +110,22 @@
         #include <GL/glext.h>
     #endif
 
-    #define GLX_GLXEXT_PROTOTYPES
-    #include <GL/glx.h>
-    #include <GL/glxext.h>
+    #ifndef MANGO_OPENGL_DISABLE_API
+        #define GLX_GLXEXT_PROTOTYPES
+        #include <GL/glx.h>
+        #include <GL/glxext.h>
+    #endif
 
 #else
 
 	//#error "Unsupported OpenGL implementation."
 
 #endif
+
+#ifndef MANGO_OPENGL_DISABLE_API
+
+#include "../image/compression.hpp"
+#include "../window/window.hpp"
 
 namespace mango {
 namespace opengl {
@@ -252,3 +261,5 @@ namespace opengl {
 
 } // namespace opengl
 } // namespace mango
+
+#endif // MANGO_OPENGL_DISABLE_API
