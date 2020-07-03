@@ -15,6 +15,11 @@
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
 
+#if defined (Status)
+# undef Status
+typedef int Status;
+#endif
+
 namespace mango
 {
 

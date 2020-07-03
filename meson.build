@@ -26,16 +26,16 @@ enable_bmi       = get_option('enable_bmi')
 enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 
-# for public arguments
-mango_cpp_args = []
+mango_public_cpp_args = []
+mango_interface_cpp_args = [ '-DMANGO_OPENGL_DISABLE_PLATFORM_API' ]
 if get_option('mango_disable_license_gpl')
-    mango_cpp_args =+ [ '-DMANGO_OPENGL_CORE_PROFILE' ]
+    mango_public_cpp_args =+ [ '-DMANGO_OPENGL_CORE_PROFILE' ]
 endif
 
 mango_all_archive_formats = [ 'ZIP', 'RAR', 'MGX' ]
 foreach archive_format : mango_all_archive_formats
     if get_option('mango_disable_archive_@0@'.format(archive_format))
-        mango_cpp_args += [ '-DMANGO_DISABLE_ARCHIVE_@0@'.format(archive_format) ]
+        mango_public_cpp_args += [ '-DMANGO_DISABLE_ARCHIVE_@0@'.format(archive_format) ]
     endif
 endforeach
 
@@ -43,12 +43,12 @@ mango_all_image_formats = [ 'ASTC', 'ATARI', 'BMP', 'C64', 'DDS', 'GIF', 'HDR', 
                             'PCX', 'PKM', 'PNG', 'PNM', 'PVR', 'SGI', 'TGA', 'WEBP', 'ZPNG' ]
 foreach image_format : mango_all_image_formats
     if get_option('mango_disable_image_@0@'.format(image_format))
-        mango_cpp_args += [ '-DMANGO_DISABLE_IMAGE_@0@'.format(image_format) ]
+        mango_public_cpp_args += [ '-DMANGO_DISABLE_IMAGE_@0@'.format(image_format) ]
     endif
 endforeach
 
 if get_option('mango_disable_license_gpl')
-    mango_cpp_args += [ '-DMANGO_DISABLE_LICENSE_GPL' ]
+    mango_public_cpp_args += [ '-DMANGO_DISABLE_LICENSE_GPL' ]
 endif
 
 # ------------------------------------------------------------------------------
@@ -163,7 +163,6 @@ mango_headers = files(
     'include/mango/opengl/khronos/GLES3/gl32.h',
     'include/mango/opengl/khronos/GLES3/gl3platform.h',
     'include/mango/opengl/khronos/KHR/khrplatform.h',
-    'include/mango/opengl/opengl_api.hpp',
     'include/mango/opengl/opengl.hpp',
     'include/mango/simd/altivec_convert.hpp',
     'include/mango/simd/altivec_double128.hpp',
@@ -896,10 +895,13 @@ if host_machine.system() != 'windows'
     mango_deps += [ dl_dep ]
 endif
 
-# if host_machine.system() == 'linux'
-#     x11_dep = cpp.find_library('X11', required : true)
-#     mango_opengl_deps += [ x11_dep ]
-# endif
+if host_machine.system() == 'linux'
+    m_dep = cpp.find_library('m', required : true)
+    x11_dep = cpp.find_library('X11', required : true)
+    mango_deps += [ m_dep ]
+    mango_public_deps += [ m_dep ]
+    mango_opengl_deps += [ x11_dep ]
+endif
 
 mango_inc = include_directories('include')
 
@@ -931,14 +933,14 @@ mango = static_library('mango',
     ],
     include_directories : [ mango_inc, 'source/external/libwebp' ],
     dependencies        : mango_deps,
-    cpp_args            : mango_cpp_args
+    cpp_args            : mango_public_cpp_args
 )
 
 mango_dep = declare_dependency(
     link_with           : mango,
     include_directories : mango_inc,
     dependencies        : mango_public_deps,
-    compile_args        : mango_cpp_args
+    compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
 
 mango_framebuffer_deps += [ mango_dep ]
@@ -946,7 +948,7 @@ mango_framebuffer = static_library('mango-framebuffer',
     sources             : window_sources + framebuffer_sources,
     dependencies        : mango_framebuffer_deps,
     include_directories : mango_inc,
-    cpp_args            : mango_cpp_args
+    cpp_args            : mango_public_cpp_args
 )
 
 mango_opengl = static_library('mango-opengl',
@@ -954,13 +956,13 @@ mango_opengl = static_library('mango-opengl',
     link_with           : mango_framebuffer,
     dependencies        : mango_opengl_deps,
     include_directories : mango_inc,
-    cpp_args            : mango_cpp_args
+    cpp_args            : mango_public_cpp_args
 )
 
 mango_opengl_dep = declare_dependency(
     link_with           : mango_opengl,
     include_directories : mango_inc,
-    compile_args        : mango_cpp_args
+    compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
 
 mango_vulkan = static_library('mango-vulkan',
