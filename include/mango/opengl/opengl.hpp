@@ -12,7 +12,7 @@
 // OpenGL API
 // -----------------------------------------------------------------------
 
-//#define MANGO_OPENGL_DISABLE_API
+//#define MANGO_OPENGL_DISABLE_PLATFORM_API
 
 //#define MANGO_OPENGL_LEGACY_PROFILE
 //#define MANGO_OPENGL_CORE_PROFILE
@@ -36,7 +36,7 @@
         #include "func/glext.hpp"
     #endif
 
-    #ifndef MANGO_OPENGL_DISABLE_API
+    #ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
         #include "khronos/GL/wgl.h"
         #include "khronos/GL/wglext.h"
         #include "func/wglext.hpp"
@@ -76,7 +76,7 @@
     //#include <OpenGLES/ES1/gl.h>
     //#include <OpenGLES/ES1/glext.h>
 
-	// TODO: EGL context
+    // TODO: EGL context
 
 #elif defined(MANGO_PLATFORM_ANDROID)
 
@@ -91,7 +91,7 @@
     //#include <GLES2/gl2.h>
     #include <GLES3/gl3.h>
 
-	// TODO: EGL context
+    // TODO: EGL context
 
 #elif defined(MANGO_PLATFORM_UNIX)
 
@@ -110,19 +110,21 @@
         #include <GL/glext.h>
     #endif
 
-    #ifndef MANGO_OPENGL_DISABLE_API
+    #ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
         #define GLX_GLXEXT_PROTOTYPES
         #include <GL/glx.h>
         #include <GL/glxext.h>
+        #if defined (Status)
+        #undef Status
+            typedef int Status;
+        #endif
     #endif
 
 #else
 
-	//#error "Unsupported OpenGL implementation."
+    //#error "Unsupported OpenGL implementation."
 
 #endif
-
-#ifndef MANGO_OPENGL_DISABLE_API
 
 #include "../image/compression.hpp"
 #include "../window/window.hpp"
@@ -147,9 +149,9 @@ namespace opengl {
         u32 samples  = 1;
     };
 
-	// -------------------------------------------------------------------
-	// Context
-	// -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    // Context
+    // -------------------------------------------------------------------
 
     class Context : public Window
     {
@@ -175,9 +177,9 @@ namespace opengl {
         int2 getWindowSize() const override;
     };
 
-	// -------------------------------------------------------------------
-	// glext
-	// -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    // glext
+    // -------------------------------------------------------------------
 
     struct glExtensionMask
     {
@@ -210,9 +212,26 @@ namespace opengl {
 
     extern coreExtensionMask core;
 
-	// -------------------------------------------------------------------
-	// wglext
-	// -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    // helper functions ; require active context
+    // -------------------------------------------------------------------
+
+    struct InternalFormat
+    {
+        GLenum internal_format;
+        Format format;
+        bool srgb;
+        const char* name;
+    };
+
+    bool isCompressedTextureSupported(TextureCompression compression);
+    const InternalFormat* getInternalFormat(GLenum internalFormat);
+
+#ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
+
+    // -------------------------------------------------------------------
+    // wglext
+    // -------------------------------------------------------------------
 
 #ifdef MANGO_OPENGL_CONTEXT_WGL
 
@@ -227,9 +246,9 @@ namespace opengl {
 
 #endif
 
-	// -------------------------------------------------------------------
-	// glxext
-	// -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    // glxext
+    // -------------------------------------------------------------------
 
 #ifdef MANGO_OPENGL_CONTEXT_GLX
 
@@ -242,24 +261,9 @@ namespace opengl {
 
     extern glxExtensionMask glxext;
 
-#endif
+#endif // MANGO_OPENGL_CONTEXT_GLX
 
-	// -------------------------------------------------------------------
-    // helper functions ; require active context
-	// -------------------------------------------------------------------
-
-    struct InternalFormat
-    {
-        GLenum internal_format;
-        Format format;
-        bool srgb;
-        const char* name;
-    };
-
-    bool isCompressedTextureSupported(TextureCompression compression);
-    const InternalFormat* getInternalFormat(GLenum internalFormat);
+#endif // MANGO_OPENGL_DISABLE_PLATFORM_API
 
 } // namespace opengl
 } // namespace mango
-
-#endif // MANGO_OPENGL_DISABLE_API
