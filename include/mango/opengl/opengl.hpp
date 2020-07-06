@@ -244,7 +244,7 @@ namespace opengl {
 
     extern wglExtensionMask wglext;
 
-#endif
+#endif // MANGO_OPENGL_CONTEXT_WGL
 
     // -------------------------------------------------------------------
     // glxext
