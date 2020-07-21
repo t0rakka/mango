@@ -553,8 +553,6 @@ __m512i _mm512_subrsetb_epi32 (__m512i v2, __m512i v3, __mmask16 * borrow)
 
 
 -- xxx --
--- xxx --
--- xxx --
 
 __m128i _mm_abs_epi64 (__m128i a)
 __m128i _mm_mask_abs_epi64 (__m128i src, __mmask8 k, __m128i a)
