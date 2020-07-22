@@ -72,14 +72,14 @@ namespace filesystem {
             return files.begin();
         }
 
-        std::vector<FileInfo>::const_iterator begin() const
-        {
-            return files.begin();
-        }
-
         std::vector<FileInfo>::iterator end()
         {
             return files.end();
+        }
+
+        std::vector<FileInfo>::const_iterator begin() const
+        {
+            return files.begin();
         }
 
         std::vector<FileInfo>::const_iterator end() const

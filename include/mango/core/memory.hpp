@@ -172,6 +172,36 @@ namespace detail {
         {
             return m_size;
         }
+
+        T& operator [] (int index)
+        {
+            return m_data[index];
+        }
+
+        const T& operator [] (int index) const
+        {
+            return m_data[index];
+        }
+
+        T* begin()
+        {
+            return m_data;
+        }
+
+        T* end()
+        {
+            return m_data + m_size;
+        }
+
+        const T* begin() const
+        {
+            return m_data;
+        }
+
+        const T* end() const
+        {
+            return m_data + m_size;
+        }
     };
 
 } // namespace mango
