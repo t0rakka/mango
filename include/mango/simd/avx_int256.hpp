@@ -158,6 +158,18 @@ namespace detail {
         return result;
     }
 
+    static inline u8x32 u8x32_set(
+        u8 s00, u8 s01, u8 s02, u8 s03, u8 s04, u8 s05, u8 s06, u8 s07, 
+        u8 s08, u8 s09, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15,
+        u8 s16, u8 s17, u8 s18, u8 s19, u8 s20, u8 s21, u8 s22, u8 s23, 
+        u8 s24, u8 s25, u8 s26, u8 s27, u8 s28, u8 s29, u8 s30, u8 s31)
+    {
+        u8x32 result;
+        result.lo = u8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
+        result.hi = u8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+        return result;
+    }
+
     static inline u8x32 u8x32_uload(const u8* source)
     {
         u8x32 result;
@@ -272,6 +284,16 @@ namespace detail {
         u16x16 result;
         result.lo = u16x8_set(s);
         result.hi = u16x8_set(s);
+        return result;
+    }
+
+    static inline u16x16 u16x16_set(
+        u16 s00, u16 s01, u16 s02, u16 s03, u16 s04, u16 s05, u16 s06, u16 s07,
+        u16 s08, u16 s09, u16 s10, u16 s11, u16 s12, u16 s13, u16 s14, u16 s15)
+    {
+        u16x16 result;
+        result.lo = u16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
+        result.hi = u16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
         return result;
     }
 
@@ -816,6 +838,18 @@ namespace detail {
         return result;
     }
 
+    static inline s8x32 s8x32_set(
+        s8 s00, s8 s01, s8 s02, s8 s03, s8 s04, s8 s05, s8 s06, s8 s07, 
+        s8 s08, s8 s09, s8 s10, s8 s11, s8 s12, s8 s13, s8 s14, s8 s15,
+        s8 s16, s8 s17, s8 s18, s8 s19, s8 s20, s8 s21, s8 s22, s8 s23, 
+        s8 s24, s8 s25, s8 s26, s8 s27, s8 s28, s8 s29, s8 s30, s8 s31)
+    {
+        s8x32 result;
+        result.lo = s8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
+        result.hi = s8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+        return result;
+    }
+
     static inline s8x32 s8x32_uload(const s8* source)
     {
         s8x32 result;
@@ -932,6 +966,16 @@ namespace detail {
         s16x16 result;
         result.lo = s16x8_set(s);
         result.hi = s16x8_set(s);
+        return result;
+    }
+
+    static inline s16x16 s16x16_set(
+        s16 s00, s16 s01, s16 s02, s16 s03, s16 s04, s16 s05, s16 s06, s16 s07,
+        s16 s08, s16 s09, s16 s10, s16 s11, s16 s12, s16 s13, s16 s14, s16 s15)
+    {
+        s16x16 result;
+        result.lo = s16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
+        result.hi = s16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
         return result;
     }
 

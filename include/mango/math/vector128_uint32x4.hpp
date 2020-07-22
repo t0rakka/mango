@@ -121,6 +121,11 @@ namespace mango
             return m.data;
         }
 #endif
+
+        static Vector ascend()
+        {
+            return Vector(0, 1, 2, 3);
+        }
     };
 
     template <int x, int y, int z, int w>

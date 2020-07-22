@@ -47,6 +47,15 @@ namespace mango
         {
         }
 
+        Vector(s8 s00, s8 s01, s8 s02, s8 s03, s8 s04, s8 s05, s8 s06, s8 s07, 
+               s8 s08, s8 s09, s8 s10, s8 s11, s8 s12, s8 s13, s8 s14, s8 s15,
+               s8 s16, s8 s17, s8 s18, s8 s19, s8 s20, s8 s21, s8 s22, s8 s23, 
+               s8 s24, s8 s25, s8 s26, s8 s27, s8 s28, s8 s29, s8 s30, s8 s31)
+            : m(simd::s8x32_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15,
+                                s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31))
+        {
+        }
+
         Vector(simd::s8x32 v)
             : m(v)
         {
@@ -90,6 +99,12 @@ namespace mango
             return m.data;
         }
 #endif
+
+        static Vector ascend()
+        {
+            return Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31);
+        }
     };
 
     static inline const Vector<s8, 32> operator + (Vector<s8, 32> v)

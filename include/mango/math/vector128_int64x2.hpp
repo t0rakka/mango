@@ -120,6 +120,11 @@ namespace mango
             return m.data;
         }
 #endif
+
+        static Vector ascend()
+        {
+            return Vector(0, 1);
+        }
     };
 
     static inline const Vector<s64, 2> operator + (Vector<s64, 2> v)

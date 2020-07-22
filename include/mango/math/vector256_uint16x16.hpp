@@ -47,6 +47,13 @@ namespace mango
         {
         }
 
+        Vector(u16 s00, u16 s01, u16 s02, u16 s03, u16 s04, u16 s05, u16 s06, u16 s07,
+               u16 s08, u16 s09, u16 s10, u16 s11, u16 s12, u16 s13, u16 s14, u16 s15)
+            : m(simd::u16x16_set(s00, s01, s02, s03, s04, s05, s06, s07, 
+                                 s08, s09, s10, s11, s12, s13, s14, s15))
+        {
+        }
+
         Vector(simd::u16x16 v)
             : m(v)
         {
@@ -90,6 +97,11 @@ namespace mango
             return m.data;
         }
 #endif
+
+        static Vector ascend()
+        {
+            return Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+        }
     };
 
     static inline const Vector<u16, 16> operator + (Vector<u16, 16> v)

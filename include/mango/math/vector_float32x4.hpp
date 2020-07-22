@@ -172,6 +172,11 @@ namespace mango
             const simd::s32x4 temp = simd::unpack(a);
             m = simd::convert<simd::f32x4>(temp);
         }
+
+        static Vector ascend()
+        {
+            return Vector(0.0f, 1.0f, 2.0f, 3.0f);
+        }
     };
 
     // ------------------------------------------------------------------
