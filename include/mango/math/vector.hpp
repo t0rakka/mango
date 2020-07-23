@@ -271,6 +271,16 @@ namespace mango
             }
             return *this;
         }
+
+        static Vector ascend()
+        {
+            Vector v;
+            for (int i = 0; i < VectorSize; ++i)
+            {
+                v.component[i] = ScalarType(i);
+            }
+            return v;
+        }
     };
 
     template <typename ScalarType>
@@ -341,6 +351,14 @@ namespace mango
             x = v.x;
             y = v.y;
             return *this;
+        }
+
+        static Vector ascend()
+        {
+            return Vector(
+                ScalarType(0), 
+                ScalarType(1)
+            );
         }
     };
 
@@ -425,6 +443,15 @@ namespace mango
             y = v.y;
             z = v.z;
             return *this;
+        }
+
+        static Vector ascend()
+        {
+            return Vector(
+                ScalarType(0), 
+                ScalarType(1), 
+                ScalarType(2)
+            );
         }
     };
 
@@ -523,6 +550,16 @@ namespace mango
             z = v.z;
             w = v.w;
             return *this;
+        }
+
+        static Vector ascend()
+        {
+            return Vector(
+                ScalarType(0), 
+                ScalarType(1), 
+                ScalarType(2), 
+                ScalarType(3)
+            );
         }
     };
 

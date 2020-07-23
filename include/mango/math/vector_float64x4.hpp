@@ -159,6 +159,11 @@ namespace mango
             return m.data;
         }
 #endif
+
+        static Vector ascend()
+        {
+            return Vector(0.0, 1.0, 2.0, 3.0);
+        }
     };
 
     // ------------------------------------------------------------------

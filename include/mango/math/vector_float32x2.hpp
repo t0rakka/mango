@@ -116,6 +116,11 @@ namespace mango
 			y = v.y;
             return *this;
         }
+
+        static Vector ascend()
+        {
+            return Vector(0.0f, 1.0f);
+        }
     };
 
     // ------------------------------------------------------------------
