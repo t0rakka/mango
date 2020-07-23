@@ -101,14 +101,8 @@ namespace mango
 
     struct ThreadPool::TaskQueue
     {
-        enum { N = 1 };
-        moodycamel::ConcurrentQueue<ThreadPool::Task> tasks[N];
-
-        moodycamel::ConcurrentQueue<ThreadPool::Task>& get()
-        {
-            thread_local size_t idx = 0;
-            return tasks[idx++ % N];
-        }
+        using Task = ThreadPool::Task;
+        moodycamel::ConcurrentQueue<Task> tasks;
     };
 
     ThreadPool::ThreadPool(size_t size)
@@ -147,7 +141,7 @@ namespace mango
             }
 #endif
 
-			if (affinity)
+            if (affinity)
             {
                 set_thread_affinity(get_native_handle(m_threads[i]), int(i + 1));
             }
@@ -224,7 +218,7 @@ namespace mango
         task.func = std::move(func);
 
         ++queue->task_counter;
-        m_queues[queue->priority].get().enqueue(std::move(task));
+        m_queues[queue->priority].tasks.enqueue(std::move(task));
 
         if (m_sleep_count > 0)
         {
@@ -238,7 +232,7 @@ namespace mango
         for (size_t priority = 0; priority < 3; ++priority)
         {
             Task task;
-            if (m_queues[priority].get().try_dequeue(task))
+            if (m_queues[priority].tasks.try_dequeue(task))
             {
                 Queue* queue = task.queue;
 
