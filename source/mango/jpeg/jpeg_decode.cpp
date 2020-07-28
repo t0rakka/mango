@@ -212,22 +212,26 @@ namespace jpeg {
         if (flags & INTEL_SSE2)
         {
             processState.idct = idct_sse2;
-        m_idct_name = "SSE2 iDCT";
+            m_idct_name = "SSE2 iDCT";
         }
 #endif
 
         if (isJPEG(memory))
         {
             parse(memory, false);
-        }
 
-        // precision is not known until parse() above is complete
-        if (precision == 12)
+            // precision is not known until parse() above is complete
+            if (precision == 12)
+            {
+                // Force 12 bit idct
+                // This will round down to 8 bit precision until we have a 12 bit capable color conversion
+                processState.idct = idct12;
+                m_idct_name = "12 bit iDCT";
+            }
+        }
+        else
         {
-            // Force 12 bit idct
-            // This will round down to 8 bit precision until we have a 12 bit capable color conversion
-            processState.idct = idct12;
-            m_idct_name = "12 bit iDCT";
+            header.setError("Incorrect SOI marker.");
         }
     }
 
