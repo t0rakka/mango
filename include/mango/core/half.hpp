@@ -149,7 +149,7 @@ namespace mango
             u32 result = 0;
 
             Float temp = value;
-            u32 sign = temp.sign;
+            u32 vsign = temp.sign;
             temp.sign = 0;
 
             if (temp.exponent == (1 << Float::EXPONENT) - 1)
@@ -176,7 +176,7 @@ namespace mango
                 result = temp.u >> (Float::MANTISSA - Mantissa);
             }
 
-            result |= ((sign & Sign) << (Exponent + Mantissa));
+            result |= ((vsign & Sign) << (Exponent + Mantissa));
 
             return result;
         }

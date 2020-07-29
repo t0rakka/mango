@@ -321,7 +321,6 @@ endif ()
 # ------------------------------------------------------------------------------
 
 if (COMPILER_MSVC)
-    target_compile_options(mango PUBLIC "/Gm")
     target_compile_options(mango PUBLIC "/DUNICODE")
 
     if (ENABLE_FAST_MATH)
