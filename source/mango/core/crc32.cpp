@@ -776,7 +776,7 @@ namespace
         if (!length)
             return crc;
 
-        constexpr u32 BITS = 32;
+        constexpr int BITS = 32;
 
         u32 odd[BITS]; // odd-power-of-two zeros operator
         u32 even[BITS]; // even-power-of-two zeros operator
