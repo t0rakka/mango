@@ -6,6 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
+#include <mango/core/thread.hpp>
 
     // ----------------------------------------------------------------------------------------
     // configuration
@@ -32,8 +33,12 @@ namespace
     using namespace mango;
 
     // ----------------------------------------------------------------------------------------
-    // tables
+    // tables and constants
     // ----------------------------------------------------------------------------------------
+
+    // NOTE: these are in little-endian
+    constexpr u32 crc32_polynomial = 0xedb88320;
+    constexpr u32 crc32c_polynomial = 0x82f63b78;
 
 #if !defined(HARDWARE_U8_CRC32) || !defined(HARDWARE_U64_CRC32)
 
@@ -78,7 +83,7 @@ namespace
         0xaed16a4a,0xd9d65adc,0x40df0b66,0x37d83bf0,0xa9bcae53,0xdebb9ec5,0x47b2cf7f,0x30b5ffe9,
         0xbdbdf21c,0xcabac28a,0x53b39330,0x24b4a3a6,0xbad03605,0xcdd70693,0x54de5729,0x23d967bf,
         0xb3667a2e,0xc4614ab8,0x5d681b02,0x2a6f2b94,0xb40bbe37,0xc30c8ea1,0x5a05df1b,0x2d02ef8d,
-        
+
         0x00000000,0x191b3141,0x32366282,0x2b2d53c3,0x646cc504,0x7d77f445,0x565aa786,0x4f4196c7,
         0xc8d98a08,0xd1c2bb49,0xfaefe88a,0xe3f4d9cb,0xacb54f0c,0xb5ae7e4d,0x9e832d8e,0x87981ccf,
         0x4ac21251,0x53d92310,0x78f470d3,0x61ef4192,0x2eaed755,0x37b5e614,0x1c98b5d7,0x05838496,
@@ -111,7 +116,7 @@ namespace
         0x96a779e4,0x8fbc48a5,0xa4911b66,0xbd8a2a27,0xf2cbbce0,0xebd08da1,0xc0fdde62,0xd9e6ef23,
         0x14bce1bd,0x0da7d0fc,0x268a833f,0x3f91b27e,0x70d024b9,0x69cb15f8,0x42e6463b,0x5bfd777a,
         0xdc656bb5,0xc57e5af4,0xee530937,0xf7483876,0xb809aeb1,0xa1129ff0,0x8a3fcc33,0x9324fd72,
-        
+
         0x00000000,0x01c26a37,0x0384d46e,0x0246be59,0x0709a8dc,0x06cbc2eb,0x048d7cb2,0x054f1685,
         0x0e1351b8,0x0fd13b8f,0x0d9785d6,0x0c55efe1,0x091af964,0x08d89353,0x0a9e2d0a,0x0b5c473d,
         0x1c26a370,0x1de4c947,0x1fa2771e,0x1e601d29,0x1b2f0bac,0x1aed619b,0x18abdfc2,0x1969b5f5,
@@ -144,7 +149,7 @@ namespace
         0xa7f18118,0xa633eb2f,0xa4755576,0xa5b73f41,0xa0f829c4,0xa13a43f3,0xa37cfdaa,0xa2be979d,
         0xb5c473d0,0xb40619e7,0xb640a7be,0xb782cd89,0xb2cddb0c,0xb30fb13b,0xb1490f62,0xb08b6555,
         0xbbd72268,0xba15485f,0xb853f606,0xb9919c31,0xbcde8ab4,0xbd1ce083,0xbf5a5eda,0xbe9834ed,
-        
+
         0x00000000,0xb8bc6765,0xaa09c88b,0x12b5afee,0x8f629757,0x37def032,0x256b5fdc,0x9dd738b9,
         0xc5b428ef,0x7d084f8a,0x6fbde064,0xd7018701,0x4ad6bfb8,0xf26ad8dd,0xe0df7733,0x58631056,
         0x5019579f,0xe8a530fa,0xfa109f14,0x42acf871,0xdf7bc0c8,0x67c7a7ad,0x75720843,0xcdce6f26,
@@ -177,7 +182,7 @@ namespace
         0x13cb69d7,0xab770eb2,0xb9c2a15c,0x017ec639,0x9ca9fe80,0x241599e5,0x36a0360b,0x8e1c516e,
         0x866616a7,0x3eda71c2,0x2c6fde2c,0x94d3b949,0x090481f0,0xb1b8e695,0xa30d497b,0x1bb12e1e,
         0x43d23e48,0xfb6e592d,0xe9dbf6c3,0x516791a6,0xccb0a91f,0x740cce7a,0x66b96194,0xde0506f1,
-        
+
         0x00000000,0x3d6029b0,0x7ac05360,0x47a07ad0,0xf580a6c0,0xc8e08f70,0x8f40f5a0,0xb220dc10,
         0x30704bc1,0x0d106271,0x4ab018a1,0x77d03111,0xc5f0ed01,0xf890c4b1,0xbf30be61,0x825097d1,
         0x60e09782,0x5d80be32,0x1a20c4e2,0x2740ed52,0x95603142,0xa80018f2,0xefa06222,0xd2c04b92,
@@ -210,7 +215,7 @@ namespace
         0x18a48c1e,0x25c4a5ae,0x6264df7e,0x5f04f6ce,0xed242ade,0xd044036e,0x97e479be,0xaa84500e,
         0x4834505d,0x755479ed,0x32f4033d,0x0f942a8d,0xbdb4f69d,0x80d4df2d,0xc774a5fd,0xfa148c4d,
         0x78441b9c,0x4524322c,0x028448fc,0x3fe4614c,0x8dc4bd5c,0xb0a494ec,0xf704ee3c,0xca64c78c,
-        
+
         0x00000000,0xcb5cd3a5,0x4dc8a10b,0x869472ae,0x9b914216,0x50cd91b3,0xd659e31d,0x1d0530b8,
         0xec53826d,0x270f51c8,0xa19b2366,0x6ac7f0c3,0x77c2c07b,0xbc9e13de,0x3a0a6170,0xf156b2d5,
         0x03d6029b,0xc88ad13e,0x4e1ea390,0x85427035,0x9847408d,0x531b9328,0xd58fe186,0x1ed33223,
@@ -243,7 +248,7 @@ namespace
         0xfa1799ef,0x314b4a4a,0xb7df38e4,0x7c83eb41,0x6186dbf9,0xaada085c,0x2c4e7af2,0xe712a957,
         0x15921919,0xdececabc,0x585ab812,0x93066bb7,0x8e035b0f,0x455f88aa,0xc3cbfa04,0x089729a1,
         0xf9c19b74,0x329d48d1,0xb4093a7f,0x7f55e9da,0x6250d962,0xa90c0ac7,0x2f987869,0xe4c4abcc,
-        
+
         0x00000000,0xa6770bb4,0x979f1129,0x31e81a9d,0xf44f2413,0x52382fa7,0x63d0353a,0xc5a73e8e,
         0x33ef4e67,0x959845d3,0xa4705f4e,0x020754fa,0xc7a06a74,0x61d761c0,0x503f7b5d,0xf64870e9,
         0x67de9cce,0xc1a9977a,0xf0418de7,0x56368653,0x9391b8dd,0x35e6b369,0x040ea9f4,0xa279a240,
@@ -276,7 +281,7 @@ namespace
         0x304fe870,0x9638e3c4,0xa7d0f959,0x01a7f2ed,0xc400cc63,0x6277c7d7,0x539fdd4a,0xf5e8d6fe,
         0x647e3ad9,0xc209316d,0xf3e12bf0,0x55962044,0x90311eca,0x3646157e,0x07ae0fe3,0xa1d90457,
         0x579174be,0xf1e67f0a,0xc00e6597,0x66796e23,0xa3de50ad,0x05a95b19,0x34414184,0x92364a30,
-        
+
         0x00000000,0xccaa009e,0x4225077d,0x8e8f07e3,0x844a0efa,0x48e00e64,0xc66f0987,0x0ac50919,
         0xd3e51bb5,0x1f4f1b2b,0x91c01cc8,0x5d6a1c56,0x57af154f,0x9b0515d1,0x158a1232,0xd92012ac,
         0x7cbb312b,0xb01131b5,0x3e9e3656,0xf23436c8,0xf8f13fd1,0x345b3f4f,0xbad438ac,0x767e3832,
@@ -349,7 +354,7 @@ namespace
         0x69e9f0d5,0x9b8273d6,0x88d28022,0x7ab90321,0xae7367ca,0x5c18e4c9,0x4f48173d,0xbd23943e,
         0xf36e6f75,0x0105ec76,0x12551f82,0xe03e9c81,0x34f4f86a,0xc69f7b69,0xd5cf889d,0x27a40b9e,
         0x79b737ba,0x8bdcb4b9,0x988c474d,0x6ae7c44e,0xbe2da0a5,0x4c4623a6,0x5f16d052,0xad7d5351,
-        
+
         0x00000000,0x13a29877,0x274530ee,0x34e7a899,0x4e8a61dc,0x5d28f9ab,0x69cf5132,0x7a6dc945,
         0x9d14c3b8,0x8eb65bcf,0xba51f356,0xa9f36b21,0xd39ea264,0xc03c3a13,0xf4db928a,0xe7790afd,
         0x3fc5f181,0x2c6769f6,0x1880c16f,0x0b225918,0x714f905d,0x62ed082a,0x560aa0b3,0x45a838c4,
@@ -382,7 +387,7 @@ namespace
         0xe64b1c47,0xf5e98430,0xc10e2ca9,0xd2acb4de,0xa8c17d9b,0xbb63e5ec,0x8f844d75,0x9c26d502,
         0x449a2e7e,0x5738b609,0x63df1e90,0x707d86e7,0x0a104fa2,0x19b2d7d5,0x2d557f4c,0x3ef7e73b,
         0xd98eedc6,0xca2c75b1,0xfecbdd28,0xed69455f,0x97048c1a,0x84a6146d,0xb041bcf4,0xa3e32483,
-        
+
         0x00000000,0xa541927e,0x4f6f520d,0xea2ec073,0x9edea41a,0x3b9f3664,0xd1b1f617,0x74f06469,
         0x38513ec5,0x9d10acbb,0x773e6cc8,0xd27ffeb6,0xa68f9adf,0x03ce08a1,0xe9e0c8d2,0x4ca15aac,
         0x70a27d8a,0xd5e3eff4,0x3fcd2f87,0x9a8cbdf9,0xee7cd990,0x4b3d4bee,0xa1138b9d,0x045219e3,
@@ -415,7 +420,7 @@ namespace
         0x9557324b,0x3016a035,0xda386046,0x7f79f238,0x0b899651,0xaec8042f,0x44e6c45c,0xe1a75622,
         0xdda47104,0x78e5e37a,0x92cb2309,0x378ab177,0x437ad51e,0xe63b4760,0x0c158713,0xa954156d,
         0xe5f54fc1,0x40b4ddbf,0xaa9a1dcc,0x0fdb8fb2,0x7b2bebdb,0xde6a79a5,0x3444b9d6,0x91052ba8,
-        
+
         0x00000000,0xdd45aab8,0xbf672381,0x62228939,0x7b2231f3,0xa6679b4b,0xc4451272,0x1900b8ca,
         0xf64463e6,0x2b01c95e,0x49234067,0x9466eadf,0x8d665215,0x5023f8ad,0x32017194,0xef44db2c,
         0xe964b13d,0x34211b85,0x560392bc,0x8b463804,0x924680ce,0x4f032a76,0x2d21a34f,0xf06409f7,
@@ -448,7 +453,7 @@ namespace
         0xd867e1b5,0x05224b0d,0x6700c234,0xba45688c,0xa345d046,0x7e007afe,0x1c22f3c7,0xc167597f,
         0xc747336e,0x1a0299d6,0x782010ef,0xa565ba57,0xbc65029d,0x6120a825,0x0302211c,0xde478ba4,
         0x31035088,0xec46fa30,0x8e647309,0x5321d9b1,0x4a21617b,0x9764cbc3,0xf54642fa,0x2803e842,
-        
+
         0x00000000,0x38116fac,0x7022df58,0x4833b0f4,0xe045beb0,0xd854d11c,0x906761e8,0xa8760e44,
         0xc5670b91,0xfd76643d,0xb545d4c9,0x8d54bb65,0x2522b521,0x1d33da8d,0x55006a79,0x6d1105d5,
         0x8f2261d3,0xb7330e7f,0xff00be8b,0xc711d127,0x6f67df63,0x5776b0cf,0x1f45003b,0x27546f97,
@@ -481,7 +486,7 @@ namespace
         0x873c0134,0xbf2d6e98,0xf71ede6c,0xcf0fb1c0,0x6779bf84,0x5f68d028,0x175b60dc,0x2f4a0f70,
         0xcd796b76,0xf56804da,0xbd5bb42e,0x854adb82,0x2d3cd5c6,0x152dba6a,0x5d1e0a9e,0x650f6532,
         0x081e60e7,0x300f0f4b,0x783cbfbf,0x402dd013,0xe85bde57,0xd04ab1fb,0x9879010f,0xa0686ea3,
-        
+
         0x00000000,0xef306b19,0xdb8ca0c3,0x34bccbda,0xb2f53777,0x5dc55c6e,0x697997b4,0x8649fcad,
         0x6006181f,0x8f367306,0xbb8ab8dc,0x54bad3c5,0xd2f32f68,0x3dc34471,0x097f8fab,0xe64fe4b2,
         0xc00c303e,0x2f3c5b27,0x1b8090fd,0xf4b0fbe4,0x72f90749,0x9dc96c50,0xa975a78a,0x4645cc93,
@@ -514,7 +519,7 @@ namespace
         0xf7fee2af,0x18ce89b6,0x2c72426c,0xc3422975,0x450bd5d8,0xaa3bbec1,0x9e87751b,0x71b71e02,
         0x57f4ca8e,0xb8c4a197,0x8c786a4d,0x63480154,0xe501fdf9,0x0a3196e0,0x3e8d5d3a,0xd1bd3623,
         0x37f2d291,0xd8c2b988,0xec7e7252,0x034e194b,0x8507e5e6,0x6a378eff,0x5e8b4525,0xb1bb2e3c,
-        
+
         0x00000000,0x68032cc8,0xd0065990,0xb8057558,0xa5e0c5d1,0xcde3e919,0x75e69c41,0x1de5b089,
         0x4e2dfd53,0x262ed19b,0x9e2ba4c3,0xf628880b,0xebcd3882,0x83ce144a,0x3bcb6112,0x53c84dda,
         0x9c5bfaa6,0xf458d66e,0x4c5da336,0x245e8ffe,0x39bb3f77,0x51b813bf,0xe9bd66e7,0x81be4a2f,
@@ -547,7 +552,7 @@ namespace
         0xfcaf7760,0x94ac5ba8,0x2ca92ef0,0x44aa0238,0x594fb2b1,0x314c9e79,0x8949eb21,0xe14ac7e9,
         0x2ed97095,0x46da5c5d,0xfedf2905,0x96dc05cd,0x8b39b544,0xe33a998c,0x5b3fecd4,0x333cc01c,
         0x60f48dc6,0x08f7a10e,0xb0f2d456,0xd8f1f89e,0xc5144817,0xad1764df,0x15121187,0x7d113d4f,
-        
+
         0x00000000,0x493c7d27,0x9278fa4e,0xdb448769,0x211d826d,0x6821ff4a,0xb3657823,0xfa590504,
         0x423b04da,0x0b0779fd,0xd043fe94,0x997f83b3,0x632686b7,0x2a1afb90,0xf15e7cf9,0xb86201de,
         0x847609b4,0xcd4a7493,0x160ef3fa,0x5f328edd,0xa56b8bd9,0xec57f6fe,0x37137197,0x7e2f0cb0,
@@ -765,99 +770,292 @@ namespace
 
 #endif // MANGO_ENABLE_SSE4_2
 
-} // namespace
-
-namespace mango
-{
-
-    u32 crc32(u32 crc, ConstMemory memory)
+    // Original implementation (C) Stephan Brumme
+    u32 crc_combine(u32 crc, size_t length, u32 polynomial)
     {
-        crc = ~crc;
+        if (!length)
+            return crc;
 
-        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(memory.address)) & 7;
-        if (alignment + 8 < memory.size)
+        constexpr u32 BITS = 32;
+
+        u32 odd[BITS]; // odd-power-of-two zeros operator
+        u32 even[BITS]; // even-power-of-two zeros operator
+
+        // put operator for one zero bit in odd
+        odd[0] = polynomial;
+        for (int i = 1; i < BITS; ++i)
         {
-            memory.size -= alignment;
-            while (alignment-- > 0)
-            {
-                crc = u8_crc32(crc, *memory.address++);
-            }
+            odd[i] = 1 << (i - 1);
+        }
 
-#ifdef HARDWARE_U64_CRC32
-            while (memory.size >= 64)
+        // put operator for two zero bits in even
+        for (int i = 0; i < BITS; ++i)
+        {
+            u32 v = odd[i];
+            even[i] = 0;
+            for (int j = 0; v != 0; ++j, v >>= 1)
             {
-                crc = u64_crc32(crc, memory.address + 8 * 0);
-                crc = u64_crc32(crc, memory.address + 8 * 1);
-                crc = u64_crc32(crc, memory.address + 8 * 2);
-                crc = u64_crc32(crc, memory.address + 8 * 3);
-                crc = u64_crc32(crc, memory.address + 8 * 4);
-                crc = u64_crc32(crc, memory.address + 8 * 5);
-                crc = u64_crc32(crc, memory.address + 8 * 6);
-                crc = u64_crc32(crc, memory.address + 8 * 7);
-                memory.address += 64;
-                memory.size -= 64;
-            }
-#endif
-
-            while (memory.size >= 8)
-            {
-                crc = u64_crc32(crc, memory.address);
-                memory.address += 8;
-                memory.size -= 8;
+                if (v & 1)
+                {
+                    even[i] ^= odd[j];
+                }
             }
         }
 
-        while (memory.size-- > 0)
+        // put operator for four zero bits in odd
+        for (int i = 0; i < BITS; i++)
         {
-            crc = u8_crc32(crc, *memory.address++);
+            uint32_t vec = even[i];
+            odd[i] = 0;
+            for (int j = 0; vec != 0; j++, vec >>= 1)
+            {
+                if (vec & 1)
+                {
+                    odd[i] ^= even[j];
+                }
+            }
+        }
+
+        u32* a = even;
+        u32* b = odd;
+
+        // apply length zeros to crc
+        for ( ; length > 0; length >>= 1)
+        {
+            for (int i = 0; i < BITS; ++i)
+            {
+                u32 vec = b[i];
+                a[i] = 0;
+                for (int j = 0; vec != 0; ++j, vec >>= 1)
+                {
+                    if (vec & 1)
+                        a[i] ^= b[j];
+                }
+            }
+
+            // apply zeros operator for this bit
+            if (length & 1)
+            {
+                u32 sum = 0;
+                for (int i = 0; crc != 0; i++, crc >>= 1)
+                {
+                    if (crc & 1)
+                    {
+                        sum ^= a[i];
+                    }
+                }
+                crc = sum;
+            }
+
+            std::swap(a, b);
+        }
+
+        return crc;
+    }
+
+    u32 crc32(u32 crc, const u8* address, u64 size)
+    {
+        crc = ~crc;
+
+        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
+        if (alignment + 8 < size)
+        {
+            size -= alignment;
+            while (alignment-- > 0)
+            {
+                crc = u8_crc32(crc, *address++);
+            }
+
+#ifdef HARDWARE_U64_CRC32
+            while (size >= 64)
+            {
+                crc = u64_crc32(crc, address + 8 * 0);
+                crc = u64_crc32(crc, address + 8 * 1);
+                crc = u64_crc32(crc, address + 8 * 2);
+                crc = u64_crc32(crc, address + 8 * 3);
+                crc = u64_crc32(crc, address + 8 * 4);
+                crc = u64_crc32(crc, address + 8 * 5);
+                crc = u64_crc32(crc, address + 8 * 6);
+                crc = u64_crc32(crc, address + 8 * 7);
+                address += 64;
+                size -= 64;
+            }
+#endif
+
+            while (size >= 8)
+            {
+                crc = u64_crc32(crc, address);
+                address += 8;
+                size -= 8;
+            }
+        }
+
+        while (size-- > 0)
+        {
+            crc = u8_crc32(crc, *address++);
         }
 
         return ~crc;
     }
 
-    u32 crc32c(u32 crc, ConstMemory memory)
+    u32 crc32c(u32 crc, const u8* address, u64 size)
     {
         crc = ~crc;
 
-        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(memory.address)) & 7;
-        if (alignment + 8 < memory.size)
+        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
+        if (alignment + 8 < size)
         {
-            memory.size -= alignment;
+            size -= alignment;
             while (alignment-- > 0)
             {
-                crc = u8_crc32c(crc, *memory.address++);
+                crc = u8_crc32c(crc, *address++);
             }
 
 #ifdef HARDWARE_U64_CRC32C
-            while (memory.size >= 64)
+            while (size >= 64)
             {
-                crc = u64_crc32c(crc, memory.address + 8 * 0);
-                crc = u64_crc32c(crc, memory.address + 8 * 1);
-                crc = u64_crc32c(crc, memory.address + 8 * 2);
-                crc = u64_crc32c(crc, memory.address + 8 * 3);
-                crc = u64_crc32c(crc, memory.address + 8 * 4);
-                crc = u64_crc32c(crc, memory.address + 8 * 5);
-                crc = u64_crc32c(crc, memory.address + 8 * 6);
-                crc = u64_crc32c(crc, memory.address + 8 * 7);
-                memory.address += 64;
-                memory.size -= 64;
+                crc = u64_crc32c(crc, address + 8 * 0);
+                crc = u64_crc32c(crc, address + 8 * 1);
+                crc = u64_crc32c(crc, address + 8 * 2);
+                crc = u64_crc32c(crc, address + 8 * 3);
+                crc = u64_crc32c(crc, address + 8 * 4);
+                crc = u64_crc32c(crc, address + 8 * 5);
+                crc = u64_crc32c(crc, address + 8 * 6);
+                crc = u64_crc32c(crc, address + 8 * 7);
+                address += 64;
+                size -= 64;
             }
 #endif
 
-            while (memory.size >= 8)
+            while (size >= 8)
             {
-                crc = u64_crc32c(crc, memory.address);
-                memory.address += 8;
-                memory.size -= 8;
+                crc = u64_crc32c(crc, address);
+                address += 8;
+                size -= 8;
             }
         }
 
-        while (memory.size-- > 0)
+        while (size-- > 0)
         {
-            crc = u8_crc32c(crc, *memory.address++);
+            crc = u8_crc32c(crc, *address++);
         }
 
         return ~crc;
+    }
+
+} // namespace
+
+namespace mango
+{
+
+    u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
+    {
+        crc0 = crc_combine(crc0, length1, crc32_polynomial);
+        return crc0 ^ crc1;
+    }
+
+    u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
+    {
+        crc0 = crc_combine(crc0, length1, crc32c_polynomial);
+        return crc0 ^ crc1;
+    }
+
+    u32 crc32(u32 crc, ConstMemory memory)
+    {
+        constexpr u64 KB = 1 << 10;
+        constexpr u64 MIN_BLOCK = 32 * KB;
+
+        if (memory.size < MIN_BLOCK * 2)
+        {
+            // don't bother multi-threading if we don't have plenty of input
+            return ::crc32(crc, memory.address, memory.size);
+        }
+
+        u64 block = std::max(MIN_BLOCK, u64(memory.size / (ThreadPool::getHardwareConcurrency() * 2)));
+        int threads = int(memory.size / block);
+
+        std::vector<u32> temp(threads);
+
+        ConcurrentQueue q;
+
+        for (int i = 1; i < threads; ++i)
+        {
+            q.enqueue([i, memory, &temp, block]
+            {
+                u64 left = memory.size - i * block;
+                u64 bytes = std::min(block, left);
+                temp[i] = ::crc32(0, memory.address + i * block, bytes);
+            });
+        }
+
+        // process the first block in the current thread
+        crc = ::crc32(crc, memory.address, block);
+
+        q.wait();
+
+        for (int i = 1; i < threads; ++i)
+        {
+            u64 left = memory.size - i * block;
+            u64 bytes = std::min(block, left);
+            crc = ::crc32_combine(crc, temp[i], bytes);
+        }
+
+        u64 leftover = memory.size - block * threads;
+        if (leftover > 0)
+        {
+            crc = ::crc32(crc, memory.address + block * threads, leftover);
+        }
+
+        return crc;
+    }
+
+    u32 crc32c(u32 crc, ConstMemory memory)
+    {
+        constexpr u64 KB = 1 << 10;
+        constexpr u64 MIN_BLOCK = 32 * KB;
+
+        if (memory.size < MIN_BLOCK * 2)
+        {
+            // don't bother multi-threading if we don't have plenty of input
+            return ::crc32c(crc, memory.address, memory.size);
+        }
+
+        u64 block = std::max(MIN_BLOCK, u64(memory.size / (ThreadPool::getHardwareConcurrency() * 2)));
+        int threads = int(memory.size / block);
+
+        std::vector<u32> temp(threads);
+
+        ConcurrentQueue q;
+
+        for (int i = 1; i < threads; ++i)
+        {
+            q.enqueue([i, memory, &temp, block]
+            {
+                u64 left = memory.size - i * block;
+                u64 bytes = std::min(block, left);
+                temp[i] = ::crc32c(0, memory.address + i * block, bytes);
+            });
+        }
+
+        // process the first block in the current thread
+        crc = ::crc32c(crc, memory.address, block);
+
+        q.wait();
+
+        for (int i = 1; i < threads; ++i)
+        {
+            u64 left = memory.size - i * block;
+            u64 bytes = std::min(block, left);
+            crc = ::crc32c_combine(crc, temp[i], bytes);
+        }
+
+        u64 leftover = memory.size - block * threads;
+        if (leftover > 0)
+        {
+            crc = ::crc32c(crc, memory.address + block * threads, leftover);
+        }
+
+        return crc;
     }
 
 } // namespace mango
