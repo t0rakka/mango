@@ -1872,6 +1872,11 @@ namespace jpeg {
             info += m_ycbcr_name;
         }
 
+        if (restartInterval > 0)
+        {
+            info += " [RST]";
+        }
+
         return info;
     }
 
