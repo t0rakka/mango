@@ -185,7 +185,9 @@
 	#endif
 
     // Fix <cmath> macros
-    #define _USE_MATH_DEFINES
+    #ifndef _USE_MATH_DEFINES
+        #define _USE_MATH_DEFINES
+    #endif
 
     // SSE2 is always supported on x64
     #if defined(_M_X64) || defined(_M_AMD64)
