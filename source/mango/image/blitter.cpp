@@ -673,7 +673,7 @@ namespace
         for (int x = 0; x < count; ++x)
         {
             u32 v = s[x];
-            d[x] = (v & 0xff00ff00) | (((v << 16) | (v >> 16)) & 0x00ff00ff);
+            d[x] = (v & 0xff00ff00) | (v << 16) | ((v >> 16) & 0x00ff);
         }
     }
 
@@ -1237,6 +1237,9 @@ namespace mango
         {
             // select innerloop
             ConvertFunc func = convert_sse2(modeMask);
+
+            // TODO: fixme
+            func = nullptr; // disabled until SSE converter is fixed
 
             if (func)
             {
