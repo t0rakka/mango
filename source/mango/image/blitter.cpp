@@ -1292,4 +1292,12 @@ namespace mango
     {
     }
 
+    void Blitter::convert(const BlitRect& rect) const
+    {
+        if (convertFunc)
+        {
+            convertFunc(*this, rect);
+        }
+    }
+
 } // namespace mango

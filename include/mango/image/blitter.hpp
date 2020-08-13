@@ -70,11 +70,7 @@ namespace mango
         Blitter(const Format& dest, const Format& source);
         ~Blitter();
 
-        void convert(const BlitRect& rect) const
-        {
-            if (convertFunc)
-                convertFunc(*this, rect);
-        }
+        void convert(const BlitRect& rect) const;
     };
 
 } // namespace mango
