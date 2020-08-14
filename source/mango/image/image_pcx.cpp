@@ -87,7 +87,7 @@ namespace
             header.levels  = 0;
             header.faces   = 0;
 			header.palette = isPaletteMarker || (BitsPerPixel == 1 && NPlanes == 4);
-            header.format  = FORMAT_B8G8R8A8;
+            header.format  = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             header.compression = TextureCompression::NONE;
         }
 
@@ -301,7 +301,7 @@ namespace
                             }
                             else
                             {
-                                Bitmap indices(width, height, FORMAT_L8);
+                                Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
                                 decode4(indices, buffer, scansize);
 
                                 for (int y = 0; y < height; ++y)
@@ -360,7 +360,7 @@ namespace
                                 }
                                 else
                                 {
-                                    Bitmap indices(width, height, FORMAT_L8);
+                                    Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
                                     decode8(indices, buffer, scansize);
 
                                     for (int y = 0; y < height; ++y)

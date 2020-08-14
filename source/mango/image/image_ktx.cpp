@@ -575,7 +575,7 @@ namespace
                 bool valid = resolve_format(format, compression, glType, glFormat);
                 if (!valid)
                 {
-                    format = FORMAT_NONE;
+                    format = Format();
                 }
             }
 
@@ -693,7 +693,7 @@ namespace
                 status.success = cs.success;
                 status.direct = cs.direct;
             }
-            else if (format != FORMAT_NONE)
+            else if (format != Format())
             {
                 int width = std::max(1U, m_ktx_header.pixelWidth >> level);
                 int height = std::max(1U, m_ktx_header.pixelHeight >> level);

@@ -576,7 +576,7 @@ namespace
 				m_header.levels  = 0;
 				m_header.faces   = 0;
 				m_header.palette = true;
-				m_header.format  = FORMAT_B8G8R8A8;
+				m_header.format  = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
 				m_header.compression = TextureCompression::NONE;
 
 				m_image.reset(new u8[m_header.width * m_header.height * 4]);
@@ -606,7 +606,8 @@ namespace
                 return status;
             }
 
-			Format format = ptr_palette ? FORMAT_L8 : FORMAT_B8G8R8A8;
+			Format format = ptr_palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
+			                            : Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
 
 			int stride = m_header.width * format.bytes();
 			Surface target(m_header.width, m_header.height, format, stride, m_image.get());

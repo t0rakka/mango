@@ -660,7 +660,7 @@ namespace mango
         const int width = std::min(256, surface.width);
         const int height = std::min(256, surface.height);
 
-        Bitmap bitmap(width, height, FORMAT_B8G8R8A8);
+        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
         bitmap.blit(0, 0, surface);
 
         int screen = DefaultScreen(m_handle->display);
@@ -692,7 +692,7 @@ namespace mango
 
         // convert alpha channel to mask
         int stride = (width + 7) / 8; // round to next multiple of 8
-        Bitmap alphaMask(stride, height, FORMAT_A8);
+        Bitmap alphaMask(stride, height, Format(8, Format::UNORM, Format::A, 8));
 
         for (int y = 0; y < height; ++y)
         {

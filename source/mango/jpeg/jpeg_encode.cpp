@@ -39,11 +39,11 @@ namespace
 
     static SampleFormat g_format_table [] =
     {
-        { JPEG_U8_Y,    FORMAT_L8 },
-        { JPEG_U8_BGR,  FORMAT_B8G8R8 },
-        { JPEG_U8_RGB,  FORMAT_R8G8B8 },
-        { JPEG_U8_BGRA, FORMAT_B8G8R8A8 },
-        { JPEG_U8_RGBA, FORMAT_R8G8B8A8 },
+        { JPEG_U8_Y,    LuminanceFormat(8, Format::UNORM, 8, 0) },
+        { JPEG_U8_BGR,  Format(24, Format::UNORM, Format::BGR, 8, 8, 8) },
+        { JPEG_U8_RGB,  Format(24, Format::UNORM, Format::RGB, 8, 8, 8) },
+        { JPEG_U8_BGRA, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
+        { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
     };
 
     const u16 g_luminance_dc_code_table [] =
@@ -1929,7 +1929,7 @@ namespace jpeg {
     SampleFormat getSampleFormat(const Format& format)
     {
         // set default format
-        SampleFormat result { JPEG_U8_RGBA, FORMAT_R8G8B8A8 };
+        SampleFormat result { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
 
         // find better match
         for (auto sf : g_format_table)

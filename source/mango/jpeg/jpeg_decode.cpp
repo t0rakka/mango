@@ -730,7 +730,8 @@ namespace jpeg {
         // configure header
         header.width = xsize;
         header.height = ysize;
-        header.format = components > 1 ? Format(FORMAT_B8G8R8A8) : Format(FORMAT_L8);
+        header.format = components > 1 ? Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8)
+                                       : LuminanceFormat(8, Format::UNORM, 8, 0);
 
         MANGO_UNREFERENCED(length);
     }
@@ -1781,19 +1782,19 @@ namespace jpeg {
             if (components == 1)
             {
                 sf.sample = JPEG_U8_Y;
-                sf.format = FORMAT_L8;
+                sf.format = LuminanceFormat(8, Format::UNORM, 8, 0);
             }
             else
             {
                 sf.sample = JPEG_U8_BGRA;
-                sf.format = FORMAT_B8G8R8A8;
+                sf.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             }
         }
         else if (components == 4)
         {
             // CMYK / YCCK is in the slow-path anyway so force BGRA
             sf.sample = JPEG_U8_BGRA;
-            sf.format = FORMAT_B8G8R8A8;
+            sf.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
         }
 
         status.direct = true;

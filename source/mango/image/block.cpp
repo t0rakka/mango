@@ -12,7 +12,7 @@
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
     Format(bits, Format::type, Format::order, s0, s1, s2, s3)
 
-#define FORMAT_ASTC  MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8)
+#define FORMAT_ASTC MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8)
 
 namespace mango
 {
@@ -100,7 +100,7 @@ namespace
             0,
             opengl::COMPRESSED_LUMINANCE_LATC1_EXT,
             0,
-            4, 4,  8, FORMAT_NONE, nullptr, nullptr
+            4, 4,  8, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -108,7 +108,7 @@ namespace
             0,
             opengl::COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,
             0,
-            4, 4,  8, FORMAT_NONE, nullptr, nullptr
+            4, 4,  8, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -116,7 +116,7 @@ namespace
             0,
             opengl::COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -124,7 +124,7 @@ namespace
             0,
             opengl::COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT,
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, Format(), nullptr, nullptr
         ),
 
         // DXT
@@ -306,7 +306,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,
             vulkan::FORMAT_PVRTC2_2BPP_UNORM_BLOCK_IMG,
-            8, 4, 8, FORMAT_NONE, nullptr, nullptr
+            8, 4, 8, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -314,7 +314,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,
             vulkan::FORMAT_PVRTC2_4BPP_UNORM_BLOCK_IMG,
-            4, 4, 8, FORMAT_NONE, nullptr, nullptr
+            4, 4, 8, Format(), nullptr, nullptr
         ),
 
         // EXT_pvrtc_sRGB
@@ -679,7 +679,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_3x3x3_OES,
             0,
-            3, 3, 16, FORMAT_NONE, nullptr, nullptr
+            3, 3, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -687,7 +687,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_4x3x3_OES,
             0,
-            4, 3, 16, FORMAT_NONE, nullptr, nullptr
+            4, 3, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -695,7 +695,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_4x4x3_OES,
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -703,7 +703,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_4x4x4_OES,
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -711,7 +711,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_5x4x4_OES,
             0,
-            5, 4, 16, FORMAT_NONE, nullptr, nullptr
+            5, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -719,7 +719,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_5x5x4_OES,
             0,
-            5, 5, 16, FORMAT_NONE, nullptr, nullptr
+            5, 5, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -727,7 +727,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_5x5x5_OES,
             0,
-            5, 5, 16, FORMAT_NONE, nullptr, nullptr
+            5, 5, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -735,7 +735,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_6x5x5_OES,
             0,
-            6, 5, 16, FORMAT_NONE, nullptr, nullptr
+            6, 5, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -743,7 +743,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_6x6x5_OES,
             0,
-            6, 6, 16, FORMAT_NONE, nullptr, nullptr
+            6, 6, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -751,7 +751,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_ASTC_6x6x6_OES,
             0,
-            6, 6, 16, FORMAT_NONE, nullptr, nullptr
+            6, 6, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -759,7 +759,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES,
             0,
-            3, 3, 16, FORMAT_NONE, nullptr, nullptr
+            3, 3, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -767,7 +767,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES,
             0,
-            4, 3, 16, FORMAT_NONE, nullptr, nullptr
+            4, 3, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -775,7 +775,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES,
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -783,7 +783,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES,
             0,
-            4, 4, 16, FORMAT_NONE, nullptr, nullptr
+            4, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -791,7 +791,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES,
             0,
-            5, 4, 16, FORMAT_NONE, nullptr, nullptr
+            5, 4, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -799,7 +799,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES,
             0,
-            5, 5, 16, FORMAT_NONE, nullptr, nullptr
+            5, 5, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -807,7 +807,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES,
             0,
-            5, 5, 16, FORMAT_NONE, nullptr, nullptr
+            5, 5, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -815,7 +815,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES,
             0,
-            6, 5, 16, FORMAT_NONE, nullptr, nullptr
+            6, 5, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -823,7 +823,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES,
             0,
-            6, 6, 16, FORMAT_NONE, nullptr, nullptr
+            6, 6, 16, Format(), nullptr, nullptr
         ),
 
         TextureCompressionInfo(
@@ -831,7 +831,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES,
             0,
-            6, 6, 16, FORMAT_NONE, nullptr, nullptr
+            6, 6, 16, Format(), nullptr, nullptr
         ),
 
 #endif
@@ -867,7 +867,7 @@ namespace
             dxgi::FORMAT_G8R8_G8B8_UNORM,
             0,
             0,
-            2, 1, 4, FORMAT_R8G8B8A8, decode_block_grgb8, nullptr
+            2, 1, 4, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_grgb8, nullptr
         ),
 
         TextureCompressionInfo(
@@ -875,7 +875,7 @@ namespace
             dxgi::FORMAT_R8G8_B8G8_UNORM,
             0,
             0,
-            2, 1, 4, FORMAT_R8G8B8A8, decode_block_rgbg8, nullptr
+            2, 1, 4, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_rgbg8, nullptr
         ),
 
         TextureCompressionInfo(
@@ -883,7 +883,7 @@ namespace
             0,
             0,
             0,
-            2, 1, 4, FORMAT_R8G8B8A8, decode_block_uyvy, nullptr
+            2, 1, 4, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_uyvy, nullptr
         ),
 
         TextureCompressionInfo(
@@ -891,7 +891,7 @@ namespace
             0,
             0,
             0,
-            2, 1, 4, FORMAT_R8G8B8A8, decode_block_yuy2, nullptr
+            2, 1, 4, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_yuy2, nullptr
         ),
     };
 
@@ -1030,7 +1030,7 @@ namespace mango
         , width(1)
         , height(1)
         , bytes(0)
-        , format(FORMAT_NONE)
+        , format()
         , decode(nullptr)
         , encode(nullptr)
     {

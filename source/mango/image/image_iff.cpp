@@ -217,7 +217,7 @@ namespace
         if (ham)
         {
             // always decode Hold And Modify modes into 32 bpp
-            format = FORMAT_B8G8R8A8;
+            format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
         }
         else
         {
@@ -226,16 +226,16 @@ namespace
             {
                 case 1:
                     // expand palette
-                    format = FORMAT_B8G8R8A8;
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
                     break;
                 case 2:
-                    format = FORMAT_B5G6R5;
+                    format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
                     break;
                 case 3:
-                    format = FORMAT_B8G8R8;
+                    format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8);
                     break;
                 case 4:
-                    format = FORMAT_R8G8B8A8;
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     break;
             }
         }
@@ -481,7 +481,7 @@ namespace
                 else
                 {
                     // interlaced
-                    Bitmap raw(xsize, ysize, FORMAT_L8);
+                    Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
                     p2c_raw(raw.image, buffer, xsize, ysize, nplanes, mask);
                     std::memcpy(dest.image, raw.image, xsize * ysize);
                 }
@@ -516,7 +516,7 @@ namespace
                         // interlaced
                         if (nplanes <= 8)
                         {
-                            Bitmap raw(xsize, ysize, FORMAT_L8);
+                            Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
                             p2c_raw(raw.image, buffer, xsize, ysize, nplanes, mask);
                             expand_palette(temp.image, raw.image, xsize, ysize, palette);
                         }

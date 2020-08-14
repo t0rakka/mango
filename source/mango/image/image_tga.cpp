@@ -197,25 +197,26 @@ namespace
                     if (isPalette())
                     {
                         // expand palette to 32 bits
-                        format = FORMAT_B8G8R8A8;
+                        format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
                     }
                     else
                     {
                         // keep grayscale at 8 bits
-                        format = FORMAT_L8;
+                        format = LuminanceFormat(8, Format::UNORM, 8,  0);
                     }
                     break;
 
                 case 16:
-                    format = (descriptor & DESCRIPTOR_ALPHA) ? FORMAT_L8A8 : FORMAT_B5G5R5X1;
+                    format = (descriptor & DESCRIPTOR_ALPHA) ? LuminanceFormat(16, Format::UNORM, 8, 8)
+                                                             : Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 0);
                     break;
 
                 case 24:
-                    format = FORMAT_B8G8R8;
+                    format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8);
                     break;
 
                 case 32:
-                    format = FORMAT_B8G8R8A8;
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
                     break;
             }
 
@@ -471,11 +472,11 @@ namespace
                     if (ptr_palette)
                     {
                         *ptr_palette = palette;
-                        dest.blit(0, 0, Surface(width, height, FORMAT_L8, width, data));
+                        dest.blit(0, 0, Surface(width, height, LuminanceFormat(8, Format::UNORM, 8, 0), width, data));
                     }
                     else
                     {
-                        Bitmap bitmap(width, height, FORMAT_B8G8R8A8);
+                        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
                         for (int y = 0; y < height; ++y)
                         {
@@ -521,7 +522,8 @@ namespace
 
         // configure output
         const bool isalpha = surface.format.isAlpha();
-        const Format format = isalpha ? FORMAT_B8G8R8A8 : FORMAT_B8G8R8;
+        const Format format = isalpha ? Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8)
+                                      : Format(24, Format::UNORM, Format::BGR, 8, 8, 8);
         const int width = surface.width;
         const int height = surface.height;
 

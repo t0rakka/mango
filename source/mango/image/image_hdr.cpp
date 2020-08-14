@@ -280,7 +280,7 @@ namespace
             header.levels  = 0;
             header.faces   = 0;
             header.palette = false;
-            header.format  = FORMAT_RGBA32F;
+            header.format  = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
             header.compression = TextureCompression::NONE;
 
             return data;

@@ -254,7 +254,7 @@ namespace
 
     const FormatDXGI g_dxgi_table[] =
     {
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
         { 0, MAKE_FORMAT(128, NONE, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_TYPELESS" },
         { 0, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_FLOAT" },
         { 0, MAKE_FORMAT(128, UINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_UINT" },
@@ -273,14 +273,14 @@ namespace
         { 0, MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0), false, "R32G32_FLOAT" },
         { 0, MAKE_FORMAT(64, UINT, RG, 32, 32, 0, 0), false, "R32G32_UINT" },
         { 0, MAKE_FORMAT(64, SINT, RG, 32, 32, 0, 0), false, "R32G32_SINT" },
-        { 0, FORMAT_NONE, false, "R32G8X24_TYPELESS" }, // not supported
-        { 0, FORMAT_NONE, false, "D32_FLOAT_S8X24_UINT" }, // not supported
-        { 0, FORMAT_NONE, false, "R32_FLOAT_X8X24_TYPELESS" }, // not supported
-        { 0, FORMAT_NONE, false, "X32_TYPELESS_G8X24_UINT" }, // not supported
+        { 0, Format(), false, "R32G8X24_TYPELESS" }, // not supported
+        { 0, Format(), false, "D32_FLOAT_S8X24_UINT" }, // not supported
+        { 0, Format(), false, "R32_FLOAT_X8X24_TYPELESS" }, // not supported
+        { 0, Format(), false, "X32_TYPELESS_G8X24_UINT" }, // not supported
         { 0, MAKE_FORMAT(32, NONE, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_TYPELESS" },
         { 0, MAKE_FORMAT(32, UNORM, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_UNORM" },
         { 0, MAKE_FORMAT(32, UINT, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_UINT" },
-        { 0, FORMAT_NONE, false, "R11G11B10_FLOAT" }, // not supported
+        { 0, Format(), false, "R11G11B10_FLOAT" }, // not supported
         { 0, MAKE_FORMAT(32, NONE, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_TYPELESS" },
         { 0, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_UNORM" },
         { 0, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), true, "R8G8B8A8_UNORM_SRGB" },
@@ -294,14 +294,14 @@ namespace
         { 0, MAKE_FORMAT(32, SNORM, RG, 16, 16, 0, 0), false, "R16G16_SNORM" },
         { 0, MAKE_FORMAT(32, SINT, RG, 16, 16, 0, 0), false, "R16G16_SINT" },
         { 0, MAKE_FORMAT(32, NONE, R, 32, 0, 0, 0), false, "R32_TYPELESS" },
-        { 0, FORMAT_NONE, false, "D32_FLOAT" }, // not supported
+        { 0, Format(), false, "D32_FLOAT" }, // not supported
         { 0, MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0), false, "R32_FLOAT" },
         { 0, MAKE_FORMAT(32, UINT, R, 32, 0, 0, 0), false, "R32_UINT" },
         { 0, MAKE_FORMAT(32, SINT, R, 32, 0, 0, 0), false, "R32_SINT" },
         { 0, MAKE_FORMAT(32, NONE, RG, 24, 8, 0, 0), false, "R24G8_TYPELESS" },
-        { 0, FORMAT_NONE, false, "D24_UNORM_S8_UINT" }, // not supported
-        { 0, FORMAT_NONE, false, "R24_UNORM_X8_TYPELESS" }, // not supported
-        { 0, FORMAT_NONE, false, "X24_TYPELESS_G8_UINT" }, // not supported
+        { 0, Format(), false, "D24_UNORM_S8_UINT" }, // not supported
+        { 0, Format(), false, "R24_UNORM_X8_TYPELESS" }, // not supported
+        { 0, Format(), false, "X24_TYPELESS_G8_UINT" }, // not supported
         { 0, MAKE_FORMAT(16, NONE, RG, 8, 8, 0, 0), false, "R8G8_TYPELESS" },
         { 0, MAKE_FORMAT(16, UNORM, RG, 8, 8, 0, 0), false, "R8G8_UNORM" },
         { 0, MAKE_FORMAT(16, UINT, RG, 8, 8, 0, 0), false, "R8G8_UINT" },
@@ -309,7 +309,7 @@ namespace
         { 0, MAKE_FORMAT(16, SINT, RG, 8, 8, 0, 0), false, "R8G8_SINT" },
         { 0, MAKE_FORMAT(16, NONE, R, 16, 0, 0, 0), false, "R16_TYPELESS" },
         { 0, MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0), false, "R16_FLOAT" },
-        { 0, FORMAT_NONE, false, "D16_UNORM" }, // not supported
+        { 0, Format(), false, "D16_UNORM" }, // not supported
         { 0, MAKE_FORMAT(16, UNORM, R, 16, 0, 0, 0), false, "R16_UNORM" },
         { 0, MAKE_FORMAT(16, UINT, R, 16, 0, 0, 0), false, "R16_UINT" },
         { 0, MAKE_FORMAT(16, SNORM, R, 16, 0, 0, 0), false, "R16_SNORM" },
@@ -320,115 +320,115 @@ namespace
         { 0, MAKE_FORMAT(8, SNORM, R, 8, 0, 0, 0), false, "R8_SNORM" },
         { 0, MAKE_FORMAT(8, SINT, R, 8, 0, 0, 0), false, "R8_SINT" },
         { 0, MAKE_FORMAT(8, UNORM, A, 8, 0, 0, 0), false, "A8_UNORM" },
-        { 0, FORMAT_NONE, false, "R1_UNORM" }, // not supported
-        { 0, FORMAT_NONE, false, "R9G9B9E5_SHAREDEXP" }, // not supported
-        { 0, FORMAT_NONE, false, "R8G8_B8G8_UNORM" },  // not supported: could be handled by FOURCC
-        { 0, FORMAT_NONE, false, "G8R8_G8B8_UNORM" },  // not supported: could be handled by FOURCC
-        { FOURCC_DXT1, FORMAT_NONE, false, "BC1_TYPELESS" },
-        { FOURCC_DXT1, FORMAT_NONE, false, "BC1_UNORM" },
-        { FOURCC_DXT1, FORMAT_NONE, true, "BC1_UNORM_SRGB" },
-        { FOURCC_DXT3, FORMAT_NONE, false, "BC2_TYPELESS" },
-        { FOURCC_DXT3, FORMAT_NONE, false, "BC2_UNORM" },
-        { FOURCC_DXT3, FORMAT_NONE, true, "BC2_UNORM_SRGB" },
-        { FOURCC_DXT5, FORMAT_NONE, false, "BC3_TYPELESS" },
-        { FOURCC_DXT5, FORMAT_NONE, false, "BC3_UNORM" },
-        { FOURCC_DXT5, FORMAT_NONE, true, "BC3_UNORM_SRGB" },
-        { FOURCC_BC4U, FORMAT_NONE, false, "BC4_TYPELESS" },
-        { FOURCC_BC4U, FORMAT_NONE, false, "BC4_UNORM" },
-        { FOURCC_BC4S, FORMAT_NONE, false, "BC4_SNORM" },
-        { FOURCC_BC5U, FORMAT_NONE, false, "BC5_TYPELESS" },
-        { FOURCC_BC5U, FORMAT_NONE, false, "BC5_UNORM" },
-        { FOURCC_BC5S, FORMAT_NONE, false, "BC5_SNORM" },
+        { 0, Format(), false, "R1_UNORM" }, // not supported
+        { 0, Format(), false, "R9G9B9E5_SHAREDEXP" }, // not supported
+        { 0, Format(), false, "R8G8_B8G8_UNORM" },  // not supported: could be handled by FOURCC
+        { 0, Format(), false, "G8R8_G8B8_UNORM" },  // not supported: could be handled by FOURCC
+        { FOURCC_DXT1, Format(), false, "BC1_TYPELESS" },
+        { FOURCC_DXT1, Format(), false, "BC1_UNORM" },
+        { FOURCC_DXT1, Format(), true, "BC1_UNORM_SRGB" },
+        { FOURCC_DXT3, Format(), false, "BC2_TYPELESS" },
+        { FOURCC_DXT3, Format(), false, "BC2_UNORM" },
+        { FOURCC_DXT3, Format(), true, "BC2_UNORM_SRGB" },
+        { FOURCC_DXT5, Format(), false, "BC3_TYPELESS" },
+        { FOURCC_DXT5, Format(), false, "BC3_UNORM" },
+        { FOURCC_DXT5, Format(), true, "BC3_UNORM_SRGB" },
+        { FOURCC_BC4U, Format(), false, "BC4_TYPELESS" },
+        { FOURCC_BC4U, Format(), false, "BC4_UNORM" },
+        { FOURCC_BC4S, Format(), false, "BC4_SNORM" },
+        { FOURCC_BC5U, Format(), false, "BC5_TYPELESS" },
+        { FOURCC_BC5U, Format(), false, "BC5_UNORM" },
+        { FOURCC_BC5S, Format(), false, "BC5_SNORM" },
         { 0, MAKE_FORMAT(16, UNORM, BGR, 5, 6, 5, 0), false, "B5G6R5_UNORM" },
         { 0, MAKE_FORMAT(16, UNORM, BGRA, 5, 5, 5, 1), false, "B5G5R5A1_UNORM" },
         { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), false, "B8G8R8A8_UNORM" },
         { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 0), false, "B8G8R8X8_UNORM" },
-        { 0, FORMAT_NONE, false, "R10G10B10_XR_BIAS_A2_UNORM" }, // not supported
+        { 0, Format(), false, "R10G10B10_XR_BIAS_A2_UNORM" }, // not supported
         { 0, MAKE_FORMAT(32, NONE, BGRA, 8, 8, 8, 8), false, "B8G8R8A8_TYPELESS" },
         { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), true, "B8G8R8A8_UNORM_SRGB" },
         { 0, MAKE_FORMAT(32, NONE, BGRA, 8, 8, 8, 0), false, "B8G8R8X8_TYPELESS" },
         { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 0), true, "B8G8R8X8_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "BC6H_TYPELESS" }, // not supported
-        { 0, FORMAT_NONE, false, "BC6H_UF16" }, // not supported
-        { 0, FORMAT_NONE, false, "BC6H_SF16" }, // not supported
-        { 0, FORMAT_NONE, false, "BC7_TYPELESS" }, // not supported
-        { 0, FORMAT_NONE, false, "BC7_UNORM" }, // not supported
-        { 0, FORMAT_NONE, true, "BC7_UNORM_SRGB" }, // not supported
-        { 0, FORMAT_NONE, false, "AYUV" }, // not supported
-        { 0, FORMAT_NONE, false, "Y410" }, // not supported
-        { 0, FORMAT_NONE, false, "Y416" }, // not supported
-        { 0, FORMAT_NONE, false, "NV12" }, // not supported
-        { 0, FORMAT_NONE, false, "P010" }, // not supported
-        { 0, FORMAT_NONE, false, "P016" }, // not supported
-        { 0, FORMAT_NONE, false, "420_OPAQUE" }, // not supported
-        { FOURCC_YUY2, FORMAT_NONE, false, "YUY2" },
-        { 0, FORMAT_NONE, false, "Y210" }, // not supported
-        { 0, FORMAT_NONE, false, "Y216" }, // not supported
-        { 0, FORMAT_NONE, false, "NV11" }, // not supported
-        { 0, FORMAT_NONE, false, "AI44" }, // not supported
-        { 0, FORMAT_NONE, false, "IA44" }, // not supported
-        { 0, FORMAT_NONE, false, "P8" }, // not supported
-        { 0, FORMAT_NONE, false, "A8P8" }, // not supported
+        { 0, Format(), false, "BC6H_TYPELESS" }, // not supported
+        { 0, Format(), false, "BC6H_UF16" }, // not supported
+        { 0, Format(), false, "BC6H_SF16" }, // not supported
+        { 0, Format(), false, "BC7_TYPELESS" }, // not supported
+        { 0, Format(), false, "BC7_UNORM" }, // not supported
+        { 0, Format(), true, "BC7_UNORM_SRGB" }, // not supported
+        { 0, Format(), false, "AYUV" }, // not supported
+        { 0, Format(), false, "Y410" }, // not supported
+        { 0, Format(), false, "Y416" }, // not supported
+        { 0, Format(), false, "NV12" }, // not supported
+        { 0, Format(), false, "P010" }, // not supported
+        { 0, Format(), false, "P016" }, // not supported
+        { 0, Format(), false, "420_OPAQUE" }, // not supported
+        { FOURCC_YUY2, Format(), false, "YUY2" },
+        { 0, Format(), false, "Y210" }, // not supported
+        { 0, Format(), false, "Y216" }, // not supported
+        { 0, Format(), false, "NV11" }, // not supported
+        { 0, Format(), false, "AI44" }, // not supported
+        { 0, Format(), false, "IA44" }, // not supported
+        { 0, Format(), false, "P8" }, // not supported
+        { 0, Format(), false, "A8P8" }, // not supported
         { 0, MAKE_FORMAT(16, UNORM, BGRA, 4, 4, 4, 4), false, "B4G4R4A4_UNORM" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "UNKNOWN" },
-        { 0, FORMAT_NONE, false, "P208" }, // not supported
-        { 0, FORMAT_NONE, false, "V208" }, // not supported
-        { 0, FORMAT_NONE, false, "V408" }, // not supported
-        { FOURCC_ASTC4x4, FORMAT_NONE, false, "ASTC_4X4_TYPELESS" },
-        { FOURCC_ASTC4x4, FORMAT_NONE, false, "ASTC_4X4_UNORM" },
-        { FOURCC_ASTC4x4, FORMAT_NONE, true,  "ASTC_4X4_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_5X4_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_5X4_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_5X4_UNORM_SRGB" },
-        { FOURCC_ASTC5x5, FORMAT_NONE, false, "ASTC_5X5_TYPELESS" },
-        { FOURCC_ASTC5x5, FORMAT_NONE, false, "ASTC_5X5_UNORM" },
-        { FOURCC_ASTC5x5, FORMAT_NONE, true,  "ASTC_5X5_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_6X5_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_6X5_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_6X5_UNORM_SRGB" },
-        { FOURCC_ASTC6x6, FORMAT_NONE, false, "ASTC_6X6_TYPELESS" },
-        { FOURCC_ASTC6x6, FORMAT_NONE, false, "ASTC_6X6_UNORM" },
-        { FOURCC_ASTC6x6, FORMAT_NONE, true,  "ASTC_6X6_UNORM_SRGB" },
-        { FOURCC_ASTC8x5, FORMAT_NONE, false, "ASTC_8X5_TYPELESS" },
-        { FOURCC_ASTC8x5, FORMAT_NONE, false, "ASTC_8X5_UNORM" },
-        { FOURCC_ASTC8x5, FORMAT_NONE, true,  "ASTC_8X5_UNORM_SRGB" },
-        { FOURCC_ASTC8x6, FORMAT_NONE, false, "ASTC_8X6_TYPELESS" },
-        { FOURCC_ASTC8x6, FORMAT_NONE, false, "ASTC_8X6_UNORM" },
-        { FOURCC_ASTC8x6, FORMAT_NONE, true,  "ASTC_8X6_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_8X8_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_8X8_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_8X8_UNORM_SRGB" },
-        { FOURCC_ASTC10x5, FORMAT_NONE, false, "ASTC_10X5_TYPELESS" },
-        { FOURCC_ASTC10x5, FORMAT_NONE, false, "ASTC_10X5_UNORM" },
-        { FOURCC_ASTC10x5, FORMAT_NONE, true,  "ASTC_10X5_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_10X6_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_10X6_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_10X6_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_10X8_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_10X8_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_10X8_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_10X10_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_10X10_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_10X10_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_12X10_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_12X10_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_12X10_UNORM_SRGB" },
-        { 0, FORMAT_NONE, false, "ASTC_12X12_TYPELESS" },
-        { 0, FORMAT_NONE, false, "ASTC_12X12_UNORM" },
-        { 0, FORMAT_NONE, true,  "ASTC_12X12_UNORM_SRGB" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "UNKNOWN" },
+        { 0, Format(), false, "P208" }, // not supported
+        { 0, Format(), false, "V208" }, // not supported
+        { 0, Format(), false, "V408" }, // not supported
+        { FOURCC_ASTC4x4, Format(), false, "ASTC_4X4_TYPELESS" },
+        { FOURCC_ASTC4x4, Format(), false, "ASTC_4X4_UNORM" },
+        { FOURCC_ASTC4x4, Format(), true,  "ASTC_4X4_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_5X4_TYPELESS" },
+        { 0, Format(), false, "ASTC_5X4_UNORM" },
+        { 0, Format(), true,  "ASTC_5X4_UNORM_SRGB" },
+        { FOURCC_ASTC5x5, Format(), false, "ASTC_5X5_TYPELESS" },
+        { FOURCC_ASTC5x5, Format(), false, "ASTC_5X5_UNORM" },
+        { FOURCC_ASTC5x5, Format(), true,  "ASTC_5X5_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_6X5_TYPELESS" },
+        { 0, Format(), false, "ASTC_6X5_UNORM" },
+        { 0, Format(), true,  "ASTC_6X5_UNORM_SRGB" },
+        { FOURCC_ASTC6x6, Format(), false, "ASTC_6X6_TYPELESS" },
+        { FOURCC_ASTC6x6, Format(), false, "ASTC_6X6_UNORM" },
+        { FOURCC_ASTC6x6, Format(), true,  "ASTC_6X6_UNORM_SRGB" },
+        { FOURCC_ASTC8x5, Format(), false, "ASTC_8X5_TYPELESS" },
+        { FOURCC_ASTC8x5, Format(), false, "ASTC_8X5_UNORM" },
+        { FOURCC_ASTC8x5, Format(), true,  "ASTC_8X5_UNORM_SRGB" },
+        { FOURCC_ASTC8x6, Format(), false, "ASTC_8X6_TYPELESS" },
+        { FOURCC_ASTC8x6, Format(), false, "ASTC_8X6_UNORM" },
+        { FOURCC_ASTC8x6, Format(), true,  "ASTC_8X6_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_8X8_TYPELESS" },
+        { 0, Format(), false, "ASTC_8X8_UNORM" },
+        { 0, Format(), true,  "ASTC_8X8_UNORM_SRGB" },
+        { FOURCC_ASTC10x5, Format(), false, "ASTC_10X5_TYPELESS" },
+        { FOURCC_ASTC10x5, Format(), false, "ASTC_10X5_UNORM" },
+        { FOURCC_ASTC10x5, Format(), true,  "ASTC_10X5_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_10X6_TYPELESS" },
+        { 0, Format(), false, "ASTC_10X6_UNORM" },
+        { 0, Format(), true,  "ASTC_10X6_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_10X8_TYPELESS" },
+        { 0, Format(), false, "ASTC_10X8_UNORM" },
+        { 0, Format(), true,  "ASTC_10X8_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_10X10_TYPELESS" },
+        { 0, Format(), false, "ASTC_10X10_UNORM" },
+        { 0, Format(), true,  "ASTC_10X10_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_12X10_TYPELESS" },
+        { 0, Format(), false, "ASTC_12X10_UNORM" },
+        { 0, Format(), true,  "ASTC_12X10_UNORM_SRGB" },
+        { 0, Format(), false, "ASTC_12X12_TYPELESS" },
+        { 0, Format(), false, "ASTC_12X12_UNORM" },
+        { 0, Format(), true,  "ASTC_12X12_UNORM_SRGB" },
     };
 
     const int g_dxgi_table_size = sizeof(g_dxgi_table) / sizeof(g_dxgi_table[0]);
@@ -596,7 +596,7 @@ namespace
             switch (fourCC)
             {
                 case FOURCC_DX10:
-					format = FORMAT_NONE;
+					format = Format();
 					compression = TextureCompression::NONE;
                     preserve_fourcc = true;
 					break;
@@ -689,12 +689,12 @@ namespace
                     break;
 
                 case FOURCC_PTC2:
-                    format = FORMAT_R8G8B8A8;
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     compression = TextureCompression::PVRTC_RGB_2BPP;
                     break;
 
                 case FOURCC_DXT1:
-                    format = FORMAT_R8G8B8A8;
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 					if (flags & DDPF_ALPHAPIXELS)
 					{
 	                    compression = TextureCompression::DXT1_ALPHA1;
@@ -721,7 +721,7 @@ namespace
                 case FOURCC_YUY2:
                 case FOURCC_G8R8G8B8:
                 case FOURCC_R8G8B8G8:
-                    format = FORMAT_R8G8B8A8;
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     compression = fourcc_to_compression(fourCC);
                     break;
 
@@ -914,26 +914,26 @@ namespace
             {
                 case DXGI_FORMAT_BC6H_TYPELESS:
                 case DXGI_FORMAT_BC6H_UF16:
-                    pixelFormat.format = FORMAT_R8G8B8A8;
+                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     pixelFormat.compression = TextureCompression::BPTC_RGB_UNSIGNED_FLOAT;
                     pixelFormat.fourCC = 0;
                     return;
 
                 case DXGI_FORMAT_BC6H_SF16:
-                    pixelFormat.format = FORMAT_R8G8B8A8;
+                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     pixelFormat.compression = TextureCompression::BPTC_RGB_SIGNED_FLOAT;
                     pixelFormat.fourCC = 0;
                     return;
 
                 case DXGI_FORMAT_BC7_TYPELESS:
                 case DXGI_FORMAT_BC7_UNORM:
-                    pixelFormat.format = FORMAT_R8G8B8A8;
+                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     pixelFormat.compression = TextureCompression::BPTC_RGBA_UNORM;
                     pixelFormat.fourCC = 0;
                     return;
 
                 case DXGI_FORMAT_BC7_UNORM_SRGB:
-                    pixelFormat.format = FORMAT_R8G8B8A8;
+                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     pixelFormat.compression = TextureCompression::BPTC_SRGB_ALPHA_UNORM;
                     pixelFormat.fourCC = 0;
                     return;

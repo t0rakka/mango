@@ -338,14 +338,16 @@ namespace mango
 #if 1
                     // super simple multi-threaded buffer clearing
 
-                    std::thread top([=] {
+                    std::thread top([=]
+                    {
                         for (int y = 0; y < height / 2; ++y)
                         {
                             func(image + y * stride, width, color);
                         }
                     });
 
-                    std::thread bottom([=] {
+                    std::thread bottom([=]
+                    {
                         for (int y = height / 2; y < height; ++y)
                         {
                             func(image + y * stride, width, color);

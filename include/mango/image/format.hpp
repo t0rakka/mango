@@ -125,7 +125,7 @@ namespace mango {
         Format();
         explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
         explicit Format(int bits, Type type, ColorRGBA size, ColorRGBA offset);
-        explicit Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3);
+        explicit Format(int bits, Type type, Order order, int s0, int s1 = 0, int s2 = 0, int s3 = 0);
         Format(const Format& format) = default;
         ~Format() = default;
 
@@ -159,8 +159,7 @@ namespace mango {
     // Format macros
     // ----------------------------------------------------------------------------
 
-    // NONE
-    #define FORMAT_NONE                 Format()
+    /*
 
     // UNORM
     #define FORMAT_B8G8R8               Format(24, mango::Format::UNORM, mango::Format::BGR,  8, 8, 8, 0)
@@ -241,5 +240,7 @@ namespace mango {
     #define FORMAT_RGBA16F                               Format(64,  mango::Format::FLOAT16, mango::Format::RGBA, 16, 16, 16, 16)
     #define FORMAT_RGBA32F                               Format(128, mango::Format::FLOAT32, mango::Format::RGBA, 32, 32, 32, 32)
     #define FORMAT_RGBA64F                               Format(256, mango::Format::FLOAT64, mango::Format::RGBA, 64, 64, 64, 64)
+
+    */
 
 } // namespace mango

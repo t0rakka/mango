@@ -100,7 +100,7 @@ namespace
             extended_height = p.read16();
             original_width  = p.read16();
             original_height = p.read16();
-            format = FORMAT_R8G8B8A8;
+            format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
             header.width   = extended_width;
             header.height  = extended_height;

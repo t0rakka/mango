@@ -746,7 +746,7 @@ namespace
         const int width = dest.width;
         const int height = dest.height;
 
-        Bitmap temp(width, height, FORMAT_B8G8R8A8);
+        Bitmap temp(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
         for (int y = 0; y < height; ++y)
         {
@@ -841,7 +841,7 @@ namespace
                         }
                         else
                         {
-                            Bitmap temp(header.width, header.height, FORMAT_L8);
+                            Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
                             readIndexed(temp, header, stride, data);
                             blitPalette(mirror, temp, palette);
                         }
@@ -875,7 +875,7 @@ namespace
                 }
                 else
                 {
-                    Bitmap temp(header.width, header.height, FORMAT_L8);
+                    Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
                     std::memset(temp.image, 0, temp.width * temp.height);
                     readRLE8(temp, header, stride, data);
                     blitPalette(mirror, temp, palette);
@@ -893,7 +893,7 @@ namespace
                 }
                 else
                 {
-                    Bitmap temp(header.width, header.height, FORMAT_L8);
+                    Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
                     std::memset(temp.image, 0, temp.width * temp.height);
                     readRLE4(temp, header, stride, data);
                     blitPalette(mirror, temp, palette);
@@ -1280,7 +1280,7 @@ namespace
 
         int width = surface.width;
         int height = surface.height;
-        Format format = FORMAT_B8G8R8A8;
+        Format format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
 
         int magicsize = 14;
         int headersize = 56;

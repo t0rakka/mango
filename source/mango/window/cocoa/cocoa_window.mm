@@ -80,7 +80,7 @@ namespace mango
 
     void Window::setIcon(const Surface& icon)
     {
-        Bitmap bitmap(icon, FORMAT_R8G8B8A8);
+        Bitmap bitmap(icon, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
         NSBitmapImageRep* bitmapImage = [[NSBitmapImageRep alloc]
                                          initWithBitmapDataPlanes:&bitmap.image

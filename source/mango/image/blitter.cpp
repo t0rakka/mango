@@ -647,17 +647,17 @@ namespace
     // custom conversion functions
     // ----------------------------------------------------------------------------
 
-#define INIT_POINTERS(DEST, SRC) \
-    const SRC* s = reinterpret_cast<const SRC*>(src); \
-    DEST* d = reinterpret_cast<DEST*>(dest);
-
     template <int bytes>
     void blit_memcpy(u8* dest, const u8* src, int count)
     {
         std::memcpy(dest, src, count * bytes);
     }
 
-    void blit_bgra8888_from_bgrx8888(u8* dest, const u8* src, int count)
+#define INIT_POINTERS(DEST, SRC) \
+    const SRC* s = reinterpret_cast<const SRC*>(src); \
+    DEST* d = reinterpret_cast<DEST*>(dest);
+
+    void blit_32bit_generate_alpha(u8* dest, const u8* src, int count)
     {
         INIT_POINTERS(u32, u32);
         for (int x = 0; x < count; ++x)
@@ -667,7 +667,7 @@ namespace
         }
     }
 
-    void blit_bgra8888_to_and_from_rgba8888(u8* dest, const u8* src, int count)
+    void blit_32bit_swap_rg(u8* dest, const u8* src, int count)
     {
         INIT_POINTERS(u32, u32);
         for (int x = 0; x < count; ++x)
@@ -677,88 +677,7 @@ namespace
         }
     }
 
-    void blit_bgra8888_from_bgra4444(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) | ((v & 0x00f0) << 8) | ((v & 0x000f) << 4);
-            d[x] = u | (u >> 4);
-        }
-    }
-
-    void blit_bgra8888_from_bgra5551(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            u32 u = v & 0x8000 ? 0xff000000 : 0;
-            u |= ((v & 0x7c00) << 9) | ((v & 0x03e0) << 6) | ((v & 0x001f) << 3);
-            d[x] = u | ((u & 0x00e0e0e0) >> 5);
-        }
-    }
-
-    void blit_bgra8888_from_bgr888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u24);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            d[x] = 0xff000000 | v;
-        }
-    }
-
-    void blit_rgba8888_from_bgr888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u8, u8);
-        for (int x = 0; x < count; ++x)
-        {
-            d[0] = s[2];
-            d[1] = s[1];
-            d[2] = s[0];
-            d[3] = 0xff;
-            s += 3;
-            d += 4;
-        }
-    }
-
-    void blit_bgra8888_from_bgr565(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            u32 u = ((v & 0xf800) << 8) | ((v & 0x07e0) << 5) | ((v & 0x001f) << 3);
-            u |= ((v & 0xe000) << 3) | ((v & 0x0600) >> 1) | ((v & 0x001c) >> 2);
-            d[x] = 0xff000000 | u;
-        }
-    }
-
-    void blit_bgr888_from_bgra8888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u24, u32);
-        for (int x = 0; x < count; ++x)
-        {
-            d[x] = s[x];
-        }
-    }
-
-    void blit_rgb888_from_bgra8888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u8, u8);
-        for (int x = 0; x < count; ++x)
-        {
-            d[0] = s[2];
-            d[1] = s[1];
-            d[2] = s[0];
-            s += 4;
-            d += 3;
-        }
-    }
-
-    void blit_bgr888_to_and_from_rgb888(u8* dest, const u8* src, int count)
+    void blit_24bit_swap_rg(u8* dest, const u8* src, int count)
     {
         INIT_POINTERS(u8, u8);
         for (int x = 0; x < count; ++x)
@@ -768,227 +687,6 @@ namespace
             d[2] = s[0];
             s += 3;
             d += 3;
-        }
-    }
-
-    void blit_bgr565_from_bgra8888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u16, u32);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            u32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
-            d[x] = u16(u);
-        }
-    }
-
-    void blit_bgra5551_from_bgra8888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u16, u32);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            u32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) | ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
-            d[x] = u16(u);
-        }
-    }
-
-    void blit_bgra4444_from_bgra8888(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u16, u32);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) | ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
-            d[x] = u16(u);
-        }
-    }
-
-    void blit_yyy888_from_y8(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u24, u8);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            d[x] = u24(v * 0x010101);
-        }
-    }
-
-    void blit_yyya8888_from_y8(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u8);
-        for (int x = 0; x < count; ++x)
-        {
-            u32 v = s[x];
-            d[x] = 0xff000000 | v * 0x010101;
-        }
-    }
-
-    void blit_rgba8888_from_y16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 i = s[x] >> 8;
-            d[x] = 0xff000000 | i * 0x010101;
-        }
-    }
-
-    void blit_bgra8888_from_y16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 i = s[x] >> 8;
-            d[x] = 0xff000000 | i * 0x010101;
-        }
-    }
-
-    void blit_rgba8888_from_ya16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u32);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 a = s[x] & 0xff000000;
-            const u32 i = (s[x] & 0x0000ff00) >> 8;
-            d[x] = a | i * 0x010101;
-        }
-    }
-
-    void blit_bgra8888_from_ya16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u32);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 a = s[x] & 0xff000000;
-            const u32 i = (s[x] & 0x0000ff00) >> 8;
-            d[x] = a | i * 0x010101;
-        }
-    }
-
-    void blit_rgba8888_from_rgb16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 r = s[0];
-            const u32 g = s[1] & 0x0000ff00;
-            const u32 b = s[2] & 0x0000ff00;
-            d[x] = 0xff000000 | (b << 8) | g | (r >> 8);
-            s += 3;
-        }
-    }
-
-    void blit_bgra8888_from_rgb16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 r = s[0] & 0x0000ff00;
-            const u32 g = s[1] & 0x0000ff00;
-            const u32 b = s[2];
-            d[x] = 0xff000000 | (r << 8) | g | (b >> 8);
-            s += 3;
-        }
-    }
-
-    void blit_rgba8888_from_rgba16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 r = s[0];
-            const u32 g = s[1] & 0x0000ff00;
-            const u32 b = s[2] & 0x0000ff00;
-            const u32 a = s[3] & 0x0000ff00;
-            d[x] = (a << 16) | (b << 8) | g | (r >> 8);
-            s += 4;
-        }
-    }
-
-    void blit_bgra8888_from_rgba16ui(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, u16);
-        for (int x = 0; x < count; ++x)
-        {
-            const u32 r = s[0] & 0x0000ff00;
-            const u32 g = s[1] & 0x0000ff00;
-            const u32 b = s[2];
-            const u32 a = s[3] & 0x0000ff00;
-            d[x] = (a << 16) | (r << 8) | g | (b >> 8);
-            s += 4;
-        }
-    }
-
-    void blit_rgba8888_from_rgba16f(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, float16x4);
-        for (int x = 0; x < count; ++x)
-        {
-            float32x4 f = convert<float32x4>(s[x]);
-            f = clamp(f, 0.0f, 1.0f);
-            f = f * 255.0f + 0.5f;
-            int32x4 i = convert<int32x4>(f);
-            d[x] = i.pack();
-        }
-    }
-
-    void blit_bgra8888_from_rgba16f(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, float16x4);
-        for (int x = 0; x < count; ++x)
-        {
-            float32x4 f = convert<float32x4>(s[x]);
-            f = f.zyxw;
-            f = clamp(f, 0.0f, 1.0f);
-            f = f * 255.0f + 0.5f;
-            int32x4 i = convert<int32x4>(f);
-            d[x] = i.pack();
-        }
-    }
-
-    void blit_rgba8888_from_rgba32f(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, float32x4);
-        for (int x = 0; x < count; ++x)
-        {
-            float32x4 f = s[x];
-            f = clamp(f, 0.0f, 1.0f);
-            f = f * 255.0f + 0.5f;
-            int32x4 i = convert<int32x4>(f);
-            d[x] = i.pack();
-        }
-    }
-
-    void blit_bgra8888_from_rgba32f(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(u32, float32x4);
-        for (int x = 0; x < count; ++x)
-        {
-            float32x4 f = s[x];
-            f = f.zyxw;
-            f = clamp(f, 0.0f, 1.0f);
-            f = f * 255.0f + 0.5f;
-            int32x4 i = convert<int32x4>(f);
-            d[x] = i.pack();
-        }
-    }
-
-    void blit_rgba16f_from_rgba32f(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(float16x4, float32x4);
-        for (int x = 0; x < count; ++x)
-        {
-            d[x] = convert<float16x4>(s[x]);
-        }
-    }
-
-    void blit_rgba32f_from_rgba16f(u8* dest, const u8* src, int count)
-    {
-        INIT_POINTERS(float32x4, float16x4);
-        for (int x = 0; x < count; ++x)
-        {
-            d[x] = convert<float32x4>(s[x]);
         }
     }
 
@@ -996,7 +694,6 @@ namespace
     // custom conversion function lookup
     // ----------------------------------------------------------------------------
 
-    // list of custom conversion functions
     struct
     {
         Format dest;
@@ -1006,60 +703,579 @@ namespace
     }
     const g_custom_func_table[] =
     {
-        { FORMAT_B8G8R8X8, FORMAT_B8G8R8A8,   0, blit_memcpy<4> },
-        { FORMAT_R8G8B8X8, FORMAT_R8G8B8A8,   0, blit_memcpy<4> },
-        { FORMAT_B8G8R8A8, FORMAT_B8G8R8X8,   0, blit_bgra8888_from_bgrx8888 },
-        { FORMAT_R8G8B8A8, FORMAT_R8G8B8X8,   0, blit_bgra8888_from_bgrx8888 },
-        { FORMAT_B8G8R8X8, FORMAT_R8G8B8X8,   0, blit_bgra8888_to_and_from_rgba8888 },
-        { FORMAT_R8G8B8X8, FORMAT_B8G8R8X8,   0, blit_bgra8888_to_and_from_rgba8888 },
-        { FORMAT_B8G8R8A8, FORMAT_R8G8B8A8,   0, blit_bgra8888_to_and_from_rgba8888 },
-        { FORMAT_R8G8B8A8, FORMAT_B8G8R8A8,   0, blit_bgra8888_to_and_from_rgba8888 },
-        { FORMAT_B8G8R8A8, FORMAT_B4G4R4A4,   0, blit_bgra8888_from_bgra4444 },
-        { FORMAT_B8G8R8A8, FORMAT_B5G5R5A1,   0, blit_bgra8888_from_bgra5551 },
-        { FORMAT_B8G8R8A8, FORMAT_B8G8R8,     0, blit_bgra8888_from_bgr888 },
-        { FORMAT_B8G8R8A8, FORMAT_R8G8B8,     0, blit_rgba8888_from_bgr888 },
-        { FORMAT_B8G8R8A8, FORMAT_B5G6R5,     0, blit_bgra8888_from_bgr565 },
-        { FORMAT_B8G8R8,   FORMAT_B8G8R8A8,   0, blit_bgr888_from_bgra8888 },
-        { FORMAT_R8G8B8,   FORMAT_B8G8R8A8,   0, blit_rgb888_from_bgra8888 },
-        { FORMAT_R8G8B8,   FORMAT_B8G8R8,     0, blit_bgr888_to_and_from_rgb888 },//
-        { FORMAT_B8G8R8,   FORMAT_R8G8B8,     0, blit_bgr888_to_and_from_rgb888 },
-        { FORMAT_B5G6R5,   FORMAT_B8G8R8A8,   0, blit_bgr565_from_bgra8888 },
-        { FORMAT_B5G5R5A1, FORMAT_B8G8R8A8,   0, blit_bgra5551_from_bgra8888 },
-        { FORMAT_B4G4R4A4, FORMAT_B8G8R8A8,   0, blit_bgra4444_from_bgra8888 },
-        { FORMAT_B8G8R8,   FORMAT_L8,         0, blit_yyy888_from_y8 },
-        { FORMAT_R8G8B8,   FORMAT_L8,         0, blit_yyy888_from_y8 },
-        { FORMAT_B8G8R8A8, FORMAT_L8,         0, blit_yyya8888_from_y8 },
-        { FORMAT_R8G8B8A8, FORMAT_L8,         0, blit_yyya8888_from_y8 },
-        { FORMAT_R8G8B8A8, FORMAT_L16,        0, blit_rgba8888_from_y16ui },
-        { FORMAT_B8G8R8A8, FORMAT_L16,        0, blit_bgra8888_from_y16ui },
-        { FORMAT_R8G8B8A8, FORMAT_L16A16,     0, blit_rgba8888_from_ya16ui },
-        { FORMAT_B8G8R8A8, FORMAT_L16A16,     0, blit_bgra8888_from_ya16ui },
-        { FORMAT_R8G8B8A8, FORMAT_RGB16,      0, blit_rgba8888_from_rgb16ui },
-        { FORMAT_B8G8R8A8, FORMAT_RGB16,      0, blit_bgra8888_from_rgb16ui },
-        { FORMAT_R8G8B8A8, FORMAT_RGBA16,     0, blit_rgba8888_from_rgba16ui },
-        { FORMAT_B8G8R8A8, FORMAT_RGBA16,     0, blit_bgra8888_from_rgba16ui },
-        { FORMAT_R8G8B8A8, FORMAT_RGBA16F,    0, blit_rgba8888_from_rgba16f },
-        { FORMAT_B8G8R8A8, FORMAT_RGBA16F,    0, blit_bgra8888_from_rgba16f },
-        { FORMAT_R8G8B8A8, FORMAT_RGBA32F,    0, blit_rgba8888_from_rgba32f },
-        { FORMAT_B8G8R8A8, FORMAT_RGBA32F,    0, blit_bgra8888_from_rgba32f },
-        { FORMAT_RGBA16F,  FORMAT_RGBA32F,    0, blit_rgba16f_from_rgba32f },
-        { FORMAT_RGBA32F,  FORMAT_RGBA16F,    0, blit_rgba32f_from_rgba16f },
+
+        // rgbx.u8 <- rgba.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                std::memcpy(dest, src, count * 4);
+            } 
+        },
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                std::memcpy(dest, src, count * 4);
+            } 
+        },
+
+        // rgba.u8 <- rgbx.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            0, 
+            blit_32bit_generate_alpha 
+        },
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            0, 
+            blit_32bit_generate_alpha 
+        },
+
+        // bgrx.u8 <-> rgbx.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            0, 
+            blit_32bit_swap_rg
+        },
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            0, 
+            blit_32bit_swap_rg 
+        },
+
+        // bgra.u8 <-> rgba.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            blit_32bit_swap_rg 
+        },
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            blit_32bit_swap_rg 
+        },
+
+        // bgra.u8888 <-> bgr.u888
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u24);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    d[x] = 0xff000000 | v;
+                }
+            }
+        },
+        {
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u24, u32);
+                for (int x = 0; x < count; ++x)
+                {
+                    d[x] = s[x];
+                }
+            }
+        },
+
+        // bgra.u8888 <-> rgb.u888
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u8, u8);
+                for (int x = 0; x < count; ++x)
+                {
+                    d[0] = s[2];
+                    d[1] = s[1];
+                    d[2] = s[0];
+                    d[3] = 0xff;
+                    s += 3;
+                    d += 4;
+                }
+            }
+        },
+        {
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u8, u8);
+                for (int x = 0; x < count; ++x)
+                {
+                    d[0] = s[2];
+                    d[1] = s[1];
+                    d[2] = s[0];
+                    s += 4;
+                    d += 3;
+                }
+            }
+        },
+
+        // bgr.u888 <-> rgb.u888
+
+        {
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            0, 
+            blit_24bit_swap_rg 
+        },
+        {
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            0, 
+            blit_24bit_swap_rg 
+        },
+
+        // bgra.u8888 <-> bgr.u565
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    u32 u = ((v & 0xf800) << 8) | ((v & 0x07e0) << 5) | ((v & 0x001f) << 3);
+                    u |= ((v & 0xe000) << 3) | ((v & 0x0600) >> 1) | ((v & 0x001c) >> 2);
+                    d[x] = 0xff000000 | u;
+                }
+            }
+        },
+        {
+            Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u16, u32);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    u32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
+                    d[x] = u16(u);
+                }
+            }
+        },
+
+        // bgra.u8888 <-> bgra.u5551
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    u32 u = v & 0x8000 ? 0xff000000 : 0;
+                    u |= ((v & 0x7c00) << 9) | ((v & 0x03e0) << 6) | ((v & 0x001f) << 3);
+                    d[x] = u | ((u & 0x00e0e0e0) >> 5);
+                }
+            } 
+        },
+        {
+            Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u16, u32);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    u32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) |
+                            ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
+                    d[x] = u16(u);
+                }
+            }
+        },
+
+        // bgra.u8888 <-> bgra.u4444
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) |
+                            ((v & 0x00f0) <<  8) | ((v & 0x000f) << 4);
+                    d[x] = u | (u >> 4);
+                }
+            } 
+        },
+        {
+            Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u16, u32);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) |
+                            ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
+                    d[x] = u16(u);
+                }
+            }
+        },
+
+        // rgb.u8 <- l.u8
+
+        {
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            LuminanceFormat(8, Format::UNORM, 8, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u24, u8);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    d[x] = u24(v * 0x010101);
+                }
+            }
+        },
+        {
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            LuminanceFormat(8, Format::UNORM, 8, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u24, u8);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    d[x] = u24(v * 0x010101);
+                }
+            }
+        },
+
+        // rgba.u8 <- l.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            LuminanceFormat(8, Format::UNORM, 8, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u8);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    d[x] = 0xff000000 | v * 0x010101;
+                }
+            }
+        },
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            LuminanceFormat(8, Format::UNORM, 8, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u8);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 v = s[x];
+                    d[x] = 0xff000000 | v * 0x010101;
+                }
+            }
+        },
+
+        // rgba.u8 <- l.u16
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            LuminanceFormat(16, Format::UNORM, 16, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 i = s[x] >> 8;
+                    d[x] = 0xff000000 | i * 0x010101;
+                }
+            }
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            LuminanceFormat(16, Format::UNORM, 16, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 i = s[x] >> 8;
+                    d[x] = 0xff000000 | i * 0x010101;
+                }
+            }
+        },
+
+        // rgba.u8 <- la.u16
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            LuminanceFormat(32, Format::UNORM, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u32);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 a = s[x] & 0xff000000;
+                    const u32 i = (s[x] & 0x0000ff00) >> 8;
+                    d[x] = a | i * 0x010101;
+                }
+            }
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            LuminanceFormat(32, Format::UNORM, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u32);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 a = s[x] & 0xff000000;
+                    const u32 i = (s[x] & 0x0000ff00) >> 8;
+                    d[x] = a | i * 0x010101;
+                }
+            }
+        },
+
+        // rgba.u8 <- rgb.u16
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 r = s[0];
+                    const u32 g = s[1] & 0x0000ff00;
+                    const u32 b = s[2] & 0x0000ff00;
+                    d[x] = 0xff000000 | (b << 8) | g | (r >> 8);
+                    s += 3;
+                }
+            }
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 r = s[0] & 0x0000ff00;
+                    const u32 g = s[1] & 0x0000ff00;
+                    const u32 b = s[2];
+                    d[x] = 0xff000000 | (r << 8) | g | (b >> 8);
+                    s += 3;
+                }
+            }
+        },
+
+        // rgba.u8 <- rgba.u16
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 r = s[0];
+                    const u32 g = s[1] & 0x0000ff00;
+                    const u32 b = s[2] & 0x0000ff00;
+                    const u32 a = s[3] & 0x0000ff00;
+                    d[x] = (a << 16) | (b << 8) | g | (r >> 8);
+                    s += 4;
+                }
+            }
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, u16);
+                for (int x = 0; x < count; ++x)
+                {
+                    const u32 r = s[0] & 0x0000ff00;
+                    const u32 g = s[1] & 0x0000ff00;
+                    const u32 b = s[2];
+                    const u32 a = s[3] & 0x0000ff00;
+                    d[x] = (a << 16) | (r << 8) | g | (b >> 8);
+                    s += 4;
+                }
+            }
+        },
+
+        // rgba.u8 <- rgba.f16
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, float16x4);
+                for (int x = 0; x < count; ++x)
+                {
+                    float32x4 f = convert<float32x4>(s[x]);
+                    f = clamp(f, 0.0f, 1.0f);
+                    f = f * 255.0f + 0.5f;
+                    int32x4 i = convert<int32x4>(f);
+                    d[x] = i.pack();
+                }
+            } 
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, float16x4);
+                for (int x = 0; x < count; ++x)
+                {
+                    float32x4 f = convert<float32x4>(s[x]);
+                    f = f.zyxw;
+                    f = clamp(f, 0.0f, 1.0f);
+                    f = f * 255.0f + 0.5f;
+                    int32x4 i = convert<int32x4>(f);
+                    d[x] = i.pack();
+                }
+            } 
+        },
+
+        // rgba.u8 <- rgba.f32
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, float32x4);
+                for (int x = 0; x < count; ++x)
+                {
+                    float32x4 f = s[x];
+                    f = clamp(f, 0.0f, 1.0f);
+                    f = f * 255.0f + 0.5f;
+                    int32x4 i = convert<int32x4>(f);
+                    d[x] = i.pack();
+                }
+            } 
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(u32, float32x4);
+                for (int x = 0; x < count; ++x)
+                {
+                    float32x4 f = s[x];
+                    f = f.zyxw;
+                    f = clamp(f, 0.0f, 1.0f);
+                    f = f * 255.0f + 0.5f;
+                    int32x4 i = convert<int32x4>(f);
+                    d[x] = i.pack();
+                }
+            } 
+        },
+
+        // rgba.f16 <-> rgba.f32
+
+        {
+            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(float16x4, float32x4);
+                for (int x = 0; x < count; ++x)
+                {
+                    d[x] = convert<float16x4>(s[x]);
+                }
+            } 
+        },
+        {
+            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                INIT_POINTERS(float32x4, float16x4);
+                for (int x = 0; x < count; ++x)
+                {
+                    d[x] = convert<float32x4>(s[x]);
+                }
+            } 
+        },
     };
 
     using FastConversionMap = std::map< std::pair<Format, Format>, Blitter::FastFunc >;
 
     // initialize map of custom conversion functions
-    FastConversionMap g_custom_func_map = [] {
+    FastConversionMap g_custom_func_map = []
+    {
+        const u64 cpuFlags = getCPUFlags();
+
         FastConversionMap map;
 
-        u64 cpuFlags = getCPUFlags();
-
-        const int table_size = sizeof(g_custom_func_table) / sizeof(g_custom_func_table[0]);
-
-        for (int i = 0; i < table_size; ++i)
+        for (auto& node : g_custom_func_table)
         {
-            const auto& node = g_custom_func_table[i];
-
             if (!node.requireCpuFeature || (cpuFlags & node.requireCpuFeature) != 0)
             {
                 map[std::make_pair(node.dest, node.source)] = node.func;
@@ -1071,7 +1287,7 @@ namespace
 
     Blitter::FastFunc find_custom_blitter(const Format& dest, const Format& source)
     {
-        Blitter::FastFunc func = NULL; // default: no conversion function
+        Blitter::FastFunc func = nullptr; // default: no conversion function
 
         if (dest == source)
         {
@@ -1086,6 +1302,8 @@ namespace
                 case 8: func = blit_memcpy<8>; break;
                 case 12: func = blit_memcpy<12>; break;
                 case 16: func = blit_memcpy<16>; break;
+                case 24: func = blit_memcpy<24>; break;
+                case 32: func = blit_memcpy<32>; break;
             }
         }
         else
