@@ -593,6 +593,8 @@ namespace
     // templates
     // ----------------------------------------------------------------------------------------
 
+#if !defined(HARDWARE_U64_CRC32) || !defined(HARDWARE_U64_CRC32C)
+
 #ifdef MANGO_CPU_64BIT
 
 	inline
@@ -635,6 +637,8 @@ namespace
     }
 
 #endif // MANGO_CPU_64BIT
+
+#endif // !defined(HARDWARE_U64_CRC32) || !defined(HARDWARE_U64_CRC32C)
 
     // ----------------------------------------------------------------------------------------
     // generic software implementation
