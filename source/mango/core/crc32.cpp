@@ -593,17 +593,10 @@ namespace
     // templates
     // ----------------------------------------------------------------------------------------
 
-    template <const u32* table>
-    u32 u8_crc(u32 crc, u8 data)
-    {
-        crc = (crc >> 8) ^ table[(crc & 0xff) ^ data];
-        return crc;
-    }
-
 #ifdef MANGO_CPU_64BIT
 
-    template <const u32* table>
-    u32 u64_crc(u32 crc, const u8* ptr)
+	inline
+	u32 u64_crc(u32 crc, const u8* ptr, const u32* table)
     {
         u64 data = uload64le(ptr);
         data = data ^ u64(crc);
@@ -620,8 +613,8 @@ namespace
 
 #else
 
-    template <const u32* table>
-    u32 u64_crc(u32 crc, const u8* ptr)
+	inline
+    u32 u64_crc(u32 crc, const u8* ptr, const u32* table)
     {
     #ifdef MANGO_LITTLE_ENDIAN
         u32 one = uload32le(ptr + 0) ^ crc;
@@ -651,7 +644,8 @@ namespace
 
     inline u32 u8_crc32(u32 crc, u8 data)
     {
-        return u8_crc<g_crc32_table>(crc, data);
+		crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
+		return crc;
     }
 
 #endif
@@ -660,7 +654,7 @@ namespace
 
     inline u32 u64_crc32(u32 crc, const u8* data)
     {
-        return u64_crc<g_crc32_table>(crc, data);
+		return u64_crc(crc, data, g_crc32_table);
     }
 
 #endif
@@ -669,8 +663,9 @@ namespace
 
     inline u32 u8_crc32c(u32 crc, u8 data)
     {
-        return u8_crc<g_crc32c_table>(crc, data);
-    }
+		crc = (crc >> 8) ^ g_crc32c_table[(crc & 0xff) ^ data];
+		return crc;
+	}
 
 #endif
 
@@ -678,7 +673,7 @@ namespace
 
     inline u32 u64_crc32c(u32 crc, const u8* data)
     {
-        return u64_crc<g_crc32c_table>(crc, data);
+        return u64_crc(crc, data, g_crc32c_table);
     }
 
 #endif
