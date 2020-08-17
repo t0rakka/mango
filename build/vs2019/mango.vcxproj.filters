@@ -2081,5 +2081,8 @@
     <ClCompile Include="..\..\source\external\libdeflate\lib\libd_utils.c">
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\block_fxt1.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
