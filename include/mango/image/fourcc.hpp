@@ -240,6 +240,10 @@ namespace opengl
 
     enum TextureFormat : u32
     {
+        // 3DFX_texture_compression_FXT1
+	    COMPRESSED_RGB_FXT1_3DFX                    = 0x86B0,
+	    COMPRESSED_RGBA_FXT1_3DFX                   = 0x86B1,
+
         // AMD_compressed_ATC_texture
         ATC_RGB_AMD                                 = 0x8C92,
         ATC_RGBA_EXPLICIT_ALPHA_AMD                 = 0x8C93,

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/core.hpp>
@@ -17,6 +17,7 @@
 namespace mango
 {
 
+    // decoders
     void decode_block_dxt1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC1
     void decode_block_dxt3           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC2
     void decode_block_dxt5           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC3
@@ -33,7 +34,9 @@ namespace mango
     void decode_block_atc            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_atc_e          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_atc_i          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_fxt1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
+    // encoders
     void encode_block_etc1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
 } // namespace mango
@@ -48,6 +51,24 @@ namespace
         // NONE
 
         TextureCompressionInfo(),
+
+        // 3DFX_texture_compression_FXT1
+
+        TextureCompressionInfo(
+            TextureCompression::FXT1_RGB,
+            0,
+            opengl::COMPRESSED_RGB_FXT1_3DFX,
+            0,
+            8, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_fxt1, nullptr
+        ),
+
+        TextureCompressionInfo(
+            TextureCompression::FXT1_RGBA,
+            0,
+            opengl::COMPRESSED_RGBA_FXT1_3DFX,
+            0,
+            8, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_fxt1, nullptr
+        ),
 
         // AMD_compressed_ATC_texture
 

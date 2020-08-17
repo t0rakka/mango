@@ -28,20 +28,21 @@ namespace mango
     {
         enum CompressionFormat : u32
         {
-            ATC         = 1, 
-            AMD_3DC     = 2,
-            LATC        = 3,
-            DXT         = 4,
-            RGTC        = 5,
-            BPTC        = 6,
-            ETC1        = 7,
-            ETC2_EAC    = 8,
-            PVRTC1      = 9,
-            PVRTC2      = 10,
-            PVRTC_EXT   = 11,
-            ASTC        = 12,
-            ASTC_HDR    = 13,
-            PACKED      = 14,
+            FXT1        = 1,
+            ATC         = 2, 
+            AMD_3DC     = 3,
+            LATC        = 4,
+            DXT         = 5,
+            RGTC        = 6,
+            BPTC        = 7,
+            ETC1        = 8,
+            ETC2_EAC    = 9,
+            PVRTC1      = 10,
+            PVRTC2      = 11,
+            PVRTC_EXT   = 12,
+            ASTC        = 13,
+            ASTC_HDR    = 14,
+            PACKED      = 15,
         };
 
         enum CompressionFlags : u32
@@ -60,6 +61,10 @@ namespace mango
         enum class TextureCompression : u32
         {
             NONE                          = makeTextureCompression(0, 0, 0),
+
+            // 3DFX_texture_compression_FXT1
+            FXT1_RGB                      = makeTextureCompression(FXT1, 0, 0),
+	        FXT1_RGBA                     = makeTextureCompression(FXT1, 1, ALPHA),
 
             // AMD_compressed_ATC_texture
             ATC_RGB                       = makeTextureCompression(ATC, 0, 0),
