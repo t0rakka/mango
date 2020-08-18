@@ -34,7 +34,8 @@ namespace mango
     void decode_block_atc            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_atc_e          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_atc_i          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_fxt1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_fxt1_rgb       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_fxt1_rgba      (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
     // encoders
     void encode_block_etc1           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
@@ -59,7 +60,7 @@ namespace
             0,
             opengl::COMPRESSED_RGB_FXT1_3DFX,
             0,
-            8, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_fxt1, nullptr
+            8, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_fxt1_rgb, nullptr
         ),
 
         TextureCompressionInfo(
@@ -67,7 +68,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_FXT1_3DFX,
             0,
-            8, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_fxt1, nullptr
+            8, 4, 16, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), decode_block_fxt1_rgba, nullptr
         ),
 
         // AMD_compressed_ATC_texture
