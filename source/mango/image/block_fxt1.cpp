@@ -119,14 +119,14 @@ namespace
 
         ColorBGRA color[8];
 
-	    color[0] = ColorBGRA(b0, g0, r0, 0xff);
+        color[0] = ColorBGRA(b0, g0, r0, 0xff);
         color[1] = ColorBGRA((5 * b0 + 1 * b1 + 3) / 6, (5 * g0 + 1 * g1 + 3) / 6, (5 * r0 + 1 * r1 + 3) / 6, 0xff);
         color[2] = ColorBGRA((4 * b0 + 2 * b1 + 3) / 6, (4 * g0 + 2 * g1 + 3) / 6, (4 * r0 + 2 * r1 + 3) / 6, 0xff);
         color[3] = ColorBGRA((3 * b0 + 3 * b1 + 3) / 6, (3 * g0 + 3 * g1 + 3) / 6, (3 * r0 + 3 * r1 + 3) / 6, 0xff);
         color[4] = ColorBGRA((2 * b0 + 4 * b1 + 3) / 6, (2 * g0 + 4 * g1 + 3) / 6, (2 * r0 + 4 * r1 + 3) / 6, 0xff);
         color[5] = ColorBGRA((1 * b0 + 5 * b1 + 3) / 6, (1 * g0 + 5 * g1 + 3) / 6, (1 * r0 + 5 * r1 + 3) / 6, 0xff);
-	    color[6] = ColorBGRA(b1, g1, r1, 0xff);
-	    color[7] = ColorBGRA(0, 0, 0, alphaMask);
+        color[6] = ColorBGRA(b1, g1, r1, 0xff);
+        color[7] = ColorBGRA(0, 0, 0, alphaMask);
 
         u64 indices0 = uload64le(block.indices + 0);
         u64 indices1 = uload64le(block.indices + 6);
@@ -171,10 +171,10 @@ namespace
 
         ColorBGRA color[4];
 
-	    color[0] = ColorBGRA(b0, g0, r0, 0xff);
-	    color[1] = ColorBGRA(b1, g1, r1, 0xff);
-	    color[2] = ColorBGRA(b2, g2, r2, 0xff);
-	    color[3] = ColorBGRA(b3, g3, r3, 0xff);
+        color[0] = ColorBGRA(b0, g0, r0, 0xff);
+        color[1] = ColorBGRA(b1, g1, r1, 0xff);
+        color[2] = ColorBGRA(b2, g2, r2, 0xff);
+        color[3] = ColorBGRA(b3, g3, r3, 0xff);
 
         u32 indices0 = uload32le(block.indices + 0);
         u32 indices1 = uload32le(block.indices + 4);
@@ -224,13 +224,13 @@ namespace
             color[0] = ColorBGRA(b0, g0, r0, a0);
             color[1] = ColorBGRA(b1, g1, r1, a1);
             color[2] = ColorBGRA(b2, g2, r2, a2);
-	        color[3] = ColorBGRA(0, 0, 0, alphaMask);
+            color[3] = ColorBGRA(0, 0, 0, alphaMask);
 
             // colors for right 4x4 block
             color[4] = color[0];
             color[5] = color[1];
             color[6] = color[2];
-	        color[7] = color[3];
+            color[7] = color[3];
         }
         else
         {
@@ -238,13 +238,13 @@ namespace
             color[0] = ColorBGRA(b0, g0, r0, a0);
             color[1] = ColorBGRA((2 * b0 + b1 + 1) / 3, (2 * g0 + g1 + 1) / 3, (2 * r0 + r1 + 1) / 3, (2 * a0 + a1 + 1) / 3);
             color[2] = ColorBGRA((b0 + 2 * b1 + 1) / 3, (g0 + 2 * g1 + 1) / 3, (r0 + 2 * r1 + 1) / 3, (a0 + 2 * a1 + 1) / 3);
-	        color[3] = ColorBGRA(b1, g1, r1, a1);
+            color[3] = ColorBGRA(b1, g1, r1, a1);
 
             // colors for right 4x4 block
             color[4] = ColorBGRA(b2, g2, r2, a2);
             color[5] = ColorBGRA((2 * b2 + b1 + 1) / 3, (2 * g2 + g1 + 1) / 3, (2 * r2 + r1 + 1) / 3, (2 * a2 + a1 + 1) / 3);
             color[6] = ColorBGRA((b2 + 2 * b1 + 1) / 3, (g2 + 2 * g1 + 1) / 3, (r2 + 2 * r1 + 1) / 3, (a2 + 2 * a1 + 1) / 3);
-	        color[7] = ColorBGRA(b1, g1, r1, a1);
+            color[7] = ColorBGRA(b1, g1, r1, a1);
         }
 
         u32 indices0 = uload32le(block.indices + 0);
