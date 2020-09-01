@@ -10,8 +10,8 @@ extern "C" {
 #endif
 
 #define LIBDEFLATE_VERSION_MAJOR	1
-#define LIBDEFLATE_VERSION_MINOR	5
-#define LIBDEFLATE_VERSION_STRING	"1.5"
+#define LIBDEFLATE_VERSION_MINOR	6
+#define LIBDEFLATE_VERSION_STRING	"1.6"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -255,12 +255,30 @@ libdeflate_deflate_decompress_ex(struct libdeflate_decompressor *decompressor,
 /*
  * Like libdeflate_deflate_decompress(), but assumes the zlib wrapper format
  * instead of raw DEFLATE.
+ *
+ * Decompression will stop at the end of the zlib stream, even if it is shorter
+ * than 'in_nbytes'.  If you need to know exactly where the zlib stream ended,
+ * use libdeflate_zlib_decompress_ex().
  */
 LIBDEFLATEEXPORT enum libdeflate_result LIBDEFLATEAPI
 libdeflate_zlib_decompress(struct libdeflate_decompressor *decompressor,
 			   const void *in, size_t in_nbytes,
 			   void *out, size_t out_nbytes_avail,
 			   size_t *actual_out_nbytes_ret);
+
+/*
+ * Like libdeflate_zlib_decompress(), but adds the 'actual_in_nbytes_ret'
+ * argument.  If 'actual_in_nbytes_ret' is not NULL and the decompression
+ * succeeds (indicating that the first zlib-compressed stream in the input
+ * buffer was decompressed), then the actual number of input bytes consumed is
+ * written to *actual_in_nbytes_ret.
+ */
+LIBDEFLATEEXPORT enum libdeflate_result LIBDEFLATEAPI
+libdeflate_zlib_decompress_ex(struct libdeflate_decompressor *decompressor,
+			      const void *in, size_t in_nbytes,
+			      void *out, size_t out_nbytes_avail,
+			      size_t *actual_in_nbytes_ret,
+			      size_t *actual_out_nbytes_ret);
 
 /*
  * Like libdeflate_deflate_decompress(), but assumes the gzip wrapper format
@@ -320,6 +338,22 @@ libdeflate_adler32(uint32_t adler32, const void *buffer, size_t len);
  */
 LIBDEFLATEEXPORT uint32_t LIBDEFLATEAPI
 libdeflate_crc32(uint32_t crc, const void *buffer, size_t len);
+
+/* ========================================================================== */
+/*                           Custom memory allocator                          */
+/* ========================================================================== */
+
+/*
+ * Install a custom memory allocator which libdeflate will use for all memory
+ * allocations.  'malloc_func' is a function that must behave like malloc(), and
+ * 'free_func' is a function that must behave like free().
+ *
+ * There must not be any libdeflate_compressor or libdeflate_decompressor
+ * structures in existence when calling this function.
+ */
+LIBDEFLATEEXPORT void LIBDEFLATEAPI
+libdeflate_set_memory_allocator(void *(*malloc_func)(size_t),
+				void (*free_func)(void *));
 
 #ifdef __cplusplus
 }
