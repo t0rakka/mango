@@ -280,19 +280,19 @@ namespace
             u32 bit33 = (block.indices[4] >> 1) & 1;
 
             u32 b0 = expand5to8(block.blue0);
-            u32 g0 = expand5to8((block.green0 << 1) | (block.lsb1 ^ bit01));
+            u32 g0 = expand5to8(u32(block.green0 << 1) | u32(block.lsb1 ^ bit01));
             u32 r0 = expand5to8(block.red0);
 
             u32 b1 = expand5to8(block.blue1);
-            u32 g1 = expand6to8((block.green1 << 1) | block.lsb1);
+            u32 g1 = expand6to8(u32((block.green1 << 1) | block.lsb1));
             u32 r1 = expand5to8(block.red1);
 
             u32 b2 = expand5to8(block.blue2);
-            u32 g2 = expand5to8((block.green2 << 1) | (block.lsb3 ^ bit33));
+            u32 g2 = expand5to8(u32((block.green2 << 1) | (block.lsb3 ^ bit33)));
             u32 r2 = expand5to8(block.red2);
 
             u32 b3 = expand5to8(block.blue3);
-            u32 g3 = expand6to8((block.green3 << 1) | block.lsb3);
+            u32 g3 = expand6to8(u32((block.green3 << 1) | block.lsb3));
             u32 r3 = expand5to8(block.red3);
 
             // colors for left 4x4 block
@@ -314,7 +314,7 @@ namespace
             u32 r0 = expand5to8(block.red0);
 
             u32 b1 = expand5to8(block.blue1);
-            u32 g1 = expand6to8((block.green1 << 1) | block.lsb1);
+            u32 g1 = expand6to8(u32((block.green1 << 1) | block.lsb1));
             u32 r1 = expand5to8(block.red1);
 
             u32 b2 = expand5to8(block.blue2);
@@ -322,7 +322,7 @@ namespace
             u32 r2 = expand5to8(block.red2);
 
             u32 b3 = expand5to8(block.blue3);
-            u32 g3 = expand6to8((block.green3 << 1) | block.lsb3);
+            u32 g3 = expand6to8(u32((block.green3 << 1) | block.lsb3));
             u32 r3 = expand5to8(block.red3);
 
             // colors for left 4x4 block

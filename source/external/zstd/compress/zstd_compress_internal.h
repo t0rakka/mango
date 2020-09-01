@@ -29,6 +29,12 @@ extern "C" {
 #endif
 
 
+#if defined(_MSC_VER)
+	// NOTE: mango compilation related
+	#pragma warning(disable : 4146 4244 4267)
+#endif
+
+
 /*-*************************************
 *  Constants
 ***************************************/

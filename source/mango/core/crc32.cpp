@@ -770,7 +770,7 @@ namespace
 #endif // MANGO_ENABLE_SSE4_2
 
     // Original implementation (C) Stephan Brumme
-    u32 crc_combine(u32 crc, size_t length, u32 polynomial)
+    u32 crc_combine(u32 crc, u64 length, u32 polynomial)
     {
         if (!length)
             return crc;
@@ -947,13 +947,13 @@ namespace
 namespace mango
 {
 
-    u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
+    u32 crc32_combine(u32 crc0, u32 crc1, u64 length1)
     {
         crc0 = crc_combine(crc0, length1, crc32_polynomial);
         return crc0 ^ crc1;
     }
 
-    u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
+    u32 crc32c_combine(u32 crc0, u32 crc1, u64 length1)
     {
         crc0 = crc_combine(crc0, length1, crc32c_polynomial);
         return crc0 ^ crc1;
