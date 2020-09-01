@@ -335,8 +335,8 @@
     <ClInclude Include="..\..\source\external\zstd\common\mem.h" />
     <ClInclude Include="..\..\source\external\zstd\common\pool.h" />
     <ClInclude Include="..\..\source\external\zstd\common\threading.h" />
-    <ClInclude Include="..\..\source\external\zstd\common\xxh3.h" />
     <ClInclude Include="..\..\source\external\zstd\common\xxhash.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_deps.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_errors.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\hist.h" />
