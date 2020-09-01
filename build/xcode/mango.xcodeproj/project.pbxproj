@@ -63,6 +63,7 @@
 		A60B0760228CCA9C00BD520D /* quantize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60B075F228CCA9C00BD520D /* quantize.cpp */; };
 		A60B0763229D21C900BD520D /* stb_image.h in Headers */ = {isa = PBXBuildFile; fileRef = A60B0762229D21C900BD520D /* stb_image.h */; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
+		A62D0D7C24FEF234003E144A /* zstd_deps.h in Headers */ = {isa = PBXBuildFile; fileRef = A62D0D7B24FEF234003E144A /* zstd_deps.h */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
 		A63BA3D8225EA6B6008BFB8C /* jpeg_process_sse2.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63BA3D6225EA6B6008BFB8C /* jpeg_process_sse2.hpp */; };
@@ -334,7 +335,6 @@
 		A6EC3E622308589900B17F21 /* zstd_compress_literals.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */; };
 		A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */; };
 		A6EC3E642308589900B17F21 /* zstd_compress_sequences.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */; };
-		A6EC3E6623085FCE00B17F21 /* xxh3.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E6523085FCE00B17F21 /* xxh3.h */; };
 		A6EC3E79230D7BB800B17F21 /* vp8_dec.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E69230D7BB800B17F21 /* vp8_dec.c */; };
 		A6EC3E7A230D7BB800B17F21 /* io_dec.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E6A230D7BB800B17F21 /* io_dec.c */; };
 		A6EC3E7B230D7BB800B17F21 /* alpha_dec.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E6B230D7BB800B17F21 /* alpha_dec.c */; };
@@ -557,6 +557,7 @@
 		A60B075F228CCA9C00BD520D /* quantize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = quantize.cpp; path = image/quantize.cpp; sourceTree = "<group>"; };
 		A60B0762229D21C900BD520D /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = external/stb/stb_image.h; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
+		A62D0D7B24FEF234003E144A /* zstd_deps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_deps.h; path = external/zstd/common/zstd_deps.h; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
 		A63BA3D6225EA6B6008BFB8C /* jpeg_process_sse2.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_sse2.hpp; path = jpeg/jpeg_process_sse2.hpp; sourceTree = "<group>"; };
@@ -826,7 +827,6 @@
 		A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_literals.c; path = external/zstd/compress/zstd_compress_literals.c; sourceTree = "<group>"; };
 		A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_literals.h; path = external/zstd/compress/zstd_compress_literals.h; sourceTree = "<group>"; };
 		A6EC3E602308589900B17F21 /* zstd_compress_sequences.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_sequences.c; path = external/zstd/compress/zstd_compress_sequences.c; sourceTree = "<group>"; };
-		A6EC3E6523085FCE00B17F21 /* xxh3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxh3.h; path = external/zstd/common/xxh3.h; sourceTree = "<group>"; };
 		A6EC3E69230D7BB800B17F21 /* vp8_dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vp8_dec.c; path = external/libwebp/src/dec/vp8_dec.c; sourceTree = "<group>"; };
 		A6EC3E6A230D7BB800B17F21 /* io_dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io_dec.c; path = external/libwebp/src/dec/io_dec.c; sourceTree = "<group>"; };
 		A6EC3E6B230D7BB800B17F21 /* alpha_dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = alpha_dec.c; path = external/libwebp/src/dec/alpha_dec.c; sourceTree = "<group>"; };
@@ -1808,10 +1808,10 @@
 				A645DD31214154F300EC714B /* threading.h */,
 				A645DD34214154F300EC714B /* xxhash.c */,
 				A645DD41214154F300EC714B /* xxhash.h */,
-				A6EC3E6523085FCE00B17F21 /* xxh3.h */,
 				A645DD3A214154F300EC714B /* zstd_common.c */,
 				A645DD44214154F300EC714B /* zstd_errors.h */,
 				A645DD45214154F300EC714B /* zstd_internal.h */,
+				A62D0D7B24FEF234003E144A /* zstd_deps.h */,
 			);
 			name = common;
 			sourceTree = "<group>";
@@ -1954,7 +1954,6 @@
 				A6EC3F48230D7C2E00B17F21 /* vp8li_enc.h in Headers */,
 				A6DD28C424125F1A0085E6EE /* unaligned.h in Headers */,
 				A642437521852AEF0044B763 /* XzEnc.h in Headers */,
-				A6EC3E6623085FCE00B17F21 /* xxh3.h in Headers */,
 				A645DD762141551200EC714B /* zstd_lazy.h in Headers */,
 				A6EC3F0A230D7C1500B17F21 /* common_sse41.h in Headers */,
 				A6EC3F9C230D7C4D00B17F21 /* filters_utils.h in Headers */,
@@ -2042,6 +2041,7 @@
 				A6DD28D024125F1A0085E6EE /* crc32_vec_template.h in Headers */,
 				A6EC3F46230D7C2E00B17F21 /* backward_references_enc.h in Headers */,
 				A642437421852AEF0044B763 /* 7zTypes.h in Headers */,
+				A62D0D7C24FEF234003E144A /* zstd_deps.h in Headers */,
 				A63DD7981E706F5400D4D499 /* lzodefs.h in Headers */,
 				A6DD28CE24125F1A0085E6EE /* lib_common.h in Headers */,
 				A6EC3FAA230D7C6100B17F21 /* demux.h in Headers */,

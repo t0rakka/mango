@@ -1,10 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 
 #define XXH_STATIC_LINKING_ONLY
+#define XXH_INLINE_ALL
 #include "../../external/zstd/common/xxhash.h"
 
 namespace mango {

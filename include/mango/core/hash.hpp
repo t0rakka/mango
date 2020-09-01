@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -67,10 +67,6 @@ namespace mango
 
     u32 xxhash32(u32 seed, ConstMemory memory);
     u64 xxhash64(u64 seed, ConstMemory memory);
-
-    // WARNING!
-    // The experimental SIMD enhanced hashing functions are NON-STABLE; the hash values might
-    // change when the xx3-hash is upgraded. This notice will be removed after the API is stable.
 
     XX3HASH64 xx3hash64(u64 seed, ConstMemory memory);
     XX3HASH128 xx3hash128(u64 seed, ConstMemory memory);
