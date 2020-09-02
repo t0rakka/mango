@@ -1,10 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+
 #if __ANDROID_API__ < __ANDROID_API_N__
 #define _FILE_OFFSET_BITS 64 /* LFS: 64 bit off_t */
 #endif
+
 #include <cstdio>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -55,20 +57,20 @@ namespace filesystem {
 	        return ftello(m_file);
 		}
 
-		void seek(u64 distance, int method)
+		void seek(s64 distance, int method)
 		{
 	        fseeko(m_file, distance, method);
 		}
 
-	    void read(void* dest, size_t size)
+	    void read(void* dest, u64 size)
 	    {
-    	    size_t status = std::fread(dest, 1, size, m_file);
+    	    size_t status = std::fread(dest, 1, size_t(size), m_file);
 	        MANGO_UNREFERENCED(status);
 	    }
 
-	    void write(const void* data, size_t size)
+	    void write(const void* data, u64 size)
 	    {
-	        size_t status = std::fwrite(data, 1, size, m_file);
+	        size_t status = std::fwrite(data, 1, size_t(size), m_file);
 	        MANGO_UNREFERENCED(status);
 	    }
 	};
@@ -120,7 +122,7 @@ namespace filesystem {
 		return m_handle->offset();
     }
 
-    void FileStream::seek(u64 distance, SeekMode mode)
+    void FileStream::seek(s64 distance, SeekMode mode)
     {
         int method;
 
@@ -145,12 +147,12 @@ namespace filesystem {
 		m_handle->seek(distance, method);
     }
 
-    void FileStream::read(void* dest, size_t size)
+    void FileStream::read(void* dest, u64 size)
     {
 		m_handle->read(dest, size);
     }
 
-    void FileStream::write(const void* data, size_t size)
+    void FileStream::write(const void* data, u64 size)
     {
 		m_handle->write(data, size);
     }

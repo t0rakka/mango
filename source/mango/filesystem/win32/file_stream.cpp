@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -50,7 +50,7 @@ namespace filesystem {
 	        return result.QuadPart;
 	    }
 
-	    void seek(u64 distance, DWORD method)
+	    void seek(s64 distance, DWORD method)
 	    {
 	        LARGE_INTEGER dist;
 	        dist.QuadPart = distance;
@@ -58,18 +58,18 @@ namespace filesystem {
 			MANGO_UNREFERENCED(status);
 	    }
 
-	    void read(void* dest, size_t size)
+	    void read(void* dest, u64 size)
 	    {
 	        DWORD bytes_read;
-	        BOOL status = ReadFile(m_handle, dest, static_cast<DWORD>(size), &bytes_read, NULL);
+	        BOOL status = ReadFile(m_handle, dest, DWORD(size), &bytes_read, NULL);
 			MANGO_UNREFERENCED(status);
 			MANGO_UNREFERENCED(bytes_read);
 	    }
 
-	    void write(const void* data, size_t size)
+	    void write(const void* data, u64 size)
 	    {
 	        DWORD bytes_written;
-	        BOOL status = WriteFile(m_handle, data, static_cast<DWORD>(size), &bytes_written, NULL);
+	        BOOL status = WriteFile(m_handle, data, DWORD(size), &bytes_written, NULL);
 			MANGO_UNREFERENCED(status);
 			MANGO_UNREFERENCED(bytes_written);
 	    }
@@ -132,7 +132,7 @@ namespace filesystem {
         return m_handle->offset();
     }
 
-    void FileStream::seek(u64 distance, SeekMode mode)
+    void FileStream::seek(s64 distance, SeekMode mode)
     {
         DWORD method;
 
@@ -157,12 +157,12 @@ namespace filesystem {
 		m_handle->seek(distance, method);
     }
 
-    void FileStream::read(void* dest, size_t size)
+    void FileStream::read(void* dest, u64 size)
     {
 		m_handle->read(dest, size);
     }
 
-    void FileStream::write(const void* data, size_t size)
+    void FileStream::write(const void* data, u64 size)
     {
 		m_handle->write(data, size);
     }

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -38,7 +38,7 @@ namespace filesystem {
         operator ConstMemory () const;
         operator const u8* () const;
         const u8* data() const;
-        size_t size() const;
+        u64 size() const;
     };
 
     class FileStream : public Stream
@@ -52,11 +52,11 @@ namespace filesystem {
 
         const std::string& filename() const;
 
-        u64 size() const;
-        u64 offset() const;
-        void seek(u64 distance, SeekMode mode);
-        void read(void* dest, size_t size);
-        void write(const void* data, size_t size);
+        u64 size() const override;
+        u64 offset() const override;
+        void seek(s64 distance, SeekMode mode) override;
+        void read(void* dest, u64 size) override;
+        void write(const void* data, u64 size) override;
 
         void write(ConstMemory memory)
         {

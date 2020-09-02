@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -125,7 +125,7 @@ namespace filesystem {
         return getMemory().address;
     }
 
-    size_t File::size() const
+    u64 File::size() const
     {
         return getMemory().size;
     }

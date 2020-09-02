@@ -16,14 +16,14 @@ namespace mango
     {
     private:
         Memory m_memory;
-        size_t m_capacity;
+        u64 m_capacity;
         Alignment m_alignment;
 
     public:
         explicit Buffer(Alignment alignment = Alignment());
-        explicit Buffer(size_t bytes, Alignment alignment = Alignment());
-        explicit Buffer(size_t bytes, u8 value, Alignment alignment = Alignment());
-        explicit Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
+        explicit Buffer(u64 bytes, Alignment alignment = Alignment());
+        explicit Buffer(u64 bytes, u8 value, Alignment alignment = Alignment());
+        explicit Buffer(const u8* source, u64 bytes, Alignment alignment = Alignment());
         explicit Buffer(ConstMemory memory, Alignment alignment = Alignment());
         explicit Buffer(Stream& stream, Alignment alignment = Alignment());
         ~Buffer();
@@ -33,16 +33,16 @@ namespace mango
         operator u8* () const;
         u8* data() const;
 
-        size_t size() const;
-        size_t capacity() const;
+        u64 size() const;
+        u64 capacity() const;
 
         void reset();
-        void resize(size_t bytes);
-        void reserve(size_t bytes);
-        void append(const void* source, size_t bytes);
+        void resize(u64 bytes);
+        void reserve(u64 bytes);
+        void append(const void* source, u64 bytes);
 
     private:
-        u8* allocate(size_t bytes, Alignment alignment) const;
+        u8* allocate(u64 bytes, Alignment alignment) const;
         void free(u8* ptr) const;
     };
 
@@ -50,11 +50,11 @@ namespace mango
     {
     private:
         Buffer m_buffer;
-        size_t m_offset;
+        u64 m_offset;
 
     public:
         MemoryStream();
-        MemoryStream(const u8* source, size_t bytes);
+        MemoryStream(const u8* source, u64 bytes);
         MemoryStream(ConstMemory memory);
         ~MemoryStream();
 
@@ -63,11 +63,11 @@ namespace mango
         operator u8* () const;
         u8* data() const;
 
-        u64 size() const;
-        u64 offset() const;
-        void seek(u64 distance, SeekMode mode);
-        void read(void* dest, size_t bytes);
-        void write(const void* source, size_t bytes);
+        u64 size() const override;
+        u64 offset() const override;
+        void seek(s64 distance, SeekMode mode) override;
+        void read(void* dest, u64 bytes) override;
+        void write(const void* source, u64 bytes) override;
 
         void write(ConstMemory memory)
         {
