@@ -18,14 +18,14 @@ namespace mango {
     {
     }
 
-    Buffer::Buffer(u64 bytes, Alignment alignment)
+    Buffer::Buffer(size_t bytes, Alignment alignment)
         : m_memory(allocate(bytes, alignment), bytes)
         , m_capacity(bytes)
         , m_alignment(alignment)
     {
     }
 
-    Buffer::Buffer(u64 bytes, u8 value, Alignment alignment)
+    Buffer::Buffer(size_t bytes, u8 value, Alignment alignment)
         : m_memory(allocate(bytes, alignment), bytes)
         , m_capacity(bytes)
         , m_alignment(alignment)
@@ -33,7 +33,7 @@ namespace mango {
         std::memset(m_memory.address, value, bytes);
     }
 
-    Buffer::Buffer(const u8* source, u64 bytes, Alignment alignment)
+    Buffer::Buffer(const u8* source, size_t bytes, Alignment alignment)
         : m_memory(allocate(bytes, alignment), bytes)
         , m_capacity(bytes)
         , m_alignment(alignment)
@@ -50,7 +50,7 @@ namespace mango {
     }
 
     Buffer::Buffer(Stream& stream, Alignment alignment)
-        : m_memory(allocate(stream.size(), alignment), stream.size())
+        : m_memory(allocate(size_t(stream.size()), alignment), size_t(stream.size()))
         , m_capacity(m_memory.size)
         , m_alignment(alignment)
     {
@@ -83,12 +83,12 @@ namespace mango {
         return m_memory.address;
     }
 
-    u64 Buffer::size() const
+    size_t Buffer::size() const
     {
         return m_memory.size;
     }
 
-    u64 Buffer::capacity() const
+    size_t Buffer::capacity() const
     {
         return m_capacity;        
     }
@@ -100,13 +100,13 @@ namespace mango {
         m_capacity = 0;
     }
 
-    void Buffer::resize(u64 bytes)
+    void Buffer::resize(size_t bytes)
     {
         reserve(bytes);
         m_memory.size = bytes;
     }
 
-    void Buffer::reserve(u64 bytes)
+    void Buffer::reserve(size_t bytes)
     {
         if (bytes > m_capacity)
         {
@@ -121,9 +121,9 @@ namespace mango {
         }
     }
 
-    void Buffer::append(const void* source, u64 bytes)
+    void Buffer::append(const void* source, size_t bytes)
     {
-        u64 required = m_memory.size + bytes;
+        size_t required = m_memory.size + bytes;
         if (required > m_capacity)
         {
             // grow 1.4x the required capacity
@@ -134,7 +134,7 @@ namespace mango {
         m_memory.size += bytes;
     }
 
-    u8* Buffer::allocate(u64 bytes, Alignment alignment) const
+    u8* Buffer::allocate(size_t bytes, Alignment alignment) const
     {
         void* ptr = aligned_malloc(bytes, alignment);
         return reinterpret_cast<u8*>(ptr);
@@ -156,7 +156,7 @@ namespace mango {
     }
 
     MemoryStream::MemoryStream(const u8* source, u64 bytes)
-        : m_buffer(source, bytes)
+        : m_buffer(source, size_t(bytes))
         , m_offset(bytes)
     {
     }
@@ -230,7 +230,7 @@ namespace mango {
             MANGO_EXCEPTION("[MemoryStream] Reading past end of buffer.");
         }
 
-        std::memcpy(dest, m_buffer.data() + m_offset, bytes);
+        std::memcpy(dest, m_buffer.data() + m_offset, size_t(bytes));
         m_offset += bytes;
     }
 
@@ -238,11 +238,11 @@ namespace mango {
     {
         const u64 left = std::min(bytes, m_buffer.size() - m_offset);
         const u64 right = bytes - left;
-        std::memcpy(m_buffer.data() + m_offset, source, left);
+        std::memcpy(m_buffer.data() + m_offset, source, size_t(left));
         if (right > 0)
         {
             const u8* src = reinterpret_cast<const u8*>(source);
-            m_buffer.append(src + left, right);
+            m_buffer.append(src + left, size_t(right));
         }
         m_offset += bytes;
     }

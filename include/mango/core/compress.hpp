@@ -71,9 +71,9 @@ namespace mango
     // memory block compression
     // -----------------------------------------------------------------------
 
-    // WARNING! The memory allocation is caller's responsibility; use bound()
-    // to get conservative estimate for destination size - the bound is
-    // guaranteed to be sufficient.
+    // WARNING!
+    // The memory allocation is caller's responsibility;
+    // use bound() to get a conservative estimate for the destination size.
 
     // Compression levels are clamped to range [0, 10]
     // Level 6: default

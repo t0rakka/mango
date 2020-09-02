@@ -16,14 +16,14 @@ namespace mango
     {
     private:
         Memory m_memory;
-        u64 m_capacity;
+        size_t m_capacity;
         Alignment m_alignment;
 
     public:
         explicit Buffer(Alignment alignment = Alignment());
-        explicit Buffer(u64 bytes, Alignment alignment = Alignment());
-        explicit Buffer(u64 bytes, u8 value, Alignment alignment = Alignment());
-        explicit Buffer(const u8* source, u64 bytes, Alignment alignment = Alignment());
+        explicit Buffer(size_t bytes, Alignment alignment = Alignment());
+        explicit Buffer(size_t bytes, u8 value, Alignment alignment = Alignment());
+        explicit Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
         explicit Buffer(ConstMemory memory, Alignment alignment = Alignment());
         explicit Buffer(Stream& stream, Alignment alignment = Alignment());
         ~Buffer();
@@ -33,16 +33,16 @@ namespace mango
         operator u8* () const;
         u8* data() const;
 
-        u64 size() const;
-        u64 capacity() const;
+        size_t size() const;
+        size_t capacity() const;
 
         void reset();
-        void resize(u64 bytes);
-        void reserve(u64 bytes);
-        void append(const void* source, u64 bytes);
+        void resize(size_t bytes);
+        void reserve(size_t bytes);
+        void append(const void* source, size_t bytes);
 
     private:
-        u8* allocate(u64 bytes, Alignment alignment) const;
+        u8* allocate(size_t bytes, Alignment alignment) const;
         void free(u8* ptr) const;
     };
 
