@@ -207,7 +207,7 @@ namespace mango {
         switch (mode)
         {
             case BEGIN:
-                distance = std::max(0ll, distance);
+                distance = std::max(s64(0), distance);
                 m_offset = std::min(size, u64(distance));
                 break;
 
@@ -216,8 +216,8 @@ namespace mango {
                 break;
 
             case END:
-                distance = std::min(0ll, distance);
-                m_offset = u64(std::max(0ll, s64(size + distance)));
+                distance = std::min(s64(0), distance);
+                m_offset = u64(std::max(s64(0), s64(size + distance)));
                 break;
         }
     }
