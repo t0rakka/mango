@@ -384,28 +384,25 @@ namespace mango
 
         float tmax = (box.corner[1 - ray.sign[0]].x - ray.origin.x) * ray.invdir.x;
         float ymin = (box.corner[0 + ray.sign[1]].y - ray.origin.y) * ray.invdir.y;
-        if (ymin > tmax)
+        if (tmax < ymin)
             return false;
 
-        if (ymin > tmin)
-            tmin = ymin;
-        if (ymax < tmax)
-            tmax = ymax;
+        tmin = std::max(tmin, ymin);
+        tmax = std::min(tmax, ymax);
 
         float zmin = (box.corner[0 + ray.sign[2]].z - ray.origin.z) * ray.invdir.z;
-        if (zmin > tmax)
+        if (tmax < zmin)
             return false;
+
         float zmax = (box.corner[1 - ray.sign[2]].z - ray.origin.z) * ray.invdir.z;
         if (tmin > zmax)
             return false;
 
-        if (zmin > tmin)
-            tmin = zmin;
-        if (zmax < tmax)
-            tmax = zmax;
+        tmin = std::max(tmin, zmin);
+        tmax = std::min(tmax, zmax);
 
-        t0 = std::max(tmin, zmin);
-        t1 = std::min(tmax, zmax);
+		t0 = tmin;
+		t1 = tmax;
         return t1 > std::max(t0, 0.0f);
     }
 
