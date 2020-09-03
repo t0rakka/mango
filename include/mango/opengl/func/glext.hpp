@@ -1225,6 +1225,10 @@ GLEXT_PROC(PFNGLFRAMEBUFFERSAMPLELOCATIONSFVARBPROC, glFramebufferSampleLocation
 GLEXT_PROC(PFNGLNAMEDFRAMEBUFFERSAMPLELOCATIONSFVARBPROC, glNamedFramebufferSampleLocationsfvARB);
 GLEXT_PROC(PFNGLEVALUATEDEPTHVALUESARBPROC, glEvaluateDepthValuesARB);
 
+// GL_ARB_viewport_array
+GLEXT_PROC(PFNGLDEPTHRANGEARRAYDVNVPROC, glDepthRangeArraydvNV);
+GLEXT_PROC(PFNGLDEPTHRANGEINDEXEDDNVPROC, glDepthRangeIndexeddNV);
+
 // ---------------------------------------------------------------------------------
 // OES
 // ---------------------------------------------------------------------------------
@@ -3072,6 +3076,17 @@ GLEXT_PROC(PFNGLSHADINGRATESAMPLEORDERCUSTOMNVPROC, glShadingRateSampleOrderCust
 
 // GL_NV_vdpau_interop2
 GLEXT_PROC(PFNGLVDPAUREGISTERVIDEOSURFACEWITHPICTURESTRUCTURENVPROC, glVDPAURegisterVideoSurfaceWithPictureStructureNV);
+
+// GL_NV_memory_object_sparse
+GLEXT_PROC(PFNGLBUFFERPAGECOMMITMENTMEMNVPROC, glBufferPageCommitmentMemNV);
+GLEXT_PROC(PFNGLTEXPAGECOMMITMENTMEMNVPROC, glTexPageCommitmentMemNV);
+GLEXT_PROC(PFNGLNAMEDBUFFERPAGECOMMITMENTMEMNVPROC, glNamedBufferPageCommitmentMemNV);
+GLEXT_PROC(PFNGLTEXTUREPAGECOMMITMENTMEMNVPROC, glTexturePageCommitmentMemNV);
+
+// GL_NV_timeline_semaphore
+GLEXT_PROC(PFNGLCREATESEMAPHORESNVPROC, glCreateSemaphoresNV);
+GLEXT_PROC(PFNGLSEMAPHOREPARAMETERIVNVPROC, glSemaphoreParameterivNV);
+GLEXT_PROC(PFNGLGETSEMAPHOREPARAMETERIVNVPROC, glGetSemaphoreParameterivNV);
 
 // ---------------------------------------------------------------------------------
 // OVR

@@ -893,6 +893,10 @@ GLEXT_PROC(PFNGLEVALUATEDEPTHVALUESARBPROC, glEvaluateDepthValuesARB);
 // GL_ARB_texture_buffer_object
 GLEXT_PROC(PFNGLTEXBUFFERARBPROC, glTexBufferARB);
 
+// GL_ARB_viewport_array
+GLEXT_PROC(PFNGLDEPTHRANGEARRAYDVNVPROC, glDepthRangeArraydvNV);
+GLEXT_PROC(PFNGLDEPTHRANGEINDEXEDDNVPROC, glDepthRangeIndexeddNV);
+
 // ---------------------------------------------------------------------------------
 // EXT
 // ---------------------------------------------------------------------------------
@@ -1487,6 +1491,17 @@ GLEXT_PROC(PFNGLSHADINGRATEIMAGEBARRIERNVPROC, glShadingRateImageBarrierNV);
 GLEXT_PROC(PFNGLSHADINGRATEIMAGEPALETTENVPROC, glShadingRateImagePaletteNV);
 GLEXT_PROC(PFNGLSHADINGRATESAMPLEORDERNVPROC, glShadingRateSampleOrderNV);
 GLEXT_PROC(PFNGLSHADINGRATESAMPLEORDERCUSTOMNVPROC, glShadingRateSampleOrderCustomNV);
+
+// GL_NV_depth_buffer_float
+GLEXT_PROC(PFNGLDEPTHRANGEDNVPROC, glDepthRangedNV);
+GLEXT_PROC(PFNGLCLEARDEPTHDNVPROC, glClearDepthdNV);
+GLEXT_PROC(PFNGLDEPTHBOUNDSDNVPROC, glDepthBoundsdNV);
+
+// GL_NV_memory_object_sparse
+GLEXT_PROC(PFNGLBUFFERPAGECOMMITMENTMEMNVPROC, glBufferPageCommitmentMemNV);
+GLEXT_PROC(PFNGLTEXPAGECOMMITMENTMEMNVPROC, glTexPageCommitmentMemNV);
+GLEXT_PROC(PFNGLNAMEDBUFFERPAGECOMMITMENTMEMNVPROC, glNamedBufferPageCommitmentMemNV);
+GLEXT_PROC(PFNGLTEXTUREPAGECOMMITMENTMEMNVPROC, glTexturePageCommitmentMemNV);
 
 // ---------------------------------------------------------------------------------
 // OVR
