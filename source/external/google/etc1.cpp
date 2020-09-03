@@ -378,13 +378,6 @@ void etc_encode_block_helper(const etc1_byte* pIn, int stride,
     }
 }
 
-static void writeBigEndian(etc1_byte* pOut, etc1_uint32 d) {
-    pOut[0] = (etc1_byte)(d >> 24);
-    pOut[1] = (etc1_byte)(d >> 16);
-    pOut[2] = (etc1_byte)(d >> 8);
-    pOut[3] = (etc1_byte) d;
-}
-
 namespace mango
 {
 
@@ -393,18 +386,18 @@ namespace mango
         MANGO_UNREFERENCED(info);
 
         etc1_byte colors[8];
-        etc1_byte flippedColors[8];
-        etc_average_colors_subblock(input, stride, colors, false, 0);
+        etc1_byte flipped[8];
+        etc_average_colors_subblock(input, stride, colors + 0, false, 0);
         etc_average_colors_subblock(input, stride, colors + 4, false, 2);
-        etc_average_colors_subblock(input, stride, flippedColors, true, 0);
-        etc_average_colors_subblock(input, stride, flippedColors + 4, true, 2);
+        etc_average_colors_subblock(input, stride, flipped + 0, true, 0);
+        etc_average_colors_subblock(input, stride, flipped + 4, true, 2);
 
         etc_compressed a, b;
         etc_encode_block_helper(input, stride, colors, &a, false);
-        etc_encode_block_helper(input, stride, flippedColors, &b, true);
+        etc_encode_block_helper(input, stride, flipped, &b, true);
         take_best(&a, &b);
-        writeBigEndian(output + 0, a.high);
-        writeBigEndian(output + 4, a.low);
+        ustore32be(output + 0, a.high);
+        ustore32be(output + 4, a.low);
     }
 
 } // namespace mango
