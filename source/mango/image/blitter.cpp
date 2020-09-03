@@ -1394,13 +1394,13 @@ namespace mango
                     if (src_mask)
                     {
                         // isolate least significant bit of mask; this is used for correct rounding
-                        const u32 lsb = dest_mask ^ (dest_mask - 1);
+                        //const u32 lsb = dest_mask ^ (dest_mask - 1);
 
                         // source and destination are different: add channel to component array
                         component[components].srcMask = src_mask;
                         component[components].destMask = dest_mask;
                         component[components].scale = float(dest_mask) / float(src_mask);
-                        component[components].bias = lsb * 0.5f;
+                        component[components].bias = 0;//lsb * 0.5f;
 
                         component[components].constant = i == 3 ? 1.0f : 0.0f;
                         component[components].offset = source.offset[i] >> source_float_shift;
@@ -1457,7 +1457,7 @@ namespace mango
             ConvertFunc func = convert_sse2(modeMask);
 
             // TODO: fixme
-            func = nullptr; // disabled until SSE converter is fixed
+            //func = nullptr; // disabled until SSE converter is fixed
 
             if (func)
             {
