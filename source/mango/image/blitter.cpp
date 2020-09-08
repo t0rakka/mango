@@ -1457,7 +1457,7 @@ namespace mango
             ConvertFunc func = convert_sse2(modeMask);
 
             // TODO: fixme
-            //func = nullptr; // disabled until SSE converter is fixed
+            func = nullptr; // disabled until SSE converter is fixed
 
             if (func)
             {
