@@ -390,15 +390,6 @@
     <ClInclude Include="..\..\source\external\lz4\lz4.h">
       <Filter>external\lz4</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\external\google\etc1.h">
-      <Filter>external\google</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\google\astc.hpp">
-      <Filter>external\google</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\google\etc.hpp">
-      <Filter>external\google</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\concurrentqueue\concurrentqueue.h">
       <Filter>external\concurrentqueue</Filter>
     </ClInclude>

@@ -21,13 +21,6 @@
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
 
-#define ETC1_ENCODED_BLOCK_SIZE 8
-#define ETC1_DECODED_BLOCK_SIZE 64
-
-typedef unsigned char etc1_byte;
-typedef int etc1_bool;
-typedef unsigned int etc1_uint32;
-
 /* From http://www.khronos.org/registry/gles/extensions/OES/OES_compressed_ETC1_RGB8_texture.txt
 
  The number of bits that represent a 4x4 texel block is 64 bits if
@@ -118,6 +111,13 @@ typedef unsigned int etc1_uint32;
 
 
  */
+
+#define ETC1_ENCODED_BLOCK_SIZE 8
+#define ETC1_DECODED_BLOCK_SIZE 64
+
+typedef unsigned char etc1_byte;
+typedef int etc1_bool;
+typedef unsigned int etc1_uint32;
 
 static const int kModifierTable[] = {
 /* 0 */2, 8, -2, -8,

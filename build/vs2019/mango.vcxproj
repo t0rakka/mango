@@ -190,9 +190,6 @@
     <ClInclude Include="..\..\source\external\bzip2\bzlib.h" />
     <ClInclude Include="..\..\source\external\bzip2\bzlib_private.h" />
     <ClInclude Include="..\..\source\external\concurrentqueue\concurrentqueue.h" />
-    <ClInclude Include="..\..\source\external\google\astc.hpp" />
-    <ClInclude Include="..\..\source\external\google\etc.hpp" />
-    <ClInclude Include="..\..\source\external\google\etc1.h" />
     <ClInclude Include="..\..\source\external\libdeflate\common\common_defs.h" />
     <ClInclude Include="..\..\source\external\libdeflate\common\compiler_gcc.h" />
     <ClInclude Include="..\..\source\external\libdeflate\common\compiler_msc.h" />
