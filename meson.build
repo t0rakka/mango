@@ -392,7 +392,6 @@ external_headers = files(
     'source/external/zstd/common/huf.h',
     'source/external/zstd/common/fse.h',
     'source/external/zstd/common/pool.h',
-    'source/external/zstd/common/xxh3.h',
     'source/external/zstd/common/xxhash.h',
     'source/external/zstd/common/zstd_errors.h',
     'source/external/zstd/common/zstd_internal.h',
