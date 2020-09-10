@@ -5,7 +5,6 @@
 #include <map>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
-#include "../../external/bc/BC.h"
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
     Format(bits, Format::type, Format::order, s0, s1, s2, s3)
