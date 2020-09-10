@@ -770,7 +770,7 @@ namespace
 #endif // MANGO_ENABLE_SSE4_2
 
     // Original implementation (C) Stephan Brumme
-    u32 crc_combine(u32 crc, u64 length, u32 polynomial)
+    u32 crc_combine(u32 crc, size_t length, u32 polynomial)
     {
         if (!length)
             return crc;
@@ -852,7 +852,7 @@ namespace
         return crc;
     }
 
-    u32 crc32(u32 crc, const u8* address, u64 size)
+    u32 crc32(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -897,7 +897,7 @@ namespace
         return ~crc;
     }
 
-    u32 crc32c(u32 crc, const u8* address, u64 size)
+    u32 crc32c(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -961,8 +961,8 @@ namespace mango
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        constexpr u64 KB = 1 << 10;
-        constexpr u64 MIN_BLOCK = 32 * KB;
+        constexpr size_t KB = 1 << 10;
+        constexpr size_t MIN_BLOCK = 32 * KB;
 
         if (memory.size < MIN_BLOCK * 2)
         {
@@ -970,7 +970,7 @@ namespace mango
             return ::crc32(crc, memory.address, memory.size);
         }
 
-        u64 block = std::max(MIN_BLOCK, u64(memory.size / (ThreadPool::getHardwareConcurrency() * 2)));
+        size_t block = std::max(MIN_BLOCK, memory.size / (ThreadPool::getHardwareConcurrency() * 2));
         int threads = int(memory.size / block);
 
         std::vector<u32> temp(threads);
@@ -981,8 +981,8 @@ namespace mango
         {
             q.enqueue([i, memory, &temp, block]
             {
-                u64 left = memory.size - i * block;
-                u64 bytes = std::min(block, left);
+                size_t left = memory.size - i * block;
+                size_t bytes = std::min(block, left);
                 temp[i] = ::crc32(0, memory.address + i * block, bytes);
             });
         }
@@ -994,12 +994,12 @@ namespace mango
 
         for (int i = 1; i < threads; ++i)
         {
-            u64 left = memory.size - i * block;
-            u64 bytes = std::min(block, left);
+            size_t left = memory.size - i * block;
+            size_t bytes = std::min(block, left);
             crc = ::crc32_combine(crc, temp[i], bytes);
         }
 
-        u64 leftover = memory.size - block * threads;
+        size_t leftover = memory.size - block * threads;
         if (leftover > 0)
         {
             crc = ::crc32(crc, memory.address + block * threads, leftover);
@@ -1010,8 +1010,8 @@ namespace mango
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        constexpr u64 KB = 1 << 10;
-        constexpr u64 MIN_BLOCK = 32 * KB;
+        constexpr size_t KB = 1 << 10;
+        constexpr size_t MIN_BLOCK = 32 * KB;
 
         if (memory.size < MIN_BLOCK * 2)
         {
@@ -1019,7 +1019,7 @@ namespace mango
             return ::crc32c(crc, memory.address, memory.size);
         }
 
-        u64 block = std::max(MIN_BLOCK, u64(memory.size / (ThreadPool::getHardwareConcurrency() * 2)));
+        size_t block = std::max(MIN_BLOCK, memory.size / (ThreadPool::getHardwareConcurrency() * 2));
         int threads = int(memory.size / block);
 
         std::vector<u32> temp(threads);
@@ -1030,8 +1030,8 @@ namespace mango
         {
             q.enqueue([i, memory, &temp, block]
             {
-                u64 left = memory.size - i * block;
-                u64 bytes = std::min(block, left);
+                size_t left = memory.size - i * block;
+                size_t bytes = std::min(block, left);
                 temp[i] = ::crc32c(0, memory.address + i * block, bytes);
             });
         }
@@ -1043,12 +1043,12 @@ namespace mango
 
         for (int i = 1; i < threads; ++i)
         {
-            u64 left = memory.size - i * block;
-            u64 bytes = std::min(block, left);
+            size_t left = memory.size - i * block;
+            size_t bytes = std::min(block, left);
             crc = ::crc32c_combine(crc, temp[i], bytes);
         }
 
-        u64 leftover = memory.size - block * threads;
+        size_t leftover = memory.size - block * threads;
         if (leftover > 0)
         {
             crc = ::crc32c(crc, memory.address + block * threads, leftover);
