@@ -947,15 +947,15 @@ namespace
 namespace mango
 {
 
-    u32 crc32_combine(u32 crc0, u32 crc1, u64 length1)
+    u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = crc_combine(crc0, length1, crc32_polynomial);
+        crc0 = crc_combine(crc0, u64(length1), crc32_polynomial);
         return crc0 ^ crc1;
     }
 
-    u32 crc32c_combine(u32 crc0, u32 crc1, u64 length1)
+    u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = crc_combine(crc0, length1, crc32c_polynomial);
+        crc0 = crc_combine(crc0, u64(length1), crc32c_polynomial);
         return crc0 ^ crc1;
     }
 
