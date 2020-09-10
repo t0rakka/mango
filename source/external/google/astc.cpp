@@ -24,10 +24,10 @@
     The original source code has been modified for integration.
 */
 
-#include "astc.hpp"
-#include <mango/core/endian.hpp>
-#include <mango/math/vector.hpp>
-#include <mango/math/srgb.hpp>
+#include "../../../include/mango/core/configure.hpp"
+#include "../../../include/mango/core/endian.hpp"
+#include "../../../include/mango/math/vector.hpp"
+#include "../../../include/mango/image/compression.hpp"
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
 
@@ -45,23 +45,23 @@ namespace
     {
         return a/b + ((a%b) ? 1 : 0);
     }
-    
+
     inline u32 getBit (u32 src, int ndx)
     {
         return (src >> ndx) & 1;
     }
-    
+
     inline u32 getBits (u32 src, int low, int high)
     {
         const int numBits = (high-low) + 1;
         return (src >> low) & ((1u<<numBits)-1);
     }
-    
+
     inline bool isBitSet (u32 src, int ndx)
     {
         return getBit(src, ndx) != 0;
     }
-    
+
     inline u32 reverseBits (u32 src, int numBits)
     {
         u32 result = 0;
@@ -69,7 +69,7 @@ namespace
             result |= ((src >> i) & 1) << (numBits-1-i);
         return result;
     }
-    
+
     inline u32 bitReplicationScale (u32 src, int numSrcBits, int numDstBits)
     {
         u32 dst = 0;
@@ -77,22 +77,16 @@ namespace
             dst |= shift >= 0 ? src << shift : src >> -shift;
         return dst;
     }
-    
+
     inline s32 signExtend (s32 src, int numSrcBits)
     {
         const bool negative = (src & (1 << (numSrcBits-1))) != 0;
         return src | (negative ? ~((1 << numSrcBits) - 1) : 0);
     }
-    
-    inline bool isFloat16InfOrNan (Half v)
+
+    inline bool isFloat16InfOrNan (float16 v)
     {
         return getBits(v.u, 10, 14) == 31;
-    }
-
-    inline u8 linearToSRGB(float value)
-    {
-        return u8(value * 255.0f);
-        //return u8(linear_to_srgb(value) * 255.0f);
     }
 
     // A helper for getting bits from a 128-bit block.
@@ -259,10 +253,10 @@ namespace
     
     struct ColorEndpointPair
     {
-        uint4 e0;
-        uint4 e1;
+        uint32x4 e0;
+        uint32x4 e1;
     };
-    
+
     struct TexelWeightPair
     {
         u32 w[2];
@@ -388,7 +382,7 @@ namespace
         if (isSRGB)
         {
             u8* const dstU = (u8*)dst;
-            
+
             for (int i = 0; i < blockWidth*blockHeight; i++)
             {
                 dstU[4*i + 0] = 0xff;
@@ -399,14 +393,14 @@ namespace
         }
         else
         {
-            float* const dstF = (float*)dst;
-            
+            float16* const dstF = (float16*)dst;
+
             for (int i = 0; i < blockWidth*blockHeight; i++)
             {
-                dstF[4*i + 0] = 1.0f;
-                dstF[4*i + 1] = 0.0f;
-                dstF[4*i + 2] = 1.0f;
-                dstF[4*i + 3] = 1.0f;
+                dstF[4*i + 0] = float16(1.0f);
+                dstF[4*i + 1] = float16(0.0f);
+                dstF[4*i + 2] = float16(1.0f);
+                dstF[4*i + 3] = float16(1.0f);
             }
         }
     }
@@ -445,8 +439,8 @@ namespace
         }
         else
         {
-            float* const dstF = (float*)dst;
-            
+            float16* const dstF = (float16*)dst;
+
             if (isHDRBlock)
             {
                 for (int c = 0; c < 4; c++)
@@ -470,7 +464,7 @@ namespace
                 for (int i = 0; i < blockWidth*blockHeight; i++)
                     for (int c = 0; c < 4; c++)
                     {
-                        dstF[i*4 + c] = rgba[c] == 65535 ? 1.0f : (float)rgba[c] / 65536.0f;
+                        dstF[i*4 + c] = float16(rgba[c] == 65535 ? 1.0f : float(rgba[c] / 65536.0f));
                     }
             }
         }
@@ -748,16 +742,16 @@ namespace
             a -= 0x40;
     }
 
-    inline uint4 clampedRGBA(int4 rgba)
+    inline uint32x4 clampedRGBA(int32x4 rgba)
     {
         // TODO: optimize
-        rgba = clamp(rgba, int4(0), int4(255));
-        return uint4(rgba.x, rgba.y, rgba.z, rgba.w);
+        rgba = clamp(rgba, int32x4(0), int32x4(255));
+        return uint32x4(rgba.x, rgba.y, rgba.z, rgba.w);
     }
 
-    inline int4 blueContract (int r, int g, int b, int a)
+    inline int32x4 blueContract (int r, int g, int b, int a)
     {
-        return int4((r+b)>>1, (g+b)>>1, b, a);
+        return int32x4((r+b)>>1, (g+b)>>1, b, a);
     }
     
     inline bool isColorEndpointModeHDR (u32 mode)
@@ -769,8 +763,8 @@ namespace
                mode == 14	||
                mode == 15;
     }
-    
-    void decodeHDREndpointMode7 (uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3)
+
+    void decodeHDREndpointMode7 (uint32x4& e0, uint32x4& e1, u32 v0, u32 v1, u32 v2, u32 v3)
     {
         const u32 m10		= getBit(v1, 7) | (getBit(v2, 7) << 1);
         const u32 m23		= getBits(v0, 6, 7);
@@ -837,22 +831,22 @@ namespace
         else if (majComp == 2)
             std::swap(red, blue);
 
-        const uint4 limit0(0);
-        const uint4 limit1(0xfff);
-        e0 = uint4(red - scale, green - scale, blue - scale, 0x780);
-        e1 = uint4(red, green, blue, 0x780);
+        const uint32x4 limit0(0);
+        const uint32x4 limit1(0xfff);
+        e0 = uint32x4(red - scale, green - scale, blue - scale, 0x780);
+        e1 = uint32x4(red, green, blue, 0x780);
         e0 = clamp(e0, limit0, limit1);
         e1 = clamp(e1, limit0, limit1);
     }
     
-    void decodeHDREndpointMode11 (uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5)
+    void decodeHDREndpointMode11 (uint32x4& e0, uint32x4& e1, u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5)
     {
         const u32 major = (getBit(v5, 7) << 1) | getBit(v4, 7);
-        
+
         if (major == 3)
         {
-            e0 = uint4(v0<<4, v2<<4, getBits(v4,0,6)<<5, 0x780);
-            e1 = uint4(v1<<4, v3<<4, getBits(v5,0,6)<<5, 0x780);
+            e0 = uint32x4(v0<<4, v2<<4, getBits(v4,0,6)<<5, 0x780);
+            e1 = uint32x4(v1<<4, v3<<4, getBits(v5,0,6)<<5, 0x780);
         }
         else
         {
@@ -907,10 +901,10 @@ namespace
             d0	<<= shiftAmount;
             d1	<<= shiftAmount;
 
-            const uint4 limit0(0);
-            const uint4 limit1(0xfff);
-            e0 = uint4(a - c, a - b0 - c - d0, a - b1 - c - d1, 0x780);
-            e1 = uint4(a, a - b0, a - b1, 0x780);
+            const uint32x4 limit0(0);
+            const uint32x4 limit1(0xfff);
+            e0 = uint32x4(a - c, a - b0 - c - d0, a - b1 - c - d1, 0x780);
+            e1 = uint32x4(a, a - b0, a - b1, 0x780);
             e0 = clamp(e0, limit0, limit1);
             e1 = clamp(e1, limit0, limit1);
 
@@ -925,7 +919,7 @@ namespace
         }
     }
 
-    void decodeHDREndpointMode15(uint4& e0, uint4& e1, u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5, u32 v6In, u32 v7In)
+    void decodeHDREndpointMode15(uint32x4& e0, uint32x4& e1, u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5, u32 v6In, u32 v7In)
     {
         decodeHDREndpointMode11(e0, e1, v0, v1, v2, v3, v4, v5);
 
@@ -962,24 +956,24 @@ namespace
         {
             const u32		endpointMode	= endpointModes[partitionNdx];
             const u32*		v				= &unquantizedEndpoints[unquantizedNdx];
-            uint4&			e0				= dst[partitionNdx].e0;
-            uint4&			e1				= dst[partitionNdx].e1;
+            uint32x4&		e0				= dst[partitionNdx].e0;
+            uint32x4&		e1				= dst[partitionNdx].e1;
 
             unquantizedNdx += computeNumColorEndpointValues(endpointMode);
             
             switch (endpointMode)
             {
                 case 0:
-                    e0 = uint4(v[0], v[0], v[0], 0xff);
-                    e1 = uint4(v[1], v[1], v[1], 0xff);
+                    e0 = uint32x4(v[0], v[0], v[0], 0xff);
+                    e1 = uint32x4(v[1], v[1], v[1], 0xff);
                     break;
                     
                 case 1:
                 {
                     const u32 L0 = (v[0] >> 2) | (getBits(v[1], 6, 7) << 6);
                     const u32 L1 = std::min(0xffu, L0 + getBits(v[1], 0, 5));
-                    e0 = uint4(L0, L0, L0, 0xff);
-                    e1 = uint4(L1, L1, L1, 0xff);
+                    e0 = uint32x4(L0, L0, L0, 0xff);
+                    e1 = uint32x4(L1, L1, L1, 0xff);
                     break;
                 }
                     
@@ -989,8 +983,8 @@ namespace
                     const u32 y0		= v1Gr ? v[0]<<4 : (v[1]<<4) + 8;
                     const u32 y1		= v1Gr ? v[1]<<4 : (v[0]<<4) - 8;
                     
-                    e0 = uint4(y0, y0, y0, 0x780);
-                    e1 = uint4(y1, y1, y1, 0x780);
+                    e0 = uint32x4(y0, y0, y0, 0x780);
+                    e1 = uint32x4(y1, y1, y1, 0x780);
                     break;
                 }
                     
@@ -1003,14 +997,14 @@ namespace
                     : getBits(v[1], 0, 3) << 1;
                     const u32	y1	= std::min(0xfffu, y0+d);
                     
-                    e0 = uint4(y0, y0, y0, 0x780);
-                    e1 = uint4(y1, y1, y1, 0x780);
+                    e0 = uint32x4(y0, y0, y0, 0x780);
+                    e1 = uint32x4(y1, y1, y1, 0x780);
                     break;
                 }
                     
                 case 4:
-                    e0 = uint4(v[0], v[0], v[0], v[2]);
-                    e1 = uint4(v[1], v[1], v[1], v[3]);
+                    e0 = uint32x4(v[0], v[0], v[0], v[2]);
+                    e1 = uint32x4(v[1], v[1], v[1], v[3]);
                     break;
                     
                 case 5:
@@ -1022,14 +1016,14 @@ namespace
                     bitTransferSigned(v1, v0);
                     bitTransferSigned(v3, v2);
                     
-                    e0 = clampedRGBA(int4(v0, v0, v0, v2));
-                    e1 = clampedRGBA(int4(v0+v1, v0+v1, v0+v1, v2+v3));
+                    e0 = clampedRGBA(int32x4(v0, v0, v0, v2));
+                    e1 = clampedRGBA(int32x4(v0+v1, v0+v1, v0+v1, v2+v3));
                     break;
                 }
                     
                 case 6:
-                    e0 = uint4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	0xff);
-                    e1 = uint4(v[0],				v[1],				v[2],				0xff);
+                    e0 = uint32x4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	0xff);
+                    e1 = uint32x4(v[0],				v[1],				v[2],				0xff);
                     break;
                     
                 case 7:
@@ -1039,15 +1033,15 @@ namespace
                 case 8:
                     if (v[1]+v[3]+v[5] >= v[0]+v[2]+v[4])
                     {
-                        e0 = uint4(v[0], v[2], v[4], 0xff);
-                        e1 = uint4(v[1], v[3], v[5], 0xff);
+                        e0 = uint32x4(v[0], v[2], v[4], 0xff);
+                        e1 = uint32x4(v[1], v[3], v[5], 0xff);
                     }
                     else
                     {
-                        int4 temp0 = blueContract(v[1], v[3], v[5], 0xff);
-                        int4 temp1 = blueContract(v[0], v[2], v[4], 0xff);
-                        e0 = uint4(temp0.x, temp0.y, temp0.z, temp0.w);
-                        e1 = uint4(temp1.x, temp1.y, temp1.z, temp1.w);
+                        int32x4 temp0 = blueContract(v[1], v[3], v[5], 0xff);
+                        int32x4 temp1 = blueContract(v[0], v[2], v[4], 0xff);
+                        e0 = uint32x4(temp0.x, temp0.y, temp0.z, temp0.w);
+                        e1 = uint32x4(temp1.x, temp1.y, temp1.z, temp1.w);
                     }
                     break;
 
@@ -1065,8 +1059,8 @@ namespace
                     
                     if (v1+v3+v5 >= 0)
                     {
-                        e0 = clampedRGBA(int4(v0,		v2,		v4,		0xff));
-                        e1 = clampedRGBA(int4(v0+v1,	v2+v3,	v4+v5,	0xff));
+                        e0 = clampedRGBA(int32x4(v0,		v2,		v4,		0xff));
+                        e1 = clampedRGBA(int32x4(v0+v1,	v2+v3,	v4+v5,	0xff));
                     }
                     else
                     {
@@ -1077,8 +1071,8 @@ namespace
                 }
                     
                 case 10:
-                    e0 = uint4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	v[4]);
-                    e1 = uint4(v[0],				v[1],				v[2],				v[5]);
+                    e0 = uint32x4((v[0]*v[3]) >> 8,	(v[1]*v[3]) >> 8,	(v[2]*v[3]) >> 8,	v[4]);
+                    e1 = uint32x4(v[0],				v[1],				v[2],				v[5]);
                     break;
                     
                 case 11:
@@ -1088,8 +1082,8 @@ namespace
                 case 12:
                     if (v[1]+v[3]+v[5] >= v[0]+v[2]+v[4])
                     {
-                        e0 = uint4(v[0], v[2], v[4], v[6]);
-                        e1 = uint4(v[1], v[3], v[5], v[7]);
+                        e0 = uint32x4(v[0], v[2], v[4], v[6]);
+                        e1 = uint32x4(v[1], v[3], v[5], v[7]);
                     }
                     else
                     {
@@ -1112,11 +1106,11 @@ namespace
                     bitTransferSigned(v3, v2);
                     bitTransferSigned(v5, v4);
                     bitTransferSigned(v7, v6);
-                    
+
                     if (v1+v3+v5 >= 0)
                     {
-                        e0 = clampedRGBA(int4(v0,		v2,		v4,		v6));
-                        e1 = clampedRGBA(int4(v0+v1,	v2+v3,	v4+v5,	v6+v7));
+                        e0 = clampedRGBA(int32x4(v0,		v2,		v4,		v6));
+                        e1 = clampedRGBA(int32x4(v0+v1,	v2+v3,	v4+v5,	v6+v7));
                     }
                     else
                     {
@@ -1164,7 +1158,7 @@ namespace
     {
         const int			numWeights	= computeNumWeights(blockMode);
         const ISEParams&	iseParams	= blockMode.weightISEParams;
-        
+
         if (iseParams.mode == ISEMODE_TRIT || iseParams.mode == ISEMODE_QUINT)
         {
             const int rangeCase = iseParams.numBits*2 + (iseParams.mode == ISEMODE_QUINT ? 1 : 0);
@@ -1207,7 +1201,7 @@ namespace
             for (int weightNdx = 0; weightNdx < numWeights; weightNdx++)
                 dst[weightNdx] = bitReplicationScale(weightGrid[weightNdx].v, iseParams.numBits, 6);
         }
-        
+
         for (int weightNdx = 0; weightNdx < numWeights; weightNdx++)
             dst[weightNdx] += dst[weightNdx] > 32 ? 1 : 0;
     }
@@ -1332,8 +1326,8 @@ namespace
             {
                 const int				texelNdx			= texelY*blockWidth + texelX;
                 const int				colorEndpointNdx	= numPartitions == 1 ? 0 : computeTexelPartition(partitionIndexSeed, texelX, texelY, 0, numPartitions, smallBlock);
-                const uint4&			e0					= colorEndpoints[colorEndpointNdx].e0;
-                const uint4&			e1					= colorEndpoints[colorEndpointNdx].e1;
+                const uint32x4&			e0					= colorEndpoints[colorEndpointNdx].e0;
+                const uint32x4&			e1					= colorEndpoints[colorEndpointNdx].e1;
                 const TexelWeightPair&	weight				= texelWeights[texelNdx];
                 
                 if (isLDRMode && isHDREndpoint[colorEndpointNdx])
@@ -1347,10 +1341,10 @@ namespace
                     }
                     else
                     {
-                        ((float*)dst)[texelNdx*4 + 0] = 1.0f;
-                        ((float*)dst)[texelNdx*4 + 1] = 0;
-                        ((float*)dst)[texelNdx*4 + 2] = 1.0f;
-                        ((float*)dst)[texelNdx*4 + 3] = 1.0f;
+                        ((float16*)dst)[texelNdx*4 + 0] = float16(1.0f);
+                        ((float16*)dst)[texelNdx*4 + 1] = float16(0.0f);
+                        ((float16*)dst)[texelNdx*4 + 2] = float16(1.0f);
+                        ((float16*)dst)[texelNdx*4 + 3] = float16(1.0f);
                     }
                 }
                 else
@@ -1367,7 +1361,7 @@ namespace
                             if (isSRGB)
                                 ((u8*)dst)[texelNdx*4 + channelNdx] = (c & 0xff00) >> 8;
                             else
-                                ((float*)dst)[texelNdx*4 + channelNdx] = c == 65535 ? 1.0f : (float)c / 65536.0f;
+                                ((float16*)dst)[texelNdx*4 + channelNdx] = float16(c == 65535 ? 1.0f : float(c / 65536.0f));
                         }
                         else
                         {
@@ -1381,12 +1375,12 @@ namespace
                             : m >= 1536		? 5*m - 2048
                             :				  4*m - 512;
 
-                            Half cf;
+                            float16 cf;
                             cf.u = u16((e << 10) + (mt >> 3));
                             if (isFloat16InfOrNan(cf))
                                 cf.u = 0x7bff;
 
-                            ((float*)dst)[texelNdx*4 + channelNdx] = cf;
+                            ((float16*)dst)[texelNdx*4 + channelNdx] = cf;
                         }
                     }
                 }
@@ -1438,7 +1432,7 @@ namespace
 
         const bool	isSingleUniqueCem			= numPartitions == 1 || blockData.getBits(23, 24) == 0;
         const int	numConfigDataBits			= (numPartitions == 1 ? 17 : isSingleUniqueCem ? 29 : 25 + 3*numPartitions) +
-        (blockMode.isDualPlane ? 2 : 0);
+                                                  (blockMode.isDualPlane ? 2 : 0);
         const int	numBitsForColorEndpoints	= 128 - numWeightDataBits - numConfigDataBits;
         const int	extraCemBitsStart			= 127 - numWeightDataBits - (isSingleUniqueCem		? -1
                                                                              : numPartitions == 4	? 7
@@ -1446,36 +1440,36 @@ namespace
                                                                              : numPartitions == 2	? 1
                                                                              : 0);
         // Decode color endpoint modes.
-        
+
         u32 colorEndpointModes[4];
         decodeColorEndpointModes(&colorEndpointModes[0], blockData, numPartitions, extraCemBitsStart);
-        
+
         const int numColorEndpointValues = computeNumColorEndpointValues(colorEndpointModes, numPartitions);
-        
+
         // Check for errors in color endpoint value count.
-        
+
         if (numColorEndpointValues > 18 || numBitsForColorEndpoints < divRoundUp(13*numColorEndpointValues, 5))
         {
             setASTCErrorColorBlock(dst, blockWidth, blockHeight, isSRGB);
             return;
         }
-        
+
         // Compute color endpoints.
-        
+
         ColorEndpointPair colorEndpoints[4];
         computeColorEndpoints(&colorEndpoints[0], blockData, &colorEndpointModes[0], numPartitions, numColorEndpointValues,
                               computeMaximumRangeISEParams(numBitsForColorEndpoints, numColorEndpointValues), numBitsForColorEndpoints);
-        
+
         // Compute texel weights.
-        
+
         TexelWeightPair texelWeights[ASTC_MAX_BLOCK_WIDTH*ASTC_MAX_BLOCK_HEIGHT];
         computeTexelWeights(&texelWeights[0], blockData, blockWidth, blockHeight, blockMode);
-        
+
         // Set texel colors.
-        
+
         const int		ccs					= blockMode.isDualPlane ? (int)blockData.getBits(extraCemBitsStart-2, extraCemBitsStart-1) : -1;
         const u32	partitionIndexSeed		= numPartitions > 1 ? blockData.getBits(13, 22) : (u32)-1;
-        
+
         setTexelColors(dst, &colorEndpoints[0], &texelWeights[0], ccs, partitionIndexSeed, numPartitions, blockWidth, blockHeight, isSRGB, isLDR, &colorEndpointModes[0]);
     }
     
@@ -1484,63 +1478,62 @@ namespace
 namespace mango
 {
 
-    void decode_block_astc(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_astc_srgb(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
-        union
-        {
-            u8 sRGB[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
-            float linear[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
-        } decompressedBuffer;
+        const bool isSRGB = true;
+        const bool isLDR = true;
 
-        const bool isLDR = false; // TODO: determine from block information
-        const bool isSRGB = (info.getCompressionFlags() & TextureCompressionFlags::SRGB) != 0;
         const int blockWidth = info.width;
         const int blockHeight = info.height;
 
         const Block128 blockData(input);
 
-        if (isSRGB)
+        u8 buffer[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
+        decompressASTCBlock(buffer, blockData, blockWidth, blockHeight, isSRGB, isLDR);
+
+        for (int y = 0; y < blockHeight; ++y)
         {
-            // TODO: Support writing directly into the output pointer
-            decompressASTCBlock(&decompressedBuffer.sRGB[0], blockData, blockWidth, blockHeight, isSRGB, isLDR);
+            u8* dest = output + y * stride;
+            u8* src = buffer + y * blockWidth * 4;
 
-            for (int y = 0; y < blockHeight; ++y)
+            for (int x = 0; x < blockWidth; ++x)
             {
-                u8* dest = output + y * stride;
-                u8* src = decompressedBuffer.sRGB + y * blockWidth * 4;
-
-                for (int x = 0; x < blockWidth; ++x)
-                {
-                    dest[0] = src[0];
-                    dest[1] = src[1];
-                    dest[2] = src[2];
-                    dest[3] = src[3];
-                    dest += 4;
-                    src += 4;
-                }
+                dest[0] = src[0];
+                dest[1] = src[1];
+                dest[2] = src[2];
+                dest[3] = src[3];
+                dest += 4;
+                src += 4;
             }
         }
-        else
+    }
+
+    void decode_block_astc_fp16(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    {
+        const bool isSRGB = false;
+        const bool isLDR = false;
+
+        const int blockWidth = info.width;
+        const int blockHeight = info.height;
+
+        const Block128 blockData(input);
+
+        float16 buffer[ASTC_MAX_BLOCK_WIDTH * ASTC_MAX_BLOCK_HEIGHT * 4];
+        decompressASTCBlock(buffer, blockData, blockWidth, blockHeight, isSRGB, isLDR);
+
+        for (int y = 0; y < blockHeight; ++y)
         {
-            // TODO: Write result out in Half or Float format.
-            // NOTE: The code does internally use Half format and converts to Float.
-            decompressASTCBlock(&decompressedBuffer.linear[0], blockData, blockWidth, blockHeight, isSRGB, isLDR);
+            float16* dest = reinterpret_cast<float16*>(output + y * stride);
+            float16* src = buffer + y * blockWidth * 4;
 
-            // convert to unorm8
-            for (int y = 0; y < blockHeight; ++y)
+            for (int x = 0; x < blockWidth; ++x)
             {
-                u8* dest = output + y * stride;
-                float* src = decompressedBuffer.linear + y * blockWidth * 4;
-
-                for (int x = 0; x < blockWidth; ++x)
-                {
-                    dest[0] = linearToSRGB(src[0]);
-                    dest[1] = linearToSRGB(src[1]);
-                    dest[2] = linearToSRGB(src[2]);
-                    dest[3] = linearToSRGB(src[3]);
-                    dest += 4;
-                    src += 4;
-                }
+                dest[0] = src[0];
+                dest[1] = src[1];
+                dest[2] = src[2];
+                dest[3] = src[3];
+                dest += 4;
+                src += 4;
             }
         }
     }
