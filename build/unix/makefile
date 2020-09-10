@@ -134,7 +134,7 @@ ifeq (Linux, $(OS))
   LIBRARY_OPENGL = lib$(LIBNAME_OPENGL).so
   LIBRARY_VULKAN = lib$(LIBNAME_VULKAN).so
   LIBRARY_FRAMEBUFFER = lib$(LIBNAME_FRAMEBUFFER).so
-  
+
   CLEAN    = rm -fr *.so $(OBJECTS_PATH)
   INSTALL  = cp *.so /usr/local/lib ; ldconfig ; rm -rf /usr/local/include/mango ; cp -r $(INCLUDE_BASE)/mango/ /usr/local/include/mango/
   LINK_POST += -lpthread -ldl
@@ -163,8 +163,8 @@ ifeq (Linux, $(OS))
 
   ifeq (i686, $(ARCH))
     PLATFORM = x86
-    CC  = gcc $(OPTIONS) $(OPTIONS_GCC) $(OPTIONS_X86) -g $(CC_STD)
-    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) $(OPTIONS_X86) -g -ansi $(CPP_STD)
+    CC  = gcc $(OPTIONS) $(OPTIONS_GCC) $(OPTIONS_X86) $(CC_STD)
+    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) $(OPTIONS_X86) -ansi $(CPP_STD)
     LINK_MANGO  = g++ -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = g++ -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
@@ -179,8 +179,8 @@ ifeq (Linux, $(OS))
 
   ifeq (armv6l, $(ARCH))
     PLATFORM = armv6l
-    CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -g -mfpu=vfp -mfloat-abi=hard
-    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) -g -mfpu=vfp -mfloat-abi=hard -ansi -std=c++0x
+    CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -mfpu=vfp -mfloat-abi=hard
+    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) -mfpu=vfp -mfloat-abi=hard -ansi -std=c++0x
     LINK_MANGO  = g++ -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = g++ -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
@@ -195,8 +195,8 @@ ifeq (Linux, $(OS))
 
   ifeq (armv7l, $(ARCH))
     PLATFORM = armv7l
-    CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -g -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fPIC $(CC_STD)
-    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) -g -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fpermissive -Wno-psabi -fPIC -ansi $(CPP_STD)
+    CC  = gcc $(OPTIONS) $(OPTIONS_GCC) -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = g++ $(OPTIONS) $(OPTIONS_GCC) -marm -mcpu=cortex-a9 -mtune=cortex-a9 $(NEON) -mfloat-abi=hard -funsafe-math-optimizations -fpermissive -Wno-psabi -fPIC -ansi $(CPP_STD)
     LINK_MANGO  = g++ -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = g++ -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = g++ -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
@@ -211,8 +211,8 @@ ifeq (Linux, $(OS))
 
   ifeq (ppc64le, $(ARCH))
     PLATFORM = ppc64le
-    CC  = powerpc64le-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -mcpu=power8 -funsafe-math-optimizations -fPIC $(CC_STD)
-    CPP = powerpc64le-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -mcpu=power8 -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    CC  = powerpc64le-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -mcpu=power8 -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = powerpc64le-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -mcpu=power8 -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
     LINK_MANGO  = powerpc64le-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = powerpc64le-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = powerpc64le-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
@@ -227,8 +227,8 @@ ifeq (Linux, $(OS))
 
   ifeq (mips64, $(ARCH))
     PLATFORM = mips64
-    CC  = mips64-linux-gnuabi64-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
-    CPP = mips64-linux-gnuabi64-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    CC  = mips64-linux-gnuabi64-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = mips64-linux-gnuabi64-g++-5 $(OPTIONS) $(OPTIONS_GCC) -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
     CC += -mips64r5 -mfp64
     CPP += -mips64r5 -mfp64
     LINK_MANGO  = mips64-linux-gnuabi64-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
@@ -245,8 +245,8 @@ ifeq (Linux, $(OS))
 
   ifeq (aarch64, $(ARCH))
     PLATFORM = arm64
-    CC  = aarch64-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fPIC $(CC_STD)
-    CPP = aarch64-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -g -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
+    CC  = aarch64-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -funsafe-math-optimizations -fPIC $(CC_STD)
+    CPP = aarch64-linux-gnu-g++-5 $(OPTIONS) $(OPTIONS_GCC) -funsafe-math-optimizations -fpermissive -fPIC -ansi $(CPP_STD)
     LINK_MANGO  = aarch64-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_MANGO) -o $(LIBRARY_MANGO)
     LINK_OPENGL = aarch64-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_OPENGL) -o $(LIBRARY_OPENGL)
     LINK_VULKAN = aarch64-linux-gnu-g++-5 -s -shared -Wl,-soname,$(LIBRARY_VULKAN) -o $(LIBRARY_VULKAN)
