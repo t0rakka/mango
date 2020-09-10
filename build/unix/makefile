@@ -8,6 +8,18 @@
 # configuration
 # ---------------------------------------------------------------------------
 
+# build
+ifeq ($(build),)
+    OPTIONS = -DNDEBUG
+else ifeq ($(build), release)
+    OPTIONS = -DNDEBUG
+else ifeq ($(build), debug)
+    OPTIONS = -O0 -g
+else
+    $(error Incorrect option: build=$(build))
+endif
+
+# simd
 ifeq ($(simd),)
     OPTIONS_X86   =
 else ifeq ($(simd), sse2)
@@ -21,9 +33,10 @@ else ifeq ($(simd), avx2)
 else ifeq ($(simd), avx512)
     OPTIONS_X86   = -mavx512dq -mavx512vl -mavx512bw
 else
-    incorrect option
+    $(error Incorrect option: simd=$(simd))
 endif
 
+# arch
 ifeq ($(arch),)
     ARCH = $(shell uname -m)
 else ifeq ($(arch), ppc64le)
@@ -33,7 +46,7 @@ else ifeq ($(arch), mips64)
 else ifeq ($(arch), aarch64)
     ARCH = aarch64
 else
-    incorrect option
+    $(error Incorrect option: arch=$(arch))
 endif
 
 OS = $(shell uname)
@@ -43,7 +56,7 @@ CC_STD = -std=c11
 CPP_STD = -std=c++14
 
 # common compiler options (LLVM/CLANG/GCC)
-OPTIONS     = -c -Wall -O3 -ffast-math
+OPTIONS     += -c -Wall -O3 -ffast-math
 OPTIONS_GCC = -ftree-vectorize
 
 OPTIONS_X86 += -maes -mpclmul
