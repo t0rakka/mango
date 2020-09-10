@@ -124,11 +124,8 @@
 		A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7A11E706F8800D4D499 /* BC4BC5.cpp */; };
 		A63DD7A61E706F8800D4D499 /* BC6HBC7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7A21E706F8800D4D499 /* BC6HBC7.cpp */; };
 		A63DD7AE1E706FA000D4D499 /* astc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7A81E706FA000D4D499 /* astc.cpp */; };
-		A63DD7AF1E706FA000D4D499 /* astc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7A91E706FA000D4D499 /* astc.hpp */; };
 		A63DD7B01E706FA000D4D499 /* etc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AA1E706FA000D4D499 /* etc.cpp */; };
-		A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AB1E706FA000D4D499 /* etc.hpp */; };
 		A63DD7B21E706FA000D4D499 /* etc1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7AC1E706FA000D4D499 /* etc1.cpp */; };
-		A63DD7B31E706FA000D4D499 /* etc1.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7AD1E706FA000D4D499 /* etc1.h */; };
 		A642435421852AEF0044B763 /* Bcj2.c in Sources */ = {isa = PBXBuildFile; fileRef = A642430121852AE80044B763 /* Bcj2.c */; };
 		A642435521852AEF0044B763 /* 7zCrc.h in Headers */ = {isa = PBXBuildFile; fileRef = A642430221852AE80044B763 /* 7zCrc.h */; };
 		A642435721852AEF0044B763 /* Ppmd8Enc.c in Sources */ = {isa = PBXBuildFile; fileRef = A642430421852AE80044B763 /* Ppmd8Enc.c */; };
@@ -618,11 +615,8 @@
 		A63DD7A11E706F8800D4D499 /* BC4BC5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BC4BC5.cpp; path = external/bc/BC4BC5.cpp; sourceTree = "<group>"; };
 		A63DD7A21E706F8800D4D499 /* BC6HBC7.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BC6HBC7.cpp; path = external/bc/BC6HBC7.cpp; sourceTree = "<group>"; };
 		A63DD7A81E706FA000D4D499 /* astc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astc.cpp; path = external/google/astc.cpp; sourceTree = "<group>"; };
-		A63DD7A91E706FA000D4D499 /* astc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = astc.hpp; path = external/google/astc.hpp; sourceTree = "<group>"; };
 		A63DD7AA1E706FA000D4D499 /* etc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc.cpp; path = external/google/etc.cpp; sourceTree = "<group>"; };
-		A63DD7AB1E706FA000D4D499 /* etc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = etc.hpp; path = external/google/etc.hpp; sourceTree = "<group>"; };
 		A63DD7AC1E706FA000D4D499 /* etc1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = etc1.cpp; path = external/google/etc1.cpp; sourceTree = "<group>"; };
-		A63DD7AD1E706FA000D4D499 /* etc1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = etc1.h; path = external/google/etc1.h; sourceTree = "<group>"; };
 		A642430121852AE80044B763 /* Bcj2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Bcj2.c; path = external/lzma/Bcj2.c; sourceTree = "<group>"; };
 		A642430221852AE80044B763 /* 7zCrc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 7zCrc.h; path = external/lzma/7zCrc.h; sourceTree = "<group>"; };
 		A642430421852AE80044B763 /* Ppmd8Enc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Ppmd8Enc.c; path = external/lzma/Ppmd8Enc.c; sourceTree = "<group>"; };
@@ -1344,11 +1338,8 @@
 			isa = PBXGroup;
 			children = (
 				A63DD7A81E706FA000D4D499 /* astc.cpp */,
-				A63DD7A91E706FA000D4D499 /* astc.hpp */,
 				A63DD7AA1E706FA000D4D499 /* etc.cpp */,
-				A63DD7AB1E706FA000D4D499 /* etc.hpp */,
 				A63DD7AC1E706FA000D4D499 /* etc1.cpp */,
-				A63DD7AD1E706FA000D4D499 /* etc1.h */,
 			);
 			name = google;
 			sourceTree = "<group>";
@@ -1883,7 +1874,6 @@
 				A6EC3F8F230D7C4D00B17F21 /* bit_reader_inl_utils.h in Headers */,
 				A645DD54214154F400EC714B /* compiler.h in Headers */,
 				A642439C21852AEF0044B763 /* BwtSort.h in Headers */,
-				A63DD7B31E706FA000D4D499 /* etc1.h in Headers */,
 				A642437121852AEF0044B763 /* Compiler.h in Headers */,
 				A645DD722141551200EC714B /* zstd_opt.h in Headers */,
 				A6EC3FA7230D7C6100B17F21 /* types.h in Headers */,
@@ -1923,7 +1913,6 @@
 				A642435521852AEF0044B763 /* 7zCrc.h in Headers */,
 				A63DD7971E706F5400D4D499 /* lzoconf.h in Headers */,
 				A63DD7551E706EB200D4D499 /* rarvm.hpp in Headers */,
-				A63DD7AF1E706FA000D4D499 /* astc.hpp in Headers */,
 				A6EC3F67230D7C3D00B17F21 /* muxi.h in Headers */,
 				A650BE9521F8D4290066B9B5 /* cocoa_window.h in Headers */,
 				A642439121852AEF0044B763 /* Bra.h in Headers */,
@@ -1976,7 +1965,6 @@
 				A6DD28D324125F1A0085E6EE /* matchfinder_common.h in Headers */,
 				A6EC3F98230D7C4D00B17F21 /* endian_inl_utils.h in Headers */,
 				A645DD5A214154F400EC714B /* zstd_internal.h in Headers */,
-				A63DD7B11E706FA000D4D499 /* etc.hpp in Headers */,
 				A63DD7771E706EF100D4D499 /* lzfse.h in Headers */,
 				A64243A521852AEF0044B763 /* Xz.h in Headers */,
 				A6EC3F64230D7C3D00B17F21 /* animi.h in Headers */,

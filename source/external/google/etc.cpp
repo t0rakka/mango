@@ -24,10 +24,11 @@
     The original source code has been modified for integration.
 */
 
-#include "etc.hpp"
-#include <mango/core/bits.hpp>
-#include <mango/core/endian.hpp>
-#include <mango/math/vector.hpp>
+#include "../../../include/mango/core/configure.hpp"
+#include "../../../include/mango/core/bits.hpp"
+#include "../../../include/mango/core/endian.hpp"
+#include "../../../include/mango/math/vector.hpp"
+#include "../../../include/mango/image/compression.hpp"
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
 

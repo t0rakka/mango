@@ -5,7 +5,6 @@
 #include <map>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
-#include "../../external/google/etc.hpp"
 #include "../../external/bc/BC.h"
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
@@ -17,7 +16,6 @@
 namespace mango
 {
 
-    // decoders
     void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC1
     void decode_block_dxt3            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC2
     void decode_block_dxt5            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC3
@@ -36,12 +34,46 @@ namespace mango
     void decode_block_atc_i           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_fxt1_rgb        (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_fxt1_rgba       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+
 #ifdef MANGO_ENABLE_LICENSE_APACHE
+
+    void decode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_etc2            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_etc2_eac        (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_eac_r11         (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_eac_rg11        (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_astc_fp16       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
     void decode_block_astc_srgb       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+
 #endif // MANGO_ENABLE_LICENSE_APACHE
 
-    // encoders
+#ifdef MANGO_ENABLE_LICENSE_MICROSOFT
+
+    void decode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+
+    void encode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc1a            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+
+#endif // MANGO_ENABLE_LICENSE_MICROSOFT
+
     void encode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
 } // namespace mango
