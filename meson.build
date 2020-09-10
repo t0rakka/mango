@@ -309,6 +309,7 @@ image_sources = files(
     'source/mango/image/blitter.cpp',
     'source/mango/image/block.cpp',
     'source/mango/image/block_dxt.cpp',
+    'source/mango/image/block_fxt1.cpp',
     'source/mango/image/block_pvrtc.cpp',
     'source/mango/image/block_yuv.cpp',
     'source/mango/image/exif.cpp',
