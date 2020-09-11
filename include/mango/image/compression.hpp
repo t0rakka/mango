@@ -219,20 +219,23 @@ namespace mango
         using EncodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
 
         TextureCompression compression; // block format (including flags)
-        u32 dxgi;   // DXGI format
-        u32 gl;     // OpenGL format
-        u32 vk;     // Vulkan format
+        u32 dxgi;           // DXGI format
+        u32 gl;             // OpenGL format
+        u32 vk;             // Vulkan format
 
-        int width;  // block width
-        int height; // block height
-        int bytes;  // block size in bytes
-        Format format; // pixel format for encode/decode
-        DecodeFunc decode; // decoding function
-        EncodeFunc encode; // encoding function
+        int width;          // block width
+        int height;         // block height
+        int depth;          // block depth
+        int bytes;          // block size in bytes
+        Format format;      // pixel format for encode/decode
+        DecodeFunc decode;  // decoding function
+        EncodeFunc encode;  // encoding function
 
         TextureCompressionInfo();
         TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 gl, u32 vk,
-                               int width, int height, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode);
+                               int width, int height, int depth, int bytes,
+                               const Format& format, DecodeFunc decode, EncodeFunc encode);
+        TextureCompressionInfo(const TextureCompressionInfo& info, int width, int height);
         TextureCompressionInfo(TextureCompression compression);
         TextureCompressionInfo(dxgi::TextureFormat format);
         TextureCompressionInfo(opengl::TextureFormat format);
