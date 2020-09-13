@@ -50,6 +50,7 @@ namespace mango
 
         void save(const std::string& filename, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
         void clear(float red, float green, float blue, float alpha) const;
+        void clear(ColorRGBA color) const;
         void blit(int x, int y, const Surface& source) const;
         void xflip() const;
         void yflip() const;

@@ -275,20 +275,25 @@ namespace mango
     {
     }
 
-    Surface::Surface(const Surface& source, int x, int y, int width_, int height_)
-        : format(source.format)
-        , stride(source.stride)
+    Surface::Surface(const Surface& surface, int x, int y, int w, int h)
+        : format(surface.format)
+        , stride(surface.stride)
     {
-        // clip rectangle to source surface
-        const int x0 = std::max(0, x);
-        const int y0 = std::max(0, y);
-        const int x1 = std::min(source.width, x + width_);
-        const int y1 = std::min(source.height, y + height_);
+        if (x < 0)
+        {
+            w = std::max(0, w + x);
+            x = 0;
+        }
 
-        // compute resulting surface
-        image  = source.address(x0, y0);
-        width  = std::max(0, x1 - x0);
-        height = std::max(0, y1 - y0);
+        if (y < 0)
+        {
+            h = std::max(0, h + y);
+            y = 0;
+        }
+
+        image  = surface.address(x, y);
+        width  = std::max(0, std::min(surface.width, x + w) - x);
+        height = std::max(0, std::min(surface.height, y + h) - y);
     }
 
     Surface::~Surface()
@@ -399,6 +404,12 @@ namespace mango
         }
     }
 
+    void Surface::clear(ColorRGBA color) const
+    {
+        const float s = 1.0f / 255.0f;
+        clear(color.r * s, color.g * s, color.b * s, color.a * s);
+    }
+
     void Surface::blit(int x, int y, const Surface& source) const
     {
         if (!source.width || !source.height || !source.format.bits || !format.bits)
@@ -417,6 +428,16 @@ namespace mango
         rect.dest.stride = dest.stride;
         rect.width = dest.width;
         rect.height = dest.height;
+
+        if (x < 0)
+        {
+            rect.src.address -= x * source.format.bytes();
+        }
+
+        if (y < 0)
+        {
+            rect.src.address -= y * source.stride;
+        }
 
         Blitter blitter(dest.format, source.format);
 
