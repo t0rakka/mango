@@ -739,14 +739,14 @@ namespace mango
         }
     }
 
-    int2 Window::getWindowSize() const
+    int32x2 Window::getWindowSize() const
     {
         XWindowAttributes attributes;
         XGetWindowAttributes(m_handle->display, m_handle->window, &attributes);
         return int2(attributes.width, attributes.height);
     }
 
-	int2 Window::getCursorPosition() const
+	int32x2 Window::getCursorPosition() const
 	{
 		::Window root;
 		::Window child;

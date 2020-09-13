@@ -332,7 +332,7 @@ static inline void DecodeBC1(u8* pColor, int stride, const D3DX_BC1 *pBC, bool i
     assert( pColor && pBC );
     static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
 
-    float4 color[4];
+    float32x4 color[4];
     color[0] = XMLoadU565(pBC->rgb[0]);
     color[1] = XMLoadU565(pBC->rgb[1]);
 
@@ -1209,7 +1209,7 @@ namespace mango
     void encode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC1(output, temp, 0.0f, DirectX::BC_FLAGS_NONE);
     }
@@ -1217,7 +1217,7 @@ namespace mango
     void encode_block_bc1a(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC1(output, temp, 1.0f, DirectX::BC_FLAGS_NONE);
     }
@@ -1225,7 +1225,7 @@ namespace mango
     void encode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC2(output, temp, DirectX::BC_FLAGS_NONE);
     }
@@ -1233,7 +1233,7 @@ namespace mango
     void encode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
     {
         MANGO_UNREFERENCED(info);
-        float4 temp[16];
+        float32x4 temp[16];
         convert_block(temp, input, stride);
         DirectX::D3DXEncodeBC3(output, temp, DirectX::BC_FLAGS_NONE);
     }

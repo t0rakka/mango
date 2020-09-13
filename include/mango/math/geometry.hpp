@@ -41,13 +41,13 @@ namespace mango
 
     struct LineSegment
     {
-        float3 position[2];
+        float32x3 position[2];
 
         LineSegment()
         {
         }
 
-        LineSegment(const float3& position0, const float3& position1)
+        LineSegment(const float32x3& position0, const float32x3& position1)
         {
             position[0] = position0;
             position[1] = position1;
@@ -57,8 +57,8 @@ namespace mango
         {
         }
 
-        float3 closest(const float3& point) const;
-        float distance(const float3& point) const;
+        float32x3 closest(const float32x3& point) const;
+        float distance(const float32x3& point) const;
     };
 
     // ------------------------------------------------------------------
@@ -67,14 +67,14 @@ namespace mango
 
     struct Ray
     {
-        float3 origin;
-        float3 direction;
+        float32x3 origin;
+        float32x3 direction;
 
         Ray()
         {
         }
 
-        Ray(const float3& origin, const float3& direction)
+        Ray(const float32x3& origin, const float32x3& direction)
             : origin(origin)
             , direction(direction)
         {
@@ -84,7 +84,7 @@ namespace mango
         {
         }
 
-        float distance(const float3& point) const;
+        float distance(const float32x3& point) const;
     };
 
     // ------------------------------------------------------------------
@@ -95,8 +95,8 @@ namespace mango
     {
         float dotod;
         float dotoo;
-        float3 invdir;
-        int3 sign;
+        float32x3 invdir;
+        int32x3 sign;
 
         FastRay(const Ray& ray);
         ~FastRay()
@@ -110,8 +110,8 @@ namespace mango
 
     struct Rectangle
     {
-        float2 position;
-        float2 size;
+        float32x2 position;
+        float32x2 size;
 
         Rectangle()
         {
@@ -123,7 +123,7 @@ namespace mango
         {
         }
 
-        Rectangle(const float2& position, const float2& size)
+        Rectangle(const float32x2& position, const float32x2& size)
             : position(position)
             , size(size)
         {
@@ -134,7 +134,7 @@ namespace mango
         }
 
         float aspect() const;
-        bool inside(const float2& point) const;
+        bool inside(const float32x2& point) const;
     };
 
     // ------------------------------------------------------------------
@@ -143,26 +143,26 @@ namespace mango
 
     struct Plane
     {
-        float3 normal;
+        float32x3 normal;
         float dist;
 
         Plane()
         {
         }
 
-        Plane(const float3& normal, float dist)
+        Plane(const float32x3& normal, float dist)
             : normal(normal)
             , dist(dist)
         {
         }
 
-        Plane(const float3& normal, const float3& point)
+        Plane(const float32x3& normal, const float32x3& point)
             : normal(normal)
         {
             dist = dot(normal, point);
         }
 
-        Plane(const float3& point0, const float3& point1, const float3& point2)
+        Plane(const float32x3& point0, const float32x3& point1, const float32x3& point2)
         {
             normal = normalize(cross(point1 - point0, point2 - point0));
             dist = dot(point0, normal);
@@ -178,12 +178,12 @@ namespace mango
         {
         }
 
-        operator float4 () const
+        operator float32x4 () const
         {
-            return float4(normal, dist);
+            return float32x4(normal, dist);
         }
 
-        float distance(const float3& point) const
+        float distance(const float32x3& point) const
         {
             return dot(normal, point) - dist;
         }
@@ -195,22 +195,22 @@ namespace mango
 
     struct Box
     {
-        float3 corner[2];
+        float32x3 corner[2];
 
         Box()
         {
             const float s = std::numeric_limits<float>::max();
-            corner[0] = float3(s, s, s);
-            corner[1] = float3(-s, -s, -s);
+            corner[0] = float32x3(s, s, s);
+            corner[1] = float32x3(-s, -s, -s);
         }
 
-        Box(const float3& point, float size)
+        Box(const float32x3& point, float size)
         {
             corner[0] = point - size * 0.5f;
             corner[1] = point + size * 0.5f;
         }
 
-        Box(const float3& point0, const float3& point1)
+        Box(const float32x3& point0, const float32x3& point1)
         {
             corner[0] = min(point0, point1);
             corner[1] = max(point0, point1);
@@ -226,13 +226,13 @@ namespace mango
         {
         }
 
-        float3 center() const;
-        float3 size() const;
-        void extend(const float3& point);
+        float32x3 center() const;
+        float32x3 size() const;
+        void extend(const float32x3& point);
         void extend(const Box& box);
-        bool inside(const float3& point) const;
-        float3 vertex(int index) const;
-        void vertices(float3 vertex[]) const;
+        bool inside(const float32x3& point) const;
+        float32x3 vertex(int index) const;
+        void vertices(float32x3 vertex[]) const;
     };
 
     // ------------------------------------------------------------------
@@ -241,14 +241,14 @@ namespace mango
 
     struct Sphere
     {
-        float3 center;
+        float32x3 center;
         float radius;
 
         Sphere()
         {
         }
 
-        Sphere(const float3& center, float radius)
+        Sphere(const float32x3& center, float radius)
             : center(center)
             , radius(radius)
         {
@@ -259,7 +259,7 @@ namespace mango
         }
 
         void circumscribe(const Box& box);
-        bool inside(const float3& point) const;
+        bool inside(const float32x3& point) const;
     };
 
     // ------------------------------------------------------------------
@@ -268,15 +268,15 @@ namespace mango
 
     struct Cone
     {
-        float3 origin;
-        float3 target;
+        float32x3 origin;
+        float32x3 target;
         float angle;
 
         Cone()
         {
         }
 
-        Cone(const float3& origin, const float3& target, float angle)
+        Cone(const float32x3& origin, const float32x3& target, float angle)
             : origin(origin)
             , target(target)
             , angle(angle)
@@ -294,13 +294,13 @@ namespace mango
 
     struct Triangle
     {
-        float3 position[3];
+        float32x3 position[3];
 
         Triangle()
         {
         }
 
-        Triangle(const float3& point0, const float3& point1, const float3& point2)
+        Triangle(const float32x3& point0, const float32x3& point1, const float32x3& point2)
         {
             position[0] = point0;
             position[1] = point1;
@@ -311,8 +311,8 @@ namespace mango
         {
         }
 
-        float3 normal() const;
-        bool barycentric(float3& result, const float3& point) const;
+        float32x3 normal() const;
+        bool barycentric(float32x3& result, const float32x3& point) const;
     };
 
     // ------------------------------------------------------------------
@@ -340,8 +340,8 @@ namespace mango
 
     struct Frustum
     {
-        float3 point[4]; // 0: top_left, 1: top_right, 2: bottom_left, 3: bottom_right
-        float3 origin;
+        float32x3 point[4]; // 0: top_left, 1: top_right, 2: bottom_left, 3: bottom_right
+        float32x3 origin;
 
         Frustum() = default;
         Frustum(const float4x4& m);
@@ -409,7 +409,7 @@ namespace mango
 
     bool intersect(Rectangle& result, const Rectangle& rect0, const Rectangle& rect1);
     bool intersect(Ray& result, const Plane& plane0, const Plane& plane1);
-    bool intersect(float3& result, const Plane& plane0, const Plane& plane1, const Plane& plane2);
+    bool intersect(float32x3& result, const Plane& plane0, const Plane& plane1, const Plane& plane2);
 
     bool intersect(const Sphere& sphere, const Box& box);
     bool intersect(const Cone& cone, const Sphere& sphere);

@@ -355,7 +355,7 @@ namespace opengl {
 		return m_context->fullscreen;
 	}
 
-    int2 Context::getWindowSize() const
+    int32x2 Context::getWindowSize() const
     {
 		return Window::getWindowSize();
     }

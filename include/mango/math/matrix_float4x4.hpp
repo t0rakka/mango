@@ -136,11 +136,11 @@ namespace mango
         // modify the current matrix
         void setIdentity();
         void translate(float xtrans, float ytrans, float ztrans);
-        void translate(const float3& trans);
+        void translate(const float32x3& trans);
         void scale(float scale);
         void scale(float xscale, float yscale, float zscale);
-        void scale(const float3& scale);
-        void rotate(float angle, const float3& axis);
+        void scale(const float32x3& scale);
+        void rotate(float angle, const float32x3& axis);
         void rotateX(float angle);
         void rotateY(float angle);
         void rotateZ(float angle);
@@ -382,23 +382,23 @@ namespace mango
     }
 
     float4x4 normalize(const float4x4& m);
-    float4x4 mirror(const float4x4& m, const float4& plane);
+    float4x4 mirror(const float4x4& m, const float32x4& plane);
     float4x4 affineInverse(const float4x4& m);
     float4x4 adjoint(const float4x4& m);
 
     namespace matrix {
         float4x4 identity();
         float4x4 translate(float xtrans, float ytrans, float ztrans);
-        float4x4 translate(const float3& trans);
+        float4x4 translate(const float32x3& trans);
         float4x4 scale(float scale);
         float4x4 scale(float xscale, float yscale, float zscale);
-        float4x4 scale(const float3& scale);
-        float4x4 rotate(float angle, const float3& axis);
+        float4x4 scale(const float32x3& scale);
+        float4x4 rotate(float angle, const float32x3& axis);
         float4x4 rotateX(float angle);
         float4x4 rotateY(float angle);
         float4x4 rotateZ(float angle);
         float4x4 rotateXYZ(float xangle, float yangle, float zangle);
-        float4x4 lookat(const float3& target, const float3& viewer, const float3& up);
+        float4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
     } // namespace
 
     namespace opengl {
@@ -406,7 +406,7 @@ namespace mango
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float4& nearclip);
+        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
     } // namespace
 
     namespace vulkan {
@@ -414,7 +414,7 @@ namespace mango
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float4& nearclip);
+        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
     } // namespace
 
     namespace directx {
@@ -422,7 +422,7 @@ namespace mango
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float4& nearclip);
+        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
     } // namespace
 
 } // namespace mango

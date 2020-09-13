@@ -47,9 +47,9 @@ namespace mango
 
     const float4x4& float4x4::operator = (const quat& q)
     {
-        const float3 s = q.xyz * 2.0f;
-        const float3 w = s * q.w;
-        const float3 x = s * q.xyz.x;
+        const float32x3 s = q.xyz * 2.0f;
+        const float32x3 w = s * q.w;
+        const float32x3 x = s * q.xyz.x;
         const float yy = q.xyz.y * s.y;
         const float yz = q.xyz.y * s.z;
         const float zz = q.xyz.z * s.z;
@@ -134,7 +134,7 @@ namespace mango
         m[3] = madd(m[3], m[3].wwww, v);
     }
 
-    void float4x4::translate(const float3& t)
+    void float4x4::translate(const float32x3& t)
     {
         const float32x4 v = float32x4(t.x, t.y, t.z, 0.0f);
         m[0] = madd(m[0], m[0].wwww, v);
@@ -161,7 +161,7 @@ namespace mango
         m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
-    void float4x4::scale(const float3& s)
+    void float4x4::scale(const float32x3& s)
     {
         const float32x4 v = float32x4(s.x, s.y, s.z, 1.0f);
         m[0] = m[0] * v;
@@ -172,7 +172,7 @@ namespace mango
 
 #if defined(MANGO_ENABLE_SIMD)
 
-    void float4x4::rotate(float angle, const float3& axis)
+    void float4x4::rotate(float angle, const float32x3& axis)
     {
         const float4x4 temp = AngleAxis(angle, axis);
         *this = *this * temp;
@@ -180,7 +180,7 @@ namespace mango
 
 #else
 
-    void float4x4::rotate(float angle, const float3& axis)
+    void float4x4::rotate(float angle, const float32x3& axis)
     {
         const float4x4 temp = AngleAxis(angle, axis);
 
@@ -272,9 +272,9 @@ namespace mango
 
     float4x4 normalize(const float4x4& m)
     {
-        float4 x = m[0];
-        float4 y = m[1];
-        float4 z = m[2];
+        float32x4 x = m[0];
+        float32x4 y = m[1];
+        float32x4 z = m[2];
         x = normalize(x);
         y = normalize(y - x * dot(x, y));
         z = cross(x, y);
@@ -285,9 +285,9 @@ namespace mango
 
     void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
-        const float4 v = float4(xangle, yangle, zangle, 0.0f);
-        const float4 s = sin(v);
-        const float4 c = cos(v);
+        const float32x4 v = float4(xangle, yangle, zangle, 0.0f);
+        const float32x4 s = sin(v);
+        const float32x4 c = cos(v);
 
         const float sx = s.x;
         const float sy = s.y;
@@ -327,9 +327,9 @@ namespace mango
     {
         const float* m = _m;
 
-        float3 x(m[0], m[1], m[2]);
-        float3 y(m[4], m[5], m[6]);
-        float3 z(m[8], m[9], m[10]);
+        float32x3 x(m[0], m[1], m[2]);
+        float32x3 y(m[4], m[5], m[6]);
+        float32x3 z(m[8], m[9], m[10]);
 
         x = normalize(x);
         y = normalize(y - x * dot(x, y));
@@ -347,22 +347,22 @@ namespace mango
 
 #endif
 
-    float4x4 mirror(const float4x4& M, const float4& plane)
+    float4x4 mirror(const float4x4& M, const float32x4& plane)
     {
         const float* m = M;
 
         // components
-        float3 xaxis(m[0], m[1], m[2]);
-        float3 yaxis(m[4], m[5], m[6]);
-        float3 zaxis(m[8], m[9], m[10]);
-        float3 trans(m[12], m[13], m[14]);
+        float32x3 xaxis(m[0], m[1], m[2]);
+        float32x3 yaxis(m[4], m[5], m[6]);
+        float32x3 zaxis(m[8], m[9], m[10]);
+        float32x3 trans(m[12], m[13], m[14]);
 
-        float3 normal = plane.xyz;
-        float3 normal2 = normal * -2.0f;
+        float32x3 normal = plane.xyz;
+        float32x3 normal2 = normal * -2.0f;
         float dist = plane.w;
 
         // mirror translation
-        float3 pos = trans + normal2 * (dot(trans, normal) - dist);
+        float32x3 pos = trans + normal2 * (dot(trans, normal) - dist);
         
         // mirror x rotation
         xaxis += trans;
@@ -463,7 +463,7 @@ namespace matrix {
         return m;
     }
 
-    float4x4 translate(const float3& translation)
+    float4x4 translate(const float32x3& translation)
     {
         float4x4 m;
         const float32x4 zero(0);
@@ -496,7 +496,7 @@ namespace matrix {
         return m;
     }
 
-    float4x4 scale(const float3& s)
+    float4x4 scale(const float32x3& s)
     {
         float4x4 m;
         const float32x4 zero(0);
@@ -507,7 +507,7 @@ namespace matrix {
         return m;
     }
 
-    float4x4 rotate(float angle, const float3& axis)
+    float4x4 rotate(float angle, const float32x3& axis)
     {
         const float4x4 temp = AngleAxis(angle, axis);
         return temp;
@@ -557,9 +557,9 @@ namespace matrix {
 
     float4x4 rotateXYZ(float x, float y, float z)
     {
-        const float4 v = float4(x, y, z, 0.0f);
-        const float4 s = sin(v);
-        const float4 c = cos(v);
+        const float32x4 v = float4(x, y, z, 0.0f);
+        const float32x4 s = sin(v);
+        const float32x4 c = cos(v);
 
         const float sx = s.x;
         const float sy = s.y;
@@ -589,11 +589,11 @@ namespace matrix {
         };
     }
 
-    float4x4 lookat(const float3& target, const float3& viewer, const float3& up)
+    float4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
     {
-        const float3 zaxis = normalize(target - viewer);
-        const float3 xaxis = normalize(cross(up, zaxis));
-        const float3 yaxis = cross(zaxis, xaxis);
+        const float32x3 zaxis = normalize(target - viewer);
+        const float32x3 xaxis = normalize(cross(up, zaxis));
+        const float32x3 yaxis = cross(zaxis, xaxis);
 
         return float4x4
         {
@@ -652,17 +652,17 @@ namespace opengl {
         return frustum(-x, x, -y, y, znear, zfar);
     }
 
-    float4x4 oblique(const float4x4& proj, const float4& nearclip)
+    float4x4 oblique(const float4x4& proj, const float32x4& nearclip)
     {
-        float4 s = sign(nearclip);
+        float32x4 s = sign(nearclip);
         float xsign = s.x;
         float ysign = s.y;
 
-        float4 q((xsign - proj(2,0)) / proj(0,0),
-                 (ysign - proj(2,1)) / proj(1,1),
-                 -1.0f, (1.0f + proj(2,2)) / proj(3,2));
+        float32x4 q((xsign - proj(2,0)) / proj(0,0),
+                    (ysign - proj(2,1)) / proj(1,1),
+                    -1.0f, (1.0f + proj(2,2)) / proj(3,2));
 
-        float4 c = nearclip * (float4(2.0f) / dot(nearclip, q));
+        float32x4 c = nearclip * (float4(2.0f) / dot(nearclip, q));
         c += float4(0.0f, 0.0f, 1.0f, 0.0f);
 
         float4x4 p = proj;
@@ -722,7 +722,7 @@ namespace vulkan {
         return frustum(-x, x, -y, y, znear, zfar);
     }
 
-    float4x4 oblique(const float4x4& proj, const float4& nearclip)
+    float4x4 oblique(const float4x4& proj, const float32x4& nearclip)
     {
         // conversion from GL to VK matrix format
         const float4x4 to_vk
@@ -812,18 +812,18 @@ namespace directx {
         };
     }
 
-    float4x4 oblique(const float4x4& proj, const float4& nearclip)
+    float4x4 oblique(const float4x4& proj, const float32x4& nearclip)
     {
-        float4 clip = nearclip;
-        float4 s = sign(clip);
+        float32x4 clip = nearclip;
+        float32x4 s = sign(clip);
         float xsign = s.x;
         float ysign = s.y;
 
-        float4 q((xsign - proj(2,0)) / proj(0,0),
-                 (ysign - proj(2,1)) / proj(1,1),
-                 1.0f,
-                 (1.0f - proj(2,2)) / proj(3,2));
-        float4 c = clip / dot(clip, q);
+        float32x4 q((xsign - proj(2,0)) / proj(0,0),
+                    (ysign - proj(2,1)) / proj(1,1),
+                    1.0f,
+                    (1.0f - proj(2,2)) / proj(3,2));
+        float32x4 c = clip / dot(clip, q);
 
         float4x4 p = proj;
 
@@ -967,9 +967,9 @@ namespace directx {
 
     Quaternion Quaternion::rotateXYZ(float xangle, float yangle, float zangle)
     {
-        const float4 v = float4(xangle, yangle, zangle, 0.0f) * 0.5f;
-        const float4 s = sin(v);
-        const float4 c = cos(v);
+        const float32x4 v = float4(xangle, yangle, zangle, 0.0f) * 0.5f;
+        const float32x4 s = sin(v);
+        const float32x4 c = cos(v);
         const float sx = s.x;
         const float sy = s.y;
         const float sz = s.z;
@@ -987,10 +987,10 @@ namespace directx {
         return Quaternion(x, y, z, w);
     }
 
-	Quaternion Quaternion::rotate(const float3& from, const float3& to)
+	Quaternion Quaternion::rotate(const float32x3& from, const float32x3& to)
 	{
-		const float3 h = normalize(from + to);
-		const float3 xyz = cross(from, h);
+		const float32x3 h = normalize(from + to);
+		const float32x3 xyz = cross(from, h);
 		const float w = dot(from, h);
 		return Quaternion(xyz, w);
 	}

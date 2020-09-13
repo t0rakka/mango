@@ -174,7 +174,7 @@ namespace opengl {
         void swapInterval(int interval);
         void toggleFullscreen();
         bool isFullscreen() const;
-        int2 getWindowSize() const override;
+        int32x2 getWindowSize() const override;
     };
 
     // -------------------------------------------------------------------

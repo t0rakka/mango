@@ -360,12 +360,12 @@ namespace opengl {
         return [m_context->view isInFullScreenMode];
 	}
 
-    int2 Context::getWindowSize() const
+    int32x2 Context::getWindowSize() const
     {
         CustomView* view = m_context->view;
         NSRect rect = [view frame];
         rect = [[m_handle->window contentView] convertRectToBacking:rect];
-        return int2(rect.size.width, rect.size.height);
+        return int32x2(rect.size.width, rect.size.height);
     }
 
 } // namespace opengl

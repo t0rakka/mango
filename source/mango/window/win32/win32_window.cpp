@@ -671,14 +671,14 @@ namespace mango
         ::ShowWindow(m_handle->hwnd, command);
     }
 
-    int2 Window::getWindowSize() const
+    int32x2 Window::getWindowSize() const
     {
         RECT rect;
         ::GetClientRect(m_handle->hwnd, &rect);
         return int2(rect.right - rect.left, rect.bottom - rect.top);
     }
 
-	int2 Window::getCursorPosition() const
+	int32x2 Window::getCursorPosition() const
 	{
 		POINT p;
 		GetCursorPos(&p);

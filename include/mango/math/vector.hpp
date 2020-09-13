@@ -19,11 +19,11 @@
     wrap vec3, vec4, etc. This code does wrap these types anyway but gives a convenient
     building block to go extra-wide. Because the front-end is all templates, we can write this:
 
-    using float3 = Vector<float32x8, 3>;
+    using vfloat3 = Vector<float32x8, 3>;
 
-    Now the float3 is a three-component vector of 256 bit SIMD vectors.
+    Now the vfloat3 is a three-component vector of 256 bit SIMD vectors.
 
-    float3 a, b;
+    vfloat3 a, b;
     auto s = dot(a, b);
 
     The object s is a vector of scalars; we executed eight dot products in parallel when
@@ -1563,9 +1563,11 @@ namespace mango
     // named vector types
     // ------------------------------------------------------------------
 
-    // 64 bit integer vectors
+    // integer vectors
     using int32x2  = Vector<s32, 2>;
+    using int32x3  = Vector<s32, 3>;
     using uint32x2 = Vector<u32, 2>;
+    using uint32x3 = Vector<u32, 3>;
 
     // 128 bit integer vectors
     using int8x16  = Vector<s8, 16>;
@@ -1597,13 +1599,17 @@ namespace mango
     using uint32x16 = Vector<u32, 16>;
     using uint64x8  = Vector<u64, 8>;
 
-    // float vectors
+    // half vectors
     using float16x4  = Vector<float16, 4>;
+
+    // float vectors
     using float32x2  = Vector<float32, 2>;
     using float32x3  = Vector<float32, 3>;
     using float32x4  = Vector<float32, 4>;
     using float32x8  = Vector<float32, 8>;
     using float32x16 = Vector<float32, 16>;
+
+    // double vectors
     using float64x2  = Vector<float64, 2>;
     using float64x3  = Vector<float64, 3>;
     using float64x4  = Vector<float64, 4>;

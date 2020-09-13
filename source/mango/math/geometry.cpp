@@ -13,9 +13,9 @@ namespace mango
     // LineSegment
     // ------------------------------------------------------------------
 
-    float3 LineSegment::closest(const float3& point) const
+    float32x3 LineSegment::closest(const float32x3& point) const
     {
-        const float3 v = position[0] - position[1];
+        const float32x3 v = position[0] - position[1];
         float time = dot(v, point - position[0]);
         if (time <= 0)
             return position[0];
@@ -27,10 +27,10 @@ namespace mango
         return position[0] + (v * (time / sqrlen));
     }
 
-    float LineSegment::distance(const float3& point) const
+    float LineSegment::distance(const float32x3& point) const
     {
-        const float3 v = position[1] - position[0];
-        const float3 u = point - position[0];
+        const float32x3 v = position[1] - position[0];
+        const float32x3 u = point - position[0];
 
         const float c1 = dot(u, v);
         if (c1 <= 0)
@@ -47,9 +47,9 @@ namespace mango
     // Ray
     // ------------------------------------------------------------------
 
-    float Ray::distance(const float3& point) const
+    float Ray::distance(const float32x3& point) const
     {
-        const float3 u = point - origin;
+        const float32x3 u = point - origin;
         const float c1 = dot(u, direction);
         const float c2 = dot(direction, direction);
 
@@ -84,9 +84,9 @@ namespace mango
         return size.x / size.y;
     }
 
-    bool Rectangle::inside(const float2& point) const
+    bool Rectangle::inside(const float32x2& point) const
     {
-        const float2 d = position - point;
+        const float32x2 d = position - point;
 
         if (d.x < 0 || d.x >= size.x)
             return false;
@@ -101,17 +101,17 @@ namespace mango
     // Box
     // ------------------------------------------------------------------
 
-    float3 Box::center() const
+    float32x3 Box::center() const
     {
         return (corner[0] + corner[1]) * 0.5f;
     }
 
-    float3 Box::size() const
+    float32x3 Box::size() const
     {
         return corner[1] - corner[0];
     }
 
-    void Box::extend(const float3& point)
+    void Box::extend(const float32x3& point)
     {
         corner[0] = min(corner[0], point);
         corner[1] = max(corner[1], point);
@@ -123,14 +123,14 @@ namespace mango
         corner[1] = max(corner[1], box.corner[1]);
     }
 
-    bool Box::inside(const float3& point) const
+    bool Box::inside(const float32x3& point) const
     {
         return corner[0].x <= point.x && corner[1].x > point.x &&
         corner[0].y <= point.y && corner[1].y > point.y &&
         corner[0].z <= point.z && corner[1].z > point.z;
     }
 
-    float3 Box::vertex(int index) const
+    float32x3 Box::vertex(int index) const
     {
         assert(index >= 0 && index < 8);
         float x = corner[(index >> 0) & 1].x;
@@ -139,16 +139,16 @@ namespace mango
         return float3(x, y, z);
     }
 
-    void Box::vertices(float3 vertex[]) const
+    void Box::vertices(float32x3 vertex[]) const
     {
-        vertex[0] = float3(corner[0].x, corner[0].y, corner[0].z);
-        vertex[1] = float3(corner[1].x, corner[0].y, corner[0].z);
-        vertex[2] = float3(corner[0].x, corner[1].y, corner[0].z);
-        vertex[3] = float3(corner[1].x, corner[1].y, corner[0].z);
-        vertex[4] = float3(corner[0].x, corner[0].y, corner[1].z);
-        vertex[5] = float3(corner[1].x, corner[0].y, corner[1].z);
-        vertex[6] = float3(corner[0].x, corner[1].y, corner[1].z);
-        vertex[7] = float3(corner[1].x, corner[1].y, corner[1].z);
+        vertex[0] = float32x3(corner[0].x, corner[0].y, corner[0].z);
+        vertex[1] = float32x3(corner[1].x, corner[0].y, corner[0].z);
+        vertex[2] = float32x3(corner[0].x, corner[1].y, corner[0].z);
+        vertex[3] = float32x3(corner[1].x, corner[1].y, corner[0].z);
+        vertex[4] = float32x3(corner[0].x, corner[0].y, corner[1].z);
+        vertex[5] = float32x3(corner[1].x, corner[0].y, corner[1].z);
+        vertex[6] = float32x3(corner[0].x, corner[1].y, corner[1].z);
+        vertex[7] = float32x3(corner[1].x, corner[1].y, corner[1].z);
     }
 
     // ------------------------------------------------------------------
@@ -157,12 +157,12 @@ namespace mango
 
     void Sphere::circumscribe(const Box& box)
     {
-        float3 size = box.size();
+        float32x3 size = box.size();
         center = box.center();
         radius = float(std::sqrt(dot(size, size)) * 0.5f);
     }
 
-    bool Sphere::inside(const float3& point) const
+    bool Sphere::inside(const float32x3& point) const
     {
         return square(point - center) < (radius * radius);
     }
@@ -171,17 +171,17 @@ namespace mango
     // Triangle
     // ------------------------------------------------------------------
 
-    float3 Triangle::normal() const
+    float32x3 Triangle::normal() const
     {
-        const float3 n = cross(position[1] - position[0], position[2] - position[0]);
+        const float32x3 n = cross(position[1] - position[0], position[2] - position[0]);
         return normalize(n);
     }
 
-    bool Triangle::barycentric(float3& result, const float3& point) const
+    bool Triangle::barycentric(float32x3& result, const float32x3& point) const
     {
-        const float3 v0 = position[1] - position[0]; // tag. cache
-        const float3 v1 = position[2] - position[0]; // tag. cache
-        const float3 v2 = point - position[0];
+        const float32x3 v0 = position[1] - position[0]; // tag. cache
+        const float32x3 v1 = position[2] - position[0]; // tag. cache
+        const float32x3 v2 = point - position[0];
 
         float d01 = dot(v0, v1); // tag. cache
         float d11 = dot(v1, v1); // tag. cache
@@ -220,10 +220,10 @@ namespace mango
 
     float3x3 TexTriangle::tbn() const
     {
-        const float3 a = position[1] - position[0];
-        const float3 b = position[2] - position[0];
-        const float2 c = texcoord[1] - texcoord[0];
-        const float2 d = texcoord[2] - texcoord[0];
+        const float32x3 a = position[1] - position[0];
+        const float32x3 b = position[2] - position[0];
+        const float32x2 c = texcoord[1] - texcoord[0];
+        const float32x2 d = texcoord[2] - texcoord[0];
         float s = c.x * d.y - c.y * d.x;
 		if (s)
 		{
@@ -247,10 +247,10 @@ namespace mango
     {
         const float4x4 m = transpose(tm);
 
-        const float3 nx = float4(m[3] + m[0]).xyz;
-        const float3 px = float4(m[3] - m[0]).xyz;
-        const float3 ny = float4(m[3] + m[1]).xyz;
-        const float3 py = float4(m[3] - m[1]).xyz;
+        const float32x3 nx = float4(m[3] + m[0]).xyz;
+        const float32x3 px = float4(m[3] - m[0]).xyz;
+        const float32x3 ny = float4(m[3] + m[1]).xyz;
+        const float32x3 py = float4(m[3] - m[1]).xyz;
 
         const float d0 = m[3][3] - m[0][3];
         const float d1 = m[3][3] + m[0][3];
@@ -262,16 +262,16 @@ namespace mango
         point[3] = cross(px, ny);
 
         const float s = -1.0f / dot(nx, point[1]);
-        const float3 temp = cross(px, nx);
+        const float32x3 temp = cross(px, nx);
 
         origin = (point[0] * d0 + point[1] * d1 + temp * d2) * s;
     }
 
     Ray Frustum::ray(float x, float y) const
     {
-        const float3 left = lerp(point[0], point[2], y);
-        const float3 right = lerp(point[1], point[3], y);
-        const float3 p = lerp(left, right, x);
+        const float32x3 left = lerp(point[0], point[2], y);
+        const float32x3 right = lerp(point[1], point[3], y);
+        const float32x3 p = lerp(left, right, x);
         return Ray(origin, normalize(p - origin));
     }
 
@@ -295,7 +295,7 @@ namespace mango
 
     bool Intersect::intersect(const Ray& ray, const Sphere& sphere)
     {
-        const float3 dep = ray.origin - sphere.center;
+        const float32x3 dep = ray.origin - sphere.center;
         const float b = dot(dep, ray.direction);
         const float c = square(dep) - sphere.radius * sphere.radius;
 
@@ -322,10 +322,10 @@ namespace mango
             return false;
 
         // Intersection point
-        float3 point = ray.origin + ray.direction * is.t0;
+        float32x3 point = ray.origin + ray.direction * is.t0;
 
         // Test if intersection point is inside the triangle
-        float3 normal;
+        float32x3 normal;
 
         // edge 1
         normal = cross(ray.origin - vertex[1], ray.origin - vertex[0]);
@@ -471,22 +471,22 @@ namespace mango
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
 
-        float3 edge1 = triangle.position[1] - triangle.position[0];
-        float3 edge2 = triangle.position[2] - triangle.position[0];
+        float32x3 edge1 = triangle.position[1] - triangle.position[0];
+        float32x3 edge2 = triangle.position[2] - triangle.position[0];
 
-        float3 pvec = cross(ray.direction, edge2);
+        float32x3 pvec = cross(ray.direction, edge2);
         float det = dot(edge1, pvec);
 
         const float epsilon = 0.000001f;
         if (det < epsilon)
             return false;
 
-        float3 tvec = ray.origin - triangle.position[0];
+        float32x3 tvec = ray.origin - triangle.position[0];
         v = dot(tvec, pvec);
         if (v < 0 || v > det)
             return false;
 
-        float3 qvec = cross(tvec, edge1);
+        float32x3 qvec = cross(tvec, edge1);
         w = dot(ray.direction, qvec);
         if (w < 0 || (v + w) > det)
             return false;
@@ -506,10 +506,10 @@ namespace mango
         // Based on article by Tomas Möller
         // Fast, Minimum Storage Ray-Triangle Intersection
 
-        float3 edge1 = triangle.position[1] - triangle.position[0];
-        float3 edge2 = triangle.position[2] - triangle.position[0];
+        float32x3 edge1 = triangle.position[1] - triangle.position[0];
+        float32x3 edge2 = triangle.position[2] - triangle.position[0];
 
-        float3 pvec = cross(ray.direction, edge2);
+        float32x3 pvec = cross(ray.direction, edge2);
         float det = dot(edge1, pvec);
 
         const float epsilon = 0.000001f;
@@ -518,12 +518,12 @@ namespace mango
 
         det = 1.0f / det;
 
-        float3 tvec = ray.origin - triangle.position[0];
+        float32x3 tvec = ray.origin - triangle.position[0];
         v = dot(tvec, pvec) * det;
         if (v < 0 || v > 1.0f)
             return false;
 
-        float3 qvec = cross(tvec, edge1);
+        float32x3 qvec = cross(tvec, edge1);
         w = dot(ray.direction, qvec) * det;
         if (w < 0 || (v + w) > 1.0f)
             return false;
@@ -541,17 +541,17 @@ namespace mango
     bool intersect(Rectangle& result, const Rectangle& rect0, const Rectangle& rect1)
     {
         // Trivial reject
-        const float2 pos0 = rect0.position + rect0.size;
+        const float32x2 pos0 = rect0.position + rect0.size;
         if (pos0.x <= rect1.position.x || pos0.y <= rect1.position.y)
             return false;
 
-        const float2 pos1 = rect1.position + rect1.size;
+        const float32x2 pos1 = rect1.position + rect1.size;
         if (pos1.x <= rect0.position.x || pos1.y <= rect0.position.y)
             return false;
 
         // Compute intersection
-        const float2 p0 = max(rect0.position, rect1.position);
-        const float2 p1 = min(pos0, pos1);
+        const float32x2 p0 = max(rect0.position, rect1.position);
+        const float32x2 p1 = min(pos0, pos1);
         if (p0.x >= p1.x || p0.y >= p1.y)
             return false;
 
@@ -563,7 +563,7 @@ namespace mango
 
     bool intersect(Ray& result, const Plane& plane0, const Plane& plane1)
     {
-        float3 direction = cross(plane0.normal, plane1.normal);
+        float32x3 direction = cross(plane0.normal, plane1.normal);
 
         // Parallel planes
         float s = square(direction);
@@ -577,10 +577,10 @@ namespace mango
         return true;
     }
 
-    bool intersect(float3& result, const Plane& plane0, const Plane& plane1, const Plane& plane2)
+    bool intersect(float32x3&& result, const Plane& plane0, const Plane& plane1, const Plane& plane2)
     {
         // Determinant
-        float3 cp01 = cross(plane0.normal, plane1.normal);
+        float32x3 cp01 = cross(plane0.normal, plane1.normal);
 
         // Parallel planes
         float det = dot(cp01, plane2.normal);
@@ -588,8 +588,8 @@ namespace mango
             return false;
 
         // Compute intersection
-        float3 cp12 = cross(plane1.normal, plane2.normal) * plane0.dist;
-        float3 cp20 = cross(plane2.normal, plane0.normal) * plane1.dist;
+        float32x3 cp12 = cross(plane1.normal, plane2.normal) * plane0.dist;
+        float32x3 cp20 = cross(plane2.normal, plane0.normal) * plane1.dist;
 
         result = (cp12 + cp20 + plane2.dist * cp01) / det;
 
@@ -622,7 +622,7 @@ namespace mango
     bool intersect(const Cone& cone, const Sphere& sphere)
     {
         // Test if cone vertex is in sphere
-        float3 diff = sphere.center - cone.origin;
+        float32x3 diff = sphere.center - cone.origin;
 
         float r2 = sphere.radius * sphere.radius;
         float len2 = dot(diff, diff);

@@ -1207,10 +1207,10 @@ namespace
 
     struct Chromaticity
     {
-        float2 white;
-        float2 red;
-        float2 green;
-        float2 blue;
+        float32x2 white;
+        float32x2 red;
+        float32x2 green;
+        float32x2 blue;
     };
 
     struct Frame

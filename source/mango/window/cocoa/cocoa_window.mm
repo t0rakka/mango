@@ -114,18 +114,18 @@ namespace mango
         }
     }
 
-    int2 Window::getWindowSize() const
+    int32x2 Window::getWindowSize() const
     {
         NSRect rect = [[m_handle->window contentView] frame];
         rect = [[m_handle->window contentView] convertRectToBacking:rect];
         return int2(rect.size.width, rect.size.height);
     }
 
-	int2 Window::getCursorPosition() const
+	int32x2 Window::getCursorPosition() const
 	{
         NSRect rect = [[m_handle->window contentView] frame];
 		NSPoint point = [m_handle->window mouseLocationOutsideOfEventStream];
-		return int2(point.x, rect.size.height - point.y - 1);
+		return int32x2(point.x, rect.size.height - point.y - 1);
 	}
 
     bool Window::isKeyPressed(Keycode code) const

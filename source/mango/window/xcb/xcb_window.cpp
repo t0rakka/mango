@@ -218,8 +218,9 @@ namespace mango
 #endif
     }
 
-    int2 Window::getWindowSize() const
+    int32x2 Window::getWindowSize() const
     {
+        // TODO
 #if 0
         XWindowAttributes attributes;
         XGetWindowAttributes(m_handle->display, m_handle->window, &attributes);
@@ -228,8 +229,9 @@ namespace mango
         return int2(0, 0);
     }
 
-	int2 Window::getCursorPosition() const
+	int32x2 Window::getCursorPosition() const
 	{
+        // TODO
 #if 0
 		::Window root;
 		::Window child;
@@ -246,6 +248,7 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
+        // TODO
 #if 0
         char keys[32];
         XQueryKeymap(m_handle->display, keys);
