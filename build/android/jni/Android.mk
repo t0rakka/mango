@@ -94,7 +94,7 @@ LOCAL_SRC_FILES := $(mango_sources)
 LOCAL_C_INCLUDES := $(MANGO_INCLUDE) $(INCLUDE_WEBP)
 LOCAL_EXPORT_C_INCLUDES := $(MANGO_INCLUDE)
 LOCAL_CPP_FEATURES += exceptions
-LOCAL_CPPFLAGS := $(OPTIONS) -Wno-extern-c-compat 
+LOCAL_CPPFLAGS := $(OPTIONS) -Wno-extern-c-compat
 LOCAL_STATIC_LIBRARIES := cpufeatures
 
 ifeq ($(LOCAL_MODULE),mango_static)
