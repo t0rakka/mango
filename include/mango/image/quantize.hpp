@@ -4,8 +4,8 @@
 */
 #pragma once
 
-#include "format.hpp"
-#include "surface.hpp"
+#include <mango/image/format.hpp>
+#include <mango/image/surface.hpp>
 
 namespace mango {
 namespace image {

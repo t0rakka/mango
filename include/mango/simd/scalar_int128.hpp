@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "scalar_detail.hpp"
+#include <mango/simd/scalar_detail.hpp>
 
 namespace mango {
 namespace simd {

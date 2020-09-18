@@ -6,7 +6,7 @@
 
 #include <string>
 #include <cstdio>
-#include "configure.hpp"
+#include <mango/core/configure.hpp>
 
 namespace mango
 {

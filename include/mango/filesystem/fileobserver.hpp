@@ -1,12 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
-#include "../core/configure.hpp"
-#include "../core/object.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/object.hpp>
 
 namespace mango {
 namespace filesystem {

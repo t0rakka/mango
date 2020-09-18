@@ -1,11 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
-#include "core/core.hpp"
-#include "filesystem/filesystem.hpp"
-#include "image/image.hpp"
-#include "simd/simd.hpp"
-#include "math/math.hpp"
+#include <mango/core/core.hpp>
+#include <mango/filesystem/filesystem.hpp>
+#include <mango/image/image.hpp>
+#include <mango/simd/simd.hpp>
+#include <mango/math/math.hpp>

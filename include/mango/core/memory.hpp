@@ -7,8 +7,8 @@
 #include <memory>
 #include <limits>
 #include <algorithm>
-#include "configure.hpp"
-#include "object.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/object.hpp>
 
 namespace mango {
 namespace detail {

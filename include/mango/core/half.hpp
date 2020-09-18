@@ -8,7 +8,7 @@
 #pragma once
 
 #include <algorithm>
-#include "configure.hpp"
+#include <mango/core/configure.hpp>
 
 // NOTES:
 // https://en.wikipedia.org/wiki/Half-precision_floating-point_format

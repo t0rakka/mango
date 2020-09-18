@@ -4,8 +4,8 @@
 */
 #pragma once
 
-#include "vector.hpp"
-#include "matrix.hpp"
+#include <mango/math/vector.hpp>
+#include <mango/math/matrix.hpp>
 
 namespace mango
 {

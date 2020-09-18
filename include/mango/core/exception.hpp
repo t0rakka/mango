@@ -7,8 +7,8 @@
 #include <cstdarg>
 #include <string>
 #include <exception>
-#include "configure.hpp"
-#include "string.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/string.hpp>
 
 namespace mango
 {

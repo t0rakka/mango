@@ -1,10 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
-#include "mapper.hpp"
-#include "path.hpp"
-#include "file.hpp"
-#include "fileobserver.hpp"
+#include <mango/filesystem/mapper.hpp>
+#include <mango/filesystem/path.hpp>
+#include <mango/filesystem/file.hpp>
+#include <mango/filesystem/fileobserver.hpp>

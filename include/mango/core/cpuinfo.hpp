@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "configure.hpp"
+#include <mango/core/configure.hpp>
 
 namespace mango
 {

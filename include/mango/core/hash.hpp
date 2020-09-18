@@ -4,8 +4,8 @@
 */
 #pragma once
 
-#include "configure.hpp"
-#include "memory.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/memory.hpp>
 
 namespace mango
 {

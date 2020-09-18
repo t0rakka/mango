@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#include "vector.hpp"
-#include "vector_float32x2.hpp"
-#include "vector_float32x3.hpp"
+#include <mango/math/vector.hpp>
+#include <mango/math/vector_float32x2.hpp>
+#include <mango/math/vector_float32x3.hpp>
 
 namespace mango
 {

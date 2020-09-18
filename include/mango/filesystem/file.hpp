@@ -7,10 +7,10 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-#include "../core/configure.hpp"
-#include "../core/stream.hpp"
-#include "mapper.hpp"
-#include "path.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/stream.hpp>
+#include <mango/filesystem/mapper.hpp>
+#include <mango/filesystem/path.hpp>
 
 namespace mango {
 namespace filesystem {

@@ -12,9 +12,9 @@
 #include <functional>
 #include <condition_variable>
 #include <future>
-#include "exception.hpp"
-#include "object.hpp"
-#include "atomic.hpp"
+#include <mango/core/exception.hpp>
+#include <mango/core/object.hpp>
+#include <mango/core/atomic.hpp>
 
 namespace mango
 {

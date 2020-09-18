@@ -6,8 +6,8 @@
 
 #include <cmath>
 #include <algorithm>
-#include "configure.hpp"
-#include "half.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/half.hpp>
 
 namespace mango
 {

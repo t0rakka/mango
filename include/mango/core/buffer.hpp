@@ -5,9 +5,9 @@
 #pragma once
 
 #include <cstddef>
-#include "configure.hpp"
-#include "memory.hpp"
-#include "stream.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/memory.hpp>
+#include <mango/core/stream.hpp>
 
 namespace mango
 {

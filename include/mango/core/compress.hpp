@@ -5,9 +5,9 @@
 #pragma once
 
 #include <vector>
-#include "configure.hpp"
-#include "memory.hpp"
-#include "object.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/memory.hpp>
+#include <mango/core/object.hpp>
 
 namespace mango
 {

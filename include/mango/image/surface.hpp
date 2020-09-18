@@ -1,17 +1,17 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <cstddef>
 #include <string>
-#include "../core/configure.hpp"
-#include "../core/object.hpp"
-#include "../core/memory.hpp"
-#include "../filesystem/file.hpp"
-#include "format.hpp"
-#include "encoder.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/object.hpp>
+#include <mango/core/memory.hpp>
+#include <mango/filesystem/file.hpp>
+#include <mango/image/format.hpp>
+#include <mango/image/encoder.hpp>
 
 namespace mango
 {

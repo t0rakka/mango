@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "vector.hpp"
+#include <mango/math/vector.hpp>
 
 namespace mango
 {

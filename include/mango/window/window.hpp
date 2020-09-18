@@ -1,17 +1,17 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
 #include <vector>
-#include "../core/configure.hpp"
-#include "../core/object.hpp"
-#include "../core/timer.hpp"
-#include "../image/surface.hpp"
-#include "../filesystem/filesystem.hpp"
-#include "../math/math.hpp"
+#include <mango//core/configure.hpp>
+#include <mango//core/object.hpp>
+#include <mango//core/timer.hpp>
+#include <mango//image/surface.hpp>
+#include <mango//filesystem/filesystem.hpp>
+#include <mango//math/math.hpp>
 
 namespace mango
 {

@@ -1,14 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <vector>
-#include "../core/configure.hpp"
-#include "../core/dynamic_library.hpp"
-#include "../image/compression.hpp"
-#include "../window/window.hpp"
+#include <mango//core/configure.hpp>
+#include <mango//core/dynamic_library.hpp>
+#include <mango//image/compression.hpp>
+#include <mango//window/window.hpp>
 
 // -----------------------------------------------------------------------
 // MANGO Vulkan SDK

@@ -5,12 +5,12 @@
 #pragma once
 
 #include <string>
-#include "../core/object.hpp"
-#include "../core/stream.hpp"
-#include "../core/exception.hpp"
-#include "format.hpp"
-#include "compression.hpp"
-#include "exif.hpp"
+#include <mango/core/object.hpp>
+#include <mango/core/stream.hpp>
+#include <mango/core/exception.hpp>
+#include <mango/image/format.hpp>
+#include <mango/image/compression.hpp>
+#include <mango/image/exif.hpp>
 
 namespace mango
 {

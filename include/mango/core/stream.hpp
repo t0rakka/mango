@@ -4,11 +4,11 @@
 */
 #pragma once
 
-#include "configure.hpp"
-#include "object.hpp"
-#include "endian.hpp"
-#include "memory.hpp"
-#include "half.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/object.hpp>
+#include <mango/core/endian.hpp>
+#include <mango/core/memory.hpp>
+#include <mango/core/half.hpp>
 
 namespace mango
 {

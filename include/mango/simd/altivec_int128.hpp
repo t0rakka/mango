@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "simd.hpp"
+#include <mango/simd/simd.hpp>
 
 namespace mango {
 namespace simd {

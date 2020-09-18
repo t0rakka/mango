@@ -4,11 +4,11 @@
 */
 #pragma once
 
-#include "../core/memory.hpp"
-#include "../core/string.hpp"
-#include "../core/exception.hpp"
-#include "format.hpp"
-#include "fourcc.hpp"
+#include <mango/core/memory.hpp>
+#include <mango/core/string.hpp>
+#include <mango/core/exception.hpp>
+#include <mango/image/format.hpp>
+#include <mango/image/fourcc.hpp>
 
 namespace mango
 {
