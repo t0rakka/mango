@@ -73,7 +73,7 @@
 
 #elif defined(__APPLE__)
 
-    #include "TargetConditionals.h"
+    #include <TargetConditionals.h>
 
     #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 

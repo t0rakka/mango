@@ -34,7 +34,7 @@ extern "C" {
 
 #define GL_GLEXT_VERSION 20200814
 
-#include "../KHR/khrplatform.h"
+#include <mango/opengl/khronos/KHR/khrplatform.h>
 
 /* Generated C header for:
  * API: gl

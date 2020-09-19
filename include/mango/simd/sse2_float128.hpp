@@ -580,7 +580,7 @@ namespace simd {
     }
 
 #define SIMD_MASK_FLOAT128
-#include "common_mask.hpp"
+#include <mango/simd/common_mask.hpp>
 #undef SIMD_MASK_FLOAT128
 
 } // namespace simd

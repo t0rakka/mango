@@ -28,18 +28,18 @@
     #define GLEXT_PROC(proc, name) extern proc name
 
     #ifdef MANGO_OPENGL_CORE_PROFILE
-        #include "khronos/GL/glcorearb.h"
-        #include "func/glcorearb.hpp"
+        #include <mango/opengl/khronos/GL/glcorearb.h>
+        #include <mango/opengl/func/glcorearb.hpp>
     #else
         #include <GL/gl.h>
-        #include "khronos/GL/glext.h"
-        #include "func/glext.hpp"
+        #include <mango/opengl/khronos/GL/glext.h>
+        #include <mango/opengl/func/glext.hpp>
     #endif
 
     #ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
-        #include "khronos/GL/wgl.h"
-        #include "khronos/GL/wglext.h"
-        #include "func/wglext.hpp"
+        #include <mango/opengl/khronos/GL/wgl.h>
+        #include <mango/opengl/khronos/GL/wglext.h>
+        #include <mango/opengl/func/wglext.hpp>
     #endif
 
     #undef GLEXT_PROC
@@ -58,11 +58,11 @@
         #include <OpenGL/gl.h>
         #include <OpenGL/glext.h>
     #else
-        #include "OpenGL/gl3.h"
-        #include "OpenGL/gl3ext.h"
+        #include <OpenGL/gl3.h>
+        #include <OpenGL/gl3ext.h>
 
         #define GL_GLEXT_PROTOTYPES
-        #include "khronos/GL/glext.h"
+        #include <mango/opengl/khronos/GL/glext.h>
     #endif
 
 #elif defined(MANGO_PLATFORM_IOS)
@@ -103,7 +103,7 @@
 
     #ifdef MANGO_OPENGL_CORE_PROFILE
         #define GL_GLEXT_PROTOTYPES
-        #include "khronos/GL/glcorearb.h"
+        #include <mango/opengl/khronos/GL/glcorearb.h>
     #else
         #define GL_GLEXT_PROTOTYPES
         #include <GL/gl.h>
@@ -126,8 +126,8 @@
 
 #endif
 
-#include "../image/compression.hpp"
-#include "../window/window.hpp"
+#include <mango/image/compression.hpp>
+#include <mango/window/window.hpp>
 
 namespace mango {
 namespace opengl {
@@ -184,7 +184,7 @@ namespace opengl {
     struct glExtensionMask
     {
 #define GL_EXTENSION(Name) u32 Name : 1;
-#include "func/glext.hpp"
+#include <mango/opengl/func/glext.hpp>
 #undef GL_EXTENSION
     };
 
@@ -197,7 +197,7 @@ namespace opengl {
     struct coreExtensionMask
     {
 #define CORE_EXTENSION(Version, Name) u32 Name : 1;
-#include "func/glcorearb.hpp"
+#include <mango/opengl/func/glcorearb.hpp>
 #undef CORE_EXTENSION
 
         // custom extension flags
@@ -238,7 +238,7 @@ namespace opengl {
     struct wglExtensionMask
     {
 #define WGL_EXTENSION(Name) u32 Name : 1;
-#include "func/wglext.hpp"
+#include <mango/opengl/func/wglext.hpp>
 #undef WGL_EXTENSION
     };
 
@@ -255,7 +255,7 @@ namespace opengl {
     struct glxExtensionMask
     {
 #define GLX_EXTENSION(Name) u32 Name : 1;
-#include "func/glxext.hpp"
+#include <mango/opengl/func/glxext.hpp>
 #undef GLX_EXTENSION
     };
 

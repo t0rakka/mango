@@ -30,7 +30,7 @@ namespace mango
             // generate 2 component accessors
 #define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
             ShuffleAccessor2<double, simd::f64x2, A, B> NAME
-#include "accessor.hpp"
+#include <mango/math/accessor.hpp>
 #undef VECTOR2_SHUFFLE_ACCESSOR2
         };
 

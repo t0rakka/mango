@@ -380,7 +380,7 @@ namespace simd {
 
 #define SIMD_ZEROMASK_FLOAT128
 #define SIMD_MASK_FLOAT128
-#include "common_mask.hpp"
+#include <mango/simd/common_mask.hpp>
 #undef SIMD_ZEROMASK_FLOAT128
 #undef SIMD_MASK_FLOAT128
 

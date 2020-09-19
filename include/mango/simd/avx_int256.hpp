@@ -1936,7 +1936,7 @@ namespace detail {
     }
 
 #define SIMD_MASK_INT256
-#include "common_mask.hpp"
+#include <mango/simd/common_mask.hpp>
 #undef SIMD_MASK_INT256
 
 #undef SIMD_SET_COMPONENT

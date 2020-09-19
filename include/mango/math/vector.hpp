@@ -1737,40 +1737,40 @@ namespace mango
 
 } // namespace mango
 
-#include "vector128_uint8x16.hpp"
-#include "vector128_uint16x8.hpp"
-#include "vector128_uint32x4.hpp"
-#include "vector128_uint64x2.hpp"
-#include "vector128_int8x16.hpp"
-#include "vector128_int16x8.hpp"
-#include "vector128_int32x4.hpp"
-#include "vector128_int64x2.hpp"
+#include <mango/math/vector128_uint8x16.hpp>
+#include <mango/math/vector128_uint16x8.hpp>
+#include <mango/math/vector128_uint32x4.hpp>
+#include <mango/math/vector128_uint64x2.hpp>
+#include <mango/math/vector128_int8x16.hpp>
+#include <mango/math/vector128_int16x8.hpp>
+#include <mango/math/vector128_int32x4.hpp>
+#include <mango/math/vector128_int64x2.hpp>
 
-#include "vector256_uint8x32.hpp"
-#include "vector256_uint16x16.hpp"
-#include "vector256_uint32x8.hpp"
-#include "vector256_uint64x4.hpp"
-#include "vector256_int8x32.hpp"
-#include "vector256_int16x16.hpp"
-#include "vector256_int32x8.hpp"
-#include "vector256_int64x4.hpp"
+#include <mango/math/vector256_uint8x32.hpp>
+#include <mango/math/vector256_uint16x16.hpp>
+#include <mango/math/vector256_uint32x8.hpp>
+#include <mango/math/vector256_uint64x4.hpp>
+#include <mango/math/vector256_int8x32.hpp>
+#include <mango/math/vector256_int16x16.hpp>
+#include <mango/math/vector256_int32x8.hpp>
+#include <mango/math/vector256_int64x4.hpp>
 
-#include "vector512_uint8x64.hpp"
-#include "vector512_uint16x32.hpp"
-#include "vector512_uint32x16.hpp"
-#include "vector512_uint64x8.hpp"
-#include "vector512_int8x64.hpp"
-#include "vector512_int16x32.hpp"
-#include "vector512_int32x16.hpp"
-#include "vector512_int64x8.hpp"
+#include <mango/math/vector512_uint8x64.hpp>
+#include <mango/math/vector512_uint16x32.hpp>
+#include <mango/math/vector512_uint32x16.hpp>
+#include <mango/math/vector512_uint64x8.hpp>
+#include <mango/math/vector512_int8x64.hpp>
+#include <mango/math/vector512_int16x32.hpp>
+#include <mango/math/vector512_int32x16.hpp>
+#include <mango/math/vector512_int64x8.hpp>
 
-#include "vector_float16x4.hpp"
-#include "vector_float32x2.hpp"
-#include "vector_float32x3.hpp"
-#include "vector_float32x4.hpp"
-#include "vector_float32x8.hpp"
-#include "vector_float32x16.hpp"
-#include "vector_float64x2.hpp"
-#include "vector_float64x4.hpp"
-#include "vector_float64x8.hpp"
-#include "vector_gather.hpp"
+#include <mango/math/vector_float16x4.hpp>
+#include <mango/math/vector_float32x2.hpp>
+#include <mango/math/vector_float32x3.hpp>
+#include <mango/math/vector_float32x4.hpp>
+#include <mango/math/vector_float32x8.hpp>
+#include <mango/math/vector_float32x16.hpp>
+#include <mango/math/vector_float64x2.hpp>
+#include <mango/math/vector_float64x4.hpp>
+#include <mango/math/vector_float64x8.hpp>
+#include <mango/math/vector_gather.hpp>

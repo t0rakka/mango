@@ -50,13 +50,13 @@ namespace mango
             // generate 2 component accessors
 #define VECTOR3_SHUFFLE_ACCESSOR2(A, B, NAME) \
             ShuffleAccessor2<A, B> NAME
-#include "accessor.hpp"
+#include <mango/math/accessor.hpp>
 #undef VECTOR3_SHUFFLE_ACCESSOR2
 
             // generate 3 component accessors
 #define VECTOR3_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
             ShuffleAccessor3<A, B, C> NAME
-#include "accessor.hpp"
+#include <mango/math/accessor.hpp>
 #undef VECTOR3_SHUFFLE_ACCESSOR3
         };
 
