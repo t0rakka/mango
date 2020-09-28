@@ -7,12 +7,12 @@ The library does come with many ways to compile itself; hopefully one of them wo
 * MESON!
 ------------------------------------------------------------------------------------------------
 
-1. cd build
-2. meson temp
-3. cd temp
-4. meson configure --buildtype=release
-5. ninja -j20
-6. sudo ninja install
+0. You should be in the build/ folder
+
+1. meson temp --buildtype=release
+2. cd temp
+3. ninja -j20
+4. sudo ninja install
 
 ------------------------------------------------------------------------------------------------
 * CMAKE!
