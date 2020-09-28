@@ -12,6 +12,7 @@ The library does come with many ways to compile itself; hopefully one of them wo
 3. cd temp
 4. meson configure --buildtype=release
 5. ninja -j20
+6. sudo ninja install
 
 ------------------------------------------------------------------------------------------------
 * CMAKE!

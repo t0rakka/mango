@@ -930,7 +930,8 @@ mango = static_library('mango',
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,
-    cpp_args            : mango_public_cpp_args
+    cpp_args            : mango_public_cpp_args,
+    install             : true
 )
 
 mango_dep = declare_dependency(
@@ -945,7 +946,8 @@ mango_framebuffer = static_library('mango-framebuffer',
     sources             : window_sources + framebuffer_sources,
     dependencies        : mango_framebuffer_deps,
     include_directories : mango_inc,
-    cpp_args            : mango_public_cpp_args
+    cpp_args            : mango_public_cpp_args,
+    install             : true
 )
 
 mango_opengl = static_library('mango-opengl',
@@ -953,7 +955,8 @@ mango_opengl = static_library('mango-opengl',
     link_with           : mango_framebuffer,
     dependencies        : mango_opengl_deps,
     include_directories : mango_inc,
-    cpp_args            : mango_public_cpp_args
+    cpp_args            : mango_public_cpp_args,
+    install             : true
 )
 
 mango_opengl_dep = declare_dependency(
@@ -965,7 +968,8 @@ mango_opengl_dep = declare_dependency(
 mango_vulkan = static_library('mango-vulkan',
     sources             : window_sources + vulkan_sources,
     link_with           : mango_framebuffer,
-    include_directories : mango_inc
+    include_directories : mango_inc,
+    install             : true
 )
 
 mango_vulkan_dep = declare_dependency(
@@ -973,42 +977,4 @@ mango_vulkan_dep = declare_dependency(
     include_directories : mango_inc
 )
 
-
-# archivers
-
-# ------------------------------------------------------------------------------
-# install
-# ------------------------------------------------------------------------------
-
-# TARGET_INCLUDE_DIRECTORIES(mango PUBLIC
-#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-#     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>
-# )
-# 
-# INSTALL(TARGETS mango
-#     LIBRARY DESTINATION "lib"
-#     ARCHIVE DESTINATION "lib"
-#     RUNTIME DESTINATION "bin"
-# )
-# 
-# INSTALL(TARGETS mango-framebuffer
-#     LIBRARY DESTINATION "lib"
-#     ARCHIVE DESTINATION "lib"
-#     RUNTIME DESTINATION "bin"
-# )
-# INSTALL(TARGETS mango-opengl
-#     LIBRARY DESTINATION "lib"
-#     ARCHIVE DESTINATION "lib"
-#     RUNTIME DESTINATION "bin"
-# )
-# INSTALL(TARGETS mango-vulkan
-#     LIBRARY DESTINATION "lib"
-#     ARCHIVE DESTINATION "lib"
-#     RUNTIME DESTINATION "bin"
-# )
-# 
-# INSTALL(
-#     DIRECTORY ${CMAKE_SOURCE_DIR}/../../include/
-#     DESTINATION include
-#     FILES_MATCHING PATTERN "*.h*"
-# )
+install_subdir('../include/mango', install_dir : 'include')
