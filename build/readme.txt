@@ -4,8 +4,18 @@ MANGO! Compiling instructions.
 The library does come with many ways to compile itself; hopefully one of them works for you.
 
 ------------------------------------------------------------------------------------------------
+* MESON!
+------------------------------------------------------------------------------------------------
 
+1. cd build
+2. meson temp
+3. cd temp
+4. meson configure --buildtype=release
+5. ninja -j20
+
+------------------------------------------------------------------------------------------------
 * CMAKE!
+------------------------------------------------------------------------------------------------
 
 This is probably the most generic build script we have; it has been tested on Linux, Windows and macOS.
 
@@ -24,8 +34,8 @@ Pro tip! "cmake -DENABLE_AVX512=ON .." to enable Intel AVX-512 SIMD instructions
          "cmake -DBUILD_SHARED_LIBS=ON .." to compile .so/.dll/.dylib instead of .a/.lib
 
 ------------------------------------------------------------------------------------------------
-
 * MAKE!
+------------------------------------------------------------------------------------------------
 
 This is a hand-written, custom makefile which needs some manual tinkering on different platforms 
 for example when building with cross-compilation toolchains. Should work out of the box on Linux and macOS.
@@ -44,15 +54,15 @@ The separation is done so that when not using OpenGL or Vulkan don't have to pul
 Pro tip! "make simd=avx2" to enable Intel AVX2 SIMD instructions.
 
 ------------------------------------------------------------------------------------------------
-
 * XCODE!!!
+------------------------------------------------------------------------------------------------
 
 Load the xcode project and build for release.
 Drag and drop or link with the mango.framework to get access to the headers and binaries.
 
 ------------------------------------------------------------------------------------------------
-
 * VISUAL STUDIO!!!
+------------------------------------------------------------------------------------------------
 
 Load the solution file. Select configuration (the Release / x64 is very nice one). Build!
 
@@ -62,8 +72,8 @@ link with the appropriate library. Each configuration generates own static .lib 
 We only support the latest Visual Studio (2017 at the time of writing this); apologies for the inconvenience.
 
 ------------------------------------------------------------------------------------------------
-
 * ANDROID!!?
+------------------------------------------------------------------------------------------------
 
 1. cd build/android/
 2. ndk-build -j20
@@ -71,8 +81,8 @@ We only support the latest Visual Studio (2017 at the time of writing this); apo
 Then use the resulting library files in your cool/awesome Android projects.
 
 ------------------------------------------------------------------------------------------------
-
 Troubleshooting!
+------------------------------------------------------------------------------------------------
 
 Error:
   "In file included from /root/temp/mango/source/mango/image/image_ktx.cpp:9:0:
@@ -95,4 +105,3 @@ Solution:
 Apologies for poor quality build scripts and instructions. Typically you configure the library to be part of your build system
 just once and there are so many ways organizations and individuals do these things it's super duper hard to please everyone so
 our main focus was pleasing ourselves foremost and fix problems as they are reported. Have a nice day! :)
-
