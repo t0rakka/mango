@@ -310,7 +310,7 @@ if (APPLE)
     target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
 endif ()
 
-# add "-lpthreads" linker option when platform has support
+# add "-lpthread" linker option when platform has support
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango "${CMAKE_THREAD_LIBS_INIT}")
