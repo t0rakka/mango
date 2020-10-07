@@ -7,7 +7,7 @@ mango::core
 [x] Improve CPU feature runtime detection (esp. Android)
 [x] Configurable alignment for aligned_malloc/free (currently defaults to 16 bytes)
 [ ] Unify stream offset type (size_t vs. u64)
-[ ] should the seek offset by signed? u64 -> s64
+[x] should the seek offset by signed? u64 -> s64
 [-] Improved string builder: variadic template variant of a + b + c + d.. -> makeString(a,b,c,d, ...)
 
 ---------------------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ mango::image
     - was decoding direct? color converting? scaling? dithering? paletted.. source bitplanes..
 [x] struct EncodeOptions, used by ImageEncoder::encode()
 [ ] 1, 2 and 4 bit formats / blitting support
-[ ] rename ColorRGBA / ColorBGRA? RGBA/BGRA won't work (used in Format class enums). rgba, u8_rgba, ..
+[-] rename ColorRGBA / ColorBGRA? RGBA/BGRA won't work (used in Format class enums). rgba, u8_rgba, ..
 [ ] namespace mango::image
 [ ] Palette blitters (palette + index -> RGBA)
 [x] Color quantizer / dithering for RGBA -> Palette + Index generation (supports 1..8 bits)
