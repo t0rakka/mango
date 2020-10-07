@@ -54,8 +54,8 @@ void compression_example(size_t size)
     int result = std::memcmp(buffer, output, size);
     const char* status = result ? "FAILED" : "PASSED";
 
-    printf("compressed %zu bytes to %zu bytes in %llu us (%.1f MB/s).\n", size, bytes, time1 - time0, rate0);
-    printf("decompressed %zu bytes to %zu bytes in %llu us (%.1f MB/s).\n", bytes, size, time2 - time1, rate1);
+    printf("compressed %zu bytes to %zu bytes in %d us (%.1f MB/s).\n", size, bytes, u32(time1 - time0), rate0);
+    printf("decompressed %zu bytes to %zu bytes in %d us (%.1f MB/s).\n", bytes, size, u32(time2 - time1), rate1);
     printf("status: %s\n", status);
 }
 
