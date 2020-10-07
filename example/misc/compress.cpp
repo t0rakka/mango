@@ -51,8 +51,8 @@ void compression_example(size_t size)
     float rate0 = size / float(time1 - time0);
     float rate1 = size / float(time2 - time1);
 
-    int result = std::memcmp(buffer, output, size);
-    const char* status = result ? "FAILED" : "PASSED";
+    bool correct = std::memcmp(buffer, output, size) == 0;
+    const char* status = correct ? "PASSED" : "FAILED";
 
     printf("compressed %zu bytes to %zu bytes in %d us (%.1f MB/s).\n", size, bytes, u32(time1 - time0), rate0);
     printf("decompressed %zu bytes to %zu bytes in %d us (%.1f MB/s).\n", bytes, size, u32(time2 - time1), rate1);
