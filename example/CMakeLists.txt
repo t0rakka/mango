@@ -9,6 +9,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 link_libraries(mango)
 
+# add "-lpthread" linker option when platform has support
+find_package(Threads)
+if (CMAKE_THREAD_LIBS_INIT)
+    link_libraries("${CMAKE_THREAD_LIBS_INIT}")
+endif ()
+
 if (APPLE)
     # fix wrapped compiler dropping /usr/local
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include")
@@ -25,4 +31,6 @@ add_executable(endian misc/endian.cpp)
 add_executable(filesystem misc/filesystem.cpp)
 add_executable(math misc/math.cpp)
 add_executable(memory misc/memory.cpp)
-add_executable(webp_test image/webp/webp_test.cpp)
+
+add_executable(webp_test benchmark/webp/webp_test.cpp)
+add_executable(jpeg_test benchmark/jpeg/jpeg_test.cpp)
