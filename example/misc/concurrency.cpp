@@ -155,7 +155,7 @@ struct State
 
     void process(size_t offset, size_t count)
     {
-        assert(offset + count < data.size());
+        assert(offset + count <= data.size());
         // process a range in the data here...
     }
 };
