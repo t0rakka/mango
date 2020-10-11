@@ -1481,14 +1481,18 @@ namespace
 
         // look-ahead into the chunks to see if we have transparency information
         p += 4; // skip crc
-        for (; p < m_end - 8;)
+        for ( ; p < m_end - 8; )
         {
             const u32 size = p.read32();
             const u32 id = p.read32();
             switch (id)
             {
                 case u32_mask_rev('t', 'R', 'N', 'S'):
-                    m_color_state.transparent_enable = true;
+                    if (m_color_type < 4)
+                    {
+                        // Enable color keying only for valid color types
+                        m_color_state.transparent_enable = true;
+                    }
                     break;
             }
             p += (size + 4);
@@ -1619,7 +1623,13 @@ namespace
         }
         else
         {
-            setError("Incorrect color type for alpha palette.");
+            // From the specification, ISO/IEC 15948:2003 ;
+            // "A tRNS chunk shall not appear for colour types 4 and 6, since a full alpha channel is already present in those cases."
+            //
+            // Of course, some software apparently writes png files with color_type=RGBA which have a tRNS chunk
+            // so the following validation check is disabled because the users expect the files to "work"
+
+            //setError("Incorrect color type for alpha palette.");
         }
     }
 
