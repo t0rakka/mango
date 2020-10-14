@@ -47,34 +47,9 @@ endif ()
 # build
 # ----------------------------------------------------------------------
 
-add_executable(threads  test/threads.cpp)
-add_executable(pathtest test/pathtest.cpp)
-add_executable(particle test/particle.cpp)
-
-add_executable(bitmap      misc/bitmap.cpp)
-add_executable(checksum    misc/checksum.cpp)
-add_executable(compress    misc/compress.cpp)
-add_executable(concurrency misc/concurrency.cpp)
-add_executable(endian      misc/endian.cpp)
-add_executable(filesystem  misc/filesystem.cpp)
-add_executable(math        misc/math.cpp)
-add_executable(memory      misc/memory.cpp)
-
-add_executable(webp_test image/webp/webp.cpp)
-add_executable(jpeg_test image/jpeg/jpeg.cpp)
-add_executable(png_benchmark
-    image/png_benchmark/png_benchmark.cpp
-    image/png_benchmark/lodepng/lodepng.cpp
-    image/png_benchmark/spng/spng.c
-)
-add_executable(jpeg_benchmark
-    image/jpeg_benchmark/jpeg_benchmark.cpp
-    image/jpeg_benchmark/jpeg-compressor/jpgd.cpp
-    image/jpeg_benchmark/jpeg-compressor/jpge.cpp
-)
-
-target_link_libraries(png_benchmark png z)
-target_link_libraries(jpeg_benchmark jpeg)
+add_subdirectory(test)
+add_subdirectory(misc)
+add_subdirectory(image)
 
 # ----------------------------------------------------------------------
 # build framebuffer
