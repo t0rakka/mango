@@ -1,8 +1,15 @@
+# ----------------------------------------------------------------------
 # NOTE:
 # apt-get install libpng-dev libz-dev
 #
+# ----------------------------------------------------------------------
+
 cmake_minimum_required(VERSION 3.5)
 project(mango-examples)
+
+# build options
+option(BUILD_OPENGL      "Enables build of OpenGL examples"      OFF)
+option(BUILD_FRAMEBUFFER "Enables build of framebuffer examples" OFF)
 
 add_compile_options(-Wall -O3 -g)
 
@@ -36,6 +43,10 @@ else ()
     link_libraries(dl)
 endif ()
 
+# ----------------------------------------------------------------------
+# build
+# ----------------------------------------------------------------------
+
 add_executable(threads  test/threads.cpp)
 add_executable(pathtest test/pathtest.cpp)
 add_executable(particle test/particle.cpp)
@@ -62,23 +73,21 @@ add_executable(jpeg_benchmark
     image/jpeg_benchmark/jpeg-compressor/jpge.cpp
 )
 
-add_executable(framebuffer framebuffer/framebuffer.cpp)
-add_executable(mandelbrot  framebuffer/mandelbrot.cpp)
-add_executable(animation   framebuffer/animation.cpp)
-
-add_executable(gltest opengl/gltest.cpp)
-
 target_link_libraries(png_benchmark png z)
 target_link_libraries(jpeg_benchmark jpeg)
 
-if (APPLE)
-    target_link_libraries(framebuffer mango-framebuffer)
-    target_link_libraries(mandelbrot  mango-framebuffer)
-    target_link_libraries(animation   mango-framebuffer)
-    target_link_libraries(gltest mango-opengl "-framework OpenGL")
-elseif (UNIX)
-    target_link_libraries(framebuffer mango-framebuffer X11)
-    target_link_libraries(mandelbrot  mango-framebuffer X11)
-    target_link_libraries(animation   mango-framebuffer X11)
-    target_link_libraries(gltest mango-opengl X11 GL)
+# ----------------------------------------------------------------------
+# build framebuffer
+# ----------------------------------------------------------------------
+
+if (BUILD_FRAMEBUFFER)
+    add_subdirectory(framebuffer)
+endif ()
+
+# ----------------------------------------------------------------------
+# build opengl
+# ----------------------------------------------------------------------
+
+if (BUILD_OPENGL)
+    add_subdirectory(opengl)
 endif ()
