@@ -1940,6 +1940,8 @@ namespace jpeg {
 
         for (int y = 0; y < height; ++y)
         {
+            u8* image = m_surface->address<u8>(0, y);
+
             for (int x = 0; x < width; ++x)
             {
                 s16 data[JPEG_MAX_BLOCKS_IN_MCU];
@@ -1989,20 +1991,18 @@ namespace jpeg {
                     data[currentComponent] = data[currentComponent] >> (precision - 8);
                 }
 
-                // TODO: optimize
                 if (components == 1)
                 {
-                    int s = byteclamp(data[0] + 128);
-                    u8* image = m_surface->address<u8>(x, y);
-                    image[0] = s;
+                    image[0] = byteclamp(data[0] + 128);
+                    image += 1;
                 }
                 else
                 {
-                    int r = byteclamp(data[0] + 128);
-                    int g = byteclamp(data[1] + 128);
-                    int b = byteclamp(data[2] + 128);
-                    u32* image = m_surface->address<u32>(x, y);
-                    image[0] = makeBGRA(r, g, b, 255);
+                    image[0] = byteclamp(data[2] + 128); // blue
+                    image[1] = byteclamp(data[1] + 128); // green
+                    image[2] = byteclamp(data[0] + 128); // red
+                    image[3] = 0xff;
+                    image += 4;
                 }
             }
         }
