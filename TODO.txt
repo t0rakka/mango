@@ -33,6 +33,12 @@ mango::image
 [-] GIF encoder + animation
 [ ] Blitter Engine v2.0
 [x] mango::ConstMemory for read-only or read-only intent memory regions
+[ ] fix image_ktx.cpp to use GL_* macros correctly; nicer place for the macros?
+[ ] expose 1,2,4 bit png file as "block compressed" format
+      1 bit -> 8x1 block size (group 8 pixels into 1 byte)
+      2 bit -> 4x1 block size (group 4 pixels into 1 byte)
+      4 bit -> 2x1 block size (group 2 pixels into 1 byte)
+    possibly also extend the "block compressed" to cover GIF and other formats
 
 ---------------------------------------------------------------------------------------------
 mango::math
@@ -45,6 +51,32 @@ mango::math
 [ ] clean the simd *_is_hardware_vector macros and their usage
 [ ] expose all of the masked simd functions in mango::Vector
 [ ] implement the generic masked simd functions in one header (= CODE SHARING IS CARING)
+
+---------------------------------------------------------------------------------------------
+mango::window
+---------------------------------------------------------------------------------------------
+
+[ ] Window::setVisible(true) as default
+[ ] rename setVislbe -> setWindowVisible, etc.
+[ ] separation of X11 and GLX in glx::Window/Context impl.
+[ ] improve window creation flags: resize, frame, minimize, fullscreen
+
+---------------------------------------------------------------------------------------------
+mango::opengl
+---------------------------------------------------------------------------------------------
+
+[ ] shared context support
+[ ] helper functions for shader creation
+[ ] integration to mango::math for most common OpenGL API
+
+---------------------------------------------------------------------------------------------
+mango::filesystem
+---------------------------------------------------------------------------------------------
+
+[ ] RAR: implement decryption? maybe.
+[ ] RAR: reject multi-volume archives (or just support them but requires quite a bit of logic)
+[ ] RAR: reject SFX archives (propably a good idea)
+[ ] RAR: optimize (especially getbits() which is a low-hanging fruit)
 
 ---------------------------------------------------------------------------------------------
 misc
