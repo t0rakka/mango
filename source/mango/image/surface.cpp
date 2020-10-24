@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -184,12 +184,15 @@ namespace
         {
             ImageHeader header = decoder.header();
 
+            size_t stride = header.width * surface.format.bytes();
+            size_t bytes = header.height * stride;
+
             // configure surface
             surface.width  = header.width;
             surface.height = header.height;
             surface.format = format ? *format : header.format;
-            surface.stride = surface.width * surface.format.bytes();
-            surface.image  = new u8[surface.height * surface.stride];
+            surface.stride = int(stride);
+            surface.image  = new u8[bytes];
 
             // decode
             ImageDecodeStatus status = decoder.decode(surface);
@@ -213,12 +216,15 @@ namespace
             ImageHeader header = decoder.header();
             if (header.palette)
             {
+                size_t stride = surface.width;
+                size_t bytes = header.height * stride;
+
                 // configure surface
                 surface.width  = header.width;
                 surface.height = header.height;
                 surface.format = IndexedFormat(8);
                 surface.stride = surface.width;
-                surface.image  = new u8[surface.height * surface.stride];
+                surface.image  = new u8[bytes];
 
                 // decode
                 ImageDecodeOptions options;
