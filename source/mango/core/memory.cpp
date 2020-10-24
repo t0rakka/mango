@@ -81,13 +81,13 @@ namespace mango
 
     void* aligned_malloc(size_t bytes, Alignment alignment)
     {
-        const size_t mask = u32(alignment) - 1;
+        const size_t mask = size_t(alignment) - 1;
         void* block = std::malloc(bytes + mask + sizeof(void*));
         char* aligned = reinterpret_cast<char*>(block) + sizeof(void*);
 
         if (block)
         {
-            aligned += u32(alignment) - (reinterpret_cast<ptrdiff_t>(aligned) & mask);
+            aligned += size_t(alignment) - (reinterpret_cast<ptrdiff_t>(aligned) & mask);
             reinterpret_cast<void**>(aligned)[-1] = block;
         }
         else

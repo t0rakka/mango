@@ -1764,7 +1764,8 @@ namespace jpeg {
 
         // determine if we need a full-surface temporary storage
         bool require_vector = is_progressive || is_multiscan;
-        size_t vector_bytes = require_vector ? mcus * blocks_in_mcu * 64 : 0;
+        size_t num_blocks = size_t(mcus) * blocks_in_mcu;
+        size_t vector_bytes = require_vector ? num_blocks * 64 : 0;
 
         // allocate blocks
         AlignedStorage<s16> tempBlockVector(vector_bytes);
@@ -2231,8 +2232,8 @@ namespace jpeg {
 
             for (int x = 0; x < xs; ++x)
             {
-                int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
-                int block_offset = (x & HMask) + block_yoffset;
+                size_t mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
+                size_t block_offset = (x & HMask) + block_yoffset;
                 s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
                 // decode
@@ -2305,13 +2306,15 @@ namespace jpeg {
         // use threadpool to process blocks
         ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
 
+        size_t mcu_stride = size_t(xmcu) * blocks_in_mcu * 64;
+
         for (int y = 0; y < ymcu; y += N)
         {
             const int y0 = y;
             const int y1 = std::min(y + N, ymcu);
             debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
-            s16* data = blockVector + y0 * xmcu * (blocks_in_mcu * 64);
+            s16* data = blockVector + y0 * mcu_stride;
 
             // enqueue task
             queue.enqueue([=]
