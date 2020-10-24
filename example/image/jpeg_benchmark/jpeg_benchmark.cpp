@@ -23,7 +23,7 @@ void warmup(const char* filename)
 
     ImageDecoder decoder(memory, filename);
     ImageHeader header = decoder.header();
-    printf("image: %d x %d (%d KB)\n", header.width, header.height, int(memory.size / 1024));
+    printf("image: %d x %d (%zu KB)\n", header.width, header.height, memory.size / 1024);
 }
 
 // ----------------------------------------------------------------------
