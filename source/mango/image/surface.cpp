@@ -82,20 +82,21 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    void load_surface(Surface& surface, ConstMemory memory, const std::string& extension, const Format* format)
+    void load_surface(Surface& surface, ConstMemory memory, const std::string& extension, const Format* ptr_format)
     {
         ImageDecoder decoder(memory, extension);
         if (decoder.isDecoder())
         {
             ImageHeader header = decoder.header();
 
-            size_t stride = header.width * surface.format.bytes();
+            Format format = ptr_format ? *ptr_format : header.format;
+            size_t stride = header.width * format.bytes();
             size_t bytes = header.height * stride;
 
             // configure surface
             surface.width  = header.width;
             surface.height = header.height;
-            surface.format = format ? *format : header.format;
+            surface.format = format;
             surface.stride = int(stride);
             surface.image  = new u8[bytes];
 
@@ -121,7 +122,7 @@ namespace
             ImageHeader header = decoder.header();
             if (header.palette)
             {
-                size_t stride = surface.width;
+                size_t stride = header.width;
                 size_t bytes = header.height * stride;
 
                 // configure surface
