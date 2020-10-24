@@ -12,49 +12,9 @@
 #include <mango/math/vector.hpp>
 #include <mango/image/image.hpp>
 
-#include <mango/core/timer.hpp>
-
 namespace
 {
     using namespace mango;
-
-    // ----------------------------------------------------------------------------
-	// fill_aligned
-    // ----------------------------------------------------------------------------
-
-    template <typename T>
-    inline u8* u8_fill(u8* dest, int count, T value)
-    {
-        T* p = reinterpret_cast<T*>(dest);
-        for (int i = 0; i < count; ++i)
-        {
-            p[i] = value;
-        }
-        return dest + count * sizeof(T);
-    }
-
-	template <typename T, typename E>
-	void fill_aligned(u8* dest, T value, E expanded_value, int count)
-	{
-		// compute padding required for alignment
-		const ptrdiff_t address = dest - reinterpret_cast<u8*>(0);
-        const ptrdiff_t mask = sizeof(E) - 1;
-		const int padding_in_bytes = int(-address & mask);
-
-        // fill padding values to align the dest pointer
-		const int padding_count = int(padding_in_bytes / sizeof(T));
-        dest = u8_fill(dest, padding_count, value);
-		count -= padding_count;
-
-        // fill expanded value to aligned address
-		const int expand_ratio = sizeof(E) / sizeof(T);
-		const int expand_count = count / expand_ratio;
-        dest = u8_fill(dest, expand_count, expanded_value);
-		count -= expand_count * expand_ratio;
-
-        // fill remaining values
-        u8_fill(dest, count, value);
-	}
 
     // ----------------------------------------------------------------------------
     // clear
@@ -62,77 +22,22 @@ namespace
 
     void clear_u8_scan(u8* dest, int count, u32 color)
     {
-        const u8 value = static_cast<u8>(color);
-		std::memset(dest, value, count);
+		std::memset(dest, u8(color), count);
     }
 
     void clear_u16_scan(u8* dest, int count, u32 color)
     {
-#if defined(MANGO_ENABLE_SIMD)
-		if (count >= 32)
-		{
-            // 128 bit fill
-            u16 value16 = static_cast<u16>(color);
-            u32 value32 = (color << 16) | color;
-            uint32x4 value128(value32);
-            fill_aligned(dest, value16, value128, count);
-		}
-#else
-		if (count >= 16)
-		{
-			u16 value16 = static_cast<u16>(color);
-			u32 value32 = (color << 16) | color;
-#ifdef MANGO_CPU_64BIT
-			// 64 bit fill
-			u64 value64 = (u64(value32) << 32) | value32;
-			fill_aligned(dest, value16, value64, count);
-#else
-			// 32 bit fill
-			fill_aligned(dest, value16, value32, count);
-#endif
-		}
-#endif
-		else
-		{
-			// 16 bit fill
-			u16 value16 = static_cast<u16>(color);
-            u8_fill(dest, count, value16);
-		}
+        std::fill_n(reinterpret_cast<u16*>(dest), count, u16(color));
     }
 
     void clear_u24_scan(u8* dest, int count, u32 color)
     {
-        u24 value24 = color;
-        u8_fill(dest, count, value24);
+        std::fill_n(reinterpret_cast<u24*>(dest), count, u24(color));
     }
 
     void clear_u32_scan(u8* dest, int count, u32 color)
     {
-#if defined(MANGO_ENABLE_SIMD)
-		if (count >= 16)
-		{
-            // 128 bit fill
-            uint32x4 value128(color);
-            fill_aligned(dest, color, value128, count);
-		}
-		else
-#else
-
-#ifdef MANGO_CPU_64BIT
-		if (count >= 8)
-		{
-			// 64 bit fill
-			u64 value64 = (u64(color) << 32) | color;
-			fill_aligned(dest, color, value64, count);
-		}
-		else
-#endif
-
-#endif
-		{
-			// 32 bit fill
-            u8_fill(dest, count, color);
-		}
+        std::fill_n(reinterpret_cast<u32*>(dest), count, color);
     }
 
     template <typename FloatType>
