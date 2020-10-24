@@ -101,8 +101,13 @@ void save_jpeg(const char* filename, const Surface& surface)
     cinfo.in_color_space = JCS_RGB;
 
     int quality = 95;
+    bool progressive = false;
 
     jpeg_set_defaults(&cinfo);
+    if (progressive)
+    {
+        jpeg_simple_progression(&cinfo);
+    }
     jpeg_set_quality(&cinfo, quality, TRUE);
     jpeg_start_compress(&cinfo, TRUE);
 
