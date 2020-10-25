@@ -339,6 +339,7 @@ namespace jpeg {
 
         const u8* stepMarker(const u8* p, const u8* end) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
+        const u8* seekRestartMarker(const u8* p, const u8* end) const;
 
         void processSOI();
         void processEOI();

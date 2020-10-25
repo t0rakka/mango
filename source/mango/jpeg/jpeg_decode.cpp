@@ -319,6 +319,28 @@ namespace jpeg {
         return p;
     }
 
+    const u8* Parser::seekRestartMarker(const u8* start, const u8* end) const
+    {
+        const u8* p = start;
+        --end; // marker is two bytes: don't look at last byte
+
+        while (p < end)
+        {
+            p = mango::memchr(p, 0xff, end - p);
+            if (p[1])
+            {
+                return p; // found a marker
+            }
+            p += 2; // skip: 0xff, 0x00
+        }
+
+        //if (*p != 0xff)
+        ++p; // skip last byte (warning! if it is 0xff a marker can be potentially missed)
+        debugPrint("  Seek: %d bytes\n", int(p - start));
+
+        return p;
+    }
+
     void Parser::processSOI()
     {
         debugPrint("[ SOI ]\n");
@@ -1059,7 +1081,7 @@ namespace jpeg {
         {
             printf("%.2x ", decodeState.buffer.ptr[i-8]);
         }
-        printf(" | ");
+        printf("| ");
         for (int i = 0; i < 8; ++i)
         {
             printf("%.2x ", decodeState.buffer.ptr[i]);
@@ -1068,7 +1090,7 @@ namespace jpeg {
         */
 
         // HACK: the decoder may have prefetched more bytes that it could consume
-        p = seekMarker(decodeState.buffer.ptr - 6, end);
+        p = seekMarker(decodeState.buffer.ptr - 8, end);
 
         return p;
     }
@@ -2178,7 +2200,7 @@ namespace jpeg {
                 });
 
                 // seek next restart marker
-                p = seekMarker(p, decodeState.buffer.end);
+                p = seekRestartMarker(p, decodeState.buffer.end);
                 p += 2;
             }
 
