@@ -113,6 +113,19 @@ namespace jpeg {
         MARKER_RES      = 0xff02   // Reserved (0x02 .. 0xbf)
     };
 
+    inline bool isRestartMarker(const u8* p)
+    {
+        bool is = false;
+
+        if (p[0] == 0xff)
+        {
+            int index = p[1] - 0xd0;
+            is = index >= 0 && index <= 7;
+        }
+
+        return is;
+    }
+
     // ----------------------------------------------------------------------------
     // BitBuffer
     // ----------------------------------------------------------------------------
@@ -291,7 +304,10 @@ namespace jpeg {
             p = mango::memchr(p, 0xff, end - p);
             if (p[1])
             {
-                return p; // found a marker
+                if (!isRestartMarker(p))
+                {
+                    return p; // found a marker
+                }
             }
             p += 2; // skip: 0xff, 0x00
         }
@@ -1036,8 +1052,23 @@ namespace jpeg {
             }
         }
 
+        /*
+        int remain = decodeState.buffer.remain;
+        printf("remain: %d\n", remain);
+        for (int i = 0; i < 8; ++i)
+        {
+            printf("%.2x ", decodeState.buffer.ptr[i-8]);
+        }
+        printf(" | ");
+        for (int i = 0; i < 8; ++i)
+        {
+            printf("%.2x ", decodeState.buffer.ptr[i]);
+        }
+        printf("\n");
+        */
+
         // HACK: the decoder may have prefetched more bytes that it could consume
-        p = seekMarker(decodeState.buffer.ptr - 8, end);
+        p = seekMarker(decodeState.buffer.ptr - 6, end);
 
         return p;
     }
@@ -1483,18 +1514,6 @@ namespace jpeg {
             MANGO_UNREFERENCED(time0);
             MANGO_UNREFERENCED(time1);
         }
-    }
-
-    inline bool isRestartMarker(const u8* p)
-    {
-        // TODO: clean up this hack
-        bool is = false;
-        if (p[0] == 0xff)
-        {
-            int index = p[1] - 0xd0;
-            is = index >= 0 && index <= 7;
-        }
-        return is;
     }
 
     void Parser::restart()
@@ -2232,8 +2251,8 @@ namespace jpeg {
 
             for (int x = 0; x < xs; ++x)
             {
-                size_t mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
-                size_t block_offset = (x & HMask) + block_yoffset;
+                int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
+                int block_offset = (x & HMask) + block_yoffset;
                 s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
                 // decode
