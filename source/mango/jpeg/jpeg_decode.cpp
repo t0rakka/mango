@@ -2192,8 +2192,6 @@ namespace jpeg {
 
     void Parser::decodeProgressiveDC()
     {
-        // TODO: store Huffman decoding tables in decode state
-#if 0
         if (restartInterval)
         {
             s16* data = blockVector;
@@ -2229,14 +2227,12 @@ namespace jpeg {
             decodeState.buffer.ptr = p;
         }
         else
-#endif
         {
             s16* data = blockVector;
 
             for (int i = 0; i < mcus; ++i)
             {
                 decodeState.decode(data, &decodeState);
-                handleRestart(); // TODO: remove this after restart code is activated
                 data += blocks_in_mcu * 64;
             }
         }
@@ -2244,8 +2240,6 @@ namespace jpeg {
 
     void Parser::decodeProgressiveAC()
     {
-        // TODO: store Huffman decoding tables in decode state
-#if 0
         if (restartInterval)
         {
             s16* data = blockVector;
@@ -2313,7 +2307,6 @@ namespace jpeg {
             decodeState.buffer.ptr = p;
         }
         else
-#endif
         {
             s16* data = blockVector;
 
@@ -2347,7 +2340,6 @@ namespace jpeg {
                     s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
                     decodeState.decode(mcudata, &decodeState);
-                    handleRestart(); // TODO: remove this after restart code is activated
                 }
             }
         }
