@@ -328,6 +328,7 @@
 		A6DD28E124129F8E0085E6EE /* libd_adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28DF24129F8E0085E6EE /* libd_adler32.c */; };
 		A6DD28E324129FA10085E6EE /* cpu_x86_features.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28E224129FA10085E6EE /* cpu_x86_features.c */; };
 		A6DD28E524129FAE0085E6EE /* cpu_arm_features.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28E424129FAE0085E6EE /* cpu_arm_features.c */; };
+		A6E2F47C254662B300A26178 /* cpu_features_common.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E2F47B254662B300A26178 /* cpu_features_common.h */; };
 		A6EC3E612308589900B17F21 /* zstd_compress_sequences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */; };
 		A6EC3E622308589900B17F21 /* zstd_compress_literals.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */; };
 		A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */; };
@@ -817,6 +818,7 @@
 		A6DD28DF24129F8E0085E6EE /* libd_adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libd_adler32.c; path = external/libdeflate/lib/libd_adler32.c; sourceTree = "<group>"; };
 		A6DD28E224129FA10085E6EE /* cpu_x86_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_x86_features.c; path = external/libdeflate/lib/x86/cpu_x86_features.c; sourceTree = "<group>"; };
 		A6DD28E424129FAE0085E6EE /* cpu_arm_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_arm_features.c; path = external/libdeflate/lib/arm/cpu_arm_features.c; sourceTree = "<group>"; };
+		A6E2F47B254662B300A26178 /* cpu_features_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_features_common.h; path = external/libdeflate/lib/cpu_features_common.h; sourceTree = "<group>"; };
 		A6EC3E5D2308589900B17F21 /* zstd_compress_sequences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_sequences.h; path = external/zstd/compress/zstd_compress_sequences.h; sourceTree = "<group>"; };
 		A6EC3E5E2308589900B17F21 /* zstd_compress_literals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_literals.c; path = external/zstd/compress/zstd_compress_literals.c; sourceTree = "<group>"; };
 		A6EC3E5F2308589900B17F21 /* zstd_compress_literals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_literals.h; path = external/zstd/compress/zstd_compress_literals.h; sourceTree = "<group>"; };
@@ -1497,6 +1499,7 @@
 				A6966E022457D863000C1970 /* libd_utils.c */,
 				A6DD28AA24125F190085E6EE /* adler32_vec_template.h */,
 				A6DD28AC24125F190085E6EE /* bt_matchfinder.h */,
+				A6E2F47B254662B300A26178 /* cpu_features_common.h */,
 				A6DD28B824125F190085E6EE /* crc32_table.h */,
 				A6DD28B924125F190085E6EE /* crc32_vec_template.h */,
 				A6DD28B024125F190085E6EE /* decompress_template.h */,
@@ -2017,6 +2020,7 @@
 				A642436021852AEF0044B763 /* Alloc.h in Headers */,
 				A66F158921C15CB400E1C8AA /* zstd_ddict.h in Headers */,
 				A66F158721C15CB400E1C8AA /* zstd_decompress_block.h in Headers */,
+				A6E2F47C254662B300A26178 /* cpu_features_common.h in Headers */,
 				A63DD75E1E706EB200D4D499 /* unpack.hpp in Headers */,
 				A642438021852AEF0044B763 /* CpuArch.h in Headers */,
 				A6EC3F87230D7C4D00B17F21 /* quant_levels_dec_utils.h in Headers */,
