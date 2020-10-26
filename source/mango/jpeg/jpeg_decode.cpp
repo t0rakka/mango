@@ -138,6 +138,22 @@ namespace jpeg {
 
     void BitBuffer::fill()
     {
+#if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
+        if (ptr + 8 <= end)
+        {
+            u64 x = uload64(ptr);
+            const __m128i ref = _mm_cmpeq_epi8(_mm_setzero_si128(), _mm_setzero_si128());
+            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(_mm_set_epi64x(0, x), ref));
+            if (!mask)
+            {
+                data = (data << 48) | (byteswap(x) >> 16);
+                remain += 48;
+                ptr += 6;
+                return;
+            }
+        }
+#endif
+
         for (int i = 0; i < JPEG_REGISTER_FILL; ++i)
         {
             const u8* x = ptr;
