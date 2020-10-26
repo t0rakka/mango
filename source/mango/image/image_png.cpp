@@ -791,13 +791,7 @@ namespace
     {
         MANGO_UNREFERENCED(state);
 
-        u16* dest = reinterpret_cast<u16*>(dst);
-
-        for (int x = 0; x < width; ++x)
-        {
-            dest[x] = uload16be(src);
-            src += 2;
-        }
+        std::memcpy(dst, src, width * 2);
     }
 
     void process_ia16(const ColorState& state, int width, u8* dst, const u8* src)
@@ -1329,7 +1323,6 @@ namespace
 
         void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
         void deinterlace8(u8* output, int width, int height, int stride, u8* buffer);
-        void deinterlace16(u8* output, int width, int height, int stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
         void process(u8* dest, int width, int height, int stride, u8* buffer);
 
@@ -2025,17 +2018,19 @@ namespace
 
     void ParserPNG::deinterlace8(u8* output, int width, int height, int stride, u8* buffer)
     {
+        const int components = m_channels * (m_color_state.bits / 8);
+
         for (int pass = 0; pass < 7; ++pass)
         {
             AdamInterleave adam(pass, width, height);
             debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
 
-            const int bw = PNG_FILTER_BYTE + adam.w;
+            const int bw = PNG_FILTER_BYTE + adam.w * components;
             filter(buffer, bw, adam.h);
 
             if (adam.w && adam.h)
             {
-                const int ps = adam.w + PNG_FILTER_BYTE;
+                const int ps = adam.w * components + PNG_FILTER_BYTE;
 
                 for (int y = 0; y < adam.h; ++y)
                 {
@@ -2043,51 +2038,14 @@ namespace
                     u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
                     u8* src = buffer + y * ps + PNG_FILTER_BYTE;
 
-                    dest += adam.xorig;
-                    const int xmax = adam.w << adam.xspc;
-                    const int xstep = 1 << adam.xspc;
+                    dest += adam.xorig * components;
+                    const int xmax = (adam.w * components) << adam.xspc;
+                    const int xstep = components << adam.xspc;
 
                     for (int x = 0; x < xmax; x += xstep)
                     {
-                        dest[x] = *src++;
-                    }
-                }
-
-                // next pass
-                buffer += bw * adam.h;
-            }
-        }
-    }
-
-    void ParserPNG::deinterlace16(u8* output, int width, int height, int stride, u8* buffer)
-    {
-        for (int pass = 0; pass < 7; ++pass)
-        {
-            AdamInterleave adam(pass, width, height);
-            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
-
-            const int bw = PNG_FILTER_BYTE + adam.w * 2;
-            filter(buffer, bw, adam.h);
-
-            if (adam.w && adam.h)
-            {
-                const int ps = adam.w * 2 + PNG_FILTER_BYTE;
-
-                for (int y = 0; y < adam.h; ++y)
-                {
-                    const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = buffer + y * ps + PNG_FILTER_BYTE;
-
-                    dest += adam.xorig * 2;
-                    const int xmax = (adam.w * 2) << adam.xspc;
-                    const int xstep = 2 << adam.xspc;
-
-                    for (int x = 0; x < xmax; x += xstep)
-                    {
-                        dest[x + 0] = src[0];
-                        dest[x + 1] = src[1];
-                        src += 2;
+                        std::memcpy(dest + x, src, components);
+                        src += components;
                     }
                 }
 
@@ -2138,10 +2096,8 @@ namespace
             // deinterlace does filter for each pass
             if (m_color_state.bits < 8)
                 deinterlace1to4(temp, width, height, bytes_per_line, buffer);
-            else if (m_color_state.bits < 16)
-                deinterlace8(temp, width, height, bytes_per_line, buffer);
             else
-                deinterlace16(temp, width, height, bytes_per_line, buffer);
+                deinterlace8(temp, width, height, bytes_per_line, buffer);
 
             // use de-interlaced temp buffer as processing source
             buffer = temp;
