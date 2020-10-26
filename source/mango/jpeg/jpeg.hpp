@@ -127,7 +127,7 @@ namespace jpeg {
         void restart();
         void fill();
 
-        void ensure16()
+        void ensure()
         {
             if (remain < 16)
             {
@@ -137,11 +137,13 @@ namespace jpeg {
 
         int getBits(int nbits)
         {
+            ensure();
             return int(bextr(data, remain -= nbits, nbits));
         }
 
         int peekBits(int nbits)
         {
+            ensure();
             return int(bextr(data, remain - nbits, nbits));
         }
 
@@ -152,7 +154,6 @@ namespace jpeg {
 
         int receive(int nbits)
         {
-            ensure16();
             int value = getBits(nbits);
             return extend(value, nbits);
         }

@@ -138,32 +138,6 @@ namespace jpeg {
 
     void BitBuffer::fill()
     {
-#if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
-        if (ptr + 8 <= end)
-        {
-            const __m128i ref = _mm_set1_epi8(0xffu);
-
-#if defined(MANGO_COMPILER_GCC) && __GNUC__ < 9
-            // Work-around; generates inferior code with some compilers (ICC, MSVC)
-            __m128i value = _mm_set_epi64x(0, uload64(ptr));
-#else
-            // This intrinsic was broken until GCC 9
-            __m128i value = _mm_loadu_si64(reinterpret_cast<const __m128i *>(ptr));
-#endif
-
-            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(value, ref)) & 0x3f; // mask 6 first samples
-            if (!mask)
-            {
-                DataType x = _mm_cvtsi128_si64(value);
-                x = byteswap(x) >> 16; // source data is big endian
-                data = (data << 48) | x;
-                remain += 48;
-                ptr += 6;
-                return;
-            }
-        }
-#endif
-
         for (int i = 0; i < JPEG_REGISTER_FILL; ++i)
         {
             const u8* x = ptr;
@@ -1074,12 +1048,11 @@ namespace jpeg {
             }
         }
 
-        /*
-        int remain = decodeState.buffer.remain;
-        printf("remain: %d\n", remain);
+#if 0
+        printf("remain: %d bits\n", decodeState.buffer.remain);
         for (int i = 0; i < 8; ++i)
         {
-            printf("%.2x ", decodeState.buffer.ptr[i-8]);
+            printf("%.2x ", decodeState.buffer.ptr[i - 8]);
         }
         printf("| ");
         for (int i = 0; i < 8; ++i)
@@ -1087,10 +1060,11 @@ namespace jpeg {
             printf("%.2x ", decodeState.buffer.ptr[i]);
         }
         printf("\n");
-        */
+#endif
 
-        // HACK: the decoder may have prefetched more bytes that it could consume
-        p = seekMarker(decodeState.buffer.ptr - 8, end);
+        // TODO: deprecate seekMarker()
+        //p = seekMarker(decodeState.buffer.ptr - 2, end);
+        p = decodeState.buffer.ptr;
 
         return p;
     }
