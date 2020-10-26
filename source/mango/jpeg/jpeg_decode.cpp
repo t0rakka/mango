@@ -2200,6 +2200,8 @@ namespace jpeg {
         const bool dc_scan = (decodeState.spectralStart == 0);
         s16* data = blockVector;
 
+        ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
+
         if (dc_scan)
         {
             if (decodeState.comps_in_scan == 1 && decodeState.blocks > 1)
@@ -2211,49 +2213,146 @@ namespace jpeg {
             }
             else
             {
-                for (int i = 0; i < mcus; ++i)
+                if (restartInterval)
                 {
-                    decodeState.decode(data, &decodeState);
-                    handleRestart();
-                    data += blocks_in_mcu * 64;
-                }
+                    const u8* p = decodeState.buffer.ptr;
 
-                return;
+                    for (int i = 0; i < mcus; i += restartInterval)
+                    {
+                        // enqueue task
+                        queue.enqueue([=]
+                        {
+                            DecodeState state = decodeState;
+                            state.buffer.ptr = p;
+
+                            s16* dest = data + i * blocks_in_mcu * 64;
+
+                            const int left = std::min(restartInterval, mcus - i);
+                            for (int j = 0; j < left; ++j)
+                            {
+                                state.decode(dest, &state);
+                                dest += blocks_in_mcu * 64;
+                            }
+                        });
+
+                        // seek next restart marker
+                        p = seekRestartMarker(p, decodeState.buffer.end);
+                        if (isRestartMarker(p))
+                            p += 2;
+                    }
+
+                    decodeState.buffer.ptr = p;
+                }
+                else
+                {
+                    for (int i = 0; i < mcus; ++i)
+                    {
+                        decodeState.decode(data, &decodeState);
+                        handleRestart();
+                        data += blocks_in_mcu * 64;
+                    }
+                }
             }
         }
-
-        const int hsf = u32_log2(scanFrame->Hsf);
-        const int vsf = u32_log2(scanFrame->Vsf);
-        const int hsize = (Hmax >> hsf) * 8;
-        const int vsize = (Vmax >> vsf) * 8;
-
-        debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
-        debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
-
-        const int scan_offset = scanFrame->offset;
-
-        const int xs = ((xsize + hsize - 1) / hsize);
-        const int ys = ((ysize + vsize - 1) / vsize);
-
-        debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
-
-        const int HMask = (1 << hsf) - 1;
-        const int VMask = (1 << vsf) - 1;
-
-        for (int y = 0; y < ys; ++y)
+        else
         {
-            int mcu_yoffset = (y >> vsf) * xmcu;
-            int block_yoffset = ((y & VMask) << hsf) + scan_offset;
-
-            for (int x = 0; x < xs; ++x)
+            if (restartInterval)
             {
-                int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
-                int block_offset = (x & HMask) + block_yoffset;
-                s16* mcudata = data + (block_offset + mcu_offset) * 64;
+                const int hsf = u32_log2(scanFrame->Hsf);
+                const int vsf = u32_log2(scanFrame->Vsf);
+                const int hsize = (Hmax >> hsf) * 8;
+                const int vsize = (Vmax >> vsf) * 8;
 
-                // decode
-                decodeState.decode(mcudata, &decodeState);
-                handleRestart();
+                debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
+                debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
+
+                const int scan_offset = scanFrame->offset;
+
+                const int xs = xmcu;//((xsize + hsize - 1) / hsize);
+                const int ys = ymcu;//((ysize + vsize - 1) / vsize);
+
+                debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
+
+                MANGO_UNREFERENCED(xs);
+                MANGO_UNREFERENCED(ys);
+                MANGO_UNREFERENCED(hsize);
+                MANGO_UNREFERENCED(vsize);
+
+                const int HMask = (1 << hsf) - 1;
+                const int VMask = (1 << vsf) - 1;
+
+                const u8* p = decodeState.buffer.ptr;
+
+                for (int i = 0; i < mcus; i += restartInterval)
+                {
+                    // enqueue task
+                    queue.enqueue([=]
+                    {
+                        DecodeState state = decodeState;
+                        state.buffer.ptr = p;
+
+                        const int left = std::min(restartInterval, mcus - i);
+                        for (int j = 0; j < left; ++j)
+                        {
+                            int n = i + j;
+                            int x = n % xmcu;
+                            int y = n / xmcu;
+
+                            int mcu_yoffset = (y >> vsf) * xmcu;
+                            int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+
+                            int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
+                            int block_offset = (x & HMask) + block_yoffset;
+                            s16* dest = data + (block_offset + mcu_offset) * 64;
+
+                            state.decode(dest, &state);
+                        }
+                    });
+
+                    // seek next restart marker
+                    p = seekRestartMarker(p, decodeState.buffer.end);
+                    if (isRestartMarker(p))
+                        p += 2;
+                }
+
+                decodeState.buffer.ptr = p;
+            }
+            else
+            {
+                const int hsf = u32_log2(scanFrame->Hsf);
+                const int vsf = u32_log2(scanFrame->Vsf);
+                const int hsize = (Hmax >> hsf) * 8;
+                const int vsize = (Vmax >> vsf) * 8;
+
+                debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
+                debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
+
+                const int scan_offset = scanFrame->offset;
+
+                const int xs = ((xsize + hsize - 1) / hsize);
+                const int ys = ((ysize + vsize - 1) / vsize);
+
+                debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
+
+                const int HMask = (1 << hsf) - 1;
+                const int VMask = (1 << vsf) - 1;
+
+                for (int y = 0; y < ys; ++y)
+                {
+                    int mcu_yoffset = (y >> vsf) * xmcu;
+                    int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+
+                    for (int x = 0; x < xs; ++x)
+                    {
+                        int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
+                        int block_offset = (x & HMask) + block_yoffset;
+                        s16* mcudata = data + (block_offset + mcu_offset) * 64;
+
+                        // decode
+                        decodeState.decode(mcudata, &decodeState);
+                        handleRestart();
+                    }
+                }
             }
         }
     }
