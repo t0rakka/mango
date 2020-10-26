@@ -2007,7 +2007,7 @@ namespace jpeg {
 
     void Parser::decodeSequentialST()
     {
-        const int stride = m_surface->stride;
+        const size_t stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
         const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
@@ -2095,7 +2095,7 @@ namespace jpeg {
         {
             const u8* p = decodeState.buffer.ptr;
 
-            const int stride = m_surface->stride;
+            const size_t stride = m_surface->stride;
             const int bytes_per_pixel = m_surface->format.bytes();
             const int xstride = bytes_per_pixel * xblock;
             const int ystride = stride * yblock;
@@ -2192,6 +2192,8 @@ namespace jpeg {
 
     void Parser::decodeProgressiveDC()
     {
+        // TODO: store Huffman decoding tables in decode state
+#if 0
         if (restartInterval)
         {
             s16* data = blockVector;
@@ -2227,12 +2229,14 @@ namespace jpeg {
             decodeState.buffer.ptr = p;
         }
         else
+#endif
         {
             s16* data = blockVector;
 
             for (int i = 0; i < mcus; ++i)
             {
                 decodeState.decode(data, &decodeState);
+                handleRestart(); // TODO: remove this after restart code is activated
                 data += blocks_in_mcu * 64;
             }
         }
@@ -2240,6 +2244,8 @@ namespace jpeg {
 
     void Parser::decodeProgressiveAC()
     {
+        // TODO: store Huffman decoding tables in decode state
+#if 0
         if (restartInterval)
         {
             s16* data = blockVector;
@@ -2307,6 +2313,7 @@ namespace jpeg {
             decodeState.buffer.ptr = p;
         }
         else
+#endif
         {
             s16* data = blockVector;
 
@@ -2340,6 +2347,7 @@ namespace jpeg {
                     s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
                     decodeState.decode(mcudata, &decodeState);
+                    handleRestart(); // TODO: remove this after restart code is activated
                 }
             }
         }
@@ -2356,7 +2364,7 @@ namespace jpeg {
 
     void Parser::finishProgressiveST()
     {
-        const int stride = m_surface->stride;
+        const size_t stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
         const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
@@ -2433,7 +2441,7 @@ namespace jpeg {
         const int xblock_last = xclip ? xclip : xblock;
         const int yblock_last = yclip ? yclip : yblock;
 
-        const int stride = m_surface->stride;
+        const size_t stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
         const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
@@ -2481,7 +2489,7 @@ namespace jpeg {
         }
     }
 
-    void Parser::process_and_clip(u8* dest, int stride, const s16* data, int width, int height)
+    void Parser::process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height)
     {
         if (xblock != width || yblock != height)
         {

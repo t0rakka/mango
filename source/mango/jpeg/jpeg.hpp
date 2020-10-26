@@ -269,14 +269,14 @@ namespace jpeg {
 
 	    void (*idct) (u8* dest, const s16* data, const s16* qt);
 
-        void (*process            ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_y          ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_cmyk       ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_ycbcr      ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_ycbcr_8x8  ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_ycbcr_8x16 ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_ycbcr_16x8 ) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-        void (*process_ycbcr_16x16) (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process            ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_y          ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_cmyk       ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_ycbcr      ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_ycbcr_8x8  ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_ycbcr_8x16 ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_ycbcr_16x8 ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        void (*process_ycbcr_16x16) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     };
 
     // ----------------------------------------------------------------------------
@@ -377,7 +377,7 @@ namespace jpeg {
         void finishProgressiveMT(int N);
 
         void process_range(int y0, int y1, const s16* data);
-        void process_and_clip(u8* dest, int stride, const s16* data, int width, int height);
+        void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
 
         int getTaskSize(int count) const;
         void configureCPU(SampleType sample);
@@ -399,7 +399,7 @@ namespace jpeg {
     // functions
     // ----------------------------------------------------------------------------
 
-    using ProcessFunc = void (*)(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    using ProcessFunc = void (*)(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
     void huff_decode_mcu_lossless   (s16* output, DecodeState* state);
     void huff_decode_mcu            (s16* output, DecodeState* state);
@@ -422,59 +422,59 @@ namespace jpeg {
     void idct8                          (u8* dest, const s16* data, const s16* qt);
     void idct12                         (u8* dest, const s16* data, const s16* qt);
 
-    void process_y_8bit                 (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_y_24bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_y_32bit                (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_cmyk_bgra              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_8bit             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_y_8bit                 (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_y_24bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_y_32bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_cmyk_bgra              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_8bit             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_bgr              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x8          (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x8          (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x16         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgb              (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x8          (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x8          (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x16         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_bgra             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x8        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_8x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_8x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_16x8        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_16x16       (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgba             (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x8         (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x16        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x8        (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x16       (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x8        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x16       (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
 #if defined(JPEG_ENABLE_NEON)
 
     void idct_neon                      (u8* dest, const s16* data, const s16* qt);
 
-    void process_ycbcr_bgra_8x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x8_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x16_neon  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_8x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_8x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_16x8_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_16x16_neon  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgba_8x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x8_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x16_neon  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x8_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x16_neon  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_bgr_8x8_neon     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x8_neon     (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x16_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgb_8x8_neon     (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8_neon    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16_neon   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x8_neon     (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x16_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
 #endif
 
@@ -482,29 +482,29 @@ namespace jpeg {
 
     void idct_sse2                      (u8* dest, const s16* data, const s16* qt);
 
-    void process_ycbcr_bgra_8x8_sse2    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x16_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x8_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x16_sse2  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_8x8_sse2    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_8x16_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_16x8_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgra_16x16_sse2  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgba_8x8_sse2    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x16_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x8_sse2   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x16_sse2  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x8_sse2    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_8x16_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x8_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgba_16x16_sse2  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
 #endif // JPEG_ENABLE_SSE2
 
 #if defined(JPEG_ENABLE_SSE4)
 
-    void process_ycbcr_bgr_8x8_ssse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16_ssse3  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x8_ssse3    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x16_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x8_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x16_ssse3  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgb_8x8_ssse3    (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8_ssse3   (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16_ssse3  (u8* dest, int stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x8_ssse3    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x16_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x8_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x16_ssse3  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
 #endif // JPEG_ENABLE_SSE4
 
