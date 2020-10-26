@@ -127,6 +127,8 @@ namespace jpeg {
 
     int HuffTable::decode(BitBuffer& buffer) const
     {
+        buffer.ensure();
+
         int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
         int size = lookupSize[index];
 

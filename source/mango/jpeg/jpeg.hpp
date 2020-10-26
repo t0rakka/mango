@@ -143,7 +143,6 @@ namespace jpeg {
 
         int peekBits(int nbits)
         {
-            ensure();
             return int(bextr(data, remain - nbits, nbits));
         }
 
@@ -371,6 +370,8 @@ namespace jpeg {
         void decodeSequentialMT(int N);
         void decodeMultiScan();
         void decodeProgressive();
+        void decodeProgressiveDC();
+        void decodeProgressiveAC();
         void finishProgressive();
         void finishProgressiveST();
         void finishProgressiveMT(int N);
