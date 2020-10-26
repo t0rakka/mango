@@ -14,7 +14,7 @@ namespace mango
     struct BlitScan
     {
         u8* address;
-        int stride;
+        size_t stride;
     };
 
     struct BlitRect

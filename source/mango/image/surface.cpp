@@ -91,13 +91,13 @@ namespace
 
             Format format = ptr_format ? *ptr_format : header.format;
             size_t stride = header.width * format.bytes();
-            size_t bytes = header.height * stride;
+            size_t bytes = stride * header.height;
 
             // configure surface
             surface.width  = header.width;
             surface.height = header.height;
             surface.format = format;
-            surface.stride = int(stride);
+            surface.stride = stride;
             surface.image  = new u8[bytes];
 
             // decode
@@ -129,7 +129,7 @@ namespace
                 surface.width  = header.width;
                 surface.height = header.height;
                 surface.format = IndexedFormat(8);
-                surface.stride = surface.width;
+                surface.stride = stride;
                 surface.image  = new u8[bytes];
 
                 // decode
@@ -178,7 +178,7 @@ namespace mango
     {
     }
 
-    Surface::Surface(int width, int height, const Format& format, int stride, const void* image)
+    Surface::Surface(int width, int height, const Format& format, size_t stride, const void* image)
         : format(format)
         , image(const_cast<u8*>(reinterpret_cast<const u8*>(image)))
         , stride(stride)
@@ -408,7 +408,7 @@ namespace mango
 
         for (int y = 0; y < half_height; ++y)
         {
-            // swap pixels using the slowest possible method
+            // swap pixels
             for (int i = 0; i < bytes_per_scan; ++i)
             {
                 std::swap(top[i], bottom[i]);
@@ -424,7 +424,7 @@ namespace mango
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int w, int h, const Format& f, int s)
+    Bitmap::Bitmap(int w, int h, const Format& f, size_t s)
         : Surface(w, h, f, s, nullptr)
     {
         if (!stride)
@@ -432,14 +432,18 @@ namespace mango
             stride = width * format.bytes();
         }
 
-        image = new u8[stride * height];
+        size_t bytes = stride * height;
+        image = new u8[bytes];
     }
 
     Bitmap::Bitmap(const Surface& source, const Format& format)
         : Surface(source.width, source.height, format, 0, nullptr)
     {
         stride = width * format.bytes();
-        image = new u8[stride * height];
+
+        size_t bytes = stride * height;
+        image = new u8[bytes];
+
         blit(0, 0, source);
     }
 
