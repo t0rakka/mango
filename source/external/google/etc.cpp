@@ -62,7 +62,7 @@ namespace
         return value >= vmin && value <= vmax;
     }
 
-    void decompress_block_etc1(u8* output, int stride, const u64 src)
+    void decompress_block_etc1(u8* output, size_t stride, const u64 src)
     {
         const int  flipBit  = getBits(src, 32, 1);
         const int  diffBit  = getBits(src, 33, 1);
@@ -157,7 +157,7 @@ namespace
 #endif
     }
 
-    void decompress_block_etc2(u8* output, int stride, const u64 src, bool alphaMode)
+    void decompress_block_etc2(u8* output, size_t stride, const u64 src, bool alphaMode)
     {
         enum Etc2Mode
         {
@@ -494,7 +494,7 @@ namespace
         }
     }
 
-    void decompress_block_eac8(u8* output, int stride, u64 src)
+    void decompress_block_eac8(u8* output, size_t stride, u64 src)
     {
         static const int modifierTable[16][8] =
         {
@@ -538,7 +538,7 @@ namespace
         }
     }
 
-    void decompress_block_eac11(u8* output, int xstride, int ystride, u64 src, bool signedMode)
+    void decompress_block_eac11(u8* output, size_t xstride, size_t ystride, u64 src, bool signedMode)
     {
         static const int modifierTable[16][8] =
         {
@@ -626,14 +626,14 @@ namespace
 namespace mango
 {
 
-    void decode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const u64 color = uload64be(input);
         decompress_block_etc1(output, stride, color);
     }
 
-    void decode_block_etc2(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_etc2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         const bool alphaMode = info.compression == TextureCompression::ETC2_RGB_ALPHA1 ||
                                info.compression == TextureCompression::ETC2_SRGB_ALPHA1;
@@ -641,7 +641,7 @@ namespace mango
         decompress_block_etc2(output, stride, color, alphaMode);
     }
 
-    void decode_block_etc2_eac(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_etc2_eac(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const u64 alpha = uload64be(input + 0);
@@ -650,14 +650,14 @@ namespace mango
         decompress_block_eac8(output, stride, alpha);
     }
 
-    void decode_block_eac_r11(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_eac_r11(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         const bool signedMode = info.compression == TextureCompression::EAC_SIGNED_R11;
         const u64 red = uload64be(input);
         decompress_block_eac11(output, 1, stride, red, signedMode);
     }
 
-    void decode_block_eac_rg11(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_eac_rg11(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         const bool signedMode = info.compression == TextureCompression::EAC_SIGNED_RG11;
         const u64 red = uload64be(input + 0);

@@ -697,7 +697,7 @@ namespace
             {
                 int width = std::max(1U, m_ktx_header.pixelWidth >> level);
                 int height = std::max(1U, m_ktx_header.pixelHeight >> level);
-                int stride = width * format.bytes();
+                size_t stride = width * format.bytes();
 
                 // KTX format stores data with GL_UNPACK_ALIGNMENT of 4
                 stride = (stride + 3) & ~3;

@@ -1074,13 +1074,13 @@ static float ComputeError(const LDRColorA& pixel, const LDRColorA aPalette[],
 }
 
 // NOTE: where this is used it might be more efficient to use a tiling loop
-static inline HDRColorA* ComputeAddress(u8* output, int stride, size_t index)
+static inline HDRColorA* ComputeAddress(u8* output, size_t stride, size_t index)
 {
 	HDRColorA* scan = reinterpret_cast<HDRColorA*>(output + stride * (index >> 2));
 	return scan + (index & 3);
 }
 
-static inline void FillWithErrorColors(u8* output, int stride)
+static inline void FillWithErrorColors(u8* output, size_t stride)
 {
     for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -1101,7 +1101,7 @@ static inline void FillWithErrorColors(u8* output, int stride)
 // BC6H Compression
 //-------------------------------------------------------------------------------------
 
-void D3DX_BC6H::Decode(bool bSigned, u8* output, int stride) const
+void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const
 {
     assert(output);
 
@@ -1894,7 +1894,7 @@ float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const
 // BC7 Compression
 //-------------------------------------------------------------------------------------
 
-void D3DX_BC7::Decode(u8* output, int stride) const
+void D3DX_BC7::Decode(u8* output, size_t stride) const
 {
     assert(output);
 
@@ -2773,7 +2773,7 @@ namespace
     using namespace mango;
 
     // TODO: add stride support to encoder to eliminate this step
-    void convert_block(float32x4* output, const u8* input, int stride)
+    void convert_block(float32x4* output, const u8* input, size_t stride)
     {
         for (int y = 0; y < 4; ++y)
         {
@@ -2792,7 +2792,7 @@ namespace mango
 {
     using namespace DirectX;
 
-    void decode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert(output && input);
@@ -2800,7 +2800,7 @@ namespace mango
         reinterpret_cast< const D3DX_BC6H* >( input )->Decode(false, output, stride);
     }
 
-    void decode_block_bc6hs(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc6hs(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert(output && input);
@@ -2808,7 +2808,7 @@ namespace mango
         reinterpret_cast< const D3DX_BC6H* >( input )->Decode(true, output, stride);
     }
 
-    void decode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert(output && input);
@@ -2816,7 +2816,7 @@ namespace mango
         reinterpret_cast< const D3DX_BC7* >( input )->Decode(output, stride);
     }
 
-    void encode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];
@@ -2824,7 +2824,7 @@ namespace mango
         D3DXEncodeBC6HU(output, temp);
     }
 
-    void encode_block_bc6hs(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc6hs(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];
@@ -2832,7 +2832,7 @@ namespace mango
         D3DXEncodeBC6HS(output, temp);
     }
 
-    void encode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];

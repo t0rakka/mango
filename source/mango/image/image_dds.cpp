@@ -1127,7 +1127,7 @@ namespace
                 Format format = header.format;
                 int width = std::max(1, header.width >> level);
                 int height = std::max(1, header.height >> level);
-                int stride = width * format.bytes();
+                size_t stride = width * format.bytes();
 
                 Surface source(width, height, format, stride, imageMemory.address);
                 dest.blit(0, 0, source);

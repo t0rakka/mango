@@ -216,7 +216,7 @@ void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState
     {
         int cbcr_offset = (i & 1) * 4 + (i >> 1) * 32;
         int y_offset = i * 64;
-        int dest_offset = (i >> 1) * 8 * stride + (i & 1) * 8 * XSTEP;
+        size_t dest_offset = (i >> 1) * 8 * stride + (i & 1) * 8 * XSTEP;
         const u8* ptr_cbcr = result + 256 + cbcr_offset;
         const u8* ptr_y = result + y_offset;
         u8* ptr_dest = dest + dest_offset;

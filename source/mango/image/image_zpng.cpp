@@ -171,7 +171,7 @@ namespace
         z.Channels = 4;
         z.WidthPixels = surface.width;
         z.HeightPixels = surface.height;
-        z.StrideBytes = temp.stride;
+        z.StrideBytes = int(temp.stride);
 
         // compress image
         ZPNG_Buffer buf = ZPNG_Compress(&z);

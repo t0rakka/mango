@@ -1478,7 +1478,7 @@ namespace
 namespace mango
 {
 
-    void decode_block_astc_srgb(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_astc_srgb(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         const bool isSRGB = true;
         const bool isLDR = true;
@@ -1508,7 +1508,7 @@ namespace mango
         }
     }
 
-    void decode_block_astc_fp16(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_astc_fp16(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         const bool isSRGB = false;
         const bool isLDR = false;

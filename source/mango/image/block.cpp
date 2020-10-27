@@ -15,65 +15,65 @@
 namespace mango
 {
 
-    void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC1
-    void decode_block_dxt3            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC2
-    void decode_block_dxt5            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC3
-    void decode_block_3dc_x           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC4U
-    void decode_block_3dc_xy          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride); // BC5U
-    void decode_block_uyvy            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_yuy2            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_grgb8           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_rgbg8           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_rgb9e5          (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_r11f_g11f_b10f  (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_r10f_g11f_b11f  (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_pvrtc           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_atc             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_atc_e           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_atc_i           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_fxt1_rgb        (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_fxt1_rgba       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1
+    void decode_block_dxt3            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC2
+    void decode_block_dxt5            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC3
+    void decode_block_3dc_x           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC4U
+    void decode_block_3dc_xy          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC5U
+    void decode_block_uyvy            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_yuy2            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_grgb8           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_rgbg8           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_rgb9e5          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_r11f_g11f_b10f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_r10f_g11f_b11f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_pvrtc           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_atc             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_atc_e           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_atc_i           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_fxt1_rgb        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_fxt1_rgba       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
 #ifdef MANGO_ENABLE_LICENSE_APACHE
 
-    void decode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_etc2            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_etc2_eac        (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_eac_r11         (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_eac_rg11        (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_astc_fp16       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_astc_srgb       (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_etc2            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_etc2_eac        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_eac_r11         (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_eac_rg11        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_astc_fp16       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_astc_srgb       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
 #endif // MANGO_ENABLE_LICENSE_APACHE
 
 #ifdef MANGO_ENABLE_LICENSE_MICROSOFT
 
-    void decode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void decode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void decode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
-    void encode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc1a            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-    void encode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc1a            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
 #endif // MANGO_ENABLE_LICENSE_MICROSOFT
 
-    void encode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+    void encode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
 } // namespace mango
 
@@ -959,18 +959,18 @@ namespace
         const u8* data = memory.address;
 
         u8* image = surface.image;
-        int stride = surface.stride;
+        size_t stride = surface.stride;
 
-        int xstride = info.width * surface.format.bytes();
-        int ystride = info.height * surface.stride;
+        size_t xstride = info.width * surface.format.bytes();
+        size_t ystride = info.height * surface.stride;
 
         const bool origin = (info.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
         if (origin)
         {
             image += yblocks * ystride;
             image -= stride;
-            stride = -stride;
-            ystride = -ystride;
+            stride = 0 - stride;
+            ystride = 0 - ystride;
         }
 
         ConcurrentQueue queue;

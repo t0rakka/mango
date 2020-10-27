@@ -667,7 +667,7 @@ namespace
             }
             else
             {
-                int stride = width * m_pvr_header.m_info.format.bytes();
+                size_t stride = width * m_pvr_header.m_info.format.bytes();
                 Surface source(width, height, m_pvr_header.m_info.format, stride, data.address);
                 dest.blit(0, 0, source);
             }

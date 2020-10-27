@@ -609,7 +609,7 @@ namespace
 			Format format = ptr_palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
 			                            : Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
 
-			int stride = m_header.width * format.bytes();
+			size_t stride = m_header.width * format.bytes();
 			Surface target(m_header.width, m_header.height, format, stride, m_image.get());
 
 			status.current_frame_index = m_frame_counter;
@@ -711,7 +711,7 @@ namespace
 		}
 	};
 
-	void gif_encode_image_block(LittleEndianStream& s, int depth, int width, int height, int stride, u8* image)
+	void gif_encode_image_block(LittleEndianStream& s, int depth, int width, int height, size_t stride, u8* image)
 	{
 		const int minCodeSize = depth;
 		const u32 clearCode = 1 << depth;
@@ -788,7 +788,7 @@ namespace
 	{
 		int width = surface.width;
 		int height = surface.height;
-		int stride = surface.stride;
+		size_t stride = surface.stride;
 		u8* image = surface.image;
 
 		LittleEndianStream s = stream;

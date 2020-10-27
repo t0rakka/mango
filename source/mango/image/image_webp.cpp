@@ -36,15 +36,15 @@ namespace
 
         u8* decode(const Surface& dest, ConstMemory memory) const
         {
-            int bytes = dest.height * dest.stride;
-            return decode_func(memory.address, memory.size, dest.image, bytes, dest.stride);
+            size_t bytes = dest.height * dest.stride;
+            return decode_func(memory.address, memory.size, dest.image, bytes, int(dest.stride));
 
         }
 
         size_t encode(uint8_t** output, const Surface& source, float quality, bool lossless)
         {
-            return lossless ? encode_lossless_func(source.image, source.width, source.height, source.stride, output)
-                            : encode_func(source.image, source.width, source.height, source.stride, quality, output);
+            return lossless ? encode_lossless_func(source.image, source.width, source.height, int(source.stride), output)
+                            : encode_func(source.image, source.width, source.height, int(source.stride), quality, output);
         }
     };
 

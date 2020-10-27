@@ -298,7 +298,7 @@ namespace
     static void pvrtcGetDecompressedPixels(u8 i32ModulationValues[8][16],
                                            Pixel128S upscaledColorA[32],
                                            Pixel128S upscaledColorB[32],
-                                           u8* pColorData, int stride,
+                                           u8* pColorData, size_t stride,
                                            int xoffset, int yoffset, int width, int height,
                                            u8 ui8Bpp)
     {
@@ -315,7 +315,7 @@ namespace
             const Pixel128S* colorA = upscaledColorA + y * ui32WordWidth;
             const Pixel128S* colorB = upscaledColorB + y * ui32WordWidth;
 
-            const int sy = ((yoffset + y) & ymask) * stride;
+            const size_t sy = ((yoffset + y) & ymask) * stride;
             Pixel32* dest = reinterpret_cast<Pixel32 *>(pColorData + sy);
 
             for (unsigned int x = 0; x < ui32WordWidth; x++)
@@ -359,11 +359,11 @@ namespace
     }
 
     static void pvrtcDecompress(const u8* pCompressedData,
-                               u8* pDecompressedData,
-                               int stride,
-                               u32 ui32Width,
-                               u32 ui32Height,
-                               u8 ui8Bpp)
+                                u8* pDecompressedData,
+                                size_t stride,
+                                u32 ui32Width,
+                                u32 ui32Height,
+                                u8 ui8Bpp)
     {
         const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
         const u32 ui32WordHeight = 4;
@@ -449,7 +449,7 @@ namespace
 namespace mango
 {
 
-    void decode_block_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         u8 bpp = 0;
 

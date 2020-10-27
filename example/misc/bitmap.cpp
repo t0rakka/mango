@@ -84,7 +84,7 @@ void example5(const Memory& memory, const std::string& extension)
         // to get address where we can blit the image we are decoding.
 
         // Since this is a simple example we just allocate a buffer.
-        const int stride = header.width * header.format.bytes();
+        const size_t stride = header.width * header.format.bytes();
         std::vector<u8> buffer(header.height * stride);
 
         // This is just "Image Pointer" ; mango::Surface is just surface

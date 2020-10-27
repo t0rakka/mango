@@ -437,7 +437,7 @@ namespace
             {
                 // image origin is at the bottom
                 dest.image = surface.image + (height - 1) * surface.stride;
-                dest.stride = -surface.stride;
+                dest.stride = 0 - surface.stride;
             }
 
 		    std::unique_ptr<u8[]> temp;

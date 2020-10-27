@@ -1321,10 +1321,10 @@ namespace
         void blend_rgba16   (u8* dest, const u8* src, int width);
         void blend_indexed  (u8* dest, const u8* src, int width);
 
-        void deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer);
-        void deinterlace8(u8* output, int width, int height, int stride, u8* buffer);
+        void deinterlace1to4(u8* output, int width, int height, size_t stride, u8* buffer);
+        void deinterlace8(u8* output, int width, int height, size_t stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
-        void process(u8* dest, int width, int height, int stride, u8* buffer);
+        void process(u8* dest, int width, int height, size_t stride, u8* buffer);
 
         void blend(Surface& d, Surface& s, Palette* palette);
 
@@ -1975,7 +1975,7 @@ namespace
         return buffer_size;
     }
 
-    void ParserPNG::deinterlace1to4(u8* output, int width, int height, int stride, u8* buffer)
+    void ParserPNG::deinterlace1to4(u8* output, int width, int height, size_t stride, u8* buffer)
     {
         const int samples = 8 / m_color_state.bits;
         const int mask = samples - 1;
@@ -2016,7 +2016,7 @@ namespace
         }
     }
 
-    void ParserPNG::deinterlace8(u8* output, int width, int height, int stride, u8* buffer)
+    void ParserPNG::deinterlace8(u8* output, int width, int height, size_t stride, u8* buffer)
     {
         const int components = m_channels * (m_color_state.bits / 8);
 
@@ -2075,7 +2075,7 @@ namespace
         }
     }
 
-    void ParserPNG::process(u8* image, int width, int height, int stride, u8* buffer)
+    void ParserPNG::process(u8* image, int width, int height, size_t stride, u8* buffer)
     {
         if (m_error)
         {
@@ -2172,7 +2172,7 @@ namespace
         // default: main image from "IHDR" chunk
         int width = m_width;
         int height = m_height;
-        int stride = dest.stride;
+        size_t stride = dest.stride;
         u8* image = dest.image;
 
         std::unique_ptr<u8[]> framebuffer;

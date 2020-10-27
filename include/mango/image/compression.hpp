@@ -215,8 +215,8 @@ namespace mango
             BC7_UNORM_SRGB                = BPTC_SRGB_ALPHA_UNORM
         };
 
-        using DecodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
-        using EncodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, int stride);
+        using DecodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+        using EncodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
         TextureCompression compression; // block format (including flags)
         u32 dxgi;           // DXGI format

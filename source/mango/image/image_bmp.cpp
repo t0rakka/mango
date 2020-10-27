@@ -474,7 +474,7 @@ namespace
     // .bmp decoder
     // ------------------------------------------------------------
 
-    void readRLE4(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
+    void readRLE4(Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
     {
         MANGO_UNREFERENCED(stride);
 
@@ -559,7 +559,7 @@ namespace
         }
     }
 
-    void readRLE8(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
+    void readRLE8(Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
     {
         MANGO_UNREFERENCED(stride);
 
@@ -708,7 +708,7 @@ namespace
         }
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, int stride, const u8* data)
+    void readIndexed(Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
     {
         const int bits = header.bitsPerPixel;
         const u32 mask = (1 << bits) - 1;
@@ -735,7 +735,7 @@ namespace
         }
     }
 
-    void readRGB(const Surface& surface, const BitmapHeader& header, int stride, const u8* data)
+    void readRGB(const Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
     {
         Surface source(header.width, header.height, header.format, stride, data);
         surface.blit(0, 0, source);
@@ -795,7 +795,7 @@ namespace
             }
         }
 
-        const int stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
+        const size_t stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
         const u8* data = memory.address + offset;
 
         Surface mirror = surface;
@@ -803,7 +803,7 @@ namespace
         if (header.yflip)
         {
             mirror.image += (header.height - 1) * surface.stride;
-            mirror.stride = -surface.stride;
+            mirror.stride = 0 - surface.stride;
         }
 
         if (header.os2)
@@ -1286,7 +1286,7 @@ namespace
         int headersize = 56;
         int dataoffset = magicsize + headersize;
 
-        int stride = width * format.bytes();
+        u32 stride = width * format.bytes();
         u32 imagesize = height * stride;
         u32 filesize = dataoffset + imagesize;
 

@@ -90,7 +90,7 @@ namespace
         }
     }
 
-    void DecodeColorBlock(u8* dest, int stride, const DXTColBlock* colorBlock, u8 alpha)
+    void DecodeColorBlock(u8* dest, size_t stride, const DXTColBlock* colorBlock, u8 alpha)
     {
         u32 color[4];
         GetColorBlockColors(color, colorBlock, alpha);
@@ -150,7 +150,7 @@ namespace
 
 #ifdef MANGO_CPU_64BIT
     
-    void DecodeAlphaExplicit(u8* dest, int stride, const DXTAlphaBlockExplicit* alphaBlock)
+    void DecodeAlphaExplicit(u8* dest, size_t stride, const DXTAlphaBlockExplicit* alphaBlock)
     {
         u64 data = uload64le(&alphaBlock->data[0]);
 
@@ -165,7 +165,7 @@ namespace
         }
     }
 
-    void Decode3BitLinear(u8* dest, int bpp, int stride, const DXTAlphaBlock3BitLinear* block)
+    void Decode3BitLinear(u8* dest, int bpp, size_t stride, const DXTAlphaBlock3BitLinear* block)
     {
         u8 table[8];
         DecodeAlphaTable(table, block);
@@ -186,7 +186,7 @@ namespace
 
 #else
 
-    void DecodeAlphaExplicit(u8* dest, int stride, const DXTAlphaBlockExplicit* alphaBlock)
+    void DecodeAlphaExplicit(u8* dest, size_t stride, const DXTAlphaBlockExplicit* alphaBlock)
     {
         for (int y = 0; y < 4; ++y)
         {
@@ -199,7 +199,7 @@ namespace
         }
     }
 
-    void Decode3BitLinear(u8* dest, int bpp, int stride, const DXTAlphaBlock3BitLinear* block)
+    void Decode3BitLinear(u8* dest, int bpp, size_t stride, const DXTAlphaBlock3BitLinear* block)
     {
         u8 table[8];
         DecodeAlphaTable(table, block);
@@ -226,7 +226,7 @@ namespace
 
 #endif
 
-    void DecodeATC(u8* dest, int stride, const u8* src)
+    void DecodeATC(u8* dest, size_t stride, const u8* src)
     {
         u32 a = uload16le(src + 0);
         u32 b = uload16le(src + 2);
@@ -299,14 +299,14 @@ namespace
 namespace mango
 {
 
-    void decode_block_dxt1(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_dxt1(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTColBlock* blockColor = reinterpret_cast<const DXTColBlock*>(in + 0);
         DecodeColorBlock(out, stride, blockColor, 0xff);
     }
 
-    void decode_block_dxt3(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_dxt3(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTAlphaBlockExplicit* alphaBlock = reinterpret_cast<const DXTAlphaBlockExplicit *>(in + 0);
@@ -315,7 +315,7 @@ namespace mango
         DecodeAlphaExplicit(out + 3, stride, alphaBlock);
     }
 
-    void decode_block_dxt5(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_dxt5(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* alphaBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear *>(in + 0);
@@ -324,14 +324,14 @@ namespace mango
         Decode3BitLinear(out + 3, 4, stride, alphaBlock);
     }
 
-    void decode_block_3dc_x(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_3dc_x(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* redBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear*>(in + 0);
         Decode3BitLinear(out + 0, 1, stride, redBlock);
     }
 
-    void decode_block_3dc_xy(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_3dc_xy(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* redBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear*>(in + 0);
@@ -340,13 +340,13 @@ namespace mango
         Decode3BitLinear(out + 1, 2, stride, greenBlock);
     }
 
-    void decode_block_atc(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_atc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         DecodeATC(out + 0, stride, in + 0);
     }
 
-    void decode_block_atc_e(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_atc_e(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTAlphaBlockExplicit* alphaBlock = reinterpret_cast<const DXTAlphaBlockExplicit *>(in + 0);
@@ -354,7 +354,7 @@ namespace mango
         DecodeAlphaExplicit(out + 3, stride, alphaBlock);
     }
 
-    void decode_block_atc_i(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_atc_i(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const DXTAlphaBlock3BitLinear* alphaBlock = reinterpret_cast<const DXTAlphaBlock3BitLinear *>(in + 0);

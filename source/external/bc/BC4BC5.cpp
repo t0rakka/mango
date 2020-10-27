@@ -331,7 +331,7 @@ namespace mango
 {
     using namespace DirectX;
 
-    void decode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -351,7 +351,7 @@ namespace mango
     	}
     }
 
-    void decode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -371,7 +371,7 @@ namespace mango
     	}
     }
 
-    void decode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -396,7 +396,7 @@ namespace mango
     	}
     }
 
-    void decode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void decode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -421,7 +421,7 @@ namespace mango
     	}
     }
 
-    void encode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -447,7 +447,7 @@ namespace mango
         FindClosestUNORM(pBC4, theTexelsU);
     }
 
-    void encode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -473,7 +473,7 @@ namespace mango
         FindClosestSNORM(pBC4, theTexelsU);
     }
 
-    void encode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );
@@ -511,7 +511,7 @@ namespace mango
         FindClosestUNORM(pBCG, theTexelsV);
     }
 
-    void encode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         assert( output && input );

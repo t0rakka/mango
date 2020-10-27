@@ -537,7 +537,7 @@ private:
 class D3DX_BC6H : private CBits< 16 >
 {
 public:
-    void Decode(bool bSigned, u8* output, int stride) const;
+    void Decode(bool bSigned, u8* output, size_t stride) const;
     void Encode(bool bSigned, const HDRColorA* const pIn);
 
 private:
@@ -635,7 +635,7 @@ private:
 class D3DX_BC7 : private CBits< 16 >
 {
 public:
-    void Decode(u8* output, int stride) const;
+    void Decode(u8* output, size_t stride) const;
     void Encode(const HDRColorA* const pIn);
 
 private:

@@ -182,7 +182,7 @@ inline void take_best(etc_compressed* a, const etc_compressed* b) {
 }
 
 static
-void etc_average_colors_subblock(const etc1_byte* pIn, int stride,
+void etc_average_colors_subblock(const etc1_byte* pIn, size_t stride,
         etc1_byte* pColors, bool flipped, int base) {
     int r = 0;
     int g = 0;
@@ -255,7 +255,7 @@ static etc1_uint32 chooseModifier(const etc1_byte* pBaseColors,
 }
 
 static
-void etc_encode_subblock_helper(const etc1_byte* pIn, int stride,
+void etc_encode_subblock_helper(const etc1_byte* pIn, size_t stride,
         etc_compressed* pCompressed, bool flipped, int base,
         const etc1_byte* pBaseColors, const int* pModifierTable) {
     int score = pCompressed->score;
@@ -345,7 +345,7 @@ static void etc_encodeBaseColors(etc1_byte* pBaseColors,
 }
 
 static
-void etc_encode_block_helper(const etc1_byte* pIn, int stride,
+void etc_encode_block_helper(const etc1_byte* pIn, size_t stride,
         const etc1_byte* pColors, etc_compressed* pCompressed, bool flipped) {
     pCompressed->score = ~etc1_uint32(0);
     pCompressed->high = (flipped ? 1 : 0);
@@ -387,7 +387,7 @@ void etc_encode_block_helper(const etc1_byte* pIn, int stride,
 namespace mango
 {
 
-    void encode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, int stride)
+    void encode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
 

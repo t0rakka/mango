@@ -2004,8 +2004,8 @@ namespace jpeg {
     {
         const size_t stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
-        const int xstride = bytes_per_pixel * xblock;
-        const int ystride = stride * yblock;
+        const size_t xstride = bytes_per_pixel * xblock;
+        const size_t ystride = stride * yblock;
 
         u8* image = m_surface->image;
 
@@ -2090,8 +2090,8 @@ namespace jpeg {
 
             const size_t stride = m_surface->stride;
             const int bytes_per_pixel = m_surface->format.bytes();
-            const int xstride = bytes_per_pixel * xblock;
-            const int ystride = stride * yblock;
+            const size_t xstride = bytes_per_pixel * xblock;
+            const size_t ystride = stride * yblock;
 
             u8* image = m_surface->image;
 

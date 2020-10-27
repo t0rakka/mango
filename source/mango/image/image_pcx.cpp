@@ -125,7 +125,7 @@ namespace
     {
         const int width = s.width;
         const int height = s.height;
-        const int stride = s.stride;
+        const size_t stride = s.stride;
         u8* image = s.image;
 
         const int sn = scansize / 4;
@@ -153,7 +153,7 @@ namespace
     {
         const int width = s.width;
         const int height = s.height;
-        const int stride = s.stride;
+        const size_t stride = s.stride;
         u8* image = s.image;
 
         for (int y = 0; y < height; ++y)
@@ -168,7 +168,7 @@ namespace
     {
         const int width = s.width;
         const int height = s.height;
-        const int stride = s.stride;
+        const size_t stride = s.stride;
         u8* image = s.image;
 
         const int sn = scansize / 3;
@@ -197,7 +197,7 @@ namespace
     {
         const int width = s.width;
         const int height = s.height;
-        const int stride = s.stride;
+        const size_t stride = s.stride;
         u8* image = s.image;
 
         const int sn = scansize / 4;

@@ -107,7 +107,7 @@ namespace
         return (v << 2) | (v >> 4);
     }
 
-    void decode_hi(u8* out, int stride, const BlockHI& block, u8 alphaMask)
+    void decode_hi(u8* out, size_t stride, const BlockHI& block, u8 alphaMask)
     {
         u32 b0 = expand5to8(block.blue0);
         u32 g0 = expand5to8(block.green0);
@@ -151,7 +151,7 @@ namespace
         }
     }
 
-    void decode_chroma(u8* out, int stride, const BlockCHROMA& block, u8 alphaMask)
+    void decode_chroma(u8* out, size_t stride, const BlockCHROMA& block, u8 alphaMask)
     {
         u32 b0 = expand5to8(block.blue0);
         u32 g0 = expand5to8(block.green0);
@@ -199,7 +199,7 @@ namespace
         }
     }
 
-    void decode_alpha(u8* out, int stride, const BlockALPHA& block, u8 alphaMask)
+    void decode_alpha(u8* out, size_t stride, const BlockALPHA& block, u8 alphaMask)
     {
         u32 b0 = expand5to8(block.blue0);
         u32 g0 = expand5to8(block.green0);
@@ -270,7 +270,7 @@ namespace
         }
     }
 
-    void decode_mixed(u8* out, int stride, const BlockMIXED& block, u8 alphaMask)
+    void decode_mixed(u8* out, size_t stride, const BlockMIXED& block, u8 alphaMask)
     {
         ColorBGRA color[8];
 
@@ -361,7 +361,7 @@ namespace
         }
     }
 
-    void decode_fxt1(u8* out, int stride, const BlockFXT& block, u8 alphaMask)
+    void decode_fxt1(u8* out, size_t stride, const BlockFXT& block, u8 alphaMask)
     {
         u32 mode = block.getMode();
         switch (mode)
@@ -391,14 +391,14 @@ namespace
 namespace mango
 {
 
-    void decode_block_fxt1_rgb(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_fxt1_rgb(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const BlockFXT& block = *reinterpret_cast<const BlockFXT *>(in);
         decode_fxt1(out, stride, block, 0xff);
     }
 
-    void decode_block_fxt1_rgba(const TextureCompressionInfo& info, u8* out, const u8* in, int stride)
+    void decode_block_fxt1_rgba(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const BlockFXT& block = *reinterpret_cast<const BlockFXT *>(in);

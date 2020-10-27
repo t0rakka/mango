@@ -691,7 +691,7 @@ namespace mango
         XFreeGC(m_handle->display, gc);
 
         // convert alpha channel to mask
-        int stride = (width + 7) / 8; // round to next multiple of 8
+        size_t stride = (width + 7) / 8; // round to next multiple of 8
         Bitmap alphaMask(stride, height, Format(8, Format::UNORM, Format::A, 8));
 
         for (int y = 0; y < height; ++y)
