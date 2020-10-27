@@ -1803,7 +1803,6 @@ namespace jpeg {
 
         status.direct = true;
 
-        // target surface size has to match (clipping isn't yet supported)
         if (target.width != xsize || target.height != ysize)
         {
             status.direct = false;
@@ -1814,42 +1813,34 @@ namespace jpeg {
             status.direct = false;
         }
 
-        if (status.direct)
+        // set decoding target surface
+        m_surface = &target;
+
+        std::unique_ptr<Bitmap> temp;
+
+        if (!status.direct)
         {
-            m_surface = &target;
-
-            parse(scan_memory, true);
-
-            if (!header)
-            {
-                status.setError(header.info);
-                return status;
-            }
-
-            if (is_progressive || is_multiscan)
-			{
-	            finishProgressive();
-			}
+            // create a temporary decoding target
+            temp.reset(new Bitmap(width, height, sf.format));
+            m_surface = temp.get();
         }
-        else
+
+        parse(scan_memory, true);
+
+        if (!header)
         {
-            Bitmap temp(width, height, sf.format);
-            m_surface = &temp;
+            status.setError(header.info);
+            return status;
+        }
 
-            parse(scan_memory, true);
+        if (is_progressive || is_multiscan)
+        {
+            finishProgressive();
+        }
 
-            if (!header)
-            {
-                status.setError(header.info);
-                return status;
-            }
-
-            if (is_progressive || is_multiscan)
-			{
-	            finishProgressive();
-			}
-
-            target.blit(0, 0, temp);
+        if (!status.direct)
+        {
+            target.blit(0, 0, *m_surface);
         }
 
         blockVector = nullptr;
