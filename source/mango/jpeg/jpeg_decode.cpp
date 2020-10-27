@@ -1885,28 +1885,12 @@ namespace jpeg {
         return info;
     }
 
-    int Parser::getTaskSize(int count) const
+    int Parser::getTaskSize(int tasks) const
     {
-        int threads = m_hardware_concurrency;
-        if (threads == 1)
-        {
-            //printf("Scheduling: %d in %d threads.\n", count, threads);
-            return count;
-        }
-
-        // adjust the number of threads:
-        // - large thread count is fine as-is; we don't want too much overhead
-        // - small thread count needs finer-grained granularity so that cpu cores have enough work
-        if (threads < 16)
-        {
-            threads *= 2;
-        }
-
-        const int N = (count / threads) + 1;
-
-        //printf("Scheduling: %d scans in %d threads.\n", count, threads);
-        //printf("  size: %d, tasks: %d\n", N, (count + N - 1) / N);
-        return N;
+        const int threads = m_hardware_concurrency;
+        const int tasks_per_thread = threads > 1 ? std::max(tasks / threads, 1) : 0;
+        //printf("Scheduling %d tasks in %d threads (%d tasks/thread)\n", tasks, threads, tasks_per_thread);
+        return tasks_per_thread;
     }
 
     void Parser::decodeLossless()
@@ -2015,10 +1999,14 @@ namespace jpeg {
     void Parser::decodeSequential()
     {
         int n = getTaskSize(ymcu);
-        if (n == ymcu)
-            decodeSequentialST();
-        else
+        if (n)
+        {
             decodeSequentialMT(n);
+        }
+        else
+        {
+            decodeSequentialST();
+        }
     }
 
     void Parser::decodeSequentialST()
@@ -2076,7 +2064,6 @@ namespace jpeg {
 
     void Parser::decodeSequentialMT(int N)
     {
-        // use threadpool to process blocks
         ConcurrentQueue queue("jpeg.sequential", Priority::HIGH);
 
         if (!restartInterval)
@@ -2096,7 +2083,6 @@ namespace jpeg {
                 for (int i = 0; i < count; ++i)
                 {
                     decodeState.decode(data + i * mcu_data_size, &decodeState);
-                    handleRestart();
                 }
 
                 // enqueue task
@@ -2115,7 +2101,8 @@ namespace jpeg {
             const int bytes_per_pixel = m_surface->format.bytes();
             const int xstride = bytes_per_pixel * xblock;
             const int ystride = stride * yblock;
-            u8* image = m_surface->address<u8>(0, 0);
+
+            u8* image = m_surface->image;
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
@@ -2364,81 +2351,32 @@ namespace jpeg {
     void Parser::finishProgressive()
     {
         int n = getTaskSize(ymcu);
-        if (n == ymcu)
-            finishProgressiveST();
-        else
-            finishProgressiveMT(n);
-    }
-
-    void Parser::finishProgressiveST()
-    {
-        const size_t stride = m_surface->stride;
-        const size_t bytes_per_pixel = m_surface->format.bytes();
-        const size_t xstride = bytes_per_pixel * xblock;
-        const size_t ystride = stride * yblock;
-
-        u8* image = m_surface->address<u8>(0, 0);
-
-        const int mcu_data_size = blocks_in_mcu * 64;
-        s16* data = blockVector;
-
-        ProcessFunc process = processState.process;
-
-        const int xmcu_last = xmcu - 1;
-        const int ymcu_last = ymcu - 1;
-        const int xblock_last = xclip ? xclip : xblock;
-        const int yblock_last = yclip ? yclip : yblock;
-
-        for (int y = 0; y < ymcu_last; ++y)
+        if (n)
         {
-            u8* dest = image;
-            image += ystride;
+            ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
 
-            for (int x = 0; x < xmcu_last; ++x)
+            size_t mcu_stride = size_t(xmcu) * blocks_in_mcu * 64;
+
+            for (int y = 0; y < ymcu; y += n)
             {
-                process(dest, stride, data, &processState, xblock, yblock);
-                data += mcu_data_size;
-                dest += xstride;
+                const int y0 = y;
+                const int y1 = std::min(y + n, ymcu);
+
+                s16* data = blockVector + y0 * mcu_stride;
+
+                debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
+
+                // enqueue task
+                queue.enqueue([=]
+                {
+                    process_range(y0, y1, data);
+                });
             }
-
-            // last column
-            process_and_clip(dest, stride, data, xblock_last, yblock);
-            data += mcu_data_size;
-            dest += xstride;
         }
-
-        // last row
-        for (int x = 0; x < xmcu_last; ++x)
+        else
         {
-            process_and_clip(image, stride, data, xblock, yblock_last);
-            data += mcu_data_size;
-            image += xstride;
-        }
-
-        // last mcu
-        process_and_clip(image, stride, data, xblock_last, yblock_last);
-    }
-
-    void Parser::finishProgressiveMT(int N)
-    {
-        // use threadpool to process blocks
-        ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
-
-        size_t mcu_stride = size_t(xmcu) * blocks_in_mcu * 64;
-
-        for (int y = 0; y < ymcu; y += N)
-        {
-            const int y0 = y;
-            const int y1 = std::min(y + N, ymcu);
-            debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
-
-            s16* data = blockVector + y0 * mcu_stride;
-
-            // enqueue task
-            queue.enqueue([=]
-            {
-                process_range(y0, y1, data);
-            });
+            s16* data = blockVector;
+            process_range(0, ymcu, data);
         }
     }
 
@@ -2454,13 +2392,11 @@ namespace jpeg {
         const size_t xstride = bytes_per_pixel * xblock;
         const size_t ystride = stride * yblock;
 
-        u8* image = m_surface->address<u8>(0, 0);
+        u8* image = m_surface->image;
 
         const int mcu_data_size = blocks_in_mcu * 64;
 
         ProcessFunc process = processState.process;
-
-        const s16* source = data;
 
         for (int y = y0; y < y1; ++y)
         {
@@ -2470,28 +2406,28 @@ namespace jpeg {
             {
                 for (int x = 0; x < xmcu_last; ++x)
                 {
-                    process_and_clip(dest, stride, source, xblock, yblock_last);
-                    source += mcu_data_size;
+                    process_and_clip(dest, stride, data, xblock, yblock_last);
+                    data += mcu_data_size;
                     dest += xstride;
                 }
 
                 // last column
-                process_and_clip(dest, stride, source, xblock_last, yblock_last);
-                source += mcu_data_size;
+                process_and_clip(dest, stride, data, xblock_last, yblock_last);
+                data += mcu_data_size;
                 dest += xstride;
             }
             else
             {
                 for (int x = 0; x < xmcu_last; ++x)
                 {
-                    process(dest, stride, source, &processState, xblock, yblock);
-                    source += mcu_data_size;
+                    process(dest, stride, data, &processState, xblock, yblock);
+                    data += mcu_data_size;
                     dest += xstride;
                 }
 
                 // last column
-                process_and_clip(dest, stride, source, xblock_last, yblock);
-                source += mcu_data_size;
+                process_and_clip(dest, stride, data, xblock_last, yblock);
+                data += mcu_data_size;
                 dest += xstride;
             }
         }
