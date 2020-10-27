@@ -76,7 +76,7 @@ namespace jpeg {
             }
         }
         valueOffset[18] = 0;
-        maxcode[17] = ~DataType(0);//0xfffff; // ensures jpeg_huff_decode terminates
+        maxcode[17] = ~DataType(0); //0xfffff; // ensures jpeg_huff_decode terminates
 
         // Compute lookahead tables to speed up decoding.
         // First we set all the table entries to 0, indicating "too long";
@@ -127,7 +127,7 @@ namespace jpeg {
 
     int HuffTable::decode(BitBuffer& buffer) const
     {
-        buffer.ensure16();
+        buffer.ensure();
 
         int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
         int size = lookupSize[index];
@@ -262,8 +262,6 @@ namespace jpeg {
     {
         BitBuffer& buffer = state->buffer;
 
-        buffer.ensure16();
-
         for (int j = 0; j < state->blocks; ++j)
         {
             s16* dest = output + state->block[j].offset;
@@ -308,7 +306,6 @@ namespace jpeg {
                         huffman.eob_run = 1 << r;
                         if (r)
                         {
-                            buffer.ensure16();
                             huffman.eob_run += buffer.getBits(r);
                         }
 
@@ -346,7 +343,6 @@ namespace jpeg {
 
                 if (s)
                 {
-                    buffer.ensure16();
                     if (buffer.getBits(1))
                         s = p1;
                     else
@@ -360,7 +356,6 @@ namespace jpeg {
 
                         if (r)
                         {
-                            buffer.ensure16();
                             huffman.eob_run += buffer.getBits(r);
                         }
 
@@ -373,7 +368,6 @@ namespace jpeg {
                     s16* coef = output + zigzagTable[k];
                     if (*coef != 0)
                     {
-                        buffer.ensure16();
                         if (buffer.getBits(1))
                         {
                             if ((*coef & p1) == 0)
@@ -407,7 +401,6 @@ namespace jpeg {
 
                 if (*coef != 0)
                 {
-                    buffer.ensure16();
                     if (buffer.getBits(1))
                     {
                         if ((*coef & p1) == 0)

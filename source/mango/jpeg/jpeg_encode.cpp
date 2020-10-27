@@ -312,10 +312,10 @@ namespace
 
         std::string info;
 
-        void (*read_8x8) (s16* block, const u8* input, int stride, int rows, int cols);
-        void (*read)     (s16* block, const u8* input, int stride, int rows, int cols);
+        void (*read_8x8) (s16* block, const u8* input, size_t stride, int rows, int cols);
+        void (*read)     (s16* block, const u8* input, size_t stride, int rows, int cols);
 
-        jpeg_encode(SampleType sample, u32 width, u32 height, u32 stride, u32 quality);
+        jpeg_encode(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
         ~jpeg_encode();
 
         void init_quantization_tables(u32 quality);
@@ -1013,7 +1013,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     static
-    void read_y_format(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_y_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -1045,7 +1045,7 @@ namespace
     }
 
     static
-    void read_bgr_format(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_bgr_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -1091,7 +1091,7 @@ namespace
     }
 
     static
-    void read_rgb_format(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_rgb_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -1137,7 +1137,7 @@ namespace
     }
 
     static
-    void read_bgra_format(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_bgra_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -1183,7 +1183,7 @@ namespace
     }
 
     static
-    void read_rgba_format(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_rgba_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int i = 0; i < rows; ++i)
         {
@@ -1231,7 +1231,7 @@ namespace
 #if defined(JPEG_ENABLE_SSE2)
 
     static
-    void read_y_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_y_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -1292,7 +1292,7 @@ namespace
     }
 
     static
-    void read_bgra_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_bgra_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -1355,7 +1355,7 @@ namespace
     }
 
     static
-    void read_rgba_format_sse2(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_rgba_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -1422,7 +1422,7 @@ namespace
 #if defined(JPEG_ENABLE_SSE4)
 
     static
-    void read_bgr_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_bgr_format_ssse3(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -1483,7 +1483,7 @@ namespace
     }
 
     static
-    void read_rgb_format_ssse3(s16* block, const u8* input, int stride, int rows, int cols)
+    void read_rgb_format_ssse3(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -1549,7 +1549,7 @@ namespace
     // jpeg_encode
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(SampleType sample, u32 width, u32 height, u32 stride, u32 quality)
+    jpeg_encode::jpeg_encode(SampleType sample, u32 width, u32 height, size_t stride, u32 quality)
         : ILqt(64)
         , ICqt(64)
     {
@@ -1802,7 +1802,7 @@ namespace
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
 
         const u8* input = surface.image;
-        int stride = surface.stride;
+        size_t stride = surface.stride;
 
         // bitstream for each MCU scan
         std::vector<EncodeBuffer> buffers(jp.vertical_mcus);

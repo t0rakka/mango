@@ -4,7 +4,7 @@
 */
 
 #ifdef FUNCTION_YCBCR_8x8
-void FUNCTION_YCBCR_8x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
 
@@ -50,7 +50,7 @@ void FUNCTION_YCBCR_8x8(u8* dest, int stride, const s16* data, ProcessState* sta
 #endif
 
 #ifdef FUNCTION_YCBCR_8x16
-void FUNCTION_YCBCR_8x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
 
@@ -104,7 +104,7 @@ void FUNCTION_YCBCR_8x16(u8* dest, int stride, const s16* data, ProcessState* st
 #endif
 
 #ifdef FUNCTION_YCBCR_16x8
-void FUNCTION_YCBCR_16x8(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
 
@@ -174,7 +174,7 @@ void FUNCTION_YCBCR_16x8(u8* dest, int stride, const s16* data, ProcessState* st
 #endif
 
 #ifdef FUNCTION_YCBCR_16x16
-void FUNCTION_YCBCR_16x16(u8* dest, int stride, const s16* data, ProcessState* state, int width, int height)
+void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 6];
 

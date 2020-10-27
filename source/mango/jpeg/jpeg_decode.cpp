@@ -141,22 +141,12 @@ namespace jpeg {
 #if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
         if (ptr + 8 <= end)
         {
-            const __m128i ref = _mm_set1_epi8(0xffu);
-
-#if defined(MANGO_COMPILER_GCC) && __GNUC__ < 9
-            // Work-around; generates inferior code with some compilers (ICC, MSVC)
-            __m128i value = _mm_set_epi64x(0, uload64(ptr));
-#else
-            // This intrinsic was broken until GCC 9
-            __m128i value = _mm_loadu_si64(reinterpret_cast<const __m128i *>(ptr));
-#endif
-
-            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(value, ref)) & 0x3f; // mask 6 first samples
+            u64 x = uload64(ptr);
+            const __m128i ref = _mm_cmpeq_epi8(_mm_setzero_si128(), _mm_setzero_si128());
+            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(_mm_set_epi64x(0, x), ref));
             if (!mask)
             {
-                DataType x = _mm_cvtsi128_si64(value);
-                x = byteswap(x) >> 16; // source data is big endian
-                data = (data << 48) | x;
+                data = (data << 48) | (byteswap(x) >> 16);
                 remain += 48;
                 ptr += 6;
                 return;
@@ -291,31 +281,6 @@ namespace jpeg {
 
         p += (p[1] == 0xff); // HACK: some really ancient jpeg encoders encode markers sometimes as
                              // (0xff, 0xff, ID) ; this will skip to the "correct" 0xff (the second one)
-        return p;
-    }
-
-    const u8* Parser::seekMarker(const u8* start, const u8* end) const
-    {
-        const u8* p = start;
-        --end; // marker is two bytes: don't look at last byte
-
-        while (p < end)
-        {
-            p = mango::memchr(p, 0xff, end - p);
-            if (p[1])
-            {
-                if (!isRestartMarker(p))
-                {
-                    return p; // found a marker
-                }
-            }
-            p += 2; // skip: 0xff, 0x00
-        }
-
-        //if (*p != 0xff)
-        ++p; // skip last byte (warning! if it is 0xff a marker can be potentially missed)
-        debugPrint("  Seek: %d bytes\n", int(p - start));
-
         return p;
     }
 
@@ -1074,12 +1039,10 @@ namespace jpeg {
             }
         }
 
-        /*
-        int remain = decodeState.buffer.remain;
-        printf("remain: %d\n", remain);
+#if defined(MANGO_ENABLE_DEBUG_PRINT)
         for (int i = 0; i < 8; ++i)
         {
-            printf("%.2x ", decodeState.buffer.ptr[i-8]);
+            printf("%.2x ", decodeState.buffer.ptr[i - 8]);
         }
         printf("| ");
         for (int i = 0; i < 8; ++i)
@@ -1087,10 +1050,9 @@ namespace jpeg {
             printf("%.2x ", decodeState.buffer.ptr[i]);
         }
         printf("\n");
-        */
+#endif
 
-        // HACK: the decoder may have prefetched more bytes that it could consume
-        p = seekMarker(decodeState.buffer.ptr - 8, end);
+        p = decodeState.buffer.ptr;
 
         return p;
     }
@@ -1923,28 +1885,12 @@ namespace jpeg {
         return info;
     }
 
-    int Parser::getTaskSize(int count) const
+    int Parser::getTaskSize(int tasks) const
     {
-        int threads = m_hardware_concurrency;
-        if (threads == 1)
-        {
-            //printf("Scheduling: %d in %d threads.\n", count, threads);
-            return count;
-        }
-
-        // adjust the number of threads:
-        // - large thread count is fine as-is; we don't want too much overhead
-        // - small thread count needs finer-grained granularity so that cpu cores have enough work
-        if (threads < 16)
-        {
-            threads *= 2;
-        }
-
-        const int N = (count / threads) + 1;
-
-        //printf("Scheduling: %d scans in %d threads.\n", count, threads);
-        //printf("  size: %d, tasks: %d\n", N, (count + N - 1) / N);
-        return N;
+        const int threads = m_hardware_concurrency;
+        const int tasks_per_thread = threads > 1 ? std::max(tasks / threads, 1) : 0;
+        //printf("Scheduling %d tasks in %d threads (%d tasks/thread)\n", tasks, threads, tasks_per_thread);
+        return tasks_per_thread;
     }
 
     void Parser::decodeLossless()
@@ -2053,15 +1999,19 @@ namespace jpeg {
     void Parser::decodeSequential()
     {
         int n = getTaskSize(ymcu);
-        if (n == ymcu)
-            decodeSequentialST();
-        else
+        if (n)
+        {
             decodeSequentialMT(n);
+        }
+        else
+        {
+            decodeSequentialST();
+        }
     }
 
     void Parser::decodeSequentialST()
     {
-        const int stride = m_surface->stride;
+        const size_t stride = m_surface->stride;
         const int bytes_per_pixel = m_surface->format.bytes();
         const int xstride = bytes_per_pixel * xblock;
         const int ystride = stride * yblock;
@@ -2114,7 +2064,6 @@ namespace jpeg {
 
     void Parser::decodeSequentialMT(int N)
     {
-        // use threadpool to process blocks
         ConcurrentQueue queue("jpeg.sequential", Priority::HIGH);
 
         if (!restartInterval)
@@ -2134,7 +2083,6 @@ namespace jpeg {
                 for (int i = 0; i < count; ++i)
                 {
                     decodeState.decode(data + i * mcu_data_size, &decodeState);
-                    handleRestart();
                 }
 
                 // enqueue task
@@ -2149,11 +2097,12 @@ namespace jpeg {
         {
             const u8* p = decodeState.buffer.ptr;
 
-            const int stride = m_surface->stride;
+            const size_t stride = m_surface->stride;
             const int bytes_per_pixel = m_surface->format.bytes();
             const int xstride = bytes_per_pixel * xblock;
             const int ystride = stride * yblock;
-            u8* image = m_surface->address<u8>(0, 0);
+
+            u8* image = m_surface->image;
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
@@ -2201,7 +2150,8 @@ namespace jpeg {
 
                 // seek next restart marker
                 p = seekRestartMarker(p, decodeState.buffer.end);
-                p += 2;
+                if (isRestartMarker(p))
+                    p += 2;
             }
 
             decodeState.buffer.ptr = p;
@@ -2223,63 +2173,177 @@ namespace jpeg {
 
     void Parser::decodeProgressive()
     {
-        const bool dc_scan = (decodeState.spectralStart == 0);
-        s16* data = blockVector;
-
-        if (dc_scan)
+        if (decodeState.spectralStart == 0)
         {
             if (decodeState.comps_in_scan == 1 && decodeState.blocks > 1)
             {
-                // HACK: process 8x8 blocks in more expensive ac scanner code below
-                // NOTE: we propably should do this only when 8x8 block count is not multiple of MCU block size
                 decodeState.block[0].offset = 0;
                 decodeState.blocks = 1;
+
+                decodeProgressiveAC();
             }
             else
             {
-                for (int i = 0; i < mcus; ++i)
-                {
-                    decodeState.decode(data, &decodeState);
-                    handleRestart();
-                    data += blocks_in_mcu * 64;
-                }
-
-                return;
+                decodeProgressiveDC();
             }
         }
-
-        const int hsf = u32_log2(scanFrame->Hsf);
-        const int vsf = u32_log2(scanFrame->Vsf);
-        const int hsize = (Hmax >> hsf) * 8;
-        const int vsize = (Vmax >> vsf) * 8;
-
-        debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
-        debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
-
-        const int scan_offset = scanFrame->offset;
-
-        const int xs = ((xsize + hsize - 1) / hsize);
-        const int ys = ((ysize + vsize - 1) / vsize);
-
-        debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
-
-        const int HMask = (1 << hsf) - 1;
-        const int VMask = (1 << vsf) - 1;
-
-        for (int y = 0; y < ys; ++y)
+        else
         {
-            int mcu_yoffset = (y >> vsf) * xmcu;
-            int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+            decodeProgressiveAC();
+        }
+    }
 
-            for (int x = 0; x < xs; ++x)
+    void Parser::decodeProgressiveDC()
+    {
+        if (restartInterval)
+        {
+            s16* data = blockVector;
+
+            const u8* p = decodeState.buffer.ptr;
+
+            ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
+
+            for (int i = 0; i < mcus; i += restartInterval)
             {
-                int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
-                int block_offset = (x & HMask) + block_yoffset;
-                s16* mcudata = data + (block_offset + mcu_offset) * 64;
+                // enqueue task
+                queue.enqueue([=]
+                {
+                    DecodeState state = decodeState;
+                    state.buffer.ptr = p;
 
-                // decode
-                decodeState.decode(mcudata, &decodeState);
-                handleRestart();
+                    s16* dest = data + i * blocks_in_mcu * 64;
+
+                    const int left = std::min(restartInterval, mcus - i);
+                    for (int j = 0; j < left; ++j)
+                    {
+                        state.decode(dest, &state);
+                        dest += blocks_in_mcu * 64;
+                    }
+                });
+
+                // seek next restart marker
+                p = seekRestartMarker(p, decodeState.buffer.end);
+                if (isRestartMarker(p))
+                    p += 2;
+            }
+
+            decodeState.buffer.ptr = p;
+        }
+        else
+        {
+            s16* data = blockVector;
+
+            for (int i = 0; i < mcus; ++i)
+            {
+                decodeState.decode(data, &decodeState);
+                data += blocks_in_mcu * 64;
+            }
+        }
+    }
+
+    void Parser::decodeProgressiveAC()
+    {
+        if (restartInterval)
+        {
+            s16* data = blockVector;
+
+            const int hsf = u32_log2(scanFrame->Hsf);
+            const int vsf = u32_log2(scanFrame->Vsf);
+            const int hsize = (Hmax >> hsf) * 8;
+            const int vsize = (Vmax >> vsf) * 8;
+
+            debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
+            debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
+
+            const int scan_offset = scanFrame->offset;
+
+            const int xs = ((xsize + hsize - 1) / hsize);
+            const int ys = ((ysize + vsize - 1) / vsize);
+            const int cnt = xs * ys;
+
+            debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
+
+            MANGO_UNREFERENCED(xs);
+            MANGO_UNREFERENCED(ys);
+            MANGO_UNREFERENCED(hsize);
+            MANGO_UNREFERENCED(vsize);
+
+            const int HMask = (1 << hsf) - 1;
+            const int VMask = (1 << vsf) - 1;
+
+            ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
+
+            const u8* p = decodeState.buffer.ptr;
+
+            for (int i = 0; i < cnt; i += restartInterval)
+            {
+                // enqueue task
+                queue.enqueue([=]
+                {
+                    DecodeState state = decodeState;
+                    state.buffer.ptr = p;
+
+                    const int left = std::min(restartInterval, mcus - i);
+                    for (int j = 0; j < left; ++j)
+                    {
+                        int n = i + j;
+                        int x = n % xmcu;
+                        int y = n / xmcu;
+
+                        int mcu_yoffset = (y >> vsf) * xmcu;
+                        int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+
+                        int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
+                        int block_offset = (x & HMask) + block_yoffset;
+                        s16* dest = data + (block_offset + mcu_offset) * 64;
+
+                        state.decode(dest, &state);
+                    }
+                });
+
+                // seek next restart marker
+                p = seekRestartMarker(p, decodeState.buffer.end);
+                if (isRestartMarker(p))
+                    p += 2;
+            }
+
+            decodeState.buffer.ptr = p;
+        }
+        else
+        {
+            s16* data = blockVector;
+
+            const int hsf = u32_log2(scanFrame->Hsf);
+            const int vsf = u32_log2(scanFrame->Vsf);
+            const int hsize = (Hmax >> hsf) * 8;
+            const int vsize = (Vmax >> vsf) * 8;
+
+            debugPrint("    hf: %i x %i, log2: %i x %i\n", 1 << hsf, 1 << vsf, hsf, vsf);
+            debugPrint("    bs: %i x %i  scanSize: %d\n", hsize, vsize, decodeState.blocks);
+
+            const int scan_offset = scanFrame->offset;
+
+            const int xs = ((xsize + hsize - 1) / hsize);
+            const int ys = ((ysize + vsize - 1) / vsize);
+
+            debugPrint("    blocks: %d x %d (%d x %d)\n", xs, ys, xs * hsize, ys * vsize);
+
+            const int HMask = (1 << hsf) - 1;
+            const int VMask = (1 << vsf) - 1;
+
+            for (int y = 0; y < ys; ++y)
+            {
+                int mcu_yoffset = (y >> vsf) * xmcu;
+                int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+
+                for (int x = 0; x < xs; ++x)
+                {
+                    int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
+                    int block_offset = (x & HMask) + block_yoffset;
+                    s16* mcudata = data + (block_offset + mcu_offset) * 64;
+
+                    decodeState.decode(mcudata, &decodeState);
+                }
             }
         }
     }
@@ -2287,81 +2351,32 @@ namespace jpeg {
     void Parser::finishProgressive()
     {
         int n = getTaskSize(ymcu);
-        if (n == ymcu)
-            finishProgressiveST();
-        else
-            finishProgressiveMT(n);
-    }
-
-    void Parser::finishProgressiveST()
-    {
-        const int stride = m_surface->stride;
-        const int bytes_per_pixel = m_surface->format.bytes();
-        const int xstride = bytes_per_pixel * xblock;
-        const int ystride = stride * yblock;
-
-        u8* image = m_surface->address<u8>(0, 0);
-
-        const int mcu_data_size = blocks_in_mcu * 64;
-        s16* data = blockVector;
-
-        ProcessFunc process = processState.process;
-
-        const int xmcu_last = xmcu - 1;
-        const int ymcu_last = ymcu - 1;
-        const int xblock_last = xclip ? xclip : xblock;
-        const int yblock_last = yclip ? yclip : yblock;
-
-        for (int y = 0; y < ymcu_last; ++y)
+        if (n)
         {
-            u8* dest = image;
-            image += ystride;
+            ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
 
-            for (int x = 0; x < xmcu_last; ++x)
+            size_t mcu_stride = size_t(xmcu) * blocks_in_mcu * 64;
+
+            for (int y = 0; y < ymcu; y += n)
             {
-                process(dest, stride, data, &processState, xblock, yblock);
-                data += mcu_data_size;
-                dest += xstride;
+                const int y0 = y;
+                const int y1 = std::min(y + n, ymcu);
+
+                s16* data = blockVector + y0 * mcu_stride;
+
+                debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
+
+                // enqueue task
+                queue.enqueue([=]
+                {
+                    process_range(y0, y1, data);
+                });
             }
-
-            // last column
-            process_and_clip(dest, stride, data, xblock_last, yblock);
-            data += mcu_data_size;
-            dest += xstride;
         }
-
-        // last row
-        for (int x = 0; x < xmcu_last; ++x)
+        else
         {
-            process_and_clip(image, stride, data, xblock, yblock_last);
-            data += mcu_data_size;
-            image += xstride;
-        }
-
-        // last mcu
-        process_and_clip(image, stride, data, xblock_last, yblock_last);
-    }
-
-    void Parser::finishProgressiveMT(int N)
-    {
-        // use threadpool to process blocks
-        ConcurrentQueue queue("jpeg.progressive", Priority::HIGH);
-
-        size_t mcu_stride = size_t(xmcu) * blocks_in_mcu * 64;
-
-        for (int y = 0; y < ymcu; y += N)
-        {
-            const int y0 = y;
-            const int y1 = std::min(y + N, ymcu);
-            debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
-
-            s16* data = blockVector + y0 * mcu_stride;
-
-            // enqueue task
-            queue.enqueue([=]
-            {
-                process_range(y0, y1, data);
-            });
+            s16* data = blockVector;
+            process_range(0, ymcu, data);
         }
     }
 
@@ -2372,18 +2387,16 @@ namespace jpeg {
         const int xblock_last = xclip ? xclip : xblock;
         const int yblock_last = yclip ? yclip : yblock;
 
-        const int stride = m_surface->stride;
-        const int bytes_per_pixel = m_surface->format.bytes();
-        const int xstride = bytes_per_pixel * xblock;
-        const int ystride = stride * yblock;
+        const size_t stride = m_surface->stride;
+        const size_t bytes_per_pixel = m_surface->format.bytes();
+        const size_t xstride = bytes_per_pixel * xblock;
+        const size_t ystride = stride * yblock;
 
-        u8* image = m_surface->address<u8>(0, 0);
+        u8* image = m_surface->image;
 
         const int mcu_data_size = blocks_in_mcu * 64;
 
         ProcessFunc process = processState.process;
-
-        const s16* source = data;
 
         for (int y = y0; y < y1; ++y)
         {
@@ -2393,34 +2406,34 @@ namespace jpeg {
             {
                 for (int x = 0; x < xmcu_last; ++x)
                 {
-                    process_and_clip(dest, stride, source, xblock, yblock_last);
-                    source += mcu_data_size;
+                    process_and_clip(dest, stride, data, xblock, yblock_last);
+                    data += mcu_data_size;
                     dest += xstride;
                 }
 
                 // last column
-                process_and_clip(dest, stride, source, xblock_last, yblock_last);
-                source += mcu_data_size;
+                process_and_clip(dest, stride, data, xblock_last, yblock_last);
+                data += mcu_data_size;
                 dest += xstride;
             }
             else
             {
                 for (int x = 0; x < xmcu_last; ++x)
                 {
-                    process(dest, stride, source, &processState, xblock, yblock);
-                    source += mcu_data_size;
+                    process(dest, stride, data, &processState, xblock, yblock);
+                    data += mcu_data_size;
                     dest += xstride;
                 }
 
                 // last column
-                process_and_clip(dest, stride, source, xblock_last, yblock);
-                source += mcu_data_size;
+                process_and_clip(dest, stride, data, xblock_last, yblock);
+                data += mcu_data_size;
                 dest += xstride;
             }
         }
     }
 
-    void Parser::process_and_clip(u8* dest, int stride, const s16* data, int width, int height)
+    void Parser::process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height)
     {
         if (xblock != width || yblock != height)
         {

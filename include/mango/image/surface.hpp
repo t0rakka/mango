@@ -24,12 +24,12 @@ namespace mango
     public:
         Format  format;
         u8*     image;
-        int     stride;
+        size_t  stride;
         int     width;
         int     height;
 
         Surface(const Surface& surface);
-        Surface(int width, int height, const Format& format, int stride, const void* image);
+        Surface(int width, int height, const Format& format, size_t stride, const void* image);
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
 
@@ -59,7 +59,7 @@ namespace mango
     class Bitmap : private NonCopyable, public Surface
     {
     public:
-        Bitmap(int width, int height, const Format& format, int stride = 0);
+        Bitmap(int width, int height, const Format& format, size_t stride = 0);
         Bitmap(const Surface& source, const Format& format);
         Bitmap(ConstMemory memory, const std::string& extension);
         Bitmap(ConstMemory memory, const std::string& extension, const Format& format);
