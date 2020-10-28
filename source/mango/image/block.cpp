@@ -969,8 +969,8 @@ namespace
         {
             image += yblocks * ystride;
             image -= stride;
-            stride = 0 - stride;
-            ystride = 0 - ystride;
+            stride = -stride;
+            ystride = -ystride;
         }
 
         ConcurrentQueue queue;

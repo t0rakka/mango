@@ -41,7 +41,7 @@ namespace
                 return;
             }
 
-            encoding  = p.read8();  // 0 - UNCOMPRESSED, 1 - RLE
+            encoding  = p.read8();  // 0: UNCOMPRESSED, 1: RLE
             bpc       = p.read8();  // bytes per pixel channel (1, 2)
             dimension = p.read16(); // number of dimensions (1, 2, 3)
             xsize     = p.read16(); // width
@@ -50,7 +50,7 @@ namespace
             p += 2; // minimum pixel value
             p += 2; // maximum pixel value
             p += 84;
-            colormap  = p.read32(); // 0 - NORMAL, 1 - DITHERED, 2- SCREEN, 3 - COLORMAP
+            colormap  = p.read32(); // 0: NORMAL, 1: DITHERED, 2: SCREEN, 3: COLORMAP
 
             if (bpc != 1 || colormap != 0)
             {
@@ -126,7 +126,7 @@ namespace
             {
                 for (int y = 0; y < height; ++y)
                 {
-                    int scanline = (height - 1) - y; // mirror y-axis
+                    int scanline = (height - 1) - y; // mirror vertically
                     u8* dest = s.address<u8>(0, scanline) + channel;
 
                     int offset = (y + channel * height) * width;

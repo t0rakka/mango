@@ -224,7 +224,7 @@
         #endif
     #endif
 
-    #pragma warning(disable : 4996 4201 26812)
+    #pragma warning(disable : 4146 4996 4201 26812)
 
 #elif defined(__llvm__) || defined(__clang__)
 
