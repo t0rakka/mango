@@ -1812,24 +1812,18 @@ namespace
         // encode MCUs
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
+            int rows = jp.mcu_height;
             auto read_func = jp.read_8x8; // default: optimized 8x8 reader
 
-            int rows;
-            const int bottom_mcu = jp.vertical_mcus - 1;
-            if (y < bottom_mcu)
+            if (y >= jp.vertical_mcus - 1)
             {
-                rows = jp.mcu_height;
-            }
-            else
-            {
-                // clipping
+                // vertical clipping
                 rows = jp.rows_in_bottom_mcus;
                 read_func = jp.read; // clipping reader
             }
 
             queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func]
             {
-                auto read = read_func;
                 const u8* image = input;
 
                 HuffmanEncoder huffman;
@@ -1841,25 +1835,22 @@ namespace
                 u8 huff_temp[buffer_size]; // encoding buffer
                 u8* ptr = huff_temp;
 
+                int cols = jp.mcu_width;
+                auto read = read_func;
+
                 const int right_mcu = jp.horizontal_mcus - 1;
 
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
-                    int cols;
-                    if (x < right_mcu)
+                    if (x >= right_mcu)
                     {
-                        cols = jp.mcu_width;
-                    }
-                    else
-                    {
-                        // clipping
+                        // horizontal clipping
                         cols = jp.cols_in_right_mcus;
                         read = jp.read; // clipping reader
                     }
 
-                    s16 block[BLOCK_SIZE * 3];
-
                     // read MCU data
+                    s16 block[BLOCK_SIZE * 3];
                     read(block, image, stride, rows, cols);
 
                     // encode the data in MCU
@@ -1867,7 +1858,6 @@ namespace
                     {
                         s16 temp[BLOCK_SIZE];
                         fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-
                         ptr = huffman.encode(ptr, jp.channel[i].component - 1, temp);
                     }
 
