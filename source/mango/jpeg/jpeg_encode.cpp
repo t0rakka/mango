@@ -1711,10 +1711,10 @@ namespace
     void jpeg_encode::write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height)
     {
         // Start of image marker
-        p.write16(0xffd8);
+        p.write16(MARKER_SOI);
 
         // Quantization table marker
-        p.write16(0xffdb);
+        p.write16(MARKER_DQT);
         p.write16(0x43); // quantization table length
         p.write8(0x00); // Pq, Tq
 
@@ -1722,7 +1722,7 @@ namespace
         p.write(Lqt, 64);
 
         // Quantization table marker
-        p.write16(0xffdb);
+        p.write16(MARKER_DQT);
         p.write16(0x43); // quantization table length
         p.write8(0x01); // Pq, Tq
 
@@ -1730,7 +1730,7 @@ namespace
         p.write(Cqt, 64);
 
         // Start of frame marker
-        p.write16(0xffc0);
+        p.write16(MARKER_SOF0);
 
         u8 number_of_components = 0;
 
@@ -1771,12 +1771,12 @@ namespace
         p.write(marker_data, sizeof(marker_data));
 
         // Define Restart Interval marker
-        p.write16(0xffdd);
+        p.write16(MARKER_DRI);
         p.write16(4);
         p.write16(horizontal_mcus);
 
         // Start of scan marker
-        p.write16(0xffda);
+        p.write16(MARKER_SOS);
         p.write16(6 + number_of_components * 2); // header length
         p.write8(number_of_components); // Ns
 
@@ -1908,15 +1908,15 @@ namespace
             }
 
             // write huffman bitstream
-            s.write(buffer, size_t(buffer.size()));
+            s.write(buffer, buffer.size());
 
             // write restart marker
             int index = y & 7;
-            s.write16(0xffd0 + index);
+            s.write16(MARKER_RST0 + index);
         }
 
         // EOI marker
-        s.write16(0xffd9);
+        s.write16(MARKER_EOI);
 
         status.info = jp.info;
     }

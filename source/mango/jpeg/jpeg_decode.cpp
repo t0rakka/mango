@@ -11,6 +11,10 @@
 namespace mango {
 namespace jpeg {
 
+    // ----------------------------------------------------------------------------
+    // utilities
+    // ----------------------------------------------------------------------------
+
     static const u8 g_zigzag_table_inverse [] =
     {
          0,  1,  8, 16,  9,  2,  3, 10,
@@ -21,96 +25,6 @@ namespace jpeg {
         29, 22, 15, 23, 30, 37, 44, 51,
         58, 59, 52, 45, 38, 31, 39, 46,
         53, 60, 61, 54, 47, 55, 62, 63,
-    };
-
-    // ----------------------------------------------------------------------------
-    // markers
-    // ----------------------------------------------------------------------------
-
-    enum jpegMarker
-    {
-        // Start of Frame markers, non-differential, Huffman coding
-        MARKER_SOF0     = 0xffc0,  // Baseline DCT
-        MARKER_SOF1     = 0xffc1,  // Extended sequential DCT
-        MARKER_SOF2     = 0xffc2,  // Progressive DCT
-        MARKER_SOF3     = 0xffc3,  // Lossless (sequential)
-
-        // Huffman table specification
-        MARKER_DHT      = 0xffc4,  // Define Huffman table(s)
-
-        // Start of Frame markers, differential, Huffman coding
-        MARKER_SOF5     = 0xffc5,  // Differential sequential DCT
-        MARKER_SOF6     = 0xffc6,  // Differential progressive DCT
-        MARKER_SOF7     = 0xffc7,  // Differential lossless (sequential)
-
-        // Start of Frame markers, non-differential, arithmetic coding
-        MARKER_JPG      = 0xffc8,  // Reserved for JPEG extensions
-        MARKER_SOF9     = 0xffc9,  // Extended sequential DCT
-        MARKER_SOF10    = 0xffca,  // Progressive DCT
-        MARKER_SOF11    = 0xffcb,  // Lossless (sequential)
-
-        // Arithmetic coding conditioning specification
-        MARKER_DAC      = 0xffcc,  // Define arithmetic coding conditioning(s)
-
-        // Start of Frame markers, differential, arithmetic coding
-        MARKER_SOF13    = 0xffcd,  // Differential sequential DCT
-        MARKER_SOF14    = 0xffce,  // Differential progressive DCT
-        MARKER_SOF15    = 0xffcf,  // Differential lossless (sequential)
-
-        // Restart interval termination
-        MARKER_RST0     = 0xffd0,  // Restart with modulo 8 count 0
-        MARKER_RST1     = 0xffd1,  // Restart with modulo 8 count 1
-        MARKER_RST2     = 0xffd2,  // Restart with modulo 8 count 2
-        MARKER_RST3     = 0xffd3,  // Restart with modulo 8 count 3
-        MARKER_RST4     = 0xffd4,  // Restart with modulo 8 count 4
-        MARKER_RST5     = 0xffd5,  // Restart with modulo 8 count 5
-        MARKER_RST6     = 0xffd6,  // Restart with modulo 8 count 6
-        MARKER_RST7     = 0xffd7,  // Restart with modulo 8 count 7
-
-        // Other markers
-        MARKER_SOI      = 0xffd8,  // Start of image
-        MARKER_EOI      = 0xffd9,  // End of image
-        MARKER_SOS      = 0xffda,  // Start of scan
-        MARKER_DQT      = 0xffdb,  // Define quantization table(s)
-        MARKER_DNL      = 0xffdc,  // Define number of lines
-        MARKER_DRI      = 0xffdd,  // Define restart interval
-        MARKER_DHP      = 0xffde,  // Define hierarchical progression
-        MARKER_EXP      = 0xffdf,  // Expand reference component(s)
-        MARKER_APP0     = 0xffe0,  // Reserved for application segments
-        MARKER_APP1     = 0xffe1,  // Reserved for application segments
-        MARKER_APP2     = 0xffe2,  // Reserved for application segments
-        MARKER_APP3     = 0xffe3,  // Reserved for application segments
-        MARKER_APP4     = 0xffe4,  // Reserved for application segments
-        MARKER_APP5     = 0xffe5,  // Reserved for application segments
-        MARKER_APP6     = 0xffe6,  // Reserved for application segments
-        MARKER_APP7     = 0xffe7,  // Reserved for application segments
-        MARKER_APP8     = 0xffe8,  // Reserved for application segments
-        MARKER_APP9     = 0xffe9,  // Reserved for application segments
-        MARKER_APP10    = 0xffea,  // Reserved for application segments
-        MARKER_APP11    = 0xffeb,  // Reserved for application segments
-        MARKER_APP12    = 0xffec,  // Reserved for application segments
-        MARKER_APP13    = 0xffed,  // Reserved for application segments
-        MARKER_APP14    = 0xffee,  // Reserved for application segments
-        MARKER_APP15    = 0xffef,  // Reserved for application segments
-        MARKER_JPG0     = 0xfff0,  // Reserved for JPEG extensions
-        MARKER_JPG1     = 0xfff1,  // Reserved for JPEG extensions
-        MARKER_JPG2     = 0xfff2,  // Reserved for JPEG extensions
-        MARKER_JPG3     = 0xfff3,  // Reserved for JPEG extensions
-        MARKER_JPG4     = 0xfff4,  // Reserved for JPEG extensions
-        MARKER_JPG5     = 0xfff5,  // Reserved for JPEG extensions
-        MARKER_JPG6     = 0xfff6,  // Reserved for JPEG extensions
-        MARKER_JPG7     = 0xfff7,  // Reserved for JPEG extensions
-        MARKER_JPG8     = 0xfff8,  // Reserved for JPEG extensions
-        MARKER_JPG9     = 0xfff9,  // Reserved for JPEG extensions
-        MARKER_JPG10    = 0xfffa,  // Reserved for JPEG extensions
-        MARKER_JPG11    = 0xfffb,  // Reserved for JPEG extensions
-        MARKER_JPG12    = 0xfffc,  // Reserved for JPEG extensions
-        MARKER_JPG13    = 0xfffd,  // Reserved for JPEG extensions
-        MARKER_COM      = 0xfffe,  // Comment
-
-        // Reserved markers
-        MARKER_TEM      = 0xff01,  // For temporary private use in arithmetic coding
-        MARKER_RES      = 0xff02   // Reserved (0x02 .. 0xbf)
     };
 
     inline bool isRestartMarker(const u8* p)
