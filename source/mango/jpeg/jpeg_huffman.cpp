@@ -168,7 +168,7 @@ namespace jpeg {
         for (int j = 0; j < state->blocks; ++j)
         {
             const DecodeBlock* block = state->block + j;
-            const HuffTable* dc = block->table.dc;
+            const HuffTable* dc = &huffman.table[0][block->dc];
 
             int s = dc->decode(buffer);
             if (s)
@@ -193,8 +193,8 @@ namespace jpeg {
         {
             const DecodeBlock* block = state->block + j;
 
-            const HuffTable* dc = block->table.dc;
-            const HuffTable* ac = block->table.ac;
+            const HuffTable* dc = &huffman.table[0][block->dc];
+            const HuffTable* ac = &huffman.table[1][block->ac];
 
             // DC
             int s = dc->decode(buffer);
@@ -241,7 +241,7 @@ namespace jpeg {
             const DecodeBlock* block = state->block + j;
 
             s16* dest = output + block->offset;
-            const HuffTable* dc = block->table.dc;
+            const HuffTable* dc = &huffman.table[0][block->dc];
 
             std::memset(dest, 0, 64 * sizeof(s16));
 
@@ -275,7 +275,7 @@ namespace jpeg {
         Huffman& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
-        const HuffTable* ac = state->block[0].table.ac;
+        const HuffTable* ac = &huffman.table[1][state->block[0].ac];
 
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
@@ -323,7 +323,7 @@ namespace jpeg {
         Huffman& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
-        const HuffTable* ac = state->block[0].table.ac;
+        const HuffTable* ac = &huffman.table[1][state->block[0].ac];
 
         const int start = state->spectralStart;
         const int end = state->spectralEnd;

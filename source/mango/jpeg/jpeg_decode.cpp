@@ -716,13 +716,13 @@ namespace jpeg {
 
             // find frame
             Frame* frame = nullptr;
-            int frameIndex = 0;
+            int pred = 0;
 
             for (int j = 0; j < int(frames.size()); ++j)
             {
                 if (frames[j].compid == cs)
                 {
-                    frameIndex = j;
+                    pred = j;
                     frame = &frames[j];
                 }
             }
@@ -757,22 +757,12 @@ namespace jpeg {
 
                 DecodeBlock& block = decodeState.block[decodeState.blocks];
 
-                if (is_arithmetic)
-                {
-                    block.offset = offset * 64;
-                    block.pred = frameIndex;
-                    block.index.dc = dc;
-                    block.index.ac = ac;
-                }
-                else
-                {
-                    block.offset = offset * 64;
-                    block.pred = frameIndex;
-                    block.table.dc = &huffTable[0][dc];
-                    block.table.ac = &huffTable[1][ac];
-                }
+                block.offset = offset * 64;
+                block.pred = pred;
+                block.dc = dc;
+                block.ac = ac;
 
-                debugPrint("      - offset: %d, pred: %d,\n", offset * 64, frameIndex);
+                debugPrint("      - offset: %d, pred: %d,\n", offset * 64, pred);
                 ++offset;
                 ++decodeState.blocks;
             }
@@ -1064,7 +1054,7 @@ namespace jpeg {
                 return;
             }
 
-            HuffTable& table = huffTable[Tc][Th];
+            HuffTable& table = decodeState.huffman.table[Tc][Th];
 
             debugPrint("  Huffman table #%d table class: %d\n", Th, Tc);
             debugPrint("    codes: ");

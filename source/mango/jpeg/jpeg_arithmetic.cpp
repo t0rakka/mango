@@ -156,7 +156,7 @@ namespace jpeg {
             const int ci = block->pred;
 
             // DC
-            int tbl = block->index.dc;
+            int tbl = block->dc;
             u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
             if (arith_decode(arithmetic, buffer, st) == 0)
@@ -231,7 +231,7 @@ namespace jpeg {
             const int ci = block->pred;
 
             // DC
-            int tbl = block->index.dc;
+            int tbl = block->dc;
             u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
             if (arith_decode(arithmetic, buffer, st) == 0)
@@ -289,7 +289,7 @@ namespace jpeg {
             output[0] = s16(arithmetic.last_dc_value[ci]);
 
             // AC
-            tbl = block->index.ac;
+            tbl = block->ac;
             u8* ac_stats = arithmetic.ac_stats[tbl];
             u8 ac_K = arithmetic.ac_K[tbl];
 
@@ -359,7 +359,7 @@ namespace jpeg {
 
             std::memset(dest, 0, 64 * sizeof(s16));
 
-            int tbl = block->index.dc;
+            int tbl = block->dc;
             u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
             int sign;
@@ -447,8 +447,8 @@ namespace jpeg {
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
 
-        u8* ac_stats = arithmetic.ac_stats[state->block[0].index.ac];
-        u8 ac_K = arithmetic.ac_K[state->block[0].index.ac];
+        u8* ac_stats = arithmetic.ac_stats[state->block[0].ac];
+        u8 ac_K = arithmetic.ac_K[state->block[0].ac];
         
         // Figure F.20: Decode_AC_coefficients
         for (int k = start; k <= end; k++)
@@ -513,7 +513,7 @@ namespace jpeg {
         const int start = state->spectralStart;
         const int end = state->spectralEnd;
 
-        u8* ac_stats = arithmetic.ac_stats[state->block[0].index.ac];
+        u8* ac_stats = arithmetic.ac_stats[state->block[0].ac];
 
         int p1 = 1 << state->successiveLow; //  1 in the bit position being coded
         int m1 = (-1) << state->successiveLow; // -1 in the bit position being coded

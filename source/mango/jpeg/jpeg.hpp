@@ -153,18 +153,22 @@ namespace jpeg {
 #ifdef MANGO_CPU_64BIT
 
     using DataType = u64;
+
+	#define bextr mango::u64_extract_bits
+
     #define JPEG_REGISTER_BITS  64
     #define JPEG_REGISTER_BYTES 8
     #define JPEG_REGISTER_FILL  6
-	#define bextr mango::u64_extract_bits
 
 #else
 
     using DataType = u32;
+
+	#define bextr mango::u32_extract_bits
+
     #define JPEG_REGISTER_BITS  32
     #define JPEG_REGISTER_BYTES 4
     #define JPEG_REGISTER_FILL  2
-	#define bextr mango::u32_extract_bits
 
 #endif
 
@@ -268,6 +272,8 @@ namespace jpeg {
         int last_dc_value[JPEG_MAX_COMPS_IN_SCAN];
         int eob_run;
 
+        HuffTable table[2][JPEG_MAX_COMPS_IN_SCAN];
+
         void restart();
     };
 
@@ -307,19 +313,8 @@ namespace jpeg {
     {
         int offset;
         int pred;
-        union
-        {
-            struct
-            {
-                int dc;
-                int ac;
-            } index;
-            struct
-            {
-                HuffTable* dc;
-                HuffTable* ac;
-            } table;
-        };
+        int dc;
+        int ac;
     };
 
     struct DecodeState
@@ -377,7 +372,6 @@ namespace jpeg {
     {
     protected:
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
-        HuffTable huffTable[2][JPEG_MAX_COMPS_IN_SCAN];
 
         AlignedStorage<s16> quantTableVector;
         s16* blockVector;
