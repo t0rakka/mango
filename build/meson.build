@@ -816,8 +816,10 @@ else
 
     if (host_machine.cpu_family() == 'arm' and enable_neon) or host_machine.cpu_family() == 'aarch64'
         message('SIMD: NEON')
-        add_project_arguments('-mfpu=neon', '-mfloat-abi=hard', language: ['c', 'cpp'])
-        add_project_arguments('-fpermissive', '-Wno-psabi', language: ['c', 'cpp'])
+        if (host_machine.cpu_family() == 'arm')
+            add_project_arguments('-mfpu=neon', '-mfloat-abi=hard', language: ['c', 'cpp'])
+            add_project_arguments('-fpermissive', '-Wno-psabi', language: ['c', 'cpp'])
+        endif
     endif
 
     if host_machine.cpu_family() == 'x86'  or host_machine.cpu_family() == 'x86'
