@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
     add_compile_options(-mavx)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)|(aarch64)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
     add_definitions(-mfpu=neon -mfloat-abi=hard)
     set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
 endif ()

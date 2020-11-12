@@ -4,6 +4,9 @@
 # Copyright (C) 2012-2020 Twilight 3D Finland Oy Ltd.
 # ---------------------------------------------------------------------------
 
+# NOTE: These build scripts are for custom tinkering and hacking, please use
+#       the cmake build system if you can.
+
 # ---------------------------------------------------------------------------
 # configuration
 # ---------------------------------------------------------------------------
@@ -209,6 +212,8 @@ ifeq (Linux, $(OS))
   #
   ###############################################################################
 
+  # NOTE: cross-compiler
+
   ifeq (ppc64le, $(ARCH))
     PLATFORM = ppc64le
     CC  = powerpc64le-linux-gnu-gcc-5 $(OPTIONS) $(OPTIONS_GCC) -mcpu=power8 -funsafe-math-optimizations -fPIC $(CC_STD)
@@ -224,6 +229,8 @@ ifeq (Linux, $(OS))
   # MIPS
   #
   ###############################################################################
+
+  # NOTE: cross-compiler
 
   ifeq (mips64, $(ARCH))
     PLATFORM = mips64
@@ -242,6 +249,8 @@ ifeq (Linux, $(OS))
   # ARM64
   #
   ###############################################################################
+
+  # NOTE: cross-compiler
 
   ifeq (aarch64, $(ARCH))
     PLATFORM = arm64
