@@ -95,7 +95,6 @@ namespace jpeg {
 
     Parser::Parser(ConstMemory memory)
         : quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
-        , blockVector(nullptr)
     {
         restartInterval = 0;
         restartCounter = 0;
@@ -677,6 +676,10 @@ namespace jpeg {
         if (components != processState.frames && !is_progressive)
         {
             is_multiscan = true;
+
+            // allocate blocks
+            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
+            blockVector.resize(num_blocks * 64);
         }
 
         decodeState.comps_in_scan = components;
@@ -1670,13 +1673,12 @@ namespace jpeg {
         }
 
         // determine if we need a full-surface temporary storage
-        bool require_vector = is_progressive || is_multiscan;
-        size_t num_blocks = size_t(mcus) * blocks_in_mcu;
-        size_t vector_bytes = require_vector ? num_blocks * 64 : 0;
-
-        // allocate blocks
-        AlignedStorage<s16> tempBlockVector(vector_bytes);
-        blockVector = tempBlockVector.data();
+        if (is_progressive || is_multiscan)
+        {
+            // allocate blocks
+            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
+            blockVector.resize(num_blocks * 64);
+        }
 
         // find best matching format
         SampleFormat sf = getSampleFormat(target.format);
@@ -1747,7 +1749,7 @@ namespace jpeg {
             target.blit(0, 0, *m_surface);
         }
 
-        blockVector = nullptr;
+        blockVector.resize(0);
         status.info = getInfo();
 
         return status;

@@ -146,16 +146,50 @@ namespace detail {
         T* m_data;
         size_t m_size;
 
-    public:
-        AlignedStorage(size_t size, Alignment alignment = Alignment())
-            : m_size(size)
+        void allocate(size_t size, Alignment alignment)
         {
             m_data = aligned_alloc<T>(size, alignment);
+            m_size = size;
+        }
+
+        void clear()
+        {
+            if (m_data)
+            {
+                aligned_free(m_data);
+                m_data = nullptr;
+                m_size = 0;
+            }
+        }
+
+    public:
+        AlignedStorage()
+            : m_data(nullptr)
+            , m_size(0)
+        {
+        }
+
+        AlignedStorage(size_t size, Alignment alignment = Alignment())
+        {
+            allocate(size, alignment);
         }
 
         ~AlignedStorage()
         {
-            aligned_free(m_data);
+            clear();
+        }
+
+        void resize(size_t size, Alignment alignment = Alignment())
+        {
+            if (size != m_size)
+            {
+                clear();
+
+                if (size)
+                {
+                    allocate(size, alignment);
+                }
+            }
         }
 
         operator T* () const

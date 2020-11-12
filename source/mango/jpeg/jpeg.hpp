@@ -374,7 +374,7 @@ namespace jpeg {
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
 
         AlignedStorage<s16> quantTableVector;
-        s16* blockVector;
+        AlignedStorage<s16> blockVector;
 
         std::vector<Frame> frames;
         Frame* scanFrame = nullptr; // current Progressive AC scan frame
