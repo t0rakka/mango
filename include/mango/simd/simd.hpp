@@ -364,7 +364,7 @@ namespace simd {
     #define int128_is_hardware_vector
     #define float128_is_hardware_vector
     #define float256_is_hardware_vector
-    
+
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
@@ -455,7 +455,7 @@ namespace simd {
 
     #define int128_is_hardware_vector
     #define float128_is_hardware_vector
-    
+
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
@@ -765,7 +765,7 @@ namespace simd {
 
     #define int128_is_hardware_vector
     #define float128_is_hardware_vector
-    
+
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
@@ -825,7 +825,7 @@ namespace simd {
     using mask16x32 = composite_mask<mask16x16>;
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
-    
+
 } // namespace simd
 } // namespace mango
 

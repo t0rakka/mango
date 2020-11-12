@@ -113,7 +113,7 @@ namespace simd {
         vst1q_f64(dest, a);
     }
 
-#endif // MANGO_COMPILER_GCC   
+#endif // MANGO_COMPILER_GCC
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)
     {
@@ -366,32 +366,32 @@ namespace simd {
 
     static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
     {
-        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(min(a, b))));
+        return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(min(a, b))));
     }
 
     static inline f64x2 max(f64x2 a, f64x2 b, mask64x2 mask)
     {
-        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(max(a, b))));
+        return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(max(a, b))));
     }
 
     static inline f64x2 add(f64x2 a, f64x2 b, mask64x2 mask)
     {
-        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(add(a, b))));
+        return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(add(a, b))));
     }
 
     static inline f64x2 sub(f64x2 a, f64x2 b, mask64x2 mask)
     {
-        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(sub(a, b))));
+        return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(sub(a, b))));
     }
 
     static inline f64x2 mul(f64x2 a, f64x2 b, mask64x2 mask)
     {
-        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(mul(a, b))));
+        return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(mul(a, b))));
     }
 
     static inline f64x2 div(f64x2 a, f64x2 b, mask64x2 mask)
     {
-        return vreinterpretq_f64_s64(vandq_u64(mask, vreinterpretq_u64_f64(div(a, b))));
+        return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(div(a, b))));
     }
 
 #define SIMD_MASK_DOUBLE128
@@ -540,7 +540,7 @@ namespace simd {
         v.data[1] = a.data[1] < 0 ? -1.0f : (a.data[1] > 0 ? 1.0f : 0.0f);
         return v;
     }
-    
+
     static inline f64x2 add(f64x2 a, f64x2 b)
     {
         f64x2 v;
