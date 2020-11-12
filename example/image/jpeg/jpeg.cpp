@@ -11,72 +11,95 @@ using namespace mango::filesystem;
 // pipelined jpeg reader
 // -----------------------------------------------------------------
 
-static inline bool isJPEG(const FileInfo& node)
+static
+inline bool isJPEG(const FileInfo& node)
 {
     return !node.isDirectory() && filesystem::getExtension(node.name) == ".jpg";
 }
 
-void test_jpeg(const std::string& folder, bool mmap)
+struct State
 {
-    Path path(folder);
-    const size_t count = path.size();
-
+    std::atomic<size_t> total_input_files { 0 };
     std::atomic<size_t> total_input_bytes { 0 };
     std::atomic<size_t> total_image_bytes { 0 };
 
-    u64 time0 = Time::ms();
+    ConcurrentQueue queue;
 
-    ConcurrentQueue q;
-
-    for (size_t i = 0; i < count; ++i)
+    void process(const Path& path, bool mmap)
     {
-        const auto& node = path[i];
-        if (isJPEG(node))
+        for (auto node : path)
         {
-            std::string filename = node.name;
-            q.enqueue([=, &path, &total_input_bytes, &total_image_bytes]
+            if (node.isDirectory())
             {
-                size_t input_bytes = 0;
-                size_t image_bytes = 0;
-
-                if (mmap)
+                if (!node.isContainer())
                 {
-                    File file(path, filename);
-                    Bitmap bitmap(file, filename);
-
-                    input_bytes = file.size();
-                    image_bytes = bitmap.width * bitmap.height * 4; 
+                    Path child(path, node.name);
+                    process(child, mmap);
                 }
-                else
+            }
+            else
+            {
+                if (isJPEG(node))
                 {
-                    FileStream file(path.pathname() + filename, Stream::READ);
-                    Buffer buffer(file);
-                    Bitmap bitmap(buffer, filename);
+                    std::string filename = path.pathname() + node.name;
 
-                    input_bytes = file.size();
-                    image_bytes = bitmap.width * bitmap.height * 4; 
+                    queue.enqueue([this, filename, mmap]
+                    {
+                        size_t input_bytes = 0;
+                        size_t image_bytes = 0;
+
+                        if (mmap)
+                        {
+                            File file(filename);
+                            Bitmap bitmap(file, filename);
+
+                            input_bytes = file.size();
+                            image_bytes = bitmap.width * bitmap.height * 4; 
+                        }
+                        else
+                        {
+                            FileStream file(filename, Stream::READ);
+                            Buffer buffer(file);
+                            Bitmap bitmap(buffer, filename);
+
+                            input_bytes = file.size();
+                            image_bytes = bitmap.width * bitmap.height * 4; 
+                        }
+
+                        total_input_files ++;
+                        total_input_bytes += input_bytes;
+                        total_image_bytes += image_bytes;
+
+                        printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n", 
+                            filename.c_str(), 
+                            input_bytes >> 10, image_bytes >> 10);
+                    });
                 }
-
-                total_input_bytes += input_bytes;
-                total_image_bytes += image_bytes;
-
-                printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n", 
-                    filename.c_str(), 
-                    input_bytes >> 10, image_bytes >> 10);
-            });
+            }
         }
     }
+};
 
-    q.wait();
+void test_jpeg(const std::string& folder, bool mmap)
+{
+    State state;
+
+    u64 time0 = Time::ms();
+
+    Path path(folder);
+
+    state.process(path, mmap);
+    state.queue.wait();
 
     u64 time1 = Time::ms();
 
     printf("\n%s\n", getSystemInfo().c_str());
     printf("MMAP: %s\n", mmap ? "ENABLED" : "DISABLED");
-    printf("Decoded %d files in %d ms (%zu MB -> %zu MB).\n",
-        u32(count), u32(time1 - time0), 
-        total_input_bytes >> 20, 
-        total_image_bytes >> 20);
+    printf("Decoded %zu files in %d ms (%zu MB -> %zu MB).\n",
+        size_t(state.total_input_files),
+        u32(time1 - time0),
+        state.total_input_bytes >> 20,
+        state.total_image_bytes >> 20);
 }
 
 // -----------------------------------------------------------------
