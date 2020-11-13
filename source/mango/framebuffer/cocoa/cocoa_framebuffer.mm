@@ -614,7 +614,7 @@ namespace framebuffer {
 
             int width = bitmap.width;
             int height = bitmap.height;
-            int stride = bitmap.stride;
+            size_t stride = bitmap.stride;
             u8* data = bitmap.address<u8>();
 
             NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc]
