@@ -6,7 +6,7 @@
 
 #include <set>
 #include <string>
-#include <mango//core/configure.hpp>
+#include <mango/core/configure.hpp>
 
 // -----------------------------------------------------------------------
 // OpenGL API
