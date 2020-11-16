@@ -335,7 +335,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(Surface& surface, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& surface, Palette* ptr_palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);

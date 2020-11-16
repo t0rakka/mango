@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     ATARI decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -40,7 +40,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(palette);
             MANGO_UNREFERENCED(level);
@@ -73,7 +73,7 @@ namespace
             return status;
         }
 
-        virtual void decodeImage(Surface& dest) = 0;
+        virtual void decodeImage(const Surface& dest) = 0;
     };
 
     // ------------------------------------------------------------
@@ -92,7 +92,7 @@ namespace
         return color;
     }
 
-    void resolve_palette(Surface& s, int width, int height, const u8* image, const Palette& palette)
+    void resolve_palette(const Surface& s, int width, int height, const u8* image, const Palette& palette)
     {
         for (int y = 0; y < height; ++y)
         {
@@ -193,7 +193,7 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, Palette& palette, const u8* data, const u8* end)
+        void decode(const Surface& s, Palette& palette, const u8* data, const u8* end)
         {
             std::vector<u8> tempImage(width * height, 0);
 
@@ -283,7 +283,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
 			if (!m_data)
                 return;
@@ -372,7 +372,7 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, const u8* data, const u8* end)
+        void decode(const Surface& s, const u8* data, const u8* end)
         {
             BigEndianConstPointer p = data;
 
@@ -452,7 +452,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -571,7 +571,7 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, const u8* data, const u8* end)
+        void decode(const Surface& s, const u8* data, const u8* end)
         {
             BigEndianConstPointer p = data;
 
@@ -719,7 +719,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -961,7 +961,7 @@ namespace
             return p;
         }
 
-        void decode(Surface& s, const u8* data, const u8* end)
+        void decode(const Surface& s, const u8* data, const u8* end)
         {
             BigEndianConstPointer p = data;
 
@@ -1048,7 +1048,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 //#define MANGO_ENABLE_DEBUG_PRINT
 
@@ -380,7 +380,7 @@ namespace
             return m_header.header;
         }
 
-        bool decode_matching(Surface& dest)
+        bool decode_matching(const Surface& dest)
         {
             const char* p = m_header.data;
             const char* end = reinterpret_cast<const char *>(m_memory.address + m_memory.size);
@@ -500,7 +500,7 @@ namespace
             return true;
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(palette);
             MANGO_UNREFERENCED(level);

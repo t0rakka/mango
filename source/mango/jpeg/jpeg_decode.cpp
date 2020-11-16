@@ -1667,7 +1667,7 @@ namespace jpeg {
         debugPrint("  Decoder: %s\n", id.c_str());
     }
 
-    ImageDecodeStatus Parser::decode(Surface& target)
+    ImageDecodeStatus Parser::decode(const Surface& target)
     {
         ImageDecodeStatus status;
 

@@ -392,7 +392,7 @@ namespace jpeg {
         std::string m_idct_name;
         std::string m_ycbcr_name;
 
-        Surface* m_surface;
+        const Surface* m_surface;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
@@ -474,7 +474,7 @@ namespace jpeg {
         Parser(ConstMemory memory);
         ~Parser();
 
-        ImageDecodeStatus decode(Surface& target);
+        ImageDecodeStatus decode(const Surface& target);
     };
 
     // ----------------------------------------------------------------------------

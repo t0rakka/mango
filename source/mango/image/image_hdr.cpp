@@ -287,7 +287,7 @@ namespace
         }
     };
 
-    void hdr_decode(ImageDecodeStatus& status, Surface& surface, const u8* data)
+    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data)
     {
         Buffer buffer(surface.width * 4);
 
@@ -383,7 +383,7 @@ namespace
             return m_rad_header.header;
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(palette);
             MANGO_UNREFERENCED(level);

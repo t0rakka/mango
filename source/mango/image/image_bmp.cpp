@@ -761,7 +761,7 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    mango::Status decodeBitmap(Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
+    mango::Status decodeBitmap(const Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
         if (!header)
@@ -931,7 +931,7 @@ namespace
         return header;
     }
 
-    void getImage(Surface& surface, ConstMemory memory, std::string extension)
+    void getImage(const Surface& surface, ConstMemory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
 
@@ -945,7 +945,7 @@ namespace
     // .ico parser
     // ------------------------------------------------------------
 
-    const char* parseIco(ImageHeader* imageHeader, Surface* surface, ConstMemory memory)
+    const char* parseIco(ImageHeader* imageHeader, const Surface* surface, ConstMemory memory)
     {
         LittleEndianConstPointer p = memory.address;
 
@@ -1196,7 +1196,7 @@ namespace
             return m_image_header;
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
 	The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
@@ -592,7 +592,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
