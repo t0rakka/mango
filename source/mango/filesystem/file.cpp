@@ -95,8 +95,7 @@ namespace filesystem {
 
     const std::string& File::pathname() const
     {
-        Mapper& mapper = m_path->getMapper();
-        return mapper.pathname();
+        return m_path->pathname();
     }
 
     File::operator ConstMemory () const
