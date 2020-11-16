@@ -45,6 +45,11 @@ namespace filesystem {
         }
     }
 
+    Mapper* Path::getMapper() const
+    {
+        return m_mapper.get();
+    }
+
     // -----------------------------------------------------------------
     // filename manipulation functions
     // -----------------------------------------------------------------

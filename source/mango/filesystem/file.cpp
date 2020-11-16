@@ -25,7 +25,7 @@ namespace filesystem {
         // create a internal path
         m_path.reset(new Path(filepath));
 
-        Mapper* path_mapper = m_path->m_mapper.get();
+        Mapper* path_mapper = m_path->getMapper();
         if (!path_mapper)
         {
             MANGO_EXCEPTION("[File] Mapper interface missing.");
@@ -51,7 +51,7 @@ namespace filesystem {
         // create a internal path
         m_path.reset(new Path(path, filepath));
 
-        Mapper* path_mapper = m_path->m_mapper.get();
+        Mapper* path_mapper = m_path->getMapper();
         if (!path_mapper)
         {
             MANGO_EXCEPTION("[File] Mapper interface missing.");
@@ -72,7 +72,7 @@ namespace filesystem {
         // create a internal path
         m_path.reset(new Path(memory, extension, password));
 
-        Mapper* path_mapper = m_path->m_mapper.get();
+        Mapper* path_mapper = m_path->getMapper();
         if (!path_mapper)
         {
             MANGO_EXCEPTION("[File] Mapper interface missing.");
@@ -107,7 +107,8 @@ namespace filesystem {
 
     const std::string& File::pathname() const
     {
-        return m_path->m_mapper->pathname();
+        Mapper* mapper = m_path->getMapper();
+        return mapper->pathname();
     }
 
     File::operator ConstMemory () const

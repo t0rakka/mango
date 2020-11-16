@@ -15,8 +15,6 @@ namespace filesystem {
     class Path : protected NonCopyable
     {
     protected:
-        friend class File;
-
         std::shared_ptr<Mapper> m_mapper;
 
         mutable FileIndex m_index;
@@ -29,6 +27,8 @@ namespace filesystem {
         Path(const Path& path, const std::string& filename, const std::string& password = "");
         Path(ConstMemory memory, const std::string& extension, const std::string& password = "");
         ~Path();
+
+        Mapper* getMapper() const;
 
         const std::string& pathname() const
         {
