@@ -40,7 +40,7 @@ namespace filesystem {
     {
         std::vector<FileInfo> files;
 
-        void emplace(const std::string &name, u64 size, u32 flags);
+        void emplace(const std::string& name, u64 size, u32 flags);
 
         size_t size() const
         {
