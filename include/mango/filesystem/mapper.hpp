@@ -40,7 +40,7 @@ namespace filesystem {
     {
         std::vector<FileInfo> files;
 
-        void emplace(const std::string &name, u64 size, u32 flags);
+        void emplace(const std::string& name, u64 size, u32 flags);
 
         size_t size() const
         {
@@ -102,8 +102,6 @@ namespace filesystem {
     class Mapper : protected NonCopyable
     {
     protected:
-        friend class File;
-
         AbstractMapper* m_mapper { nullptr };
         std::shared_ptr<Mapper> m_parent_mapper;
         VirtualMemory* m_parent_memory { nullptr };
@@ -111,7 +109,6 @@ namespace filesystem {
         std::string m_basepath;
         std::string m_pathname;
 
-        std::string parse(std::string& pathname, const std::string& password);
         AbstractMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
         AbstractMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
         AbstractMapper* createFileMapper(const std::string& basepath);
@@ -121,6 +118,8 @@ namespace filesystem {
         Mapper(std::shared_ptr<Mapper> mapper, const std::string& filename, const std::string& password);
         Mapper(ConstMemory memory, const std::string& extension, const std::string& password);
         ~Mapper();
+
+        std::string parse(std::string& pathname, const std::string& password);
 
         const std::string& basepath() const;
         const std::string& pathname() const;

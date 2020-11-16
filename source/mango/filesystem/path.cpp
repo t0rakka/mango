@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/filesystem/path.hpp>
@@ -15,35 +15,39 @@ namespace filesystem {
     Path::Path(const std::string& pathname, const std::string& password)
         : m_mapper(std::make_shared<Mapper>(pathname, password))
     {
-        AbstractMapper* mapper = *m_mapper;
-        if (mapper)
-        {
-            mapper->getIndex(m_files, m_mapper->basepath());
-        }
     }
 
     Path::Path(const Path& path, const std::string& pathname, const std::string& password)
         : m_mapper(std::make_shared<Mapper>(path.m_mapper, pathname, password))
     {
-        AbstractMapper* mapper = *m_mapper;
-        if (mapper)
-        {
-            mapper->getIndex(m_files, m_mapper->basepath());
-        }
     }
 
     Path::Path(ConstMemory memory, const std::string& extension, const std::string& password)
         : m_mapper(std::make_shared<Mapper>(memory, extension, password))
     {
-        AbstractMapper* mapper = *m_mapper;
-        if (mapper)
-        {
-            mapper->getIndex(m_files, m_mapper->basepath());
-        }
     }
 
     Path::~Path()
     {
+    }
+
+    void Path::updateIndex() const
+    {
+        if (m_index_is_dirty)
+        {
+            AbstractMapper* mapper = *m_mapper;
+            if (mapper)
+            {
+                mapper->getIndex(m_index, m_mapper->basepath());
+            }
+
+            m_index_is_dirty = false;
+        }
+    }
+
+    Mapper& Path::getMapper() const
+    {
+        return *m_mapper.get();
     }
 
     // -----------------------------------------------------------------

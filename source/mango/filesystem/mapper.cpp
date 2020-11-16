@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -116,14 +116,18 @@ namespace filesystem {
     // FileIndex
     // -----------------------------------------------------------------
 
-    void FileIndex::emplace(const std::string &name, u64 size, u32 flags)
+    void FileIndex::emplace(const std::string& name, u64 size, u32 flags)
     {
         files.emplace_back(name, size, flags);
 
         const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
         if (isFile && Mapper::isCustomMapper(name))
         {
-            // file is a container; add it into the index again as such
+            // TODO: check that
+            // - filename doesn't already end with "/"
+            // - flags don't contain FileInfo::CONTAINER
+
+            // file is a container; add it into the index again
             files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
         }
     }

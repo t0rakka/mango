@@ -15,10 +15,12 @@ namespace filesystem {
     class Path : protected NonCopyable
     {
     protected:
-        friend class File;
-
         std::shared_ptr<Mapper> m_mapper;
-        FileIndex m_files;
+
+        mutable FileIndex m_index;
+        mutable bool m_index_is_dirty = true;
+
+        void updateIndex() const;
 
     public:
         Path(const std::string& pathname, const std::string& password = "");
@@ -26,34 +28,41 @@ namespace filesystem {
         Path(ConstMemory memory, const std::string& extension, const std::string& password = "");
         ~Path();
 
+        Mapper& getMapper() const;
+
         const std::string& pathname() const
         {
             return m_mapper->pathname();
         }
 
-        auto begin() const -> decltype(m_files.begin())
+        auto begin() const -> decltype(m_index.begin())
         {
-            return m_files.begin();
+            updateIndex();
+            return m_index.begin();
         }
 
-        auto end() const -> decltype(m_files.end())
+        auto end() const -> decltype(m_index.end())
         {
-            return m_files.end();
+            updateIndex();
+            return m_index.end();
         }
  
-        auto size() const -> decltype(m_files.size())
+        auto size() const -> decltype(m_index.size())
         {
-            return m_files.size();
+            updateIndex();
+            return m_index.size();
         }
 
         bool empty() const
         {
-            return m_files.empty();
+            updateIndex();
+            return m_index.empty();
         }
 
         const FileInfo& operator [] (int index) const
         {
-            return m_files[index];
+            updateIndex();
+            return m_index[index];
         }
     };
 
