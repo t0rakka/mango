@@ -14,6 +14,7 @@ mango::core
 mango::image
 ---------------------------------------------------------------------------------------------
 
+[ ] make diagnostic prints runtime configurable (JPEG, PNG, ..)
 [x] struct LuminanceFormat for initializing luminance formats
 [x] LUMINANCE -flag to format instead of inspecting the RGB(A) masks
 [x] INDEXED -flag to format (limits bit depth to 1..8 bits, used by palette blitter)
