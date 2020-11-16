@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/string.hpp>
@@ -267,7 +267,7 @@ namespace mango
         return header;
     }
 
-    ImageDecodeStatus ImageDecoder::decode(Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    ImageDecodeStatus ImageDecoder::decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
     {
         ImageDecodeStatus status;
 

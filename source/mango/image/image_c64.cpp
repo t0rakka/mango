@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Commodore 64 decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -54,7 +54,7 @@ namespace
         }
     };
 
-    void resolve_palette(Surface& s, u8* data, int width, int height, const Palette& palette)
+    void resolve_palette(const Surface& s, u8* data, int width, int height, const Palette& palette)
     {
         for (int y = 0; y < height; ++y)
         {
@@ -195,10 +195,10 @@ namespace
         }
     }
 
-    void multicolor_to_surface(Surface& s, const u8 *data, int width, int height, 
-                            u32 bitmap_offset, u32 video_ram_offset, u32 color_ram_offset, 
-                            u32 background_offset, u32 opcode_colors_offset, 
-                            int background_mode, bool fli)
+    void multicolor_to_surface(const Surface& s, const u8 *data, int width, int height, 
+                               u32 bitmap_offset, u32 video_ram_offset, u32 color_ram_offset, 
+                               u32 background_offset, u32 opcode_colors_offset, 
+                               int background_mode, bool fli)
     {
         PaletteC64 palette;
         std::vector<u8> temp(width * height, 0);
@@ -211,14 +211,14 @@ namespace
         resolve_palette(s, temp.data(), width, height, palette);
     }
 
-    void multicolor_interlace_to_surface(Surface& s, const u8 *data, int width, int height,
-                                        u32 bitmap_offset_1, u32 bitmap_offset_2, 
-                                        u32 video_ram_offset_1, u32 video_ram_offset_2, 
-                                        u32 color_ram_offset, u8 *background_colors,
-                                        u8 *opcode_colors,
-                                        int background_mode,
-                                        bool fli,
-                                        int mode)
+    void multicolor_interlace_to_surface(const Surface& s, const u8 *data, int width, int height,
+                                         u32 bitmap_offset_1, u32 bitmap_offset_2, 
+                                         u32 video_ram_offset_1, u32 video_ram_offset_2, 
+                                         u32 color_ram_offset, u8 *background_colors,
+                                         u8 *opcode_colors,
+                                         int background_mode,
+                                         bool fli,
+                                         int mode)
     {
         PaletteC64 palette;
 
@@ -343,11 +343,11 @@ namespace
         }
     }
 
-    void hires_to_surface(Surface& s, const u8* data, int width, int height, 
-                              u32 bitmap_offset, u32 video_ram_offset, 
-                              bool fli = false,
-                              bool show_fli_bug = false,
-                              u8 fli_bug_color = 0)
+    void hires_to_surface(const Surface& s, const u8* data, int width, int height, 
+                          u32 bitmap_offset, u32 video_ram_offset, 
+                          bool fli = false,
+                          bool show_fli_bug = false,
+                          u8 fli_bug_color = 0)
     {
         PaletteC64 palette;
         std::vector<u8> temp(width * height, 0);
@@ -357,12 +357,12 @@ namespace
         resolve_palette(s, temp.data(), width, height, palette);
     }
 
-    void hires_interlace_to_surface(Surface& s, const u8* data, int width, int height,
-                                        u32 bitmap_offset_1, u32 bitmap_offset_2, 
-                                        u32 video_ram_offset_1, u32 video_ram_offset_2, 
-                                        bool fli = false,
-                                        bool show_fli_bug = false,
-                                        u8 fli_bug_color = 0)
+    void hires_interlace_to_surface(const Surface& s, const u8* data, int width, int height,
+                                    u32 bitmap_offset_1, u32 bitmap_offset_2, 
+                                    u32 video_ram_offset_1, u32 video_ram_offset_2, 
+                                    bool fli = false,
+                                    bool show_fli_bug = false,
+                                    u8 fli_bug_color = 0)
     {
         PaletteC64 palette;
 
@@ -420,7 +420,7 @@ namespace
             return nullptr;
         }
 
-        void multicolor_load(Surface& s, const u8* data,
+        void multicolor_load(const Surface& s, const u8* data,
                              u32 bitmap_offset, u32 video_ram_offset, 
                              u32 color_ram_offset, u32 background_offset, u32 opcode_colors_offset,
                              int background_mode, bool fli)
@@ -430,7 +430,7 @@ namespace
                                   background_mode, fli);
         }
 
-        void hires_load(Surface& s, const u8* data, 
+        void hires_load(const Surface& s, const u8* data, 
                         u32 bitmap_offset, u32 video_ram_offset, bool fli)
         {
             hires_to_surface(s, data, width, height, bitmap_offset, video_ram_offset, fli);
@@ -460,7 +460,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(palette);
             MANGO_UNREFERENCED(level);
@@ -488,7 +488,7 @@ namespace
             return status;
         }
 
-        virtual void decodeImage(Surface& dest) = 0;
+        virtual void decodeImage(const Surface& dest) = 0;
     };
 
     struct GenericInterface : Interface
@@ -521,7 +521,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -547,7 +547,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -591,7 +591,7 @@ namespace
             }
         }
             
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -629,7 +629,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -655,7 +655,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -681,7 +681,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -707,7 +707,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -733,7 +733,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -759,7 +759,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -823,7 +823,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -898,7 +898,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -966,7 +966,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1004,7 +1004,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1030,7 +1030,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1056,7 +1056,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1196,7 +1196,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1256,7 +1256,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1287,7 +1287,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1384,7 +1384,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1486,7 +1486,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1535,7 +1535,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1561,7 +1561,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1663,7 +1663,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1702,7 +1702,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1728,7 +1728,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1781,7 +1781,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -1911,7 +1911,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -2151,7 +2151,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -2215,7 +2215,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -2382,7 +2382,7 @@ namespace
             }
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;
@@ -2515,7 +2515,7 @@ namespace
         {
         }
 
-        void decodeImage(Surface& s) override
+        void decodeImage(const Surface& s) override
         {
             if (!m_data)
                 return;

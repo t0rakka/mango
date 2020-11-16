@@ -1347,7 +1347,7 @@ namespace
         ~ParserPNG();
 
         const ImageHeader& getHeader();
-        ImageDecodeStatus decode(Surface& dest, Palette* palette);
+        ImageDecodeStatus decode(const Surface& dest, Palette* palette);
     };
 
     // ------------------------------------------------------------
@@ -2137,7 +2137,7 @@ namespace
         }
     }
 
-    ImageDecodeStatus ParserPNG::decode(Surface& dest, Palette* ptr_palette)
+    ImageDecodeStatus ParserPNG::decode(const Surface& dest, Palette* ptr_palette)
     {
         ImageDecodeStatus status;
 
@@ -2504,7 +2504,7 @@ namespace
             return m_parser.getHeader();
         }
 
-        ImageDecodeStatus decode(Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);

@@ -58,7 +58,7 @@ namespace mango
         virtual ~ImageDecoderInterface() = default;
 
         virtual ImageHeader header() = 0;
-        virtual ImageDecodeStatus decode(Surface& dest, Palette* palette, int level, int depth, int face) = 0;
+        virtual ImageDecodeStatus decode(const Surface& dest, Palette* palette, int level, int depth, int face) = 0;
 
         // optional
         virtual ConstMemory memory(int level, int depth, int face); // get compressed data
@@ -74,7 +74,7 @@ namespace mango
 
         bool isDecoder() const;
         ImageHeader header();
-        ImageDecodeStatus decode(Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
 
         ConstMemory memory(int level, int depth, int face);
         ConstMemory icc();
