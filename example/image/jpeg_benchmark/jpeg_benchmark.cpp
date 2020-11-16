@@ -7,6 +7,7 @@
 using namespace mango;
 using namespace mango::filesystem;
 
+#define TEST_LIBJPEG
 #define TEST_STB
 #define TEST_JPEG_COMPRESSOR
 
@@ -212,6 +213,8 @@ int main(int argc, const char* argv[])
 
     // ------------------------------------------------------------------
 
+#ifdef TEST_LIBJPEG
+
     time0 = Time::us();
 
     Surface s = load_jpeg(argv[1]);
@@ -222,6 +225,8 @@ int main(int argc, const char* argv[])
 
     time2 = Time::us();
     print("libjpeg: ", time0, time1, time2);
+
+#endif
 
     // ------------------------------------------------------------------
 

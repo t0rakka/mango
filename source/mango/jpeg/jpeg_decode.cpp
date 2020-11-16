@@ -40,6 +40,20 @@ namespace jpeg {
         return is;
     }
 
+    void memoryDump(const u8* ptr)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            printf("%.2x ", ptr[i - 8]);
+        }
+        printf("| ");
+        for (int i = 0; i < 8; ++i)
+        {
+            printf("%.2x ", ptr[i]);
+        }
+        printf("\n");
+    }
+
     // ----------------------------------------------------------------------------
     // BitBuffer
     // ----------------------------------------------------------------------------
@@ -569,7 +583,7 @@ namespace jpeg {
                 return;
             }
 
-            if (blocks_in_mcu >= JPEG_MAX_BLOCKS_IN_MCU)
+            if (blocks_in_mcu > JPEG_MAX_BLOCKS_IN_MCU)
             {
                 header.setError(makeString("Incorrect number of blocks in MCU (%d >= %d).", blocks_in_mcu, JPEG_MAX_BLOCKS_IN_MCU));
                 return;
@@ -947,16 +961,7 @@ namespace jpeg {
         }
 
 #if defined(MANGO_ENABLE_DEBUG_PRINT)
-        for (int i = 0; i < 8; ++i)
-        {
-            printf("%.2x ", decodeState.buffer.ptr[i - 8]);
-        }
-        printf("| ");
-        for (int i = 0; i < 8; ++i)
-        {
-            printf("%.2x ", decodeState.buffer.ptr[i]);
-        }
-        printf("\n");
+        memoryDump(decodeState.buffer.ptr);
 #endif
 
         p = decodeState.buffer.ptr;
