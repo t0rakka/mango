@@ -28,7 +28,7 @@ namespace filesystem {
         Path(ConstMemory memory, const std::string& extension, const std::string& password = "");
         ~Path();
 
-        Mapper* getMapper() const;
+        Mapper& getMapper() const;
 
         const std::string& pathname() const
         {

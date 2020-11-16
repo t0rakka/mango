@@ -45,9 +45,9 @@ namespace filesystem {
         }
     }
 
-    Mapper* Path::getMapper() const
+    Mapper& Path::getMapper() const
     {
-        return m_mapper.get();
+        return *m_mapper.get();
     }
 
     // -----------------------------------------------------------------
