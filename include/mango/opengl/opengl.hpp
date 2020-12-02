@@ -266,4 +266,50 @@ namespace opengl {
 #endif // MANGO_OPENGL_DISABLE_PLATFORM_API
 
 } // namespace opengl
+
+    // -------------------------------------------------------------------
+    // OpenGLFramebuffer
+    // -------------------------------------------------------------------
+#if 0
+    class OpenGLFramebuffer : public opengl::Context
+    {
+    protected:
+        Surface m_surface;
+
+        GLuint m_texture = 0;
+        GLuint m_buffer = 0;
+
+        GLuint m_vao = 0;
+        GLuint m_vbo = 0;
+        GLuint m_ibo = 0;
+
+        struct Program
+        {
+            GLuint program = 0;
+            GLint transform = -1;
+            GLint texture = -1;
+            GLint scale = -1;
+            GLint position = -1;
+        };
+
+        Program m_bilinear;
+        Program m_bicubic;
+
+    public:
+        enum Filter
+        {
+            FILTER_NEAREST,
+            FILTER_BILINEAR,
+            FILTER_BICUBIC
+        };
+
+        OpenGLFramebuffer(int width, int height);
+        ~OpenGLFramebuffer();
+
+        Surface lock();
+        void unlock();
+        void present(Filter filter = FILTER_NEAREST);
+    };
+#endif
+
 } // namespace mango

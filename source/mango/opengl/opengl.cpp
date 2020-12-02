@@ -527,4 +527,364 @@ namespace opengl {
     }
 
 } // namespace opengl
+
+namespace {
+
+    // -------------------------------------------------------------------
+    // built-in shader sources
+    // -------------------------------------------------------------------
+
+    const char* vertex_shader_source =
+        "uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0); \n"
+        "in vec2 inPosition; \n"
+        "out vec2 texcoord; \n"
+        "void main() { \n"
+        "    texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5); \n"
+        "    gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0); \n"
+        "}\n";
+
+    const char* fragment_shader_source =
+        "uniform sampler2D uTexture; \n"
+        "in vec2 texcoord; \n"
+        "out vec4 outFragment0; \n"
+        "void main() { \n"
+        "    outFragment0 = texture(uTexture, texcoord); \n"
+        "} \n";
+
+    const char* vertex_shader_source_bicubic =
+        "uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0); \n"
+        "in vec2 inPosition; \n"
+        "out vec2 texcoord; \n"
+        " \n"
+        "void main() { \n"
+        "    texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5); \n"
+        "    gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0); \n"
+        "}\n";
+
+    const char* fragment_shader_source_bicubic =
+        "vec4 cubic(float v) \n"
+        "{ \n"
+        "    vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v; \n"
+        "    vec4 s = n * n * n; \n"
+        "    float x = s.x; \n"
+        "    float y = s.y - 4.0 * s.x; \n"
+        "    float z = s.z - 4.0 * s.y + 6.0 * s.x; \n"
+        "    float w = 6.0 - x - y - z; \n"
+        "    return vec4(x, y, z, w); \n"
+        "} \n"
+        " \n"
+        "vec4 texture_filter(sampler2D uTexture, vec2 texcoord, vec2 texscale) \n"
+        "{ \n"
+        "    // hack to bring unit texcoords to integer pixel coords \n"
+        "    texcoord /= texscale; \n"
+        "    texcoord -= vec2(0.5, 0.5f); \n"
+        " \n"
+        "    float fx = fract(texcoord.x); \n"
+        "    float fy = fract(texcoord.y); \n"
+        "    texcoord.x -= fx; \n"
+        "    texcoord.y -= fy; \n"
+        " \n"
+        "    vec4 cx = cubic(fx); \n"
+        "    vec4 cy = cubic(fy); \n"
+        " \n"
+        "    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5); \n"
+        "    vec4 s = vec4(cx.x + cx.y, cx.z + cx.w, cy.x + cy.y, cy.z + cy.w); \n"
+        "    vec4 offset = c + vec4(cx.y, cx.w, cy.y, cy.w) / s; \n"
+        " \n"
+        "    vec4 sample0 = texture(uTexture, vec2(offset.x, offset.z) * texscale); \n"
+        "    vec4 sample1 = texture(uTexture, vec2(offset.y, offset.z) * texscale); \n"
+        "    vec4 sample2 = texture(uTexture, vec2(offset.x, offset.w) * texscale); \n"
+        "    vec4 sample3 = texture(uTexture, vec2(offset.y, offset.w) * texscale); \n"
+        " \n"
+        "    float sx = s.x / (s.x + s.y); \n"
+        "    float sy = s.z / (s.z + s.w); \n"
+        " \n"
+        "    return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy); \n"
+        "} \n"
+        " \n"
+        "uniform sampler2D uTexture; \n"
+        "uniform vec2 uTexScale; \n"
+        "in vec2 texcoord; \n"
+        "out vec4 outFragment0; \n"
+        " \n"
+        "void main() { \n"
+        "    outFragment0 = texture_filter(uTexture, texcoord, uTexScale); \n"
+        "} \n";
+
+    std::string getShadingLanguageVersionString()
+    {
+        std::string s = "#version 110\n"; // default for OpenGL 2.0
+
+        const char* version = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+        if (version)
+        {
+            int major;
+            int minor;
+            std::sscanf(version, "%d.%d", &major, &minor);
+            char buffer[80];
+            sprintf(buffer, "#version %d%d\n", major, minor);
+            s = buffer;
+        }
+
+        return s;
+    }
+
+    GLuint createShader(GLenum type, const char* source)
+    {
+        GLuint shader = glCreateShader(type);
+
+        std::string header = getShadingLanguageVersionString();
+
+        const GLchar* string[] =
+        {
+            reinterpret_cast<const GLchar*>(header.c_str()),
+            reinterpret_cast<const GLchar*>(source)
+        };
+
+        glShaderSource(shader, 2, string, NULL);
+        glCompileShader(shader);
+
+        GLint status;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+        if (!status)
+        {
+            GLint size;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
+
+            GLchar* buffer = new GLchar[size + 1];
+            GLsizei length;
+            glGetShaderInfoLog(shader, size + 1, &length, buffer);
+
+            printf("glCompileShader() ERROR:\n%s\n", buffer); // TODO: exception
+            delete[] buffer;
+
+            glDeleteShader(shader);
+            shader = 0;
+        }
+
+        return shader;
+    }
+
+    GLuint createProgram(const char* vertex_source, const char* fragment_source)
+    {
+        GLuint vs = createShader(GL_VERTEX_SHADER, vertex_source);
+        GLuint fs = createShader(GL_FRAGMENT_SHADER, fragment_source);
+
+        GLuint program = glCreateProgram();
+        glAttachShader(program, vs);
+        glAttachShader(program, fs);
+        glBindFragDataLocation(program, 0, "outFragment0");
+        glLinkProgram(program);
+
+        GLint status;
+        glGetProgramiv(program, GL_LINK_STATUS, &status);
+        if (!status)
+        {
+            GLint size;
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
+
+            GLchar* buffer = new GLchar[size + 1];
+            GLsizei length;
+            glGetProgramInfoLog(program, size + 1, &length, buffer);
+
+            printf("glLinkProgram() ERROR:\n%s\n", buffer); // TODO: exception
+            delete[] buffer;
+
+            glDeleteProgram(program);
+            program = 0;
+        }
+
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+
+        return program;
+    }
+
+} // namespace
+
+    // -------------------------------------------------------------------
+    // OpenGLFramebuffer
+    // -------------------------------------------------------------------
+#if 0
+    OpenGLFramebuffer::OpenGLFramebuffer(int width, int height)
+        : opengl::Context(width, height, 0, nullptr)
+        , m_surface(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), width * 4, nullptr)
+    {
+
+        // create texture
+
+        glGenTextures(1, &m_texture);
+        glBindTexture(GL_TEXTURE_2D, m_texture);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // create pixelbuffer
+
+		glGenBuffers(1, &m_buffer);
+
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STATIC_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+        // create vertex buffers
+
+        const GLfloat vertex_buffer_data[] =
+        {
+            -1.0f, -1.0f,
+             1.0f, -1.0f,
+            -1.0f,  1.0f,
+             1.0f,  1.0f
+        };
+
+        const GLushort element_buffer_data[] =
+        {
+            0, 1, 2, 3
+        };
+
+        glGenVertexArrays(1, &m_vao);
+        glBindVertexArray(m_vao);
+
+        glGenBuffers(1, &m_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data), vertex_buffer_data, GL_STATIC_DRAW);
+
+        glGenBuffers(1, &m_ibo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(element_buffer_data), element_buffer_data, GL_STATIC_DRAW);
+
+        // create vertex program
+
+        m_bilinear.program = createProgram(vertex_shader_source, fragment_shader_source);
+        m_bilinear.transform = glGetUniformLocation(m_bilinear.program, "uTransform");
+        m_bilinear.texture = glGetUniformLocation(m_bilinear.program, "uTexture");
+        m_bilinear.position = glGetAttribLocation(m_bilinear.program, "inPosition");
+
+        // create fragment program
+
+        m_bicubic.program = createProgram(vertex_shader_source_bicubic, fragment_shader_source_bicubic);
+        m_bicubic.transform = glGetUniformLocation(m_bicubic.program, "uTransform");
+        m_bicubic.texture = glGetUniformLocation(m_bicubic.program, "uTexture");
+        m_bicubic.scale = glGetUniformLocation(m_bicubic.program, "uTexScale");
+        m_bicubic.position = glGetAttribLocation(m_bicubic.program, "inPosition");
+    }
+
+    OpenGLFramebuffer::~OpenGLFramebuffer()
+    {
+        if (m_bilinear.program)
+        {
+            glDeleteProgram(m_bilinear.program);
+        }
+
+        if (m_bicubic.program)
+        {
+            glDeleteProgram(m_bicubic.program);
+        }
+
+        if (m_ibo)
+        {
+            glDeleteBuffers(1, &m_ibo);
+        }
+
+        if (m_vbo)
+        {
+            glDeleteBuffers(1, &m_vbo);
+        }
+
+        if (m_vao)
+        {
+            glDeleteBuffers(1, &m_vao);
+        }
+
+        if (m_buffer)
+        {
+		    glDeleteBuffers(1, &m_buffer);
+        }
+
+        if (m_texture)
+        {
+            glDeleteTextures(1, &m_texture);
+        }
+    }
+
+    Surface OpenGLFramebuffer::lock()
+    {
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
+        void* data = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+        m_surface.image = reinterpret_cast<u8*>(data);
+        return m_surface;
+    }
+
+    void OpenGLFramebuffer::unlock()
+    {
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_surface.width, m_surface.height, 0, 
+            GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    }
+
+    void OpenGLFramebuffer::present(Filter filter)
+    {
+        glDisable(GL_BLEND);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_texture);
+
+        float2 aspect = 1.0f;//computeAspect();
+        float2 scale = 1.0f;//aspect * computeScale();
+        float2 translate(0, 0); // = m_translate + computeTranslate() / scale;
+
+        glBindVertexArray(m_vao);
+
+        Program p;
+
+        switch (filter)
+        {
+            case FILTER_NEAREST:
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                p = m_bilinear;
+                break;
+
+            case FILTER_BILINEAR:
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                p = m_bilinear;
+                break;
+
+            case FILTER_BICUBIC:
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                p = m_bicubic;
+                break;
+        }
+
+        if (p.program)
+        {
+            glUseProgram(p.program);
+
+            glUniform1i(p.texture, 0);
+            glUniform4f(p.transform, translate.x, -translate.y, scale.x, scale.y);
+            glUniform2f(p.scale, 1.0f / m_surface.width, 1.0f / m_surface.height);
+
+            if (p.position != -1)
+            {
+                glVertexAttribPointer(p.position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, (void*)0);
+                glEnableVertexAttribArray(p.position);
+            }
+        }
+
+        glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (void*)0);
+        glBindVertexArray(0);
+
+        swapBuffers();
+    }
+#endif
+
 } // namespace mango
