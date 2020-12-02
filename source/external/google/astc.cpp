@@ -1478,6 +1478,15 @@ namespace
 namespace mango
 {
 
+    //
+    // NOTE: 
+    //
+    // The isSRGB here simply means 8 bit UNORM target, whether it is or isn't interpreted as sRGB
+    // by the client depends on the ASTC compression format being decoded.
+    //
+    // The isLDR is redundant and should reflect the value of isSRGB and exists only because the decoder
+    // has flexibility our front-end doesn't require. Don't be confused about this. :D
+
     void decode_block_astc_srgb(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         const bool isSRGB = true;
