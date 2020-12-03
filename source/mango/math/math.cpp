@@ -381,10 +381,10 @@ namespace mango
         
         float4x4 result;
         
-        result[0] = float4(xaxis.x, xaxis.y, xaxis.z, 0.0f);
-        result[1] = float4(yaxis.x, yaxis.y, yaxis.z, 0.0f);
-        result[2] = float4(zaxis.x, zaxis.y, zaxis.z, 0.0f);
-        result[3] = float4(pos.x, pos.y, pos.z, 1.0f);
+        result[0] = float32x4(xaxis.x, xaxis.y, xaxis.z, 0.0f);
+        result[1] = float32x4(yaxis.x, yaxis.y, yaxis.z, 0.0f);
+        result[2] = float32x4(zaxis.x, zaxis.y, zaxis.z, 0.0f);
+        result[3] = float32x4(pos.x, pos.y, pos.z, 1.0f);
         
         return result;
     }
@@ -410,10 +410,10 @@ namespace mango
 
         float4x4 result;
 
-        result[0] = float4(m00, m01, m02, m[ 3]);
-        result[1] = float4(m10, m11, m12, m[ 7]);
-        result[2] = float4(m20, m21, m22, m[11]);
-        result[3] = float4(m30, m31, m32, m[15]);
+        result[0] = float32x4(m00, m01, m02, m[ 3]);
+        result[1] = float32x4(m10, m11, m12, m[ 7]);
+        result[2] = float32x4(m20, m21, m22, m[11]);
+        result[3] = float32x4(m30, m31, m32, m[15]);
 
         return result;
     }
@@ -437,10 +437,10 @@ namespace mango
 
         float4x4 result;
 
-        result[0] = float4(m00, m01, m02, m[3]);
-        result[1] = float4(m10, m11, m12, m[7]);
-        result[2] = float4(m20, m21, m22, m[11]);
-        result[3] = float4(m30, m31, m32, m[15]);
+        result[0] = float32x4(m00, m01, m02, m[3]);
+        result[1] = float32x4(m10, m11, m12, m[7]);
+        result[2] = float32x4(m20, m21, m22, m[11]);
+        result[3] = float32x4(m30, m31, m32, m[15]);
 
         return result;
     }
@@ -520,10 +520,10 @@ namespace matrix {
 
         return float4x4
         {
-            float4(1, 0, 0, 0),
-            float4(0, c, s, 0),
-            float4(0,-s, c, 0),
-            float4(0, 0, 0, 1)
+            float32x4(1, 0, 0, 0),
+            float32x4(0, c, s, 0),
+            float32x4(0,-s, c, 0),
+            float32x4(0, 0, 0, 1)
         };
     }
 
@@ -534,10 +534,10 @@ namespace matrix {
 
         return float4x4
         {
-            float4(c, 0,-s, 0),
-            float4(0, 1, 0, 0),
-            float4(s, 0, c, 0),
-            float4(0, 0, 0, 1)
+            float32x4(c, 0,-s, 0),
+            float32x4(0, 1, 0, 0),
+            float32x4(s, 0, c, 0),
+            float32x4(0, 0, 0, 1)
         };
      }
 
@@ -548,16 +548,16 @@ namespace matrix {
 
         return float4x4
         {
-            float4( c, s, 0, 0),
-            float4(-s, c, 0, 0),
-            float4( 0, 0, 1, 0),
-            float4( 0, 0, 0, 1)
+            float32x4( c, s, 0, 0),
+            float32x4(-s, c, 0, 0),
+            float32x4( 0, 0, 1, 0),
+            float32x4( 0, 0, 0, 1)
         };
     }
 
     float4x4 rotateXYZ(float x, float y, float z)
     {
-        const float32x4 v = float4(x, y, z, 0.0f);
+        const float32x4 v = float32x4(x, y, z, 0.0f);
         const float32x4 s = sin(v);
         const float32x4 c = cos(v);
 
@@ -582,10 +582,10 @@ namespace matrix {
 
         return float4x4
         {
-            float4(m00, m01, m02, 0),
-            float4(m10, m11, m12, 0),
-            float4(m20, m21, m22, 0),
-            float4(0, 0, 0, 1)
+            float32x4(m00, m01, m02, 0),
+            float32x4(m10, m11, m12, 0),
+            float32x4(m20, m21, m22, 0),
+            float32x4(0, 0, 0, 1)
         };
     }
 
@@ -597,10 +597,10 @@ namespace matrix {
 
         return float4x4
         {
-            float4(xaxis.x, yaxis.x, zaxis.x, 0),
-            float4(xaxis.y, yaxis.y, zaxis.y, 0),
-            float4(xaxis.z, yaxis.z, zaxis.z, 0),
-            float4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f)
+            float32x4(xaxis.x, yaxis.x, zaxis.x, 0),
+            float32x4(xaxis.y, yaxis.y, zaxis.y, 0),
+            float32x4(xaxis.z, yaxis.z, zaxis.z, 0),
+            float32x4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f)
         };
     }
 
@@ -619,10 +619,10 @@ namespace opengl {
 
         return float4x4
         {
-            float4(x, 0, 0, 0),
-            float4(0, y, 0, 0),
-            float4(0, 0, z, 0),
-            float4(a, b, c, 1)
+            float32x4(x, 0, 0, 0),
+            float32x4(0, y, 0, 0),
+            float32x4(0, 0, z, 0),
+            float32x4(a, b, c, 1)
         };
     }
 
@@ -638,10 +638,10 @@ namespace opengl {
 
         return float4x4
         {
-            float4(x, 0, 0, 0),
-            float4(0, y, 0, 0),
-            float4(a, b, c, z),
-            float4(0, 0, d, 0)
+            float32x4(x, 0, 0, 0),
+            float32x4(0, y, 0, 0),
+            float32x4(a, b, c, z),
+            float32x4(0, 0, d, 0)
         };
     }
 
@@ -662,8 +662,8 @@ namespace opengl {
                     (ysign - proj(2,1)) / proj(1,1),
                     -1.0f, (1.0f + proj(2,2)) / proj(3,2));
 
-        float32x4 c = nearclip * (float4(2.0f) / dot(nearclip, q));
-        c += float4(0.0f, 0.0f, 1.0f, 0.0f);
+        float32x4 c = nearclip * (float32x4(2.0f) / dot(nearclip, q));
+        c += float32x4(0.0f, 0.0f, 1.0f, 0.0f);
 
         float4x4 p = proj;
 
@@ -690,10 +690,10 @@ namespace vulkan {
 
         return float4x4
         {
-            float4(x, 0, 0, 0),
-            float4(0, y, 0, 0),
-            float4(0, 0, z, z),
-            float4(a, b, c, c + 1.0f)
+            float32x4(x, 0, 0, 0),
+            float32x4(0, y, 0, 0),
+            float32x4(0, 0, z, z),
+            float32x4(a, b, c, c + 1.0f)
         };
     }
 
@@ -708,10 +708,10 @@ namespace vulkan {
 
         return float4x4
         {
-            float4(x, 0, 0, 0),
-            float4(0, y, 0, 0),
-            float4(a, b, c, c - 1.0f),
-            float4(0, 0, d, d)
+            float32x4(x, 0, 0, 0),
+            float32x4(0, y, 0, 0),
+            float32x4(a, b, c, c - 1.0f),
+            float32x4(0, 0, d, d)
         };
     }
 
@@ -727,19 +727,19 @@ namespace vulkan {
         // conversion from GL to VK matrix format
         const float4x4 to_vk
         {
-            float4(1.0f, 0.0f, 0.0f, 0.0f),
-            float4(0.0f,-1.0f, 0.0f, 0.0f),
-            float4(0.0f, 0.0f, 0.5f, 0.5f),
-            float4(0.0f, 0.0f, 0.0f, 1.0f)
+            float32x4(1.0f, 0.0f, 0.0f, 0.0f),
+            float32x4(0.0f,-1.0f, 0.0f, 0.0f),
+            float32x4(0.0f, 0.0f, 0.5f, 0.5f),
+            float32x4(0.0f, 0.0f, 0.0f, 1.0f)
         };
 
         // inverse of to_vk matrix
         const float4x4 from_vk
         {
-            float4(1.0f, 0.0f, 0.0f, 0.0f),
-            float4(0.0f,-1.0f, 0.0f, 0.0f),
-            float4(0.0f, 0.0f, 2.0f,-1.0f),
-            float4(0.0f, 0.0f, 0.0f, 1.0f)
+            float32x4(1.0f, 0.0f, 0.0f, 0.0f),
+            float32x4(0.0f,-1.0f, 0.0f, 0.0f),
+            float32x4(0.0f, 0.0f, 2.0f,-1.0f),
+            float32x4(0.0f, 0.0f, 0.0f, 1.0f)
         };
 
         // NOTE: using the existing OpenGL function requires a round-trip to it's matrix format. :(
@@ -767,10 +767,10 @@ namespace directx {
 
         return float4x4
         {
-            float4(w, 0, 0, 0),
-            float4(0, h, 0, 0),
-            float4(0, 0, z, 0),
-            float4(a, b, c, 1)
+            float32x4(w, 0, 0, 0),
+            float32x4(0, h, 0, 0),
+            float32x4(0, 0, z, 0),
+            float32x4(a, b, c, 1)
         };
     }
 
@@ -789,10 +789,10 @@ namespace directx {
 
         return float4x4
         {
-            float4(w, 0, 0, 0),
-            float4(0, h, 0, 0),
-            float4(a, b, c, 1),
-            float4(0, 0, d, 0)
+            float32x4(w, 0, 0, 0),
+            float32x4(0, h, 0, 0),
+            float32x4(a, b, c, 1),
+            float32x4(0, 0, d, 0)
         };
     }
 
@@ -805,10 +805,10 @@ namespace directx {
 
         return float4x4
         {
-            float4(w, 0, 0, 0),
-            float4(0, h, 0, 0),
-            float4(0, 0, a, 1),
-            float4(0, 0, b, 0)
+            float32x4(w, 0, 0, 0),
+            float32x4(0, h, 0, 0),
+            float32x4(0, 0, a, 1),
+            float32x4(0, 0, b, 0)
         };
     }
 
@@ -843,7 +843,7 @@ namespace directx {
 
     AngleAxis::AngleAxis(const float4x4& m)
     {
-        axis = float3(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
+        axis = float32x3(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
         const float s = square(axis) * 0.5f;
         const float c = (m[0][0] + m[1][1] + m[2][2] - 1.0f) * 0.5f;
         angle = std::atan2(s, c);
@@ -967,7 +967,7 @@ namespace directx {
 
     Quaternion Quaternion::rotateXYZ(float xangle, float yangle, float zangle)
     {
-        const float32x4 v = float4(xangle, yangle, zangle, 0.0f) * 0.5f;
+        const float32x4 v = float32x4(xangle, yangle, zangle, 0.0f) * 0.5f;
         const float32x4 s = sin(v);
         const float32x4 c = cos(v);
         const float sx = s.x;

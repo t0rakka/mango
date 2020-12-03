@@ -321,7 +321,7 @@ namespace mango
 
     struct TexTriangle : Triangle
     {
-        float2 texcoord[3];
+        float32x2 texcoord[3];
 
         TexTriangle()
         {

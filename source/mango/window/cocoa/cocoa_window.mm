@@ -140,8 +140,8 @@ namespace mango
     int32x2 Window::getWindowSize() const
     {
         NSRect rect = [[m_handle->window contentView] frame];
-        rect = [[m_handle->window contentView] convertRectToBacking:rect];
-        return int2(rect.size.width, rect.size.height);
+        rect = [[m_handle->window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
+        return int32x2(rect.size.width, rect.size.height);
     }
 
 	int32x2 Window::getCursorPosition() const

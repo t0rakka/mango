@@ -347,7 +347,7 @@ namespace
 
 - (void)dispatchResize:(NSRect)frame
 {
-    frame = [self convertRectToBacking:frame]; // retina conversion
+    frame = [self convertRectToBacking:frame]; // NOTE: Retina conversion
     framebuffer->onResize(frame.size.width, frame.size.height);
 }
 

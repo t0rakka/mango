@@ -136,7 +136,7 @@ namespace mango
         float x = corner[(index >> 0) & 1].x;
         float y = corner[(index >> 1) & 1].y;
         float z = corner[(index >> 2) & 1].z;
-        return float3(x, y, z);
+        return float32x3(x, y, z);
     }
 
     void Box::vertices(float32x3 vertex[]) const
@@ -247,10 +247,10 @@ namespace mango
     {
         const float4x4 m = transpose(tm);
 
-        const float32x3 nx = float4(m[3] + m[0]).xyz;
-        const float32x3 px = float4(m[3] - m[0]).xyz;
-        const float32x3 ny = float4(m[3] + m[1]).xyz;
-        const float32x3 py = float4(m[3] - m[1]).xyz;
+        const float32x3 nx = float32x4(m[3] + m[0]).xyz;
+        const float32x3 px = float32x4(m[3] - m[0]).xyz;
+        const float32x3 ny = float32x4(m[3] + m[1]).xyz;
+        const float32x3 py = float32x4(m[3] - m[1]).xyz;
 
         const float d0 = m[3][3] - m[0][3];
         const float d1 = m[3][3] + m[0][3];
@@ -313,7 +313,7 @@ namespace mango
 
     bool Intersect::intersect(const Ray& ray, const Triangle& triangle)
     {
-        const float3* vertex = triangle.position;
+        const float32x3* vertex = triangle.position;
 
         // Intersect the ray with plane
         Plane plane(vertex[0], vertex[1], vertex[2]);

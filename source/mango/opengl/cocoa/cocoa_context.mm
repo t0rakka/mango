@@ -353,7 +353,7 @@ namespace mango {
     {
         CustomView* view = m_context->view;
         NSRect rect = [view frame];
-        rect = [[m_handle->window contentView] convertRectToBacking:rect];
+        rect = [[m_handle->window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
         return int32x2(rect.size.width, rect.size.height);
     }
 

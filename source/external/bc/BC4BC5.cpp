@@ -345,7 +345,7 @@ namespace mango
     		const int blockIndex = y * 4;
 
     		for (int x = 0; x < 4; ++x)
-    			pColor[x] = float4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
+    			pColor[x] = float32x4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
 
     		output += stride;
     	}
@@ -365,7 +365,7 @@ namespace mango
     		const int blockIndex = y * 4;
 
     		for (int x = 0; x < 4; ++x)
-    			pColor[x] = float4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
+    			pColor[x] = float32x4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
 
     		output += stride;
     	}
@@ -389,7 +389,7 @@ namespace mango
     		{
 	    		float red = pBCR->R(blockIndex + x);
     			float green = pBCG->R(blockIndex + x);
-    			pColor[x] = float4(red, green, 0.0f, 1.0f);
+    			pColor[x] = float32x4(red, green, 0.0f, 1.0f);
     		}
 
     		output += stride;
@@ -414,7 +414,7 @@ namespace mango
     		{
 	    		float red = pBCR->R(blockIndex + x);
     			float green = pBCG->R(blockIndex + x);
-    			pColor[x] = float4(red, green, 0.0f, 1.0f);
+    			pColor[x] = float32x4(red, green, 0.0f, 1.0f);
     		}
 
     		output += stride;
