@@ -726,11 +726,11 @@ namespace {
 
         // create pixelbuffer
 
-		glGenBuffers(1, &m_buffer);
+        glGenBuffers(1, &m_buffer);
 
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STATIC_DRAW);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         // create vertex buffers
 
@@ -758,14 +758,14 @@ namespace {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(element_buffer_data), element_buffer_data, GL_STATIC_DRAW);
 
-        // create vertex program
+        // create bilinear program
 
         m_bilinear.program = createProgram(vertex_shader_source, fragment_shader_source);
         m_bilinear.transform = glGetUniformLocation(m_bilinear.program, "uTransform");
         m_bilinear.texture = glGetUniformLocation(m_bilinear.program, "uTexture");
         m_bilinear.position = glGetAttribLocation(m_bilinear.program, "inPosition");
 
-        // create fragment program
+        // create bicubic program
 
         m_bicubic.program = createProgram(vertex_shader_source_bicubic, fragment_shader_source_bicubic);
         m_bicubic.transform = glGetUniformLocation(m_bicubic.program, "uTransform");
@@ -803,7 +803,7 @@ namespace {
 
         if (m_buffer)
         {
-		    glDeleteBuffers(1, &m_buffer);
+            glDeleteBuffers(1, &m_buffer);
         }
 
         if (m_texture)
@@ -814,7 +814,7 @@ namespace {
 
     Surface OpenGLFramebuffer::lock()
     {
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
         void* data = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
         m_surface.image = reinterpret_cast<u8*>(data);
         return m_surface;
@@ -823,10 +823,9 @@ namespace {
     void OpenGLFramebuffer::unlock()
     {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_surface.width, m_surface.height, 0, 
-            GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_surface.width, m_surface.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     }
 
     void OpenGLFramebuffer::present(Filter filter)
