@@ -18,6 +18,7 @@ public:
         : OpenGLFramebuffer(bitmap.width, bitmap.height)
         , m_bitmap(bitmap)
     {
+        setWindowSize(bitmap.width * 2, bitmap.height * 2);
         setTitle("OpenGLFramebuffer");
     }
 
