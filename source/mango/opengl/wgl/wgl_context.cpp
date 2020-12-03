@@ -119,7 +119,7 @@ namespace mango {
 			config = *configPtr;
 		}
 
-		u32 colorBits = attrib.red + attrib.green + attrib.blue + attrib.alpha;
+		u32 colorBits = config.red + config.green + config.blue + config.alpha;
 
 		// Configure pixel format
 		PIXELFORMATDESCRIPTOR pfd;
@@ -192,20 +192,20 @@ namespace mango {
 				formatAttribs.push_back(colorBits);
 
 				formatAttribs.push_back(WGL_DEPTH_BITS_ARB);
-				formatAttribs.push_back(attrib.depth);
+				formatAttribs.push_back(config.depth);
 
 				formatAttribs.push_back(WGL_STENCIL_BITS_ARB);
-				formatAttribs.push_back(attrib.stencil);
+				formatAttribs.push_back(config.stencil);
 
 				if (wglExtensions.find("WGL_ARB_multisample") != std::string::npos)
 				{
-					if (attrib.samples > 1)
+					if (config.samples > 1)
 					{
 						formatAttribs.push_back(WGL_SAMPLE_BUFFERS_ARB);
 						formatAttribs.push_back(GL_TRUE);
 
 						formatAttribs.push_back(WGL_SAMPLES_ARB);
-						formatAttribs.push_back(attrib.samples);
+						formatAttribs.push_back(config.samples);
 					}
 				}
 
