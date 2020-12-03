@@ -215,7 +215,7 @@ namespace mango {
 #ifdef MANGO_OPENGL_CONTEXT_WGL
     wglExtensionMask wglext;
 
-    static void init_wglext(Context& context)
+    static void init_wglext(OpenGLContext& context)
     {
         static const char* names[] =
         {
@@ -241,7 +241,7 @@ namespace mango {
 #ifdef MANGO_OPENGL_CONTEXT_GLX
     glxExtensionMask glxext;
 
-    static void init_glxext(Context& context)
+    static void init_glxext(OpenGLContext& context)
     {
         static const char* names[] =
         {

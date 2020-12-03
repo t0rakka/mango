@@ -69,7 +69,7 @@ namespace mango {
     // OpenGLContext
     // -----------------------------------------------------------------------
 
-    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const config* configPtr, OpenGLContext* shared)
+    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
 	    : Window(width, height, flags)
     {
         m_context = new OpenGLContextHandle();
@@ -191,7 +191,7 @@ namespace mango {
                     samples = 1;
                 }
 
-                int dist = attrib.samples - samples;
+                int dist = config.samples - samples;
                 if (dist < 0)
                 {
                     dist = -dist;
