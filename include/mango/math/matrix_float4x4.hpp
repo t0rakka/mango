@@ -386,7 +386,8 @@ namespace mango
     float4x4 affineInverse(const float4x4& m);
     float4x4 adjoint(const float4x4& m);
 
-    namespace matrix {
+    namespace matrix
+    {
         float4x4 identity();
         float4x4 translate(float xtrans, float ytrans, float ztrans);
         float4x4 translate(const float32x3& trans);
@@ -399,9 +400,19 @@ namespace mango
         float4x4 rotateZ(float angle);
         float4x4 rotateXYZ(float xangle, float yangle, float zangle);
         float4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
-    } // namespace
+    } // namespace matrix
 
-    namespace opengl {
+    namespace opengl
+    {
+        // right-handed
+        float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
+        float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
+        float4x4 perspective(float xfov, float yfov, float znear, float zfar);
+        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
+    } // namespace opengl
+
+    namespace vulkan
+    {
         // right-handed
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
@@ -409,20 +420,13 @@ namespace mango
         float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
     } // namespace
 
-    namespace vulkan {
-        // right-handed
-        float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
-    } // namespace
-
-    namespace directx {
+    namespace directx
+    {
         // left-handed
         float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
         float4x4 perspective(float xfov, float yfov, float znear, float zfar);
         float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
-    } // namespace
+    } // namespace directx
 
 } // namespace mango
