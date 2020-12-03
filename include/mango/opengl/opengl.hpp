@@ -156,12 +156,22 @@ namespace mango {
             u32 samples  = 1;
         };
 
+        struct InternalFormat
+        {
+            GLenum iformat;
+            Format format;
+            bool srgb;
+            const char* name;
+        };
+
         OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
         ~OpenGLContext();
 
         bool isExtension(const std::string& name) const;
         bool isGLES() const;
         int getVersion() const;
+        bool isCompressedTextureSupported(TextureCompression compression) const;
+        const InternalFormat* getInternalFormat(GLenum internalFormat) const;
 
         void makeCurrent();
         void swapBuffers();
@@ -246,31 +256,16 @@ namespace mango {
         u32 texture_compression_eac : 1;
         u32 texture_compression_latc : 1;
         u32 texture_compression_atc : 1;
+        u32 texture_compression_astc : 1;
     };
 
     extern coreExtensionMask core;
 
     // -------------------------------------------------------------------
-    // helper functions ; require active context
-    // -------------------------------------------------------------------
-
-    struct OpenGLInternalFormat
-    {
-        GLenum iformat;
-        Format format;
-        bool srgb;
-        const char* name;
-    };
-
-    bool isCompressedTextureSupported(TextureCompression compression);
-    const OpenGLInternalFormat* getInternalFormat(GLenum internalFormat);
-
-#ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
-
-    // -------------------------------------------------------------------
     // wglext
     // -------------------------------------------------------------------
 
+#ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
 #ifdef MANGO_OPENGL_CONTEXT_WGL
 
     struct wglExtensionMask
@@ -283,11 +278,13 @@ namespace mango {
     extern wglExtensionMask wglext;
 
 #endif // MANGO_OPENGL_CONTEXT_WGL
+#endif // MANGO_OPENGL_DISABLE_PLATFORM_API
 
     // -------------------------------------------------------------------
     // glxext
     // -------------------------------------------------------------------
 
+#ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
 #ifdef MANGO_OPENGL_CONTEXT_GLX
 
     struct glxExtensionMask
@@ -300,7 +297,6 @@ namespace mango {
     extern glxExtensionMask glxext;
 
 #endif // MANGO_OPENGL_CONTEXT_GLX
-
 #endif // MANGO_OPENGL_DISABLE_PLATFORM_API
 
 } // namespace mango

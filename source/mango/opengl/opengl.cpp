@@ -29,7 +29,7 @@ namespace
 {
     using namespace mango;
 
-    const OpenGLInternalFormat g_format_table[] =
+    const OpenGLContext::InternalFormat g_format_table[] =
     {
         // 1.0
         { 0x1903, MAKE_FORMAT(  8, UNORM,    R,  8, 0, 0, 0), false, "RED" },
@@ -331,6 +331,7 @@ namespace mango {
 
 		core.texture_compression_latc = glext.NV_texture_compression_latc || glext.EXT_texture_compression_latc;
         core.texture_compression_atc = glext.AMD_compressed_ATC_texture || glext.ATI_texture_compression_atitc;
+        core.texture_compression_astc = glext.KHR_texture_compression_astc_hdr || glext.KHR_texture_compression_astc_ldr;
 
         if (gles)
         {
@@ -364,7 +365,7 @@ namespace mango {
         return version;
     }
 
-    bool isCompressedTextureSupported(TextureCompression compression)
+    bool OpenGLContext::isCompressedTextureSupported(TextureCompression compression) const
     {
         bool supported = false;
 
@@ -479,8 +480,7 @@ namespace mango {
             case TextureCompression::ASTC_SRGB_ALPHA_10x10:
             case TextureCompression::ASTC_SRGB_ALPHA_12x10:
             case TextureCompression::ASTC_SRGB_ALPHA_12x12:
-                supported = glext.KHR_texture_compression_astc_hdr;
-                // TODO: || glext.KHR_texture_compression_astc_ldr;
+                supported = glext.KHR_texture_compression_astc_hdr || glext.KHR_texture_compression_astc_ldr;
                 break;
 
             case TextureCompression::ASTC_RGBA_3x3x3:
@@ -513,7 +513,7 @@ namespace mango {
         return supported;
     }
 
-    const OpenGLInternalFormat* getInternalFormat(GLenum internalFormat)
+    const OpenGLContext::InternalFormat* OpenGLContext::getInternalFormat(GLenum internalFormat) const
     {
         for (auto& node : g_format_table)
         {
@@ -521,7 +521,7 @@ namespace mango {
                 return &node;
         }
 
-        return NULL;
+        return nullptr;
     }
 
 namespace {
