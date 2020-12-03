@@ -601,6 +601,22 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
+    int Window::getScreenCount()
+    {
+        // TODO: support more than default screen
+        return 1;
+    }
+
+    int32x2 Window::getScreenSize(int screen)
+    {
+        // TODO: support more than default screen
+        MANGO_UNREFERENCED(screen);
+
+        int width = int(GetSystemMetrics(SM_CXSCREEN));
+        int height = int(GetSystemMetrics(SM_CYSCREEN));
+        return int32x2(width, height);
+    }
+
     Window::Window(int width, int height, u32 flags)
     {
         m_handle = new WindowHandle(width, height, flags);

@@ -45,6 +45,29 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
+    int Window::getScreenCount()
+    {
+        // TODO: support more than default screen
+        return 1;
+    }
+
+    int32x2 Window::getScreenSize(int screen)
+    {
+        // TODO: support more than default screen
+        MANGO_UNREFERENCED(screen);
+
+#if 1
+        // NOTE: "This is the way." -- or is it? Test with multiple displays
+        auto display = CGMainDisplayID();
+        int width = CGDisplayPixelsWide(display);
+        int height = CGDisplayPixelsHigh(display);
+        return int32x2(width, height);
+#else
+        NSRect rect = [[NSScreen mainScreen] frame];
+        return int32x2(rect.size.width, rect.size.height);
+#endif
+    }
+
     Window::Window(int width, int height, u32 flags)
     {
         // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT

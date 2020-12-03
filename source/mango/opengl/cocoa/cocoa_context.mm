@@ -261,21 +261,11 @@ namespace mango {
         m_context->modifiers = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
 
         // parse extension string
-#ifdef MANGO_OPENGL_CORE_PROFILE
-        GLint numExtensions;
-        glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-        for (int i = 0; i < numExtensions; ++i)
-        {
-            const GLubyte* extension = glGetStringi(GL_EXTENSIONS, i);
-            m_extensions.insert(reinterpret_cast<const char*>(extension));
-        }
-#else
         const GLubyte* extensions = glGetString(GL_EXTENSIONS);
         if (extensions)
         {
             parseExtensionString(m_extensions, reinterpret_cast<const char*>(extensions));
         }
-#endif
 
         initExtensionMask();
 

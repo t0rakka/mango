@@ -12,10 +12,6 @@
 // OpenGL API
 // -----------------------------------------------------------------------
 
-//#define MANGO_OPENGL_DISABLE_PLATFORM_API
-//#define MANGO_OPENGL_LEGACY_PROFILE
-//#define MANGO_OPENGL_CORE_PROFILE
-
 #if defined(MANGO_PLATFORM_WINDOWS)
 
     // -----------------------------------------------------------------------
@@ -26,20 +22,13 @@
 
     #define GLEXT_PROC(proc, name) extern proc name
 
-    #ifdef MANGO_OPENGL_CORE_PROFILE
-        #include <mango/opengl/khronos/GL/glcorearb.h>
-        #include <mango/opengl/func/glcorearb.hpp>
-    #else
-        #include <GL/gl.h>
-        #include <mango/opengl/khronos/GL/glext.h>
-        #include <mango/opengl/func/glext.hpp>
-    #endif
+    #include <GL/gl.h>
+    #include <mango/opengl/khronos/GL/glext.h>
+    #include <mango/opengl/func/glext.hpp>
 
-    #ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
-        #include <mango/opengl/khronos/GL/wgl.h>
-        #include <mango/opengl/khronos/GL/wglext.h>
-        #include <mango/opengl/func/wglext.hpp>
-    #endif
+    #include <mango/opengl/khronos/GL/wgl.h>
+    #include <mango/opengl/khronos/GL/wglext.h>
+    #include <mango/opengl/func/wglext.hpp>
 
     #undef GLEXT_PROC
 
@@ -53,16 +42,11 @@
 
     #define GL_SILENCE_DEPRECATION /* macOS 10.14 deprecated OpenGL API */
 
-    #if defined(MANGO_OPENGL_LEGACY_PROFILE)
-        #include <OpenGL/gl.h>
-        #include <OpenGL/glext.h>
-    #else
-        #include <OpenGL/gl3.h>
-        #include <OpenGL/gl3ext.h>
+    #include <OpenGL/gl3.h>
+    #include <OpenGL/gl3ext.h>
 
-        #define GL_GLEXT_PROTOTYPES
-        #include <mango/opengl/khronos/GL/glext.h>
-    #endif
+    #define GL_GLEXT_PROTOTYPES
+    #include <mango/opengl/khronos/GL/glext.h>
 
 #elif defined(MANGO_PLATFORM_IOS)
 
@@ -100,23 +84,16 @@
 
     #define MANGO_OPENGL_CONTEXT_GLX
 
-    #ifdef MANGO_OPENGL_CORE_PROFILE
-        #define GL_GLEXT_PROTOTYPES
-        #include <mango/opengl/khronos/GL/glcorearb.h>
-    #else
-        #define GL_GLEXT_PROTOTYPES
-        #include <GL/gl.h>
-        #include <GL/glext.h>
-    #endif
+    #define GL_GLEXT_PROTOTYPES
+    #include <GL/gl.h>
+    #include <GL/glext.h>
 
-    #ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
-        #define GLX_GLXEXT_PROTOTYPES
-        #include <GL/glx.h>
-        #include <GL/glxext.h>
-        #if defined (Status)
+    #define GLX_GLXEXT_PROTOTYPES
+    #include <GL/glx.h>
+    #include <GL/glxext.h>
+    #if defined(Status)
         #undef Status
-            typedef int Status;
-        #endif
+        typedef int Status;
     #endif
 
 #else
@@ -146,7 +123,6 @@ namespace mango {
         struct Config
         {
             u32 version  = 0;
-
             u32 red      = 8;
             u32 green    = 8;
             u32 blue     = 8;
@@ -179,6 +155,49 @@ namespace mango {
         void toggleFullscreen();
         bool isFullscreen() const;
         int32x2 getWindowSize() const override;
+
+        // extension masks
+
+        struct
+        {
+            #define GL_EXTENSION(Name) u32 Name : 1;
+            #include <mango/opengl/func/glext.hpp>
+            #undef GL_EXTENSION
+        } ext;
+
+        struct
+        {
+            #define CORE_EXTENSION(Version, Name) u32 Name : 1;
+            #include <mango/opengl/func/glcorearb.hpp>
+            #undef CORE_EXTENSION
+
+            u32 texture_compression_dxt1 : 1;
+            u32 texture_compression_dxt3 : 1;
+            u32 texture_compression_dxt5 : 1;
+            u32 texture_compression_etc2 : 1;
+            u32 texture_compression_eac : 1;
+            u32 texture_compression_latc : 1;
+            u32 texture_compression_atc : 1;
+            u32 texture_compression_astc : 1;
+        } core;
+
+#if defined(MANGO_OPENGL_CONTEXT_WGL)
+        struct
+        {
+            #define WGL_EXTENSION(Name) u32 Name : 1;
+            #include <mango/opengl/func/wglext.hpp>
+            #undef WGL_EXTENSION
+        } wgl;
+#endif
+
+#if defined(MANGO_OPENGL_CONTEXT_GLX)
+        struct
+        {
+            #define GLX_EXTENSION(Name) u32 Name : 1;
+            #include <mango/opengl/func/glxext.hpp>
+            #undef GLX_EXTENSION
+        } glx;
+#endif
     };
 
     // -------------------------------------------------------------------
@@ -224,79 +243,5 @@ namespace mango {
         void unlock();
         void present(Filter filter = FILTER_NEAREST);
     };
-
-    // -------------------------------------------------------------------
-    // glext
-    // -------------------------------------------------------------------
-
-    struct glExtensionMask
-    {
-#define GL_EXTENSION(Name) u32 Name : 1;
-#include <mango/opengl/func/glext.hpp>
-#undef GL_EXTENSION
-    };
-
-    extern glExtensionMask glext;
-
-    // -------------------------------------------------------------------
-    // core
-    // -------------------------------------------------------------------
-
-    struct coreExtensionMask
-    {
-#define CORE_EXTENSION(Version, Name) u32 Name : 1;
-#include <mango/opengl/func/glcorearb.hpp>
-#undef CORE_EXTENSION
-
-        // custom extension flags
-        u32 texture_compression_dxt1 : 1;
-        u32 texture_compression_dxt3 : 1;
-        u32 texture_compression_dxt5 : 1;
-        u32 texture_compression_etc2 : 1;
-        u32 texture_compression_eac : 1;
-        u32 texture_compression_latc : 1;
-        u32 texture_compression_atc : 1;
-        u32 texture_compression_astc : 1;
-    };
-
-    extern coreExtensionMask core;
-
-    // -------------------------------------------------------------------
-    // wglext
-    // -------------------------------------------------------------------
-
-#ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
-#ifdef MANGO_OPENGL_CONTEXT_WGL
-
-    struct wglExtensionMask
-    {
-#define WGL_EXTENSION(Name) u32 Name : 1;
-#include <mango/opengl/func/wglext.hpp>
-#undef WGL_EXTENSION
-    };
-
-    extern wglExtensionMask wglext;
-
-#endif // MANGO_OPENGL_CONTEXT_WGL
-#endif // MANGO_OPENGL_DISABLE_PLATFORM_API
-
-    // -------------------------------------------------------------------
-    // glxext
-    // -------------------------------------------------------------------
-
-#ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
-#ifdef MANGO_OPENGL_CONTEXT_GLX
-
-    struct glxExtensionMask
-    {
-#define GLX_EXTENSION(Name) u32 Name : 1;
-#include <mango/opengl/func/glxext.hpp>
-#undef GLX_EXTENSION
-    };
-
-    extern glxExtensionMask glxext;
-
-#endif // MANGO_OPENGL_CONTEXT_GLX
-#endif // MANGO_OPENGL_DISABLE_PLATFORM_API
 
 } // namespace mango

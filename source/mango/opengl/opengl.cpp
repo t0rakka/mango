@@ -161,23 +161,21 @@ namespace
 namespace mango {
 
     // -----------------------------------------------------------------------
-    // ExtensionMask
+    // extension masks
     // -----------------------------------------------------------------------
 
-    glExtensionMask glext;
-
-    static void init_glext(OpenGLContext& context)
+    static void init_ext(OpenGLContext& context)
     {
-        static const char* names[] =
+        const char* names[] =
         {
 #define GL_EXTENSION(Name) "GL_"#Name,
 #include <mango/opengl/func/glext.hpp>
 #undef GL_EXTENSION
         };
-        static const int size = sizeof(names) / sizeof(names[0]);
+        const int size = sizeof(names) / sizeof(names[0]);
 
-        u32* mask = reinterpret_cast<u32*>(&glext);
-        std::memset(mask, 0, sizeof(glext));
+        u32* mask = reinterpret_cast<u32*>(&context.ext);
+        std::memset(mask, 0, sizeof(context.ext));
 
         for (int i = 0; i < size; ++i)
         {
@@ -188,20 +186,18 @@ namespace mango {
         }
     }
 
-    coreExtensionMask core;
-
-    static void init_core(int version)
+    static void init_core(OpenGLContext& context, int version)
     {
-        static int versions[] =
+        int versions[] =
         {
 #define CORE_EXTENSION(Version, Name)  Version,
 #include <mango/opengl/func/glcorearb.hpp>
 #undef CORE_EXTENSION
         };
-        static const int size = sizeof(versions) / sizeof(versions[0]);
+        const int size = sizeof(versions) / sizeof(versions[0]);
 
-        u32* mask = reinterpret_cast<u32*>(&core);
-        std::memset(mask, 0, sizeof(core));
+        u32* mask = reinterpret_cast<u32*>(&context.core);
+        std::memset(mask, 0, sizeof(context.core));
 
         for (int i = 0; i < size; ++i)
         {
@@ -212,21 +208,20 @@ namespace mango {
         }
     }
 
-#ifdef MANGO_OPENGL_CONTEXT_WGL
-    wglExtensionMask wglext;
+#if defined(MANGO_OPENGL_CONTEXT_WGL)
 
-    static void init_wglext(OpenGLContext& context)
+    static void init_wgl(OpenGLContext& context)
     {
-        static const char* names[] =
+        const char* names[] =
         {
 #define WGL_EXTENSION(Name) "WGL_"#Name,
 #include <mango/opengl/func/wglext.hpp>
 #undef WGL_EXTENSION
         };
-        static const int size = sizeof(names) / sizeof(names[0]);
+        const int size = sizeof(names) / sizeof(names[0]);
 
-        u32* mask = reinterpret_cast<u32*>(&wglext);
-        std::memset(mask, 0, sizeof(wglext));
+        u32* mask = reinterpret_cast<u32*>(&context.wgl);
+        std::memset(mask, 0, sizeof(context.wgl));
 
         for (int i = 0; i < size; ++i)
         {
@@ -236,23 +231,23 @@ namespace mango {
             }
         }
     }
+
 #endif
 
-#ifdef MANGO_OPENGL_CONTEXT_GLX
-    glxExtensionMask glxext;
+#if defined(MANGO_OPENGL_CONTEXT_GLX)
 
-    static void init_glxext(OpenGLContext& context)
+    static void init_glx(OpenGLContext& context)
     {
-        static const char* names[] =
+        const char* names[] =
         {
 #define GLX_EXTENSION(Name) "GLX_"#Name,
 #include <mango/opengl/func/glxext.hpp>
 #undef GLX_EXTENSION
         };
-        static const int size = sizeof(names) / sizeof(names[0]);
+        const int size = sizeof(names) / sizeof(names[0]);
 
-        u32* mask = reinterpret_cast<u32*>(&glxext);
-        std::memset(mask, 0, sizeof(glxext));
+        u32* mask = reinterpret_cast<u32*>(&context.glx);
+        std::memset(mask, 0, sizeof(context.glx));
 
         for (int i = 0; i < size; ++i)
         {
@@ -262,6 +257,7 @@ namespace mango {
             }
         }
     }
+
 #endif
 
     // -----------------------------------------------------------------------
@@ -275,63 +271,63 @@ namespace mango {
 
         // TODO: GLES version number
 
-        init_glext(*this);
-        init_core(version);
+        init_ext(*this);
+        init_core(*this, version);
 
-#ifdef MANGO_OPENGL_CONTEXT_WGL
-        init_wglext(*this);
+#if defined(MANGO_OPENGL_CONTEXT_WGL)
+        init_wgl(*this);
 #endif
 
-#ifdef MANGO_OPENGL_CONTEXT_GLX
-        init_glxext(*this);
+#if defined(MANGO_OPENGL_CONTEXT_GLX)
+        init_glx(*this);
 #endif
 
         core.texture_compression_dxt1 = false;
         core.texture_compression_dxt3 = false;
         core.texture_compression_dxt5 = false;
 
-        if (glext.EXT_texture_compression_s3tc || glext.NV_texture_compression_s3tc)
+        if (ext.EXT_texture_compression_s3tc || ext.NV_texture_compression_s3tc)
         {
             core.texture_compression_dxt1 = true;
             core.texture_compression_dxt3 = true;
             core.texture_compression_dxt5 = true;
         }
 
-        if (glext.ANGLE_texture_compression_dxt1 || glext.EXT_texture_compression_dxt1)
+        if (ext.ANGLE_texture_compression_dxt1 || ext.EXT_texture_compression_dxt1)
         {
             core.texture_compression_dxt1 = true;
         }
 
-        if (glext.ANGLE_texture_compression_dxt3)
+        if (ext.ANGLE_texture_compression_dxt3)
         {
             core.texture_compression_dxt1 = true;
             core.texture_compression_dxt3 = true;
         }
 
-        if (glext.ANGLE_texture_compression_dxt5)
+        if (ext.ANGLE_texture_compression_dxt5)
         {
             core.texture_compression_dxt1 = true;
             core.texture_compression_dxt5 = true;
         }
 
-        if (glext.EXT_texture_compression_rgtc || glext.ARB_texture_compression_rgtc)
+        if (ext.EXT_texture_compression_rgtc || ext.ARB_texture_compression_rgtc)
         {
             core.texture_compression_rgtc = true;
         }
 
-        if (glext.EXT_texture_rg || glext.ARB_texture_rg)
+        if (ext.EXT_texture_rg || ext.ARB_texture_rg)
         {
             core.texture_rg = true;
         }
 
-        if (glext.EXT_texture_snorm)
+        if (ext.EXT_texture_snorm)
         {
             core.texture_snorm = true;
         }
 
-		core.texture_compression_latc = glext.NV_texture_compression_latc || glext.EXT_texture_compression_latc;
-        core.texture_compression_atc = glext.AMD_compressed_ATC_texture || glext.ATI_texture_compression_atitc;
-        core.texture_compression_astc = glext.KHR_texture_compression_astc_hdr || glext.KHR_texture_compression_astc_ldr;
+		core.texture_compression_latc = ext.NV_texture_compression_latc || ext.EXT_texture_compression_latc;
+        core.texture_compression_atc = ext.AMD_compressed_ATC_texture || ext.ATI_texture_compression_atitc;
+        core.texture_compression_astc = ext.KHR_texture_compression_astc_hdr || ext.KHR_texture_compression_astc_ldr;
 
         if (gles)
         {
@@ -379,14 +375,14 @@ namespace mango {
 
             case TextureCompression::AMD_3DC_X:
             case TextureCompression::AMD_3DC_XY:
-                supported = glext.AMD_compressed_3DC_texture;
+                supported = ext.AMD_compressed_3DC_texture;
                 break;
 
 			case TextureCompression::LATC1_LUMINANCE:
 			case TextureCompression::LATC1_SIGNED_LUMINANCE:
 			case TextureCompression::LATC2_LUMINANCE_ALPHA:
 			case TextureCompression::LATC2_SIGNED_LUMINANCE_ALPHA:
-				supported = glext.EXT_texture_compression_latc;
+				supported = ext.EXT_texture_compression_latc;
 				break;
 
 			case TextureCompression::DXT1:
@@ -420,19 +416,19 @@ namespace mango {
             case TextureCompression::PVRTC_RGB_2BPP:
             case TextureCompression::PVRTC_RGBA_4BPP:
             case TextureCompression::PVRTC_RGBA_2BPP:
-                supported = glext.IMG_texture_compression_pvrtc;
+                supported = ext.IMG_texture_compression_pvrtc;
                 break;
 
             case TextureCompression::PVRTC2_RGBA_2BPP:
             case TextureCompression::PVRTC2_RGBA_4BPP:
-                supported = glext.IMG_texture_compression_pvrtc2;
+                supported = ext.IMG_texture_compression_pvrtc2;
                 break;
 
             case TextureCompression::PVRTC_SRGB_2BPP:
             case TextureCompression::PVRTC_SRGB_4BPP:
             case TextureCompression::PVRTC_SRGB_ALPHA_2BPP:
             case TextureCompression::PVRTC_SRGB_ALPHA_4BPP:
-                supported = glext.EXT_pvrtc_sRGB;
+                supported = ext.EXT_pvrtc_sRGB;
                 break;
 
             case TextureCompression::EAC_R11:
@@ -449,7 +445,7 @@ namespace mango {
                 break;
 
             case TextureCompression::ETC1_RGB:
-                supported = glext.OES_compressed_ETC1_RGB8_texture;
+                supported = ext.OES_compressed_ETC1_RGB8_texture;
                 break;
 
             case TextureCompression::ASTC_RGBA_4x4:
@@ -480,7 +476,7 @@ namespace mango {
             case TextureCompression::ASTC_SRGB_ALPHA_10x10:
             case TextureCompression::ASTC_SRGB_ALPHA_12x10:
             case TextureCompression::ASTC_SRGB_ALPHA_12x12:
-                supported = glext.KHR_texture_compression_astc_hdr || glext.KHR_texture_compression_astc_ldr;
+                supported = ext.KHR_texture_compression_astc_hdr || ext.KHR_texture_compression_astc_ldr;
                 break;
 
             case TextureCompression::ASTC_RGBA_3x3x3:

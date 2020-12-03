@@ -139,6 +139,9 @@ namespace mango
             DISABLE_RESIZE  = 0x00000001,
         };
 
+        static int getScreenCount();
+        static int32x2 getScreenSize(int screen = 0);
+
         Window(int width, int height, u32 flags = 0);
         virtual ~Window();
 

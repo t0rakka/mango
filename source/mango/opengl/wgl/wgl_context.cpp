@@ -43,12 +43,7 @@ namespace
 #define GLEXT_PROC(proc, name) proc name = NULL
 
 #include <mango/opengl/func/wglext.hpp>
-
-#ifdef MANGO_OPENGL_CORE_PROFILE
-    #include <mango/opengl/func/glcorearb.hpp>
-#else
-    #include <mango/opengl/func/glext.hpp>
-#endif
+#include <mango/opengl/func/glext.hpp>
 
 #undef GLEXT_PROC
 
@@ -60,21 +55,10 @@ static void init_wgl_extensions()
     #include <mango/opengl/func/wglext.hpp>
 }
 
-#if defined(MANGO_OPENGL_CORE_PROFILE)
-
-static void init_glcorearb_extensions()
-{
-#include <mango/opengl/func/glcorearb.hpp>
-}
-
-#else
-
 static void init_glext_extensions()
 {
     #include <mango/opengl/func/glext.hpp>
 }
-
-#endif
 
 #undef GLEXT_PROC
 
@@ -266,11 +250,7 @@ namespace mango {
 		    //::wglShareLists(m_context->hrc, shared->m_context->hrc);
 		}
 
-#ifdef MANGO_OPENGL_CORE_PROFILE
-		init_glcorearb_extensions();
-#else
 		init_glext_extensions();
-#endif
 
 		// parse extension string
 		if (glGetString == nullptr)
