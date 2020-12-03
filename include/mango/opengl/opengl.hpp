@@ -270,7 +270,7 @@ namespace opengl {
     // -------------------------------------------------------------------
     // OpenGLFramebuffer
     // -------------------------------------------------------------------
-#if 0
+
     class OpenGLFramebuffer : public opengl::Context
     {
     protected:
@@ -310,6 +310,5 @@ namespace opengl {
         void unlock();
         void present(Filter filter = FILTER_NEAREST);
     };
-#endif
 
 } // namespace mango

@@ -705,7 +705,7 @@ namespace {
     // -------------------------------------------------------------------
     // OpenGLFramebuffer
     // -------------------------------------------------------------------
-#if 0
+
     OpenGLFramebuffer::OpenGLFramebuffer(int width, int height)
         : opengl::Context(width, height, 0, nullptr)
         , m_surface(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), width * 4, nullptr)
@@ -831,14 +831,41 @@ namespace {
 
     void OpenGLFramebuffer::present(Filter filter)
     {
+
+        // compute aspect ratio
+
+        int32x2 window = getWindowSize();
+
+        float32x2 aspect;
+        aspect.x = float(window.x) / float(m_surface.width);
+        aspect.y = float(window.y) / float(m_surface.height);
+        
+        if (aspect.x < aspect.y)
+        {
+            aspect.y = aspect.x / aspect.y;
+            aspect.x = 1.0f;
+        }
+        else
+        {
+            aspect.x = aspect.y / aspect.x;
+            aspect.y = 1.0f;
+        }
+
+        float32x2 scale = aspect;
+        float32x2 translate(0.0f, 0.0f);
+
+        // render
+
+        glViewport(0, 0, window.x, window.y);
+        glScissor(0, 0, window.x, window.y);
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         glDisable(GL_BLEND);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_texture);
-
-        float2 aspect = 1.0f;//computeAspect();
-        float2 scale = 1.0f;//aspect * computeScale();
-        float2 translate(0, 0); // = m_translate + computeTranslate() / scale;
 
         glBindVertexArray(m_vao);
 
@@ -875,16 +902,15 @@ namespace {
 
             if (p.position != -1)
             {
-                glVertexAttribPointer(p.position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, (void*)0);
+                glVertexAttribPointer(p.position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, nullptr);
                 glEnableVertexAttribArray(p.position);
             }
         }
 
-        glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (void*)0);
+        glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr);
         glBindVertexArray(0);
 
         swapBuffers();
     }
-#endif
 
 } // namespace mango

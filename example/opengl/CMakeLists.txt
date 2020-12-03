@@ -1,6 +1,7 @@
 
 list(APPEND EXAMPLES
     gltest
+    glfb
 )
 
 foreach(example IN LISTS EXAMPLES)
