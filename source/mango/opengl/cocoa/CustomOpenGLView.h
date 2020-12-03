@@ -8,9 +8,8 @@
 #import <Cocoa/Cocoa.h>
 
 namespace mango {
-namespace opengl {
 
-    struct ContextHandle
+    struct OpenGLContextHandle
     {
         id delegate;
         id view;
@@ -18,15 +17,14 @@ namespace opengl {
         u32 modifiers;
     };
 
-} // namespace opengl
 } // namespace mango
 
 @interface CustomView : NSOpenGLView {
-    mango::opengl::Context *context;
+    mango::OpenGLContext *context;
 }
 
 - (void)dispatchResize:(NSRect)frame;
-- (id)initWithFrame:(NSRect)frame andCustomWindow:(mango::opengl::Context *)theContext;
+- (id)initWithFrame:(NSRect)frame andCustomWindow:(mango::OpenGLContext *)theContext;
 - (void)trackContentView:(NSWindow *)window;
 
 @end

@@ -7,11 +7,11 @@
 
 using namespace mango;
 
-class TestWindow : public opengl::Context
+class TestWindow : public OpenGLContext
 {
 public:
     TestWindow()
-        : Context(1280, 800)
+        : OpenGLContext(1280, 800)
     {
     }
 

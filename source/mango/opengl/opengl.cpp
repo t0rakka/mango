@@ -28,9 +28,8 @@
 namespace
 {
     using namespace mango;
-    using namespace mango::opengl;
 
-    const InternalFormat g_format_table[] =
+    const OpenGLInternalFormat g_format_table[] =
     {
         // 1.0
         { 0x1903, MAKE_FORMAT(  8, UNORM,    R,  8, 0, 0, 0), false, "RED" },
@@ -160,7 +159,6 @@ namespace
 } // namespace
 
 namespace mango {
-namespace opengl {
 
     // -----------------------------------------------------------------------
     // ExtensionMask
@@ -168,7 +166,7 @@ namespace opengl {
 
     glExtensionMask glext;
 
-    static void init_glext(Context& context)
+    static void init_glext(OpenGLContext& context)
     {
         static const char* names[] =
         {
@@ -267,10 +265,10 @@ namespace opengl {
 #endif
 
     // -----------------------------------------------------------------------
-    // Context
+    // OpenGLContext
     // -----------------------------------------------------------------------
 
-    void Context::initExtensionMask()
+    void OpenGLContext::initExtensionMask()
     {
         const int version = getVersion();
         const bool gles = isGLES();
@@ -346,17 +344,17 @@ namespace opengl {
         }
     }
 
-    bool Context::isExtension(const std::string& name) const
+    bool OpenGLContext::isExtension(const std::string& name) const
     {
         return m_extensions.find(name) != m_extensions.end();
     }
 
-    bool Context::isGLES() const
+    bool OpenGLContext::isGLES() const
     {
         return false; // TODO: add GLES support
     }
 
-    int Context::getVersion() const
+    int OpenGLContext::getVersion() const
     {
         int major;
         int minor;
@@ -515,18 +513,16 @@ namespace opengl {
         return supported;
     }
 
-    const InternalFormat* getInternalFormat(GLenum internalFormat)
+    const OpenGLInternalFormat* getInternalFormat(GLenum internalFormat)
     {
         for (auto& node : g_format_table)
         {
-            if (node.internal_format == internalFormat)
+            if (node.iformat == internalFormat)
                 return &node;
         }
 
         return NULL;
     }
-
-} // namespace opengl
 
 namespace {
 
@@ -707,7 +703,7 @@ namespace {
     // -------------------------------------------------------------------
 
     OpenGLFramebuffer::OpenGLFramebuffer(int width, int height)
-        : opengl::Context(width, height, 0, nullptr)
+        : OpenGLContext(width, height, 0, nullptr)
         , m_surface(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), width * 4, nullptr)
     {
 

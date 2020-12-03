@@ -173,7 +173,7 @@ namespace
     // TODO: Replace this with "friend class Keyboard" to send
     //       keyboard events.
     
-    class WindowAdapter : public opengl::Context
+    class WindowAdapter : public OpenGLContext
     {
     public:
         void setKeyState(Keycode code, bool press)
@@ -196,7 +196,7 @@ namespace
 
 @implementation CustomView
 
-- (id)initWithFrame:(NSRect)frame andCustomWindow:(mango::opengl::Context *)theContext
+- (id)initWithFrame:(NSRect)frame andCustomWindow:(mango::OpenGLContext *)theContext
 {
     if ((self = [super initWithFrame:frame]))
     {

@@ -35,13 +35,13 @@ namespace
 // -----------------------------------------------------------------------
 
 @interface CustomNSWindowDelegate : NSObject {
-    mango::opengl::Context *context;
-    mango::opengl::ContextHandle *context_handle;
+    mango::OpenGLContext *context;
+    mango::OpenGLContextHandle *context_handle;
     mango::WindowHandle *window_handle;
 }
 
-- (id)initWithCustomWindow:(mango::opengl::Context *)theContext 
-      andContextHandle:(mango::opengl::ContextHandle *)theContextHandle
+- (id)initWithCustomWindow:(mango::OpenGLContext *)theContext 
+      andContextHandle:(mango::OpenGLContextHandle *)theContextHandle
       andWindowHandle:(mango::WindowHandle *)theWindowHandle;
 @end
 
@@ -49,8 +49,8 @@ namespace
 
 @implementation CustomNSWindowDelegate
 
-- (id)initWithCustomWindow:(mango::opengl::Context *)theContext 
-      andContextHandle:(mango::opengl::ContextHandle *)theContextHandle
+- (id)initWithCustomWindow:(mango::OpenGLContext *)theContext 
+      andContextHandle:(mango::OpenGLContextHandle *)theContextHandle
       andWindowHandle:(mango::WindowHandle *)theWindowHandle;
 {
     if ((self = [super init]))
@@ -113,29 +113,28 @@ namespace
 @end
 
 namespace mango {
-namespace opengl {
 
     // -----------------------------------------------------------------------
-    // Context
+    // OpenGLContext
     // -----------------------------------------------------------------------
 
-    Context::Context(int width, int height, u32 flags, const ContextAttribute* contextAttribute, Context* shared)
+    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
 	    : Window(width, height, flags)
         , m_context(nullptr)
     {
         [NSApplication sharedApplication];
         //xxx.autorelease_pool = [[NSAutoreleasePool alloc] init];
-        
+
         ProcessSerialNumber psn = { 0, kCurrentProcess };
         TransformProcessType(&psn, kProcessTransformToForegroundApplication);
         [[NSApplication sharedApplication] activateIgnoringOtherApps: YES];
-        
+
         [NSEvent setMouseCoalescingEnabled:NO];
         [NSApp finishLaunching];
 
         // "createContext"
 
-        m_context = new ContextHandle();
+        m_context = new OpenGLContextHandle();
         m_context->view = nil;
 
         unsigned int styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
@@ -185,16 +184,16 @@ namespace opengl {
         [m_handle->window createMenu];
 
         // configure attributes
-        ContextAttribute attrib;
-        if (contextAttribute)
+        Config config;
+        if (configPtr)
         {
             // override defaults
-            attrib = *contextAttribute;
+            config = *configPtr;
         }
 
         std::vector<NSOpenGLPixelFormatAttribute> attribs;
 
-        if (!attrib.version || attrib.version >= 4)
+        if (!config.version || config.version >= 4)
         {
             attribs.push_back(NSOpenGLPFAOpenGLProfile);
             attribs.push_back(NSOpenGLProfileVersion4_1Core);
@@ -207,20 +206,20 @@ namespace opengl {
         //attribs.push_back(NSOpenGLPFAWindow);
 
         attribs.push_back(NSOpenGLPFAColorSize);
-        attribs.push_back(attrib.red + attrib.green + attrib.blue);
+        attribs.push_back(config.red + config.green + config.blue);
         attribs.push_back(NSOpenGLPFAAlphaSize);
-        attribs.push_back(attrib.alpha);
+        attribs.push_back(config.alpha);
         attribs.push_back(NSOpenGLPFADepthSize);
-        attribs.push_back(attrib.depth);
+        attribs.push_back(config.depth);
         attribs.push_back(NSOpenGLPFAStencilSize);
-        attribs.push_back(attrib.stencil);
+        attribs.push_back(config.stencil);
 
-        if (attrib.samples > 1)
+        if (config.samples > 1)
         {
             attribs.push_back(NSOpenGLPFASampleBuffers);
             attribs.push_back(1);
             attribs.push_back(NSOpenGLPFASamples);
-            attribs.push_back(attrib.samples);
+            attribs.push_back(config.samples);
 #if 0
             attribs.push_back(NSOpenGLPFASupersample);
 #else
@@ -285,7 +284,7 @@ namespace opengl {
         setVisible(true);
     }
 
-    Context::~Context()
+    OpenGLContext::~OpenGLContext()
     {
         [NSOpenGLContext clearCurrentContext];
 
@@ -316,23 +315,23 @@ namespace opengl {
         delete m_context;
     }
 
-    void Context::makeCurrent()
+    void OpenGLContext::makeCurrent()
     {
         [m_context->ctx makeCurrentContext];
     }
 
-    void Context::swapBuffers()
+    void OpenGLContext::swapBuffers()
     {
         [m_context->ctx flushBuffer];
     }
 
-    void Context::swapInterval(int interval)
+    void OpenGLContext::swapInterval(int interval)
     {
         GLint sync = interval;
         [m_context->ctx setValues:&sync forParameter:NSOpenGLContextParameterSwapInterval];
     }
 
-    void Context::toggleFullscreen()
+    void OpenGLContext::toggleFullscreen()
     {
         CustomView* view = m_context->view;
         CustomNSWindow* window = m_handle->window;
@@ -355,12 +354,12 @@ namespace opengl {
         [view setHidden:NO];
     }
 
-    bool Context::isFullscreen() const
+    bool OpenGLContext::isFullscreen() const
 	{
         return [m_context->view isInFullScreenMode];
 	}
 
-    int32x2 Context::getWindowSize() const
+    int32x2 OpenGLContext::getWindowSize() const
     {
         CustomView* view = m_context->view;
         NSRect rect = [view frame];
@@ -368,5 +367,4 @@ namespace opengl {
         return int32x2(rect.size.width, rect.size.height);
     }
 
-} // namespace opengl
 } // namespace mango
