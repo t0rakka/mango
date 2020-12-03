@@ -20,6 +20,14 @@ public:
     {
         setWindowSize(bitmap.width * 2, bitmap.height * 2);
         setTitle("OpenGLFramebuffer");
+
+        int32x2 screen = getScreenSize();
+        int32x2 window = getWindowSize();
+        printf("screen: %d x %d, window: %d x %d, image: %d x %d\n",
+            screen.x, screen.y, 
+            window.x, window.y,
+            bitmap.width, bitmap.height);
+
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -34,17 +42,17 @@ public:
             toggleFullscreen();
             break;
 
-        case KEYCODE_F1:
+        case KEYCODE_1:
             m_filter = OpenGLFramebuffer::FILTER_NEAREST;
             onDraw();
             break;
 
-        case KEYCODE_F2:
+        case KEYCODE_2:
             m_filter = OpenGLFramebuffer::FILTER_BILINEAR;
             onDraw();
             break;
 
-        case KEYCODE_F3:
+        case KEYCODE_3:
             m_filter = OpenGLFramebuffer::FILTER_BICUBIC;
             onDraw();
             break;

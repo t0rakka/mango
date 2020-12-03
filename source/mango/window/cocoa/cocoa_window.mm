@@ -56,8 +56,8 @@ namespace mango
         // TODO: support more than default screen
         MANGO_UNREFERENCED(screen);
 
+        // NOTE: both of these report incorrect resolution on Retina Display :D
 #if 1
-        // NOTE: "This is the way." -- or is it? Test with multiple displays
         auto display = CGMainDisplayID();
         int width = CGDisplayPixelsWide(display);
         int height = CGDisplayPixelsHigh(display);
