@@ -38,25 +38,25 @@ namespace
 } // namespace
 
 namespace mango {
-namespace opengl {
 
     // -----------------------------------------------------------------------
-    // ContextHandle
+    // OpenGLContextHandle
     // -----------------------------------------------------------------------
 
-    struct ContextHandle
+    struct OpenGLContextHandle
     {
 		GLXContext context { 0 };
         bool fullscreen { false };
     };
 
-    static void deleteContext(WindowHandle* window_handle, ContextHandle* context_handle)
+    static void deleteContext(WindowHandle* window_handle, OpenGLContextHandle* context_handle)
     {
         if (window_handle->display)
         {
             glXMakeCurrent(window_handle->display, 0, 0);
 
-            if (context_handle->context) {
+            if (context_handle->context)
+            {
                 glXDestroyContext(window_handle->display, context_handle->context);
                 context_handle->context = 0;
             }
@@ -66,27 +66,29 @@ namespace opengl {
     }
 
     // -----------------------------------------------------------------------
-    // Context
+    // OpenGLContext
     // -----------------------------------------------------------------------
 
-    Context::Context(int width, int height, u32 flags, const ContextAttribute* contextAttribute, Context* shared)
+    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
 	    : Window(width, height, flags)
     {
-        m_context = new ContextHandle();
+        m_context = new OpenGLContextHandle();
 
         // TODO
         if (shared)
         {
-            MANGO_EXCEPTION("[GLX Context] Shared context is not implemented yet.");
+            MANGO_EXCEPTION("[GLX OpenGLContext] Shared context is not implemented yet.");
+        }
+
+        // override defaults
+        Config config;
+        if (configPtr)
+        {
+            // Override defaults
+            config = *configPtr;
         }
 
         // Configure attributes
-        ContextAttribute attrib;
-        if (contextAttribute)
-        {
-            // Override defaults
-            attrib = *contextAttribute;
-        }
 
         std::vector<int> visualAttribs;
 
@@ -106,36 +108,36 @@ namespace opengl {
         visualAttribs.push_back(True);
 
         visualAttribs.push_back(GLX_RED_SIZE);
-        visualAttribs.push_back(attrib.red);
+        visualAttribs.push_back(config.red);
 
         visualAttribs.push_back(GLX_GREEN_SIZE);
-        visualAttribs.push_back(attrib.green);
+        visualAttribs.push_back(config.green);
 
         visualAttribs.push_back(GLX_BLUE_SIZE);
-        visualAttribs.push_back(attrib.blue);
+        visualAttribs.push_back(config.blue);
 
         visualAttribs.push_back(GLX_ALPHA_SIZE);
-        visualAttribs.push_back(attrib.alpha);
+        visualAttribs.push_back(config.alpha);
 
         visualAttribs.push_back(GLX_DEPTH_SIZE);
-        visualAttribs.push_back(attrib.depth);
+        visualAttribs.push_back(config.depth);
 
         visualAttribs.push_back(GLX_STENCIL_SIZE);
-        visualAttribs.push_back(attrib.stencil);
+        visualAttribs.push_back(config.stencil);
 
-        if (attrib.samples > 1)
+        if (config.samples > 1)
         {
             visualAttribs.push_back(GLX_SAMPLE_BUFFERS);
             visualAttribs.push_back(1);
 
             visualAttribs.push_back(GLX_SAMPLES);
-            visualAttribs.push_back(attrib.samples);
+            visualAttribs.push_back(config.samples);
         }
 
         visualAttribs.push_back(None);
 
-
-        int glx_major, glx_minor;
+        int glx_major;
+        int glx_minor;
 
         if (!glXQueryVersion(m_handle->display, &glx_major, &glx_minor))
         {
@@ -189,7 +191,7 @@ namespace opengl {
                     samples = 1;
                 }
 
-                int dist = attrib.samples - samples;
+                int dist = config.samples - samples;
                 if (dist < 0)
                 {
                     dist = -dist;
@@ -353,28 +355,28 @@ namespace opengl {
         initExtensionMask();
     }
 
-    Context::~Context()
+    OpenGLContext::~OpenGLContext()
     {
         deleteContext(m_handle, m_context);
     }
 
-    void Context::makeCurrent()
+    void OpenGLContext::makeCurrent()
     {
         glXMakeCurrent(m_handle->display, m_handle->window, m_context->context);
     }
 
-    void Context::swapBuffers()
+    void OpenGLContext::swapBuffers()
     {
         glXSwapBuffers(m_handle->display, m_handle->window);
     }
 
-    void Context::swapInterval(int interval)
+    void OpenGLContext::swapInterval(int interval)
     {
         glXSwapIntervalEXT(m_handle->display, m_handle->window, interval);
 
     }
 
-    void Context::toggleFullscreen()
+    void OpenGLContext::toggleFullscreen()
     {
         // Disable rendering while switching fullscreen mode
         m_handle->busy = true;
@@ -411,15 +413,14 @@ namespace opengl {
         m_context->fullscreen = !m_context->fullscreen;
     }
 
-    bool Context::isFullscreen() const
+    bool OpenGLContext::isFullscreen() const
 	{
 		return m_context->fullscreen;
 	}
 
-    int32x2 Context::getWindowSize() const
+    int32x2 OpenGLContext::getWindowSize() const
     {
 		return Window::getWindowSize();
     }
 
-} // namespace opengl
 } // namespace mango

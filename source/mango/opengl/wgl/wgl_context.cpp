@@ -79,13 +79,12 @@ static void init_glext_extensions()
 #undef GLEXT_PROC
 
 namespace mango {
-namespace opengl {
 
     // -----------------------------------------------------------------------
-    // ContextHandle
+    // OpenGLContextHandle
     // -----------------------------------------------------------------------
 
-	struct ContextHandle
+	struct OpenGLContextHandle
 	{
 		HDC hdc { NULL };
 		HGLRC hrc { NULL };
@@ -94,13 +93,13 @@ namespace opengl {
     };
 
     // -----------------------------------------------------------------------
-    // Context
+    // OpenGLContext
     // -----------------------------------------------------------------------
 
-    Context::Context(int width, int height, u32 flags, const ContextAttribute* contextAttribute, Context* shared)
+    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
 		: Window(width, height, flags)
     {
-		m_context = new ContextHandle();
+		m_context = new OpenGLContextHandle();
 
 		// TODO
 		if (shared)
@@ -113,14 +112,14 @@ namespace opengl {
 		HDC hdc = ::GetDC(m_handle->hwnd);
 
 		// Configure attributes
-		ContextAttribute attrib;
-		if (contextAttribute)
+		Config config;
+		if (configPtr)
 		{
 			// Override defaults
-			attrib = *contextAttribute;
+			config = *configPtr;
 		}
 
-		u32 colorBits = attrib.red + attrib.green + attrib.blue + attrib.alpha;
+		u32 colorBits = config.red + config.green + config.blue + config.alpha;
 
 		// Configure pixel format
 		PIXELFORMATDESCRIPTOR pfd;
@@ -129,21 +128,21 @@ namespace opengl {
 		pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;
 		pfd.iPixelType = 32;
 		pfd.cColorBits = (BYTE)colorBits;
-		pfd.cRedBits = (BYTE)attrib.red;
+		pfd.cRedBits = (BYTE)config.red;
 		pfd.cRedShift = 0;
-		pfd.cGreenBits = (BYTE)attrib.green;
+		pfd.cGreenBits = (BYTE)config.green;
 		pfd.cGreenShift = 0;
-		pfd.cBlueBits = (BYTE)attrib.blue;
+		pfd.cBlueBits = (BYTE)config.blue;
 		pfd.cBlueShift = 0;
-		pfd.cAlphaBits = (BYTE)attrib.alpha;
+		pfd.cAlphaBits = (BYTE)config.alpha;
 		pfd.cAlphaShift = 0;
 		pfd.cAccumBits = 0;
 		pfd.cAccumRedBits = 0;
 		pfd.cAccumGreenBits = 0;
 		pfd.cAccumBlueBits = 0;
 		pfd.cAccumAlphaBits = 0;
-		pfd.cDepthBits = (BYTE)attrib.depth;
-		pfd.cStencilBits = (BYTE)attrib.stencil;
+		pfd.cDepthBits = (BYTE)config.depth;
+		pfd.cStencilBits = (BYTE)config.stencil;
 		pfd.cAuxBuffers = 0;
 		pfd.iLayerType = PFD_MAIN_PLANE;
 		pfd.bReserved = 0;
@@ -193,20 +192,20 @@ namespace opengl {
 				formatAttribs.push_back(colorBits);
 
 				formatAttribs.push_back(WGL_DEPTH_BITS_ARB);
-				formatAttribs.push_back(attrib.depth);
+				formatAttribs.push_back(config.depth);
 
 				formatAttribs.push_back(WGL_STENCIL_BITS_ARB);
-				formatAttribs.push_back(attrib.stencil);
+				formatAttribs.push_back(config.stencil);
 
 				if (wglExtensions.find("WGL_ARB_multisample") != std::string::npos)
 				{
-					if (attrib.samples > 1)
+					if (config.samples > 1)
 					{
 						formatAttribs.push_back(WGL_SAMPLE_BUFFERS_ARB);
 						formatAttribs.push_back(GL_TRUE);
 
 						formatAttribs.push_back(WGL_SAMPLES_ARB);
-						formatAttribs.push_back(attrib.samples);
+						formatAttribs.push_back(config.samples);
 					}
 				}
 
@@ -291,7 +290,7 @@ namespace opengl {
 		setVisible(true);
 	}
 
-    Context::~Context()
+    OpenGLContext::~OpenGLContext()
     {
 		::wglMakeCurrent(NULL, NULL);
 
@@ -310,17 +309,17 @@ namespace opengl {
 		delete m_context;
     }
 
-    void Context::makeCurrent()
+    void OpenGLContext::makeCurrent()
     {
         ::wglMakeCurrent(m_context->hdc, m_context->hrc);
     }
 
-    void Context::swapBuffers()
+    void OpenGLContext::swapBuffers()
     {
         ::SwapBuffers(m_context->hdc);
     }
 
-    void Context::swapInterval(int interval)
+    void OpenGLContext::swapInterval(int interval)
     {
         if (wglSwapIntervalEXT)
         {
@@ -328,7 +327,7 @@ namespace opengl {
         }
     }
 
-    void Context::toggleFullscreen()
+    void OpenGLContext::toggleFullscreen()
     {
         if (!m_context->fullscreen)
         {
@@ -350,15 +349,14 @@ namespace opengl {
         m_context->fullscreen = !m_context->fullscreen;
     }
 
-    bool Context::isFullscreen() const
+    bool OpenGLContext::isFullscreen() const
 	{
 		return m_context->fullscreen;
 	}
 
-    int32x2 Context::getWindowSize() const
+    int32x2 OpenGLContext::getWindowSize() const
     {
 		return Window::getWindowSize();
     }
 
-} // namespace opengl
 } // namespace mango

@@ -13,7 +13,6 @@
 // -----------------------------------------------------------------------
 
 //#define MANGO_OPENGL_DISABLE_PLATFORM_API
-
 //#define MANGO_OPENGL_LEGACY_PROFILE
 //#define MANGO_OPENGL_CORE_PROFILE
 
@@ -130,40 +129,35 @@
 #include <mango/window/window.hpp>
 
 namespace mango {
-namespace opengl {
-
-    // -----------------------------------------------------------------------
-    // ContextAttribute
-    // -----------------------------------------------------------------------
-
-    struct ContextAttribute
-    {
-        u32 version  = 0;
-
-        u32 red      = 8;
-        u32 green    = 8;
-        u32 blue     = 8;
-        u32 alpha    = 8;
-        u32 depth    = 24;
-        u32 stencil  = 8;
-        u32 samples  = 1;
-    };
 
     // -------------------------------------------------------------------
-    // Context
+    // OpenGLContext
     // -------------------------------------------------------------------
 
-    class Context : public Window
+    class OpenGLContext : public Window
     {
     protected:
-        struct ContextHandle* m_context;
+        struct OpenGLContextHandle* m_context;
         std::set<std::string> m_extensions;
 
         void initExtensionMask();
 
     public:
-        Context(int width, int height, u32 flags = 0, const ContextAttribute* attrib = nullptr, Context* shared = nullptr);
-        ~Context();
+        struct Config
+        {
+            u32 version  = 0;
+
+            u32 red      = 8;
+            u32 green    = 8;
+            u32 blue     = 8;
+            u32 alpha    = 8;
+            u32 depth    = 24;
+            u32 stencil  = 8;
+            u32 samples  = 1;
+        };
+
+        OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
+        ~OpenGLContext();
 
         bool isExtension(const std::string& name) const;
         bool isGLES() const;
@@ -175,6 +169,50 @@ namespace opengl {
         void toggleFullscreen();
         bool isFullscreen() const;
         int32x2 getWindowSize() const override;
+    };
+
+    // -------------------------------------------------------------------
+    // OpenGLFramebuffer
+    // -------------------------------------------------------------------
+
+    class OpenGLFramebuffer : public OpenGLContext
+    {
+    protected:
+        Surface m_surface;
+
+        GLuint m_texture = 0;
+        GLuint m_buffer = 0;
+
+        GLuint m_vao = 0;
+        GLuint m_vbo = 0;
+        GLuint m_ibo = 0;
+
+        struct Program
+        {
+            GLuint program = 0;
+            GLint transform = -1;
+            GLint texture = -1;
+            GLint scale = -1;
+            GLint position = -1;
+        };
+
+        Program m_bilinear;
+        Program m_bicubic;
+
+    public:
+        enum Filter
+        {
+            FILTER_NEAREST,
+            FILTER_BILINEAR,
+            FILTER_BICUBIC
+        };
+
+        OpenGLFramebuffer(int width, int height);
+        ~OpenGLFramebuffer();
+
+        Surface lock();
+        void unlock();
+        void present(Filter filter = FILTER_NEAREST);
     };
 
     // -------------------------------------------------------------------
@@ -216,16 +254,16 @@ namespace opengl {
     // helper functions ; require active context
     // -------------------------------------------------------------------
 
-    struct InternalFormat
+    struct OpenGLInternalFormat
     {
-        GLenum internal_format;
+        GLenum iformat;
         Format format;
         bool srgb;
         const char* name;
     };
 
     bool isCompressedTextureSupported(TextureCompression compression);
-    const InternalFormat* getInternalFormat(GLenum internalFormat);
+    const OpenGLInternalFormat* getInternalFormat(GLenum internalFormat);
 
 #ifndef MANGO_OPENGL_DISABLE_PLATFORM_API
 
@@ -264,51 +302,5 @@ namespace opengl {
 #endif // MANGO_OPENGL_CONTEXT_GLX
 
 #endif // MANGO_OPENGL_DISABLE_PLATFORM_API
-
-} // namespace opengl
-
-    // -------------------------------------------------------------------
-    // OpenGLFramebuffer
-    // -------------------------------------------------------------------
-
-    class OpenGLFramebuffer : public opengl::Context
-    {
-    protected:
-        Surface m_surface;
-
-        GLuint m_texture = 0;
-        GLuint m_buffer = 0;
-
-        GLuint m_vao = 0;
-        GLuint m_vbo = 0;
-        GLuint m_ibo = 0;
-
-        struct Program
-        {
-            GLuint program = 0;
-            GLint transform = -1;
-            GLint texture = -1;
-            GLint scale = -1;
-            GLint position = -1;
-        };
-
-        Program m_bilinear;
-        Program m_bicubic;
-
-    public:
-        enum Filter
-        {
-            FILTER_NEAREST,
-            FILTER_BILINEAR,
-            FILTER_BICUBIC
-        };
-
-        OpenGLFramebuffer(int width, int height);
-        ~OpenGLFramebuffer();
-
-        Surface lock();
-        void unlock();
-        void present(Filter filter = FILTER_NEAREST);
-    };
 
 } // namespace mango
