@@ -767,7 +767,7 @@ namespace mango
     {
         XWindowAttributes attributes;
         XGetWindowAttributes(m_handle->display, m_handle->window, &attributes);
-        return int2(attributes.width, attributes.height);
+        return int32x2(attributes.width, attributes.height);
     }
 
 	int32x2 Window::getCursorPosition() const
@@ -780,7 +780,7 @@ namespace mango
 
 		XQueryPointer(m_handle->display, m_handle->window, &root, &child,
                       &root_x, &root_y, &child_x, &child_y, &mask);
-		return int2(child_x, child_y);
+		return int32x2(child_x, child_y);
 	}
 
     bool Window::isKeyPressed(Keycode code) const

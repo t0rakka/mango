@@ -18,16 +18,13 @@ public:
         : OpenGLFramebuffer(bitmap.width, bitmap.height)
         , m_bitmap(bitmap)
     {
-        setWindowSize(bitmap.width * 2, bitmap.height * 2);
         setTitle("OpenGLFramebuffer");
 
         int32x2 screen = getScreenSize();
-        int32x2 window = getWindowSize();
-        printf("screen: %d x %d, window: %d x %d, image: %d x %d\n",
-            screen.x, screen.y, 
-            window.x, window.y,
-            bitmap.width, bitmap.height);
+        int scale = (screen.y / std::max(1, bitmap.height)) / 2;
+        setWindowSize(bitmap.width * scale, bitmap.height * scale);
 
+        printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -60,10 +57,6 @@ public:
         default:
             break;
         }
-    }
-
-    void onResize(int width, int height) override
-    {
     }
 
     void onIdle() override
