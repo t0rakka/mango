@@ -330,6 +330,7 @@ namespace mango
 
         Blitter blitter(dest.format, source.format);
 
+#if 0
         const int slice = 96;
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
@@ -354,6 +355,7 @@ namespace mango
             }
         }
         else
+#endif        
         {
             blitter.convert(rect);
         }
