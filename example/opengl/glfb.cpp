@@ -21,7 +21,7 @@ public:
         setTitle("OpenGLFramebuffer");
 
         int32x2 screen = getScreenSize();
-        int scale = (screen.y / std::max(1, bitmap.height)) / 2;
+        int scale = std::max(1, (screen.y / std::max(1, height)) / 2);
         setWindowSize(bitmap.width * scale, bitmap.height * scale);
 
         printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
