@@ -113,7 +113,7 @@ clang 3.9 for X86_64 / SSE2:
 It is very easy to shoot yourself into the foot with intrinsics. The most basic error is to use unions of different types; this will dramatically reduce the quality of generated code. We have crafted the "accessor" proxy type to generate the overloads of different shuffling and scalar component access. This has been tested with Microsoft C++, GNU G++ and clang to produce superior code to any other alternative implementation. Nearly every method, operator and function has been extensively optimized to reduce register pressure and spilling with generated code. Most of the time the design attempts to use non-mutable transformations to the data; no in-place modification so that compiler has more options to generate better code.
 
 ##### JPEG decoder performance
-Sample workload: 672 MB of JPEG data in 410 individual files. 6196 KB of RGB image data when decompressed.
+Sample workload: 672 MB of JPEG data in 410 individual files. 6196 MB of RGB image data when decompressed.
 Processing time: 3.2 seconds on i7-3770K CPU running 64 bit Ubuntu 16.04
 This means data rate of of nearly 2 GB/s for raw uncompressed image data.
 
