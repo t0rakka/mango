@@ -74,10 +74,6 @@ This was just one example how we do things differently and give you, the program
 - GLSL compatible syntax
 - Unique ScalarAccessor design for reading/writing lanes and shuffling SIMD-backed vectors
 
-#### Code Samples
-
-https://github.com/t0rakka/mango-examples
-
 ##### Vector Math performance
 Let's take a look at example function:
 
