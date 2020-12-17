@@ -977,3 +977,28 @@ mango_vulkan_dep = declare_dependency(
 )
 
 install_subdir('../include/mango', install_dir : 'include')
+
+pkg = import('pkgconfig')
+
+pkg.generate(mango,
+    libraries_private : [ mango_deps ],
+    description : 'A multi-platform low-level development framework for graphics programmers - core'
+)
+
+pkg.generate(mango_framebuffer,
+    name: 'mango-framebuffer',
+    libraries_private : [ mango_framebuffer_deps ],
+    description : 'A multi-platform low-level development framework for graphics programmers - framebuffer'
+)
+
+pkg.generate(mango_opengl,
+    name: 'mango-opengl',
+    libraries_private : [ mango_opengl_deps ],
+    description : 'A multi-platform low-level development framework for graphics programmers - opengl'
+)
+
+pkg.generate(mango_vulkan,
+    name: 'mango-vulkan',
+    libraries_private : [ mango_vulkan_deps ],
+    description : 'A multi-platform low-level development framework for graphics programmers - vulkan'
+)
