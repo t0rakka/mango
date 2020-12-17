@@ -27,6 +27,7 @@ enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 
 mango_public_cpp_args = []
+mango_interface_cpp_args = []
 
 mango_all_archive_formats = [ 'ZIP', 'RAR', 'MGX' ]
 foreach archive_format : mango_all_archive_formats
