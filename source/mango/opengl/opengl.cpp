@@ -808,14 +808,17 @@ namespace {
     {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
         void* data = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+
         m_surface.image = reinterpret_cast<u8*>(data);
         return m_surface;
     }
 
     void OpenGLFramebuffer::unlock()
     {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_surface.width, m_surface.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     }
