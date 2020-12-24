@@ -700,7 +700,9 @@ namespace {
 
     OpenGLFramebuffer::OpenGLFramebuffer(int width, int height)
         : OpenGLContext(width, height, 0, nullptr)
-        , m_surface(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), width * 4, nullptr)
+        , m_width(width)
+        , m_height(height)
+        , m_format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
     {
 
         // create texture
@@ -808,9 +810,7 @@ namespace {
     {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
         void* data = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
-
-        m_surface.image = reinterpret_cast<u8*>(data);
-        return m_surface;
+        return Surface(m_width, m_height, m_format, m_width * m_format.bytes(), data);
     }
 
     void OpenGLFramebuffer::unlock()
@@ -819,7 +819,7 @@ namespace {
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_surface.width, m_surface.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     }
 
@@ -831,9 +831,9 @@ namespace {
         int32x2 window = getWindowSize();
 
         float32x2 aspect;
-        aspect.x = float(window.x) / float(m_surface.width);
-        aspect.y = float(window.y) / float(m_surface.height);
-        
+        aspect.x = float(window.x) / float(m_width);
+        aspect.y = float(window.y) / float(m_height);
+
         if (aspect.x < aspect.y)
         {
             aspect.y = aspect.x / aspect.y;
@@ -892,7 +892,7 @@ namespace {
 
             glUniform1i(p.texture, 0);
             glUniform4f(p.transform, translate.x, -translate.y, scale.x, scale.y);
-            glUniform2f(p.scale, 1.0f / m_surface.width, 1.0f / m_surface.height);
+            glUniform2f(p.scale, 1.0f / m_width, 1.0f / m_height);
 
             if (p.position != -1)
             {

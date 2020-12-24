@@ -207,7 +207,9 @@ namespace mango {
     class OpenGLFramebuffer : public OpenGLContext
     {
     protected:
-        Surface m_surface;
+        int m_width;
+        int m_height;
+        Format m_format;
 
         GLuint m_texture = 0;
         GLuint m_buffer = 0;
