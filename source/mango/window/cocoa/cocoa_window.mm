@@ -59,8 +59,8 @@ namespace mango
         // NOTE: both of these report incorrect resolution on Retina Display :D
 #if 1
         auto display = CGMainDisplayID();
-        int width = CGDisplayPixelsWide(display);
-        int height = CGDisplayPixelsHigh(display);
+        int width = int(CGDisplayPixelsWide(display));
+        int height = int(CGDisplayPixelsHigh(display));
         return int32x2(width, height);
 #else
         NSRect rect = [[NSScreen mainScreen] frame];
