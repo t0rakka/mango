@@ -210,6 +210,14 @@ namespace mango {
         int m_width;
         int m_height;
         Format m_format;
+        size_t m_stride;
+
+        bool m_is_rgba;
+        bool m_is_palette;
+
+        GLuint m_framebuffer = 0;
+        GLuint m_index_texture = 0;
+        GLuint m_index_program = 0;
 
         GLuint m_texture = 0;
         GLuint m_buffer = 0;
@@ -231,18 +239,27 @@ namespace mango {
         Program m_bicubic;
 
     public:
+        enum BufferMode
+        {
+            RGBA_DIRECT,
+            BGRA_DIRECT,
+            RGBA_PALETTE,
+            BGRA_PALETTE,
+        };
+
         enum Filter
         {
             FILTER_NEAREST,
             FILTER_BILINEAR,
-            FILTER_BICUBIC
+            FILTER_BICUBIC,
         };
 
-        OpenGLFramebuffer(int width, int height);
+        OpenGLFramebuffer(int width, int height, BufferMode buffermode = RGBA_DIRECT);
         ~OpenGLFramebuffer();
 
         Surface lock();
         void unlock();
+        void setPalette(const u32* palette);
         void present(Filter filter = FILTER_NEAREST);
     };
 

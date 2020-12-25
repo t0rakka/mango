@@ -603,6 +603,20 @@ namespace {
         "    outFragment0 = texture_filter(uTexture, texcoord, uTexScale); \n"
         "} \n";
 
+    const char* fragment_shader_source_index =
+        "uniform isampler2D uTexture; \n"
+        "uniform uint uPalette[256];\n"
+        "in vec2 texcoord; \n"
+        "out vec4 outFragment0; \n"
+        "void main() { \n"
+        "    uint color = uPalette[texture(uTexture, texcoord).r]; \n"
+        "    float r = ((color << 24) >> 24) / 255.0; \n"
+        "    float g = ((color << 16) >> 24) / 255.0; \n"
+        "    float b = ((color <<  8) >> 24) / 255.0; \n"
+        "    float a = ((color <<  0) >> 24) / 255.0; \n"
+        "    outFragment0 = vec4(r, g, b, a); \n"
+        "} \n";
+
     std::string getShadingLanguageVersionString()
     {
         std::string s = "#version 110\n"; // default for OpenGL 2.0
@@ -698,19 +712,45 @@ namespace {
     // OpenGLFramebuffer
     // -------------------------------------------------------------------
 
-    OpenGLFramebuffer::OpenGLFramebuffer(int width, int height)
+    OpenGLFramebuffer::OpenGLFramebuffer(int width, int height, BufferMode buffermode)
         : OpenGLContext(width, height, 0, nullptr)
         , m_width(width)
         , m_height(height)
-        , m_format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
     {
+
+        switch (buffermode)
+        {
+            case RGBA_DIRECT:
+                m_format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                m_is_rgba = true;
+                m_is_palette = false;
+                break;
+
+            case BGRA_DIRECT:
+                m_format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_is_rgba = false;
+                m_is_palette = false;
+                break;
+
+            case RGBA_PALETTE:
+                m_format = IndexedFormat(8);
+                m_is_rgba = true;
+                m_is_palette = true;
+                break;
+
+            case BGRA_PALETTE:
+                m_format = IndexedFormat(8);
+                m_is_rgba = false;
+                m_is_palette = true;
+                break;
+        }
+
+        m_stride = size_t(m_width) * m_format.bytes();
 
         // create texture
 
         glGenTextures(1, &m_texture);
         glBindTexture(GL_TEXTURE_2D, m_texture);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -718,12 +758,31 @@ namespace {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+        // create framebuffer
+
+        if (m_is_palette)
+        {
+            glGenTextures(1, &m_index_texture);
+            glBindTexture(GL_TEXTURE_2D, m_index_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glGenFramebuffers(1, &m_framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_texture, 0);
+
+            m_index_program = createProgram(vertex_shader_source, fragment_shader_source_index);
+        }
+
         // create pixelbuffer
 
         glGenBuffers(1, &m_buffer);
-
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
-        glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STATIC_DRAW);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER, m_stride * height, nullptr, GL_STATIC_DRAW);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         // create vertex buffers
@@ -804,13 +863,23 @@ namespace {
         {
             glDeleteTextures(1, &m_texture);
         }
+
+        if (m_index_texture)
+        {
+            glDeleteTextures(1, &m_index_texture);
+        }
+
+        if (m_framebuffer)
+        {
+            glDeleteFramebuffers(1, &m_framebuffer);
+        }
     }
 
     Surface OpenGLFramebuffer::lock()
     {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
         void* data = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
-        return Surface(m_width, m_height, m_format, m_width * m_format.bytes(), data);
+        return Surface(m_width, m_height, m_format, m_stride, data);
     }
 
     void OpenGLFramebuffer::unlock()
@@ -819,12 +888,56 @@ namespace {
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+        if (m_framebuffer)
+        {
+            glBindTexture(GL_TEXTURE_2D, m_index_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, m_width, m_height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, m_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        }
+
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    }
+
+    void OpenGLFramebuffer::setPalette(const u32* palette)
+    {
+        if (m_is_palette)
+        {
+            GLint location = glGetUniformLocation(m_index_program, "uPalette");
+            glProgramUniform1uiv(m_index_program, location, 256, palette);
+        }
     }
 
     void OpenGLFramebuffer::present(Filter filter)
     {
+
+        glDisable(GL_BLEND);
+
+        // resolve palette
+
+        if (m_framebuffer)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+
+            glViewport(0, 0, m_width, m_height);
+            glScissor(0, 0, m_width, m_height);
+
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, m_index_texture);
+
+            glUseProgram(m_index_program);
+
+            glBindVertexArray(m_vao);
+            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr);
+            glBindVertexArray(0);
+        }
 
         // compute aspect ratio
 
@@ -850,13 +963,13 @@ namespace {
 
         // render
 
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         glViewport(0, 0, window.x, window.y);
         glScissor(0, 0, window.x, window.y);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        glDisable(GL_BLEND);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_texture);
@@ -899,6 +1012,21 @@ namespace {
                 glVertexAttribPointer(p.position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, nullptr);
                 glEnableVertexAttribArray(p.position);
             }
+        }
+
+        if (m_is_rgba)
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R_EXT, GL_RED);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G_EXT, GL_GREEN);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B_EXT, GL_BLUE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A_EXT, GL_ALPHA);
+        }
+        else
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R_EXT, GL_BLUE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G_EXT, GL_GREEN);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B_EXT, GL_RED);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A_EXT, GL_ALPHA);
         }
 
         glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr);
