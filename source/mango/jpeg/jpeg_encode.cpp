@@ -320,6 +320,8 @@ namespace
 
         void init_quantization_tables(u32 quality);
         void write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
+        
+        ConstMemory icc;
     };
 
     struct EncodeBuffer : Buffer
@@ -1704,6 +1706,27 @@ namespace
     {
         // Start of image marker
         p.write16(MARKER_SOI);
+        
+        // ICC profile.  splitting to multiple markers if necessary
+        if(icc.size)
+        {
+            const size_t magicICCLength = 12;
+            const u8 magicICC[magicICCLength] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
+            
+            const size_t iccMaxSegmentSize = 65000;  // marker size is 16bit minus icc stuff, if larger we need to split
+            const size_t iccSegments = (icc.size+iccMaxSegmentSize-1)/iccMaxSegmentSize;
+            
+            for(size_t i=0;i<iccSegments;i++)
+            {
+                const size_t size = i<(iccSegments-1) ? iccMaxSegmentSize :  icc.size%iccMaxSegmentSize;
+                p.write16(MARKER_APP2);
+                p.write16(size + magicICCLength + 4);
+                p.write(magicICC, magicICCLength);
+                p.write8(i+1); // segment index, 1-based
+                p.write8(iccSegments);
+                p.write(icc.slice(i*iccMaxSegmentSize), size);
+            }
+        }
 
         // Quantization table marker
         p.write16(MARKER_DQT);
@@ -1789,9 +1812,10 @@ namespace
     // encodeJPEG()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample)
+    void encodeJPEG(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample, const ImageEncodeOptions& options)
     {
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
+        jp.icc = options.icc;
 
         const u8* input = surface.image;
         size_t stride = surface.stride;
@@ -1926,12 +1950,12 @@ namespace jpeg {
         return result;
     }
 
-    ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, float quality)
+    ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         ImageEncodeStatus status;
 
         // configure quality
-        quality = clamp(1.0f - quality, 0.0f, 1.0f);
+        float quality = clamp(1.0f - options.quality, 0.0f, 1.0f);
         u32 iq = u32(std::pow(1.0f + quality, 11.0f) * 8.0f);
 
         SampleFormat sf = getSampleFormat(surface.format);
@@ -1939,14 +1963,14 @@ namespace jpeg {
         // encode
         if (surface.format == sf.format)
         {
-            encodeJPEG(status, surface, stream, iq, sf.sample);
+            encodeJPEG(status, surface, stream, iq, sf.sample, options);
             status.direct = true;
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface, sf.format);
-            encodeJPEG(status, temp, stream, iq, sf.sample);
+            encodeJPEG(status, temp, stream, iq, sf.sample, options);
         }
 
         return status;
