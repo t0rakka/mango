@@ -2370,6 +2370,25 @@ namespace
         writeChunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
+    void write_iCCP(Stream& stream, const ConstMemory& icc, int level)
+    {
+        if(icc.size == 0) return; // omit empty profile chunk
+
+        MemoryStream buffer;
+        BigEndianStream s(buffer);
+
+        s.write8('-'); // profile name is 1-79 char according to spec. we dont have/need name
+        s.write8(0); // profile name null separator
+        s.write8(0); // compression method, 0=deflate
+
+        size_t bound = zlib::bound(icc.size);
+        Buffer compressed(bound);
+        size_t bytes_out = zlib::compress(compressed, icc, level);
+        buffer.write(compressed, bytes_out); // rest of chunk is compressed profile
+
+        writeChunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
+    }
+
     void write_IDAT(Stream& stream, const Surface& surface, int level, bool filtering)
     {
         // data to compress
@@ -2466,7 +2485,7 @@ namespace
         writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(compressed, bytes_out));
     }
 
-    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, int level, bool filtering)
+    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
     {
         BigEndianStream s(stream);
 
@@ -2474,7 +2493,8 @@ namespace
         s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
-        write_IDAT(stream, surface, level, filtering);
+        write_iCCP(stream, options.icc, options.compression);
+        write_IDAT(stream, surface, options.compression, options.filtering);
 
         // write IEND
         s.write32(0);
@@ -2626,12 +2646,12 @@ namespace
 
         if (surface.format == format)
         {
-            writePNG(stream, surface, color_bits, color_type, options.compression, options.filtering);
+            writePNG(stream, surface, color_bits, color_type, options);
         }
         else
         {
             Bitmap temp(surface, format);
-            writePNG(stream, temp, color_bits, color_type, options.compression, options.filtering);
+            writePNG(stream, temp, color_bits, color_type, options);
         }
 
         return status;
