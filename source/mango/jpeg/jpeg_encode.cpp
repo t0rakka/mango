@@ -376,6 +376,7 @@ namespace
         return (u64(b) << 32) | a;
     }
 
+    // TODO: use zigzag_table_inverse and unpcklo from 8 to 16 bit
     const u16 zigzag_shuffle [] =
     {
         0,  1,  8, 16,  9,  2,  3, 10,
@@ -599,42 +600,40 @@ namespace
             //u64 mask = ~jpeg_zigzag_avx512bw(input, temp);
             mask >>= 1; // skip dc
 
-            int runLength = 0;
-
             for (int i = 1; i < 64; )
             {
-                int count = u64_tzcnt(mask);
-                runLength += count;
-                mask >>= (count + 1);
-                i += count;
-
-                if (i < 64)
+                if (!mask)
                 {
-                    while (runLength > 15)
-                    {
-                        runLength -= 16;
-                        p = putBits(p, ac.code[161], ac.size[161]);
-                    }
-
-                    // TODO: parallel absCoeff to dataSize computation
-
-                    int coeff = temp[i++];
-
-                    u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-                    u32 dataSize = getSymbolSize(absCoeff);
-                    u32 dataMask = (1 << dataSize) - 1;
-
-                    int index = runLength * 10 + dataSize;
-                    p = putBits(p, ac.code[index], ac.size[index]);
-                    p = putBits(p, coeff & dataMask, dataSize);
-
-                    runLength = 0;
+                    // only zeros left
+                    p = putBits(p, ac.code[0], ac.size[0]);
+                    break;
                 }
-            }
 
-            if (runLength != 0)
-            {
-                p = putBits(p, ac.code[0], ac.size[0]);
+                int runLength = u64_tzcnt(mask);
+                mask >>= (runLength + 1);
+                i += runLength;
+
+                while (runLength > 15)
+                {
+                    runLength -= 16;
+                    p = putBits(p, ac.code[161], ac.size[161]);
+                }
+
+                // TODO: parallel absCoeff to dataSize computation
+
+                int coeff = temp[i++];
+
+                u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
+                u32 dataSize = getSymbolSize(absCoeff);
+                u32 dataMask = (1 << dataSize) - 1;
+
+                // TODO: if we make the table 16 entries wide, we could use "runLength * 16" here
+                //       "runLength * 10 + dataSize" is MUL + ADD
+                //       "runLength * 16 + dataSize" is LEA
+
+                int index = runLength * 10 + dataSize;
+                p = putBits(p, ac.code[index], ac.size[index]);
+                p = putBits(p, coeff & dataMask, dataSize);
             }
 
             return p;
