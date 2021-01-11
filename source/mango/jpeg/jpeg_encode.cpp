@@ -224,6 +224,191 @@ namespace
         99, 99, 99, 99, 99, 99, 99, 99
     };
 
+#if 0
+
+    // NOTE: If we procecessed more MCUs at a time the constants could be initialized outsize of the
+    //       processing loop.
+    // TODO: Profile if it's worth it..
+
+    u64 jpeg_zigzag_sse2(const s16* in, s16* out)
+    {
+        const __m128i A = _mm_loadu_si128((const __m128i*)(in + 0*8));
+        const __m128i B = _mm_loadu_si128((const __m128i*)(in + 1*8));
+        const __m128i C = _mm_loadu_si128((const __m128i*)(in + 2*8));
+        const __m128i D = _mm_loadu_si128((const __m128i*)(in + 3*8));
+        const __m128i E = _mm_loadu_si128((const __m128i*)(in + 4*8));
+        const __m128i F = _mm_loadu_si128((const __m128i*)(in + 5*8));
+        const __m128i G = _mm_loadu_si128((const __m128i*)(in + 6*8));
+        const __m128i H = _mm_loadu_si128((const __m128i*)(in + 7*8));
+
+        // row #0
+        const __m128i A_0_shuf = _mm_setr_epi8(0, 1, 2, 3, -1, -1, -1, -1, -1, -1, 4, 5, 6, 7, -1, -1);
+        const __m128i A_0 = _mm_shuffle_epi8(A, A_0_shuf);
+        const __m128i B_0_shuf = _mm_setr_epi8(-1, -1, -1, -1, 0, 1, -1, -1, 2, 3, -1, -1, -1, -1, 4, 5);
+        const __m128i B_0 = _mm_shuffle_epi8(B, B_0_shuf);
+        __m128i row0 = _mm_or_si128(A_0, B_0);
+        const __m128i C_0_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i C_0 = _mm_shuffle_epi8(C, C_0_shuf);
+        row0 = _mm_or_si128(row0, C_0);
+
+        // row #1
+        const __m128i A_1_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, 10, 11);
+        const __m128i A_1 = _mm_shuffle_epi8(A, A_1_shuf);
+        const __m128i B_1_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7, -1, -1, -1, -1);
+        const __m128i B_1 = _mm_shuffle_epi8(B, B_1_shuf);
+        __m128i row1 = _mm_or_si128(A_1, B_1);
+        const __m128i C_1_shuf = _mm_setr_epi8(2, 3, -1, -1, -1, -1, -1, -1, 4, 5, -1, -1, -1, -1, -1, -1);
+        const __m128i C_1 = _mm_shuffle_epi8(C, C_1_shuf);
+        row1 = _mm_or_si128(row1, C_1);
+        const __m128i D_1_shuf = _mm_setr_epi8(-1, -1, 0, 1, -1, -1, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i D_1 = _mm_shuffle_epi8(D, D_1_shuf);
+        row1 = _mm_or_si128(row1, D_1);
+        const __m128i E_1_shuf = _mm_setr_epi8(-1, -1, -1, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i E_1 = _mm_shuffle_epi8(E, E_1_shuf);
+        row1 = _mm_or_si128(row1, E_1);
+
+        // row #2
+        const __m128i B_2_shuf = _mm_setr_epi8(8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i B_2 = _mm_shuffle_epi8(B, B_2_shuf);
+        const __m128i C_2_shuf = _mm_setr_epi8(-1, -1, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i C_2 = _mm_shuffle_epi8(C, C_2_shuf);
+        __m128i row2 = _mm_or_si128(B_2, C_2);
+        const __m128i D_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i D_2 = _mm_shuffle_epi8(D, D_2_shuf);
+        row2 = _mm_or_si128(row2, D_2);
+        const __m128i E_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 2, 3, -1, -1, -1, -1, -1, -1, 4, 5);
+        const __m128i E_2 = _mm_shuffle_epi8(E, E_2_shuf);
+        row2 = _mm_or_si128(row2, E_2);
+        const __m128i F_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, 3, -1, -1);
+        const __m128i F_2 = _mm_shuffle_epi8(F, F_2_shuf);
+        row2 = _mm_or_si128(row2, F_2);
+        const __m128i G_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, -1, -1);
+        const __m128i G_2 = _mm_shuffle_epi8(G, G_2_shuf);
+        row2 = _mm_or_si128(row2, G_2);
+
+        // row #3
+        const __m128i A_3_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1);
+        const __m128i A_3 = _mm_shuffle_epi8(A, A_3_shuf);
+        const __m128i B_3_shuf = _mm_setr_epi8(-1, -1, -1, -1, 10, 11, -1, -1, -1, -1, 12, 13, -1, -1, -1, -1);
+        const __m128i B_3 = _mm_shuffle_epi8(B, B_3_shuf);
+        __m128i row3 = _mm_or_si128(A_3, B_3);
+        const __m128i C_3_shuf = _mm_setr_epi8(-1, -1, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, -1, -1);
+        const __m128i C_3 = _mm_shuffle_epi8(C, C_3_shuf);
+        row3 = _mm_or_si128(row3, C_3);
+        const __m128i D_3_shuf = _mm_setr_epi8(6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9);
+        const __m128i D_3 = _mm_shuffle_epi8(D, D_3_shuf);
+        row3 = _mm_or_si128(row3, D_3);
+
+        // row #4
+        const __m128i E_4_shuf = _mm_setr_epi8(6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9);
+        const __m128i E_4 = _mm_shuffle_epi8(E, E_4_shuf);
+        const __m128i F_4_shuf = _mm_setr_epi8(-1, -1, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7, -1, -1);
+        const __m128i F_4 = _mm_shuffle_epi8(F, F_4_shuf);
+        __m128i row4 = _mm_or_si128(E_4, F_4);
+        const __m128i G_4_shuf = _mm_setr_epi8(-1, -1, -1, -1, 2, 3, -1, -1, -1, -1, 4, 5, -1, -1, -1, -1);
+        const __m128i G_4 = _mm_shuffle_epi8(G, G_4_shuf);
+        row4 = _mm_or_si128(row4, G_4);
+        const __m128i H_4_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 0, 1, 2, 3, -1, -1, -1, -1, -1, -1);
+        const __m128i H_4 = _mm_shuffle_epi8(H, H_4_shuf);
+        row4 = _mm_or_si128(row4, H_4);
+
+        // row #5
+        const __m128i B_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i B_5 = _mm_shuffle_epi8(B, B_5_shuf);
+        const __m128i C_5_shuf = _mm_setr_epi8(-1, -1, 12, 13, -1, -1, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i C_5 = _mm_shuffle_epi8(C, C_5_shuf);
+        __m128i row5 = _mm_or_si128(B_5, C_5);
+        const __m128i D_5_shuf = _mm_setr_epi8(10, 11, -1, -1, -1, -1, -1, -1, 12, 13, -1, -1, -1, -1, -1, -1);
+        const __m128i D_5 = _mm_shuffle_epi8(D, D_5_shuf);
+        row5 = _mm_or_si128(row5, D_5);
+        const __m128i E_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, -1, -1, -1, -1);
+        const __m128i E_5 = _mm_shuffle_epi8(E, E_5_shuf);
+        row5 = _mm_or_si128(row5, E_5);
+        const __m128i F_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, -1, -1);
+        const __m128i F_5 = _mm_shuffle_epi8(F, F_5_shuf);
+        row5 = _mm_or_si128(row5, F_5);
+        const __m128i G_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7);
+        const __m128i G_5 = _mm_shuffle_epi8(G, G_5_shuf);
+        row5 = _mm_or_si128(row5, G_5);
+
+        // row #6
+        const __m128i D_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, 15, -1, -1, -1, -1);
+        const __m128i D_6 = _mm_shuffle_epi8(D, D_6_shuf);
+        const __m128i E_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 12, 13, -1, -1, 14, 15, -1, -1);
+        const __m128i E_6 = _mm_shuffle_epi8(E, E_6_shuf);
+        __m128i row6 = _mm_or_si128(D_6, E_6);
+        const __m128i F_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 10, 11, -1, -1, -1, -1, -1, -1, 12, 13);
+        const __m128i F_6 = _mm_shuffle_epi8(F, F_6_shuf);
+        row6 = _mm_or_si128(row6, F_6);
+        const __m128i G_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i G_6 = _mm_shuffle_epi8(G, G_6_shuf);
+        row6 = _mm_or_si128(row6, G_6);
+        const __m128i H_6_shuf = _mm_setr_epi8(4, 5, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+        const __m128i H_6 = _mm_shuffle_epi8(H, H_6_shuf);
+        row6 = _mm_or_si128(row6, H_6);
+
+        // row #7
+        const __m128i F_7_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 14, 15, -1, -1, -1, -1, -1, -1);
+        const __m128i F_7 = _mm_shuffle_epi8(F, F_7_shuf);
+        const __m128i G_7_shuf = _mm_setr_epi8(10, 11, -1, -1, -1, -1, 12, 13, -1, -1, 14, 15, -1, -1, -1, -1);
+        const __m128i G_7 = _mm_shuffle_epi8(G, G_7_shuf);
+        __m128i row7 = _mm_or_si128(F_7, G_7);
+        const __m128i H_7_shuf = _mm_setr_epi8(-1, -1, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, 12, 13, 14, 15);
+        const __m128i H_7 = _mm_shuffle_epi8(H, H_7_shuf);
+        row7 = _mm_or_si128(row7, H_7);
+
+        _mm_storeu_si128((__m128i*)(out + 0*8), row0);
+        _mm_storeu_si128((__m128i*)(out + 1*8), row1);
+        _mm_storeu_si128((__m128i*)(out + 2*8), row2);
+        _mm_storeu_si128((__m128i*)(out + 3*8), row3);
+        _mm_storeu_si128((__m128i*)(out + 4*8), row4);
+        _mm_storeu_si128((__m128i*)(out + 5*8), row5);
+        _mm_storeu_si128((__m128i*)(out + 6*8), row6);
+        _mm_storeu_si128((__m128i*)(out + 7*8), row7);
+
+        const __m128i zero = _mm_setzero_si128();
+        __m128i z0 = _mm_packs_epi16(_mm_cmpeq_epi16(row0, zero), _mm_cmpeq_epi16(row1, zero));
+        __m128i z1 = _mm_packs_epi16(_mm_cmpeq_epi16(row2, zero), _mm_cmpeq_epi16(row3, zero));
+        __m128i z2 = _mm_packs_epi16(_mm_cmpeq_epi16(row4, zero), _mm_cmpeq_epi16(row5, zero));
+        __m128i z3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
+        u32 a = _mm_movemask_epi8(z0) | ((_mm_movemask_epi8(z1)) << 16);
+        u32 b = _mm_movemask_epi8(z2) | ((_mm_movemask_epi8(z3)) << 16);
+        return (u64(b) << 32) | a;
+    }
+
+    const u16 zigzag_shuffle [] =
+    {
+        0,  1,  8, 16,  9,  2,  3, 10,
+        17, 24, 32, 25, 18, 11,  4,  5,
+        12, 19, 26, 33, 40, 48, 41, 34,
+        27, 20, 13,  6,  7, 14, 21, 28,
+        35, 42, 49, 56, 57, 50, 43, 36,
+        29, 22, 15, 23, 30, 37, 44, 51,
+        58, 59, 52, 45, 38, 31, 39, 46,
+        53, 60, 61, 54, 47, 55, 62, 63
+    };
+
+    u64 jpeg_zigzag_avx512bw(const s16* in, s16* out)
+    {
+        const __m512i A = _mm512_loadu_si512((const __m512i*)(in + 0*32));
+        const __m512i B = _mm512_loadu_si512((const __m512i*)(in + 1*32));
+
+        const __m512i shuf0 = _mm512_loadu_si512((const __m512i*)(zigzag_shuffle + 0*32));
+        const __m512i shuf1 = _mm512_loadu_si512((const __m512i*)(zigzag_shuffle + 1*32));
+        const __m512i res0  = _mm512_permutex2var_epi16(A, shuf0, B);
+        const __m512i res1  = _mm512_permutex2var_epi16(A, shuf1, B);
+
+        _mm512_storeu_si512((__m512i*)(out + 0*32), res0);
+        _mm512_storeu_si512((__m512i*)(out + 1*32), res1);
+
+        const __m512i zero = _mm512_setzero_si512();
+        __mmask32 a = _mm512_cmpeq_epu16_mask(res0, zero);
+        __mmask32 b = _mm512_cmpeq_epu16_mask(res1, zero);
+        return (u64(b) << 32) | a;
+    }
+
+#endif // 0
+
 #if defined(MANGO_ENABLE_LZCNT)
 
     static inline
@@ -372,6 +557,91 @@ namespace
             return output;
         }
 
+#if 0
+
+        // SSE2 / AVX512 zigzag + zero detector prototype
+
+        u8* encode(u8* p, int component, const s16* input)
+        {
+            struct
+            {
+                const u16* code;
+                const u16* size;
+            } dc, ac;
+
+            if (component != 0)
+            {
+                dc.code = g_chrominance_dc_code_table;
+                dc.size = g_chrominance_dc_size_table;
+                ac.code = g_chrominance_ac_code_table;
+                ac.size = g_chrominance_ac_size_table;
+            }
+            else
+            {
+                dc.code = g_luminance_dc_code_table;
+                dc.size = g_luminance_dc_size_table;
+                ac.code = g_luminance_ac_code_table;
+                ac.size = g_luminance_ac_size_table;
+            }
+
+            int coeff = input[0] - last_dc_value[component];
+            last_dc_value[component] = input[0];
+
+            u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
+            u32 dataSize = getSymbolSize(absCoeff);
+            u32 dataMask = (1 << dataSize) - 1;
+
+            p = putBits(p, dc.code[dataSize], dc.size[dataSize]);
+            p = putBits(p, coeff & dataMask, dataSize);
+
+            s16 temp[64];
+            u64 mask = ~jpeg_zigzag_sse2(input, temp);
+            //u64 mask = ~jpeg_zigzag_avx512bw(input, temp);
+            mask >>= 1; // skip dc
+
+            int runLength = 0;
+
+            for (int i = 1; i < 64; )
+            {
+                int count = u64_tzcnt(mask);
+                runLength += count;
+                mask >>= (count + 1);
+                i += count;
+
+                if (i < 64)
+                {
+                    while (runLength > 15)
+                    {
+                        runLength -= 16;
+                        p = putBits(p, ac.code[161], ac.size[161]);
+                    }
+
+                    // TODO: parallel absCoeff to dataSize computation
+
+                    int coeff = temp[i++];
+
+                    u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
+                    u32 dataSize = getSymbolSize(absCoeff);
+                    u32 dataMask = (1 << dataSize) - 1;
+
+                    int index = runLength * 10 + dataSize;
+                    p = putBits(p, ac.code[index], ac.size[index]);
+                    p = putBits(p, coeff & dataMask, dataSize);
+
+                    runLength = 0;
+                }
+            }
+
+            if (runLength != 0)
+            {
+                p = putBits(p, ac.code[0], ac.size[0]);
+            }
+
+            return p;
+        }
+
+#else
+
         u8* encode(u8* p, int component, const s16* input)
         {
             struct
@@ -441,6 +711,9 @@ namespace
 
             return p;
         }
+
+#endif
+
     };
 
 #if defined(JPEG_ENABLE_SSE2)
