@@ -3,6 +3,11 @@
 using namespace mango;
 using namespace mango::filesystem;
 
+void printSize(const File &f)
+{
+    printf("'%s' is %lld bytes\n", f.filename().c_str(), f.size());
+}
+
 int main(int argc, const char* argv[])
 {
     // Display P3 icc profile.  this non-copyrighted profile from https://github.com/saucecontrol/Compact-ICC-Profiles
@@ -15,6 +20,8 @@ int main(int argc, const char* argv[])
     options.compression = 4;
     options.icc = icc;
 
+    printSize(icc);
+
     Bitmap bitmapMoreRed(256, 512, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
     bitmapMoreRed.clear(ColorRGBA(0xff0000ff)); // p3 full red
 
@@ -22,9 +29,12 @@ int main(int argc, const char* argv[])
     bitmap.clear(ColorRGBA(0xff2333ec)); // srgb full red in display p3 colorspace
 
     bitmap.blit(256, 0, bitmapMoreRed); // copy more reddish bar to right side of the buffer
-    
+
     bitmap.save("icc-mango.jpg", options);
     bitmap.save("icc-mango.png", options);
+
+    printSize(File("icc-mango.jpg"));
+    printSize(File("icc-mango.png"));
 
     // now we have jpeg, png showing srgb full red on left, more saturated p3 full red on right side.
 }
