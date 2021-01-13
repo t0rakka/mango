@@ -232,14 +232,16 @@ namespace
 
     u64 jpeg_zigzag_sse2(const s16* in, s16* out)
     {
-        const __m128i A = _mm_loadu_si128((const __m128i*)(in + 0*8));
-        const __m128i B = _mm_loadu_si128((const __m128i*)(in + 1*8));
-        const __m128i C = _mm_loadu_si128((const __m128i*)(in + 2*8));
-        const __m128i D = _mm_loadu_si128((const __m128i*)(in + 3*8));
-        const __m128i E = _mm_loadu_si128((const __m128i*)(in + 4*8));
-        const __m128i F = _mm_loadu_si128((const __m128i*)(in + 5*8));
-        const __m128i G = _mm_loadu_si128((const __m128i*)(in + 6*8));
-        const __m128i H = _mm_loadu_si128((const __m128i*)(in + 7*8));
+        const __m128i* src = reinterpret_cast<const __m128i *>(in);
+
+        const __m128i A = _mm_loadu_si128(src + 0);
+        const __m128i B = _mm_loadu_si128(src + 1);
+        const __m128i C = _mm_loadu_si128(src + 2);
+        const __m128i D = _mm_loadu_si128(src + 3);
+        const __m128i E = _mm_loadu_si128(src + 4);
+        const __m128i F = _mm_loadu_si128(src + 5);
+        const __m128i G = _mm_loadu_si128(src + 6);
+        const __m128i H = _mm_loadu_si128(src + 7);
 
         // row #0
         const __m128i A_0_shuf = _mm_setr_epi8(0, 1, 2, 3, -1, -1, -1, -1, -1, -1, 4, 5, 6, 7, -1, -1);
@@ -357,23 +359,32 @@ namespace
         const __m128i H_7 = _mm_shuffle_epi8(H, H_7_shuf);
         row7 = _mm_or_si128(row7, H_7);
 
-        _mm_storeu_si128((__m128i*)(out + 0*8), row0);
-        _mm_storeu_si128((__m128i*)(out + 1*8), row1);
-        _mm_storeu_si128((__m128i*)(out + 2*8), row2);
-        _mm_storeu_si128((__m128i*)(out + 3*8), row3);
-        _mm_storeu_si128((__m128i*)(out + 4*8), row4);
-        _mm_storeu_si128((__m128i*)(out + 5*8), row5);
-        _mm_storeu_si128((__m128i*)(out + 6*8), row6);
-        _mm_storeu_si128((__m128i*)(out + 7*8), row7);
-
+        // compute zeromask
         const __m128i zero = _mm_setzero_si128();
-        __m128i z0 = _mm_packs_epi16(_mm_cmpeq_epi16(row0, zero), _mm_cmpeq_epi16(row1, zero));
-        __m128i z1 = _mm_packs_epi16(_mm_cmpeq_epi16(row2, zero), _mm_cmpeq_epi16(row3, zero));
-        __m128i z2 = _mm_packs_epi16(_mm_cmpeq_epi16(row4, zero), _mm_cmpeq_epi16(row5, zero));
-        __m128i z3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
-        u32 a = _mm_movemask_epi8(z0) | ((_mm_movemask_epi8(z1)) << 16);
-        u32 b = _mm_movemask_epi8(z2) | ((_mm_movemask_epi8(z3)) << 16);
-        return (u64(b) << 32) | a;
+        __m128i zero0 = _mm_packs_epi16(_mm_cmpeq_epi16(row0, zero), _mm_cmpeq_epi16(row1, zero));
+        __m128i zero1 = _mm_packs_epi16(_mm_cmpeq_epi16(row2, zero), _mm_cmpeq_epi16(row3, zero));
+        __m128i zero2 = _mm_packs_epi16(_mm_cmpeq_epi16(row4, zero), _mm_cmpeq_epi16(row5, zero));
+        __m128i zero3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
+        u32 mask_lo = _mm_movemask_epi8(zero0) | ((_mm_movemask_epi8(zero1)) << 16);
+        u32 mask_hi = _mm_movemask_epi8(zero2) | ((_mm_movemask_epi8(zero3)) << 16);
+        u64 zeromask = ~((u64(mask_hi) << 32) | mask_lo);
+
+        __m128i* dest = reinterpret_cast<__m128i *>(out);
+
+        _mm_storeu_si128(dest + 0, row0);
+        _mm_storeu_si128(dest + 1, row1);
+        _mm_storeu_si128(dest + 2, row2);
+        _mm_storeu_si128(dest + 3, row3);
+
+        if (mask_hi)
+        {
+            _mm_storeu_si128(dest + 4, row4);
+            _mm_storeu_si128(dest + 5, row5);
+            _mm_storeu_si128(dest + 6, row6);
+            _mm_storeu_si128(dest + 7, row7);
+        }
+
+        return zeromask;
     }
 
     // TODO: use zigzag_table_inverse and unpcklo from 8 to 16 bit
@@ -399,13 +410,16 @@ namespace
         const __m512i res0  = _mm512_permutex2var_epi16(A, shuf0, B);
         const __m512i res1  = _mm512_permutex2var_epi16(A, shuf1, B);
 
+        // compute zeromask
+        const __m512i zero = _mm512_setzero_si512();
+        __mmask32 mask_lo = _mm512_cmpneq_epu16_mask(res0, zero);
+        __mmask32 mask_hi = _mm512_cmpneq_epu16_mask(res1, zero);
+        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
+
         _mm512_storeu_si512((__m512i*)(out + 0*32), res0);
         _mm512_storeu_si512((__m512i*)(out + 1*32), res1);
 
-        const __m512i zero = _mm512_setzero_si512();
-        __mmask32 a = _mm512_cmpeq_epu16_mask(res0, zero);
-        __mmask32 b = _mm512_cmpeq_epu16_mask(res1, zero);
-        return (u64(b) << 32) | a;
+        return zeromask;
     }
 
 #endif // 0
@@ -596,8 +610,8 @@ namespace
             p = putBits(p, coeff & dataMask, dataSize);
 
             s16 temp[64];
-            u64 mask = ~jpeg_zigzag_sse2(input, temp);
-            //u64 mask = ~jpeg_zigzag_avx512bw(input, temp);
+            u64 mask = jpeg_zigzag_sse2(input, temp);
+            //u64 mask = jpeg_zigzag_avx512bw(input, temp);
             mask >>= 1; // skip dc
 
             for (int i = 1; i < 64; )
@@ -618,8 +632,6 @@ namespace
                     runLength -= 16;
                     p = putBits(p, ac.code[161], ac.size[161]);
                 }
-
-                // TODO: parallel absCoeff to dataSize computation
 
                 int coeff = temp[i++];
 
