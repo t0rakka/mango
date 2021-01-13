@@ -591,7 +591,7 @@ namespace jpeg {
 #endif // JPEG_ENABLE_SSE4
 
     SampleFormat getSampleFormat(const Format& format);
-	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, float quality);
+	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);
 
 } // namespace jpeg
 } // namespace mango

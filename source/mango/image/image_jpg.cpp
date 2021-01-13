@@ -71,7 +71,7 @@ namespace
 
     ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        ImageEncodeStatus status = jpeg::encodeImage(stream, surface, options.quality);
+        ImageEncodeStatus status = jpeg::encodeImage(stream, surface, options);
         return status;
     }
 
