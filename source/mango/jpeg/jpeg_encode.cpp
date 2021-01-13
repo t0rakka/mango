@@ -46,6 +46,36 @@ namespace
         { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
     };
 
+    // Table K.1 – Luminance quantization table
+
+    const u8 luminance_quant_table [] =
+    {
+        16, 11, 10, 16,  24,  40,  51,  61,
+        12, 12, 14, 19,  26,  58,  60,  55,
+        14, 13, 16, 24,  40,  57,  69,  56,
+        14, 17, 22, 29,  51,  87,  80,  62,
+        18, 22, 37, 56,  68, 109, 103,  77,
+        24, 35, 55, 64,  81, 104, 113,  92,
+        49, 64, 78, 87, 103, 121, 120, 101,
+        72, 92, 95, 98, 112, 100, 103,  99
+    };
+
+    // Table K.2 – Chrominance quantization table
+
+    const u8 chrominance_quant_table [] =
+    {
+        17, 18, 24, 47, 99, 99, 99, 99,
+        18, 21, 26, 66, 99, 99, 99, 99,
+        24, 26, 56, 99, 99, 99, 99, 99,
+        47, 66, 99, 99, 99, 99, 99, 99,
+        99, 99, 99, 99, 99, 99, 99, 99,
+        99, 99, 99, 99, 99, 99, 99, 99,
+        99, 99, 99, 99, 99, 99, 99, 99,
+        99, 99, 99, 99, 99, 99, 99, 99
+    };
+
+    // Table K.3 – Table for luminance DC coefficient differences
+
     const u16 g_luminance_dc_code_table [] =
     {
         0x0000, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006,
@@ -58,6 +88,8 @@ namespace
         0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009
     };
 
+    // Table K.4 – Table for chrominance DC coefficient differences
+
     const u16 g_chrominance_dc_code_table [] =
     {
         0x0000, 0x0001, 0x0002, 0x0006, 0x000E, 0x001E,
@@ -69,6 +101,8 @@ namespace
         0x0002, 0x0002, 0x0002, 0x0003, 0x0004, 0x0005,
         0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B
     };
+
+    // Table K.5 – Table for luminance AC coefficients
 
     const u16 g_luminance_ac_code_table [] =
     {
@@ -113,6 +147,8 @@ namespace
         0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
         0x000B
     };
+
+    // Table K.6 – Table for chrominance AC coefficients
 
     const u16 g_chrominance_ac_code_table [] =
     {
@@ -200,35 +236,13 @@ namespace
         53, 60, 61, 54, 47, 55, 62, 63,
     };
 
-    const u8 luminance_quant_table [] =
-    {
-        16, 11, 10, 16,  24,  40,  51,  61,
-        12, 12, 14, 19,  26,  58,  60,  55,
-        14, 13, 16, 24,  40,  57,  69,  56,
-        14, 17, 22, 29,  51,  87,  80,  62,
-        18, 22, 37, 56,  68, 109, 103,  77,
-        24, 35, 55, 64,  81, 104, 113,  92,
-        49, 64, 78, 87, 103, 121, 120, 101,
-        72, 92, 95, 98, 112, 100, 103,  99
-    };
-
-    const u8 chrominance_quant_table [] =
-    {
-        17, 18, 24, 47, 99, 99, 99, 99,
-        18, 21, 26, 66, 99, 99, 99, 99,
-        24, 26, 56, 99, 99, 99, 99, 99,
-        47, 66, 99, 99, 99, 99, 99, 99,
-        99, 99, 99, 99, 99, 99, 99, 99,
-        99, 99, 99, 99, 99, 99, 99, 99,
-        99, 99, 99, 99, 99, 99, 99, 99,
-        99, 99, 99, 99, 99, 99, 99, 99
-    };
-
 #if 0
 
     // NOTE: If we procecessed more MCUs at a time the constants could be initialized outsize of the
     //       processing loop.
     // TODO: Profile if it's worth it..
+
+    // TODO: attribute
 
     u64 jpeg_zigzag_sse2(const s16* in, s16* out)
     {
@@ -642,8 +656,8 @@ namespace
                 u32 dataMask = (1 << dataSize) - 1;
 
                 // TODO: if we make the table 16 entries wide, we could use "runLength * 16" here
-                //       "runLength * 10 + dataSize" is MUL + ADD
-                //       "runLength * 16 + dataSize" is LEA
+                //       "runLength * 10 + dataSize" is LEA x 2 ; index = (runLength * 4 + runLength) * 2 + dataSize
+                //       "runLength * 16 + dataSize" is LEA     ; index = (runLength * 16 + dataSize)
 
                 int index = runLength * 10 + dataSize;
                 p = putBits(p, ac.code[index], ac.size[index]);
