@@ -54,6 +54,34 @@ namespace jpeg {
         printf("\n");
     }
 
+    static
+    const SampleFormat g_format_table [] =
+    {
+        { JPEG_U8_Y,    LuminanceFormat(8, Format::UNORM, 8, 0) },
+        { JPEG_U8_BGR,  Format(24, Format::UNORM, Format::BGR, 8, 8, 8) },
+        { JPEG_U8_RGB,  Format(24, Format::UNORM, Format::RGB, 8, 8, 8) },
+        { JPEG_U8_BGRA, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
+        { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
+    };
+
+    SampleFormat getSampleFormat(const Format& format)
+    {
+        // set default format
+        SampleFormat result { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
+
+        // find better match
+        for (auto sf : g_format_table)
+        {
+            if (format == sf.format)
+            {
+                result = sf;
+                break;
+            }
+        }
+
+        return result;
+    }
+
     // ----------------------------------------------------------------------------
     // BitBuffer
     // ----------------------------------------------------------------------------
