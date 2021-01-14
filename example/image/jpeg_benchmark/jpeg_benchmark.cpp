@@ -184,8 +184,8 @@ void jpge_save(const char* filename, const Surface& surface)
 void print(const char* name, u64 load, u64 save)
 {
     printf("%s", name);
-    printf("%7d.%d ms ", int(load / 1000), int(load % 10));
-    printf("%7d.%d ms ", int(save / 1000), int(save % 10));
+    printf("%7d.%d ms ", int(load / 1000), int(load % 1000) / 100);
+    printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
     printf("\n");
 }
 
