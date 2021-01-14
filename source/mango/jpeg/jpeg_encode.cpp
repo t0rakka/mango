@@ -376,7 +376,7 @@ namespace
         __m128i zero3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
         u32 mask_lo = _mm_movemask_epi8(zero0) | ((_mm_movemask_epi8(zero1)) << 16);
         u32 mask_hi = _mm_movemask_epi8(zero2) | ((_mm_movemask_epi8(zero3)) << 16);
-        u64 zeromask = ~((u64(mask_hi) << 32) | mask_lo);
+        u64 zeromask = mask_lo;
 
         __m128i* dest = reinterpret_cast<__m128i *>(out);
 
@@ -387,13 +387,14 @@ namespace
 
         if (mask_hi)
         {
+            zeromask |= (u64(mask_hi) << 32);
             _mm_storeu_si128(dest + 4, row4);
             _mm_storeu_si128(dest + 5, row5);
             _mm_storeu_si128(dest + 6, row6);
             _mm_storeu_si128(dest + 7, row7);
         }
 
-        return zeromask;
+        return ~zeromask;
     }
 
     // TODO: use zigzag_table_inverse and unpcklo from 8 to 16 bit
@@ -411,11 +412,14 @@ namespace
 
     u64 jpeg_zigzag_avx512bw(const s16* in, s16* out)
     {
-        const __m512i A = _mm512_loadu_si512((const __m512i*)(in + 0*32));
-        const __m512i B = _mm512_loadu_si512((const __m512i*)(in + 1*32));
+        const __m512i* src = reinterpret_cast<const __m512i *>(in);
+        const __m512i* table = reinterpret_cast<const __m512i *>(zigzag_shuffle);
 
-        const __m512i shuf0 = _mm512_loadu_si512((const __m512i*)(zigzag_shuffle + 0*32));
-        const __m512i shuf1 = _mm512_loadu_si512((const __m512i*)(zigzag_shuffle + 1*32));
+        const __m512i A = _mm512_loadu_si512(src + 0);
+        const __m512i B = _mm512_loadu_si512(src + 1);
+
+        const __m512i shuf0 = _mm512_loadu_si512(table + 0);
+        const __m512i shuf1 = _mm512_loadu_si512(table + 1);
         const __m512i res0  = _mm512_permutex2var_epi16(A, shuf0, B);
         const __m512i res1  = _mm512_permutex2var_epi16(A, shuf1, B);
 
@@ -425,8 +429,10 @@ namespace
         __mmask32 mask_hi = _mm512_cmpneq_epu16_mask(res1, zero);
         u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
 
-        _mm512_storeu_si512((__m512i*)(out + 0*32), res0);
-        _mm512_storeu_si512((__m512i*)(out + 1*32), res1);
+        __m512i* dest = reinterpret_cast<__m512i *>(out);
+
+        _mm512_storeu_si512(dest + 0, res0);
+        _mm512_storeu_si512(dest + 1, res1);
 
         return zeromask;
     }
