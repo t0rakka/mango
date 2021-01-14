@@ -181,11 +181,11 @@ void jpge_save(const char* filename, const Surface& surface)
 // print
 // ----------------------------------------------------------------------
 
-void print(const char* name, u64 time0, u64 time1, u64 time2)
+void print(const char* name, u64 load, u64 save)
 {
     printf("%s", name);
-    printf("%7d.%d ms ", int((time1 - time0) / 1000), int((time1 - time0) % 10));
-    printf("%7d.%d ms ", int((time2 - time1) / 1000), int((time2 - time1) % 10));
+    printf("%7d.%d ms ", int(load / 1000), int(load % 10));
+    printf("%7d.%d ms ", int(save / 1000), int(save % 10));
     printf("\n");
 }
 
@@ -202,6 +202,12 @@ int main(int argc, const char* argv[])
     }
 
     warmup(argv[1]);
+
+    int test_count = 0;
+    if (argc == 3)
+    {
+        test_count = std::atoi(argv[2]);
+    }
 
     printf("----------------------------------------------\n");
     printf("                load         save             \n");
@@ -224,7 +230,7 @@ int main(int argc, const char* argv[])
     save_jpeg("output-libjpeg.jpg", s);
 
     time2 = Time::us();
-    print("libjpeg: ", time0, time1, time2);
+    print("libjpeg: ", time1 - time0, time2 - time1);
 
 #endif
 
@@ -241,7 +247,7 @@ int main(int argc, const char* argv[])
     stb_save_jpeg("output-stb.jpg", s_stb);
 
     time2 = Time::us();
-    print("stb:     ", time0, time1, time2);
+    print("stb:     ", time1 - time0, time2 - time1);
 
 #endif
 
@@ -258,7 +264,7 @@ int main(int argc, const char* argv[])
     jpge_save("output-jpge.jpg", s_jpgd);
 
     time2 = Time::us();
-    print("jpgd:    ", time0, time1, time2);
+    print("jpgd:    ", time1 - time0, time2 - time1);
 
 #endif
 
@@ -275,8 +281,40 @@ int main(int argc, const char* argv[])
     bitmap.save("output-mango.jpg", options);
 
     time2 = Time::us();
-    print("mango:   ", time0, time1, time2);
+    print("mango:   ", time1 - time0, time2 - time1);
 
     // ------------------------------------------------------------------
+
+    if (test_count > 0)
+    {
+        u64 load_total = time1 - time0;
+        u64 save_total = time2 - time1;
+        u64 load_lowest = load_total;
+        u64 save_lowest = save_total;
+
+        for (int i = 0; i < test_count; ++i)
+        {
+            time0 = Time::us();
+            Bitmap bitmap(argv[1]);
+
+            time1 = Time::us();
+            bitmap.save("output-mango.jpg", options);
+
+            time2 = Time::us();
+
+            u64 load = time1 - time0;
+            u64 save = time2 - time1;
+            load_total += load;
+            save_total += save;
+            load_lowest = std::min(load_lowest, load);
+            save_lowest = std::min(save_lowest, save);
+            print("         ", load, save);
+        }
+
+        printf("----------------------------------------------\n");
+        print("average: ", load_total / (test_count + 1), save_total / (test_count + 1));
+        print("lowest : ", load_lowest, save_lowest);
+        printf("----------------------------------------------\n");
+    }
 
 }
