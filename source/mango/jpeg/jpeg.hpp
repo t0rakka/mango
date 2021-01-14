@@ -591,7 +591,10 @@ namespace jpeg {
 #endif // JPEG_ENABLE_SSE4
 
     SampleFormat getSampleFormat(const Format& format);
+
+#ifdef MANGO_ENABLE_LICENSE_GPL
 	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);
+#endif
 
 } // namespace jpeg
 } // namespace mango

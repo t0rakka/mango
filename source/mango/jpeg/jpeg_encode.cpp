@@ -30,6 +30,10 @@
 #include "jpeg.hpp"
 #include <cstring>
 
+// NOTE: Some parts of the code still use the SRV-1 license where this code started from,
+//       it has very little original code left but enough that we MUST respect the GPL license!!!
+#ifdef MANGO_ENABLE_LICENSE_GPL
+
 namespace
 {
     using namespace mango;
@@ -2249,3 +2253,5 @@ namespace jpeg {
 
 } // namespace jpeg
 } // namespace mango
+
+#endif // MANGO_ENABLE_LICENSE_GPL
