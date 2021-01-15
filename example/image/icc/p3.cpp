@@ -1,3 +1,5 @@
+/*
+*/
 #include <mango/mango.hpp>
 
 using namespace mango;
@@ -5,7 +7,7 @@ using namespace mango::filesystem;
 
 void printSize(const File &f)
 {
-    printf("'%s' is %lld bytes\n", f.filename().c_str(), f.size());
+    printf("'%s' is %zu bytes\n", f.filename().c_str(), f.size());
 }
 
 int main(int argc, const char* argv[])
@@ -38,4 +40,3 @@ int main(int argc, const char* argv[])
 
     // now we have jpeg, png showing srgb full red on left, more saturated p3 full red on right side.
 }
-

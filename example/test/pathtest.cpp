@@ -31,10 +31,10 @@ void print(const Path& path)
 
 void print(const File& file)
 {
-    printf("[file] %s + %s, size: %" PRIu64 " bytes \n", 
+    printf("[file] %s + %s, size: %zu bytes \n", 
         file.pathname().c_str(), 
         file.filename().c_str(), 
-        u64(file.size()));
+        file.size());
 
     // sum of every byte in the file to validate the memory mapping
     u64 sum = 0;
