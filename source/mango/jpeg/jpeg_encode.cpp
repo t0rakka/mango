@@ -636,25 +636,17 @@ namespace
 
 #else
 
-    const u8 g_log2_4bit_table [] =
-    {
-        0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-    };
-
     static inline
     u32 getSymbolSize(u32 value)
     {
-        /* branchless binary search
-        u32 base = 0;
-        base += 8 * ((value >> base) > 0xff);
-        base += 4 * ((value >> base) > 0x0f);
-        base += 2 * ((value >> base) > 0x03);
-        base += 1 * ((value >> base) > 0x01);
-        return base;
-        */
-        u32 base = 8 * (value > 255);
-        base += 4 * ((value >> base) > 15);
-        return g_log2_4bit_table[value >> base] + base;
+        // NOTE: This looks crap but clang compiles it branchless
+        int base = 0;
+        u32 temp;
+        temp = value & 0xff00; if (temp) { base |= 8;  value = temp; }
+        temp = value & 0xf0f0; if (temp) { base |= 4;  value = temp; }
+        temp = value & 0xcccc; if (temp) { base |= 2;  value = temp; }
+        temp = value & 0xaaaa; if (temp) { base |= 1; }
+        return base + 1;
     }
 
 #endif
@@ -670,8 +662,9 @@ namespace
             *output++ = value;
 
             // always write the stuff byte
-            // .. but advance ptr only when it actually was one
             *output = 0;
+
+            // .. but advance ptr only when it actually was one
             output += (value == 0xff);
         }
         return output;
@@ -798,7 +791,7 @@ namespace
             last_dc_value[component] = input[0];
 
             u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            u32 dataSize = getSymbolSize(absCoeff);
+            u32 dataSize = absCoeff ? getSymbolSize(absCoeff) : 0;
             u32 dataMask = (1 << dataSize) - 1;
 
             p = putBits(p, dc.code[dataSize], dc.size[dataSize]);
@@ -808,7 +801,7 @@ namespace
             u64 mask = jpeg_zigzag_ssse3(input, temp);
             //u64 mask = jpeg_zigzag_avx2(input, temp);
             //u64 mask = jpeg_zigzag_avx512bw(input, temp);
-            mask >>= 1; // skip dc
+            mask >>= 1; // skip DC
 
             for (int i = 1; i < 64; )
             {
@@ -876,7 +869,7 @@ namespace
             last_dc_value[component] = input[0];
 
             u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            u32 dataSize = getSymbolSize(absCoeff);
+            u32 dataSize = absCoeff ? getSymbolSize(absCoeff) : 0;
             u32 dataMask = (1 << dataSize) - 1;
 
             p = putBits(p, dc.code[dataSize], dc.size[dataSize]);
