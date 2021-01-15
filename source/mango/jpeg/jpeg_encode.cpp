@@ -239,7 +239,7 @@ namespace
 
     // TODO: attribute
 
-    u64 jpeg_zigzag_sse2(const s16* in, s16* out)
+    u64 jpeg_zigzag_ssse3(const s16* in, s16* out)
     {
         const __m128i* src = reinterpret_cast<const __m128i *>(in);
 
@@ -400,7 +400,7 @@ namespace
     // TODO: use zigzag_table_inverse and unpcklo from 8 to 16 bit
     const u16 zigzag_shuffle [] =
     {
-        0,  1,  8, 16,  9,  2,  3, 10,
+         0,  1,  8, 16,  9,  2,  3, 10,
         17, 24, 32, 25, 18, 11,  4,  5,
         12, 19, 26, 33, 40, 48, 41, 34,
         27, 20, 13,  6,  7, 14, 21, 28,
@@ -632,7 +632,7 @@ namespace
             p = putBits(p, coeff & dataMask, dataSize);
 
             s16 temp[64];
-            u64 mask = jpeg_zigzag_sse2(input, temp);
+            u64 mask = jpeg_zigzag_ssse3(input, temp);
             //u64 mask = jpeg_zigzag_avx512bw(input, temp);
             mask >>= 1; // skip dc
 
