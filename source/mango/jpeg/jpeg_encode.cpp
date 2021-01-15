@@ -427,12 +427,17 @@ namespace
         const __m512i zero = _mm512_setzero_si512();
         __mmask32 mask_lo = _mm512_cmpneq_epu16_mask(res0, zero);
         __mmask32 mask_hi = _mm512_cmpneq_epu16_mask(res1, zero);
-        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
+        u64 zeromask = mask_lo;
 
         __m512i* dest = reinterpret_cast<__m512i *>(out);
 
         _mm512_storeu_si512(dest + 0, res0);
-        _mm512_storeu_si512(dest + 1, res1);
+
+        if (!mask_hi)
+        {
+            zeromask |= (u64(mask_hi) << 32);
+            _mm512_storeu_si512(dest + 1, res1);
+        }
 
         return zeromask;
     }
