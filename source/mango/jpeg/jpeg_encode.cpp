@@ -238,14 +238,29 @@ namespace
         return v == -1 ? -1 : (v & 7) * 2 + offset;
     }
 
-    inline __m128i shuffle(__m128i v, s8 a, s8 b, s8 c, s8 d, s8 e, s8 f, s8 g, s8 h)
+    inline int16x8 shuffle(__m128i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7)
     {
         const __m128i s = _mm_setr_epi8(
-            lane(a, 0), lane(a, 1), lane(b, 0), lane(b, 1),
-            lane(c, 0), lane(c, 1), lane(d, 0), lane(d, 1),
-            lane(e, 0), lane(e, 1), lane(f, 0), lane(f, 1),
-            lane(g, 0), lane(g, 1), lane(h, 0), lane(h, 1));
-        return _mm_shuffle_epi8(v, s);
+            lane(c0, 0), lane(c0, 1), lane(c1, 0), lane(c1, 1),
+            lane(c2, 0), lane(c2, 1), lane(c3, 0), lane(c3, 1),
+            lane(c4, 0), lane(c4, 1), lane(c5, 0), lane(c5, 1),
+            lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1));
+        return int16x8(_mm_shuffle_epi8(v, s));
+    }
+
+    inline int16x16 shuffle(__m256i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7,
+                                       s8 c8, s8 c9, s8 ca, s8 cb, s8 cc, s8 cd, s8 ce, s8 cf)
+    {
+        const __m256i s = _mm256_setr_epi8(
+            lane(c0, 0), lane(c0, 1), lane(c1, 0), lane(c1, 1),
+            lane(c2, 0), lane(c2, 1), lane(c3, 0), lane(c3, 1),
+            lane(c4, 0), lane(c4, 1), lane(c5, 0), lane(c5, 1),
+            lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1),
+            lane(c8, 0), lane(c8, 1), lane(c9, 0), lane(c9, 1),
+            lane(ca, 0), lane(ca, 1), lane(cb, 0), lane(cb, 1),
+            lane(cc, 0), lane(cc, 1), lane(cd, 0), lane(cd, 1),
+            lane(ce, 0), lane(ce, 1), lane(cf, 0), lane(cf, 1));
+        return int16x16(_mm256_shuffle_epi8(v, s));
     }
 
     u64 jpeg_zigzag_ssse3(const s16* in, s16* out)
@@ -275,11 +290,9 @@ namespace
         // G:  -   -   -   -   -   -   -   -
         // H:  -   -   -   -   -   -   -   -
 
-        const __m128i A0 = shuffle(A, 0, 1, z, z, z, 2, 3, z); 
-        const __m128i B0 = shuffle(B, z, z, 8, z, 9, z, z, 2); 
-        const __m128i C0 = shuffle(C, z, z, z, 16, z, z, z, z); 
-        __m128i row0 = _mm_or_si128(A0, B0);
-        row0 = _mm_or_si128(row0, C0);
+        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3, z) |
+                       shuffle(B, z, z, 8,  z, 9, z, z, 2) |
+                       shuffle(C, z, z, z, 16, z, z, z, z);
 
         // ------------------------------------------------------------------------
         //    17, 24, 32, 25, 18, 11,  4,  5,
@@ -293,15 +306,11 @@ namespace
         // G:  -   -   -   -   -   -   -   -
         // H:  -   -   -   -   -   -   -   -
 
-        const __m128i A1 = shuffle(A, z, z, z, z, z, z, 4, 5); 
-        const __m128i B1 = shuffle(B, z, z, z, z, z, 11, z, z); 
-        const __m128i C1 = shuffle(C, 1, z, z, z, 18, z, z, z); 
-        const __m128i D1 = shuffle(D, z, 24, z, 25, z, z, z, z); 
-        const __m128i E1 = shuffle(E, z, z, 32, z, z, z, z, z); 
-        __m128i row1 = _mm_or_si128(A1, B1);
-        row1 = _mm_or_si128(row1, C1);
-        row1 = _mm_or_si128(row1, D1);
-        row1 = _mm_or_si128(row1, E1);
+        __m128i row1 = shuffle(A, z,  z, z,  z,  z,  z, 4, 5) |
+                       shuffle(B, z,  z, z,  z,  z, 11, z, z) |
+                       shuffle(C, 1,  z, z,  z, 18,  z, z, z) |
+                       shuffle(D, z, 24, z, 25,  z,  z, z, z) |
+                       shuffle(E, z, z, 32,  z,  z,  z, z, z);
 
         // ------------------------------------------------------------------------
         //    12, 19, 26, 33, 40, 48, 41, 34,
@@ -315,17 +324,12 @@ namespace
         // G:  -   -   -   -   -   x   -   -
         // H:  -   -   -   -   -   -   -   -
 
-        const __m128i B2 = shuffle(B, 12, z, z, z, z, z, z, z); 
-        const __m128i C2 = shuffle(C, z, 19, z, z, z, z, z, z); 
-        const __m128i D2 = shuffle(D, z, z, 26, z, z, z, z, z); 
-        const __m128i E2 = shuffle(E, z, z, z, 33, z, z, z, 34); 
-        const __m128i F2 = shuffle(F, z, z, z, z, 40, z, 41, z); 
-        const __m128i G2 = shuffle(G, z, z, z, z, z, 48, z, z); 
-        __m128i row2 = _mm_or_si128(B2, C2);
-        row2 = _mm_or_si128(row2, D2);
-        row2 = _mm_or_si128(row2, E2);
-        row2 = _mm_or_si128(row2, F2);
-        row2 = _mm_or_si128(row2, G2);
+        __m128i row2 = shuffle(B, 12,  z,  z,  z,  z,  z,  z,  z) |
+                       shuffle(C,  z, 19,  z,  z,  z,  z,  z,  z) |
+                       shuffle(D,  z,  z, 26,  z,  z,  z,  z,  z) |
+                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) | 
+                       shuffle(F,  z,  z,  z,  z, 40,  z, 41,  z) |
+                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z); 
 
         // ------------------------------------------------------------------------
         //    27, 20, 13,  6,  7, 14, 21, 28,
@@ -339,13 +343,10 @@ namespace
         // G:  -   -   -   -   -   -   -   -
         // H:  -   -   -   -   -   -   -   -
 
-        const __m128i A3 = shuffle(A, z, z, z, 6, 7, z, z, z); 
-        const __m128i B3 = shuffle(B, z, z, 13, z, z, 14, z, z); 
-        const __m128i C3 = shuffle(C, z, 20, z, z, z, z, 21, z); 
-        const __m128i D3 = shuffle(D, 27, z, z, z, z, z, z, 28); 
-        __m128i row3 = _mm_or_si128(A3, B3);
-        row3 = _mm_or_si128(row3, C3);
-        row3 = _mm_or_si128(row3, D3);
+        __m128i row3 = shuffle(A,  z,  z,  z, 6, 7,  z,  z,  z) |
+                       shuffle(B,  z,  z, 13, z, z, 14,  z,  z) |
+                       shuffle(C,  z, 20,  z, z, z,  z, 21,  z) |
+                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28); 
 
         // ------------------------------------------------------------------------
         //    35, 42, 49, 56, 57, 50, 43, 36,
@@ -359,13 +360,10 @@ namespace
         // G:  -   -   x   -   -   x   -   -
         // H:  -   -   -   x   x   -   -   -
 
-        const __m128i E4 = shuffle(E, 35, z, z, z, z, z, z, 36); 
-        const __m128i F4 = shuffle(F, z, 42, z, z, z, z, 43, z); 
-        const __m128i G4 = shuffle(G, z, z, 49, z, z, 50, z, z); 
-        const __m128i H4 = shuffle(H, z, z, z, 56, 57, z, z, z); 
-        __m128i row4 = _mm_or_si128(E4, F4);
-        row4 = _mm_or_si128(row4, G4);
-        row4 = _mm_or_si128(row4, H4);
+        __m128i row4 = shuffle(E, 35,  z,  z,  z,  z,  z,  z, 36) |
+                       shuffle(F,  z, 42,  z,  z,  z,  z, 43,  z) |
+                       shuffle(G,  z,  z, 49,  z,  z, 50,  z,  z) |
+                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z); 
 
         // ------------------------------------------------------------------------
         //    29, 22, 15, 23, 30, 37, 44, 51,
@@ -379,17 +377,12 @@ namespace
         // G:  -   -   -   -   -   -   -   x
         // H:  -   -   -   -   -   -   -   -
 
-        const __m128i B5 = shuffle(B, z, z, 15, z, z, z, z, z); 
-        const __m128i C5 = shuffle(C, z, 22, z, 23, z, z, z, z); 
-        const __m128i D5 = shuffle(D, 29, z, z, z, 30, z, z, z); 
-        const __m128i E5 = shuffle(E, z, z, z, z, z, 37, z, z); 
-        const __m128i F5 = shuffle(F, z, z, z, z, z, z, 44, z); 
-        const __m128i G5 = shuffle(G, z, z, z, z, z, z, z, 51); 
-        __m128i row5 = _mm_or_si128(B5, C5);
-        row5 = _mm_or_si128(row5, D5);
-        row5 = _mm_or_si128(row5, E5);
-        row5 = _mm_or_si128(row5, F5);
-        row5 = _mm_or_si128(row5, G5);
+        __m128i row5 = shuffle(B,  z,  z, 15,  z,  z,  z,  z,  z) |
+                       shuffle(C,  z, 22,  z, 23,  z,  z,  z,  z) |
+                       shuffle(D, 29,  z,  z,  z, 30,  z,  z,  z) |
+                       shuffle(E,  z,  z,  z,  z,  z, 37,  z,  z) |
+                       shuffle(F,  z,  z,  z,  z,  z,  z, 44,  z) |
+                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51); 
 
         // ------------------------------------------------------------------------
         //    58, 59, 52, 45, 38, 31, 39, 46,
@@ -403,15 +396,11 @@ namespace
         // G:  -   -   x   -   -   -   -   -
         // H:  x   x   -   -   -   -   -   -
 
-        const __m128i D6 = shuffle(D, z, z, z, z, z, 31, z, z);
-        const __m128i E6 = shuffle(E, z, z, z, z, 38, z, 39, z); 
-        const __m128i F6 = shuffle(F, z, z, z, 45, z, z, z, 46); 
-        const __m128i G6 = shuffle(G, z, z, 52, z, z, z, z, z); 
-        const __m128i H6 = shuffle(H, 58, 59, z, z, z, z, z, z); 
-        __m128i row6 = _mm_or_si128(D6, E6);
-        row6 = _mm_or_si128(row6, F6);
-        row6 = _mm_or_si128(row6, G6);
-        row6 = _mm_or_si128(row6, H6);
+        __m128i row6 = shuffle(D,  z,  z,  z,  z,  z, 31,  z,  z) |
+                       shuffle(E,  z,  z,  z,  z, 38,  z, 39,  z) |
+                       shuffle(F,  z,  z,  z, 45,  z,  z,  z, 46) |
+                       shuffle(G,  z,  z, 52,  z,  z,  z,  z,  z) |
+                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z); 
 
         // ------------------------------------------------------------------------
         //    53, 60, 61, 54, 47, 55, 62, 63,
@@ -425,11 +414,9 @@ namespace
         // G:  x   -   -   x   -   x   -   -
         // H:  -   x   x   -   -   -   x   x
 
-        const __m128i F7 = shuffle(F, z, z, z, z, 47, z, z, z);
-        const __m128i G7 = shuffle(G, 53, z, z, 54, z, 55, z, z);
-        const __m128i H7 = shuffle(H, z, 60, 61, z, z, z, 62, 63);
-        __m128i row7 = _mm_or_si128(F7, G7);
-        row7 = _mm_or_si128(row7, H7);
+        __m128i row7 = shuffle(F,  z,  z,  z,  z, 47,  z,  z,  z) |
+                       shuffle(G, 53,  z,  z, 54,  z, 55,  z,  z) |
+                       shuffle(H,  z, 60, 61,  z,  z,  z, 62, 63);
 
         // compute zeromask
         const __m128i zero = _mm_setzero_si128();
@@ -460,15 +447,27 @@ namespace
         return ~zeromask;
     }
 
-    /* TODO
+    // NOTE: The zigzag is still 128 bit wide only because of the retarded 128+128 way the AVX2 works
+    // TODO: re-arrange (if possible) so that 256 bit shuffle can be used, in this form this is useless
     u64 jpeg_zigzag_avx2(const s16* in, s16* out)
     {
         const __m256i* src = reinterpret_cast<const __m256i *>(in);
 
-        const __m256i A = _mm256_loadu_si256(src + 0); //  0 .. 15
-        const __m256i B = _mm256_loadu_si256(src + 1); // 16 .. 31
-        const __m256i C = _mm256_loadu_si256(src + 2); // 32 .. 47
-        const __m256i D = _mm256_loadu_si256(src + 3); // 48 .. 63
+        const __m256i AB = _mm256_loadu_si256(src + 0); //  0 .. 15
+        const __m256i CD = _mm256_loadu_si256(src + 1); // 16 .. 31
+        const __m256i EF = _mm256_loadu_si256(src + 2); // 32 .. 47
+        const __m256i GH = _mm256_loadu_si256(src + 3); // 48 .. 63
+
+        const __m128i A = _mm256_extracti128_si256(AB, 0);
+        const __m128i B = _mm256_extracti128_si256(AB, 1);
+        const __m128i C = _mm256_extracti128_si256(CD, 0);
+        const __m128i D = _mm256_extracti128_si256(CD, 1);
+        const __m128i E = _mm256_extracti128_si256(EF, 0);
+        const __m128i F = _mm256_extracti128_si256(EF, 1);
+        const __m128i G = _mm256_extracti128_si256(GH, 0);
+        const __m128i H = _mm256_extracti128_si256(GH, 1);
+
+        constexpr s8 z = -1;
 
         // ------------------------------------------------------------------------
         //     0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
@@ -478,6 +477,18 @@ namespace
         // C:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
         // D:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
+        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3, z) |
+                       shuffle(B, z, z, 8,  z, 9, z, z, 2) |
+                       shuffle(C, z, z, z, 16, z, z, z, z);
+
+        __m128i row1 = shuffle(A, z,  z, z,  z,  z,  z, 4, 5) |
+                       shuffle(B, z,  z, z,  z,  z, 11, z, z) |
+                       shuffle(C, 1,  z, z,  z, 18,  z, z, z) |
+                       shuffle(D, z, 24, z, 25,  z,  z, z, z) |
+                       shuffle(E, z, z, 32,  z,  z,  z, z, z);
+
+        const __m256i row01 = _mm256_setr_m128i(row0, row1);
+
         // ------------------------------------------------------------------------
         //    12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13,  6,  7, 14, 21, 28,
         // ------------------------------------------------------------------------
@@ -485,6 +496,20 @@ namespace
         // B:  -   x   x   -   -   -   -   -   x   x   -   -   -   -   x   x
         // C:  -   -   -   x   x   -   x   x   -   -   -   -   -   -   -   -
         // D:  -   -   -   -   -   x   -   -   -   -   -   -   -   -   -   -
+
+        __m128i row2 = shuffle(B, 12,  z,  z,  z,  z,  z,  z,  z) |
+                       shuffle(C,  z, 19,  z,  z,  z,  z,  z,  z) |
+                       shuffle(D,  z,  z, 26,  z,  z,  z,  z,  z) |
+                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) | 
+                       shuffle(F,  z,  z,  z,  z, 40,  z, 41,  z) |
+                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z); 
+
+        __m128i row3 = shuffle(A,  z,  z,  z, 6, 7,  z,  z,  z) |
+                       shuffle(B,  z,  z, 13, z, z, 14,  z,  z) |
+                       shuffle(C,  z, 20,  z, z, z,  z, 21,  z) |
+                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28); 
+
+        const __m256i row23 = _mm256_setr_m128i(row2, row3);
 
         // ------------------------------------------------------------------------
         //    35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
@@ -494,6 +519,20 @@ namespace
         // C:  x   x   -   -   -   -   x   x   -   -   -   -   -   x   x   -
         // D:  -   -   x   x   x   x   -   -   -   -   -   -   -   -   -   x
 
+        __m128i row4 = shuffle(E, 35,  z,  z,  z,  z,  z,  z, 36) |
+                       shuffle(F,  z, 42,  z,  z,  z,  z, 43,  z) |
+                       shuffle(G,  z,  z, 49,  z,  z, 50,  z,  z) |
+                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z); 
+
+        __m128i row5 = shuffle(B,  z,  z, 15,  z,  z,  z,  z,  z) |
+                       shuffle(C,  z, 22,  z, 23,  z,  z,  z,  z) |
+                       shuffle(D, 29,  z,  z,  z, 30,  z,  z,  z) |
+                       shuffle(E,  z,  z,  z,  z,  z, 37,  z,  z) |
+                       shuffle(F,  z,  z,  z,  z,  z,  z, 44,  z) |
+                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51); 
+
+        const __m256i row45 = _mm256_setr_m128i(row4, row5);
+
         // ------------------------------------------------------------------------
         //    58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63
         // ------------------------------------------------------------------------
@@ -502,12 +541,42 @@ namespace
         // C:  -   -   -   x   x   -   x   x   -   -   -   -   x   -   -   -
         // D:  x   x   x   -   -   -   -   -   x   x   x   x   -   x   x   x
 
-        // TODO
-        u64 zeromask = 0;
+        __m128i row6 = shuffle(D,  z,  z,  z,  z,  z, 31,  z,  z) |
+                       shuffle(E,  z,  z,  z,  z, 38,  z, 39,  z) |
+                       shuffle(F,  z,  z,  z, 45,  z,  z,  z, 46) |
+                       shuffle(G,  z,  z, 52,  z,  z,  z,  z,  z) |
+                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z); 
 
-        return zeromask;
+        __m128i row7 = shuffle(F,  z,  z,  z,  z, 47,  z,  z,  z) |
+                       shuffle(G, 53,  z,  z, 54,  z, 55,  z,  z) |
+                       shuffle(H,  z, 60, 61,  z,  z,  z, 62, 63);
+
+        const __m256i row67 = _mm256_setr_m128i(row6, row7);
+
+        // compute zeromask
+        const __m256i zero = _mm256_setzero_si256();
+        __m256i zero0 = _mm256_packs_epi16(_mm256_cmpeq_epi16(row01, zero), _mm256_cmpeq_epi16(row23, zero));
+        __m256i zero1 = _mm256_packs_epi16(_mm256_cmpeq_epi16(row45, zero), _mm256_cmpeq_epi16(row67, zero));
+        zero0 = _mm256_permute4x64_epi64(zero0, 0xd8);
+        zero1 = _mm256_permute4x64_epi64(zero1, 0xd8);
+        u32 mask_lo = _mm256_movemask_epi8(zero0);
+        u32 mask_hi = _mm256_movemask_epi8(zero1);
+        u64 zeromask = mask_lo;
+
+        __m256i* dest = reinterpret_cast<__m256i *>(out);
+
+        _mm256_storeu_si256(dest + 0, row01);
+        _mm256_storeu_si256(dest + 1, row23);
+
+        if (mask_hi)
+        {
+            zeromask |= (u64(mask_hi) << 32);
+            _mm256_storeu_si256(dest + 2, row45);
+            _mm256_storeu_si256(dest + 3, row67);
+        }
+
+        return ~zeromask;
     }
-    */
 
     // NOTE: same as zigzag_table_inverse but 16 bit elements
     // TODO: use zigzag_table_inverse and unpack from 8 to 16 bits
@@ -600,19 +669,10 @@ namespace
             code >>= 8;
             *output++ = value;
 
-#if 1
             // always write the stuff byte
             // .. but advance ptr only when it actually was one
-            // this variant of the code can be branchless (measured: ~5% faster)
             *output = 0;
             output += (value == 0xff);
-#else
-            if (value == 0xff)
-            {
-                // write stuff byte
-                *output++ = 0;
-            }
-#endif
         }
         return output;
     }
@@ -746,6 +806,7 @@ namespace
 
             s16 temp[64];
             u64 mask = jpeg_zigzag_ssse3(input, temp);
+            //u64 mask = jpeg_zigzag_avx2(input, temp);
             //u64 mask = jpeg_zigzag_avx512bw(input, temp);
             mask >>= 1; // skip dc
 
