@@ -233,140 +233,203 @@ namespace
 
 #if 0
 
-    // NOTE: If we procecessed more MCUs at a time the constants could be initialized outsize of the
-    //       processing loop.
-    // TODO: Profile if it's worth it..
+    constexpr s8 lane(s8 v, s8 offset)
+    {
+        return v == -1 ? -1 : (v & 7) * 2 + offset;
+    }
 
-    // TODO: attribute
+    inline __m128i shuffle(__m128i v, s8 a, s8 b, s8 c, s8 d, s8 e, s8 f, s8 g, s8 h)
+    {
+        const __m128i s = _mm_setr_epi8(
+            lane(a, 0), lane(a, 1), lane(b, 0), lane(b, 1),
+            lane(c, 0), lane(c, 1), lane(d, 0), lane(d, 1),
+            lane(e, 0), lane(e, 1), lane(f, 0), lane(f, 1),
+            lane(g, 0), lane(g, 1), lane(h, 0), lane(h, 1));
+        return _mm_shuffle_epi8(v, s);
+    }
 
     u64 jpeg_zigzag_ssse3(const s16* in, s16* out)
     {
         const __m128i* src = reinterpret_cast<const __m128i *>(in);
 
-        const __m128i A = _mm_loadu_si128(src + 0);
-        const __m128i B = _mm_loadu_si128(src + 1);
-        const __m128i C = _mm_loadu_si128(src + 2);
-        const __m128i D = _mm_loadu_si128(src + 3);
-        const __m128i E = _mm_loadu_si128(src + 4);
-        const __m128i F = _mm_loadu_si128(src + 5);
-        const __m128i G = _mm_loadu_si128(src + 6);
-        const __m128i H = _mm_loadu_si128(src + 7);
+        const __m128i A = _mm_loadu_si128(src + 0); //  0 .. 7
+        const __m128i B = _mm_loadu_si128(src + 1); //  8 .. 15
+        const __m128i C = _mm_loadu_si128(src + 2); // 16 .. 23
+        const __m128i D = _mm_loadu_si128(src + 3); // 24 .. 31
+        const __m128i E = _mm_loadu_si128(src + 4); // 32 .. 39
+        const __m128i F = _mm_loadu_si128(src + 5); // 40 .. 47
+        const __m128i G = _mm_loadu_si128(src + 6); // 48 .. 55
+        const __m128i H = _mm_loadu_si128(src + 7); // 56 .. 63
 
-        // row #0
-        const __m128i A_0_shuf = _mm_setr_epi8(0, 1, 2, 3, -1, -1, -1, -1, -1, -1, 4, 5, 6, 7, -1, -1);
-        const __m128i A_0 = _mm_shuffle_epi8(A, A_0_shuf);
-        const __m128i B_0_shuf = _mm_setr_epi8(-1, -1, -1, -1, 0, 1, -1, -1, 2, 3, -1, -1, -1, -1, 4, 5);
-        const __m128i B_0 = _mm_shuffle_epi8(B, B_0_shuf);
-        __m128i row0 = _mm_or_si128(A_0, B_0);
-        const __m128i C_0_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i C_0 = _mm_shuffle_epi8(C, C_0_shuf);
-        row0 = _mm_or_si128(row0, C_0);
+        constexpr s8 z = -1;
 
-        // row #1
-        const __m128i A_1_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, 10, 11);
-        const __m128i A_1 = _mm_shuffle_epi8(A, A_1_shuf);
-        const __m128i B_1_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7, -1, -1, -1, -1);
-        const __m128i B_1 = _mm_shuffle_epi8(B, B_1_shuf);
-        __m128i row1 = _mm_or_si128(A_1, B_1);
-        const __m128i C_1_shuf = _mm_setr_epi8(2, 3, -1, -1, -1, -1, -1, -1, 4, 5, -1, -1, -1, -1, -1, -1);
-        const __m128i C_1 = _mm_shuffle_epi8(C, C_1_shuf);
-        row1 = _mm_or_si128(row1, C_1);
-        const __m128i D_1_shuf = _mm_setr_epi8(-1, -1, 0, 1, -1, -1, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i D_1 = _mm_shuffle_epi8(D, D_1_shuf);
-        row1 = _mm_or_si128(row1, D_1);
-        const __m128i E_1_shuf = _mm_setr_epi8(-1, -1, -1, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i E_1 = _mm_shuffle_epi8(E, E_1_shuf);
-        row1 = _mm_or_si128(row1, E_1);
+        // ------------------------------------------------------------------------
+        //     0,  1,  8, 16,  9,  2,  3, 10,
+        // ------------------------------------------------------------------------
+        // A:  x   x   -   -   -   x   x   -
+        // B:  -   -   x   -   x   -   -   x
+        // C:  -   -   -   x   -   -   -   -
+        // D:  -   -   -   -   -   -   -   -
+        // E:  -   -   -   -   -   -   -   -
+        // F:  -   -   -   -   -   -   -   -
+        // G:  -   -   -   -   -   -   -   -
+        // H:  -   -   -   -   -   -   -   -
 
-        // row #2
-        const __m128i B_2_shuf = _mm_setr_epi8(8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i B_2 = _mm_shuffle_epi8(B, B_2_shuf);
-        const __m128i C_2_shuf = _mm_setr_epi8(-1, -1, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i C_2 = _mm_shuffle_epi8(C, C_2_shuf);
-        __m128i row2 = _mm_or_si128(B_2, C_2);
-        const __m128i D_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i D_2 = _mm_shuffle_epi8(D, D_2_shuf);
-        row2 = _mm_or_si128(row2, D_2);
-        const __m128i E_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 2, 3, -1, -1, -1, -1, -1, -1, 4, 5);
-        const __m128i E_2 = _mm_shuffle_epi8(E, E_2_shuf);
-        row2 = _mm_or_si128(row2, E_2);
-        const __m128i F_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, 3, -1, -1);
-        const __m128i F_2 = _mm_shuffle_epi8(F, F_2_shuf);
-        row2 = _mm_or_si128(row2, F_2);
-        const __m128i G_2_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, -1, -1);
-        const __m128i G_2 = _mm_shuffle_epi8(G, G_2_shuf);
-        row2 = _mm_or_si128(row2, G_2);
+        const __m128i A0 = shuffle(A, 0, 1, z, z, z, 2, 3, z); 
+        const __m128i B0 = shuffle(B, z, z, 8, z, 9, z, z, 2); 
+        const __m128i C0 = shuffle(C, z, z, z, 16, z, z, z, z); 
+        __m128i row0 = _mm_or_si128(A0, B0);
+        row0 = _mm_or_si128(row0, C0);
 
-        // row #3
-        const __m128i A_3_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1);
-        const __m128i A_3 = _mm_shuffle_epi8(A, A_3_shuf);
-        const __m128i B_3_shuf = _mm_setr_epi8(-1, -1, -1, -1, 10, 11, -1, -1, -1, -1, 12, 13, -1, -1, -1, -1);
-        const __m128i B_3 = _mm_shuffle_epi8(B, B_3_shuf);
-        __m128i row3 = _mm_or_si128(A_3, B_3);
-        const __m128i C_3_shuf = _mm_setr_epi8(-1, -1, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, -1, -1);
-        const __m128i C_3 = _mm_shuffle_epi8(C, C_3_shuf);
-        row3 = _mm_or_si128(row3, C_3);
-        const __m128i D_3_shuf = _mm_setr_epi8(6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9);
-        const __m128i D_3 = _mm_shuffle_epi8(D, D_3_shuf);
-        row3 = _mm_or_si128(row3, D_3);
+        // ------------------------------------------------------------------------
+        //    17, 24, 32, 25, 18, 11,  4,  5,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   x   x
+        // B:  -   -   -   -   -   x   -   -
+        // C:  x   -   -   -   x   -   -   -
+        // D:  -   x   -   x   -   -   -   -
+        // E:  -   -   x   -   -   -   -   -
+        // F:  -   -   -   -   -   -   -   -
+        // G:  -   -   -   -   -   -   -   -
+        // H:  -   -   -   -   -   -   -   -
 
-        // row #4
-        const __m128i E_4_shuf = _mm_setr_epi8(6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9);
-        const __m128i E_4 = _mm_shuffle_epi8(E, E_4_shuf);
-        const __m128i F_4_shuf = _mm_setr_epi8(-1, -1, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7, -1, -1);
-        const __m128i F_4 = _mm_shuffle_epi8(F, F_4_shuf);
-        __m128i row4 = _mm_or_si128(E_4, F_4);
-        const __m128i G_4_shuf = _mm_setr_epi8(-1, -1, -1, -1, 2, 3, -1, -1, -1, -1, 4, 5, -1, -1, -1, -1);
-        const __m128i G_4 = _mm_shuffle_epi8(G, G_4_shuf);
-        row4 = _mm_or_si128(row4, G_4);
-        const __m128i H_4_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 0, 1, 2, 3, -1, -1, -1, -1, -1, -1);
-        const __m128i H_4 = _mm_shuffle_epi8(H, H_4_shuf);
-        row4 = _mm_or_si128(row4, H_4);
+        const __m128i A1 = shuffle(A, z, z, z, z, z, z, 4, 5); 
+        const __m128i B1 = shuffle(B, z, z, z, z, z, 11, z, z); 
+        const __m128i C1 = shuffle(C, 1, z, z, z, 18, z, z, z); 
+        const __m128i D1 = shuffle(D, z, 24, z, 25, z, z, z, z); 
+        const __m128i E1 = shuffle(E, z, z, 32, z, z, z, z, z); 
+        __m128i row1 = _mm_or_si128(A1, B1);
+        row1 = _mm_or_si128(row1, C1);
+        row1 = _mm_or_si128(row1, D1);
+        row1 = _mm_or_si128(row1, E1);
 
-        // row #5
-        const __m128i B_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i B_5 = _mm_shuffle_epi8(B, B_5_shuf);
-        const __m128i C_5_shuf = _mm_setr_epi8(-1, -1, 12, 13, -1, -1, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i C_5 = _mm_shuffle_epi8(C, C_5_shuf);
-        __m128i row5 = _mm_or_si128(B_5, C_5);
-        const __m128i D_5_shuf = _mm_setr_epi8(10, 11, -1, -1, -1, -1, -1, -1, 12, 13, -1, -1, -1, -1, -1, -1);
-        const __m128i D_5 = _mm_shuffle_epi8(D, D_5_shuf);
-        row5 = _mm_or_si128(row5, D_5);
-        const __m128i E_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, -1, -1, -1, -1);
-        const __m128i E_5 = _mm_shuffle_epi8(E, E_5_shuf);
-        row5 = _mm_or_si128(row5, E_5);
-        const __m128i F_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, -1, -1);
-        const __m128i F_5 = _mm_shuffle_epi8(F, F_5_shuf);
-        row5 = _mm_or_si128(row5, F_5);
-        const __m128i G_5_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, 7);
-        const __m128i G_5 = _mm_shuffle_epi8(G, G_5_shuf);
-        row5 = _mm_or_si128(row5, G_5);
+        // ------------------------------------------------------------------------
+        //    12, 19, 26, 33, 40, 48, 41, 34,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -
+        // B:  x   -   -   -   -   -   -   -
+        // C:  -   x   -   -   -   -   -   -
+        // D:  -   -   x   -   -   -   -   -
+        // E:  -   -   -   x   -   -   -   x
+        // F:  -   -   -   -   x   -   x   -
+        // G:  -   -   -   -   -   x   -   -
+        // H:  -   -   -   -   -   -   -   -
 
-        // row #6
-        const __m128i D_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, 15, -1, -1, -1, -1);
-        const __m128i D_6 = _mm_shuffle_epi8(D, D_6_shuf);
-        const __m128i E_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 12, 13, -1, -1, 14, 15, -1, -1);
-        const __m128i E_6 = _mm_shuffle_epi8(E, E_6_shuf);
-        __m128i row6 = _mm_or_si128(D_6, E_6);
-        const __m128i F_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 10, 11, -1, -1, -1, -1, -1, -1, 12, 13);
-        const __m128i F_6 = _mm_shuffle_epi8(F, F_6_shuf);
-        row6 = _mm_or_si128(row6, F_6);
-        const __m128i G_6_shuf = _mm_setr_epi8(-1, -1, -1, -1, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i G_6 = _mm_shuffle_epi8(G, G_6_shuf);
-        row6 = _mm_or_si128(row6, G_6);
-        const __m128i H_6_shuf = _mm_setr_epi8(4, 5, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-        const __m128i H_6 = _mm_shuffle_epi8(H, H_6_shuf);
-        row6 = _mm_or_si128(row6, H_6);
+        const __m128i B2 = shuffle(B, 12, z, z, z, z, z, z, z); 
+        const __m128i C2 = shuffle(C, z, 19, z, z, z, z, z, z); 
+        const __m128i D2 = shuffle(D, z, z, 26, z, z, z, z, z); 
+        const __m128i E2 = shuffle(E, z, z, z, 33, z, z, z, 34); 
+        const __m128i F2 = shuffle(F, z, z, z, z, 40, z, 41, z); 
+        const __m128i G2 = shuffle(G, z, z, z, z, z, 48, z, z); 
+        __m128i row2 = _mm_or_si128(B2, C2);
+        row2 = _mm_or_si128(row2, D2);
+        row2 = _mm_or_si128(row2, E2);
+        row2 = _mm_or_si128(row2, F2);
+        row2 = _mm_or_si128(row2, G2);
 
-        // row #7
-        const __m128i F_7_shuf = _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 14, 15, -1, -1, -1, -1, -1, -1);
-        const __m128i F_7 = _mm_shuffle_epi8(F, F_7_shuf);
-        const __m128i G_7_shuf = _mm_setr_epi8(10, 11, -1, -1, -1, -1, 12, 13, -1, -1, 14, 15, -1, -1, -1, -1);
-        const __m128i G_7 = _mm_shuffle_epi8(G, G_7_shuf);
-        __m128i row7 = _mm_or_si128(F_7, G_7);
-        const __m128i H_7_shuf = _mm_setr_epi8(-1, -1, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, 12, 13, 14, 15);
-        const __m128i H_7 = _mm_shuffle_epi8(H, H_7_shuf);
-        row7 = _mm_or_si128(row7, H_7);
+        // ------------------------------------------------------------------------
+        //    27, 20, 13,  6,  7, 14, 21, 28,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   x   x   -   -   -
+        // B:  -   -   x   -   -   x   -   -
+        // C:  -   x   -   -   -   -   x   -
+        // D:  x   -   -   -   -   -   -   x
+        // E:  -   -   -   -   -   -   -   -
+        // F:  -   -   -   -   -   -   -   -
+        // G:  -   -   -   -   -   -   -   -
+        // H:  -   -   -   -   -   -   -   -
+
+        const __m128i A3 = shuffle(A, z, z, z, 6, 7, z, z, z); 
+        const __m128i B3 = shuffle(B, z, z, 13, z, z, 14, z, z); 
+        const __m128i C3 = shuffle(C, z, 20, z, z, z, z, 21, z); 
+        const __m128i D3 = shuffle(D, 27, z, z, z, z, z, z, 28); 
+        __m128i row3 = _mm_or_si128(A3, B3);
+        row3 = _mm_or_si128(row3, C3);
+        row3 = _mm_or_si128(row3, D3);
+
+        // ------------------------------------------------------------------------
+        //    35, 42, 49, 56, 57, 50, 43, 36,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -
+        // B:  -   -   -   -   -   -   -   -
+        // C:  -   -   -   -   -   -   -   -
+        // D:  -   -   -   -   -   -   -   -
+        // E:  x   -   -   -   -   -   -   x
+        // F:  -   x   -   -   -   -   x   -
+        // G:  -   -   x   -   -   x   -   -
+        // H:  -   -   -   x   x   -   -   -
+
+        const __m128i E4 = shuffle(E, 35, z, z, z, z, z, z, 36); 
+        const __m128i F4 = shuffle(F, z, 42, z, z, z, z, 43, z); 
+        const __m128i G4 = shuffle(G, z, z, 49, z, z, 50, z, z); 
+        const __m128i H4 = shuffle(H, z, z, z, 56, 57, z, z, z); 
+        __m128i row4 = _mm_or_si128(E4, F4);
+        row4 = _mm_or_si128(row4, G4);
+        row4 = _mm_or_si128(row4, H4);
+
+        // ------------------------------------------------------------------------
+        //    29, 22, 15, 23, 30, 37, 44, 51,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -
+        // B:  -   -   x   -   -   -   -   -
+        // C:  -   x   -   x   -   -   -   -
+        // D:  x   -   -   -   x   -   -   -
+        // E:  -   -   -   -   -   x   -   -
+        // F:  -   -   -   -   -   -   x   -
+        // G:  -   -   -   -   -   -   -   x
+        // H:  -   -   -   -   -   -   -   -
+
+        const __m128i B5 = shuffle(B, z, z, 15, z, z, z, z, z); 
+        const __m128i C5 = shuffle(C, z, 22, z, 23, z, z, z, z); 
+        const __m128i D5 = shuffle(D, 29, z, z, z, 30, z, z, z); 
+        const __m128i E5 = shuffle(E, z, z, z, z, z, 37, z, z); 
+        const __m128i F5 = shuffle(F, z, z, z, z, z, z, 44, z); 
+        const __m128i G5 = shuffle(G, z, z, z, z, z, z, z, 51); 
+        __m128i row5 = _mm_or_si128(B5, C5);
+        row5 = _mm_or_si128(row5, D5);
+        row5 = _mm_or_si128(row5, E5);
+        row5 = _mm_or_si128(row5, F5);
+        row5 = _mm_or_si128(row5, G5);
+
+        // ------------------------------------------------------------------------
+        //    58, 59, 52, 45, 38, 31, 39, 46,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -
+        // B:  -   -   -   -   -   -   -   -
+        // C:  -   -   -   -   -   -   -   -
+        // D:  -   -   -   -   -   x   -   -
+        // E:  -   -   -   -   x   -   x   -
+        // F:  -   -   -   x   -   -   -   x
+        // G:  -   -   x   -   -   -   -   -
+        // H:  x   x   -   -   -   -   -   -
+
+        const __m128i D6 = shuffle(D, z, z, z, z, z, 31, z, z);
+        const __m128i E6 = shuffle(E, z, z, z, z, 38, z, 39, z); 
+        const __m128i F6 = shuffle(F, z, z, z, 45, z, z, z, 46); 
+        const __m128i G6 = shuffle(G, z, z, 52, z, z, z, z, z); 
+        const __m128i H6 = shuffle(H, 58, 59, z, z, z, z, z, z); 
+        __m128i row6 = _mm_or_si128(D6, E6);
+        row6 = _mm_or_si128(row6, F6);
+        row6 = _mm_or_si128(row6, G6);
+        row6 = _mm_or_si128(row6, H6);
+
+        // ------------------------------------------------------------------------
+        //    53, 60, 61, 54, 47, 55, 62, 63,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -
+        // B:  -   -   -   -   -   -   -   -
+        // C:  -   -   -   -   -   -   -   -
+        // D:  -   -   -   -   -   -   -   -
+        // E:  -   -   -   -   -   -   -   -
+        // F:  -   -   -   -   x   -   -   -
+        // G:  x   -   -   x   -   x   -   -
+        // H:  -   x   x   -   -   -   x   x
+
+        const __m128i F7 = shuffle(F, z, z, z, z, 47, z, z, z);
+        const __m128i G7 = shuffle(G, 53, z, z, 54, z, 55, z, z);
+        const __m128i H7 = shuffle(H, z, 60, 61, z, z, z, 62, 63);
+        __m128i row7 = _mm_or_si128(F7, G7);
+        row7 = _mm_or_si128(row7, H7);
 
         // compute zeromask
         const __m128i zero = _mm_setzero_si128();
@@ -397,7 +460,57 @@ namespace
         return ~zeromask;
     }
 
-    // TODO: use zigzag_table_inverse and unpcklo from 8 to 16 bit
+    /* TODO
+    u64 jpeg_zigzag_avx2(const s16* in, s16* out)
+    {
+        const __m256i* src = reinterpret_cast<const __m256i *>(in);
+
+        const __m256i A = _mm256_loadu_si256(src + 0); //  0 .. 15
+        const __m256i B = _mm256_loadu_si256(src + 1); // 16 .. 31
+        const __m256i C = _mm256_loadu_si256(src + 2); // 32 .. 47
+        const __m256i D = _mm256_loadu_si256(src + 3); // 48 .. 63
+
+        // ------------------------------------------------------------------------
+        //     0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
+        // ------------------------------------------------------------------------
+        // A:  x   x   x   -   x   x   x   x   -   -   -   -   -   x   x   x 
+        // B:  -   -   -   x   -   -   -   -   x   x   -   x   x   -   -   -
+        // C:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
+        // D:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+        // ------------------------------------------------------------------------
+        //    12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13,  6,  7, 14, 21, 28,
+        // ------------------------------------------------------------------------
+        // A:  x   -   -   -   -   -   -   -   -   -   x   x   x   x   -   -
+        // B:  -   x   x   -   -   -   -   -   x   x   -   -   -   -   x   x
+        // C:  -   -   -   x   x   -   x   x   -   -   -   -   -   -   -   -
+        // D:  -   -   -   -   -   x   -   -   -   -   -   -   -   -   -   -
+
+        // ------------------------------------------------------------------------
+        //    35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
+        // B:  -   -   -   -   -   -   -   -   x   x   -   x   x   -   -   -
+        // C:  x   x   -   -   -   -   x   x   -   -   -   -   -   x   x   -
+        // D:  -   -   x   x   x   x   -   -   -   -   -   -   -   -   -   x
+
+        // ------------------------------------------------------------------------
+        //    58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63
+        // ------------------------------------------------------------------------
+        // A:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+        // B:  -   -   -   -   -   x   -   -   -   -   -   -   -   -   -   -
+        // C:  -   -   -   x   x   -   x   x   -   -   -   -   x   -   -   -
+        // D:  x   x   x   -   -   -   -   -   x   x   x   x   -   x   x   x
+
+        // TODO
+        u64 zeromask = 0;
+
+        return zeromask;
+    }
+    */
+
+    // NOTE: same as zigzag_table_inverse but 16 bit elements
+    // TODO: use zigzag_table_inverse and unpack from 8 to 16 bits
     const u16 zigzag_shuffle [] =
     {
          0,  1,  8, 16,  9,  2,  3, 10,
@@ -596,7 +709,7 @@ namespace
 
 #if 0
 
-        // SSE2 / AVX512 zigzag + zero detector prototype
+        // SSSE3 / AVX512 zigzag + zero detector prototype
 
         u8* encode(u8* p, int component, const s16* input)
         {
