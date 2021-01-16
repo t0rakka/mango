@@ -2321,11 +2321,11 @@ namespace
             {
                 const size_t size = i<(iccSegments-1) ? iccMaxSegmentSize :  icc.size%iccMaxSegmentSize;
                 p.write16(MARKER_APP2);
-                p.write16(size + magicICCLength + 4);
+                p.write16(u16(size + magicICCLength + 4));
                 p.write(magicICC, magicICCLength);
-                p.write8(i+1); // segment index, 1-based
-                p.write8(iccSegments);
-                p.write(icc.slice(i*iccMaxSegmentSize), size);
+                p.write8(u8(i + 1)); // segment index, 1-based
+                p.write8(u8(iccSegments));
+                p.write(icc.slice(i * iccMaxSegmentSize), size);
             }
         }
 
