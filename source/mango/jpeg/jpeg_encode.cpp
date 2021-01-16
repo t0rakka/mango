@@ -874,7 +874,7 @@ namespace
                 int coeff = temp[i++];
 
                 u32 absCoeff = std::abs(coeff);
-                coeff -= (absCoeff == coeff);
+                coeff -= (absCoeff != coeff);
 
                 u32 size = getSymbolSize(absCoeff);
                 u32 mask = (1 << size) - 1;
@@ -940,7 +940,7 @@ namespace
                     }
 
                     u32 absCoeff = std::abs(coeff);
-                    coeff -= (absCoeff == coeff);
+                    coeff -= (absCoeff != coeff);
 
                     u32 size = getSymbolSize(absCoeff);
                     u32 mask = (1 << size) - 1;
