@@ -233,6 +233,55 @@ namespace
 
 #if 0
 
+    /*
+    // NOTE: parallel symbol size computation prototype
+
+    inline __m128i getSymbolSize(__m128i absCoeff)
+    {
+        int16x8 value(absCoeff);
+        int16x8 base(0);
+        int16x8 temp;
+        mask16x8 mask;
+
+        temp = value & 0xff00;
+        mask = temp != 0;
+        base = select(mask, base | 8, base);
+        value = select(mask, temp, value);
+
+        temp = value & 0xf0f0;
+        mask = temp != 0;
+        base = select(mask, base | 4, base);
+        value = select(mask, temp, value);
+
+        temp = value & 0xcccc;
+        mask = temp != 0;
+        base = select(mask, base | 2, base);
+        value = select(mask, temp, value);
+
+        temp = value & 0xaaaa;
+        mask = temp != 0;
+        base = select(mask, base | 1, base);
+        value = select(mask, temp, value);
+
+        base += 1;
+
+        return base;
+    }
+
+    inline __m128i absSymbolSize(__m128i* ptr_sz, __m128i coeff)
+    {
+        __m128i absCoeff = _mm_abs_epi16(coeff);
+        __m128i mask = _mm_cmpeq_epi16(absCoeff, coeff);
+        mask = _mm_xor_si128(mask, _mm_cmpeq_epi8(mask, mask)); // not
+        coeff = _mm_add_epi16(coeff, mask);
+
+        __m128 sz = getSymbolSize(absCoeff);
+        _mm_storeu_si128(ptr_sz, sz);
+
+        return coeff;
+    }
+    */
+
     constexpr s8 lane(s8 v, s8 offset)
     {
         return v == -1 ? -1 : (v & 7) * 2 + offset;
@@ -791,29 +840,29 @@ namespace
             last_dc_value[component] = input[0];
 
             u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            u32 dataSize = absCoeff ? getSymbolSize(absCoeff) : 0;
-            u32 dataMask = (1 << dataSize) - 1;
+            u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
+            u32 mask = (1 << size) - 1;
 
-            p = putBits(p, dc.code[dataSize], dc.size[dataSize]);
-            p = putBits(p, coeff & dataMask, dataSize);
+            p = putBits(p, dc.code[size], dc.size[size]);
+            p = putBits(p, coeff & mask, size);
 
             s16 temp[64];
-            u64 mask = jpeg_zigzag_ssse3(input, temp);
-            //u64 mask = jpeg_zigzag_avx2(input, temp);
-            //u64 mask = jpeg_zigzag_avx512bw(input, temp);
-            mask >>= 1; // skip DC
+            u64 zeromask = jpeg_zigzag_ssse3(input, temp);
+            //u64 zeromask = jpeg_zigzag_avx2(input, temp);
+            //u64 zeromask = jpeg_zigzag_avx512bw(input, temp);
+            zeromask >>= 1; // skip DC
 
             for (int i = 1; i < 64; )
             {
-                if (!mask)
+                if (!zeromask)
                 {
                     // only zeros left
                     p = putBits(p, ac.code[0], ac.size[0]);
                     break;
                 }
 
-                int runLength = u64_tzcnt(mask);
-                mask >>= (runLength + 1);
+                int runLength = u64_tzcnt(zeromask);
+                zeromask >>= (runLength + 1);
                 i += runLength;
 
                 while (runLength > 15)
@@ -824,17 +873,19 @@ namespace
 
                 int coeff = temp[i++];
 
-                u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-                u32 dataSize = getSymbolSize(absCoeff);
-                u32 dataMask = (1 << dataSize) - 1;
+                u32 absCoeff = std::abs(coeff);
+                coeff -= (absCoeff == coeff);
+
+                u32 size = getSymbolSize(absCoeff);
+                u32 mask = (1 << size) - 1;
 
                 // TODO: if we make the table 16 entries wide, we could use "runLength * 16" here
-                //       "runLength * 10 + dataSize" is LEA x 2 ; index = (runLength * 4 + runLength) * 2 + dataSize
-                //       "runLength * 16 + dataSize" is LEA     ; index = (runLength * 16 + dataSize)
+                //       "runLength * 10 + size" is LEA x 2 ; index = (runLength * 4 + runLength) * 2 + size
+                //       "runLength * 16 + size" is LEA     ; index = (runLength * 16 + size)
 
-                int index = runLength * 10 + dataSize;
+                int index = runLength * 10 + size;
                 p = putBits(p, ac.code[index], ac.size[index]);
-                p = putBits(p, coeff & dataMask, dataSize);
+                p = putBits(p, coeff & mask, size);
             }
 
             return p;
@@ -869,11 +920,11 @@ namespace
             last_dc_value[component] = input[0];
 
             u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            u32 dataSize = absCoeff ? getSymbolSize(absCoeff) : 0;
-            u32 dataMask = (1 << dataSize) - 1;
+            u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
+            u32 mask = (1 << size) - 1;
 
-            p = putBits(p, dc.code[dataSize], dc.size[dataSize]);
-            p = putBits(p, coeff & dataMask, dataSize);
+            p = putBits(p, dc.code[size], dc.size[size]);
+            p = putBits(p, coeff & mask, size);
 
             int runLength = 0;
 
@@ -888,13 +939,15 @@ namespace
                         p = putBits(p, ac.code[161], ac.size[161]);
                     }
 
-                    u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-                    u32 dataSize = getSymbolSize(absCoeff);
-                    u32 dataMask = (1 << dataSize) - 1;
+                    u32 absCoeff = std::abs(coeff);
+                    coeff -= (absCoeff == coeff);
 
-                    int index = runLength * 10 + dataSize;
+                    u32 size = getSymbolSize(absCoeff);
+                    u32 mask = (1 << size) - 1;
+
+                    int index = runLength * 10 + size;
                     p = putBits(p, ac.code[index], ac.size[index]);
-                    p = putBits(p, coeff & dataMask, dataSize);
+                    p = putBits(p, coeff & mask, size);
 
                     runLength = 0;
                 }
