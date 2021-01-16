@@ -97,6 +97,8 @@ namespace
         0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B
     };
 
+#if 0
+
     // Table K.5 – Table for luminance AC coefficients
 
     const u16 g_luminance_ac_code_table [] =
@@ -188,6 +190,82 @@ namespace
         0x000F, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
         0x000A
     };
+
+#else
+
+    // Table K.5 – Table for luminance AC coefficients
+
+    alignas(64)
+    const u16 g_luminance_ac_code_table [] =
+    {
+        0x000A, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x0000, 0x000C, 0x001C, 0x003A, 0x003B, 0x007A, 0x007B, 0x00FA, 0x01F8, 0x01F9, 0x01FA, 0x03F9, 0x03FA, 0x07F8, 0xFFEB, 0xFFF5, 
+        0x0001, 0x001B, 0x00F9, 0x01F7, 0x03F8, 0x07F7, 0x0FF6, 0x0FF7, 0x7FC0, 0xFFBE, 0xFFC7, 0xFFD0, 0xFFD9, 0xFFE2, 0xFFEC, 0xFFF6, 
+        0x0004, 0x0079, 0x03F7, 0x0FF5, 0xFF96, 0xFF9E, 0xFFA6, 0xFFAE, 0xFFB6, 0xFFBF, 0xFFC8, 0xFFD1, 0xFFDA, 0xFFE3, 0xFFED, 0xFFF7, 
+        0x000B, 0x01F6, 0x0FF4, 0xFF8F, 0xFF97, 0xFF9F, 0xFFA7, 0xFFAF, 0xFFB7, 0xFFC0, 0xFFC9, 0xFFD2, 0xFFDB, 0xFFE4, 0xFFEE, 0xFFF8, 
+        0x001A, 0x07F6, 0xFF89, 0xFF90, 0xFF98, 0xFFA0, 0xFFA8, 0xFFB0, 0xFFB8, 0xFFC1, 0xFFCA, 0xFFD3, 0xFFDC, 0xFFE5, 0xFFEF, 0xFFF9, 
+        0x0078, 0xFF84, 0xFF8A, 0xFF91, 0xFF99, 0xFFA1, 0xFFA9, 0xFFB1, 0xFFB9, 0xFFC2, 0xFFCB, 0xFFD4, 0xFFDD, 0xFFE6, 0xFFF0, 0xFFFA, 
+        0x00F8, 0xFF85, 0xFF8b, 0xFF92, 0xFF9A, 0xFFA2, 0xFFAA, 0xFFB2, 0xFFBA, 0xFFC3, 0xFFCC, 0xFFD5, 0xFFDE, 0xFFE7, 0xFFF1, 0xFFFB, 
+        0x03F6, 0xFF86, 0xFF8C, 0xFF93, 0xFF9B, 0xFFA3, 0xFFAB, 0xFFB3, 0xFFBB, 0xFFC4, 0xFFCD, 0xFFD6, 0xFFDF, 0xFFE8, 0xFFF2, 0xFFFC, 
+        0xFF82, 0xFF87, 0xFF8D, 0xFF94, 0xFF9C, 0xFFA4, 0xFFAC, 0xFFB4, 0xFFBC, 0xFFC5, 0xFFCE, 0xFFD7, 0xFFE0, 0xFFE9, 0xFFF3, 0xFFFD, 
+        0xFF83, 0xFF88, 0xFF8E, 0xFF95, 0xFF9D, 0xFFA5, 0xFFAD, 0xFFB5, 0xFFBD, 0xFFC6, 0xFFCF, 0xFFD8, 0xFFE1, 0xFFEA, 0xFFF4, 0xFFFE,
+        0x07F9
+    };
+
+    alignas(64)
+    const u16 g_luminance_ac_size_table [] =
+    {
+        0x0004, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x0002, 0x0004, 0x0005, 0x0006, 0x0006, 0x0007, 0x0007, 0x0008, 0x0009, 0x0009, 0x0009, 0x000A, 0x000A, 0x000B, 0x0010, 0x0010, 
+        0x0002, 0x0005, 0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000C, 0x000F, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0003, 0x0007, 0x000A, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0004, 0x0009, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0005, 0x000B, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0007, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0008, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x000A, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x000B
+    };
+
+    // Table K.6 – Table for chrominance AC coefficients
+
+    alignas(64)
+    const u16 g_chrominance_ac_code_table [] =
+    {
+        0x0000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x0001, 0x000B, 0x001A, 0x001B, 0x003A, 0x003B, 0x0079, 0x007A, 0x00F9, 0x01F7, 0x01F8, 0x01F9, 0x01FA, 0x07F9, 0x3FE0, 0x7FC3, 
+        0x0004, 0x0039, 0x00F7, 0x00F8, 0x01F6, 0x03F9, 0x07F7, 0x07F8, 0xFFB7, 0xFFC0, 0xFFC9, 0xFFD2, 0xFFDB, 0xFFE4, 0xFFED, 0xFFF6, 
+        0x000A, 0x00F6, 0x03F7, 0x03F8, 0xFF97, 0xFF9F, 0xFFA7, 0xFFAF, 0xFFB8, 0xFFC1, 0xFFCA, 0xFFD3, 0xFFDC, 0xFFE5, 0xFFEE, 0xFFF7, 
+        0x0018, 0x01F5, 0x0FF6, 0x0FF7, 0xFF98, 0xFFA0, 0xFFA8, 0xFFB0, 0xFFB9, 0xFFC2, 0xFFCB, 0xFFD4, 0xFFDD, 0xFFE6, 0xFFEF, 0xFFF8, 
+        0x0019, 0x07F6, 0x7FC2, 0xFF91, 0xFF99, 0xFFA1, 0xFFA9, 0xFFB1, 0xFFBA, 0xFFC3, 0xFFCC, 0xFFD5, 0xFFDE, 0xFFE7, 0xFFF0, 0xFFF9, 
+        0x0038, 0x0FF5, 0xFF8C, 0xFF92, 0xFF9A, 0xFFA2, 0xFFAA, 0xFFB2, 0xFFBB, 0xFFC4, 0xFFCD, 0xFFD6, 0xFFDF, 0xFFE8, 0xFFF1, 0xFFFA, 
+        0x0078, 0xFF88, 0xFF8D, 0xFF93, 0xFF9B, 0xFFA3, 0xFFAB, 0xFFB3, 0xFFBC, 0xFFC5, 0xFFCE, 0xFFD7, 0xFFE0, 0xFFE9, 0xFFF2, 0xFFFB, 
+        0x01F4, 0xFF89, 0xFF8E, 0xFF94, 0xFF9C, 0xFFA4, 0xFFAC, 0xFFB4, 0xFFBD, 0xFFC6, 0xFFCF, 0xFFD8, 0xFFE1, 0xFFEA, 0xFFF3, 0xFFFC, 
+        0x03F6, 0xFF8A, 0xFF8F, 0xFF95, 0xFF9D, 0xFFA5, 0xFFAD, 0xFFB5, 0xFFBE, 0xFFC7, 0xFFD0, 0xFFD9, 0xFFE2, 0xFFEb, 0xFFF4, 0xFFFD, 
+        0x0FF4, 0xFF8B, 0xFF90, 0xFF96, 0xFF9E, 0xFFA6, 0xFFAE, 0xFFB6, 0xFFBF, 0xFFC8, 0xFFD1, 0xFFDA, 0xFFE3, 0xFFEC, 0xFFF5, 0xFFFE,
+        0x03FA
+    };
+
+    alignas(64)
+    const u16 g_chrominance_ac_size_table [] =
+    {
+        0x0002, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x0002, 0x0004, 0x0005, 0x0005, 0x0006, 0x0006, 0x0007, 0x0007, 0x0008, 0x0009, 0x0009, 0x0009, 0x0009, 0x000B, 0x000E, 0x000F, 
+        0x0003, 0x0006, 0x0008, 0x0008, 0x0009, 0x000A, 0x000B, 0x000B, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0004, 0x0008, 0x000A, 0x000A, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0005, 0x0009, 0x000C, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0005, 0x000B, 0x000F, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0006, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0007, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0009, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x000A, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x000A
+    };
+
+#endif
 
     const u8 marker_data [] =
     {
@@ -808,70 +886,136 @@ namespace
             output = writeStuffedBytes(output, code, count);
             return output;
         }
+    };
 
 #if 0
 
-        // SSSE3 / AVX512 zigzag + zero detector prototype
+    // SSSE3 / AVX512 zigzag + zero detector prototype
 
-        u8* encode(u8* p, int component, const s16* input)
+    u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    {
+        struct
         {
-            struct
-            {
-                const u16* code;
-                const u16* size;
-            } dc, ac;
+            const u16* code;
+            const u16* size;
+        } dc, ac;
 
-            if (component != 0)
+        if (component != 0)
+        {
+            dc.code = g_chrominance_dc_code_table;
+            dc.size = g_chrominance_dc_size_table;
+            ac.code = g_chrominance_ac_code_table;
+            ac.size = g_chrominance_ac_size_table;
+        }
+        else
+        {
+            dc.code = g_luminance_dc_code_table;
+            dc.size = g_luminance_dc_size_table;
+            ac.code = g_luminance_ac_code_table;
+            ac.size = g_luminance_ac_size_table;
+        }
+
+        int coeff = input[0] - encoder.last_dc_value[component];
+        encoder.last_dc_value[component] = input[0];
+
+        u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
+        u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
+        u32 mask = (1 << size) - 1;
+
+        p = encoder.putBits(p, dc.code[size], dc.size[size]);
+        p = encoder.putBits(p, coeff & mask, size);
+
+        s16 temp[64];
+        u64 zeromask = jpeg_zigzag_ssse3(input, temp);
+        //u64 zeromask = jpeg_zigzag_avx2(input, temp);
+        //u64 zeromask = jpeg_zigzag_avx512bw(input, temp);
+        zeromask >>= 1; // skip DC
+
+        for (int i = 1; i < 64; )
+        {
+            if (!zeromask)
             {
-                dc.code = g_chrominance_dc_code_table;
-                dc.size = g_chrominance_dc_size_table;
-                ac.code = g_chrominance_ac_code_table;
-                ac.size = g_chrominance_ac_size_table;
+                // only zeros left
+                p = encoder.putBits(p, ac.code[0], ac.size[0]);
+                break;
             }
-            else
+
+            int runLength = u64_tzcnt(zeromask);
+            zeromask >>= (runLength + 1);
+            i += runLength;
+
+            while (runLength > 15)
             {
-                dc.code = g_luminance_dc_code_table;
-                dc.size = g_luminance_dc_size_table;
-                ac.code = g_luminance_ac_code_table;
-                ac.size = g_luminance_ac_size_table;
+                runLength -= 16;
+                //p = encoder.putBits(p, ac.code[161], ac.size[161]);
+                p = encoder.putBits(p, ac.code[176], ac.size[176]);
             }
 
-            int coeff = input[0] - last_dc_value[component];
-            last_dc_value[component] = input[0];
+            int coeff = temp[i++];
 
-            u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
+            u32 absCoeff = std::abs(coeff);
+            coeff -= (absCoeff != coeff);
+
+            u32 size = getSymbolSize(absCoeff);
             u32 mask = (1 << size) - 1;
 
-            p = putBits(p, dc.code[size], dc.size[size]);
-            p = putBits(p, coeff & mask, size);
+            //int index = runLength * 10 + size;
+            int index = runLength + size * 16;
+            p = encoder.putBits(p, ac.code[index], ac.size[index]);
+            p = encoder.putBits(p, coeff & mask, size);
+        }
 
-            s16 temp[64];
-            u64 zeromask = jpeg_zigzag_ssse3(input, temp);
-            //u64 zeromask = jpeg_zigzag_avx2(input, temp);
-            //u64 zeromask = jpeg_zigzag_avx512bw(input, temp);
-            zeromask >>= 1; // skip DC
+        return p;
+    }
 
-            for (int i = 1; i < 64; )
+#else
+
+    u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    {
+        struct
+        {
+            const u16* code;
+            const u16* size;
+        } dc, ac;
+
+        if (component != 0)
+        {
+            dc.code = g_chrominance_dc_code_table;
+            dc.size = g_chrominance_dc_size_table;
+            ac.code = g_chrominance_ac_code_table;
+            ac.size = g_chrominance_ac_size_table;
+        }
+        else
+        {
+            dc.code = g_luminance_dc_code_table;
+            dc.size = g_luminance_dc_size_table;
+            ac.code = g_luminance_ac_code_table;
+            ac.size = g_luminance_ac_size_table;
+        }
+
+        int coeff = input[0] - encoder.last_dc_value[component];
+        encoder.last_dc_value[component] = input[0];
+
+        u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
+        u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
+        u32 mask = (1 << size) - 1;
+
+        p = encoder.putBits(p, dc.code[size], dc.size[size]);
+        p = encoder.putBits(p, coeff & mask, size);
+
+        int runLength = 0;
+
+        for (int i = 1; i < 64; ++i)
+        {
+            int coeff = input[zigzag_table_inverse[i]];
+            if (coeff)
             {
-                if (!zeromask)
-                {
-                    // only zeros left
-                    p = putBits(p, ac.code[0], ac.size[0]);
-                    break;
-                }
-
-                int runLength = u64_tzcnt(zeromask);
-                zeromask >>= (runLength + 1);
-                i += runLength;
-
                 while (runLength > 15)
                 {
                     runLength -= 16;
-                    p = putBits(p, ac.code[161], ac.size[161]);
+                    //p = encoder.putBits(p, ac.code[161], ac.size[161]);
+                    p = encoder.putBits(p, ac.code[176], ac.size[176]);
                 }
-
-                int coeff = temp[i++];
 
                 u32 absCoeff = std::abs(coeff);
                 coeff -= (absCoeff != coeff);
@@ -879,95 +1023,28 @@ namespace
                 u32 size = getSymbolSize(absCoeff);
                 u32 mask = (1 << size) - 1;
 
-                // TODO: if we make the table 16 entries wide, we could use "runLength * 16" here
-                //       "runLength * 10 + size" is LEA x 2 ; index = (runLength * 4 + runLength) * 2 + size
-                //       "runLength * 16 + size" is LEA     ; index = (runLength * 16 + size)
+                //int index = runLength * 10 + size;
+                int index = runLength + size * 16;
+                p = encoder.putBits(p, ac.code[index], ac.size[index]);
+                p = encoder.putBits(p, coeff & mask, size);
 
-                int index = runLength * 10 + size;
-                p = putBits(p, ac.code[index], ac.size[index]);
-                p = putBits(p, coeff & mask, size);
-            }
-
-            return p;
-        }
-
-#else
-
-        u8* encode(u8* p, int component, const s16* input)
-        {
-            struct
-            {
-                const u16* code;
-                const u16* size;
-            } dc, ac;
-
-            if (component != 0)
-            {
-                dc.code = g_chrominance_dc_code_table;
-                dc.size = g_chrominance_dc_size_table;
-                ac.code = g_chrominance_ac_code_table;
-                ac.size = g_chrominance_ac_size_table;
+                runLength = 0;
             }
             else
             {
-                dc.code = g_luminance_dc_code_table;
-                dc.size = g_luminance_dc_size_table;
-                ac.code = g_luminance_ac_code_table;
-                ac.size = g_luminance_ac_size_table;
+                ++runLength;
             }
-
-            int coeff = input[0] - last_dc_value[component];
-            last_dc_value[component] = input[0];
-
-            u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-            u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
-            u32 mask = (1 << size) - 1;
-
-            p = putBits(p, dc.code[size], dc.size[size]);
-            p = putBits(p, coeff & mask, size);
-
-            int runLength = 0;
-
-            for (int i = 1; i < 64; ++i)
-            {
-                int coeff = input[zigzag_table_inverse[i]];
-                if (coeff)
-                {
-                    while (runLength > 15)
-                    {
-                        runLength -= 16;
-                        p = putBits(p, ac.code[161], ac.size[161]);
-                    }
-
-                    u32 absCoeff = std::abs(coeff);
-                    coeff -= (absCoeff != coeff);
-
-                    u32 size = getSymbolSize(absCoeff);
-                    u32 mask = (1 << size) - 1;
-
-                    int index = runLength * 10 + size;
-                    p = putBits(p, ac.code[index], ac.size[index]);
-                    p = putBits(p, coeff & mask, size);
-
-                    runLength = 0;
-                }
-                else
-                {
-                    ++runLength;
-                }
-            }
-
-            if (runLength != 0)
-            {
-                p = putBits(p, ac.code[0], ac.size[0]);
-            }
-
-            return p;
         }
 
-#endif
+        if (runLength != 0)
+        {
+            p = encoder.putBits(p, ac.code[0], ac.size[0]);
+        }
 
-    };
+        return p;
+    }
+
+#endif
 
 #if defined(JPEG_ENABLE_SSE2)
 
@@ -2398,7 +2475,7 @@ namespace
                     {
                         s16 temp[BLOCK_SIZE];
                         fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-                        ptr = huffman.encode(ptr, jp.channel[i].component - 1, temp);
+                        ptr = encode(huffman, ptr, jp.channel[i].component - 1, temp);
                     }
 
                     // flush encoding buffer
