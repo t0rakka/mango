@@ -23,6 +23,7 @@ namespace mango
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
         bool    palette = false; // palette is available
+        bool    premultiplied = false; // alpha is premultiplied
         Format  format; // preferred format (fastest available "direct" decoding is possible)
         TextureCompression compression = TextureCompression::NONE;
     };

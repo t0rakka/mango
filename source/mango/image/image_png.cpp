@@ -1417,6 +1417,7 @@ namespace
             m_header.faces   = 0;
 			m_header.palette = false;
             m_header.compression = TextureCompression::NONE;
+            m_header.premultiplied = m_iphoneOptimized; // apple pngcrush premultiplies alpha
 
             // force alpha channel on when transparency is enabled
             int color_type = m_color_type;
