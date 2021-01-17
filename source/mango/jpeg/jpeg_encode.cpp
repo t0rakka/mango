@@ -207,7 +207,7 @@ namespace
         53, 60, 61, 54, 47, 55, 62, 63,
     };
 
-#if 1
+#if 0
 
     /*
     // NOTE: parallel symbol size computation prototype
@@ -786,7 +786,7 @@ namespace
         }
     };
 
-#if 1
+#if 0
 
     // SSSE3 / AVX512 zigzag + zero detector prototype
 
