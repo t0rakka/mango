@@ -1276,6 +1276,9 @@ namespace
 
         int m_channels;
 
+        // CgBI
+        bool m_iphoneOptimized = false; // Apple's proprietary iphone optimized pngcrush
+
         // PLTE
         Palette m_palette;
 
@@ -1368,9 +1371,23 @@ namespace
             return;
         }
 
-        // read first chunk; it must be IHDR
-        const u32 size = p.read32();
-        const u32 id = p.read32();
+        // read first chunk; in standard it is IHDR, but apple has CgBI+IHDR
+        u32 size = p.read32();
+        u32 id = p.read32();
+
+        if (id == u32_mask_rev('C', 'g', 'B', 'I'))
+        {
+            debugPrint("CgBI: reading PNG as iphone optimized");
+
+            m_iphoneOptimized = true;
+            p += size; // skip chunk data
+            p += sizeof(u32); // skip crc
+
+            // next chunk
+            size = p.read32();
+            id = p.read32();
+        }
+
         if (id != u32_mask_rev('I', 'H', 'D', 'R'))
         {
             setError("Incorrect file; the IHDR chunk must come first.");
@@ -1428,7 +1445,7 @@ namespace
 
                 case COLOR_TYPE_RGB:
                 case COLOR_TYPE_RGBA:
-                    m_header.format = Format(bits * 4, Format::UNORM, Format::RGBA, bits, bits, bits, bits);
+                    m_header.format = Format(bits * 4, Format::UNORM, m_iphoneOptimized ? Format::BGRA : Format::RGBA, bits, bits, bits, bits);
                     break;
             }
         }
@@ -2204,9 +2221,20 @@ namespace
 
         try
         {
-            size_t bytes_out = zlib::decompress(buffer, m_compressed);
-            debugPrint("  # total_out:  %d\n", int(bytes_out));
-            MANGO_UNREFERENCED(bytes_out);
+            if(m_iphoneOptimized)
+            {
+                // apple uses raw deflate format
+                size_t bytes_out = deflate::decompress(buffer, m_compressed);
+                debugPrint("  # deflate total_out:  %d\n", int(bytes_out));
+                MANGO_UNREFERENCED(bytes_out);
+            }
+            else
+            {
+                // png standard uses zlib frame format
+                size_t bytes_out = zlib::decompress(buffer, m_compressed);
+                debugPrint("  # zlib total_out:  %d\n", int(bytes_out));
+                MANGO_UNREFERENCED(bytes_out);
+            }
         }
         catch (const Exception& exception)
         {
