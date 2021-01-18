@@ -1301,6 +1301,9 @@ namespace
         Frame m_frame;
         const u8* m_first_frame = nullptr;
 
+        // iCCP
+        Buffer m_icc;
+
         void read_IHDR(BigEndianConstPointer p, u32 size);
         void read_IDAT(BigEndianConstPointer p, u32 size);
         void read_PLTE(BigEndianConstPointer p, u32 size);
@@ -1312,6 +1315,7 @@ namespace
         void read_acTL(BigEndianConstPointer p, u32 size);
         void read_fcTL(BigEndianConstPointer p, u32 size);
         void read_fdAT(BigEndianConstPointer p, u32 size);
+        void read_iCCP(BigEndianConstPointer p, u32 size);
 
         void parse();
 
@@ -1348,6 +1352,12 @@ namespace
 
         const ImageHeader& getHeader();
         ImageDecodeStatus decode(const Surface& dest, Palette* palette);
+
+        ConstMemory icc()
+        {
+            return m_icc;
+        }
+
     };
 
     // ------------------------------------------------------------
@@ -1723,6 +1733,52 @@ namespace
         m_compressed.append(p, size);
     }
 
+    void ParserPNG::read_iCCP(BigEndianConstPointer p, u32 size)
+    {
+        /*
+         Profile name:       1-79 bytes (character string)
+         Null separator:     1 byte
+         Compression method: 1 byte (0=deflate)
+         Compressed profile: n bytes
+         */
+        const char* name = (const char*)&p[0];
+        size_t name_len = strnlen(name, size);
+        if(name_len == size)
+        {
+            debugPrint("iCCP: profile name not terminated\n");
+            return;
+        }
+
+        debugPrint("  profile name '%s'\n", name);
+
+        const u8* profile = p + name_len + 2;
+        const size_t icc_bytes = size - name_len - 2;
+
+        m_icc.reset();
+
+        try
+        {
+            debugPrint("  decompressing icc profile %d bytes\n", int(icc_bytes));
+
+            Buffer buffer(2*1024*1024); // max profile size supported
+            size_t bytes_out = zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
+
+            debugPrint("  unpacked icc profile %d bytes\n", int(bytes_out));
+            
+            m_icc.append(buffer, bytes_out);
+        }
+        catch (const Exception& exception)
+        {
+            // could not unpack icc profile
+            debugPrint("  threw %s\n", exception.what());
+        }
+
+        debugPrint("  icc profile %d bytes\n", int(m_icc.size()));
+
+        return;
+
+    }
+
     void ParserPNG::parse()
     {
         BigEndianConstPointer p = m_pointer;
@@ -1794,6 +1850,10 @@ namespace
                 case u32_mask_rev('f', 'd', 'A', 'T'):
                     read_fdAT(p, size);
                     m_pointer = ptr_next_chunk;
+                    return;
+
+                case u32_mask_rev('i', 'C', 'C', 'P'):
+                    read_iCCP(p, size);
                     return;
 
                 case u32_mask_rev('p', 'H', 'Y', 's'):
@@ -2522,6 +2582,11 @@ namespace
         ImageHeader header() override
         {
             return m_parser.getHeader();
+        }
+
+        ConstMemory icc() override
+        {
+            return m_parser.icc();
         }
 
         ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
