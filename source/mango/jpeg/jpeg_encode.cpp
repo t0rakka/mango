@@ -656,7 +656,7 @@ namespace
     static inline
     u32 getSymbolSize(int value)
     {
-        return u32_log2(value) + 1;
+        return u32_log2(value) + 1; // LZCNT / BMI
     }
 
 #else
@@ -786,42 +786,60 @@ namespace
         }
     };
 
-#if 0
-
-    // SSSE3 / AVX512 zigzag + zero detector prototype
-
-    u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    static inline
+    u8* encode_dc(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
     {
-        struct
-        {
-            const u16* code;
-            const u16* size;
-        } dc, ac;
+        const u16* dc_code;
+        const u16* dc_size;
 
         if (component != 0)
         {
-            dc.code = g_chrominance_dc_code_table;
-            dc.size = g_chrominance_dc_size_table;
-            ac.code = g_chrominance_ac_code_table;
-            ac.size = g_chrominance_ac_size_table;
+            dc_code = g_chrominance_dc_code_table;
+            dc_size = g_chrominance_dc_size_table;
         }
         else
         {
-            dc.code = g_luminance_dc_code_table;
-            dc.size = g_luminance_dc_size_table;
-            ac.code = g_luminance_ac_code_table;
-            ac.size = g_luminance_ac_size_table;
+            dc_code = g_luminance_dc_code_table;
+            dc_size = g_luminance_dc_size_table;
         }
 
         int coeff = input[0] - encoder.last_dc_value[component];
         encoder.last_dc_value[component] = input[0];
 
-        u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
+        int absCoeff = std::abs(coeff);
+        coeff -= (absCoeff != coeff);
+
         u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
         u32 mask = (1 << size) - 1;
 
-        p = encoder.putBits(p, dc.code[size], dc.size[size]);
+        p = encoder.putBits(p, dc_code[size], dc_size[size]);
         p = encoder.putBits(p, coeff & mask, size);
+
+        return p;
+    }
+
+#if 0
+
+    // SSSE3 / AVX512 zigzag + zero detector prototype
+
+    static
+    u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    {
+        p = encode_dc(encoder, p, component, input);
+
+        const u16* ac_code;
+        const u16* ac_size;
+
+        if (component != 0)
+        {
+            ac_code = g_chrominance_ac_code_table;
+            ac_size = g_chrominance_ac_size_table;
+        }
+        else
+        {
+            ac_code = g_luminance_ac_code_table;
+            ac_size = g_luminance_ac_size_table;
+        }
 
         s16 temp[64];
         u64 zeromask = jpeg_zigzag_ssse3(input, temp);
@@ -834,18 +852,18 @@ namespace
             if (!zeromask)
             {
                 // only zeros left
-                p = encoder.putBits(p, ac.code[0], ac.size[0]);
+                p = encoder.putBits(p, ac_code[0], ac_size[0]);
                 break;
             }
 
-            int runLength = u64_tzcnt(zeromask);
+            int runLength = u64_tzcnt(zeromask); // BMI
             zeromask >>= (runLength + 1);
             i += runLength;
 
             while (runLength > 15)
             {
                 runLength -= 16;
-                p = encoder.putBits(p, ac.code[176], ac.size[176]);
+                p = encoder.putBits(p, ac_code[176], ac_size[176]);
             }
 
             int coeff = temp[i++];
@@ -856,7 +874,7 @@ namespace
             u32 mask = (1 << size) - 1;
 
             int index = runLength + size * 16;
-            p = encoder.putBits(p, ac.code[index], ac.size[index]);
+            p = encoder.putBits(p, ac_code[index], ac_size[index]);
             p = encoder.putBits(p, coeff & mask, size);
         }
 
@@ -865,38 +883,24 @@ namespace
 
 #else
 
+    static
     u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
     {
-        struct
-        {
-            const u16* code;
-            const u16* size;
-        } dc, ac;
+        p = encode_dc(encoder, p, component, input);
+
+        const u16* ac_code;
+        const u16* ac_size;
 
         if (component != 0)
         {
-            dc.code = g_chrominance_dc_code_table;
-            dc.size = g_chrominance_dc_size_table;
-            ac.code = g_chrominance_ac_code_table;
-            ac.size = g_chrominance_ac_size_table;
+            ac_code = g_chrominance_ac_code_table;
+            ac_size = g_chrominance_ac_size_table;
         }
         else
         {
-            dc.code = g_luminance_dc_code_table;
-            dc.size = g_luminance_dc_size_table;
-            ac.code = g_luminance_ac_code_table;
-            ac.size = g_luminance_ac_size_table;
+            ac_code = g_luminance_ac_code_table;
+            ac_size = g_luminance_ac_size_table;
         }
-
-        int coeff = input[0] - encoder.last_dc_value[component];
-        encoder.last_dc_value[component] = input[0];
-
-        u32 absCoeff = (coeff < 0) ? -coeff-- : coeff;
-        u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
-        u32 mask = (1 << size) - 1;
-
-        p = encoder.putBits(p, dc.code[size], dc.size[size]);
-        p = encoder.putBits(p, coeff & mask, size);
 
         int runLength = 0;
 
@@ -908,7 +912,7 @@ namespace
                 while (runLength > 15)
                 {
                     runLength -= 16;
-                    p = encoder.putBits(p, ac.code[176], ac.size[176]);
+                    p = encoder.putBits(p, ac_code[176], ac_size[176]);
                 }
 
                 int absCoeff = std::abs(coeff);
@@ -918,7 +922,7 @@ namespace
                 u32 mask = (1 << size) - 1;
 
                 int index = runLength + size * 16;
-                p = encoder.putBits(p, ac.code[index], ac.size[index]);
+                p = encoder.putBits(p, ac_code[index], ac_size[index]);
                 p = encoder.putBits(p, coeff & mask, size);
 
                 runLength = 0;
@@ -931,7 +935,7 @@ namespace
 
         if (runLength != 0)
         {
-            p = encoder.putBits(p, ac.code[0], ac.size[0]);
+            p = encoder.putBits(p, ac_code[0], ac_size[0]);
         }
 
         return p;
