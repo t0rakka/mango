@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cmath>
+#include <cassert>
 #include <algorithm>
 #include <mango/core/configure.hpp>
 #include <mango/core/half.hpp>
@@ -177,9 +178,10 @@ namespace mango
         return (value + multiple - 1) / multiple;
     }
 
-    constexpr float snap(float value, float grid)
+    static inline float snap(float value, float grid)
     {
-        return grid ? std::floor(0.5f + value / grid) * grid : value;
+        assert(grid != 0);
+        return std::floor(0.5f + value / grid) * grid;
     }
 
     constexpr u32 wang_hash(u32 seed)
@@ -193,7 +195,7 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // 16 bits
+    // scale / extend
     // ----------------------------------------------------------------------------
 
     constexpr u16 u16_scale(u16 value, int from, int to)
@@ -202,7 +204,31 @@ namespace mango
         return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
+    constexpr u32 u32_scale(u32 value, int from, int to)
+    {
+        // scale value "from" bits "to" bits
+        return value * ((1 << to) - 1) / ((1 << from) - 1);
+    }
+
+    constexpr u64 u64_scale(u64 value, int from, int to)
+    {
+        // scale value "from" bits "to" bits
+        return value * ((1ull << to) - 1) / ((1ull << from) - 1);
+    }
+
     constexpr u16 u16_extend(u16 value, int from, int to)
+    {
+        // bit-pattern replicating scaling (can at most double the bits)
+        return (value << (to - from)) | (value >> (from * 2 - to));
+    }
+
+    constexpr u32 u32_extend(u32 value, int from, int to)
+    {
+        // bit-pattern replicating scaling (can at most double the bits)
+        return (value << (to - from)) | (value >> (from * 2 - to));
+    }
+
+    constexpr u64 u64_extend(u64 value, int from, int to)
     {
         // bit-pattern replicating scaling (can at most double the bits)
         return (value << (to - from)) | (value >> (from * 2 - to));
@@ -214,30 +240,26 @@ namespace mango
         return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
     }
 
-    // ----------------------------------------------------------------------------
-    // 32 bits
-    // ----------------------------------------------------------------------------
-
-    constexpr u32 u32_scale(u32 value, int from, int to)
-    {
-        // scale value "from" bits "to" bits
-        return value * ((1 << to) - 1) / ((1 << from) - 1);
-    }
-
-    constexpr u32 u32_extend(u32 value, int from, int to)
-    {
-        // bit-pattern replicating scaling (can at most double the bits)
-        return (value << (to - from)) | (value >> (from * 2 - to));
-    }
-
     constexpr s32 s32_extend(s32 value, int from)
     {
         // sign-extend "from" bits to full s32
         return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
     }
 
+    constexpr s64 s64_extend(s64 value, int from)
+    {
+        // sign-extend "from" bits to full s64
+        return value | (value & (1ull << (from - 1)) ? ~((1ull << from) - 1) : 0);
+    }
+
+    // ----------------------------------------------------------------------------
+    // 32 bits
+    // ----------------------------------------------------------------------------
+
     static inline u32 u32_expand_msb(u32 value)
     {
+        // value:  0001xxxxxxxx
+        // result: 000111111111
         value |= value >> 1;
         value |= value >> 2;
         value |= value >> 4;
@@ -268,24 +290,24 @@ namespace mango
 
     constexpr u32 u32_clear_lsb(u32 value)
     {
-        // value:     xxxxx100000
-        // value - 1: xxxxx011111
-        // Subtracting one from the value borrows from the first set bit
-        // that is encountered. The bitwise-and will yield 0 ONLY if the
-        // the other bits in the value (marked with x) are not set.
-        // The expression will evaluate to zero ONLY when a single bit is set,
-        // which means the value is a power of two.
+        // value:     xxxxxx100000
+        // result:    xxxxxx000000
         return value & (value - 1);
     }
 
     constexpr u32 u32_expand_lsb(u32 value)
     {
+        // value:     xxxxxx100000
+        // result:    000000111111
+
 		// NOTE: 0 expands to 0xffffffff
         return value ^ (value - 1);
     }
 
     constexpr u32 u32_lsb(u32 value)
     {
+        // value:  xxxxxx100000
+        // result: 000000100000
         return value & (0 - value);
     }
 
@@ -293,11 +315,15 @@ namespace mango
 
     constexpr u32 u32_expand_high_lsb(u32 value)
     {
+        // value:  xxxxxxxx100
+        // result: 11111111100
         return value | (0 - value);
     }
 
     static inline int u32_index_of_bit(u32 bit)
     {
+        // value:  00000010000
+        // result: 4
         static const u8 table[] =
         {
             0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
@@ -308,6 +334,8 @@ namespace mango
 
     static inline int u32_index_of_expanded_bit(u32 mask)
     {
+        // value:  00000011111
+        // result: 4
         static const u8 table[] =
         {
 			0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
@@ -547,24 +575,6 @@ namespace mango
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
-
-    constexpr u64 u64_scale(u64 value, int from, int to)
-    {
-        // scale value "from" bits "to" bits
-        return value * ((1ull << to) - 1) / ((1ull << from) - 1);
-    }
-
-    constexpr u64 u64_extend(u64 value, int from, int to)
-    {
-        // bit-pattern replicating scaling (can at most double the bits)
-        return (value << (to - from)) | (value >> (from * 2 - to));
-    }
-
-    constexpr s64 s64_extend(s64 value, int from)
-    {
-        // sign-extend "from" bits to full s64
-        return value | (value & (1ull << (from - 1)) ? ~((1ull << from) - 1) : 0);
-    }
 
     static inline u64 u64_expand_msb(u64 value)
     {
