@@ -208,9 +208,11 @@ namespace
     };
 
 #if 0
+#if defined(JPEG_ENABLE_SSE4)
 
     /*
     // NOTE: parallel symbol size computation prototype
+    // NOTE: try this with AVX512 - 128 bit wide is +- same performance as scalar (sparse input)
 
     inline __m128i getSymbolSize(__m128i absCoeff)
     {
@@ -263,7 +265,8 @@ namespace
         return v == -1 ? -1 : (v & 7) * 2 + offset;
     }
 
-    inline int16x8 shuffle(__m128i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7)
+    static inline
+    int16x8 shuffle(__m128i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7)
     {
         const __m128i s = _mm_setr_epi8(
             lane(c0, 0), lane(c0, 1), lane(c1, 0), lane(c1, 1),
@@ -271,21 +274,6 @@ namespace
             lane(c4, 0), lane(c4, 1), lane(c5, 0), lane(c5, 1),
             lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1));
         return int16x8(_mm_shuffle_epi8(v, s));
-    }
-
-    inline int16x16 shuffle(__m256i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7,
-                                       s8 c8, s8 c9, s8 ca, s8 cb, s8 cc, s8 cd, s8 ce, s8 cf)
-    {
-        const __m256i s = _mm256_setr_epi8(
-            lane(c0, 0), lane(c0, 1), lane(c1, 0), lane(c1, 1),
-            lane(c2, 0), lane(c2, 1), lane(c3, 0), lane(c3, 1),
-            lane(c4, 0), lane(c4, 1), lane(c5, 0), lane(c5, 1),
-            lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1),
-            lane(c8, 0), lane(c8, 1), lane(c9, 0), lane(c9, 1),
-            lane(ca, 0), lane(ca, 1), lane(cb, 0), lane(cb, 1),
-            lane(cc, 0), lane(cc, 1), lane(cd, 0), lane(cd, 1),
-            lane(ce, 0), lane(ce, 1), lane(cf, 0), lane(cf, 1));
-        return int16x16(_mm256_shuffle_epi8(v, s));
     }
 
     u64 jpeg_zigzag_ssse3(const s16* in, s16* out)
@@ -472,8 +460,28 @@ namespace
         return ~zeromask;
     }
 
+#if defined(JPEG_ENABLE_AVX2)
+
     // NOTE: The zigzag is still 128 bit wide only because of the retarded 128+128 way the AVX2 works
     // TODO: re-arrange (if possible) so that 256 bit shuffle can be used, in this form this is useless
+
+    /*
+    inline int16x16 shuffle(__m256i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7,
+                                       s8 c8, s8 c9, s8 ca, s8 cb, s8 cc, s8 cd, s8 ce, s8 cf)
+    {
+        const __m256i s = _mm256_setr_epi8(
+            lane(c0, 0), lane(c0, 1), lane(c1, 0), lane(c1, 1),
+            lane(c2, 0), lane(c2, 1), lane(c3, 0), lane(c3, 1),
+            lane(c4, 0), lane(c4, 1), lane(c5, 0), lane(c5, 1),
+            lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1),
+            lane(c8, 0), lane(c8, 1), lane(c9, 0), lane(c9, 1),
+            lane(ca, 0), lane(ca, 1), lane(cb, 0), lane(cb, 1),
+            lane(cc, 0), lane(cc, 1), lane(cd, 0), lane(cd, 1),
+            lane(ce, 0), lane(ce, 1), lane(cf, 0), lane(cf, 1));
+        return int16x16(_mm256_shuffle_epi8(v, s));
+    }
+    */
+
     u64 jpeg_zigzag_avx2(const s16* in, s16* out)
     {
         const __m256i* src = reinterpret_cast<const __m256i *>(in);
@@ -603,52 +611,55 @@ namespace
         return ~zeromask;
     }
 
-    // NOTE: same as zigzag_table_inverse but 16 bit elements
-    // TODO: use zigzag_table_inverse and unpack from 8 to 16 bits
-    const u16 zigzag_shuffle [] =
-    {
-         0,  1,  8, 16,  9,  2,  3, 10,
-        17, 24, 32, 25, 18, 11,  4,  5,
-        12, 19, 26, 33, 40, 48, 41, 34,
-        27, 20, 13,  6,  7, 14, 21, 28,
-        35, 42, 49, 56, 57, 50, 43, 36,
-        29, 22, 15, 23, 30, 37, 44, 51,
-        58, 59, 52, 45, 38, 31, 39, 46,
-        53, 60, 61, 54, 47, 55, 62, 63
-    };
+#if defined(JPEG_ENABLE_AVX512)
 
     u64 jpeg_zigzag_avx512bw(const s16* in, s16* out)
     {
+        // TODO: use zigzag_table_inverse and unpack from 8 to 16 bits
+        static const u16 zigzag_shuffle [] =
+        {
+             0,  1,  8, 16,  9,  2,  3, 10,
+            17, 24, 32, 25, 18, 11,  4,  5,
+            12, 19, 26, 33, 40, 48, 41, 34,
+            27, 20, 13,  6,  7, 14, 21, 28,
+            35, 42, 49, 56, 57, 50, 43, 36,
+            29, 22, 15, 23, 30, 37, 44, 51,
+            58, 59, 52, 45, 38, 31, 39, 46,
+            53, 60, 61, 54, 47, 55, 62, 63
+        };
+
         const __m512i* src = reinterpret_cast<const __m512i *>(in);
         const __m512i* table = reinterpret_cast<const __m512i *>(zigzag_shuffle);
 
-        const __m512i A = _mm512_loadu_si512(src + 0);
-        const __m512i B = _mm512_loadu_si512(src + 1);
-
-        const __m512i shuf0 = _mm512_loadu_si512(table + 0);
-        const __m512i shuf1 = _mm512_loadu_si512(table + 1);
-        const __m512i res0  = _mm512_permutex2var_epi16(A, shuf0, B);
-        const __m512i res1  = _mm512_permutex2var_epi16(A, shuf1, B);
+        const __m512i src0 = _mm512_loadu_si512(src + 0);
+        const __m512i src1 = _mm512_loadu_si512(src + 1);
+        const __m512i table0 = _mm512_loadu_si512(table + 0);
+        const __m512i table1 = _mm512_loadu_si512(table + 1);
+        const __m512i v0  = _mm512_permutex2var_epi16(src0, table0, src1);
+        const __m512i v1  = _mm512_permutex2var_epi16(src0, table1, src1);
 
         // compute zeromask
         const __m512i zero = _mm512_setzero_si512();
-        __mmask32 mask_lo = _mm512_cmpneq_epu16_mask(res0, zero);
-        __mmask32 mask_hi = _mm512_cmpneq_epu16_mask(res1, zero);
+        __mmask32 mask_lo = _mm512_cmpneq_epu16_mask(v0, zero);
+        __mmask32 mask_hi = _mm512_cmpneq_epu16_mask(v1, zero);
         u64 zeromask = mask_lo;
 
         __m512i* dest = reinterpret_cast<__m512i *>(out);
 
-        _mm512_storeu_si512(dest + 0, res0);
+        _mm512_storeu_si512(dest + 0, v0);
 
         if (!mask_hi)
         {
             zeromask |= (u64(mask_hi) << 32);
-            _mm512_storeu_si512(dest + 1, res1);
+            _mm512_storeu_si512(dest + 1, v1);
         }
 
         return zeromask;
     }
 
+#endif // defined(JPEG_ENABLE_AVX512)
+#endif // defined(JPEG_ENABLE_AVX2)
+#endif // defined(JPEG_ENABLE_SSE4)
 #endif // 0
 
 #if defined(MANGO_ENABLE_LZCNT)
