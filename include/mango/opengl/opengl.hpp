@@ -19,6 +19,7 @@
     // -----------------------------------------------------------------------
 
     #define MANGO_OPENGL_CONTEXT_WGL
+    #define MANGO_OPENGL_FRAMEBUFFER
 
     #define GLEXT_PROC(proc, name) extern proc name
 
@@ -39,6 +40,7 @@
     // -----------------------------------------------------------------------
 
     #define MANGO_OPENGL_CONTEXT_COCOA
+    #define MANGO_OPENGL_FRAMEBUFFER
 
     #define GL_SILENCE_DEPRECATION /* macOS 10.14 deprecated OpenGL API */
 
@@ -72,7 +74,7 @@
     //#include <GLES/gl.h>
     //#include <GLES/glext.h>
     //#include <GLES2/gl2.h>
-    #include <GLES3/gl3.h>
+    #include <GLES3/gl32.h>
 
     // TODO: EGL context
 
@@ -83,6 +85,7 @@
     // -----------------------------------------------------------------------
 
     #define MANGO_OPENGL_CONTEXT_GLX
+    #define MANGO_OPENGL_FRAMEBUFFER
 
     #define GL_GLEXT_PROTOTYPES
     #include <GL/gl.h>
@@ -200,6 +203,8 @@ namespace mango {
 #endif
     };
 
+#ifdef MANGO_OPENGL_FRAMEBUFFER
+
     // -------------------------------------------------------------------
     // OpenGLFramebuffer
     // -------------------------------------------------------------------
@@ -262,5 +267,7 @@ namespace mango {
         void setPalette(const u32* palette);
         void present(Filter filter = FILTER_NEAREST);
     };
+
+#endif // MANGO_OPENGL_FRAMEBUFFER
 
 } // namespace mango

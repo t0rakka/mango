@@ -520,6 +520,8 @@ namespace mango {
         return nullptr;
     }
 
+#ifdef MANGO_OPENGL_FRAMEBUFFER
+
 namespace {
 
     // -------------------------------------------------------------------
@@ -1034,5 +1036,7 @@ namespace {
 
         swapBuffers();
     }
+
+#endif // MANGO_OPENGL_FRAMEBUFFER
 
 } // namespace mango
