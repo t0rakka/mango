@@ -4,8 +4,6 @@
 */
 #pragma once
 
-//#define MANGO_ENABLE_DEBUG_PRINT
-
 #define JPEG_ENABLE_THREAD
 #define JPEG_ENABLE_SIMD
 

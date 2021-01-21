@@ -186,4 +186,32 @@ namespace mango
         return info.str();
     }
 
+	// ----------------------------------------------------------------------------
+	// debugPrint()
+	// ----------------------------------------------------------------------------
+
+    static bool g_debug_print_enable = false;
+
+    bool debugPrintIsEnable()
+    {
+        return g_debug_print_enable;
+    }
+
+    void debugPrintEnable(bool enable)
+    {
+        g_debug_print_enable = enable;
+    }
+
+    void debugPrint(const char* format, ...)
+    {
+        if (g_debug_print_enable)
+        {
+            va_list args;
+            va_start(args, format);
+            std::vprintf(format, args);
+            std::fflush(stdout);
+            va_end(args);
+        }
+    }
+
 } // namespace mango
