@@ -2,8 +2,6 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-//#define MANGO_ENABLE_DEBUG_PRINT
-
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
@@ -35,8 +33,6 @@ namespace
         COLOR_TYPE_RGBA    = 6,
     };
 
-#if defined(MANGO_ENABLE_DEBUG_PRINT)
-
     inline
     const char* get_string(ColorType type)
     {
@@ -63,8 +59,6 @@ namespace
         }
         return text;
     }
-
-#endif // MANGO_ENABLE_DEBUG_PRINT
 
     // ------------------------------------------------------------
     // Filter

@@ -186,4 +186,97 @@ namespace mango
         return info.str();
     }
 
+	// ----------------------------------------------------------------------------
+	// debugPrint()
+	// ----------------------------------------------------------------------------
+
+    static bool g_debug_print_enable = false;
+
+    bool debugPrintIsEnable()
+    {
+        return g_debug_print_enable;
+    }
+
+    void debugPrintEnable(bool enable)
+    {
+        g_debug_print_enable = enable;
+    }
+
+    void debugPrint(const char* format, ...)
+    {
+        if (g_debug_print_enable)
+        {
+            va_list args;
+            va_start(args, format);
+            std::vprintf(format, args);
+            std::fflush(stdout);
+            va_end(args);
+        }
+    }
+
+	// ----------------------------------------------------------------------------
+    // Status
+	// ----------------------------------------------------------------------------
+
+    Status::operator bool () const
+    {
+        return success;
+    }
+
+    void Status::setError(const std::string& error)
+    {
+        info = error;
+        success = false;
+    }
+
+    void Status::setError(const char* format, ...)
+    {
+        constexpr size_t max_length = 512;
+        char buffer[max_length];
+
+        va_list args;
+        va_start(args, format);
+        std::vsnprintf(buffer, max_length, format, args);
+        va_end(args);
+
+        info = buffer;
+        success = false;
+    }
+
+	// ----------------------------------------------------------------------------
+	// Exception
+	// ----------------------------------------------------------------------------
+
+    Exception::Exception(const std::string message, const std::string func, const std::string file, int line)
+        : m_message(message)
+        , m_func(func)
+        , m_file(file)
+        , m_line(line)
+    {
+    }
+
+    Exception::~Exception() noexcept
+    {
+    }
+
+    const char* Exception::what() const noexcept
+    {
+        return m_message.c_str();
+    }
+
+    const char* Exception::func() const
+    {
+        return m_func.c_str();
+    }
+
+    const char* Exception::file() const
+    {
+        return m_file.c_str();
+    }
+
+    int Exception::line() const
+    {
+        return m_line;
+    }
+
 } // namespace mango

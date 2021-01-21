@@ -40,7 +40,7 @@ namespace jpeg {
         return is;
     }
 
-    void memoryDump(const u8* ptr)
+    void jpegPrintMemory(const u8* ptr)
     {
         for (int i = 0; i < 8; ++i)
         {
@@ -988,9 +988,10 @@ namespace jpeg {
             }
         }
 
-#if defined(MANGO_ENABLE_DEBUG_PRINT)
-        memoryDump(decodeState.buffer.ptr);
-#endif
+        if (debugPrintIsEnable())
+        {
+            jpegPrintMemory(decodeState.buffer.ptr);
+        }
 
         p = decodeState.buffer.ptr;
 

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <string>
-#include <cstdio>
 #include <mango/core/configure.hpp>
 
 namespace mango
@@ -13,16 +12,8 @@ namespace mango
 
     std::string getSystemInfo();
 
-    // --------------------------------------------------------------
-    // debugPrint()
-    // --------------------------------------------------------------
-
-#ifdef MANGO_ENABLE_DEBUG_PRINT
-    #define debugPrint(...) \
-        std::printf(__VA_ARGS__); \
-        std::fflush(stdout)
-#else
-    #define debugPrint(...)
-#endif
+    bool debugPrintIsEnable();
+    void debugPrintEnable(bool enable);
+    void debugPrint(const char* format, ...);
 
 } // namespace mango

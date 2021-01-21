@@ -6,8 +6,6 @@
 	The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
 	The symbol resolver is iterative instead of recursive as in the original.
 */
-//#define MANGO_ENABLE_DEBUG_PRINT
-
 #include <algorithm>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
