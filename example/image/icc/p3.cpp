@@ -24,13 +24,13 @@ int main(int argc, const char* argv[])
 
     printSize(icc);
 
-    Bitmap bitmapMoreRed(256, 512, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-    bitmapMoreRed.clear(ColorRGBA(0xff0000ff)); // p3 full red
-
     Bitmap bitmap(512, 512, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-    bitmap.clear(ColorRGBA(0xff2333ec)); // srgb full red in display p3 colorspace
 
-    bitmap.blit(256, 0, bitmapMoreRed); // copy more reddish bar to right side of the buffer
+    // clear left half with srgb full red in display p3 colorspace
+    Surface(bitmap, 0, 0, 256, 512).clear(ColorRGBA(0xff2333ec));
+
+    // clear right half with p3 full red
+    Surface(bitmap, 256, 0, 256, 512).clear(ColorRGBA(0xff0000ff));
 
     bitmap.save("icc-mango.jpg", options);
     bitmap.save("icc-mango.png", options);
