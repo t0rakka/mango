@@ -22,30 +22,9 @@ namespace mango
         std::string info;
         bool success = true;
 
-        operator bool () const
-        {
-            return success;
-        }
-
-        void setError(const std::string& error)
-        {
-            info = error;
-            success = false;
-        }
-
-        void setError(const char* format, ...)
-        {
-            constexpr size_t max_length = 512;
-            char buffer[max_length];
-
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, max_length, format, args);
-            va_end(args);
-
-            info = buffer;
-            success = false;
-        }
+        operator bool () const;
+        void setError(const std::string& error);
+        void setError(const char* format, ...);
     };
 
 	// ----------------------------------------------------------------------------
@@ -61,37 +40,13 @@ namespace mango
         int m_line;
 
     public:
-        Exception(const std::string message, const std::string func, const std::string file, int line)
-            : m_message(message)
-            , m_func(func)
-            , m_file(file)
-            , m_line(line)
-        {
-        }
+        Exception(const std::string message, const std::string func, const std::string file, int line);
+        ~Exception() noexcept;
 
-        ~Exception() noexcept
-        {
-        }
-
-        const char* what() const noexcept
-        {
-            return m_message.c_str();
-        }
-
-        const char* func() const
-        {
-            return m_func.c_str();
-        }
-
-        const char* file() const
-        {
-            return m_file.c_str();
-        }
-
-        int line() const
-        {
-            return m_line;
-        }
+        const char* what() const noexcept;
+        const char* func() const;
+        const char* file() const;
+        int line() const;
     };
 
 	// ----------------------------------------------------------------------------
