@@ -303,9 +303,9 @@ namespace
         // G:  -   -   -   -   -   -   -   -
         // H:  -   -   -   -   -   -   -   -
 
-        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3, z) |
-                       shuffle(B, z, z, 8,  z, 9, z, z, 2) |
-                       shuffle(C, z, z, z, 16, z, z, z, z);
+        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3,  z) |
+                       shuffle(B, z, z, 8,  z, 9, z, z, 10) |
+                       shuffle(C, z, z, z, 16, z, z, z,  z);
 
         // ------------------------------------------------------------------------
         //    17, 24, 32, 25, 18, 11,  4,  5,
@@ -319,11 +319,11 @@ namespace
         // G:  -   -   -   -   -   -   -   -
         // H:  -   -   -   -   -   -   -   -
 
-        __m128i row1 = shuffle(A, z,  z, z,  z,  z,  z, 4, 5) |
-                       shuffle(B, z,  z, z,  z,  z, 11, z, z) |
-                       shuffle(C, 1,  z, z,  z, 18,  z, z, z) |
-                       shuffle(D, z, 24, z, 25,  z,  z, z, z) |
-                       shuffle(E, z, z, 32,  z,  z,  z, z, z);
+        __m128i row1 = shuffle(A,  z,  z, z,  z,  z,  z, 4, 5) |
+                       shuffle(B,  z,  z, z,  z,  z, 11, z, z) |
+                       shuffle(C, 17,  z, z,  z, 18,  z, z, z) |
+                       shuffle(D,  z, 24, z, 25,  z,  z, z, z) |
+                       shuffle(E,  z, z, 32,  z,  z,  z, z, z);
 
         // ------------------------------------------------------------------------
         //    12, 19, 26, 33, 40, 48, 41, 34,
@@ -510,15 +510,15 @@ namespace
         // C:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
         // D:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
-        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3, z) |
-                       shuffle(B, z, z, 8,  z, 9, z, z, 2) |
-                       shuffle(C, z, z, z, 16, z, z, z, z);
+        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3,  z) |
+                       shuffle(B, z, z, 8,  z, 9, z, z, 10) |
+                       shuffle(C, z, z, z, 16, z, z, z,  z);
 
-        __m128i row1 = shuffle(A, z,  z, z,  z,  z,  z, 4, 5) |
-                       shuffle(B, z,  z, z,  z,  z, 11, z, z) |
-                       shuffle(C, 1,  z, z,  z, 18,  z, z, z) |
-                       shuffle(D, z, 24, z, 25,  z,  z, z, z) |
-                       shuffle(E, z, z, 32,  z,  z,  z, z, z);
+        __m128i row1 = shuffle(A,  z,  z, z,  z,  z,  z, 4, 5) |
+                       shuffle(B,  z,  z, z,  z,  z, 11, z, z) |
+                       shuffle(C, 17,  z, z,  z, 18,  z, z, z) |
+                       shuffle(D,  z, 24, z, 25,  z,  z, z, z) |
+                       shuffle(E,  z, z, 32,  z,  z,  z, z, z);
 
         const __m256i row01 = _mm256_setr_m128i(row0, row1);
 
