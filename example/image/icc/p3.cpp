@@ -7,7 +7,7 @@ using namespace mango::filesystem;
 
 void printSize(const File &f)
 {
-    printf("'%s' is %zu bytes\n", f.filename().c_str(), f.size());
+    printf("'%s' is %" PRIu64 " bytes\n", f.filename().c_str(), f.size());
 }
 
 int main(int argc, const char* argv[])
