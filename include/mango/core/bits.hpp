@@ -313,11 +313,27 @@ namespace mango
 
 #endif
 
+    constexpr u32 u32_mask_without_lsb(u32 value)
+    {
+        // value:     xxxxxx100000
+        // result:    000000011111
+
+		// NOTE: 0 expands to 0xffffffff
+        return ~(value | (0 - value));
+    }
+
     constexpr u32 u32_extend_lsb(u32 value)
     {
         // value:  xxxxxxxx100
         // result: 11111111100
         return value | (0 - value);
+    }
+
+    constexpr u32 u32_extend_without_lsb(u32 value)
+    {
+        // value:  xxxxxxxx100
+        // result: 11111111000
+        return value ^ (0 - value);
     }
 
     static inline int u32_index_of_bit(u32 bit)
@@ -626,9 +642,20 @@ namespace mango
 
 #endif
 
+    constexpr u64 u64_mask_without_lsb(u64 value)
+    {
+		// NOTE: 0 expands to 0xffffffffffffffff
+        return ~(value | (0 - value));
+    }
+
     static inline u64 u64_extend_lsb(u64 value)
     {
         return value | (0 - value);
+    }
+
+    constexpr u64 u64_extend_without_lsb(u64 value)
+    {
+        return value ^ (0 - value);
     }
 
     static inline int u64_index_of_bit(u64 bit)
