@@ -636,7 +636,7 @@
 
 #ifndef MANGO_DISABLE_LICENSE_GPL
     #define MANGO_ENABLE_LICENSE_GPL
-    // unrar
+    // unrar, jpeg.encoder
 #endif
 
 #ifndef MANGO_DISABLE_LICENSE_MICROSOFT

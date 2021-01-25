@@ -394,11 +394,15 @@ namespace simd {
         return vreinterpretq_f64_u64(vandq_u64(mask, vreinterpretq_u64_f64(div(a, b))));
     }
 
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
 #define SIMD_MASK_DOUBLE128
 #include "common_mask.hpp"
 #undef SIMD_MASK_DOUBLE128
 
-#else
+#else // __aarch64__
 
     template <u32 x, u32 y>
     static inline f64x2 shuffle(f64x2 v)
