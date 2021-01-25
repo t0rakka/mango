@@ -589,6 +589,11 @@ namespace mango
         return mask + 1;
     }
 
+    constexpr u32 u32_clamp(u32 value, u32 low, u32 high)
+    {
+        return (value < low) ? low : (high < value) ? high : value;
+    }
+
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
@@ -931,6 +936,11 @@ namespace mango
     {
         const u64 mask = u64_mask_msb(value - 1);
         return mask + 1;
+    }
+
+    constexpr u64 u64_clamp(u64 value, u64 low, u64 high)
+    {
+        return (value < low) ? low : (high < value) ? high : value;
     }
 
 } // namespace mango

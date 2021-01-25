@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -43,7 +43,7 @@ namespace
 
     // Table K.1 – Luminance quantization table
 
-    const u8 luminance_quant_table [] =
+    const u8 g_luminance_quant_table [] =
     {
         16, 11, 10, 16,  24,  40,  51,  61,
         12, 12, 14, 19,  26,  58,  60,  55,
@@ -57,7 +57,7 @@ namespace
 
     // Table K.2 – Chrominance quantization table
 
-    const u8 chrominance_quant_table [] =
+    const u8 g_chrominance_quant_table [] =
     {
         17, 18, 24, 47, 99, 99, 99, 99,
         18, 21, 26, 66, 99, 99, 99, 99,
@@ -740,7 +740,6 @@ namespace
         jpeg_encode(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
         ~jpeg_encode();
 
-        void init_quantization_tables(u32 quality);
         void write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
         
         ConstMemory icc;
@@ -2171,44 +2170,25 @@ namespace
 
         mcu_width_size = mcu_width * bytes_per_pixel;
 
-        init_quantization_tables(quality);
+        // initialize quantization tables
+        for (int i = 0; i < 64; ++i)
+        {
+            u16 index = zigzag_table[i];
+
+            // luminance
+            u32 L = u32_clamp((g_luminance_quant_table[i] * quality + 0x200) >> 10, 2, 255);
+            Lqt[index] = u8(L);
+            ILqt[i] = u16(0x8000 / L);
+
+            // chrominance
+            u32 C = u32_clamp((g_chrominance_quant_table [i] * quality + 0x200) >> 10, 2, 255);
+            Cqt[index] = u8(C);
+            ICqt[i] = u16(0x8000 / C);
+        }
     }
 
     jpeg_encode::~jpeg_encode()
     {
-    }
-
-    void jpeg_encode::init_quantization_tables(u32 quality)
-    {
-        for (int i = 0; i < 64; ++i)
-        {
-            u16 index = zigzag_table [i];
-            u32 value;
-
-            // luminance quantization table * quality factor
-            value = luminance_quant_table [i] * quality;
-            value = (value + 0x200) >> 10;
-
-            if (value < 2)
-                value = 2;
-            else if (value > 255)
-                value = 255;
-
-            Lqt [index] = (u8) value;
-            ILqt [i] = u16(0x8000 / value);
-
-            // chrominance quantization table * quality factor
-            value = chrominance_quant_table [i] * quality;
-            value = (value + 0x200) >> 10;
-
-            if (value < 2)
-                value = 2;
-            else if (value > 255)
-                value = 255;
-
-            Cqt [index] = (u8) value;
-            ICqt [i] = u16(0x8000 / value);
-        }
     }
 
     void jpeg_encode::write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height)
