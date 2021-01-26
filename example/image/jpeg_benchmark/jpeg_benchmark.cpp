@@ -201,7 +201,8 @@ int main(int argc, const char* argv[])
         exit(1);
     }
 
-    warmup(argv[1]);
+    const char* filename = argv[1];
+    warmup(filename);
 
     int test_count = 0;
     if (argc == 3)
@@ -223,7 +224,7 @@ int main(int argc, const char* argv[])
 
     time0 = Time::us();
 
-    Surface s = load_jpeg(argv[1]);
+    Surface s = load_jpeg(filename);
 
     time1 = Time::us();
 
@@ -240,7 +241,7 @@ int main(int argc, const char* argv[])
 
     time0 = Time::us();
 
-    Surface s_stb = stb_load_jpeg(argv[1]);
+    Surface s_stb = stb_load_jpeg(filename);
 
     time1 = Time::us();
 
@@ -257,7 +258,7 @@ int main(int argc, const char* argv[])
 
     time0 = Time::us();
 
-    Surface s_jpgd = jpgd_load(argv[1]);
+    Surface s_jpgd = jpgd_load(filename);
 
     time1 = Time::us();
 
@@ -272,7 +273,7 @@ int main(int argc, const char* argv[])
 
     time0 = Time::us();
 
-    Bitmap bitmap(argv[1]);
+    Bitmap bitmap(filename);
 
     time1 = Time::us();
 
@@ -295,7 +296,7 @@ int main(int argc, const char* argv[])
         for (int i = 0; i < test_count; ++i)
         {
             time0 = Time::us();
-            Bitmap bitmap(argv[1]);
+            Bitmap bitmap(filename);
 
             time1 = Time::us();
             bitmap.save("output-mango.jpg", options);

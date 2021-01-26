@@ -183,82 +183,187 @@ namespace
 		0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
     };
 
-    const u8 zigzag_table [] =
+    static inline
+    u8* writeStuffedBytes(u8* output, DataType code, int count)
     {
-         0,  1,  5,  6, 14, 15, 27, 28,
-         2,  4,  7, 13, 16, 26, 29, 42,
-         3,  8, 12, 17, 25, 30, 41, 43,
-         9, 11, 18, 24, 31, 40, 44, 53,
-        10, 19, 23, 32, 39, 45, 52, 54,
-        20, 22, 33, 38, 46, 51, 55, 60,
-        21, 34, 37, 47, 50, 56, 59, 61,
-        35, 36, 48, 49, 57, 58, 62, 63
+        code = byteswap(code);
+        for (int i = 0; i < count; ++i)
+        {
+            u8 value = u8(code);
+            code >>= 8;
+            *output++ = value;
+
+            // always write the stuff byte
+            *output = 0;
+
+            // .. but advance ptr only when it actually was one
+            output += (value == 0xff);
+        }
+        return output;
+    }
+
+    struct Channel
+    {
+        int     component;
+        s16*    qtable;
     };
 
-    const u8 zigzag_table_inverse [] =
+    struct EncodeBuffer : Buffer
     {
-         0,  1,  8, 16,  9,  2,  3, 10,
-        17, 24, 32, 25, 18, 11,  4,  5,
-        12, 19, 26, 33, 40, 48, 41, 34,
-        27, 20, 13,  6,  7, 14, 21, 28,
-        35, 42, 49, 56, 57, 50, 43, 36,
-        29, 22, 15, 23, 30, 37, 44, 51,
-        58, 59, 52, 45, 38, 31, 39, 46,
-        53, 60, 61, 54, 47, 55, 62, 63,
+        std::atomic<bool> ready { false };
     };
 
-#if 0
+    struct HuffmanEncoder
+    {
+        int last_dc_value[3];
+
+        DataType code;
+        int space;
+
+        HuffmanEncoder()
+        {
+            last_dc_value[0] = 0;
+            last_dc_value[1] = 0;
+            last_dc_value[2] = 0;
+            code = 0;
+            space = JPEG_REGISTER_BITS;
+        }
+
+        ~HuffmanEncoder()
+        {
+        }
+
+        u8* putBits(u8* output, DataType data, int numbits)
+        {
+            if (space >= numbits)
+            {
+                space -= numbits;
+                code |= (data << space);
+            }
+            else
+            {
+                int overflow = numbits - space;
+                code |= (data >> overflow);
+                output = writeStuffedBytes(output, code, JPEG_REGISTER_BYTES);
+                space = JPEG_REGISTER_BITS - overflow;
+                code = data << space;
+            }
+            return output;
+        }
+
+        u8* flush(u8* output)
+        {
+            int count = ((JPEG_REGISTER_BITS - space) + 7) >> 3;
+            output = writeStuffedBytes(output, code, count);
+            return output;
+        }
+    };
+
+    struct jpegEncoder
+    {
+        int     mcu_width;
+        int     mcu_height;
+        int     horizontal_mcus;
+        int     vertical_mcus;
+        int     cols_in_right_mcus;
+        int     rows_in_bottom_mcus;
+
+        int     mcu_width_size;
+
+        u8      Lqt [BLOCK_SIZE];
+        u8      Cqt [BLOCK_SIZE];
+        AlignedStorage<s16> ILqt;
+        AlignedStorage<s16> ICqt;
+
+        // MCU configuration
+        Channel channel[3];
+        int     channel_count;
+
+        std::string info;
+
+        void (*read_8x8)  (s16* block, const u8* input, size_t stride, int rows, int cols);
+        void (*read)      (s16* block, const u8* input, size_t stride, int rows, int cols);
+        u8*  (*encode_ac) (HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size);
+
+        jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
+        ~jpegEncoder();
+
+        void writeMarkers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
+        
+        ConstMemory icc;
+    };
+
+    static inline
+    u8* encode_dc(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* dc_code, const u16* dc_size, int last_dc)
+    {
+        int coeff = input[0] - last_dc;
+        int absCoeff = std::abs(coeff);
+        coeff -= (absCoeff != coeff);
+
+        u32 size = absCoeff ? u32_log2(absCoeff) + 1 : 0;
+        u32 mask = (1 << size) - 1;
+
+        p = encoder.putBits(p, dc_code[size], dc_size[size]);
+        p = encoder.putBits(p, coeff & mask, size);
+
+        return p;
+    }
+
+    static
+    u8* encode_ac_scalar(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    {
+        const u8 zigzag_table_inverse [] =
+        {
+             0,  1,  8, 16,  9,  2,  3, 10,
+            17, 24, 32, 25, 18, 11,  4,  5,
+            12, 19, 26, 33, 40, 48, 41, 34,
+            27, 20, 13,  6,  7, 14, 21, 28,
+            35, 42, 49, 56, 57, 50, 43, 36,
+            29, 22, 15, 23, 30, 37, 44, 51,
+            58, 59, 52, 45, 38, 31, 39, 46,
+            53, 60, 61, 54, 47, 55, 62, 63,
+        };
+
+        int runLength = 0;
+
+        for (int i = 1; i < 64; ++i)
+        {
+            int coeff = input[zigzag_table_inverse[i]];
+            if (coeff)
+            {
+                while (runLength > 15)
+                {
+                    runLength -= 16;
+                    p = encoder.putBits(p, ac_code[176], ac_size[176]);
+                }
+
+                int absCoeff = std::abs(coeff);
+                coeff -= (absCoeff != coeff);
+
+                u32 size = u32_log2(absCoeff) + 1;
+                u32 mask = (1 << size) - 1;
+
+                int index = runLength + size * 16;
+                p = encoder.putBits(p, ac_code[index], ac_size[index]);
+                p = encoder.putBits(p, coeff & mask, size);
+
+                runLength = 0;
+            }
+            else
+            {
+                ++runLength;
+            }
+        }
+
+        if (runLength != 0)
+        {
+            p = encoder.putBits(p, ac_code[0], ac_size[0]);
+        }
+
+        return p;
+    }
+
 #if defined(JPEG_ENABLE_SSE4)
-
-    /*
-    // NOTE: parallel symbol size computation prototype
-    // NOTE: try this with AVX512 - 128 bit wide is +- same performance as scalar (sparse input)
-
-    inline __m128i getSymbolSize(__m128i absCoeff)
-    {
-        int16x8 value(absCoeff);
-        int16x8 base(0);
-        int16x8 temp;
-        mask16x8 mask;
-
-        temp = value & 0xff00;
-        mask = temp != 0;
-        base = select(mask, base | 8, base);
-        value = select(mask, temp, value);
-
-        temp = value & 0xf0f0;
-        mask = temp != 0;
-        base = select(mask, base | 4, base);
-        value = select(mask, temp, value);
-
-        temp = value & 0xcccc;
-        mask = temp != 0;
-        base = select(mask, base | 2, base);
-        value = select(mask, temp, value);
-
-        temp = value & 0xaaaa;
-        mask = temp != 0;
-        base = select(mask, base | 1, base);
-        value = select(mask, temp, value);
-
-        base += 1;
-
-        return base;
-    }
-
-    inline __m128i absSymbolSize(__m128i* ptr_sz, __m128i coeff)
-    {
-        __m128i absCoeff = _mm_abs_epi16(coeff);
-        __m128i mask = _mm_cmpeq_epi16(absCoeff, coeff);
-        mask = _mm_xor_si128(mask, _mm_cmpeq_epi8(mask, mask)); // not
-        coeff = _mm_add_epi16(coeff, mask);
-
-        __m128 sz = getSymbolSize(absCoeff);
-        _mm_storeu_si128(ptr_sz, sz);
-
-        return coeff;
-    }
-    */
 
     constexpr s8 lane(s8 v, s8 offset)
     {
@@ -276,7 +381,7 @@ namespace
         return int16x8(_mm_shuffle_epi8(v, s));
     }
 
-    u64 jpeg_zigzag_ssse3(const s16* in, s16* out)
+    u64 zigzag_ssse3(const s16* in, s16* out)
     {
         const __m128i* src = reinterpret_cast<const __m128i *>(in);
 
@@ -460,6 +565,48 @@ namespace
         return ~zeromask;
     }
 
+    static
+    u8* encode_ac_ssse3(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    {
+        s16 temp[64];
+        u64 zeromask = zigzag_ssse3(input, temp);
+
+        zeromask >>= 1; // skip DC
+
+        for (int i = 1; i < 64; )
+        {
+            if (!zeromask)
+            {
+                // only zeros left
+                p = encoder.putBits(p, ac_code[0], ac_size[0]);
+                break;
+            }
+
+            int runLength = u64_tzcnt(zeromask); // BMI
+            zeromask >>= (runLength + 1);
+            i += runLength;
+
+            while (runLength > 15)
+            {
+                runLength -= 16;
+                p = encoder.putBits(p, ac_code[176], ac_size[176]);
+            }
+
+            int coeff = temp[i++];
+            int absCoeff = std::abs(coeff);
+            coeff -= (absCoeff != coeff);
+
+            u32 size = u32_log2(absCoeff) + 1;
+            u32 mask = (1 << size) - 1;
+
+            int index = runLength + size * 16;
+            p = encoder.putBits(p, ac_code[index], ac_size[index]);
+            p = encoder.putBits(p, coeff & mask, size);
+        }
+
+        return p;
+    }
+
 #if defined(JPEG_ENABLE_AVX2)
 
     // NOTE: The zigzag is still 128 bit wide only because of the retarded 128+128 way the AVX2 works
@@ -482,7 +629,7 @@ namespace
     }
     */
 
-    u64 jpeg_zigzag_avx2(const s16* in, s16* out)
+    u64 zigzag_avx2(const s16* in, s16* out)
     {
         const __m256i* src = reinterpret_cast<const __m256i *>(in);
 
@@ -611,11 +758,102 @@ namespace
         return ~zeromask;
     }
 
+    static
+    u8* encode_ac_avx2(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    {
+        s16 temp[64];
+        u64 zeromask = zigzag_avx2(input, temp);
+
+        zeromask >>= 1; // skip DC
+
+        for (int i = 1; i < 64; )
+        {
+            if (!zeromask)
+            {
+                // only zeros left
+                p = encoder.putBits(p, ac_code[0], ac_size[0]);
+                break;
+            }
+
+            int runLength = u64_tzcnt(zeromask); // BMI
+            zeromask >>= (runLength + 1);
+            i += runLength;
+
+            while (runLength > 15)
+            {
+                runLength -= 16;
+                p = encoder.putBits(p, ac_code[176], ac_size[176]);
+            }
+
+            int coeff = temp[i++];
+            int absCoeff = std::abs(coeff);
+            coeff -= (absCoeff != coeff);
+
+            u32 size = u32_log2(absCoeff) + 1;
+            u32 mask = (1 << size) - 1;
+
+            int index = runLength + size * 16;
+            p = encoder.putBits(p, ac_code[index], ac_size[index]);
+            p = encoder.putBits(p, coeff & mask, size);
+        }
+
+        return p;
+    }
+
 #if defined(JPEG_ENABLE_AVX512)
 
-    u64 jpeg_zigzag_avx512bw(const s16* in, s16* out)
+    /*
+    // NOTE: parallel symbol size computation prototype
+    // NOTE: try this with AVX512 - 128 bit wide is +- same performance as scalar (sparse input)
+
+    inline __m128i getSymbolSize(__m128i absCoeff)
     {
-        // TODO: use zigzag_table_inverse and unpack from 8 to 16 bits
+        int16x8 value(absCoeff);
+        int16x8 base(0);
+        int16x8 temp;
+        mask16x8 mask;
+
+        temp = value & 0xff00;
+        mask = temp != 0;
+        base = select(mask, base | 8, base);
+        value = select(mask, temp, value);
+
+        temp = value & 0xf0f0;
+        mask = temp != 0;
+        base = select(mask, base | 4, base);
+        value = select(mask, temp, value);
+
+        temp = value & 0xcccc;
+        mask = temp != 0;
+        base = select(mask, base | 2, base);
+        value = select(mask, temp, value);
+
+        temp = value & 0xaaaa;
+        mask = temp != 0;
+        base = select(mask, base | 1, base);
+        value = select(mask, temp, value);
+
+        base += 1;
+
+        return base;
+    }
+
+    inline __m128i absSymbolSize(__m128i* ptr_sz, __m128i coeff)
+    {
+        __m128i absCoeff = _mm_abs_epi16(coeff);
+        __m128i mask = _mm_cmpeq_epi16(absCoeff, coeff);
+        mask = _mm_xor_si128(mask, _mm_cmpeq_epi8(mask, mask)); // not
+        coeff = _mm_add_epi16(coeff, mask);
+
+        __m128 sz = getSymbolSize(absCoeff);
+        _mm_storeu_si128(ptr_sz, sz);
+
+        return coeff;
+    }
+    */
+
+    u64 zigzag_avx512bw(const s16* in, s16* out)
+    {
         static const u16 zigzag_shuffle [] =
         {
              0,  1,  8, 16,  9,  2,  3, 10,
@@ -657,172 +895,11 @@ namespace
         return zeromask;
     }
 
-#endif // defined(JPEG_ENABLE_AVX512)
-#endif // defined(JPEG_ENABLE_AVX2)
-#endif // defined(JPEG_ENABLE_SSE4)
-#endif // 0
-
-#if defined(MANGO_ENABLE_LZCNT)
-
-    static inline
-    u32 getSymbolSize(int value)
-    {
-        return u32_log2(value) + 1; // LZCNT / BMI
-    }
-
-#else
-
-    static inline
-    u32 getSymbolSize(u32 value)
-    {
-        // NOTE: This looks crap but clang compiles it branchless
-        int base = 0;
-        u32 temp;
-        temp = value & 0xff00; if (temp) { base |= 8;  value = temp; }
-        temp = value & 0xf0f0; if (temp) { base |= 4;  value = temp; }
-        temp = value & 0xcccc; if (temp) { base |= 2;  value = temp; }
-        temp = value & 0xaaaa; if (temp) { base |= 1; }
-        return base + 1;
-    }
-
-#endif
-
-    static inline
-    u8* writeStuffedBytes(u8* output, DataType code, int count)
-    {
-        code = byteswap(code);
-        for (int i = 0; i < count; ++i)
-        {
-            u8 value = u8(code);
-            code >>= 8;
-            *output++ = value;
-
-            // always write the stuff byte
-            *output = 0;
-
-            // .. but advance ptr only when it actually was one
-            output += (value == 0xff);
-        }
-        return output;
-    }
-
-    struct jpeg_chan
-    {
-        int     component;
-        s16*    qtable;
-    };
-
-    struct jpeg_encode
-    {
-        int     mcu_width;
-        int     mcu_height;
-        int     horizontal_mcus;
-        int     vertical_mcus;
-        int     cols_in_right_mcus;
-        int     rows_in_bottom_mcus;
-
-        int     mcu_width_size;
-
-        u8      Lqt [BLOCK_SIZE];
-        u8      Cqt [BLOCK_SIZE];
-        AlignedStorage<s16> ILqt;
-        AlignedStorage<s16> ICqt;
-
-        // MCU configuration
-        jpeg_chan   channel[3];
-        int         channel_count;
-
-        std::string info;
-
-        void (*read_8x8) (s16* block, const u8* input, size_t stride, int rows, int cols);
-        void (*read)     (s16* block, const u8* input, size_t stride, int rows, int cols);
-
-        jpeg_encode(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
-        ~jpeg_encode();
-
-        void write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
-        
-        ConstMemory icc;
-    };
-
-    struct EncodeBuffer : Buffer
-    {
-        std::atomic<bool> ready { false };
-    };
-
-    struct HuffmanEncoder
-    {
-        int last_dc_value[3];
-
-        DataType code;
-        int space;
-
-        HuffmanEncoder()
-        {
-            last_dc_value[0] = 0;
-            last_dc_value[1] = 0;
-            last_dc_value[2] = 0;
-            code = 0;
-            space = JPEG_REGISTER_BITS;
-        }
-
-        ~HuffmanEncoder()
-        {
-        }
-
-        u8* putBits(u8* output, DataType data, int numbits)
-        {
-            if (space >= numbits)
-            {
-                space -= numbits;
-                code |= (data << space);
-            }
-            else
-            {
-                int overflow = numbits - space;
-                code |= (data >> overflow);
-                output = writeStuffedBytes(output, code, JPEG_REGISTER_BYTES);
-                space = JPEG_REGISTER_BITS - overflow;
-                code = data << space;
-            }
-            return output;
-        }
-
-        u8* flush(u8* output)
-        {
-            int count = ((JPEG_REGISTER_BITS - space) + 7) >> 3;
-            output = writeStuffedBytes(output, code, count);
-            return output;
-        }
-    };
-
-    static inline
-    u8* encode_dc(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* dc_code, const u16* dc_size, int last_dc)
-    {
-        int coeff = input[0] - last_dc;
-        int absCoeff = std::abs(coeff);
-        coeff -= (absCoeff != coeff);
-
-        u32 size = absCoeff ? getSymbolSize(absCoeff) : 0;
-        u32 mask = (1 << size) - 1;
-
-        p = encoder.putBits(p, dc_code[size], dc_size[size]);
-        p = encoder.putBits(p, coeff & mask, size);
-
-        return p;
-    }
-
-#if 0
-
-    // SSSE3 / AVX512 zigzag + zero detector prototype
-
     static
-    u8* encode_ac(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    u8* encode_ac_avx512bw(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
     {
         s16 temp[64];
-        u64 zeromask = jpeg_zigzag_ssse3(input, temp);
-        //u64 zeromask = jpeg_zigzag_avx2(input, temp);
-        //u64 zeromask = jpeg_zigzag_avx512bw(input, temp);
+        u64 zeromask = zigzag_avx512bw(input, temp);
 
         zeromask >>= 1; // skip DC
 
@@ -849,7 +926,7 @@ namespace
             int absCoeff = std::abs(coeff);
             coeff -= (absCoeff != coeff);
 
-            u32 size = getSymbolSize(absCoeff);
+            u32 size = u32_log2(absCoeff) + 1;
             u32 mask = (1 << size) - 1;
 
             int index = runLength + size * 16;
@@ -860,58 +937,17 @@ namespace
         return p;
     }
 
-#else
+#endif // defined(JPEG_ENABLE_AVX512)
+#endif // defined(JPEG_ENABLE_AVX2)
+#endif // defined(JPEG_ENABLE_SSE4)
 
-    static
-    u8* encode_ac(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
-    {
-        int runLength = 0;
-
-        for (int i = 1; i < 64; ++i)
-        {
-            int coeff = input[zigzag_table_inverse[i]];
-            if (coeff)
-            {
-                while (runLength > 15)
-                {
-                    runLength -= 16;
-                    p = encoder.putBits(p, ac_code[176], ac_size[176]);
-                }
-
-                int absCoeff = std::abs(coeff);
-                coeff -= (absCoeff != coeff);
-
-                u32 size = getSymbolSize(absCoeff);
-                u32 mask = (1 << size) - 1;
-
-                int index = runLength + size * 16;
-                p = encoder.putBits(p, ac_code[index], ac_size[index]);
-                p = encoder.putBits(p, coeff & mask, size);
-
-                runLength = 0;
-            }
-            else
-            {
-                ++runLength;
-            }
-        }
-
-        if (runLength != 0)
-        {
-            p = encoder.putBits(p, ac_code[0], ac_size[0]);
-        }
-
-        return p;
-    }
-
-#endif // 0
 
 #if defined(JPEG_ENABLE_SSE2)
 
 #if defined(JPEG_ENABLE_AVX2)
-    constexpr const char* fdct_name = "AVX2 DCT";
+    constexpr const char* fdct_name = "DCT: AVX2";
 #else
-    constexpr const char* fdct_name = "SSE2 DCT";
+    constexpr const char* fdct_name = "DCT: SSE2";
 #endif
 
     // ----------------------------------------------------------------------------
@@ -1196,7 +1232,7 @@ namespace
 
 #elif defined(JPEG_ENABLE_NEON)
 
-    constexpr const char* fdct_name = "NEON DCT";
+    constexpr const char* fdct_name = "DCT: NEON";
 
     // ----------------------------------------------------------------------------
     // fdct neon
@@ -1385,7 +1421,7 @@ namespace
 
 #else
 
-    constexpr const char* fdct_name = "Scalar DCT";
+    constexpr const char* fdct_name = "DCT: Scalar";
 
     // ----------------------------------------------------------------------------
     // fdct scalar
@@ -2001,10 +2037,10 @@ namespace
 #endif // JPEG_ENABLE_SSE4
 
     // ----------------------------------------------------------------------------
-    // jpeg_encode
+    // jpegEncoder
     // ----------------------------------------------------------------------------
 
-    jpeg_encode::jpeg_encode(SampleType sample, u32 width, u32 height, size_t stride, u32 quality)
+    jpegEncoder::jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality)
         : ILqt(64)
         , ICqt(64)
     {
@@ -2028,7 +2064,7 @@ namespace
         u64 flags = getCPUFlags();
         MANGO_UNREFERENCED(flags);
 
-        const char* sampler_name = nullptr;
+        const char* sampler_name = "Scalar";
 
         switch (sample)
         {
@@ -2103,14 +2139,44 @@ namespace
             read_8x8 = read;
         }
 
-        // build encoder info string
-        info = "JPEG Encoder: ";
-        info += fdct_name;
-        if (sampler_name)
+        // select block encoder
+
+        encode_ac = encode_ac_scalar;
+        const char* encode_name = "Scalar";
+
+#if defined(JPEG_ENABLE_SSE4)
+        if (flags & INTEL_SSSE3)
         {
-            info += " ";
-            info += sampler_name;
+            encode_ac = encode_ac_ssse3;
+            encode_name = "SSSE3";
         }
+#endif
+
+#if defined(JPEG_ENABLE_AVX2)
+        if (flags & INTEL_AVX2)
+        {
+            encode_ac = encode_ac_avx2;
+            encode_name = "AVX2";
+        }
+#endif
+
+#if defined(JPEG_ENABLE_AVX512)
+        if (flags & INTEL_AVX512BW)
+        {
+            encode_ac = encode_ac_avx512bw;
+            encode_name = "AVX512BW";
+        }
+#endif
+
+        // build encoder info string
+        info = "[JPEG Encoder] ";
+        info += fdct_name;
+
+        info += ", Sampler: ";
+        info += sampler_name;
+
+        info += ", Encoder: ";
+        info += encode_name;
 
         mcu_width = 8;
         mcu_height = 8;
@@ -2124,6 +2190,19 @@ namespace
         mcu_width_size = mcu_width * bytes_per_pixel;
 
         // initialize quantization tables
+
+        const u8 zigzag_table [] =
+        {
+             0,  1,  5,  6, 14, 15, 27, 28,
+             2,  4,  7, 13, 16, 26, 29, 42,
+             3,  8, 12, 17, 25, 30, 41, 43,
+             9, 11, 18, 24, 31, 40, 44, 53,
+            10, 19, 23, 32, 39, 45, 52, 54,
+            20, 22, 33, 38, 46, 51, 55, 60,
+            21, 34, 37, 47, 50, 56, 59, 61,
+            35, 36, 48, 49, 57, 58, 62, 63
+        };
+
         for (int i = 0; i < 64; ++i)
         {
             u16 index = zigzag_table[i];
@@ -2140,24 +2219,24 @@ namespace
         }
     }
 
-    jpeg_encode::~jpeg_encode()
+    jpegEncoder::~jpegEncoder()
     {
     }
 
-    void jpeg_encode::write_markers(BigEndianStream& p, SampleType sample, u32 width, u32 height)
+    void jpegEncoder::writeMarkers(BigEndianStream& p, SampleType sample, u32 width, u32 height)
     {
         // Start of image marker
         p.write16(MARKER_SOI);
-        
+
         // ICC profile.  splitting to multiple markers if necessary
         if(icc.size)
         {
             const size_t magicICCLength = 12;
             const u8 magicICC[magicICCLength] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
-            
+
             const size_t iccMaxSegmentSize = 65000;  // marker size is 16bit minus icc stuff, if larger we need to split
             const size_t iccSegments = (icc.size+iccMaxSegmentSize-1)/iccMaxSegmentSize;
-            
+
             for(size_t i=0;i<iccSegments;i++)
             {
                 const size_t size = i<(iccSegments-1) ? iccMaxSegmentSize :  icc.size%iccMaxSegmentSize;
@@ -2256,7 +2335,7 @@ namespace
 
     void encode_jpeg(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample, const ImageEncodeOptions& options)
     {
-        jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
+        jpegEncoder jp(sample, surface.width, surface.height, surface.stride, quality);
         jp.icc = options.icc;
 
         const u8* input = surface.image;
@@ -2280,7 +2359,9 @@ namespace
                 read_func = jp.read; // clipping reader
             }
 
-            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func]
+            auto encode_ac = jp.encode_ac;
+
+            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func, encode_ac]
             {
                 const u8* image = input;
 
@@ -2370,7 +2451,7 @@ namespace
         BigEndianStream s(stream);
 
         // writing marker data
-        jp.write_markers(s, sample, surface.width, surface.height);
+        jp.writeMarkers(s, sample, surface.width, surface.height);
 
         for (int y = 0; y < jp.vertical_mcus; ++y)
         {
