@@ -37,6 +37,7 @@ namespace mango
 #elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
 
     // GCC / CLANG intrinsics
+    #define MANGO_BITS_GCC_BUILTINS
 
     static inline u16 byteswap(u16 v)
     {
@@ -368,10 +369,12 @@ namespace mango
         return _tzcnt_u32(value);
     }
 
-    static inline int u32_index_of_lsb(u32 value)
+#elif defined(MANGO_BITS_GCC_BUILTINS)
+
+    static inline int u32_tzcnt(u32 value)
     {
 		// NOTE: value 0 is undefined
-        return _tzcnt_u32(value);
+        return __builtin_ctz(value);
     }
 
 #else
@@ -383,14 +386,13 @@ namespace mango
         return u32_index_of_bit(lsb);
     }
 
+#endif
+
     static inline int u32_index_of_lsb(u32 value)
     {
 		// NOTE: value 0 is undefined
-        const u32 lsb = u32_extract_lsb(value);
-        return u32_index_of_bit(lsb);
+        return u32_tzcnt(value);
     }
-
-#endif
 
 #ifdef MANGO_ENABLE_LZCNT
 
@@ -406,16 +408,18 @@ namespace mango
         return 31 - _lzcnt_u32(value);
     }
 
-    static inline u32 u32_extract_msb(u32 value)
+#elif defined(MANGO_BITS_GCC_BUILTINS)
+
+    static inline int u32_lzcnt(u32 value)
     {
 		// NOTE: value 0 is undefined
-        return 1u << (31 - _lzcnt_u32(value));
+        return __builtin_clz(value);
     }
 
-    static inline int u32_log2(u32 value)
+    static inline int u32_index_of_msb(u32 value)
     {
 		// NOTE: value 0 is undefined
-        return 31 - _lzcnt_u32(value);
+        return 31 - __builtin_clz(value);
     }
 
 #else
@@ -423,8 +427,8 @@ namespace mango
     static inline int u32_lzcnt(u32 value)
     {
 		// NOTE: value 0 is undefined
-        const u32 msb = u32_mask_msb(value);
-        return 31 - u32_index_of_mask_bit(msb);
+        const u32 mask = u32_mask_msb(value);
+        return 31 - u32_index_of_mask_bit(mask);
     }
 
     static inline int u32_index_of_msb(u32 value)
@@ -440,12 +444,12 @@ namespace mango
         return base;
     }
 
+#endif
+
     static inline u32 u32_extract_msb(u32 value)
     {
 		// NOTE: value 0 is undefined
-        // TODO: bit 31 is lost
-        const u32 mask = u32_mask_msb(value);
-        return (mask + 1) >> 1;
+        return 1u << (31 - _lzcnt_u32(value));
     }
 
     static inline int u32_log2(u32 value)
@@ -453,8 +457,6 @@ namespace mango
 		// NOTE: value 0 is undefined
         return u32_index_of_msb(value);
     }
-
-#endif
 
     static inline u32 u32_reverse_bits(u32 value)
     {
@@ -703,10 +705,12 @@ namespace mango
         return int(_tzcnt_u64(value));
     }
 
-    static inline int u64_index_of_lsb(u64 value)
+#elif defined(MANGO_BITS_GCC_BUILTINS)
+
+    static inline int u64_tzcnt(u64 value)
     {
 		// NOTE: value 0 is undefined
-        return int(_tzcnt_u64(value));
+        return __builtin_ctzll(value);
     }
 
 #else
@@ -718,14 +722,13 @@ namespace mango
         return u64_index_of_bit(lsb);
     }
 
+#endif
+
     static inline int u64_index_of_lsb(u64 value)
     {
 		// NOTE: value 0 is undefined
-        const u64 lsb = u64_extract_lsb(value);
-        return u64_index_of_bit(lsb);
+        return u64_tzcnt(value);
     }
-
-#endif
 
 #ifdef MANGO_ENABLE_LZCNT
 
@@ -741,6 +744,38 @@ namespace mango
         return int(63 - _lzcnt_u64(value));
     }
 
+#elif defined(MANGO_BITS_GCC_BUILTINS)
+
+    static inline int u64_lzcnt(u64 value)
+    {
+		// NOTE: value 0 is undefined
+        return __builtin_clzll(value);
+    }
+
+    static inline int u64_index_of_msb(u64 value)
+    {
+		// NOTE: value 0 is undefined
+        return 31 - __builtin_clzll(value);
+    }
+
+#else
+
+    static inline int u64_lzcnt(u64 value)
+    {
+		// NOTE: value 0 is undefined
+        const u64 mask = u64_mask_msb(value);
+        return 63 - u64_index_of_mask_bit(mask);
+    }
+
+    static inline int u64_index_of_msb(u64 value)
+    {
+		// NOTE: value 0 is undefined
+        const u64 mask = u64_mask_msb(value);
+        return u64_index_of_mask_bit(mask);
+    }
+
+#endif
+
     static inline u64 u64_extract_msb(u64 value)
     {
 		// NOTE: value 0 is undefined
@@ -752,39 +787,6 @@ namespace mango
 		// NOTE: value 0 is undefined
         return u64_index_of_msb(value);
     }
-
-#else
-
-    static inline int u64_lzcnt(u64 value)
-    {
-		// NOTE: value 0 is undefined
-        const u64 msb = u64_mask_msb(value);
-        return 63 - u64_index_of_mask_bit(msb);
-    }
-
-    static inline int u64_index_of_msb(u64 value)
-    {
-		// NOTE: value 0 is undefined
-        const u64 msb = u64_mask_msb(value);
-        return u64_index_of_mask_bit(msb);
-    }
-
-    static inline u64 u64_extract_msb(u64 value)
-    {
-		// NOTE: value 0 is undefined
-        // TODO: bit 63 is lost
-        const u64 mask = u64_mask_msb(value);
-        return (mask + 1) >> 1;
-    }
-
-    static inline int u64_log2(u64 value)
-    {
-		// NOTE: value 0 is undefined
-        const u64 mask = u64_mask_msb(value);
-        return u64_index_of_mask_bit(mask);
-    }
-
-#endif
 
     static inline u64 u64_reverse_bits(u64 value)
     {
