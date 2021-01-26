@@ -37,7 +37,12 @@ namespace mango
 #elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
 
     // GCC / CLANG intrinsics
+
+#if defined(MANGO_CPU_ARM)
+    // enable built-ins for bitmanipulation only for ARM/ARM64 ..
+    // .. because on x86(_64) they would require a runtime CPU feature check
     #define MANGO_BITS_GCC_BUILTINS
+#endif
 
     static inline u16 byteswap(u16 v)
     {
