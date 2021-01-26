@@ -797,25 +797,9 @@ namespace
     };
 
     static inline
-    u8* encode_dc(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    u8* encode_dc(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* dc_code, const u16* dc_size, int last_dc)
     {
-        const u16* dc_code;
-        const u16* dc_size;
-
-        if (component != 0)
-        {
-            dc_code = g_chrominance_dc_code_table;
-            dc_size = g_chrominance_dc_size_table;
-        }
-        else
-        {
-            dc_code = g_luminance_dc_code_table;
-            dc_size = g_luminance_dc_size_table;
-        }
-
-        int coeff = input[0] - encoder.last_dc_value[component];
-        encoder.last_dc_value[component] = input[0];
-
+        int coeff = input[0] - last_dc;
         int absCoeff = std::abs(coeff);
         coeff -= (absCoeff != coeff);
 
@@ -833,28 +817,13 @@ namespace
     // SSSE3 / AVX512 zigzag + zero detector prototype
 
     static
-    u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    u8* encode_ac(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
     {
-        p = encode_dc(encoder, p, component, input);
-
-        const u16* ac_code;
-        const u16* ac_size;
-
-        if (component != 0)
-        {
-            ac_code = g_chrominance_ac_code_table;
-            ac_size = g_chrominance_ac_size_table;
-        }
-        else
-        {
-            ac_code = g_luminance_ac_code_table;
-            ac_size = g_luminance_ac_size_table;
-        }
-
         s16 temp[64];
         u64 zeromask = jpeg_zigzag_ssse3(input, temp);
         //u64 zeromask = jpeg_zigzag_avx2(input, temp);
         //u64 zeromask = jpeg_zigzag_avx512bw(input, temp);
+
         zeromask >>= 1; // skip DC
 
         for (int i = 1; i < 64; )
@@ -894,24 +863,8 @@ namespace
 #else
 
     static
-    u8* encode(HuffmanEncoder& encoder, u8* p, int component, const s16* input)
+    u8* encode_ac(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
     {
-        p = encode_dc(encoder, p, component, input);
-
-        const u16* ac_code;
-        const u16* ac_size;
-
-        if (component != 0)
-        {
-            ac_code = g_chrominance_ac_code_table;
-            ac_size = g_chrominance_ac_size_table;
-        }
-        else
-        {
-            ac_code = g_luminance_ac_code_table;
-            ac_size = g_luminance_ac_size_table;
-        }
-
         int runLength = 0;
 
         for (int i = 1; i < 64; ++i)
@@ -2298,10 +2251,10 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // encodeJPEG()
+    // encode_jpeg()
     // ----------------------------------------------------------------------------
 
-    void encodeJPEG(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample, const ImageEncodeOptions& options)
+    void encode_jpeg(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample, const ImageEncodeOptions& options)
     {
         jpeg_encode jp(sample, surface.width, surface.height, surface.stride, quality);
         jp.icc = options.icc;
@@ -2345,6 +2298,21 @@ namespace
 
                 const int right_mcu = jp.horizontal_mcus - 1;
 
+                struct
+                {
+                    const u16* dc_code;
+                    const u16* dc_size;
+                    const u16* ac_code;
+                    const u16* ac_size;
+                    int last_dc;
+                } 
+                encode_table [] =
+                {
+                    { g_luminance_dc_code_table, g_luminance_dc_size_table, g_luminance_ac_code_table, g_luminance_ac_size_table, 0 },
+                    { g_chrominance_dc_code_table, g_chrominance_dc_size_table, g_chrominance_ac_code_table, g_chrominance_ac_size_table, 0 },
+                    { g_chrominance_dc_code_table, g_chrominance_dc_size_table, g_chrominance_ac_code_table, g_chrominance_ac_size_table, 0 },
+                };
+
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
                     if (x >= right_mcu)
@@ -2363,7 +2331,19 @@ namespace
                     {
                         s16 temp[BLOCK_SIZE];
                         fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-                        ptr = encode(huffman, ptr, jp.channel[i].component - 1, temp);
+
+                        const int component = jp.channel[i].component - 1;
+
+                        const u16* dc_code = encode_table[component].dc_code;
+                        const u16* dc_size = encode_table[component].dc_size;
+                        const u16* ac_code = encode_table[component].ac_code;
+                        const u16* ac_size = encode_table[component].ac_size;
+
+                        int last_dc = encode_table[component].last_dc;
+                        encode_table[component].last_dc = temp[0];
+
+                        ptr = encode_dc(huffman, ptr, temp, dc_code, dc_size, last_dc);
+                        ptr = encode_ac(huffman, ptr, temp, ac_code, ac_size);
                     }
 
                     // flush encoding buffer
@@ -2434,14 +2414,14 @@ namespace jpeg {
         // encode
         if (surface.format == sf.format)
         {
-            encodeJPEG(status, surface, stream, iq, sf.sample, options);
+            encode_jpeg(status, surface, stream, iq, sf.sample, options);
             status.direct = true;
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface, sf.format);
-            encodeJPEG(status, temp, stream, iq, sf.sample, options);
+            encode_jpeg(status, temp, stream, iq, sf.sample, options);
         }
 
         return status;
