@@ -202,6 +202,42 @@ namespace
         return output;
     }
 
+#ifdef MANGO_CPU_64BIT
+
+    static inline
+    u8* flushStuffedBytes(u8* output, DataType code)
+    {
+        if (code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull))
+        {
+            output = writeStuffedBytes(output, code, 8);
+        }
+        else
+        {
+            ustore64be(output, code);
+            output += 8;
+        }
+        return output;
+    }
+
+#else
+
+    static inline
+    u8* flushStuffedBytes(u8* output, DataType code)
+    {
+        if (code & 0x80808080 & ~(code + 0x01010101))
+        {
+            output = writeStuffedBytes(output, code, 4);
+        }
+        else
+        {
+            ustore32be(output, code);
+            output += 4;
+        }
+        return output;
+    }
+
+#endif
+
     struct EncodeBuffer : Buffer
     {
         std::atomic<bool> ready { false };
@@ -209,16 +245,11 @@ namespace
 
     struct HuffmanEncoder
     {
-        int last_dc_value[3];
-
         DataType code;
         int space;
 
         HuffmanEncoder()
         {
-            last_dc_value[0] = 0;
-            last_dc_value[1] = 0;
-            last_dc_value[2] = 0;
             code = 0;
             space = JPEG_REGISTER_BITS;
         }
@@ -229,18 +260,16 @@ namespace
 
         u8* putBits(u8* output, DataType data, int numbits)
         {
-            if (space >= numbits)
+            space -= numbits;
+            if (space < 0)
             {
-                space -= numbits;
-                code |= (data << space);
+                output = flushStuffedBytes(output, code | (data >> -space));
+                space += JPEG_REGISTER_BITS;
+                code = data << space;
             }
             else
             {
-                int overflow = numbits - space;
-                code |= (data >> overflow);
-                output = writeStuffedBytes(output, code, JPEG_REGISTER_BYTES);
-                space = JPEG_REGISTER_BITS - overflow;
-                code = data << space;
+                code |= (data << space);
             }
             return output;
         }
