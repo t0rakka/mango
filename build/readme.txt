@@ -82,6 +82,13 @@ We only support the latest Visual Studio (2017 at the time of writing this); apo
 Then use the resulting library files in your cool/awesome Android projects.
 
 ------------------------------------------------------------------------------------------------
+How To Configure A Fresh Linux (Ubuntu/Mint) For Development With MANGO
+------------------------------------------------------------------------------------------------
+
+Install the required tools and libraries:
+  sudo apt install g++ git cmake libpng-dev libx11-dev libgl-dev libjpeg-turbo8-dev
+
+------------------------------------------------------------------------------------------------
 Troubleshooting!
 ------------------------------------------------------------------------------------------------
 
