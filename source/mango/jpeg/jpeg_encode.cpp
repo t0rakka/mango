@@ -99,15 +99,15 @@ namespace
     const u16 g_luminance_ac_code_table [] =
     {
         0x000A, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0x0000, 0x000C, 0x001C, 0x003A, 0x003B, 0x007A, 0x007B, 0x00FA, 0x01F8, 0x01F9, 0x01FA, 0x03F9, 0x03FA, 0x07F8, 0xFFEB, 0xFFF5, 
-        0x0001, 0x001B, 0x00F9, 0x01F7, 0x03F8, 0x07F7, 0x0FF6, 0x0FF7, 0x7FC0, 0xFFBE, 0xFFC7, 0xFFD0, 0xFFD9, 0xFFE2, 0xFFEC, 0xFFF6, 
-        0x0004, 0x0079, 0x03F7, 0x0FF5, 0xFF96, 0xFF9E, 0xFFA6, 0xFFAE, 0xFFB6, 0xFFBF, 0xFFC8, 0xFFD1, 0xFFDA, 0xFFE3, 0xFFED, 0xFFF7, 
-        0x000B, 0x01F6, 0x0FF4, 0xFF8F, 0xFF97, 0xFF9F, 0xFFA7, 0xFFAF, 0xFFB7, 0xFFC0, 0xFFC9, 0xFFD2, 0xFFDB, 0xFFE4, 0xFFEE, 0xFFF8, 
-        0x001A, 0x07F6, 0xFF89, 0xFF90, 0xFF98, 0xFFA0, 0xFFA8, 0xFFB0, 0xFFB8, 0xFFC1, 0xFFCA, 0xFFD3, 0xFFDC, 0xFFE5, 0xFFEF, 0xFFF9, 
-        0x0078, 0xFF84, 0xFF8A, 0xFF91, 0xFF99, 0xFFA1, 0xFFA9, 0xFFB1, 0xFFB9, 0xFFC2, 0xFFCB, 0xFFD4, 0xFFDD, 0xFFE6, 0xFFF0, 0xFFFA, 
-        0x00F8, 0xFF85, 0xFF8b, 0xFF92, 0xFF9A, 0xFFA2, 0xFFAA, 0xFFB2, 0xFFBA, 0xFFC3, 0xFFCC, 0xFFD5, 0xFFDE, 0xFFE7, 0xFFF1, 0xFFFB, 
-        0x03F6, 0xFF86, 0xFF8C, 0xFF93, 0xFF9B, 0xFFA3, 0xFFAB, 0xFFB3, 0xFFBB, 0xFFC4, 0xFFCD, 0xFFD6, 0xFFDF, 0xFFE8, 0xFFF2, 0xFFFC, 
-        0xFF82, 0xFF87, 0xFF8D, 0xFF94, 0xFF9C, 0xFFA4, 0xFFAC, 0xFFB4, 0xFFBC, 0xFFC5, 0xFFCE, 0xFFD7, 0xFFE0, 0xFFE9, 0xFFF3, 0xFFFD, 
+        0x0000, 0x000C, 0x001C, 0x003A, 0x003B, 0x007A, 0x007B, 0x00FA, 0x01F8, 0x01F9, 0x01FA, 0x03F9, 0x03FA, 0x07F8, 0xFFEB, 0xFFF5,
+        0x0001, 0x001B, 0x00F9, 0x01F7, 0x03F8, 0x07F7, 0x0FF6, 0x0FF7, 0x7FC0, 0xFFBE, 0xFFC7, 0xFFD0, 0xFFD9, 0xFFE2, 0xFFEC, 0xFFF6,
+        0x0004, 0x0079, 0x03F7, 0x0FF5, 0xFF96, 0xFF9E, 0xFFA6, 0xFFAE, 0xFFB6, 0xFFBF, 0xFFC8, 0xFFD1, 0xFFDA, 0xFFE3, 0xFFED, 0xFFF7,
+        0x000B, 0x01F6, 0x0FF4, 0xFF8F, 0xFF97, 0xFF9F, 0xFFA7, 0xFFAF, 0xFFB7, 0xFFC0, 0xFFC9, 0xFFD2, 0xFFDB, 0xFFE4, 0xFFEE, 0xFFF8,
+        0x001A, 0x07F6, 0xFF89, 0xFF90, 0xFF98, 0xFFA0, 0xFFA8, 0xFFB0, 0xFFB8, 0xFFC1, 0xFFCA, 0xFFD3, 0xFFDC, 0xFFE5, 0xFFEF, 0xFFF9,
+        0x0078, 0xFF84, 0xFF8A, 0xFF91, 0xFF99, 0xFFA1, 0xFFA9, 0xFFB1, 0xFFB9, 0xFFC2, 0xFFCB, 0xFFD4, 0xFFDD, 0xFFE6, 0xFFF0, 0xFFFA,
+        0x00F8, 0xFF85, 0xFF8b, 0xFF92, 0xFF9A, 0xFFA2, 0xFFAA, 0xFFB2, 0xFFBA, 0xFFC3, 0xFFCC, 0xFFD5, 0xFFDE, 0xFFE7, 0xFFF1, 0xFFFB,
+        0x03F6, 0xFF86, 0xFF8C, 0xFF93, 0xFF9B, 0xFFA3, 0xFFAB, 0xFFB3, 0xFFBB, 0xFFC4, 0xFFCD, 0xFFD6, 0xFFDF, 0xFFE8, 0xFFF2, 0xFFFC,
+        0xFF82, 0xFF87, 0xFF8D, 0xFF94, 0xFF9C, 0xFFA4, 0xFFAC, 0xFFB4, 0xFFBC, 0xFFC5, 0xFFCE, 0xFFD7, 0xFFE0, 0xFFE9, 0xFFF3, 0xFFFD,
         0xFF83, 0xFF88, 0xFF8E, 0xFF95, 0xFF9D, 0xFFA5, 0xFFAD, 0xFFB5, 0xFFBD, 0xFFC6, 0xFFCF, 0xFFD8, 0xFFE1, 0xFFEA, 0xFFF4, 0xFFFE,
         0x07F9
     };
@@ -116,15 +116,15 @@ namespace
     const u16 g_luminance_ac_size_table [] =
     {
         0x0004, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0x0002, 0x0004, 0x0005, 0x0006, 0x0006, 0x0007, 0x0007, 0x0008, 0x0009, 0x0009, 0x0009, 0x000A, 0x000A, 0x000B, 0x0010, 0x0010, 
-        0x0002, 0x0005, 0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000C, 0x000F, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x0003, 0x0007, 0x000A, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x0004, 0x0009, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x0005, 0x000B, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x0007, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x0008, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x000A, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
-        0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 
+        0x0002, 0x0004, 0x0005, 0x0006, 0x0006, 0x0007, 0x0007, 0x0008, 0x0009, 0x0009, 0x0009, 0x000A, 0x000A, 0x000B, 0x0010, 0x0010,
+        0x0002, 0x0005, 0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000C, 0x000F, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x0003, 0x0007, 0x000A, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x0004, 0x0009, 0x000C, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x0005, 0x000B, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x0007, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x0008, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x000A, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
+        0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
         0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010,
         0x000B
     };
@@ -169,18 +169,18 @@ namespace
     {
         0xFF, 0xC4, 0x00, 0x1F, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
         0xFF, 0xC4, 0x00, 0xB5, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06,
-		0x13, 0x51, 0x61, 0x07, 0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08, 0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0, 0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x25,
-		0x26, 0x27, 0x28, 0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x63, 0x64, 0x65, 0x66, 0x67,
-		0x68, 0x69, 0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6,
-		0xA7, 0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
-		0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
+        0x13, 0x51, 0x61, 0x07, 0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08, 0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0, 0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x25,
+        0x26, 0x27, 0x28, 0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x63, 0x64, 0x65, 0x66, 0x67,
+        0x68, 0x69, 0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6,
+        0xA7, 0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
+        0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
         0xFF, 0xC4, 0x00, 0x1F, 0x01, 0x00, 0x03, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
         0xFF, 0xC4, 0x00, 0xB5, 0x11, 0x00, 0x02, 0x01, 0x02, 0x04, 0x04, 0x03, 0x04, 0x07, 0x05, 0x04, 0x04, 0x00, 0x01, 0x02, 0x77, 0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21, 0x31, 0x06, 0x12, 0x41,
-		0x51, 0x07, 0x61, 0x71, 0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91, 0xA1, 0xB1, 0xC1, 0x09, 0x23, 0x33, 0x52, 0xF0, 0x15, 0x62, 0x72, 0xD1, 0x0A, 0x16, 0x24, 0x34, 0xE1, 0x25, 0xF1, 0x17, 0x18,
-		0x19, 0x1A, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x63, 0x64, 0x65, 0x66,
-		0x67, 0x68, 0x69, 0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0xA2, 0xA3, 0xA4,
-		0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA,
-		0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
+        0x51, 0x07, 0x61, 0x71, 0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91, 0xA1, 0xB1, 0xC1, 0x09, 0x23, 0x33, 0x52, 0xF0, 0x15, 0x62, 0x72, 0xD1, 0x0A, 0x16, 0x24, 0x34, 0xE1, 0x25, 0xF1, 0x17, 0x18,
+        0x19, 0x1A, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x63, 0x64, 0x65, 0x66,
+        0x67, 0x68, 0x69, 0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0xA2, 0xA3, 0xA4,
+        0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA,
+        0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
     };
 
     static inline
@@ -201,12 +201,6 @@ namespace
         }
         return output;
     }
-
-    struct Channel
-    {
-        int     component;
-        s16*    qtable;
-    };
 
     struct EncodeBuffer : Buffer
     {
@@ -276,20 +270,30 @@ namespace
         AlignedStorage<s16> ICqt;
 
         // MCU configuration
+        struct Channel
+        {
+            int component;
+            const s16* qtable;
+            const u16* dc_code;
+            const u16* dc_size;
+            const u16* ac_code;
+            const u16* ac_size;
+        };
         Channel channel[3];
-        int     channel_count;
+        int     components;
 
         std::string info;
 
         void (*read_8x8)  (s16* block, const u8* input, size_t stride, int rows, int cols);
         void (*read)      (s16* block, const u8* input, size_t stride, int rows, int cols);
+        void (*fdct)      (s16* dest, const s16* data, const s16* quant_table);
         u8*  (*encode_ac) (HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size);
 
         jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
         ~jpegEncoder();
 
         void writeMarkers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
-        
+
         ConstMemory icc;
     };
 
@@ -364,6 +368,10 @@ namespace
     }
 
 #if defined(JPEG_ENABLE_SSE4)
+
+    // ----------------------------------------------------------------------------
+    // encode_ac_ssse3
+    // ----------------------------------------------------------------------------
 
     constexpr s8 lane(s8 v, s8 offset)
     {
@@ -445,9 +453,9 @@ namespace
         __m128i row2 = shuffle(B, 12,  z,  z,  z,  z,  z,  z,  z) |
                        shuffle(C,  z, 19,  z,  z,  z,  z,  z,  z) |
                        shuffle(D,  z,  z, 26,  z,  z,  z,  z,  z) |
-                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) | 
+                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) |
                        shuffle(F,  z,  z,  z,  z, 40,  z, 41,  z) |
-                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z); 
+                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z);
 
         // ------------------------------------------------------------------------
         //    27, 20, 13,  6,  7, 14, 21, 28,
@@ -464,7 +472,7 @@ namespace
         __m128i row3 = shuffle(A,  z,  z,  z, 6, 7,  z,  z,  z) |
                        shuffle(B,  z,  z, 13, z, z, 14,  z,  z) |
                        shuffle(C,  z, 20,  z, z, z,  z, 21,  z) |
-                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28); 
+                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28);
 
         // ------------------------------------------------------------------------
         //    35, 42, 49, 56, 57, 50, 43, 36,
@@ -481,7 +489,7 @@ namespace
         __m128i row4 = shuffle(E, 35,  z,  z,  z,  z,  z,  z, 36) |
                        shuffle(F,  z, 42,  z,  z,  z,  z, 43,  z) |
                        shuffle(G,  z,  z, 49,  z,  z, 50,  z,  z) |
-                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z); 
+                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z);
 
         // ------------------------------------------------------------------------
         //    29, 22, 15, 23, 30, 37, 44, 51,
@@ -500,7 +508,7 @@ namespace
                        shuffle(D, 29,  z,  z,  z, 30,  z,  z,  z) |
                        shuffle(E,  z,  z,  z,  z,  z, 37,  z,  z) |
                        shuffle(F,  z,  z,  z,  z,  z,  z, 44,  z) |
-                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51); 
+                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51);
 
         // ------------------------------------------------------------------------
         //    58, 59, 52, 45, 38, 31, 39, 46,
@@ -518,7 +526,7 @@ namespace
                        shuffle(E,  z,  z,  z,  z, 38,  z, 39,  z) |
                        shuffle(F,  z,  z,  z, 45,  z,  z,  z, 46) |
                        shuffle(G,  z,  z, 52,  z,  z,  z,  z,  z) |
-                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z); 
+                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z);
 
         // ------------------------------------------------------------------------
         //    53, 60, 61, 54, 47, 55, 62, 63,
@@ -609,6 +617,10 @@ namespace
 
 #if defined(JPEG_ENABLE_AVX2)
 
+    // ----------------------------------------------------------------------------
+    // encode_ac_avx2
+    // ----------------------------------------------------------------------------
+
     // NOTE: The zigzag is still 128 bit wide only because of the retarded 128+128 way the AVX2 works
     // TODO: re-arrange (if possible) so that 256 bit shuffle can be used, in this form this is useless
 
@@ -652,7 +664,7 @@ namespace
         // ------------------------------------------------------------------------
         //     0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
         // ------------------------------------------------------------------------
-        // A:  x   x   x   -   x   x   x   x   -   -   -   -   -   x   x   x 
+        // A:  x   x   x   -   x   x   x   x   -   -   -   -   -   x   x   x
         // B:  -   -   -   x   -   -   -   -   x   x   -   x   x   -   -   -
         // C:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
         // D:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
@@ -680,14 +692,14 @@ namespace
         __m128i row2 = shuffle(B, 12,  z,  z,  z,  z,  z,  z,  z) |
                        shuffle(C,  z, 19,  z,  z,  z,  z,  z,  z) |
                        shuffle(D,  z,  z, 26,  z,  z,  z,  z,  z) |
-                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) | 
+                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) |
                        shuffle(F,  z,  z,  z,  z, 40,  z, 41,  z) |
-                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z); 
+                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z);
 
         __m128i row3 = shuffle(A,  z,  z,  z, 6, 7,  z,  z,  z) |
                        shuffle(B,  z,  z, 13, z, z, 14,  z,  z) |
                        shuffle(C,  z, 20,  z, z, z,  z, 21,  z) |
-                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28); 
+                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28);
 
         const __m256i row23 = _mm256_setr_m128i(row2, row3);
 
@@ -702,14 +714,14 @@ namespace
         __m128i row4 = shuffle(E, 35,  z,  z,  z,  z,  z,  z, 36) |
                        shuffle(F,  z, 42,  z,  z,  z,  z, 43,  z) |
                        shuffle(G,  z,  z, 49,  z,  z, 50,  z,  z) |
-                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z); 
+                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z);
 
         __m128i row5 = shuffle(B,  z,  z, 15,  z,  z,  z,  z,  z) |
                        shuffle(C,  z, 22,  z, 23,  z,  z,  z,  z) |
                        shuffle(D, 29,  z,  z,  z, 30,  z,  z,  z) |
                        shuffle(E,  z,  z,  z,  z,  z, 37,  z,  z) |
                        shuffle(F,  z,  z,  z,  z,  z,  z, 44,  z) |
-                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51); 
+                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51);
 
         const __m256i row45 = _mm256_setr_m128i(row4, row5);
 
@@ -725,7 +737,7 @@ namespace
                        shuffle(E,  z,  z,  z,  z, 38,  z, 39,  z) |
                        shuffle(F,  z,  z,  z, 45,  z,  z,  z, 46) |
                        shuffle(G,  z,  z, 52,  z,  z,  z,  z,  z) |
-                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z); 
+                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z);
 
         __m128i row7 = shuffle(F,  z,  z,  z,  z, 47,  z,  z,  z) |
                        shuffle(G, 53,  z,  z, 54,  z, 55,  z,  z) |
@@ -801,6 +813,10 @@ namespace
     }
 
 #if defined(JPEG_ENABLE_AVX512)
+
+    // ----------------------------------------------------------------------------
+    // encode_ac_avx512
+    // ----------------------------------------------------------------------------
 
     /*
     // NOTE: parallel symbol size computation prototype
@@ -941,14 +957,95 @@ namespace
 #endif // defined(JPEG_ENABLE_AVX2)
 #endif // defined(JPEG_ENABLE_SSE4)
 
+#if defined(JPEG_ENABLE_NEON__todo)
+
+    // ----------------------------------------------------------------------------
+    // encode_ac_neon
+    // ----------------------------------------------------------------------------
+
+    static
+    u8* encode_ac_neon(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    {
+        // TODO
+    }
+
+#endif // defined(JPEG_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------
+    // fdct_scalar
+    // ----------------------------------------------------------------------------
+
+    static
+    void fdct_scalar(s16* dest, const s16* data, const s16* quant_table)
+    {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        s16 temp[64];
+
+        for (int i = 0; i < 8; ++i)
+        {
+            s16 x8 = data [0] + data [7];
+            s16 x0 = data [0] - data [7];
+            s16 x7 = data [1] + data [6];
+            s16 x1 = data [1] - data [6];
+            s16 x6 = data [2] + data [5];
+            s16 x2 = data [2] - data [5];
+            s16 x5 = data [3] + data [4];
+            s16 x3 = data [3] - data [4];
+            s16 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
+            temp[i * 8 + 0] = x4 + x5;
+            temp[i * 8 + 4] = x4 - x5;
+            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
+            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
+            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
+            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
+            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
+            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
+            data += 8;
+        }
+
+        for (int i = 0; i < 8; ++i)
+        {
+            s16 x8 = temp [i +  0] + temp [i + 56];
+            s16 x0 = temp [i +  0] - temp [i + 56];
+            s16 x7 = temp [i +  8] + temp [i + 48];
+            s16 x1 = temp [i +  8] - temp [i + 48];
+            s16 x6 = temp [i + 16] + temp [i + 40];
+            s16 x2 = temp [i + 16] - temp [i + 40];
+            s16 x5 = temp [i + 24] + temp [i + 32];
+            s16 x3 = temp [i + 24] - temp [i + 32];
+            s16 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
+            s16 v0 = (x4 + x5) >> 3;
+            s16 v4 = (x4 - x5) >> 3;
+            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
+            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
+            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
+            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
+            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
+            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
+            dest[i + 8 * 0] = (v0 * quant_table[i + 8 * 0] + 0x4000) >> 15;
+            dest[i + 8 * 1] = (v1 * quant_table[i + 8 * 1] + 0x4000) >> 15;
+            dest[i + 8 * 2] = (v2 * quant_table[i + 8 * 2] + 0x4000) >> 15;
+            dest[i + 8 * 3] = (v3 * quant_table[i + 8 * 3] + 0x4000) >> 15;
+            dest[i + 8 * 4] = (v4 * quant_table[i + 8 * 4] + 0x4000) >> 15;
+            dest[i + 8 * 5] = (v5 * quant_table[i + 8 * 5] + 0x4000) >> 15;
+            dest[i + 8 * 6] = (v6 * quant_table[i + 8 * 6] + 0x4000) >> 15;
+            dest[i + 8 * 7] = (v7 * quant_table[i + 8 * 7] + 0x4000) >> 15;
+        }
+    }
 
 #if defined(JPEG_ENABLE_SSE2)
-
-#if defined(JPEG_ENABLE_AVX2)
-    constexpr const char* fdct_name = "DCT: AVX2";
-#else
-    constexpr const char* fdct_name = "DCT: SSE2";
-#endif
 
     // ----------------------------------------------------------------------------
     // fdct sse2
@@ -1036,21 +1133,6 @@ namespace
         a_hi = _mm_srai_epi32(a_hi, n); \
         v1 = _mm_packs_epi32(a_lo, a_hi); }
 
-#if defined(JPEG_ENABLE_AVX2)
-
-    static inline
-    __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
-    {
-        __m256i lo = _mm256_madd_epi16(_mm256_unpacklo_epi16(v, one), _mm256_unpacklo_epi16(q, bias));
-        __m256i hi = _mm256_madd_epi16(_mm256_unpackhi_epi16(v, one), _mm256_unpackhi_epi16(q, bias));
-        lo = _mm256_srai_epi32(lo, 15);
-        hi = _mm256_srai_epi32(hi, 15);
-        v = _mm256_packs_epi32(lo, hi);
-        return v;
-    }
-
-#else
-
     static inline
     __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
     {
@@ -1062,10 +1144,8 @@ namespace
         return v;
     }
 
-#endif
-
     static
-    void fdct(s16* dest, const s16* data, const s16* quant_table)
+    void fdct_sse2(s16* dest, const s16* data, const s16* quant_table)
     {
         constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
         constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
@@ -1074,20 +1154,6 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
-#if 0
-        const __m128i c00 = _mm_setr_epi16(c2, c6, c6, -c2, c7, -c5, c3, -c1);
-        const __m128i c01 = _mm_setr_epi16(c5, -c1, c7, c3, c3, -c7, c1, c5);
-        __m128i c26p = _mm_shuffle_epi32(c00, 0x00);
-        __m128i c62n = _mm_shuffle_epi32(c00, 0x55);
-        __m128i c75n = _mm_shuffle_epi32(c00, 0xaa);
-        __m128i c31n = _mm_shuffle_epi32(c00, 0xff);
-        __m128i c51n = _mm_shuffle_epi32(c01, 0x00);
-        __m128i c73p = _mm_shuffle_epi32(c01, 0x55);
-        __m128i c37n = _mm_shuffle_epi32(c01, 0xaa);
-        __m128i c15p = _mm_shuffle_epi32(c01, 0xff);
-        __m128i c13p = JPEG_CONST16(c1, c3);
-        __m128i c57p = JPEG_CONST16(c5, c7);
-#else
         __m128i c26p = JPEG_CONST16(c2, c6);
         __m128i c62n = JPEG_CONST16(c6,-c2);
         __m128i c75n = JPEG_CONST16(c7,-c5);
@@ -1098,7 +1164,6 @@ namespace
         __m128i c15p = JPEG_CONST16(c1, c5);
         __m128i c13p = JPEG_CONST16(c1, c3);
         __m128i c57p = JPEG_CONST16(c5, c7);
-#endif
 
         // load
 
@@ -1172,34 +1237,6 @@ namespace
 
         JPEG_TRANSFORM(13);
 
-#if defined(JPEG_ENABLE_AVX2)
-
-        __m256i v01 = _mm256_setr_m128i(v0, v1);
-        __m256i v23 = _mm256_setr_m128i(v2, v3);
-        __m256i v45 = _mm256_setr_m128i(v4, v5);
-        __m256i v67 = _mm256_setr_m128i(v6, v7);
-
-        // quantize
-
-        const __m256i one = _mm256_set1_epi16(1);
-        const __m256i bias = _mm256_set1_epi16(0x4000);
-        const __m256i* q = reinterpret_cast<const __m256i*>(quant_table);
-
-        v01 = quantize(v01, q[0], one, bias);
-        v23 = quantize(v23, q[1], one, bias);
-        v45 = quantize(v45, q[2], one, bias);
-        v67 = quantize(v67, q[3], one, bias);
-
-        // store
-
-        __m256i* d = reinterpret_cast<__m256i *>(dest);
-        _mm256_storeu_si256(d + 0, v01);
-        _mm256_storeu_si256(d + 1, v23);
-        _mm256_storeu_si256(d + 2, v45);
-        _mm256_storeu_si256(d + 3, v67);
-
-#else
-
         // quantize
 
         const __m128i one = _mm_set1_epi16(1);
@@ -1226,16 +1263,150 @@ namespace
         _mm_storeu_si128(d + 5, v5);
         _mm_storeu_si128(d + 6, v6);
         _mm_storeu_si128(d + 7, v7);
-
-#endif
     }
 
-#elif defined(JPEG_ENABLE_NEON)
-
-    constexpr const char* fdct_name = "DCT: NEON";
+#if defined(JPEG_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
-    // fdct neon
+    // fdct_avx2
+    // ----------------------------------------------------------------------------
+
+    static inline
+    __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
+    {
+        __m256i lo = _mm256_madd_epi16(_mm256_unpacklo_epi16(v, one), _mm256_unpacklo_epi16(q, bias));
+        __m256i hi = _mm256_madd_epi16(_mm256_unpackhi_epi16(v, one), _mm256_unpackhi_epi16(q, bias));
+        lo = _mm256_srai_epi32(lo, 15);
+        hi = _mm256_srai_epi32(hi, 15);
+        v = _mm256_packs_epi32(lo, hi);
+        return v;
+    }
+
+    static
+    void fdct_avx2(s16* dest, const s16* data, const s16* quant_table)
+    {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        __m128i c26p = JPEG_CONST16(c2, c6);
+        __m128i c62n = JPEG_CONST16(c6,-c2);
+        __m128i c75n = JPEG_CONST16(c7,-c5);
+        __m128i c31n = JPEG_CONST16(c3,-c1);
+        __m128i c51n = JPEG_CONST16(c5,-c1);
+        __m128i c73p = JPEG_CONST16(c7, c3);
+        __m128i c37n = JPEG_CONST16(c3,-c7);
+        __m128i c15p = JPEG_CONST16(c1, c5);
+        __m128i c13p = JPEG_CONST16(c1, c3);
+        __m128i c57p = JPEG_CONST16(c5, c7);
+
+        // load
+
+        const __m128i* s = reinterpret_cast<const __m128i *>(data);
+        __m128i v0 = _mm_loadu_si128(s + 0);
+        __m128i v1 = _mm_loadu_si128(s + 1);
+        __m128i v2 = _mm_loadu_si128(s + 2);
+        __m128i v3 = _mm_loadu_si128(s + 3);
+        __m128i v4 = _mm_loadu_si128(s + 4);
+        __m128i v5 = _mm_loadu_si128(s + 5);
+        __m128i v6 = _mm_loadu_si128(s + 6);
+        __m128i v7 = _mm_loadu_si128(s + 7);
+
+        // pass 1
+
+        JPEG_TRANSPOSE16();
+
+        __m128i x8 = _mm_add_epi16(v0, v7);
+        __m128i x7 = _mm_add_epi16(v1, v6);
+        __m128i x6 = _mm_add_epi16(v2, v5);
+        __m128i x5 = _mm_add_epi16(v3, v4);
+        __m128i x0 = _mm_sub_epi16(v0, v7);
+        __m128i x1 = _mm_sub_epi16(v1, v6);
+        __m128i x2 = _mm_sub_epi16(v2, v5);
+        __m128i x3 = _mm_sub_epi16(v3, v4);
+        __m128i x4 = _mm_add_epi16(x8, x5);
+
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
+
+        __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
+        __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
+        __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
+        __m128i x01_hi = _mm_unpackhi_epi16(x0, x1);
+        __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
+        __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        v0 = _mm_add_epi16(x4, x5);
+        v4 = _mm_sub_epi16(x4, x5);
+
+        JPEG_TRANSFORM(10);
+
+        // pass 2
+
+        JPEG_TRANSPOSE16();
+
+        x8 = _mm_add_epi16(v0, v7);
+        x0 = _mm_sub_epi16(v0, v7);
+        x7 = _mm_add_epi16(v1, v6);
+        x1 = _mm_sub_epi16(v1, v6);
+        x6 = _mm_add_epi16(v2, v5);
+        x2 = _mm_sub_epi16(v2, v5);
+        x5 = _mm_add_epi16(v3, v4);
+        x3 = _mm_sub_epi16(v3, v4);
+        x4 = _mm_add_epi16(x8, x5);
+
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
+
+        x87_lo = _mm_unpacklo_epi16(x8, x7);
+        x87_hi = _mm_unpackhi_epi16(x8, x7);
+        x01_lo = _mm_unpacklo_epi16(x0, x1);
+        x01_hi = _mm_unpackhi_epi16(x0, x1);
+        x23_lo = _mm_unpacklo_epi16(x2, x3);
+        x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
+        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
+
+        JPEG_TRANSFORM(13);
+
+        __m256i v01 = _mm256_setr_m128i(v0, v1);
+        __m256i v23 = _mm256_setr_m128i(v2, v3);
+        __m256i v45 = _mm256_setr_m128i(v4, v5);
+        __m256i v67 = _mm256_setr_m128i(v6, v7);
+
+        // quantize
+
+        const __m256i one = _mm256_set1_epi16(1);
+        const __m256i bias = _mm256_set1_epi16(0x4000);
+        const __m256i* q = reinterpret_cast<const __m256i*>(quant_table);
+
+        v01 = quantize(v01, q[0], one, bias);
+        v23 = quantize(v23, q[1], one, bias);
+        v45 = quantize(v45, q[2], one, bias);
+        v67 = quantize(v67, q[3], one, bias);
+
+        // store
+
+        __m256i* d = reinterpret_cast<__m256i *>(dest);
+        _mm256_storeu_si256(d + 0, v01);
+        _mm256_storeu_si256(d + 1, v23);
+        _mm256_storeu_si256(d + 2, v45);
+        _mm256_storeu_si256(d + 3, v67);
+    }
+
+#endif // defined(JPEG_ENABLE_AVX2)
+#endif // defined(JPEG_ENABLE_SSE2)
+
+#if defined(JPEG_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------
+    // fdct_neon
     // ----------------------------------------------------------------------------
 
     static inline
@@ -1329,7 +1500,7 @@ namespace
         JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
 
     static
-    void fdct(s16* dest, const s16* data, const s16* quant_table)
+    void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
     {
         const int16x4_t c1 = vdup_n_s16(1420); // cos 1PI/16 * root(2)
         const int16x4_t c2 = vdup_n_s16(1338); // cos 2PI/16 * root(2)
@@ -1419,85 +1590,7 @@ namespace
         vst1q_s16(dest + 7 * 8, v7);
     }
 
-#else
-
-    constexpr const char* fdct_name = "DCT: Scalar";
-
-    // ----------------------------------------------------------------------------
-    // fdct scalar
-    // ----------------------------------------------------------------------------
-
-    static
-    void fdct(s16* dest, const s16* data, const s16* quant_table)
-    {
-        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
-        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
-        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
-        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
-        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
-        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
-
-        s16 temp[64];
-
-        for (int i = 0; i < 8; ++i)
-        {
-            s16 x8 = data [0] + data [7];
-            s16 x0 = data [0] - data [7];
-            s16 x7 = data [1] + data [6];
-            s16 x1 = data [1] - data [6];
-            s16 x6 = data [2] + data [5];
-            s16 x2 = data [2] - data [5];
-            s16 x5 = data [3] + data [4];
-            s16 x3 = data [3] - data [4];
-            s16 x4 = x8 + x5;
-            x8 = x8 - x5;
-            x5 = x7 + x6;
-            x7 = x7 - x6;
-            temp[i * 8 + 0] = x4 + x5;
-            temp[i * 8 + 4] = x4 - x5;
-            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
-            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
-            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
-            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
-            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
-            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
-            data += 8;
-        }
-
-        for (int i = 0; i < 8; ++i)
-        {
-            s16 x8 = temp [i +  0] + temp [i + 56];
-            s16 x0 = temp [i +  0] - temp [i + 56];
-            s16 x7 = temp [i +  8] + temp [i + 48];
-            s16 x1 = temp [i +  8] - temp [i + 48];
-            s16 x6 = temp [i + 16] + temp [i + 40];
-            s16 x2 = temp [i + 16] - temp [i + 40];
-            s16 x5 = temp [i + 24] + temp [i + 32];
-            s16 x3 = temp [i + 24] - temp [i + 32];
-            s16 x4 = x8 + x5;
-            x8 = x8 - x5;
-            x5 = x7 + x6;
-            x7 = x7 - x6;
-            s16 v0 = (x4 + x5) >> 3;
-            s16 v4 = (x4 - x5) >> 3;
-            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
-            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
-            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
-            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
-            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
-            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
-            dest[i + 8 * 0] = (v0 * quant_table[i + 8 * 0] + 0x4000) >> 15;
-            dest[i + 8 * 1] = (v1 * quant_table[i + 8 * 1] + 0x4000) >> 15;
-            dest[i + 8 * 2] = (v2 * quant_table[i + 8 * 2] + 0x4000) >> 15;
-            dest[i + 8 * 3] = (v3 * quant_table[i + 8 * 3] + 0x4000) >> 15;
-            dest[i + 8 * 4] = (v4 * quant_table[i + 8 * 4] + 0x4000) >> 15;
-            dest[i + 8 * 5] = (v5 * quant_table[i + 8 * 5] + 0x4000) >> 15;
-            dest[i + 8 * 6] = (v6 * quant_table[i + 8 * 6] + 0x4000) >> 15;
-            dest[i + 8 * 7] = (v7 * quant_table[i + 8 * 7] + 0x4000) >> 15;
-        }
-    }
-
-#endif
+#endif // defined(JPEG_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
     // read_xxx_format
@@ -2048,21 +2141,35 @@ namespace
 
         int bytes_per_pixel = 0;
 
-        channel_count = 0;
+        components = 0;
 
         channel[0].component = 1;
         channel[0].qtable = ILqt;
+        channel[0].dc_code = g_luminance_dc_code_table;
+        channel[0].dc_size = g_luminance_dc_size_table;
+        channel[0].ac_code = g_luminance_ac_code_table;
+        channel[0].ac_size = g_luminance_ac_size_table;
 
         channel[1].component = 2;
         channel[1].qtable = ICqt;
+        channel[1].dc_code = g_chrominance_dc_code_table;
+        channel[1].dc_size = g_chrominance_dc_size_table;
+        channel[1].ac_code = g_chrominance_ac_code_table;
+        channel[1].ac_size = g_chrominance_ac_size_table;
 
         channel[2].component = 3;
         channel[2].qtable = ICqt;
+        channel[2].dc_code = g_chrominance_dc_code_table;
+        channel[2].dc_size = g_chrominance_dc_size_table;
+        channel[2].ac_code = g_chrominance_ac_code_table;
+        channel[2].ac_size = g_chrominance_ac_size_table;
 
         read_8x8 = nullptr;
 
         u64 flags = getCPUFlags();
         MANGO_UNREFERENCED(flags);
+
+        // select sampler
 
         const char* sampler_name = "Scalar";
 
@@ -2078,7 +2185,7 @@ namespace
 #endif
                 read = read_y_format;
                 bytes_per_pixel = 1;
-                channel_count = 1;
+                components = 1;
                 break;
 
             case JPEG_U8_BGR:
@@ -2091,7 +2198,7 @@ namespace
 #endif
                 read = read_bgr_format;
                 bytes_per_pixel = 3;
-                channel_count = 3;
+                components = 3;
                 break;
 
             case JPEG_U8_RGB:
@@ -2104,7 +2211,7 @@ namespace
 #endif
                 read = read_rgb_format;
                 bytes_per_pixel = 3;
-                channel_count = 3;
+                components = 3;
                 break;
 
             case JPEG_U8_BGRA:
@@ -2117,7 +2224,7 @@ namespace
 #endif
                 read = read_bgra_format;
                 bytes_per_pixel = 4;
-                channel_count = 3;
+                components = 3;
                 break;
 
             case JPEG_U8_RGBA:
@@ -2130,7 +2237,7 @@ namespace
 #endif
                 read = read_rgba_format;
                 bytes_per_pixel = 4;
-                channel_count = 3;
+                components = 3;
                 break;
         }
 
@@ -2138,6 +2245,34 @@ namespace
         {
             read_8x8 = read;
         }
+
+        // select fdct
+
+        fdct = fdct_scalar;
+        const char* fdct_name = "Scalar";
+
+#if defined(JPEG_ENABLE_SSE2)
+        if (flags & INTEL_SSE2)
+        {
+            fdct = fdct_sse2;
+            fdct_name = "SSE2";
+        }
+#endif
+
+#if defined(JPEG_ENABLE_AVX2)
+        if (flags & INTEL_AVX2)
+        {
+            fdct = fdct_avx2;
+            fdct_name = "AVX2";
+        }
+#endif
+
+#if defined(JPEG_ENABLE_NEON)
+        {
+            fdct = fdct_neon;
+            fdct_name = "NEON";
+        }
+#endif
 
         // select block encoder
 
@@ -2168,8 +2303,15 @@ namespace
         }
 #endif
 
+#if defined(JPEG_ENABLE_NEON__todo)
+        {
+            encode_ac = encode_ac_neon;
+            encode_name = "NEON";
+        }
+#endif
+
         // build encoder info string
-        info = "[JPEG Encoder] ";
+        info = "[JPEG Encoder] FDCT: ";
         info += fdct_name;
 
         info += ", Sampler: ";
@@ -2344,6 +2486,9 @@ namespace
         // bitstream for each MCU scan
         std::vector<EncodeBuffer> buffers(jp.vertical_mcus);
 
+        auto fdct = jp.fdct;
+        auto encode_ac = jp.encode_ac;
+
         ConcurrentQueue queue;
 
         // encode MCUs
@@ -2359,9 +2504,7 @@ namespace
                 read_func = jp.read; // clipping reader
             }
 
-            auto encode_ac = jp.encode_ac;
-
-            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func, encode_ac]
+            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func, fdct, encode_ac]
             {
                 const u8* image = input;
 
@@ -2379,20 +2522,7 @@ namespace
 
                 const int right_mcu = jp.horizontal_mcus - 1;
 
-                struct
-                {
-                    const u16* dc_code;
-                    const u16* dc_size;
-                    const u16* ac_code;
-                    const u16* ac_size;
-                    int last_dc;
-                } 
-                encode_table [] =
-                {
-                    { g_luminance_dc_code_table, g_luminance_dc_size_table, g_luminance_ac_code_table, g_luminance_ac_size_table, 0 },
-                    { g_chrominance_dc_code_table, g_chrominance_dc_size_table, g_chrominance_ac_code_table, g_chrominance_ac_size_table, 0 },
-                    { g_chrominance_dc_code_table, g_chrominance_dc_size_table, g_chrominance_ac_code_table, g_chrominance_ac_size_table, 0 },
-                };
+                int last_dc_value[3] = { 0, 0, 0 };
 
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
@@ -2408,20 +2538,20 @@ namespace
                     read(block, image, stride, rows, cols);
 
                     // encode the data in MCU
-                    for (int i = 0; i < jp.channel_count; ++i)
+                    for (int i = 0; i < jp.components; ++i)
                     {
                         s16 temp[BLOCK_SIZE];
                         fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
 
                         const int component = jp.channel[i].component - 1;
 
-                        const u16* dc_code = encode_table[component].dc_code;
-                        const u16* dc_size = encode_table[component].dc_size;
-                        const u16* ac_code = encode_table[component].ac_code;
-                        const u16* ac_size = encode_table[component].ac_size;
+                        const u16* dc_code = jp.channel[i].dc_code;
+                        const u16* dc_size = jp.channel[i].dc_size;
+                        const u16* ac_code = jp.channel[i].ac_code;
+                        const u16* ac_size = jp.channel[i].ac_size;
 
-                        int last_dc = encode_table[component].last_dc;
-                        encode_table[component].last_dc = temp[0];
+                        int last_dc = last_dc_value[component];
+                        last_dc_value[component] = temp[0];
 
                         ptr = encode_dc(huffman, ptr, temp, dc_code, dc_size, last_dc);
                         ptr = encode_ac(huffman, ptr, temp, ac_code, ac_size);
