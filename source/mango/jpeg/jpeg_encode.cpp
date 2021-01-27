@@ -377,8 +377,7 @@ namespace
                 u32 mask = (1 << size) - 1;
 
                 int index = runLength + size * 16;
-                p = encoder.putBits(p, ac_code[index], ac_size[index]);
-                p = encoder.putBits(p, coeff & mask, size);
+                p = encoder.putBits(p, (ac_code[index] << size) | (coeff & mask), ac_size[index] + size);
 
                 runLength = 0;
             }
@@ -637,8 +636,7 @@ namespace
             u32 mask = (1 << size) - 1;
 
             int index = runLength + size * 16;
-            p = encoder.putBits(p, ac_code[index], ac_size[index]);
-            p = encoder.putBits(p, coeff & mask, size);
+            p = encoder.putBits(p, (ac_code[index] << size) | (coeff & mask), ac_size[index] + size);
         }
 
         return p;
@@ -834,8 +832,7 @@ namespace
             u32 mask = (1 << size) - 1;
 
             int index = runLength + size * 16;
-            p = encoder.putBits(p, ac_code[index], ac_size[index]);
-            p = encoder.putBits(p, coeff & mask, size);
+            p = encoder.putBits(p, (ac_code[index] << size) | (coeff & mask), ac_size[index] + size);
         }
 
         return p;
@@ -975,8 +972,7 @@ namespace
             u32 mask = (1 << size) - 1;
 
             int index = runLength + size * 16;
-            p = encoder.putBits(p, ac_code[index], ac_size[index]);
-            p = encoder.putBits(p, coeff & mask, size);
+            p = encoder.putBits(p, (ac_code[index] << size) | (coeff & mask), ac_size[index] + size);
         }
 
         return p;
