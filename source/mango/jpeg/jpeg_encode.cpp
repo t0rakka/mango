@@ -996,6 +996,8 @@ namespace
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
+        const u32 zero16_code = ac_code[176];
+        const u32 zero16_size = ac_size[176];
 
         int runLength = 0;
 
@@ -1007,7 +1009,7 @@ namespace
                 while (runLength > 15)
                 {
                     runLength -= 16;
-                    p = encoder.putBits(p, ac_code[176], ac_size[176]);
+                    p = encoder.putBits(p, zero16_code, zero16_size);
                 }
 
                 int absCoeff = std::abs(coeff);
@@ -1255,6 +1257,8 @@ namespace
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
+        const u32 zero16_code = ac_code[176];
+        const u32 zero16_size = ac_size[176];
 
         for (int i = 1; i < 64; )
         {
@@ -1272,7 +1276,7 @@ namespace
             while (runLength > 15)
             {
                 runLength -= 16;
-                p = encoder.putBits(p, ac_code[176], ac_size[176]);
+                p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
             int coeff = temp[i++];
@@ -1458,6 +1462,8 @@ namespace
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
+        const u32 zero16_code = ac_code[176];
+        const u32 zero16_size = ac_size[176];
 
         for (int i = 1; i < 64; )
         {
@@ -1475,7 +1481,7 @@ namespace
             while (runLength > 15)
             {
                 runLength -= 16;
-                p = encoder.putBits(p, ac_code[176], ac_size[176]);
+                p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
             int coeff = temp[i++];
@@ -1569,8 +1575,8 @@ namespace
         const __m512i src1 = _mm512_loadu_si512(src + 1);
         const __m512i table0 = _mm512_loadu_si512(table + 0);
         const __m512i table1 = _mm512_loadu_si512(table + 1);
-        const __m512i v0  = _mm512_permutex2var_epi16(src0, table0, src1);
-        const __m512i v1  = _mm512_permutex2var_epi16(src0, table1, src1);
+        const __m512i v0 = _mm512_permutex2var_epi16(src0, table0, src1);
+        const __m512i v1 = _mm512_permutex2var_epi16(src0, table1, src1);
 
         // compute zeromask
         const __m512i zero = _mm512_setzero_si512();
@@ -1605,6 +1611,8 @@ namespace
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
+        const u32 zero16_code = ac_code[176];
+        const u32 zero16_size = ac_size[176];
 
         for (int i = 1; i < 64; )
         {
@@ -1622,7 +1630,7 @@ namespace
             while (runLength > 15)
             {
                 runLength -= 16;
-                p = encoder.putBits(p, ac_code[176], ac_size[176]);
+                p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
             int coeff = temp[i++];
