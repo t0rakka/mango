@@ -183,6 +183,10 @@ namespace
         0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA,
     };
 
+    // ----------------------------------------------------------------------------
+    // HuffmanEncoder
+    // ----------------------------------------------------------------------------
+
     static inline
     u8* writeStuffedBytes(u8* output, DataType code, int count)
     {
@@ -248,6 +252,9 @@ namespace
         DataType code;
         int space;
 
+        int last_dc_value[3] = { 0, 0, 0 };
+        void (*fdct)(s16* dest, const s16* data, const s16* qtable);
+
         HuffmanEncoder()
         {
             code = 0;
@@ -284,19 +291,18 @@ namespace
 
     struct jpegEncoder
     {
-        int     mcu_width;
-        int     mcu_height;
-        int     horizontal_mcus;
-        int     vertical_mcus;
-        int     cols_in_right_mcus;
-        int     rows_in_bottom_mcus;
+        int mcu_width;
+        int mcu_height;
+        int mcu_stride;
+        int horizontal_mcus;
+        int vertical_mcus;
+        int cols_in_right_mcus;
+        int rows_in_bottom_mcus;
 
-        int     mcu_width_size;
-
-        u8      Lqt [BLOCK_SIZE];
-        u8      Cqt [BLOCK_SIZE];
-        AlignedStorage<s16> ILqt;
-        AlignedStorage<s16> ICqt;
+        u8 luminance_qtable[BLOCK_SIZE];
+        u8 chrominance_qtable[BLOCK_SIZE];
+        AlignedStorage<s16> inverse_luminance_qtable;
+        AlignedStorage<s16> inverse_chrominance_qtable;
 
         // MCU configuration
         struct Channel
@@ -309,14 +315,14 @@ namespace
             const u16* ac_size;
         };
         Channel channel[3];
-        int     components;
+        int components;
 
         std::string info;
 
-        void (*read_8x8)  (s16* block, const u8* input, size_t stride, int rows, int cols);
-        void (*read)      (s16* block, const u8* input, size_t stride, int rows, int cols);
-        void (*fdct)      (s16* dest, const s16* data, const s16* quant_table);
-        u8*  (*encode_ac) (HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size);
+        void (*read_8x8) (s16* block, const u8* input, size_t stride, int rows, int cols);
+        void (*read)     (s16* block, const u8* input, size_t stride, int rows, int cols);
+        void (*fdct)     (s16* dest, const s16* data, const s16* qtable);
+        u8*  (*encode)   (HuffmanEncoder& encoder, u8* p, const s16* input, const Channel& channel);
 
         jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
         ~jpegEncoder();
@@ -326,9 +332,633 @@ namespace
         ConstMemory icc;
     };
 
-    static inline
-    u8* encode_dc(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* dc_code, const u16* dc_size, int last_dc)
+    // ----------------------------------------------------------------------------
+    // fdct_scalar
+    // ----------------------------------------------------------------------------
+
+    static
+    void fdct_scalar(s16* dest, const s16* data, const s16* qtable)
     {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        s16 temp[64];
+
+        for (int i = 0; i < 8; ++i)
+        {
+            s16 x8 = data [0] + data [7];
+            s16 x0 = data [0] - data [7];
+            s16 x7 = data [1] + data [6];
+            s16 x1 = data [1] - data [6];
+            s16 x6 = data [2] + data [5];
+            s16 x2 = data [2] - data [5];
+            s16 x5 = data [3] + data [4];
+            s16 x3 = data [3] - data [4];
+            s16 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
+            temp[i * 8 + 0] = x4 + x5;
+            temp[i * 8 + 4] = x4 - x5;
+            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
+            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
+            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
+            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
+            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
+            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
+            data += 8;
+        }
+
+        for (int i = 0; i < 8; ++i)
+        {
+            s16 x8 = temp [i +  0] + temp [i + 56];
+            s16 x0 = temp [i +  0] - temp [i + 56];
+            s16 x7 = temp [i +  8] + temp [i + 48];
+            s16 x1 = temp [i +  8] - temp [i + 48];
+            s16 x6 = temp [i + 16] + temp [i + 40];
+            s16 x2 = temp [i + 16] - temp [i + 40];
+            s16 x5 = temp [i + 24] + temp [i + 32];
+            s16 x3 = temp [i + 24] - temp [i + 32];
+            s16 x4 = x8 + x5;
+            x8 = x8 - x5;
+            x5 = x7 + x6;
+            x7 = x7 - x6;
+            s16 v0 = (x4 + x5) >> 3;
+            s16 v4 = (x4 - x5) >> 3;
+            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
+            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
+            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
+            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
+            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
+            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
+            dest[i + 8 * 0] = (v0 * qtable[i + 8 * 0] + 0x4000) >> 15;
+            dest[i + 8 * 1] = (v1 * qtable[i + 8 * 1] + 0x4000) >> 15;
+            dest[i + 8 * 2] = (v2 * qtable[i + 8 * 2] + 0x4000) >> 15;
+            dest[i + 8 * 3] = (v3 * qtable[i + 8 * 3] + 0x4000) >> 15;
+            dest[i + 8 * 4] = (v4 * qtable[i + 8 * 4] + 0x4000) >> 15;
+            dest[i + 8 * 5] = (v5 * qtable[i + 8 * 5] + 0x4000) >> 15;
+            dest[i + 8 * 6] = (v6 * qtable[i + 8 * 6] + 0x4000) >> 15;
+            dest[i + 8 * 7] = (v7 * qtable[i + 8 * 7] + 0x4000) >> 15;
+        }
+    }
+
+#if defined(JPEG_ENABLE_SSE2)
+
+    // ----------------------------------------------------------------------------
+    // fdct sse2
+    // ----------------------------------------------------------------------------
+
+    static inline void interleave16(__m128i& a, __m128i& b)
+    {
+        __m128i c = a;
+        a = _mm_unpacklo_epi16(a, b);
+        b = _mm_unpackhi_epi16(c, b);
+    }
+
+    #define JPEG_CONST16(x, y) \
+        _mm_setr_epi16(x, y, x, y, x, y, x, y)
+
+    #define JPEG_TRANSPOSE16() \
+        interleave16(v0, v4); \
+        interleave16(v2, v6); \
+        interleave16(v1, v5); \
+        interleave16(v3, v7); \
+        interleave16(v0, v2); \
+        interleave16(v1, v3); \
+        interleave16(v4, v6); \
+        interleave16(v5, v7); \
+        interleave16(v0, v1); \
+        interleave16(v2, v3); \
+        interleave16(v4, v5); \
+        interleave16(v6, v7)
+
+    #define JPEG_TRANSFORM(n) { \
+        __m128i a_lo; \
+        __m128i a_hi; \
+        __m128i b_lo; \
+        __m128i b_hi; \
+        \
+        a_lo = _mm_madd_epi16(x87_lo, c26p); \
+        a_hi = _mm_madd_epi16(x87_hi, c26p); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v2 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x87_lo, c62n); \
+        a_hi = _mm_madd_epi16(x87_hi, c62n); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v6 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c75n); \
+        a_hi = _mm_madd_epi16(x01_hi, c75n); \
+        b_lo = _mm_madd_epi16(x23_lo, c31n); \
+        b_hi = _mm_madd_epi16(x23_hi, c31n); \
+        a_lo = _mm_add_epi32(a_lo, b_lo); \
+        a_hi = _mm_add_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v7 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c51n); \
+        a_hi = _mm_madd_epi16(x01_hi, c51n); \
+        b_lo = _mm_madd_epi16(x23_lo, c73p); \
+        b_hi = _mm_madd_epi16(x23_hi, c73p); \
+        a_lo = _mm_add_epi32(a_lo, b_lo); \
+        a_hi = _mm_add_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v5 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c37n); \
+        a_hi = _mm_madd_epi16(x01_hi, c37n); \
+        b_lo = _mm_madd_epi16(x23_lo, c15p); \
+        b_hi = _mm_madd_epi16(x23_hi, c15p); \
+        a_lo = _mm_sub_epi32(a_lo, b_lo); \
+        a_hi = _mm_sub_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v3 = _mm_packs_epi32(a_lo, a_hi); \
+        \
+        a_lo = _mm_madd_epi16(x01_lo, c13p); \
+        a_hi = _mm_madd_epi16(x01_hi, c13p); \
+        b_lo = _mm_madd_epi16(x23_lo, c57p); \
+        b_hi = _mm_madd_epi16(x23_hi, c57p); \
+        a_lo = _mm_add_epi32(a_lo, b_lo); \
+        a_hi = _mm_add_epi32(a_hi, b_hi); \
+        a_lo = _mm_srai_epi32(a_lo, n); \
+        a_hi = _mm_srai_epi32(a_hi, n); \
+        v1 = _mm_packs_epi32(a_lo, a_hi); }
+
+    static inline
+    __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
+    {
+        __m128i lo = _mm_madd_epi16(_mm_unpacklo_epi16(v, one), _mm_unpacklo_epi16(q, bias));
+        __m128i hi = _mm_madd_epi16(_mm_unpackhi_epi16(v, one), _mm_unpackhi_epi16(q, bias));
+        lo = _mm_srai_epi32(lo, 15);
+        hi = _mm_srai_epi32(hi, 15);
+        v = _mm_packs_epi32(lo, hi);
+        return v;
+    }
+
+    static
+    void fdct_sse2(s16* dest, const s16* data, const s16* qtable)
+    {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        __m128i c26p = JPEG_CONST16(c2, c6);
+        __m128i c62n = JPEG_CONST16(c6,-c2);
+        __m128i c75n = JPEG_CONST16(c7,-c5);
+        __m128i c31n = JPEG_CONST16(c3,-c1);
+        __m128i c51n = JPEG_CONST16(c5,-c1);
+        __m128i c73p = JPEG_CONST16(c7, c3);
+        __m128i c37n = JPEG_CONST16(c3,-c7);
+        __m128i c15p = JPEG_CONST16(c1, c5);
+        __m128i c13p = JPEG_CONST16(c1, c3);
+        __m128i c57p = JPEG_CONST16(c5, c7);
+
+        // load
+
+        const __m128i* s = reinterpret_cast<const __m128i *>(data);
+        __m128i v0 = _mm_loadu_si128(s + 0);
+        __m128i v1 = _mm_loadu_si128(s + 1);
+        __m128i v2 = _mm_loadu_si128(s + 2);
+        __m128i v3 = _mm_loadu_si128(s + 3);
+        __m128i v4 = _mm_loadu_si128(s + 4);
+        __m128i v5 = _mm_loadu_si128(s + 5);
+        __m128i v6 = _mm_loadu_si128(s + 6);
+        __m128i v7 = _mm_loadu_si128(s + 7);
+
+        // pass 1
+
+        JPEG_TRANSPOSE16();
+
+        __m128i x8 = _mm_add_epi16(v0, v7);
+        __m128i x7 = _mm_add_epi16(v1, v6);
+        __m128i x6 = _mm_add_epi16(v2, v5);
+        __m128i x5 = _mm_add_epi16(v3, v4);
+        __m128i x0 = _mm_sub_epi16(v0, v7);
+        __m128i x1 = _mm_sub_epi16(v1, v6);
+        __m128i x2 = _mm_sub_epi16(v2, v5);
+        __m128i x3 = _mm_sub_epi16(v3, v4);
+        __m128i x4 = _mm_add_epi16(x8, x5);
+
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
+
+        __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
+        __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
+        __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
+        __m128i x01_hi = _mm_unpackhi_epi16(x0, x1);
+        __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
+        __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        v0 = _mm_add_epi16(x4, x5);
+        v4 = _mm_sub_epi16(x4, x5);
+
+        JPEG_TRANSFORM(10);
+
+        // pass 2
+
+        JPEG_TRANSPOSE16();
+
+        x8 = _mm_add_epi16(v0, v7);
+        x0 = _mm_sub_epi16(v0, v7);
+        x7 = _mm_add_epi16(v1, v6);
+        x1 = _mm_sub_epi16(v1, v6);
+        x6 = _mm_add_epi16(v2, v5);
+        x2 = _mm_sub_epi16(v2, v5);
+        x5 = _mm_add_epi16(v3, v4);
+        x3 = _mm_sub_epi16(v3, v4);
+        x4 = _mm_add_epi16(x8, x5);
+
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
+
+        x87_lo = _mm_unpacklo_epi16(x8, x7);
+        x87_hi = _mm_unpackhi_epi16(x8, x7);
+        x01_lo = _mm_unpacklo_epi16(x0, x1);
+        x01_hi = _mm_unpackhi_epi16(x0, x1);
+        x23_lo = _mm_unpacklo_epi16(x2, x3);
+        x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
+        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
+
+        JPEG_TRANSFORM(13);
+
+        // quantize
+
+        const __m128i one = _mm_set1_epi16(1);
+        const __m128i bias = _mm_set1_epi16(0x4000);
+        const __m128i* q = reinterpret_cast<const __m128i*>(qtable);
+
+        v0 = quantize(v0, q[0], one, bias);
+        v1 = quantize(v1, q[1], one, bias);
+        v2 = quantize(v2, q[2], one, bias);
+        v3 = quantize(v3, q[3], one, bias);
+        v4 = quantize(v4, q[4], one, bias);
+        v5 = quantize(v5, q[5], one, bias);
+        v6 = quantize(v6, q[6], one, bias);
+        v7 = quantize(v7, q[7], one, bias);
+
+        // store
+
+        __m128i* d = reinterpret_cast<__m128i *>(dest);
+        _mm_storeu_si128(d + 0, v0);
+        _mm_storeu_si128(d + 1, v1);
+        _mm_storeu_si128(d + 2, v2);
+        _mm_storeu_si128(d + 3, v3);
+        _mm_storeu_si128(d + 4, v4);
+        _mm_storeu_si128(d + 5, v5);
+        _mm_storeu_si128(d + 6, v6);
+        _mm_storeu_si128(d + 7, v7);
+    }
+
+#if defined(JPEG_ENABLE_AVX2)
+
+    // ----------------------------------------------------------------------------
+    // fdct_avx2
+    // ----------------------------------------------------------------------------
+
+    static inline
+    __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
+    {
+        __m256i lo = _mm256_madd_epi16(_mm256_unpacklo_epi16(v, one), _mm256_unpacklo_epi16(q, bias));
+        __m256i hi = _mm256_madd_epi16(_mm256_unpackhi_epi16(v, one), _mm256_unpackhi_epi16(q, bias));
+        lo = _mm256_srai_epi32(lo, 15);
+        hi = _mm256_srai_epi32(hi, 15);
+        v = _mm256_packs_epi32(lo, hi);
+        return v;
+    }
+
+    static
+    void fdct_avx2(s16* dest, const s16* data, const s16* qtable)
+    {
+        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
+        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
+        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
+        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
+        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
+        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
+
+        __m128i c26p = JPEG_CONST16(c2, c6);
+        __m128i c62n = JPEG_CONST16(c6,-c2);
+        __m128i c75n = JPEG_CONST16(c7,-c5);
+        __m128i c31n = JPEG_CONST16(c3,-c1);
+        __m128i c51n = JPEG_CONST16(c5,-c1);
+        __m128i c73p = JPEG_CONST16(c7, c3);
+        __m128i c37n = JPEG_CONST16(c3,-c7);
+        __m128i c15p = JPEG_CONST16(c1, c5);
+        __m128i c13p = JPEG_CONST16(c1, c3);
+        __m128i c57p = JPEG_CONST16(c5, c7);
+
+        // load
+
+        const __m128i* s = reinterpret_cast<const __m128i *>(data);
+        __m128i v0 = _mm_loadu_si128(s + 0);
+        __m128i v1 = _mm_loadu_si128(s + 1);
+        __m128i v2 = _mm_loadu_si128(s + 2);
+        __m128i v3 = _mm_loadu_si128(s + 3);
+        __m128i v4 = _mm_loadu_si128(s + 4);
+        __m128i v5 = _mm_loadu_si128(s + 5);
+        __m128i v6 = _mm_loadu_si128(s + 6);
+        __m128i v7 = _mm_loadu_si128(s + 7);
+
+        // pass 1
+
+        JPEG_TRANSPOSE16();
+
+        __m128i x8 = _mm_add_epi16(v0, v7);
+        __m128i x7 = _mm_add_epi16(v1, v6);
+        __m128i x6 = _mm_add_epi16(v2, v5);
+        __m128i x5 = _mm_add_epi16(v3, v4);
+        __m128i x0 = _mm_sub_epi16(v0, v7);
+        __m128i x1 = _mm_sub_epi16(v1, v6);
+        __m128i x2 = _mm_sub_epi16(v2, v5);
+        __m128i x3 = _mm_sub_epi16(v3, v4);
+        __m128i x4 = _mm_add_epi16(x8, x5);
+
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
+
+        __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
+        __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
+        __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
+        __m128i x01_hi = _mm_unpackhi_epi16(x0, x1);
+        __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
+        __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        v0 = _mm_add_epi16(x4, x5);
+        v4 = _mm_sub_epi16(x4, x5);
+
+        JPEG_TRANSFORM(10);
+
+        // pass 2
+
+        JPEG_TRANSPOSE16();
+
+        x8 = _mm_add_epi16(v0, v7);
+        x0 = _mm_sub_epi16(v0, v7);
+        x7 = _mm_add_epi16(v1, v6);
+        x1 = _mm_sub_epi16(v1, v6);
+        x6 = _mm_add_epi16(v2, v5);
+        x2 = _mm_sub_epi16(v2, v5);
+        x5 = _mm_add_epi16(v3, v4);
+        x3 = _mm_sub_epi16(v3, v4);
+        x4 = _mm_add_epi16(x8, x5);
+
+        x8 = _mm_sub_epi16(x8, x5);
+        x5 = _mm_add_epi16(x7, x6);
+        x7 = _mm_sub_epi16(x7, x6);
+
+        x87_lo = _mm_unpacklo_epi16(x8, x7);
+        x87_hi = _mm_unpackhi_epi16(x8, x7);
+        x01_lo = _mm_unpacklo_epi16(x0, x1);
+        x01_hi = _mm_unpackhi_epi16(x0, x1);
+        x23_lo = _mm_unpacklo_epi16(x2, x3);
+        x23_hi = _mm_unpackhi_epi16(x2, x3);
+
+        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
+        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
+
+        JPEG_TRANSFORM(13);
+
+        __m256i v01 = _mm256_setr_m128i(v0, v1);
+        __m256i v23 = _mm256_setr_m128i(v2, v3);
+        __m256i v45 = _mm256_setr_m128i(v4, v5);
+        __m256i v67 = _mm256_setr_m128i(v6, v7);
+
+        // quantize
+
+        const __m256i one = _mm256_set1_epi16(1);
+        const __m256i bias = _mm256_set1_epi16(0x4000);
+        const __m256i* q = reinterpret_cast<const __m256i*>(qtable);
+
+        v01 = quantize(v01, q[0], one, bias);
+        v23 = quantize(v23, q[1], one, bias);
+        v45 = quantize(v45, q[2], one, bias);
+        v67 = quantize(v67, q[3], one, bias);
+
+        // store
+
+        __m256i* d = reinterpret_cast<__m256i *>(dest);
+        _mm256_storeu_si256(d + 0, v01);
+        _mm256_storeu_si256(d + 1, v23);
+        _mm256_storeu_si256(d + 2, v45);
+        _mm256_storeu_si256(d + 3, v67);
+    }
+
+#endif // defined(JPEG_ENABLE_AVX2)
+#endif // defined(JPEG_ENABLE_SSE2)
+
+#if defined(JPEG_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------
+    // fdct_neon
+    // ----------------------------------------------------------------------------
+
+    static inline
+    void dct_trn16(int16x8_t& x, int16x8_t& y)
+    {
+        int16x8x2_t t = vtrnq_s16(x, y);
+        x = t.val[0];
+        y = t.val[1];
+    }
+
+    static inline
+    void dct_trn32(int16x8_t& x, int16x8_t& y)
+    {
+        int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y));
+        x = vreinterpretq_s16_s32(t.val[0]);
+        y = vreinterpretq_s16_s32(t.val[1]);
+    }
+
+    static inline
+    void dct_trn64(int16x8_t& x, int16x8_t& y)
+    {
+        int16x8_t x0 = x;
+        int16x8_t y0 = y;
+        x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0));
+        y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0));
+    }
+
+    static inline
+    int16x8_t packs_s32(int32x4_t a, int32x4_t b)
+    {
+        return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
+    }
+
+    static inline
+    int16x8_t quantize(int16x8_t v, int16x8_t q, int32x4_t bias)
+    {
+        int32x4_t lo = vmlal_s16(bias, vget_low_s16(v), vget_low_s16(q));
+        int32x4_t hi = vmlal_s16(bias, vget_high_s16(v), vget_high_s16(q));
+        lo = vshrq_n_s32(lo, 15);
+        hi = vshrq_n_s32(hi, 15);
+        v = packs_s32(lo, hi);
+        return v;
+    }
+
+    #define JPEG_TRANSPOSE16() \
+        dct_trn16(v0, v1); \
+        dct_trn16(v2, v3); \
+        dct_trn16(v4, v5); \
+        dct_trn16(v6, v7); \
+        dct_trn32(v0, v2); \
+        dct_trn32(v1, v3); \
+        dct_trn32(v4, v6); \
+        dct_trn32(v5, v7); \
+        dct_trn64(v0, v4); \
+        dct_trn64(v1, v5); \
+        dct_trn64(v2, v6); \
+        dct_trn64(v3, v7)
+
+    #define JPEG_MUL2(v, x0, c0, x1, c1, f1, n) { \
+        int32x4_t lo; \
+        int32x4_t hi; \
+        lo = vmull_s16(vget_low_s16(x0), c0); \
+        lo = vml##f1##l_s16(lo, vget_low_s16(x1), c1); \
+        lo = vshrq_n_s32(lo, n); \
+        hi = vmull_s16(vget_high_s16(x0), c0); \
+        hi = vml##f1##l_s16(hi, vget_high_s16(x1), c1); \
+        hi = vshrq_n_s32(hi, n); \
+        v = packs_s32(lo, hi); }
+
+    #define JPEG_MUL4(v, x0, c0, x1, c1, x2, c2, x3, c3, f1, f2, f3, n) { \
+        int32x4_t lo; \
+        int32x4_t hi; \
+        lo = vmull_s16(vget_low_s16(x0), c0); \
+        lo = vml##f1##l_s16(lo, vget_low_s16(x1), c1); \
+        lo = vml##f2##l_s16(lo, vget_low_s16(x2), c2); \
+        lo = vml##f3##l_s16(lo, vget_low_s16(x3), c3); \
+        lo = vshrq_n_s32(lo, n); \
+        hi = vmull_s16(vget_high_s16(x0), c0); \
+        hi = vml##f1##l_s16(hi, vget_high_s16(x1), c1); \
+        hi = vml##f2##l_s16(hi, vget_high_s16(x2), c2); \
+        hi = vml##f3##l_s16(hi, vget_high_s16(x3), c3); \
+        hi = vshrq_n_s32(hi, n); \
+        v = packs_s32(lo, hi); }
+
+    #define JPEG_TRANSFORM(n) \
+        JPEG_MUL2(v2, x8, c2, x7, c6, a, n); \
+        JPEG_MUL2(v6, x8, c6, x7, c2, s, n); \
+        JPEG_MUL4(v7, x0, c7, x1, c5, x2, c3, x3, c1, s, a, s, n); \
+        JPEG_MUL4(v5, x0, c5, x1, c1, x2, c7, x3, c3, s, a, a, n); \
+        JPEG_MUL4(v3, x0, c3, x1, c7, x2, c1, x3, c5, s, s, s, n); \
+        JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
+
+    static
+    void fdct_neon(s16* dest, const s16* data, const s16* qtable)
+    {
+        const int16x4_t c1 = vdup_n_s16(1420); // cos 1PI/16 * root(2)
+        const int16x4_t c2 = vdup_n_s16(1338); // cos 2PI/16 * root(2)
+        const int16x4_t c3 = vdup_n_s16(1204); // cos 3PI/16 * root(2)
+        const int16x4_t c5 = vdup_n_s16(805);  // cos 5PI/16 * root(2)
+        const int16x4_t c6 = vdup_n_s16(554);  // cos 6PI/16 * root(2)
+        const int16x4_t c7 = vdup_n_s16(283);  // cos 7PI/16 * root(2)
+
+        // load
+
+        int16x8_t v0 = vld1q_s16(data + 0 * 8);
+        int16x8_t v1 = vld1q_s16(data + 1 * 8);
+        int16x8_t v2 = vld1q_s16(data + 2 * 8);
+        int16x8_t v3 = vld1q_s16(data + 3 * 8);
+        int16x8_t v4 = vld1q_s16(data + 4 * 8);
+        int16x8_t v5 = vld1q_s16(data + 5 * 8);
+        int16x8_t v6 = vld1q_s16(data + 6 * 8);
+        int16x8_t v7 = vld1q_s16(data + 7 * 8);
+
+        // pass 1
+
+        JPEG_TRANSPOSE16();
+
+        int16x8_t x8 = vaddq_s16(v0, v7);
+        int16x8_t x0 = vsubq_s16(v0, v7);
+        int16x8_t x7 = vaddq_s16(v1, v6);
+        int16x8_t x1 = vsubq_s16(v1, v6);
+        int16x8_t x6 = vaddq_s16(v2, v5);
+        int16x8_t x2 = vsubq_s16(v2, v5);
+        int16x8_t x5 = vaddq_s16(v3, v4);
+        int16x8_t x3 = vsubq_s16(v3, v4);
+        int16x8_t x4 = vaddq_s16(x8, x5);
+        x8 = vsubq_s16(x8, x5);
+        x5 = vaddq_s16(x7, x6);
+        x7 = vsubq_s16(x7, x6);
+
+        v0 = vaddq_s16(x4, x5);
+        v4 = vsubq_s16(x4, x5);
+
+        JPEG_TRANSFORM(10);
+
+        // pass 2
+
+        JPEG_TRANSPOSE16();
+
+        x8 = vaddq_s16(v0, v7);
+        x0 = vsubq_s16(v0, v7);
+        x7 = vaddq_s16(v1, v6);
+        x1 = vsubq_s16(v1, v6);
+        x6 = vaddq_s16(v2, v5);
+        x2 = vsubq_s16(v2, v5);
+        x5 = vaddq_s16(v3, v4);
+        x3 = vsubq_s16(v3, v4);
+        x4 = vaddq_s16(x8, x5);
+        x8 = vsubq_s16(x8, x5);
+        x5 = vaddq_s16(x7, x6);
+        x7 = vsubq_s16(x7, x6);
+
+        v0 = vshrq_n_s16(vaddq_s16(x4, x5), 3);
+        v4 = vshrq_n_s16(vsubq_s16(x4, x5), 3);
+
+        JPEG_TRANSFORM(13);
+
+        // quantize
+
+        const int32x4_t bias = vdupq_n_s32(0x4000);
+        const int16x8_t* q = reinterpret_cast<const int16x8_t *>(qtable);
+
+        v0 = quantize(v0, q[0], bias);
+        v1 = quantize(v1, q[1], bias);
+        v2 = quantize(v2, q[2], bias);
+        v3 = quantize(v3, q[3], bias);
+        v4 = quantize(v4, q[4], bias);
+        v5 = quantize(v5, q[5], bias);
+        v6 = quantize(v6, q[6], bias);
+        v7 = quantize(v7, q[7], bias);
+
+        // store
+
+        vst1q_s16(dest + 0 * 8, v0);
+        vst1q_s16(dest + 1 * 8, v1);
+        vst1q_s16(dest + 2 * 8, v2);
+        vst1q_s16(dest + 3 * 8, v3);
+        vst1q_s16(dest + 4 * 8, v4);
+        vst1q_s16(dest + 5 * 8, v5);
+        vst1q_s16(dest + 6 * 8, v6);
+        vst1q_s16(dest + 7 * 8, v7);
+    }
+
+#endif // defined(JPEG_ENABLE_NEON)
+
+    static inline
+    u8* encode_dc(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
+    {
+        int last_dc = encoder.last_dc_value[channel.component];
+        encoder.last_dc_value[channel.component] = input[0];
+
         int coeff = input[0] - last_dc;
         int absCoeff = std::abs(coeff);
         coeff -= (absCoeff != coeff);
@@ -336,15 +966,23 @@ namespace
         u32 size = absCoeff ? u32_log2(absCoeff) + 1 : 0;
         u32 mask = (1 << size) - 1;
 
-        p = encoder.putBits(p, dc_code[size], dc_size[size]);
-        p = encoder.putBits(p, coeff & mask, size);
+        p = encoder.putBits(p, (channel.dc_code[size] << size) | (coeff & mask), channel.dc_size[size] + size);
 
         return p;
     }
 
+    // ----------------------------------------------------------------------------
+    // encode_block_scalar
+    // ----------------------------------------------------------------------------
+
     static
-    u8* encode_ac_scalar(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    u8* encode_block_scalar(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
+        s16 block[64];
+        encoder.fdct(block, input, channel.qtable);
+
+        p = encode_dc(encoder, p, block, channel);
+
         const u8 zigzag_table_inverse [] =
         {
              0,  1,  8, 16,  9,  2,  3, 10,
@@ -357,11 +995,14 @@ namespace
             53, 60, 61, 54, 47, 55, 62, 63,
         };
 
+        const u16* ac_code = channel.ac_code;
+        const u16* ac_size = channel.ac_size;
+
         int runLength = 0;
 
         for (int i = 1; i < 64; ++i)
         {
-            int coeff = input[zigzag_table_inverse[i]];
+            int coeff = block[zigzag_table_inverse[i]];
             if (coeff)
             {
                 while (runLength > 15)
@@ -398,7 +1039,7 @@ namespace
 #if defined(JPEG_ENABLE_SSE4)
 
     // ----------------------------------------------------------------------------
-    // encode_ac_ssse3
+    // encode_block_ssse3
     // ----------------------------------------------------------------------------
 
     constexpr s8 lane(s8 v, s8 offset)
@@ -602,10 +1243,18 @@ namespace
     }
 
     static
-    u8* encode_ac_ssse3(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    u8* encode_block_ssse3(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
+        s16 block[64];
+        encoder.fdct(block, input, channel.qtable);
+
+        p = encode_dc(encoder, p, block, channel);
+
+        const u16* ac_code = channel.ac_code;
+        const u16* ac_size = channel.ac_size;
+
         s16 temp[64];
-        u64 zeromask = zigzag_ssse3(input, temp);
+        u64 zeromask = zigzag_ssse3(block, temp);
 
         zeromask >>= 1; // skip DC
 
@@ -645,7 +1294,7 @@ namespace
 #if defined(JPEG_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
-    // encode_ac_avx2
+    // encode_block_avx2
     // ----------------------------------------------------------------------------
 
     // NOTE: The zigzag is still 128 bit wide only because of the retarded 128+128 way the AVX2 works
@@ -798,10 +1447,18 @@ namespace
     }
 
     static
-    u8* encode_ac_avx2(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    u8* encode_block_avx2(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
+        s16 block[64];
+        encoder.fdct(block, input, channel.qtable);
+
+        p = encode_dc(encoder, p, block, channel);
+
+        const u16* ac_code = channel.ac_code;
+        const u16* ac_size = channel.ac_size;
+
         s16 temp[64];
-        u64 zeromask = zigzag_avx2(input, temp);
+        u64 zeromask = zigzag_avx2(block, temp);
 
         zeromask >>= 1; // skip DC
 
@@ -841,7 +1498,7 @@ namespace
 #if defined(JPEG_ENABLE_AVX512)
 
     // ----------------------------------------------------------------------------
-    // encode_ac_avx512
+    // encode_block_avx512
     // ----------------------------------------------------------------------------
 
     /*
@@ -938,10 +1595,18 @@ namespace
     }
 
     static
-    u8* encode_ac_avx512bw(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    u8* encode_block_avx512bw(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
+        s16 block[64];
+        encoder.fdct(block, input, channel.qtable);
+
+        p = encode_dc(encoder, p, block, channel);
+
+        const u16* ac_code = channel.ac_code;
+        const u16* ac_size = channel.ac_size;
+
         s16 temp[64];
-        u64 zeromask = zigzag_avx512bw(input, temp);
+        u64 zeromask = zigzag_avx512bw(block, temp);
 
         zeromask >>= 1; // skip DC
 
@@ -985,634 +1650,13 @@ namespace
 #if defined(JPEG_ENABLE_NEON__todo)
 
     // ----------------------------------------------------------------------------
-    // encode_ac_neon
+    // encode_block_neon
     // ----------------------------------------------------------------------------
 
     static
-    u8* encode_ac_neon(HuffmanEncoder& encoder, u8* p, const s16* input, const u16* ac_code, const u16* ac_size)
+    u8* encode_block_neon(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
         // TODO
-    }
-
-#endif // defined(JPEG_ENABLE_NEON)
-
-    // ----------------------------------------------------------------------------
-    // fdct_scalar
-    // ----------------------------------------------------------------------------
-
-    static
-    void fdct_scalar(s16* dest, const s16* data, const s16* quant_table)
-    {
-        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
-        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
-        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
-        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
-        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
-        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
-
-        s16 temp[64];
-
-        for (int i = 0; i < 8; ++i)
-        {
-            s16 x8 = data [0] + data [7];
-            s16 x0 = data [0] - data [7];
-            s16 x7 = data [1] + data [6];
-            s16 x1 = data [1] - data [6];
-            s16 x6 = data [2] + data [5];
-            s16 x2 = data [2] - data [5];
-            s16 x5 = data [3] + data [4];
-            s16 x3 = data [3] - data [4];
-            s16 x4 = x8 + x5;
-            x8 = x8 - x5;
-            x5 = x7 + x6;
-            x7 = x7 - x6;
-            temp[i * 8 + 0] = x4 + x5;
-            temp[i * 8 + 4] = x4 - x5;
-            temp[i * 8 + 2] = (x8 * c2 + x7 * c6) >> 10;
-            temp[i * 8 + 6] = (x8 * c6 - x7 * c2) >> 10;
-            temp[i * 8 + 7] = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 10;
-            temp[i * 8 + 5] = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 10;
-            temp[i * 8 + 3] = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 10;
-            temp[i * 8 + 1] = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 10;
-            data += 8;
-        }
-
-        for (int i = 0; i < 8; ++i)
-        {
-            s16 x8 = temp [i +  0] + temp [i + 56];
-            s16 x0 = temp [i +  0] - temp [i + 56];
-            s16 x7 = temp [i +  8] + temp [i + 48];
-            s16 x1 = temp [i +  8] - temp [i + 48];
-            s16 x6 = temp [i + 16] + temp [i + 40];
-            s16 x2 = temp [i + 16] - temp [i + 40];
-            s16 x5 = temp [i + 24] + temp [i + 32];
-            s16 x3 = temp [i + 24] - temp [i + 32];
-            s16 x4 = x8 + x5;
-            x8 = x8 - x5;
-            x5 = x7 + x6;
-            x7 = x7 - x6;
-            s16 v0 = (x4 + x5) >> 3;
-            s16 v4 = (x4 - x5) >> 3;
-            s16 v2 = (x8 * c2 + x7 * c6) >> 13;
-            s16 v6 = (x8 * c6 - x7 * c2) >> 13;
-            s16 v7 = (x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> 13;
-            s16 v5 = (x0 * c5 - x1 * c1 + x2 * c7 + x3 * c3) >> 13;
-            s16 v3 = (x0 * c3 - x1 * c7 - x2 * c1 - x3 * c5) >> 13;
-            s16 v1 = (x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> 13;
-            dest[i + 8 * 0] = (v0 * quant_table[i + 8 * 0] + 0x4000) >> 15;
-            dest[i + 8 * 1] = (v1 * quant_table[i + 8 * 1] + 0x4000) >> 15;
-            dest[i + 8 * 2] = (v2 * quant_table[i + 8 * 2] + 0x4000) >> 15;
-            dest[i + 8 * 3] = (v3 * quant_table[i + 8 * 3] + 0x4000) >> 15;
-            dest[i + 8 * 4] = (v4 * quant_table[i + 8 * 4] + 0x4000) >> 15;
-            dest[i + 8 * 5] = (v5 * quant_table[i + 8 * 5] + 0x4000) >> 15;
-            dest[i + 8 * 6] = (v6 * quant_table[i + 8 * 6] + 0x4000) >> 15;
-            dest[i + 8 * 7] = (v7 * quant_table[i + 8 * 7] + 0x4000) >> 15;
-        }
-    }
-
-#if defined(JPEG_ENABLE_SSE2)
-
-    // ----------------------------------------------------------------------------
-    // fdct sse2
-    // ----------------------------------------------------------------------------
-
-    static inline void interleave16(__m128i& a, __m128i& b)
-    {
-        __m128i c = a;
-        a = _mm_unpacklo_epi16(a, b);
-        b = _mm_unpackhi_epi16(c, b);
-    }
-
-    #define JPEG_CONST16(x, y) \
-        _mm_setr_epi16(x, y, x, y, x, y, x, y)
-
-    #define JPEG_TRANSPOSE16() \
-        interleave16(v0, v4); \
-        interleave16(v2, v6); \
-        interleave16(v1, v5); \
-        interleave16(v3, v7); \
-        interleave16(v0, v2); \
-        interleave16(v1, v3); \
-        interleave16(v4, v6); \
-        interleave16(v5, v7); \
-        interleave16(v0, v1); \
-        interleave16(v2, v3); \
-        interleave16(v4, v5); \
-        interleave16(v6, v7)
-
-    #define JPEG_TRANSFORM(n) { \
-        __m128i a_lo; \
-        __m128i a_hi; \
-        __m128i b_lo; \
-        __m128i b_hi; \
-        \
-        a_lo = _mm_madd_epi16(x87_lo, c26p); \
-        a_hi = _mm_madd_epi16(x87_hi, c26p); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v2 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x87_lo, c62n); \
-        a_hi = _mm_madd_epi16(x87_hi, c62n); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v6 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c75n); \
-        a_hi = _mm_madd_epi16(x01_hi, c75n); \
-        b_lo = _mm_madd_epi16(x23_lo, c31n); \
-        b_hi = _mm_madd_epi16(x23_hi, c31n); \
-        a_lo = _mm_add_epi32(a_lo, b_lo); \
-        a_hi = _mm_add_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v7 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c51n); \
-        a_hi = _mm_madd_epi16(x01_hi, c51n); \
-        b_lo = _mm_madd_epi16(x23_lo, c73p); \
-        b_hi = _mm_madd_epi16(x23_hi, c73p); \
-        a_lo = _mm_add_epi32(a_lo, b_lo); \
-        a_hi = _mm_add_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v5 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c37n); \
-        a_hi = _mm_madd_epi16(x01_hi, c37n); \
-        b_lo = _mm_madd_epi16(x23_lo, c15p); \
-        b_hi = _mm_madd_epi16(x23_hi, c15p); \
-        a_lo = _mm_sub_epi32(a_lo, b_lo); \
-        a_hi = _mm_sub_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v3 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c13p); \
-        a_hi = _mm_madd_epi16(x01_hi, c13p); \
-        b_lo = _mm_madd_epi16(x23_lo, c57p); \
-        b_hi = _mm_madd_epi16(x23_hi, c57p); \
-        a_lo = _mm_add_epi32(a_lo, b_lo); \
-        a_hi = _mm_add_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v1 = _mm_packs_epi32(a_lo, a_hi); }
-
-    static inline
-    __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
-    {
-        __m128i lo = _mm_madd_epi16(_mm_unpacklo_epi16(v, one), _mm_unpacklo_epi16(q, bias));
-        __m128i hi = _mm_madd_epi16(_mm_unpackhi_epi16(v, one), _mm_unpackhi_epi16(q, bias));
-        lo = _mm_srai_epi32(lo, 15);
-        hi = _mm_srai_epi32(hi, 15);
-        v = _mm_packs_epi32(lo, hi);
-        return v;
-    }
-
-    static
-    void fdct_sse2(s16* dest, const s16* data, const s16* quant_table)
-    {
-        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
-        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
-        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
-        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
-        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
-        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
-
-        __m128i c26p = JPEG_CONST16(c2, c6);
-        __m128i c62n = JPEG_CONST16(c6,-c2);
-        __m128i c75n = JPEG_CONST16(c7,-c5);
-        __m128i c31n = JPEG_CONST16(c3,-c1);
-        __m128i c51n = JPEG_CONST16(c5,-c1);
-        __m128i c73p = JPEG_CONST16(c7, c3);
-        __m128i c37n = JPEG_CONST16(c3,-c7);
-        __m128i c15p = JPEG_CONST16(c1, c5);
-        __m128i c13p = JPEG_CONST16(c1, c3);
-        __m128i c57p = JPEG_CONST16(c5, c7);
-
-        // load
-
-        const __m128i* s = reinterpret_cast<const __m128i *>(data);
-        __m128i v0 = _mm_loadu_si128(s + 0);
-        __m128i v1 = _mm_loadu_si128(s + 1);
-        __m128i v2 = _mm_loadu_si128(s + 2);
-        __m128i v3 = _mm_loadu_si128(s + 3);
-        __m128i v4 = _mm_loadu_si128(s + 4);
-        __m128i v5 = _mm_loadu_si128(s + 5);
-        __m128i v6 = _mm_loadu_si128(s + 6);
-        __m128i v7 = _mm_loadu_si128(s + 7);
-
-        // pass 1
-
-        JPEG_TRANSPOSE16();
-
-        __m128i x8 = _mm_add_epi16(v0, v7);
-        __m128i x7 = _mm_add_epi16(v1, v6);
-        __m128i x6 = _mm_add_epi16(v2, v5);
-        __m128i x5 = _mm_add_epi16(v3, v4);
-        __m128i x0 = _mm_sub_epi16(v0, v7);
-        __m128i x1 = _mm_sub_epi16(v1, v6);
-        __m128i x2 = _mm_sub_epi16(v2, v5);
-        __m128i x3 = _mm_sub_epi16(v3, v4);
-        __m128i x4 = _mm_add_epi16(x8, x5);
-
-        x8 = _mm_sub_epi16(x8, x5);
-        x5 = _mm_add_epi16(x7, x6);
-        x7 = _mm_sub_epi16(x7, x6);
-
-        __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
-        __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
-        __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
-        __m128i x01_hi = _mm_unpackhi_epi16(x0, x1);
-        __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
-        __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
-
-        v0 = _mm_add_epi16(x4, x5);
-        v4 = _mm_sub_epi16(x4, x5);
-
-        JPEG_TRANSFORM(10);
-
-        // pass 2
-
-        JPEG_TRANSPOSE16();
-
-        x8 = _mm_add_epi16(v0, v7);
-        x0 = _mm_sub_epi16(v0, v7);
-        x7 = _mm_add_epi16(v1, v6);
-        x1 = _mm_sub_epi16(v1, v6);
-        x6 = _mm_add_epi16(v2, v5);
-        x2 = _mm_sub_epi16(v2, v5);
-        x5 = _mm_add_epi16(v3, v4);
-        x3 = _mm_sub_epi16(v3, v4);
-        x4 = _mm_add_epi16(x8, x5);
-
-        x8 = _mm_sub_epi16(x8, x5);
-        x5 = _mm_add_epi16(x7, x6);
-        x7 = _mm_sub_epi16(x7, x6);
-
-        x87_lo = _mm_unpacklo_epi16(x8, x7);
-        x87_hi = _mm_unpackhi_epi16(x8, x7);
-        x01_lo = _mm_unpacklo_epi16(x0, x1);
-        x01_hi = _mm_unpackhi_epi16(x0, x1);
-        x23_lo = _mm_unpacklo_epi16(x2, x3);
-        x23_hi = _mm_unpackhi_epi16(x2, x3);
-
-        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
-        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
-
-        JPEG_TRANSFORM(13);
-
-        // quantize
-
-        const __m128i one = _mm_set1_epi16(1);
-        const __m128i bias = _mm_set1_epi16(0x4000);
-        const __m128i* q = reinterpret_cast<const __m128i*>(quant_table);
-
-        v0 = quantize(v0, q[0], one, bias);
-        v1 = quantize(v1, q[1], one, bias);
-        v2 = quantize(v2, q[2], one, bias);
-        v3 = quantize(v3, q[3], one, bias);
-        v4 = quantize(v4, q[4], one, bias);
-        v5 = quantize(v5, q[5], one, bias);
-        v6 = quantize(v6, q[6], one, bias);
-        v7 = quantize(v7, q[7], one, bias);
-
-        // store
-
-        __m128i* d = reinterpret_cast<__m128i *>(dest);
-        _mm_storeu_si128(d + 0, v0);
-        _mm_storeu_si128(d + 1, v1);
-        _mm_storeu_si128(d + 2, v2);
-        _mm_storeu_si128(d + 3, v3);
-        _mm_storeu_si128(d + 4, v4);
-        _mm_storeu_si128(d + 5, v5);
-        _mm_storeu_si128(d + 6, v6);
-        _mm_storeu_si128(d + 7, v7);
-    }
-
-#if defined(JPEG_ENABLE_AVX2)
-
-    // ----------------------------------------------------------------------------
-    // fdct_avx2
-    // ----------------------------------------------------------------------------
-
-    static inline
-    __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
-    {
-        __m256i lo = _mm256_madd_epi16(_mm256_unpacklo_epi16(v, one), _mm256_unpacklo_epi16(q, bias));
-        __m256i hi = _mm256_madd_epi16(_mm256_unpackhi_epi16(v, one), _mm256_unpackhi_epi16(q, bias));
-        lo = _mm256_srai_epi32(lo, 15);
-        hi = _mm256_srai_epi32(hi, 15);
-        v = _mm256_packs_epi32(lo, hi);
-        return v;
-    }
-
-    static
-    void fdct_avx2(s16* dest, const s16* data, const s16* quant_table)
-    {
-        constexpr s16 c1 = 1420; // cos 1PI/16 * root(2)
-        constexpr s16 c2 = 1338; // cos 2PI/16 * root(2)
-        constexpr s16 c3 = 1204; // cos 3PI/16 * root(2)
-        constexpr s16 c5 = 805;  // cos 5PI/16 * root(2)
-        constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
-        constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
-
-        __m128i c26p = JPEG_CONST16(c2, c6);
-        __m128i c62n = JPEG_CONST16(c6,-c2);
-        __m128i c75n = JPEG_CONST16(c7,-c5);
-        __m128i c31n = JPEG_CONST16(c3,-c1);
-        __m128i c51n = JPEG_CONST16(c5,-c1);
-        __m128i c73p = JPEG_CONST16(c7, c3);
-        __m128i c37n = JPEG_CONST16(c3,-c7);
-        __m128i c15p = JPEG_CONST16(c1, c5);
-        __m128i c13p = JPEG_CONST16(c1, c3);
-        __m128i c57p = JPEG_CONST16(c5, c7);
-
-        // load
-
-        const __m128i* s = reinterpret_cast<const __m128i *>(data);
-        __m128i v0 = _mm_loadu_si128(s + 0);
-        __m128i v1 = _mm_loadu_si128(s + 1);
-        __m128i v2 = _mm_loadu_si128(s + 2);
-        __m128i v3 = _mm_loadu_si128(s + 3);
-        __m128i v4 = _mm_loadu_si128(s + 4);
-        __m128i v5 = _mm_loadu_si128(s + 5);
-        __m128i v6 = _mm_loadu_si128(s + 6);
-        __m128i v7 = _mm_loadu_si128(s + 7);
-
-        // pass 1
-
-        JPEG_TRANSPOSE16();
-
-        __m128i x8 = _mm_add_epi16(v0, v7);
-        __m128i x7 = _mm_add_epi16(v1, v6);
-        __m128i x6 = _mm_add_epi16(v2, v5);
-        __m128i x5 = _mm_add_epi16(v3, v4);
-        __m128i x0 = _mm_sub_epi16(v0, v7);
-        __m128i x1 = _mm_sub_epi16(v1, v6);
-        __m128i x2 = _mm_sub_epi16(v2, v5);
-        __m128i x3 = _mm_sub_epi16(v3, v4);
-        __m128i x4 = _mm_add_epi16(x8, x5);
-
-        x8 = _mm_sub_epi16(x8, x5);
-        x5 = _mm_add_epi16(x7, x6);
-        x7 = _mm_sub_epi16(x7, x6);
-
-        __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
-        __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
-        __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
-        __m128i x01_hi = _mm_unpackhi_epi16(x0, x1);
-        __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
-        __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
-
-        v0 = _mm_add_epi16(x4, x5);
-        v4 = _mm_sub_epi16(x4, x5);
-
-        JPEG_TRANSFORM(10);
-
-        // pass 2
-
-        JPEG_TRANSPOSE16();
-
-        x8 = _mm_add_epi16(v0, v7);
-        x0 = _mm_sub_epi16(v0, v7);
-        x7 = _mm_add_epi16(v1, v6);
-        x1 = _mm_sub_epi16(v1, v6);
-        x6 = _mm_add_epi16(v2, v5);
-        x2 = _mm_sub_epi16(v2, v5);
-        x5 = _mm_add_epi16(v3, v4);
-        x3 = _mm_sub_epi16(v3, v4);
-        x4 = _mm_add_epi16(x8, x5);
-
-        x8 = _mm_sub_epi16(x8, x5);
-        x5 = _mm_add_epi16(x7, x6);
-        x7 = _mm_sub_epi16(x7, x6);
-
-        x87_lo = _mm_unpacklo_epi16(x8, x7);
-        x87_hi = _mm_unpackhi_epi16(x8, x7);
-        x01_lo = _mm_unpacklo_epi16(x0, x1);
-        x01_hi = _mm_unpackhi_epi16(x0, x1);
-        x23_lo = _mm_unpacklo_epi16(x2, x3);
-        x23_hi = _mm_unpackhi_epi16(x2, x3);
-
-        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
-        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
-
-        JPEG_TRANSFORM(13);
-
-        __m256i v01 = _mm256_setr_m128i(v0, v1);
-        __m256i v23 = _mm256_setr_m128i(v2, v3);
-        __m256i v45 = _mm256_setr_m128i(v4, v5);
-        __m256i v67 = _mm256_setr_m128i(v6, v7);
-
-        // quantize
-
-        const __m256i one = _mm256_set1_epi16(1);
-        const __m256i bias = _mm256_set1_epi16(0x4000);
-        const __m256i* q = reinterpret_cast<const __m256i*>(quant_table);
-
-        v01 = quantize(v01, q[0], one, bias);
-        v23 = quantize(v23, q[1], one, bias);
-        v45 = quantize(v45, q[2], one, bias);
-        v67 = quantize(v67, q[3], one, bias);
-
-        // store
-
-        __m256i* d = reinterpret_cast<__m256i *>(dest);
-        _mm256_storeu_si256(d + 0, v01);
-        _mm256_storeu_si256(d + 1, v23);
-        _mm256_storeu_si256(d + 2, v45);
-        _mm256_storeu_si256(d + 3, v67);
-    }
-
-#endif // defined(JPEG_ENABLE_AVX2)
-#endif // defined(JPEG_ENABLE_SSE2)
-
-#if defined(JPEG_ENABLE_NEON)
-
-    // ----------------------------------------------------------------------------
-    // fdct_neon
-    // ----------------------------------------------------------------------------
-
-    static inline
-    void dct_trn16(int16x8_t& x, int16x8_t& y)
-    {
-        int16x8x2_t t = vtrnq_s16(x, y);
-        x = t.val[0];
-        y = t.val[1];
-    }
-
-    static inline
-    void dct_trn32(int16x8_t& x, int16x8_t& y)
-    {
-        int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y));
-        x = vreinterpretq_s16_s32(t.val[0]);
-        y = vreinterpretq_s16_s32(t.val[1]);
-    }
-
-    static inline
-    void dct_trn64(int16x8_t& x, int16x8_t& y)
-    {
-        int16x8_t x0 = x;
-        int16x8_t y0 = y;
-        x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0));
-        y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0));
-    }
-
-    static inline
-    int16x8_t packs_s32(int32x4_t a, int32x4_t b)
-    {
-        return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
-    }
-
-    static inline
-    int16x8_t quantize(int16x8_t v, int16x8_t q, int32x4_t bias)
-    {
-        int32x4_t lo = vmlal_s16(bias, vget_low_s16(v), vget_low_s16(q));
-        int32x4_t hi = vmlal_s16(bias, vget_high_s16(v), vget_high_s16(q));
-        lo = vshrq_n_s32(lo, 15);
-        hi = vshrq_n_s32(hi, 15);
-        v = packs_s32(lo, hi);
-        return v;
-    }
-
-    #define JPEG_TRANSPOSE16() \
-        dct_trn16(v0, v1); \
-        dct_trn16(v2, v3); \
-        dct_trn16(v4, v5); \
-        dct_trn16(v6, v7); \
-        dct_trn32(v0, v2); \
-        dct_trn32(v1, v3); \
-        dct_trn32(v4, v6); \
-        dct_trn32(v5, v7); \
-        dct_trn64(v0, v4); \
-        dct_trn64(v1, v5); \
-        dct_trn64(v2, v6); \
-        dct_trn64(v3, v7)
-
-    #define JPEG_MUL2(v, x0, c0, x1, c1, f1, n) { \
-        int32x4_t lo; \
-        int32x4_t hi; \
-        lo = vmull_s16(vget_low_s16(x0), c0); \
-        lo = vml##f1##l_s16(lo, vget_low_s16(x1), c1); \
-        lo = vshrq_n_s32(lo, n); \
-        hi = vmull_s16(vget_high_s16(x0), c0); \
-        hi = vml##f1##l_s16(hi, vget_high_s16(x1), c1); \
-        hi = vshrq_n_s32(hi, n); \
-        v = packs_s32(lo, hi); }
-
-    #define JPEG_MUL4(v, x0, c0, x1, c1, x2, c2, x3, c3, f1, f2, f3, n) { \
-        int32x4_t lo; \
-        int32x4_t hi; \
-        lo = vmull_s16(vget_low_s16(x0), c0); \
-        lo = vml##f1##l_s16(lo, vget_low_s16(x1), c1); \
-        lo = vml##f2##l_s16(lo, vget_low_s16(x2), c2); \
-        lo = vml##f3##l_s16(lo, vget_low_s16(x3), c3); \
-        lo = vshrq_n_s32(lo, n); \
-        hi = vmull_s16(vget_high_s16(x0), c0); \
-        hi = vml##f1##l_s16(hi, vget_high_s16(x1), c1); \
-        hi = vml##f2##l_s16(hi, vget_high_s16(x2), c2); \
-        hi = vml##f3##l_s16(hi, vget_high_s16(x3), c3); \
-        hi = vshrq_n_s32(hi, n); \
-        v = packs_s32(lo, hi); }
-
-    #define JPEG_TRANSFORM(n) \
-        JPEG_MUL2(v2, x8, c2, x7, c6, a, n); \
-        JPEG_MUL2(v6, x8, c6, x7, c2, s, n); \
-        JPEG_MUL4(v7, x0, c7, x1, c5, x2, c3, x3, c1, s, a, s, n); \
-        JPEG_MUL4(v5, x0, c5, x1, c1, x2, c7, x3, c3, s, a, a, n); \
-        JPEG_MUL4(v3, x0, c3, x1, c7, x2, c1, x3, c5, s, s, s, n); \
-        JPEG_MUL4(v1, x0, c1, x1, c3, x2, c5, x3, c7, a, a, a, n);
-
-    static
-    void fdct_neon(s16* dest, const s16* data, const s16* quant_table)
-    {
-        const int16x4_t c1 = vdup_n_s16(1420); // cos 1PI/16 * root(2)
-        const int16x4_t c2 = vdup_n_s16(1338); // cos 2PI/16 * root(2)
-        const int16x4_t c3 = vdup_n_s16(1204); // cos 3PI/16 * root(2)
-        const int16x4_t c5 = vdup_n_s16(805);  // cos 5PI/16 * root(2)
-        const int16x4_t c6 = vdup_n_s16(554);  // cos 6PI/16 * root(2)
-        const int16x4_t c7 = vdup_n_s16(283);  // cos 7PI/16 * root(2)
-
-        // load
-
-        int16x8_t v0 = vld1q_s16(data + 0 * 8);
-        int16x8_t v1 = vld1q_s16(data + 1 * 8);
-        int16x8_t v2 = vld1q_s16(data + 2 * 8);
-        int16x8_t v3 = vld1q_s16(data + 3 * 8);
-        int16x8_t v4 = vld1q_s16(data + 4 * 8);
-        int16x8_t v5 = vld1q_s16(data + 5 * 8);
-        int16x8_t v6 = vld1q_s16(data + 6 * 8);
-        int16x8_t v7 = vld1q_s16(data + 7 * 8);
-
-        // pass 1
-
-        JPEG_TRANSPOSE16();
-
-        int16x8_t x8 = vaddq_s16(v0, v7);
-        int16x8_t x0 = vsubq_s16(v0, v7);
-        int16x8_t x7 = vaddq_s16(v1, v6);
-        int16x8_t x1 = vsubq_s16(v1, v6);
-        int16x8_t x6 = vaddq_s16(v2, v5);
-        int16x8_t x2 = vsubq_s16(v2, v5);
-        int16x8_t x5 = vaddq_s16(v3, v4);
-        int16x8_t x3 = vsubq_s16(v3, v4);
-        int16x8_t x4 = vaddq_s16(x8, x5);
-        x8 = vsubq_s16(x8, x5);
-        x5 = vaddq_s16(x7, x6);
-        x7 = vsubq_s16(x7, x6);
-
-        v0 = vaddq_s16(x4, x5);
-        v4 = vsubq_s16(x4, x5);
-
-        JPEG_TRANSFORM(10);
-
-        // pass 2
-
-        JPEG_TRANSPOSE16();
-
-        x8 = vaddq_s16(v0, v7);
-        x0 = vsubq_s16(v0, v7);
-        x7 = vaddq_s16(v1, v6);
-        x1 = vsubq_s16(v1, v6);
-        x6 = vaddq_s16(v2, v5);
-        x2 = vsubq_s16(v2, v5);
-        x5 = vaddq_s16(v3, v4);
-        x3 = vsubq_s16(v3, v4);
-        x4 = vaddq_s16(x8, x5);
-        x8 = vsubq_s16(x8, x5);
-        x5 = vaddq_s16(x7, x6);
-        x7 = vsubq_s16(x7, x6);
-
-        v0 = vshrq_n_s16(vaddq_s16(x4, x5), 3);
-        v4 = vshrq_n_s16(vsubq_s16(x4, x5), 3);
-
-        JPEG_TRANSFORM(13);
-
-        // quantize
-
-        const int32x4_t bias = vdupq_n_s32(0x4000);
-        const int16x8_t* q = reinterpret_cast<const int16x8_t *>(quant_table);
-
-        v0 = quantize(v0, q[0], bias);
-        v1 = quantize(v1, q[1], bias);
-        v2 = quantize(v2, q[2], bias);
-        v3 = quantize(v3, q[3], bias);
-        v4 = quantize(v4, q[4], bias);
-        v5 = quantize(v5, q[5], bias);
-        v6 = quantize(v6, q[6], bias);
-        v7 = quantize(v7, q[7], bias);
-
-        // store
-
-        vst1q_s16(dest + 0 * 8, v0);
-        vst1q_s16(dest + 1 * 8, v1);
-        vst1q_s16(dest + 2 * 8, v2);
-        vst1q_s16(dest + 3 * 8, v3);
-        vst1q_s16(dest + 4 * 8, v4);
-        vst1q_s16(dest + 5 * 8, v5);
-        vst1q_s16(dest + 6 * 8, v6);
-        vst1q_s16(dest + 7 * 8, v7);
     }
 
 #endif // defined(JPEG_ENABLE_NEON)
@@ -2159,8 +2203,8 @@ namespace
     // ----------------------------------------------------------------------------
 
     jpegEncoder::jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality)
-        : ILqt(64)
-        , ICqt(64)
+        : inverse_luminance_qtable(64)
+        , inverse_chrominance_qtable(64)
     {
         MANGO_UNREFERENCED(stride);
 
@@ -2168,22 +2212,22 @@ namespace
 
         components = 0;
 
-        channel[0].component = 1;
-        channel[0].qtable = ILqt;
+        channel[0].component = 0;
+        channel[0].qtable = inverse_luminance_qtable;
         channel[0].dc_code = g_luminance_dc_code_table;
         channel[0].dc_size = g_luminance_dc_size_table;
         channel[0].ac_code = g_luminance_ac_code_table;
         channel[0].ac_size = g_luminance_ac_size_table;
 
-        channel[1].component = 2;
-        channel[1].qtable = ICqt;
+        channel[1].component = 1;
+        channel[1].qtable = inverse_chrominance_qtable;
         channel[1].dc_code = g_chrominance_dc_code_table;
         channel[1].dc_size = g_chrominance_dc_size_table;
         channel[1].ac_code = g_chrominance_ac_code_table;
         channel[1].ac_size = g_chrominance_ac_size_table;
 
-        channel[2].component = 3;
-        channel[2].qtable = ICqt;
+        channel[2].component = 2;
+        channel[2].qtable = inverse_chrominance_qtable;
         channel[2].dc_code = g_chrominance_dc_code_table;
         channel[2].dc_size = g_chrominance_dc_size_table;
         channel[2].ac_code = g_chrominance_ac_code_table;
@@ -2301,13 +2345,13 @@ namespace
 
         // select block encoder
 
-        encode_ac = encode_ac_scalar;
+        encode = encode_block_scalar;
         const char* encode_name = "Scalar";
 
 #if defined(JPEG_ENABLE_SSE4)
         if (flags & INTEL_SSSE3)
         {
-            encode_ac = encode_ac_ssse3;
+            encode = encode_block_ssse3;
             encode_name = "SSSE3";
         }
 #endif
@@ -2315,7 +2359,7 @@ namespace
 #if defined(JPEG_ENABLE_AVX2)
         if (flags & INTEL_AVX2)
         {
-            encode_ac = encode_ac_avx2;
+            encode = encode_block_avx2;
             encode_name = "AVX2";
         }
 #endif
@@ -2323,14 +2367,14 @@ namespace
 #if defined(JPEG_ENABLE_AVX512)
         if (flags & INTEL_AVX512BW)
         {
-            encode_ac = encode_ac_avx512bw;
+            encode = encode_block_avx512bw;
             encode_name = "AVX512BW";
         }
 #endif
 
 #if defined(JPEG_ENABLE_NEON__todo)
         {
-            encode_ac = encode_ac_neon;
+            encode = encode_block_neon;
             encode_name = "NEON";
         }
 #endif
@@ -2354,7 +2398,7 @@ namespace
         rows_in_bottom_mcus = height - (vertical_mcus - 1) * mcu_height;
         cols_in_right_mcus  = width  - (horizontal_mcus - 1) * mcu_width;
 
-        mcu_width_size = mcu_width * bytes_per_pixel;
+        mcu_stride = mcu_width * bytes_per_pixel;
 
         // initialize quantization tables
 
@@ -2372,17 +2416,17 @@ namespace
 
         for (int i = 0; i < 64; ++i)
         {
-            u16 index = zigzag_table[i];
+            u8 index = zigzag_table[i];
 
             // luminance
             u32 L = u32_clamp((g_luminance_quant_table[i] * quality + 0x200) >> 10, 2, 255);
-            Lqt[index] = u8(L);
-            ILqt[i] = u16(0x8000 / L);
+            luminance_qtable[index] = u8(L);
+            inverse_luminance_qtable[i] = u16(0x8000 / L);
 
             // chrominance
             u32 C = u32_clamp((g_chrominance_quant_table [i] * quality + 0x200) >> 10, 2, 255);
-            Cqt[index] = u8(C);
-            ICqt[i] = u16(0x8000 / C);
+            chrominance_qtable[index] = u8(C);
+            inverse_chrominance_qtable[i] = u16(0x8000 / C);
         }
     }
 
@@ -2422,7 +2466,7 @@ namespace
         p.write8(0x00); // Pq, Tq
 
         // Lqt table
-        p.write(Lqt, 64);
+        p.write(luminance_qtable, 64);
 
         // Quantization table marker
         p.write16(MARKER_DQT);
@@ -2430,7 +2474,7 @@ namespace
         p.write8(0x01); // Pq, Tq
 
         // Cqt table
-        p.write(Cqt, 64);
+        p.write(chrominance_qtable, 64);
 
         // Start of frame marker
         p.write16(MARKER_SOF0);
@@ -2512,7 +2556,7 @@ namespace
         std::vector<EncodeBuffer> buffers(jp.vertical_mcus);
 
         auto fdct = jp.fdct;
-        auto encode_ac = jp.encode_ac;
+        auto encode = jp.encode;
 
         ConcurrentQueue queue;
 
@@ -2529,11 +2573,13 @@ namespace
                 read_func = jp.read; // clipping reader
             }
 
-            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func, fdct, encode_ac]
+            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func, fdct, encode]
             {
                 const u8* image = input;
 
                 HuffmanEncoder huffman;
+                huffman.fdct = fdct;
+
                 EncodeBuffer& buffer = buffers[y];
 
                 constexpr int buffer_size = 2048;
@@ -2546,8 +2592,6 @@ namespace
                 auto read = read_func;
 
                 const int right_mcu = jp.horizontal_mcus - 1;
-
-                int last_dc_value[3] = { 0, 0, 0 };
 
                 for (int x = 0; x < jp.horizontal_mcus; ++x)
                 {
@@ -2565,21 +2609,7 @@ namespace
                     // encode the data in MCU
                     for (int i = 0; i < jp.components; ++i)
                     {
-                        s16 temp[BLOCK_SIZE];
-                        fdct(temp, block + i * BLOCK_SIZE, jp.channel[i].qtable);
-
-                        const int component = jp.channel[i].component - 1;
-
-                        const u16* dc_code = jp.channel[i].dc_code;
-                        const u16* dc_size = jp.channel[i].dc_size;
-                        const u16* ac_code = jp.channel[i].ac_code;
-                        const u16* ac_size = jp.channel[i].ac_size;
-
-                        int last_dc = last_dc_value[component];
-                        last_dc_value[component] = temp[0];
-
-                        ptr = encode_dc(huffman, ptr, temp, dc_code, dc_size, last_dc);
-                        ptr = encode_ac(huffman, ptr, temp, ac_code, ac_size);
+                        ptr = encode(huffman, ptr, block + i * BLOCK_SIZE, jp.channel[i]);
                     }
 
                     // flush encoding buffer
@@ -2589,7 +2619,7 @@ namespace
                         ptr = huff_temp;
                     }
 
-                    image += jp.mcu_width_size;
+                    image += jp.mcu_stride;
                 }
 
                 // flush encoding buffer
