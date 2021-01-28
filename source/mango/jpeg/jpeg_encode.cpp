@@ -954,12 +954,11 @@ namespace
 #endif // defined(JPEG_ENABLE_NEON)
 
     static inline
-    u8* encode_dc(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
+    u8* encode_dc(HuffmanEncoder& encoder, u8* p, s16 dc, const jpegEncoder::Channel& channel)
     {
-        int last_dc = encoder.last_dc_value[channel.component];
-        encoder.last_dc_value[channel.component] = input[0];
+        int coeff = dc - encoder.last_dc_value[channel.component];
+        encoder.last_dc_value[channel.component] = dc;
 
-        int coeff = input[0] - last_dc;
         int absCoeff = std::abs(coeff);
         coeff -= (absCoeff != coeff);
 
@@ -981,7 +980,7 @@ namespace
         s16 block[64];
         encoder.fdct(block, input, channel.qtable);
 
-        p = encode_dc(encoder, p, block, channel);
+        p = encode_dc(encoder, p, block[0], channel);
 
         const u8 zigzag_table_inverse [] =
         {
@@ -1248,15 +1247,14 @@ namespace
         s16 block[64];
         encoder.fdct(block, input, channel.qtable);
 
-        p = encode_dc(encoder, p, block, channel);
+        s16 temp[64];
+        u64 zeromask = zigzag_ssse3(block, temp);
+        zeromask >>= 1; // skip DC
+
+        p = encode_dc(encoder, p, temp[0], channel);
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
-
-        s16 temp[64];
-        u64 zeromask = zigzag_ssse3(block, temp);
-
-        zeromask >>= 1; // skip DC
 
         for (int i = 1; i < 64; )
         {
@@ -1452,15 +1450,14 @@ namespace
         s16 block[64];
         encoder.fdct(block, input, channel.qtable);
 
-        p = encode_dc(encoder, p, block, channel);
+        s16 temp[64];
+        u64 zeromask = zigzag_avx2(block, temp);
+        zeromask >>= 1; // skip DC
+
+        p = encode_dc(encoder, p, temp[0], channel);
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
-
-        s16 temp[64];
-        u64 zeromask = zigzag_avx2(block, temp);
-
-        zeromask >>= 1; // skip DC
 
         for (int i = 1; i < 64; )
         {
@@ -1600,15 +1597,14 @@ namespace
         s16 block[64];
         encoder.fdct(block, input, channel.qtable);
 
-        p = encode_dc(encoder, p, block, channel);
+        s16 temp[64];
+        u64 zeromask = zigzag_avx512bw(block, temp);
+        zeromask >>= 1; // skip DC
+
+        p = encode_dc(encoder, p, temp[0], channel);
 
         const u16* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
-
-        s16 temp[64];
-        u64 zeromask = zigzag_avx512bw(block, temp);
-
-        zeromask >>= 1; // skip DC
 
         for (int i = 1; i < 64; )
         {
