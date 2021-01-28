@@ -1748,11 +1748,11 @@ namespace
     void ParserPNG::read_iCCP(BigEndianConstPointer p, u32 size)
     {
         /*
-         Profile name:       1-79 bytes (character string)
-         Null separator:     1 byte
-         Compression method: 1 byte (0=deflate)
-         Compressed profile: n bytes
-         */
+        Profile name:       1-79 bytes (character string)
+        Null separator:     1 byte
+        Compression method: 1 byte (0=deflate)
+        Compressed profile: n bytes
+        */
         const char* name = (const char*)&p[0];
         size_t name_len = strnlen(name, size);
         if(name_len == size)
@@ -1786,9 +1786,6 @@ namespace
         }
 
         debugPrint("  icc profile %d bytes\n", int(m_icc.size()));
-
-        return;
-
     }
 
     void ParserPNG::parse()
@@ -1866,7 +1863,7 @@ namespace
 
                 case u32_mask_rev('i', 'C', 'C', 'P'):
                     read_iCCP(p, size);
-                    return;
+                    break;
 
                 case u32_mask_rev('p', 'H', 'Y', 's'):
                 case u32_mask_rev('b', 'K', 'G', 'D'):
