@@ -289,6 +289,10 @@ namespace
 
     struct jpegEncoder
     {
+        Surface m_surface;
+        SampleType m_sample;
+        const ImageEncodeOptions& m_options;
+
         int mcu_width;
         int mcu_height;
         int mcu_stride;
@@ -322,12 +326,11 @@ namespace
         void (*fdct)     (s16* dest, const s16* data, const s16* qtable);
         u8*  (*encode)   (HuffmanEncoder& encoder, u8* p, const s16* input, const Channel& channel);
 
-        jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality);
+        jpegEncoder(const Surface& surface, SampleType sample, const ImageEncodeOptions& options);
         ~jpegEncoder();
 
-        void writeMarkers(BigEndianStream& p, SampleType sample, u32 width, u32 height);
-
-        ConstMemory icc;
+        void writeMarkers(BigEndianStream& p);
+        ImageEncodeStatus encodeImage(Stream& stream);
     };
 
     // ----------------------------------------------------------------------------
@@ -2204,14 +2207,13 @@ namespace
     // jpegEncoder
     // ----------------------------------------------------------------------------
 
-    jpegEncoder::jpegEncoder(SampleType sample, u32 width, u32 height, size_t stride, u32 quality)
-        : inverse_luminance_qtable(64)
+    jpegEncoder::jpegEncoder(const Surface& surface, SampleType sample, const ImageEncodeOptions& options)
+        : m_surface(surface)
+        , m_sample(sample)
+        , m_options(options)
+        , inverse_luminance_qtable(64)
         , inverse_chrominance_qtable(64)
     {
-        MANGO_UNREFERENCED(stride);
-
-        int bytes_per_pixel = 0;
-
         components = 0;
 
         channel[0].component = 0;
@@ -2235,6 +2237,7 @@ namespace
         channel[2].ac_code = g_chrominance_ac_code_table;
         channel[2].ac_size = g_chrominance_ac_size_table;
 
+        int bytes_per_pixel = 0;
         read_8x8 = nullptr;
 
         u64 flags = getCPUFlags();
@@ -2394,11 +2397,11 @@ namespace
         mcu_width = 8;
         mcu_height = 8;
 
-        horizontal_mcus = (width + mcu_width - 1) >> 3;
-        vertical_mcus   = (height + mcu_height - 1) >> 3;
+        horizontal_mcus = (m_surface.width + mcu_width - 1) >> 3;
+        vertical_mcus   = (m_surface.height + mcu_height - 1) >> 3;
 
-        rows_in_bottom_mcus = height - (vertical_mcus - 1) * mcu_height;
-        cols_in_right_mcus  = width  - (horizontal_mcus - 1) * mcu_width;
+        rows_in_bottom_mcus = m_surface.height - (vertical_mcus - 1) * mcu_height;
+        cols_in_right_mcus  = m_surface.width  - (horizontal_mcus - 1) * mcu_width;
 
         mcu_stride = mcu_width * bytes_per_pixel;
 
@@ -2415,6 +2418,9 @@ namespace
             21, 34, 37, 47, 50, 56, 59, 61,
             35, 36, 48, 49, 57, 58, 62, 63
         };
+
+        // configure quality
+        u32 quality = u32(std::pow(1.0f + clamp(1.0f - options.quality, 0.0f, 1.0f), 11.0f) * 8.0f);
 
         for (int i = 0; i < 64; ++i)
         {
@@ -2436,29 +2442,29 @@ namespace
     {
     }
 
-    void jpegEncoder::writeMarkers(BigEndianStream& p, SampleType sample, u32 width, u32 height)
+    void jpegEncoder::writeMarkers(BigEndianStream& p)
     {
         // Start of image marker
         p.write16(MARKER_SOI);
 
         // ICC profile.  splitting to multiple markers if necessary
-        if(icc.size)
+        if (m_options.icc.size)
         {
             const size_t magicICCLength = 12;
             const u8 magicICC[magicICCLength] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
 
             const size_t iccMaxSegmentSize = 65000;  // marker size is 16bit minus icc stuff, if larger we need to split
-            const size_t iccSegments = (icc.size+iccMaxSegmentSize-1)/iccMaxSegmentSize;
+            const size_t iccSegments = (m_options.icc.size + iccMaxSegmentSize - 1) / iccMaxSegmentSize;
 
-            for(size_t i=0;i<iccSegments;i++)
+            for(size_t i=0; i < iccSegments; i++)
             {
-                const size_t size = i<(iccSegments-1) ? iccMaxSegmentSize :  icc.size%iccMaxSegmentSize;
+                const size_t size = i < (iccSegments - 1) ? iccMaxSegmentSize :  m_options.icc.size % iccMaxSegmentSize;
                 p.write16(MARKER_APP2);
                 p.write16(u16(size + magicICCLength + 4));
                 p.write(magicICC, magicICCLength);
                 p.write8(u8(i + 1)); // segment index, 1-based
                 p.write8(u8(iccSegments));
-                p.write(icc.slice(i * iccMaxSegmentSize), size);
+                p.write(m_options.icc.slice(i * iccMaxSegmentSize), size);
             }
         }
 
@@ -2483,7 +2489,7 @@ namespace
 
         u8 number_of_components = 0;
 
-        switch (sample)
+        switch (m_sample)
         {
             case JPEG_U8_Y:
                 number_of_components = 1;
@@ -2501,8 +2507,8 @@ namespace
 
         p.write16(header_length); // frame header length
         p.write8(8); // precision
-        p.write16(u16(height)); // image height
-        p.write16(u16(width)); // image width
+        p.write16(u16(m_surface.height)); // image height
+        p.write16(u16(m_surface.width)); // image width
         p.write8(number_of_components); // Nf
 
         const u8 nfdata[] =
@@ -2542,40 +2548,30 @@ namespace
         p.write8(0x00);
     }
 
-    // ----------------------------------------------------------------------------
-    // encode_jpeg()
-    // ----------------------------------------------------------------------------
-
-    void encode_jpeg(ImageEncodeStatus& status, const Surface& surface, Stream& stream, int quality, SampleType sample, const ImageEncodeOptions& options)
+    ImageEncodeStatus jpegEncoder::encodeImage(Stream& stream)
     {
-        jpegEncoder jp(sample, surface.width, surface.height, surface.stride, quality);
-        jp.icc = options.icc;
-
-        const u8* input = surface.image;
-        size_t stride = surface.stride;
+        const u8* input = m_surface.image;
+        size_t stride = m_surface.stride;
 
         // bitstream for each MCU scan
-        std::vector<EncodeBuffer> buffers(jp.vertical_mcus);
-
-        auto fdct = jp.fdct;
-        auto encode = jp.encode;
+        std::vector<EncodeBuffer> buffers(vertical_mcus);
 
         ConcurrentQueue queue;
 
         // encode MCUs
-        for (int y = 0; y < jp.vertical_mcus; ++y)
+        for (int y = 0; y < vertical_mcus; ++y)
         {
-            int rows = jp.mcu_height;
-            auto read_func = jp.read_8x8; // default: optimized 8x8 reader
+            int rows = mcu_height;
+            auto read_func = read_8x8; // default: optimized 8x8 reader
 
-            if (y >= jp.vertical_mcus - 1)
+            if (y >= vertical_mcus - 1)
             {
                 // vertical clipping
-                rows = jp.rows_in_bottom_mcus;
-                read_func = jp.read; // clipping reader
+                rows = rows_in_bottom_mcus;
+                read_func = read; // clipping reader
             }
 
-            queue.enqueue([&jp, y, &buffers, input, stride, rows, read_func, fdct, encode]
+            queue.enqueue([this, y, &buffers, input, stride, rows, read_func]
             {
                 const u8* image = input;
 
@@ -2590,28 +2586,28 @@ namespace
                 u8 huff_temp[buffer_size]; // encoding buffer
                 u8* ptr = huff_temp;
 
-                int cols = jp.mcu_width;
-                auto read = read_func;
+                int cols = mcu_width;
+                auto reader = read_func;
 
-                const int right_mcu = jp.horizontal_mcus - 1;
+                const int right_mcu = horizontal_mcus - 1;
 
-                for (int x = 0; x < jp.horizontal_mcus; ++x)
+                for (int x = 0; x < horizontal_mcus; ++x)
                 {
                     if (x >= right_mcu)
                     {
                         // horizontal clipping
-                        cols = jp.cols_in_right_mcus;
-                        read = jp.read; // clipping reader
+                        cols = cols_in_right_mcus;
+                        reader = read; // clipping reader
                     }
 
                     // read MCU data
                     s16 block[BLOCK_SIZE * 3];
-                    read(block, image, stride, rows, cols);
+                    reader(block, image, stride, rows, cols);
 
                     // encode the data in MCU
-                    for (int i = 0; i < jp.components; ++i)
+                    for (int i = 0; i < components; ++i)
                     {
-                        ptr = encode(huffman, ptr, block + i * BLOCK_SIZE, jp.channel[i]);
+                        ptr = encode(huffman, ptr, block + i * BLOCK_SIZE, channel[i]);
                     }
 
                     // flush encoding buffer
@@ -2621,7 +2617,7 @@ namespace
                         ptr = huff_temp;
                     }
 
-                    image += jp.mcu_stride;
+                    image += mcu_stride;
                 }
 
                 // flush encoding buffer
@@ -2632,15 +2628,15 @@ namespace
                 buffer.ready = true;
             });
 
-            input += surface.stride * jp.mcu_height;
+            input += m_surface.stride * mcu_height;
         }
 
         BigEndianStream s(stream);
 
         // writing marker data
-        jp.writeMarkers(s, sample, surface.width, surface.height);
+        writeMarkers(s);
 
-        for (int y = 0; y < jp.vertical_mcus; ++y)
+        for (int y = 0; y < vertical_mcus; ++y)
         {
             EncodeBuffer& buffer = buffers[y];
 
@@ -2661,7 +2657,10 @@ namespace
         // EOI marker
         s.write16(MARKER_EOI);
 
-        status.info = jp.info;
+        ImageEncodeStatus status;
+        status.info = info;
+
+        return status;
     }
 
 } // namespace
@@ -2671,25 +2670,23 @@ namespace jpeg {
 
     ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        ImageEncodeStatus status;
-
-        // configure quality
-        float quality = clamp(1.0f - options.quality, 0.0f, 1.0f);
-        u32 iq = u32(std::pow(1.0f + quality, 11.0f) * 8.0f);
-
         SampleFormat sf = getSampleFormat(surface.format);
+
+        ImageEncodeStatus status;
 
         // encode
         if (surface.format == sf.format)
         {
-            encode_jpeg(status, surface, stream, iq, sf.sample, options);
+            jpegEncoder encoder(surface, sf.sample, options);
+            status = encoder.encodeImage(stream);
             status.direct = true;
         }
         else
         {
             // convert source surface to format supported in the encoder
             Bitmap temp(surface, sf.format);
-            encode_jpeg(status, temp, stream, iq, sf.sample, options);
+            jpegEncoder encoder(temp, sf.sample, options);
+            status = encoder.encodeImage(stream);
         }
 
         return status;
