@@ -18,7 +18,7 @@ namespace mango
 
     struct ImageEncodeStatus : Status
     {
-        bool direct;
+        bool direct = false;
     };
 
     struct ImageEncodeOptions
