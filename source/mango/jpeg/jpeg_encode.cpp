@@ -143,7 +143,6 @@ namespace
         0x0001f400, 0x00ff8900, 0x00ff8e00, 0x00ff9400, 0x00ff9c00, 0x00ffa400, 0x00ffac00, 0x00ffb400, 0x00ffbd00, 0x00ffc600, 0x00ffcf00, 0x00ffd800, 0x00ffe100, 0x00ffea00, 0x00fff300, 0x00fffc00,
         0x0007ec00, 0x01ff1400, 0x01ff1e00, 0x01ff2a00, 0x01ff3a00, 0x01ff4a00, 0x01ff5a00, 0x01ff6a00, 0x01ff7c00, 0x01ff8e00, 0x01ffa000, 0x01ffb200, 0x01ffc400, 0x01ffd600, 0x01ffe800, 0x01fffa00,
         0x003fd000, 0x03fe2c00, 0x03fe4000, 0x03fe5800, 0x03fe7800, 0x03fe9800, 0x03feb800, 0x03fed800, 0x03fefc00, 0x03ff2000, 0x03ff4400, 0x03ff6800, 0x03ff8c00, 0x03ffb000, 0x03ffd400, 0x03fff800,
-        
     };
 
     alignas(64)
@@ -999,16 +998,16 @@ namespace
         const u32 zero16_code = ac_code[1];
         const u32 zero16_size = ac_size[1];
 
-        int runLength = 0;
+        int counter = 0;
 
         for (int i = 1; i < 64; ++i)
         {
             int coeff = block[zigzag_table_inverse[i]];
             if (coeff)
             {
-                while (runLength > 15)
+                while (counter > 15)
                 {
-                    runLength -= 16;
+                    counter -= 16;
                     p = encoder.putBits(p, zero16_code, zero16_size);
                 }
 
@@ -1018,18 +1017,18 @@ namespace
                 u32 size = u32_log2(absCoeff) + 1;
                 u32 mask = (1 << size) - 1;
 
-                int index = runLength + size * 16;
+                int index = counter + size * 16;
                 p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
 
-                runLength = 0;
+                counter = 0;
             }
             else
             {
-                ++runLength;
+                ++counter;
             }
         }
 
-        if (runLength != 0)
+        if (counter)
         {
             p = encoder.putBits(p, ac_code[0], ac_size[0]);
         }
@@ -1251,16 +1250,16 @@ namespace
 
         s16 temp[64];
         u64 zeromask = zigzag_ssse3(block, temp);
-        zeromask >>= 1; // skip DC
 
         p = encode_dc(encoder, p, temp[0], channel);
+        zeromask >>= 1;
 
         const u32* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
         const u32 zero16_code = ac_code[1];
         const u32 zero16_size = ac_size[1];
 
-        for (int i = 1; i < 64; )
+        for (int i = 1; i < 64; ++i)
         {
             if (!zeromask)
             {
@@ -1269,24 +1268,24 @@ namespace
                 break;
             }
 
-            int runLength = u64_tzcnt(zeromask); // BMI
-            zeromask >>= (runLength + 1);
-            i += runLength;
+            int counter = u64_tzcnt(zeromask); // BMI
+            zeromask >>= (counter + 1);
+            i += counter;
 
-            while (runLength > 15)
+            while (counter > 15)
             {
-                runLength -= 16;
+                counter -= 16;
                 p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
-            int coeff = temp[i++];
+            int coeff = temp[i];
             int absCoeff = std::abs(coeff);
             coeff -= (absCoeff != coeff);
 
             u32 size = u32_log2(absCoeff) + 1;
             u32 mask = (1 << size) - 1;
 
-            int index = runLength + size * 16;
+            int index = counter + size * 16;
             p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
         }
 
@@ -1456,16 +1455,16 @@ namespace
 
         s16 temp[64];
         u64 zeromask = zigzag_avx2(block, temp);
-        zeromask >>= 1; // skip DC
 
         p = encode_dc(encoder, p, temp[0], channel);
+        zeromask >>= 1;
 
         const u32* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
         const u32 zero16_code = ac_code[1];
         const u32 zero16_size = ac_size[1];
 
-        for (int i = 1; i < 64; )
+        for (int i = 1; i < 64; ++i)
         {
             if (!zeromask)
             {
@@ -1474,24 +1473,24 @@ namespace
                 break;
             }
 
-            int runLength = u64_tzcnt(zeromask); // BMI
-            zeromask >>= (runLength + 1);
-            i += runLength;
+            int counter = u64_tzcnt(zeromask); // BMI
+            zeromask >>= (counter + 1);
+            i += counter;
 
-            while (runLength > 15)
+            while (counter > 15)
             {
-                runLength -= 16;
+                counter -= 16;
                 p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
-            int coeff = temp[i++];
+            int coeff = temp[i];
             int absCoeff = std::abs(coeff);
             coeff -= (absCoeff != coeff);
 
             u32 size = u32_log2(absCoeff) + 1;
             u32 mask = (1 << size) - 1;
 
-            int index = runLength + size * 16;
+            int index = counter + size * 16;
             p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
         }
 
@@ -1605,16 +1604,16 @@ namespace
 
         s16 temp[64];
         u64 zeromask = zigzag_avx512bw(block, temp);
-        zeromask >>= 1; // skip DC
 
         p = encode_dc(encoder, p, temp[0], channel);
+        zeromask >>= 1;
 
         const u32* ac_code = channel.ac_code;
         const u16* ac_size = channel.ac_size;
         const u32 zero16_code = ac_code[1];
         const u32 zero16_size = ac_size[1];
 
-        for (int i = 1; i < 64; )
+        for (int i = 1; i < 64; ++i)
         {
             if (!zeromask)
             {
@@ -1623,24 +1622,24 @@ namespace
                 break;
             }
 
-            int runLength = u64_tzcnt(zeromask); // BMI
-            zeromask >>= (runLength + 1);
-            i += runLength;
+            int counter = u64_tzcnt(zeromask); // BMI
+            zeromask >>= (counter + 1);
+            i += counter;
 
-            while (runLength > 15)
+            while (counter > 15)
             {
-                runLength -= 16;
+                counter -= 16;
                 p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
-            int coeff = temp[i++];
+            int coeff = temp[i];
             int absCoeff = std::abs(coeff);
             coeff -= (absCoeff != coeff);
 
             u32 size = u32_log2(absCoeff) + 1;
             u32 mask = (1 << size) - 1;
 
-            int index = runLength + size * 16;
+            int index = counter + size * 16;
             p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
         }
 
