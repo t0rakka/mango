@@ -26,7 +26,7 @@ https://www.pkware.com/support/zip-app-note/
 [3] PKWARE Inc. APPNOTE.TXT, version 1.0
 https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-1.0.txt
 
-4] WinZip. AES Encryption Information: Encryption Specification AE-1 and AE-2
+[4] WinZip. AES Encryption Information: Encryption Specification AE-1 and AE-2
 http://www.winzip.com/aes_info.htm
 */
 
