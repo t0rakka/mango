@@ -1076,6 +1076,7 @@ namespace gzip {
         {
             MANGO_EXCEPTION("[WARNING] Incorrect compressor (%s).", name.c_str());
         }
+
         return compressor;
     }
 

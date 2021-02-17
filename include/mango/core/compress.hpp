@@ -195,12 +195,12 @@ namespace mango
             DEFLATE,
             ZLIB,
             GZIP,
-        } method;
+        } method = NONE;
         std::string name;
 
-        size_t (*bound)(size_t size);
-        size_t (*compress)(Memory dest, ConstMemory source, int level);
-        size_t (*decompress)(Memory dest, ConstMemory source);
+        size_t (*bound)(size_t size) = nullptr;
+        size_t (*compress)(Memory dest, ConstMemory source, int level) = nullptr;
+        size_t (*decompress)(Memory dest, ConstMemory source) = nullptr;
     };
 
     std::vector<Compressor> getCompressors();

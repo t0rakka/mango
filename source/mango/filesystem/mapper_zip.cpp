@@ -612,7 +612,7 @@ namespace filesystem {
         {
         }
 
-        VirtualMemory* mmap(const FileHeader& header, const u8* start, const std::string& password)
+        VirtualMemory* mmap(FileHeader header, const u8* start, const std::string& password)
         {
             LittleEndianConstPointer p = start + header.localOffset;
 
@@ -646,8 +646,8 @@ namespace filesystem {
                     const size_t compressed_size = size_t(header.compressedSize);
                     buffer = new u8[compressed_size];
 
-                    bool status = zip_decrypt(buffer, address, header.compressedSize, dcheader,
-                                            header.versionUsed & 0xff, header.crc, password);
+                    bool status = zip_decrypt(buffer, address, header.compressedSize,
+                        dcheader, header.versionUsed & 0xff, header.crc, password);
                     if (!status)
                     {
                         delete[] buffer;
@@ -686,6 +686,8 @@ namespace filesystem {
                 }
             }
 
+            Compressor compressor;
+
             switch (header.compression)
             {
                 case COMPRESSION_NONE:
@@ -717,85 +719,39 @@ namespace filesystem {
 
                 case COMPRESSION_LZMA:
                 {
-                    const size_t uncompressed_size = size_t(header.uncompressedSize);
-                    u8* uncompressed_buffer = new u8[uncompressed_size];
-
                     // parse LZMA compression header
                     p = address;
                     p += 2; // skip LZMA version
                     u16 lzma_propsize = p.read16();
+                    address = p;
+
                     if (lzma_propsize != 5)
                     {
                         delete[] buffer;
                         MANGO_EXCEPTION("[mapper.zip] Incorrect LZMA header.");
                     }
-                    address = p;
-                    u64 compressed_size = header.compressedSize - 4;
 
-                    ConstMemory input(address, size_t(compressed_size));
-                    Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
-                    lzma::decompress(output, input);
+                    header.compressedSize -= 4;
 
-                    delete[] buffer;
-                    buffer = uncompressed_buffer;
-
-                    // use decode_buffer as memory map
-                    address = buffer;
-                    size = header.uncompressedSize;
+                    compressor = getCompressor(Compressor::LZMA);
                     break;
                 }
 
                 case COMPRESSION_PPMD:
                 {
-                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
-                    u8* uncompressed_buffer = new u8[uncompressed_size];
-
-                    ConstMemory input(address, size_t(header.compressedSize));
-                    Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
-                    ppmd8::decompress(output, input);
-
-                    delete[] buffer;
-                    buffer = uncompressed_buffer;
-
-                    // use decode_buffer as memory map
-                    address = buffer;
-                    size = header.uncompressedSize;
+                    compressor = getCompressor(Compressor::PPMD8);
                     break;
                 }
 
                 case COMPRESSION_BZIP2:
                 {
-                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
-                    u8* uncompressed_buffer = new u8[uncompressed_size];
-
-                    ConstMemory input(address, size_t(header.compressedSize));
-                    Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
-                    bzip2::decompress(output, input);
-
-                    delete[] buffer;
-                    buffer = uncompressed_buffer;
-
-                    // use decode_buffer as memory map
-                    address = buffer;
-                    size = header.uncompressedSize;
+                    compressor = getCompressor(Compressor::BZIP2);
                     break;
                 }
 
                 case COMPRESSION_ZSTD:
                 {
-                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
-                    u8* uncompressed_buffer = new u8[uncompressed_size];
-
-                    ConstMemory input(address, size_t(header.compressedSize));
-                    Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
-                    zstd::decompress(output, input);
-
-                    delete[] buffer;
-                    buffer = uncompressed_buffer;
-
-                    // use decode_buffer as memory map
-                    address = buffer;
-                    size = header.uncompressedSize;
+                    compressor = getCompressor(Compressor::ZSTD);
                     break;
                 }
 
@@ -817,6 +773,23 @@ namespace filesystem {
                 case COMPRESSION_AES:
                     MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
                     break;
+            }
+
+            if (compressor.decompress)
+            {
+                const size_t uncompressed_size = size_t(header.uncompressedSize);
+                u8* uncompressed_buffer = new u8[uncompressed_size];
+
+                ConstMemory input(address, size_t(header.compressedSize));
+                Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
+                compressor.decompress(output, input);
+
+                delete[] buffer;
+                buffer = uncompressed_buffer;
+
+                // use decode_buffer as memory map
+                address = buffer;
+                size = header.uncompressedSize;
             }
 
             VirtualMemory* memory;
