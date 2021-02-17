@@ -781,6 +781,24 @@ namespace filesystem {
                     break;
                 }
 
+                case COMPRESSION_ZSTD:
+                {
+                    const std::size_t uncompressed_size = static_cast<std::size_t>(header.uncompressedSize);
+                    u8* uncompressed_buffer = new u8[uncompressed_size];
+
+                    ConstMemory input(address, size_t(header.compressedSize));
+                    Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
+                    zstd::decompress(output, input);
+
+                    delete[] buffer;
+                    buffer = uncompressed_buffer;
+
+                    // use decode_buffer as memory map
+                    address = buffer;
+                    size = header.uncompressedSize;
+                    break;
+                }
+
                 case COMPRESSION_SHRUNK:
                 case COMPRESSION_REDUCE_1:
                 case COMPRESSION_REDUCE_2:
@@ -792,7 +810,6 @@ namespace filesystem {
                 case COMPRESSION_CMPSC:
                 case COMPRESSION_TERSE:
                 case COMPRESSION_LZ77:
-                case COMPRESSION_ZSTD:
                 case COMPRESSION_MP3:
                 case COMPRESSION_XZ:
                 case COMPRESSION_WAVPACK:
