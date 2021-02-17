@@ -17,7 +17,7 @@
 /*
 https://courses.cs.ut.ee/MTAT.07.022/2015_fall/uploads/Main/dmitri-report-f15-16.pdf
 
-1] PKWARE Inc. APPNOTE.TXT – .ZIP File Format Specification, version 6.3.4
+[1] PKWARE Inc. APPNOTE.TXT – .ZIP File Format Specification, version 6.3.4
 https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 
 [2] PKWARE Inc. .ZIP Application Note
