@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # mango meson.build
 #
-# Copyright (C) 2012-2020 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2021 Twilight 3D Finland Oy Ltd.
 # ---------------------------------------------------------------------------
 
 project(
@@ -9,7 +9,7 @@ project(
 
     default_options : [
         'c_std=c11',
-        'cpp_std=c++14',
+        'cpp_std=c++17',
         'default_library=static'
     ]
 )
