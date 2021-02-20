@@ -18,4 +18,4 @@ APP_PLATFORM := android-21
 # select stl: c++_static / c++_shared
 #
 APP_STL := c++_shared
-APP_CPPFLAGS += -std=c++14
+APP_CPPFLAGS += -std=c++17

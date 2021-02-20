@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # mango makefile
 #
-# Copyright (C) 2012-2020 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2021 Twilight 3D Finland Oy Ltd.
 # ---------------------------------------------------------------------------
 
 # NOTE: These build scripts are for custom tinkering and hacking, please use
@@ -56,7 +56,7 @@ OS = $(shell uname)
 
 # language versions
 CC_STD = -std=c11
-CPP_STD = -std=c++14
+CPP_STD = -std=c++17
 
 # common compiler options (LLVM/CLANG/GCC)
 OPTIONS     += -c -Wall -O3 -ffast-math
