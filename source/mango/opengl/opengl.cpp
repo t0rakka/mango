@@ -158,7 +158,8 @@ namespace
 
 } // namespace
 
-namespace mango {
+namespace mango
+{
 
     // -----------------------------------------------------------------------
     // extension masks

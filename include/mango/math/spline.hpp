@@ -1,14 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
 #include <mango/core/bits.hpp>
 
-namespace mango {
-namespace math {
+namespace mango::math
+{
 
     constexpr double pi = 3.14159265358979323846264338327;
 
@@ -387,5 +387,4 @@ namespace math {
                btangent * (time3 - time2);
     }
 
-} // namespace math
-} // namespace mango
+} // namespace mango::math

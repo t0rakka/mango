@@ -1,14 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
-namespace detail {
+namespace mango::simd::detail
+{
 
     template <typename ScalarType, int Size>
     static inline scalar_vector<ScalarType, Size>
@@ -385,6 +384,4 @@ namespace detail {
         return v;
     }
 
-} // namespace detail
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd::detail

@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // ------------------------------------------------------------------
     // u8x16
@@ -387,5 +387,4 @@ namespace simd {
     #define srli(Value, Count) srli<Count>(Value)
     #define srai(Value, Count) srai<Count>(Value)
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

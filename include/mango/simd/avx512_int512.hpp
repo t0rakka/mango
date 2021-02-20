@@ -1,58 +1,59 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------
 
-namespace detail {
-
-    static inline __m512i simd512_not(__m512i a)
+    namespace detail
     {
-        // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
-        return _mm512_ternarylogic_epi32(a, a, a, 0x01);
-    }
 
-    static inline __m512i simd512_srli1_epi8(__m512i a)
-    {
-        a = _mm512_srli_epi16(a, 1);
-        return _mm512_and_si512(a, _mm512_set1_epi32(0x7f7f7f7f));
-    }
+        static inline __m512i simd512_not(__m512i a)
+        {
+            // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
+            return _mm512_ternarylogic_epi32(a, a, a, 0x01);
+        }
+
+        static inline __m512i simd512_srli1_epi8(__m512i a)
+        {
+            a = _mm512_srli_epi16(a, 1);
+            return _mm512_and_si512(a, _mm512_set1_epi32(0x7f7f7f7f));
+        }
 
 #if 0
-    static inline __m512i simd512_srli7_epi8(__m512i a)
-    {
-        a = _mm512_srli_epi16(a, 7);
-        return _mm512_and_si512(a, _mm512_set1_epi32(0x01010101));
-    }
+        static inline __m512i simd512_srli7_epi8(__m512i a)
+        {
+            a = _mm512_srli_epi16(a, 7);
+            return _mm512_and_si512(a, _mm512_set1_epi32(0x01010101));
+        }
 #endif
 
-    static inline __m512i simd512_srai1_epi8(__m512i a)
-    {
-        __m512i b = _mm512_slli_epi16(a, 8);
-        a = _mm512_srai_epi16(a, 1);
-        b = _mm512_srai_epi16(b, 1);
-        a = _mm512_and_si512(a, _mm512_set1_epi32(0xff00ff00));
-        b = _mm512_srli_epi16(b, 8);
-        return _mm512_or_si512(a, b);
-    }
+        static inline __m512i simd512_srai1_epi8(__m512i a)
+        {
+            __m512i b = _mm512_slli_epi16(a, 8);
+            a = _mm512_srai_epi16(a, 1);
+            b = _mm512_srai_epi16(b, 1);
+            a = _mm512_and_si512(a, _mm512_set1_epi32(0xff00ff00));
+            b = _mm512_srli_epi16(b, 8);
+            return _mm512_or_si512(a, b);
+        }
 
-    static inline __m512i simd512_srai1_epi64(__m512i a)
-    {
-        __m512i sign = _mm512_and_si512(a, _mm512_set1_epi64(0x8000000000000000ull));
-        a = _mm512_or_si512(sign, _mm512_srli_epi64(a, 1));
-        return a;
-    }
+        static inline __m512i simd512_srai1_epi64(__m512i a)
+        {
+            __m512i sign = _mm512_and_si512(a, _mm512_set1_epi64(0x8000000000000000ull));
+            a = _mm512_or_si512(sign, _mm512_srli_epi64(a, 1));
+            return a;
+        }
 
-} // namespace detail
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // u8x64
@@ -2281,5 +2282,4 @@ namespace detail {
         return get_mask(a) == 0xff;
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

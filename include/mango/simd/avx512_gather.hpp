@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // 128 bit gather
 
@@ -207,5 +207,4 @@ namespace simd {
         return _mm512_mask_i32gather_pd(value, mask, offset, reinterpret_cast<const void *>(address), 8);
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

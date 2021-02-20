@@ -2663,8 +2663,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace jpeg {
+namespace mango::jpeg
+{
 
     ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
@@ -2690,7 +2690,6 @@ namespace jpeg {
         return status;
     }
 
-} // namespace jpeg
-} // namespace mango
+} // namespace mango::jpeg
 
 #endif // MANGO_ENABLE_LICENSE_GPL

@@ -1,14 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
 #include <map>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     template <typename Header>
     class Indexer
@@ -58,5 +58,4 @@ namespace filesystem {
         }
     };
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

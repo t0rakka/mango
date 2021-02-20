@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -9,8 +9,8 @@
 #include <mango/core/configure.hpp>
 #include <mango/filesystem/mapper.hpp>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     class Path : protected NonCopyable
     {
@@ -72,5 +72,4 @@ namespace filesystem {
     std::string getExtension(const std::string& filename);      // ".txt"
     std::string removeExtension(const std::string& filename);   // "foo/bar/readme"
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

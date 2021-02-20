@@ -7,7 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-namespace mango {
+namespace mango
+{
 
     struct OpenGLContextHandle
     {

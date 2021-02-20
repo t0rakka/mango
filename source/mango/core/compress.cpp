@@ -34,13 +34,15 @@
 
 #include "../../external/libdeflate/libdeflate.h"
 
-namespace mango {
+namespace mango
+{
 
 // ----------------------------------------------------------------------------
 // nocompress
 // ----------------------------------------------------------------------------
 
-namespace nocompress {
+namespace nocompress
+{
 
     size_t bound(size_t size)
     {
@@ -68,7 +70,8 @@ namespace nocompress {
 // lz4
 // ----------------------------------------------------------------------------
 
-namespace lz4 {
+namespace lz4
+{
 
     size_t bound(size_t size)
     {
@@ -247,7 +250,8 @@ namespace lz4 {
 // lzo
 // ----------------------------------------------------------------------------
 
-namespace lzo {
+namespace lzo
+{
 
     size_t bound(size_t size)
     {
@@ -292,7 +296,8 @@ namespace lzo {
 // zstd
 // ----------------------------------------------------------------------------
 
-namespace zstd {
+namespace zstd
+{
 
     size_t bound(size_t size)
     {
@@ -445,7 +450,8 @@ namespace zstd {
 // bzip2
 // ----------------------------------------------------------------------------
 
-namespace bzip2 {
+namespace bzip2
+{
 
     size_t bound(size_t size)
     {
@@ -537,7 +543,8 @@ namespace bzip2 {
 // lzfse
 // ----------------------------------------------------------------------------
 
-namespace lzfse {
+namespace lzfse
+{
 
     size_t bound(size_t size)
     {
@@ -890,7 +897,8 @@ namespace ppmd8
 // deflate
 // ----------------------------------------------------------------------------
 
-namespace deflate {
+namespace deflate
+{
 
     const char* get_error_string(libdeflate_result result)
     {
@@ -953,7 +961,8 @@ namespace deflate {
 // zlib
 // ----------------------------------------------------------------------------
 
-namespace zlib {
+namespace zlib
+{
 
     size_t bound(size_t size)
     {
@@ -995,7 +1004,8 @@ namespace zlib {
 // gzip
 // ----------------------------------------------------------------------------
 
-namespace gzip {
+namespace gzip
+{
 
     size_t bound(size_t size)
     {

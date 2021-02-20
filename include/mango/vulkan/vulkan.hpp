@@ -62,8 +62,8 @@
 #define VULKAN_DEVICE_FUNC(func)   extern PFN_##func func
 #include "func/vk_func.hpp"
 
-namespace mango {
-namespace vulkan {
+namespace mango::vulkan
+{
 
 	const char* getResultString(VkResult result);
 	const char* getPresentModeString(VkPresentModeKHR presentMode);
@@ -174,7 +174,6 @@ namespace vulkan {
 		}
 	};
 
-} // namespace vulkan
-} // namespace mango
+} // namespace mango::vulkan
 
 #endif // MANGO_ENABLE_VULKAN

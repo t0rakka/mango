@@ -179,8 +179,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     // -----------------------------------------------------------------
     // VirtualMemoryMGX
@@ -372,7 +372,6 @@ namespace filesystem {
         return mapper;
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem
 
 #endif // MANGO_ENABLE_ARCHIVE_MGX

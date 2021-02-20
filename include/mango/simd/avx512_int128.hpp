@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // helpers
@@ -19,84 +19,84 @@ namespace simd {
 #define simd128_shuffle_epi64(a, b, mask) \
     _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), mask))
 
-namespace detail
-{
-
-    static inline __m128i simd128_not_si128(__m128i a)
+    namespace detail
     {
-        // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
-        return _mm_ternarylogic_epi32(a, a, a, 0x01);
-    }
 
-    static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
-    {
-        return _mm_blendv_epi8(b, a, mask);
-    }
+        static inline __m128i simd128_not_si128(__m128i a)
+        {
+            // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
+            return _mm_ternarylogic_epi32(a, a, a, 0x01);
+        }
+
+        static inline __m128i simd128_select_si128(__m128i mask, __m128i a, __m128i b)
+        {
+            return _mm_blendv_epi8(b, a, mask);
+        }
 
 #if defined(__x86_64__)
 
-    /*
-    static inline __m128i simd128_cvtsi64_si128(s64 a)
-    {
-        return _mm_cvtsi64_si128(a);
-    }
+        /*
+        static inline __m128i simd128_cvtsi64_si128(s64 a)
+        {
+            return _mm_cvtsi64_si128(a);
+        }
 
-    static inline s64 simd128_cvtsi128_si64(__m128i a)
-    {
-        return _mm_cvtsi128_si64(a);
-    }
-    */
+        static inline s64 simd128_cvtsi128_si64(__m128i a)
+        {
+            return _mm_cvtsi128_si64(a);
+        }
+        */
 
 #else
 
-    /*
-    static inline __m128i simd128_cvtsi64_si128(s64 a)
-    {
-        return _mm_set_epi64x(0, a);
-    }
+        /*
+        static inline __m128i simd128_cvtsi64_si128(s64 a)
+        {
+            return _mm_set_epi64x(0, a);
+        }
 
-    static inline s64 simd128_cvtsi128_si64(__m128i a)
-    {
-        u64 value = _mm_cvtsi128_si32(a);
-        value |= u64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
-        return value;
-    }
-    */
+        static inline s64 simd128_cvtsi128_si64(__m128i a)
+        {
+            u64 value = _mm_cvtsi128_si32(a);
+            value |= u64(_mm_cvtsi128_si32(simd128_shuffle_epi32(a, a, 0xee))) << 32;
+            return value;
+        }
+        */
 
 #endif
 
-    static inline __m128i simd128_srli1_epi8(__m128i a)
-    {
-        a = _mm_srli_epi16(a, 1);
-        return _mm_and_si128(a, _mm_set1_epi32(0x7f7f7f7f));
-    }
+        static inline __m128i simd128_srli1_epi8(__m128i a)
+        {
+            a = _mm_srli_epi16(a, 1);
+            return _mm_and_si128(a, _mm_set1_epi32(0x7f7f7f7f));
+        }
 
 #if 0
-    static inline __m128i simd128_srli7_epi8(__m128i a)
-    {
-        a = _mm_srli_epi16(a, 7);
-        return _mm_and_si128(a, _mm_set1_epi32(0x01010101));
-    }
+        static inline __m128i simd128_srli7_epi8(__m128i a)
+        {
+            a = _mm_srli_epi16(a, 7);
+            return _mm_and_si128(a, _mm_set1_epi32(0x01010101));
+        }
 #endif
 
-    static inline __m128i simd128_srai1_epi8(__m128i a)
-    {
-        __m128i b = _mm_slli_epi16(a, 8);
-        a = _mm_srai_epi16(a, 1);
-        b = _mm_srai_epi16(b, 1);
-        a = _mm_and_si128(a, _mm_set1_epi32(0xff00ff00));
-        b = _mm_srli_epi16(b, 8);
-        return _mm_or_si128(a, b);
-    }
+        static inline __m128i simd128_srai1_epi8(__m128i a)
+        {
+            __m128i b = _mm_slli_epi16(a, 8);
+            a = _mm_srai_epi16(a, 1);
+            b = _mm_srai_epi16(b, 1);
+            a = _mm_and_si128(a, _mm_set1_epi32(0xff00ff00));
+            b = _mm_srli_epi16(b, 8);
+            return _mm_or_si128(a, b);
+        }
 
-    static inline __m128i simd128_srai1_epi64(__m128i a)
-    {
-        __m128i sign = _mm_and_si128(a, _mm_set1_epi64x(0x8000000000000000ull));
-        a = _mm_or_si128(sign, _mm_srli_epi64(a, 1));
-        return a;
-    }
+        static inline __m128i simd128_srai1_epi64(__m128i a)
+        {
+            __m128i sign = _mm_and_si128(a, _mm_set1_epi64x(0x8000000000000000ull));
+            a = _mm_or_si128(sign, _mm_srli_epi64(a, 1));
+            return a;
+        }
 
-} // namespace detail
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // u8x16
@@ -2553,5 +2553,4 @@ namespace detail
 #undef simd128_shuffle_epi32
 #undef simd128_shuffle_epi64
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

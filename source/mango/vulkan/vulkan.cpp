@@ -70,8 +70,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace vulkan {
+namespace mango::vulkan
+{
 
 	// -----------------------------------------------------------------------
 	// Library
@@ -1076,8 +1076,7 @@ namespace vulkan {
 		return table[index].compression;
 	}
 
-} // namespace vulkan
-} // namespace mango
+} // namespace mango::vulkan
 
 #else
 

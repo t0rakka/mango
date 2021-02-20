@@ -112,7 +112,8 @@ namespace
 
 @end
 
-namespace mango {
+namespace mango
+{
 
     // -----------------------------------------------------------------------
     // OpenGLContext

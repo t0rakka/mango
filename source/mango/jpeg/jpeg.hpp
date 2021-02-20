@@ -33,8 +33,8 @@
 
 #endif
 
-namespace mango {
-namespace jpeg {
+namespace mango::jpeg
+{
 
     // ----------------------------------------------------------------------------
     // Specifications
@@ -594,5 +594,4 @@ namespace jpeg {
 	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);
 #endif
 
-} // namespace jpeg
-} // namespace mango
+} // namespace mango::jpeg

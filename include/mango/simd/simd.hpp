@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -15,8 +15,8 @@
 // Configure SIMD implementation
 // ------------------------------------------------------------------
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     using f16 = float16;
     using f32 = float32;
@@ -159,13 +159,12 @@ namespace simd {
         }
     };
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #if defined(MANGO_ENABLE_AVX512)
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // Intel AVX512 vector intrinsics
@@ -240,8 +239,7 @@ namespace simd {
     using mask32x16 = hardware_mask<32, 16, __mmask16>;
     using mask64x8  = hardware_mask<64, 8, __mmask8>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
@@ -259,8 +257,8 @@ namespace simd {
 
 #elif defined(MANGO_ENABLE_AVX2)
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // Intel AVX2 vector intrinsics
@@ -333,8 +331,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
@@ -352,8 +349,8 @@ namespace simd {
 
 #elif defined(MANGO_ENABLE_AVX)
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // Intel AVX vector intrinsics
@@ -425,8 +422,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
@@ -444,8 +440,8 @@ namespace simd {
 
 #elif defined(MANGO_ENABLE_SSE2)
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // Intel SSE2 vector intrinsics
@@ -516,8 +512,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
@@ -535,8 +530,8 @@ namespace simd {
 
 #elif defined(MANGO_ENABLE_NEON)
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // ARM NEON vector instrinsics
@@ -629,8 +624,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
@@ -651,8 +645,8 @@ namespace simd {
 #include <altivec.h>
 //#include <builtins.h>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // Altivec / VSX
@@ -727,8 +721,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 // <altivec.h> defined these; clean up
 #undef bool
@@ -754,8 +747,8 @@ namespace simd {
 
 #elif defined(MANGO_ENABLE_MSA)
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // MIPS MSA
@@ -826,8 +819,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
@@ -845,8 +837,8 @@ namespace simd {
 
 #else
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // --------------------------------------------------------------
     // SIMD emulation
@@ -912,8 +904,7 @@ namespace simd {
     using mask32x16 = composite_mask<mask32x8>;
     using mask64x8  = composite_mask<mask64x4>;
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>

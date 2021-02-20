@@ -1,138 +1,139 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 #include <mango/simd/common.hpp>
 
-namespace mango {
-namespace simd {
-namespace detail {
+namespace mango::simd
+{
+    namespace detail
+    {
 
-	template <int bits>
-	struct reinterpret_vector;
+        template <int bits>
+        struct reinterpret_vector;
 
-	template <>
-	struct reinterpret_vector<128>
-	{
-		__m128 data;
+        template <>
+        struct reinterpret_vector<128>
+        {
+            __m128 data;
 
-	    template <typename ScalarType, int VectorSize, typename VectorType>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-            : data(v)
-	    {
-	    }
+            template <typename ScalarType, int VectorSize, typename VectorType>
+            reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
+                : data(v)
+            {
+            }
 
-	    template <typename ScalarType, int VectorSize>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128i> v)
-            : data(_mm_castsi128_ps(v))
-	    {
-	    }
+            template <typename ScalarType, int VectorSize>
+            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128i> v)
+                : data(_mm_castsi128_ps(v))
+            {
+            }
 
-	    template <typename ScalarType, int VectorSize>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128d> v)
-            : data(_mm_castpd_ps(v))
-	    {
-	    }
+            template <typename ScalarType, int VectorSize>
+            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128d> v)
+                : data(_mm_castpd_ps(v))
+            {
+            }
 
-		template <typename ScalarType, int VectorSize, typename VectorType>
-		operator hardware_vector<ScalarType, VectorSize, VectorType> ()
-		{
-			return hardware_vector<ScalarType, VectorSize, VectorType>(data);
-		}
+            template <typename ScalarType, int VectorSize, typename VectorType>
+            operator hardware_vector<ScalarType, VectorSize, VectorType> ()
+            {
+                return hardware_vector<ScalarType, VectorSize, VectorType>(data);
+            }
 
-		template <typename ScalarType, int VectorSize>
-		operator hardware_vector<ScalarType, VectorSize, __m128i> ()
-		{
-			return hardware_vector<ScalarType, VectorSize, __m128i>(_mm_castps_si128(data));
-		}
+            template <typename ScalarType, int VectorSize>
+            operator hardware_vector<ScalarType, VectorSize, __m128i> ()
+            {
+                return hardware_vector<ScalarType, VectorSize, __m128i>(_mm_castps_si128(data));
+            }
 
-		template <typename ScalarType, int VectorSize>
-		operator hardware_vector<ScalarType, VectorSize, __m128d> ()
-		{
-			return hardware_vector<ScalarType, VectorSize, __m128d>(_mm_castps_pd(data));
-		}
-	};
+            template <typename ScalarType, int VectorSize>
+            operator hardware_vector<ScalarType, VectorSize, __m128d> ()
+            {
+                return hardware_vector<ScalarType, VectorSize, __m128d>(_mm_castps_pd(data));
+            }
+        };
 
-	template <>
-	struct reinterpret_vector<256>
-	{
-	    __m256 data;
+        template <>
+        struct reinterpret_vector<256>
+        {
+            __m256 data;
 
-	    template <typename ScalarType, int VectorSize, typename VectorType>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-            : data(v)
-	    {
-	    }
+            template <typename ScalarType, int VectorSize, typename VectorType>
+            reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
+                : data(v)
+            {
+            }
 
-	    template <typename ScalarType, int VectorSize>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256i> v)
-            : data(_mm256_castsi256_ps(v))
-	    {
-	    }
+            template <typename ScalarType, int VectorSize>
+            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256i> v)
+                : data(_mm256_castsi256_ps(v))
+            {
+            }
 
-	    template <typename ScalarType, int VectorSize>
-	    reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256d> v)
-            : data(_mm256_castpd_ps(v))
-	    {
-	    }
+            template <typename ScalarType, int VectorSize>
+            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256d> v)
+                : data(_mm256_castpd_ps(v))
+            {
+            }
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-	    {
-		    std::memcpy(this, &v, 32);
-	    }
+            template <typename T>
+            reinterpret_vector(composite_vector<T> v)
+            {
+                std::memcpy(this, &v, 32);
+            }
 
-    	template <typename ScalarType, int VectorSize, typename VectorType>
-    	operator hardware_vector<ScalarType, VectorSize, VectorType> ()
-	    {
-		    return hardware_vector<ScalarType, VectorSize, VectorType>(data);
-	    }
+            template <typename ScalarType, int VectorSize, typename VectorType>
+            operator hardware_vector<ScalarType, VectorSize, VectorType> ()
+            {
+                return hardware_vector<ScalarType, VectorSize, VectorType>(data);
+            }
 
-	    template <typename ScalarType, int VectorSize>
-	    operator hardware_vector<ScalarType, VectorSize, __m256i> ()
-	    {
-		    return hardware_vector<ScalarType, VectorSize, __m256i>(_mm256_castps_si256(data));
-	    }
+            template <typename ScalarType, int VectorSize>
+            operator hardware_vector<ScalarType, VectorSize, __m256i> ()
+            {
+                return hardware_vector<ScalarType, VectorSize, __m256i>(_mm256_castps_si256(data));
+            }
 
-	    template <typename ScalarType, int VectorSize>
-	    operator hardware_vector<ScalarType, VectorSize, __m256d> ()
-	    {
-		    return hardware_vector<ScalarType, VectorSize, __m256d>(_mm256_castps_pd(data));
-	    }
+            template <typename ScalarType, int VectorSize>
+            operator hardware_vector<ScalarType, VectorSize, __m256d> ()
+            {
+                return hardware_vector<ScalarType, VectorSize, __m256d>(_mm256_castps_pd(data));
+            }
 
-	    template <typename T>
-	    operator composite_vector<T> ()
-	    {
-    		composite_vector<T> temp;
-		    std::memcpy(&temp, this, 32);
-		    return temp;
-	    }
-    };
+            template <typename T>
+            operator composite_vector<T> ()
+            {
+                composite_vector<T> temp;
+                std::memcpy(&temp, this, 32);
+                return temp;
+            }
+        };
 
-	template <>
-	struct reinterpret_vector<512>
-	{
-        reinterpret_vector<256> lo;
-        reinterpret_vector<256> hi;
+        template <>
+        struct reinterpret_vector<512>
+        {
+            reinterpret_vector<256> lo;
+            reinterpret_vector<256> hi;
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-            : lo(v.lo)
-            , hi(v.hi)
-	    {
-	    }
+            template <typename T>
+            reinterpret_vector(composite_vector<T> v)
+                : lo(v.lo)
+                , hi(v.hi)
+            {
+            }
 
-		template <typename T>
-		operator composite_vector<T> ()
-		{
-            return composite_vector<T>(lo, hi);
-		}
-	};
+            template <typename T>
+            operator composite_vector<T> ()
+            {
+                return composite_vector<T>(lo, hi);
+            }
+        };
 
-} // namespace detail
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -1147,5 +1148,4 @@ namespace detail {
 
 #endif // MANGO_ENABLE_F16C
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

@@ -125,8 +125,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace jpeg {
+namespace mango::jpeg
+{
 
     // ------------------------------------------------------------------------------------------------
     // Generic C++ implementation
@@ -574,5 +574,4 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
 
 #endif // JPEG_ENABLE_NEON
 
-} // namespace jpeg
-} // namespace mango
+} // namespace mango::jpeg

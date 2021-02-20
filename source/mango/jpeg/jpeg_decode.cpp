@@ -8,8 +8,8 @@
 #include <mango/core/thread.hpp>
 #include "jpeg.hpp"
 
-namespace mango {
-namespace jpeg {
+namespace mango::jpeg
+{
 
     // ----------------------------------------------------------------------------
     // utilities
@@ -2391,5 +2391,4 @@ namespace jpeg {
         }
     }
 
-} // namespace jpeg
-} // namespace mango
+} // namespace mango::jpeg

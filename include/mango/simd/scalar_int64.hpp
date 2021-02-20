@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/scalar_detail.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // u32x2
@@ -189,5 +189,4 @@ namespace simd {
         return detail::scalar_unroll(detail::scalar_max, a, b);
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

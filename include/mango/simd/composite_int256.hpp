@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
 #define SIMD_SET_COMPONENT(vec, value, mask, index) \
     if (index <= mask) vec.lo = set_component<index & mask>(vec.lo, value); \
@@ -1459,5 +1459,4 @@ namespace simd {
 #undef SIMD_COMPOSITE_MASK_FUNC1
 #undef SIMD_COMPOSITE_MASK_FUNC2
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

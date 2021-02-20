@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -8,8 +8,8 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     // -----------------------------------------------------------------
     // extension registry
@@ -301,5 +301,4 @@ namespace filesystem {
         return false;
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

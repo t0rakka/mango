@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,56 +10,59 @@
 #include <mango/core/configure.hpp>
 #include <mango/core/object.hpp>
 
-namespace mango {
-namespace detail {
+namespace mango
+{
 
-    template <typename T>
-    struct Memory
+    namespace detail
     {
-        T* address;
-        size_t size;
 
-        Memory()
-            : address(nullptr)
-            , size(0)
+        template <typename T>
+        struct Memory
         {
-        }
+            T* address;
+            size_t size;
 
-        Memory(T* address, size_t bytes)
-            : address(address)
-            , size(bytes)
-        {
-        }
-
-        operator T* () const
-        {
-            return address;
-        }
-
-        template <typename S>
-        operator Memory<S> () const
-        {
-            return Memory<S>(address, size);
-        }
-
-        template <typename S>
-        S* cast() const
-        {
-            return reinterpret_cast<S*>(address);
-        }
-
-        Memory slice(size_t slice_offset, size_t slice_size = 0) const
-        {
-            Memory memory(address + slice_offset, size - slice_offset);
-            if (slice_size)
+            Memory()
+                : address(nullptr)
+                , size(0)
             {
-                memory.size = std::min(memory.size, slice_size);
             }
-            return memory;
-        }
-    };
 
-} // namespace detail
+            Memory(T* address, size_t bytes)
+                : address(address)
+                , size(bytes)
+            {
+            }
+
+            operator T* () const
+            {
+                return address;
+            }
+
+            template <typename S>
+            operator Memory<S> () const
+            {
+                return Memory<S>(address, size);
+            }
+
+            template <typename S>
+            S* cast() const
+            {
+                return reinterpret_cast<S*>(address);
+            }
+
+            Memory slice(size_t slice_offset, size_t slice_size = 0) const
+            {
+                Memory memory(address + slice_offset, size - slice_offset);
+                if (slice_size)
+                {
+                    memory.size = std::min(memory.size, slice_size);
+                }
+                return memory;
+            }
+        };
+
+    } // namespace detail
 
     // -----------------------------------------------------------------------
     // memory

@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     // -----------------------------------------------------------------
     // File
@@ -123,5 +123,4 @@ namespace filesystem {
         return m_memory ? *m_memory : ConstMemory();
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

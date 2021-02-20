@@ -6,8 +6,8 @@
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     // -----------------------------------------------------------------
     // FileHandle
@@ -167,5 +167,4 @@ namespace filesystem {
 		m_handle->write(data, size);
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

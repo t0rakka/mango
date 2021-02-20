@@ -8,7 +8,8 @@
 #define XXH_INLINE_ALL
 #include "../../external/zstd/common/xxhash.h"
 
-namespace mango {
+namespace mango
+{
 
     u32 xxhash32(u32 seed, ConstMemory memory)
     {

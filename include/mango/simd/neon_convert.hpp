@@ -1,221 +1,221 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 #include <mango/simd/common.hpp>
 
-namespace mango {
-namespace simd {
-namespace detail {
+namespace mango::simd
+{
+    namespace detail
+    {
 
-	template <int bits>
-	struct reinterpret_vector;
+        template <int bits>
+        struct reinterpret_vector;
 
-	template <>
-	struct reinterpret_vector<128>
-	{
-        uint32x4_t data;
+        template <>
+        struct reinterpret_vector<128>
+        {
+            uint32x4_t data;
 
-        reinterpret_vector() = default;
+            reinterpret_vector() = default;
 
-		reinterpret_vector(s8x16 v)
-            : data(vreinterpretq_u32_s8(v))
-		{
-		}
+            reinterpret_vector(s8x16 v)
+                : data(vreinterpretq_u32_s8(v))
+            {
+            }
 
-		reinterpret_vector(s16x8 v)
-            : data(vreinterpretq_u32_s16(v))
-		{
-		}
+            reinterpret_vector(s16x8 v)
+                : data(vreinterpretq_u32_s16(v))
+            {
+            }
 
-		reinterpret_vector(s32x4 v)
-            : data(vreinterpretq_u32_s32(v))
-		{
-		}
+            reinterpret_vector(s32x4 v)
+                : data(vreinterpretq_u32_s32(v))
+            {
+            }
 
-		reinterpret_vector(s64x2 v)
-            : data(vreinterpretq_u32_s64(v))
-		{
-		}
+            reinterpret_vector(s64x2 v)
+                : data(vreinterpretq_u32_s64(v))
+            {
+            }
 
-		reinterpret_vector(u8x16 v)
-            : data(vreinterpretq_u32_u8(v))
-		{
-		}
+            reinterpret_vector(u8x16 v)
+                : data(vreinterpretq_u32_u8(v))
+            {
+            }
 
-		reinterpret_vector(u16x8 v)
-            : data(vreinterpretq_u32_u16(v))
-		{
-		}
+            reinterpret_vector(u16x8 v)
+                : data(vreinterpretq_u32_u16(v))
+            {
+            }
 
-		reinterpret_vector(u32x4 v)
-            : data(v)
-		{
-		}
+            reinterpret_vector(u32x4 v)
+                : data(v)
+            {
+            }
 
-		reinterpret_vector(u64x2 v)
-            : data(vreinterpretq_u32_u64(v))
-		{
-		}
+            reinterpret_vector(u64x2 v)
+                : data(vreinterpretq_u32_u64(v))
+            {
+            }
 
-		reinterpret_vector(f32x4 v)
-            : data(vreinterpretq_u32_f32(v))
-		{
-		}
-
-#ifdef __aarch64__
-
-		reinterpret_vector(f64x2 v)
-            : data(vreinterpretq_u32_f64(v))
-		{
-		}
-
-#else
-
-		reinterpret_vector(f64x2 v)
-		{
-            std::memcpy(&data, &v, 16);
-		}
-
-#endif
-
-		operator s8x16 ()
-		{
-			return vreinterpretq_s8_u32(data);
-		}
-
-		operator s16x8 ()
-		{
-			return vreinterpretq_s16_u32(data);
-		}
-
-		operator s32x4 ()
-		{
-			return vreinterpretq_s32_u32(data);
-		}
-
-		operator s64x2 ()
-		{
-			return vreinterpretq_s64_u32(data);
-		}
-
-		operator u8x16 ()
-		{
-			return vreinterpretq_u8_u32(data);
-		}
-
-		operator u16x8 ()
-		{
-			return vreinterpretq_u16_u32(data);
-		}
-
-		operator u32x4 ()
-		{
-			return data;
-		}
-
-		operator u64x2 ()
-		{
-			return vreinterpretq_u64_u32(data);
-		}
-
-		operator f32x4 ()
-		{
-			return vreinterpretq_f32_u32(data);
-		}
+            reinterpret_vector(f32x4 v)
+                : data(vreinterpretq_u32_f32(v))
+            {
+            }
 
 #ifdef __aarch64__
 
-		operator f64x2 ()
-		{
-			return vreinterpretq_f64_u32(data);
-		}
+            reinterpret_vector(f64x2 v)
+                : data(vreinterpretq_u32_f64(v))
+            {
+            }
 
 #else
 
-		operator f64x2 ()
-		{
-            f64x2 temp;
-            std::memcpy(&temp, &data, 16);
-            return temp;
-		}
+            reinterpret_vector(f64x2 v)
+            {
+                std::memcpy(&data, &v, 16);
+            }
 
 #endif
 
-	};
+            operator s8x16 ()
+            {
+                return vreinterpretq_s8_u32(data);
+            }
 
-	template <>
-	struct reinterpret_vector<256>
-	{
-        reinterpret_vector<128> lo;
-        reinterpret_vector<128> hi;
+            operator s16x8 ()
+            {
+                return vreinterpretq_s16_u32(data);
+            }
 
-        reinterpret_vector() = default;
+            operator s32x4 ()
+            {
+                return vreinterpretq_s32_u32(data);
+            }
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-            : lo(v.lo)
-            , hi(v.hi)
-	    {
-	    }
+            operator s64x2 ()
+            {
+                return vreinterpretq_s64_u32(data);
+            }
 
-		reinterpret_vector(f64x4 v)
-		{
-            std::memcpy(this, &v, 32);
-		}
+            operator u8x16 ()
+            {
+                return vreinterpretq_u8_u32(data);
+            }
 
-		template <typename T>
-		operator composite_vector<T> ()
-		{
-            return composite_vector<T>(lo, hi);
-		}
+            operator u16x8 ()
+            {
+                return vreinterpretq_u16_u32(data);
+            }
 
-		operator f64x4 ()
-		{
-            f64x4 temp;
-            std::memcpy(&temp, this, 32);
-            return temp;
-		}
-	};
+            operator u32x4 ()
+            {
+                return data;
+            }
 
-	template <>
-	struct reinterpret_vector<512>
-	{
-        reinterpret_vector<256> lo;
-        reinterpret_vector<256> hi;
+            operator u64x2 ()
+            {
+                return vreinterpretq_u64_u32(data);
+            }
 
-        reinterpret_vector() = default;
+            operator f32x4 ()
+            {
+                return vreinterpretq_f32_u32(data);
+            }
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-            : lo(v.lo)
-            , hi(v.hi)
-	    {
-	    }
+#ifdef __aarch64__
 
-		reinterpret_vector(f64x8 v)
-		{
-            std::memcpy(this, &v, 64);
-		}
+            operator f64x2 ()
+            {
+                return vreinterpretq_f64_u32(data);
+            }
 
-		template <typename T>
-		operator composite_vector<T> ()
-		{
-            return composite_vector<T>(lo, hi);
-		}
+#else
 
-		operator f64x8 ()
-		{
-            f64x8 temp;
-            std::memcpy(&temp, this, 64);
-            return temp;
-		}
-	};
+            operator f64x2 ()
+            {
+                f64x2 temp;
+                std::memcpy(&temp, &data, 16);
+                return temp;
+            }
 
-} // namespace detail
+#endif
+        };
+
+        template <>
+        struct reinterpret_vector<256>
+        {
+            reinterpret_vector<128> lo;
+            reinterpret_vector<128> hi;
+
+            reinterpret_vector() = default;
+
+            template <typename T>
+            reinterpret_vector(composite_vector<T> v)
+                : lo(v.lo)
+                , hi(v.hi)
+            {
+            }
+
+            reinterpret_vector(f64x4 v)
+            {
+                std::memcpy(this, &v, 32);
+            }
+
+            template <typename T>
+            operator composite_vector<T> ()
+            {
+                return composite_vector<T>(lo, hi);
+            }
+
+            operator f64x4 ()
+            {
+                f64x4 temp;
+                std::memcpy(&temp, this, 32);
+                return temp;
+            }
+        };
+
+        template <>
+        struct reinterpret_vector<512>
+        {
+            reinterpret_vector<256> lo;
+            reinterpret_vector<256> hi;
+
+            reinterpret_vector() = default;
+
+            template <typename T>
+            reinterpret_vector(composite_vector<T> v)
+                : lo(v.lo)
+                , hi(v.hi)
+            {
+            }
+
+            reinterpret_vector(f64x8 v)
+            {
+                std::memcpy(this, &v, 64);
+            }
+
+            template <typename T>
+            operator composite_vector<T> ()
+            {
+                return composite_vector<T>(lo, hi);
+            }
+
+            operator f64x8 ()
+            {
+                f64x8 temp;
+                std::memcpy(&temp, this, 64);
+                return temp;
+            }
+        };
+
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -1163,5 +1163,4 @@ namespace detail {
 
 #endif // MANGO_ENABLE_FP16
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

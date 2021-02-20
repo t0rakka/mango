@@ -1,63 +1,64 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------
 
-namespace detail {
-
-    static inline __m256i simd256_not_si256(__m256i a)
+    namespace detail
     {
-        // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
-        return _mm256_ternarylogic_epi32(a, a, a, 0x01);
-    }
 
-    static inline __m256i simd256_select_si256(__m256i mask, __m256i a, __m256i b)
-    {
-        return _mm256_blendv_epi8(b, a, mask);
-    }
+        static inline __m256i simd256_not_si256(__m256i a)
+        {
+            // 3 bit index will be either 000 or 111 as same 'a' is used for all bits
+            return _mm256_ternarylogic_epi32(a, a, a, 0x01);
+        }
 
-    static inline __m256i simd256_srli1_epi8(__m256i a)
-    {
-        a = _mm256_srli_epi16(a, 1);
-        return _mm256_and_si256(a, _mm256_set1_epi32(0x7f7f7f7f));
-    }
+        static inline __m256i simd256_select_si256(__m256i mask, __m256i a, __m256i b)
+        {
+            return _mm256_blendv_epi8(b, a, mask);
+        }
+
+        static inline __m256i simd256_srli1_epi8(__m256i a)
+        {
+            a = _mm256_srli_epi16(a, 1);
+            return _mm256_and_si256(a, _mm256_set1_epi32(0x7f7f7f7f));
+        }
 
 #if 0
-    static inline __m256i simd256_srli7_epi8(__m256i a)
-    {
-        a = _mm256_srli_epi16(a, 7);
-        return _mm256_and_si256(a, _mm256_set1_epi32(0x01010101));
-    }
+        static inline __m256i simd256_srli7_epi8(__m256i a)
+        {
+            a = _mm256_srli_epi16(a, 7);
+            return _mm256_and_si256(a, _mm256_set1_epi32(0x01010101));
+        }
 #endif
 
-    static inline __m256i simd256_srai1_epi8(__m256i a)
-    {
-        __m256i b = _mm256_slli_epi16(a, 8);
-        a = _mm256_srai_epi16(a, 1);
-        b = _mm256_srai_epi16(b, 1);
-        a = _mm256_and_si256(a, _mm256_set1_epi32(0xff00ff00));
-        b = _mm256_srli_epi16(b, 8);
-        return _mm256_or_si256(a, b);
-    }
+        static inline __m256i simd256_srai1_epi8(__m256i a)
+        {
+            __m256i b = _mm256_slli_epi16(a, 8);
+            a = _mm256_srai_epi16(a, 1);
+            b = _mm256_srai_epi16(b, 1);
+            a = _mm256_and_si256(a, _mm256_set1_epi32(0xff00ff00));
+            b = _mm256_srli_epi16(b, 8);
+            return _mm256_or_si256(a, b);
+        }
 
-    static inline __m256i simd256_srai1_epi64(__m256i a)
-    {
-        __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(0x8000000000000000ull));
-        a = _mm256_or_si256(sign, _mm256_srli_epi64(a, 1));
-        return a;
-    }
+        static inline __m256i simd256_srai1_epi64(__m256i a)
+        {
+            __m256i sign = _mm256_and_si256(a, _mm256_set1_epi64x(0x8000000000000000ull));
+            a = _mm256_or_si256(sign, _mm256_srli_epi64(a, 1));
+            return a;
+        }
 
-} // namespace detail
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // u8x32
@@ -2358,5 +2359,4 @@ namespace detail {
         return get_mask(a) == 0xf;
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

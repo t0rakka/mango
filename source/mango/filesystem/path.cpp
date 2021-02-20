@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <mango/filesystem/path.hpp>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     // -----------------------------------------------------------------
     // Path
@@ -89,5 +89,4 @@ namespace filesystem {
         return filename.substr(0, n);
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

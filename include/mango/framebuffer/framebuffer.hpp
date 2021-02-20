@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/window//window.hpp>
 
-namespace mango {
-namespace framebuffer {
+namespace mango::framebuffer
+{
 
     // -------------------------------------------------------------------
     // Framebuffer
@@ -27,5 +27,4 @@ namespace framebuffer {
         void present();
     };
 
-} // namespace framebuffer
-} // namespace mango
+} // namespace mango::framebuffer

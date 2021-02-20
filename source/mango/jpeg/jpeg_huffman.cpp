@@ -5,8 +5,8 @@
 #include <cstring>
 #include "jpeg.hpp"
 
-namespace mango {
-namespace jpeg {
+namespace mango::jpeg
+{
 
     // ----------------------------------------------------------------------------
     // Huffman
@@ -416,5 +416,4 @@ namespace jpeg {
         }
     }
 
-} // namespace jpeg
-} // namespace mango
+} // namespace mango::jpeg

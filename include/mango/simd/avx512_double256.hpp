@@ -1,13 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 
-namespace mango {
-namespace simd {
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // f64x4
@@ -480,5 +480,4 @@ namespace simd {
         return _mm256_sub_pd(s, _mm256_floor_pd(s));
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

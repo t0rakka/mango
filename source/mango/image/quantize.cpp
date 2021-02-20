@@ -298,8 +298,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace image {
+namespace mango::image
+{
 
     ColorQuantizer::ColorQuantizer(const Surface& source, float quality)
     {
@@ -532,5 +532,4 @@ namespace image {
         return best;
     }
 
-} // namespace image
-} // namespace mango
+} // namespace mango::image

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -8,8 +8,8 @@
 #include <mango/core/configure.hpp>
 #include <mango/core/object.hpp>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     class FileObserver : protected NonCopyable
     {
@@ -44,5 +44,4 @@ namespace filesystem {
         virtual void onEvent(u32 flags, const std::string& filename) = 0;
     };
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem

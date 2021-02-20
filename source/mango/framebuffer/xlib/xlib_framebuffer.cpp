@@ -6,8 +6,8 @@
 #include <mango/core/exception.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
 
-namespace mango {
-namespace framebuffer {
+namespace mango::framebuffer
+{
 
     struct FramebufferContext
     {
@@ -96,5 +96,4 @@ namespace framebuffer {
         m_context->present();
     }
 
-} // namespace framebuffer
-} // namespace mango
+} // namespace mango::framebuffer

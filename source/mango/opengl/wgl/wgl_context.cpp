@@ -62,7 +62,8 @@ static void init_glext_extensions()
 
 #undef GLEXT_PROC
 
-namespace mango {
+namespace mango
+{
 
     // -----------------------------------------------------------------------
     // OpenGLContextHandle

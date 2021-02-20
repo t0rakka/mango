@@ -669,8 +669,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace image {
+namespace mango::image
+{
 
     Exif::Exif()
     {
@@ -725,5 +725,4 @@ namespace image {
         parseIFD(*this, p, start, littleEndian);
     }
 
-} // namespace image
-} // namespace mango
+} // namespace mango::image

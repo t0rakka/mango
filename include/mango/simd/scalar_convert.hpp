@@ -1,41 +1,42 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 #include <mango/simd/common.hpp>
 
-namespace mango {
-namespace simd {
-namespace detail {
-
-    template <typename D, typename S>
-    inline D extend(S s)
+namespace mango::simd
+{
+    namespace detail
     {
-        D temp;
-        for (int i = 0; i < D::size; ++i)
-        {
-            temp[i] = s[i];
-        }
-        return temp;
-    }
 
-    template <typename D, typename S>
-    inline D extend_composite(S s)
-    {
-        constexpr int halfsize = D::size / 2;
-        D temp;
-        for (int i = 0; i < halfsize; ++i)
+        template <typename D, typename S>
+        inline D extend(S s)
         {
-            temp.lo[i] = s[i + 0];
-            temp.hi[i] = s[i + halfsize];
+            D temp;
+            for (int i = 0; i < D::size; ++i)
+            {
+                temp[i] = s[i];
+            }
+            return temp;
         }
-        return temp;
-    }
 
-} // namespace detail
+        template <typename D, typename S>
+        inline D extend_composite(S s)
+        {
+            constexpr int halfsize = D::size / 2;
+            D temp;
+            for (int i = 0; i < halfsize; ++i)
+            {
+                temp.lo[i] = s[i + 0];
+                temp.hi[i] = s[i + halfsize];
+            }
+            return temp;
+        }
+
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -821,5 +822,4 @@ namespace detail {
         return v;
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

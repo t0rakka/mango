@@ -37,7 +37,8 @@ namespace
 
 } // namespace
 
-namespace mango {
+namespace mango
+{
 
     // -----------------------------------------------------------------------
     // OpenGLContextHandle

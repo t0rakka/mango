@@ -1,168 +1,169 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/simd/simd.hpp>
 #include <mango/simd/common.hpp>
 
-namespace mango {
-namespace simd {
-namespace detail {
+namespace mango::simd
+{
+    namespace detail
+    {
 
-	template <int bits>
-	struct reinterpret_vector;
+        template <int bits>
+        struct reinterpret_vector;
 
-	template <>
-	struct reinterpret_vector<128>
-	{
-        u32x4::vector data;
+        template <>
+        struct reinterpret_vector<128>
+        {
+            u32x4::vector data;
 
-        reinterpret_vector() = default;
+            reinterpret_vector() = default;
 
-		reinterpret_vector(s8x16 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(s8x16 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(s16x8 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(s16x8 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(s32x4 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(s32x4 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(s64x2 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(s64x2 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(u8x16 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(u8x16 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(u16x8 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(u16x8 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(u32x4 v)
-            : data(v.data)
-		{
-		}
+            reinterpret_vector(u32x4 v)
+                : data(v.data)
+            {
+            }
 
-		reinterpret_vector(u64x2 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(u64x2 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(f32x4 v)
-            : data((u32x4::vector) v.data)
-		{
-		}
+            reinterpret_vector(f32x4 v)
+                : data((u32x4::vector) v.data)
+            {
+            }
 
-		reinterpret_vector(f64x2 v)
-		{
-            std::memcpy(&data, &v, 16);
-		}
+            reinterpret_vector(f64x2 v)
+            {
+                std::memcpy(&data, &v, 16);
+            }
 
-		operator s8x16 ()
-		{
-            return (s8x16::vector) data;
-		}
+            operator s8x16 ()
+            {
+                return (s8x16::vector) data;
+            }
 
-		operator s16x8 ()
-		{
-            return (s16x8::vector) data;
-		}
+            operator s16x8 ()
+            {
+                return (s16x8::vector) data;
+            }
 
-		operator s32x4 ()
-		{
-            return (s32x4::vector) data;
-		}
+            operator s32x4 ()
+            {
+                return (s32x4::vector) data;
+            }
 
-		operator s64x2 ()
-		{
-            return (s64x2::vector) data;
-		}
+            operator s64x2 ()
+            {
+                return (s64x2::vector) data;
+            }
 
-		operator u8x16 ()
-		{
-            return (u8x16::vector) data;
-		}
+            operator u8x16 ()
+            {
+                return (u8x16::vector) data;
+            }
 
-		operator u16x8 ()
-		{
-            return (u16x8::vector) data;
-		}
+            operator u16x8 ()
+            {
+                return (u16x8::vector) data;
+            }
 
-		operator u32x4 ()
-		{
-			return data;
-		}
+            operator u32x4 ()
+            {
+                return data;
+            }
 
-		operator u64x2 ()
-		{
-            return (u64x2::vector) data;
-		}
+            operator u64x2 ()
+            {
+                return (u64x2::vector) data;
+            }
 
-		operator f32x4 ()
-		{
-            return (f32x4::vector) data;
-		}
+            operator f32x4 ()
+            {
+                return (f32x4::vector) data;
+            }
 
-		operator f64x2 ()
-		{
-            return (f64x2::vector) data;
-		}
-	};
+            operator f64x2 ()
+            {
+                return (f64x2::vector) data;
+            }
+        };
 
-	template <>
-	struct reinterpret_vector<256>
-	{
-        reinterpret_vector<128> lo;
-        reinterpret_vector<128> hi;
+        template <>
+        struct reinterpret_vector<256>
+        {
+            reinterpret_vector<128> lo;
+            reinterpret_vector<128> hi;
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-            : lo(v.lo)
-            , hi(v.hi)
-	    {
-	    }
+            template <typename T>
+            reinterpret_vector(composite_vector<T> v)
+                : lo(v.lo)
+                , hi(v.hi)
+            {
+            }
 
-		template <typename T>
-		operator composite_vector<T> ()
-		{
-            return composite_vector<T>(lo, hi);
-		}
-	};
+            template <typename T>
+            operator composite_vector<T> ()
+            {
+                return composite_vector<T>(lo, hi);
+            }
+        };
 
-	template <>
-	struct reinterpret_vector<512>
-	{
-        reinterpret_vector<256> lo;
-        reinterpret_vector<256> hi;
+        template <>
+        struct reinterpret_vector<512>
+        {
+            reinterpret_vector<256> lo;
+            reinterpret_vector<256> hi;
 
-	    template <typename T>
-	    reinterpret_vector(composite_vector<T> v)
-            : lo(v.lo)
-            , hi(v.hi)
-	    {
-	    }
+            template <typename T>
+            reinterpret_vector(composite_vector<T> v)
+                : lo(v.lo)
+                , hi(v.hi)
+            {
+            }
 
-		template <typename T>
-		operator composite_vector<T> ()
-		{
-            return composite_vector<T>(lo, hi);
-		}
-    };
+            template <typename T>
+            operator composite_vector<T> ()
+            {
+                return composite_vector<T>(lo, hi);
+            }
+        };
 
-} // namespace detail
+    } // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret
@@ -929,5 +930,4 @@ namespace detail {
         return v;
     }
 
-} // namespace simd
-} // namespace mango
+} // namespace mango::simd

@@ -557,8 +557,8 @@ namespace
 
 @end
 
-namespace mango {    
-namespace framebuffer {
+namespace mango::framebuffer
+{
 
 	// -------------------------------------------------------------------
 	// FramebufferContext
@@ -748,5 +748,4 @@ namespace framebuffer {
         m_context->present();
     }
 
-} // namespace framebuffer
-} // namespace mango
+} // namespace mango::framebuffer

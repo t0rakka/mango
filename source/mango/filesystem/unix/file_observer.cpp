@@ -20,8 +20,8 @@
 #include <unistd.h>
 #include <limits.h>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     enum
     {
@@ -188,8 +188,7 @@ namespace filesystem {
         }
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem
 
 #elif defined(MANGO_PLATFORM_BSD) || defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS)
 
@@ -204,8 +203,8 @@ namespace filesystem {
 #include <sys/event.h>
 #include <unistd.h>
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     struct FileObserverState
     {
@@ -291,8 +290,7 @@ namespace filesystem {
         }
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem
 
 #else
 
@@ -302,8 +300,8 @@ namespace filesystem {
 // 
 // -----------------------------------------------------------------
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     FileObserver::FileObserver()
         : m_state(nullptr)
@@ -323,7 +321,6 @@ namespace filesystem {
     {
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem
 
 #endif

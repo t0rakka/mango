@@ -400,8 +400,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace filesystem {
+namespace mango::filesystem
+{
 
     // -----------------------------------------------------------------
     // MapperRAR
@@ -751,7 +751,6 @@ namespace filesystem {
         return mapper;
     }
 
-} // namespace filesystem
-} // namespace mango
+} // namespace mango::filesystem
 
 #endif // MANGO_ENABLE_ARCHIVE_RAR

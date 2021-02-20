@@ -5,7 +5,8 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
 
-namespace mango {
+namespace mango
+{
 
     // ----------------------------------------------------------------------------
     // Buffer

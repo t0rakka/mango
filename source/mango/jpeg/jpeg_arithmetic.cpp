@@ -138,8 +138,8 @@ namespace
 
 } // namespace
 
-namespace mango {
-namespace jpeg {
+namespace mango::jpeg
+{
 
     // ----------------------------------------------------------------------------
     // arithmetic decoder
@@ -605,13 +605,12 @@ namespace jpeg {
         }
     }
 
-} // namespace jpeg
-} // namespace mango
+} // namespace mango::jpeg
 
 #else // MANGO_ENABLE_LICENSE_BSD
 
 // no license -> no arithmetic decoder
-namespace jpeg
+namespace mango::jpeg
 {
     Arithmetic::Arithmetic()
     {
@@ -624,6 +623,6 @@ namespace jpeg
     void Arithmetic::restart(BitBuffer& buffer)
     {
     }
-} // namespace jpeg
+} // namespace mango::jpeg
 
 #endif // MANGO_ENABLE_LICENSE_BSD
