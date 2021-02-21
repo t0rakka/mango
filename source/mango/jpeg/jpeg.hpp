@@ -488,16 +488,12 @@ namespace mango::jpeg
     void huff_decode_ac_first       (s16* output, DecodeState* state);
     void huff_decode_ac_refine      (s16* output, DecodeState* state);
 
-#ifdef MANGO_ENABLE_LICENSE_BSD
-
     void arith_decode_mcu_lossless  (s16* output, DecodeState* state);
     void arith_decode_mcu           (s16* output, DecodeState* state);
     void arith_decode_dc_first      (s16* output, DecodeState* state);
     void arith_decode_dc_refine     (s16* output, DecodeState* state);
     void arith_decode_ac_first      (s16* output, DecodeState* state);
     void arith_decode_ac_refine     (s16* output, DecodeState* state);
-
-#endif
 
     void idct8                          (u8* dest, const s16* data, const s16* qt);
     void idct12                         (u8* dest, const s16* data, const s16* qt);
@@ -589,9 +585,6 @@ namespace mango::jpeg
 #endif // JPEG_ENABLE_SSE4
 
     SampleFormat getSampleFormat(const Format& format);
-
-#ifdef MANGO_ENABLE_LICENSE_GPL
 	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);
-#endif
 
 } // namespace mango::jpeg

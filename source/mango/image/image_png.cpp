@@ -6,8 +6,6 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
-#ifdef MANGO_ENABLE_IMAGE_PNG
-
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
 // https://wiki.mozilla.org/APNG_Specification
 
@@ -2754,5 +2752,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_IMAGE_PNG

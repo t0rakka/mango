@@ -6,8 +6,6 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#ifdef MANGO_ENABLE_IMAGE_BMP
-
 // Specification:
 // https://en.wikipedia.org/wiki/BMP_file_format
 // https://www.digicamsoft.com/bmp/bmp.html
@@ -1335,5 +1333,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_IMAGE_BMP

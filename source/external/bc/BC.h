@@ -23,8 +23,6 @@
 #include <stdint.h>
 #include "../../../include/mango/mango.hpp"
 
-#ifdef MANGO_ENABLE_LICENSE_MICROSOFT
-
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 #endif
@@ -857,5 +855,3 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
 }
 
 }; // namespace DirectX
-
-#endif // MANGO_ENABLE_LICENSE_MICROSOFT

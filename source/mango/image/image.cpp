@@ -14,63 +14,25 @@ namespace mango
     // ImageServer
     // ----------------------------------------------------------------------------
 
-#ifdef MANGO_ENABLE_IMAGE_TGA
     void registerImageDecoderTGA();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PKM
     void registerImageDecoderPKM();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_DDS
     void registerImageDecoderDDS();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PNG
     void registerImageDecoderPNG();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_JPG
     void registerImageDecoderJPG();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_BMP
     void registerImageDecoderBMP();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PCX
     void registerImageDecoderPCX();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_IFF
     void registerImageDecoderIFF();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_HDR
     void registerImageDecoderHDR();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_GIF
     void registerImageDecoderGIF();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_KTX
     void registerImageDecoderKTX();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PVR
     void registerImageDecoderPVR();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_ASTC
     void registerImageDecoderASTC();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_ZPNG
     void registerImageDecoderZPNG();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_SGI
     void registerImageDecoderSGI();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PNM
     void registerImageDecoderPNM();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_ATARI
     void registerImageDecoderATARI();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_C64
     void registerImageDecoderC64();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_WEBP
     void registerImageDecoderWEBP();
-#endif
 
     class ImageServer
     {
@@ -81,63 +43,25 @@ namespace mango
     public:
         ImageServer()
         {
-#ifdef MANGO_ENABLE_IMAGE_TGA
             registerImageDecoderTGA();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PKM
             registerImageDecoderPKM();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_DDS
             registerImageDecoderDDS();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PNG
             registerImageDecoderPNG();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_JPG
             registerImageDecoderJPG();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_BMP
             registerImageDecoderBMP();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PCX
             registerImageDecoderPCX();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_IFF
             registerImageDecoderIFF();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_HDR
             registerImageDecoderHDR();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_GIF
             registerImageDecoderGIF();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_KTX
             registerImageDecoderKTX();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PVR
             registerImageDecoderPVR();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_ASTC
             registerImageDecoderASTC();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_ZPNG
             registerImageDecoderZPNG();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_SGI
             registerImageDecoderSGI();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_PNM
             registerImageDecoderPNM();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_ATARI
             registerImageDecoderATARI();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_C64
             registerImageDecoderC64();
-#endif
-#ifdef MANGO_ENABLE_IMAGE_WEBP
             registerImageDecoderWEBP();
-#endif
         }
 
         ~ImageServer()

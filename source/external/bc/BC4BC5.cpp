@@ -15,8 +15,6 @@
 
 #include "BC.h"
 
-#ifdef MANGO_ENABLE_LICENSE_MICROSOFT
-
 namespace DirectX
 {
 
@@ -550,5 +548,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_LICENSE_MICROSOFT

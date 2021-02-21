@@ -69,18 +69,6 @@ OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 
-OPTION(MANGO_DISABLE_LICENSE_GPL "" OFF)
-
-set(MANGO_ALL_ARCHIVE_FORMATS ZIP; RAR; MGX)
-foreach(format ${MANGO_ALL_ARCHIVE_FORMATS})
-  OPTION(MANGO_DISABLE_ARCHIVE_${format} "" OFF)
-endforeach()
-
-set(MANGO_ALL_IMAGE_FORMATS ASTC; ATARI; BMP; C64; DDS; GIF; HDR; IFF; JPG; KTX; PCX; PKM; PNG; PNM; PVR; SGI; TGA; WEBP; ZPNG)
-foreach(format ${MANGO_ALL_IMAGE_FORMATS})
-  OPTION(MANGO_DISABLE_IMAGE_${format} "" OFF)
-endforeach()
-
 # ------------------------------------------------------------------------------
 # include directories
 # ------------------------------------------------------------------------------
@@ -413,28 +401,6 @@ else ()
         endif ()
     endif ()
 endif ()
-
-# licenses
-
-if (MANGO_DISABLE_LICENSE_GPL)
-  target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_LICENSE_GPL")
-endif ()
-
-# archivers
-
-foreach(format ${MANGO_ALL_ARCHIVE_FORMATS})
-  if(MANGO_DISABLE_ARCHIVE_${format})
-    target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_ARCHIVE_${format}")
-  endif()
-endforeach()
-
-# image codecs
-
-foreach(format ${MANGO_ALL_IMAGE_FORMATS})
-  if(MANGO_DISABLE_IMAGE_${format})
-    target_compile_definitions(mango PUBLIC "-DMANGO_DISABLE_IMAGE_${format}")
-  endif()
-endforeach()
 
 # ------------------------------------------------------------------------------
 # install

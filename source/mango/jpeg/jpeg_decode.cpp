@@ -873,7 +873,6 @@ namespace mango::jpeg
 
         if (is_arithmetic)
         {
-#ifdef MANGO_ENABLE_LICENSE_BSD
             Arithmetic& arithmetic = decodeState.arithmetic;
 
             decodeState.buffer.ptr = p;
@@ -928,7 +927,6 @@ namespace mango::jpeg
                 decodeState.decode = arith_decode_mcu;
                 decodeSequential();
             }
-#endif // MANGO_ENABLE_LICENSE_BSD
         }
         else
         {
@@ -1834,13 +1832,8 @@ namespace mango::jpeg
 
         if (is_arithmetic)
         {
-#ifdef MANGO_ENABLE_LICENSE_BSD
             decodeFunction = arith_decode_mcu_lossless;
             previousDC = decodeState.arithmetic.last_dc_value;
-#else
-            // We don't have a license for arithmetic decoder
-            return;
-#endif
         }
 
         const int width = m_surface->width;

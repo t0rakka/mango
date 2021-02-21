@@ -13,17 +13,13 @@
 #include <mango/core/pointer.hpp>
 #include <mango/math/math.hpp>
 
-#ifdef MANGO_ENABLE_LICENSE_BSD
 #include "../../external/lz4/lz4.h"
 #include "../../external/lz4/lz4hc.h"
 #include "../../external/lzo/minilzo.h"
 #include "../../external/zstd/zstd.h"
-#endif
 
-#ifdef MANGO_ENABLE_LICENSE_ZLIB
 #include "../../external/bzip2/bzlib.h"
 #include "../../external/lzfse/lzfse.h"
-#endif
 
 #include "../../external/lzma/Alloc.h"
 #include "../../external/lzma/LzmaDec.h"
@@ -63,8 +59,6 @@ namespace nocompress
     }
 
 } // namespace nocompress
-
-#ifdef MANGO_ENABLE_LICENSE_BSD
 
 // ----------------------------------------------------------------------------
 // lz4
@@ -442,10 +436,6 @@ namespace zstd
 
 } // namespace zstd
 
-#endif // MANGO_ENABLE_LICENSE_BSD
-
-#ifdef MANGO_ENABLE_LICENSE_ZLIB
-
 // ----------------------------------------------------------------------------
 // bzip2
 // ----------------------------------------------------------------------------
@@ -571,8 +561,6 @@ namespace lzfse
     }
 
 } // namespace lzfse
-
-#endif // MANGO_ENABLE_LICENSE_ZLIB
 
 // ----------------------------------------------------------------------------
 // lzma

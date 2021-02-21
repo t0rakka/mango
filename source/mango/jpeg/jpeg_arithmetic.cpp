@@ -7,8 +7,6 @@
 #include <cstring>
 #include "jpeg.hpp"
 
-#ifdef MANGO_ENABLE_LICENSE_BSD
-
 // ----------------------------------------------------------------------------
 // jdarith
 // ----------------------------------------------------------------------------
@@ -606,23 +604,3 @@ namespace mango::jpeg
     }
 
 } // namespace mango::jpeg
-
-#else // MANGO_ENABLE_LICENSE_BSD
-
-// no license -> no arithmetic decoder
-namespace mango::jpeg
-{
-    Arithmetic::Arithmetic()
-    {
-    }
-    
-    Arithmetic::~Arithmetic()
-    {
-    }
-    
-    void Arithmetic::restart(BitBuffer& buffer)
-    {
-    }
-} // namespace mango::jpeg
-
-#endif // MANGO_ENABLE_LICENSE_BSD

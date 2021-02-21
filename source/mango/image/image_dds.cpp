@@ -6,8 +6,6 @@
 #include <mango/core/pointer.hpp>
 #include <mango/image/image.hpp>
 
-#ifdef MANGO_ENABLE_IMAGE_DDS
-
 namespace
 {
     using namespace mango;
@@ -1152,5 +1150,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_IMAGE_DDS

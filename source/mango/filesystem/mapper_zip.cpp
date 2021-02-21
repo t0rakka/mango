@@ -10,8 +10,6 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
-#ifdef MANGO_ENABLE_ARCHIVE_ZIP
-
 #include "../../external/libdeflate/libdeflate.h"
 
 /*
@@ -873,5 +871,3 @@ namespace mango::filesystem
     }
 
 } // namespace mango::filesystem
-
-#endif // MANGO_ENABLE_ARCHIVE_ZIP

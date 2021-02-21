@@ -34,8 +34,6 @@ namespace mango
     void decode_block_fxt1_rgb        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgba       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
-#ifdef MANGO_ENABLE_LICENSE_APACHE
-
     void decode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2_eac        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
@@ -43,10 +41,6 @@ namespace mango
     void decode_block_eac_rg11        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_astc_fp16       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_astc_srgb       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-
-#endif // MANGO_ENABLE_LICENSE_APACHE
-
-#ifdef MANGO_ENABLE_LICENSE_MICROSOFT
 
     void decode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
@@ -70,8 +64,6 @@ namespace mango
     void encode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void encode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void encode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-
-#endif // MANGO_ENABLE_LICENSE_MICROSOFT
 
     void encode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
@@ -250,8 +242,6 @@ namespace
             4, 4, 1, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_dxt5, encode_block_bc3
         ),
 
-#ifdef MANGO_ENABLE_LICENSE_MICROSOFT
-
         // RGTC
 
         TextureCompressionInfo(
@@ -319,8 +309,6 @@ namespace
             vulkan::FORMAT_BC7_SRGB_BLOCK,
             4, 4, 1, 16, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), decode_block_bc7, encode_block_bc7
         ),
-
-#endif
 
         // IMG_texture_compression_pvrtc
 
@@ -407,8 +395,6 @@ namespace
             vulkan::FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
             8, 8, 1, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
         ),
-
-#ifdef MANGO_ENABLE_LICENSE_APACHE
 
         // OES_compressed_ETC1_RGB8_texture
 
@@ -890,8 +876,6 @@ namespace
             0,
             6, 6, 6, 16, Format(), nullptr, nullptr
         ),
-
-#endif
 
         // Packed Pixel
 

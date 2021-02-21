@@ -14,8 +14,6 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
-#if defined(MANGO_ENABLE_ARCHIVE_RAR)
-
 #include "../../external/unrar/rar.hpp"
 
 namespace
@@ -752,5 +750,3 @@ namespace mango::filesystem
     }
 
 } // namespace mango::filesystem
-
-#endif // MANGO_ENABLE_ARCHIVE_RAR

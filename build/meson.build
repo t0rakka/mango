@@ -29,25 +29,6 @@ enable_fma       = get_option('enable_fma')
 mango_public_cpp_args = []
 mango_interface_cpp_args = []
 
-mango_all_archive_formats = [ 'ZIP', 'RAR', 'MGX' ]
-foreach archive_format : mango_all_archive_formats
-    if get_option('mango_disable_archive_@0@'.format(archive_format))
-        mango_public_cpp_args += [ '-DMANGO_DISABLE_ARCHIVE_@0@'.format(archive_format) ]
-    endif
-endforeach
-
-mango_all_image_formats = [ 'ASTC', 'ATARI', 'BMP', 'C64', 'DDS', 'GIF', 'HDR', 'IFF', 'JPG', 'KTX',
-                            'PCX', 'PKM', 'PNG', 'PNM', 'PVR', 'SGI', 'TGA', 'WEBP', 'ZPNG' ]
-foreach image_format : mango_all_image_formats
-    if get_option('mango_disable_image_@0@'.format(image_format))
-        mango_public_cpp_args += [ '-DMANGO_DISABLE_IMAGE_@0@'.format(image_format) ]
-    endif
-endforeach
-
-if get_option('mango_disable_license_gpl')
-    mango_public_cpp_args += [ '-DMANGO_DISABLE_LICENSE_GPL' ]
-endif
-
 # ------------------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------------------

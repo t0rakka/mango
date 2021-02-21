@@ -8,8 +8,6 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#ifdef MANGO_ENABLE_IMAGE_WEBP
-
 #include "../../external/libwebp/src/webp/decode.h"
 #include "../../external/libwebp/src/webp/encode.h"
 
@@ -228,5 +226,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_IMAGE_WEBP

@@ -30,8 +30,6 @@
 #include "../../../include/mango/math/vector.hpp"
 #include "../../../include/mango/image/compression.hpp"
 
-#ifdef MANGO_ENABLE_LICENSE_APACHE
-
 #define ETC_ENABLE_SIMD
 
 namespace
@@ -667,5 +665,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_LICENSE_APACHE

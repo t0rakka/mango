@@ -8,8 +8,6 @@
 #include <mango/core/string.hpp>
 #include <mango/image/image.hpp>
 
-#ifdef MANGO_ENABLE_IMAGE_TGA
-
 // Specification:
 // https://www.fileformat.info/format/tga/egff.htm
 
@@ -577,5 +575,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // MANGO_ENABLE_IMAGE_TGA
