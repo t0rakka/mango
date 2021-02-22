@@ -442,7 +442,7 @@ namespace
 
             if (m_targa_header.isRLE())
             {
-                temp.reset(new u8[width * height * bpp]);
+                temp = std::make_unique<u8[]>(width * height * bpp);
                 if (!tga_decompress_RLE(temp.get(), p, end, width, height, bpp))
                 {
                     status.setError("[ImageDecoder.TGA] RLE decoding error.");

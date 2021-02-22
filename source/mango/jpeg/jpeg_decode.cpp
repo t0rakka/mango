@@ -1759,7 +1759,7 @@ namespace mango::jpeg
         if (!status.direct)
         {
             // create a temporary decoding target
-            temp.reset(new Bitmap(width, height, sf.format));
+            temp = std::make_unique<Bitmap>(width, height, sf.format);
             m_surface = temp.get();
         }
 

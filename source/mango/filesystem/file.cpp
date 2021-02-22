@@ -23,7 +23,7 @@ namespace mango::filesystem
         m_filename = filename;
 
         // create a internal path
-        m_path.reset(new Path(filepath));
+        m_path = std::make_unique<Path>(filepath);
 
         Mapper& mapper = m_path->getMapper();
 
@@ -45,7 +45,7 @@ namespace mango::filesystem
         m_filename = filename;
 
         // create a internal path
-        m_path.reset(new Path(path, filepath));
+        m_path = std::make_unique<Path>(path, filepath);
 
         Mapper& mapper = m_path->getMapper();
 
@@ -62,7 +62,7 @@ namespace mango::filesystem
         std::string password;
 
         // create a internal path
-        m_path.reset(new Path(memory, extension, password));
+        m_path = std::make_unique<Path>(memory, extension, password);
 
         Mapper& mapper = m_path->getMapper();
 
