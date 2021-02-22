@@ -42,7 +42,6 @@
     <ClInclude Include="..\..\include\mango\core\half.hpp" />
     <ClInclude Include="..\..\include\mango\core\hash.hpp" />
     <ClInclude Include="..\..\include\mango\core\memory.hpp" />
-    <ClInclude Include="..\..\include\mango\core\object.hpp" />
     <ClInclude Include="..\..\include\mango\core\pointer.hpp" />
     <ClInclude Include="..\..\include\mango\core\stream.hpp" />
     <ClInclude Include="..\..\include\mango\core\string.hpp" />

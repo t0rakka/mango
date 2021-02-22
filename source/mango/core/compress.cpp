@@ -226,16 +226,14 @@ namespace lz4
         }
     };
 
-    SharedObject<StreamEncoder> createStreamEncoder(int level)
+    std::shared_ptr<StreamEncoder> createStreamEncoder(int level)
     {
-        StreamEncoder* encoder = new StreamEncoderLZ4(level);
-        return encoder;
+        return std::make_shared<StreamEncoderLZ4>(level);
     }
 
-    SharedObject<StreamDecoder> createStreamDecoder()
+    std::shared_ptr<StreamDecoder> createStreamDecoder()
     {
-        StreamDecoder* decoder = new StreamDecoderLZ4();
-        return decoder;
+        return std::make_shared<StreamDecoderLZ4>();
     }
 
 } // namespace lz4
@@ -422,16 +420,14 @@ namespace zstd
         }
     };
 
-    SharedObject<StreamEncoder> createStreamEncoder(int level)
+    std::shared_ptr<StreamEncoder> createStreamEncoder(int level)
     {
-        StreamEncoder* encoder = new StreamEncoderZSTD(level);
-        return encoder;
+        return std::make_shared<StreamEncoderZSTD>(level);
     }
 
-    SharedObject<StreamDecoder> createStreamDecoder()
+    std::shared_ptr<StreamDecoder> createStreamDecoder()
     {
-        StreamDecoder* decoder = new StreamDecoderZSTD();
-        return decoder;
+        return std::make_shared<StreamDecoderZSTD>();
     }
 
 } // namespace zstd

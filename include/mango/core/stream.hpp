@@ -5,7 +5,6 @@
 #pragma once
 
 #include <mango/core/configure.hpp>
-#include <mango/core/object.hpp>
 #include <mango/core/endian.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/core/half.hpp>

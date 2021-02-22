@@ -13,7 +13,7 @@
 #include <condition_variable>
 #include <future>
 #include <mango/core/exception.hpp>
-#include <mango/core/object.hpp>
+#include <mango/core/memory.hpp>
 #include <mango/core/atomic.hpp>
 
 namespace mango

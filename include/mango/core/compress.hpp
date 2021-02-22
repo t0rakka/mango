@@ -4,10 +4,11 @@
 */
 #pragma once
 
+#include <string>
 #include <vector>
+#include <memory>
 #include <mango/core/configure.hpp>
 #include <mango/core/memory.hpp>
-#include <mango/core/object.hpp>
 
 namespace mango
 {
@@ -53,14 +54,14 @@ namespace mango
 
     namespace lz4
     {
-        SharedObject<StreamEncoder> createStreamEncoder(int level = 4);
-        SharedObject<StreamDecoder> createStreamDecoder();
+        std::shared_ptr<StreamEncoder> createStreamEncoder(int level = 4);
+        std::shared_ptr<StreamDecoder> createStreamDecoder();
     }
 
     namespace zstd
     {
-        SharedObject<StreamEncoder> createStreamEncoder(int level = 4);
-        SharedObject<StreamDecoder> createStreamDecoder();
+        std::shared_ptr<StreamEncoder> createStreamEncoder(int level = 4);
+        std::shared_ptr<StreamDecoder> createStreamDecoder();
     }
 
     // -----------------------------------------------------------------------

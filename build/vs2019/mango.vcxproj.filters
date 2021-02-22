@@ -228,9 +228,6 @@
     <ClInclude Include="..\..\include\mango\core\memory.hpp">
       <Filter>mango\include\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\core\object.hpp">
-      <Filter>mango\include\core</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mango\core\pointer.hpp">
       <Filter>mango\include\core</Filter>
     </ClInclude>

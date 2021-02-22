@@ -30,8 +30,8 @@ namespace mango::filesystem
         AbstractMapper* abstract_mapper = mapper;
         if (abstract_mapper)
         {
-            VirtualMemory* vmemory = abstract_mapper->mmap(mapper.basepath() + m_filename);
-            m_memory = UniqueObject<VirtualMemory>(vmemory);
+            VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
+            m_memory = std::unique_ptr<VirtualMemory>(ptr);
         }
     }
 
@@ -52,8 +52,8 @@ namespace mango::filesystem
         AbstractMapper* abstract_mapper = mapper;
         if (abstract_mapper)
         {
-            VirtualMemory* vmemory = abstract_mapper->mmap(mapper.basepath() + m_filename);
-            m_memory = UniqueObject<VirtualMemory>(vmemory);
+            VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
+            m_memory = std::unique_ptr<VirtualMemory>(ptr);
         }
     }
 
@@ -74,8 +74,8 @@ namespace mango::filesystem
         AbstractMapper* abstract_mapper = mapper;
         if (abstract_mapper)
         {
-            VirtualMemory* vmemory = abstract_mapper->mmap(m_filename);
-            m_memory = UniqueObject<VirtualMemory>(vmemory);
+            VirtualMemory* ptr = abstract_mapper->mmap(m_filename);
+            m_memory = std::unique_ptr<VirtualMemory>(ptr);
         }
     }
 

@@ -50,7 +50,6 @@ mango_headers = files(
     '../include/mango/core/half.hpp',
     '../include/mango/core/hash.hpp',
     '../include/mango/core/memory.hpp',
-    '../include/mango/core/object.hpp',
     '../include/mango/core/pointer.hpp',
     '../include/mango/core/stream.hpp',
     '../include/mango/core/string.hpp',

@@ -8,7 +8,6 @@
 #include <limits>
 #include <algorithm>
 #include <mango/core/configure.hpp>
-#include <mango/core/object.hpp>
 
 namespace mango
 {
@@ -63,6 +62,20 @@ namespace mango
         };
 
     } // namespace detail
+
+    // -----------------------------------------------------------------------
+    // NonCopyable
+    // -----------------------------------------------------------------------
+
+    class NonCopyable
+    {
+    protected:
+        NonCopyable() = default;
+
+    private:
+        NonCopyable(const NonCopyable&) = delete;
+        NonCopyable& operator = (const NonCopyable&) = delete;
+    };
 
     // -----------------------------------------------------------------------
     // memory

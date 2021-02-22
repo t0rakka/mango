@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <string>
 #include <mango/core/configure.hpp>
-#include <mango/core/object.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/filesystem/file.hpp>
 #include <mango/image/format.hpp>

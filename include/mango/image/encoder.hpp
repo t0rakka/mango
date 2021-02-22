@@ -5,7 +5,7 @@
 #pragma once
 
 #include <string>
-#include <mango/core/object.hpp>
+#include <mango/core/memory.hpp>
 #include <mango/core/stream.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>

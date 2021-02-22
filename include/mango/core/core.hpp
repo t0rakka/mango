@@ -17,7 +17,6 @@
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/exception.hpp>
-#include <mango/core/object.hpp>
 #include <mango/core/stream.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/core/buffer.hpp>

@@ -6,12 +6,12 @@
 
 #include <string>
 #include <vector>
-#include <mango//core/configure.hpp>
-#include <mango//core/object.hpp>
-#include <mango//core/timer.hpp>
-#include <mango//image/surface.hpp>
-#include <mango//filesystem/filesystem.hpp>
-#include <mango//math/math.hpp>
+#include <mango/core/configure.hpp>
+#include <mango/core/memory.hpp>
+#include <mango/core/timer.hpp>
+#include <mango/image/surface.hpp>
+#include <mango/filesystem/filesystem.hpp>
+#include <mango/math/math.hpp>
 
 namespace mango
 {

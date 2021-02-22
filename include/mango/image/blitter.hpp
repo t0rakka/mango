@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include <mango/core/object.hpp>
+#include <mango/core/memory.hpp>
 #include <mango/simd/simd.hpp>
 #include <mango/image/surface.hpp>
 
