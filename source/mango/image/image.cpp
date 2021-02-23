@@ -88,23 +88,13 @@ namespace mango
         ImageDecoder::CreateDecoderFunc getImageDecoder(const std::string& extension) const
         {
             auto i = m_decoders.find(getLowerCaseExtension(extension));
-            if (i != m_decoders.end())
-            {
-                return i->second;
-            }
-
-            return nullptr;
+            return i != m_decoders.end() ? i->second : nullptr;
         }
 
         ImageEncoder::EncodeFunc getImageEncoder(const std::string& extension) const
         {
             auto i = m_encoders.find(getLowerCaseExtension(extension));
-            if (i != m_encoders.end())
-            {
-                return i->second;
-            }
-
-            return nullptr;
+            return i != m_encoders.end() ? i->second : nullptr;
         }
     } g_imageServer;
 
@@ -265,13 +255,13 @@ namespace mango
     {
         ImageEncodeStatus status;
 
-        if (!m_encode_func)
+        if (m_encode_func)
         {
-            status.setError("[WARNING] ImageEncoder::encode() is not supported for this extension.");
+            status = m_encode_func(output, source, options);
         }
         else
         {
-            status = m_encode_func(output, source, options);
+            status.setError("[WARNING] ImageEncoder::encode() is not supported for this extension.");
         }
 
         return status;
