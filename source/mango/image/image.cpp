@@ -179,13 +179,13 @@ namespace mango
     {
         ImageHeader header;
 
-        if (!m_interface)
+        if (m_interface)
         {
-            header.setError("[WARNING] ImageDecoder::header() is not supported for this extension.");
+            header = m_interface->header();
         }
         else
         {
-            header = m_interface->header();
+            header.setError("[WARNING] ImageDecoder::header() is not supported for this extension.");
         }
 
         return header;
@@ -195,13 +195,13 @@ namespace mango
     {
         ImageDecodeStatus status;
 
-        if (!m_interface)
+        if (m_interface)
         {
-            status.setError("[WARNING] ImageDecoder::decode() is not supported for this extension.");
+            status = m_interface->decode(dest, options.palette, level, depth, face);
         }
         else
         {
-            status = m_interface->decode(dest, options.palette, level, depth, face);
+            status.setError("[WARNING] ImageDecoder::decode() is not supported for this extension.");
         }
 
         return status;
