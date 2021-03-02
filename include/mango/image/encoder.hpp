@@ -29,7 +29,7 @@ namespace mango
         bool filtering = true; // png
         bool dithering = true; // gif
         bool lossless = false; // webp
-        ConstMemory icc;
+        ConstMemory icc; // jpeg, png
     };
 
     class ImageEncoder : protected NonCopyable
