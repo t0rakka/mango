@@ -149,9 +149,9 @@ namespace
                         break;
                 }
 
-                dest[0] = u8(b);
+                dest[0] = u8(r);
                 dest[1] = u8(g);
-                dest[2] = u8(r);
+                dest[2] = u8(b);
                 dest[3] = 0xff;
                 dest += 4;
 
@@ -170,7 +170,7 @@ namespace
 
     void expand_palette(u8* dest, const u8* src, int xsize, int ysize, const Palette& palette)
     {
-        ColorBGRA* image = reinterpret_cast<ColorBGRA*>(dest);
+        Color* image = reinterpret_cast<Color*>(dest);
         int count = xsize * ysize;
 
         for (int i = 0; i < count; ++i)
@@ -215,7 +215,7 @@ namespace
         if (ham)
         {
             // always decode Hold And Modify modes into 32 bpp
-            format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         }
         else
         {
@@ -224,7 +224,7 @@ namespace
             {
                 case 1:
                     // expand palette
-                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     break;
                 case 2:
                     format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
@@ -406,7 +406,7 @@ namespace
                         palette.size = size / 3;
                         for (u32 i = 0; i < palette.size; ++i)
                         {
-                            palette[i] = ColorBGRA(p[0], p[1], p[2], 0xff);
+                            palette[i] = Color(p[0], p[1], p[2], 0xff);
                             p += 3;
                         }
                         break;

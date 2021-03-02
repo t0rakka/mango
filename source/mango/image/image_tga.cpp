@@ -193,7 +193,7 @@ namespace
                     if (isPalette())
                     {
                         // expand palette to 32 bits
-                        format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                        format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     }
                     else
                     {
@@ -384,7 +384,7 @@ namespace
                             r = (r * 255) / 31;
                             g = (g * 255) / 31;
                             b = (b * 255) / 31;
-                            palette[origin + i] = ColorBGRA(r, g, b, 0xff);
+                            palette[origin + i] = Color(r, g, b, 0xff);
                             p += 2;
                         }
                     }
@@ -392,7 +392,7 @@ namespace
                     {
                         for (u32 i = 0; i < length; ++i)
                         {
-                            palette[origin + i] = ColorBGRA(p[2], p[1], p[0], 0xff);
+                            palette[origin + i] = Color(p[2], p[1], p[0], 0xff);
                             p += 3;
                         }
                     }
@@ -400,7 +400,7 @@ namespace
                     {
                         for (u32 i = 0; i < length; ++i)
                         {
-                            palette[origin + i] = ColorBGRA(p[2], p[1], p[0], p[3]);
+                            palette[origin + i] = Color(p[2], p[1], p[0], p[3]);
                             p += 4;
                         }
                     }
@@ -476,7 +476,7 @@ namespace
 
                         for (int y = 0; y < height; ++y)
                         {
-                            ColorBGRA* d = bitmap.address<ColorBGRA>(0, y);
+                            Color* d = bitmap.address<Color>(0, y);
                             const u8* s = data + y * width;
                             for (int x = 0; x < width; ++x)
                             {

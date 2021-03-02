@@ -21,46 +21,7 @@ namespace mango
         return (alpha << 24) | (blue << 16) | (green << 8) | red;
     }
 
-    union ColorBGRA
-    {
-        u8 component[4];
-        struct
-        {
-            u8 b, g, r, a; 
-        };
-
-        ColorBGRA()
-        {
-            ustore32le(this, 0);
-        }
-
-        ColorBGRA(u8 red, u8 green, u8 blue, u8 alpha)
-        {
-            ustore32le(this, makeBGRA(red, green, blue, alpha));
-        }
-
-        ColorBGRA(u32 value)
-        {
-            ustore32le(this, value);
-        }
-
-        operator u32 () const
-        {
-            return uload32le(this);
-        }
-
-        u8& operator [] (int index)
-        {
-            return component[index];
-        }
-
-        u8 operator [] (int index) const
-        {
-            return component[index];
-        }
-    };
-
-    union ColorRGBA
+    union Color
     {
         u8 component[4];
         struct
@@ -68,17 +29,17 @@ namespace mango
             u8 r, g, b, a;
         };
 
-        ColorRGBA()
+        Color()
         {
             ustore32le(this, 0);
         }
 
-        ColorRGBA(u8 red, u8 green, u8 blue, u8 alpha)
+        Color(u8 red, u8 green, u8 blue, u8 alpha)
         {
             ustore32le(this, makeRGBA(red, green, blue, alpha));
         }
 
-        ColorRGBA(u32 value)
+        Color(u32 value)
         {
             ustore32le(this, value);
         }
@@ -102,14 +63,14 @@ namespace mango
     struct Palette
     {
         u32 size { 0 };
-        ColorBGRA color[256];
+        Color color[256];
 
-        ColorBGRA& operator [] (int index)
+        Color& operator [] (int index)
         {
             return color[index];
         }
 
-        ColorBGRA operator [] (int index) const
+        Color operator [] (int index) const
         {
             return color[index];
         }

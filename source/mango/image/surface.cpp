@@ -293,7 +293,7 @@ namespace mango
         }
     }
 
-    void Surface::clear(ColorRGBA color) const
+    void Surface::clear(Color color) const
     {
         const float s = 1.0f / 255.0f;
         clear(color.r * s, color.g * s, color.b * s, color.a * s);

@@ -614,9 +614,9 @@ namespace
         // tRNS
         bool transparent_enable = false;
         u16 transparent_sample[3];
-        ColorRGBA transparent_color;
+        Color transparent_color;
 
-        ColorBGRA* palette = nullptr;
+        Color* palette = nullptr;
     };
 
     void process_pal1to4_indx(const ColorState& state, int width, u8* dst, const u8* src)
@@ -647,7 +647,7 @@ namespace
 
         u32* dest = reinterpret_cast<u32*>(dst);
 
-        ColorBGRA* palette = state.palette;
+        Color* palette = state.palette;
 
         const int bits = state.bits;
         const u32 mask = (1 << bits) - 1;
@@ -680,7 +680,7 @@ namespace
     {
         u32* dest = reinterpret_cast<u32*>(dst);
 
-        ColorBGRA* palette = state.palette;
+        Color* palette = state.palette;
 
         for (int x = 0; x < width; ++x)
         {
@@ -823,7 +823,7 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
+            dest[x] = Color(src[0], src[1], src[2], 0xff);
             src += 3;
         }
     }
@@ -834,11 +834,11 @@ namespace
 
         u32* dest = reinterpret_cast<u32*>(dst);
 
-        const ColorRGBA transparent_color = state.transparent_color;
+        const Color transparent_color = state.transparent_color;
 
         for (int x = 0; x < width; ++x)
         {
-            ColorRGBA color(src[0], src[1], src[2], 0xff);
+            Color color(src[0], src[1], src[2], 0xff);
             if (color == transparent_color)
             {
                 color.a = 0;
@@ -1022,7 +1022,7 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[x] = ColorRGBA(src[0], src[1], src[2], 0xff);
+            dest[x] = Color(src[0], src[1], src[2], 0xff);
             src += 3;
         }
     }
@@ -1441,8 +1441,7 @@ namespace
                     break;
 
                 case COLOR_TYPE_PALETTE:
-                    // NOTE: palette formats decode to BGRA (same format as the palette)
-                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     m_header.palette = true;
                     break;
 
@@ -1587,7 +1586,7 @@ namespace
         m_palette.size = size / 3;
         for (u32 i = 0; i < m_palette.size; ++i)
         {
-            m_palette[i] = ColorBGRA(p[0], p[1], p[2], 0xff);
+            m_palette[i] = Color(p[0], p[1], p[2], 0xff);
             p += 3;
         }
     }
@@ -1617,9 +1616,9 @@ namespace
             m_color_state.transparent_sample[0] = p.read16();
             m_color_state.transparent_sample[1] = p.read16();
             m_color_state.transparent_sample[2] = p.read16();
-            m_color_state.transparent_color = ColorRGBA(m_color_state.transparent_sample[0] & 0xff,
-                                                        m_color_state.transparent_sample[1] & 0xff,
-                                                        m_color_state.transparent_sample[2] & 0xff, 0xff);
+            m_color_state.transparent_color = Color(m_color_state.transparent_sample[0] & 0xff,
+                                                    m_color_state.transparent_sample[1] & 0xff,
+                                                    m_color_state.transparent_sample[2] & 0xff, 0xff);
         }
         else if (m_color_type == COLOR_TYPE_PALETTE)
         {
@@ -1966,7 +1965,7 @@ namespace
         for (int x = 0; x < width; ++x)
         {
             u8 sample = src[x];
-            ColorBGRA color = m_palette[sample];
+            Color color = m_palette[sample];
             if (color.a)
             {
                 dest[x] = sample;
@@ -2495,7 +2494,7 @@ namespace
                 size_t best = ~0;
                 Buffer* best_buffer = &temp_none;
 
-                const char* s = "0"; // selected filter debug string
+                //const char* s = "0"; // selected filter debug string
 
                 size_t score;
 
@@ -2505,7 +2504,7 @@ namespace
                 {
                     best = score;
                     best_buffer = &temp_sub;
-                    s = "1";
+                    //s = "1";
                 }
 
                 temp_up[0] = FILTER_UP;
@@ -2514,7 +2513,7 @@ namespace
                 {
                     best = score;
                     best_buffer = &temp_up;
-                    s = "2";
+                    //s = "2";
                 }
 
                 temp_average[0] = FILTER_AVERAGE;
@@ -2523,7 +2522,7 @@ namespace
                 {
                     best = score;
                     best_buffer = &temp_average;
-                    s = "3";
+                    //s = "3";
                 }
 
                 temp_paeth[0] = FILTER_PAETH;
@@ -2537,7 +2536,7 @@ namespace
                 buffer.append(*best_buffer, bytes_per_scan + PNG_FILTER_BYTE);
 
                 //printf("%s", s);
-                MANGO_UNREFERENCED(s);
+                //MANGO_UNREFERENCED(s);
 
                 prev = image;
                 image += surface.stride;

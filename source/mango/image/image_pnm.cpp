@@ -318,7 +318,7 @@ namespace
             {
                 switch (channels)
                 {
-                    case 1: format = Format(32, Format::FLOAT32, ColorRGBA(32, 32, 32, 0), ColorRGBA(0, 0, 0, 0)); break;
+                    case 1: format = Format(32, Format::FLOAT32, Color(32, 32, 32, 0), Color(0, 0, 0, 0)); break;
                     case 3: format = Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0); break;
                     default:
                         header.setError("[ImageDecoder.PNM] Incorrect number of channels");

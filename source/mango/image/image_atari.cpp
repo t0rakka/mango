@@ -78,13 +78,13 @@ namespace
     // ST helper functions
     // ------------------------------------------------------------
 
-    ColorBGRA convert_atari_color(u16 atari_color)
+    Color convert_atari_color(u16 atari_color)
     {
-        ColorBGRA color;
+        Color color;
 
-        color.b = ((atari_color & 0x7  ) << 5) | ((atari_color & 0x8  ) << 1) | ((atari_color & 0x7  ) << 1) | ((atari_color & 0x8  ) >> 3);
-        color.g = ((atari_color & 0x70 ) << 1) | ((atari_color & 0x80 ) >> 3) | ((atari_color & 0x70 ) >> 3) | ((atari_color & 0x80 ) >> 7);
         color.r = ((atari_color & 0x700) >> 3) | ((atari_color & 0x800) >> 7) | ((atari_color & 0x700) >> 7) | ((atari_color & 0x800) >> 11);
+        color.g = ((atari_color & 0x70 ) << 1) | ((atari_color & 0x80 ) >> 3) | ((atari_color & 0x70 ) >> 3) | ((atari_color & 0x80 ) >> 7);
+        color.b = ((atari_color & 0x7  ) << 5) | ((atari_color & 0x8  ) << 1) | ((atari_color & 0x7  ) << 1) | ((atari_color & 0x8  ) >> 3);
         color.a = 0xff;
 
         return color;
@@ -94,7 +94,7 @@ namespace
     {
         for (int y = 0; y < height; ++y)
         {
-            ColorBGRA* scan = s.address<ColorBGRA>(0, y);
+            Color* scan = s.address<Color>(0, y);
             const u8* src = image + y * width;
 
             for (int x = 0; x < width; ++x)
@@ -273,7 +273,7 @@ namespace
             {
                 m_header.width  = m_degas_header.width;
                 m_header.height = m_degas_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
@@ -442,7 +442,7 @@ namespace
             {
                 m_header.width  = m_neo_header.width;
                 m_header.height = m_neo_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
@@ -574,7 +574,7 @@ namespace
             BigEndianConstPointer p = data;
 
             std::vector<u8> bitmap(width * height, 0);
-            std::vector<ColorBGRA> palette(16 * 3 * (height - 1), ColorBGRA(0, 0, 0, 0xff));
+            std::vector<Color> palette(16 * 3 * (height - 1), Color(0, 0, 0, 0xff));
 
             int num_words = 16000;
             int words_per_scan = 20;
@@ -681,7 +681,7 @@ namespace
             // Resolve palette
             for (int y = 1; y < height; ++y)
             {
-                ColorBGRA* image = s.address<ColorBGRA>(0, y);
+                Color* image = s.address<Color>(0, y);
 
                 for (int x = 0; x < width; ++x)
                 {
@@ -709,7 +709,7 @@ namespace
             {
                 m_header.width  = m_spu_header.width;
                 m_header.height = m_spu_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
@@ -1038,7 +1038,7 @@ namespace
             {
                 m_header.width  = m_ca_header.width;
                 m_header.height = m_ca_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {

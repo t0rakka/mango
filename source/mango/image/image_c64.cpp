@@ -20,23 +20,23 @@ namespace
     // Commodore 64 utilities
     // ------------------------------------------------------------
 
-    const ColorBGRA c64_palette[16] =
+    const Color c64_palette[16] =
     { 
         0xFF000000,
         0xFFFFFFFF,
-        0xFF68372B,
-        0xFF70A4B2,
-        0xFF6F3D86,
-        0xFF588D43,
-        0xFF352879,
-        0xFFB8C76F,
-        0xFF6F4F25,
-        0xFF433900,
-        0xFF9A6759,
+        0xFF2B3768,
+        0xFFB2A470,
+        0xFF863D6F,
+        0xFF438D58,
+        0xFF792835,
+        0xFF6FC7B8,
+        0xFF254F6F,
+        0xFF003943,
+        0xFF59679A,
         0xFF444444,
         0xFF6C6C6C,
-        0xFF9AD284,
-        0xFF6C5EB5,
+        0xFF84D29A,
+        0xFFB55E6C,
         0xFF959595,
     };
 
@@ -56,7 +56,7 @@ namespace
     {
         for (int y = 0; y < height; ++y)
         {
-            ColorBGRA* scan = s.address<ColorBGRA>(0, y);
+            Color* scan = s.address<Color>(0, y);
 
             for (int x = 0; x < width; ++x)
             {
@@ -228,7 +228,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            ColorBGRA* image = s.address<ColorBGRA>(0, y);
+            Color* image = s.address<Color>(0, y);
 
             for (int x = 0; x < width; ++x)
             {
@@ -238,38 +238,38 @@ namespace
 
                 if (mode == 0)
                 {
-                    image[x].b = (palette[bitmap1[offset]].b >> 1) + (palette[bitmap2[offset]].b >> 1);
-                    image[x].g = (palette[bitmap1[offset]].g >> 1) + (palette[bitmap2[offset]].g >> 1);
                     image[x].r = (palette[bitmap1[offset]].r >> 1) + (palette[bitmap2[offset]].r >> 1);
+                    image[x].g = (palette[bitmap1[offset]].g >> 1) + (palette[bitmap2[offset]].g >> 1);
+                    image[x].b = (palette[bitmap1[offset]].b >> 1) + (palette[bitmap2[offset]].b >> 1);
                 }
                 else if (mode == 1)
                 {
                     if ((offset % 320) == 0)
                     {
-                        image[x].b = (palette[bitmap1[offset]].b >> 1);
-                        image[x].g = (palette[bitmap1[offset]].g >> 1);
                         image[x].r = (palette[bitmap1[offset]].r >> 1);
+                        image[x].g = (palette[bitmap1[offset]].g >> 1);
+                        image[x].b = (palette[bitmap1[offset]].b >> 1);
                     }
                     else
                     {
-                        image[x].b = (palette[bitmap1[offset + 0]].b >> 1) + (palette[bitmap2[offset - 1]].b >> 1);
-                        image[x].g = (palette[bitmap1[offset + 0]].g >> 1) + (palette[bitmap2[offset - 1]].g >> 1);
                         image[x].r = (palette[bitmap1[offset + 0]].r >> 1) + (palette[bitmap2[offset - 1]].r >> 1);
+                        image[x].g = (palette[bitmap1[offset + 0]].g >> 1) + (palette[bitmap2[offset - 1]].g >> 1);
+                        image[x].b = (palette[bitmap1[offset + 0]].b >> 1) + (palette[bitmap2[offset - 1]].b >> 1);
                     }
                 }
                 else if (mode == 2)
                 {
                     if ((offset & 0x1) == 0)
                     {
-                        image[x].b = palette[bitmap1[offset]].b;
-                        image[x].g = palette[bitmap1[offset]].g;
                         image[x].r = palette[bitmap1[offset]].r;
+                        image[x].g = palette[bitmap1[offset]].g;
+                        image[x].b = palette[bitmap1[offset]].b;
                     }
                     else
                     {
-                        image[x].b = palette[bitmap2[offset]].b;
-                        image[x].g = palette[bitmap2[offset]].g;
                         image[x].r = palette[bitmap2[offset]].r;
+                        image[x].g = palette[bitmap2[offset]].g;
+                        image[x].b = palette[bitmap2[offset]].b;
                     }
                 }
             }
@@ -372,15 +372,15 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            ColorBGRA* image = s.address<ColorBGRA>(0, y);
+            Color* image = s.address<Color>(0, y);
 
             for (int x = 0; x < width; ++x)
             {
                 int offset = x + y * width;
 
-                image[x].b = (palette[bitmap1[offset]].b >> 1) + (palette[bitmap2[offset]].b >> 1);
-                image[x].g = (palette[bitmap1[offset]].g >> 1) + (palette[bitmap2[offset]].g >> 1);
                 image[x].r = (palette[bitmap1[offset]].r >> 1) + (palette[bitmap2[offset]].r >> 1);
+                image[x].g = (palette[bitmap1[offset]].g >> 1) + (palette[bitmap2[offset]].g >> 1);
+                image[x].b = (palette[bitmap1[offset]].b >> 1) + (palette[bitmap2[offset]].b >> 1);
                 image[x].a = 0xff;
             }
         }
@@ -503,7 +503,7 @@ namespace
             {
                 m_header.width  = m_generic_header.width;
                 m_header.height = m_generic_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
     };
@@ -580,7 +580,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_generic_header.compressed = true;
                 m_generic_header.escape_char = 0xc2;
@@ -795,7 +795,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -811,7 +811,7 @@ namespace
 
                         m_header.width = 320;
                         m_header.height = 200;
-                        m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                         m_compressed = true;
                         m_escape_char = p.read8();
@@ -870,7 +870,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -886,7 +886,7 @@ namespace
 
                         m_header.width = 320;
                         m_header.height = 200;
-                        m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                         m_compressed = true;
                         m_escape_char = p.read8();
@@ -944,7 +944,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -955,7 +955,7 @@ namespace
                 {
                     m_header.width = 320;
                     m_header.height = 200;
-                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_compressed = true;
                     m_escape_char = p.read8();
@@ -1188,7 +1188,7 @@ namespace
                         m_header.height = 200;
                     }
 
-                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     m_data = p;
                 }
             }
@@ -1247,7 +1247,7 @@ namespace
                 {
                     m_header.width = 320;
                     m_header.height = 200;
-                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_data = p;
                 }
@@ -1467,7 +1467,7 @@ namespace
                 {
                     m_header.width = 320;
                     m_header.height = 192;
-                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_compressed = false;
                     m_data = p;
@@ -1477,7 +1477,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 192;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_data = p;
@@ -1528,7 +1528,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 m_data = p;
             }
         }
@@ -1657,7 +1657,7 @@ namespace
             {
                 m_header.width  = m_generic_header.width;
                 m_header.height = m_generic_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
 
@@ -1762,7 +1762,7 @@ namespace
             {
                 m_header.width = 96;
                 m_header.height = 167;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -1771,7 +1771,7 @@ namespace
             {
                 m_header.width = 96;
                 m_header.height = 167;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_escape_char = p.read8();
@@ -2129,7 +2129,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -2141,7 +2141,7 @@ namespace
                 {
                     m_header.width = 320;
                     m_header.height = 200;
-                    m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_compressed = true;
                     m_data = p;
@@ -2196,7 +2196,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -2205,7 +2205,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_escape_char = p.read8();
@@ -2372,7 +2372,7 @@ namespace
             {
                 m_header.width = 320;
                 m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_escape_char = p.read8();
@@ -2402,7 +2402,7 @@ namespace
 
             for (int y = 0; y < m_header.height; ++y)
             {
-                ColorBGRA* image = s.address<ColorBGRA>(0, y);
+                Color* image = s.address<Color>(0, y);
 
                 for (int x = 0; x < m_header.width; ++x)
                 {
@@ -2487,9 +2487,9 @@ namespace
                         }
                     }
 
-                    image[x].b = (c64_palette[index[0]].b >> 1) + (c64_palette[index[1]].b >> 1);
-                    image[x].g = (c64_palette[index[0]].g >> 1) + (c64_palette[index[1]].g >> 1);
                     image[x].r = (c64_palette[index[0]].r >> 1) + (c64_palette[index[1]].r >> 1);
+                    image[x].g = (c64_palette[index[0]].g >> 1) + (c64_palette[index[1]].g >> 1);
+                    image[x].b = (c64_palette[index[0]].b >> 1) + (c64_palette[index[1]].b >> 1);
                     image[x].a = 0xff;
                 }
             }

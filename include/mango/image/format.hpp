@@ -120,12 +120,12 @@ namespace mango
         u32 bits;
         Type type;
         u16 flags;
-        ColorRGBA size;
-        ColorRGBA offset;
+        Color size;
+        Color offset;
 
         Format();
         explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
-        explicit Format(int bits, Type type, ColorRGBA size, ColorRGBA offset);
+        explicit Format(int bits, Type type, Color size, Color offset);
         explicit Format(int bits, Type type, Order order, int s0, int s1 = 0, int s2 = 0, int s3 = 0);
         Format(const Format& format) = default;
         ~Format() = default;

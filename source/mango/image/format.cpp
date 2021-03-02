@@ -41,7 +41,7 @@ namespace mango
         offset[3] = u8(u32_index_of_lsb(alphaMask));
     }
 
-    Format::Format(int bits, Type type, ColorRGBA size, ColorRGBA offset)
+    Format::Format(int bits, Type type, Color size, Color offset)
         : bits(bits)
         , type(type)
         , flags(0)
@@ -181,7 +181,7 @@ namespace mango
     }
 
     LuminanceFormat::LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits)
-        : Format(bits, type, ColorRGBA(luminanceBits, luminanceBits, luminanceBits, alphaBits), ColorRGBA(0, 0, 0, luminanceBits))
+        : Format(bits, type, Color(luminanceBits, luminanceBits, luminanceBits, alphaBits), Color(0, 0, 0, luminanceBits))
     {
         flags = FLAG_LUMINANCE;
     }
@@ -191,7 +191,7 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     IndexedFormat::IndexedFormat(int bits)
-        : Format(bits, Format::UNORM, ColorRGBA(bits, bits, bits, 0), ColorRGBA(0, 0, 0, 0))
+        : Format(bits, Format::UNORM, Color(bits, bits, bits, 0), Color(0, 0, 0, 0))
     {
         flags = FLAG_INDEXED;
     }

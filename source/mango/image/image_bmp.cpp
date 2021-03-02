@@ -742,12 +742,12 @@ namespace
         const int width = dest.width;
         const int height = dest.height;
 
-        Bitmap temp(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
+        Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
         for (int y = 0; y < height; ++y)
         {
             u8* s = indices.address<u8>(0, y);
-            ColorBGRA* d = temp.address<ColorBGRA>(0, y);
+            Color* d = temp.address<Color>(0, y);
             for (int x = 0; x < width; ++x)
             {
                 d[x] = palette[s[x]];
@@ -786,7 +786,7 @@ namespace
             const u8* p = header.palette;
             for (u32 i = 0; i < palette.size; ++i)
             {
-                palette[i] = ColorBGRA(p[2], p[1], p[0], 0xff);
+                palette[i] = Color(p[2], p[1], p[0], 0xff);
                 p += components;
             }
         }

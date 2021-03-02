@@ -36,8 +36,8 @@ namespace
             u8(eightcc >> 32),
         };
 
-        ColorRGBA size = 0;
-        ColorRGBA offset = 0;
+        Color size = 0;
+        Color offset = 0;
         int bits = 0;
 
         for (int i = 0; i < 4; ++i)

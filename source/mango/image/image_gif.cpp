@@ -318,8 +318,7 @@ namespace
 		for (int x = 0; x < width; ++x)
 		{
 			u8 sample = src[x];
-			ColorBGRA color = palette[sample];
-			dest[x] = color;
+			dest[x] = palette[sample];
 		}
 	}
 
@@ -332,8 +331,7 @@ namespace
 			u8 sample = src[x];
 			if (sample != transparent)
 			{
-				ColorBGRA color = palette[sample];
-				dest[x] = color;
+				dest[x] = palette[sample];
 			}
 		}
 	}
@@ -358,7 +356,7 @@ namespace
             	u32 r = image_desc.palette[i * 3 + 0];
             	u32 g = image_desc.palette[i * 3 + 1];
             	u32 b = image_desc.palette[i * 3 + 2];
-            	palette[i] = ColorBGRA(r, g, b, 0xff);
+            	palette[i] = Color(r, g, b, 0xff);
 			}
 		}
 		else
@@ -371,7 +369,7 @@ namespace
             	u32 r = state.screen_desc.palette[i * 3 + 0];
             	u32 g = state.screen_desc.palette[i * 3 + 1];
             	u32 b = state.screen_desc.palette[i * 3 + 2];
-            	palette[i] = ColorBGRA(r, g, b, 0xff);
+            	palette[i] = Color(r, g, b, 0xff);
 			}
 		}
 
@@ -572,7 +570,7 @@ namespace
 				m_header.levels  = 0;
 				m_header.faces   = 0;
 				m_header.palette = true;
-				m_header.format  = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+				m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 				m_header.compression = TextureCompression::NONE;
 
 				m_image.reset(new u8[m_header.width * m_header.height * 4]);
@@ -603,7 +601,7 @@ namespace
             }
 
 			Format format = ptr_palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
-			                            : Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+			                            : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
 			size_t stride = m_header.width * format.bytes();
 			Surface target(m_header.width, m_header.height, format, stride, m_image.get());

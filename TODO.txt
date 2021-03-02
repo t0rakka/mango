@@ -24,7 +24,6 @@ mango::image
     - was decoding direct? color converting? scaling? dithering? paletted.. source bitplanes..
 [x] struct EncodeOptions, used by ImageEncoder::encode()
 [ ] 1, 2 and 4 bit formats / blitting support
-[-] rename ColorRGBA / ColorBGRA? RGBA/BGRA won't work (used in Format class enums). rgba, u8_rgba, ..
 [ ] namespace mango::image
 [ ] Palette blitters (palette + index -> RGBA)
 [x] Color quantizer / dithering for RGBA -> Palette + Index generation (supports 1..8 bits)
