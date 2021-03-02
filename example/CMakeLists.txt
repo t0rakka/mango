@@ -13,7 +13,7 @@ option(BUILD_FRAMEBUFFER "Enables build of framebuffer examples" OFF)
 
 add_compile_options(-Wall -O3 -g)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")

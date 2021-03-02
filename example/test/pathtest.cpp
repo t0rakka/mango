@@ -31,7 +31,7 @@ void print(const Path& path)
 
 void print(const File& file)
 {
-    printf("[file] %s + %s, size: %zu bytes \n", 
+    printf("[file] %s + %s, size: %" PRIu64 " bytes \n", 
         file.pathname().c_str(), 
         file.filename().c_str(), 
         file.size());
