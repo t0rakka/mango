@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -24,7 +24,10 @@ namespace mango
     union ColorBGRA
     {
         u8 component[4];
-        struct { u8 b, g, r, a; };
+        struct
+        {
+            u8 b, g, r, a; 
+        };
 
         ColorBGRA()
         {
@@ -60,7 +63,10 @@ namespace mango
     union ColorRGBA
     {
         u8 component[4];
-        struct { u8 r, g, b, a; };
+        struct
+        {
+            u8 r, g, b, a;
+        };
 
         ColorRGBA()
         {

@@ -66,7 +66,12 @@ namespace mango::filesystem
         }
     };
 
-    // filename manipulation functions (example: "foo/bar/readme.txt")
+    // -----------------------------------------------------------------------
+    // filename manipulation functions
+    // -----------------------------------------------------------------------
+
+    // example: "foo/bar/readme.txt"
+
     std::string getPath(const std::string& filename);           // "foo/bar/"
     std::string removePath(const std::string& filename);        // "readme.txt"
     std::string getExtension(const std::string& filename);      // ".txt"
