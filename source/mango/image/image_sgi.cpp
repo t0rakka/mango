@@ -11,6 +11,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // .sgi parser
@@ -264,7 +265,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderSGI()
@@ -275,4 +276,4 @@ namespace mango
         registerImageDecoder(createInterface, ".sgi");
     }
 
-} // namespace mango
+} // namespace mango::image

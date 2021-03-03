@@ -13,6 +13,8 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::math;
+    using namespace mango::image;
 
     // ----------------------------------------------------------------------------
     // prototype.2018.07
@@ -1321,7 +1323,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     // ----------------------------------------------------------------------------
@@ -1521,4 +1523,4 @@ namespace mango
         }
     }
 
-} // namespace mango
+} // namespace mango::image

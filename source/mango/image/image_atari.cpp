@@ -14,6 +14,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -1064,7 +1065,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderATARI()
@@ -1090,4 +1091,4 @@ namespace mango
         registerImageDecoder(createInterfaceCA, ".ca3");
     }
 
-} // namespace mango
+} // namespace mango::image

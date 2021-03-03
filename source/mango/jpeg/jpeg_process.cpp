@@ -201,7 +201,7 @@ void process_cmyk_bgra(u8* dest, size_t stride, const s16* data, ProcessState* s
                     r = byteclamp(r);
                     g = byteclamp(g);
                     b = byteclamp(b);
-                    d[x] = makeBGRA(r, g, b, 0xff);
+                    d[x] = image::makeBGRA(r, g, b, 0xff);
                 }
                 dest_block += stride;
                 y_block += 8;

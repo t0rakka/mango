@@ -8,7 +8,7 @@
 #include <mango/core/bits.hpp>
 #include <mango/image/color.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     class Format
@@ -244,4 +244,4 @@ namespace mango
 
     */
 
-} // namespace mango
+} // namespace mango::image

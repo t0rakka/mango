@@ -17,6 +17,7 @@
 
 namespace mango::framebuffer
 {
+    using namespace image;
 
 	// -------------------------------------------------------------------
 	// FramebufferContext

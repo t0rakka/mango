@@ -140,7 +140,7 @@ namespace mango
         };
 
         static int getScreenCount();
-        static int32x2 getScreenSize(int screen = 0);
+        static math::int32x2 getScreenSize(int screen = 0);
 
         Window(int width, int height, u32 flags = 0);
         virtual ~Window();
@@ -148,11 +148,11 @@ namespace mango
         void setWindowPosition(int x, int y);
         void setWindowSize(int width, int height);
         void setTitle(const std::string& title);
-        void setIcon(const Surface& icon);
+        void setIcon(const image::Surface& icon);
         void setVisible(bool enable);
 
-        virtual int32x2 getWindowSize() const;
-		virtual int32x2 getCursorPosition() const;
+        virtual math::int32x2 getWindowSize() const;
+		virtual math::int32x2 getCursorPosition() const;
         virtual bool isKeyPressed(Keycode code) const;
 
 #ifdef MANGO_PLATFORM_WINDOWS

@@ -14,6 +14,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
 	// ------------------------------------------------------------
 	// header
@@ -565,7 +566,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderTGA()
@@ -574,4 +575,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".tga");
     }
 
-} // namespace mango
+} // namespace mango::image

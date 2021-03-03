@@ -446,7 +446,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
@@ -493,4 +493,4 @@ namespace mango
         pvrtcDecompress(in, out, stride, info.width, info.height, bpp);
     }
 
-} // namespace mango
+} // namespace mango::image

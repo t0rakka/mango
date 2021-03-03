@@ -23,7 +23,7 @@
 */
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
-    Format(bits, Format::type, Format::order, s0, s1, s2, s3)
+    image::Format(bits, image::Format::type, image::Format::order, s0, s1, s2, s3)
 
 namespace
 {
@@ -160,6 +160,8 @@ namespace
 
 namespace mango
 {
+    using namespace math;
+    using namespace image;
 
     // -----------------------------------------------------------------------
     // extension masks

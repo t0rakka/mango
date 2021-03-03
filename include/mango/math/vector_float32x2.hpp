@@ -6,7 +6,7 @@
 
 #include <mango/math/vector.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -401,4 +401,4 @@ namespace mango
         return Vector<float, 2>(x, y);
     }
 
-} // namespace mango
+} // namespace mango::math

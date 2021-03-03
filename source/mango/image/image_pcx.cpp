@@ -10,6 +10,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // .pcx parser
@@ -408,7 +409,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderPCX()
@@ -416,4 +417,4 @@ namespace mango
         registerImageDecoder(createInterface, ".pcx");
     }
 
-} // namespace mango
+} // namespace mango::image

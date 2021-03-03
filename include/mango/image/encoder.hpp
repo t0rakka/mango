@@ -12,7 +12,7 @@
 #include <mango/image/compression.hpp>
 #include <mango/image/exif.hpp>
 
-namespace mango
+namespace mango::image
 {
     class Surface;
 
@@ -50,4 +50,4 @@ namespace mango
     void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension);
     bool isImageEncoder(const std::string& extension);
 
-} // namespace mango
+} // namespace mango::image

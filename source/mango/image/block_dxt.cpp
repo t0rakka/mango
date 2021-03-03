@@ -296,7 +296,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_dxt1(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
@@ -362,4 +362,4 @@ namespace mango
         Decode3BitLinear(out + 3, 4, stride, alphaBlock);
     }
 
-} // namespace mango
+} // namespace mango::image

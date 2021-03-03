@@ -41,7 +41,7 @@
 
 */
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -1735,7 +1735,7 @@ namespace mango
         return simd::all_of(mask);
     }
 
-} // namespace mango
+} // namespace mango::math
 
 #include <mango/math/vector128_uint8x16.hpp>
 #include <mango/math/vector128_uint16x8.hpp>

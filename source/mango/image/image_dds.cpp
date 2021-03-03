@@ -9,6 +9,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
 	// ------------------------------------------------------------
     // .dds information
@@ -1141,7 +1142,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderDDS()
@@ -1149,4 +1150,4 @@ namespace mango
         registerImageDecoder(createInterface, ".dds");
     }
 
-} // namespace mango
+} // namespace mango::image

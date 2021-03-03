@@ -8,6 +8,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ----------------------------------------------------------------------------
     // FormatASTC
@@ -168,7 +169,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderASTC()
@@ -176,4 +177,4 @@ namespace mango
         registerImageDecoder(createInterface, ".astc");
     }
 
-} // namespace mango
+} // namespace mango::image

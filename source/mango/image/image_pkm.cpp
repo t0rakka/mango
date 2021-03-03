@@ -10,6 +10,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ----------------------------------------------------------------------------
     // header
@@ -229,7 +230,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderPKM()
@@ -238,4 +239,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".pkm");
     }
 
-} // namespace mango
+} // namespace mango::image

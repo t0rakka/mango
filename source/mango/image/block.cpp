@@ -12,7 +12,7 @@
 #define FORMAT_ASTC_SRGB MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8)
 #define FORMAT_ASTC_FP16 MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16)
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1
@@ -67,11 +67,12 @@ namespace mango
 
     void encode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
-} // namespace mango
+} // namespace mango::image
 
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     const TextureCompressionInfo g_blockTable[] =
     {
@@ -984,7 +985,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
 	// ----------------------------------------------------------------------------
@@ -1198,4 +1199,4 @@ namespace mango
         return status;
     }
 
-} // namespace mango
+} // namespace mango::image

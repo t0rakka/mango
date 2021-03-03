@@ -382,7 +382,7 @@ void etc_encode_block_helper(const etc1_byte* pIn, size_t stride,
     }
 }
 
-namespace mango
+namespace mango::image
 {
 
     void encode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -404,4 +404,4 @@ namespace mango
         ustore32be(output + 4, a.low);
     }
 
-} // namespace mango
+} // namespace mango::image

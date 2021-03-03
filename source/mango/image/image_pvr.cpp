@@ -13,6 +13,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ----------------------------------------------------------------------------
     // EightCC
@@ -680,7 +681,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderPVR()
@@ -688,4 +689,4 @@ namespace mango
         registerImageDecoder(createInterface, ".pvr");
     }
 
-} // namespace mango
+} // namespace mango::image

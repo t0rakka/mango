@@ -10,6 +10,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
 	// ------------------------------------------------------------
 	// ImageDecoder
@@ -73,7 +74,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderJPG()
@@ -86,4 +87,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".jpeg");
     }
 
-} // namespace mango
+} // namespace mango::image

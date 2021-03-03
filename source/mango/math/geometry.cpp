@@ -6,7 +6,7 @@
 #include <cmath>
 #include <mango/math/geometry.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -646,4 +646,4 @@ namespace mango
         return discr >= 0 && test >= 0;
     }
 
-} // namespace mango
+} // namespace mango::math

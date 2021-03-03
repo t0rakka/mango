@@ -141,12 +141,20 @@ namespace mango::jpeg
     using mango::u32;
     using mango::u64;
     using mango::s16;
-    using mango::Format;
-    using mango::Surface;
+
 	using mango::Stream;
     using mango::ThreadPool;
     using mango::Memory;
     using mango::ConstMemory;
+
+    using mango::image::Format;
+    using mango::image::LuminanceFormat;
+    using mango::image::Surface;
+    using mango::image::Bitmap;
+    using mango::image::ImageHeader;
+    using mango::image::ImageDecodeStatus;
+    using mango::image::ImageEncodeStatus;
+    using mango::image::ImageEncodeOptions;
 
 #ifdef MANGO_CPU_64BIT
 

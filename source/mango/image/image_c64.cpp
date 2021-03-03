@@ -15,6 +15,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // Commodore 64 utilities
@@ -2530,7 +2531,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderC64()
@@ -2648,4 +2649,4 @@ namespace mango
         registerImageDecoder(createInterfaceVID, ".vid");
     }
 
-} // namespace mango
+} // namespace mango::image

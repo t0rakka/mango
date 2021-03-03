@@ -156,7 +156,7 @@ static int8_t inline FloatToSNorm(float fVal)
 {
     const uint32_t dwMostNeg = ( 1 << ( 8 * sizeof( int8_t ) - 1 ) );
 
-    fVal = mango::clamp(fVal, -1.0f, 1.0f);
+    fVal = mango::math::clamp(fVal, -1.0f, 1.0f);
     fVal = fVal * (int8_t) ( dwMostNeg - 1 );
 
     if( fVal >= 0 )
@@ -325,7 +325,7 @@ static void FindClosestSNORM(BC4_SNORM* pBC, const float theTexelsU[])
 
 } // namespace DirectX
 
-namespace mango
+namespace mango::image
 {
     using namespace DirectX;
 
@@ -547,4 +547,4 @@ namespace mango
         FindClosestSNORM(pBCG, theTexelsV);
     }
 
-} // namespace mango
+} // namespace mango::image

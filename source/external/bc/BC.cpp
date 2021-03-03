@@ -1163,6 +1163,7 @@ static void D3DXEncodeBC3(uint8_t *pBC, const float32x4 *pColor, u32 flags)
 namespace
 {
     using namespace mango;
+    using namespace mango::math;
 
     // NOTE: calls to this routine can be reduced when the DX encoder supports stride.
     // TODO: support rgba8888 input in the encoder to completely eliminate this.
@@ -1182,7 +1183,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -1236,4 +1237,4 @@ namespace mango
         DirectX::D3DXEncodeBC3(output, temp, DirectX::BC_FLAGS_NONE);
     }
 
-} // namespace mango
+} // namespace mango::image

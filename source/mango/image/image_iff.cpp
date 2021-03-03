@@ -9,6 +9,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // iff
@@ -541,7 +542,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderIFF()
@@ -554,4 +555,4 @@ namespace mango
         registerImageDecoder(createInterface, ".ehb");
     }
 
-} // namespace mango
+} // namespace mango::image

@@ -6,7 +6,7 @@
 
 #include <mango/math/vector.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     template <>
@@ -271,4 +271,4 @@ namespace mango
         return simd::sll(a, b);
     }
 
-} // namespace mango
+} // namespace mango::math

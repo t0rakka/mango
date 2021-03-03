@@ -12,7 +12,7 @@
 #include <mango/image/format.hpp>
 #include <mango/image/encoder.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     class Surface
@@ -72,4 +72,4 @@ namespace mango
         Bitmap& operator = (Bitmap&& bitmap);
     };
 
-} // namespace mango
+} // namespace mango::image

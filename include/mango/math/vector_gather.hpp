@@ -6,7 +6,7 @@
 
 #include <mango/math/vector.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // 128 bit gather
@@ -201,4 +201,4 @@ namespace mango
         return simd::gather(address, offset, value, mask);
     }
 
-} // namespace mango
+} // namespace mango::math

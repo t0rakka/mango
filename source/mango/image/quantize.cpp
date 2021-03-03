@@ -289,7 +289,7 @@ namespace
             for (int j = 0; j < 3; ++j)
             {
                 constexpr int bias = 1 << (netbiasshift - 1);
-                network[i][j] = clamp((network[i][j] + bias) >> netbiasshift, 0, 255);
+                network[i][j] = math::clamp((network[i][j] + bias) >> netbiasshift, 0, 255);
             }
 
             network[i][3] = i;
@@ -303,7 +303,7 @@ namespace mango::image
 
     ColorQuantizer::ColorQuantizer(const Surface& source, float quality)
     {
-        quality = clamp(quality, 0.0f, 1.0f);
+        quality = math::clamp(quality, 0.0f, 1.0f);
         int sample_factor = std::max(1, 30 - int(quality * 29.0f + 1.0f));
 
         Bitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
@@ -392,26 +392,26 @@ namespace mango::image
                     // distribute the error to neighbouring pixels with Floyd-Steinberg weights
                     if (x < width - 1)
                     {
-                        s[x + 1].r = clamp(s[x + 1].r + (r * 7 / 16), 0, 255);
-                        s[x + 1].g = clamp(s[x + 1].g + (g * 7 / 16), 0, 255);
-                        s[x + 1].b = clamp(s[x + 1].b + (b * 7 / 16), 0, 255);
+                        s[x + 1].r = math::clamp(s[x + 1].r + (r * 7 / 16), 0, 255);
+                        s[x + 1].g = math::clamp(s[x + 1].g + (g * 7 / 16), 0, 255);
+                        s[x + 1].b = math::clamp(s[x + 1].b + (b * 7 / 16), 0, 255);
 
                         if (y < height - 1)
                         {
                             if (x > 0)
                             {
-                                n[x - 1].r = clamp(n[x - 1].r + (r * 3 / 16), 0, 255);
-                                n[x - 1].g = clamp(n[x - 1].g + (g * 3 / 16), 0, 255);
-                                n[x - 1].b = clamp(n[x - 1].b + (b * 3 / 16), 0, 255);
+                                n[x - 1].r = math::clamp(n[x - 1].r + (r * 3 / 16), 0, 255);
+                                n[x - 1].g = math::clamp(n[x - 1].g + (g * 3 / 16), 0, 255);
+                                n[x - 1].b = math::clamp(n[x - 1].b + (b * 3 / 16), 0, 255);
                             }
 
-                            n[x + 0].r = clamp(n[x + 0].r + (r * 5 / 16), 0, 255);
-                            n[x + 0].g = clamp(n[x + 0].g + (g * 5 / 16), 0, 255);
-                            n[x + 0].b = clamp(n[x + 0].b + (b * 5 / 16), 0, 255);
+                            n[x + 0].r = math::clamp(n[x + 0].r + (r * 5 / 16), 0, 255);
+                            n[x + 0].g = math::clamp(n[x + 0].g + (g * 5 / 16), 0, 255);
+                            n[x + 0].b = math::clamp(n[x + 0].b + (b * 5 / 16), 0, 255);
 
-                            n[x + 1].r = clamp(n[x + 1].r + (r * 1 / 16), 0, 255);
-                            n[x + 1].g = clamp(n[x + 1].g + (g * 1 / 16), 0, 255);
-                            n[x + 1].b = clamp(n[x + 1].b + (b * 1 / 16), 0, 255);
+                            n[x + 1].r = math::clamp(n[x + 1].r + (r * 1 / 16), 0, 255);
+                            n[x + 1].g = math::clamp(n[x + 1].g + (g * 1 / 16), 0, 255);
+                            n[x + 1].b = math::clamp(n[x + 1].b + (b * 1 / 16), 0, 255);
                         }
                     }
                 }

@@ -14,6 +14,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
 	// ------------------------------------------------------------
 	// decoder
@@ -870,7 +871,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderGIF()
@@ -879,4 +880,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".gif");
     }
 
-} // namespace mango
+} // namespace mango::image

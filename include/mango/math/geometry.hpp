@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -8,7 +8,7 @@
 #include <cmath>
 #include <mango/math/math.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -414,4 +414,4 @@ namespace mango
     bool intersect(const Sphere& sphere, const Box& box);
     bool intersect(const Cone& cone, const Sphere& sphere);
 
-} // namespace mango
+} // namespace mango::math

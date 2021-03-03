@@ -11,6 +11,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // tokenizer
@@ -427,7 +428,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderHDR()
@@ -435,4 +436,4 @@ namespace mango
         registerImageDecoder(createInterface, ".hdr");
     }
 
-} // namespace mango
+} // namespace mango::image

@@ -7,7 +7,7 @@
 #include <mango/math/vector.hpp>
 #include <mango/math/vector_float32x4.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     template <>
@@ -100,4 +100,4 @@ namespace mango
         }
     };
 
-} // namespace mango
+} // namespace mango::math

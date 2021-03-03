@@ -7,7 +7,7 @@
 #include <mango/math/vector.hpp>
 #include <mango/math/vector_float32x2.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -479,4 +479,4 @@ namespace mango
         return Vector<float, 3>(x, y, z);
     }
 
-} // namespace mango
+} // namespace mango::math

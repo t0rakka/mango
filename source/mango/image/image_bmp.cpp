@@ -13,6 +13,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // .bmp parser
@@ -1321,7 +1322,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderBMP()
@@ -1332,4 +1333,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".bmp");
     }
 
-} // namespace mango
+} // namespace mango::image

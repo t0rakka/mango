@@ -7,7 +7,7 @@
 #include <cassert>
 #include <mango/math/vector.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -200,6 +200,6 @@ namespace mango
     using float3x3 = Matrix<float, 3, 3>;
     using float4x4 = Matrix<float, 4, 4>;
 
-} // namespace mango
+} // namespace mango::math
 
 #include <mango/math/matrix_float4x4.hpp>

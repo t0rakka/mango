@@ -40,6 +40,7 @@
 
 namespace mango
 {
+    using namespace mango::image;
 
     // -----------------------------------------------------------------------
     // Window
@@ -51,7 +52,7 @@ namespace mango
         return 1;
     }
 
-    int32x2 Window::getScreenSize(int screen)
+    math::int32x2 Window::getScreenSize(int screen)
     {
         // TODO: support more than default screen
         MANGO_UNREFERENCED(screen);
@@ -61,10 +62,10 @@ namespace mango
         auto display = CGMainDisplayID();
         int width = int(CGDisplayPixelsWide(display));
         int height = int(CGDisplayPixelsHigh(display));
-        return int32x2(width, height);
+        return math::int32x2(width, height);
 #else
         NSRect rect = [[NSScreen mainScreen] frame];
-        return int32x2(rect.size.width, rect.size.height);
+        return math::int32x2(rect.size.width, rect.size.height);
 #endif
     }
 
@@ -101,7 +102,7 @@ namespace mango
         [m_handle->window setTitle:[NSString stringWithUTF8String:title.c_str()]];
     }
 
-    void Window::setIcon(const Surface& icon)
+    void Window::setIcon(const image::Surface& icon)
     {
         Bitmap bitmap(icon, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
@@ -137,18 +138,18 @@ namespace mango
         }
     }
 
-    int32x2 Window::getWindowSize() const
+    math::int32x2 Window::getWindowSize() const
     {
         NSRect rect = [[m_handle->window contentView] frame];
         rect = [[m_handle->window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
-        return int32x2(rect.size.width, rect.size.height);
+        return math::int32x2(rect.size.width, rect.size.height);
     }
 
-	int32x2 Window::getCursorPosition() const
+	math::int32x2 Window::getCursorPosition() const
 	{
         NSRect rect = [[m_handle->window contentView] frame];
 		NSPoint point = [m_handle->window mouseLocationOutsideOfEventStream];
-		return int32x2(point.x, rect.size.height - point.y - 1);
+		return math::int32x2(point.x, rect.size.height - point.y - 1);
 	}
 
     bool Window::isKeyPressed(Keycode code) const

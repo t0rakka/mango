@@ -350,12 +350,12 @@ namespace mango
         return [m_context->view isInFullScreenMode];
 	}
 
-    int32x2 OpenGLContext::getWindowSize() const
+    math::int32x2 OpenGLContext::getWindowSize() const
     {
         CustomView* view = m_context->view;
         NSRect rect = [view frame];
         rect = [[m_handle->window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
-        return int32x2(rect.size.width, rect.size.height);
+        return math::int32x2(rect.size.width, rect.size.height);
     }
 
 } // namespace mango

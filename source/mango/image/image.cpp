@@ -7,7 +7,7 @@
 #include <mango/core/timer.hpp>
 #include <mango/image/image.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     // ----------------------------------------------------------------------------
@@ -267,4 +267,4 @@ namespace mango
         return status;
     }
 
-} // namespace mango
+} // namespace mango::image

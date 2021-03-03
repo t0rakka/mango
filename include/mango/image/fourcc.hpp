@@ -6,7 +6,7 @@
 
 #include <mango/core/bits.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     enum : u32
@@ -61,7 +61,9 @@ namespace mango
         FOURCC_R8G8B8G8   = u32_mask('R', 'G', 'B', 'G'),
     };
 
-namespace dxgi
+} // namespace mango::image
+
+namespace mango::dxgi
 {
 
     // Microsoft DirectX Graphics Infrastructure
@@ -231,9 +233,9 @@ namespace dxgi
         FORMAT_ASTC_12X12_UNORM_SRGB       = 187,
     };
 
-} // namespace dxgi
+} // namespace mango::dxgi
 
-namespace opengl
+namespace mango::opengl
 {
 
     // OpenGL Compressed Texture Formats
@@ -366,9 +368,9 @@ namespace opengl
         COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES      = 0x93E9,
     };
 
-} // namespace opengl
+} // namespace mango::opengl
 
-namespace vulkan
+namespace mango::vulkan
 {
 
     // Vulkan Image Formats
@@ -652,5 +654,4 @@ namespace vulkan
         FORMAT_G16_B16_R16_3PLANE_444_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_444_UNORM,
     };
 
-} // namespace vulkan
-} // namespace mango
+} // namespace mango::vulkan

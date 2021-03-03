@@ -10,6 +10,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // KTX Format Specification:
     // http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
@@ -718,7 +719,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderKTX()
@@ -726,4 +727,4 @@ namespace mango
         registerImageDecoder(createInterface, ".ktx");
     }
 
-} // namespace mango
+} // namespace mango::image

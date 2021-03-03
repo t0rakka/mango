@@ -13,6 +13,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     const char* skipComment(const char* p, const char* end)
     {
@@ -539,7 +540,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderPNM()
@@ -551,4 +552,4 @@ namespace mango
         registerImageDecoder(createInterface, ".pfm");
     }
 
-} // namespace mango
+} // namespace mango::image

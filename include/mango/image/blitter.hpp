@@ -8,7 +8,7 @@
 #include <mango/simd/simd.hpp>
 #include <mango/image/surface.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     struct BlitScan
@@ -73,4 +73,4 @@ namespace mango
         void convert(const BlitRect& rect) const;
     };
 
-} // namespace mango
+} // namespace mango::image

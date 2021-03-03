@@ -1,12 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/matrix.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     struct Quaternion;
@@ -429,4 +429,4 @@ namespace mango
         float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
     } // namespace directx
 
-} // namespace mango
+} // namespace mango::math

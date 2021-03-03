@@ -11,11 +11,10 @@
 #include <mango/core/bits.hpp>
 #include <mango/math/math.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();
-    constexpr float pi = float(mango::math::pi);
 
     // ------------------------------------------------------------------------
     // float4x4
@@ -1122,11 +1121,6 @@ namespace directx
         return slerp(qa, qb, 0, 2.0f * time * (1.0f - time));
     }
 
-} // namespace mango
-
-namespace mango::math
-{
-
     namespace detail
     {
         inline float pow24(float v)
@@ -1174,7 +1168,8 @@ namespace mango::math
             f -= (f - v / (s * s)) * 0.2f;
             return f;
         }
-    }
+
+    } // namespace detail
 
     // ------------------------------------------------------------------------
     // sRGB

@@ -59,7 +59,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_uyvy(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -207,4 +207,4 @@ namespace mango
         dest[3] = 1.0f;
     }
 
-} // namespace mango
+} // namespace mango::image

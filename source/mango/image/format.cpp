@@ -7,7 +7,7 @@
 #include <mango/math/math.hpp>
 #include <mango/image/format.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     // ----------------------------------------------------------------------------
@@ -137,10 +137,10 @@ namespace mango
     {
         const float scale[] =
         {
-            clamp(red,   0.0f, 1.0f),
-            clamp(green, 0.0f, 1.0f),
-            clamp(blue,  0.0f, 1.0f),
-            clamp(alpha, 0.0f, 1.0f)
+            math::clamp(red,   0.0f, 1.0f),
+            math::clamp(green, 0.0f, 1.0f),
+            math::clamp(blue,  0.0f, 1.0f),
+            math::clamp(alpha, 0.0f, 1.0f)
         };
 
         u32 color = 0;
@@ -196,4 +196,4 @@ namespace mango
         flags = FLAG_INDEXED;
     }
 
-} // namespace mango
+} // namespace mango::image

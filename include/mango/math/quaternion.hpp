@@ -7,7 +7,7 @@
 #include <mango/math/vector.hpp>
 #include <mango/math/matrix.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     struct AngleAxis;
@@ -238,4 +238,4 @@ namespace mango
 
     using quat = Quaternion;
 
-} // namespace mango
+} // namespace mango::math

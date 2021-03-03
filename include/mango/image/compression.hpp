@@ -10,7 +10,7 @@
 #include <mango/image/format.hpp>
 #include <mango/image/fourcc.hpp>
 
-namespace mango
+namespace mango::image
 {
     class Surface;
 
@@ -260,48 +260,53 @@ namespace mango
     using TextureCompressionFlags = TextureCompressionInfo::CompressionFlags;
     using TextureCompression = TextureCompressionInfo::TextureCompression;
 
+} // namespace mango::image
+
+namespace mango
+{
+
     namespace opengl
     {
         static inline
-        TextureCompression getTextureCompression(u32 format)
+        image::TextureCompression getTextureCompression(u32 format)
         {
-            return TextureCompressionInfo(opengl::TextureFormat(format)).compression;
+            return image::TextureCompressionInfo(opengl::TextureFormat(format)).compression;
         }
 
         static inline
-        u32 getTextureFormat(TextureCompression compression)
+        u32 getTextureFormat(image::TextureCompression compression)
         {
-            return TextureCompressionInfo(compression).gl;
+            return image::TextureCompressionInfo(compression).gl;
         }
     }
 
     namespace vulkan
     {
         static inline
-        TextureCompression getTextureCompression(u32 format)
+        image::TextureCompression getTextureCompression(u32 format)
         {
-            return TextureCompressionInfo(vulkan::TextureFormat(format)).compression;
+            return image::TextureCompressionInfo(vulkan::TextureFormat(format)).compression;
         }
 
         static inline
-        u32 getTextureFormat(TextureCompression compression)
+        u32 getTextureFormat(image::TextureCompression compression)
         {
-            return TextureCompressionInfo(compression).vk;
+            return image::TextureCompressionInfo(compression).vk;
         }
     }
 
     namespace dxgi
     {
         static inline
-        TextureCompression getTextureCompression(u32 format)
+        image::TextureCompression getTextureCompression(u32 format)
         {
-            return TextureCompressionInfo(dxgi::TextureFormat(format)).compression;
+            return image::TextureCompressionInfo(dxgi::TextureFormat(format)).compression;
         }
 
         static inline
-        u32 getTextureFormat(TextureCompression compression)
+        u32 getTextureFormat(image::TextureCompression compression)
         {
-            return TextureCompressionInfo(compression).dxgi;
+            return image::TextureCompressionInfo(compression).dxgi;
         }
     }
 

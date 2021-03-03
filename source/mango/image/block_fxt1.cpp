@@ -10,6 +10,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     struct BlockFXT
     {
@@ -388,7 +389,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_fxt1_rgb(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
@@ -405,4 +406,4 @@ namespace mango
         decode_fxt1(out, stride, block, 0);
     }
 
-} // namespace mango
+} // namespace mango::image

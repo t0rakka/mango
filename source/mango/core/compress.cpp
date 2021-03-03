@@ -80,7 +80,7 @@ namespace lz4
 
         size_t written = 0;
 
-        level = clamp(level, 0, 10);
+        level = math::clamp(level, 0, 10);
 
         if (level > 6)
         {
@@ -304,7 +304,7 @@ namespace zstd
         if (!source.size)
             return 0;
 
-        level = clamp(level * 2, 1, 20);
+        level = math::clamp(level * 2, 1, 20);
 
         const size_t x = ZSTD_compress(dest.address, dest.size,
                                        source.address, source.size, level);
@@ -338,7 +338,7 @@ namespace zstd
     public:
         StreamEncoderZSTD(int level)
         {
-            level = clamp(level * 2, 1, 20);
+            level = math::clamp(level * 2, 1, 20);
             z = ZSTD_createCStream();
             ZSTD_initCStream(z, level);
         }
@@ -446,7 +446,7 @@ namespace bzip2
 
     size_t compress(Memory dest, ConstMemory source, int level)
     {
-        const int blockSize100k = clamp(level, 1, 9);
+        const int blockSize100k = math::clamp(level, 1, 9);
 
         const int verbosity = 0;
         const int workFactor = 30;
@@ -594,7 +594,7 @@ namespace lzma
         CLzmaEncProps props;
         LzmaEncProps_Init(&props);
 
-        level = clamp(level - 1, 0, 9);
+        level = math::clamp(level - 1, 0, 9);
 
         props.level = level; // [0, 9] (default: 5)
         props.dictSize = 2048 << level; // use (1 << N) or (3 << N). 4 KB < dictSize <= 128 MB
@@ -673,7 +673,7 @@ namespace lzma2
         Lzma2EncProps_Init(&props);
         Lzma2EncProps_Normalize(&props);
 
-        level = clamp(level, 0, 10);
+        level = math::clamp(level, 0, 10);
 
         CLzma2EncHandle encoder = Lzma2Enc_Create(&g_Alloc, &g_Alloc);
 
@@ -796,7 +796,7 @@ namespace ppmd8
     {
         u8* start = dest.address;
 
-        level = clamp(level, 0, 10);
+        level = math::clamp(level, 0, 10);
 
         // encoding parameters
         u16 opt_order = level + 2; // 2..16
@@ -912,7 +912,7 @@ namespace deflate
 
     size_t compress(Memory dest, ConstMemory source, int level)
     {
-        level = clamp(level, 1, 10);
+        level = math::clamp(level, 1, 10);
         if (level >= 8) level = (level * 12) / 10;
 
         libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
@@ -955,7 +955,7 @@ namespace zlib
 
     size_t compress(Memory dest, ConstMemory source, int level)
     {
-        level = clamp(level, 1, 10);
+        level = math::clamp(level, 1, 10);
         if (level >= 8) level = (level * 12) / 10;
 
         libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);
@@ -998,7 +998,7 @@ namespace gzip
 
     size_t compress(Memory dest, ConstMemory source, int level)
     {
-        level = clamp(level, 1, 10);
+        level = math::clamp(level, 1, 10);
         if (level >= 8) level = (level * 12) / 10;
 
         libdeflate_compressor* compressor = libdeflate_alloc_compressor(level);

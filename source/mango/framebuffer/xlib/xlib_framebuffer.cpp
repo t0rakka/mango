@@ -8,6 +8,7 @@
 
 namespace mango::framebuffer
 {
+    using namespace image;
 
     struct FramebufferContext
     {

@@ -32,6 +32,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::math;
 
     enum
     {
@@ -1473,7 +1474,7 @@ namespace
     
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     //
@@ -1545,4 +1546,4 @@ namespace mango
         }
     }
 
-} // namespace mango
+} // namespace mango::image

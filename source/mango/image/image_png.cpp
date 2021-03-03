@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -17,6 +17,8 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
+    using namespace mango::math;
 
     constexpr int PNG_SIMD_PADDING = 16;
     constexpr int PNG_FILTER_BYTE = 1;
@@ -2741,7 +2743,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderPNG()
@@ -2750,4 +2752,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".png");
     }
 
-} // namespace mango
+} // namespace mango::image

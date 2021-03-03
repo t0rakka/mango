@@ -16,6 +16,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     // ------------------------------------------------------------
     // webp formats
@@ -216,7 +217,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void registerImageDecoderWEBP()
@@ -225,4 +226,4 @@ namespace mango
         registerImageEncoder(imageEncode, ".webp");
     }
 
-} // namespace mango
+} // namespace mango::image

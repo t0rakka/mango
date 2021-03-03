@@ -8,6 +8,7 @@
 
 namespace mango::framebuffer
 {
+    using Surface = image::Surface;
 
     // -------------------------------------------------------------------
     // Framebuffer

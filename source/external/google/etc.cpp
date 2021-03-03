@@ -35,6 +35,7 @@
 namespace
 {
     using namespace mango;
+    using namespace mango::math;
 
     inline u32 getBits (u64 src, int offset, int count)
     {
@@ -392,10 +393,10 @@ namespace
 
             const u32 paint[] =
             {
-                makeRGBA(paintR[0], paintG[0], paintB[0], 0xff),
-                makeRGBA(paintR[1], paintG[1], paintB[1], 0xff),
-                makeRGBA(paintR[2], paintG[2], paintB[2], 0xff),
-                makeRGBA(paintR[3], paintG[3], paintB[3], 0xff)
+                image::makeRGBA(paintR[0], paintG[0], paintB[0], 0xff),
+                image::makeRGBA(paintR[1], paintG[1], paintB[1], 0xff),
+                image::makeRGBA(paintR[2], paintG[2], paintB[2], 0xff),
+                image::makeRGBA(paintR[3], paintG[3], paintB[3], 0xff)
             };
 
             // Write final pixels for T or H mode.
@@ -621,7 +622,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
 
     void decode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -664,4 +665,4 @@ namespace mango
         decompress_block_eac11(output + 2, 2, stride, green, signedMode);
     }
 
-} // namespace mango
+} // namespace mango::image

@@ -7,7 +7,7 @@
 #include <mango/math/vector.hpp>
 #include <mango/math/vector_float32x4.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
@@ -469,4 +469,4 @@ namespace mango
         return simd::select(mask, a, b);
     }
 
-} // namespace mango
+} // namespace mango::math

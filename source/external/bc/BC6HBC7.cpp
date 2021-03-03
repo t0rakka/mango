@@ -1886,8 +1886,6 @@ float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const
     return fError;
 }
 
-
-
 //-------------------------------------------------------------------------------------
 // BC7 Compression
 //-------------------------------------------------------------------------------------
@@ -2769,6 +2767,7 @@ static void D3DXEncodeBC7(uint8_t *output, const float32x4 *input)
 namespace
 {
     using namespace mango;
+    using namespace mango::math;
 
     // TODO: add stride support to encoder to eliminate this step
     void convert_block(float32x4* output, const u8* input, size_t stride)
@@ -2786,7 +2785,7 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::image
 {
     using namespace DirectX;
 
@@ -2838,4 +2837,4 @@ namespace mango
         D3DXEncodeBC7(output, temp);
     }
 
-} // namespace mango
+} // namespace mango::image

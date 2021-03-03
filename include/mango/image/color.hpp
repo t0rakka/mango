@@ -8,7 +8,7 @@
 #include <mango/core/endian.hpp>
 #include <mango/core/bits.hpp>
 
-namespace mango
+namespace mango::image
 {
 
     constexpr u32 makeBGRA(u32 red, u32 green, u32 blue, u32 alpha) noexcept
@@ -76,4 +76,4 @@ namespace mango
         }
     };
 
-} // namespace mango
+} // namespace mango::image

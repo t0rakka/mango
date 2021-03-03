@@ -30,6 +30,7 @@
 namespace DirectX
 {
     using namespace mango;
+    using namespace mango::math;
 
 //-------------------------------------------------------------------------------------
 // Constants
@@ -246,10 +247,10 @@ public:
 
     HDRColorA& Clamp(float fMin, float fMax)
     {
-        r = mango::clamp(r, fMin, fMax);
-        g = mango::clamp(g, fMin, fMax);
-        b = mango::clamp(b, fMin, fMax);
-        a = mango::clamp(a, fMin, fMax);
+        r = mango::math::clamp(r, fMin, fMax);
+        g = mango::math::clamp(g, fMin, fMax);
+        b = mango::math::clamp(b, fMin, fMax);
+        a = mango::math::clamp(a, fMin, fMax);
         return *this;
     }
 
@@ -850,8 +851,8 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
             break;
     }
 
-    *pX = mango::clamp(fX, MIN_VALUE, MAX_VALUE);
-    *pY = mango::clamp(fY, MIN_VALUE, MAX_VALUE);
+    *pX = mango::math::clamp(fX, MIN_VALUE, MAX_VALUE);
+    *pY = mango::math::clamp(fY, MIN_VALUE, MAX_VALUE);
 }
 
 }; // namespace DirectX
