@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__)
-    #ifndef SPNG_STATIC
+#if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(SPNG_STATIC)
+    #if defined(SPNG__BUILD)
         #define SPNG_API __declspec(dllexport)
     #else
         #define SPNG_API __declspec(dllimport)
@@ -18,10 +18,11 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define SPNG_VERSION_MAJOR 0
 #define SPNG_VERSION_MINOR 6
-#define SPNG_VERSION_PATCH 0
+#define SPNG_VERSION_PATCH 3
 
 enum spng_errno
 {
@@ -103,6 +104,11 @@ enum spng_errno
     SPNG_ECHUNKAVAIL,
     SPNG_ENCODE_ONLY,
     SPNG_EOI,
+    SPNG_ENOPLTE,
+    SPNG_ECHUNK_LIMITS,
+    SPNG_EZLIB_INIT,
+    SPNG_ECHUNK_STDLEN,
+    SPNG_EINTERNAL,
 };
 
 enum spng_text_type
@@ -121,10 +127,36 @@ enum spng_color_type
     SPNG_COLOR_TYPE_TRUECOLOR_ALPHA = 6
 };
 
+enum spng_filter
+{
+    SPNG_FILTER_NONE = 0,
+    SPNG_FILTER_SUB = 1,
+    SPNG_FILTER_UP = 2,
+    SPNG_FILTER_AVERAGE = 3,
+    SPNG_FILTER_PAETH = 4
+};
+
+enum spng_interlace_method
+{
+    SPNG_INTERLACE_NONE = 0,
+    SPNG_INTERLACE_ADAM7 = 1
+};
+
+/* Channels are always in byte-order */
 enum spng_format
 {
     SPNG_FMT_RGBA8 = 1,
-    SPNG_FMT_RGBA16 = 2
+    SPNG_FMT_RGBA16 = 2,
+    SPNG_FMT_RGB8 = 4,
+
+    /* Partially implemented, see documentation */
+    SPNG_FMT_GA8 = 16,
+    SPNG_FMT_GA16 = 32,
+    SPNG_FMT_G8 = 64,
+
+    /* No conversion or scaling */
+    SPNG_FMT_PNG = 256, /* host-endian */
+    SPNG_FMT_RAW = 512  /* big-endian */
 };
 
 enum spng_ctx_flags
@@ -145,9 +177,16 @@ enum spng_decode_flags
 
 enum spng_crc_action
 {
-    SPNG_CRC_ERROR = 0, /* Default */
-    SPNG_CRC_DISCARD = 1, /* Discard chunk, invalid for critical chunks */
-    SPNG_CRC_USE = 2 /* Ignore and don't calculate checksum */
+    /* Default for critical chunks */
+    SPNG_CRC_ERROR = 0,
+
+    /* Discard chunk, invalid for critical chunks.
+       Since v0.6.2: default for ancillary chunks */
+    SPNG_CRC_DISCARD = 1,
+
+    /* Ignore and don't calculate checksum.
+       Since v0.6.2: also ignores checksums in DEFLATE streams */
+    SPNG_CRC_USE = 2
 };
 
 struct spng_ihdr
@@ -340,6 +379,7 @@ SPNG_API void spng_ctx_free(spng_ctx *ctx);
 
 SPNG_API int spng_set_png_buffer(spng_ctx *ctx, const void *buf, size_t size);
 SPNG_API int spng_set_png_stream(spng_ctx *ctx, spng_read_fn *read_fn, void *user);
+SPNG_API int spng_set_png_file(spng_ctx *ctx, FILE *file);
 
 SPNG_API int spng_set_image_limits(spng_ctx *ctx, uint32_t width, uint32_t height);
 SPNG_API int spng_get_image_limits(spng_ctx *ctx, uint32_t *width, uint32_t *height);
@@ -352,11 +392,11 @@ SPNG_API int spng_set_crc_action(spng_ctx *ctx, int critical, int ancillary);
 SPNG_API int spng_decoded_image_size(spng_ctx *ctx, int fmt, size_t *len);
 
 /* Decode */
-SPNG_API int spng_decode_image(spng_ctx *ctx, unsigned char *out, size_t len, int fmt, int flags);
+SPNG_API int spng_decode_image(spng_ctx *ctx, void *out, size_t len, int fmt, int flags);
 
 /* Progressive decode */
-SPNG_API int spng_decode_scanline(spng_ctx *ctx, unsigned char *out, size_t len);
-SPNG_API int spng_decode_row(spng_ctx *ctx, unsigned char *out, size_t len);
+SPNG_API int spng_decode_scanline(spng_ctx *ctx, void *out, size_t len);
+SPNG_API int spng_decode_row(spng_ctx *ctx, void *out, size_t len);
 
 SPNG_API int spng_get_row_info(spng_ctx *ctx, struct spng_row_info *row_info);
 
