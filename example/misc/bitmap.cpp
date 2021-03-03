@@ -6,6 +6,7 @@
 #include <mango/image/image.hpp>
 
 using namespace mango;
+using namespace mango::image;
 
 /*
     First let's do trivial image loading using traditional "Bitmap" object technique:

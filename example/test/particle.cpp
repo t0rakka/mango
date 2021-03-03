@@ -7,6 +7,7 @@
 #include <random>
 
 using namespace mango;
+using namespace mango::math;
 
 // ----------------------------------------------------------------------
 // helpers

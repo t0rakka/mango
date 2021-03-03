@@ -6,6 +6,7 @@
 
 using namespace mango;
 using namespace mango::filesystem;
+using namespace mango::image;
 
 #define TEST_LIBJPEG
 #define TEST_STB

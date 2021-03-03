@@ -6,6 +6,8 @@
 #include <mango/opengl/opengl.hpp>
 
 using namespace mango;
+using namespace mango::math;
+using namespace mango::image;
 
 class TestWindow : public OpenGLFramebuffer
 {

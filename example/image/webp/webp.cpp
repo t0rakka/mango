@@ -5,6 +5,7 @@
 #include <mango/mango.hpp>
 
 using namespace mango;
+using namespace mango::image;
 
 int main(int argc, const char* argv[])
 {

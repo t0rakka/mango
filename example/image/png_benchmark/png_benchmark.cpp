@@ -6,6 +6,7 @@
 
 using namespace mango;
 using namespace mango::filesystem;
+using namespace mango::image;
 
 #define ENABLE_LIBPNG
 #define ENABLE_LODEPNG
