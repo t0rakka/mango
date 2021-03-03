@@ -64,6 +64,9 @@
 
 namespace mango::vulkan
 {
+	using mango::math::int32x2;
+	using mango::image::Format;
+	using mango::image::TextureCompression;
 
 	const char* getResultString(VkResult result);
 	const char* getPresentModeString(VkPresentModeKHR presentMode);

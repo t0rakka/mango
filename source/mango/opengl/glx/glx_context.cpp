@@ -39,6 +39,7 @@ namespace
 
 namespace mango
 {
+    using namespace math;
 
     // -----------------------------------------------------------------------
     // OpenGLContextHandle

@@ -534,6 +534,8 @@ namespace
 
 namespace mango
 {
+    using namespace mango::math;
+    using namespace mango::image;
 
 	// -----------------------------------------------------------------------
 	// WindowHandle

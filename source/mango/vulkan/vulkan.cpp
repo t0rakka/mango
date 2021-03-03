@@ -72,6 +72,7 @@ namespace
 
 namespace mango::vulkan
 {
+    using namespace mango::image;
 
 	// -----------------------------------------------------------------------
 	// Library

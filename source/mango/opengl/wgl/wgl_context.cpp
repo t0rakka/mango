@@ -64,6 +64,7 @@ static void init_glext_extensions()
 
 namespace mango
 {
+    using namespace math;
 
     // -----------------------------------------------------------------------
     // OpenGLContextHandle
