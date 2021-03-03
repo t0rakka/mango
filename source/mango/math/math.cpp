@@ -995,7 +995,7 @@ namespace directx
 
     Quaternion log(const Quaternion& q)
     {
-        float s = q.w ? std::atan2(std::sqrt(square(q)), q.w) : pi * 2.0f;
+        float s = q.w ? std::atan2(std::sqrt(square(q)), q.w) : float(pi) * 2.0f;
         return Quaternion(q.xyz * s, 0.0f);
     }
 
@@ -1030,7 +1030,7 @@ namespace directx
         Quaternion p = inverse(a) * b;
         const float length = std::sqrt(square(p));
         const float scale = norm(a);
-        float s = scale ? std::atan2(length, scale) : pi * 2.0f;
+        float s = scale ? std::atan2(length, scale) : float(pi) * 2.0f;
         if (length) s /= length;
 
         return Quaternion(p.xyz * s, 0.0f);
@@ -1105,7 +1105,7 @@ namespace directx
         else
         {
             const float theta = std::acos(tcos);
-            const float phi   = theta + spin * pi;
+            const float phi   = theta + spin * float(pi);
             const float tsin  = std::sin(theta);
             beta  = std::sin(theta - time * phi) / tsin;
             alpha = std::sin(time * phi) / tsin * bflip;
