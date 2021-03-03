@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <limits>
@@ -11,16 +11,11 @@
 #include <mango/core/bits.hpp>
 #include <mango/math/math.hpp>
 
-namespace
+namespace mango
 {
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();
     constexpr float pi = float(mango::math::pi);
-
-} // namespace
-
-namespace mango
-{
 
     // ------------------------------------------------------------------------
     // float4x4
@@ -196,7 +191,7 @@ namespace mango
 
         float* p = *this;
 
-        // multiply_by_3x3
+        // 3x3 multiply
         for (int i = 0; i < 4; ++i)
         {
             const float x = p[0];
@@ -310,7 +305,7 @@ namespace mango
 
         float* p = *this;
 
-        // multiply_by_3x3
+        // 3x3 multiply
         for (int i = 0; i < 4; ++i)
         {
             const float x = p[0];
@@ -445,7 +440,8 @@ namespace mango
         return result;
     }
 
-namespace matrix {
+namespace matrix
+{
 
     float4x4 identity()
     {
@@ -606,7 +602,8 @@ namespace matrix {
 
 } // namespace matrix
 
-namespace opengl {
+namespace opengl
+{
 
     float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
@@ -677,7 +674,8 @@ namespace opengl {
 
 } // namespace opengl
 
-namespace vulkan {
+namespace vulkan
+{
 
     float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
@@ -749,7 +747,8 @@ namespace vulkan {
 
 } // namespace vulkan
 
-namespace directx {
+namespace directx
+{
 
     // left-handed
 
@@ -1123,60 +1122,100 @@ namespace directx {
         return slerp(qa, qb, 0, 2.0f * time * (1.0f - time));
     }
 
+} // namespace mango
+
+namespace mango::math
+{
+
+    namespace detail
+    {
+        inline float pow24(float v)
+        {
+            s32 i = reinterpret_bits<s32>(v);
+            i = (i >> 2) + (i >> 4);
+            i += (i >> 4);
+            i += (i >> 8);
+            i += 0x2a514d80;
+            float s = reinterpret_bits<float>(i);
+            s = 0.3332454f * (2.0f * s + v / (s * s));
+            return s * sqrt(sqrt(s));
+        }
+
+        inline float root5(float v)
+        {
+            s32 i = reinterpret_bits<s32>(v);
+            s32 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
+            i = 0x32c9af22 + d;
+            float f = reinterpret_bits<float>(i);
+            float s = f * f;
+            f -= (f - v / (s * s)) * 0.2f;
+            return f;
+        }
+
+        inline float32x4 pow24(float32x4 v)
+        {
+            int32x4 i = reinterpret<int32x4>(v);
+            i = (i >> 2) + (i >> 4);
+            i += (i >> 4);
+            i += (i >> 8);
+            i += 0x2a514d80;
+            float32x4 s = reinterpret<float32x4>(i);
+            s = 0.3332454f * (2.0f * s + v / (s * s));
+            return s * sqrt(sqrt(s));
+        }
+
+        inline float32x4 root5(float32x4 v)
+        {
+            int32x4 i = reinterpret<int32x4>(v);
+            int32x4 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
+            i = 0x32c9af22 + d;
+            float32x4 f = reinterpret<float32x4>(i);
+            float32x4 s = f * f;
+            f -= (f - v / (s * s)) * 0.2f;
+            return f;
+        }
+    }
+
     // ------------------------------------------------------------------------
     // sRGB
     // ------------------------------------------------------------------------
 
-    float linear_to_srgb(float n)
+    float srgbEncode(float linear)
     {
-        float s = clamp(n, 0.0f, 1.0f);
-        s = (s < 0.0031308f) ? 12.92f * s : 1.055f * std::pow(s, 0.41666f) - 0.055f;
-        return s;
-    }
-
-    float srgb_to_linear(float s)
-    {
-        return (s <= 0.04045f) ? s * (1.0f / 12.92f) : std::pow(((s + 0.055f) * (1.0f / 1.055f)), 2.4f);
-    }
-
-    static inline float32x4 pow24(float32x4 v)
-    {
-        int32x4 i = reinterpret<int32x4>(v);
-        i = (i >> 2) + (i >> 4);
-        i += (i >> 4);
-        i += (i >> 8);
-        i += 0x2a514d80;
-        float32x4 s = reinterpret<float32x4>(i);
-        s = 0.3332454f * (2.0f * s + v / (s * s));
-        return s * sqrt(sqrt(s));
-    }
-
-    static inline float32x4 root5(float32x4 v)
-    {
-        int32x4 i = reinterpret<int32x4>(v);
-        int32x4 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
-        i = 0x32c9af22 + d;
-        float32x4 f = reinterpret<float32x4>(i);
-        float32x4 s = f * f;
-        f -= (f - v / (s * s)) * 0.2f;
-        return f;
-    }
-
-    float32x4 linear_to_srgb(float32x4 linear)
-    {
-        float32x4 a = linear * 12.92f;
-        float32x4 b = 1.055f * pow24(linear) - 0.055f;
-        float32x4 srgb = select(linear <= 0.0031308f, a, b);
+        float srgb = (linear < 0.0031308f) ? 12.92f * linear : 1.055f * detail::pow24(linear) - 0.055f;
         return srgb;
     }
 
-    float32x4 srgb_to_linear(float32x4 srgb)
+    float srgbDecode(float srgb)
     {
-        float32x4 a = srgb * (1.0f / 12.92f);
-        float32x4 b = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
-        float32x4 c = (b * b) * root5(b * b);
-        float32x4 linear = select(srgb < 0.04045f, a, c);
+        float linear;
+        if (srgb <= 0.04045f)
+        {
+            linear = srgb * (1.0f / 12.92f);
+        }
+        else
+        {
+            float s = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
+            linear = (s * s) * detail::root5(s * s);
+        }
         return linear;
     }
 
-} // namespace mango
+    float32x4 srgbEncode(float32x4 linear)
+    {
+        float32x4 a = linear * 12.92f;
+        float32x4 b = 1.055f * detail::pow24(linear) - 0.055f;
+        float32x4 srgb = select(linear < 0.0031308f, a, b);
+        return srgb;
+    }
+
+    float32x4 srgbDecode(float32x4 srgb)
+    {
+        float32x4 a = srgb * (1.0f / 12.92f);
+        float32x4 s = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
+        float32x4 b = (s * s) * detail::root5(s * s);
+        float32x4 linear = select(srgb <= 0.04045f, a, b);
+        return linear;
+    }
+
+} // namespace mango::math

@@ -1,27 +1,23 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
 
-namespace mango
+namespace mango::math
 {
 
     // ------------------------------------------------------------------
-    // linear / non-linear (sRGB) conversion functions
+    // sRGB <-> linear conversion functions
     // ------------------------------------------------------------------
 
-    // The conversion functions do NOT consider w-component to contain alpha;
-    // every component is converted between linear and non-linear sRGB.
-    // The inputs and outputs are normalized.
+    float srgbEncode(float linear);
+    float srgbDecode(float srgb);
 
-    float linear_to_srgb(float linear);
-    float srgb_to_linear(float srgb);
-
-    float32x4 linear_to_srgb(float32x4 linear);
-    float32x4 srgb_to_linear(float32x4 srgb);
+    float32x4 srgbEncode(float32x4 linear);
+    float32x4 srgbDecode(float32x4 srgb);
 
     // ------------------------------------------------------------------
     // sRGB
@@ -49,7 +45,7 @@ namespace mango
 
         sRGB& operator = (float32x4 linear)
         {
-            float32x4 srgb = linear_to_srgb(linear) * 255.0f;
+            float32x4 srgb = srgbEncode(linear) * 255.0f;
             srgb.w = linear.w * 255.0f; // pass-through linear alpha
             color = srgb.pack();
             return *this;
@@ -70,10 +66,10 @@ namespace mango
         {
             float32x4 srgb;
             srgb.unpack(color);
-            float32x4 linear = srgb_to_linear(srgb / 255.0f);
+            float32x4 linear = srgbDecode(srgb / 255.0f);
             linear.w = float(color >> 24) / 255.0f; // pass-through linear alpha
             return linear;
         }
     };
 
-} // namespace mango
+} // namespace mango::math
