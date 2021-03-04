@@ -266,6 +266,18 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
+    static inline u32 u32_extract_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        return value ^ (value >> 1);
+    }
+
     static inline u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -455,12 +467,6 @@ namespace mango
 
 #endif
 
-    static inline u32 u32_extract_msb(u32 value)
-    {
-		// NOTE: value 0 is undefined
-        return 1u << u32_index_of_msb(value);
-    }
-
     static inline int u32_log2(u32 value)
     {
 		// NOTE: value 0 is undefined
@@ -607,6 +613,17 @@ namespace mango
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
+
+    static inline u64 u64_extract_msb(u64 value)
+    {
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        value |= value >> 32;
+        return value ^ (value >> 1);
+    }
 
     static inline u64 u64_mask_msb(u64 value)
     {
@@ -783,12 +800,6 @@ namespace mango
     }
 
 #endif
-
-    static inline u64 u64_extract_msb(u64 value)
-    {
-		// NOTE: value 0 is undefined
-        return 1ull << u64_index_of_msb(value);
-    }
 
     static inline int u64_log2(u64 value)
     {
