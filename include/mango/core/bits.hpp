@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -138,32 +138,36 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     template <typename D, typename S>
-    D reinterpret_bits(const S& s)
+    D reinterpret_bits(S src) noexcept
     {
         static_assert(sizeof(D) == sizeof(S), "Incompatible types.");
-        D d;
-        std::memcpy(&d, &s, sizeof(S));
-        return d;
+        D dest;
+        std::memcpy(&dest, &src, sizeof(S));
+        return dest;
     }
 
-#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_CLANG)
+#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
 
-    static inline u32 byteclamp(s32 v)
+    static inline
+    u32 byteclamp(s32 value)
     {
-        return std::max(0, std::min(255, v));
+        return std::max(0, std::min(255, value));
+    }
+
+#elif defined(MANGO_COMPILER_GCC)
+
+    static inline
+    u32 byteclamp(s32 value)
+    {
+        return std::clamp(value, 0, 255);
     }
 
 #else
 
-    static inline u32 byteclamp(s32 v)
+    static inline
+    u32 byteclamp(s32 value)
     {
-        // clamp value to [0, 255] range
-        if (v & 0xffffff00)
-        {
-            // value < 0 generates 0x00, value > 0xff generates 0xff
-            v = (((~v) >> 31) & 0xff);
-        }
-        return u32(v);
+        return u32(value & 0xffffff00 ? (((~value) >> 31) & 0xff) : value);
     }
 
 #endif
