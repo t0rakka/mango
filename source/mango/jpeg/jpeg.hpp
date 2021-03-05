@@ -241,14 +241,14 @@ namespace mango::jpeg
             return int(bextr(data, remain -= nbits, nbits));
         }
 
-        int peekBits(int nbits)
+        int peekBits(int nbits) const
         {
             return int(bextr(data, remain - nbits, nbits));
         }
 
         int extend(int value, int nbits) const
         {
-            return value - ((((value + value) >> nbits) - 1) & ((1 << nbits) - 1));
+            return value - value < (1 << (nbits - 1)) ? (1 << nbits) - 1 : 0;
         }
 
         int receive(int nbits)
