@@ -217,7 +217,7 @@ namespace mango
     constexpr u32 u32_scale(u32 value, int from, int to)
     {
         // scale value "from" bits "to" bits
-        return value * ((1 << to) - 1) / ((1 << from) - 1);
+        return value * ((1u << to) - 1) / ((1u << from) - 1);
     }
 
     constexpr u64 u64_scale(u64 value, int from, int to)
@@ -244,22 +244,25 @@ namespace mango
         return (value << (to - from)) | (value >> (from * 2 - to));
     }
 
-    constexpr s16 s16_extend(s16 value, int from)
+    constexpr s16 s16_extend(s16 value, int bits)
     {
-        // sign-extend "from" bits to full s16
-        return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
+        // sign-extend to 16 bits
+        u16 mask = 1 << (bits - 1);
+        return (value ^ mask) - mask;
     }
 
-    constexpr s32 s32_extend(s32 value, int from)
+    constexpr s32 s32_extend(s32 value, int bits)
     {
-        // sign-extend "from" bits to full s32
-        return value | (value & (1 << (from - 1)) ? ~((1 << from) - 1) : 0);
+        // sign-extend to 32 bits
+        u32 mask = 1u << (bits - 1);
+        return (value ^ mask) - mask;
     }
 
-    constexpr s64 s64_extend(s64 value, int from)
+    constexpr s64 s64_extend(s64 value, int bits)
     {
-        // sign-extend "from" bits to full s64
-        return value | (value & (1ull << (from - 1)) ? ~((1ull << from) - 1) : 0);
+        // sign-extend to 64 bits
+        u64 mask = 1ull << (bits - 1);
+        return (value ^ mask) - mask;
     }
 
     // ----------------------------------------------------------------------------
