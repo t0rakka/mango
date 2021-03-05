@@ -266,18 +266,6 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
-    static inline u32 u32_extract_msb(u32 value)
-    {
-        // value:  0001xxxxxxxx
-        // result: 000100000000
-        value |= value >> 1;
-        value |= value >> 2;
-        value |= value >> 4;
-        value |= value >> 8;
-        value |= value >> 16;
-        return value ^ (value >> 1);
-    }
-
     static inline u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -288,6 +276,14 @@ namespace mango
         value |= value >> 8;
         value |= value >> 16;
         return value;
+    }
+
+    static inline u32 u32_extract_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        value = u32_mask_msb(value);
+        return value ^ (value >> 1);
     }
 
 #ifdef MANGO_ENABLE_BMI
@@ -614,17 +610,6 @@ namespace mango
     // 64 bits
     // ----------------------------------------------------------------------------
 
-    static inline u64 u64_extract_msb(u64 value)
-    {
-        value |= value >> 1;
-        value |= value >> 2;
-        value |= value >> 4;
-        value |= value >> 8;
-        value |= value >> 16;
-        value |= value >> 32;
-        return value ^ (value >> 1);
-    }
-
     static inline u64 u64_mask_msb(u64 value)
     {
         value |= value >> 1;
@@ -634,6 +619,12 @@ namespace mango
         value |= value >> 16;
         value |= value >> 32;
         return value;
+    }
+
+    static inline u64 u64_extract_msb(u64 value)
+    {
+        value = u64_mask_msb(value);
+        return value ^ (value >> 1);
     }
 
 #ifdef MANGO_ENABLE_BMI
