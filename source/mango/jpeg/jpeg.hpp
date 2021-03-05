@@ -249,6 +249,7 @@ namespace mango::jpeg
         int extend(int value, int nbits) const
         {
             return value - ((((value + value) >> nbits) - 1) & ((1 << nbits) - 1));
+            //return value - int(bextr(((value + value) >> nbits) - 1, nbits, nbits));
         }
 
         int receive(int nbits)
