@@ -257,7 +257,7 @@
         return select(mask, abs(a), s32x4_zero());
     }
 
-#endif
+#endif // SIMD_ZEROMASK_INT128
 
 // -----------------------------------------------------------------
 
@@ -519,7 +519,7 @@
         return select(mask, abs(a), value);
     }
 
-#endif
+#endif // SIMD_MASK_INT128
 
 // -----------------------------------------------------------------
 
@@ -781,7 +781,7 @@
         return select(mask, abs(a), value);
     }
 
-#endif
+#endif // SIMD_MASK_INT256
 
 // -----------------------------------------------------------------
 
@@ -817,7 +817,7 @@
         return select(mask, div(a, b), f32x4_zero());
     }
 
-#endif
+#endif // SIMD_ZEROMASK_FLOAT128
 
 // -----------------------------------------------------------------
 
@@ -853,7 +853,7 @@
         return select(mask, div(a, b), value);
     }
 
-#endif
+#endif // SIMD_MASK_FLOAT128
 
 // -----------------------------------------------------------------
 
@@ -889,7 +889,7 @@
         return select(mask, div(a, b), f64x2_zero());
     }
 
-#endif
+#endif // SIMD_ZEROMASK_DOUBLE128
 
 // -----------------------------------------------------------------
 
@@ -925,4 +925,4 @@
         return select(mask, div(a, b), value);
     }
 
-#endif
+#endif // SIMD_MASK_DOUBLE128
