@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -27,7 +27,6 @@ namespace mango
     {
     private:
         friend class ConcurrentQueue;
-        using CacheLine = u8[64];
 
         struct Queue
         {
@@ -35,23 +34,8 @@ namespace mango
             int priority;
             std::string name;
 
-#if 0 // __cplusplus >= 201703L
-
-            // NOTE: When the minimum requirement is C++17 we will use this form so that
-            //       the heap allocations will be properly aligned. We won't compile both versions
-            //       based on the _ cplusplus macro as that would break binary compatibility between
-            //       code compiled against different C++ standard version.
-
             alignas(64) std::atomic<int> task_counter { 0 };
             alignas(64) std::atomic<bool> cancelled { false };
-
-#else
-
-            std::atomic<int> task_counter { 0 };
-            CacheLine padding;
-            std::atomic<bool> cancelled { false };
-
-#endif
 
             Queue(ThreadPool* pool, int priority, const std::string& name)
                 : pool(pool)
@@ -192,28 +176,12 @@ namespace mango
     {
     protected:
         using Task = std::function<void()>;
-        using CacheLine = u8[64];
 
         std::string m_name;
         std::thread m_thread;
 
-#if 0 // __cplusplus >= 201703L
-
-        // NOTE: When the minimum requirement is C++17 we will use this form so that
-        //       the heap allocations will be properly aligned. We won't compile both versions
-        //       based on the _ cplusplus macro as that would break binary compatibility between
-        //       code compiled against different C++ standard version.
-
         alignas(64) std::atomic<bool> m_stop { false };
         alignas(64) std::atomic<int> m_task_counter { 0 };
-
-#else
-
-        std::atomic<bool> m_stop { false };
-        CacheLine padding;
-        std::atomic<int> m_task_counter { 0 };
-
-#endif
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
