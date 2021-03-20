@@ -1623,16 +1623,190 @@ namespace
 #endif // defined(JPEG_ENABLE_AVX2)
 #endif // defined(JPEG_ENABLE_SSE4)
 
-#if defined(JPEG_ENABLE_NEON__todo)
+#if defined(JPEG_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
     // encode_block_neon
     // ----------------------------------------------------------------------------
 
+#if defined(MANGO_COMPILER_GCC)
+
+    static inline
+    uint8x16x4_t jpeg_vld1q_u8_x4(const u8* p)
+    {
+        uint8x16x4_t result;
+        result.val[0] = vld1q_u8(p +  0);
+        result.val[1] = vld1q_u8(p + 16);
+        result.val[2] = vld1q_u8(p + 32);
+        result.val[3] = vld1q_u8(p + 48);
+        return result;
+    }
+
+    static inline
+    int8x16x4_t jpeg_vld1q_s8_x4(const s8* p)
+    {
+        int8x16x4_t result;
+        result.val[0] = vld1q_s8(p +  0);
+        result.val[1] = vld1q_s8(p + 16);
+        result.val[2] = vld1q_s8(p + 32);
+        result.val[3] = vld1q_s8(p + 48);
+        return result;
+    }
+
+#else
+
+    static inline
+    uint8x16x4_t jpeg_vld1q_u8_x4(const u8 *p)
+    {
+        return vld1q_u8_x4(p);
+    }
+
+    static inline
+    int8x16x4_t jpeg_vld1q_s8_x4(const s8 *p)
+    {
+        return vld1q_s8_x4(p);
+    }
+
+#endif // MANGO_COMPILER_GCC
+
+    u64 zigzag_neon(const s16* in, s16* out)
+    {
+        const u8 zigzag_shuffle [] =
+        {
+              0,   1,   2,   3,  16,  17,  32,  33,
+             18,  19,   4,   5,   6,   7,  20,  21,
+             34,  35,  48,  49, 255, 255,  50,  51,
+             36,  37,  22,  23,   8,   9,  10,  11,
+            255, 255,   6,   7,  20,  21,  34,  35,
+             48,  49, 255, 255,  50,  51,  36,  37,
+             54,  55,  40,  41,  26,  27,  12,  13,
+             14,  15,  28,  29,  42,  43,  56,  57,
+              6,   7,  20,  21,  34,  35,  48,  49,
+             50,  51,  36,  37,  22,  23,   8,   9,
+             26,  27,  12,  13, 255, 255,  14,  15,
+             28,  29,  42,  43,  56,  57, 255, 255,
+             52,  53,  54,  55,  40,  41,  26,  27,
+             12,  13, 255, 255,  14,  15,  28,  29,
+             26,  27,  40,  41,  42,  43,  28,  29,
+             14,  15,  30,  31,  44,  45,  46,  47
+        };
+
+        const uint8x16x4_t idx_rows_0123 = jpeg_vld1q_u8_x4(zigzag_shuffle + 0 * 8);
+        const uint8x16x4_t idx_rows_4567 = jpeg_vld1q_u8_x4(zigzag_shuffle + 8 * 8);
+
+        const int8x16x4_t tbl_rows_0123 = jpeg_vld1q_s8_x4((s8 *)(in + 0 * 8));
+        const int8x16x4_t tbl_rows_4567 = jpeg_vld1q_s8_x4((s8 *)(in + 4 * 8));
+
+        const int8x16x4_t tbl_rows_2345 =
+        {{
+            tbl_rows_0123.val[2], tbl_rows_0123.val[3],
+            tbl_rows_4567.val[0], tbl_rows_4567.val[1]
+        }};
+        const int8x16x3_t tbl_rows_567 = {{ tbl_rows_4567.val[1], tbl_rows_4567.val[2], tbl_rows_4567.val[3] }};
+
+        // shuffle coefficients
+        int16x8_t row0 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_0123, idx_rows_0123.val[0]));
+        int16x8_t row1 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_0123, idx_rows_0123.val[1]));
+        int16x8_t row2 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_2345, idx_rows_0123.val[2]));
+        int16x8_t row3 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_0123, idx_rows_0123.val[3]));
+        int16x8_t row4 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_4567, idx_rows_4567.val[0]));
+        int16x8_t row5 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_2345, idx_rows_4567.val[1]));
+        int16x8_t row6 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_4567, idx_rows_4567.val[2]));
+        int16x8_t row7 = vreinterpretq_s16_s8(vqtbl3q_s8(tbl_rows_567, idx_rows_4567.val[3]));
+
+        row1 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_4567.val[0]), 0), row1, 2);
+        row2 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_0123.val[1]), 4), row2, 0);
+        row2 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_4567.val[2]), 0), row2, 5);
+        row5 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_0123.val[1]), 7), row5, 2);
+        row5 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_4567.val[2]), 3), row5, 7);
+        row6 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_0123.val[3]), 7), row6, 5);
+
+        // zeromask
+        const uint16x8_t zero = vdupq_n_u16(0);
+        uint8x8_t gt0 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row0), zero));
+        uint8x8_t gt1 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row1), zero));
+        uint8x8_t gt2 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row2), zero));
+        uint8x8_t gt3 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row3), zero));
+        uint8x8_t gt4 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row4), zero));
+        uint8x8_t gt5 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row5), zero));
+        uint8x8_t gt6 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row6), zero));
+        uint8x8_t gt7 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(row7), zero));
+
+        const uint8x16_t mask = { 1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128 };
+        uint8x16_t gt01 = vandq_u8(vcombine_u8(gt0, gt1), mask);
+        uint8x16_t gt23 = vandq_u8(vcombine_u8(gt2, gt3), mask);
+        uint8x16_t gt45 = vandq_u8(vcombine_u8(gt4, gt5), mask);
+        uint8x16_t gt67 = vandq_u8(vcombine_u8(gt6, gt7), mask);
+        uint8x16_t gt0123 = vpaddq_u8(gt01, gt23);
+        uint8x16_t gt4567 = vpaddq_u8(gt45, gt67);
+        uint8x16_t gt01234567 = vpaddq_u8(gt0123, gt4567);
+        uint8x16_t x = vpaddq_u8(gt01234567, gt01234567);
+        u64 zeromask = vgetq_lane_u64(vreinterpretq_u64_u8(x), 0);
+
+        vst1q_s16(out + 0 * 8, row0);
+        vst1q_s16(out + 1 * 8, row1);
+        vst1q_s16(out + 2 * 8, row2);
+        vst1q_s16(out + 3 * 8, row3);
+
+        if (zeromask & 0xffffffff00000000ull)
+        {
+            vst1q_s16(out + 4 * 8, row4);
+            vst1q_s16(out + 5 * 8, row5);
+            vst1q_s16(out + 6 * 8, row6);
+            vst1q_s16(out + 7 * 8, row7);
+        }
+
+        return zeromask;
+    }
+
     static
     u8* encode_block_neon(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
-        // TODO
+        s16 block[64];
+        encoder.fdct(block, input, channel.qtable);
+
+        s16 temp[64];
+        u64 zeromask = zigzag_neon(block, temp);
+
+        p = encode_dc(encoder, p, temp[0], channel);
+        zeromask >>= 1;
+
+        const u32* ac_code = channel.ac_code;
+        const u16* ac_size = channel.ac_size;
+        const u32 zero16_code = ac_code[1];
+        const u32 zero16_size = ac_size[1];
+
+        for (int i = 1; i < 64; ++i)
+        {
+            if (!zeromask)
+            {
+                // only zeros left
+                p = encoder.putBits(p, ac_code[0], ac_size[0]);
+                break;
+            }
+
+            int counter = u64_tzcnt(zeromask); // BMI
+            zeromask >>= (counter + 1);
+            i += counter;
+
+            while (counter > 15)
+            {
+                counter -= 16;
+                p = encoder.putBits(p, zero16_code, zero16_size);
+            }
+
+            int coeff = temp[i];
+            int absCoeff = std::abs(coeff);
+            coeff -= (absCoeff != coeff);
+
+            u32 size = u32_log2(absCoeff) + 1;
+            u32 mask = (1 << size) - 1;
+
+            int index = counter + size * 16;
+            p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
+        }
+
+        return p;
     }
 
 #endif // defined(JPEG_ENABLE_NEON)
@@ -2348,7 +2522,7 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_NEON__todo)
+#if defined(JPEG_ENABLE_NEON)
         {
             encode = encode_block_neon;
             encode_name = "NEON";
