@@ -12,6 +12,7 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_SPNG
 #define ENABLE_STB
+#define ENABLE_WUFFS
 #define ENABLE_MANGO
 
 // ----------------------------------------------------------------------
@@ -290,7 +291,7 @@ void save_spng(const Bitmap& bitmap)
 // stb
 // ----------------------------------------------------------------------
 
-#if defined ENABLE_STB
+#if defined(ENABLE_STB)
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../jpeg_benchmark/stb_image.h"
@@ -308,6 +309,92 @@ void load_stb(Memory memory)
 void save_stb(const Bitmap& bitmap)
 {
     stbi_write_png("output-stb.png", bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
+}
+
+#endif
+
+// ----------------------------------------------------------------------
+// wuffs
+// ----------------------------------------------------------------------
+
+#if defined(ENABLE_WUFFS)
+
+#define WUFFS_IMPLEMENTATION
+
+#define WUFFS_CONFIG__MODULES
+#define WUFFS_CONFIG__MODULE__ADLER32
+#define WUFFS_CONFIG__MODULE__AUX__BASE
+#define WUFFS_CONFIG__MODULE__AUX__IMAGE
+#define WUFFS_CONFIG__MODULE__BASE
+#define WUFFS_CONFIG__MODULE__BMP
+#define WUFFS_CONFIG__MODULE__CRC32
+#define WUFFS_CONFIG__MODULE__DEFLATE
+#define WUFFS_CONFIG__MODULE__GIF
+#define WUFFS_CONFIG__MODULE__LZW
+#define WUFFS_CONFIG__MODULE__PNG
+#define WUFFS_CONFIG__MODULE__ZLIB
+
+#include "wuffs/wuffs-unsupported-snapshot.c"
+
+class Wuffs_Load_RW_Callbacks : public wuffs_aux::DecodeImageCallbacks
+{
+public:
+    u32 width = 0;
+    u32 height = 0;
+    u8* image = nullptr;
+
+    Wuffs_Load_RW_Callbacks()
+    {
+    }
+
+    ~Wuffs_Load_RW_Callbacks()
+    {
+    }
+
+private:
+    wuffs_base__pixel_format SelectPixfmt(const wuffs_base__image_config& image_config) override
+    {
+        return wuffs_base__make_pixel_format(WUFFS_BASE__PIXEL_FORMAT__BGRA_NONPREMUL);
+    }
+
+    AllocPixbufResult AllocPixbuf(const wuffs_base__image_config& image_config, bool allow_uninitialized_memory) override
+    {
+        width = image_config.pixcfg.width();
+        height = image_config.pixcfg.height();
+        image = (u8*)malloc(width * height * 4);
+
+        wuffs_base__pixel_buffer pixbuf;
+        wuffs_base__status status = pixbuf.set_interleaved(
+            &image_config.pixcfg,
+            wuffs_base__make_table_u8(image, width * 4, height, width * 4),
+            wuffs_base__empty_slice_u8());
+        if (!status.is_ok())
+        {
+            return AllocPixbufResult(status.message());
+        }
+        return AllocPixbufResult(wuffs_aux::MemOwner(NULL, &free), pixbuf);
+    }
+};
+
+void load_wuffs(Memory memory)
+{
+    Wuffs_Load_RW_Callbacks cb;
+    wuffs_aux::sync_io::MemoryInput input(memory.address, memory.size);
+
+    wuffs_aux::DecodeImageResult res = wuffs_aux::DecodeImage(cb, input);
+    if (!res.error_message.empty())
+    {
+        printf("%s\n", res.error_message.c_str());
+    }
+
+    // NOTE: validation code .. keep commented out ;)
+    //Surface temp(cb.width, cb.height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), cb.width * 4, cb.image);
+    //temp.save("wuffs.png");
+}
+
+void save_wuffs(const Bitmap& bitmap)
+{
+    // TODO: not supported.
 }
 
 #endif
@@ -400,6 +487,10 @@ int main(int argc, const char* argv[])
 
 #if defined(ENABLE_STB)
     test("stb:     ", load_stb, save_stb, buffer, bitmap);
+#endif
+
+#if defined(ENABLE_WUFFS)
+    test("wuffs:   ", load_wuffs, save_wuffs, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_MANGO)
