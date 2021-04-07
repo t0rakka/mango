@@ -336,18 +336,17 @@ void save_stb(const Bitmap& bitmap)
 
 #include "wuffs/wuffs-unsupported-snapshot.c"
 
-class Wuffs_Load_RW_Callbacks : public wuffs_aux::DecodeImageCallbacks
+class WuffsCallbacks : public wuffs_aux::DecodeImageCallbacks
 {
 public:
-    u32 width = 0;
-    u32 height = 0;
-    u8* image = nullptr;
+    Buffer buffer;
+    Surface surface;
 
-    Wuffs_Load_RW_Callbacks()
+    WuffsCallbacks()
     {
     }
 
-    ~Wuffs_Load_RW_Callbacks()
+    ~WuffsCallbacks()
     {
     }
 
@@ -359,14 +358,16 @@ private:
 
     AllocPixbufResult AllocPixbuf(const wuffs_base__image_config& image_config, bool allow_uninitialized_memory) override
     {
-        width = image_config.pixcfg.width();
-        height = image_config.pixcfg.height();
-        image = (u8*)malloc(width * height * 4);
+        u32 width = image_config.pixcfg.width();
+        u32 height = image_config.pixcfg.height();
+        buffer.resize(width * height * 4);
+
+        surface = Surface(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), width * 4, buffer);
 
         wuffs_base__pixel_buffer pixbuf;
         wuffs_base__status status = pixbuf.set_interleaved(
             &image_config.pixcfg,
-            wuffs_base__make_table_u8(image, width * 4, height, width * 4),
+            wuffs_base__make_table_u8(buffer, surface.stride, surface.height, surface.stride),
             wuffs_base__empty_slice_u8());
         if (!status.is_ok())
         {
@@ -378,18 +379,14 @@ private:
 
 void load_wuffs(Memory memory)
 {
-    Wuffs_Load_RW_Callbacks cb;
     wuffs_aux::sync_io::MemoryInput input(memory.address, memory.size);
+    WuffsCallbacks cb;
 
     wuffs_aux::DecodeImageResult res = wuffs_aux::DecodeImage(cb, input);
     if (!res.error_message.empty())
     {
         printf("%s\n", res.error_message.c_str());
     }
-
-    // NOTE: validation code .. keep commented out ;)
-    //Surface temp(cb.width, cb.height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), cb.width * 4, cb.image);
-    //temp.save("wuffs.png");
 }
 
 void save_wuffs(const Bitmap& bitmap)

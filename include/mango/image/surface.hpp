@@ -17,9 +17,6 @@ namespace mango::image
 
     class Surface
     {
-    protected:
-        Surface();
-
     public:
         Format  format;
         u8*     image;
@@ -27,6 +24,7 @@ namespace mango::image
         int     width;
         int     height;
 
+        Surface();
         Surface(const Surface& surface);
         Surface(int width, int height, const Format& format, size_t stride, const void* image);
         Surface(const Surface& source, int x, int y, int width, int height);
