@@ -12,3 +12,5 @@ foreach(example IN LISTS EXAMPLES)
         target_link_libraries(${example} mango-opengl X11 GL)
     endif ()
 endforeach()
+
+file(COPY hanselun.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
