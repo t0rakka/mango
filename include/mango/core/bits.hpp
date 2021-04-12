@@ -365,30 +365,6 @@ namespace mango
         return value ^ (0 - value);
     }
 
-    static inline int u32_index_of_bit(u32 bit)
-    {
-        // value:  00000010000
-        // result: 4
-        static const u8 table[] =
-        {
-            0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
-            31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
-        };
-        return table[(bit * 0x077cb531) >> 27];
-    }
-
-    static inline int u32_index_of_mask_bit(u32 mask)
-    {
-        // value:  00000011111
-        // result: 4
-        static const u8 table[] =
-        {
-			0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
-			8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
-        };
-        return table[(mask * 0x07c4acdd) >> 27];
-    }
-
 #ifdef MANGO_ENABLE_BMI
 
     static inline int u32_tzcnt(u32 value)
@@ -411,7 +387,12 @@ namespace mango
     {
 		// NOTE: value 0 is undefined
         const u32 lsb = u32_extract_lsb(value);
-        return u32_index_of_bit(lsb);
+        static const u8 table [] =
+        {
+            0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
+            31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
+        };
+        return table[(lsb * 0x077cb531) >> 27];
     }
 
 #endif
@@ -456,7 +437,12 @@ namespace mango
     {
 		// NOTE: value 0 is undefined
         const u32 mask = u32_mask_msb(value);
-        return 31 - u32_index_of_mask_bit(mask);
+        static const u8 table [] =
+        {
+			31, 22, 30, 21, 18, 10, 29, 2, 20, 17, 15, 13, 9, 6, 28, 1,
+			23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0
+        };
+        return table[(mask * 0x07c4acdd) >> 27];
     }
 
     static inline int u32_index_of_msb(u32 value)
@@ -692,38 +678,6 @@ namespace mango
         return value ^ (0 - value);
     }
 
-    static inline int u64_index_of_bit(u64 bit)
-    {
-        static const u8 table[] =
-        {
-            0,  1,  2, 53,  3,  7, 54, 27,
-            4, 38, 41,  8, 34, 55, 48, 28,
-            62,  5, 39, 46, 44, 42, 22,  9,
-            24, 35, 59, 56, 49, 18, 29, 11,
-            63, 52,  6, 26, 37, 40, 33, 47,
-            61, 45, 43, 21, 23, 58, 17, 10,
-            51, 25, 36, 32, 60, 20, 57, 16,
-            50, 31, 19, 15, 30, 14, 13, 12,
-        };
-        return table[(bit * 0x022fdd63cc95386du) >> 58];
-    }
-
-    static inline int u64_index_of_mask_bit(u64 mask)
-    {
-        static const u8 table[] =
-        {
-            0, 47, 1, 56, 48, 27, 2, 60,
-            57, 49, 41, 37, 28, 16, 3, 61,
-            54, 58, 35, 52, 50, 42, 21, 44,
-            38, 32, 29, 23, 17, 11, 4, 62,
-            46, 55, 26, 59, 40, 36, 15, 53,
-            34, 51, 20, 43, 31, 22, 10, 45,
-            25, 39, 14, 33, 19, 30, 9, 24,
-            13, 18, 8, 12, 7, 6, 5, 63
-        };
-        return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
-    }
-
 #ifdef MANGO_ENABLE_BMI
 
     static inline int u64_tzcnt(u64 value)
@@ -746,7 +700,14 @@ namespace mango
     {
 		// NOTE: value 0 is undefined
         const u64 lsb = u64_extract_lsb(value);
-        return u64_index_of_bit(lsb);
+        static const u8 table [] =
+        {
+            0, 1, 2, 53, 3, 7, 54, 27, 4, 38, 41, 8, 34, 55, 48, 28,
+            62, 5, 39, 46, 44, 42, 22, 9, 24, 35, 59, 56, 49, 18, 29, 11,
+            63, 52, 6, 26, 37, 40, 33, 47, 61, 45, 43, 21, 23, 58, 17, 10,
+            51, 25, 36, 32, 60, 20, 57, 16, 50, 31, 19, 15, 30, 14, 13, 12,
+        };
+        return table[(lsb * 0x022fdd63cc95386du) >> 58];
     }
 
 #endif
@@ -791,14 +752,28 @@ namespace mango
     {
 		// NOTE: value 0 is undefined
         const u64 mask = u64_mask_msb(value);
-        return 63 - u64_index_of_mask_bit(mask);
+        static const u8 table [] =
+        {
+            63, 16, 62, 7, 15, 36, 61, 3, 6, 14, 22, 26, 35, 47, 60, 2,
+            9, 5, 28, 11, 13, 21, 42, 19, 25, 31, 34, 40, 46, 52, 59, 1,
+            17, 8, 37, 4, 23, 27, 48, 10, 29, 12, 43, 20, 32, 41, 53, 18,
+            38, 24, 49, 30, 44, 33, 54, 39, 50, 45, 55, 51, 56, 57, 58, 0
+        };
+        return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
     }
 
     static inline int u64_index_of_msb(u64 value)
     {
 		// NOTE: value 0 is undefined
         const u64 mask = u64_mask_msb(value);
-        return u64_index_of_mask_bit(mask);
+        static const u8 table [] =
+        {
+            0, 47, 1, 56, 48, 27, 2, 60, 57, 49, 41, 37, 28, 16, 3, 61,
+            54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11, 4, 62,
+            46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
+            25, 39, 14, 33, 19, 30, 9, 24, 13, 18, 8, 12, 7, 6, 5, 63
+        };
+        return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
     }
 
 #endif
