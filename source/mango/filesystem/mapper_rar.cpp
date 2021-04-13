@@ -16,6 +16,8 @@
 
 #include "../../external/unrar/rar.hpp"
 
+// https://www.rarlab.com/technote.htm
+
 namespace
 {
     // -----------------------------------------------------------------
