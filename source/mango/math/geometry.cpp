@@ -408,21 +408,21 @@ namespace mango::math
 
     bool IntersectRange::intersect(const FastRay& ray, const Sphere& sphere)
     {
-        float b = -2 * (ray.dotod - dot(sphere.center, ray.direction));
+        float b = -(ray.dotod - dot(sphere.center, ray.direction));
         float c = ray.dotoo + dot(sphere.center, sphere.center) - 2.0f * dot(ray.origin, sphere.center) - sphere.radius * sphere.radius;
 
-        const float det = b * b - 4 * c;
+        const float det = b * b - c;
 
         // TODO: branchless version
         if (det >= 0)
         {
             const float sd = float(std::sqrt(det));
-            t0 = (b + sd) * 0.5f;
-            t1 = (b - sd) * 0.5f;
+            t0 = b + sd;
+            t1 = b - sd;
 
             if (t0 > t1)
             {
-				std::swap(t0, t1);
+                std::swap(t0, t1);
             }
 
             return t1 > std::max(t0, 0.0f);
