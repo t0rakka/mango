@@ -508,6 +508,11 @@
     #if defined(__ARM_NEON__) || defined(__ARM_NEON) || defined(__ARM_FEATURE_CRYPTO)
         // ARM NEON vector instrinsics
         #define MANGO_ENABLE_NEON
+
+        #ifdef __aarch64__
+            #define MANGO_ENABLE_NEON64
+        #endif
+
         #if defined(_M_ARM64)
             #include <arm64_neon.h>
         #else

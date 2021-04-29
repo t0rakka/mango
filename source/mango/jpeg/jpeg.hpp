@@ -31,6 +31,10 @@
         #define JPEG_ENABLE_NEON
     #endif
 
+    #if defined(MANGO_ENABLE_NEON64)
+        #define JPEG_ENABLE_NEON64
+    #endif
+
 #endif
 
 namespace mango::jpeg

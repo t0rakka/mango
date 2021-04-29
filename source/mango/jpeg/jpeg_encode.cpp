@@ -1623,7 +1623,7 @@ namespace
 #endif // defined(JPEG_ENABLE_AVX2)
 #endif // defined(JPEG_ENABLE_SSE4)
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(JPEG_ENABLE_NEON64)
 
     // ----------------------------------------------------------------------------
     // encode_block_neon
@@ -1669,7 +1669,7 @@ namespace
 
 #endif // MANGO_COMPILER_GCC
 
-    u64 zigzag_neon(const s16* in, s16* out)
+    u64 zigzag_neon64(const s16* in, s16* out)
     {
         const u8 zigzag_shuffle [] =
         {
@@ -1760,13 +1760,13 @@ namespace
     }
 
     static
-    u8* encode_block_neon(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
+    u8* encode_block_neon64(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
         s16 block[64];
         encoder.fdct(block, input, channel.qtable);
 
         s16 temp[64];
-        u64 zeromask = zigzag_neon(block, temp);
+        u64 zeromask = zigzag_neon64(block, temp);
 
         p = encode_dc(encoder, p, temp[0], channel);
         zeromask >>= 1;
@@ -1809,7 +1809,7 @@ namespace
         return p;
     }
 
-#endif // defined(JPEG_ENABLE_NEON)
+#endif // defined(JPEG_ENABLE_NEON64)
 
     // ----------------------------------------------------------------------------
     // read_xxx_format
@@ -2522,10 +2522,10 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(JPEG_ENABLE_NEON64)
         {
-            encode = encode_block_neon;
-            encode_name = "NEON";
+            encode = encode_block_neon64;
+            encode_name = "NEON64";
         }
 #endif
 
