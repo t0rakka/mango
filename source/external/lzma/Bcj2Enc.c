@@ -303,6 +303,15 @@ void Bcj2Enc_Encode(CBcj2Enc *p)
     const Byte *src = p->src;
     unsigned rem = (unsigned)(p->srcLim - src);
     unsigned i;
+
+    // mango compiler warning fix
+    // gcc-11: "warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]"
+    //    A) check for code update
+    //    B) signal error to the caller
+    //    C) Not Our Code -> Ignore
+    //    PICK ONE!
+    if (rem > 7) rem = 7;
+
     for (i = 0; i < rem; i++)
       p->temp[i] = src[i];
     p->tempPos = rem;
