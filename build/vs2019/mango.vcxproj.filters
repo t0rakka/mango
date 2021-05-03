@@ -756,9 +756,6 @@
     <ClInclude Include="..\..\source\external\lzma\7zCrc.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\7zFile.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\lzma\7zTypes.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
@@ -789,12 +786,6 @@
     <ClInclude Include="..\..\source\external\lzma\Delta.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\DllSecur.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\HuffEnc.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\external\lzma\LzFind.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
@@ -805,9 +796,6 @@
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\external\lzma\Lzma2Enc.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\Lzma86.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\external\lzma\LzmaDec.h">
@@ -835,24 +823,6 @@
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\external\lzma\Sort.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\Xz.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\XzCrc64.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\XzEnc.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\7zAes.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\7zSha1.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\external\lzma\7zSha256.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_ddict.h">
@@ -1550,13 +1520,7 @@
     <ClCompile Include="..\..\source\external\lzma\7zDec.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\7zFile.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\7zStream.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\AesOpt.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\Alloc.c">
@@ -1589,12 +1553,6 @@
     <ClCompile Include="..\..\source\external\lzma\Delta.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\DllSecur.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\HuffEnc.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\LzFind.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
@@ -1602,12 +1560,6 @@
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\Lzma2Enc.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\Lzma86Dec.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\Lzma86Enc.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\LzmaDec.c">
@@ -1638,33 +1590,6 @@
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\lzma\Sort.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\Xz.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\XzCrc64.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\XzCrc64Opt.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\XzDec.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\XzEnc.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\XzIn.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\7zAes.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\7zSha1.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\external\lzma\7zSha256.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_ddict.c">
