@@ -223,7 +223,7 @@ namespace
 							return nullptr;
 						}
 
-						p->prefix = (s16) oldcode;
+						p->prefix = s16(oldcode);
 						p->first = codes[oldcode].first;
 						p->suffix = (code == available) ? p->first : codes[code].first;
 					}
@@ -241,9 +241,9 @@ namespace
 					// resolve symbols
 					for (;;)
 					{
-						u8 sample = codes[code].suffix;
 						if (dest < dest_end)
 						{
+							u8 sample = codes[code].suffix;
 							*dest++ = sample;
 						}
 
