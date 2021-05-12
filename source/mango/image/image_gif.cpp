@@ -507,14 +507,12 @@ namespace
 		return data;
     }
 
-    const u8* read_chunks(const u8* data, const u8* end,
-						  gif_state& state,
-	                      Surface& surface, Palette* ptr_palette)
+    const u8* read_chunks(const u8* data, const u8* end, gif_state& state, Surface& surface, Palette* ptr_palette)
     {
         while (data < end)
 		{
 			u8 chunkID = *data++;
-			debugPrint("  chunkID: %x\n", (int)chunkID);
+			debugPrint("  chunkID: %x\n", int(chunkID));
 			switch (chunkID)
 			{
 				case GIF_EXTENSION:
@@ -706,7 +704,7 @@ namespace
 		}
 	};
 
-	void gif_encode_image_block(LittleEndianStream& s, int depth, int width, int height, size_t stride, u8* image)
+	void gif_encode_image_block(LittleEndianStream& s, int depth, Surface surface)
 	{
 		const int minCodeSize = depth;
 		const u32 clearCode = 1 << depth;
@@ -723,11 +721,11 @@ namespace
 
 		state.writeBits(s, clearCode, codeSize); // start with a fresh LZW dictionary
 
-		for (int y = 0; y < height; ++y)
+		for (int y = 0; y < surface.height; ++y)
 		{
-			u8* scan = image + y * stride;
+			u8* scan = surface.address(0, y);
 
-			for (int x = 0; x < width; ++x)
+			for (int x = 0; x < surface.width; ++x)
 			{
 				u8 nextValue = scan[x];
 
@@ -755,6 +753,7 @@ namespace
 						// we need more bits for codes
 						codeSize++;
 					}
+
 					if (maxCode == 4095)
 					{
 						// the dictionary is full, clear it out and begin anew
@@ -781,19 +780,14 @@ namespace
 
 	void gif_encode_file(Stream& stream, const Surface& surface, const Palette& palette)
 	{
-		int width = surface.width;
-		int height = surface.height;
-		size_t stride = surface.stride;
-		u8* image = surface.image;
-
 		LittleEndianStream s = stream;
 
 		// identifier
 		s.write("GIF89a", 6);
 
 		// screen descriptor
-		s.write16(width);
-		s.write16(height);
+		s.write16(surface.width);
+		s.write16(surface.height);
 
 		u8 packed = 0;
 		packed |= 0x7; // color table size as log2(size) - 1 (0 -> 2 colors, 7 -> 256 colors)
@@ -822,14 +816,14 @@ namespace
 
 			s.write16(0);
 			s.write16(0);
-			s.write16(width);
-			s.write16(height);
+			s.write16(surface.width);
+			s.write16(surface.height);
 
 			// local palette
 			u8 field = 0;
 			s.write8(field);
 
-			gif_encode_image_block(s, 8, width, height, stride, image);
+			gif_encode_image_block(s, 8, surface);
 		}
 
 		// end of file
