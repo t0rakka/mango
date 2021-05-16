@@ -234,6 +234,7 @@
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
 		A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A6872D082270546C008F0D1A /* jpeg_process_func.hpp */; };
+		A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */ = {isa = PBXBuildFile; fileRef = A68CD3EF2651D9A200725A7C /* lossless_sse41.c */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
 		A6966E032457D863000C1970 /* libd_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = A6966E022457D863000C1970 /* libd_utils.c */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
@@ -700,6 +701,7 @@
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
 		A6872D082270546C008F0D1A /* jpeg_process_func.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_func.hpp; path = jpeg/jpeg_process_func.hpp; sourceTree = "<group>"; };
+		A68CD3EF2651D9A200725A7C /* lossless_sse41.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lossless_sse41.c; path = external/libwebp/src/dsp/lossless_sse41.c; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
 		A6966E022457D863000C1970 /* libd_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libd_utils.c; path = external/libdeflate/lib/libd_utils.c; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
@@ -1619,6 +1621,7 @@
 				A6EC3EC3230D7C1400B17F21 /* lossless_msa.c */,
 				A6EC3EAE230D7C1200B17F21 /* lossless_neon.c */,
 				A6EC3EC6230D7C1400B17F21 /* lossless_sse2.c */,
+				A68CD3EF2651D9A200725A7C /* lossless_sse41.c */,
 				A6EC3EC0230D7C1400B17F21 /* lossless.c */,
 				A6EC3ED0230D7C1500B17F21 /* lossless.h */,
 				A6EC3EA7230D7C1200B17F21 /* mips_macro.h */,
@@ -2265,6 +2268,7 @@
 				A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */,
 				A00559D31C93329A00A6D963 /* image.cpp in Sources */,
 				A642439621852AEF0044B763 /* Ppmd7Enc.c in Sources */,
+				A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */,
 				A6EC3EEA230D7C1500B17F21 /* yuv_mips32.c in Sources */,
 				A63DD7991E706F5400D4D499 /* minilzo.c in Sources */,
 				A00559D11C93329A00A6D963 /* image_pvr.cpp in Sources */,
