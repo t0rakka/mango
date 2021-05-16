@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -46,17 +46,17 @@ namespace mango
         void free(u8* ptr) const;
     };
 
-    class MemoryStream : public Stream
+    class BufferStream : public Stream
     {
     private:
         Buffer m_buffer;
         u64 m_offset;
 
     public:
-        MemoryStream();
-        MemoryStream(const u8* source, u64 bytes);
-        MemoryStream(ConstMemory memory);
-        ~MemoryStream();
+        BufferStream();
+        BufferStream(const u8* source, u64 bytes);
+        BufferStream(ConstMemory memory);
+        ~BufferStream();
 
         operator ConstMemory () const;
         operator Memory () const;

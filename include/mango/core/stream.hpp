@@ -8,6 +8,7 @@
 #include <mango/core/endian.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/core/half.hpp>
+#include <mango/core/exception.hpp>
 
 namespace mango
 {
@@ -40,6 +41,76 @@ namespace mango
         void write(ConstMemory memory)
         {
             write(memory.address, memory.size);
+        }
+    };
+
+    // --------------------------------------------------------------
+    // ConstMemoryStream
+    // --------------------------------------------------------------
+
+    class ConstMemoryStream : public Stream
+    {
+    protected:
+        ConstMemory m_memory;
+        u64 m_offset;
+
+    public:
+        ConstMemoryStream(ConstMemory memory)
+            : m_memory(memory)
+            , m_offset(0)
+        {
+        }
+
+        ~ConstMemoryStream()
+        {
+        }
+
+        u64 size() const
+        {
+            return u64(m_memory.size);
+        }
+
+        u64 offset() const
+        {
+            return m_offset;
+        }
+
+        void seek(s64 distance, SeekMode mode)
+        {
+            const u64 size = u64(m_memory.size);
+            switch (mode)
+            {
+                case BEGIN:
+                    distance = std::max(s64(0), distance);
+                    m_offset = std::min(size, u64(distance));
+                    break;
+
+                case CURRENT:
+                    m_offset = std::min(size, m_offset + distance);
+                    break;
+
+                case END:
+                    distance = std::min(s64(0), distance);
+                    m_offset = u64(std::max(s64(0), s64(size + distance)));
+                    break;
+            }
+        }
+
+        void read(void* dest, u64 bytes)
+        {
+            const u64 left = u64(m_memory.size) - m_offset;
+            if (left < bytes)
+            {
+                MANGO_EXCEPTION("[ConstMemoryStream] Reading past end of memory.");
+            }
+
+            std::memcpy(dest, m_memory.address + m_offset, size_t(bytes));
+            m_offset += bytes;
+        }
+
+        void write(const void* data, u64 size)
+        {
+            MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
         }
     };
 

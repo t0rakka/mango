@@ -2435,7 +2435,7 @@ namespace
 
     void write_IHDR(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
-        MemoryStream buffer;
+        BufferStream buffer;
         BigEndianStream s(buffer);
 
         s.write32(surface.width);
@@ -2453,7 +2453,7 @@ namespace
     {
         if(icc.size == 0) return; // omit empty profile chunk
 
-        MemoryStream buffer;
+        BufferStream buffer;
         BigEndianStream s(buffer);
 
         s.write8('-'); // profile name is 1-79 char according to spec. we dont have/need name

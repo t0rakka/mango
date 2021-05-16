@@ -147,62 +147,62 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // MemoryStream
+    // BufferStream
     // ----------------------------------------------------------------------------
 
-    MemoryStream::MemoryStream()
+    BufferStream::BufferStream()
         : m_buffer()
         , m_offset(0)
     {
     }
 
-    MemoryStream::MemoryStream(const u8* source, u64 bytes)
+    BufferStream::BufferStream(const u8* source, u64 bytes)
         : m_buffer(source, size_t(bytes))
         , m_offset(bytes)
     {
     }
 
-    MemoryStream::MemoryStream(ConstMemory memory)
+    BufferStream::BufferStream(ConstMemory memory)
         : m_buffer(memory)
         , m_offset(memory.size)
     {
     }
 
-    MemoryStream::~MemoryStream()
+    BufferStream::~BufferStream()
     {
     }
 
-    MemoryStream::operator ConstMemory () const
-    {
-        return m_buffer;
-    }
-
-    MemoryStream::operator Memory () const
+    BufferStream::operator ConstMemory () const
     {
         return m_buffer;
     }
 
-    MemoryStream::operator u8* () const
+    BufferStream::operator Memory () const
     {
         return m_buffer;
     }
 
-    u8* MemoryStream::data() const
+    BufferStream::operator u8* () const
+    {
+        return m_buffer;
+    }
+
+    u8* BufferStream::data() const
     {
         return m_buffer.data();
     }
 
-    u64 MemoryStream::size() const
+    u64 BufferStream::size() const
     {
         return u64(m_buffer.size());
     }
 
-    u64 MemoryStream::offset() const
+    u64 BufferStream::offset() const
     {
         return m_offset;
     }
 
-    void MemoryStream::seek(s64 distance, SeekMode mode)
+    void BufferStream::seek(s64 distance, SeekMode mode)
     {
         const u64 size = m_buffer.size();
         switch (mode)
@@ -223,19 +223,19 @@ namespace mango
         }
     }
 
-    void MemoryStream::read(void* dest, u64 bytes)
+    void BufferStream::read(void* dest, u64 bytes)
     {
         const u64 left = m_buffer.size() - m_offset;
         if (left < bytes)
         {
-            MANGO_EXCEPTION("[MemoryStream] Reading past end of buffer.");
+            MANGO_EXCEPTION("[BufferStream] Reading past end of buffer.");
         }
 
         std::memcpy(dest, m_buffer.data() + m_offset, size_t(bytes));
         m_offset += bytes;
     }
 
-    void MemoryStream::write(const void* source, u64 bytes)
+    void BufferStream::write(const void* source, u64 bytes)
     {
         const u64 left = std::min(bytes, m_buffer.size() - m_offset);
         const u64 right = bytes - left;
