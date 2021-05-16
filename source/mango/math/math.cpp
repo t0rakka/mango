@@ -1070,7 +1070,7 @@ namespace directx
         }
         else
         {
-            const float halfpi = pi * 0.5f;
+            const float halfpi = float(pi * 0.5);
             const float sp = std::sin((1.0f - time) * halfpi);
             const float sq = std::sin(time * halfpi);
 
