@@ -324,8 +324,8 @@
     <ClInclude Include="..\..\source\external\zstd\common\threading.h" />
     <ClInclude Include="..\..\source\external\zstd\common\xxhash.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_deps.h" />
-    <ClInclude Include="..\..\source\external\zstd\common\zstd_errors.h" />
     <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_trace.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\hist.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_internal.h" />
@@ -337,11 +337,13 @@
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_fast.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_lazy.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_ldm.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_ldm_geartab.h" />
     <ClInclude Include="..\..\source\external\zstd\compress\zstd_opt.h" />
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_ddict.h" />
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_block.h" />
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_internal.h" />
     <ClInclude Include="..\..\source\external\zstd\zstd.h" />
+    <ClInclude Include="..\..\source\external\zstd\zstd_errors.h" />
     <ClInclude Include="..\..\source\mango\filesystem\indexer.hpp" />
     <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp" />
     <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_func.hpp" />
@@ -430,6 +432,7 @@
     <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_msa.c" />
     <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_neon.c" />
     <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_sse41.c" />
     <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler.c" />
     <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips32.c" />
     <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips_dsp_r2.c" />
