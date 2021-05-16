@@ -64,6 +64,8 @@
  * ----------------------------------------------------------------------------
  */
 
+#ifndef LIB_BT_MATCHFINDER_H
+#define LIB_BT_MATCHFINDER_H
 
 #include "matchfinder_common.h"
 
@@ -71,9 +73,9 @@
 #define BT_MATCHFINDER_HASH3_WAYS  2
 #define BT_MATCHFINDER_HASH4_ORDER 16
 
-#define BT_MATCHFINDER_TOTAL_HASH_LENGTH		\
-	((1UL << BT_MATCHFINDER_HASH3_ORDER) * BT_MATCHFINDER_HASH3_WAYS + \
-	 (1UL << BT_MATCHFINDER_HASH4_ORDER))
+#define BT_MATCHFINDER_TOTAL_HASH_SIZE		\
+	(((1UL << BT_MATCHFINDER_HASH3_ORDER) * BT_MATCHFINDER_HASH3_WAYS + \
+	  (1UL << BT_MATCHFINDER_HASH4_ORDER)) * sizeof(mf_pos_t))
 
 /* Representation of a match found by the bt_matchfinder  */
 struct lz_match {
@@ -101,7 +103,7 @@ struct bt_matchfinder {
 
 }
 #ifdef _aligned_attribute
-_aligned_attribute(MATCHFINDER_ALIGNMENT)
+_aligned_attribute(MATCHFINDER_MEM_ALIGNMENT)
 #endif
 ;
 
@@ -109,14 +111,18 @@ _aligned_attribute(MATCHFINDER_ALIGNMENT)
 static forceinline void
 bt_matchfinder_init(struct bt_matchfinder *mf)
 {
-	matchfinder_init((mf_pos_t *)mf, BT_MATCHFINDER_TOTAL_HASH_LENGTH);
+	STATIC_ASSERT(BT_MATCHFINDER_TOTAL_HASH_SIZE %
+		      MATCHFINDER_SIZE_ALIGNMENT == 0);
+
+	matchfinder_init((mf_pos_t *)mf, BT_MATCHFINDER_TOTAL_HASH_SIZE);
 }
 
 static forceinline void
 bt_matchfinder_slide_window(struct bt_matchfinder *mf)
 {
-	matchfinder_rebase((mf_pos_t *)mf,
-			   sizeof(struct bt_matchfinder) / sizeof(mf_pos_t));
+	STATIC_ASSERT(sizeof(*mf) % MATCHFINDER_SIZE_ALIGNMENT == 0);
+
+	matchfinder_rebase((mf_pos_t *)mf, sizeof(*mf));
 }
 
 static forceinline mf_pos_t *
@@ -152,7 +158,7 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const restrict mf,
 {
 	const u8 *in_next = in_base + cur_pos;
 	u32 depth_remaining = max_search_depth;
-	const s32 cutoff = (s32)(cur_pos - MATCHFINDER_WINDOW_SIZE);
+	const s32 cutoff = cur_pos - MATCHFINDER_WINDOW_SIZE;
 	u32 next_hashseq;
 	u32 hash3;
 	u32 hash4;
@@ -206,8 +212,8 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const restrict mf,
 	cur_node = mf->hash4_tab[hash4];
 	mf->hash4_tab[hash4] = cur_pos;
 
-	pending_lt_ptr = bt_left_child(mf, (s32)cur_pos);
-	pending_gt_ptr = bt_right_child(mf, (s32)cur_pos);
+	pending_lt_ptr = bt_left_child(mf, cur_pos);
+	pending_gt_ptr = bt_right_child(mf, cur_pos);
 
 	if (cur_node <= cutoff) {
 		*pending_lt_ptr = MATCHFINDER_INITVAL;
@@ -353,3 +359,5 @@ bt_matchfinder_skip_position(struct bt_matchfinder *mf,
 					NULL,
 					false);
 }
+
+#endif /* LIB_BT_MATCHFINDER_H */

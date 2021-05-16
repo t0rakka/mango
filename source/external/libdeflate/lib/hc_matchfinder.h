@@ -106,14 +106,17 @@
  * ----------------------------------------------------------------------------
  */
 
+#ifndef LIB_HC_MATCHFINDER_H
+#define LIB_HC_MATCHFINDER_H
+
 #include "matchfinder_common.h"
 
 #define HC_MATCHFINDER_HASH3_ORDER	15
 #define HC_MATCHFINDER_HASH4_ORDER	16
 
-#define HC_MATCHFINDER_TOTAL_HASH_LENGTH		\
-	((1UL << HC_MATCHFINDER_HASH3_ORDER) +		\
-	 (1UL << HC_MATCHFINDER_HASH4_ORDER))
+#define HC_MATCHFINDER_TOTAL_HASH_SIZE			\
+	(((1UL << HC_MATCHFINDER_HASH3_ORDER) +		\
+	  (1UL << HC_MATCHFINDER_HASH4_ORDER)) * sizeof(mf_pos_t))
 
 struct hc_matchfinder {
 
@@ -130,7 +133,7 @@ struct hc_matchfinder {
 
 }
 #ifdef _aligned_attribute
-  _aligned_attribute(MATCHFINDER_ALIGNMENT)
+  _aligned_attribute(MATCHFINDER_MEM_ALIGNMENT)
 #endif
 ;
 
@@ -138,14 +141,18 @@ struct hc_matchfinder {
 static forceinline void
 hc_matchfinder_init(struct hc_matchfinder *mf)
 {
-	matchfinder_init((mf_pos_t *)mf, HC_MATCHFINDER_TOTAL_HASH_LENGTH);
+	STATIC_ASSERT(HC_MATCHFINDER_TOTAL_HASH_SIZE %
+		      MATCHFINDER_SIZE_ALIGNMENT == 0);
+
+	matchfinder_init((mf_pos_t *)mf, HC_MATCHFINDER_TOTAL_HASH_SIZE);
 }
 
 static forceinline void
 hc_matchfinder_slide_window(struct hc_matchfinder *mf)
 {
-	matchfinder_rebase((mf_pos_t *)mf,
-			   sizeof(struct hc_matchfinder) / sizeof(mf_pos_t));
+	STATIC_ASSERT(sizeof(*mf) % MATCHFINDER_SIZE_ALIGNMENT == 0);
+
+	matchfinder_rebase((mf_pos_t *)mf, sizeof(*mf));
 }
 
 /*
@@ -198,7 +205,7 @@ hc_matchfinder_longest_match(struct hc_matchfinder * const restrict mf,
 	u32 seq4;
 	const u8 *matchptr;
 	u32 len;
-	u32 cur_pos = (u32)(in_next - *in_base_p);
+	u32 cur_pos = in_next - *in_base_p;
 	const u8 *in_base;
 	mf_pos_t cutoff;
 
@@ -333,7 +340,7 @@ hc_matchfinder_longest_match(struct hc_matchfinder * const restrict mf,
 			goto out;
 	}
 out:
-	*offset_ret = (u32)(in_next - best_matchptr);
+	*offset_ret = in_next - best_matchptr;
 	return best_len;
 }
 
@@ -375,7 +382,7 @@ hc_matchfinder_skip_positions(struct hc_matchfinder * const restrict mf,
 	if (unlikely(count + 5 > in_end - in_next))
 		return &in_next[count];
 
-	cur_pos = (u32)(in_next - *in_base_p);
+	cur_pos = in_next - *in_base_p;
 	hash3 = next_hashes[0];
 	hash4 = next_hashes[1];
 	do {
@@ -401,3 +408,5 @@ hc_matchfinder_skip_positions(struct hc_matchfinder * const restrict mf,
 
 	return in_next;
 }
+
+#endif /* LIB_HC_MATCHFINDER_H */
